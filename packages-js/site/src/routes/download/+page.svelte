@@ -1,29 +1,29 @@
 <script lang="ts">
     import type { Platform, VersionManifest } from '$lib/api/index.js';
-    import { Api } from '$lib/api/index.js';
     import Page from '$lib/components/Page.svelte';
+    import { BROWSER } from 'esm-env';
+    import { getPlatform } from './download.js';
 
     export let data: { versions: VersionManifest };
-    let version: Platform | undefined;
     let downloading = false;
     let showExtra = false;
 
-    async function getVersion() {
-        const platform = Api.getPlatform();
+    function getVersion() {
+        const platform = getPlatform();
         if (data.versions.platforms[platform] === undefined) {
             console.error(`Platform ${platform} is not supported.`);
             return;
         }
-        version = data.versions.platforms[platform];
+        return data.versions.platforms[platform];
     }
+
+    let version: Platform | undefined = BROWSER ? getVersion() : undefined;
 
     $: if (downloading) {
         setTimeout(() => {
             downloading = false;
         }, 1000);
     }
-
-    const promise = getVersion();
 </script>
 
 <svelte:head>
@@ -41,22 +41,18 @@
     </header>
     <main slot="content">
         <p>
-            {#await promise}
-                <i class="ti ti-loader-2 loading" />
-            {:then}
-                {#if version}
-                    <a href={version?.url} class="download" on:click={() => (downloading = true)}>
-                        {#if downloading}
-                            ダウンロード中...
-                        {:else}
-                            ダウンロード
-                        {/if}
-                        <i class="ti ti-download" />
-                    </a>
-                {:else}
-                    <small> お使いのプラットフォームはサポートされていませんでした… </small>
-                {/if}
-            {/await}
+            {#if version}
+                <a href={version?.url} class="download" on:click={() => (downloading = true)}>
+                    {#if downloading}
+                        ダウンロード中...
+                    {:else}
+                        ダウンロード
+                    {/if}
+                    <i class="ti ti-download" />
+                </a>
+            {:else}
+                <small> お使いのプラットフォームはサポートされていませんでした… </small>
+            {/if}
             <a href="/app">
                 アプリを探す
                 <i class="ti ti-external-link" />
@@ -123,19 +119,6 @@
                 background: var(--color-bg-2);
                 outline: 1px solid var(--color-1);
             }
-        }
-    }
-
-    .loading {
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg);
         }
     }
 
