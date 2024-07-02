@@ -1,22 +1,20 @@
 <script lang="ts">
-    import Page from '$lib/components/Page.svelte';
     import type { Platform, VersionManifest } from '$lib/api/index.js';
     import { Api } from '$lib/api/index.js';
-    import { onMount } from 'svelte';
+    import Page from '$lib/components/Page.svelte';
 
-    let versions: VersionManifest | undefined;
+    export let data: { versions: VersionManifest };
     let version: Platform | undefined;
     let downloading = false;
     let showExtra = false;
 
     async function getVersion() {
-        versions = await Api.getVersions();
         const platform = Api.getPlatform();
-        if (versions.platforms[platform] === undefined) {
+        if (data.versions.platforms[platform] === undefined) {
             console.error(`Platform ${platform} is not supported.`);
             return;
         }
-        version = versions.platforms[platform];
+        version = data.versions.platforms[platform];
     }
 
     $: if (downloading) {
@@ -72,7 +70,7 @@
         </button>
         {#if showExtra}
             <ul>
-                {#each Object.entries(versions?.platforms ?? {}) as [key, platform] (key)}
+                {#each Object.entries(data.versions.platforms ?? {}) as [key, platform] (key)}
                     <li>
                         <a
                             href={platform.url}
