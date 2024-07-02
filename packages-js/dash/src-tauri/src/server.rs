@@ -3,17 +3,17 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use anyhow::{Error, Result};
-use rand::Rng;
+use anyhow::Result;
 
+use crate::lock::Lock;
 use crate::version::VERSION;
 use crate::{app::ServerStatus, python::Python, uv::Uv};
 const LATEST_PIP: &str = "pip==23.3.2";
 
 pub struct ServerOption {
     pub data_dir: PathBuf,
+    pub lock_file: PathBuf,
     pub port: u16,
-    pub address: String,
 }
 
 pub struct Server {
@@ -39,13 +39,6 @@ impl Server {
         }
     }
 
-    pub fn is_port_free(&self) -> bool {
-        match std::net::TcpListener::bind((self.option.address.as_str(), self.option.port)) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
-    }
-
     fn change_state(&self, state: ServerStatus) {
         if let Some(window) = self.window.lock().unwrap().as_ref() {
             window
@@ -57,34 +50,32 @@ impl Server {
         *self.state.lock().unwrap() = state;
     }
 
-    pub fn start(&self) -> Result<(), Error> {
-        if cfg!(dev) {
-            let token_path = std::env::current_dir()?.join("../../../appdata/token.txt");
-            println!("{:?}", token_path);
-            let token = std::fs::read_to_string(token_path).expect("token.txt not found");
-            self.token.lock().unwrap().get_or_insert(token);
-        } else {
-            self.token
-                .lock()
-                .unwrap()
-                .get_or_insert_with(generate_token);
-        }
+    pub fn start(&self) -> Result<(), String> {
+        let (is_locked, mut lock) =
+            Lock::ensure(&self.option.lock_file).map_err(|e| e.to_string())?;
 
-        if !self.is_port_free() {
-            // return Err(anyhow!("Port {} is already in use", self.option.port));
-            println!("Port {} is already in use", self.option.port);
+        self.token.lock().unwrap().get_or_insert(lock.token.clone());
+
+        if is_locked {
+            println!("Server is already running");
+            println!("Server is already running with token {}", lock.token);
             self.change_state(ServerStatus::AlreadyRunning);
             return Ok(());
         }
+        lock.save(self.option.lock_file.clone())
+            .map_err(|e| e.to_string())?;
+
         println!("Running server on port {}", self.option.port);
 
         if !self.option.data_dir.exists() {
-            std::fs::create_dir_all(&self.option.data_dir)?;
+            std::fs::create_dir_all(&self.option.data_dir).expect("failed to create data_dir");
         }
 
         self.change_state(ServerStatus::Installing);
         let requirements = format!("omuserver=={}", VERSION);
-        self.uv.update(LATEST_PIP, &requirements)?;
+        self.uv
+            .update(LATEST_PIP, &requirements)
+            .expect("failed to update uv");
         self.change_state(ServerStatus::Installed);
         let mut cmd = self.python.cmd();
         cmd.arg("-m");
@@ -102,16 +93,10 @@ impl Server {
             cmd.creation_flags(0x08000000);
         }
 
-        let child = cmd.spawn()?;
+        let child = cmd.spawn().expect("failed to start server");
+        lock.set_pid(child.id());
+        lock.save(self.option.lock_file.clone())?;
         *self.child.lock().unwrap() = Some(child);
         Ok(())
     }
-}
-
-fn generate_token() -> String {
-    rand::thread_rng()
-        .sample_iter(&rand::distributions::Alphanumeric)
-        .take(32)
-        .map(char::from)
-        .collect::<String>()
 }

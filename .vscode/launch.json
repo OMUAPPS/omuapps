@@ -16,8 +16,6 @@
             "module": "omuserver",
             "args": [
                 "--debug",
-                "--token-file",
-                "token.txt",
             ],
             "cwd": "${workspaceFolder}/appdata",
             "justMyCode": true,

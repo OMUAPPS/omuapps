@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod app;
+mod lock;
 mod options;
 mod python;
 mod server;
@@ -64,7 +65,7 @@ fn get_server_state(state: tauri::State<'_, AppState>) -> Result<ServerStatus, S
 }
 
 fn main() {
-    let data_dir = APP_DIRECTORY.data_dir();
+    let data_dir = get_data_dir();
     let bin_dir = APP_DIRECTORY.data_local_dir();
     let options = InstallOptions {
         python_version: PYTHON_VERSION.clone(),
@@ -74,8 +75,8 @@ fn main() {
     };
     let server_options = ServerOption {
         data_dir: options.workdir.clone(),
+        lock_file: options.workdir.join("server.lock"),
         port: 26423,
-        address: "127.0.0.1".to_string(),
     };
 
     let python = Python::ensure(&options).unwrap();
@@ -107,4 +108,13 @@ fn main() {
         .invoke_handler(tauri::generate_handler![greet, get_token, get_server_state])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn get_data_dir() -> std::path::PathBuf {
+    if cfg!(dev) {
+        let path = std::env::current_dir().unwrap();
+        let path = path.join("../../../appdata");
+        return path;
+    }
+    return APP_DIRECTORY.data_dir().to_path_buf();
 }

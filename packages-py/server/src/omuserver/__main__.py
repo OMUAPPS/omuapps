@@ -2,12 +2,14 @@ import asyncio
 import io
 import sys
 import tracemalloc
+from pathlib import Path
 
 import click
 from loguru import logger
 from omu.address import Address
 
 from omuserver.config import Config
+from omuserver.lock import Lock
 from omuserver.server.omuserver import OmuServer
 
 
@@ -29,13 +31,11 @@ def setup_logging():
 
 @click.command()
 @click.option("--debug", is_flag=True)
-@click.option("--token", type=str, default=None)
-@click.option("--token-file", type=click.Path(), default=None)
+@click.option("--lock-file", type=click.Path(), default=None)
 @click.option("--port", type=int, default=26423)
 def main(
     debug: bool,
-    token: str | None,
-    token_file: str | None,
+    lock_file: str | None,
     port: int,
 ):
     loop = asyncio.get_event_loop()
@@ -46,7 +46,10 @@ def main(
         port=int(port),
         secure=False,
     )
-    config.dashboard_token = token or (token_file and open(token_file).read())
+    lock_path = Path(lock_file or "server.lock")
+    lock = Lock.load(lock_path)
+    lock.acquire(lock_path)
+    config.dashboard_token = lock.token
 
     if debug:
         logger.warning("Debug mode enabled")
