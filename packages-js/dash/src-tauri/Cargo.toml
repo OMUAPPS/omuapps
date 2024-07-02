@@ -43,19 +43,15 @@ tempfile = "3.10.1"
 sha2 = "0.10.8"
 hex = "0.4.3"
 rand = "0.8.5"
-# plugins
 tauri-plugin-window-state = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 window-shadows = "0.2.1"
-
-# extract
 zstd = "0.13.0"
 flate2 = "1.0.25"
 bzip2 = "0.4.4"
 zip = { version = "0.6.5", features = ["deflate"], default-features = false }
 tar = "0.4.38"
 portpicker = "0.1.1"
-sysinfo = "0.29.5"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

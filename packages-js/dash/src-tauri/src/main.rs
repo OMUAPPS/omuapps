@@ -2,7 +2,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod app;
-mod lock;
 mod options;
 mod python;
 mod server;
@@ -75,7 +74,6 @@ fn main() {
     };
     let server_options = ServerOption {
         data_dir: options.workdir.clone(),
-        lock_file: options.workdir.join("server.lock"),
         port: 26423,
     };
 

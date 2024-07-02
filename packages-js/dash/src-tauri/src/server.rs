@@ -1,18 +1,18 @@
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
+    thread,
 };
 
 use anyhow::Result;
+use rand::Rng;
 
-use crate::lock::Lock;
 use crate::version::VERSION;
 use crate::{app::ServerStatus, python::Python, uv::Uv};
 const LATEST_PIP: &str = "pip==23.3.2";
 
 pub struct ServerOption {
     pub data_dir: PathBuf,
-    pub lock_file: PathBuf,
     pub port: u16,
 }
 
@@ -21,7 +21,6 @@ pub struct Server {
     python: Python,
     uv: Uv,
     pub token: Arc<Mutex<Option<String>>>,
-    pub child: Arc<Mutex<Option<std::process::Child>>>,
     pub state: Arc<Mutex<ServerStatus>>,
     pub window: Arc<Mutex<Option<tauri::Window>>>,
 }
@@ -33,7 +32,6 @@ impl Server {
             python,
             uv,
             token: Arc::new(Mutex::new(None)),
-            child: Arc::new(Mutex::new(None)),
             state: Arc::new(Mutex::new(ServerStatus::NotInstalled)),
             window: Arc::new(Mutex::new(None)),
         }
@@ -51,19 +49,16 @@ impl Server {
     }
 
     pub fn start(&self) -> Result<(), String> {
-        let (is_locked, mut lock) =
-            Lock::ensure(&self.option.lock_file).map_err(|e| e.to_string())?;
-
-        self.token.lock().unwrap().get_or_insert(lock.token.clone());
-
-        if is_locked {
-            println!("Server is already running");
-            println!("Server is already running with token {}", lock.token);
-            self.change_state(ServerStatus::AlreadyRunning);
-            return Ok(());
+        if cfg!(dev) {
+            let token_path = std::env::current_dir()
+                .unwrap()
+                .join("../../../appdata/token.txt");
+            println!("{:?}", token_path);
+            let token = std::fs::read_to_string(token_path).expect("token.txt not found");
+            self.token.lock().unwrap().get_or_insert(token);
+        } else {
+            self.token.lock().unwrap().replace(generate_token());
         }
-        lock.save(self.option.lock_file.clone())
-            .map_err(|e| e.to_string())?;
 
         println!("Running server on port {}", self.option.port);
 
@@ -77,6 +72,7 @@ impl Server {
             .update(LATEST_PIP, &requirements)
             .expect("failed to update uv");
         self.change_state(ServerStatus::Installed);
+
         let mut cmd = self.python.cmd();
         cmd.arg("-m");
         cmd.arg("omuserver");
@@ -92,11 +88,17 @@ impl Server {
             // 0x08000000: CREATE_NO_WINDOW https://learn.microsoft.com/ja-jp/windows/win32/procthread/process-creation-flags?redirectedfrom=MSDN#create_no_window
             cmd.creation_flags(0x08000000);
         }
-
-        let child = cmd.spawn().expect("failed to start server");
-        lock.set_pid(child.id());
-        lock.save(self.option.lock_file.clone())?;
-        *self.child.lock().unwrap() = Some(child);
+        thread::spawn(move || {
+            cmd.status().expect("failed to start server");
+        });
         Ok(())
     }
+}
+
+fn generate_token() -> String {
+    rand::thread_rng()
+        .sample_iter(&rand::distributions::Alphanumeric)
+        .take(32)
+        .map(char::from)
+        .collect::<String>()
 }
