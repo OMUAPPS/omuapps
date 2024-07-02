@@ -201,10 +201,6 @@
                 transition-duration: 0.0621s;
                 transition-property: padding-left, background, color;
             }
-
-            &.selected {
-                // outline: 1px solid var(--color-1);
-            }
         }
     }
 
