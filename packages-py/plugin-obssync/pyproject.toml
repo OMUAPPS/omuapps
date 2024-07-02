@@ -1,6 +1,6 @@
 [project]
 name = "omuplugin_obssync"
-version = "0.4.23"
+version = "0.4.24"
 description = "Add your description here"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
