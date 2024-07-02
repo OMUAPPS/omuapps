@@ -1,6 +1,6 @@
 [project]
 name = "omu_chatprovider"
-version = "0.4.21"
+version = "0.4.22"
 description = "Add your description here"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
