@@ -1,7 +1,6 @@
 <script lang="ts">
     import { BROWSER } from 'esm-env';
     import { afterUpdate, onDestroy } from 'svelte';
-    import { style } from './utils/class-helper.js';
 
     export let noBackground = false;
 
@@ -24,6 +23,7 @@
     };
     let tooltipPos: { x: number; y: number } = { x: 0, y: 0 };
     let pointerPos: { x: number; y: number } = { x: 0, y: 0 };
+    let offset: { x: number; y: number } = { x: 0, y: 0 };
     let direction: 'top' | 'bottom' = 'bottom';
 
     function showTooltip() {
@@ -37,6 +37,27 @@
 
     function clamp(value: number, min: number, max: number) {
         return Math.min(Math.max(value, min), max);
+    }
+
+    function getPositionRoot(element: HTMLElement): { x: number; y: number } {
+        const resetStyles = { 'container-type': ['inline-size'] };
+        let currentElement: HTMLElement | null = element;
+        while (currentElement) {
+            const style = getComputedStyle(currentElement);
+            if (
+                Object.entries(resetStyles).some(([key, values]) =>
+                    values.includes(style.getPropertyValue(key)),
+                )
+            ) {
+                const rect = currentElement.getBoundingClientRect();
+                return {
+                    x: rect.x,
+                    y: rect.y,
+                };
+            }
+            currentElement = currentElement.parentElement;
+        }
+        return { x: 0, y: 0 };
     }
 
     $: {
@@ -61,6 +82,7 @@
                     window.innerHeight - tooltipRect.height - padding,
                 ),
             };
+            offset = getPositionRoot(target);
         }
     }
 
@@ -90,7 +112,7 @@
             class="tooltip"
             class:background={!noBackground}
             class:top={direction === 'top'}
-            style={style({ top: `${tooltipPos.y}px`, left: `${tooltipPos.x}px` })}
+            style="left: {tooltipPos.x - offset.x}px; top: {tooltipPos.y - offset.y}px;"
             bind:this={tooltip}
         >
             <slot />
@@ -98,13 +120,10 @@
         <div
             class="pointer"
             class:top={direction === 'top'}
-            style={style({
-                left: `${targetRect.x + targetRect.width / 2}px`,
-                top:
-                    direction === 'bottom'
-                        ? `${targetRect.y + targetRect.height}px`
-                        : `${targetRect.y - 10}px`,
-            })}
+            style="left: {targetRect.x + targetRect.width / 2 - offset.x}px; top: {(direction ===
+            'bottom'
+                ? targetRect.y + targetRect.height
+                : targetRect.y - 10) - offset.y}px;"
         />
     {/if}
 </span>
