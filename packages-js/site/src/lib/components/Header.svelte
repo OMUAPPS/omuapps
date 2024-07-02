@@ -3,6 +3,7 @@
     import title from '$lib/images/title.svg';
     import { onMount } from 'svelte';
     import Content from './Content.svelte';
+    import { Tooltip } from '@omujs/ui';
 
     let onTop = true;
 
@@ -32,12 +33,14 @@
                             ? 'page'
                             : undefined}
                     >
+                        <Tooltip>アプリを動かすための手順を見る</Tooltip>
                         <i class="ti ti-download" />
                         ダウンロード
                     </li>
                 </a>
                 <a href="/app">
                     <li aria-current={$page.url.pathname.startsWith('/app') ? 'page' : undefined}>
+                        <Tooltip>何か使いたいアプリがあるかも</Tooltip>
                         <i class="ti ti-search" />
                         アプリを探す
                     </li>
@@ -46,6 +49,7 @@
                     <li
                         aria-current={$page.url.pathname.startsWith('/create') ? 'page' : undefined}
                     >
+                        <Tooltip>あったらいいなが作れるかも</Tooltip>
                         <i class="ti ti-pencil" />
                         アプリを作る
                     </li>
@@ -94,7 +98,8 @@
         display: flex;
         align-items: center;
         height: 100%;
-        padding: 0.75rem;
+        padding: 0.75rem 1rem;
+        padding-bottom: 0.75rem;
         gap: 0.25rem;
         font-size: 0;
         font-weight: 800;
@@ -102,17 +107,21 @@
         text-decoration: none;
         text-transform: uppercase;
         letter-spacing: 0.1em;
+        font-weight: 600;
 
         &:hover {
-            background: var(--color-bg-1);
+            background: var(--color-bg-2);
             color: var(--color-1);
-            outline: 1px solid var(--color-1);
-            outline-offset: -3px;
+            padding-bottom: 1rem;
+            transition: padding 0.0621s;
         }
 
         &[aria-current='page'] {
-            color: var(--color-bg-2);
-            background: var(--color-1);
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            border-bottom: 2px solid var(--color-1);
+            padding-bottom: 1rem;
+            font-weight: 800;
         }
     }
 
