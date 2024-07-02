@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.4.22 (2024-07-02)
+
+
+### Reverts
+
+* Revert "Update publish.yml" ([70f88e8](https://github.com/OMUAPPS/omuapps/commit/70f88e8e59f83a69276ca0742f28ce5694db3480))
+
+
+
+
+
 ## 0.4.21 (2024-07-02)
 
 **Note:** Version bump only for package @omujs/i18n
