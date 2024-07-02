@@ -69,3 +69,8 @@ def update_version(version: str | None = None):
     # pub static VERSION: &str = "0.1.0";
     version_path = Path("packages-js/dash/src-tauri/src/version.rs")
     version_path.write_text(f'pub static VERSION: &str = "{new_version}";\n')
+
+    tauri_path = Path("packages-js/dash/src-tauri/tauri.conf.json")
+    tauri = json.loads(tauri_path.read_text())
+    tauri["package"]["version"] = new_version
+    tauri_path.write_text(json.dumps(tauri, indent=4))
