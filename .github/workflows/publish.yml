@@ -170,7 +170,10 @@ jobs:
 
         runs-on: ${{ matrix.platform }}
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ needs.publish-pypi.outputs.VERSION }}
 
             - run: corepack enable
 
@@ -197,11 +200,6 @@ jobs:
                   key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
                   restore-keys: |
                       ${{ runner.os }}-pnpm-store-
-
-            - name: Pull
-              uses: actions/checkout@v4
-              with:
-                  ref: ${{ needs.publish-pypi.outputs.VERSION }}
 
             - name: Install dependencies
               run: pnpm i --frozen-lockfile
