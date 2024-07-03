@@ -56,6 +56,8 @@ impl Server {
             println!("{:?}", token_path);
             let token = std::fs::read_to_string(token_path).expect("token.txt not found");
             self.token.lock().unwrap().get_or_insert(token);
+            self.change_state(ServerStatus::Installed);
+            return Ok(());
         } else {
             self.token.lock().unwrap().replace(generate_token());
         }
