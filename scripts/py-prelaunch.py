@@ -8,7 +8,7 @@ TOKEN_FILE = Path("appdata/token.txt")
 
 def generate_lock():
     token = os.urandom(16).hex()
-    TOKEN_FILE.write_text(token)
+    TOKEN_FILE.write_text(token, encoding="utf-8")
 
 
 def main():
