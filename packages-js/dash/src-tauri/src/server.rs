@@ -1,7 +1,6 @@
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
-    thread,
 };
 
 use anyhow::Result;
@@ -48,6 +47,29 @@ impl Server {
         *self.state.lock().unwrap() = state;
     }
 
+    pub fn is_port_free(&self) -> bool {
+        match std::net::TcpListener::bind(("127.0.0.1", self.option.port)) {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+
+    fn save_token(&self) {
+        let token_path = self.option.data_dir.join("token.txt");
+        std::fs::write(token_path, self.token.lock().unwrap().as_ref().unwrap())
+            .expect("failed to save token");
+    }
+
+    fn load_token(&self) {
+        let token_path = self.option.data_dir.join("token.txt");
+        if !token_path.exists() {
+            return;
+        }
+        if let Ok(token) = std::fs::read_to_string(token_path) {
+            *self.token.lock().unwrap() = Some(token);
+        }
+    }
+
     pub fn start(&self) -> Result<(), String> {
         if cfg!(dev) {
             let token_path = std::env::current_dir()
@@ -59,7 +81,14 @@ impl Server {
             self.change_state(ServerStatus::Installed);
             return Ok(());
         } else {
-            self.token.lock().unwrap().replace(generate_token());
+            if self.is_port_free() {
+                self.token.lock().unwrap().replace(generate_token());
+                self.save_token();
+            } else {
+                self.load_token();
+                self.change_state(ServerStatus::AlreadyRunning);
+                return Ok(());
+            }
         }
 
         println!("Running server on port {}", self.option.port);
@@ -90,9 +119,7 @@ impl Server {
             // 0x08000000: CREATE_NO_WINDOW https://learn.microsoft.com/ja-jp/windows/win32/procthread/process-creation-flags?redirectedfrom=MSDN#create_no_window
             cmd.creation_flags(0x08000000);
         }
-        thread::spawn(move || {
-            cmd.status().expect("failed to start server");
-        });
+        cmd.spawn().expect("failed to spawn server");
         Ok(())
     }
 }
