@@ -102,6 +102,15 @@
         </Tooltip>
         <i class="ti ti-arrow-autofit-down" />
     </button>
+    <button
+        class="close"
+        on:click={() => {
+            $data.message = null;
+        }}
+    >
+        <Tooltip>メッセージを閉じる</Tooltip>
+        <i class="ti ti-x" />
+    </button>
 </div>
 <div bind:this={container}>
     <div class="message">

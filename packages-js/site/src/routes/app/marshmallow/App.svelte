@@ -11,46 +11,54 @@
 
     let user: User | null = null;
     let users: Record<string, User> | null = null;
+    let state: 'loading_users' | 'user_notfound' | 'user_select' | 'loaded' = 'loading_users';
 
-    marshmallow.refreshUsers().then((res) => {
-        users = res;
-        users['test'] = {
-            name: 'test',
-            screen_name: 'Test User',
-            image: 'https://via.placeholder.com/150',
-        };
-        console.log(users);
-        if ($config.user) {
-            user = users[$config.user];
+    async function refreshUsers() {
+        state = 'loading_users';
+        const result = await marshmallow.refreshUsers();
+        users = result;
+        console.log(result);
+        state = 'loaded';
+        if (Object.keys(users).length === 0) {
+            state = 'user_notfound';
             return;
         }
-        if (users && Object.keys(users).length === 1) {
+        if ($config.user && users[$config.user]) {
+            user = users[$config.user];
+        } else if (Object.keys(users).length === 1) {
             user = users[Object.keys(users)[0]];
+        } else {
+            state = 'user_select';
         }
-    });
+    }
 
     $: {
         $config.user = user?.name || null;
     }
 
     let messages: Message[] = [];
-    let loading = false;
+
+    async function refreshMessages(user: User) {
+        messages = [];
+        state = 'loading_users';
+        marshmallow
+            .getMessages(user.name)
+            .then((res) => {
+                console.log(res);
+                messages = res;
+            })
+            .finally(() => {
+                state = 'loaded';
+            });
+    }
 
     $: {
         if (user) {
-            messages = [];
-            loading = true;
-            marshmallow
-                .getMessages(user.name)
-                .then((res) => {
-                    console.log(res);
-                    messages = res;
-                })
-                .finally(() => {
-                    loading = false;
-                });
+            refreshMessages(user);
         }
     }
+
+    refreshUsers();
 
     function createAssetUrl() {
         const url = new URL($page.url);
@@ -64,6 +72,13 @@
     <div class="left">
         <AccountSwitcher {users} bind:user />
         <div class="messages">
+            {#if user}
+                <button class="refresh" on:click={() => user && refreshMessages(user)}>
+                    <Tooltip>読み込み直して新しいメッセージを表示する</Tooltip>
+                    更新
+                    <i class="ti ti-reload" />
+                </button>
+            {/if}
             {#each messages as item}
                 {@const selected = $data.message === item}
                 <button class="message" class:selected on:click={() => ($data.message = item)}>
@@ -77,16 +92,6 @@
                     {/if}
                 </button>
             {/each}
-            {#if $data.message}
-                <button on:click={() => ($data.message = null)} class="message hide">
-                    <Tooltip>
-                        表示中のメッセージを閉じる
-                        <i class="ti ti-chevron-right" />
-                    </Tooltip>
-                    <p>メッセージを閉じる</p>
-                    <i class="ti ti-x" />
-                </button>
-            {/if}
         </div>
     </div>
     <div class="right">
@@ -115,14 +120,21 @@
         </DragLink>
     </div>
 </main>
-{#if users && !user}
-    <SelectUser {users} bind:user />
-{/if}
-{#if loading}
+{#if state === 'loading_users'}
     <div class="loading">
         <i class="ti ti-loader-2" />
         メッセージを読み込んでいます…
     </div>
+{:else if state === 'user_notfound'}
+    <div class="loading">
+        <i class="ti ti-alert" />
+        ユーザーの認証情報が見つかりませんでした。 ブラウザでログインしてもういちどお試しください。
+        <button on:click={refreshUsers}>再読み込み</button>
+    </div>
+{:else if state === 'user_select'}
+    {#if users}
+        <SelectUser {users} bind:user />
+    {/if}
 {/if}
 
 <style lang="scss">
@@ -131,6 +143,32 @@
         display: flex;
         flex-direction: row;
         height: 100%;
+    }
+
+    .refresh {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 2rem;
+        border: none;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        border-bottom: 1px solid var(--color-outline);
+        width: 100%;
+        font-size: 0.9rem;
+        font-weight: bold;
+        cursor: pointer;
+
+        > i {
+            font-size: 1rem;
+        }
+
+        &:hover {
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            transition-duration: 0.0621s;
+            transition-property: background, color;
+        }
     }
 
     .loading {
@@ -202,10 +240,6 @@
                 transition-property: padding-left, background, color;
             }
         }
-    }
-
-    .hide {
-        margin-top: auto;
     }
 
     .left {
