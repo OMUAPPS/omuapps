@@ -6,6 +6,7 @@
     import { IDENTIFIER } from '../app.js';
     import Timer from '../components/Timer.svelte';
     import { TimerApp } from '../timer-app.js';
+    import AssetPage from '$lib/components/AssetPage.svelte';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();
@@ -34,13 +35,15 @@
 </script>
 
 {#if id}
-    <main
-        style="
+    <AssetPage>
+        <main
+            style="
         justify-content: {alignHorizontal};
         align-items: {alignVertical};"
-    >
-        <Timer {timer} />
-    </main>
+        >
+            <Timer {timer} />
+        </main>
+    </AssetPage>
 {:else}
     <p>id is not provided</p>
 {/if}

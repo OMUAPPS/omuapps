@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import { FlexColWrapper, FlexRowWrapper } from '@omujs/ui';
 </script>
 

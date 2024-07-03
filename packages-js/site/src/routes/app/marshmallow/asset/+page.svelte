@@ -5,6 +5,7 @@
     import { BROWSER } from 'esm-env';
     import { APP_ID } from '../app.js';
     import { MarshmallowApp } from '../marshmallow-app.js';
+    import AssetPage from '$lib/components/AssetPage.svelte';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();
@@ -23,16 +24,21 @@
 </script>
 
 {#if id}
-    <main>
-        {#if $data.message}
-            <img
-                src="https://media.marshmallow-qa.com/system/images/{$data.message.message_id}.png"
-                alt=""
-                class:async={!$config.syncScroll}
-                style="transform: translateY(calc(-100% * {$config.syncScroll ? $data.scroll : 0}));"
-            />
-        {/if}
-    </main>
+    <AssetPage>
+        <main>
+            {#if $data.message}
+                <img
+                    src="https://media.marshmallow-qa.com/system/images/{$data.message
+                        .message_id}.png"
+                    alt=""
+                    class:async={!$config.syncScroll}
+                    style="transform: translateY(calc(-100% * {$config.syncScroll
+                        ? $data.scroll
+                        : 0}));"
+                />
+            {/if}
+        </main>
+    </AssetPage>
 {:else}
     <p>id is not provided</p>
 {/if}

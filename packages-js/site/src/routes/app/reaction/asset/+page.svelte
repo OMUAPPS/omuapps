@@ -8,6 +8,7 @@
     import { IDENTIFIER } from '../app.js';
     import ReactionOverlay from '../components/ReactionRenderer.svelte';
     import { ReactionApp } from '../reaction.js';
+    import AssetPage from '$lib/components/AssetPage.svelte';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();
@@ -26,7 +27,9 @@
 </script>
 
 {#if id}
-    <ReactionOverlay {omu} {reactionApp} />
+    <AssetPage>
+        <ReactionOverlay {omu} {reactionApp} />
+    </AssetPage>
 {:else}
     <p>id is not provided</p>
 {/if}

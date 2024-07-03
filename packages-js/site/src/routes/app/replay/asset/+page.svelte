@@ -7,6 +7,7 @@
     import { ReplayApp } from '../replay-app.js';
     import Player from '../components/Player.svelte';
     import { page } from '$app/stores';
+    import AssetPage from '$lib/components/AssetPage.svelte';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();
@@ -60,20 +61,22 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 </svelte:head>
 
-<main>
-    {#if $config.active}
-        <Player
-            videoId={$replayData?.videoId}
-            bind:player
-            options={{
-                events: {
-                    onReady,
-                },
-            }}
-            hide
-        />
-    {/if}
-</main>
+<AssetPage>
+    <main>
+        {#if $config.active}
+            <Player
+                videoId={$replayData?.videoId}
+                bind:player
+                options={{
+                    events: {
+                        onReady,
+                    },
+                }}
+                hide
+            />
+        {/if}
+    </main>
+</AssetPage>
 
 <style lang="scss">
     main {

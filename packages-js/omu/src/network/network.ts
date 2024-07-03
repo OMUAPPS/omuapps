@@ -15,6 +15,7 @@ import type { TokenProvider } from '../token.js';
 
 import type { Connection } from './connection.js';
 import { PacketMapper } from './connection.js';
+import type { DisconnectPacket } from './packet/packet-types.js';
 import { ConnectPacket, DisconnectType, PACKET_TYPES } from './packet/packet-types.js';
 import type { Packet, PacketType } from './packet/packet.js';
 
@@ -36,7 +37,7 @@ export class Network {
     public status: NetworkStatus = NetworkStatus.DISCONNECTED;
     public readonly event = {
         connected: new EventEmitter<[]>(),
-        disconnected: new EventEmitter<[]>(),
+        disconnected: new EventEmitter<[DisconnectPacket | null]>(),
         packet: new EventEmitter<[Packet]>(),
         status: new EventEmitter<[NetworkStatus]>(),
     };
@@ -59,7 +60,8 @@ export class Network {
         this.addPacketHandler(PACKET_TYPES.TOKEN, async (token: string) => {
             await this.tokenProvider.set(this.address, this.client.app, token);
         });
-        this.addPacketHandler(PACKET_TYPES.DISCONNECT, (reason) => {
+        this.addPacketHandler(PACKET_TYPES.DISCONNECT, async (reason) => {
+            await this.event.disconnected.emit(reason);
             if (reason.type === DisconnectType.SHUTDOWN || reason.type === DisconnectType.CLOSE) {
                 return;
             }
@@ -169,7 +171,7 @@ export class Network {
         this.setStatus(NetworkStatus.DISCONNECTED);
         this.event.status.emit(NetworkStatus.DISCONNECTED);
         this.connection.close();
-        this.event.disconnected.emit();
+        this.event.disconnected.emit(null);
     }
 
     public send(packet: Packet): void {

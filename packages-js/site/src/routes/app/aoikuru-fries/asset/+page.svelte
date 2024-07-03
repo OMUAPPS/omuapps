@@ -13,6 +13,7 @@
     import Board from './Board.svelte';
     import Fries from './Fries.svelte';
     import bg from './img/bg.png';
+    import AssetPage from '$lib/components/AssetPage.svelte';
 
     const ASSET_APP = new App(IDENTIFIER.join('asset'), {
         version: '0.1.0',
@@ -47,7 +48,7 @@
         processQueue();
     });
 
-    function isMessageGreasy(message:Message):boolean{
+    function isMessageGreasy(message: Message): boolean {
         if (!message.content) return false;
         return [...message.content.iter()].some((part) => {
             if (part instanceof content.Image) {
@@ -83,18 +84,20 @@
     }
 </script>
 
-<main>
-    <img src={bg} alt="" />
-    <Board title={$config.text} />
-    <Avatar {state} />
-    <Fries {state} />
+<AssetPage>
+    <main>
+        <img src={bg} alt="" />
+        <Board title={$config.text} />
+        <Avatar {state} />
+        <Fries {state} />
 
-    {#if $config.hint}
-        <small class="hint">
-            {$config.hint}
-        </small>
-    {/if}
-</main>
+        {#if $config.hint}
+            <small class="hint">
+                {$config.hint}
+            </small>
+        {/if}
+    </main>
+</AssetPage>
 
 <style lang="scss">
     main {

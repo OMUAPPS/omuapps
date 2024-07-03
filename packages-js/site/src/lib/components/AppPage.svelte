@@ -1,32 +1,41 @@
 <script lang="ts">
-    import { page } from '$app/stores';
+    import { DisconnectType } from '@omujs/omu/network/packet/packet-types.js';
     import { client } from '@omujs/ui';
     import Spinner from '../../routes/app/archive/components/Spinner.svelte';
 
-    const isInApp = /\/app\/./gm.test($page.url.pathname);
-    let loading = false;
+    let state: 'loading' | 'loaded' | DisconnectType = 'loaded';
 
-    if (isInApp) {
-        loading = true;
-        client.subscribe((omu) => {
-            if (!omu) return;
-            omu.onReady(() => {
-                loading = false;
-            });
+    state = 'loading';
+    client.subscribe((omu) => {
+        if (!omu) return;
+        omu.onReady(() => {
+            state = 'loaded';
         });
-    }
+        omu.network.event.disconnected.listen((reason) => {
+            state = 'loading';
+            if (reason) {
+                state = reason.type;
+                console.log(reason);
+            }
+        });
+    });
 </script>
 
 <slot name="header" />
 <slot />
-{#if loading}
-    <div class="loading">
+{#if state === 'loading'}
+    <div class="modal">
         <Spinner />
+    </div>
+{:else if state === DisconnectType.ANOTHER_CONNECTION}
+    <div class="modal">
+        <p>同じIDを持つアプリが接続されました</p>
+        <small>このアプリを使うにはどちらかを閉じてください</small>
     </div>
 {/if}
 
 <style lang="scss">
-    .loading {
+    .modal {
         position: fixed;
         top: 0;
         left: 0;

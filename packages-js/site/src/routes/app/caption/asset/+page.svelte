@@ -6,6 +6,7 @@
     import { IDENTIFIER } from '../app.js';
     import { CaptionApp } from '../caption-app.js';
     import CaptionRenderer from '../CaptionRenderer.svelte';
+    import AssetPage from '$lib/components/AssetPage.svelte';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();
@@ -23,9 +24,11 @@
 </script>
 
 {#if id}
-    <main>
-        <CaptionRenderer {captionApp} />
-    </main>
+    <AssetPage>
+        <main>
+            <CaptionRenderer {captionApp} />
+        </main>
+    </AssetPage>
 {:else}
     <p>id is not provided</p>
 {/if}

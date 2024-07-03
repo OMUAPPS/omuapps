@@ -100,13 +100,14 @@ export class Omu implements Client {
         });
     }
 
-    public start(): void {
+    public async start(): Promise<void> {
         if (this.running) {
             throw new Error('Client already running');
         }
         this.running = true;
-        this.network.connect();
+        const connect = this.network.connect();
         this.event.started.emit();
+        await connect;
     }
 
     public stop(): void {
