@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/i18n",
-    "version": "0.4.26",
+    "version": "0.4.27",
     "repository": {
         "type": "git",
         "url": "https://github.com/OMUAPPS/omuapps"
