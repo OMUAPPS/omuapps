@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.4.25 (2024-07-03)
+
+
+### Bug Fixes
+
+* **dash:** 開発環境で２重でサーバーが立ち上がらないように ([591853a](https://github.com/OMUAPPS/omuapps/commit/591853a66480788a7726426fc2e59563bb01179b))
+
+
+
+
+
 ## 0.4.24 (2024-07-02)
 
 **Note:** Version bump only for package @omujs/omu
