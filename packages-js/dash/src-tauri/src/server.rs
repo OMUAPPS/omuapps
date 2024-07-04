@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
+use log::info;
 use rand::Rng;
 
 use crate::version::VERSION;
@@ -42,7 +43,7 @@ impl Server {
                 .emit("server-state", Some(state.clone()))
                 .expect("failed to emit server-state");
         } else {
-            println!("window not found");
+            info!("window not found");
         }
         *self.state.lock().unwrap() = state;
     }
@@ -71,27 +72,16 @@ impl Server {
     }
 
     pub fn start(&self) -> Result<(), String> {
-        if cfg!(dev) {
-            let token_path = std::env::current_dir()
-                .unwrap()
-                .join("../../../appdata/token.txt");
-            println!("{:?}", token_path);
-            let token = std::fs::read_to_string(token_path).expect("token.txt not found");
-            self.token.lock().unwrap().get_or_insert(token);
-            self.change_state(ServerStatus::Installed);
-            return Ok(());
+        if self.is_port_free() {
+            self.token.lock().unwrap().replace(generate_token());
+            self.save_token();
         } else {
-            if self.is_port_free() {
-                self.token.lock().unwrap().replace(generate_token());
-                self.save_token();
-            } else {
-                self.load_token();
-                self.change_state(ServerStatus::AlreadyRunning);
-                return Ok(());
-            }
+            self.load_token();
+            self.change_state(ServerStatus::AlreadyRunning);
+            return Ok(());
         }
 
-        println!("Running server on port {}", self.option.port);
+        info!("Running server on port {}", self.option.port);
 
         if !self.option.data_dir.exists() {
             std::fs::create_dir_all(&self.option.data_dir).expect("failed to create data_dir");

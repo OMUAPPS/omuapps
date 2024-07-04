@@ -7,12 +7,12 @@ use std::{
 
 use anyhow::Context;
 use anyhow::{bail, Error};
+use log::info;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
 use crate::{
     options::InstallOptions,
-    python::Python,
     sources::uv::{UvDownload, UvRequest},
     utils::{download::download_url, extract::unpack_archive},
 };
@@ -63,7 +63,7 @@ impl Uv {
 
         for entry in versions {
             if let Err(e) = remove_dir_all(entry.path()) {
-                println!("Failed to remove old uv version: {}", e);
+                info!("Failed to remove old uv version: {}", e);
             }
         }
         Ok(())
@@ -73,9 +73,9 @@ impl Uv {
         let uv_request = UvRequest::default();
         let uv_download = UvDownload::try_from(uv_request).unwrap();
         let uv_url = uv_download.url.as_ref();
-        println!("Downloading uv from {}", uv_url);
+        info!("Downloading uv from {}", uv_url);
         let contents = download_url(&uv_url).unwrap();
-        println!("Downloaded uv to {}", contents.len());
+        info!("Downloaded uv to {}", contents.len());
         let dst = options.uv_path.join(uv_download.version());
         let strip = if cfg!(target_os = "windows") { 0 } else { 1 };
         unpack_archive(&contents, &dst, strip).unwrap();

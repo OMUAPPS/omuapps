@@ -14,12 +14,14 @@ mod version;
 use anyhow::Result;
 use app::{AppState, ServerStatus};
 use directories::ProjectDirs;
+use log::info;
 use once_cell::sync::Lazy;
 use options::InstallOptions;
 use python::Python;
 use server::{Server, ServerOption};
 use sources::py::PythonVersionRequest;
 use tauri::Manager;
+use tauri_plugin_log::LogTarget;
 use uv::Uv;
 use window_shadows::set_shadow;
 
@@ -43,12 +45,6 @@ static PYTHON_VERSION: PythonVersionRequest = PythonVersionRequest {
 struct Payload {
     args: Vec<String>,
     cwd: String,
-}
-
-#[tauri::command]
-fn greet(name: &str) -> String {
-    println!("Hello, {}! You've been greeted from Rust!", name);
-    format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
 #[tauri::command]
@@ -87,12 +83,17 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
-            println!("{}, {argv:?}, {cwd}", app.package_info().name);
+            info!("{}, {argv:?}, {cwd}", app.package_info().name);
 
             app.emit_all("single-instance", Payload { args: argv, cwd })
                 .unwrap();
         }))
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .targets([LogTarget::Stdout, LogTarget::Webview, LogTarget::LogDir])
+                .build(),
+        )
         .manage(app_state.clone())
         .setup(move |app| {
             let window = app.get_window("main").unwrap();
@@ -103,7 +104,7 @@ fn main() {
                 .unwrap();
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet, get_token, get_server_state])
+        .invoke_handler(tauri::generate_handler![get_token, get_server_state])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

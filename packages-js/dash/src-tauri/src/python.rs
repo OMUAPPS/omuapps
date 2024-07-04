@@ -1,6 +1,7 @@
 use std::{path::PathBuf, process::Command};
 
 use anyhow::{anyhow, bail, Error};
+use log::info;
 
 use crate::{
     options::InstallOptions,
@@ -33,14 +34,14 @@ impl Python {
                 None => Self::download(&options).map(|version| Self {
                     version,
                     path: python_path,
-                    python_bin: python_bin,
+                    python_bin,
                 }),
             }
         } else {
             Self::download(&options).map(|version| Self {
                 version,
                 path: python_path,
-                python_bin: python_bin,
+                python_bin,
             })
         }
     }
@@ -52,12 +53,12 @@ impl Python {
             None => bail!("unknown version {}", version),
         };
         let python_dir = get_dir(options);
-        println!("Downloading Python from {}", python_url);
+        info!("Downloading Python from {}", python_url);
         let contents = download_url(python_url).unwrap();
         if let Some(checksum) = checksum {
             check_checksum(&contents, &checksum).map_err(|_| anyhow!("checksum mismatch"))?;
         }
-        println!("Downloaded Python to {}", contents.len());
+        info!("Downloaded Python to {}", contents.len());
         unpack_archive(&contents, &python_dir, 1).unwrap();
         write_venv_marker(&python_dir, &version).unwrap();
         Ok(version)
