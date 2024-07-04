@@ -4,16 +4,12 @@
     import { BROWSER } from 'esm-env';
     import { omu } from '../client.js';
     import { appTable } from './apps.js';
-    import { REGISTRIES, type Tag } from './category.js';
+    import { REGISTRIES } from './category.js';
     export let app: App;
-
-    function launch() {
-        omu.dashboard.openApp(app);
-    }
 
     let alreadyAdded = false;
 
-    async function action() {
+    async function install() {
         const old = await appTable.get(app.key());
         console.log(old);
         if (old) {
@@ -23,6 +19,7 @@
             appTable.add(app);
             alreadyAdded = true;
         }
+        omu.dashboard.openApp(app);
     }
 
     omu.onReady(async () => {
@@ -85,17 +82,11 @@
                 </small>
             </FlexColWrapper>
             <FlexRowWrapper>
-                <button on:click={action} class:active={alreadyAdded}>
-                    <i class="ti ti-{alreadyAdded ? 'minus' : 'plus'}" />
+                <button on:click={install} class:active={alreadyAdded}>
                     <Tooltip>
-                        {alreadyAdded
-                            ? 'アプリをダッシュボードから削除する'
-                            : 'アプリをダッシュボードに保存する'}
+                        {alreadyAdded ? 'アプリを削除' : 'アプリをインストール'}
                     </Tooltip>
-                </button>
-                <button on:click={launch}>
-                    <i class="ti ti-player-play" />
-                    <Tooltip>アプリを起動する</Tooltip>
+                    <i class="ti ti-{alreadyAdded ? 'x' : 'download'}" />
                 </button>
             </FlexRowWrapper>
         </FlexRowWrapper>
