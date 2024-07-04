@@ -278,12 +278,14 @@
         }
     }
 
+    $left-width: 20rem;
+
     .left {
         position: absolute;
         top: 0;
         bottom: 0;
-        width: 300px;
-        min-width: 300px;
+        width: $left-width;
+        min-width: $left-width;
         display: flex;
         flex-direction: column;
         background: var(--color-bg-2);
@@ -292,7 +294,7 @@
 
     .right {
         position: absolute;
-        left: 300px;
+        left: $left-width;
         right: 0;
         top: 0;
         bottom: 0;
