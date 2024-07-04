@@ -73,35 +73,42 @@
     <div class="left">
         <AccountSwitcher {users} bind:user />
         <div class="messages">
-            {#if user}
-                <button class="refresh" on:click={() => user && refreshMessages(user)}>
-                    <Tooltip>読み込み直して新しいメッセージを表示する</Tooltip>
-                    更新
-                    <i class="ti ti-reload" />
-                </button>
-            {/if}
-            {#each messages as item}
-                {@const selected = $data.message === item}
-                <button
-                    class="message"
-                    class:selected
-                    on:click={() => ($data.message = selected ? null : item)}
-                >
-                    <Tooltip>
+            {#if state === 'loading_messages'}
+                <div class="loading">
+                    <i class="ti ti-loader-2" />
+                    メッセージを読み込んでいます…
+                </div>
+            {:else}
+                {#if user}
+                    <button class="refresh" on:click={() => user && refreshMessages(user)}>
+                        <Tooltip>読み込み直して新しいメッセージを表示する</Tooltip>
+                        更新
+                        <i class="ti ti-reload" />
+                    </button>
+                {/if}
+                {#each messages as item}
+                    {@const selected = $data.message === item}
+                    <button
+                        class="message"
+                        class:selected
+                        on:click={() => ($data.message = selected ? null : item)}
+                    >
+                        <Tooltip>
+                            {#if selected}
+                                クリックして選択を解除する
+                                <i class="ti ti-x" />
+                            {:else}
+                                クリックでメッセージを表示
+                                <i class="ti ti-chevron-right" />
+                            {/if}
+                        </Tooltip>
+                        <p>{item.content}</p>
                         {#if selected}
-                            クリックして選択を解除する
-                            <i class="ti ti-x" />
-                        {:else}
-                            クリックでメッセージを表示
                             <i class="ti ti-chevron-right" />
                         {/if}
-                    </Tooltip>
-                    <p>{item.content}</p>
-                    {#if selected}
-                        <i class="ti ti-chevron-right" />
-                    {/if}
-                </button>
-            {/each}
+                    </button>
+                {/each}
+            {/if}
         </div>
     </div>
     <div class="right">
@@ -131,18 +138,13 @@
     </div>
 </main>
 {#if state === 'loading_users'}
-    <div class="loading">
+    <div class="modal">
         <i class="ti ti-loader-2" />
         ブラウザからユーザー情報を読み込んでいます…
         <small>これには時間がかかることがあります</small>
     </div>
-{:else if state === 'loading_messages'}
-    <div class="loading">
-        <i class="ti ti-loader-2" />
-        メッセージを読み込んでいます…
-    </div>
 {:else if state === 'user_notfound'}
-    <div class="loading">
+    <div class="modal">
         <i class="ti ti-alert" />
         ユーザーの認証情報が見つかりませんでした。 ブラウザでログインしてもういちどお試しください。
         <button on:click={refreshUsers}>再読み込み</button>
@@ -188,6 +190,24 @@
     }
 
     .loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 2rem;
+        border: none;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        width: 100%;
+        font-size: 0.8rem;
+
+        > i {
+            font-size: 1rem;
+            animation: spin 1s linear infinite;
+        }
+    }
+
+    .modal {
         position: absolute;
         inset: 0;
         display: flex;
