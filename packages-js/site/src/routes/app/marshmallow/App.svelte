@@ -141,7 +141,7 @@
     <div class="modal">
         <i class="ti ti-loader-2" />
         ブラウザからユーザー情報を読み込んでいます…
-        <small>これには時間がかかることがあります</small>
+        <small>これには数分かかる場合があります</small>
     </div>
 {:else if state === 'user_notfound'}
     <div class="modal">
