@@ -126,9 +126,9 @@
         height: 100%;
     }
 
-    article:hover .overlay {
+    article:hover {
         outline: 1px solid var(--color-1);
-        outline-offset: 11px;
+        background: var(--color-bg-1);
     }
 
     .icon {
