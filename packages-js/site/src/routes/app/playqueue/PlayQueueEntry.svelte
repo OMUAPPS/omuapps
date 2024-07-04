@@ -123,7 +123,7 @@
         &:hover {
             background: var(--color-bg-1);
             outline: 2px solid var(--color-1);
-            transition: 0.06s;
+            transition: 0.0621s;
 
             .buttons {
                 visibility: visible;

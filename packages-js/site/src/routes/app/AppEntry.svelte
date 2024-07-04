@@ -108,7 +108,7 @@
         outline: 1px solid var(--color-outline);
 
         &:hover {
-            transition: 0.06s;
+            transition: 0.0621s;
             margin-left: 2px;
         }
     }

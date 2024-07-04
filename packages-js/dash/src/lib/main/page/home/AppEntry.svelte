@@ -86,12 +86,12 @@
     .selected {
         background: var(--color-bg-1);
         outline: 1px solid var(--color-1);
-        transition: 0.06s;
+        transition: 0.0621s;
 
         .right {
             padding-right: 15px;
             visibility: visible;
-            transition: 0.06s;
+            transition: 0.0621s;
         }
     }
 

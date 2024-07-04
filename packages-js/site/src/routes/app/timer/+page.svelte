@@ -218,7 +218,7 @@
             margin-left: 4px;
             outline: 2px solid var(--color-1);
             box-shadow: -4px 4px 0 2px var(--color-2);
-            transition: 0.06233s;
+            transition: 0.0621s;
         }
     }
 

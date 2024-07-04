@@ -369,7 +369,7 @@
         }
 
         &:hover {
-            transition: 0.06233s;
+            transition: 0.0621s;
         }
     }
 </style>
