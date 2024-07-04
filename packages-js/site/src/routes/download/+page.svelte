@@ -9,15 +9,15 @@
     let showExtra = false;
 
     function getVersion() {
+        const platform = getPlatform();
         if (data.manifest.platforms[platform] === undefined) {
             console.error(`Platform ${platform} is not supported.`);
             return;
         }
-        return data.manifest.platforms[platform];
+        return { ...data.manifest.platforms[platform], platform };
     }
 
-    const platform = getPlatform();
-    let version: Platform | undefined = BROWSER ? getVersion() : undefined;
+    let version: (Platform & { platform: string }) | undefined = BROWSER ? getVersion() : undefined;
 
     $: if (downloading) {
         setTimeout(() => {
@@ -45,7 +45,7 @@
                 {@const date = new Date(data.manifest.pub_date)}
                 <a href={version?.url} class="download" on:click={() => (downloading = true)}>
                     <Tooltip>
-                        {platform} 用のインストーラーをダウンロードします
+                        {version.platform} 用のインストーラーをダウンロードします
                     </Tooltip>
                     {#if downloading}
                         ダウンロード中...
