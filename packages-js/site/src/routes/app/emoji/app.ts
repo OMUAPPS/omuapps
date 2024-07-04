@@ -18,6 +18,6 @@ export const APP = new App(IDENTIFIER, {
             ja: '特定の文字列を絵文字に変換します。',
         },
         icon: icon,
-        tags: [] as TagKey[],
+        tags: ['underdevelopment'] as TagKey[],
     },
 });

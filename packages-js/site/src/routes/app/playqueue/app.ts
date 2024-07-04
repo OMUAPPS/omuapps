@@ -11,6 +11,6 @@ export const APP = new App(IDENTIFIER, {
         locale: 'en',
         name: 'Play Queue',
         icon: icon,
-        tags: ['tool'] as TagKey[],
+        tags: ['tool', 'underdevelopment'] as TagKey[],
     },
 });
