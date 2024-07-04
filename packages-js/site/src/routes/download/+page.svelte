@@ -1,22 +1,22 @@
 <script lang="ts">
-    import type { Platform, VersionManifest } from '$lib/api/index.js';
     import Page from '$lib/components/Page.svelte';
     import { BROWSER } from 'esm-env';
-    import { getPlatform } from './download.js';
+    import { getPlatform, type Platform, type VersionManifest } from './download.js';
+    import { RelativeDate, Tooltip } from '@omujs/ui';
 
-    export let data: { versions: VersionManifest };
+    export let data: { manifest: VersionManifest };
     let downloading = false;
     let showExtra = false;
 
     function getVersion() {
-        const platform = getPlatform();
-        if (data.versions.platforms[platform] === undefined) {
+        if (data.manifest.platforms[platform] === undefined) {
             console.error(`Platform ${platform} is not supported.`);
             return;
         }
-        return data.versions.platforms[platform];
+        return data.manifest.platforms[platform];
     }
 
+    const platform = getPlatform();
     let version: Platform | undefined = BROWSER ? getVersion() : undefined;
 
     $: if (downloading) {
@@ -42,7 +42,11 @@
     <main slot="content">
         <p>
             {#if version}
+                {@const date = new Date(data.manifest.pub_date)}
                 <a href={version?.url} class="download" on:click={() => (downloading = true)}>
+                    <Tooltip>
+                        {platform} 用のインストーラーをダウンロードします
+                    </Tooltip>
                     {#if downloading}
                         ダウンロード中...
                     {:else}
@@ -50,13 +54,19 @@
                     {/if}
                     <i class="ti ti-download" />
                 </a>
+                <div class="version-info">
+                    <p class="version">
+                        {data.manifest.version}
+                    </p>
+                    <p>
+                        リリース日
+                        {date.toLocaleDateString()}
+                        {date.toLocaleTimeString()}
+                    </p>
+                </div>
             {:else}
                 <small> お使いのプラットフォームはサポートされていませんでした… </small>
             {/if}
-            <a href="/app">
-                アプリを探す
-                <i class="ti ti-external-link" />
-            </a>
         </p>
         <button on:click={() => (showExtra = !showExtra)}>
             <small>
@@ -66,7 +76,7 @@
         </button>
         {#if showExtra}
             <ul>
-                {#each Object.entries(data.versions.platforms ?? {}) as [key, platform] (key)}
+                {#each Object.entries(data.manifest.platforms) as [key, platform] (key)}
                     <li>
                         <a
                             href={platform.url}
@@ -89,6 +99,21 @@
         font-weight: 600;
         width: fit-content;
         color: var(--color-1);
+    }
+
+    .version-info {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+
+        p {
+            color: var(--color-1);
+        }
+
+        .version {
+            font-weight: 600;
+        }
     }
 
     p {

@@ -1,7 +1,7 @@
 export const prerender = true;
 
 export async function load() {
-    const versions = await fetch(
+    const manifest = await fetch(
         'https://github.com/OMUAPPS/omuapps/releases/latest/download/latest.json',
         {
             method: 'GET',
@@ -12,5 +12,5 @@ export async function load() {
         },
     ).then((res) => res.json());
 
-    return { versions };
+    return { manifest };
 }
