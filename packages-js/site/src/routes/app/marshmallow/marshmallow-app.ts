@@ -5,7 +5,7 @@ import { APP_ID } from './app.js';
 import { get, type Writable } from 'svelte/store';
 import { makeRegistryWritable } from '$lib/helper.js';
 
-const PLUGIN_ID = Identifier.fromKey('com.omuapps:marshmallow/plugin');
+export const PLUGIN_ID = Identifier.fromKey('com.omuapps:marshmallow/plugin');
 export type User = {
     name: string;
     screen_name: string;
@@ -105,10 +105,7 @@ export class MarshmallowApp {
         return this.omu.endpoints.call(SET_LIKED_ENDPOINT_TYPE, { user_id, message_id, liked });
     }
 
-    async setAcknowledged(
-        message_id: string,
-        acknowledged: boolean,
-    ): Promise<Message> {
+    async setAcknowledged(message_id: string, acknowledged: boolean): Promise<Message> {
         const user_id = get(this.config).user;
         return this.omu.endpoints.call(SET_ACKNOWLEDGED_ENDPOINT_TYPE, {
             user_id,

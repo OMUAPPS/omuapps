@@ -6,7 +6,7 @@
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import App from './App.svelte';
-    import { MarshmallowApp } from './marshmallow-app.js';
+    import { MarshmallowApp, PLUGIN_ID } from './marshmallow-app.js';
 
     const omu = new Omu(APP);
     const marshmallow = new MarshmallowApp(omu);
@@ -15,6 +15,7 @@
     omu.plugins.require({
         omuplugin_marshmallow: `==${version}`,
     });
+    omu.server.require(PLUGIN_ID);
 
     const waitReady = new Promise<void>((resolve) => omu.onReady(resolve));
 
