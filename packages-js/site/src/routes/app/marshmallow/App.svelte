@@ -95,7 +95,7 @@
                     >
                         <Tooltip>
                             {#if selected}
-                                クリックして選択を解除する
+                                クリックで選択を解除
                                 <i class="ti ti-x" />
                             {:else}
                                 クリックでメッセージを表示
