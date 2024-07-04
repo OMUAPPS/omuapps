@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Tooltip } from '@omujs/ui';
     import type { User } from '../marshmallow-app.js';
 
     export let users: Record<string, User>;
@@ -14,6 +15,10 @@
     <div class="users">
         {#each Object.entries(users) as [id, entry]}
             <button on:click={() => (user = entry)}>
+                <Tooltip>
+                    <b>{entry.screen_name}</b>
+                    <small>として続ける</small>
+                </Tooltip>
                 <img src={entry.image} alt={entry.name} />
                 <span class="user-info">
                     <p>{entry.screen_name}</p>
@@ -22,7 +27,7 @@
             </button>
         {/each}
     </div>
-    <small>
+    <small class="footer">
         <p>ブラウザの認証情報を使用して取得しています。</p>
         <p>認証情報は実行中のみに取得され、保存されることはありません。</p>
     </small>
@@ -33,6 +38,7 @@
         position: fixed;
         flex-direction: column;
         gap: 1rem;
+        padding-top: 2rem;
         inset: 0;
         display: flex;
         justify-content: center;
@@ -52,6 +58,10 @@
         > small {
             font-size: 0.65rem;
         }
+    }
+
+    .footer {
+        margin-top: 2rem;
     }
 
     .users {
