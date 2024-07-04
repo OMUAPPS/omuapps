@@ -11,7 +11,8 @@
 
     let user: User | null = null;
     let users: Record<string, User> | null = null;
-    let state: 'loading_users' | 'user_notfound' | 'user_select' | 'loaded' = 'loading_users';
+    let state: 'loading_users' | 'user_notfound' | 'user_select' | 'loading_messages' | 'loaded' =
+        'loading_users';
 
     async function refreshUsers() {
         state = 'loading_users';
@@ -40,7 +41,7 @@
 
     async function refreshMessages(user: User) {
         messages = [];
-        state = 'loading_users';
+        state = 'loading_messages';
         marshmallow
             .getMessages(user.name)
             .then((res) => {
@@ -121,6 +122,12 @@
     </div>
 </main>
 {#if state === 'loading_users'}
+    <div class="loading">
+        <i class="ti ti-loader-2" />
+        ブラウザからユーザー情報を読み込んでいます…
+        <small>これには時間がかかることがあります</small>
+    </div>
+{:else if state === 'loading_messages'}
     <div class="loading">
         <i class="ti ti-loader-2" />
         メッセージを読み込んでいます…
