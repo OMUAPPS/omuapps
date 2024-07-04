@@ -72,6 +72,10 @@ impl Server {
     }
 
     pub fn start(&self) -> Result<(), String> {
+        if !self.option.data_dir.exists() {
+            std::fs::create_dir_all(&self.option.data_dir).expect("failed to create data_dir");
+        }
+
         if self.is_port_free() {
             self.token.lock().unwrap().replace(generate_token());
             self.save_token();
