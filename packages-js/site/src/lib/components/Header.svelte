@@ -70,7 +70,7 @@
         width: 100%;
         height: fit-content;
         padding: 1rem;
-        transition: background 0.06s;
+        transition: background 0.0621s;
 
         &:not(.ontop) {
             background: var(--color-bg-2);
