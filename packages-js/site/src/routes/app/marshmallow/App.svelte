@@ -82,10 +82,19 @@
             {/if}
             {#each messages as item}
                 {@const selected = $data.message === item}
-                <button class="message" class:selected on:click={() => ($data.message = item)}>
+                <button
+                    class="message"
+                    class:selected
+                    on:click={() => ($data.message = selected ? null : item)}
+                >
                     <Tooltip>
-                        クリックでメッセージを表示
-                        <i class="ti ti-chevron-right" />
+                        {#if selected}
+                            クリックして選択を解除する
+                            <i class="ti ti-x" />
+                        {:else}
+                            クリックでメッセージを表示
+                            <i class="ti ti-chevron-right" />
+                        {/if}
                     </Tooltip>
                     <p>{item.content}</p>
                     {#if selected}
