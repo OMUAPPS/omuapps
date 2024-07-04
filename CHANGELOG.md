@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.5.0](https://github.com/OMUAPPS/omuapps/compare/v0.4.27...v0.5.0) (2024-07-04)
+
+
+### Bug Fixes
+
+* **app-marshmallow:** ユーザー情報の読込中の文字が表示されるように ([8f347ae](https://github.com/OMUAPPS/omuapps/commit/8f347ae30a279944b4eefe1e2f34b7da2dce7799))
+* **site:** アプリを削除する時にアプリが起動しないように ([181b386](https://github.com/OMUAPPS/omuapps/commit/181b3868d01df96cb03640516dd3c7694695c9ff))
+
+
+### Features
+
+* **app-marshmallow:** アカウント選択画面のアカウントにヒントを追加 ([7fcfd76](https://github.com/OMUAPPS/omuapps/commit/7fcfd76454f6402e7db0a644b1de0072eae105a3))
+* **app-marshmallow:** 選択中のメッセージをクリックして選択を解除できるように ([01c3c63](https://github.com/OMUAPPS/omuapps/commit/01c3c63982cfcbd2f5d764e73a77cd280c8f7527))
+* **site:** アプリの多重起動を検知して警告する機能 ([f1fb68d](https://github.com/OMUAPPS/omuapps/commit/f1fb68d919b4384b923db36612240305c9398e20))
+* **site:** ダウンロードページでダウンロードするバージョンを表記するように ([a6ff294](https://github.com/OMUAPPS/omuapps/commit/a6ff294bbbfc68c2d4400f6b655518238e6f36ca))
+
+
+
+
+
 ## 0.4.27 (2024-07-03)
 
 
