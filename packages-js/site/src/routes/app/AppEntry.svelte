@@ -10,16 +10,15 @@
     let alreadyAdded = false;
 
     async function install() {
-        const old = await appTable.get(app.key());
-        console.log(old);
-        if (old) {
+        const found = await appTable.get(app.key());
+        if (found) {
             appTable.remove(app);
             alreadyAdded = false;
         } else {
             appTable.add(app);
+            omu.dashboard.openApp(app);
             alreadyAdded = true;
         }
-        omu.dashboard.openApp(app);
     }
 
     omu.onReady(async () => {
