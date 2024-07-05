@@ -1,0 +1,89 @@
+name: Publish
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: write # for checkout and tag
+    pull-requests: write # for comments
+    packages: write # for publish
+
+jobs:
+    publish-npm:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+
+            - uses: pnpm/action-setup@v3
+              name: Install pnpm
+              with:
+                  version: latest
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - uses: actions/cache@v4
+              name: Setup pnpm cache
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm i --frozen-lockfile
+
+            - name: Get version
+              id: get_version
+              run: |
+                  echo "VERSION=$(npx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
+
+            - name: Merge
+              run: |
+                  git checkout master
+                  git pull
+                  git merge --squash develop
+                  git commit -m "chore: merge develop to master"
+                  git push
+
+            - name: Delete develop branch
+              run: |
+                  git branch -d develop
+                  git push origin --delete develop
+
+            - name: Delete tag
+              run: |
+                  git tag -d v${{ steps.get_version.outputs }}
+                  git push --delete origin v${{ steps.get_version.outputs }}
+
+            - name: Comment
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      github.issues.createComment({
+                        issue_number: context.issue.number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body: 'Merged to master'
+                      })
+
+            - name: Close
+              uses: actions/github-script@v7
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      github.issues.update({
+                        issue_number: context.issue.number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        state: 'closed'
+                      })
