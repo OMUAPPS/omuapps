@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import importlib
 import importlib.metadata
+import io
+import sys
 from dataclasses import dataclass
 from multiprocessing import Process
 
@@ -80,6 +82,22 @@ def handle_exception(loop: asyncio.AbstractEventLoop, context: dict) -> None:
         raise exception
 
 
+def setup_logging(app: App) -> None:
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if isinstance(sys.stderr, io.TextIOWrapper):
+        sys.stderr.reconfigure(encoding="utf-8")
+    logger.add(
+        f"logs/{app.id.get_sanitized_path()}/{{time:YYYY-MM-DD}}.log",
+        rotation="1 day",
+        colorize=False,
+        format=(
+            "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
+            "{name}:{function}:{line} - {message}"
+        ),
+    )
+
+
 def run_plugin_isolated(
     plugin: Plugin,
     address: Address,
@@ -88,6 +106,7 @@ def run_plugin_isolated(
     if plugin.get_client is None:
         raise ValueError(f"Invalid plugin: {plugin} has no client")
     client = plugin.get_client()
+    setup_logging(client.app)
     connection = WebsocketsConnection(client, address)
     client.network.set_connection(connection)
     client.network.set_token_provider(PluginTokenProvider(token))
