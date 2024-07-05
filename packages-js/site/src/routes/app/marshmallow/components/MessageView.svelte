@@ -11,13 +11,71 @@
     let buttons: HTMLElement;
     let image: HTMLImageElement;
 
-    function handleScroll(e: Event) {
-        const target = e.target as HTMLElement;
+    function handleScroll(event: Event) {
+        const target = event.target as HTMLElement;
         let scroll = target.scrollTop;
         const imageHeight = image.clientHeight;
         const imageTop = image.offsetTop - buttons.clientHeight;
         scroll = (scroll - imageTop) / imageHeight;
-        $data.scroll = Math.max(0, scroll);
+        const imageRect = image.getBoundingClientRect();
+        const x = (mouse.x - imageRect.x) / imageRect.width;
+        const y = (mouse.y - imageRect.y) / imageRect.height;
+        pointer = {
+            x,
+            y,
+        };
+        $data = {
+            ...$data,
+            scroll: Math.max(0, scroll),
+            pointer,
+        };
+    }
+
+    let mouse: {
+        x: number;
+        y: number;
+    } = {
+        x: 0,
+        y: 0,
+    };
+    let pointer: {
+        x: number;
+        y: number;
+    } | null = null;
+
+    function mouseMove(event: MouseEvent) {
+        const imageRect = image.getBoundingClientRect();
+        mouse = {
+            x: event.clientX,
+            y: event.clientY,
+        };
+        const x = (mouse.x - imageRect.x) / imageRect.width;
+        const y = (mouse.y - imageRect.y) / imageRect.height;
+        pointer = {
+            x,
+            y,
+        };
+    }
+
+    let updateHandle: number | null = null;
+
+    function updatePointer() {
+        if (pointer) {
+            $data.pointer = pointer;
+        }
+        updateHandle = requestAnimationFrame(updatePointer);
+    }
+
+    function mouseEnter() {
+        updateHandle = requestAnimationFrame(updatePointer);
+    }
+
+    function mouseLeave() {
+        if (updateHandle) {
+            cancelAnimationFrame(updateHandle);
+            updateHandle = null;
+        }
+        $data.pointer = null;
     }
 
     onMount(() => {
@@ -104,6 +162,21 @@
         <i class="ti ti-arrow-autofit-down" />
     </button>
     <button
+        class:active={$config.showPointer}
+        on:click={() => {
+            $config.showPointer = !$config.showPointer;
+        }}
+    >
+        <Tooltip>
+            {#if $config.showPointer}
+                ポインターを非表示にする
+            {:else}
+                ポインターを表示する
+            {/if}
+        </Tooltip>
+        <i class="ti ti-pointer" />
+    </button>
+    <button
         class="close"
         on:click={() => {
             $data.message = null;
@@ -114,10 +187,13 @@
     </button>
 </div>
 <div bind:this={container}>
-    <div class="message">
+    <div class="message" role="presentation">
         <img
             src="https://media.marshmallow-qa.com/system/images/{message.message_id}.png"
             alt=""
+            on:mousemove={mouseMove}
+            on:mouseenter={mouseEnter}
+            on:mouseleave={mouseLeave}
             bind:this={image}
         />
         <button class="next" on:click={() => next()}>
