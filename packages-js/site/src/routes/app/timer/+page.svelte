@@ -34,7 +34,7 @@
     <main>
         <FlexColWrapper widthFull>
             <h3>タイム</h3>
-            <section>
+            <section class="timer">
                 <Timer {timer} />
             </section>
 
@@ -190,6 +190,13 @@
         width: 100%;
         height: 100vh;
         padding: 30px;
+    }
+
+    .timer {
+        transform-origin: top left;
+        transform: scale(0.5);
+        width: 0;
+        height: 5rem;
     }
 
     .drag-preview {
