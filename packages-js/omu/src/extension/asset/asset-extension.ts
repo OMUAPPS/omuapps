@@ -64,14 +64,13 @@ const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<File, Identifier>(
         permissionId: ASSET_UPLOAD_PERMISSION_ID,
     },
 );
-export const ASSET_UPLOAD_MANY_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('upload', 'many');
 const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<File[], Identifier[]>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'upload_many',
         requestSerializer: FILE_ARRAY_SERIALIZER,
         responseSerializer: Serializer.model(Identifier).toArray().pipe(Serializer.json()),
-        permissionId: ASSET_UPLOAD_MANY_PERMISSION_ID,
+        permissionId: ASSET_UPLOAD_PERMISSION_ID,
     },
 );
 export const ASSET_DOWNLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('download');
@@ -84,14 +83,13 @@ const ASSET_DOWNLOAD_ENDPOINT = EndpointType.createSerialized<Identifier, File>(
         permissionId: ASSET_DOWNLOAD_PERMISSION_ID,
     },
 );
-export const ASSET_DOWNLOAD_MANY_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('download', 'many');
 const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[], File[]>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'download_many',
         requestSerializer: Serializer.model(Identifier).toArray().pipe(Serializer.json()),
         responseSerializer: FILE_ARRAY_SERIALIZER,
-        permissionId: ASSET_DOWNLOAD_MANY_PERMISSION_ID,
+        permissionId: ASSET_DOWNLOAD_PERMISSION_ID,
     },
 );
 

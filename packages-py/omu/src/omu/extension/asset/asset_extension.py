@@ -66,7 +66,6 @@ ASSET_UPLOAD_ENDPOINT = EndpointType[File, Identifier].create_serialized(
     response_serializer=Serializer.model(Identifier).to_json(),
     permission_id=ASSET_UPLOAD_PERMISSION_ID,
 )
-ASSET_UPLOAD_MANY_PERMISSION_ID = ASSET_EXTENSION_TYPE / "upload" / "many"
 ASSET_UPLOAD_MANY_ENDPOINT = EndpointType[
     list[File], list[Identifier]
 ].create_serialized(
@@ -74,7 +73,7 @@ ASSET_UPLOAD_MANY_ENDPOINT = EndpointType[
     "upload_many",
     request_serializer=FileArraySerializer,
     response_serializer=Serializer.model(Identifier).to_array().to_json(),
-    permission_id=ASSET_UPLOAD_MANY_PERMISSION_ID,
+    permission_id=ASSET_UPLOAD_PERMISSION_ID,
 )
 ASSET_DOWNLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE / "download"
 ASSET_DOWNLOAD_ENDPOINT = EndpointType[Identifier, File].create_serialized(
@@ -84,7 +83,6 @@ ASSET_DOWNLOAD_ENDPOINT = EndpointType[Identifier, File].create_serialized(
     response_serializer=FileSerializer,
     permission_id=ASSET_DOWNLOAD_PERMISSION_ID,
 )
-ASSET_DOWNLOAD_MANY_PERMISSION_ID = ASSET_EXTENSION_TYPE / "download" / "many"
 ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[
     list[Identifier], list[File]
 ].create_serialized(
@@ -92,7 +90,7 @@ ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[
     "download_many",
     request_serializer=Serializer.model(Identifier).to_array().to_json(),
     response_serializer=FileArraySerializer,
-    permission_id=ASSET_DOWNLOAD_MANY_PERMISSION_ID,
+    permission_id=ASSET_DOWNLOAD_PERMISSION_ID,
 )
 
 
