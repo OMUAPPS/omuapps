@@ -1,0 +1,72 @@
+name: Merge
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: write # for checkout and tag
+    pull-requests: write # for comments
+    packages: write # for publish
+
+jobs:
+    get-version:
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.get_version.outputs.VERSION }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+
+            - uses: pnpm/action-setup@v3
+              name: Install pnpm
+              with:
+                  version: latest
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+            - uses: actions/cache@v4
+              name: Setup pnpm cache
+              with:
+                  path: ${{ env.STORE_PATH }}
+                  key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-pnpm-store-
+
+            - name: Install dependencies
+              run: pnpm i --frozen-lockfile
+
+            - name: Get version
+              id: get_version
+              run: |
+                  echo "VERSION=$(npx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
+
+    merge:
+        # Create a squash and merge commit to master branch
+        runs-on: ubuntu-latest
+        needs: get-version
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Merge
+              run: |
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY
+                  git fetch origin master
+                  git checkout master
+                  git merge --squash develop
+                  git commit -m "Merge branch"
+                  git push origin master
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  GITHUB_HEAD_REF: ${{ github.head_ref }}
+                  GITHUB_REF: ${{ github.ref }}

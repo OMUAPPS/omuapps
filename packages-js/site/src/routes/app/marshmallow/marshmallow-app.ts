@@ -60,6 +60,7 @@ const SET_REPLY_ENDPOINT_TYPE = EndpointType.createJson<
 export type MarshmallowConfig = {
     user: string | null;
     syncScroll: boolean;
+    showPointer: boolean;
 };
 
 const MARSHMALLOW_CONFIG_REGISTRY_TYPE = RegistryType.createJson<MarshmallowConfig>(APP_ID, {
@@ -67,12 +68,14 @@ const MARSHMALLOW_CONFIG_REGISTRY_TYPE = RegistryType.createJson<MarshmallowConf
     defaultValue: {
         user: null,
         syncScroll: true,
+        showPointer: true,
     },
 });
 
 export type MarshmallowData = {
     message: Message | null;
     scroll: number;
+    pointer: { x: number; y: number } | null;
 };
 
 const MARSHMALLOW_DATA_REGISTRY_TYPE = RegistryType.createJson<MarshmallowData>(APP_ID, {
@@ -80,6 +83,7 @@ const MARSHMALLOW_DATA_REGISTRY_TYPE = RegistryType.createJson<MarshmallowData>(
     defaultValue: {
         message: null,
         scroll: 0,
+        pointer: null,
     },
 });
 

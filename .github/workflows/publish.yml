@@ -18,6 +18,11 @@ on:
                 required: true
                 default: true
                 type: boolean
+            merge:
+                description: 'Merge to master'
+                required: true
+                default: true
+                type: boolean
 
 permissions:
     contents: write # for checkout and tag
@@ -31,6 +36,8 @@ jobs:
             NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
             NPM_TOKEN: ${{secrets.NPM_TOKEN}}
             GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        outputs:
+            VERSION: ${{ steps.get_version.outputs.VERSION }}
         steps:
             - uses: actions/checkout@v4
 
@@ -83,7 +90,8 @@ jobs:
 
             - name: Get version
               id: get_version
-              run: echo ::set-output name=VERSION::$(npx lerna ls --json | jq -r '.[0].version')
+              run: |
+                  echo "VERSION=$(npx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
             - name: Push
               run: |

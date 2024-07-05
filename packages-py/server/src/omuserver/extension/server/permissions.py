@@ -9,12 +9,12 @@ SERVER_SHUTDOWN_PERMISSION = PermissionType(
     metadata={
         "level": "high",
         "name": {
-            "en": "Shutdown Server",
             "ja": "サーバーをシャットダウン",
+            "en": "Shutdown Server",
         },
         "note": {
-            "en": "Permission to shutdown the server",
-            "ja": "サーバーをシャットダウンできる権限",
+            "ja": "アプリが内部のAPIサーバーをシャットダウンするために使われます",
+            "en": "Used by apps to shut down the internal API server",
         },
     },
 )
@@ -23,12 +23,12 @@ SERVER_APPS_READ_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "en": "Get connected apps",
-            "ja": "接続アプリ一覧取得",
+            "ja": "起動中のアプリを取得",
+            "en": "Get Running Apps",
         },
         "note": {
-            "en": "Permission to get a list of apps connected to the server",
-            "ja": "サーバーに接続されたアプリの一覧を取得する",
+            "ja": "内部のAPIサーバーに接続されているアプリのリストを取得するために使われます",
+            "en": "Used to get a list of apps connected to the server",
         },
     },
 )

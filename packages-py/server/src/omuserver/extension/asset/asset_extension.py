@@ -17,9 +17,7 @@ from omuserver.server import Server
 from omuserver.session import Session
 
 from .permissions import (
-    ASSET_DOWNLOAD_MANY_PERMISSION,
     ASSET_DOWNLOAD_PERMISSION,
-    ASSET_UPLOAD_MANY_PERMISSION,
     ASSET_UPLOAD_PERMISSION,
 )
 
@@ -55,9 +53,7 @@ class AssetExtension:
         self.storage = FileStorage(server.directories.assets)
         server.permission_manager.register(
             ASSET_UPLOAD_PERMISSION,
-            ASSET_UPLOAD_MANY_PERMISSION,
             ASSET_DOWNLOAD_PERMISSION,
-            ASSET_DOWNLOAD_MANY_PERMISSION,
         )
         server.endpoints.bind_endpoint(
             ASSET_UPLOAD_ENDPOINT,

@@ -3,7 +3,7 @@
     import { version } from '$lib/version.json';
     import { Chat } from '@omujs/chat';
     import { Omu } from '@omujs/omu';
-    import { ASSET_UPLOAD_MANY_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
+    import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
     import { AppHeader, FlexRowWrapper, TableList, Textbox, Toggle, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import EmojiEdit from './EmojiEdit.svelte';
@@ -20,7 +20,7 @@
     omu.plugins.require({
         omuplugin_emoji: `==${version}`,
     });
-    omu.permissions.require(ASSET_UPLOAD_MANY_PERMISSION_ID);
+    omu.permissions.require(ASSET_UPLOAD_PERMISSION_ID);
 
     let search: string = '';
 

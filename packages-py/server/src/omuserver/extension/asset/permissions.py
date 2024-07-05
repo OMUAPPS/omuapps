@@ -1,7 +1,5 @@
 from omu.extension.asset import (
-    ASSET_DOWNLOAD_MANY_PERMISSION_ID,
     ASSET_DOWNLOAD_PERMISSION_ID,
-    ASSET_UPLOAD_MANY_PERMISSION_ID,
     ASSET_UPLOAD_PERMISSION_ID,
 )
 from omu.extension.permission import PermissionType
@@ -11,26 +9,12 @@ ASSET_UPLOAD_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "en": "File upload to storage",
-            "ja": "このPCにファイルを保存する",
+            "ja": "ファイルを保存",
+            "en": "Save a file",
         },
         "note": {
-            "en": "Upload a file to the storage on this PC.",
-            "ja": "ファイルをこのPCにアップロードし保存します。",
-        },
-    },
-)
-ASSET_UPLOAD_MANY_PERMISSION = PermissionType(
-    id=ASSET_UPLOAD_MANY_PERMISSION_ID,
-    metadata={
-        "level": "low",
-        "name": {
-            "en": "Multiple file upload to storage",
-            "ja": "このPCに複数のファイルを保存する",
-        },
-        "note": {
-            "en": "Upload multiple files to the storage on this PC.",
-            "ja": "複数のファイルをこのPCにアップロードし保存します。",
+            "ja": "アプリがファイルを保持するために使われます",
+            "en": "Used by apps to store files",
         },
     },
 )
@@ -39,26 +23,12 @@ ASSET_DOWNLOAD_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "en": "File download from storage",
-            "ja": "このPCからファイルをダウンロードする",
+            "ja": "ファイルをダウンロード",
+            "en": "Download a file",
         },
         "note": {
-            "en": "Download a file that was previously uploaded.",
-            "ja": "過去にアップロードされたファイルをダウンロードします。",
-        },
-    },
-)
-ASSET_DOWNLOAD_MANY_PERMISSION = PermissionType(
-    id=ASSET_DOWNLOAD_MANY_PERMISSION_ID,
-    metadata={
-        "level": "low",
-        "name": {
-            "en": "Multiple file download from storage",
-            "ja": "このPCから複数のファイルをダウンロードする",
-        },
-        "note": {
-            "en": "Download multiple files that were previously uploaded.",
-            "ja": "過去にアップロードされた複数のファイルをダウンロードします。",
+            "ja": "アプリが保存したファイルを読み込みなおすために使われます",
+            "en": "Used by apps to reload saved files",
         },
     },
 )

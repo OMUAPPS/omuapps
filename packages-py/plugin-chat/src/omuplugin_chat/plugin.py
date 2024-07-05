@@ -39,12 +39,12 @@ client.permissions.register(
         metadata={
             "level": "medium",
             "name": {
-                "ja": "チャットのデータ",
+                "ja": "チャット",
                 "en": "Chat data",
             },
             "note": {
-                "ja": "チャットデータの読み書き",
-                "en": "Read and write chat data",
+                "ja": "配信の情報を使うために使われます",
+                "en": "Used to use chat",
             },
         },
     ),
@@ -57,8 +57,8 @@ client.permissions.register(
                 "en": "Read chat",
             },
             "note": {
-                "ja": "チャットデータの読み取り",
-                "en": "Read chat data",
+                "ja": "配信の情報を読み取るだけに使われます",
+                "en": "Used to read chat data",
             },
         },
     ),
@@ -71,8 +71,8 @@ client.permissions.register(
                 "en": "Write chat",
             },
             "note": {
-                "ja": "チャットデータの書き込み",
-                "en": "Write chat data",
+                "ja": "配信の情報を書き込むために使われます",
+                "en": "Used to write chat data",
             },
         },
     ),
@@ -85,8 +85,8 @@ client.permissions.register(
                 "en": "Send chat",
             },
             "note": {
-                "ja": "チャットデータの送信",
-                "en": "Send chat data",
+                "ja": "メッセージを追加するために使われます",
+                "en": "Used to add messages",
             },
         },
     ),
@@ -95,12 +95,12 @@ client.permissions.register(
         metadata={
             "level": "medium",
             "name": {
-                "ja": "チャンネルツリーの作成",
+                "ja": "チャンネルツリーの取得",
                 "en": "Create channel tree",
             },
             "note": {
-                "ja": "チャンネルツリーの作成",
-                "en": "Create channel tree",
+                "ja": "指定されたURLに関連すると思われるチャンネルをすべて取得するために使われます",
+                "en": "Get all channels related to the specified URL",
             },
         },
     ),
@@ -109,12 +109,12 @@ client.permissions.register(
         metadata={
             "level": "low",
             "name": {
-                "en": "Reaction",
                 "ja": "リアクション",
+                "en": "Reaction",
             },
             "note": {
-                "en": "Permission to get reactions",
-                "ja": "リアクションの取得",
+                "ja": "リアクションを取得するために使われます",
+                "en": "Used to get reactions",
             },
         },
     ),

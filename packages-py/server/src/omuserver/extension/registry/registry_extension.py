@@ -26,12 +26,12 @@ REGISTRY_PERMISSION = PermissionType(
     {
         "level": "low",
         "name": {
+            "ja": "レジストリ",
             "en": "Registry Permission",
-            "ja": "レジストリ権限",
         },
         "note": {
-            "en": "Permission to read and write to a registry",
-            "ja": "レジストリの読み書き",
+            "ja": "アプリがデータを保持するために使われます",
+            "en": "Used by apps to store data",
         },
     },
 )

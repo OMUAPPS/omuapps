@@ -1,8 +1,6 @@
 from .asset_extension import (
-    ASSET_DOWNLOAD_MANY_PERMISSION_ID,
     ASSET_DOWNLOAD_PERMISSION_ID,
     ASSET_EXTENSION_TYPE,
-    ASSET_UPLOAD_MANY_PERMISSION_ID,
     ASSET_UPLOAD_PERMISSION_ID,
     AssetExtension,
 )
@@ -10,8 +8,6 @@ from .asset_extension import (
 __all__ = [
     "ASSET_EXTENSION_TYPE",
     "ASSET_UPLOAD_PERMISSION_ID",
-    "ASSET_UPLOAD_MANY_PERMISSION_ID",
     "ASSET_DOWNLOAD_PERMISSION_ID",
-    "ASSET_DOWNLOAD_MANY_PERMISSION_ID",
     "AssetExtension",
 ]
