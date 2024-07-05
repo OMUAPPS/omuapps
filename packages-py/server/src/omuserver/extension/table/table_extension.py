@@ -50,12 +50,12 @@ TABLE_PERMISSION = PermissionType(
     {
         "level": "low",
         "name": {
+            "ja": "テーブル",
             "en": "Table Permission",
-            "ja": "テーブル権限",
         },
         "note": {
-            "en": "Permission to read, write, and remove items in a table",
-            "ja": "テーブル内のアイテムを編集",
+            "ja": "テーブル形式のデータを扱うために使われます",
+            "en": "Used to handle table formatted data",
         },
     },
 )

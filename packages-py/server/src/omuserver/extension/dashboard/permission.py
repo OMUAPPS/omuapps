@@ -11,12 +11,12 @@ DASHBOARD_SET_PERMISSION = PermissionType(
     {
         "level": "low",
         "name": {
-            "en": "Dashboard Set Permission",
-            "ja": "ダッシュボードを設定",
+            "ja": "全体を管理する権限",
+            "en": "Manage the dashboard",
         },
         "note": {
-            "en": "Permission to set the dashboard session",
-            "ja": "ダッシュボードを設定",
+            "ja": "アプリが権限の管理やユーザーに確認を行うために使われます",
+            "en": "Used by apps to manage permissions and confirm users",
         },
     },
 )
@@ -25,12 +25,12 @@ DASHBOARD_OPEN_APP_PERMISSION = PermissionType(
     {
         "level": "low",
         "name": {
-            "en": "Dashboard Open App Permission",
             "ja": "アプリを開く",
+            "en": "Open an app",
         },
         "note": {
-            "en": "Permission to open an app on the dashboard",
-            "ja": "アプリを開く権限",
+            "ja": "インストールされているアプリを起動するために使われます",
+            "en": "Used to start an installed app",
         },
     },
 )
@@ -39,12 +39,12 @@ DASHOBARD_APP_READ_PERMISSION = PermissionType(
     {
         "level": "low",
         "name": {
-            "en": "Access to Saved Apps on Dashboard",
-            "ja": "保存されたアプリを取得",
+            "ja": "インストールされたアプリの情報を取得",
+            "en": "Get Installed App Information",
         },
         "note": {
-            "en": "Permission to get the list of saved apps on the dashboard",
-            "ja": "ダッシュボードに保存されたアプリのリストを取得",
+            "ja": "すでにインストールされているアプリの情報を取得するために使われます",
+            "en": "Used to get information about already installed apps",
         },
     },
 )
@@ -53,12 +53,12 @@ DASHOBARD_APP_EDIT_PERMISSION = PermissionType(
     {
         "level": "medium",
         "name": {
-            "en": "Edit Saved Apps on Dashboard",
-            "ja": "保存されたアプリの編集",
+            "ja": "インストールされたアプリ情報を編集",
+            "en": "Edit Installed App Information",
         },
         "note": {
-            "en": "Permission to edit saved apps on the dashboard",
-            "ja": "ダッシュボードに保存されたアプリの情報を編集",
+            "ja": "インストールされたアプリの情報を編集するために使われます",
+            "en": "Used to edit information about installed apps",
         },
     },
 )

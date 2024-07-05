@@ -6,12 +6,12 @@ LOGGER_LOG_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "ja": "ログ出力",
-            "en": "Log",
+            "ja": "アプリの動作記録を保存",
+            "en": "Save app operation records",
         },
         "note": {
-            "ja": "ログ出力を行う権限",
-            "en": "Permission to log",
+            "ja": "不具合などの調査のために使われます",
+            "en": "Used for investigation of problems",
         },
     },
 )

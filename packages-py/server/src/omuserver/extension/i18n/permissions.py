@@ -7,12 +7,12 @@ I18N_SET_LOCALES_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "en": "Set Locales",
-            "ja": "ロケールの設定",
+            "ja": "地域設定を変更",
+            "en": "Change locale settings",
         },
         "note": {
-            "en": "Permission to set locales such as language",
-            "ja": "言語などのロケールを設定",
+            "ja": "言語や通貨など地域設定を変更するために使われます",
+            "en": "Used to change locale settings such as language and currency",
         },
     },
 )
@@ -21,12 +21,12 @@ I18N_GET_LOCALES_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "en": "Get Locales",
-            "ja": "ロケールの取得",
+            "ja": "地域設定を取得",
+            "en": "Get locale settings",
         },
         "note": {
-            "en": "Permission to get locales such as language",
-            "ja": "言語などのロケールを取得",
+            "ja": "言語や通貨など地域設定を取得するために使われます",
+            "en": "Used to get locale settings such as language and currency",
         },
     },
 )
