@@ -8,15 +8,16 @@
     const { config, data } = marshmallow;
 
     let container: HTMLElement;
+    let buttons: HTMLElement;
     let image: HTMLImageElement;
 
     function handleScroll(e: Event) {
         const target = e.target as HTMLElement;
         let scroll = target.scrollTop;
         const imageHeight = image.clientHeight;
-        const imageTop = image.offsetTop;
+        const imageTop = image.offsetTop - buttons.clientHeight;
         scroll = (scroll - imageTop) / imageHeight;
-        $data.scroll = scroll;
+        $data.scroll = Math.max(0, scroll);
     }
 
     onMount(() => {
@@ -51,7 +52,7 @@
     }
 </script>
 
-<div class="buttons" class:locked>
+<div class="buttons" class:locked bind:this={buttons}>
     <button
         class="check"
         class:active={message.acknowledged}
