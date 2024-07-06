@@ -8,7 +8,7 @@
             プライバシーポリシー
             <i class="ti ti-file" />
         </h1>
-        <small> 使ってもらえる方へのお約束 </small>
+        <small>使っていただける方へのお約束</small>
     </header>
     <main slot="content">
         <p>現在、プライバシーポリシーを作成中です。</p>
