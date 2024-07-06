@@ -44,6 +44,7 @@
         display: flex;
         height: $haeder-height;
         width: 100%;
+        font-weight: 600;
 
         .header-content {
             display: flex;
