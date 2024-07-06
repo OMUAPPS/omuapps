@@ -1,11 +1,11 @@
 <script lang="ts">
+    import AppPage from '$lib/components/AppPage.svelte';
     import { type Component } from '@omujs/chat/models/content.js';
     import { Author, Message, Provider, Room, content } from '@omujs/chat/models/index.js';
-    import { AppHeader, FlexColWrapper, FlexRowWrapper, Header, MessageRenderer } from '@omujs/ui';
+    import { AppHeader, FlexColWrapper, FlexRowWrapper, MessageRenderer } from '@omujs/ui';
+    import { APP } from './app.js';
     import { chat, omu } from './client.js';
     import ComponentEditor from './components/ComponentEditor.svelte';
-    import { APP } from './app.js';
-    import AppPage from '$lib/components/AppPage.svelte';
 
     let component: Component = new content.Root([
         new content.Text('Hello, World!'),

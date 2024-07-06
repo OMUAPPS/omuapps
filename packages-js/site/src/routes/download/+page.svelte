@@ -1,8 +1,8 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
+    import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { getPlatform, type Platform, type VersionManifest } from './download.js';
-    import { RelativeDate, Tooltip } from '@omujs/ui';
 
     export let data: { manifest: VersionManifest };
     let downloading = false;

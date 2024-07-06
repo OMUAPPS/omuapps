@@ -1,12 +1,12 @@
 <script lang="ts">
     import { page } from '$app/stores';
+    import AssetPage from '$lib/components/AssetPage.svelte';
     import { App, Omu } from '@omujs/omu';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { IDENTIFIER } from '../app.js';
     import Timer from '../components/Timer.svelte';
     import { TimerApp } from '../timer-app.js';
-    import AssetPage from '$lib/components/AssetPage.svelte';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();

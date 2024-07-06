@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { TauriEvent } from '@tauri-apps/api/event';
     import { onDestroy } from 'svelte';
     import StatusBar from './common/StatusBar.svelte';
     import ScreenRenderer from './common/screen/ScreenRenderer.svelte';
@@ -6,8 +7,7 @@
     import ButtonMaximize from './common/titlebar/ButtonMaximize.svelte';
     import ButtonMinimize from './common/titlebar/ButtonMinimize.svelte';
     import Title from './images/title.svg';
-    import { listen, tauriEvent, tauriWindow } from './utils/tauri.js';
-    import { TauriEvent } from '@tauri-apps/api/event';
+    import { listen, tauriWindow } from './utils/tauri.js';
 
     let maximized = false;
 

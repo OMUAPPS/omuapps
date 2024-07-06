@@ -13,9 +13,9 @@
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
-    import { TimerApp } from './timer-app.js';
-    import Timer from './components/Timer.svelte';
     import Align from './components/Align.svelte';
+    import Timer from './components/Timer.svelte';
+    import { TimerApp } from './timer-app.js';
 
     const omu = new Omu(APP);
     const timer = new TimerApp(omu);

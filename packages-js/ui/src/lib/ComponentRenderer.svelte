@@ -2,8 +2,8 @@
     import { content } from '@omujs/chat/models/index.js';
     import FlexColWrapper from './FlexColWrapper.svelte';
     import FlexRowWrapper from './FlexRowWrapper.svelte';
-    import { client } from './stores.js';
     import LinkableText from './LinkableText.svelte';
+    import { client } from './stores.js';
     import Tooltip from './Tooltip.svelte';
 
     export let component: content.Component;

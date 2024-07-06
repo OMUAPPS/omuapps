@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { App, Omu } from '@omujs/omu';
-    import { AppHeader, setClient } from '@omujs/ui';
-    import { BROWSER } from 'esm-env';
-    import { onMount } from 'svelte';
-    import { APP, IDENTIFIER } from '../app.js';
-    import { ReplayApp } from '../replay-app.js';
-    import Player from '../components/Player.svelte';
     import { page } from '$app/stores';
     import AssetPage from '$lib/components/AssetPage.svelte';
+    import { App, Omu } from '@omujs/omu';
+    import { setClient } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import { IDENTIFIER } from '../app.js';
+    import Player from '../components/Player.svelte';
+    import { ReplayApp } from '../replay-app.js';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();

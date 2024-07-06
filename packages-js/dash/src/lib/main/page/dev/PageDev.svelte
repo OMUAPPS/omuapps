@@ -4,7 +4,7 @@
     import { omu } from '$lib/client.js';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { invoke } from '$lib/utils/tauri.js';
-    import { TableList, theme } from '@omujs/ui';
+    import { TableList } from '@omujs/ui';
 
     let starting = false;
     function start() {
