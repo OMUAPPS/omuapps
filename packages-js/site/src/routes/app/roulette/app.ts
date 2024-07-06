@@ -17,6 +17,6 @@ export const APP = new App(APP_ID, {
             en: 'An app to spin a roulette and pick someone or make a decision.',
         },
         icon: 'ti-rosette',
-        tags: ['asset', 'game', 'tool'] as TagKey[],
+        tags: ['asset', 'game', 'tool', 'underdevelopment'] as TagKey[],
     },
 });
