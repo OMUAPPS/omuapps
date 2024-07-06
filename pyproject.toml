@@ -7,7 +7,8 @@ authors = [
 ]
 dependencies = []
 readme = "README.md"
-requires-python = ">=3.12.0"
+# 3.12.0 project, but cloudflare pages is uses 3.11.5.
+requires-python = ">=3.11.5"
 
 [build-system]
 requires = ["hatchling"]
