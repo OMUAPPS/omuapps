@@ -76,7 +76,7 @@
         display: flex;
         justify-content: center;
         align-items: start;
-        margin-top: 4rem;
+        padding-top: 4rem;
         overflow: hidden;
     }
 
