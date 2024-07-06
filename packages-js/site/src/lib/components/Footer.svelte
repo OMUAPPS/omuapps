@@ -31,7 +31,7 @@
             <a href="/legal/privacy">
                 <p class="between">
                     <Tooltip>
-                        <p class="hint">使ってもらえる方へのお約束</p>
+                        <p class="hint">使っていただける方へのお約束</p>
                     </Tooltip>
                     プライバシーポリシー
                     <i class="ti ti-external-link" />
