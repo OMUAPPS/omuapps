@@ -75,7 +75,8 @@
         height: 100%;
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: start;
+        margin-top: 4rem;
         overflow: hidden;
     }
 
