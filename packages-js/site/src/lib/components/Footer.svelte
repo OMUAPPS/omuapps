@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FlexColWrapper, FlexRowWrapper } from '@omujs/ui';
+    import { FlexColWrapper, FlexRowWrapper, Tooltip } from '@omujs/ui';
 </script>
 
 <footer>
@@ -27,9 +27,29 @@
                 </p>
             </a>
         </FlexColWrapper>
-        <p style="text-align: end; margin-top: auto;">
-            <a href="https://x.com/2ji_han">🕝</a>
-        </p>
+        <div class="legal">
+            <a href="/legal/privacy">
+                <p class="between">
+                    <Tooltip>
+                        <p class="hint">使ってもらえる方へのお約束</p>
+                    </Tooltip>
+                    プライバシーポリシー
+                    <i class="ti ti-external-link" />
+                </p>
+            </a>
+            <a href="/legal/terms">
+                <p class="between">
+                    <Tooltip>
+                        <p class="hint">使っていただくにあたって</p>
+                    </Tooltip>
+                    利用規約
+                    <i class="ti ti-external-link" />
+                </p>
+            </a>
+            <p style="text-align: end; margin-top: auto;">
+                <a href="https://x.com/2ji_han">🕝</a>
+            </p>
+        </div>
     </FlexRowWrapper>
 </footer>
 
@@ -45,5 +65,18 @@
 
     p {
         font-weight: 200;
+    }
+
+    .between {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 1rem;
+        width: 100%;
+        font-size: 0.8rem;
+    }
+
+    .hint {
+        font-weight: bold;
     }
 </style>
