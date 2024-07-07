@@ -187,7 +187,7 @@
         const currentTime = Date.now();
         const timeInterval = 1000 / 30;
         const delay = previousTime + timeInterval - currentTime;
-        previousTime = currentTime;
+        previousTime = previousTime + timeInterval;
 
         if (delay > 0) {
             await new Promise<void>((resolve) => setTimeout(resolve, delay));
