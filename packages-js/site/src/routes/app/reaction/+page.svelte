@@ -20,6 +20,7 @@
     import ReactionRenderer from './components/ReactionRenderer.svelte';
     import { ReactionApp } from './reaction.js';
     import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
 
     const omu = new Omu(APP);
     const chat = new Chat(omu);
@@ -79,25 +80,7 @@
 
         <h3>OBSに貼り付ける</h3>
         <section>
-            {#if BROWSER}
-                <DragLink
-                    href={() => {
-                        const url = new URL($page.url);
-                        url.pathname = `${url.pathname}asset`;
-                        url.searchParams.set('assetId', Date.now().toString());
-                        return url;
-                    }}
-                >
-                    <h3 slot="preview" class="drag-preview">
-                        これをOBSにドロップ
-                        <i class="ti ti-upload" />
-                    </h3>
-                    <div class="drag">
-                        <i class="ti ti-drag-drop" />
-                        ここをOBSにドラッグ&ドロップ
-                    </div>
-                </DragLink>
-            {/if}
+            <AssetButton />
         </section>
 
         <h3>画像を置き換える</h3>
@@ -170,36 +153,6 @@
         max-height: 50px;
         min-width: 50px;
         object-fit: contain;
-    }
-
-    .drag-preview {
-        padding: 10px 20px;
-        background: var(--color-bg-2);
-    }
-
-    .drag {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        color: var(--color-1);
-        background: var(--color-bg-2);
-        outline: 2px solid var(--color-1);
-        padding: 10px;
-        gap: 5px;
-        cursor: grab;
-
-        & > i {
-            font-size: 20px;
-        }
-
-        &:hover {
-            margin-left: 4px;
-            outline: 2px solid var(--color-1);
-            box-shadow: -4px 4px 0 2px var(--color-2);
-            transition: 0.0621s;
-        }
     }
 
     h1 {

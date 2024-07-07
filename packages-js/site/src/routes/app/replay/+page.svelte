@@ -19,6 +19,7 @@
     import { playVideo } from './stores.js';
     import { page } from '$app/stores';
     import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
     const omu = new Omu(APP);
     const chat = new Chat(omu);
     const { replayData, config } = new ReplayApp(omu);
@@ -133,16 +134,7 @@
             />
 
             <h3>アセット</h3>
-            <DragLink href={createAssetUrl}>
-                <h3 slot="preview" class="drag-preview">
-                    これをOBSにドロップ
-                    <i class="ti ti-upload" />
-                </h3>
-                <div class="drag">
-                    <i class="ti ti-drag-drop" />
-                    ここをOBSにドラッグ&ドロップ
-                </div>
-            </DragLink>
+            <AssetButton />
         </div>
     </main>
 </AppPage>
@@ -179,36 +171,5 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-    }
-
-    .drag-preview {
-        padding: 10px 20px;
-        background: var(--color-bg-2);
-    }
-
-    .drag {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        margin-top: 1rem;
-        color: var(--color-1);
-        background: var(--color-bg-2);
-        outline: 2px solid var(--color-1);
-        padding: 10px;
-        gap: 5px;
-        cursor: grab;
-
-        & > i {
-            font-size: 20px;
-        }
-
-        &:hover {
-            margin-left: 4px;
-            outline: 2px solid var(--color-1);
-            box-shadow: -4px 4px 0 2px var(--color-2);
-            transition: 0.0621s;
-        }
     }
 </style>

@@ -70,6 +70,10 @@
 </Page>
 
 <style lang="scss">
+    main {
+        font-weight: 500;
+    }
+
     header {
         :global(h1) {
             color: var(--color-1);

@@ -17,6 +17,7 @@
     import { CaptionApp } from './caption-app.js';
     import { FONTS, LANGUAGES_OPTIONS, type LanguageKey } from './types.js';
     import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
 
     export const omu = new Omu(APP);
     setClient(omu);
@@ -84,16 +85,7 @@
     </header>
     <section>
         <h3>字幕</h3>
-        <DragLink href={createAssetUrl}>
-            <h3 slot="preview" class="drag-preview">
-                これをOBSにドロップ
-                <i class="ti ti-upload" />
-            </h3>
-            <div class="drag">
-                <i class="ti ti-drag-drop" />
-                ここをOBSにドラッグ&ドロップ
-            </div>
-        </DragLink>
+        <AssetButton />
     </section>
     <section>
         <h3>言語選択</h3>
@@ -308,36 +300,6 @@
             align-items: center;
             outline: none;
             background: var(--color-bg-1);
-        }
-    }
-
-    .drag-preview {
-        padding: 10px 20px;
-        background: var(--color-bg-2);
-    }
-
-    .drag {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-        color: var(--color-1);
-        background: var(--color-bg-2);
-        outline: 2px solid var(--color-1);
-        padding: 10px;
-        gap: 5px;
-        cursor: grab;
-
-        & > i {
-            font-size: 20px;
-        }
-
-        &:hover {
-            margin-left: 4px;
-            outline: 2px solid var(--color-1);
-            box-shadow: -4px 4px 0 2px var(--color-2);
-            transition: 0.0621s;
         }
     }
 
