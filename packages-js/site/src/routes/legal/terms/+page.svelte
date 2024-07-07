@@ -1,6 +1,6 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
-    import { FlexColWrapper, FlexRowWrapper } from '@omujs/ui';
+    import { FlexColWrapper, FlexRowWrapper, Tooltip } from '@omujs/ui';
 
     import robotReading from '$lib/images/robot-reading.svg';
 </script>
@@ -47,7 +47,7 @@
                             '配信者と視聴者をつなぐAPI。OMUAPPS https://omuapps.com',
                         )}
                 >
-                    コピー
+                    <Tooltip>クリップボードにコピー</Tooltip>
                     <i class="ti ti-copy" />
                 </button>
             </code>
