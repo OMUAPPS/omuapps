@@ -4,8 +4,9 @@
     import { onMount } from 'svelte';
     import Content from './Content.svelte';
     import { Tooltip } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
 
-    let onTop = true;
+    let onTop = BROWSER && window.scrollY < 1;
 
     function onScroll() {
         onTop = window.scrollY < 1;
