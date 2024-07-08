@@ -28,17 +28,17 @@
         if ($state.type === 'catching') {
             setTimeout(() => {
                 $state.type = 'eating';
-            }, 10 * 33.3);
+            }, 14 * 33.3);
         }
         if ($state.type === 'eating') {
             setTimeout(() => {
                 $state = { type: 'idle_start' };
-            }, 50 * 33.3);
+            }, 88 * 33.3);
         }
         if ($state.type === 'idle_start') {
             setTimeout(() => {
                 $state = { type: 'idle' };
-            }, 8 * 33.3);
+            }, 18 * 33.3);
         }
         if ($state.type === 'throw_start') {
             $state = {
@@ -52,7 +52,7 @@
                         type: 'catching',
                     };
                 }
-            }, 8 * 33.3);
+            }, 14 * 33.3);
         }
         if ($state.type === 'throw_many') {
             setTimeout(() => {
@@ -102,7 +102,7 @@
 </script>
 
 {#if $state.type === 'eating'}
-    {#if Math.floor((eatTime += $frame) / 250) % 2 === 0}
+    {#if Math.floor((eatTime += $frame) / 250 / 2) % 2 === 0}
         <img src={eating1} alt="" />
     {:else}
         <img src={eating2} alt="" />
