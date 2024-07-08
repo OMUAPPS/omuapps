@@ -27,11 +27,11 @@
         "format": "eslint . --ext .js,.ts --fix"
     },
     "devDependencies": {
-        "@types/node": "^20.14.9",
+        "@types/node": "^20.14.10",
         "@types/websocket": "1.0.10",
         "@types/ws": "8.5.10",
-        "@typescript-eslint/eslint-plugin": "^7.14.1",
-        "@typescript-eslint/parser": "^7.14.1",
+        "@typescript-eslint/eslint-plugin": "^7.16.0",
+        "@typescript-eslint/parser": "^7.16.0",
         "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-import": "^2.29.1",
@@ -40,7 +40,7 @@
         "eslint-plugin-unused-imports": "^3.2.0",
         "nodemon": "^3.1.4",
         "ts-node": "10.9.2",
-        "typescript": "^5.5.2",
+        "typescript": "^5.5.3",
         "websocket": "1.0.35",
         "ws": "8.17.0"
     },
