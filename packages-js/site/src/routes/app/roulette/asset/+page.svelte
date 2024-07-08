@@ -7,8 +7,12 @@
     import { BROWSER } from 'esm-env';
     import { APP_ID } from '../app.js';
     import { RouletteApp } from '../roulette-app.js';
+    import Roulette from '../components/Roulette.svelte';
+    import { page } from '$app/stores';
 
-    const ASSET_APP = new App(APP_ID.join('asset'), {
+    let assetId = BROWSER && $page.url.searchParams.get('assetId');
+    const id = assetId || Date.now().toString();
+    const ASSET_APP = new App(APP_ID.join('asset', id), {
         version: '0.1.0',
     });
     const omu = new Omu(ASSET_APP);
@@ -25,6 +29,7 @@
 <AssetPage>
     <main>
         {$config.text}
+        <Roulette {roulette} />
     </main>
 </AssetPage>
 

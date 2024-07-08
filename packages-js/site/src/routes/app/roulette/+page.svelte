@@ -5,11 +5,25 @@
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import { RouletteApp } from './roulette-app.js';
+    import Roulette from './components/Roulette.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
 
     const omu = new Omu(APP);
     setClient(omu);
     const roulette = new RouletteApp(omu);
     const { entries, state } = roulette;
+
+    function spin() {
+        roulette.spin();
+    }
+
+    function test() {
+        const entries = Array.from({ length: 1000 }, (_, i) => ({
+            id: i.toString(),
+            name: `Entry ${i + 1}`,
+        }));
+        roulette.setEntries(Object.fromEntries(entries.map((entry) => [entry.id, entry])));
+    }
 
     if (BROWSER) {
         omu.start();
@@ -22,8 +36,10 @@
     </header>
     <main>
         <div class="left">
-            {JSON.stringify($state)}
+            <button on:click={spin}>Spin</button>
+            <button on:click={test}>Test</button>
             <p>entries</p>
+            <button on:click={() => roulette.clearEntries()}> Clear </button>
             {#each Object.entries($entries) as [id, entry] (id)}
                 <div class="entry">
                     {entry.name}
@@ -49,7 +65,12 @@
                 Add Entry
             </button>
         </div>
-        <div class="right">roulette</div>
+        <div class="right">
+            roulette
+            <Roulette {roulette} />
+            {JSON.stringify($state)}
+            <AssetButton />
+        </div>
     </main>
 </AppPage>
 
@@ -62,11 +83,19 @@
         gap: 1rem;
         width: 100%;
         height: 100vh;
-        padding: 2rem;
+        padding: 1rem;
         background: var(--color-bg-1);
     }
 
     .left {
+        padding: 1rem;
+        width: 100%;
+        height: calc(100% - 80px);
+        overflow: auto;
+        background: var(--color-bg-2);
+    }
+
+    .right {
         padding: 1rem;
         width: 100%;
         background: var(--color-bg-2);
