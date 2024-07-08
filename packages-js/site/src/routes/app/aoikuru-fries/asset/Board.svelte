@@ -36,7 +36,7 @@
         left: 73%;
         transform: translate(-50%, -50%);
         font-size: 100px;
-        color: #573b33;
+        color: #77544b;
         white-space: pre;
     }
 </style>
