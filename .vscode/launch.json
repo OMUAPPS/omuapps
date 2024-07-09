@@ -21,7 +21,6 @@
             ],
             "cwd": "${workspaceFolder}/appdata",
             "justMyCode": true,
-            "preLaunchTask": "pyright"
         },
         {
             "name": "Python Debugger: Current File",
@@ -30,6 +29,10 @@
             "program": "${file}",
             "console": "integratedTerminal"
         },
+        {
+            "name": "pyright",
+            "preLaunchTask": "pyright"
+        }
     ],
     "compounds": [
         {
