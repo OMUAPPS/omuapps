@@ -69,4 +69,8 @@ def main(
 
 if __name__ == "__main__":
     setup_logging()
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.opt(exception=e).error("Error running server")
+        sys.exit(1)
