@@ -49,7 +49,7 @@ async def update_channel(channel: Channel, service: ProviderService):
             asyncio.create_task(chat.start())
             logger.info(f"Started chat for {item.room.key()}")
     except ProviderError as e:
-        logger.error(f"Failed to update channel {channel.id}: {e}")
+        logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
 
 
 @chat.on(events.channel.add)
