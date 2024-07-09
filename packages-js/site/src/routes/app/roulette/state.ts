@@ -8,7 +8,7 @@ export type State =
 
 import type { models } from '@omujs/chat';
 
-export type RouletteEntry = {
+export type RouletteItem = {
     id: string;
     name: string;
     image?: string;
@@ -28,7 +28,7 @@ export type RecruitingEndState = {
 };
 
 export type SpinResult = {
-    entry: RouletteEntry;
+    entry: RouletteItem;
 };
 
 export type SpinStartState = {
@@ -38,6 +38,7 @@ export type SpinStartState = {
 export type SpinningState = {
     type: 'spinning';
     result: SpinResult;
+    random: number;
     start: number;
     duration: number;
 };
@@ -45,4 +46,5 @@ export type SpinningState = {
 export type SpinResultState = {
     type: 'spin-result';
     result: SpinResult;
+    random: number;
 };

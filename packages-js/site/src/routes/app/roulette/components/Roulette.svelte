@@ -31,17 +31,15 @@
     let rotateTimer = new Timer();
     let rotation = 0;
     let lastRotation = 0;
-    let random = Math.random();
 
     state.subscribe((value) => {
         if (value.type === 'spin-start') {
-            random = BetterMath.invjsrandom();
             lastRotation = rotation;
             rotateTimer.reset();
         }
     });
 
-    function easeInOutCubic(t: number) {
+    function rouletteEasing(t: number) {
         const y2 = 3 * t * t - 2 * t * t * t;
         const y4 = 1 - Math.pow(2 * (1 - t), 10) / 2;
         if (t <= 0.5) {
@@ -64,16 +62,16 @@
             const { entry } = $state.result;
             const index = Object.keys($entries).indexOf(entry.id);
             const offset = 1 / count;
-            const hitRotation = index * offset + offset * random;
+            const hitRotation = index * offset + offset * $state.random;
             const rotateTo = hitRotation + Math.floor(lastRotation) + 5;
             const time = Date.now() - $state.start;
-            const t = easeInOutCubic(BetterMath.clamp01(time / $state.duration));
+            const t = rouletteEasing(BetterMath.clamp01(time / $state.duration));
             rotation = BetterMath.lerp(lastRotation, rotateTo, t);
         } else if ($state.type === 'spin-result') {
             const { entry } = $state.result;
             const index = Object.keys($entries).indexOf(entry.id);
             const offset = 1 / count;
-            const hitRotation = index * offset + offset * random;
+            const hitRotation = index * offset + offset * $state.random;
             const rotateTo = hitRotation + Math.floor(lastRotation) + 5;
             rotation = rotateTo;
         }
@@ -89,27 +87,11 @@
 
         const hitEntry = Object.entries($entries)[Math.floor(t * count) % count];
 
-        // debug
-        ctx.fillStyle = 'black';
-        ctx.font = 'bold 20px "Noto Sans JP"';
-        ctx.textAlign = 'start';
-        ctx.textBaseline = 'top';
-        ctx.fillText(`${split}`, 0, 0);
-        ctx.fillText(`${rotation}`, 0, 20);
-        ctx.fillText(`${t * count}`, 0, 40);
-
         // Draw circle
         ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
         ctx.fill();
-
-        // Draw border
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
-        ctx.stroke();
 
         // Draw texts
         ctx.font = `bold ${0.04 * radius}px "Noto Sans JP"`;
@@ -134,9 +116,27 @@
                 ctx.moveTo(width / 2, height / 2);
                 ctx.arc(width / 2, height / 2, radius, i * split + angle, (i + 1) * split + angle);
                 ctx.fill();
+
+                // draw inner outline
+                const outlineWidth = 0.04 * radius;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = outlineWidth;
+                ctx.beginPath();
+                ctx.arc(
+                    width / 2,
+                    height / 2,
+                    radius - outlineWidth / 2,
+                    i * split + angle,
+                    (i + 1) * split + angle,
+                );
+                ctx.stroke();
             }
             ctx.fillStyle = hit ? 'black' : 'white';
-            ctx.font = `bold ${(0.3 * radius) / Math.sqrt(count)}px "Noto Sans JP"`;
+            const fontSize = (0.3 * radius) / Math.sqrt(count);
+            ctx.font = `bold ${fontSize}px "Noto Sans JP"`;
+            const textWidth = ctx.measureText(entry.name).width;
+            const textScale = Math.min(1, radius / 1.5 / textWidth);
+            ctx.font = `bold ${fontSize * textScale}px "Noto Sans JP"`;
             // draw text
             const x = width / 2 + Math.cos((i + 0.5) * split + angle) * radius * 0.9;
             const y = height / 2 + Math.sin((i + 0.5) * split + angle) * radius * 0.9;
@@ -150,12 +150,20 @@
             i++;
         }
 
+        // Draw border
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+
         // triangle
+        const triangleRadius = radius * 0.1;
         ctx.fillStyle = 'black';
         ctx.beginPath();
-        ctx.moveTo(width / 2 - 10, height / 2 - radius - 20);
+        ctx.moveTo(width / 2 - triangleRadius / 2, height / 2 - radius - triangleRadius);
         ctx.lineTo(width / 2, height / 2 - radius);
-        ctx.lineTo(width / 2 + 10, height / 2 - radius - 20);
+        ctx.lineTo(width / 2 + triangleRadius / 2, height / 2 - radius - triangleRadius);
         ctx.fill();
     }
 
