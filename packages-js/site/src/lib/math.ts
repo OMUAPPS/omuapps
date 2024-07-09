@@ -23,10 +23,10 @@ export class BetterMath {
 
     public static invjsrandom(): number {
         const x = Math.random();
-        if (x < 0.5) {
-            return 0.5 - x;
+        if (x > 0.5) {
+            return 1.5 - x;
         } else {
-            return x - 0.5;
+            return 0.5 - x;
         }
     }
 }
