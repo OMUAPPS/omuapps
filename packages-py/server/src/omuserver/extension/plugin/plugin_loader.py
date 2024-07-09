@@ -184,6 +184,10 @@ class PluginLoader:
 
     async def load_updated_plugins(self):
         entry_points = importlib.metadata.entry_points(group=PLUGIN_GROUP)
+        detected_plugins = {
+            entry_point.dist.name for entry_point in entry_points if entry_point.dist
+        }
+        logger.info(f"Detected plugins: {detected_plugins}")
         for entry_point in entry_points:
             if entry_point.dist is None:
                 raise ValueError(f"Invalid plugin: {entry_point} has no distribution")
