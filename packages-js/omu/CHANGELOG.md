@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.6.0 (2024-07-10)
+
+
+### Features
+
+* **server:** 起動で失敗した場合でもログを保存されるように ([a25bbc6](https://github.com/OMUAPPS/omuapps/commit/a25bbc6bc15ef44036e48363df058b44d1d7a262))
+
+
+
+
+
 ## 0.5.4 (2024-07-09)
 
 **Note:** Version bump only for package @omujs/omu
