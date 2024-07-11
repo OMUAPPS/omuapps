@@ -13,6 +13,12 @@ importers:
 
   .:
     devDependencies:
+      ajv:
+        specifier: ^8.16.0
+        version: 8.16.0
+      axios:
+        specifier: ^1.7.2
+        version: 1.7.2
       execa:
         specifier: ^9.3.0
         version: 9.3.0
@@ -12980,7 +12986,7 @@ snapshots:
       stoppable: 1.1.0
       undici: 5.28.4
       workerd: 1.20240524.0
-      ws: 8.18.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+      ws: 8.17.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
       youch: 3.3.3
       zod: 3.23.8
     transitivePeerDependencies:

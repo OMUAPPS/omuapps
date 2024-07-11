@@ -1,0 +1,241 @@
+{
+    "general": {
+        "searching": "Searching...",
+        "copied": "I copied it",
+        "info": "information",
+        "try_again": "Retry",
+        "settings": "setting",
+        "cancel": "cancel",
+        "in_progress": "in progress...",
+        "show_less": "hide",
+        "save": "keep",
+        "select_all": "select all",
+        "success": "success",
+        "warning": "caveat",
+        "no": "no",
+        "show_more": "See more",
+        "close": "close",
+        "reset": "reset",
+        "ok": "OK",
+        "yes": "yes",
+        "search": "search",
+        "copy": "copy",
+        "retry": "Retry",
+        "choose_folder": "Select folder",
+        "no_results": "No results",
+        "dragdrop": "Can be added by drag and drop",
+        "second": "seconds",
+        "select": "choice",
+        "error": "error",
+        "loading": "Loading...",
+        "choose_file": "Select files"
+    },
+    "date": {
+        "tomorrow": "tomorrow",
+        "just_now": "now",
+        "today": "today",
+        "minutes_ago": "{time} minutes ago",
+        "days_ago": "{time} days ago",
+        "in_the_future": "future",
+        "weeks_ago": "{time} weeks ago",
+        "yesterday": "yesterday",
+        "seconds_ago": "{time} seconds ago",
+        "hours_ago": "{time} hours ago",
+        "months_ago": "{time} months ago"
+    },
+    "status": {
+        "disconnected": "disconnected",
+        "reconnecting": "Reconnecting...",
+        "connecting": "connecting...",
+        "connected": "Connected",
+        "connect_attempt_count": "Connection attempts: {count}"
+    },
+    "titlebar": {
+        "minimize": "minimize",
+        "maximize": "maximize",
+        "close": "close",
+        "unmaximize": "unmaximize"
+    },
+    "panels": {
+        "rooms": {
+            "viewers": "Number of viewers (click to copy)",
+            "question_add_channel": "Would you like to add a channel?",
+            "title": "connecting",
+            "not_found_rooms": "Room not found!",
+            "see_channel": "look"
+        },
+        "messages": {
+            "title": "Comment/Message",
+            "bookmark": "bookmark",
+            "copy": "copy"
+        },
+        "apps": {
+            "title": "app",
+            "start_apps": "boot",
+            "open_apps": "open the app",
+            "found_apps": "Find apps in your browser"
+        },
+        "gifts": {
+            "title": "gift/toss"
+        },
+        "channels": {
+            "title": "Channel",
+            "open": "open channel",
+            "setup_channel": "Easy setup",
+            "delete": "delete channel",
+            "edit": "edit channel",
+            "next_check": "Just to re-check",
+            "channel_url": "Channel URL...",
+            "connect": "connection",
+            "append_channel": "to add",
+            "append_as": "add as"
+        }
+    },
+    "setup": {
+        "finish": "Understood",
+        "title": "set up",
+        "please_put_in_urls": "Enter the URL and the channel will be added automatically.",
+        "which_channel": "Which channels would you like to add?",
+        "skip": "Skip setup",
+        "start_again": "start over",
+        "app_hint": "You can add various apps from the site!",
+        "installing": "Installing",
+        "append": "to add"
+    },
+    "pages": {
+        "main": {
+            "icon": "ti ti-home",
+            "name": "Main"
+        },
+        "message": {
+            "icon": "ti ti-message",
+            "name": "message"
+        },
+        "channel": {
+            "icon": "ti ti-plug",
+            "name": "Channel"
+        },
+        "asset": {
+            "icon": "ti ti-package",
+            "name": "assets"
+        },
+        "app": {
+            "icon": "ti ti-player-play",
+            "name": "app"
+        },
+        "dev": {
+            "icon": "ti ti-bug",
+            "name": "development"
+        },
+        "play-queue": {
+            "icon": "ti ti-device-gamepad",
+            "name": "participatory management"
+        },
+        "remote_connect": "remote connection",
+        "settings": "setting"
+    },
+    "screen": {
+        "settings": {
+            "icon": "ti ti-settings",
+            "description": "You can change the settings.",
+            "name": "setting"
+        },
+        "remote_connect": {
+            "icon": "ti ti-qrcode",
+            "description": "Initiate a remote connection.",
+            "name": "remote connection"
+        },
+        "setup": {
+            "icon": "ti ti-settings",
+            "description": "Start setup.",
+            "name": "set up"
+        },
+        "add_channel": {
+            "icon": "ti ti-plus",
+            "name": "add channel",
+            "description": "Add channels."
+        },
+        "permission_request": {
+            "icon": "ti ti-lock",
+            "description": "Request permission.",
+            "name": "request permission"
+        },
+        "plugin_request": {
+            "icon": "ti ti-plug",
+            "description": "Request plugin.",
+            "name": "request plugin"
+        },
+        "update": {
+            "icon": "ti ti-download",
+            "name": "update",
+            "description": "There is a new version."
+        }
+    },
+    "settings": {
+        "category": {
+            "general": {
+                "icon": "ti ti-settings",
+                "name": "General",
+                "description": "You can change general settings."
+            },
+            "language": {
+                "icon": "ti ti-language-hiragana",
+                "name": "language",
+                "description": "You can change the language."
+            },
+            "appearance": {
+                "icon": "ti ti-palette",
+                "name": "exterior",
+                "description": "You can change the appearance."
+            },
+            "advanced": {
+                "icon": "ti ti-settings",
+                "name": "detail",
+                "description": "You can change detailed settings."
+            },
+            "about": {
+                "icon": "ti ti-license",
+                "description": "Display information about this app.",
+                "name": "information"
+            }
+        },
+        "setting": {
+            "devMode": "developer mode",
+            "language": "language",
+            "layoutInvert": "flip layout"
+        },
+        "about": {
+            "contributors": "Contributor",
+            "website": "website",
+            "version": "version",
+            "links": "Link",
+            "licenses": "license",
+            "source_code": "Source code"
+        }
+    },
+    "apps": {
+        "play-queue": {
+            "name": "participatory management"
+        },
+        "emoji": {
+            "name": "Emoji"
+        },
+        "youtube-reaction": {
+            "icon": "ti ti-heart",
+            "name": "YouTube reactions",
+            "description": "This is a YouTube reaction."
+        }
+    },
+    "assets": {
+        "comment-simple": {
+            "icon": "ti ti-message",
+            "description": "It's a simple comment.",
+            "name": "Comment (simple)"
+        },
+        "youtube-reaction": {
+            "icon": "ti ti-heart",
+            "description": "This is a YouTube reaction.",
+            "name": "YouTube reactions"
+        }
+    }
+}

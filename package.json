@@ -6,6 +6,7 @@
     "scripts": {
         "build-tauri": "node ./scripts/js-build.mjs --build dash",
         "build-site": "node ./scripts/js-build.mjs --build site",
+        "build-i18n": "node scripts/js-i18n.mjs",
         "dev": "node ./scripts/js-build.mjs && node ./scripts/js-dev.mjs",
         "build": "node ./scripts/js-build.mjs",
         "lint": "pnpm -r lint",
@@ -18,7 +19,9 @@
     "devDependencies": {
         "execa": "^9.3.0",
         "lerna": "^8.1.6",
-        "license-checker": "^25.0.1"
+        "license-checker": "^25.0.1",
+        "axios": "^1.7.2",
+        "ajv": "^8.16.0"
     },
     "pnpm": {
         "overrides": {
@@ -26,5 +29,6 @@
             "strip-ansi": "6",
             "wrap-ansi": "7"
         }
-    }
+    },
+    "packageManager": "pnpm@9.4.0+sha512.f549b8a52c9d2b8536762f99c0722205efc5af913e77835dbccc3b0b0b2ca9e7dc8022b78062c17291c48e88749c70ce88eb5a74f1fa8c4bf5e18bb46c8bd83a"
 }

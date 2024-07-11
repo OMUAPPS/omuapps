@@ -1,0 +1,27 @@
+[
+    {
+        "name": "日本語",
+        "code": "ja-JP",
+        "file": "ja-JP.json"
+    },
+    {
+        "name": "English",
+        "code": "en-US",
+        "file": "en-US.json"
+    },
+    {
+        "name": "한국어",
+        "code": "ko",
+        "file": "ko.json"
+    },
+    {
+        "name": "中文(简体)",
+        "code": "zh-CN",
+        "file": "zh-CN.json"
+    },
+    {
+        "name": "中文(繁體)",
+        "code": "zh-TW",
+        "file": "zh-TW.json"
+    }
+]

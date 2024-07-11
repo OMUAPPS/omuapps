@@ -1,0 +1,241 @@
+{
+    "general": {
+        "show_more": "看更多",
+        "try_again": "重試",
+        "save": "保持",
+        "select": "選擇",
+        "select_all": "全選",
+        "info": "資訊",
+        "dragdrop": "可以透過拖放添加",
+        "copied": "我複製了",
+        "error": "錯誤",
+        "reset": "重置",
+        "copy": "複製",
+        "warning": "警告",
+        "no_results": "沒有結果",
+        "choose_folder": "選擇資料夾",
+        "yes": "是的",
+        "ok": "好的",
+        "close": "關閉",
+        "settings": "環境",
+        "search": "搜尋",
+        "cancel": "取消",
+        "loading": "載入中...",
+        "choose_file": "選擇文件",
+        "searching": "正在尋找...",
+        "retry": "重試",
+        "second": "秒",
+        "in_progress": "進行中...",
+        "success": "成功",
+        "no": "不",
+        "show_less": "隱藏"
+    },
+    "date": {
+        "hours_ago": "{time} 小時前",
+        "weeks_ago": "{time} 週前",
+        "seconds_ago": "{time} 秒前",
+        "yesterday": "昨天",
+        "just_now": "現在",
+        "tomorrow": "明天",
+        "minutes_ago": "{time} 分鐘前",
+        "in_the_future": "未來",
+        "days_ago": "{時間}天前",
+        "months_ago": "{時間} 個月前",
+        "today": "今天"
+    },
+    "status": {
+        "disconnected": "斷開連接",
+        "connected": "連接的",
+        "connecting": "連接...",
+        "reconnecting": "正在重新連接...",
+        "connect_attempt_count": "連線嘗試：{count}"
+    },
+    "titlebar": {
+        "minimize": "最小化",
+        "unmaximize": "取消最大化",
+        "maximize": "最大化",
+        "close": "關閉"
+    },
+    "panels": {
+        "rooms": {
+            "question_add_channel": "您想新增頻道嗎？",
+            "title": "連接",
+            "viewers": "觀看人數（點擊複製）",
+            "not_found_rooms": "未找到房間！",
+            "see_channel": "看"
+        },
+        "messages": {
+            "copy": "複製",
+            "bookmark": "書籤",
+            "title": "評論/留言"
+        },
+        "apps": {
+            "found_apps": "在瀏覽器中尋找應用程式",
+            "title": "應用程式",
+            "open_apps": "打開應用程式",
+            "start_apps": "啟動"
+        },
+        "gifts": {
+            "title": "禮物/拋物"
+        },
+        "channels": {
+            "open": "開放通道",
+            "delete": "刪除頻道",
+            "title": "頻道",
+            "connect": "聯繫",
+            "append_as": "添加為",
+            "append_channel": "加上",
+            "channel_url": "頻道網址...",
+            "edit": "編輯頻道",
+            "next_check": "只是要重新檢查",
+            "setup_channel": "設定簡單"
+        }
+    },
+    "setup": {
+        "append": "加上",
+        "finish": "明白了",
+        "app_hint": "您可以從該網站添加各種應用程式！",
+        "installing": "安裝中",
+        "start_again": "重來",
+        "skip": "跳過設定",
+        "which_channel": "您想新增哪些頻道？",
+        "please_put_in_urls": "輸入 URL，頻道將自動新增。",
+        "title": "設定"
+    },
+    "pages": {
+        "main": {
+            "icon": "ti ti-home",
+            "name": "主要的"
+        },
+        "message": {
+            "icon": "ti ti-message",
+            "name": "訊息"
+        },
+        "channel": {
+            "icon": "ti ti-plug",
+            "name": "頻道"
+        },
+        "asset": {
+            "icon": "ti ti-package",
+            "name": "資產"
+        },
+        "app": {
+            "icon": "ti ti-player-play",
+            "name": "應用程式"
+        },
+        "dev": {
+            "icon": "ti ti-bug",
+            "name": "發展"
+        },
+        "play-queue": {
+            "icon": "ti ti-device-gamepad",
+            "name": "參與式管理"
+        },
+        "remote_connect": "遠端連線",
+        "settings": "環境"
+    },
+    "screen": {
+        "settings": {
+            "icon": "ti ti-settings",
+            "description": "您可以更改設定。",
+            "name": "環境"
+        },
+        "remote_connect": {
+            "icon": "ti ti-qrcode",
+            "description": "啟動遠端連線。",
+            "name": "遠端連線"
+        },
+        "setup": {
+            "icon": "ti ti-settings",
+            "description": "開始設定。",
+            "name": "設定"
+        },
+        "add_channel": {
+            "icon": "ti ti-plus",
+            "description": "新增頻道。",
+            "name": "新增頻道"
+        },
+        "permission_request": {
+            "icon": "ti ti-lock",
+            "name": "請求許可",
+            "description": "請求許可。"
+        },
+        "plugin_request": {
+            "icon": "ti ti-plug",
+            "description": "請求插件。",
+            "name": "請求插件"
+        },
+        "update": {
+            "icon": "ti ti-download",
+            "name": "更新",
+            "description": "有新版本了。"
+        }
+    },
+    "settings": {
+        "category": {
+            "general": {
+                "icon": "ti ti-settings",
+                "description": "您可以變更常規設定。",
+                "name": "一般的"
+            },
+            "language": {
+                "icon": "ti ti-language-hiragana",
+                "name": "語言",
+                "description": "您可以更改語言。"
+            },
+            "appearance": {
+                "icon": "ti ti-palette",
+                "name": "外部的",
+                "description": "您可以變更外觀。"
+            },
+            "advanced": {
+                "icon": "ti ti-settings",
+                "name": "細節",
+                "description": "您可以更改詳細設定。"
+            },
+            "about": {
+                "icon": "ti ti-license",
+                "name": "資訊",
+                "description": "顯示有​​關此應用程式的資訊。"
+            }
+        },
+        "setting": {
+            "layoutInvert": "翻轉佈局",
+            "language": "語言",
+            "devMode": "開發者模式"
+        },
+        "about": {
+            "version": "版本",
+            "source_code": "原始碼",
+            "website": "網站",
+            "links": "關聯",
+            "licenses": "執照",
+            "contributors": "貢獻者"
+        }
+    },
+    "apps": {
+        "play-queue": {
+            "name": "參與式管理"
+        },
+        "emoji": {
+            "name": "表情符號"
+        },
+        "youtube-reaction": {
+            "icon": "ti ti-heart",
+            "name": "YouTube 反應",
+            "description": "這是 YouTube 的反應。"
+        }
+    },
+    "assets": {
+        "comment-simple": {
+            "icon": "ti ti-message",
+            "description": "這是一個簡單的評論。",
+            "name": "評論（簡單）"
+        },
+        "youtube-reaction": {
+            "icon": "ti ti-heart",
+            "name": "YouTube 反應",
+            "description": "這是 YouTube 的反應。"
+        }
+    }
+}
