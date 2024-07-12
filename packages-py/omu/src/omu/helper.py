@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import re
 import typing
+
+from loguru import logger
 
 type Coro[**P, T] = typing.Callable[P, typing.Coroutine[None, None, T]]
 type AsyncCallback[**P] = Coro[P, typing.Any]
@@ -37,3 +40,12 @@ def batch_call(*funcs: typing.Callable[[], None]) -> typing.Callable[[], None]:
             func()
 
     return wrapper
+
+
+def asyncio_error_logger(loop: asyncio.AbstractEventLoop, context: dict) -> None:
+    exception = context.get("exception")
+    if exception:
+        logger.opt(exception=exception).error(context["message"])
+        raise exception
+    else:
+        logger.error(context["message"])

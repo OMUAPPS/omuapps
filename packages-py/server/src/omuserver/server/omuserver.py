@@ -1,12 +1,12 @@
 import asyncio
 import json
-from collections.abc import Mapping
 
 import aiohttp
 from aiohttp import web
 from loguru import logger
 from omu import Identifier
 from omu.address import Address
+from omu.helper import asyncio_error_logger
 
 from omuserver import __version__
 from omuserver.config import Config
@@ -125,20 +125,12 @@ class OmuServer(Server):
         loop = self.loop
 
         try:
-            loop.set_exception_handler(self.handle_exception)
+            loop.set_exception_handler(asyncio_error_logger)
             loop.create_task(self.start())
             loop.run_forever()
         finally:
             loop.close()
             asyncio.run(self.shutdown())
-
-    def handle_exception(
-        self, loop: asyncio.AbstractEventLoop, context: Mapping
-    ) -> None:
-        logger.error(context["message"])
-        exception = context.get("exception")
-        if exception:
-            raise exception
 
     async def _handle_network_start(self) -> None:
         logger.info(f"Listening on {self.address}")

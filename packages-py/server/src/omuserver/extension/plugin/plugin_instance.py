@@ -4,13 +4,17 @@ import asyncio
 import importlib
 import importlib.metadata
 import io
+import os
+import signal
 import sys
 from dataclasses import dataclass
 from multiprocessing import Process
+from threading import Thread
 
 from loguru import logger
 from omu.address import Address
 from omu.app import App
+from omu.helper import asyncio_error_logger
 from omu.network.websocket_connection import WebsocketsConnection
 from omu.plugin import Plugin
 from omu.token import TokenProvider
@@ -48,6 +52,7 @@ class PluginInstance:
 
     async def start(self, server: Server):
         token = server.permission_manager.generate_plugin_token()
+        pid = os.getpid()
         if self.plugin.isolated:
             process = Process(
                 target=run_plugin_isolated,
@@ -55,6 +60,7 @@ class PluginInstance:
                     self.plugin,
                     server.address,
                     token,
+                    pid,
                 ),
                 daemon=True,
             )
@@ -75,13 +81,6 @@ class PluginInstance:
                 server.loop.create_task(server.network.process_session(session))
 
 
-def handle_exception(loop: asyncio.AbstractEventLoop, context: dict) -> None:
-    logger.error(context["message"])
-    exception = context.get("exception")
-    if exception:
-        raise exception
-
-
 def setup_logging(app: App) -> None:
     if isinstance(sys.stdout, io.TextIOWrapper):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -98,20 +97,35 @@ def setup_logging(app: App) -> None:
     )
 
 
+def daemon_thread(pid: int) -> None:
+    while True:
+        try:
+            os.waitpid(pid, 0)
+        except ChildProcessError:
+            break
+    os.kill(os.getpid(), signal.SIGTERM)
+
+
 def run_plugin_isolated(
     plugin: Plugin,
     address: Address,
     token: str,
+    pid: int,
 ) -> None:
-    if plugin.get_client is None:
-        raise ValueError(f"Invalid plugin: {plugin} has no client")
-    client = plugin.get_client()
-    setup_logging(client.app)
-    connection = WebsocketsConnection(client, address)
-    client.network.set_connection(connection)
-    client.network.set_token_provider(PluginTokenProvider(token))
-    loop = asyncio.get_event_loop()
-    loop.set_exception_handler(handle_exception)
-    loop.run_until_complete(client.start())
-    loop.run_forever()
-    loop.close()
+    try:
+        if plugin.get_client is None:
+            raise ValueError(f"Invalid plugin: {plugin} has no client")
+        client = plugin.get_client()
+        setup_logging(client.app)
+        thread = Thread(target=daemon_thread, args=(pid,))
+        thread.start()
+        connection = WebsocketsConnection(client, address)
+        client.network.set_connection(connection)
+        client.network.set_token_provider(PluginTokenProvider(token))
+        loop = asyncio.get_event_loop()
+        loop.set_exception_handler(asyncio_error_logger)
+        loop.run_until_complete(client.start())
+        loop.run_forever()
+        loop.close()
+    except Exception as e:
+        logger.opt(exception=e).error("Error running plugin")

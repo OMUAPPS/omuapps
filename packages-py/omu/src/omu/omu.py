@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import asyncio
 
-from loguru import logger
-
 from omu.address import Address
 from omu.app import App
 from omu.event_emitter import Unlisten
@@ -52,7 +50,7 @@ from omu.extension.table import (
     TABLE_EXTENSION_TYPE,
     TableExtension,
 )
-from omu.helper import Coro
+from omu.helper import Coro, asyncio_error_logger
 from omu.network import Network
 from omu.network.packet import Packet, PacketType
 from omu.network.websocket_connection import WebsocketsConnection
@@ -170,18 +168,12 @@ class Omu(Client):
 
     def run(self, *, reconnect: bool = True) -> None:
         try:
-            self.loop.set_exception_handler(self.handle_exception)
+            self.loop.set_exception_handler(asyncio_error_logger)
             self.loop.create_task(self.start(reconnect=reconnect))
             self.loop.run_forever()
         finally:
             self.loop.close()
             asyncio.run(self.stop())
-
-    def handle_exception(self, loop: asyncio.AbstractEventLoop, context: dict) -> None:
-        logger.error(context["message"])
-        exception = context.get("exception")
-        if exception:
-            raise exception
 
     async def start(self, *, reconnect: bool = True) -> None:
         if self._running:
