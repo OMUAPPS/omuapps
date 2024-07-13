@@ -7,6 +7,7 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
+#   universal: false
 
 -e file:packages-py/chat
     # via omu-chatprovider
@@ -62,10 +63,6 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via iwashi
     # via omuserver
-colorama==0.4.6
-    # via click
-    # via loguru
-    # via pytest
 coverage==7.5.4
     # via pytest-cov
 edgetrans==0.2.3
@@ -149,8 +146,6 @@ uv==0.2.15
     # via omuserver
 websockets==12.0
     # via yt-dlp
-win32-setctime==1.1.0
-    # via loguru
 yarl==1.9.4
     # via aiohttp
 yt-dlp==2024.5.27
