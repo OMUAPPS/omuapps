@@ -6,6 +6,7 @@
     export let index: number;
     export let item: RouletteItem;
     export let roulette: RouletteApp;
+    const { state } = roulette;
 </script>
 
 <div class="entry">
@@ -18,11 +19,13 @@
         on:input={() => {
             roulette.updateEntry(item);
         }}
+        placeholder="エントリー名..."
     />
     <button
         on:click={() => {
             roulette.removeEntry(item.id);
         }}
+        disabled={$state.type !== 'idle'}
     >
         <Tooltip>
             <span>Remove</span>
@@ -64,6 +67,10 @@
         &:focus {
             outline: none;
             border-bottom: 2px solid var(--color-1);
+        }
+
+        &::placeholder {
+            font-size: 0.8rem;
         }
     }
 

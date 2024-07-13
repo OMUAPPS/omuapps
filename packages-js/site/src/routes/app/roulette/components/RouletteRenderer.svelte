@@ -56,8 +56,9 @@
         const count = Object.keys($entries).length;
         if (count === 0) return;
 
-        if ($state.type === 'idle') {
-            rotation = timer.getElapsedMS() / 1000 / 5;
+        if ($state.type === 'idle' || $state.type === 'recruiting') {
+            const speed = Math.min(1, Math.sqrt(timer.getElapsedMS()) / 100);
+            rotation = lastRotation + (timer.getElapsedMS() / 1000 / 20) * speed;
         } else if ($state.type === 'spinning') {
             const { entry } = $state.result;
             const index = Object.keys($entries).indexOf(entry.id);
@@ -72,8 +73,9 @@
             const index = Object.keys($entries).indexOf(entry.id);
             const offset = 1 / count;
             const hitRotation = index * offset + offset * $state.random;
-            const rotateTo = hitRotation + Math.floor(lastRotation) + 5;
-            rotation = rotateTo;
+            const rotateTo = hitRotation + Math.floor(rotation);
+            lastRotation = rotation = rotateTo;
+            timer.reset();
         }
 
         // Clear canvas

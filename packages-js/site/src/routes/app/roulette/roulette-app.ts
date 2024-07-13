@@ -41,9 +41,11 @@ export class RouletteApp {
         this.entries = makeRegistryWritable(omu.registry.get(ENTRIES_REGISTRY));
     }
 
-    public addEntry(entry: RouletteItem) {
+    public addEntry(...entry: RouletteItem[]) {
         this.entries.update((entries) => {
-            entries[entry.id] = entry;
+            for (const e of entry) {
+                entries[e.id] = e;
+            }
             return entries;
         });
     }
@@ -70,28 +72,49 @@ export class RouletteApp {
         this.entries.set({});
     }
 
+    public toggleRecruiting() {
+        this.state.update((state) => {
+            if (state.type === 'recruiting') {
+                return { type: 'idle' };
+            }
+            return { type: 'recruiting' };
+        });
+    }
+
     private easeInOutCubic(x: number): number {
         x = lerp(0.1, 0.9, x);
         return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     }
 
+    private spinTimeout: number | null = null;
+
     public spin() {
         const config = get(this.config);
         this.entries.update((value) => {
+            if (Object.keys(value).length === 0) {
+                throw new Error('No entries to spin');
+            }
             const entries = Object.values(value);
             const entry = entries[Math.floor(Math.random() * entries.length)];
             const start = Date.now();
             const duration = config.duration * 1000;
             const random = this.easeInOutCubic(BetterMath.invjsrandom());
-            // const duration = 10000;
             this.state.set({ type: 'spin-start' });
             this.state.set({ type: 'spinning', random, result: { entry }, start, duration });
 
-            setTimeout(() => {
+            this.spinTimeout = window.setTimeout(() => {
                 this.state.set({ type: 'spin-result', random, result: { entry } });
-                alert(`Winner: ${entry.name}`);
             }, duration);
             return value;
         });
+    }
+
+    public stop() {
+        if (this.spinTimeout) {
+            clearTimeout(this.spinTimeout);
+        }
+        this.state.update(() => ({
+            type: 'idle',
+        }));
     }
 }

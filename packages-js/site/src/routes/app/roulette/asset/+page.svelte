@@ -7,7 +7,7 @@
     import { BROWSER } from 'esm-env';
     import { APP_ID } from '../app.js';
     import { RouletteApp } from '../roulette-app.js';
-    import Roulette from '../components/Roulette.svelte';
+    import RouletteRenderer from '../components/RouletteRenderer.svelte';
     import { page } from '$app/stores';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
@@ -28,8 +28,14 @@
 
 <AssetPage>
     <main>
-        {$config.text}
-        <Roulette {roulette} />
+        <RouletteRenderer {roulette} />
+        {#if $state.type === 'spin-result'}
+            <div class="result">
+                <p>
+                    {$state.result.entry.name}
+                </p>
+            </div>
+        {/if}
     </main>
 </AssetPage>
 
@@ -41,5 +47,21 @@
 
     :global(body) {
         background: transparent !important;
+    }
+
+    .result {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+
+        > p {
+            font-size: 4rem;
+            color: #fff;
+            background: #000;
+            padding: 1rem 6rem;
+        }
     }
 </style>

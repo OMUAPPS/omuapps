@@ -43,6 +43,8 @@ jobs:
               run: pnpm i --frozen-lockfile
 
             - name: Build storybook
-              run: pnpm --filter ui build-storybook
+              run: |
+                  pnpm build
+                  pnpm --filter ui build-storybook
             - name: Upload Storybook
               run: pnpm --filter ui chromatic -d storybook-static --project-token=${{secrets.CHROMATIC_PROJECT_TOKEN}}
