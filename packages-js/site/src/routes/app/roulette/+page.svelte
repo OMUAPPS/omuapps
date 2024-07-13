@@ -2,14 +2,15 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { Chat, events } from '@omujs/chat';
-    import { Omu } from '@omujs/omu';
+    import { content } from '@omujs/chat/models/index.js';
+    import { Message } from '@omujs/chat/models/message.js';
+    import { Identifier, Omu } from '@omujs/omu';
     import { AppHeader, setClient, Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import EntryList from './components/EntryList.svelte';
     import RouletteRenderer from './components/RouletteRenderer.svelte';
     import { RouletteApp } from './roulette-app.js';
-    import type { Message } from '@omujs/chat/models/message.js';
 
     const omu = new Omu(APP);
     setClient(omu);
@@ -17,18 +18,12 @@
     const roulette = new RouletteApp(omu);
     const { entries, state, config } = roulette;
 
-    function test() {
-        const entries = Array.from({ length: 1000 }, (_, i) => ({
-            id: i.toString(),
-            name: `Entry ${i + 1}`,
-        }));
-        roulette.setEntries(Object.fromEntries(entries.map((entry) => [entry.id, entry])));
-    }
-
     let tab: 'add' | 'join' = 'join';
     let joinKeyword = '';
 
     function onMessage(message: Message) {
+        if ($state.type !== 'recruiting') return;
+
         if (message.text.includes(joinKeyword)) {
             const id = `join-${message.authorId}`;
             if ($entries[id] && !$config.editable) return;
@@ -71,7 +66,7 @@
                         <i class="ti ti-users" />
                         募集設定
                     </span>
-                    <div>
+                    <div class="join-settings">
                         <input type="text" placeholder="参加キーワード" bind:value={joinKeyword} />
                         <button
                             class="join-button"
@@ -286,7 +281,7 @@
 
     .join-tab {
         margin: 0 $margin;
-        padding: 0.5rem;
+        padding: 0 0.5rem;
         margin-bottom: 1rem;
 
         input {
@@ -306,6 +301,13 @@
             cursor: pointer;
             font-size: 0.9rem;
         }
+    }
+
+    .join-settings {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
     }
 
     .between {
