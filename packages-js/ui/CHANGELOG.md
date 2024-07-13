@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.1 (2024-07-13)
+
+
+### Reverts
+
+* Revert "fix(ci): 適切なバージョンにバージョンアップされるように" ([20207d8](https://github.com/OMUAPPS/omuapps/commit/20207d899a8d785ed47515144fdf68e2490abee3))
+
+
+
+
+
 # 0.6.0 (2024-07-10)
 
 
