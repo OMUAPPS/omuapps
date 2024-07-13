@@ -40,6 +40,8 @@ jobs:
             VERSION: ${{ steps.get_version.outputs.VERSION }}
         steps:
             - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - name: Install Node.js
               uses: actions/setup-node@v4
