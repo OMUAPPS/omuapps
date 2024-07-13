@@ -42,10 +42,10 @@ def batch_call(*funcs: typing.Callable[[], None]) -> typing.Callable[[], None]:
     return wrapper
 
 
-def asyncio_error_logger(loop: asyncio.AbstractEventLoop, context: dict) -> None:
+def asyncio_error_logger(
+    loop: asyncio.AbstractEventLoop, context: typing.Mapping
+) -> None:
     exception = context.get("exception")
+    logger.opt(exception=exception).error("Unhandled exception")
     if exception:
-        logger.opt(exception=exception).error(context["message"])
         raise exception
-    else:
-        logger.error(context["message"])
