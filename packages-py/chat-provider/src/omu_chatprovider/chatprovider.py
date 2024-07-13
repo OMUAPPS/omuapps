@@ -133,9 +133,9 @@ async def recheck_channels():
 
 @chat.on(events.message.add)
 async def on_message_create(message: Message):
-    print(f"Message created: {message.text}")
+    logger.info(f"Message created: {message.text}")
     for gift in message.gifts or []:
-        print(f"Gift: {gift.name} x{gift.amount}")
+        logger.info(f"Gift: {gift.name} x{gift.amount}")
 
 
 @omu.event.ready.listen
