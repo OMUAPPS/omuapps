@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Tooltip } from '@omujs/ui';
+    import Tooltip from './Tooltip.svelte';
 
     export let href: string = '';
     export let title: string | undefined = undefined;

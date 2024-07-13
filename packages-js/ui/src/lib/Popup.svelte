@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { style } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { afterUpdate, onDestroy } from 'svelte';
+    import { style } from './utils/class-helper.js';
 
     export let noBackground = false;
     export let open = false;
