@@ -5,11 +5,9 @@ import importlib
 import importlib.metadata
 import io
 import os
-import signal
 import sys
 from dataclasses import dataclass
 from multiprocessing import Process
-from threading import Thread
 
 from loguru import logger
 from omu.address import Address
@@ -97,15 +95,6 @@ def setup_logging(app: App) -> None:
     )
 
 
-def daemon_thread(pid: int) -> None:
-    while True:
-        try:
-            os.waitpid(pid, 0)
-        except ChildProcessError:
-            break
-    os.kill(os.getpid(), signal.SIGTERM)
-
-
 def run_plugin_isolated(
     plugin: Plugin,
     address: Address,
@@ -117,8 +106,6 @@ def run_plugin_isolated(
             raise ValueError(f"Invalid plugin: {plugin} has no client")
         client = plugin.get_client()
         setup_logging(client.app)
-        thread = Thread(target=daemon_thread, args=(pid,))
-        thread.start()
         connection = WebsocketsConnection(client, address)
         client.network.set_connection(connection)
         client.network.set_token_provider(PluginTokenProvider(token))

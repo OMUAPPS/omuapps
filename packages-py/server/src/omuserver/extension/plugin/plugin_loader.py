@@ -163,13 +163,10 @@ class PluginLoader:
     async def run_plugins(self):
         self.load_plugins_from_entry_points()
 
-        for instance in self.instances.values():
-            if instance.plugin.on_start_server is not None:
-                await instance.plugin.on_start_server(self._server)
+        logger.info(f"Loaded plugins: {self.instances.keys()}")
 
-        await asyncio.gather(
-            *(instance.start(self._server) for instance in self.instances.values())
-        )
+        for instance in self.instances.values():
+            await self.start_plugin(instance)
 
     def load_plugins_from_entry_points(self):
         entry_points = importlib.metadata.entry_points(group=PLUGIN_GROUP)
@@ -196,7 +193,13 @@ class PluginLoader:
                 continue
             instance = PluginInstance.from_entry_point(entry_point)
             self.instances[plugin_key] = instance
+            await self.start_plugin(instance)
+
+    async def start_plugin(self, instance):
+        try:
             if instance.plugin.on_start_server is not None:
                 await instance.plugin.on_start_server(self._server)
 
             await instance.start(self._server)
+        except Exception as e:
+            logger.opt(exception=e).error(f"Error starting plugin: {instance.plugin}")
