@@ -83,6 +83,23 @@
             <AssetButton />
         </section>
 
+        <h3>見た目を変更する</h3>
+        <section>
+            <label for="scale">スケール</label>
+            <input
+                type="range"
+                id="scale"
+                bind:value={$config.scale}
+                min="0.1"
+                max="2"
+                step="0.1"
+            />
+            {$config.scale}
+            <label for="depth">奥行き度</label>
+            <input type="range" id="depth" bind:value={$config.depth} min="0" max="1" step="0.1" />
+            {$config.depth}
+        </section>
+
         <h3>画像を置き換える</h3>
         <section>
             {#each Object.entries($config.replaces) as [key, assetId]}

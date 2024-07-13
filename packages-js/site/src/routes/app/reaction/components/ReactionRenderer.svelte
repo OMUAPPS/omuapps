@@ -4,6 +4,8 @@
     import { onDestroy } from 'svelte';
     import type { ReactionApp } from '../reaction-app.js';
     import { BROWSER } from 'esm-env';
+    import { lerp } from '$lib/math/math.js';
+    import { Timer } from '$lib/timer.js';
 
     export let omu: Omu;
     export let reactionApp: ReactionApp;
@@ -13,6 +15,7 @@
         text: string;
         position: [number, number];
         velocity: [number, number];
+        depth: number;
         opacity: number;
         rotation: number;
         age: number;
@@ -93,53 +96,59 @@
         }
     }
 
+    $: reactionScale = 50 * $config.scale;
+
     function spawnReaction(text: string) {
-        const x = Math.random() * (canvas.width - 100);
-        const y = Math.random() * (canvas.height - 300) + 300;
+        const x = lerp(reactionScale, canvas.width - reactionScale - 50, Math.random());
+        const y = lerp(reactionScale + 300, canvas.height - reactionScale, Math.random());
+        const z = lerp(1 - ($config.depth || 0), 1, Math.random());
         const vx = Math.random() - 0.5;
         const vy = Math.random() - 0.5;
 
-        reactionArray.push({
+        const reaction = {
             text,
             position: [x, y],
             velocity: [vx, vy],
+            depth: z,
             opacity: 1,
             rotation: 0,
             age: 0,
-        });
+        } satisfies Reaction;
+        reactionArray.push(updateReaction(reaction));
+    }
+
+    function updateReaction(reaction: Reaction) {
+        const [vx, vy] = reaction.velocity;
+        const [x, y] = reaction.position;
+
+        let newVx = vx + Math.sin(reaction.age / 15) / 3;
+        newVx *= 0.8;
+        const newVy = -Math.pow(reaction.age, 0.2);
+        const newX = x + newVx * reaction.depth;
+        const newY = y + newVy * reaction.depth;
+        const newOpacity = Math.min(1, reaction.age / 10) - Math.max(0, (reaction.age - 50) / 50);
+        const newRotation = (Math.sin(reaction.age / 15 + 1) * 5 * Math.PI) / 180;
+
+        return {
+            ...reaction,
+            position: [newX, newY],
+            velocity: [newVx, newVy],
+            opacity: newOpacity,
+            rotation: newRotation,
+            age: reaction.age + 1,
+        } satisfies Reaction;
     }
 
     function updatePosition() {
         const screenBounds = {
-            left: -100,
-            top: -100,
-            right: canvas.width + 100,
-            bottom: canvas.height + 100,
+            left: -reactionScale,
+            top: -reactionScale,
+            right: canvas.width + reactionScale,
+            bottom: canvas.height + reactionScale,
         };
 
         reactionArray = reactionArray
-            .map((reaction) => {
-                const [vx, vy] = reaction.velocity;
-                const [x, y] = reaction.position;
-
-                let newVx = vx + Math.sin(reaction.age / 15) / 3;
-                newVx *= 0.8;
-                const newVy = -Math.pow(reaction.age, 0.2);
-                const newX = x + newVx;
-                const newY = y + newVy;
-                const newOpacity =
-                    Math.min(1, reaction.age / 10) - Math.max(0, (reaction.age - 50) / 50);
-                const newRotation = (Math.sin(reaction.age / 15 + 1) * 5 * Math.PI) / 180;
-
-                return {
-                    ...reaction,
-                    position: [newX, newY],
-                    velocity: [newVx, newVy],
-                    opacity: newOpacity,
-                    rotation: newRotation,
-                    age: reaction.age + 1,
-                } satisfies Reaction;
-            })
+            .map((reaction) => updateReaction(reaction))
             .filter(({ position }) => {
                 const [x, y] = position;
                 return (
@@ -156,49 +165,41 @@
             return;
         }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.font = '30px "Noto Color Emoji"';
 
-        reactionArray.forEach(({ text, position, opacity, rotation }) => {
+        for (const { text, position, depth, opacity, rotation } of reactionArray) {
             const [x, y] = position;
 
             if (opacity <= 0) {
-                return;
+                continue;
             }
 
+            ctx.font = `${30 * $config.scale * depth}px "Noto Color Emoji"`;
+
             ctx.save();
-            ctx.globalAlpha = opacity;
+            ctx.globalAlpha = opacity * depth;
             ctx.translate(x, y);
             ctx.rotate(rotation);
             const replacementImage = replaceImages[text];
             if (replacementImage) {
-                const height = 50;
-                const width = height * (replacementImage.width / replacementImage.height);
+                const height = 50 * $config.scale * depth;
+                const width = (replacementImage.width / replacementImage.height) * height;
                 ctx.drawImage(replacementImage, -width / 2, -height / 2, width, height);
             } else {
-                ctx.fillText(text, -15, 15);
+                const centerX = ctx.measureText(text).width / 2;
+                ctx.fillText(text, -centerX, 0);
             }
             ctx.restore();
-        });
-    }
-
-    let previousTime = Date.now();
-    async function waitForDelay() {
-        const currentTime = Date.now();
-        const timeInterval = 1000 / 30;
-        const delay = previousTime + timeInterval - currentTime;
-        previousTime = previousTime + timeInterval;
-
-        if (delay > 0) {
-            await new Promise<void>((resolve) => setTimeout(resolve, delay));
         }
     }
 
+    const timer = new Timer();
+
     if (BROWSER) {
         let animationTimer = requestAnimationFrame(async function drawLoop() {
-            await waitForDelay();
-
             updateSpawn();
-            updatePosition();
+            for (let i = 0, ticks = timer.tick(33); i < ticks; i++) {
+                updatePosition();
+            }
             draw();
             animationTimer = requestAnimationFrame(drawLoop);
         });

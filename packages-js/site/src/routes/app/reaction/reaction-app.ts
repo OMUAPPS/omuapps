@@ -10,6 +10,7 @@ import type { Signal } from '@omujs/omu/extension/signal/signal.js';
 type ReactionConfig = {
     replaces: Record<string, string | null>;
     scale: number;
+    depth: number;
 };
 
 const REACTION_REPLACE_REGISTRY_TYPE = RegistryType.createJson<ReactionConfig>(IDENTIFIER, {
@@ -23,6 +24,7 @@ const REACTION_REPLACE_REGISTRY_TYPE = RegistryType.createJson<ReactionConfig>(I
             '💯': null,
         },
         scale: 1,
+        depth: 0,
     },
 });
 
