@@ -1,6 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
+    import { Chat, events } from '@omujs/chat';
     import { Omu } from '@omujs/omu';
     import { AppHeader, setClient, Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -8,9 +9,11 @@
     import EntryList from './components/EntryList.svelte';
     import RouletteRenderer from './components/RouletteRenderer.svelte';
     import { RouletteApp } from './roulette-app.js';
+    import type { Message } from '@omujs/chat/models/message.js';
 
     const omu = new Omu(APP);
     setClient(omu);
+    const chat = new Chat(omu);
     const roulette = new RouletteApp(omu);
     const { entries, state, config } = roulette;
 
@@ -25,20 +28,19 @@
     let tab: 'add' | 'join' = 'join';
     let joinKeyword = '';
 
-    omu.onReady(() => {
-        if (Object.keys($entries).length === 0) {
-            roulette.addEntry(
-                {
-                    id: '1',
-                    name: 'Entry 1',
-                },
-                {
-                    id: '2',
-                    name: 'Entry 2',
-                },
-            );
+    function onMessage(message: Message) {
+        if (message.text.includes(joinKeyword)) {
+            const id = `join-${message.authorId}`;
+            if ($entries[id] && !$config.editable) return;
+            roulette.addEntry({
+                id,
+                name: message.text,
+                message,
+            });
         }
-    });
+    }
+
+    chat.on(events.message.add, (message) => onMessage(message));
 
     if (BROWSER) {
         omu.start();
@@ -303,12 +305,6 @@
             border: none;
             cursor: pointer;
             font-size: 0.9rem;
-        }
-
-        &.recruiting {
-            button {
-                background: var(--color-2);
-            }
         }
     }
 

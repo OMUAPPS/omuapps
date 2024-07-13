@@ -9,12 +9,14 @@ import { lerp } from '$lib/math/math.js';
 
 export type Config = {
     duration: number;
+    editable: boolean;
 };
 
 const CONFIG_REGISTRY = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: {
         duration: 5,
+        editable: true,
     },
 });
 
