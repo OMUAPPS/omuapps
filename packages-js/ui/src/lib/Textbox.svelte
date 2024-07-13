@@ -9,13 +9,15 @@
     let inputValue: string = value;
     let timer: number | undefined;
 
-    const eventDispatcher = createEventDispatcher();
+    const eventDispatcher = createEventDispatcher<{
+        input: string;
+    }>();
 
     function handleChange(event: Event) {
         inputValue = (event.target as HTMLInputElement).value;
         if (!lazy) {
             value = inputValue;
-            eventDispatcher('input', { value: inputValue });
+            eventDispatcher('input', inputValue);
             return;
         }
         if (timer) {
@@ -23,7 +25,7 @@
         }
         timer = window.setTimeout(() => {
             value = inputValue;
-            eventDispatcher('input', { value: inputValue });
+            eventDispatcher('input', inputValue);
         }, 300);
     }
 

@@ -98,7 +98,7 @@
             <Textbox
                 placeholder="URLを入力"
                 on:input={(event) => {
-                    const url = new URL(event.detail.value);
+                    const url = new URL(event.detail);
                     if (url.hostname === 'youtu.be') {
                         const videoId = url.pathname.slice(1);
                         $playVideo(videoId);
