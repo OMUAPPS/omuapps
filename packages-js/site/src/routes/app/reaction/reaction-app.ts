@@ -7,31 +7,34 @@ import type { Chat } from '@omujs/chat';
 import { Reaction } from '@omujs/chat/models/reaction.js';
 import type { Signal } from '@omujs/omu/extension/signal/signal.js';
 
-type ReactionReplaceRegistry = Record<string, string | null>;
+type ReactionConfig = {
+    replaces: Record<string, string | null>;
+    scale: number;
+};
 
-const REACTION_REPLACE_REGISTRY_TYPE = RegistryType.createJson<ReactionReplaceRegistry>(
-    IDENTIFIER,
-    {
-        name: 'reaction_replace',
-        defaultValue: {
+const REACTION_REPLACE_REGISTRY_TYPE = RegistryType.createJson<ReactionConfig>(IDENTIFIER, {
+    name: 'config',
+    defaultValue: {
+        replaces: {
             '❤': null,
             '😄': null,
             '🎉': null,
             '😳': null,
             '💯': null,
         },
+        scale: 1,
     },
-);
+});
 
 export class ReactionApp {
-    public readonly replaces: Writable<ReactionReplaceRegistry>;
+    public readonly config: Writable<ReactionConfig>;
     public readonly reactionSignal: Signal<Reaction>;
 
     constructor(
         private readonly omu: Omu,
         private readonly chat: Chat,
     ) {
-        this.replaces = makeRegistryWritable(omu.registry.get(REACTION_REPLACE_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registry.get(REACTION_REPLACE_REGISTRY_TYPE));
         this.reactionSignal = chat.reactionSignal;
     }
 

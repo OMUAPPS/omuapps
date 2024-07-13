@@ -18,14 +18,14 @@
     import { BROWSER } from 'esm-env';
     import { APP, IDENTIFIER } from './app.js';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
-    import { ReactionApp } from './reaction.js';
+    import { ReactionApp } from './reaction-app.js';
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
 
     const omu = new Omu(APP);
     const chat = new Chat(omu);
     const reactionApp = new ReactionApp(omu, chat);
-    const { replaces } = reactionApp;
+    const { config } = reactionApp;
     setClient(omu);
 
     function test() {
@@ -49,7 +49,7 @@
         reader.onload = async () => {
             const buffer = new Uint8Array(reader.result as ArrayBuffer);
             const asset = await omu.assets.upload(id, buffer);
-            $replaces = { ...$replaces, [key]: asset.key() };
+            $config.replaces = { ...$config.replaces, [key]: asset.key() };
         };
         reader.readAsArrayBuffer(file);
     }
@@ -85,7 +85,7 @@
 
         <h3>画像を置き換える</h3>
         <section>
-            {#each Object.entries($replaces) as [key, assetId]}
+            {#each Object.entries($config.replaces) as [key, assetId]}
                 <div class="replace-entry">
                     <FlexRowWrapper alignItems="center" gap>
                         <h1>
@@ -103,7 +103,8 @@
                     <FlexRowWrapper gap alignItems="center">
                         {#if assetId}
                             <ButtonMini
-                                on:click={() => ($replaces = { ...$replaces, [key]: null })}
+                                on:click={() =>
+                                    ($config.replaces = { ...$config.replaces, [key]: null })}
                             >
                                 <Tooltip>置き換えを削除</Tooltip>
                                 <i class="ti ti-trash" />

@@ -7,7 +7,7 @@
     import { BROWSER } from 'esm-env';
     import { IDENTIFIER } from '../app.js';
     import ReactionOverlay from '../components/ReactionRenderer.svelte';
-    import { ReactionApp } from '../reaction.js';
+    import { ReactionApp } from '../reaction-app.js';
     import AssetPage from '$lib/components/AssetPage.svelte';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');

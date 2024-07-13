@@ -2,12 +2,12 @@
     import type { Omu } from '@omujs/omu';
     import { Identifier } from '@omujs/omu/identifier.js';
     import { onDestroy } from 'svelte';
-    import type { ReactionApp } from '../reaction.js';
+    import type { ReactionApp } from '../reaction-app.js';
     import { BROWSER } from 'esm-env';
 
     export let omu: Omu;
     export let reactionApp: ReactionApp;
-    let { replaces, reactionSignal } = reactionApp;
+    let { config, reactionSignal } = reactionApp;
 
     type Reaction = {
         text: string;
@@ -34,7 +34,8 @@
     });
 
     let replaceImages: Record<string, HTMLImageElement | null> = {};
-    replaces.subscribe((replaces) => {
+    config.subscribe((config) => {
+        const replaces = config.replaces;
         replaceImages = Object.fromEntries(
             Object.entries(replaces).map(([key, assetId]) => {
                 if (!assetId) {
@@ -51,8 +52,6 @@
 
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D;
-    let width: number;
-    let height: number;
 
     $: if (canvas) {
         resize();
@@ -216,7 +215,7 @@
 </div>
 
 <svelte:window on:resize={resize} />
-<canvas bind:this={canvas} bind:clientWidth={width} bind:clientHeight={height} />
+<canvas bind:this={canvas} />
 
 <style lang="scss">
     canvas {
