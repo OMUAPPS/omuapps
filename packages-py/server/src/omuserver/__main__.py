@@ -10,6 +10,7 @@ from omu.address import Address
 
 from omuserver.config import Config
 from omuserver.server.omuserver import OmuServer
+from omuserver.version import VERSION
 
 
 def setup_logging():
@@ -63,7 +64,7 @@ def main(
 
     server = OmuServer(config=config, loop=loop)
 
-    logger.info("Starting server...")
+    logger.info(f"Starting omuserver v{VERSION} on {config.address.to_url()}")
     server.run()
 
 
