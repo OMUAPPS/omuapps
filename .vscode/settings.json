@@ -15,6 +15,7 @@
         "**/.mypy_cache": true,
         "**/.ruff_cache": true,
         "**/.pytest_cache": true,
+        "**/__node_modules__": true,
     },
     "search.exclude": {
         "**/node_modules": true,
@@ -23,5 +24,14 @@
     "editor.codeActionsOnSave": {
         "source.fixAll": "always"
     },
-    "editor.formatOnSave": false,
+    "editor.formatOnSave": true,
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.patterns": {
+        ".gitignore": ".gitattributes, .gitmodules",
+        "README.md": "LICENSE, CHANGELOG.md, CONTRIBUTING.md, CONTRIBUTORS.md",
+        "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, .npmignore",
+        "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
+        ".eslintrc.cjs": ".eslintignore, .prettierrc.cjs, .prettierignore, .prettierrc, .stylelintrc.json, .stylelintignore",
+    },
 }
