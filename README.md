@@ -57,5 +57,5 @@ pnpm i
 
 ### 起動 / Start
 
-vscodeでは、`F5`を押すだけで開発サーバーとダッシュボードが起動します。
-In vscode, just press `F5` to start the development server and dashboard.
+vscodeでは、起動構成から [ Server/Client ] を選択して起動してください。
+In vscode, select [ Server/Client ] from the startup configuration and start.
