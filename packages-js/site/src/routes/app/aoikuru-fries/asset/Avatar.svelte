@@ -28,6 +28,7 @@
         if ($state.type === 'catching') {
             setTimeout(() => {
                 $state.type = 'eating';
+                eatTime = 0;
             }, 14 * 33.3);
         }
         if ($state.type === 'eating') {
