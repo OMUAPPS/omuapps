@@ -7,7 +7,7 @@
 </script>
 
 <div class="entries">
-    {#each Object.entries($entries) as [id, item], index (id)}
+    {#each Object.entries($entries).reverse() as [id, item], index (id)}
         <RouletteEntry {index} {item} {roulette} />
     {/each}
 </div>
