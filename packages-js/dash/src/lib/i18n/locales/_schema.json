@@ -1,0 +1,837 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Generated schema for i18n",
+    "type": "object",
+    "properties": {
+        "general": {
+            "type": "object",
+            "properties": {
+                "yes": {
+                    "type": "string"
+                },
+                "no": {
+                    "type": "string"
+                },
+                "ok": {
+                    "type": "string"
+                },
+                "cancel": {
+                    "type": "string"
+                },
+                "close": {
+                    "type": "string"
+                },
+                "save": {
+                    "type": "string"
+                },
+                "reset": {
+                    "type": "string"
+                },
+                "copy": {
+                    "type": "string"
+                },
+                "copied": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "warning": {
+                    "type": "string"
+                },
+                "info": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "string"
+                },
+                "try_again": {
+                    "type": "string"
+                },
+                "retry": {
+                    "type": "string"
+                },
+                "in_progress": {
+                    "type": "string"
+                },
+                "choose_file": {
+                    "type": "string"
+                },
+                "choose_folder": {
+                    "type": "string"
+                },
+                "loading": {
+                    "type": "string"
+                },
+                "search": {
+                    "type": "string"
+                },
+                "searching": {
+                    "type": "string"
+                },
+                "no_results": {
+                    "type": "string"
+                },
+                "show_more": {
+                    "type": "string"
+                },
+                "show_less": {
+                    "type": "string"
+                },
+                "select": {
+                    "type": "string"
+                },
+                "select_all": {
+                    "type": "string"
+                },
+                "settings": {
+                    "type": "string"
+                },
+                "dragdrop": {
+                    "type": "string"
+                },
+                "second": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "yes",
+                "no",
+                "ok",
+                "cancel",
+                "close",
+                "save",
+                "reset",
+                "copy",
+                "copied",
+                "error",
+                "warning",
+                "info",
+                "success",
+                "try_again",
+                "retry",
+                "in_progress",
+                "choose_file",
+                "choose_folder",
+                "loading",
+                "search",
+                "searching",
+                "no_results",
+                "show_more",
+                "show_less",
+                "select",
+                "select_all",
+                "settings",
+                "dragdrop",
+                "second"
+            ]
+        },
+        "date": {
+            "type": "object",
+            "properties": {
+                "just_now": {
+                    "type": "string"
+                },
+                "yesterday": {
+                    "type": "string"
+                },
+                "tomorrow": {
+                    "type": "string"
+                },
+                "today": {
+                    "type": "string"
+                },
+                "months_ago": {
+                    "type": "string"
+                },
+                "weeks_ago": {
+                    "type": "string"
+                },
+                "days_ago": {
+                    "type": "string"
+                },
+                "hours_ago": {
+                    "type": "string"
+                },
+                "minutes_ago": {
+                    "type": "string"
+                },
+                "seconds_ago": {
+                    "type": "string"
+                },
+                "in_the_future": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "just_now",
+                "yesterday",
+                "tomorrow",
+                "today",
+                "months_ago",
+                "weeks_ago",
+                "days_ago",
+                "hours_ago",
+                "minutes_ago",
+                "seconds_ago",
+                "in_the_future"
+            ]
+        },
+        "status": {
+            "type": "object",
+            "properties": {
+                "connecting": {
+                    "type": "string"
+                },
+                "reconnecting": {
+                    "type": "string"
+                },
+                "connected": {
+                    "type": "string"
+                },
+                "disconnected": {
+                    "type": "string"
+                },
+                "connect_attempt_count": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "connecting",
+                "reconnecting",
+                "connected",
+                "disconnected",
+                "connect_attempt_count"
+            ]
+        },
+        "titlebar": {
+            "type": "object",
+            "properties": {
+                "close": {
+                    "type": "string"
+                },
+                "minimize": {
+                    "type": "string"
+                },
+                "maximize": {
+                    "type": "string"
+                },
+                "unmaximize": {
+                    "type": "string"
+                }
+            },
+            "required": ["close", "minimize", "maximize", "unmaximize"]
+        },
+        "panels": {
+            "type": "object",
+            "properties": {
+                "rooms": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string"
+                        },
+                        "not_found_rooms": {
+                            "type": "string"
+                        },
+                        "question_add_channel": {
+                            "type": "string"
+                        },
+                        "see_channel": {
+                            "type": "string"
+                        },
+                        "viewers": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "title",
+                        "not_found_rooms",
+                        "question_add_channel",
+                        "see_channel",
+                        "viewers"
+                    ]
+                },
+                "messages": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string"
+                        },
+                        "bookmark": {
+                            "type": "string"
+                        },
+                        "copy": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["title", "bookmark", "copy"]
+                },
+                "apps": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string"
+                        },
+                        "found_apps": {
+                            "type": "string"
+                        },
+                        "open_apps": {
+                            "type": "string"
+                        },
+                        "start_apps": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["title", "found_apps", "open_apps", "start_apps"]
+                },
+                "gifts": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["title"]
+                },
+                "channels": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string"
+                        },
+                        "append_channel": {
+                            "type": "string"
+                        },
+                        "setup_channel": {
+                            "type": "string"
+                        },
+                        "next_check": {
+                            "type": "string"
+                        },
+                        "delete": {
+                            "type": "string"
+                        },
+                        "edit": {
+                            "type": "string"
+                        },
+                        "open": {
+                            "type": "string"
+                        },
+                        "connect": {
+                            "type": "string"
+                        },
+                        "channel_url": {
+                            "type": "string"
+                        },
+                        "append_as": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "title",
+                        "append_channel",
+                        "setup_channel",
+                        "next_check",
+                        "delete",
+                        "edit",
+                        "open",
+                        "connect",
+                        "channel_url",
+                        "append_as"
+                    ]
+                }
+            },
+            "required": ["rooms", "messages", "apps", "gifts", "channels"]
+        },
+        "setup": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "which_channel": {
+                    "type": "string"
+                },
+                "installing": {
+                    "type": "string"
+                },
+                "append": {
+                    "type": "string"
+                },
+                "start_again": {
+                    "type": "string"
+                },
+                "please_put_in_urls": {
+                    "type": "string"
+                },
+                "skip": {
+                    "type": "string"
+                },
+                "app_hint": {
+                    "type": "string"
+                },
+                "finish": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "title",
+                "which_channel",
+                "installing",
+                "append",
+                "start_again",
+                "please_put_in_urls",
+                "skip",
+                "app_hint",
+                "finish"
+            ]
+        },
+        "pages": {
+            "type": "object",
+            "properties": {
+                "main": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon"]
+                },
+                "message": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon"]
+                },
+                "channel": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon"]
+                },
+                "asset": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon"]
+                },
+                "app": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon"]
+                },
+                "dev": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon"]
+                },
+                "play-queue": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon"]
+                },
+                "settings": {
+                    "type": "string"
+                },
+                "remote_connect": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "main",
+                "message",
+                "channel",
+                "asset",
+                "app",
+                "dev",
+                "play-queue",
+                "settings",
+                "remote_connect"
+            ]
+        },
+        "screen": {
+            "type": "object",
+            "properties": {
+                "settings": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon", "description"]
+                },
+                "remote_connect": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon", "description"]
+                },
+                "setup": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon", "description"]
+                },
+                "add_channel": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon", "description"]
+                },
+                "permission_request": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon", "description"]
+                },
+                "plugin_request": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon", "description"]
+                },
+                "update": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "icon", "description"]
+                }
+            },
+            "required": [
+                "settings",
+                "remote_connect",
+                "setup",
+                "add_channel",
+                "permission_request",
+                "plugin_request",
+                "update"
+            ]
+        },
+        "settings": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "object",
+                    "properties": {
+                        "general": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "icon": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["name", "description", "icon"]
+                        },
+                        "language": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "icon": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["name", "description", "icon"]
+                        },
+                        "appearance": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "icon": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["name", "description", "icon"]
+                        },
+                        "advanced": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "icon": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["name", "description", "icon"]
+                        },
+                        "about": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "icon": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["name", "description", "icon"]
+                        }
+                    },
+                    "required": ["general", "language", "appearance", "advanced", "about"]
+                },
+                "setting": {
+                    "type": "object",
+                    "properties": {
+                        "devMode": {
+                            "type": "string"
+                        },
+                        "language": {
+                            "type": "string"
+                        },
+                        "layoutInvert": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["devMode", "language", "layoutInvert"]
+                },
+                "about": {
+                    "type": "object",
+                    "properties": {
+                        "version": {
+                            "type": "string"
+                        },
+                        "contributors": {
+                            "type": "string"
+                        },
+                        "licenses": {
+                            "type": "string"
+                        },
+                        "links": {
+                            "type": "string"
+                        },
+                        "source_code": {
+                            "type": "string"
+                        },
+                        "website": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "version",
+                        "contributors",
+                        "licenses",
+                        "links",
+                        "source_code",
+                        "website"
+                    ]
+                }
+            },
+            "required": ["category", "setting", "about"]
+        },
+        "apps": {
+            "type": "object",
+            "properties": {
+                "play-queue": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name"]
+                },
+                "emoji": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name"]
+                },
+                "youtube-reaction": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "description", "icon"]
+                }
+            },
+            "required": ["play-queue", "emoji", "youtube-reaction"]
+        },
+        "assets": {
+            "type": "object",
+            "properties": {
+                "comment-simple": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "description", "icon"]
+                },
+                "youtube-reaction": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "description": {
+                            "type": "string"
+                        },
+                        "icon": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "description", "icon"]
+                }
+            },
+            "required": ["comment-simple", "youtube-reaction"]
+        }
+    },
+    "required": [
+        "general",
+        "date",
+        "status",
+        "titlebar",
+        "panels",
+        "setup",
+        "pages",
+        "screen",
+        "settings",
+        "apps",
+        "assets"
+    ]
+}

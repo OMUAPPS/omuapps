@@ -1,0 +1,241 @@
+{
+    "general": {
+        "reset": "重置",
+        "save": "保持",
+        "retry": "重试",
+        "error": "错误",
+        "choose_folder": "选择文件夹",
+        "select_all": "全选",
+        "show_more": "查看更多",
+        "second": "秒",
+        "close": "关闭",
+        "info": "信息",
+        "searching": "正在寻找...",
+        "select": "选择",
+        "loading": "加载中...",
+        "copy": "复制",
+        "success": "成功",
+        "show_less": "隐藏",
+        "copied": "我复制了",
+        "dragdrop": "可以通过拖放添加",
+        "in_progress": "进行中...",
+        "ok": "好的",
+        "warning": "警告",
+        "cancel": "取消",
+        "settings": "环境",
+        "choose_file": "选择文件",
+        "try_again": "重试",
+        "search": "搜索",
+        "no_results": "没有结果",
+        "yes": "是的",
+        "no": "不"
+    },
+    "date": {
+        "months_ago": "{时间} 个月前",
+        "minutes_ago": "{time} 分钟前",
+        "hours_ago": "{time} 小时前",
+        "weeks_ago": "{time} 周前",
+        "today": "今天",
+        "tomorrow": "明天",
+        "just_now": "现在",
+        "in_the_future": "未来",
+        "yesterday": "昨天",
+        "days_ago": "{time}天前",
+        "seconds_ago": "{time} 秒前"
+    },
+    "status": {
+        "reconnecting": "正在重新连接...",
+        "disconnected": "断开连接",
+        "connect_attempt_count": "连接尝试：{count}",
+        "connecting": "连接...",
+        "connected": "连接的"
+    },
+    "titlebar": {
+        "minimize": "最小化",
+        "maximize": "最大化",
+        "unmaximize": "取消最大化",
+        "close": "关闭"
+    },
+    "panels": {
+        "rooms": {
+            "question_add_channel": "您想添加频道吗？",
+            "not_found_rooms": "未找到房间！",
+            "viewers": "观看人数（点击复制）",
+            "see_channel": "看",
+            "title": "连接"
+        },
+        "messages": {
+            "bookmark": "书签",
+            "copy": "复制",
+            "title": "评论/留言"
+        },
+        "apps": {
+            "start_apps": "启动",
+            "open_apps": "打开应用程序",
+            "title": "应用程序",
+            "found_apps": "在浏览器中查找应用程序"
+        },
+        "gifts": {
+            "title": "礼物/抛掷"
+        },
+        "channels": {
+            "setup_channel": "设置简单",
+            "connect": "联系",
+            "open": "开放通道",
+            "delete": "删除频道",
+            "edit": "编辑频道",
+            "channel_url": "频道网址...",
+            "title": "渠道",
+            "append_channel": "加上",
+            "next_check": "只是要重新检查",
+            "append_as": "添加为"
+        }
+    },
+    "setup": {
+        "skip": "跳过设置",
+        "finish": "明白了",
+        "please_put_in_urls": "输入 URL，频道将自动添加。",
+        "start_again": "重来",
+        "append": "加上",
+        "title": "设置",
+        "which_channel": "您想添加哪些频道？",
+        "app_hint": "您可以从该网站添加各种应用程序！",
+        "installing": "安装中"
+    },
+    "pages": {
+        "main": {
+            "icon": "ti ti-home",
+            "name": "主要的"
+        },
+        "message": {
+            "icon": "ti ti-message",
+            "name": "信息"
+        },
+        "channel": {
+            "icon": "ti ti-plug",
+            "name": "渠道"
+        },
+        "asset": {
+            "icon": "ti ti-package",
+            "name": "资产"
+        },
+        "app": {
+            "icon": "ti ti-player-play",
+            "name": "应用程序"
+        },
+        "dev": {
+            "icon": "ti ti-bug",
+            "name": "发展"
+        },
+        "play-queue": {
+            "icon": "ti ti-device-gamepad",
+            "name": "参与式管理"
+        },
+        "remote_connect": "远程连接",
+        "settings": "环境"
+    },
+    "screen": {
+        "settings": {
+            "icon": "ti ti-settings",
+            "description": "您可以更改设置。",
+            "name": "环境"
+        },
+        "remote_connect": {
+            "icon": "ti ti-qrcode",
+            "description": "启动远程连接。",
+            "name": "远程连接"
+        },
+        "setup": {
+            "icon": "ti ti-settings",
+            "name": "设置",
+            "description": "开始设置。"
+        },
+        "add_channel": {
+            "icon": "ti ti-plus",
+            "name": "添加频道",
+            "description": "添加频道。"
+        },
+        "permission_request": {
+            "icon": "ti ti-lock",
+            "description": "请求许可。",
+            "name": "请求许可"
+        },
+        "plugin_request": {
+            "icon": "ti ti-plug",
+            "description": "请求插件。",
+            "name": "请求插件"
+        },
+        "update": {
+            "icon": "ti ti-download",
+            "name": "更新",
+            "description": "有新版本了。"
+        }
+    },
+    "settings": {
+        "category": {
+            "general": {
+                "icon": "ti ti-settings",
+                "description": "您可以更改常规设置。",
+                "name": "一般的"
+            },
+            "language": {
+                "icon": "ti ti-language-hiragana",
+                "description": "您可以更改语言。",
+                "name": "语言"
+            },
+            "appearance": {
+                "icon": "ti ti-palette",
+                "name": "外部的",
+                "description": "您可以更改外观。"
+            },
+            "advanced": {
+                "icon": "ti ti-settings",
+                "description": "您可以更改详细设置。",
+                "name": "细节"
+            },
+            "about": {
+                "icon": "ti ti-license",
+                "name": "信息",
+                "description": "显示有关此应用程序的信息。"
+            }
+        },
+        "setting": {
+            "layoutInvert": "翻转布局",
+            "devMode": "开发者模式",
+            "language": "语言"
+        },
+        "about": {
+            "website": "网站",
+            "contributors": "贡献者",
+            "source_code": "源代码",
+            "links": "关联",
+            "version": "版本",
+            "licenses": "执照"
+        }
+    },
+    "apps": {
+        "play-queue": {
+            "name": "参与式管理"
+        },
+        "emoji": {
+            "name": "表情符号"
+        },
+        "youtube-reaction": {
+            "icon": "ti ti-heart",
+            "name": "YouTube 反应",
+            "description": "这是 YouTube 的反应。"
+        }
+    },
+    "assets": {
+        "comment-simple": {
+            "icon": "ti ti-message",
+            "description": "这是一个简单的评论。",
+            "name": "评论（简单）"
+        },
+        "youtube-reaction": {
+            "icon": "ti ti-heart",
+            "description": "这是 YouTube 的反应。",
+            "name": "YouTube 反应"
+        }
+    }
+}

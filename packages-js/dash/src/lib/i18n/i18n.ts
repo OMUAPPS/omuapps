@@ -1,10 +1,21 @@
 import { loadI18n } from "@omujs/i18n";
+import type { I18n } from "@omujs/i18n";
+import LOCALELIST from "./locales/_list.json" with { type: "json" };
 
-export const LOCALES = {
-  "ja-JP": {
-    name: "日本語",
-    load: () => loadI18n(() => import("./locales/ja-JP.json"), "ja-JP"),
-  },
+type ILocale = {
+    [key: string]: {
+        name: string;
+        load: () => Promise<I18n>;
+    }
 };
+
+export const LOCALES: ILocale = {};
+
+LOCALELIST.map((locale) => {
+    LOCALES[locale.code] = {
+        name: locale.name,
+        load: () => loadI18n(() => import(`./locales/${locale.code}.json`), locale.code),
+    };
+});
 
 export const DEFAULT_LOCALE = "ja-JP";
