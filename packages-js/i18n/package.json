@@ -41,8 +41,7 @@
         "nodemon": "^3.1.4",
         "ts-node": "10.9.2",
         "typescript": "^5.5.3",
-        "websocket": "1.0.35",
-        "ws": "8.17.0"
+        "websocket": "1.0.35"
     },
     "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"
 }
