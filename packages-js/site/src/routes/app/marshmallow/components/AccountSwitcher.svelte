@@ -34,6 +34,9 @@
                             class="user"
                             class:selected
                         >
+                            <Tooltip>
+                                {entry.screen_name} にログイン
+                            </Tooltip>
                             <img src={entry.image} alt={entry.name} />
                             <span class="user-info">
                                 <p>{entry.screen_name}</p>
@@ -112,7 +115,7 @@
         align-items: center;
         justify-content: start;
         gap: 1rem;
-        padding: 0.5rem 1rem;
+        padding: 0.6rem 1rem;
         width: 100%;
         background: var(--color-bg-2);
         border: none;
@@ -128,6 +131,15 @@
             display: flex;
             flex-direction: column;
             align-items: start;
+
+            > p {
+                font-weight: bold;
+                font-size: 0.8rem;
+            }
+
+            > small {
+                font-size: 0.6rem;
+            }
         }
 
         &.selected {
