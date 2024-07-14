@@ -25,6 +25,7 @@
 ## OMUAPPSについて / About OMUAPPS
 
 OMUAPPSは、アプリ間の連携やブラウザだけでは実現できない機能を厳格に制限された権限のもと提供をするAPIアプリケーションおよびそのAPIを利用するアプリケーションを提供するプラットフォームです。
+OMUAPPS is a platform that provides API applications and applications that use the API that strictly limit the functions that cannot be realized between applications and cannot be realized with a browser under restricted permissions.
 
 ## 開発 / Development
 
