@@ -56,12 +56,25 @@
         justify-content: center;
         align-items: center;
         z-index: 100;
+        animation: result 0.5s;
 
         > p {
             font-size: 4rem;
             color: #fff;
             background: #000;
             padding: 1rem 6rem;
+        }
+    }
+
+    @keyframes result {
+        0% {
+            transform: translateY(-2rem);
+        }
+        18% {
+            transform: translateY(0.25rem);
+        }
+        100% {
+            transform: translateY(0px);
         }
     }
 </style>
