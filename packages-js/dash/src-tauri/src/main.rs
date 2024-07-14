@@ -11,6 +11,8 @@ mod utils;
 mod uv;
 mod version;
 
+use std::borrow;
+
 use anyhow::Result;
 use app::{AppState, ServerStatus};
 use directories::ProjectDirs;
@@ -19,7 +21,7 @@ use once_cell::sync::Lazy;
 use options::InstallOptions;
 use python::Python;
 use server::{Server, ServerOption};
-use sources::py::PythonVersionRequest;
+use sources::py::{PythonVersion, PythonVersionRequest};
 use tauri::Manager;
 use tauri_plugin_log::LogTarget;
 use uv::Uv;
@@ -73,7 +75,23 @@ fn main() {
         port: 26423,
     };
 
-    let python = Python::ensure(&options).unwrap();
+    let python = if cfg!(dev) {
+        Python {
+            path: data_dir.join("../.venv"),
+            python_bin: data_dir.join("../.venv/Scripts/python.exe"),
+            version: PythonVersion {
+                major: 3,
+                minor: 12,
+                patch: 3,
+                suffix: None,
+                arch: borrow::Cow::Borrowed(""),
+                name: borrow::Cow::Borrowed(""),
+                os: borrow::Cow::Borrowed(""),
+            },
+        }
+    } else {
+        Python::ensure(&options).unwrap()
+    };
     let uv = Uv::ensure(&options, &python.python_bin).unwrap();
     let server = Server::new(server_options, python, uv);
 
