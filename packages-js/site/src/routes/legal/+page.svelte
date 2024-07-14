@@ -34,23 +34,8 @@
         color: var(--color-1);
     }
 
-    h2 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-top: 2rem;
-    }
-
     p {
         margin-top: 1rem;
         font-size: 1rem;
-    }
-
-    ol {
-        margin-top: 1rem;
-        margin-left: 2rem;
-    }
-
-    li {
-        margin-top: 0.5rem;
     }
 </style>
