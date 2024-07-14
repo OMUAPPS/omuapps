@@ -59,7 +59,7 @@
                 <p class="legal">
                     OMUAPPSをダウンロードすることで、
                     <br />
-                    利用規約とプライバシーポリシーに同意したものとみなされます。
+                    利用規約とプライバシーポリシーに同意したものとみなします。
                 </p>
                 <br />
                 {@const date = new Date(data.manifest.pub_date)}
