@@ -20,7 +20,7 @@
 
     function getColor(index: number) {
         const hue = (index * 137.508) % 360;
-        return `hsla(${hue}, 60%, 70%, 100%)`;
+        return `hsla(${hue}, 0%, 30%, 100%)`;
     }
 
     function deg2rad(deg: number) {
@@ -40,12 +40,9 @@
     });
 
     function rouletteEasing(t: number) {
-        const y2 = 3 * t * t - 2 * t * t * t;
-        const y4 = 1 - Math.pow(2 * (1 - t), 10) / 2;
-        if (t <= 0.5) {
-            return y2;
-        }
-        return BetterMath.lerp(y2, y4, 2 * (t - 0.5));
+        const a = Math.pow(t, 0.1);
+        const r = Math.pow(t, 0.5);
+        return BetterMath.lerp(a, 1, r);
     }
 
     function render() {
@@ -55,6 +52,8 @@
 
         const count = Object.keys($entries).length;
         if (count === 0) return;
+
+        ctx.save();
 
         if ($state.type === 'idle' || $state.type === 'recruiting') {
             const speed = Math.min(1, Math.sqrt(timer.getElapsedMS()) / 100);
@@ -68,6 +67,11 @@
             const time = Date.now() - $state.start;
             const t = rouletteEasing(BetterMath.clamp01(time / $state.duration));
             rotation = BetterMath.lerp(lastRotation, rotateTo, t);
+            // scale
+            const scale = 1 + BetterMath.lerp(0.2 / (t + 1), 0, t);
+            ctx.translate(width / 2, height / 2);
+            ctx.scale(scale, scale);
+            ctx.translate(-width / 2, -height / 2);
         } else if ($state.type === 'spin-result') {
             const { entry } = $state.result;
             const index = Object.keys($entries).indexOf(entry.id);
@@ -136,7 +140,8 @@
             ctx.fillStyle = hit ? 'black' : 'white';
             const fontSize = (0.3 * radius) / Math.sqrt(count);
             ctx.font = `bold ${fontSize}px "Noto Sans JP"`;
-            const textWidth = ctx.measureText(entry.name).width;
+            const name = entry.name || entry.id;
+            const textWidth = ctx.measureText(name).width;
             const textScale = Math.min(1, radius / 1.5 / textWidth);
             ctx.font = `bold ${fontSize * textScale}px "Noto Sans JP"`;
             // draw text
@@ -146,7 +151,7 @@
             ctx.save();
             ctx.translate(x, y);
             ctx.rotate((i + 0.5) * split + angle);
-            ctx.fillText(entry.name, 0, 0);
+            ctx.fillText(name, 0, 0);
             ctx.restore();
 
             i++;
@@ -167,6 +172,8 @@
         ctx.lineTo(width / 2, height / 2 - radius);
         ctx.lineTo(width / 2 + triangleRadius / 2, height / 2 - radius - triangleRadius);
         ctx.fill();
+
+        ctx.restore();
     }
 
     let renderHandle: number;
