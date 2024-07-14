@@ -4,6 +4,7 @@ import abc
 from dataclasses import dataclass
 from importlib import metadata
 
+from loguru import logger
 from omu import Omu
 from omu.helper import Coro
 from omu_chat import Channel, Chat, Provider, Room
@@ -42,7 +43,15 @@ class ChatService(abc.ABC):
     def closed(self) -> bool: ...
 
     @abc.abstractmethod
-    async def start(self): ...
+    async def run(self): ...
+
+    async def start(self):
+        try:
+            await self.run()
+        except Exception as e:
+            logger.opt(exception=e).error(f"Error starting chat for {self.room.key()}")
+        finally:
+            await self.stop()
 
     @abc.abstractmethod
     async def stop(self): ...

@@ -298,7 +298,7 @@ class YoutubeChat(ChatService):
                 ended_at = datetime.fromisoformat(broadcast_details["endTimestamp"])
                 self.room.metadata["ended_at"] = ended_at.isoformat()
 
-    async def start(self):
+    async def run(self):
         count = 0
         self.tasks.create_task(self.fetch_authors_task())
         try:
@@ -683,6 +683,8 @@ class YoutubeChat(ChatService):
         )
 
     async def stop(self):
+        if self._closed:
+            return
         self._closed = True
         self.tasks.terminate()
         self._room.connected = False
