@@ -4,7 +4,11 @@
 
 <footer>
     <FlexRowWrapper gap between heightFull>
-        <FlexColWrapper gap>
+        <div class="category">
+            <p>
+                Social
+                <i class="ti ti-share" />
+            </p>
             <a href="https://github.com/OMUAPPS/omuapps">
                 <p>
                     <i class="ti ti-brand-github" />
@@ -26,8 +30,12 @@
                     <i class="ti ti-external-link" />
                 </p>
             </a>
-        </FlexColWrapper>
-        <div class="legal">
+        </div>
+        <div class="category">
+            <p>
+                Legal
+                <i class="ti ti-file" />
+            </p>
             <a href="/legal/privacy">
                 <p class="between">
                     <Tooltip>
@@ -74,6 +82,26 @@
         gap: 1rem;
         width: 100%;
         font-size: 0.8rem;
+    }
+
+    .category {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        > p {
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        > a {
+            color: var(--color-1);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+        }
     }
 
     .hint {
