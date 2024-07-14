@@ -36,8 +36,9 @@
         color: var(--color-1);
         background: var(--color-bg-2);
         outline: 2px solid var(--color-1);
+        outline-offset: -2px;
         font-weight: bold;
-        padding: 10px;
+        padding: 0.75rem;
         gap: 5px;
         cursor: grab;
 
