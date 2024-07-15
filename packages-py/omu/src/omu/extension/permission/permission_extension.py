@@ -1,6 +1,7 @@
 from omu.client import Client
 from omu.extension import Extension, ExtensionType
 from omu.extension.endpoint import EndpointType
+from omu.extension.table.table import TablePermissions, TableType
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
 from omu.serializer import Serializer
@@ -91,4 +92,17 @@ PERMISSION_GRANT_PACKET = PacketType.create_json(
     PERMISSION_EXTENSION_TYPE,
     "grant",
     Serializer.model(PermissionType).to_array(),
+)
+
+PERMISSION_READ_PERMISSION_ID = PERMISSION_EXTENSION_TYPE / "read"
+PERMISSION_REMOVE_PERMISSION_ID = PERMISSION_EXTENSION_TYPE / "remove"
+
+PERMISSION_TABLE_TYPE = TableType.create_model(
+    PERMISSION_EXTENSION_TYPE,
+    "permissions",
+    PermissionType,
+    permissions=TablePermissions(
+        read=PERMISSION_READ_PERMISSION_ID,
+        remove=PERMISSION_REMOVE_PERMISSION_ID,
+    ),
 )

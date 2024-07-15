@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Literal, TypedDict
 
 from omu.identifier import Identifier
+from omu.interface.keyable import Keyable
 from omu.localization import LocalizedText
 from omu.model import Model
 
@@ -22,7 +23,7 @@ class PermissionTypeJson(TypedDict):
 
 
 @dataclass(frozen=True, slots=True)
-class PermissionType(Model[PermissionTypeJson]):
+class PermissionType(Model[PermissionTypeJson], Keyable):
     id: Identifier
     metadata: PermissionMetadata
 
@@ -50,3 +51,6 @@ class PermissionType(Model[PermissionTypeJson]):
             id=Identifier.from_key(json["id"]),
             metadata=json["metadata"],
         )
+
+    def key(self) -> str:
+        return self.id.key()

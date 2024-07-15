@@ -16,9 +16,18 @@ from omu.identifier import Identifier
 from omuserver.server import Server
 from omuserver.session import Session, SessionType
 
+from .permissions import (
+    PERMISSION_READ_PERMISSION,
+    PERMISSION_REMOVE_PERMISSION,
+)
+
 
 class PermissionExtension:
     def __init__(self, server: Server) -> None:
+        server.permission_manager.register(
+            PERMISSION_READ_PERMISSION,
+            PERMISSION_REMOVE_PERMISSION,
+        )
         server.packet_dispatcher.register(
             PERMISSION_REGISTER_PACKET,
             PERMISSION_REQUIRE_PACKET,
