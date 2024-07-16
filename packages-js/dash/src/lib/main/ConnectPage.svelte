@@ -9,31 +9,53 @@
 </script>
 
 <Header icon="ti-message" title={$t('pages.message')} subtitle="message" />
-<div class="panels">
-    <div class="left">
-        チャンネル
-        <div class="channels">
-            <PanelChannels />
+<main>
+    <div class="panels">
+        <div class="left">
+            <p>
+                チャンネル
+                <i class="ti ti-user" />
+            </p>
+            <div class="channels">
+                <PanelChannels />
+            </div>
+            <p>
+                配信
+                <i class="ti ti-bolt" />
+            </p>
+            <div class="rooms">
+                <PanelRooms />
+            </div>
         </div>
-        配信
-        <div class="rooms">
-            <PanelRooms />
-        </div>
+        <dir class="right">
+            <p>
+                チャット
+                <i class="ti ti-message" />
+            </p>
+            <div class="chat">
+                <PanelMessages />
+            </div>
+        </dir>
     </div>
-    <dir class="right">
-        チャット
-        <div class="chat">
-            <PanelMessages />
-        </div>
-    </dir>
-</div>
+</main>
 
 <style lang="scss">
+    main {
+        position: relative;
+        height: 100%;
+        display: flex;
+        color: var(--color-1);
+    }
+
     .panels {
         position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 5rem;
         display: flex;
-        width: 100%;
-        height: 100%;
+        padding: 1rem;
+        gap: 1rem;
     }
 
     $channel-height: 16rem;
@@ -44,7 +66,6 @@
         flex-direction: column;
         width: calc(100% - $right-width);
         height: 100%;
-        padding: 1rem;
         gap: 1rem;
 
         .channels {
@@ -64,11 +85,10 @@
         flex-direction: column;
         gap: 1rem;
         width: $right-width;
-        margin: 1rem;
-        height: 100%;
+        max-height: 100%;
 
         .chat {
-            height: 100%;
+            max-height: 100%;
             background: var(--color-bg-2);
         }
     }
