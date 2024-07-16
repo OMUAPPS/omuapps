@@ -1,6 +1,6 @@
 <script lang="ts">
     import { dashboard } from '$lib/client.js';
-    import { TableList, Tooltip } from '@omujs/ui';
+    import { Popup, TableList, Tooltip } from '@omujs/ui';
     import AppEntry from './AppEntry.svelte';
     import { loadedIds, menuOpen, page, type Page, type PageItem } from './stores.js';
     import IframePage from './IframePage.svelte';
@@ -119,11 +119,11 @@
             {#if $menuOpen}
                 <span>アプリ</span>
                 <div class="buttons">
-                    <button>
+                    <!-- <button>
                         <Tooltip>
                             <div class="tooltip">
-                                <h3>アプリを追加</h3>
-                                <small>新しいアプリを追加します</small>
+                                <h3>アプリを管理</h3>
+                                <small>設定やアンインストールを行います</small>
                             </div>
                         </Tooltip>
                         <i class="ti ti-settings" />
@@ -135,8 +135,8 @@
                                 <small>アプリの並び順を変更します</small>
                             </div>
                         </Tooltip>
-                        <i class="ti ti-chevron-down" />
-                    </button>
+                        <i class="ti ti-sort-descending" />
+                    </button> -->
                 </div>
             {/if}
         </div>
@@ -162,11 +162,25 @@
 <style lang="scss">
     $tab-width: 300px;
 
+    i {
+        pointer-events: none;
+    }
+
+    .tabs {
+        display: flex;
+        flex-direction: column;
+        width: $tab-width;
+        background: var(--color-bg-2);
+        border-right: 1px solid var(--color-outline);
+        padding: 1rem 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
     .menu {
         display: flex;
         flex-direction: row;
         align-items: center;
-        padding: 0 1rem;
+        padding: 1rem;
         border: none;
         background: var(--color-bg-2);
         color: var(--color-1);
@@ -185,15 +199,6 @@
             background: var(--color-bg-1);
             transition: background 0.0621s;
         }
-    }
-
-    .tabs {
-        display: flex;
-        flex-direction: column;
-        width: $tab-width;
-        background: var(--color-bg-2);
-        border-right: 1px solid var(--color-outline);
-        padding: 1rem 0.5rem;
     }
 
     .tab {
@@ -242,13 +247,12 @@
     .list {
         display: flex;
         flex-direction: column;
-        padding: 0.5rem 0rem;
+        padding-top: 0.5rem;
         background: var(--color-bg-2);
         color: var(--color-1);
         width: 100%;
         flex: 1;
         font-size: 0.85rem;
-        padding-bottom: 0.75rem;
         margin-top: 1rem;
         overflow-y: auto;
     }
