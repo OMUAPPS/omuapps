@@ -3,7 +3,7 @@
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
     import AppPage from './AppPage.svelte';
-    import { loadedIds, page, type PageItem } from './page.js';
+    import { loadedIds, menuOpen, page, type PageItem } from './stores.js';
 
     export let entry: App;
 
@@ -47,21 +47,33 @@
     {#if image}
         <img src={image} alt="" class="image" />
     {/if}
-    <div class="info">
-        <span class="icon">
-            {#if icon.startsWith('ti-')}
-                <i class="ti {icon}"></i>
-            {:else}
-                <img src={icon} alt={name} />
-            {/if}
-        </span>
-        <p class="name">
-            {name}
-        </p>
-        <div class="open">
-            <i class="ti ti-chevron-right" />
+    {#if $menuOpen}
+        <div class="info">
+            <span class="icon">
+                {#if icon.startsWith('ti-')}
+                    <i class="ti {icon}"></i>
+                {:else}
+                    <img src={icon} alt={name} />
+                {/if}
+            </span>
+            <p class="name">
+                {name}
+            </p>
+            <div class="open">
+                <i class="ti ti-chevron-right" />
+            </div>
         </div>
-    </div>
+    {:else}
+        <div class="info">
+            <span class="icon">
+                {#if icon.startsWith('ti-')}
+                    <i class="ti {icon}"></i>
+                {:else}
+                    <img src={icon} alt={name} />
+                {/if}
+            </span>
+        </div>
+    {/if}
 </button>
 
 <style lang="scss">
@@ -137,7 +149,7 @@
             display: flex;
             flex-direction: row;
             align-items: center;
-            padding: 1rem;
+            padding: 0.5rem;
             width: 100%;
             color: var(--color-1);
 
@@ -145,6 +157,8 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                min-width: 2rem;
+                min-height: 2rem;
                 width: 2rem;
                 height: 2rem;
                 margin-right: 0.25rem;
@@ -162,6 +176,7 @@
             }
 
             > .name {
+                margin-left: 0.25rem;
                 font-size: 0.8rem;
                 font-weight: 600;
                 color: var(--color-text-1);

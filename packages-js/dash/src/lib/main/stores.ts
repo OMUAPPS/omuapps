@@ -15,3 +15,4 @@ export type PageItem<T> = {
 
 export const page = writable<PageItem<unknown> | null>(null);
 export const loadedIds = writable<string[]>([]);
+export const menuOpen = writable(true);
