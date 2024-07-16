@@ -2,7 +2,8 @@
     import { omu } from '$lib/client.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
-    import { page } from './stores.js';
+    import AppPage from './AppPage.svelte';
+    import { loadedIds, page, type PageItem } from './page.js';
 
     export let entry: App;
 
@@ -14,12 +15,29 @@
     const icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : 'No icon';
     const image = metadata?.image ? omu.i18n.translate(metadata?.image) : null;
 
+    const appPage = {
+        id: `app-${entry.id.key()}`,
+        async open() {
+            return {
+                component: AppPage,
+                props: {
+                    app: entry,
+                },
+            };
+        },
+    } as PageItem<unknown>;
+
     function handleClick() {
-        $page = entry.url || null;
+        $page = appPage;
     }
 </script>
 
-<button class="app" on:click={handleClick}>
+<button
+    class="app"
+    class:active={$page === appPage}
+    class:loaded={$loadedIds.includes(appPage.id)}
+    on:click={handleClick}
+>
     <Tooltip>
         <div class="tooltip">
             <h3>{name}</h3>
@@ -40,9 +58,9 @@
         <p class="name">
             {name}
         </p>
-        <button class="open">
+        <div class="open">
             <i class="ti ti-chevron-right" />
-        </button>
+        </div>
     </div>
 </button>
 
@@ -58,8 +76,17 @@
         width: 100%;
         height: 4rem;
 
-        &:hover {
+        &.active {
             background: var(--color-bg-1);
+            transition: background 0.0621s;
+        }
+
+        &.loaded {
+            border-left: 2px solid var(--color-1);
+        }
+
+        &:focus,
+        &:hover {
             outline: 1px solid var(--color-1);
             outline-offset: -3px;
             transition: background 0.0621s;

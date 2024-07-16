@@ -2,17 +2,63 @@
     import { dashboard } from '$lib/client.js';
     import { TableList, Tooltip } from '@omujs/ui';
     import AppEntry from './AppEntry.svelte';
-    import { page } from './stores.js';
+    import { loadedIds, page, type Page, type PageItem } from './page.js';
+    import IframePage from './IframePage.svelte';
+    import { DEV } from 'esm-env';
+    import ConnectPage from './ConnectPage.svelte';
+
+    const DOWNLOAD_PAGE = {
+        id: `download`,
+        async open() {
+            return {
+                component: IframePage,
+                props: {
+                    url: DEV ? 'http://localhost:5173/app/' : 'http://localhost:5173/app/',
+                },
+            };
+        },
+    } as PageItem<unknown>;
+
+    const CONNECT_PAGE = {
+        id: `connect`,
+        async open() {
+            return {
+                component: ConnectPage,
+                props: {},
+            };
+        },
+    } as PageItem<unknown>;
+
+    const pages: Map<string, Page<unknown>> = new Map();
+    let loading = false;
+
+    page.subscribe(async (value) => {
+        if (value) {
+            loading = true;
+            const page = await value.open();
+            $loadedIds = [...$loadedIds, value.id];
+            pages.set(value.id, page);
+            loading = false;
+        }
+    });
 </script>
 
 <main>
     <div class="tabs">
-        <button class="tab" on:click={() => ($page = 'http://localhost:5173/app/?hide=1')}>
+        <button
+            class="tab"
+            on:click={() => ($page = DOWNLOAD_PAGE)}
+            class:active={$page === DOWNLOAD_PAGE}
+        >
             <i class="ti ti-search" />
             <span>アプリを探す</span>
             <i class="open ti ti-chevron-right" />
         </button>
-        <button class="tab">
+        <button
+            class="tab"
+            on:click={() => ($page = CONNECT_PAGE)}
+            class:active={$page === CONNECT_PAGE}
+        >
             <i class="ti ti-message" />
             <span>配信をつなげる</span>
             <i class="open ti ti-chevron-right" />
@@ -49,14 +95,24 @@
             <TableList table={dashboard.apps} component={AppEntry} />
         </div>
     </div>
-    <div class="page">
+    <div class="page-container">
         {#if $page}
-            <iframe src={$page} title="" frameborder="0" allow="camera; microphone"></iframe>
+            {@const current = $page.id}
+            {#each pages.entries() as [id, page] (id)}
+                <div class="page" class:visible={!loading && current === id}>
+                    <svelte:component this={page.component} props={page.props} />
+                </div>
+            {/each}
+        {/if}
+        {#if loading}
+            <div>Loading...</div>
         {/if}
     </div>
 </main>
 
 <style lang="scss">
+    $tab-width: 300px;
+
     main {
         display: flex;
         flex-direction: row;
@@ -68,7 +124,7 @@
     .tabs {
         display: flex;
         flex-direction: column;
-        width: 300px;
+        width: $tab-width;
         background: var(--color-bg-2);
         border-right: 1px solid var(--color-outline);
         padding: 1rem 0.5rem;
@@ -99,8 +155,6 @@
 
         &:hover {
             background: var(--color-bg-1);
-            outline: 1px solid var(--color-1);
-            outline-offset: -3px;
             transition: background 0.0621s;
 
             > .open {
@@ -108,6 +162,12 @@
                 margin-right: 0rem;
                 transition: margin 0.0621s;
             }
+        }
+
+        &.active {
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            border-right: 3px solid var(--color-1);
         }
     }
 
@@ -124,10 +184,6 @@
         padding-bottom: 0.75rem;
         margin-top: 1rem;
         padding-left: 1rem;
-
-        > i {
-            margin-left: 0.25rem;
-        }
 
         > .buttons {
             margin-left: auto;
@@ -150,17 +206,30 @@
         }
     }
 
-    .page {
+    .page-container {
         flex: 1;
         display: flex;
         justify-content: center;
         align-items: center;
         background: var(--color-bg-1);
+    }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+    .page {
+        position: absolute;
+        display: none;
+        width: 100%;
+        height: 100%;
+        background: var(--color-bg-1);
+        position: absolute;
+        top: 0;
+        left: $tab-width;
+        right: 0;
+        width: calc(100% - #{$tab-width});
+        bottom: 0;
+        z-index: 1;
+
+        &.visible {
+            display: block;
         }
     }
 </style>
