@@ -24,6 +24,15 @@ const APP_TABLE_TYPE = TableType.createModel(SERVER_EXTENSION_TYPE, {
         read: SERVER_APPS_READ_PERMISSION_ID,
     },
 });
+
+export const SERVER_SESSIONS_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('sessions', 'read');
+const SESSION_TABLE_TYPE = TableType.createModel(SERVER_EXTENSION_TYPE, {
+    name: 'sessions',
+    model: App,
+    permissions: {
+        read: SERVER_APPS_READ_PERMISSION_ID,
+    },
+});
 export const SERVER_SHUTDOWN_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('shutdown');
 const SHUTDOWN_ENDPOINT_TYPE = EndpointType.createJson<boolean, boolean>(SERVER_EXTENSION_TYPE, {
     name: 'shutdown',
@@ -36,11 +45,13 @@ const REQUIRE_APPS_PACKET_TYPE = PacketType.createJson<Identifier[]>(SERVER_EXTE
 
 export class ServerExtension implements Extension {
     public readonly apps: Table<App>;
+    public readonly sessions: Table<App>;
     private requiredApps = new IdentifierSet();
 
     constructor(private readonly client: Client) {
         client.network.registerPacket(REQUIRE_APPS_PACKET_TYPE);
         this.apps = client.tables.get(APP_TABLE_TYPE);
+        this.sessions = client.tables.get(SESSION_TABLE_TYPE);
         client.network.addTask(() => this.onTask());
     }
 
