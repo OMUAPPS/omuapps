@@ -42,6 +42,7 @@
 
     const pages: Map<string, Page<unknown>> = new Map();
     let loading = false;
+    let open = false;
 
     page.subscribe(async (value) => {
         if (value) {
@@ -54,16 +55,21 @@
     });
 </script>
 
-<main>
+<main class:open>
     <div class="tabs">
+        <button class="menu" on:click={() => (open = !open)}>
+            <i class="ti ti-menu" />
+        </button>
         <button
             class="tab"
             on:click={() => ($page = DOWNLOAD_PAGE)}
             class:active={$page === DOWNLOAD_PAGE}
         >
             <i class="ti ti-search" />
-            <span>アプリを探す</span>
-            <i class="open ti ti-chevron-right" />
+            {#if open}
+                <span>アプリを探す</span>
+                <i class="open ti ti-chevron-right" />
+            {/if}
         </button>
         <button
             class="tab"
@@ -71,8 +77,10 @@
             class:active={$page === CONNECT_PAGE}
         >
             <i class="ti ti-bolt" />
-            <span>配信をつなげる</span>
-            <i class="open ti ti-chevron-right" />
+            {#if open}
+                <span>配信をつなげる</span>
+                <i class="open ti ti-chevron-right" />
+            {/if}
         </button>
         <button
             class="tab"
@@ -80,31 +88,35 @@
             class:active={$page === SETTINGS_PAGE}
         >
             <i class="ti ti-settings" />
-            <span>設定</span>
-            <i class="open ti ti-chevron-right" />
+            {#if open}
+                <span>設定</span>
+                <i class="open ti ti-chevron-right" />
+            {/if}
         </button>
         <div class="tab-group">
-            <span>アプリ</span>
-            <div class="buttons">
-                <button>
-                    <Tooltip>
-                        <div class="tooltip">
-                            <h3>アプリを追加</h3>
-                            <small>新しいアプリを追加します</small>
-                        </div>
-                    </Tooltip>
-                    <i class="ti ti-settings" />
-                </button>
-                <button>
-                    <Tooltip>
-                        <div class="tooltip">
-                            <h3>アプリを並び替え</h3>
-                            <small>アプリの並び順を変更します</small>
-                        </div>
-                    </Tooltip>
-                    <i class="ti ti-chevron-down" />
-                </button>
-            </div>
+            {#if open}
+                <span>アプリ</span>
+                <div class="buttons">
+                    <button>
+                        <Tooltip>
+                            <div class="tooltip">
+                                <h3>アプリを追加</h3>
+                                <small>新しいアプリを追加します</small>
+                            </div>
+                        </Tooltip>
+                        <i class="ti ti-settings" />
+                    </button>
+                    <button>
+                        <Tooltip>
+                            <div class="tooltip">
+                                <h3>アプリを並び替え</h3>
+                                <small>アプリの並び順を変更します</small>
+                            </div>
+                        </Tooltip>
+                        <i class="ti ti-chevron-down" />
+                    </button>
+                </div>
+            {/if}
         </div>
         <div class="list">
             <TableList table={dashboard.apps} component={AppEntry} />
@@ -128,12 +140,28 @@
 <style lang="scss">
     $tab-width: 300px;
 
-    main {
+    .menu {
         display: flex;
         flex-direction: row;
-        height: 100%;
-        background: var(--color-bg-1);
+        align-items: center;
+        padding: 0 1rem;
+        border: none;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        width: 100%;
+        font-size: 0.9rem;
         font-weight: 600;
+        height: 3rem;
+
+        > i {
+            font-size: 1rem;
+            margin-right: 1rem;
+        }
+
+        &:hover {
+            background: var(--color-bg-1);
+            transition: background 0.0621s;
+        }
     }
 
     .tabs {
@@ -237,14 +265,42 @@
         background: var(--color-bg-1);
         position: absolute;
         top: 0;
-        left: $tab-width;
         right: 0;
-        width: calc(100% - #{$tab-width});
         bottom: 0;
         z-index: 1;
 
         &.visible {
             display: block;
+        }
+    }
+
+    main {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+        background: var(--color-bg-1);
+        font-weight: 600;
+
+        > .tabs {
+            width: 4rem;
+            transition: width 0.0621s;
+        }
+
+        .page {
+            left: 4rem;
+            width: calc(100% - 4rem);
+        }
+
+        &.open {
+            > .tabs {
+                width: $tab-width;
+                transition: width 0.0621s;
+            }
+
+            .page {
+                left: $tab-width;
+                width: calc(100% - #{$tab-width});
+            }
         }
     }
 </style>
