@@ -87,8 +87,6 @@
 
         &:focus,
         &:hover {
-            outline: 1px solid var(--color-1);
-            outline-offset: -3px;
             transition: background 0.0621s;
 
             > .info {
