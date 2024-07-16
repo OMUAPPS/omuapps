@@ -50,10 +50,15 @@ if (DEV && BROWSER) {
         const origin = 'http://localhost:5173';
         if (!app.metadata) return;
         const icon = app.metadata?.icon;
-        if (typeof icon !== 'string') return;
-        if (icon.startsWith('ti-')) return;
-        const url = new URL(icon, origin);
-        app.metadata.icon = url.href;
+        if (icon && typeof icon === 'string' && !icon.startsWith('ti-')) {
+            const url = new URL(icon, origin);
+            app.metadata.icon = url.href;
+        }
+        const image = app.metadata?.image;
+        if (image && typeof image === 'string' && !image.startsWith('ti-')) {
+            const url = new URL(image, origin);
+            app.metadata.image = url.href;
+        }
     });
 }
 
