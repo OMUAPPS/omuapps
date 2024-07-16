@@ -97,7 +97,7 @@ export class RouletteApp {
                 throw new Error('No entries to spin');
             }
             const entries = Object.values(value);
-            const entry = entries[Math.floor(Math.random() * entries.length)];
+            const entry = entries[Math.floor(BetterMath.random() * entries.length)];
             const start = Date.now();
             const duration = config.duration * 1000;
             const random = this.easeInOutCubic(BetterMath.invjsrandom());
