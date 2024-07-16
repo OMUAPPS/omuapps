@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 from omu.extension.server.server_extension import (
-    APP_TABLE_TYPE,
     REQUIRE_APPS_PACKET_TYPE,
+    SERVER_APP_TABLE_TYPE,
+    SERVER_SESSION_TABLE_TYPE,
     SHUTDOWN_ENDPOINT_TYPE,
     VERSION_REGISTRY_TYPE,
 )
@@ -56,7 +57,8 @@ class ServerExtension:
             SERVER_APPS_READ_PERMISSION,
         )
         self.version_registry = self._server.registry.register(VERSION_REGISTRY_TYPE)
-        self.apps = self._server.tables.register(APP_TABLE_TYPE)
+        self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
+        self.sessions = self._server.tables.register(SERVER_SESSION_TABLE_TYPE)
         server.network.event.connected += self.on_connected
         server.network.event.disconnected += self.on_disconnected
         server.event.start += self.on_start
@@ -107,12 +109,11 @@ class ServerExtension:
 
     async def on_connected(self, session: Session) -> None:
         logger.info(f"Connected: {session.app.key()}")
+        await self.sessions.add(session.app)
         await self.apps.add(session.app)
         unlisten = session.event.ready.listen(self.on_session_ready)
 
-        @session.event.disconnected.listen
-        def on_disconnected(session: Session) -> None:
-            unlisten()
+        session.event.disconnected.listen(lambda session: unlisten())
 
     async def on_session_ready(self, session: Session) -> None:
         for waiter in self._app_waiters.get(session.app.id, []):
@@ -122,4 +123,4 @@ class ServerExtension:
 
     async def on_disconnected(self, session: Session) -> None:
         logger.info(f"Disconnected: {session.app.key()}")
-        await self.apps.remove(session.app)
+        await self.sessions.remove(session.app)
