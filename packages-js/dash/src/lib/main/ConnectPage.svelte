@@ -44,6 +44,9 @@
         position: relative;
         height: 100%;
         display: flex;
+    }
+
+    p {
         color: var(--color-1);
     }
 
