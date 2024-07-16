@@ -6,6 +6,7 @@
     import IframePage from './IframePage.svelte';
     import { DEV } from 'esm-env';
     import ConnectPage from './ConnectPage.svelte';
+    import SettingsPage from './SettingsPage.svelte';
 
     const DOWNLOAD_PAGE = {
         id: `download`,
@@ -24,6 +25,16 @@
         async open() {
             return {
                 component: ConnectPage,
+                props: {},
+            };
+        },
+    } as PageItem<unknown>;
+
+    const SETTINGS_PAGE = {
+        id: `settings`,
+        async open() {
+            return {
+                component: SettingsPage,
                 props: {},
             };
         },
@@ -59,11 +70,15 @@
             on:click={() => ($page = CONNECT_PAGE)}
             class:active={$page === CONNECT_PAGE}
         >
-            <i class="ti ti-message" />
+            <i class="ti ti-bolt" />
             <span>配信をつなげる</span>
             <i class="open ti ti-chevron-right" />
         </button>
-        <button class="tab">
+        <button
+            class="tab"
+            on:click={() => ($page = SETTINGS_PAGE)}
+            class:active={$page === SETTINGS_PAGE}
+        >
             <i class="ti ti-settings" />
             <span>設定</span>
             <i class="open ti ti-chevron-right" />
