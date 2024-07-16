@@ -9,10 +9,10 @@ export const APP = new App(IDENTIFIER, {
     metadata: {
         locale: 'ja',
         name: {
-            ja: 'あおいくる待機画面：フライドポテト',
+            ja: 'あおいくる様用待機画面',
         },
         description: {
-            ja: 'あおいくる待機画面：フライドポテト',
+            ja: 'ポテトをあげる待機画面です。',
         },
         icon: 'ti-photo',
         tags: ['asset'] as TagKey[],
