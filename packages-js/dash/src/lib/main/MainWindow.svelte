@@ -1,153 +1,356 @@
 <script lang="ts">
-    import { writable } from 'svelte/store';
+    import { dashboard } from '$lib/client.js';
+    import { Popup, TableList, Tooltip } from '@omujs/ui';
+    import AppEntry from './AppEntry.svelte';
+    import { loadedIds, menuOpen, page, type Page, type PageItem } from './stores.js';
+    import IframePage from './IframePage.svelte';
+    import { DEV } from 'esm-env';
+    import ConnectPage from './ConnectPage.svelte';
+    import SettingsPage from './SettingsPage.svelte';
 
-    import ButtonOpenSettings from './ButtonOpenSettings.svelte';
-    import PageDev from './page/dev/PageDev.svelte';
-    import PageHome from './page/home/PageHome.svelte';
-    import { pages } from './page/page.js';
-    import PageChannels from './page/PageChannels.svelte';
-    import PageMessages from './page/PageMessages.svelte';
-    import { currentPage, devMode } from './settings.js';
+    const DOWNLOAD_PAGE = {
+        id: `download`,
+        async open() {
+            return {
+                component: IframePage,
+                props: {
+                    url: DEV ? 'http://localhost:5173/app/' : 'http://localhost:5173/app/',
+                },
+            };
+        },
+    } as PageItem<unknown>;
 
-    import { t } from '$lib/i18n/i18n-context.js';
-    import { style } from '$lib/utils/class-helper.js';
-    import { FlexColWrapper, FlexRowWrapper, Tooltip } from '@omujs/ui';
+    const CONNECT_PAGE = {
+        id: `connect`,
+        async open() {
+            return {
+                component: ConnectPage,
+                props: {},
+            };
+        },
+    } as PageItem<unknown>;
 
-    pages.set(new Map());
-    $pages.set('main', {
-        name: 'main',
-        component: PageHome,
-        props: {},
-    });
-    $pages.set('message', {
-        name: 'message',
-        component: PageMessages,
-        props: {},
-    });
-    $pages.set('channel', {
-        name: 'channel',
-        component: PageChannels,
-        props: {},
-    });
+    const SETTINGS_PAGE = {
+        id: `settings`,
+        async open() {
+            return {
+                component: SettingsPage,
+                props: {},
+            };
+        },
+    } as PageItem<unknown>;
 
-    $: if ($devMode) {
-        $pages.set('dev', {
-            name: 'dev',
-            component: PageDev,
-            props: {},
-        });
-    } else {
-        $pages.delete('dev');
-    }
+    const pages: Map<string, Page<unknown>> = new Map();
+    let loading = false;
 
-    let cachedPages = writable(new Set<string>([$currentPage]));
-
-    $: {
-        cachedPages.update((set) => {
-            set.add($currentPage);
-            return set;
-        });
-    }
-
-    function handleKeydown(event: KeyboardEvent) {
-        // ctrl + [1234567890] to switch pages
-        const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-        if (event.ctrlKey && numbers.includes(event.key)) {
-            const index = numbers.indexOf(event.key);
-            if (index >= $pages.size) return;
-            $currentPage = [...$pages.keys()][index];
-            event.preventDefault();
-            return;
+    page.subscribe(async (value) => {
+        if (value) {
+            loading = true;
+            const page = await value.open();
+            $loadedIds = [...$loadedIds, value.id];
+            pages.set(value.id, page);
+            loading = false;
         }
-    }
+    });
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
-
-<FlexRowWrapper heightFull>
-    <div class="tab-container">
-        <FlexColWrapper>
-            {#each $pages.entries() as [key, page] (key)}
-                <button
-                    class="page"
-                    on:click={() => {
-                        $currentPage = page.name;
-                    }}
-                    class:active={$currentPage === page.name}
-                >
-                    <Tooltip>{$t(`pages.${page.name}.name`)}</Tooltip>
-                    <i class={$t(`pages.${page.name}.icon`)} />
-                </button>
-            {/each}
-        </FlexColWrapper>
-        <FlexColWrapper>
-            <ButtonOpenSettings />
-        </FlexColWrapper>
-    </div>
-    {#each $pages.entries() as [key, page] (key)}
-        <div
-            style={style({ display: $currentPage === page.name ? '' : 'none' })}
-            class="page-container"
+<main class:open={$menuOpen}>
+    <div class="tabs">
+        <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
+            {#if $menuOpen}
+                <i class="ti ti-chevron-left" />
+                メニューを閉じる
+            {:else}
+                <i class="ti ti-menu" />
+            {/if}
+        </button>
+        <button
+            class="tab"
+            on:click={() => ($page = DOWNLOAD_PAGE)}
+            class:active={$page === DOWNLOAD_PAGE}
         >
-            {#if $cachedPages.has(page.name)}
-                <svelte:component this={page.component} {...page.props} />
+            <Tooltip>
+                <div class="tooltip">
+                    <h3>アプリを探す</h3>
+                    <small>何か使いたいアプリがあるかも</small>
+                </div>
+            </Tooltip>
+            <i class="ti ti-search" />
+            {#if $menuOpen}
+                <span>アプリを探す</span>
+                <i class="open ti ti-chevron-right" />
+            {/if}
+        </button>
+        <button
+            class="tab"
+            on:click={() => ($page = CONNECT_PAGE)}
+            class:active={$page === CONNECT_PAGE}
+        >
+            <Tooltip>
+                <div class="tooltip">
+                    <h3>配信をつなげる</h3>
+                    <small>配信をつなげるための設定を行います</small>
+                </div>
+            </Tooltip>
+            <i class="ti ti-bolt" />
+            {#if $menuOpen}
+                <span>配信をつなげる</span>
+                <i class="open ti ti-chevron-right" />
+            {/if}
+        </button>
+        <button
+            class="tab"
+            on:click={() => ($page = SETTINGS_PAGE)}
+            class:active={$page === SETTINGS_PAGE}
+        >
+            <Tooltip>
+                <div class="tooltip">
+                    <h3>設定</h3>
+                    <small>アプリの設定を行います</small>
+                </div>
+            </Tooltip>
+            <i class="ti ti-settings" />
+            {#if $menuOpen}
+                <span>設定</span>
+                <i class="open ti ti-chevron-right" />
+            {/if}
+        </button>
+        <div class="tab-group">
+            {#if $menuOpen}
+                <span>アプリ</span>
+                <div class="buttons">
+                    <!-- <button>
+                        <Tooltip>
+                            <div class="tooltip">
+                                <h3>アプリを管理</h3>
+                                <small>設定やアンインストールを行います</small>
+                            </div>
+                        </Tooltip>
+                        <i class="ti ti-settings" />
+                    </button>
+                    <button>
+                        <Tooltip>
+                            <div class="tooltip">
+                                <h3>アプリを並び替え</h3>
+                                <small>アプリの並び順を変更します</small>
+                            </div>
+                        </Tooltip>
+                        <i class="ti ti-sort-descending" />
+                    </button> -->
+                </div>
             {/if}
         </div>
-    {/each}
-</FlexRowWrapper>
+        <div class="list">
+            <TableList table={dashboard.apps} component={AppEntry} />
+        </div>
+    </div>
+    <div class="page-container">
+        {#if $page}
+            {@const current = $page.id}
+            {#each pages.entries() as [id, page] (id)}
+                <div class="page" class:visible={!loading && current === id}>
+                    <svelte:component this={page.component} props={page.props} />
+                </div>
+            {/each}
+        {/if}
+        {#if loading}
+            <div>Loading...</div>
+        {/if}
+    </div>
+</main>
 
 <style lang="scss">
-    .wrapper {
+    $tab-width: 300px;
+
+    i {
+        pointer-events: none;
+    }
+
+    .tabs {
+        display: flex;
+        flex-direction: column;
+        width: $tab-width;
+        background: var(--color-bg-2);
+        border-right: 1px solid var(--color-outline);
+        padding: 1rem 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .menu {
         display: flex;
         flex-direction: row;
         align-items: center;
-        height: 100%;
-    }
-
-    .tab-container {
-        z-index: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        align-items: center;
-        justify-content: space-between;
-        width: 40px;
-        height: 100%;
-        padding-top: 45px;
-        padding-bottom: 40px;
-        background: var(--color-bg-2);
-        outline: 1px solid var(--color-outline);
-    }
-
-    .page {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-        color: color-mix(in srgb, var(--color-1) 75%, var(--color-bg-2) 0%);
-        background: none;
-        background: var(--color);
+        padding: 1rem;
         border: none;
-        outline: none;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        width: 100%;
+        font-size: 0.9rem;
+        font-weight: 600;
+        height: 3rem;
+        margin-bottom: 1rem;
+
+        > i {
+            font-size: 1rem;
+            margin-right: 1rem;
+        }
 
         &:hover {
-            color: var(--color-1);
-            background: var(--color-bg-2);
-            outline: 1px solid var(--color-1);
-            outline-offset: -3px;
+            background: var(--color-bg-1);
+            transition: background 0.0621s;
+        }
+    }
+
+    .tab {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 0 1rem;
+        border: none;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        width: 100%;
+        font-size: 0.9rem;
+        font-weight: 600;
+        height: 3rem;
+
+        > i {
+            font-size: 1rem;
+            margin-right: 1rem;
+        }
+
+        > .open {
+            margin-left: auto;
+            margin-right: 0.1rem;
+            visibility: hidden;
+        }
+
+        &:focus,
+        &:hover {
+            background: var(--color-bg-1);
+            transition: background 0.0621s;
+
+            > .open {
+                visibility: visible;
+                margin-right: 0rem;
+                transition: margin 0.0621s;
+            }
         }
 
         &.active {
-            z-index: 2;
+            background: var(--color-bg-1);
             color: var(--color-1);
-            background: color-mix(in srgb, var(--color-1) 12%, transparent 0%);
-            border-left: 4px solid var(--color-1);
-            outline: 2px solid var(--color-bg-2);
-            outline-offset: -2px;
+            border-right: 2px solid var(--color-1);
+        }
+    }
+
+    .list {
+        display: flex;
+        flex-direction: column;
+        padding-top: 0.5rem;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        width: 100%;
+        flex: 1;
+        font-size: 0.85rem;
+        margin-top: 1rem;
+        overflow-y: auto;
+    }
+
+    .tab-group {
+        display: flex;
+        flex-direction: row;
+        align-items: baseline;
+        padding: 0.5rem 0rem;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        border-bottom: 1px solid var(--color-outline);
+        width: 100%;
+        font-size: 0.85rem;
+        padding-bottom: 0.75rem;
+        margin-top: 1rem;
+        padding-left: 1rem;
+
+        > .buttons {
+            margin-left: auto;
+
+            > button {
+                background: none;
+                border: none;
+                color: var(--color-1);
+                font-size: 1rem;
+                font-weight: 600;
+                width: 2rem;
+                height: 2rem;
+
+                &:hover {
+                    background: var(--color-1);
+                    color: var(--color-bg-1);
+                    border-radius: 4px;
+                }
+            }
         }
     }
 
     .page-container {
-        width: calc(100% - 40px);
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: var(--color-bg-1);
+    }
+
+    .page {
+        position: absolute;
+        display: none;
+        width: 100%;
         height: 100%;
+        background: var(--color-bg-1);
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+
+        &.visible {
+            display: block;
+        }
+    }
+
+    .tooltip {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        text-wrap: wrap;
+    }
+
+    main {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+        background: var(--color-bg-1);
+        font-weight: 600;
+
+        > .tabs {
+            width: 4rem;
+            transition: width 0.0621s;
+        }
+
+        .page {
+            left: 4rem;
+            width: calc(100% - 4rem);
+        }
+
+        &.open {
+            > .tabs {
+                width: $tab-width;
+                transition: width 0.0621s;
+            }
+
+            .page {
+                left: $tab-width;
+                width: calc(100% - #{$tab-width});
+            }
+        }
     }
 </style>
