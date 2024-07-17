@@ -30,17 +30,23 @@
     function handleClick() {
         $page = appPage;
     }
+
+    $: loaded = $loadedIds.includes(appPage.id);
+    $: active = $page === appPage;
 </script>
 
-<button
-    class="app"
-    class:active={$page === appPage}
-    class:loaded={$loadedIds.includes(appPage.id)}
-    on:click={handleClick}
->
+<button class="app" class:active class:loaded on:click={handleClick}>
     <Tooltip>
         <div class="tooltip">
-            <h3>{name}</h3>
+            <h3>
+                {name}
+                {#if loaded}
+                    <span class="loaded">
+                        読み込み済み
+                        <i class="ti ti-check" />
+                    </span>
+                {/if}
+            </h3>
             <small>{description}</small>
         </div>
     </Tooltip>
@@ -122,10 +128,22 @@
             padding: 0.1rem;
 
             > h3 {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
                 font-size: 0.9rem;
                 font-weight: 600;
                 color: var(--color-text-1);
                 width: 100%;
+
+                > .loaded {
+                    font-size: 0.6rem;
+                    padding: 0.1rem 0.25rem;
+                    background: var(--color-bg-1);
+                    color: var(--color-1);
+                }
             }
 
             > small {
