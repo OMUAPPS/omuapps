@@ -162,7 +162,6 @@
     .list {
         display: flex;
         flex-direction: column;
-        padding-top: 0.5rem;
         background: var(--color-bg-2);
         color: var(--color-1);
         width: 100%;
@@ -183,7 +182,7 @@
         width: 100%;
         font-size: 0.85rem;
         padding-bottom: 0.75rem;
-        margin-top: 1rem;
+        margin-top: 2rem;
         padding-left: 1rem;
 
         > .buttons {
