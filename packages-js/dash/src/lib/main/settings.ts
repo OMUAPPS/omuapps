@@ -43,7 +43,7 @@ export function createSetting<T>(key: string, defaultValue: T) {
 const systemLanguage = getSystemLanguage();
 export const language = createSetting<keyof typeof LOCALES>('language', systemLanguage);
 export const devMode = createSetting('devMode', false);
-export const currentPage = createSetting('currentPage', 'main');
+export const currentPage = createSetting('currentPage', 'explore');
 export const currentSettingsCategory = createSetting('currentPageSettings', 'general');
 export const installed = createSetting('installed', false);
 
