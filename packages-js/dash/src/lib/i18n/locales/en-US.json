@@ -1,241 +1,201 @@
 {
     "general": {
-        "searching": "Searching...",
-        "copied": "I copied it",
-        "info": "information",
-        "try_again": "Retry",
-        "settings": "setting",
-        "cancel": "cancel",
-        "in_progress": "in progress...",
-        "show_less": "hide",
-        "save": "keep",
-        "select_all": "select all",
-        "success": "success",
-        "warning": "caveat",
-        "no": "no",
-        "show_more": "See more",
-        "close": "close",
-        "reset": "reset",
+        "yes": "Yes",
+        "no": "No",
         "ok": "OK",
-        "yes": "yes",
-        "search": "search",
-        "copy": "copy",
+        "cancel": "Cancel",
+        "close": "Close",
+        "save": "Save",
+        "reset": "Reset",
+        "copy": "Copy",
+        "copied": "Copied",
+        "error": "Error",
+        "warning": "Warning",
+        "info": "Info",
+        "success": "Success",
+        "try_again": "Try again",
         "retry": "Retry",
-        "choose_folder": "Select folder",
-        "no_results": "No results",
-        "dragdrop": "Can be added by drag and drop",
-        "second": "seconds",
-        "select": "choice",
-        "error": "error",
+        "in_progress": "In progress...",
+        "choose_file": "Choose file",
+        "choose_folder": "Choose folder",
         "loading": "Loading...",
-        "choose_file": "Select files"
+        "search": "Search",
+        "searching": "Searching...",
+        "no_results": "No results",
+        "show_more": "Show more",
+        "show_less": "Hide",
+        "select": "Select",
+        "select_all": "Select all",
+        "settings": "Settings",
+        "dragdrop": "Drag and drop to add",
+        "second": "second"
     },
     "date": {
-        "tomorrow": "tomorrow",
-        "just_now": "now",
-        "today": "today",
-        "minutes_ago": "{time} minutes ago",
-        "days_ago": "{time} days ago",
-        "in_the_future": "future",
+        "just_now": "Just now",
+        "yesterday": "Yesterday",
+        "tomorrow": "Tomorrow",
+        "today": "Today",
+        "months_ago": "{time} months ago",
         "weeks_ago": "{time} weeks ago",
-        "yesterday": "yesterday",
-        "seconds_ago": "{time} seconds ago",
+        "days_ago": "{time} days ago",
         "hours_ago": "{time} hours ago",
-        "months_ago": "{time} months ago"
+        "minutes_ago": "{time} minutes ago",
+        "seconds_ago": "{time} seconds ago",
+        "in_the_future": "In the future"
     },
     "status": {
-        "disconnected": "disconnected",
+        "connecting": "Connecting...",
         "reconnecting": "Reconnecting...",
-        "connecting": "connecting...",
         "connected": "Connected",
+        "disconnected": "Disconnected",
         "connect_attempt_count": "Connection attempts: {count}"
     },
     "titlebar": {
-        "minimize": "minimize",
-        "maximize": "maximize",
-        "close": "close",
-        "unmaximize": "unmaximize"
+        "close": "Close",
+        "minimize": "Minimize",
+        "maximize": "Maximize",
+        "unmaximize": "Unmaximize"
     },
     "panels": {
         "rooms": {
-            "viewers": "Number of viewers (click to copy)",
-            "question_add_channel": "Would you like to add a channel?",
-            "title": "connecting",
-            "not_found_rooms": "Room not found!",
-            "see_channel": "look"
+            "title": "Connected",
+            "not_found_rooms": "No rooms found!",
+            "question_add_channel": "Do you want to add a channel?",
+            "see_channel": "View",
+            "viewers": "Viewers (click to copy)"
         },
         "messages": {
-            "title": "Comment/Message",
-            "bookmark": "bookmark",
-            "copy": "copy"
+            "title": "Comments/Messages",
+            "bookmark": "Bookmark",
+            "copy": "Copy"
         },
         "apps": {
-            "title": "app",
-            "start_apps": "boot",
-            "open_apps": "open the app",
-            "found_apps": "Find apps in your browser"
+            "title": "Apps",
+            "found_apps": "Search for apps in the browser",
+            "open_apps": "Open apps",
+            "start_apps": "Start"
         },
         "gifts": {
-            "title": "gift/toss"
+            "title": "Gifts/Donations"
         },
         "channels": {
-            "title": "Channel",
-            "open": "open channel",
+            "title": "Channels",
+            "append_channel": "Add",
             "setup_channel": "Easy setup",
-            "delete": "delete channel",
-            "edit": "edit channel",
-            "next_check": "Just to re-check",
+            "next_check": "Next check in",
+            "delete": "Delete channel",
+            "edit": "Edit channel",
+            "open": "Open channel",
+            "connect": "Connect",
             "channel_url": "Channel URL...",
-            "connect": "connection",
-            "append_channel": "to add",
-            "append_as": "add as"
+            "append_as": "Add as"
         }
     },
-    "setup": {
-        "finish": "Understood",
-        "title": "set up",
-        "please_put_in_urls": "Enter the URL and the channel will be added automatically.",
-        "which_channel": "Which channels would you like to add?",
-        "skip": "Skip setup",
-        "start_again": "start over",
-        "app_hint": "You can add various apps from the site!",
-        "installing": "Installing",
-        "append": "to add"
-    },
-    "pages": {
-        "main": {
-            "icon": "ti ti-home",
-            "name": "Main"
+    "page": {
+        "explore": {
+            "icon": "ti ti-search",
+            "title": "Explore apps",
+            "tooltip": "You might find a useful app"
         },
-        "message": {
-            "icon": "ti ti-message",
-            "name": "message"
+        "connect": {
+            "icon": "ti ti-bolt",
+            "title": "Connect streams",
+            "tooltip": "Set up connections for your streams"
         },
-        "channel": {
-            "icon": "ti ti-plug",
-            "name": "Channel"
-        },
-        "asset": {
-            "icon": "ti ti-package",
-            "name": "assets"
-        },
-        "app": {
-            "icon": "ti ti-player-play",
-            "name": "app"
-        },
-        "dev": {
-            "icon": "ti ti-bug",
-            "name": "development"
-        },
-        "play-queue": {
-            "icon": "ti ti-device-gamepad",
-            "name": "participatory management"
-        },
-        "remote_connect": "remote connection",
-        "settings": "setting"
+        "settings": {
+            "icon": "ti ti-settings",
+            "title": "Settings",
+            "tooltip": "Adjust app settings"
+        }
     },
     "screen": {
         "settings": {
+            "name": "Settings",
             "icon": "ti ti-settings",
-            "description": "You can change the settings.",
-            "name": "setting"
+            "description": "Modify the settings."
         },
         "remote_connect": {
+            "name": "Remote Connect",
             "icon": "ti ti-qrcode",
-            "description": "Initiate a remote connection.",
-            "name": "remote connection"
+            "description": "Start a remote connection."
         },
         "setup": {
+            "name": "Setup",
             "icon": "ti ti-settings",
-            "description": "Start setup.",
-            "name": "set up"
+            "description": "Start the setup process."
         },
         "add_channel": {
+            "name": "Add Channel",
             "icon": "ti ti-plus",
-            "name": "add channel",
-            "description": "Add channels."
+            "description": "Add a new channel."
         },
         "permission_request": {
+            "name": "Request Permission",
             "icon": "ti ti-lock",
-            "description": "Request permission.",
-            "name": "request permission"
+            "description": "Request permissions."
         },
         "plugin_request": {
+            "name": "Request Plugin",
             "icon": "ti ti-plug",
-            "description": "Request plugin.",
-            "name": "request plugin"
+            "description": "Request a plugin."
         },
         "update": {
+            "name": "Update",
             "icon": "ti ti-download",
-            "name": "update",
-            "description": "There is a new version."
+            "description": "A new version is available."
         }
     },
     "settings": {
         "category": {
             "general": {
-                "icon": "ti ti-settings",
                 "name": "General",
-                "description": "You can change general settings."
+                "description": "Modify general settings.",
+                "icon": "ti ti-settings"
             },
             "language": {
-                "icon": "ti ti-language-hiragana",
-                "name": "language",
-                "description": "You can change the language."
+                "name": "Language",
+                "description": "Change the language.",
+                "icon": "ti ti-language-hiragana"
             },
             "appearance": {
-                "icon": "ti ti-palette",
-                "name": "exterior",
-                "description": "You can change the appearance."
+                "name": "Appearance",
+                "description": "Change the appearance.",
+                "icon": "ti ti-palette"
             },
             "advanced": {
-                "icon": "ti ti-settings",
-                "name": "detail",
-                "description": "You can change detailed settings."
+                "name": "Advanced",
+                "description": "Modify advanced settings.",
+                "icon": "ti ti-settings"
             },
             "about": {
-                "icon": "ti ti-license",
-                "description": "Display information about this app.",
-                "name": "information"
+                "name": "About",
+                "description": "View information about this app.",
+                "icon": "ti ti-license"
             }
         },
         "setting": {
-            "devMode": "developer mode",
-            "language": "language",
-            "layoutInvert": "flip layout"
+            "devMode": "Developer mode",
+            "language": "Language",
+            "layoutInvert": "Invert layout"
         },
         "about": {
-            "contributors": "Contributor",
-            "website": "website",
-            "version": "version",
-            "links": "Link",
-            "licenses": "license",
-            "source_code": "Source code"
+            "version": "Version",
+            "contributors": "Contributors",
+            "licenses": "Licenses",
+            "links": "Links",
+            "source_code": "Source code",
+            "website": "Website"
         }
     },
-    "apps": {
-        "play-queue": {
-            "name": "participatory management"
-        },
-        "emoji": {
-            "name": "Emoji"
-        },
-        "youtube-reaction": {
-            "icon": "ti ti-heart",
-            "name": "YouTube reactions",
-            "description": "This is a YouTube reaction."
-        }
-    },
-    "assets": {
-        "comment-simple": {
-            "icon": "ti ti-message",
-            "description": "It's a simple comment.",
-            "name": "Comment (simple)"
-        },
-        "youtube-reaction": {
-            "icon": "ti ti-heart",
-            "description": "This is a YouTube reaction.",
-            "name": "YouTube reactions"
-        }
+    "setup": {
+        "title": "Setup",
+        "which_channel": "Which channel do you want to add?",
+        "installing": "Installing",
+        "append": "Add",
+        "start_again": "Start again",
+        "please_put_in_urls": "Enter URLs to automatically add channels.",
+        "skip": "Skip setup",
+        "app_hint": "You can add various apps from the website!",
+        "finish": "Got it"
     }
 }
