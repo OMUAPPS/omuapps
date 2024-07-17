@@ -16,7 +16,6 @@ export type PageItem<T> = {
 export const page = writable<PageItem<unknown> | null>(null);
 export const pageMap = writable<Record<string, PageItem<unknown>>>({});
 export const loadedIds = writable<string[]>([]);
-export const menuOpen = writable(true);
 
 export function registerPage<Props, T extends PageItem<Props>>(page: T): T {
     pageMap.update((map) => {

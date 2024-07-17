@@ -3,10 +3,11 @@
     import { TableList, Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import AppEntry from './AppEntry.svelte';
+    import { loadedIds, page, registerPage, type Page } from './page.js';
     import ConnectPage from './pages/ConnectPage.svelte';
     import IframePage from './pages/IframePage.svelte';
-    import { loadedIds, menuOpen, page, registerPage, type Page, type PageItem } from './page.js';
     import SettingsPage from './SettingsPage.svelte';
+    import { menuOpen } from './stores.js';
 
     const DOWNLOAD_PAGE = registerPage({
         id: `download`,

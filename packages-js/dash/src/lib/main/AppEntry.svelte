@@ -2,8 +2,9 @@
     import { omu } from '$lib/client.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
-    import { loadedIds, menuOpen, page, registerPage, type Page } from './page.js';
+    import { loadedIds, page, registerPage, type Page } from './page.js';
     import AppPage from './pages/AppPage.svelte';
+    import { menuOpen } from './stores.js';
 
     export let entry: App;
 
