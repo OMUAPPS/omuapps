@@ -113,7 +113,7 @@
                 transition: margin 0.0621s;
 
                 > .open {
-                    display: block;
+                    visibility: visible;
                     margin-right: 0rem;
                     transition: margin 0.0621s;
                 }
@@ -205,7 +205,10 @@
             }
 
             > .open {
-                display: none;
+                visibility: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 margin-left: auto;
                 margin-right: 0.1rem;
                 min-width: 2rem;
