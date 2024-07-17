@@ -15,7 +15,7 @@ export const APP = new App(IDENTIFIER, {
         },
         description: {
             en: 'Replay live streams.',
-            ja: '配信をリプレイします。',
+            ja: '動画や過去の配信を配信画面に写しながら再生することができます。',
         },
         icon: icon,
         tags: ['tool', 'youtube', 'asset'] as TagKey[],
