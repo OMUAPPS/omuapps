@@ -157,6 +157,7 @@
         display: flex;
         flex-direction: row;
         align-items: center;
+        justify-content: end;
         padding: 1rem;
         border: none;
         background: var(--color-bg-2);
@@ -169,7 +170,6 @@
 
         > i {
             font-size: 1rem;
-            margin-right: 1rem;
         }
 
         &:hover {
