@@ -48,6 +48,8 @@
 
     p {
         color: var(--color-1);
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
     }
 
     .panels {
@@ -69,7 +71,6 @@
         flex-direction: column;
         width: calc(100% - $right-width);
         height: 100%;
-        gap: 1rem;
 
         .channels {
             height: $channel-height;
@@ -86,7 +87,6 @@
     .right {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
         width: $right-width;
         max-height: 100%;
 
