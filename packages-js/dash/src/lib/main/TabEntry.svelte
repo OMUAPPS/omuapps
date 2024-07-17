@@ -40,6 +40,7 @@
         font-size: 0.9rem;
         font-weight: 600;
         height: 3rem;
+        margin-bottom: 0.1rem;
 
         > i {
             font-size: 1rem;
