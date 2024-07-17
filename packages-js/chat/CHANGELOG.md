@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.4 (2024-07-17)
+
+
+### Bug Fixes
+
+* **dash:** ロゴを修正 ([a15c3ba](https://github.com/OMUAPPS/omuapps/commit/a15c3ba69d6bb5fb2dfd337efa83c7f2f61f02ec))
+
+
+
+
+
 ## 0.6.3 (2024-07-17)
 
 **Note:** Version bump only for package @omujs/chat
