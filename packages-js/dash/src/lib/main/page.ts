@@ -1,5 +1,6 @@
 import type { TypedComponent } from '@omujs/ui';
 import { writable } from 'svelte/store';
+import { currentPage } from './settings.js';
 
 export type Page<T> = {
     component: TypedComponent<{
@@ -13,7 +14,6 @@ export type PageItem<T> = {
     open(): Promise<Page<T>>;
 };
 
-export const page = writable<PageItem<unknown> | null>(null);
 export const pageMap = writable<Record<string, PageItem<unknown>>>({});
 export const loadedIds = writable<string[]>([]);
 
@@ -23,4 +23,14 @@ export function registerPage<Props, T extends PageItem<Props>>(page: T): T {
         return map;
     });
     return page;
+}
+
+export function setPage(id: string) {
+    currentPage.set(id);
+    loadedIds.update((ids) => {
+        if (!ids.includes(id)) {
+            ids.push(id);
+        }
+        return ids;
+    });
 }

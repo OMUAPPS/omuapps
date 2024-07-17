@@ -3,9 +3,10 @@
     import { TableList, Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import AppEntry from './AppEntry.svelte';
-    import { loadedIds, page, registerPage, type Page } from './page.js';
+    import { loadedIds, pageMap, registerPage, type Page, type PageItem } from './page.js';
     import ConnectPage from './pages/ConnectPage.svelte';
     import IframePage from './pages/IframePage.svelte';
+    import { currentPage } from './settings.js';
     import SettingsPage from './SettingsPage.svelte';
     import { menuOpen } from './stores.js';
     import TabEntry from './TabEntry.svelte';
@@ -45,13 +46,26 @@
     const pages: Map<string, Page<unknown>> = new Map();
     let loading = false;
 
-    page.subscribe(async (value) => {
-        if (value) {
+    async function loadPage(
+        pageMap: Record<string, PageItem<unknown>>,
+        id: string,
+    ): Promise<Page<unknown> | undefined> {
+        loading = true;
+        const pageItem = pageMap[id];
+        if (pageItem) {
             loading = true;
-            const page = await value.open();
-            $loadedIds = [...$loadedIds, value.id];
-            pages.set(value.id, page);
+            const page = await pageItem.open();
+            pages.set(pageItem.id, page);
             loading = false;
+            return page;
+        }
+        loading = false;
+        return undefined;
+    }
+
+    currentPage.subscribe((id) => {
+        if (!$loadedIds.includes(id)) {
+            $loadedIds = [...$loadedIds, id];
         }
     });
 </script>
@@ -103,14 +117,19 @@
         </div>
     </div>
     <div class="page-container">
-        {#if $page}
-            {@const current = $page.id}
-            {#each pages.entries() as [id, page] (id)}
-                <div class="page" class:visible={!loading && current === id}>
-                    <svelte:component this={page.component} props={page.props} />
-                </div>
-            {/each}
-        {/if}
+        {#each Object.keys($pageMap).filter((id) => $loadedIds.includes(id)) as id (id)}
+            <div class="page" class:visible={!loading && $currentPage === id}>
+                {#await loadPage($pageMap, id)}
+                    <div>Loading...</div>
+                {:then page}
+                    {#if page}
+                        <svelte:component this={page.component} props={page.props} />
+                    {/if}
+                {:catch error}
+                    <div>{error.message}</div>
+                {/await}
+            </div>
+        {/each}
         {#if loading}
             <div>Loading...</div>
         {/if}

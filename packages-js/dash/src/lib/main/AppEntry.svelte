@@ -2,9 +2,10 @@
     import { omu } from '$lib/client.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
-    import { loadedIds, page, registerPage, type Page } from './page.js';
+    import { loadedIds, registerPage, type Page } from './page.js';
     import AppPage from './pages/AppPage.svelte';
     import { menuOpen } from './stores.js';
+    import { currentPage } from './settings.js';
 
     export let entry: App;
 
@@ -29,11 +30,11 @@
     });
 
     function handleClick() {
-        $page = appPage;
+        $currentPage = appPage.id;
     }
 
     $: loaded = $loadedIds.includes(appPage.id);
-    $: active = $page === appPage;
+    $: active = $currentPage === appPage.id;
 </script>
 
 <button class="app" class:active class:loaded on:click={handleClick}>

@@ -1,8 +1,9 @@
 <script lang="ts">
     import { Tooltip } from '@omujs/ui';
-    import { page, type PageItem } from './page.js';
+    import { type PageItem } from './page.js';
     import { menuOpen } from './stores.js';
     import { t } from '$lib/i18n/i18n-context.js';
+    import { currentPage } from './settings.js';
 
     export let entry: PageItem<unknown>;
 
@@ -11,7 +12,11 @@
     $: icon = $t(`page.${entry.id}.icon`);
 </script>
 
-<button class="tab" on:click={() => ($page = entry)} class:active={$page === entry}>
+<button
+    class="tab"
+    on:click={() => ($currentPage = entry.id)}
+    class:active={$currentPage === entry.id}
+>
     <Tooltip>
         {tooltip}
     </Tooltip>
