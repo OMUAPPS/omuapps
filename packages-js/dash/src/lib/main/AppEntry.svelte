@@ -41,16 +41,28 @@
 <button class="app" class:active class:selected on:click={handleClick}>
     <Tooltip>
         <div class="tooltip">
-            <h3>
-                {name}
+            {#if $menuOpen}
+                <small>{description}</small>
                 {#if loaded}
-                    <span class="loaded">
-                        読み込み済み
-                        <i class="ti ti-check" />
-                    </span>
+                    <h3>
+                        <span class="loaded">
+                            読み込み済み
+                            <i class="ti ti-check" />
+                        </span>
+                    </h3>
                 {/if}
-            </h3>
-            <small>{description}</small>
+            {:else}
+                <h3>
+                    {name}
+                    {#if loaded}
+                        <span class="loaded">
+                            読み込み済み
+                            <i class="ti ti-check" />
+                        </span>
+                    {/if}
+                </h3>
+                <small>{description}</small>
+            {/if}
         </div>
     </Tooltip>
     {#if image}
@@ -127,6 +139,7 @@
             text-wrap: wrap;
             text-align: start;
             padding: 0.1rem;
+            gap: 0.5rem;
 
             > h3 {
                 display: flex;

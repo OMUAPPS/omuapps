@@ -18,7 +18,14 @@
     class:active={$currentPage === entry.id}
 >
     <Tooltip>
-        {tooltip}
+        <div class="tooltip">
+            {#if $menuOpen}
+                {tooltip}
+            {:else}
+                <p>{title}</p>
+                <small>{tooltip}</small>
+            {/if}
+        </div>
     </Tooltip>
     <i class={icon} />
     {#if $menuOpen}
