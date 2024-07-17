@@ -1,14 +1,14 @@
 <script lang="ts">
     import { dashboard } from '$lib/client.js';
-    import { Popup, TableList, Tooltip } from '@omujs/ui';
-    import AppEntry from './AppEntry.svelte';
-    import { loadedIds, menuOpen, page, type Page, type PageItem } from './stores.js';
-    import IframePage from './IframePage.svelte';
+    import { TableList, Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
-    import ConnectPage from './ConnectPage.svelte';
+    import AppEntry from './AppEntry.svelte';
+    import ConnectPage from './pages/ConnectPage.svelte';
+    import IframePage from './pages/IframePage.svelte';
+    import { loadedIds, menuOpen, page, registerPage, type Page, type PageItem } from './page.js';
     import SettingsPage from './SettingsPage.svelte';
 
-    const DOWNLOAD_PAGE = {
+    const DOWNLOAD_PAGE = registerPage({
         id: `download`,
         async open() {
             return {
@@ -16,29 +16,29 @@
                 props: {
                     url: DEV ? 'http://localhost:5173/app/' : 'http://localhost:5173/app/',
                 },
-            };
+            } as Page<unknown>;
         },
-    } as PageItem<unknown>;
+    });
 
-    const CONNECT_PAGE = {
+    const CONNECT_PAGE = registerPage({
         id: `connect`,
         async open() {
             return {
                 component: ConnectPage,
                 props: {},
-            };
+            } as Page<unknown>;
         },
-    } as PageItem<unknown>;
+    });
 
-    const SETTINGS_PAGE = {
+    const SETTINGS_PAGE = registerPage({
         id: `settings`,
         async open() {
             return {
                 component: SettingsPage,
                 props: {},
-            };
+            } as Page<unknown>;
         },
-    } as PageItem<unknown>;
+    });
 
     const pages: Map<string, Page<unknown>> = new Map();
     let loading = false;
@@ -59,9 +59,10 @@
         <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
             {#if $menuOpen}
                 <i class="ti ti-chevron-left" />
-                メニューを閉じる
+                <Tooltip>メニューを閉じる</Tooltip>
             {:else}
                 <i class="ti ti-menu" />
+                <Tooltip>メニューを開く</Tooltip>
             {/if}
         </button>
         <button

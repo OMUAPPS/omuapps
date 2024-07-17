@@ -2,8 +2,8 @@
     import { omu } from '$lib/client.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
-    import AppPage from './AppPage.svelte';
-    import { loadedIds, menuOpen, page, type PageItem } from './stores.js';
+    import { loadedIds, menuOpen, page, registerPage, type Page } from './page.js';
+    import AppPage from './pages/AppPage.svelte';
 
     export let entry: App;
 
@@ -15,7 +15,7 @@
     const icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : 'No icon';
     const image = metadata?.image ? omu.i18n.translate(metadata?.image) : null;
 
-    const appPage = {
+    const appPage = registerPage({
         id: `app-${entry.id.key()}`,
         async open() {
             return {
@@ -23,9 +23,9 @@
                 props: {
                     app: entry,
                 },
-            };
+            } as Page<unknown>;
         },
-    } as PageItem<unknown>;
+    });
 
     function handleClick() {
         $page = appPage;
