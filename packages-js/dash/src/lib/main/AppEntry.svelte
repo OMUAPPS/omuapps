@@ -8,6 +8,7 @@
     import { currentPage } from './settings.js';
 
     export let entry: App;
+    export let selected: boolean = false;
 
     const metadata = entry.metadata;
     const name = metadata?.name ? omu.i18n.translate(metadata?.name) : entry.id.key();
@@ -37,7 +38,7 @@
     $: active = $currentPage === appPage.id;
 </script>
 
-<button class="app" class:active class:loaded on:click={handleClick}>
+<button class="app" class:active class:loaded class:selected on:click={handleClick}>
     <Tooltip>
         <div class="tooltip">
             <h3>
@@ -105,6 +106,7 @@
             border-left: 2px solid var(--color-1);
         }
 
+        &.selected,
         &:focus,
         &:hover {
             transition: background 0.0621s;
