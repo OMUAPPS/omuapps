@@ -91,48 +91,22 @@
             "append_as": "として追加"
         }
     },
-    "setup": {
-        "title": "セットアップ",
-        "which_channel": "どのチャンネルを追加しますか？",
-        "installing": "インストール中",
-        "append": "追加する",
-        "start_again": "やり直す",
-        "please_put_in_urls": "URLを入力すると、チャンネルを自動で追加します。",
-        "skip": "セットアップをスキップ",
-        "app_hint": "サイトから様々なアプリを追加することができます！",
-        "finish": "わかった"
-    },
-    "pages": {
-        "main": {
-            "name": "メイン",
-            "icon": "ti ti-home"
+    "page": {
+        "explore": {
+            "icon": "ti ti-search",
+            "title": "アプリを探す",
+            "tooltip": "何か使いたいアプリがあるかも"
         },
-        "message": {
-            "name": "メッセージ",
-            "icon": "ti ti-message"
+        "connect": {
+            "icon": "ti ti-bolt",
+            "title": "配信をつなげる",
+            "tooltip": "配信をつなげるための設定を行います"
         },
-        "channel": {
-            "name": "チャンネル",
-            "icon": "ti ti-plug"
-        },
-        "asset": {
-            "name": "アセット",
-            "icon": "ti ti-package"
-        },
-        "app": {
-            "name": "アプリ",
-            "icon": "ti ti-player-play"
-        },
-        "dev": {
-            "name": "開発",
-            "icon": "ti ti-bug"
-        },
-        "play-queue": {
-            "name": "参加型管理",
-            "icon": "ti ti-device-gamepad"
-        },
-        "settings": "設定",
-        "remote_connect": "リモート接続"
+        "settings": {
+            "icon": "ti ti-settings",
+            "title": "設定",
+            "tooltip": "アプリの設定を行います"
+        }
     },
     "screen": {
         "settings": {
@@ -213,29 +187,15 @@
             "website": "ウェブサイト"
         }
     },
-    "apps": {
-        "play-queue": {
-            "name": "参加型管理"
-        },
-        "emoji": {
-            "name": "絵文字"
-        },
-        "youtube-reaction": {
-            "name": "YouTube リアクション",
-            "description": "YouTube のリアクションです。",
-            "icon": "ti ti-heart"
-        }
-    },
-    "assets": {
-        "comment-simple": {
-            "name": "コメント (シンプル)",
-            "description": "シンプルなコメントです。",
-            "icon": "ti ti-message"
-        },
-        "youtube-reaction": {
-            "name": "YouTube リアクション",
-            "description": "YouTube のリアクションです。",
-            "icon": "ti ti-heart"
-        }
+    "setup": {
+        "title": "セットアップ",
+        "which_channel": "どのチャンネルを追加しますか？",
+        "installing": "インストール中",
+        "append": "追加する",
+        "start_again": "やり直す",
+        "please_put_in_urls": "URLを入力すると、チャンネルを自動で追加します。",
+        "skip": "セットアップをスキップ",
+        "app_hint": "サイトから様々なアプリを追加することができます！",
+        "finish": "わかった"
     }
 }

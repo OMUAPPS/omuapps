@@ -8,9 +8,10 @@
     import IframePage from './pages/IframePage.svelte';
     import SettingsPage from './SettingsPage.svelte';
     import { menuOpen } from './stores.js';
+    import TabEntry from './TabEntry.svelte';
 
-    const DOWNLOAD_PAGE = registerPage({
-        id: `download`,
+    const EXPLORE_PAGE = registerPage({
+        id: `explore`,
         async open() {
             return {
                 component: IframePage,
@@ -66,60 +67,15 @@
                 <Tooltip>メニューを開く</Tooltip>
             {/if}
         </button>
-        <button
-            class="tab"
-            on:click={() => ($page = DOWNLOAD_PAGE)}
-            class:active={$page === DOWNLOAD_PAGE}
-        >
-            <Tooltip>
-                <div class="tooltip">
-                    <h3>アプリを探す</h3>
-                    <small>何か使いたいアプリがあるかも</small>
-                </div>
-            </Tooltip>
-            <i class="ti ti-search" />
-            {#if $menuOpen}
-                <span>アプリを探す</span>
-                <i class="open ti ti-chevron-right" />
-            {/if}
-        </button>
-        <button
-            class="tab"
-            on:click={() => ($page = CONNECT_PAGE)}
-            class:active={$page === CONNECT_PAGE}
-        >
-            <Tooltip>
-                <div class="tooltip">
-                    <h3>配信をつなげる</h3>
-                    <small>配信をつなげるための設定を行います</small>
-                </div>
-            </Tooltip>
-            <i class="ti ti-bolt" />
-            {#if $menuOpen}
-                <span>配信をつなげる</span>
-                <i class="open ti ti-chevron-right" />
-            {/if}
-        </button>
-        <button
-            class="tab"
-            on:click={() => ($page = SETTINGS_PAGE)}
-            class:active={$page === SETTINGS_PAGE}
-        >
-            <Tooltip>
-                <div class="tooltip">
-                    <h3>設定</h3>
-                    <small>アプリの設定を行います</small>
-                </div>
-            </Tooltip>
-            <i class="ti ti-settings" />
-            {#if $menuOpen}
-                <span>設定</span>
-                <i class="open ti ti-chevron-right" />
-            {/if}
-        </button>
+        <TabEntry entry={EXPLORE_PAGE} />
+        <TabEntry entry={CONNECT_PAGE} />
+        <TabEntry entry={SETTINGS_PAGE} />
         <div class="tab-group">
             {#if $menuOpen}
-                <span>アプリ</span>
+                <span>
+                    アプリ
+                    <i class="ti ti-package" />
+                </span>
                 <div class="buttons">
                     <!-- <button>
                         <Tooltip>
@@ -203,49 +159,6 @@
         }
     }
 
-    .tab {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        padding: 0 1rem;
-        border: none;
-        background: var(--color-bg-2);
-        color: var(--color-1);
-        width: 100%;
-        font-size: 0.9rem;
-        font-weight: 600;
-        height: 3rem;
-
-        > i {
-            font-size: 1rem;
-            margin-right: 1rem;
-        }
-
-        > .open {
-            margin-left: auto;
-            margin-right: 0.1rem;
-            visibility: hidden;
-        }
-
-        &:focus,
-        &:hover {
-            background: var(--color-bg-1);
-            transition: background 0.0621s;
-
-            > .open {
-                visibility: visible;
-                margin-right: 0rem;
-                transition: margin 0.0621s;
-            }
-        }
-
-        &.active {
-            background: var(--color-bg-1);
-            color: var(--color-1);
-            border-right: 2px solid var(--color-1);
-        }
-    }
-
     .list {
         display: flex;
         flex-direction: column;
@@ -317,13 +230,6 @@
         &.visible {
             display: block;
         }
-    }
-
-    .tooltip {
-        display: flex;
-        flex-direction: column;
-        align-items: start;
-        text-wrap: wrap;
     }
 
     main {
