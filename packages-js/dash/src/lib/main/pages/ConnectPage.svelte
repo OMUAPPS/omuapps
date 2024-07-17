@@ -8,7 +8,7 @@
     export let props: {};
 </script>
 
-<Header icon="ti-message" title={$t('pages.message')} subtitle="message" />
+<Header icon="ti-bolt" title={$t('page.connect.title')} subtitle={$t('page.connect.tooltip')} />
 <main>
     <div class="panels">
         <div class="left">
