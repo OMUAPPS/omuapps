@@ -42,7 +42,7 @@
     <Tooltip>
         <div class="tooltip">
             {#if $menuOpen}
-                <small>{description}</small>
+                {description}
                 {#if loaded}
                     <h3>
                         <span class="loaded">
