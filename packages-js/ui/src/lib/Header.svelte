@@ -39,7 +39,7 @@
     .title {
         display: flex;
         flex-direction: row;
-        gap: 10px;
+        gap: 1rem;
         align-items: center;
         font-size: 1rem;
         font-weight: 600;
