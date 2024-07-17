@@ -38,7 +38,7 @@
     $: active = $currentPage === appPage.id;
 </script>
 
-<button class="app" class:active class:loaded class:selected on:click={handleClick}>
+<button class="app" class:active class:selected on:click={handleClick}>
     <Tooltip>
         <div class="tooltip">
             <h3>
@@ -99,11 +99,8 @@
 
         &.active {
             background: var(--color-bg-1);
+            border-right: 2px solid var(--color-1);
             transition: background 0.0621s;
-        }
-
-        &.loaded {
-            border-left: 2px solid var(--color-1);
         }
 
         &.selected,
