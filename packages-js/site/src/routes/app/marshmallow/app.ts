@@ -10,11 +10,11 @@ export const APP = new App(APP_ID, {
         locale: 'en',
         name: {
             en: 'Marshmallow Integration',
-            ja: 'マシュマロ連携',
+            ja: 'マシュマロ読み',
         },
         description: {
             en: 'An app to read marshmallow without any hassle.',
-            ja: '面倒なことなしにマシュマロを読むためのアプリ',
+            ja: '面倒なことなしにマシュマロを配信に写しながら読むためのアプリ',
         },
         icon: 'ti-notes',
         tags: ['tool'] as TagKey[],
