@@ -2,6 +2,7 @@ import { App } from '@omujs/omu';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
 import { ORIGIN } from '../origin.js';
+import thumbnail from './thumbnail.png';
 
 export const APP_ID = Identifier.fromKey('com.omuapps:marshmallow');
 export const APP = new App(APP_ID, {
@@ -17,6 +18,7 @@ export const APP = new App(APP_ID, {
             ja: '面倒なことなしにマシュマロを配信に写しながら読むためのアプリ',
         },
         icon: 'ti-notes',
+        image: thumbnail,
         tags: ['tool'] as TagKey[],
     },
 });
