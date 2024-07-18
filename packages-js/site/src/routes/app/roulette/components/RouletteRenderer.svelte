@@ -174,8 +174,13 @@
         ctx.stroke();
 
         // tint
-        ctx.globalAlpha = tint;
-        ctx.fillStyle = 'white';
+        if (tint > 0.8) {
+            ctx.fillStyle = 'black';
+            ctx.globalAlpha = 1;
+        } else {
+            ctx.fillStyle = 'white';
+            ctx.globalAlpha = tint;
+        }
         ctx.beginPath();
         ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
         ctx.fill();

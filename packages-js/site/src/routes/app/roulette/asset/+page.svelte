@@ -96,6 +96,7 @@
         flex-direction: column;
         gap: 1rem;
         color: #fff;
+        filter: drop-shadow(0 0 0.1rem rgba(0.5, 0.5, 0.5, 0.2));
 
         > p {
             text-align: center;
