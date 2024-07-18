@@ -17,7 +17,7 @@
             return {
                 component: IframePage,
                 props: {
-                    url: DEV ? 'http://localhost:5173/app/' : 'http://localhost:5173/app/',
+                    url: DEV ? 'http://localhost:5173/app/' : 'http://omuapps.com/app/',
                 },
             } as Page<unknown>;
         },
