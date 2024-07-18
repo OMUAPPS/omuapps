@@ -1,6 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
-    import { DragLink, Tooltip } from '@omujs/ui';
+    import AssetButton from '$lib/components/AssetButton.svelte';
+    import { Tooltip } from '@omujs/ui';
     import AccountSwitcher from './components/AccountSwitcher.svelte';
     import MessageView from './components/MessageView.svelte';
     import SelectUser from './components/SelectUser.svelte';
@@ -110,17 +111,10 @@
                 {/each}
             {/if}
         </div>
-        <small class="drag-hint"> OBSで使用する場合は以下のボタンから </small>
-        <DragLink href={createAssetUrl}>
-            <h3 slot="preview" class="drag-preview">
-                これをOBSにドロップ
-                <i class="ti ti-upload" />
-            </h3>
-            <div class="drag">
-                <i class="ti ti-drag-drop" />
-                ここをOBSにドラッグ&ドロップ
-            </div>
-        </DragLink>
+        <div class="asset">
+            <small>OBSで使用する場合は以下のボタンから</small>
+            <AssetButton />
+        </div>
     </div>
     <div class="right">
         {#if $data.message}
@@ -333,41 +327,11 @@
         color: var(--color-1);
     }
 
-    .drag-hint {
-        margin-top: auto;
+    .asset {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 0 1rem;
-        padding-top: 1rem;
+        gap: 0.5rem;
+        padding: 1rem 1rem;
         color: var(--color-1);
-    }
-
-    .drag-preview {
-        padding: 10px 20px;
-        background: var(--color-bg-2);
-    }
-
-    .drag {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: var(--color-1);
-        background: var(--color-bg-2);
-        outline: 2px solid var(--color-1);
-        padding: 10px;
-        margin: 1rem;
-        gap: 5px;
-        cursor: grab;
-
-        & > i {
-            font-size: 20px;
-        }
-
-        &:hover {
-            transition: 0.0621s;
-        }
     }
 </style>
