@@ -10,12 +10,12 @@ export const APP = new App(APP_ID, {
     metadata: {
         locale: 'en',
         name: {
-            en: 'Marshmallow Integration',
             ja: 'マシュマロ読み',
+            en: 'Marshmallow Reader',
         },
         description: {
-            en: 'An app to read marshmallow without any hassle.',
-            ja: '面倒なことなしにマシュマロを配信に写しながら読むためのアプリ',
+            ja: '面倒なことなくマシュマロを読むことが出来ます',
+            en: 'You can read marshmallow without any hassle',
         },
         icon: 'ti-notes',
         image: thumbnail,
