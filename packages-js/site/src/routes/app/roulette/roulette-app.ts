@@ -1,11 +1,11 @@
 import { makeRegistryWritable } from '$lib/helper.js';
+import { BetterMath } from '$lib/math.js';
+import { lerp } from '$lib/math/math.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import { get, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 import type { RouletteItem, State } from './state.js';
-import { BetterMath } from '$lib/math.js';
-import { lerp } from '$lib/math/math.js';
 
 export type Config = {
     duration: number;

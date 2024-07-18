@@ -30,7 +30,7 @@
             roulette.addEntry({
                 id,
                 name: author?.name || '',
-                message,
+                message: message.toJson(),
             });
         }
     }
