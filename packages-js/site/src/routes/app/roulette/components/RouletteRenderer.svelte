@@ -74,7 +74,7 @@
             const t = rouletteEasing(BetterMath.clamp01(time / $state.duration));
             rotation = BetterMath.lerp(lastRotation, rotateTo, t);
             // scale
-            const scale = 1 + BetterMath.lerp(0.2 / (t + 1), 0, t);
+            const scale = 1 + BetterMath.lerp(2 / (t + 1), 0, t);
             ctx.translate(width / 2, height / 2);
             ctx.scale(scale, scale);
             ctx.translate(-width / 2, -height / 2);
@@ -91,10 +91,10 @@
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
         const scale = 0.75;
+        const scaleFactor = Math.min(width, height) / 1000;
         const t = rotation % 1;
         const angle = deg2rad(t * 360 - 90);
         const radius = (Math.min(width, height) / 2) * scale;
-        const centerRadius = ((Math.min(width, height) * scale) / 2) * 0.25;
         const split = (2 * Math.PI) / count;
 
         const hitEntry = Object.entries($entries)[Math.floor(t * count) % count];
@@ -164,19 +164,23 @@
         }
 
         // Draw border
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 10 * scaleFactor;
         ctx.beginPath();
         ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
         ctx.stroke();
 
         // triangle
         const triangleRadius = radius * 0.1;
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = '#222';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 10 * scaleFactor;
+        ctx.lineJoin = 'round';
         ctx.beginPath();
         ctx.moveTo(width / 2 - triangleRadius / 2, height / 2 - radius - triangleRadius);
         ctx.lineTo(width / 2, height / 2 - radius);
         ctx.lineTo(width / 2 + triangleRadius / 2, height / 2 - radius - triangleRadius);
+        ctx.stroke();
         ctx.fill();
 
         ctx.restore();
