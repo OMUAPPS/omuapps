@@ -110,21 +110,7 @@
                 {/each}
             {/if}
         </div>
-    </div>
-    <div class="right">
-        {#if $data.message}
-            <MessageView {marshmallow} bind:message={$data.message} />
-        {:else}
-            <div class="select-message">
-                メッセージを選択してください。
-                <small> メッセージを選択すると、メッセージを表示できます。 </small>
-            </div>
-        {/if}
-        <small class="drag-hint">
-            OBS内で使用する場合は、
-            <br />
-            以下のボタンからドラッグ&ドロップしてください。
-        </small>
+        <small class="drag-hint"> OBSで使用する場合は以下のボタンから </small>
         <DragLink href={createAssetUrl}>
             <h3 slot="preview" class="drag-preview">
                 これをOBSにドロップ
@@ -135,6 +121,16 @@
                 ここをOBSにドラッグ&ドロップ
             </div>
         </DragLink>
+    </div>
+    <div class="right">
+        {#if $data.message}
+            <MessageView {marshmallow} bind:message={$data.message} />
+        {:else}
+            <div class="select-message">
+                メッセージを選択してください。
+                <small> メッセージを選択すると、メッセージを表示できます。 </small>
+            </div>
+        {/if}
     </div>
 </main>
 {#if state === 'loading_users'}
@@ -240,6 +236,7 @@
         flex-direction: column;
         width: 100%;
         height: 100%;
+        overflow-y: auto;
 
         > .message {
             display: flex;
@@ -342,6 +339,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        padding: 0 1rem;
         padding-top: 1rem;
         color: var(--color-1);
     }
