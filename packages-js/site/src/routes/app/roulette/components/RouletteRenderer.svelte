@@ -61,6 +61,8 @@
 
         ctx.save();
 
+        let tint = 0;
+
         if ($state.type === 'idle' || $state.type === 'recruiting') {
             const speed = Math.min(1, Math.sqrt(timer.getElapsedMS()) / 100);
             rotation = lastRotation + (timer.getElapsedMS() / 1000 / 20) * speed;
@@ -71,6 +73,7 @@
             const hitRotation = index * offset + offset * $state.random;
             const rotateTo = hitRotation + Math.floor(lastRotation) + 5;
             const time = Date.now() - $state.start;
+            tint = BetterMath.clamp01(1 / ((time / 1000) * 3 + 1));
             const t = rouletteEasing(BetterMath.clamp01(time / $state.duration));
             rotation = BetterMath.lerp(lastRotation, rotateTo, t);
             // scale
@@ -169,6 +172,14 @@
         ctx.beginPath();
         ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
         ctx.stroke();
+
+        // tint
+        ctx.globalAlpha = tint;
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.globalAlpha = 1;
 
         // triangle
         const triangleRadius = radius * 0.1;
