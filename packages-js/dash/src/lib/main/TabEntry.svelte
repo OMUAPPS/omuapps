@@ -1,9 +1,9 @@
 <script lang="ts">
+    import { t } from '$lib/i18n/i18n-context.js';
     import { Tooltip } from '@omujs/ui';
     import { type PageItem } from './page.js';
-    import { menuOpen } from './stores.js';
-    import { t } from '$lib/i18n/i18n-context.js';
     import { currentPage } from './settings.js';
+    import { menuOpen } from './stores.js';
 
     export let entry: PageItem<unknown>;
 

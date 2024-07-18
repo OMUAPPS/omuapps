@@ -3,9 +3,8 @@
 
     import { currentSettingsCategory, SETTING_REGISTRY } from './settings.js';
 
-    import { type ScreenHandle } from '$lib/common/screen/screen.js';
     import { t } from '$lib/i18n/i18n-context.js';
-    import { Button, Header, JustifyBaselineWrapper } from '@omujs/ui';
+    import { Header } from '@omujs/ui';
 
     export const props = {};
 

@@ -55,7 +55,7 @@
         color: var(--color-text);
         margin-bottom: 1rem;
     }
-    
+
     a {
         font-size: 0.9rem;
     }

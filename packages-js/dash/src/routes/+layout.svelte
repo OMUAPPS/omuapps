@@ -12,7 +12,6 @@
     import { Theme } from '@omujs/ui';
     import { checkUpdate } from '@tauri-apps/api/updater';
     import './styles.scss';
-    import type { Locale } from '@omujs/omu/localization/locale.js';
 
     async function init() {
         await loadLocale();

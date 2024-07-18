@@ -1,9 +1,9 @@
 <script lang="ts">
+    import { t } from '$lib/i18n/i18n-context.js';
     import { Header } from '@omujs/ui';
     import PanelChannels from '../panel/channels/PanelChannels.svelte';
     import PanelMessages from '../panel/messages/PanelMessages.svelte';
     import PanelRooms from '../panel/rooms/PanelRooms.svelte';
-    import { t } from '$lib/i18n/i18n-context.js';
 
     export const props = {};
 </script>

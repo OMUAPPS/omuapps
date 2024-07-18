@@ -5,8 +5,6 @@ import type { TypedComponent } from '@omujs/ui';
 import Checkbox from './settings/CheckboxField.svelte';
 import Combobox from './settings/ComboboxField.svelte';
 import About from './settings/about/About.svelte';
-import { omu } from '$lib/client.js';
-import type { Locale } from '@omujs/omu/localization/locale.js';
 
 function getSystemLanguage(): keyof typeof LOCALES {
     if (typeof window === 'undefined') {
