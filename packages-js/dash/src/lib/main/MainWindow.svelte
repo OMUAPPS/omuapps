@@ -137,7 +137,7 @@
 </main>
 
 <style lang="scss">
-    $tab-width: 300px;
+    $tab-width: 18rem;
 
     i {
         pointer-events: none;
