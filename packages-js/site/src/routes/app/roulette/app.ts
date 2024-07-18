@@ -2,6 +2,7 @@ import { App } from '@omujs/omu';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
 import { ORIGIN } from '../origin.js';
+import thumbnail from './thumbnail.png';
 
 export const APP_ID = new Identifier('com.omuapps', 'roulette');
 export const APP = new App(APP_ID, {
@@ -13,10 +14,11 @@ export const APP = new App(APP_ID, {
             en: 'Roulette',
         },
         description: {
-            ja: 'ルーレットを回して、誰かを当てたり選択を決めることができます。',
-            en: 'An app to spin a roulette and pick someone or make a decision.',
+            ja: 'ルーレットを回して、誰かを当てたり選択を決めることができます',
+            en: 'You can spin the roulette to select someone or make a decision',
         },
         icon: 'ti-rosette',
+        image: thumbnail,
         tags: ['asset', 'game', 'tool', 'underdevelopment'] as TagKey[],
     },
 });
