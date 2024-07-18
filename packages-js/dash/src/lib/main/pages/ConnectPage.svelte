@@ -5,7 +5,7 @@
     import PanelRooms from '../panel/rooms/PanelRooms.svelte';
     import { t } from '$lib/i18n/i18n-context.js';
 
-    export let props: {};
+    export const props = {};
 </script>
 
 <Header icon="ti-bolt" title={$t('page.connect.title')} subtitle={$t('page.connect.tooltip')} />

@@ -7,7 +7,7 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import { Button, Header, JustifyBaselineWrapper } from '@omujs/ui';
 
-    export let props: {};
+    export const props = {};
 
     const categories = [
         ...[...SETTING_REGISTRY.entries()].map(([name, settings]) => {
