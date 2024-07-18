@@ -19,8 +19,14 @@
     }
 
     function getColor(index: number) {
-        const hue = (index * 137.508) % 360;
-        return `hsla(${hue}, 0%, 30%, 100%)`;
+        const length = Object.keys($entries).length;
+        const colors = ['#666', '#444', '#555'];
+
+        if (length % 2 === 0) {
+            return colors[index % 2];
+        } else {
+            return colors[index % 3];
+        }
     }
 
     function deg2rad(deg: number) {
