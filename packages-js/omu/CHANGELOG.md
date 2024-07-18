@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.5 (2024-07-18)
+
+
+### Bug Fixes
+
+* **dash:** exploreページが表示されるように ([4602851](https://github.com/OMUAPPS/omuapps/commit/4602851c48a44e0779721a1e65ff154fe1a1edab))
+
+
+
+
+
 ## 0.6.4 (2024-07-17)
 
 
