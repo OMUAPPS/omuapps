@@ -1,15 +1,15 @@
 <script lang="ts">
     import type { Writable } from 'svelte/store';
     import { frame, type State, type StateType } from '../state.js';
-    import idle1 from './img/idle1.png';
-    import idle2 from './img/idle2.png';
-    import throwing from './img/throwing.png';
     import catching from './img/catching.png';
     import eating1 from './img/eating1.png';
     import eating2 from './img/eating2.png';
+    import idle1 from './img/idle1.png';
+    import idle2 from './img/idle2.png';
     import idle_start from './img/idle_start.png';
     import throw_many from './img/throw_many.png';
     import throw_many_hit from './img/throw_many_hit.png';
+    import throwing from './img/throwing.png';
 
     export let state: Writable<State>;
 
@@ -29,7 +29,7 @@
             setTimeout(() => {
                 $state.type = 'eating';
                 eatTime = 0;
-            }, 14 * 33.3);
+            }, 18 * 33.3);
         }
         if ($state.type === 'eating') {
             setTimeout(() => {
@@ -39,7 +39,7 @@
         if ($state.type === 'idle_start') {
             setTimeout(() => {
                 $state = { type: 'idle' };
-            }, 18 * 33.3);
+            }, 28 * 33.3);
         }
         if ($state.type === 'throw_start') {
             $state = {
@@ -53,7 +53,7 @@
                         type: 'catching',
                     };
                 }
-            }, 14 * 33.3);
+            }, 18 * 33.3);
         }
         if ($state.type === 'throw_many') {
             setTimeout(() => {
