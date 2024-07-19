@@ -2,7 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { Omu } from '@omujs/omu';
-    import { setClient, Tooltip } from '@omujs/ui';
+    import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import { FriesApp } from './fries-app.js';
@@ -52,9 +52,6 @@
         </section>
         <section>
             <div>
-                <Tooltip>
-                    <img src={hint} alt="" />
-                </Tooltip>
                 <h3>ヒント</h3>
                 <textarea bind:value={$config.hint} class="hint" />
             </div>
