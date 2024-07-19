@@ -55,6 +55,7 @@
                 <h3>ヒント</h3>
                 <textarea bind:value={$config.hint} class="hint" />
             </div>
+            <hr />
             <img src={hint} alt="" />
         </section>
         <section>
@@ -62,6 +63,7 @@
                 <h3>看板</h3>
                 <textarea bind:value={$config.text} class="text" />
             </div>
+            <hr />
             <img src={board} alt="" />
         </section>
         <section>
@@ -90,13 +92,24 @@
     section {
         display: flex;
         flex-direction: row;
-        align-items: center;
+        align-items: start;
         justify-content: space-between;
         width: 50rem;
         max-width: 100%;
 
+        hr {
+            width: 100%;
+            height: 1px;
+            margin: 0 1rem;
+            margin-top: 4rem;
+            margin-left: 2.5rem;
+            background: var(--color-1);
+            border: none;
+        }
+
         img {
             width: 12rem;
+            margin-top: 2rem;
             object-fit: contain;
             transform: rotate(-1.5deg);
         }
