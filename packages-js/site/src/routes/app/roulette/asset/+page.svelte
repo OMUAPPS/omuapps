@@ -45,8 +45,6 @@
                             {#await chat.authors.get(message.authorId.key()) then author}
                                 <div class="author">
                                     <img src={author?.avatarUrl} alt="icon" />
-                                    <span class="shadow">{author?.name}</span>
-                                    <span>{author?.name}</span>
                                 </div>
                                 {#if message.content}
                                     <span class="content">
@@ -111,6 +109,7 @@
             color: #fff;
             display: flex;
             align-items: center;
+            justify-content: center;
             padding: 1rem;
             gap: 1rem;
 
@@ -120,20 +119,6 @@
                 flex-direction: column;
                 align-items: center;
                 gap: 0.5rem;
-
-                > span {
-                    position: absolute;
-                    top: 100%;
-                    transform: translate(0, -50%);
-                    font-weight: 900;
-                    font-size: 1.2rem;
-                    color: #000;
-                    white-space: nowrap;
-
-                    &.shadow {
-                        -webkit-text-stroke: 0.15rem #fff;
-                    }
-                }
             }
 
             img {
@@ -150,7 +135,7 @@
                 height: 4rem;
                 background: #fff;
                 color: #000;
-                margin-left: auto;
+                margin-right: 2rem;
             }
         }
     }
