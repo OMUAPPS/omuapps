@@ -98,6 +98,7 @@
         img {
             width: 12rem;
             object-fit: contain;
+            transform: rotate(-1.5deg);
         }
     }
 
