@@ -105,6 +105,7 @@
             margin-left: 2.5rem;
             background: var(--color-1);
             border: none;
+            transform: rotate(-1deg);
         }
 
         img {
