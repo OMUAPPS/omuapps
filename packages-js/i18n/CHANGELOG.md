@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.7 (2024-07-19)
+
+
+### Bug Fixes
+
+* **dash:** プロンプトが出ないように ([46dcc10](https://github.com/OMUAPPS/omuapps/commit/46dcc101ed8ed49bc88ccf99b450bbbc50cf67c7))
+
+
+
+
+
 ## 0.6.6 (2024-07-18)
 
 **Note:** Version bump only for package @omujs/i18n

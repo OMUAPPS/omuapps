@@ -2,7 +2,7 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "useNx": true,
   "private": false,
-  "version": "0.6.6",
+  "version": "0.6.7",
   "ignoreChanges": [
     "**/*.test.ts",
     "**/*.md"
