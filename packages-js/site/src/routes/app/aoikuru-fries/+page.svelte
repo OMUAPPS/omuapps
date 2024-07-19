@@ -37,6 +37,7 @@
 
 <AppPage>
     <main>
+        <p>このアプリは一つのみ配置することができます。</p>
         <section class="asset">
             <AssetButton />
         </section>
