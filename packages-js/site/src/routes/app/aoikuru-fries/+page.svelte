@@ -1,5 +1,6 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
     import { Omu } from '@omujs/omu';
     import { setClient, Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -36,6 +37,9 @@
 
 <AppPage>
     <main>
+        <section class="asset">
+            <AssetButton />
+        </section>
         <section>
             <div>
                 <h3>試しに投げてみる</h3>
@@ -79,6 +83,10 @@
 <style lang="scss">
     main {
         padding: 2rem;
+    }
+
+    .asset {
+        margin-bottom: 2rem;
     }
 
     section {
