@@ -65,7 +65,15 @@ impl Python {
     }
 
     pub fn cmd(&self) -> Command {
-        let command = Command::new(&self.python_bin);
+        let mut command = Command::new(&self.python_bin);
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            // 0x08000000: CREATE_NO_WINDOW https://learn.microsoft.com/ja-jp/windows/win32/procthread/process-creation-flags?redirectedfrom=MSDN#create_no_window
+            command.creation_flags(0x08000000);
+        }
+
         command
     }
 }

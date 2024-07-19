@@ -86,6 +86,14 @@ impl Uv {
         let mut cmd = Command::new(&self.uv_bin);
         cmd.current_dir(&self.workdir);
         cmd.env("PROJECT_ROOT", make_project_root_fragment(&self.workdir));
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            // 0x08000000: CREATE_NO_WINDOW https://learn.microsoft.com/ja-jp/windows/win32/procthread/process-creation-flags?redirectedfrom=MSDN#create_no_window
+            cmd.creation_flags(0x08000000);
+        }
+
         cmd
     }
 

@@ -106,13 +106,6 @@ impl Server {
         cmd.arg("--port");
         cmd.arg(self.option.port.to_string());
         cmd.current_dir(&self.option.data_dir);
-
-        #[cfg(target_os = "windows")]
-        {
-            use std::os::windows::process::CommandExt;
-            // 0x08000000: CREATE_NO_WINDOW https://learn.microsoft.com/ja-jp/windows/win32/procthread/process-creation-flags?redirectedfrom=MSDN#create_no_window
-            cmd.creation_flags(0x08000000);
-        }
         cmd.spawn().expect("failed to spawn server");
         Ok(())
     }
