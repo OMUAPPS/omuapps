@@ -7,10 +7,9 @@
     import { chat, omu } from '$lib/client.js';
     import ProviderIcon from '$lib/common/ProviderIcon.svelte';
     import Screen from '$lib/common/screen/Screen.svelte';
-    import { screenContext, type ScreenHandle } from '$lib/common/screen/screen.js';
+    import { type ScreenHandle } from '$lib/common/screen/screen.js';
     import { IdentifierMap } from '@omujs/omu/identifier.js';
     import { Button, Textbox, Tooltip } from '@omujs/ui';
-    import ScreenInstallApps from './ScreenInstallApps.svelte';
 
     export let screen: {
         handle: ScreenHandle;
@@ -44,7 +43,6 @@
         const channels = [...result.values()].filter((v) => v.active).map((v) => v.channel);
         chat.channels!.add(...channels);
         screen.handle.pop();
-        screenContext.push(ScreenInstallApps, {});
     }
 
     function reset() {
@@ -53,7 +51,6 @@
 
     function skip() {
         screen.handle.pop();
-        screenContext.push(ScreenInstallApps, {});
     }
 
     let tooltipHint: string;
