@@ -1,6 +1,6 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
-    import { FlexColWrapper, FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import { FlexRowWrapper, Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { getPlatform, type Platform, type VersionManifest } from './download.js';
 
@@ -64,7 +64,7 @@
                 <br />
                 {@const date = new Date(data.manifest.pub_date)}
                 <FlexRowWrapper>
-                    <a href={version?.url} class="download" on:click={() => (downloading = true)}>
+                    <a href={version.url} class="download" on:click={() => (downloading = true)}>
                         <Tooltip>
                             {version.platform} 用のインストーラーをダウンロードします
                         </Tooltip>
