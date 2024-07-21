@@ -68,7 +68,13 @@
         </section>
         <section>
             <div>
-                <h3>状態</h3>
+                <h3>
+                    状態
+                    <button on:click={() => ($state = { type: 'idle' })}>
+                        状態をリセット
+                        <i class="ti ti-reload" />
+                    </button>
+                </h3>
                 <code>
                     {stateText}
                 </code>
@@ -117,6 +123,9 @@
     }
 
     h3 {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
         margin-top: 1rem;
         color: var(--color-1);
     }
