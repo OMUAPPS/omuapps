@@ -119,7 +119,13 @@ async def should_remove(room: Room, provider_service: ProviderService):
     channel = await chat.channels.get(room.channel_id.key())
     if channel and not channel.active:
         return True
-    return not await provider_service.is_online(room)
+    try:
+        return not await provider_service.is_online(room)
+    except Exception as e:
+        logger.opt(exception=e).error(
+            f"Error checking if room {room.key()} should be removed"
+        )
+        return True
 
 
 async def recheck_channels():
