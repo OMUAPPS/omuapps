@@ -87,7 +87,6 @@ class OmuServer(Server):
                     "Content-Type": resp.content_type,
                     "Access-Control-Allow-Origin": "*",
                 }
-                resp.raise_for_status()
                 response = web.StreamResponse(
                     status=resp.status,
                     headers=headers,
@@ -102,7 +101,7 @@ class OmuServer(Server):
         except aiohttp.ClientResponseError as e:
             return web.Response(status=e.status, text=e.message)
         except Exception as e:
-            logger.error(e)
+            logger.opt(exception=e).error("Failed to proxy request")
             return web.Response(status=500)
 
     async def _handle_assets(self, request: web.Request) -> web.StreamResponse:
