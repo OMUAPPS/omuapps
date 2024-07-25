@@ -91,7 +91,7 @@
         max-height: 100%;
 
         .chat {
-            max-height: 100%;
+            height: 100%;
             background: var(--color-bg-2);
         }
     }
