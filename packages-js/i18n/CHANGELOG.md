@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.10 (2024-07-25)
+
+
+### Bug Fixes
+
+* **dash:** 配信をつなげるタブでチャットが表示されない問題を修正 ([2b41a09](https://github.com/OMUAPPS/omuapps/commit/2b41a0992ad2cb175745f0351b8aa4af2672c898))
+
+
+
+
+
 ## 0.6.9 (2024-07-24)
 
 **Note:** Version bump only for package @omujs/i18n
