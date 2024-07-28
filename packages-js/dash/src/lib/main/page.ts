@@ -1,5 +1,5 @@
 import type { TypedComponent } from '@omujs/ui';
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { currentPage } from './settings.js';
 
 export type Page<T> = {
@@ -18,6 +18,9 @@ export const pageMap = writable<Record<string, PageItem<unknown>>>({});
 export const loadedIds = writable<string[]>([]);
 
 export function registerPage<Props, T extends PageItem<Props>>(page: T): T {
+    if (get(pageMap)[page.id]) {
+        return page;
+    }
     pageMap.update((map) => {
         map[page.id] = page as PageItem<unknown>;
         return map;
