@@ -93,6 +93,8 @@ def install(launcher: Path, scene: Path):
         data["modules"] = {}
     if "scripts-tool" not in data["modules"]:
         data["modules"]["scripts-tool"] = []
+    if any(str(launcher) == x["path"] for x in data["modules"]["scripts-tool"]):
+        return
     data["modules"]["scripts-tool"].append({"path": str(launcher), "settings": {}})
     scene.write_text(json.dumps(data), encoding="utf-8")
 
