@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from threading import Thread
 from typing import Any, TypedDict
 
 import psutil
@@ -113,6 +114,11 @@ class SceneJson(TypedDict):
 
 
 async def on_start_server(server: Server) -> None:
+    thread = Thread(target=sync_obs_scenes)
+    thread.start()
+
+
+def sync_obs_scenes():
     kill_obs()
     install_all_scene()
     launch_obs()
