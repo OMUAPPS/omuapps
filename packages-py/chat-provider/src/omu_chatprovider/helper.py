@@ -7,6 +7,7 @@ from collections.abc import Callable, Coroutine
 
 import aiohttp
 from loguru import logger
+from omu.omu import Omu
 from omu_chat import Provider
 
 HTTP_REGEX = r"(https?://)?(www\.)?"
@@ -18,7 +19,7 @@ URL_NORMALIZE_REGEX = (
 )
 
 
-def get_session(provider: Provider) -> aiohttp.ClientSession:
+def get_session(omu: Omu, provider: Provider) -> aiohttp.ClientSession:
     user_agent = json.dumps(
         [
             "omu_chatprovider",
@@ -29,7 +30,10 @@ def get_session(provider: Provider) -> aiohttp.ClientSession:
             },
         ]
     )
-    session = aiohttp.ClientSession(headers={"User-Agent": user_agent})
+    session = aiohttp.ClientSession(
+        loop=omu.loop,
+        headers={"User-Agent": user_agent},
+    )
     return session
 
 

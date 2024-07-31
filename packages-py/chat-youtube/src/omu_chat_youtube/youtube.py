@@ -16,7 +16,7 @@ class YoutubeChatService(ProviderService):
     def __init__(self, omu: Omu, chat: Chat):
         self.omu = omu
         self.chat = chat
-        self.session = get_session(PROVIDER)
+        self.session = get_session(omu, PROVIDER)
         self.extractor = YoutubeAPI(omu, self.session)
 
     @property

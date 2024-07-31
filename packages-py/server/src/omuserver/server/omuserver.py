@@ -29,19 +29,17 @@ from omuserver.security.security import PermissionManager, ServerPermissionManag
 
 from .server import Server, ServerEvents
 
-client = aiohttp.ClientSession(
-    headers={
-        "User-Agent": json.dumps(
-            [
-                "omu",
-                {
-                    "name": "omuserver",
-                    "version": __version__,
-                },
-            ]
-        )
-    }
-)
+USER_AGENT_HEADERS = {
+    "User-Agent": json.dumps(
+        [
+            "omu",
+            {
+                "name": "omuserver",
+                "version": __version__,
+            },
+        ]
+    )
+}
 
 
 class OmuServer(Server):
@@ -74,6 +72,10 @@ class OmuServer(Server):
         self._assets = AssetExtension(self)
         self._i18n = I18nExtension(self)
         self._logger = LoggerExtension(self)
+        self.client = aiohttp.ClientSession(
+            loop=self.loop,
+            headers=USER_AGENT_HEADERS,
+        )
 
     async def _handle_proxy(self, request: web.Request) -> web.StreamResponse:
         url = request.query.get("url")
@@ -81,7 +83,7 @@ class OmuServer(Server):
         if not url:
             return web.Response(status=400)
         try:
-            async with client.get(url) as resp:
+            async with self.client.get(url) as resp:
                 headers = {
                     "Cache-Control": "no-cache" if no_cache else "max-age=3600",
                     "Content-Type": resp.content_type,

@@ -18,7 +18,7 @@ class WebsocketsConnection(Connection):
         self._address = address
         self._connected = False
         self._socket: aiohttp.ClientWebSocketResponse | None = None
-        self._session = aiohttp.ClientSession()
+        self._session: aiohttp.ClientSession | None = None
 
     @property
     def _ws_endpoint(self) -> str:
@@ -30,6 +30,7 @@ class WebsocketsConnection(Connection):
     async def connect(self) -> None:
         if self._socket and not self._socket.closed:
             raise RuntimeError("Already connected")
+        self._session = aiohttp.ClientSession()
         self._socket = await self._session.ws_connect(self._ws_endpoint)
         self._connected = True
 
@@ -83,7 +84,8 @@ class WebsocketsConnection(Connection):
     def closed(self) -> bool:
         return not self._socket or self._socket.closed
 
-    def __del__(self) -> None:
+    def __del__(self):
+        if not self.closed:
+            self._client.loop.create_task(self.close())
         if self._session:
             self._client.loop.create_task(self._session.close())
-        del self._session
