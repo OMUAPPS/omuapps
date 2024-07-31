@@ -109,6 +109,7 @@ pip==24.2
     # via omuserver
 psutil==6.0.0
     # via omuplugin-obssync
+    # via omuplugin-onecomme
     # via omuserver
 pycryptodomex==3.20.0
     # via yt-dlp

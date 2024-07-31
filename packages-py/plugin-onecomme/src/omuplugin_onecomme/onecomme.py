@@ -2,6 +2,7 @@ import asyncio
 import os
 from pathlib import Path
 
+import psutil
 from loguru import logger
 from omuserver.server import Server
 
@@ -33,15 +34,11 @@ def find_onecomme_config() -> Path | None:
 
 
 def terminate_onecomme():
-    bin = find_onecomme_binary()
-    if bin is None:
-        return
-    if os.name == "nt":
-        os.system(f"taskkill /f /im {bin.name}")
-    else:
-        # TODO: Implement for other platforms
-        raise NotImplementedError("OneComme is only supported on Windows")
-    logger.info("OneComme terminated")
+    for proc in psutil.process_iter():
+        name = proc.name()
+        if name in {"OneComme.exe", "OneComme"}:
+            proc.terminate()
+            logger.info("OneComme terminated")
 
 
 async def start_onecomme(server: Server):

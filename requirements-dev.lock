@@ -119,6 +119,7 @@ pluggy==1.5.0
     # via pytest
 psutil==6.0.0
     # via omuplugin-obssync
+    # via omuplugin-onecomme
     # via omuserver
 pycryptodomex==3.20.0
     # via yt-dlp
