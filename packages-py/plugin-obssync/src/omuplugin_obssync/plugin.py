@@ -12,6 +12,8 @@ import psutil
 from omu.identifier import Identifier
 from omuserver.server import Server
 
+from .obsconfig import OBSConfig
+
 IDENTIFIER = Identifier("com.omuapps", "plugin-obssync")
 
 
@@ -22,13 +24,14 @@ class obs:
 
 def kill_obs():
     for proc in psutil.process_iter():
-        if proc.name() == "obs":
+        name = proc.name()
+        if name in {"obs64.exe", "obs32.exe"}:
             obs.launch_command = proc.cmdline()
             obs.cwd = Path(proc.cwd())
-            proc.kill()
+            proc.terminate()
 
 
-def launch_obs():
+def relaunch_obs():
     if obs.launch_command:
         subprocess.Popen(obs.launch_command, cwd=obs.cwd)
 
@@ -51,33 +54,6 @@ def get_launch_command():
     }
 
 
-def generate_launcher_code():
-    return f"""\
-import subprocess
-class g:
-    process: subprocess.Popen | None = None
-
-def _launch():
-    if g.process:
-        _kill()
-    g.process = subprocess.Popen(**{get_launch_command()})
-    print("Launched")
-
-def _kill():
-    if g.process:
-        g.process.kill()
-        g.process = None
-        print("Killed")
-
-# obs
-def script_load(settings):
-    _launch()
-
-def script_unload():
-    _kill()
-"""
-
-
 def get_obs_path():
     if sys.platform == "win32":
         APP_DATA = os.getenv("APPDATA")
@@ -88,25 +64,73 @@ def get_obs_path():
         return Path("~/.config/obs-studio").expanduser()
 
 
-def install(launcher: Path, scene: Path):
+def install_script(launcher: Path, scene: Path) -> bool:
     data: SceneJson = json.loads(scene.read_text(encoding="utf-8"))
     if "modules" not in data:
         data["modules"] = {}
     if "scripts-tool" not in data["modules"]:
         data["modules"]["scripts-tool"] = []
     if any(str(launcher) == x["path"] for x in data["modules"]["scripts-tool"]):
-        return
+        return False
     data["modules"]["scripts-tool"].append({"path": str(launcher), "settings": {}})
     scene.write_text(json.dumps(data), encoding="utf-8")
+    return True
 
 
-def install_all_scene():
+def install_all_scene() -> bool:
     obs_path = get_obs_path()
     scenes_path = obs_path / "basic" / "scenes"
-    launcher_path = obs_path / "run_omuserver.py"
-    launcher_path.write_text(generate_launcher_code())
+    launcher_path = Path(__file__).parent / "script" / "omuapps_plugin.py"
+    config_path = Path(__file__).parent / "script" / "config.json"
+    config_path.write_text(json.dumps(get_launch_command()), encoding="utf-8")
+    should_launch = False
     for scene in scenes_path.glob("*.json"):
-        install(launcher_path, scene)
+        should_launch |= install_script(launcher_path, scene)
+    return should_launch
+
+
+def setup_python_path() -> bool:
+    path = get_obs_path() / "global.ini"
+    text = path.read_text(encoding="utf-8-sig")
+    config = OBSConfig.loads(text)
+
+    if "Python" not in config:
+        config["Python"] = {}
+    python = config["Python"]
+    python_path = get_python_directory()
+
+    if python.get("Path32bit") == python.get("Path64bit") == python_path:
+        return False
+
+    kill_obs()
+    text = path.read_text(encoding="utf-8-sig")
+    config = OBSConfig.loads(text)
+    python["Path64bit"] = python_path
+    python["Path32bit"] = python_path
+    path.write_text(OBSConfig.dumps(config), encoding="utf-8-sig")
+    return True
+
+
+def is_venv():
+    return hasattr(sys, "real_prefix") or (
+        hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+    )
+
+
+def get_python_directory():
+    version_string = f"cpython@{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    rye_dir = Path.home() / ".rye" / "py" / version_string
+    if is_venv() and rye_dir.exists():
+        return str(rye_dir)
+
+    path = Path(sys.executable)
+    return str(path.parent.parent).replace("\\\\", "\\").replace("\\", "/")
+
+
+def install():
+    should_relaunch = setup_python_path()
+    should_relaunch |= install_all_scene()
+    relaunch_obs()
 
 
 class SceneJson(TypedDict):
@@ -114,11 +138,5 @@ class SceneJson(TypedDict):
 
 
 async def on_start_server(server: Server) -> None:
-    thread = Thread(target=sync_obs_scenes)
+    thread = Thread(target=install)
     thread.start()
-
-
-def sync_obs_scenes():
-    kill_obs()
-    install_all_scene()
-    launch_obs()
