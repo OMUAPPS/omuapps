@@ -34,7 +34,9 @@
 -e file:packages-py/plugin-onecomme
 -e file:packages-py/plugin-translator
 -e file:packages-py/server
-aiohttp==3.9.5
+aiohappyeyeballs==2.3.2
+    # via aiohttp
+aiohttp==3.10.0
     # via edgetrans
     # via iwashi
     # via marshmallowqa-py
@@ -55,7 +57,7 @@ brotli==1.1.0
     # via yt-dlp
 bs4==0.0.2
     # via iwashi
-certifi==2024.6.2
+certifi==2024.7.4
     # via requests
     # via yt-dlp
 charset-normalizer==3.3.2
@@ -63,6 +65,9 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via iwashi
     # via omuserver
+colorama==0.4.6
+    # via click
+    # via loguru
 edgetrans==0.2.3
     # via omuplugin-translator
 frozenlist==1.4.1
@@ -71,7 +76,7 @@ frozenlist==1.4.1
 idna==3.7
     # via requests
     # via yarl
-iwashi==3.0.8
+iwashi==3.0.9
     # via omu-chatprovider
     # via omuplugin-chat
 loguru==0.7.2
@@ -100,23 +105,23 @@ mutagen==1.47.0
     # via yt-dlp
 packaging==24.1
     # via omuserver
-pip==24.1
+pip==24.2
     # via omuserver
 psutil==6.0.0
     # via omuplugin-obssync
     # via omuserver
 pycryptodomex==3.20.0
     # via yt-dlp
-pydantic==2.7.4
+pydantic==2.8.2
     # via marshmallowqa-py
-pydantic-core==2.18.4
+pydantic-core==2.20.1
     # via pydantic
 requests==2.32.3
     # via yt-dlp
 result==0.17.0
     # via omu
     # via omuserver
-rookiepy==0.5.1
+rookiepy==0.5.2
     # via marshmallowqa-py
 soupsieve==2.5
     # via beautifulsoup4
@@ -126,11 +131,13 @@ typing-extensions==4.12.2
 urllib3==2.2.2
     # via requests
     # via yt-dlp
-uv==0.2.15
+uv==0.2.32
     # via omuserver
 websockets==12.0
     # via yt-dlp
+win32-setctime==1.1.0
+    # via loguru
 yarl==1.9.4
     # via aiohttp
-yt-dlp==2024.5.27
+yt-dlp==2024.7.25
     # via omuplugin-archive
