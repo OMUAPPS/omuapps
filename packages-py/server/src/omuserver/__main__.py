@@ -52,7 +52,7 @@ def main(
     if token:
         config.dashboard_token = token
     elif token_file:
-        config.dashboard_token = Path(token_file).read_text().strip()
+        config.dashboard_token = Path(token_file).read_text(encoding="utf-8").strip()
     else:
         config.dashboard_token = None
 

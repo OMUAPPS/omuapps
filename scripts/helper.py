@@ -9,7 +9,7 @@ def get_lerna_version():
     lerna = Path("lerna.json")
     if not lerna.exists():
         raise FileNotFoundError(f"Could not find {lerna}")
-    return json.loads(lerna.read_text())["version"]
+    return json.loads(lerna.read_text(encoding="utf-8"))["version"]
 
 
 class Project(TypedDict):
@@ -39,7 +39,9 @@ VERSION = "{project['version']}"
 
 def get_version(project: Path) -> str:
     toml = project / "pyproject.toml"
-    version_match = re.search(r"version\s*=\s*\"([0-9.]*)\"", toml.read_text())
+    version_match = re.search(
+        r"version\s*=\s*\"([0-9.]*)\"", toml.read_text(encoding="utf-8")
+    )
     if version_match is None:
         raise ValueError(f"Could not find version in {toml}")
     return version_match.group(1)
@@ -49,7 +51,9 @@ def set_version(project: Path, version: str):
     toml = project / "pyproject.toml"
     toml.write_text(
         re.sub(
-            r"version\s*=\s*\"([0-9.]*)\"", f'version = "{version}"', toml.read_text()
+            r"version\s*=\s*\"([0-9.]*)\"",
+            f'version = "{version}"',
+            toml.read_text(encoding="utf-8"),
         ),
         encoding="utf-8",
     )
@@ -77,6 +81,6 @@ def update_version(version: str | None = None):
     )
 
     tauri_path = Path("packages-js/dash/src-tauri/tauri.conf.json")
-    tauri = json.loads(tauri_path.read_text())
+    tauri = json.loads(tauri_path.read_text(encoding="utf-8"))
     tauri["package"]["version"] = new_version
     tauri_path.write_text(json.dumps(tauri, indent=4), encoding="utf-8")
