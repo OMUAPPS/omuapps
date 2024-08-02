@@ -700,16 +700,18 @@ class OBSProperties(Reference[obs_properties_t]):
             )
         return OBSProperty(obs_property)
 
-    def set_flags(
+    @property
+    def flags(self) -> int:
+        with self as properties:
+            return obspython.obs_properties_get_flags(properties)
+
+    @flags.setter
+    def flags(
         self,
         flags: int,
     ):
         with self as properties:
             obspython.obs_properties_set_flags(properties, flags)
-
-    def get_flags(self) -> int:
-        with self as properties:
-            return obspython.obs_properties_get_flags(properties)
 
     @property
     def first(self) -> OBSProperty:
