@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import obspython
+import obspython  # type: ignore
 
 from .reference import Reference
 
@@ -22,6 +22,9 @@ class OBSScene(Reference[obs_scene_t]):
 
     @classmethod
     def create(cls, name: str) -> OBSScene:
+        existing_scene = cls.get_scene_by_name(name)
+        if existing_scene is not None:
+            raise ValueError(f"Scene with name {name} already exists")
         obs_scene = obspython.obs_scene_create(name)
         return cls(obs_scene)
 
