@@ -5,8 +5,7 @@ from enum import IntEnum
 
 import obspython
 
-from omuobs.data import OBSData  # type: ignore
-
+from .data import OBSData
 from .reference import Reference
 
 
