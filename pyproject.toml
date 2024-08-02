@@ -61,4 +61,9 @@ disable = [
 ]
 
 [tool.pyright]
-exclude = ["**/node_modules", "**/__pycache__", "**/.venv"]
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.venv",
+    "packages-py/plugin-obssync/src/obspython.pyi",
+]
