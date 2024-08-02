@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from enum import IntEnum
 
-import obspython
+import obspython  # type: ignore
 
 from .data import OBSData
 from .reference import Reference

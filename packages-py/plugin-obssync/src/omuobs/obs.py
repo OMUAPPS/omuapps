@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import obspython
+import obspython  # type: ignore
 
 from .scene import OBSScene
 from .source import OBSSource

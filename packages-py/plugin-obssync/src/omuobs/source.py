@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import obspython
+import obspython  # type: ignore
 
 from .data import OBSData, OBSDataArray
 from .reference import Reference
