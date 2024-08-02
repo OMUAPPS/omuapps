@@ -1,5 +1,10 @@
 from collections.abc import Callable
 
+# メモリ管理出来るように作ってみたけどクラッシュするので安定した実装になるまで無効化
+# 勝手に安定することを星に願おう
+# https://github.com/OMUAPPS/omuapps/issues/64
+ENABLE_RELEASE = False
+
 
 class Reference[T]:
     def __init__(
@@ -26,4 +31,11 @@ class Reference[T]:
             raise ValueError("Reference is already released")
         if self.ref_count > 0:
             return
-        self.release(self._ref)
+        if ENABLE_RELEASE:
+            self.release(self._ref)
+
+    def acquire(self) -> T:
+        if self._ref is None:
+            raise ValueError("Reference is already released")
+        self.ref_count += 1
+        return self._ref
