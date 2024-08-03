@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from enum import IntEnum
 
 import obspython  # type: ignore
@@ -242,6 +243,11 @@ class OBSData(Reference[obs_data_t]):
         return cls(obs_data)
 
     @classmethod
+    def from_json(cls, json_dict: dict) -> OBSData:
+        json_string = json.dumps(json_dict)
+        return cls.create_from_json(json_string)
+
+    @classmethod
     def create_from_json(cls, json_string: str) -> OBSData:
         obs_data = obspython.obs_data_create_from_json(json_string)
         return cls(obs_data)
@@ -259,6 +265,9 @@ class OBSData(Reference[obs_data_t]):
     def get_json(self) -> str:
         with self as data:
             return obspython.obs_data_get_json(data)
+
+    def to_json(self) -> dict:
+        return json.loads(self.get_json())
 
     def get_json_with_defaults(self) -> str:
         with self as data:
