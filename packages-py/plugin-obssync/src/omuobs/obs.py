@@ -88,7 +88,7 @@ class OBS:
 
     @staticmethod
     def frontend_add_event_callback(callback: Callable[[OBSFrontendEvent], None]):
-        def obs_callback(event: int):
+        def obs_callback(event):
             callback(OBSFrontendEvent(event))
 
-        obspython.obs_frontend_add_event_callback(obs_callback)  # type: ignore
+        # obspython.obs_frontend_add_event_callback(obs_callback)  # type: ignore

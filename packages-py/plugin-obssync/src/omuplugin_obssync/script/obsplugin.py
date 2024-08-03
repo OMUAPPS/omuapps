@@ -21,22 +21,25 @@ from omuplugin_obssync.types import (
     SCENE_GET,
     SCENE_LIST,
     SOURCE_CREATE,
-    SOURCE_GET_FROM_NAME,
-    SOURCE_GET_FROM_UUID,
+    SOURCE_GET_BY_NAME,
+    SOURCE_GET_BY_UUID,
     SOURCE_LIST,
-    SOURCE_REMOVE,
+    SOURCE_REMOVE_BY_NAME,
+    SOURCE_REMOVE_BY_UUID,
     SOURCE_UPDATE,
     BlendProperties,
     BrowserSourceData,
     CreateResponse,
+    RemoveByNameRequest,
+    RemoveByUuidRequest,
     RemoveResponse,
     ScaleProperties,
     SceneGetRequest,
     SceneJson,
     SceneListRequest,
     SceneListResponse,
-    SourceGetFromNameRequest,
-    SourceGetFromUuidRequest,
+    SourceGetByNameRequest,
+    SourceGetByUuidRequest,
     SourceJson,
     SourceListRequest,
     TextSourceData,
@@ -78,9 +81,9 @@ def source_to_json(scene_item: OBSSceneItem) -> SourceJson | None:
     scale_properties = ScaleProperties(
         scale_filter=scene_item.scale_filter.name,
     )
-    if source.type == "browser_source":
+    if source.id == "browser_source":
         return {
-            "type": source.type,
+            "type": "browser_source",
             "name": source.name,
             "data": BrowserSourceData(**source.settings.to_json()),
             "uuid": source.uuid,
@@ -88,9 +91,9 @@ def source_to_json(scene_item: OBSSceneItem) -> SourceJson | None:
             "blend_properties": blend_properties,
             "scale_properties": scale_properties,
         }
-    elif source.type == "text_gdiplus":
+    elif source.id == "text_gdiplus":
         return {
-            "type": source.type,
+            "type": "text_gdiplus",
             "name": source.name,
             "data": TextSourceData(**source.settings.to_json()),
             "uuid": source.uuid,
@@ -125,42 +128,53 @@ def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
     if "blend_properties" in source_json:
         blending_method = source_json["blend_properties"]["blending_method"]
         blending_mode = source_json["blend_properties"]["blending_mode"]
-        scene_item.blending_method = OBSBlendingMethod(blending_method)
-        scene_item.blending_mode = OBSBlendingType(blending_mode)
+        scene_item.blending_method = OBSBlendingMethod[blending_method]
+        scene_item.blending_mode = OBSBlendingType[blending_mode]
     if "scale_properties" in source_json:
         scale_filter = source_json["scale_properties"]["scale_filter"]
-        scene_item.scale_filter = OBSScaleType(scale_filter)
+        scene_item.scale_filter = OBSScaleType[scale_filter]
     return scene_item
 
 
 @omu.endpoints.bind(endpoint_type=SOURCE_CREATE)
 async def source_create(source: SourceJson) -> CreateResponse:
     existing_source = OBSSource.get_source_by_name(source["name"])
-    if existing_source is not None:
+    if existing_source is not None and not existing_source.removed:
         raise ValueError(f"Source with name {source['name']} already exists")
     scene = get_scene(source.get("scene"))
     scene_item = create_obs_source(scene, source)
     if "blend_properties" in source:
         blending_method = source["blend_properties"]["blending_method"]
         blending_mode = source["blend_properties"]["blending_mode"]
-        scene_item.blending_method = OBSBlendingMethod(blending_method)
-        scene_item.blending_mode = OBSBlendingType(blending_mode)
+        scene_item.blending_method = OBSBlendingMethod[blending_method]
+        scene_item.blending_mode = OBSBlendingType[blending_mode]
     if "scale_properties" in source:
         scale_filter = source["scale_properties"]["scale_filter"]
-        scene_item.scale_filter = OBSScaleType(scale_filter)
+        scene_item.scale_filter = OBSScaleType[scale_filter]
     source_json = source_to_json(scene_item)
     if source_json is None:
         raise ValueError(f"Source with type {source['type']} is not supported")
     return {"source": source_json}
 
 
-@omu.endpoints.bind(endpoint_type=SOURCE_REMOVE)
-async def source_remove(source_name: str) -> RemoveResponse:
-    obs_source = OBSSource.get_source_by_name(source_name)
+@omu.endpoints.bind(endpoint_type=SOURCE_REMOVE_BY_NAME)
+async def source_remove_by_name(request: RemoveByNameRequest) -> RemoveResponse:
+    obs_source = OBSSource.get_source_by_name(request["name"])
     if obs_source is None:
-        raise ValueError(f"Source with name {source_name} does not exist")
+        raise ValueError(f"Source with name {request['name']} does not exist")
     if obs_source.removed:
-        raise ValueError(f"Source with name {source_name} is already removed")
+        raise ValueError(f"Source with name {request['name']} is already removed")
+    obs_source.remove()
+    return {}
+
+
+@omu.endpoints.bind(endpoint_type=SOURCE_REMOVE_BY_UUID)
+async def source_remove_by_uuid(request: RemoveByUuidRequest) -> RemoveResponse:
+    obs_source = OBSSource.get_source_by_uuid(request["uuid"])
+    if obs_source is None:
+        raise ValueError(f"Source with uuid {request['uuid']} does not exist")
+    if obs_source.removed:
+        raise ValueError(f"Source with uuid {request['uuid']} is already removed")
     obs_source.remove()
     return {}
 
@@ -186,31 +200,31 @@ async def source_update(source_json: SourceJson) -> UpdateResponse:
     if "blend_properties" in source_json:
         blending_method = source_json["blend_properties"]["blending_method"]
         blending_mode = source_json["blend_properties"]["blending_mode"]
-        scene_item.blending_method = OBSBlendingMethod(blending_method)
-        scene_item.blending_mode = OBSBlendingType(blending_mode)
+        scene_item.blending_method = OBSBlendingMethod[blending_method]
+        scene_item.blending_mode = OBSBlendingType[blending_mode]
     if "scale_properties" in source_json:
         scale_filter = source_json["scale_properties"]["scale_filter"]
-        scene_item.scale_filter = OBSScaleType(scale_filter)
+        scene_item.scale_filter = OBSScaleType[scale_filter]
     updated_json = source_to_json(scene_item)
     if updated_json is None:
-        raise ValueError(f"Source with type {source.type} is not supported")
+        raise ValueError(f"Source with type {source.id} is not supported")
     return {"source": updated_json}
 
 
-@omu.endpoints.bind(endpoint_type=SOURCE_GET_FROM_NAME)
-async def source_get_from_name(request: SourceGetFromNameRequest) -> SourceJson:
+@omu.endpoints.bind(endpoint_type=SOURCE_GET_BY_NAME)
+async def source_get_by_name(request: SourceGetByNameRequest) -> SourceJson:
     scene = get_scene(request.get("scene"))
     scene_item = scene.find_source(request["name"])
     if scene_item is None:
         raise ValueError(f"Source with name {request['name']} does not exist")
     source_json = source_to_json(scene_item)
     if source_json is None:
-        raise ValueError(f"Source with type {scene_item.source.type} is not supported")
+        raise ValueError(f"Source with type {scene_item.source.id} is not supported")
     return source_json
 
 
-@omu.endpoints.bind(endpoint_type=SOURCE_GET_FROM_UUID)
-async def source_get_from_uuid(request: SourceGetFromUuidRequest) -> SourceJson:
+@omu.endpoints.bind(endpoint_type=SOURCE_GET_BY_UUID)
+async def source_get_by_uuid(request: SourceGetByUuidRequest) -> SourceJson:
     scene_name = request.get("scene")
     if scene_name:
         scene = OBSScene.get_scene_by_name(scene_name)
@@ -237,12 +251,11 @@ async def source_list(request: SourceListRequest) -> list[SourceJson]:
             raise ValueError(f"Scene with name {scene_name} does not exist")
     else:
         scene = OBS.frontend_get_current_scene().scene
-    scene_items = scene.enum_items()
     if "scene" in request:
         scene = OBSScene.get_scene_by_name(request["scene"])
         if scene is None:
             raise ValueError(f"Scene with name {request['scene']} does not exist")
-        scene_items = scene.enum_items()
+    scene_items = scene.enum_items()
     return [*filter(None, map(source_to_json, scene_items))]
 
 

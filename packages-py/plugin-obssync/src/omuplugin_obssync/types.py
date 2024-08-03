@@ -56,14 +56,6 @@ type OBSFrontendEvent = Literal[
 ]
 
 
-class SourceType[T: LiteralString, D](TypedDict):
-    type: T
-    data: D
-    name: str
-    uuid: NotRequired[str]
-    scene: NotRequired[str]
-
-
 type OBSScaleType = Literal[
     "DISABLE",
     "POINT",
@@ -109,6 +101,14 @@ class BlendableSource(TypedDict):
 class SizeInfo(TypedDict):
     width: NotRequired[int]
     height: NotRequired[int]
+
+
+class SourceType[T: LiteralString, D](TypedDict):
+    type: T
+    data: D
+    name: str
+    uuid: NotRequired[str]
+    scene: NotRequired[str]
 
 
 class BrowserSourceData(SizeInfo):
@@ -193,12 +193,26 @@ SOURCE_CREATE = EndpointType[SourceJson, CreateResponse].create_json(
 )
 
 
+class RemoveByNameRequest(TypedDict):
+    name: str
+
+
+class RemoveByUuidRequest(TypedDict):
+    uuid: str
+
+
 class RemoveResponse(TypedDict): ...
 
 
-SOURCE_REMOVE = EndpointType[str, RemoveResponse].create_json(
+SOURCE_REMOVE_BY_NAME = EndpointType[RemoveByNameRequest, RemoveResponse].create_json(
     PLUGIN_ID,
-    name="source_remove",
+    name="source_remove_by_name",
+)
+
+
+SOURCE_REMOVE_BY_UUID = EndpointType[RemoveByUuidRequest, RemoveResponse].create_json(
+    PLUGIN_ID,
+    name="source_remove_by_uuid",
 )
 
 
@@ -212,25 +226,25 @@ SOURCE_UPDATE = EndpointType[SourceJson, UpdateResponse].create_json(
 )
 
 
-class SourceGetFromNameRequest(TypedDict):
+class SourceGetByNameRequest(TypedDict):
     scene: NotRequired[str]
     name: str
 
 
-SOURCE_GET_FROM_NAME = EndpointType[SourceGetFromNameRequest, SourceJson].create_json(
+SOURCE_GET_BY_NAME = EndpointType[SourceGetByNameRequest, SourceJson].create_json(
     PLUGIN_ID,
-    name="source_get_from_name",
+    name="source_get_by_name",
 )
 
 
-class SourceGetFromUuidRequest(TypedDict):
+class SourceGetByUuidRequest(TypedDict):
     scene: NotRequired[str]
     uuid: str
 
 
-SOURCE_GET_FROM_UUID = EndpointType[SourceGetFromUuidRequest, SourceJson].create_json(
+SOURCE_GET_BY_UUID = EndpointType[SourceGetByUuidRequest, SourceJson].create_json(
     PLUGIN_ID,
-    name="source_get_from_uuid",
+    name="source_get_by_uuid",
 )
 
 

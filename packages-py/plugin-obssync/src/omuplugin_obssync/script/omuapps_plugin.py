@@ -85,7 +85,7 @@ def script_properties():  # ui
 
 
 def start_plugin():
-    from omuplugin_obssync import obsplugin
+    from omuplugin_obssync.script import obsplugin
 
     obsplugin.start()
 

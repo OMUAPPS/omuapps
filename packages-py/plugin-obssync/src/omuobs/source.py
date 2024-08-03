@@ -24,6 +24,14 @@ class OBSTransitionMode(IntEnum):
     MANUAL = 1
 
 
+class OBSSourceType(IntEnum):
+    # https://github.com/obsproject/obs-studio/blob/ff2fa24dc25519475687041ba6af829e9ba41335/libobs/obs-source.h#L33-L38
+    INPUT = 0
+    FILTER = 1
+    TRANSITION = 2
+    SCENE = 3
+
+
 class obs_source_t: ...
 
 
@@ -145,9 +153,9 @@ class OBSSource(Reference[obs_source_t]):
             return obspython.obs_source_get_uuid(source)
 
     @property
-    def type(self) -> str:
+    def type(self) -> OBSSourceType:
         with self as source:
-            return obspython.obs_source_get_type(source)
+            return OBSSourceType(obspython.obs_source_get_type(source))
 
     @property
     def id(self) -> int:

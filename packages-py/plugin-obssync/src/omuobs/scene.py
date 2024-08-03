@@ -265,7 +265,7 @@ class OBSSceneItem(Reference[obs_sceneitem_t]):
     @property
     def scale_filter(self) -> OBSScaleType:
         with self as scene_item:
-            return obspython.obs_sceneitem_get_scale_filter(scene_item)
+            return OBSScaleType(obspython.obs_sceneitem_get_scale_filter(scene_item))
 
     @scale_filter.setter
     def scale_filter(self, value: OBSScaleType) -> None:
@@ -275,7 +275,9 @@ class OBSSceneItem(Reference[obs_sceneitem_t]):
     @property
     def blending_method(self) -> OBSBlendingMethod:
         with self as scene_item:
-            return obspython.obs_sceneitem_get_blending_method(scene_item)
+            return OBSBlendingMethod(
+                obspython.obs_sceneitem_get_blending_method(scene_item)
+            )
 
     @blending_method.setter
     def blending_method(self, value: OBSBlendingMethod) -> None:
@@ -285,7 +287,9 @@ class OBSSceneItem(Reference[obs_sceneitem_t]):
     @property
     def blending_mode(self) -> OBSBlendingType:
         with self as scene_item:
-            return obspython.obs_sceneitem_get_blending_mode(scene_item)
+            return OBSBlendingType(
+                obspython.obs_sceneitem_get_blending_mode(scene_item)
+            )
 
     @blending_mode.setter
     def blending_mode(self, value: OBSBlendingType) -> None:
@@ -535,8 +539,8 @@ class OBSScene(Reference[obs_scene_t]):
         return OBSSceneItem(obs_sceneitem)
 
     def add(self, source: OBSSource) -> OBSSceneItem:
-        with self as scene:
-            obs_sceneitem = obspython.obs_scene_add(scene, source)
+        with self as scene, source as source_data:
+            obs_sceneitem = obspython.obs_scene_add(scene, source_data)
         return OBSSceneItem(obs_sceneitem)
 
     def sceneitem_from_source(self, source: OBSSource) -> OBSSceneItem:
