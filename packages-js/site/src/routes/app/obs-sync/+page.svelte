@@ -1,14 +1,24 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
+    import { OBSPlugin } from '@omujs/obs';
+    import {
+        OBS_SCENE_READ_PERMISSION_ID,
+        OBS_SOURCE_CREATE_PERMISSION_ID,
+        OBS_SOURCE_READ_PERMISSION_ID,
+    } from '@omujs/obs/permissions.js';
     import { Omu } from '@omujs/omu';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import App from './App.svelte';
-    import { OBSSyncApp } from './obssync-app.js';
 
     const omu = new Omu(APP);
-    const obs = new OBSSyncApp(omu);
+    const obs = OBSPlugin.create(omu);
+    omu.permissions.require(
+        OBS_SCENE_READ_PERMISSION_ID,
+        OBS_SOURCE_READ_PERMISSION_ID,
+        OBS_SOURCE_CREATE_PERMISSION_ID,
+    );
     setClient(omu);
 
     const waitReady = new Promise<void>((resolve) => omu.onReady(resolve));

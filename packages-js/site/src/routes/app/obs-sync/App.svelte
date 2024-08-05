@@ -1,13 +1,28 @@
 <script lang="ts">
-    import type { OBSSyncApp } from './obssync-app.js';
+    import { OBSPlugin } from '@omujs/obs';
+    import type { SourceType } from '@omujs/obs/types.js';
 
-    export let obs: OBSSyncApp;
-    const { config } = obs;
+    export let obs: OBSPlugin;
+    let source: SourceType<string, unknown>;
 
-    async function test() {
-        await obs.sourceCreate({
+    async function getAvailableName(name: string) {
+        const sources = await obs.sourceList();
+        const names = sources.map((source) => source.name);
+        if (!names.includes(name)) return name;
+        let i = 1;
+        let newName = name;
+        while (names.includes(newName)) {
+            newName = `${name} (${i})`;
+            i++;
+        }
+        return newName;
+    }
+
+    async function test1() {
+        const name = await getAvailableName('omuapps');
+        const res = await obs.sourceCreate({
             type: 'browser_source',
-            name: 'Test',
+            name: name,
             data: {
                 url: 'https://omuapps.com/',
                 width: 1920,
@@ -18,16 +33,22 @@
                 blending_mode: 'NORMAL',
             },
         });
+        source = res.source;
+    }
+    async function test2() {
+        if (!source.uuid) return;
+        await obs.sourceRemoveByUuid(source.uuid);
     }
 </script>
 
 <main>
     <div class="left">
-        <button on:click={test}>Test</button>
+        <button on:click={test1}>Test1</button>
+        <button on:click={test2}>Test2</button>
     </div>
     <div>
         <p>
-            {JSON.stringify($config)}
+            Scene List:
             {#await obs.sceneList() then response}
                 {#each response.scenes as scene}
                     <div class="scene">
@@ -35,14 +56,17 @@
                     </div>
                 {/each}
             {/await}
+            Source List:
             {#await obs.sourceList() then sources}
                 {#each sources as source}
                     <div class="source">
                         <p>{source.name}</p>
+                        {JSON.stringify(source)}
                     </div>
                 {/each}
             {/await}
         </p>
+        {JSON.stringify(source)}
     </div>
 </main>
 
@@ -55,6 +79,13 @@
     }
 
     .scene {
+        padding: 0.5rem 1rem;
+        background: var(--color-bg-2);
+        outline: 1px solid var(--color-outline);
+        margin-top: 0.5rem;
+    }
+
+    .source {
         padding: 0.5rem 1rem;
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
