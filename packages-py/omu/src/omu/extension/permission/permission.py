@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 from omu.identifier import Identifier
 from omu.localization import LocalizedText
@@ -12,7 +12,7 @@ type PermissionLevel = Literal["low", "medium", "high"]
 
 class PermissionMetadata(TypedDict):
     name: LocalizedText
-    note: LocalizedText
+    note: NotRequired[LocalizedText]
     level: PermissionLevel
 
 
