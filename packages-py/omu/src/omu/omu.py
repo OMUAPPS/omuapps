@@ -166,7 +166,13 @@ class Omu(Client):
     async def send[T](self, type: PacketType[T], data: T) -> None:
         await self._network.send(Packet(type, data))
 
-    def run(self, *, reconnect: bool = True) -> None:
+    def run(
+        self,
+        *,
+        loop: asyncio.AbstractEventLoop | None = None,
+        reconnect: bool = True,
+    ) -> None:
+        self._loop = loop or self._loop
         try:
             self.loop.set_exception_handler(asyncio_error_logger)
             self.loop.create_task(self.start(reconnect=reconnect))
