@@ -5,35 +5,35 @@ import type { Model } from '../../model.js';
 type PermissionLevel = 'low' | 'medium' | 'high';
 
 export type PermissionMetadata = {
-    name: LocalizedText,
-    note: LocalizedText,
-    level: PermissionLevel,
-}
+    name: LocalizedText;
+    note?: LocalizedText;
+    level: PermissionLevel;
+};
 
 export type PermissionTypeJson = {
     id: string;
     metadata: PermissionMetadata;
-}
+};
 
 export class PermissionType implements Model<PermissionTypeJson> {
     public readonly id: Identifier;
     public readonly metadata: PermissionMetadata;
 
-    constructor(options: {
-        id: Identifier,
-        metadata: PermissionMetadata,
-    }) {
+    constructor(options: { id: Identifier; metadata: PermissionMetadata }) {
         this.id = options.id;
         this.metadata = options.metadata;
     }
 
-    public static create(identifier: Identifier, {
-        name,
-        metadata,
-    }: {
-        name: string,
-        metadata: PermissionMetadata,
-    }): PermissionType {
+    public static create(
+        identifier: Identifier,
+        {
+            name,
+            metadata,
+        }: {
+            name: string;
+            metadata: PermissionMetadata;
+        },
+    ): PermissionType {
         return new PermissionType({
             id: identifier.join(name),
             metadata: metadata,

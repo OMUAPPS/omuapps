@@ -17,11 +17,13 @@
                 {permission.id.key()}
             </small>
         </FlexRowWrapper>
-        <FlexRowWrapper widthFull between>
-            <small>
-                {omu.i18n.translate(permission.metadata.note)}
-            </small>
-        </FlexRowWrapper>
+        {#if permission.metadata.note}
+            <FlexRowWrapper widthFull between>
+                <small>
+                    {omu.i18n.translate(permission.metadata.note)}
+                </small>
+            </FlexRowWrapper>
+        {/if}
     </FlexColWrapper>
 </div>
 
