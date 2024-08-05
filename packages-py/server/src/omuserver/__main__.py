@@ -1,4 +1,3 @@
-import asyncio
 import io
 import sys
 import tracemalloc
@@ -40,8 +39,6 @@ def main(
     token_file: str | None,
     port: int,
 ):
-    loop = asyncio.get_event_loop()
-
     config = Config()
     config.address = Address(
         host=None,
@@ -62,7 +59,7 @@ def main(
         config.strict_origin = False
         tracemalloc.start()
 
-    server = OmuServer(config=config, loop=loop)
+    server = OmuServer(config=config)
 
     logger.info(f"Starting omuserver v{VERSION} on {config.address.to_url()}")
     server.run()

@@ -49,7 +49,7 @@ class OmuServer(Server):
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         self._config = config
-        self._loop = loop or asyncio.get_event_loop()
+        self._loop = self.ensure_loop(loop)
         self._address = config.address
         self._event = ServerEvents()
         self._directories = config.directories
@@ -76,6 +76,17 @@ class OmuServer(Server):
             loop=self.loop,
             headers=USER_AGENT_HEADERS,
         )
+
+    def ensure_loop(
+        self, loop: asyncio.AbstractEventLoop | None
+    ) -> asyncio.AbstractEventLoop:
+        if loop is None:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+        loop.set_exception_handler(asyncio_error_logger)
+        return loop
 
     async def _handle_proxy(self, request: web.Request) -> web.StreamResponse:
         url = request.query.get("url")
@@ -123,14 +134,13 @@ class OmuServer(Server):
             return web.Response(status=500)
 
     def run(self) -> None:
-        loop = self.loop
+        self._loop = self.ensure_loop(self.loop)
 
         try:
-            loop.set_exception_handler(asyncio_error_logger)
-            loop.create_task(self.start())
-            loop.run_forever()
+            self._loop.create_task(self.start())
+            self._loop.run_forever()
         finally:
-            loop.close()
+            self._loop.close()
             asyncio.run(self.shutdown())
 
     async def _handle_network_start(self) -> None:
