@@ -183,13 +183,13 @@ class Omu(Client):
         loop: asyncio.AbstractEventLoop | None = None,
         reconnect: bool = True,
     ) -> None:
-        self.loop = self.ensure_loop(loop)
+        self._loop = self.ensure_loop(loop)
         try:
-            self.loop.set_exception_handler(asyncio_error_logger)
-            self.loop.create_task(self.start(reconnect=reconnect))
-            self.loop.run_forever()
+            self._loop.set_exception_handler(asyncio_error_logger)
+            self._loop.create_task(self.start(reconnect=reconnect))
+            self._loop.run_forever()
         finally:
-            self.loop.close()
+            self._loop.close()
             asyncio.run(self.stop())
 
     async def start(self, *, reconnect: bool = True) -> None:
