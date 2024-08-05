@@ -233,7 +233,7 @@ class YoutubeChat(ChatService):
         self.chat = chat
         self._room = room
         self.youtube_chat = youtube_chat
-        self.tasks = Tasks(asyncio.get_event_loop())
+        self.tasks = Tasks(asyncio.get_running_loop())
         self.author_fetch_queue: list[Author] = []
         self._closed = False
 

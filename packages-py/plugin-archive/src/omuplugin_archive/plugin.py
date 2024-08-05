@@ -68,7 +68,7 @@ async def start_archive(archive: Archive):
             del archive_threads[archive.id]
             asyncio.run_coroutine_threadsafe(archive_table.update(archive), omu.loop)
 
-    asyncio.get_event_loop().run_in_executor(None, thread)
+    asyncio.get_running_loop().run_in_executor(None, thread)
 
 
 @chat.on(events.room.add)

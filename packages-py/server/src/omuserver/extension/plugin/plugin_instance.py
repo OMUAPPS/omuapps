@@ -109,7 +109,7 @@ def run_plugin_isolated(
         connection = WebsocketsConnection(client, address)
         client.network.set_connection(connection)
         client.network.set_token_provider(PluginTokenProvider(token))
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
         loop.run_until_complete(client.start())
         loop.run_forever()

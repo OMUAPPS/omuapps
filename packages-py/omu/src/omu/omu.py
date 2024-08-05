@@ -69,7 +69,7 @@ class Omu(Client):
         extension_registry: ExtensionRegistry | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
     ):
-        self._loop = loop or asyncio.get_event_loop()
+        self._loop = self.ensure_loop(loop)
         self._ready = False
         self._running = False
         self._event = ClientEvents()
@@ -94,6 +94,17 @@ class Omu(Client):
         self._dashboard = self.extensions.register(DASHBOARD_EXTENSION_TYPE)
         self._i18n = self.extensions.register(I18N_EXTENSION_TYPE)
         self._logger = self.extensions.register(LOGGER_EXTENSION_TYPE)
+
+    def ensure_loop(
+        self, loop: asyncio.AbstractEventLoop | None
+    ) -> asyncio.AbstractEventLoop:
+        if loop is None:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+        loop.set_exception_handler(asyncio_error_logger)
+        return loop
 
     @property
     def ready(self) -> bool:
@@ -172,7 +183,7 @@ class Omu(Client):
         loop: asyncio.AbstractEventLoop | None = None,
         reconnect: bool = True,
     ) -> None:
-        self._loop = loop or self._loop
+        self.loop = self.ensure_loop(loop)
         try:
             self.loop.set_exception_handler(asyncio_error_logger)
             self.loop.create_task(self.start(reconnect=reconnect))
