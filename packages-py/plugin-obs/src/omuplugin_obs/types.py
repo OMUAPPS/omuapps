@@ -3,7 +3,14 @@ from typing import Literal, LiteralString, NotRequired, TypedDict
 from omu.extension.endpoint import EndpointType
 from omu.extension.signal.signal import SignalType
 
-from omuplugin_obssync.const import PLUGIN_ID
+from omuplugin_obs.const import PLUGIN_ID
+
+from .permissions import (
+    OBS_SCENE_READ_PERMISSION_ID,
+    OBS_SOURCE_CREATE_PERMISSION_ID,
+    OBS_SOURCE_READ_PERMISSION_ID,
+    OBS_SOURCE_UPDATE_PERMISSION_ID,
+)
 
 TEST_ENDPOINT_TYPE = EndpointType[None, str].create_json(
     PLUGIN_ID,
@@ -190,6 +197,7 @@ class CreateResponse(TypedDict):
 SOURCE_CREATE = EndpointType[SourceJson, CreateResponse].create_json(
     PLUGIN_ID,
     name="source_create",
+    permission_id=OBS_SOURCE_CREATE_PERMISSION_ID,
 )
 
 
@@ -207,12 +215,14 @@ class RemoveResponse(TypedDict): ...
 SOURCE_REMOVE_BY_NAME = EndpointType[RemoveByNameRequest, RemoveResponse].create_json(
     PLUGIN_ID,
     name="source_remove_by_name",
+    permission_id=OBS_SOURCE_UPDATE_PERMISSION_ID,
 )
 
 
 SOURCE_REMOVE_BY_UUID = EndpointType[RemoveByUuidRequest, RemoveResponse].create_json(
     PLUGIN_ID,
     name="source_remove_by_uuid",
+    permission_id=OBS_SOURCE_UPDATE_PERMISSION_ID,
 )
 
 
@@ -223,6 +233,7 @@ class UpdateResponse(TypedDict):
 SOURCE_UPDATE = EndpointType[SourceJson, UpdateResponse].create_json(
     PLUGIN_ID,
     name="source_update",
+    permission_id=OBS_SOURCE_UPDATE_PERMISSION_ID,
 )
 
 
@@ -234,6 +245,7 @@ class SourceGetByNameRequest(TypedDict):
 SOURCE_GET_BY_NAME = EndpointType[SourceGetByNameRequest, SourceJson].create_json(
     PLUGIN_ID,
     name="source_get_by_name",
+    permission_id=OBS_SOURCE_READ_PERMISSION_ID,
 )
 
 
@@ -245,6 +257,7 @@ class SourceGetByUuidRequest(TypedDict):
 SOURCE_GET_BY_UUID = EndpointType[SourceGetByUuidRequest, SourceJson].create_json(
     PLUGIN_ID,
     name="source_get_by_uuid",
+    permission_id=OBS_SOURCE_READ_PERMISSION_ID,
 )
 
 
@@ -255,6 +268,7 @@ class SourceListRequest(TypedDict):
 SOURCE_LIST = EndpointType[SourceListRequest, list[SourceJson]].create_json(
     PLUGIN_ID,
     name="source_list",
+    permission_id=OBS_SOURCE_READ_PERMISSION_ID,
 )
 
 
@@ -268,6 +282,7 @@ class SceneListResponse(TypedDict):
 SCENE_LIST = EndpointType[SceneListRequest, SceneListResponse].create_json(
     PLUGIN_ID,
     name="scene_list",
+    permission_id=OBS_SCENE_READ_PERMISSION_ID,
 )
 
 
@@ -278,6 +293,7 @@ class SceneGetRequest(TypedDict):
 SCENE_GET = EndpointType[SceneGetRequest, SceneJson].create_json(
     PLUGIN_ID,
     name="scene_get",
+    permission_id=OBS_SCENE_READ_PERMISSION_ID,
 )
 
 EVENT_SIGNAL = SignalType[OBSFrontendEvent].create_json(

@@ -15,8 +15,8 @@ from omuobs.scene import (
     OBSSceneItem,
 )
 from omuobs.source import OBSSource
-from omuplugin_obssync.const import PLUGIN_ID
-from omuplugin_obssync.types import (
+from omuplugin_obs.const import PLUGIN_ID
+from omuplugin_obs.types import (
     EVENT_SIGNAL,
     SCENE_GET,
     SCENE_LIST,
@@ -45,7 +45,7 @@ from omuplugin_obssync.types import (
     TextSourceData,
     UpdateResponse,
 )
-from omuplugin_obssync.version import VERSION
+from omuplugin_obs.version import VERSION
 
 APP = App(
     PLUGIN_ID,

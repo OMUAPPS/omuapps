@@ -15,7 +15,7 @@
     # via omuplugin-chat
     # via omuplugin-emoji
     # via omuplugin-nyanya
-    # via omuplugin-obssync
+    # via omuplugin-obs
     # via omuplugin-onecomme
     # via omuplugin-translator
 -e file:packages-py/chat-provider
@@ -30,7 +30,7 @@
 -e file:packages-py/plugin-emoji
 -e file:packages-py/plugin-marshmallow
 -e file:packages-py/plugin-nyanya
--e file:packages-py/plugin-obssync
+-e file:packages-py/plugin-obs
 -e file:packages-py/plugin-onecomme
 -e file:packages-py/plugin-translator
 -e file:packages-py/server
@@ -71,6 +71,7 @@ colorama==0.4.6
     # via pytest
 coverage==7.6.0
     # via pytest-cov
+debugpy==1.8.2
 edgetrans==0.2.3
     # via omuplugin-translator
 frozenlist==1.4.1
@@ -95,7 +96,7 @@ loguru==0.7.2
     # via omuplugin-emoji
     # via omuplugin-marshmallow
     # via omuplugin-nyanya
-    # via omuplugin-obssync
+    # via omuplugin-obs
     # via omuplugin-onecomme
     # via omuplugin-translator
     # via omuserver
@@ -118,7 +119,7 @@ pip==24.2
 pluggy==1.5.0
     # via pytest
 psutil==6.0.0
-    # via omuplugin-obssync
+    # via omuplugin-obs
     # via omuplugin-onecomme
     # via omuserver
 pycryptodomex==3.20.0

@@ -13,6 +13,7 @@ from omu.identifier import Identifier
 from omuserver.server import Server
 
 from .obsconfig import OBSConfig
+from .permissions import PERMISSION_TYPES
 
 IDENTIFIER = Identifier("com.omuapps", "plugin-obssync")
 
@@ -70,9 +71,10 @@ def install_script(launcher: Path, scene: Path) -> bool:
         data["modules"] = {}
     if "scripts-tool" not in data["modules"]:
         data["modules"]["scripts-tool"] = []
-    if any(str(launcher) == x["path"] for x in data["modules"]["scripts-tool"]):
+    if any(Path(launcher) == Path(x["path"]) for x in data["modules"]["scripts-tool"]):
         return False
-    data["modules"]["scripts-tool"].append({"path": str(launcher), "settings": {}})
+    new_script_path = str(launcher)
+    data["modules"]["scripts-tool"].append({"path": new_script_path, "settings": {}})
     scene.write_text(json.dumps(data), encoding="utf-8")
     return True
 
@@ -140,3 +142,4 @@ class SceneJson(TypedDict):
 async def on_start_server(server: Server) -> None:
     thread = Thread(target=install)
     thread.start()
+    server.permission_manager.register(*PERMISSION_TYPES)

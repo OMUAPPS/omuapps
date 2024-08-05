@@ -1,5 +1,5 @@
 [project]
-name = "omuplugin_obssync"
+name = "omuplugin_obs"
 version = "0.6.10"
 description = "Add your description here"
 authors = [
@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">= 3.12"
 
 [project.entry-points."omu.plugins"]
-plugin = "omuplugin_obssync:plugin"
+plugin = "omuplugin_obs:plugin"
 
 [build-system]
 requires = ["hatchling"]
