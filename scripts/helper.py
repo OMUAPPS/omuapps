@@ -66,13 +66,22 @@ def update_version(version: str | None = None):
         set_version(pypackage, new_version)
         gen_version(pypackage)
 
-    version_paths = {
+    version_json_paths = {
         Path("packages-js/dash/src/lib/version.json"),
         Path("packages-js/site/src/lib/version.json"),
     }
 
-    for version_path in version_paths:
+    for version_path in version_json_paths:
         version_path.write_text(json.dumps({"version": new_version}), encoding="utf-8")
+
+    version_ts_paths = {
+        Path("packages-js/plugin-obs/src/version.ts"),
+    }
+
+    for version_path in version_ts_paths:
+        version_path.write_text(
+            f"export const VERSION = '{new_version}';\n", encoding="utf-8"
+        )
 
     # pub static VERSION: &str = "0.1.0";
     version_path = Path("packages-js/dash/src-tauri/src/version.rs")

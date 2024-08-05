@@ -18,6 +18,12 @@ execaSync('pnpm', ['--filter', 'chat', 'build'], {
     stderr: process.stderr,
     stdout: process.stdout,
 });
+await Promise.all([
+    execa('pnpm', ['--filter', 'obs', 'build'], {
+        stderr: process.stderr,
+        stdout: process.stdout,
+    }),
+]);
 
 if (process.argv.includes('--build')) {
     const targets = process.argv[process.argv.indexOf('--build') + 1];
