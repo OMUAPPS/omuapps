@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.11 (2024-08-05)
+
+
+### Bug Fixes
+
+* 起動できない問題を修正 ([c4ccf1b](https://github.com/OMUAPPS/omuapps/commit/c4ccf1bc9f47e39645791c37a92bcbe3019fd91d))
+
+
+
+
+
 ## 0.6.10 (2024-07-25)
 
 
