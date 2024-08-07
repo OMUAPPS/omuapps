@@ -26,6 +26,7 @@
         "@omujs/i18n": "workspace:*",
         "@omujs/omu": "workspace:*",
         "@omujs/ui": "workspace:*",
+        "@omujs/obs": "workspace:*",
         "@sveltejs/adapter-cloudflare": "4.4.0",
         "@sveltejs/kit": "2.5.10",
         "@sveltejs/vite-plugin-svelte": "^3.1.1",

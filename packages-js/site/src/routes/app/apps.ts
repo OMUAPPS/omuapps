@@ -8,6 +8,7 @@ import { APP as chatSubtitle } from './chatsubtitle/app.js';
 import { APP as emoji } from './emoji/app.js';
 import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
+import { APP as obssync } from './obs-sync/app.js';
 import { APP as playqueue } from './playqueue/app.js';
 import { APP as reaction } from './reaction/app.js';
 import { APP as replay } from './replay/app.js';
@@ -30,6 +31,7 @@ export const apps = [
     timer,
     marshmallow,
     roulette,
+    obssync,
 ] satisfies App[];
 
 const personalApps: Record<string, App[]> = {
