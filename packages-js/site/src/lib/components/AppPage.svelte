@@ -13,10 +13,9 @@
         });
         omu.network.event.disconnected.listen((reason) => {
             state = 'loading';
-            if (reason) {
-                state = reason.type;
-                console.log(reason);
-            }
+            if (!reason) return;
+            state = reason.type;
+            console.log(reason);
         });
     });
 </script>
@@ -32,11 +31,18 @@
         <p>同じIDを持つアプリが接続されました</p>
         <small>このアプリを使うにはどちらかを閉じてください</small>
     </div>
+{:else if state === DisconnectType.CLOSE}
+    <div class="modal">
+        <p>接続が切断されました</p>
+        <button on:click={() => location.reload()}>再接続</button>
+    </div>
 {/if}
 
 <style lang="scss">
     .modal {
         position: fixed;
+        display: flex;
+        flex-direction: column;
         top: 0;
         left: 0;
         width: 100%;
