@@ -4,6 +4,7 @@ import { PLUGIN_ID } from './const.js';
 import type { CreateResponse, SceneJson, SceneListResponse, SourceJson } from './types.js';
 import {
     SCENE_GET,
+    SCENE_GET_CURRENT,
     SCENE_LIST,
     SCENE_SET_BY_NAME,
     SCENE_SET_BY_UUID,
@@ -105,6 +106,13 @@ export class OBSPlugin {
             throw new Error('Not connected to OBS');
         }
         return await this.omu.endpoints.call(SCENE_GET, { scene: name });
+    }
+
+    async sceneGetCurrent(): Promise<SceneJson> {
+        if (!(await this.isConnected())) {
+            throw new Error('Not connected to OBS');
+        }
+        return await this.omu.endpoints.call(SCENE_GET_CURRENT, {});
     }
 
     async sceneSetByName(name: string): Promise<void> {

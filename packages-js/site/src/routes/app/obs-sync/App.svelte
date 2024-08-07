@@ -54,6 +54,15 @@
     </div>
     <div>
         <p>
+            Current Scene:
+            {#await obs.sceneGetCurrent() then source}
+                <div class="source">
+                    <p>{source.name}</p>
+                    {JSON.stringify(source)}
+                </div>
+            {/await}
+        </p>
+        <p>
             Scene List:
             {#await obs.sceneList() then response}
                 {#each response.scenes as scene}

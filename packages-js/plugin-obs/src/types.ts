@@ -2,7 +2,7 @@ import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { SignalType } from '@omujs/omu/extension/signal/signal.js';
 
 import { PLUGIN_ID } from './const.js';
-import { OBS_SCENE_SET_PERMISSION_ID } from './permissions.js';
+import { OBS_SCENE_READ_PERMISSION_ID, OBS_SCENE_SET_PERMISSION_ID } from './permissions.js';
 
 export type OBSFrontendEvent =
     | 'STREAMING_STARTING'
@@ -234,6 +234,16 @@ export type SceneGetRequest = {
 export const SCENE_GET = EndpointType.createJson<SceneGetRequest, SceneJson>(PLUGIN_ID, {
     name: 'scene_get',
 });
+
+export type SceneGetCurrentRequest = unknown;
+
+export const SCENE_GET_CURRENT = EndpointType.createJson<SceneGetCurrentRequest, SceneJson>(
+    PLUGIN_ID,
+    {
+        name: 'scene_get_current',
+        permissionId: OBS_SCENE_READ_PERMISSION_ID,
+    },
+);
 
 export type SceneSetByNameRequest = {
     name: string;

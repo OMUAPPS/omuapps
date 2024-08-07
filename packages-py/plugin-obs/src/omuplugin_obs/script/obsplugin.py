@@ -20,6 +20,7 @@ from omuplugin_obs.const import PLUGIN_ID
 from omuplugin_obs.types import (
     EVENT_SIGNAL,
     SCENE_GET,
+    SCENE_GET_CURRENT,
     SCENE_LIST,
     SCENE_SET_BY_NAME,
     SCENE_SET_BY_UUID,
@@ -37,6 +38,7 @@ from omuplugin_obs.types import (
     RemoveByUuidRequest,
     RemoveResponse,
     ScaleProperties,
+    SceneGetCurrentRequest,
     SceneGetRequest,
     SceneJson,
     SceneListRequest,
@@ -280,6 +282,12 @@ async def scene_list(request: SceneListRequest) -> SceneListResponse:
 
 @omu.endpoints.bind(endpoint_type=SCENE_GET)
 async def scene_current(request: SceneGetRequest) -> SceneJson:
+    scene = get_scene(request.get("scene"))
+    return scene_to_json(scene)
+
+
+@omu.endpoints.bind(endpoint_type=SCENE_GET_CURRENT)
+async def scene_get_current(request: SceneGetCurrentRequest) -> SceneJson:
     scene = get_scene(request.get("scene"))
     return scene_to_json(scene)
 
