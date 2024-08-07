@@ -3,6 +3,7 @@ import { BROWSER, DEV } from 'esm-env';
 import { omu } from '../client.js';
 import { APP as fries } from './aoikuru-fries/app.js';
 import { APP as archive } from './archive/app.js';
+import { APP as breaktimer } from './break-timer/app.js';
 import { APP as caption } from './caption/app.js';
 import { APP as chatSubtitle } from './chatsubtitle/app.js';
 import { APP as emoji } from './emoji/app.js';
@@ -32,6 +33,7 @@ export const apps = [
     marshmallow,
     roulette,
     obssync,
+    breaktimer,
 ] satisfies App[];
 
 const personalApps: Record<string, App[]> = {
