@@ -57,6 +57,7 @@ class OmuServer(Server):
         self._packet_dispatcher = ServerPacketDispatcher()
         self._network = Network(self, self._packet_dispatcher)
         self._network.event.start += self._handle_network_start
+        self._network.add_http_route("/", self._handle_index)
         self._network.add_http_route("/version", self._handle_version)
         self._network.add_http_route("/proxy", self._handle_proxy)
         self._network.add_http_route("/asset", self._handle_assets)
@@ -88,6 +89,9 @@ class OmuServer(Server):
                 loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
         return loop
+
+    async def _handle_index(self, request: web.Request) -> web.StreamResponse:
+        return web.FileResponse(self._directories.index)
 
     async def _handle_version(self, request: web.Request) -> web.Response:
         return web.json_response(
