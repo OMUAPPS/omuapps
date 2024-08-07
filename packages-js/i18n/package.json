@@ -17,12 +17,12 @@
         }
     },
     "scripts": {
-        "ts": "pnpm run ts-esm && pnpm run ts-dts",
+        "ts": "bun run ts-esm && bun run ts-dts",
         "ts-esm": "tsc --outDir built/esm",
         "ts-dts": "tsc --outDir built/dts --declaration true --emitDeclarationOnly true --declarationMap true",
-        "watch": "nodemon -w src -e ts,json --exec \"pnpm run ts\"",
-        "dev": "pnpm run watch",
-        "build": "pnpm run ts",
+        "watch": "nodemon -w src -e ts,json --exec \"bun run ts\"",
+        "dev": "bun run watch",
+        "build": "bun run ts",
         "lint": "eslint . --ext .js,.ts",
         "fix": "eslint . --ext .js,.ts --fix"
     },

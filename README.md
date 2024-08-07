@@ -41,18 +41,17 @@ This procedure assumes the use of vscode.
 Please install the following.
 
 - Install [Rust](https://www.rust-lang.org/ja)
-- Install [Nodejs](https://nodejs.org/)
-- Install [pnpm](https://pnpm.io/ja/installation)
+- Install [bun](https://bun.sh/)
 - Install [rye](https://rye.astral.sh/)
 
 ### セットアップ / Setup
 
-`rye sync` `pnpm i`を実行してください。
-Please run `rye sync` `pnpm i`.
+`rye sync` `bun i`を実行してください。
+Please run `rye sync` `bun i`.
 
 ```bash
 rye sync
-pnpm i
+bun i
 ```
 
 ### 起動 / Start

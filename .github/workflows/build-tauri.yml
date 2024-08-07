@@ -30,32 +30,29 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - run: corepack enable
-
-            - name: Install Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 20
-
-            - uses: pnpm/action-setup@v3
-              name: Install pnpm
-              with:
-                  version: 9
-                  run_install: false
-
-            - name: Get pnpm store directory
-              shell: bash
-              id: pnpm-store
-              run: |
-                  echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+            - uses: oven-sh/setup-bun@v2
 
             - uses: actions/cache@v4
-              name: Cache pnpm store
+              id: cache-bun
+              if: startsWith(matrix.platform, 'ubuntu-') || startsWith(matrix.platform, 'macos-')
               with:
-                  path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
-                  key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  path: ~/.bun/install/cache
+                  key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
                   restore-keys: |
-                      pnpm-store-${{ runner.os }}-
+                      bun-${{ runner.os }}-
+
+            - uses: actions/cache@v4
+              id: cache-bun-windows
+              if: startsWith(matrix.platform, 'windows-')
+              with:
+                  path: ${{ '%userprofile%\\.bun\\install\\cache' }}
+                  key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+                  restore-keys: |
+                      bun-${{ runner.os }}-
+
+            - name: Install dependencies
+              if: steps.cache-bun.outputs.cache-hit != 'true' && steps.cache-bun-windows.outputs.cache-hit != 'true'
+              run: bun i --frozen-lockfile
 
             - name: install dependencies (ubuntu only)
               if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
@@ -65,9 +62,6 @@ jobs:
                   # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
                   # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
-            - name: Install dependencies
-              run: pnpm i --frozen-lockfile
-
             - name: install Rust stable
               uses: dtolnay/rust-toolchain@stable
               with:
@@ -76,7 +70,7 @@ jobs:
 
             - name: build-pre
               run: |
-                  pnpm --filter dash run build-pre
+                  bun --filter dash run build-pre
 
             - name: Cache rust target
               uses: actions/cache@v4

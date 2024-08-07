@@ -1,25 +1,25 @@
 import { execa, execaSync } from 'execa';
 
 await Promise.all([
-    execa('pnpm', ['--filter', 'ui', 'build'], {
+    execa('bun', ['--filter', '@omujs/ui', 'build'], {
         stderr: process.stderr,
         stdout: process.stdout,
     }),
-    execa('pnpm', ['--filter', 'i18n', 'build'], {
+    execa('bun', ['--filter', '@omujs/i18n', 'build'], {
         stderr: process.stderr,
         stdout: process.stdout,
     }),
-    execa('pnpm', ['--filter', 'omu', 'build'], {
+    execa('bun', ['--filter', '@omujs/omu', 'build'], {
         stderr: process.stderr,
         stdout: process.stdout,
     }),
 ]);
-execaSync('pnpm', ['--filter', 'chat', 'build'], {
-    stderr: process.stderr,
-    stdout: process.stdout,
-});
 await Promise.all([
-    execa('pnpm', ['--filter', 'obs', 'build'], {
+    execa('bun', ['--filter', '@omujs/chat', 'build'], {
+        stderr: process.stderr,
+        stdout: process.stdout,
+    }),
+    execa('bun', ['--filter', '@omujs/obs', 'build'], {
         stderr: process.stderr,
         stdout: process.stdout,
     }),
@@ -28,7 +28,7 @@ await Promise.all([
 if (process.argv.includes('--build')) {
     const targets = process.argv[process.argv.indexOf('--build') + 1];
     targets.split(',').forEach((target) => {
-        execaSync('pnpm', ['--filter', target, 'build'], {
+        execaSync('bun', ['--filter', target, 'build'], {
             stderr: process.stderr,
             stdout: process.stdout,
         });

@@ -5,7 +5,7 @@
     "scripts": {
         "prepare": "svelte-kit sync",
         "dev": "vite dev --port 5173",
-        "build": "pnpm run build-pre && vite build",
+        "build": "bun run build-pre && vite build",
         "build-pre": "node ./scripts/build-pre.mjs",
         "preview": "vite preview",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -13,10 +13,6 @@
         "test": "vitest",
         "lint": "prettier --check . && eslint .",
         "format": "prettier --write ."
-    },
-    "engines": {
-        "node": ">=20.0.0",
-        "pnpm": ">=8.7.0"
     },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "^5.0.19",
