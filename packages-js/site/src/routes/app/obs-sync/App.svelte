@@ -42,7 +42,7 @@
     }
 
     async function test3() {
-        await obs.sceneSwitchByName('test');
+        await obs.sceneSetByName('test');
     }
 </script>
 

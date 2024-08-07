@@ -5,8 +5,8 @@ import type { CreateResponse, SceneJson, SceneListResponse, SourceJson } from '.
 import {
     SCENE_GET,
     SCENE_LIST,
-    SCENE_SWITCH_BY_NAME,
-    SCENE_SWITCH_BY_UUID,
+    SCENE_SET_BY_NAME,
+    SCENE_SET_BY_UUID,
     SOURCE_CREATE,
     SOURCE_GET_BY_NAME,
     SOURCE_GET_BY_UUID,
@@ -107,17 +107,17 @@ export class OBSPlugin {
         return await this.omu.endpoints.call(SCENE_GET, { scene: name });
     }
 
-    async sceneSwitchByName(name: string): Promise<void> {
+    async sceneSetByName(name: string): Promise<void> {
         if (!(await this.isConnected())) {
             throw new Error('Not connected to OBS');
         }
-        await this.omu.endpoints.call(SCENE_SWITCH_BY_NAME, { name });
+        await this.omu.endpoints.call(SCENE_SET_BY_NAME, { name });
     }
 
-    async sceneSwitchByUuid(uuid: string): Promise<void> {
+    async sceneSetByUuid(uuid: string): Promise<void> {
         if (!(await this.isConnected())) {
             throw new Error('Not connected to OBS');
         }
-        await this.omu.endpoints.call(SCENE_SWITCH_BY_UUID, { uuid });
+        await this.omu.endpoints.call(SCENE_SET_BY_UUID, { uuid });
     }
 }

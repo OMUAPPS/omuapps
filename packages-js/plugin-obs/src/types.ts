@@ -2,6 +2,7 @@ import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { SignalType } from '@omujs/omu/extension/signal/signal.js';
 
 import { PLUGIN_ID } from './const.js';
+import { OBS_SCENE_SET_PERMISSION_ID } from './permissions.js';
 
 export type OBSFrontendEvent =
     | 'STREAMING_STARTING'
@@ -234,29 +235,31 @@ export const SCENE_GET = EndpointType.createJson<SceneGetRequest, SceneJson>(PLU
     name: 'scene_get',
 });
 
-export type SceneSwitchByNameRequest = {
+export type SceneSetByNameRequest = {
     name: string;
 };
 
-export type SceneSwitchByUuidRequest = {
+export type SceneSetByUuidRequest = {
     uuid: string;
 };
 
-export type SceneSwitchResponse = unknown;
+export type SceneSetResponse = unknown;
 
-export const SCENE_SWITCH_BY_NAME = EndpointType.createJson<
-    SceneSwitchByNameRequest,
-    SceneSwitchResponse
->(PLUGIN_ID, {
-    name: 'scene_switch_by_name',
-});
+export const SCENE_SET_BY_NAME = EndpointType.createJson<SceneSetByNameRequest, SceneSetResponse>(
+    PLUGIN_ID,
+    {
+        name: 'scene_set_by_name',
+        permissionId: OBS_SCENE_SET_PERMISSION_ID,
+    },
+);
 
-export const SCENE_SWITCH_BY_UUID = EndpointType.createJson<
-    SceneSwitchByUuidRequest,
-    SceneSwitchResponse
->(PLUGIN_ID, {
-    name: 'scene_switch_by_uuid',
-});
+export const SCENE_SET_BY_UUID = EndpointType.createJson<SceneSetByUuidRequest, SceneSetResponse>(
+    PLUGIN_ID,
+    {
+        name: 'scene_set_by_uuid',
+        permissionId: OBS_SCENE_SET_PERMISSION_ID,
+    },
+);
 
 export const EVENT_SIGNAL = SignalType.createJson<OBSFrontendEvent>(PLUGIN_ID, {
     name: 'event_signal',

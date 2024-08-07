@@ -7,7 +7,7 @@ from omuplugin_obs.const import PLUGIN_ID
 
 from .permissions import (
     OBS_SCENE_READ_PERMISSION_ID,
-    OBS_SCENE_SWITCH_PERMISSION_ID,
+    OBS_SCENE_SET_PERMISSION_ID,
     OBS_SOURCE_CREATE_PERMISSION_ID,
     OBS_SOURCE_READ_PERMISSION_ID,
     OBS_SOURCE_UPDATE_PERMISSION_ID,
@@ -310,14 +310,14 @@ class SceneSetResponse(TypedDict): ...
 
 SCENE_SET_BY_NAME = EndpointType[SceneSetByNameRequest, SceneSetResponse].create_json(
     PLUGIN_ID,
-    name="scene_switch_by_name",
-    permission_id=OBS_SCENE_SWITCH_PERMISSION_ID,
+    name="scene_set_by_name",
+    permission_id=OBS_SCENE_SET_PERMISSION_ID,
 )
 
 SCENE_SET_BY_UUID = EndpointType[SceneSetByUuidRequest, SceneSetResponse].create_json(
     PLUGIN_ID,
-    name="scene_switch_by_uuid",
-    permission_id=OBS_SCENE_SWITCH_PERMISSION_ID,
+    name="scene_set_by_uuid",
+    permission_id=OBS_SCENE_SET_PERMISSION_ID,
 )
 
 EVENT_SIGNAL = SignalType[OBSFrontendEvent].create_json(

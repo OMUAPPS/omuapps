@@ -9,4 +9,4 @@ export const OBS_SCENE_READ_PERMISSION_ID = PLUGIN_ID.join('scene', 'read');
 export const OBS_SCENE_CREATE_PERMISSION_ID = PLUGIN_ID.join('scene', 'create');
 export const OBS_SCENE_UPDATE_PERMISSION_ID = PLUGIN_ID.join('scene', 'write');
 export const OBS_SCENE_REMOVE_PERMISSION_ID = PLUGIN_ID.join('scene', 'remove');
-export const OBS_SCENE_SWITCH_PERMISSION_ID = PLUGIN_ID.join('scene', 'switch');
+export const OBS_SCENE_SET_PERMISSION_ID = PLUGIN_ID.join('scene', 'set');
