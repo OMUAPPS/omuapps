@@ -7,7 +7,7 @@ from omuplugin_obs.const import PLUGIN_ID
 
 from .permissions import (
     OBS_SCENE_READ_PERMISSION_ID,
-    OBS_SCENE_SET_PERMISSION_ID,
+    OBS_SCENE_SET_CURRENT_PERMISSION_ID,
     OBS_SOURCE_CREATE_PERMISSION_ID,
     OBS_SOURCE_READ_PERMISSION_ID,
     OBS_SOURCE_UPDATE_PERMISSION_ID,
@@ -307,27 +307,31 @@ SCENE_GET_CURRENT = EndpointType[SceneGetCurrentRequest, SceneJson].create_json(
 )
 
 
-class SceneSetByNameRequest(TypedDict):
+class SceneSetCurrentByNameRequest(TypedDict):
     name: str
 
 
-class SceneSetByUuidRequest(TypedDict):
+class SceneSetCurrentByUuidRequest(TypedDict):
     uuid: str
 
 
-class SceneSetResponse(TypedDict): ...
+class SceneSetCurrentResponse(TypedDict): ...
 
 
-SCENE_SET_BY_NAME = EndpointType[SceneSetByNameRequest, SceneSetResponse].create_json(
+SCENE_SET_CURRENT_BY_NAME = EndpointType[
+    SceneSetCurrentByNameRequest, SceneSetCurrentResponse
+].create_json(
     PLUGIN_ID,
-    name="scene_set_by_name",
-    permission_id=OBS_SCENE_SET_PERMISSION_ID,
+    name="scene_set_current_by_name",
+    permission_id=OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 )
 
-SCENE_SET_BY_UUID = EndpointType[SceneSetByUuidRequest, SceneSetResponse].create_json(
+SCENE_SET_CURRENT_BY_UUID = EndpointType[
+    SceneSetCurrentByUuidRequest, SceneSetCurrentResponse
+].create_json(
     PLUGIN_ID,
-    name="scene_set_by_uuid",
-    permission_id=OBS_SCENE_SET_PERMISSION_ID,
+    name="scene_set_current_by_uuid",
+    permission_id=OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 )
 
 EVENT_SIGNAL = SignalType[OBSFrontendEvent].create_json(

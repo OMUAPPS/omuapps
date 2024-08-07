@@ -3,7 +3,7 @@
     import { OBSPlugin } from '@omujs/obs';
     import {
         OBS_SCENE_READ_PERMISSION_ID,
-        OBS_SCENE_SET_PERMISSION_ID,
+        OBS_SCENE_SET_CURRENT_PERMISSION_ID,
         OBS_SOURCE_CREATE_PERMISSION_ID,
         OBS_SOURCE_READ_PERMISSION_ID,
     } from '@omujs/obs/permissions.js';
@@ -20,7 +20,7 @@
         OBS_SCENE_READ_PERMISSION_ID,
         OBS_SOURCE_READ_PERMISSION_ID,
         OBS_SOURCE_CREATE_PERMISSION_ID,
-        OBS_SCENE_SET_PERMISSION_ID,
+        OBS_SCENE_SET_CURRENT_PERMISSION_ID,
     );
     setClient(omu);
 

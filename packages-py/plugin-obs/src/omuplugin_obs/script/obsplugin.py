@@ -22,8 +22,8 @@ from omuplugin_obs.types import (
     SCENE_GET,
     SCENE_GET_CURRENT,
     SCENE_LIST,
-    SCENE_SET_BY_NAME,
-    SCENE_SET_BY_UUID,
+    SCENE_SET_CURRENT_BY_NAME,
+    SCENE_SET_CURRENT_BY_UUID,
     SOURCE_CREATE,
     SOURCE_GET_BY_NAME,
     SOURCE_GET_BY_UUID,
@@ -43,9 +43,9 @@ from omuplugin_obs.types import (
     SceneJson,
     SceneListRequest,
     SceneListResponse,
-    SceneSetByNameRequest,
-    SceneSetByUuidRequest,
-    SceneSetResponse,
+    SceneSetCurrentByNameRequest,
+    SceneSetCurrentByUuidRequest,
+    SceneSetCurrentResponse,
     SourceGetByNameRequest,
     SourceGetByUuidRequest,
     SourceJson,
@@ -292,8 +292,10 @@ async def scene_get_current(request: SceneGetCurrentRequest) -> SceneJson:
     return scene_to_json(scene)
 
 
-@omu.endpoints.bind(endpoint_type=SCENE_SET_BY_NAME)
-async def scene_set_by_name(request: SceneSetByNameRequest) -> SceneSetResponse:
+@omu.endpoints.bind(endpoint_type=SCENE_SET_CURRENT_BY_NAME)
+async def scene_set_current_by_name(
+    request: SceneSetCurrentByNameRequest,
+) -> SceneSetCurrentResponse:
     scene = OBSScene.get_scene_by_name(request["name"])
     if scene is None:
         raise ValueError(f"Scene with name {request['name']} does not exist")
@@ -301,8 +303,10 @@ async def scene_set_by_name(request: SceneSetByNameRequest) -> SceneSetResponse:
     return {}
 
 
-@omu.endpoints.bind(endpoint_type=SCENE_SET_BY_UUID)
-async def scene_set_by_uuid(request: SceneSetByUuidRequest) -> SceneSetResponse:
+@omu.endpoints.bind(endpoint_type=SCENE_SET_CURRENT_BY_UUID)
+async def scene_set_current_by_uuid(
+    request: SceneSetCurrentByUuidRequest,
+) -> SceneSetCurrentResponse:
     source = OBSSource.get_source_by_uuid(request["uuid"])
     if source is None:
         raise ValueError(f"Source with uuid {request['uuid']} does not exist")

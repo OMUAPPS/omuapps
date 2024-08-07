@@ -66,9 +66,12 @@
             Scene List:
             {#await obs.sceneList() then response}
                 {#each response.scenes as scene}
-                    <div class="scene">
+                    <button
+                        class="scene"
+                        on:click={async () => await obs.sceneSetByName(scene.name)}
+                    >
                         <p>{scene.name}</p>
-                    </div>
+                    </button>
                 {/each}
             {/await}
             Source List:
