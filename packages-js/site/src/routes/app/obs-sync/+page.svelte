@@ -3,6 +3,7 @@
     import { OBSPlugin } from '@omujs/obs';
     import {
         OBS_SCENE_READ_PERMISSION_ID,
+        OBS_SCENE_SWITCH_PERMISSION_ID,
         OBS_SOURCE_CREATE_PERMISSION_ID,
         OBS_SOURCE_READ_PERMISSION_ID,
     } from '@omujs/obs/permissions.js';
@@ -14,10 +15,12 @@
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
+    obs.requirePlugin();
     omu.permissions.require(
         OBS_SCENE_READ_PERMISSION_ID,
         OBS_SOURCE_READ_PERMISSION_ID,
         OBS_SOURCE_CREATE_PERMISSION_ID,
+        OBS_SCENE_SWITCH_PERMISSION_ID,
     );
     setClient(omu);
 

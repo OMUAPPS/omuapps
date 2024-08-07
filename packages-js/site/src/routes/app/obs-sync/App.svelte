@@ -1,4 +1,5 @@
 <script lang="ts">
+    import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPlugin } from '@omujs/obs';
     import type { SourceType } from '@omujs/obs/types.js';
 
@@ -39,12 +40,17 @@
         if (!source.uuid) return;
         await obs.sourceRemoveByUuid(source.uuid);
     }
+
+    async function test3() {
+        await obs.sceneSwitchByName('test');
+    }
 </script>
 
 <main>
     <div class="left">
         <button on:click={test1}>Test1</button>
         <button on:click={test2}>Test2</button>
+        <button on:click={test3}>Test3</button>
     </div>
     <div>
         <p>
@@ -67,6 +73,7 @@
             {/await}
         </p>
         {JSON.stringify(source)}
+        <AssetButton {obs} />
     </div>
 </main>
 

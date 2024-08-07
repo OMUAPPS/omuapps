@@ -7,6 +7,7 @@ from omuplugin_obs.const import PLUGIN_ID
 
 from .permissions import (
     OBS_SCENE_READ_PERMISSION_ID,
+    OBS_SCENE_SWITCH_PERMISSION_ID,
     OBS_SOURCE_CREATE_PERMISSION_ID,
     OBS_SOURCE_READ_PERMISSION_ID,
     OBS_SOURCE_UPDATE_PERMISSION_ID,
@@ -218,7 +219,6 @@ SOURCE_REMOVE_BY_NAME = EndpointType[RemoveByNameRequest, RemoveResponse].create
     permission_id=OBS_SOURCE_UPDATE_PERMISSION_ID,
 )
 
-
 SOURCE_REMOVE_BY_UUID = EndpointType[RemoveByUuidRequest, RemoveResponse].create_json(
     PLUGIN_ID,
     name="source_remove_by_uuid",
@@ -294,6 +294,30 @@ SCENE_GET = EndpointType[SceneGetRequest, SceneJson].create_json(
     PLUGIN_ID,
     name="scene_get",
     permission_id=OBS_SCENE_READ_PERMISSION_ID,
+)
+
+
+class SceneSetByNameRequest(TypedDict):
+    name: str
+
+
+class SceneSetByUuidRequest(TypedDict):
+    uuid: str
+
+
+class SceneSetResponse(TypedDict): ...
+
+
+SCENE_SET_BY_NAME = EndpointType[SceneSetByNameRequest, SceneSetResponse].create_json(
+    PLUGIN_ID,
+    name="scene_switch_by_name",
+    permission_id=OBS_SCENE_SWITCH_PERMISSION_ID,
+)
+
+SCENE_SET_BY_UUID = EndpointType[SceneSetByUuidRequest, SceneSetResponse].create_json(
+    PLUGIN_ID,
+    name="scene_switch_by_uuid",
+    permission_id=OBS_SCENE_SWITCH_PERMISSION_ID,
 )
 
 EVENT_SIGNAL = SignalType[OBSFrontendEvent].create_json(

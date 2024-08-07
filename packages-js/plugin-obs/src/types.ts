@@ -234,6 +234,30 @@ export const SCENE_GET = EndpointType.createJson<SceneGetRequest, SceneJson>(PLU
     name: 'scene_get',
 });
 
+export type SceneSwitchByNameRequest = {
+    name: string;
+};
+
+export type SceneSwitchByUuidRequest = {
+    uuid: string;
+};
+
+export type SceneSwitchResponse = unknown;
+
+export const SCENE_SWITCH_BY_NAME = EndpointType.createJson<
+    SceneSwitchByNameRequest,
+    SceneSwitchResponse
+>(PLUGIN_ID, {
+    name: 'scene_switch_by_name',
+});
+
+export const SCENE_SWITCH_BY_UUID = EndpointType.createJson<
+    SceneSwitchByUuidRequest,
+    SceneSwitchResponse
+>(PLUGIN_ID, {
+    name: 'scene_switch_by_uuid',
+});
+
 export const EVENT_SIGNAL = SignalType.createJson<OBSFrontendEvent>(PLUGIN_ID, {
     name: 'event_signal',
 });

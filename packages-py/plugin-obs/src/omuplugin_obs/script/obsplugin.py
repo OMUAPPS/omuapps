@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 
+from loguru import logger
 from omu.app import App
 from omu.helper import map_optional
 from omu.omu import Omu
@@ -20,6 +21,8 @@ from omuplugin_obs.types import (
     EVENT_SIGNAL,
     SCENE_GET,
     SCENE_LIST,
+    SCENE_SET_BY_NAME,
+    SCENE_SET_BY_UUID,
     SOURCE_CREATE,
     SOURCE_GET_BY_NAME,
     SOURCE_GET_BY_UUID,
@@ -38,6 +41,9 @@ from omuplugin_obs.types import (
     SceneJson,
     SceneListRequest,
     SceneListResponse,
+    SceneSetByNameRequest,
+    SceneSetByUuidRequest,
+    SceneSetResponse,
     SourceGetByNameRequest,
     SourceGetByUuidRequest,
     SourceJson,
@@ -278,6 +284,29 @@ async def scene_current(request: SceneGetRequest) -> SceneJson:
     return scene_to_json(scene)
 
 
+@omu.endpoints.bind(endpoint_type=SCENE_SET_BY_NAME)
+async def scene_set_by_name(request: SceneSetByNameRequest) -> SceneSetResponse:
+    scene = OBSScene.get_scene_by_name(request["name"])
+    if scene is None:
+        raise ValueError(f"Scene with name {request['name']} does not exist")
+    OBS.frontend_set_current_scene(scene)
+    return {}
+
+
+@omu.endpoints.bind(endpoint_type=SCENE_SET_BY_UUID)
+async def scene_set_by_uuid(request: SceneSetByUuidRequest) -> SceneSetResponse:
+    source = OBSSource.get_source_by_uuid(request["uuid"])
+    if source is None:
+        raise ValueError(f"Source with uuid {request['uuid']} does not exist")
+    if not source.is_scene:
+        raise ValueError(f"Source with uuid {request['uuid']} is not a scene")
+    scene = source.scene
+    if scene is None:
+        raise ValueError(f"Scene with uuid {request['uuid']} does not exist")
+    OBS.frontend_set_current_scene(scene)
+    return {}
+
+
 event_signal = omu.signal.get(EVENT_SIGNAL)
 
 
@@ -286,7 +315,10 @@ def on_event(event: OBSFrontendEvent):
     loop.create_task(event_signal.notify(event.name))
 
 
+@omu.on_ready
+async def on_ready():
+    logger.info("OBS Plugin is ready")
+
+
 def start():
-    global loop
-    loop = asyncio.new_event_loop()
-    omu.run(loop=loop)
+    omu.run()

@@ -77,10 +77,19 @@ def test2(props: OBSProperties, prop: OBSProperty):
         print(source.source.name)
 
 
+def test3(props: OBSProperties, prop: OBSProperty):
+    # switch to scene test
+    scene = OBSScene.get_scene_by_name("test")
+    if scene is None:
+        scene = OBSScene.create("test")
+    OBS.frontend_set_current_scene(scene)
+
+
 def script_properties():  # ui
     props = OBSProperties.create()
     props.add_button("button", "Add text source", test)
     props.add_button("button2", "Test2", test2)
+    props.add_button("button3", "Test3", test3)
     return props.acquire()
 
 

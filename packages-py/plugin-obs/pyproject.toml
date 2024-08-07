@@ -1,5 +1,5 @@
 [project]
-name = "omuplugin_obssync"
+name = "omuplugin_obs"
 version = "0.6.12"
 description = "Add your description here"
 authors = [

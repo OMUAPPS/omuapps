@@ -61,6 +61,11 @@ class OBS:
         return OBSSource(obs_source)
 
     @staticmethod
+    def frontend_set_current_scene(scene: OBSScene):
+        with scene.source as obs_source:
+            obspython.obs_frontend_set_current_scene(obs_source)
+
+    @staticmethod
     def frontend_get_scene_collections() -> list[str]:
         scene_collections = obspython.obs_frontend_get_scene_collections()
         return scene_collections
