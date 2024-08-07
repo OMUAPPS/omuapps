@@ -286,13 +286,23 @@ SCENE_LIST = EndpointType[SceneListRequest, SceneListResponse].create_json(
 )
 
 
-class SceneGetRequest(TypedDict):
-    scene: NotRequired[str]
+class SceneGetByNameRequest(TypedDict):
+    name: str
 
 
-SCENE_GET = EndpointType[SceneGetRequest, SceneJson].create_json(
+class SceneGetByUuidRequest(TypedDict):
+    uuid: str
+
+
+SCENE_GET_BY_NAME = EndpointType[SceneGetByNameRequest, SceneJson].create_json(
     PLUGIN_ID,
-    name="scene_get",
+    name="scene_get_by_name",
+    permission_id=OBS_SCENE_READ_PERMISSION_ID,
+)
+
+SCENE_GET_BY_UUID = EndpointType[SceneGetByUuidRequest, SceneJson].create_json(
+    PLUGIN_ID,
+    name="scene_get_by_uuid",
     permission_id=OBS_SCENE_READ_PERMISSION_ID,
 )
 

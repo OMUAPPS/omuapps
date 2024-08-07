@@ -19,7 +19,8 @@ from omuobs.source import OBSSource
 from omuplugin_obs.const import PLUGIN_ID
 from omuplugin_obs.types import (
     EVENT_SIGNAL,
-    SCENE_GET,
+    SCENE_GET_BY_NAME,
+    SCENE_GET_BY_UUID,
     SCENE_GET_CURRENT,
     SCENE_LIST,
     SCENE_SET_CURRENT_BY_NAME,
@@ -38,8 +39,9 @@ from omuplugin_obs.types import (
     RemoveByUuidRequest,
     RemoveResponse,
     ScaleProperties,
+    SceneGetByNameRequest,
+    SceneGetByUuidRequest,
     SceneGetCurrentRequest,
-    SceneGetRequest,
     SceneJson,
     SceneListRequest,
     SceneListResponse,
@@ -280,9 +282,20 @@ async def scene_list(request: SceneListRequest) -> SceneListResponse:
     return {"scenes": [scene_to_json(scene) for scene in scenes]}
 
 
-@omu.endpoints.bind(endpoint_type=SCENE_GET)
-async def scene_current(request: SceneGetRequest) -> SceneJson:
-    scene = get_scene(request.get("scene"))
+@omu.endpoints.bind(endpoint_type=SCENE_GET_BY_NAME)
+async def scene_get_by_name(request: SceneGetByNameRequest) -> SceneJson:
+    scene = get_scene(request["name"])
+    return scene_to_json(scene)
+
+
+@omu.endpoints.bind(endpoint_type=SCENE_GET_BY_UUID)
+async def scene_get_by_uuid(request: SceneGetByUuidRequest) -> SceneJson:
+    source = OBSSource.get_source_by_uuid(request["uuid"])
+    if source is None:
+        raise ValueError(f"Source with uuid {request['uuid']} does not exist")
+    if not source.is_scene:
+        raise ValueError(f"Source with uuid {request['uuid']} is not a scene")
+    scene = source.scene
     return scene_to_json(scene)
 
 

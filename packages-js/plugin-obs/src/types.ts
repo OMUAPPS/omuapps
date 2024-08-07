@@ -230,13 +230,27 @@ export const SCENE_LIST = EndpointType.createJson<SceneListRequest, SceneListRes
     name: 'scene_list',
 });
 
-export type SceneGetRequest = {
-    scene?: string;
+export type SceneGetByNameRequest = {
+    name: string;
 };
 
-export const SCENE_GET = EndpointType.createJson<SceneGetRequest, SceneJson>(PLUGIN_ID, {
-    name: 'scene_get',
-});
+export type SceneGetByUuidRequest = {
+    uuid: string;
+};
+
+export const SCENE_GET_BY_NAME = EndpointType.createJson<SceneGetByNameRequest, SceneJson>(
+    PLUGIN_ID,
+    {
+        name: 'scene_get_by_name',
+    },
+);
+
+export const SCENE_GET_BY_UUID = EndpointType.createJson<SceneGetByUuidRequest, SceneJson>(
+    PLUGIN_ID,
+    {
+        name: 'scene_get_by_uuid',
+    },
+);
 
 export type SceneGetCurrentRequest = unknown;
 
