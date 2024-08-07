@@ -68,7 +68,7 @@
                 {#each response.scenes as scene}
                     <button
                         class="scene"
-                        on:click={async () => await obs.sceneSetByName(scene.name)}
+                        on:click={async () => await obs.sceneSetByUuid(scene.uuid)}
                     >
                         <p>{scene.name}</p>
                     </button>

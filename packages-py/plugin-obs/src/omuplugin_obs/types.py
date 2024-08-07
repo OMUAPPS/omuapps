@@ -188,6 +188,7 @@ browser: SourceJson = {
 
 class SceneJson(TypedDict):
     name: str
+    uuid: str
     sources: list[SourceJson]
 
 

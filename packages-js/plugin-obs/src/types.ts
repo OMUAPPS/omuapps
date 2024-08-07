@@ -145,6 +145,7 @@ export type SourceJson = BrowserSource | TextSource;
 
 export type SceneJson = {
     name: string;
+    uuid: string;
     sources: SourceJson[];
 };
 

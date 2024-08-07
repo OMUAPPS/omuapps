@@ -272,6 +272,7 @@ async def source_list(request: SourceListRequest) -> list[SourceJson]:
 def scene_to_json(scene: OBSScene) -> SceneJson:
     return {
         "name": scene.source.name,
+        "uuid": scene.source.uuid,
         "sources": [*filter(None, map(source_to_json, scene.enum_items()))],
     }
 
