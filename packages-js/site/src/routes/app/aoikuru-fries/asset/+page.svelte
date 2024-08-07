@@ -1,4 +1,5 @@
 <script lang="ts">
+    import AssetPage from '$lib/components/AssetPage.svelte';
     import '@fontsource/rocknroll-one';
     import { Chat, events } from '@omujs/chat';
     import { content } from '@omujs/chat/models/index.js';
@@ -8,12 +9,11 @@
     import { BROWSER } from 'esm-env';
     import { IDENTIFIER } from '../app.js';
     import { FriesApp } from '../fries-app.js';
-    import { frame, type ThrowData } from '../state.js';
+    import { type ThrowData } from '../state.js';
     import Avatar from './Avatar.svelte';
     import Board from './Board.svelte';
     import Fries from './Fries.svelte';
     import bg from './img/bg.png';
-    import AssetPage from '$lib/components/AssetPage.svelte';
 
     const ASSET_APP = new App(IDENTIFIER.join('asset'), {
         version: '0.1.0',
@@ -28,20 +28,12 @@
 
     function processQueue() {
         if ($state.type !== 'idle') return;
-        // if (queue.length >= 2) {
-        //     $state = {
-        //         type: 'throw_many',
-        //         throwers: queue.map((v) => v.thrower),
-        //     };
-        //     queue = [];
-        // } else {
         const data = queue.shift();
         if (!data) return;
         $state = {
             type: 'throw_start',
             thrower: data.thrower,
         };
-        // }
     }
 
     state.subscribe((v) => {
