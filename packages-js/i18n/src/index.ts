@@ -1,3 +1,5 @@
+const paramRegex = /\{([\w]+)\}/g;
+
 export type I18n = {
     translate: TranslateFunction;
     localeName: string;
@@ -11,11 +13,7 @@ export type TranslateFunction = (key: string, params?: Record<string, string>) =
 
 type Unconstrained<T, U extends T = T> = U;
 
-export type I18nKeys<T extends Translations> = Unconstrained<
-    { [K in keyof T]: T[K] extends Translations ? I18nKeys<T[K]> : string }
->;
-
-const paramRegex = /\{([\w]+)\}/g;
+export type I18nKeys<T extends Translations> = Unconstrained<{ [K in keyof T]: T[K] extends Translations ? I18nKeys<T[K]> : string }>;
 
 /**
  * Creates an object with i18n keys for the provided translations object.

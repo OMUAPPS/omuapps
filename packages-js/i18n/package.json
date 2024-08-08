@@ -28,8 +28,6 @@
     },
     "devDependencies": {
         "@types/node": "^22.1.0",
-        "@types/websocket": "1.0.10",
-        "@types/ws": "8.5.12",
         "@typescript-eslint/eslint-plugin": "^8.0.1",
         "@typescript-eslint/parser": "^8.0.1",
         "eslint": "^9.8.0",
@@ -40,8 +38,7 @@
         "eslint-plugin-unused-imports": "^4.0.1",
         "nodemon": "^3.1.4",
         "ts-node": "10.9.2",
-        "typescript": "^5.5.4",
-        "websocket": "1.0.35"
+        "typescript": "^5.5.4"
     },
     "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"
 }
