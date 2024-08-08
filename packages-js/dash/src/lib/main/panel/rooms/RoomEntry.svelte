@@ -85,6 +85,7 @@
     article {
         padding: 10px;
         background: var(--color-bg-2);
+        border-bottom: 1px solid var(--color-bg-1);
 
         &.selected {
             background: var(--color-bg-1);
@@ -95,8 +96,6 @@
         &.connected {
             border-left: 2px solid var(--color-1);
         }
-
-        border-bottom: 1px solid var(--color-bg-1);
     }
 
     .top {

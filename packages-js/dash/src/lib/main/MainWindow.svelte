@@ -90,26 +90,6 @@
                     アプリ
                     <i class="ti ti-package" />
                 </span>
-                <div class="buttons">
-                    <!-- <button>
-                        <Tooltip>
-                            <div class="tooltip">
-                                <h3>アプリを管理</h3>
-                                <small>設定やアンインストールを行います</small>
-                            </div>
-                        </Tooltip>
-                        <i class="ti ti-settings" />
-                    </button>
-                    <button>
-                        <Tooltip>
-                            <div class="tooltip">
-                                <h3>アプリを並び替え</h3>
-                                <small>アプリの並び順を変更します</small>
-                            </div>
-                        </Tooltip>
-                        <i class="ti ti-sort-descending" />
-                    </button> -->
-                </div>
             {/if}
         </div>
         <div class="list">
@@ -203,26 +183,6 @@
         padding-bottom: 0.75rem;
         margin-top: 2rem;
         padding-left: 1rem;
-
-        > .buttons {
-            margin-left: auto;
-
-            > button {
-                background: none;
-                border: none;
-                color: var(--color-1);
-                font-size: 1rem;
-                font-weight: 600;
-                width: 2rem;
-                height: 2rem;
-
-                &:hover {
-                    background: var(--color-1);
-                    color: var(--color-bg-1);
-                    border-radius: 4px;
-                }
-            }
-        }
     }
 
     .page-container {
