@@ -1,27 +1,15 @@
 {
     "name": "omuapps",
-    "private": true,
     "version": "0.0.0",
-    "type": "module",
-    "scripts": {
-        "build-tauri": "node ./scripts/js-build.mjs --build dash",
-        "build-site": "node ./scripts/js-build.mjs --build site",
-        "build-i18n": "node scripts/js-i18n.mjs",
-        "dev": "node ./scripts/js-build.mjs && node ./scripts/js-dev.mjs",
-        "build": "node ./scripts/js-build.mjs",
-        "lint": "pnpm -r lint",
-        "fix": "pnpm -r fix",
-        "clean": "node ./scripts/js-clean.mjs"
-    },
-    "workspaces": [
-        "packages-js/*"
-    ],
     "devDependencies": {
+        "@types/node": "^22.1.0",
         "ajv": "^8.17.1",
         "axios": "^1.7.3",
         "execa": "^9.3.0",
+        "fixpack": "^4.0.0",
         "lerna": "^8.1.8",
-        "license-checker": "^25.0.1"
+        "depcheck": "^1.4.7",
+        "typescript": "^5.5.4"
     },
     "pnpm": {
         "overrides": {
@@ -29,5 +17,21 @@
             "strip-ansi": "6",
             "wrap-ansi": "7"
         }
-    }
+    },
+    "private": true,
+    "scripts": {
+        "build": "node ./scripts/js-build.mjs",
+        "build-i18n": "node scripts/js-i18n.mjs",
+        "build-site": "node ./scripts/js-build.mjs --build site",
+        "build-tauri": "node ./scripts/js-build.mjs --build dash",
+        "clean": "node ./scripts/js-clean.mjs",
+        "dev": "node ./scripts/js-build.mjs && node ./scripts/js-dev.mjs",
+        "fix": "pnpm -r fix",
+        "lint": "pnpm -r lint"
+    },
+    "type": "module",
+    "workspaces": [
+        "packages-js/*"
+    ],
+    "packageManager": "pnpm@9.7.0+sha512.dc09430156b427f5ecfc79888899e1c39d2d690f004be70e05230b72cb173d96839587545d09429b55ac3c429c801b4dc3c0e002f653830a420fa2dd4e3cf9cf"
 }

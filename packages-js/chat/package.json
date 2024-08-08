@@ -1,10 +1,15 @@
 {
-    "type": "module",
     "name": "@omujs/chat",
     "version": "0.6.13",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/OMUAPPS/omuapps"
+    "dependencies": {
+        "@omujs/omu": "workspace:*"
+    },
+    "devDependencies": {
+        "@omujs/omu": "workspace:*",
+        "@typescript-eslint/eslint-plugin": "^8.0.1",
+        "@typescript-eslint/parser": "^8.0.1",
+        "eslint": "^9.8.0",
+        "nodemon": "^3.1.4"
     },
     "exports": {
         ".": {
@@ -16,36 +21,20 @@
             "types": "./built/dts/*"
         }
     },
+    "gitHead": "04559d5aec52117d707e0d554ee429b858da522a",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/OMUAPPS/omuapps"
+    },
     "scripts": {
-        "ts": "pnpm run ts-esm && pnpm run ts-dts",
-        "ts-esm": "tsc --outDir built/esm",
-        "ts-dts": "tsc --outDir built/dts --declaration true --emitDeclarationOnly true --declarationMap true",
-        "watch": "nodemon -w src -e ts,json --exec \"pnpm run ts\"",
-        "dev": "pnpm run watch",
         "build": "pnpm run ts",
+        "dev": "pnpm run watch",
+        "format": "eslint . --ext .js,.ts --fix",
         "lint": "eslint . --ext .js,.ts",
-        "format": "eslint . --ext .js,.ts --fix"
+        "ts": "pnpm run ts-esm && pnpm run ts-dts",
+        "ts-dts": "tsc --outDir built/dts --declaration true --emitDeclarationOnly true --declarationMap true",
+        "ts-esm": "tsc --outDir built/esm",
+        "watch": "nodemon -w src -e ts,json --exec \"pnpm run ts\""
     },
-    "devDependencies": {
-        "@omujs/omu": "workspace:*",
-        "@types/node": "^22.1.0",
-        "@types/websocket": "1.0.10",
-        "@types/ws": "8.5.12",
-        "@typescript-eslint/eslint-plugin": "^8.0.1",
-        "@typescript-eslint/parser": "^8.0.1",
-        "eslint": "^9.8.0",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-import": "^2.29.1",
-        "eslint-plugin-prettier": "^5.2.1",
-        "eslint-plugin-svelte": "^2.43.0",
-        "eslint-plugin-unused-imports": "^4.0.1",
-        "nodemon": "^3.1.4",
-        "ts-node": "10.9.2",
-        "typescript": "^5.5.4",
-        "websocket": "1.0.35"
-    },
-    "dependencies": {
-        "@omujs/omu": "workspace:*"
-    },
-    "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"
+    "type": "module"
 }
