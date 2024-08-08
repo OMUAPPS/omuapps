@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ButtonMini, Tooltip, DragLink, style } from '@omujs/ui';
+    import { ButtonMini, style, Tooltip } from '@omujs/ui';
     import type { Archive, ArchiveStatus } from '../archive.js';
     import Spinner from './Spinner.svelte';
 
@@ -113,7 +113,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 1;
+        line-clamp: 1;
         -webkit-box-orient: vertical;
     }
 
@@ -123,7 +123,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 1;
+        line-clamp: 1;
         -webkit-box-orient: vertical;
     }
 

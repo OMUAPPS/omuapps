@@ -53,7 +53,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 1;
+        line-clamp: 1;
         -webkit-box-orient: vertical;
     }
 
@@ -63,7 +63,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 1;
+        line-clamp: 1;
         -webkit-box-orient: vertical;
     }
 </style>
