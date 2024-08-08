@@ -12,7 +12,7 @@ use std::io::Write;
 use tempfile::NamedTempFile;
 
 use crate::{
-    options::InstallOptions,
+    options::AppOptions,
     sources::uv::{UvDownload, UvRequest},
     utils::{download::download_url, extract::unpack_archive},
 };
@@ -24,7 +24,7 @@ pub struct Uv {
 }
 
 impl Uv {
-    pub fn ensure(options: &InstallOptions, python_bin: &PathBuf) -> Result<Self, Error> {
+    pub fn ensure(options: &AppOptions, python_bin: &PathBuf) -> Result<Self, Error> {
         let download = UvDownload::try_from(UvRequest::default())?;
         let uv_dir = options.uv_path.join(download.version());
         let uv_bin = if cfg!(target_os = "windows") {
@@ -69,7 +69,7 @@ impl Uv {
         Ok(())
     }
 
-    pub fn download(options: &InstallOptions) -> Result<(), Error> {
+    pub fn download(options: &AppOptions) -> Result<(), Error> {
         let uv_request = UvRequest::default();
         let uv_download = UvDownload::try_from(uv_request).unwrap();
         let uv_url = uv_download.url.as_ref();

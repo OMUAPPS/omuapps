@@ -4,7 +4,7 @@ use anyhow::{anyhow, bail, Error};
 use log::info;
 
 use crate::{
-    options::InstallOptions,
+    options::AppOptions,
     sources::py::{get_download_url, PythonVersion},
     sync::{read_venv_marker, write_venv_marker},
     utils::{checksum::check_checksum, download::download_url, extract::unpack_archive},
@@ -17,7 +17,7 @@ pub struct Python {
 }
 
 impl Python {
-    pub fn ensure(options: &InstallOptions) -> Result<Self, Error> {
+    pub fn ensure(options: &AppOptions) -> Result<Self, Error> {
         let python_path = get_dir(&options);
         let python_bin = if cfg!(target_os = "windows") {
             python_path.join("install").join("python.exe")
@@ -46,7 +46,7 @@ impl Python {
         }
     }
 
-    fn download(options: &InstallOptions) -> Result<PythonVersion, Error> {
+    fn download(options: &AppOptions) -> Result<PythonVersion, Error> {
         let version = &options.python_version;
         let (version, python_url, checksum) = match get_download_url(&version) {
             Some(result) => result,
@@ -78,6 +78,6 @@ impl Python {
     }
 }
 
-fn get_dir(options: &InstallOptions) -> PathBuf {
+fn get_dir(options: &AppOptions) -> PathBuf {
     options.python_path.join(options.python_version.to_string())
 }
