@@ -11,7 +11,7 @@
         "build": "node ./scripts/js-build.mjs",
         "lint": "bun -r lint",
         "fix": "bun -r fix",
-        "clean": "node ./scripts/js-clean.mjs"
+        "clean": "bun ./scripts/js-clean.mjs"
     },
     "workspaces": [
         "packages-js/*"

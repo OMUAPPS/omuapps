@@ -1,5 +1,4 @@
 import fs from 'fs/promises';
-import path from 'path';
 
 const paths = [
     'node_modules',
@@ -18,16 +17,8 @@ const paths = [
     'packages-js/site/.svelte-kit',
 ];
 
-async function clean() {
-    await Promise.all(
-        paths.map(async (p) => {
-            try {
-                await fs.rm(path.join(p), { recursive: true });
-            } catch (e) {
-                console.error(`Error cleaning ${p}: ${e.message}`);
-            }
-        }),
-    );
-}
-
-await clean();
+await Promise.all(paths.map(path =>
+    fs.rm(path, { recursive: true })
+        .then(() => console.info(`Successfully deleted: ${path}`))
+        .catch(err => console.error(`Error cleaning ${path}: ${err.message}`))
+));
