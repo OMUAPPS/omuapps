@@ -17,27 +17,27 @@
         }
     },
     "scripts": {
-        "ts": "bun run ts-esm && bun run ts-dts",
+        "ts": "pnpm run ts-esm && pnpm run ts-dts",
         "ts-esm": "tsc --outDir built/esm",
         "ts-dts": "tsc --outDir built/dts --declaration true --emitDeclarationOnly true --declarationMap true",
-        "watch": "nodemon -w src -e ts,json --exec \"bun run ts\"",
-        "dev": "bun run watch",
-        "build": "bun run ts",
+        "watch": "nodemon -w src -e ts,json --exec \"pnpm run ts\"",
+        "dev": "pnpm run watch",
+        "build": "pnpm run ts",
         "lint": "eslint . --ext .js,.ts",
         "format": "eslint . --ext .js,.ts --fix"
     },
     "devDependencies": {
-        "@types/node": "^22.1.0",
-        "@typescript-eslint/eslint-plugin": "^8.0.1",
-        "@typescript-eslint/parser": "^8.0.1",
-        "eslint": "^9.8.0",
+        "@types/node": "^20.14.10",
+        "@typescript-eslint/eslint-plugin": "^7.16.0",
+        "@typescript-eslint/parser": "^7.16.0",
+        "eslint": "^8.57.0",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-import": "^2.29.1",
-        "eslint-plugin-prettier": "^5.2.1",
-        "eslint-plugin-unused-imports": "^4.0.1",
+        "eslint-plugin-prettier": "^5.1.3",
+        "eslint-plugin-unused-imports": "^3.2.0",
         "nodemon": "^3.1.4",
         "ts-node": "10.9.2",
-        "typescript": "^5.5.4"
+        "typescript": "^5.5.3"
     },
     "dependencies": {
         "@omujs/omu": "workspace:*"

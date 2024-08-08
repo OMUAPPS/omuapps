@@ -36,19 +36,33 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - uses: oven-sh/setup-bun@v2
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+
+            - uses: pnpm/action-setup@v3
+              name: Install pnpm
+              with:
+                  version: latest
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              id: pnpm-store
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
             - uses: actions/cache@v4
-              id: cache-bun
+              name: Cache pnpm store
               with:
-                  path: ~/.bun/install/cache
-                  key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+                  path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+                  key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
                   restore-keys: |
-                      bun-${{ runner.os }}-
+                      pnpm-store-${{ runner.os }}-
 
             - name: Install dependencies
-              if: steps.cache-bun.outputs.cache-hit != 'true'
-              run: bun i --frozen-lockfile
+              run: pnpm i --frozen-lockfile
 
             - name: Git Identity
               run: |
@@ -82,7 +96,7 @@ jobs:
 
             - name: Publish
               if: ${{ github.event.inputs.npm == 'true' }}
-              run: bun publish -r --access public --no-git-checks
+              run: pnpm publish -r --access public --no-git-checks
               env:
                   NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
@@ -173,29 +187,35 @@ jobs:
               with:
                   ref: ${{ needs.publish-pypi.outputs.VERSION }}
 
-            - uses: oven-sh/setup-bun@v2
+            - run: corepack enable
+
+            - name: Install Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+
+            - uses: pnpm/action-setup@v3
+              name: Install pnpm
+              with:
+                  version: 9
+                  run_install: false
+
+            - name: Get pnpm store directory
+              shell: bash
+              id: pnpm-store
+              run: |
+                  echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
             - uses: actions/cache@v4
-              id: cache-bun
-              if: startsWith(matrix.platform, 'ubuntu-') || startsWith(matrix.platform, 'macos-')
+              name: Cache pnpm store
               with:
-                  path: ~/.bun/install/cache
-                  key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
+                  path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
+                  key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
                   restore-keys: |
-                      bun-${{ runner.os }}-
-
-            - uses: actions/cache@v4
-              id: cache-bun-windows
-              if: startsWith(matrix.platform, 'windows-')
-              with:
-                  path: ${{ '%userprofile%\\.bun\\install\\cache' }}
-                  key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lockb') }}
-                  restore-keys: |
-                      bun-${{ runner.os }}-
+                      pnpm-store-${{ runner.os }}-
 
             - name: Install dependencies
-              if: steps.cache-bun.outputs.cache-hit != 'true' && steps.cache-bun-windows.outputs.cache-hit != 'true'
-              run: bun i --frozen-lockfile
+              run: pnpm i --frozen-lockfile
 
             - name: install dependencies (ubuntu only)
               if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
@@ -213,7 +233,7 @@ jobs:
 
             - name: build-pre
               run: |
-                  bun --filter dash run build-pre
+                  pnpm --filter dash run build-pre
 
             - name: Cache rust target
               uses: actions/cache@v4

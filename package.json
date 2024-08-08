@@ -9,9 +9,9 @@
         "build-i18n": "node scripts/js-i18n.mjs",
         "dev": "node ./scripts/js-build.mjs && node ./scripts/js-dev.mjs",
         "build": "node ./scripts/js-build.mjs",
-        "lint": "bun -r lint",
-        "fix": "bun -r fix",
-        "clean": "bun ./scripts/js-clean.mjs"
+        "lint": "pnpm -r lint",
+        "fix": "pnpm -r fix",
+        "clean": "node ./scripts/js-clean.mjs"
     },
     "workspaces": [
         "packages-js/*"
@@ -22,5 +22,12 @@
         "license-checker": "^25.0.1",
         "axios": "^1.7.2",
         "ajv": "^8.16.0"
+    },
+    "pnpm": {
+        "overrides": {
+            "string-width": "4",
+            "strip-ansi": "6",
+            "wrap-ansi": "7"
+        }
     }
 }
