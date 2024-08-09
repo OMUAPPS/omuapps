@@ -49,22 +49,31 @@
         'UvUpdateRequirements',
         'ServerStarting',
     ];
+    const FAILED_PROGRESS = [
+        'PythonChecksumFailed',
+        'UvCleanupOldVersionsFailed',
+        'UvUpdatePipFailed',
+        'UvUpdateRequirementsFailed',
+        'ServerTokenReadFailed',
+        'ServerTokenWriteFailed',
+        'ServerCreateDataDirFailed',
+        'ServerStartFailed',
+        'ServerAlreadyStarted',
+    ];
 
-    let serverState: Progress | null = null;
-    $: stateMessage = serverState
-        ? ERROR_NAMES[Object.keys(serverState)[0] as keyof PROGRESS_EVENT]
-        : '';
-    let progress = 0;
-    $: progress =
-        serverState && INSTALL_PROGRESS.includes(Object.keys(serverState)[0])
-            ? INSTALL_PROGRESS.indexOf(Object.keys(serverState)[0]) / INSTALL_PROGRESS.length
-            : progress;
+    let progress: Progress | null = null;
+    $: state = progress ? (Object.keys(progress)[0] as keyof PROGRESS_EVENT) : null;
+    $: stateMessage = state ? ERROR_NAMES[state] : '';
+    let percentage = 0;
+    $: percentage =
+        progress && state ? INSTALL_PROGRESS.indexOf(state) / INSTALL_PROGRESS.length : 0;
+    $: failed = state ? FAILED_PROGRESS.includes(state) : false;
 
     async function init() {
         await loadLocale();
         await waitForTauri();
         await listen('server_state', (state) => {
-            serverState = state.payload;
+            progress = state.payload;
         });
         try {
             await invoke('start_server');
@@ -121,34 +130,49 @@
 
 <div class="app">
     <main>
-        {#await promise}
+        {#if failed}
             <div class="loading" data-tauri-drag-region>
-                <p class="text">
-                    {#if !$installed}
-                        インストール中...
-                    {:else}
-                        loading...
-                    {/if}
-                    <i class="ti ti-loader-2" />
+                <p class="failed">
+                    起動に失敗しました
+                    <i class="ti ti-alert-circle" />
                 </p>
                 <div class="state">
-                    <progress value={progress} />
                     {#if stateMessage}
                         <p>{stateMessage}</p>
-                        <small>{JSON.stringify(serverState)}</small>
+                        <small>{JSON.stringify(progress)}</small>
                     {/if}
                 </div>
             </div>
-        {:then}
-            <slot />
-        {:catch error}
-            <div class="loading" data-tauri-drag-region>
-                {error.message}
-                <p>
-                    {JSON.stringify(serverState)}
-                </p>
-            </div>
-        {/await}
+        {:else}
+            {#await promise}
+                <div class="loading" data-tauri-drag-region>
+                    <p class="text">
+                        {#if !$installed}
+                            インストール中...
+                        {:else}
+                            loading...
+                        {/if}
+                        <i class="ti ti-loader-2" />
+                    </p>
+                    <div class="state">
+                        <progress value={percentage} />
+                        {#if stateMessage}
+                            <p>{stateMessage}</p>
+                            <small>{JSON.stringify(progress)}</small>
+                        {/if}
+                    </div>
+                </div>
+            {:then}
+                <slot />
+            {:catch error}
+                <div class="loading" data-tauri-drag-region>
+                    {error.message}
+                    <p>
+                        {JSON.stringify(progress)}
+                    </p>
+                </div>
+            {/await}
+        {/if}
     </main>
 </div>
 
@@ -177,6 +201,18 @@
         font-weight: bold;
         color: var(--color-1);
         background: var(--color-bg-1);
+    }
+
+    .failed {
+        display: flex;
+        align-items: baseline;
+        color: #dfa207;
+        font-size: 1.475rem;
+
+        > i {
+            margin-left: 0.5rem;
+            font-size: 1.5rem;
+        }
     }
 
     .text {

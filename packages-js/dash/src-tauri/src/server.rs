@@ -1,10 +1,12 @@
 use std::io::BufRead;
 use std::path::PathBuf;
 use std::process::Stdio;
+use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 use log::info;
 use rand::Rng;
+use tauri::{AppHandle, Manager};
 
 use crate::version::VERSION;
 use crate::Progress;
@@ -21,6 +23,7 @@ pub struct Server {
     option: ServerOption,
     python: Python,
     uv: Uv,
+    app_handle: Arc<Mutex<Option<AppHandle>>>,
     pub token: String,
 }
 
@@ -30,6 +33,7 @@ impl Server {
         python: Python,
         uv: Uv,
         on_progress: &(impl Fn(Progress) + Send + 'static),
+        app_handle: Arc<Mutex<Option<AppHandle>>>,
     ) -> Result<Self, String> {
         let token = match Self::get_token(&option, on_progress) {
             Ok(value) => value,
@@ -40,6 +44,7 @@ impl Server {
             option,
             python,
             uv,
+            app_handle,
             token,
         };
 
@@ -137,36 +142,56 @@ impl Server {
             on_progress(Progress::ServerStartFailed(msg.clone()));
             msg
         })?;
+        let app_handle = self.app_handle.clone();
         std::thread::spawn(move || {
-            handle_io(child).unwrap();
+            Self::handle_io(child, app_handle).unwrap();
         });
         Ok(())
     }
-}
 
-fn handle_io(mut child: std::process::Child) -> Result<(), String> {
-    let stdout = child.stdout.take().unwrap();
-    let stderr = child.stderr.take().unwrap();
-    let stdout = std::thread::spawn(move || {
-        std::io::BufReader::new(stdout).lines().for_each(|line| {
-            if let Ok(line) = line {
-                info!("{}", line);
-            }
+    fn handle_io(
+        mut child: std::process::Child,
+        app_handle: Arc<Mutex<Option<AppHandle>>>,
+    ) -> Result<(), String> {
+        let window = app_handle
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .get_window("main")
+            .unwrap();
+        let on_progress = move |progress: Progress| {
+            info!("{:?}", progress);
+            window.emit("server_state", progress).unwrap();
+        };
+
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
+        let stdout = std::thread::spawn(move || {
+            std::io::BufReader::new(stdout).lines().for_each(|line| {
+                if let Ok(line) = line {
+                    info!("{}", line);
+                }
+            });
         });
-    });
-    let stderr = std::thread::spawn(move || {
-        std::io::BufReader::new(stderr).lines().for_each(|line| {
-            if let Ok(line) = line {
-                info!("{}", line);
-            }
+        let stderr = std::thread::spawn(move || {
+            std::io::BufReader::new(stderr).lines().for_each(|line| {
+                if let Ok(line) = line {
+                    info!("{}", line);
+                }
+            });
         });
-    });
-    let exit_status = child.wait().map_err(|err| err.to_string())?;
-    stdout.join().unwrap();
-    stderr.join().unwrap();
-    Ok(if !exit_status.success() {
-        Err(format!("Failed to start server: {:?}", exit_status))?;
-    })
+        let exit_status = child.wait().map_err(|err| err.to_string())?;
+        stdout.join().unwrap();
+        stderr.join().unwrap();
+        if !exit_status.success() {
+            on_progress(Progress::ServerStartFailed(
+                "Server exited with non-zero status".to_string(),
+            ));
+            Err("Server exited with non-zero status".to_string())?;
+        }
+        Ok(())
+    }
 }
 
 fn generate_token() -> String {

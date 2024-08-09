@@ -51,6 +51,7 @@ static PYTHON_VERSION: PythonVersionRequest = PythonVersionRequest {
 struct AppState {
     option: AppOptions,
     server: Arc<Mutex<Option<Server>>>,
+    app_handle: Arc<Mutex<Option<tauri::AppHandle>>>,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -68,7 +69,6 @@ async fn start_server(
         info!("{:?}", progress);
         window.emit("server_state", progress).unwrap();
     };
-
     {
         let server = state.server.lock().unwrap();
         if server.is_some() {
@@ -98,7 +98,13 @@ async fn start_server(
         Python::ensure(&options, &on_progress).unwrap()
     };
     let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
-    let server = Server::ensure_server(options.server_options, python, uv, &on_progress);
+    let server = Server::ensure_server(
+        options.server_options,
+        python,
+        uv,
+        &on_progress,
+        state.app_handle.clone(),
+    );
     let server = match server {
         Ok(server) => server,
         Err(err) => {
@@ -138,9 +144,11 @@ fn main() {
             port: 26423,
         },
     };
+    let app_handle = Arc::new(Mutex::new(None));
     let server_state = AppState {
         option: options,
         server: Arc::new(Mutex::new(None)),
+        app_handle: app_handle.clone(),
     };
 
     tauri::Builder::default()
@@ -160,8 +168,11 @@ fn main() {
         .manage(server_state)
         .invoke_handler(tauri::generate_handler![start_server, get_token])
         .setup(move |app| {
-            let window = app.get_window("main").unwrap();
-            set_shadow(&window, true).unwrap();
+            let main_window = app.get_window("main").unwrap();
+            set_shadow(&main_window, true).unwrap();
+
+            *app_handle.lock().unwrap() = Some(app.handle().clone());
+
             Ok(())
         })
         .run(tauri::generate_context!())
