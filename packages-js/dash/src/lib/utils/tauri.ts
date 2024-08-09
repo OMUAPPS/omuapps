@@ -4,18 +4,9 @@ import { BROWSER } from 'esm-env';
 
 let _invoke: typeof api.invoke;
 let _listen: typeof event.listen;
-type ServerStatus = 'NotInstalled' | 'Installing' | 'Installed' | 'AlreadyRunning';
 type Commands = {
-    share_url: () => {
-        host: string;
-        port: number;
-    };
-    run_server: () => void;
+    start_server: () => string;
     get_token: () => string | null;
-    delete_runtime: () => void;
-    install_runtime: () => void;
-    get_server_state: () => ServerStatus;
-    update_libraries: () => void;
 };
 
 export async function invoke<T extends keyof Commands>(
@@ -26,12 +17,7 @@ export async function invoke<T extends keyof Commands>(
     return _invoke(command, ...args);
 }
 type Events = {
-    'server-state': ServerStatus;
-    'install-progress': {
-        progress: number;
-        total: number;
-        message: string;
-    };
+    server_state: string;
     [event.TauriEvent.WINDOW_RESIZED]: unknown;
     [event.TauriEvent.WINDOW_MOVED]: unknown;
     [event.TauriEvent.WINDOW_CLOSE_REQUESTED]: unknown;

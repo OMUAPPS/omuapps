@@ -5,17 +5,27 @@
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
     import UpdateScreen from '$lib/main/screen/UpdateScreen.svelte';
     import { installed, language } from '$lib/main/settings.js';
-    import ScreenInstalling from '$lib/main/setup/ScreenInstalling.svelte';
-    import { waitForTauri } from '$lib/utils/tauri.js';
+    import { invoke, listen, waitForTauri } from '$lib/utils/tauri.js';
     import { createI18nUnion } from '@omujs/i18n';
     import { NetworkStatus } from '@omujs/omu/network/network.js';
     import { Theme } from '@omujs/ui';
     import { checkUpdate } from '@tauri-apps/api/updater';
     import './styles.scss';
 
+    let serverState: string | null = null;
+
     async function init() {
         await loadLocale();
         await waitForTauri();
+        await listen('server_state', (state) => {
+            serverState = state.payload;
+        });
+        try {
+            await invoke('start_server');
+        } catch (e) {
+            console.error(e);
+        }
+        console.log('server started');
 
         omu.start();
         language.subscribe(loadLocale);
@@ -35,8 +45,13 @@
             screenContext.push(UpdateScreen, { manifest });
         }
 
-        omu.onReady(() => {
-            screenContext.push(ScreenInstalling, {});
+        return new Promise<void>((resolve, reject) => {
+            omu.onReady(resolve);
+            omu.network.event.status.listen((status) => {
+                if (status === NetworkStatus.ERROR) {
+                    reject(status);
+                }
+            });
         });
     }
 
@@ -67,11 +82,19 @@
                 {:else}
                     loading...
                 {/if}
+                <p>
+                    {JSON.stringify(serverState)}
+                </p>
             </div>
         {:then}
             <slot />
         {:catch error}
-            <div class="loading" data-tauri-drag-region>{error.message}</div>
+            <div class="loading" data-tauri-drag-region>
+                {error.message}
+                <p>
+                    {JSON.stringify(serverState)}
+                </p>
+            </div>
         {/await}
     </main>
 </div>

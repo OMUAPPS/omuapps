@@ -1,0 +1,20 @@
+#[derive(Debug, Clone, serde::Serialize)]
+pub enum Progress {
+    PythonDownloading(String),
+    PythonUnkownVersion(String),
+    PythonChecksumFailed(String),
+    PythonExtracting(String),
+    UvDownloading(String),
+    UvExtracting(String),
+    UvCleanupOldVersions(String),
+    UvCleanupOldVersionsFailed(String),
+    UvUpdatePip(String),
+    UvFailedUpdatePip(String),
+    UvUpdateRequirements(String),
+    UvFailedUpdateRequirements(String),
+    ServerTokenReadFailed(String),
+    ServerTokenWriteFailed(String),
+    ServerFailedCreateDataDir(String),
+    ServerStarting(String),
+    ServerStarted(String),
+}

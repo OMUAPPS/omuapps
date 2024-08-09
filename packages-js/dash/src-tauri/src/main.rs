@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod options;
+mod progress;
 mod python;
 mod server;
 mod sources;
@@ -10,19 +11,22 @@ mod utils;
 mod uv;
 mod version;
 
-use std::{
-    borrow,
-    sync::{Arc, Mutex},
+use crate::{
+    progress::Progress,
+    python::Python,
+    server::{Server, ServerOption},
+    sources::py::PythonVersionRequest,
 };
-
 use anyhow::Result;
 use directories::ProjectDirs;
 use log::info;
 use once_cell::sync::Lazy;
 use options::AppOptions;
-use python::Python;
-use server::{Server, ServerOption};
-use sources::py::{PythonVersion, PythonVersionRequest};
+use sources::py::PythonVersion;
+use std::{
+    borrow,
+    sync::{Arc, Mutex},
+};
 use tauri::Manager;
 use tauri_plugin_log::LogTarget;
 use uv::Uv;
@@ -56,11 +60,22 @@ struct Payload {
 }
 
 #[tauri::command]
-fn start_server(state: tauri::State<'_, AppState>) -> Result<Option<String>, String> {
-    let server = state.server.lock().unwrap();
-    if server.is_some() {
-        return Ok(None);
+async fn start_server(
+    window: tauri::Window,
+    state: tauri::State<'_, AppState>,
+) -> Result<Option<String>, String> {
+    let on_progress = move |progress: Progress| {
+        info!("{:?}", progress);
+        window.emit("server_state", progress).unwrap();
     };
+
+    {
+        let server = state.server.lock().unwrap();
+        if server.is_some() {
+            return Ok(None);
+        };
+    }
+
     let options = state.option.clone();
     let python = if cfg!(dev) {
         Python {
@@ -77,16 +92,19 @@ fn start_server(state: tauri::State<'_, AppState>) -> Result<Option<String>, Str
             },
         }
     } else {
-        Python::ensure(&options).unwrap()
+        Python::ensure(&options, &on_progress).unwrap()
     };
-    let uv = Uv::ensure(&options, &python.python_bin).unwrap();
-    let server = Server::ensure_server(options.server_options, python, uv);
+    let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
+    let server = Server::ensure_server(options.server_options, python, uv, &on_progress);
     let server = match server {
         Ok(server) => server,
         Err(err) => {
             return Err(err.to_string());
         }
     };
+
+    on_progress(Progress::ServerStarting("Starting server".to_string()));
+    server.start().unwrap();
 
     let token = server.token.clone();
     *state.server.lock().unwrap() = Some(server);
@@ -106,6 +124,7 @@ fn get_token(state: tauri::State<'_, AppState>) -> Result<Option<String>, String
 fn main() {
     let data_dir = get_data_dir();
     let bin_dir = APP_DIRECTORY.data_local_dir();
+
     let options = AppOptions {
         python_version: PYTHON_VERSION.clone(),
         python_path: bin_dir.join("python"),
@@ -132,6 +151,7 @@ fn main() {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([LogTarget::Stdout, LogTarget::Webview, LogTarget::LogDir])
+                .level(log::LevelFilter::Debug)
                 .build(),
         )
         .manage(server_state)

@@ -5,14 +5,14 @@ use std::{
     process::Command,
 };
 
-use anyhow::Context;
 use anyhow::{bail, Error};
-use log::info;
+use anyhow::{Context, Result};
 use std::io::Write;
 use tempfile::NamedTempFile;
 
 use crate::{
     options::AppOptions,
+    progress::Progress,
     sources::uv::{UvDownload, UvRequest},
     utils::{download::download_url, extract::unpack_archive},
 };
@@ -24,7 +24,11 @@ pub struct Uv {
 }
 
 impl Uv {
-    pub fn ensure(options: &AppOptions, python_bin: &PathBuf) -> Result<Self, Error> {
+    pub fn ensure(
+        options: &AppOptions,
+        python_bin: &PathBuf,
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+    ) -> Result<Self, Error> {
         let download = UvDownload::try_from(UvRequest::default())?;
         let uv_dir = options.uv_path.join(download.version());
         let uv_bin = if cfg!(target_os = "windows") {
@@ -42,8 +46,8 @@ impl Uv {
             });
         }
 
-        Self::download(options)?;
-        Self::cleanup_old_versions(&options.uv_path, &uv_dir)?;
+        Self::download(options, on_progress)?;
+        Self::cleanup_old_versions(&options.uv_path, &uv_dir, on_progress)?;
         if uv_dir.exists() && uv_bin.exists() {
             return Ok(Uv {
                 uv_bin,
@@ -54,7 +58,11 @@ impl Uv {
 
         bail!("Failed to download uv")
     }
-    fn cleanup_old_versions(base_dir: &Path, current_version: &Path) -> Result<(), Error> {
+    fn cleanup_old_versions(
+        base_dir: &Path,
+        current_version: &Path,
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+    ) -> Result<(), Error> {
         let versions = base_dir
             .read_dir()?
             .filter_map(|entry| entry.ok())
@@ -62,20 +70,36 @@ impl Uv {
             .filter(|entry| entry.path() != current_version);
 
         for entry in versions {
+            on_progress(Progress::UvCleanupOldVersions(format!(
+                "Removing old uv version: {}",
+                entry.path().display()
+            )));
             if let Err(e) = remove_dir_all(entry.path()) {
-                info!("Failed to remove old uv version: {}", e);
+                on_progress(Progress::UvCleanupOldVersionsFailed(format!(
+                    "Failed to remove old uv version: {}",
+                    e
+                )));
             }
         }
         Ok(())
     }
 
-    pub fn download(options: &AppOptions) -> Result<(), Error> {
+    pub fn download(
+        options: &AppOptions,
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+    ) -> Result<(), Error> {
         let uv_request = UvRequest::default();
         let uv_download = UvDownload::try_from(uv_request).unwrap();
         let uv_url = uv_download.url.as_ref();
-        info!("Downloading uv from {}", uv_url);
+        on_progress(Progress::UvDownloading(format!(
+            "Downloading uv from {}",
+            uv_url
+        )));
         let contents = download_url(&uv_url).unwrap();
-        info!("Downloaded uv to {}", contents.len());
+        on_progress(Progress::UvExtracting(format!(
+            "Extracting uv to {}",
+            options.uv_path.display()
+        )));
         let dst = options.uv_path.join(uv_download.version());
         let strip = if cfg!(target_os = "windows") { 0 } else { 1 };
         unpack_archive(&contents, &dst, strip).unwrap();
@@ -98,33 +122,77 @@ impl Uv {
     }
 
     /// Updates the venv to the given pip version and requirements.
-    pub fn update(&self, pip_version: &str, requirements: &str) -> Result<(), Error> {
-        self.update_pip(pip_version)?;
-        self.update_requirements(requirements)?;
+    pub fn update(
+        &self,
+        pip_version: &str,
+        requirements: &str,
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+    ) -> Result<(), Error> {
+        self.update_pip(pip_version, on_progress)?;
+        self.update_requirements(requirements, on_progress)?;
         Ok(())
     }
 
     /// Updates the pip version in the venv.
-    pub fn update_pip(&self, pip_version: &str) -> Result<(), Error> {
-        self.cmd()
+    pub fn update_pip(
+        &self,
+        pip_version: &str,
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+    ) -> Result<(), Error> {
+        on_progress(Progress::UvUpdatePip(format!(
+            "Updating pip to {} at {}",
+            pip_version,
+            self.workdir.display()
+        )));
+        let output = self
+            .cmd()
             .arg("pip")
             .arg("install")
             .arg("--upgrade")
             .arg(pip_version)
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
-            .status()
-            .with_context(|| format!("unable to update pip at {}", self.workdir.display()))?;
+            .output()
+            .with_context(|| {
+                let message = format!(
+                    "unable to update pip to {} at {}",
+                    pip_version,
+                    self.workdir.display()
+                );
+                on_progress(Progress::UvFailedUpdatePip(message.clone()));
+                message
+            })?;
 
+        if !output.status.success() {
+            let update_error_message = format!(
+                "Failed to update pip to {} at {}: {}",
+                pip_version,
+                self.workdir.display(),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            on_progress(Progress::UvFailedUpdatePip(update_error_message.clone()));
+            bail!(update_error_message.clone());
+        }
         Ok(())
     }
 
     /// Updates the requirements in the venv.
-    pub fn update_requirements(&self, requirements: &str) -> Result<(), Error> {
+    pub fn update_requirements(
+        &self,
+        requirements: &str,
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+    ) -> Result<(), Error> {
+        on_progress(Progress::UvUpdateRequirements(format!(
+            "Updating requirements {} at {}",
+            requirements,
+            self.workdir.display()
+        )));
+
         let mut req_file = NamedTempFile::new()?;
         writeln!(req_file, "{}", requirements)?;
 
-        self.cmd()
+        let output = self
+            .cmd()
             .arg("pip")
             .arg("install")
             .arg("--upgrade")
@@ -132,13 +200,26 @@ impl Uv {
             .arg(req_file.path())
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
-            .status()
+            .output()
             .with_context(|| {
-                format!(
+                let message = format!(
                     "unable to update requirements at {}",
                     self.workdir.display()
-                )
+                );
+                on_progress(Progress::UvFailedUpdateRequirements(message.clone()));
+                message
             })?;
+
+        if !output.status.success() {
+            let update_error_message = format!(
+                "Failed to update requirements at {}: {}",
+                self.workdir.display(),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            on_progress(Progress::UvFailedUpdateRequirements(
+                update_error_message.clone(),
+            ));
+        }
 
         Ok(())
     }

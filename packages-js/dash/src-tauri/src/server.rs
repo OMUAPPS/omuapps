@@ -5,6 +5,7 @@ use log::info;
 use rand::Rng;
 
 use crate::version::VERSION;
+use crate::Progress;
 use crate::{python::Python, uv::Uv};
 const LATEST_PIP: &str = "pip==23.3.2";
 
@@ -14,41 +15,87 @@ pub struct ServerOption {
     pub port: u16,
 }
 
-pub enum InstallProgress {
-    Installing,
-    Installed,
-}
-
 pub struct Server {
     option: ServerOption,
     python: Python,
     uv: Uv,
-    on_progress: Option<Box<dyn Fn(InstallProgress) + Send>>,
     pub token: String,
 }
 
 impl Server {
-    pub fn ensure_server(option: ServerOption, python: Python, uv: Uv) -> Result<Self, String> {
-        let token = if is_port_available("127.0.0.1", option.port) {
-            let token = generate_token();
-            Self::save_token(&token, &option);
-            token
-        } else {
-            Self::read_token_file(&option)?
+    pub fn ensure_server(
+        option: ServerOption,
+        python: Python,
+        uv: Uv,
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+    ) -> Result<Self, String> {
+        let token = match Self::get_token(&option, on_progress) {
+            Ok(value) => value,
+            Err(value) => return value,
         };
 
-        Ok(Self {
+        let server = Self {
             option,
             python,
             uv,
             token,
-            on_progress: None,
-        })
+        };
+
+        if !server.option.data_dir.exists() {
+            std::fs::create_dir_all(&server.option.data_dir).map_err(|err| {
+                format!(
+                    "Failed to create data directory at {}: {}",
+                    server.option.data_dir.display(),
+                    err
+                )
+            })?;
+        }
+
+        let requirements = format!("omuserver=={}", VERSION);
+        server
+            .uv
+            .update(LATEST_PIP, &requirements, on_progress)
+            .map_err(|err| err.to_string())?;
+
+        Ok(server)
     }
 
-    fn save_token(token: &str, option: &ServerOption) {
+    fn get_token(
+        option: &ServerOption,
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+    ) -> Result<String, std::result::Result<Server, String>> {
+        let token = if is_port_available("127.0.0.1", option.port) {
+            let token = generate_token();
+            match Self::save_token(&token, option) {
+                Ok(_) => token,
+                Err(err) => {
+                    on_progress(Progress::ServerTokenWriteFailed(err.clone()));
+                    return Err(Err(err));
+                }
+            }
+        } else {
+            match Self::read_token_file(option) {
+                Ok(token) => token,
+                Err(err) => {
+                    on_progress(Progress::ServerTokenReadFailed(err.clone()));
+                    return Err(Err(err));
+                }
+            }
+        };
+        Ok(token)
+    }
+
+    fn save_token(token: &str, option: &ServerOption) -> Result<(), String> {
         let token_path = option.data_dir.join("token.txt");
-        std::fs::write(token_path, token).expect("failed to save token");
+        std::fs::write(token_path.clone(), token).map_err(|err| {
+            format!(
+                "Port {} is already in use, but failed to write token file at {}: {}",
+                option.port,
+                token_path.display(),
+                err
+            )
+        })?;
+        Ok(())
     }
 
     fn read_token_file(option: &ServerOption) -> Result<String, String> {
@@ -71,21 +118,6 @@ impl Server {
     }
 
     pub fn start(&self) -> Result<(), String> {
-        if !self.option.data_dir.exists() {
-            std::fs::create_dir_all(&self.option.data_dir).expect("failed to create data_dir");
-        }
-
-        info!("Running server on port {}", self.option.port);
-
-        if !self.option.data_dir.exists() {
-            std::fs::create_dir_all(&self.option.data_dir).expect("failed to create data_dir");
-        }
-
-        let requirements = format!("omuserver=={}", VERSION);
-        self.uv
-            .update(LATEST_PIP, &requirements)
-            .expect("failed to update uv");
-
         let mut cmd = self.python.cmd();
         cmd.arg("-m");
         cmd.arg("omuserver");
@@ -94,7 +126,7 @@ impl Server {
         cmd.arg("--port");
         cmd.arg(self.option.port.to_string());
         cmd.current_dir(&self.option.data_dir);
-        cmd.spawn().expect("failed to spawn server");
+        let child = cmd.spawn().map_err(|err| err.to_string())?;
         Ok(())
     }
 }
