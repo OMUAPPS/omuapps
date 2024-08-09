@@ -7,7 +7,7 @@ use crate::{
     progress::Progress,
     sources::py::{get_download_url, PythonVersion},
     sync::{read_venv_marker, write_venv_marker},
-    utils::{checksum::check_checksum, download::download_url, extract::unpack_archive},
+    utils::{archive::unpack_archive, checksum::check_checksum, download::download_url},
 };
 
 pub struct Python {

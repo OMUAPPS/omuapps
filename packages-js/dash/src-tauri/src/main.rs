@@ -16,6 +16,7 @@ use crate::{
     python::Python,
     server::{Server, ServerOption},
     sources::py::PythonVersionRequest,
+    utils::archive::pack_archive,
 };
 use anyhow::Result;
 use directories::ProjectDirs;
@@ -25,9 +26,11 @@ use options::AppOptions;
 use sources::py::PythonVersion;
 use std::{
     borrow,
+    fs::create_dir_all,
+    path::PathBuf,
     sync::{Arc, Mutex},
 };
-use tauri::Manager;
+use tauri::{api::path::data_dir, Manager};
 use tauri_plugin_log::LogTarget;
 use uv::Uv;
 use window_shadows::set_shadow;
@@ -130,6 +133,31 @@ fn get_token(state: tauri::State<'_, AppState>) -> Result<Option<String>, String
     Ok(Some(server.token.clone()))
 }
 
+#[tauri::command]
+fn generate_log_file(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    // pack log files into a zip file, return the path
+    let options = state.option.clone();
+    let log_dir1 = options.workdir.join("logs");
+    let log_dir2 = data_dir().unwrap().join("com.omuapps.app/logs");
+    let log_files = vec![log_dir1, log_dir2];
+
+    // generate to download path
+    let download_dir: Option<PathBuf> = match directories::UserDirs::new() {
+        Some(dirs) => dirs.document_dir().map(|dir| dir.to_path_buf()),
+        None => None,
+    };
+    let zip_path = download_dir
+        .unwrap_or_else(|| std::env::current_dir().unwrap())
+        .join("omuapps");
+    create_dir_all(&zip_path)
+        .map_err(|err| format!("Failed to create download directory: {}", err))?;
+    pack_archive(&log_files, &zip_path.join("logs.zip"))
+        .map_err(|err| format!("Failed to pack log files: {}", err))?;
+    // open the zip file in the file manager
+    open::that(zip_path).map_err(|err| format!("Failed to open log file: {}", err))?;
+    Ok(())
+}
+
 fn main() {
     let data_dir = get_data_dir();
     let bin_dir = APP_DIRECTORY.data_local_dir();
@@ -166,7 +194,11 @@ fn main() {
                 .build(),
         )
         .manage(server_state)
-        .invoke_handler(tauri::generate_handler![start_server, get_token])
+        .invoke_handler(tauri::generate_handler![
+            start_server,
+            get_token,
+            generate_log_file
+        ])
         .setup(move |app| {
             let main_window = app.get_window("main").unwrap();
             set_shadow(&main_window, true).unwrap();
@@ -185,5 +217,7 @@ fn get_data_dir() -> std::path::PathBuf {
         let path = path.join("../../../appdata");
         return path;
     }
-    return APP_DIRECTORY.data_dir().to_path_buf();
+    return data_dir()
+        .map(|dir| dir.to_path_buf())
+        .unwrap_or(APP_DIRECTORY.data_dir().to_path_buf());
 }

@@ -1,6 +1,6 @@
 // https://github.com/astral-sh/rye/blob/ab8d5b433d5c4342c2bb125583c6bff4d29f5fbc/rye/src/utils/mod.rs#L290-L352 - MIT License
 use std::io::{Cursor, Read};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{fmt, fs};
 
 use anyhow::{anyhow, Context, Error};
@@ -123,5 +123,28 @@ pub fn unpack_archive(contents: &[u8], dst: &Path, strip_components: usize) -> R
         }
     }
 
+    Ok(())
+}
+
+pub fn pack_archive(sources: &Vec<PathBuf>, dest: &Path) -> Result<(), Error> {
+    let mut archive = tar::Builder::new(Vec::new());
+    let mut queue = sources.clone();
+    while let Some(path) = queue.pop() {
+        if path.is_dir() {
+            for entry in fs::read_dir(&path)? {
+                let entry = entry?;
+                let path = entry.path();
+                if path.is_dir() {
+                    queue.push(path);
+                } else {
+                    archive.append_path_with_name(&path, path.file_name().unwrap())?;
+                }
+            }
+        } else {
+            archive.append_path_with_name(&path, path.file_name().unwrap())?;
+        }
+    }
+    let archive = archive.into_inner()?;
+    fs::write(dest, archive)?;
     Ok(())
 }

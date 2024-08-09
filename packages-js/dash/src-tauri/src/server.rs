@@ -129,7 +129,7 @@ impl Server {
     pub fn start(&self, on_progress: &(impl Fn(Progress) + Send + 'static)) -> Result<(), String> {
         let mut cmd = self.python.cmd();
         cmd.arg("-m");
-        cmd.arg("_omuserver");
+        cmd.arg("omuserver");
         cmd.arg("--token");
         cmd.arg(self.token.clone());
         cmd.arg("--port");

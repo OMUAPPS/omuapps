@@ -14,7 +14,7 @@ use crate::{
     options::AppOptions,
     progress::Progress,
     sources::uv::{UvDownload, UvRequest},
-    utils::{download::download_url, extract::unpack_archive},
+    utils::{archive::unpack_archive, download::download_url},
 };
 
 pub struct Uv {

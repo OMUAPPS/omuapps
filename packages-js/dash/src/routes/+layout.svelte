@@ -58,7 +58,6 @@
         'ServerTokenWriteFailed',
         'ServerCreateDataDirFailed',
         'ServerStartFailed',
-        'ServerAlreadyStarted',
     ];
 
     let progress: Progress | null = null;
@@ -67,6 +66,7 @@
     let percentage = 0;
     $: percentage =
         progress && state ? INSTALL_PROGRESS.indexOf(state) / INSTALL_PROGRESS.length : 0;
+    // $: failed = state ? FAILED_PROGRESS.includes(state) : false;
     $: failed = state ? FAILED_PROGRESS.includes(state) : false;
 
     async function init() {
@@ -119,6 +119,11 @@
             i18n.set(lang);
         }
     }
+
+    async function getLogFile(): Promise<string> {
+        return await invoke('generate_log_file');
+    }
+
     let promise = init();
 </script>
 
@@ -130,6 +135,7 @@
 
 <div class="app">
     <main>
+        {state}
         {#if failed}
             <div class="loading" data-tauri-drag-region>
                 <p class="failed">
@@ -142,6 +148,14 @@
                         <small>{JSON.stringify(progress)}</small>
                     {/if}
                 </div>
+                {#await getLogFile()}
+                    <p>ログファイルを生成中...</p>
+                {:then logFile}
+                    <a href={logFile} download>ログファイルをダウンロード</a>
+                {:catch error}
+                    <p>ログファイルの生成に失敗しました</p>
+                    <small>{error}</small>
+                {/await}
             </div>
         {:else}
             {#await promise}
