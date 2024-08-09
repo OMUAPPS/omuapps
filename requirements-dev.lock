@@ -67,7 +67,6 @@ click==8.1.7
     # via omuserver
 coverage==7.6.1
     # via pytest-cov
-debugpy==1.8.2
 edgetrans==0.2.3
     # via omuplugin-translator
 frozenlist==1.4.1
