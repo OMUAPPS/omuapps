@@ -1,23 +1,14 @@
 {
     "name": "omuapps",
+    "type": "module",
     "version": "0.0.0",
-    "devDependencies": {
-        "@types/node": "^22.1.0",
-        "ajv": "^8.17.1",
-        "axios": "^1.7.3",
-        "execa": "^9.3.0",
-        "fixpack": "^4.0.0",
-        "lerna": "^8.1.8",
-        "depcheck": "^1.4.7",
-        "typescript": "^5.5.4"
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/OMUAPPS/omuapps.git"
     },
-    "pnpm": {
-        "overrides": {
-            "string-width": "4",
-            "strip-ansi": "6",
-            "wrap-ansi": "7"
-        }
-    },
+    "workspaces": [
+        "packages-js/*"
+    ],
     "private": true,
     "scripts": {
         "build": "node ./scripts/js-build.mjs",
@@ -29,8 +20,20 @@
         "fix": "pnpm -r fix",
         "lint": "pnpm -r lint"
     },
-    "type": "module",
-    "workspaces": [
-        "packages-js/*"
-    ]
+    "devDependencies": {
+        "@types/node": "^22.1.0",
+        "ajv": "^8.17.1",
+        "axios": "^1.7.3",
+        "execa": "^9.3.0",
+        "lerna": "^8.1.8",
+        "depcheck": "^1.4.7",
+        "typescript": "^5.5.4"
+    },
+    "pnpm": {
+        "overrides": {
+            "string-width": "4",
+            "strip-ansi": "6",
+            "wrap-ansi": "7"
+        }
+    }
 }

@@ -1,10 +1,7 @@
 {
+    "type": "module",
     "name": "@omujs/i18n",
     "version": "0.6.13",
-    "devDependencies": {
-        "eslint": "^9.8.0",
-        "nodemon": "^3.1.4"
-    },
     "exports": {
         ".": {
             "import": "./built/esm/index.js",
@@ -14,11 +11,6 @@
             "import": "./built/esm/*",
             "types": "./built/dts/*"
         }
-    },
-    "gitHead": "04559d5aec52117d707e0d554ee429b858da522a",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/OMUAPPS/omuapps"
     },
     "scripts": {
         "build": "pnpm run ts",
@@ -30,5 +22,13 @@
         "ts-esm": "tsc --outDir built/esm",
         "watch": "nodemon -w src -e ts,json --exec \"pnpm run ts\""
     },
-    "type": "module"
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/OMUAPPS/omuapps"
+    },
+    "devDependencies": {
+        "eslint": "^9.8.0",
+        "nodemon": "^3.1.4"
+    },
+    "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"
 }

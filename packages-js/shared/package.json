@@ -1,4 +1,6 @@
 {
+    "private": true,
+    "type": "module",
     "name": "@omujs/shared",
     "version": "1.0.0",
     "devDependencies": {
@@ -9,7 +11,5 @@
     "files": [
         "tsconfig.json",
         ".eslintrc.cjs"
-    ],
-    "private": true,
-    "type": "module"
+    ]
 }
