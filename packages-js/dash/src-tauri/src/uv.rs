@@ -159,7 +159,7 @@ impl Uv {
                     pip_version,
                     self.workdir.display()
                 );
-                on_progress(Progress::UvFailedUpdatePip(message.clone()));
+                on_progress(Progress::UvUpdatePipFailed(message.clone()));
                 message
             })?;
 
@@ -170,7 +170,7 @@ impl Uv {
                 self.workdir.display(),
                 String::from_utf8_lossy(&output.stderr)
             );
-            on_progress(Progress::UvFailedUpdatePip(update_error_message.clone()));
+            on_progress(Progress::UvUpdatePipFailed(update_error_message.clone()));
             bail!(update_error_message.clone());
         }
         Ok(())
@@ -206,7 +206,7 @@ impl Uv {
                     "unable to update requirements at {}",
                     self.workdir.display()
                 );
-                on_progress(Progress::UvFailedUpdateRequirements(message.clone()));
+                on_progress(Progress::UvUpdateRequirementsFailed(message.clone()));
                 message
             })?;
 
@@ -216,7 +216,7 @@ impl Uv {
                 self.workdir.display(),
                 String::from_utf8_lossy(&output.stderr)
             );
-            on_progress(Progress::UvFailedUpdateRequirements(
+            on_progress(Progress::UvUpdateRequirementsFailed(
                 update_error_message.clone(),
             ));
         }

@@ -45,11 +45,13 @@ impl Server {
 
         if !server.option.data_dir.exists() {
             std::fs::create_dir_all(&server.option.data_dir).map_err(|err| {
-                format!(
+                let msg = format!(
                     "Failed to create data directory at {}: {}",
                     server.option.data_dir.display(),
                     err
-                )
+                );
+                on_progress(Progress::ServerCreateDataDirFailed(msg.clone()));
+                msg
             })?;
         }
 
@@ -119,10 +121,10 @@ impl Server {
         })
     }
 
-    pub fn start(&self) -> Result<(), String> {
+    pub fn start(&self, on_progress: &(impl Fn(Progress) + Send + 'static)) -> Result<(), String> {
         let mut cmd = self.python.cmd();
         cmd.arg("-m");
-        cmd.arg("omuserver");
+        cmd.arg("_omuserver");
         cmd.arg("--token");
         cmd.arg(self.token.clone());
         cmd.arg("--port");
@@ -130,9 +132,16 @@ impl Server {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.current_dir(&self.option.data_dir);
-        let child = cmd.spawn().map_err(|err| err.to_string())?;
-        std::thread::spawn(move || {
-            handle_io(child).unwrap();
+        let child = cmd.spawn().map_err(|err| {
+            let msg = format!("Failed to start server: {}", err);
+            on_progress(Progress::ServerStartFailed(msg.clone()));
+            msg
+        })?;
+        std::thread::spawn(move || match handle_io(child) {
+            Ok(_) => {}
+            Err(err) => {
+                on_progress(Progress::ServerStartFailed(err));
+            }
         });
         Ok(())
     }

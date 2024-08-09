@@ -72,6 +72,9 @@ async fn start_server(
     {
         let server = state.server.lock().unwrap();
         if server.is_some() {
+            on_progress(Progress::ServerAlreadyStarted(
+                "Server already started".to_string(),
+            ));
             return Ok(None);
         };
     }
@@ -104,7 +107,7 @@ async fn start_server(
     };
 
     on_progress(Progress::ServerStarting("Starting server".to_string()));
-    server.start().unwrap();
+    server.start(&on_progress).unwrap();
 
     let token = server.token.clone();
     *state.server.lock().unwrap() = Some(server);

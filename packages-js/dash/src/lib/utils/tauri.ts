@@ -16,8 +16,33 @@ export async function invoke<T extends keyof Commands>(
     assertTauri();
     return _invoke(command, ...args);
 }
+export type PROGRESS_EVENT = {
+    PythonDownloading: string;
+    PythonUnkownVersion: string;
+    PythonChecksumFailed: string;
+    PythonExtracting: string;
+    UvDownloading: string;
+    UvExtracting: string;
+    UvCleanupOldVersions: string;
+    UvCleanupOldVersionsFailed: string;
+    UvUpdatePip: string;
+    UvUpdatePipFailed: string;
+    UvUpdateRequirements: string;
+    UvUpdateRequirementsFailed: string;
+    ServerTokenReadFailed: string;
+    ServerTokenWriteFailed: string;
+    ServerCreateDataDirFailed: string;
+    ServerStarting: string;
+    ServerStartFailed: string;
+    ServerStarted: string;
+    ServerAlreadyStarted: string;
+};
+export type ProgressMap<T extends keyof PROGRESS_EVENT> = {
+    [K in T]: PROGRESS_EVENT[K];
+};
+export type Progress = ProgressMap<keyof PROGRESS_EVENT>;
 type Events = {
-    server_state: string;
+    server_state: Progress;
     [event.TauriEvent.WINDOW_RESIZED]: unknown;
     [event.TauriEvent.WINDOW_MOVED]: unknown;
     [event.TauriEvent.WINDOW_CLOSE_REQUESTED]: unknown;
