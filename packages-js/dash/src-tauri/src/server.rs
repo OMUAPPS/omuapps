@@ -1,4 +1,6 @@
+use std::io::BufRead;
 use std::path::PathBuf;
+use std::process::Stdio;
 
 use anyhow::Result;
 use log::info;
@@ -125,10 +127,40 @@ impl Server {
         cmd.arg(self.token.clone());
         cmd.arg("--port");
         cmd.arg(self.option.port.to_string());
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
         cmd.current_dir(&self.option.data_dir);
         let child = cmd.spawn().map_err(|err| err.to_string())?;
+        std::thread::spawn(move || {
+            handle_io(child).unwrap();
+        });
         Ok(())
     }
+}
+
+fn handle_io(mut child: std::process::Child) -> Result<(), String> {
+    let stdout = child.stdout.take().unwrap();
+    let stderr = child.stderr.take().unwrap();
+    let stdout = std::thread::spawn(move || {
+        std::io::BufReader::new(stdout).lines().for_each(|line| {
+            if let Ok(line) = line {
+                info!("{}", line);
+            }
+        });
+    });
+    let stderr = std::thread::spawn(move || {
+        std::io::BufReader::new(stderr).lines().for_each(|line| {
+            if let Ok(line) = line {
+                info!("{}", line);
+            }
+        });
+    });
+    let exit_status = child.wait().map_err(|err| err.to_string())?;
+    stdout.join().unwrap();
+    stderr.join().unwrap();
+    Ok(if !exit_status.success() {
+        Err(format!("Failed to start server: {:?}", exit_status))?;
+    })
 }
 
 fn generate_token() -> String {
