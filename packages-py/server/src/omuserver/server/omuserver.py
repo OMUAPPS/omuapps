@@ -166,7 +166,12 @@ class OmuServer(Server):
 
     async def start(self) -> None:
         self._running = True
-        await self._network.start()
+        try:
+            await self._network.start()
+        except Exception as e:
+            await self.shutdown()
+            self.loop.stop()
+            raise e
 
     async def shutdown(self) -> None:
         self._running = False

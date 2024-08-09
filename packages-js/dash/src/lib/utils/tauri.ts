@@ -4,18 +4,10 @@ import { BROWSER } from 'esm-env';
 
 let _invoke: typeof api.invoke;
 let _listen: typeof event.listen;
-type ServerStatus = 'NotInstalled' | 'Installing' | 'Installed' | 'AlreadyRunning';
 type Commands = {
-    share_url: () => {
-        host: string;
-        port: number;
-    };
-    run_server: () => void;
+    start_server: () => string;
     get_token: () => string | null;
-    delete_runtime: () => void;
-    install_runtime: () => void;
-    get_server_state: () => ServerStatus;
-    update_libraries: () => void;
+    generate_log_file: () => string;
 };
 
 export async function invoke<T extends keyof Commands>(
@@ -25,13 +17,33 @@ export async function invoke<T extends keyof Commands>(
     assertTauri();
     return _invoke(command, ...args);
 }
+export type PROGRESS_EVENT = {
+    PythonDownloading: string;
+    PythonUnkownVersion: string;
+    PythonChecksumFailed: string;
+    PythonExtracting: string;
+    UvDownloading: string;
+    UvExtracting: string;
+    UvCleanupOldVersions: string;
+    UvCleanupOldVersionsFailed: string;
+    UvUpdatePip: string;
+    UvUpdatePipFailed: string;
+    UvUpdateRequirements: string;
+    UvUpdateRequirementsFailed: string;
+    ServerTokenReadFailed: string;
+    ServerTokenWriteFailed: string;
+    ServerCreateDataDirFailed: string;
+    ServerStarting: string;
+    ServerStartFailed: string;
+    ServerStarted: string;
+    ServerAlreadyStarted: string;
+};
+export type ProgressMap<T extends keyof PROGRESS_EVENT> = {
+    [K in T]: PROGRESS_EVENT[K];
+};
+export type Progress = ProgressMap<keyof PROGRESS_EVENT>;
 type Events = {
-    'server-state': ServerStatus;
-    'install-progress': {
-        progress: number;
-        total: number;
-        message: string;
-    };
+    server_state: Progress;
     [event.TauriEvent.WINDOW_RESIZED]: unknown;
     [event.TauriEvent.WINDOW_MOVED]: unknown;
     [event.TauriEvent.WINDOW_CLOSE_REQUESTED]: unknown;

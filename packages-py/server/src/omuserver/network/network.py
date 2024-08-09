@@ -129,7 +129,7 @@ class Network:
                 return psutil.Process(connection.pid)
         return None
 
-    def check_port_availability(self):
+    def ensure_port_availability(self):
         if not self.is_port_free():
             process = self.get_process_by_port(self._server.address.port)
             if process is None:
@@ -140,7 +140,7 @@ class Network:
             raise OSError(f"Port {port} already in use by {name} ({pid=})")
 
     async def start(self) -> None:
-        self.check_port_availability()
+        self.ensure_port_availability()
         runner = web.AppRunner(self._app)
         await runner.setup()
         site = web.TCPSite(
