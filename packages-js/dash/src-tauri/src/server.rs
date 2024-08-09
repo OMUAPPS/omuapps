@@ -137,11 +137,8 @@ impl Server {
             on_progress(Progress::ServerStartFailed(msg.clone()));
             msg
         })?;
-        std::thread::spawn(move || match handle_io(child) {
-            Ok(_) => {}
-            Err(err) => {
-                on_progress(Progress::ServerStartFailed(err));
-            }
+        std::thread::spawn(move || {
+            handle_io(child).unwrap();
         });
         Ok(())
     }
