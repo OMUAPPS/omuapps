@@ -135,7 +135,6 @@
 
 <div class="app">
     <main>
-        {state}
         {#if failed}
             <div class="loading" data-tauri-drag-region>
                 <p class="failed">
