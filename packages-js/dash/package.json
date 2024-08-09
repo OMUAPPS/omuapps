@@ -1,6 +1,23 @@
 {
+    "private": true,
+    "type": "module",
     "name": "dash",
     "version": "0.0.0",
+    "scripts": {
+        "build": "pnpm run build-pre && tauri build",
+        "build-pre": "node ./scripts/build-pre.mjs",
+        "dev": "tauri dev",
+        "dev-release": "tauri dev --release",
+        "format": "prettier --write .",
+        "lint": "prettier --check . && eslint .",
+        "prepare": "svelte-kit sync",
+        "tauri": "tauri",
+        "ui:build": "vite build",
+        "ui:check": "svelte-check --tsconfig ./tsconfig.json",
+        "ui:check-watch": "pnpm run ui:check --watch",
+        "ui:dev": "vite --host 0.0.0.0 --port 26420",
+        "ui:preview": "vite preview"
+    },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "5.0.19",
         "@omujs/chat": "workspace:*",
@@ -31,22 +48,5 @@
         "tslib": "2.6.3",
         "vite": "5.4.0",
         "vitest": "2.0.5"
-    },
-    "private": true,
-    "scripts": {
-        "build": "pnpm run build-pre && tauri build",
-        "build-pre": "node ./scripts/build-pre.mjs",
-        "dev": "tauri dev",
-        "dev-release": "tauri dev --release",
-        "format": "prettier --write .",
-        "lint": "prettier --check . && eslint .",
-        "prepare": "svelte-kit sync",
-        "tauri": "tauri",
-        "ui:build": "vite build",
-        "ui:check": "svelte-check --tsconfig ./tsconfig.json",
-        "ui:check-watch": "pnpm run ui:check --watch",
-        "ui:dev": "vite --host 0.0.0.0 --port 26420",
-        "ui:preview": "vite preview"
-    },
-    "type": "module"
+    }
 }

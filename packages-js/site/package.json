@@ -1,6 +1,20 @@
 {
+    "private": true,
+    "type": "module",
     "name": "site",
     "version": "0.0.1",
+    "scripts": {
+        "build": "pnpm run build-pre && vite build",
+        "build-pre": "node ./scripts/build-pre.mjs",
+        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+        "dev": "vite dev --port 5173",
+        "format": "prettier --write .",
+        "lint": "prettier --check . && eslint .",
+        "prepare": "svelte-kit sync",
+        "preview": "vite preview",
+        "test": "vitest"
+    },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "^5.0.19",
         "@fontsource/rocknroll-one": "^5.0.14",
@@ -41,23 +55,5 @@
         "tslib": "^2.6.3",
         "vite": "^5.4.0",
         "vitest": "^2.0.5"
-    },
-    "engines": {
-        "node": ">=20.0.0",
-        "pnpm": ">=8.7.0"
-    },
-    "private": true,
-    "scripts": {
-        "build": "pnpm run build-pre && vite build",
-        "build-pre": "node ./scripts/build-pre.mjs",
-        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-        "dev": "vite dev --port 5173",
-        "format": "prettier --write .",
-        "lint": "prettier --check . && eslint .",
-        "prepare": "svelte-kit sync",
-        "preview": "vite preview",
-        "test": "vitest"
-    },
-    "type": "module"
+    }
 }
