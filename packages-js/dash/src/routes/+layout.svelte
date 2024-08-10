@@ -200,9 +200,9 @@
                 <div class="loading" data-tauri-drag-region>
                     <p class="text">
                         {#if !$installed}
-                            インストール中...
+                            インストール中
                         {:else}
-                            loading...
+                            起動中
                         {/if}
                         <i class="ti ti-loader-2 spin" />
                     </p>
