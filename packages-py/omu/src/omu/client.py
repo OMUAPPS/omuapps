@@ -97,7 +97,12 @@ class Client(abc.ABC):
     def running(self) -> bool: ...
 
     @abc.abstractmethod
-    def run(self) -> None: ...
+    def run(
+        self,
+        *,
+        loop: asyncio.AbstractEventLoop | None = None,
+        reconnect: bool = True,
+    ) -> None: ...
 
     @abc.abstractmethod
     async def start(self) -> None: ...
