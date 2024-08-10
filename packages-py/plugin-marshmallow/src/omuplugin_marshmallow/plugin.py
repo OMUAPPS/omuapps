@@ -1,4 +1,6 @@
+from loguru import logger
 from marshmallowqa import MarshmallowSession, MessageDetail, retrieve_cookies
+from marshmallowqa.errors import MarshmallowLoginError
 from omu import Omu
 
 from .const import APP
@@ -32,12 +34,15 @@ async def refresh_users(_):
     users: dict[str, User] = {}
     sessions.clear()
     for browser in cookies:
-        marshmallow = await MarshmallowSession.from_cookies(
-            cookies=cookies[browser],
-        )
-        user = await marshmallow.fetch_user()
-        sessions[user.name] = marshmallow
-        users[user.name] = User(**user.model_dump())
+        try:
+            marshmallow = await MarshmallowSession.from_cookies(
+                cookies=cookies[browser],
+            )
+            user = await marshmallow.fetch_user()
+            sessions[user.name] = marshmallow
+            users[user.name] = User(**user.model_dump())
+        except MarshmallowLoginError as e:
+            logger.opt(exception=e).error(f"User {browser} could not be logged in")
     return users
 
 
