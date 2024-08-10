@@ -32,6 +32,7 @@
         } else {
             state = 'user_select';
         }
+        refreshPromise = null;
     }
 
     $: {
@@ -60,7 +61,7 @@
         }
     }
 
-    refreshUsers();
+    let refreshPromise: Promise<void> | null = refreshUsers();
 
     function createAssetUrl() {
         const url = new URL($page.url);
@@ -129,9 +130,15 @@
 </main>
 {#if state === 'loading_users'}
     <div class="modal">
-        <i class="ti ti-loader-2" />
-        ブラウザからユーザー情報を読み込んでいます…
-        <small>これには数分かかる場合があります</small>
+        {#await refreshPromise}
+            <i class="ti ti-loader-2 spin" />
+            <p>ブラウザからユーザー情報を読み込んでいます…</p>
+            <small>これには数分かかる場合があります</small>
+        {:catch error}
+            <i class="ti ti-alert-circle" />
+            <p>ユーザー情報の読み込み中にエラーが発生しました。</p>
+            <small>{error.message}</small>
+        {/await}
     </div>
 {:else if state === 'user_notfound'}
     <div class="modal">
@@ -212,8 +219,12 @@
 
         > i {
             font-size: 2rem;
-            animation: spin 1s linear infinite;
         }
+    }
+
+    .spin {
+        animation: spin 1s linear infinite;
+        transform-origin: center;
     }
 
     @keyframes spin {
