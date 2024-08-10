@@ -85,7 +85,11 @@
             throw new Error('newVersion is null');
         }
         const { installUpdate } = await import('@tauri-apps/api/updater');
-        await omu.server.shutdown();
+        try {
+            await omu.server.shutdown();
+        } catch (e) {
+            console.error(e);
+        }
         await installUpdate();
         await relaunch();
     }
