@@ -160,6 +160,7 @@ fn generate_log_file(state: tauri::State<'_, AppState>) -> Result<(), String> {
 
 fn main() {
     let data_dir = get_data_dir();
+    create_dir_all(&data_dir).unwrap();
     let bin_dir = APP_DIRECTORY.data_local_dir();
 
     let options = AppOptions {
@@ -217,7 +218,5 @@ fn get_data_dir() -> std::path::PathBuf {
         let path = path.join("../../../appdata");
         return path;
     }
-    return data_dir()
-        .map(|dir| dir.to_path_buf())
-        .unwrap_or(APP_DIRECTORY.data_dir().to_path_buf());
+    return APP_DIRECTORY.data_dir().to_path_buf();
 }
