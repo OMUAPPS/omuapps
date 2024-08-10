@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.18 (2024-08-10)
+
+
+### Performance Improvements
+
+* **app-marshmallow:** 先に読み込み時にセッションを取得するように ([0cd3f80](https://github.com/OMUAPPS/omuapps/commit/0cd3f80322d57b345b7a39eca3f8c8a9eab2fb2b))
+
+
+
+
+
 ## 0.6.17 (2024-08-10)
 
 
