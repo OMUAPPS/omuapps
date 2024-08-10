@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.16 (2024-08-10)
+
+
+### Bug Fixes
+
+* **dash:** アプリのデータが正しい場所に指定されるように ([201a3a5](https://github.com/OMUAPPS/omuapps/commit/201a3a5d1b85f8f48f0b0643685ec857e37e5ff4))
+
+
+
+
+
 ## 0.6.15 (2024-08-10)
 
 
