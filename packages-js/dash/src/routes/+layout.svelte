@@ -1,7 +1,9 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
+    import { screenContext } from '$lib/common/screen/screen.js';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
+    import UpdateScreen from '$lib/main/screen/UpdateScreen.svelte';
     import { installed, language } from '$lib/main/settings.js';
     import {
         invoke,
@@ -103,17 +105,15 @@
 
         omu.start();
         language.subscribe(loadLocale);
-        await new Promise<void>((resolve, reject) => {
-            omu.onReady(resolve);
-            omu.network.event.status.listen((status) => {
-                if (status === NetworkStatus.ERROR) {
-                    reject(status);
-                }
-            });
-        });
 
         return new Promise<void>((resolve, reject) => {
-            omu.onReady(resolve);
+            omu.onReady(async () => {
+                await checkNewVersionPromise;
+                if (newVersion) {
+                    screenContext.push(UpdateScreen, { manifest: newVersion });
+                }
+                resolve();
+            });
             omu.network.event.status.listen((status) => {
                 if (status === NetworkStatus.ERROR) {
                     reject(status);
@@ -133,9 +133,10 @@
     }
 
     let newVersion: UpdateManifest | null = null;
+    let checkNewVersionPromise: Promise<void> | null = null;
 
     onMount(() => {
-        checkNewVersion();
+        checkNewVersionPromise = checkNewVersion();
     });
 
     let generateLogPromise: Promise<void> | null = null;
