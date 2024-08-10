@@ -67,20 +67,14 @@
     $: percentage =
         progress && state ? INSTALL_PROGRESS.indexOf(state) / INSTALL_PROGRESS.length : 0;
     $: failed = state ? FAILED_PROGRESS.includes(state) : false;
-    // $: failed = true;
 
     async function checkNewVersion() {
-        newVersion = {
-            body: 'aaa',
-            date: '2021-01-01',
-            version: '1.0.0',
-        };
-        // const update = await checkUpdate();
-        // const { manifest, shouldUpdate } = update;
+        const update = await checkUpdate();
+        const { manifest, shouldUpdate } = update;
 
-        // if (shouldUpdate && manifest) {
-        //     newVersion = manifest;
-        // }
+        if (shouldUpdate && manifest) {
+            newVersion = manifest;
+        }
     }
 
     async function update() {
@@ -93,8 +87,6 @@
     }
 
     async function init() {
-        throw new Error('test');
-        // await new Promise<void>(() => {});
         await loadLocale();
         await waitForTauri();
         await listen('server_state', (state) => {
