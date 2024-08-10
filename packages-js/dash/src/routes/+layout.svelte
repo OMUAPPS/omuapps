@@ -15,7 +15,7 @@
     import '@omujs/ui';
     import { Theme, Tooltip } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/api/process';
-    import { installUpdate, type UpdateManifest } from '@tauri-apps/api/updater';
+    import { type UpdateManifest } from '@tauri-apps/api/updater';
     import { onMount } from 'svelte';
     import './styles.scss';
 
@@ -69,6 +69,7 @@
     $: failed = state ? FAILED_PROGRESS.includes(state) : false;
 
     async function checkNewVersion() {
+        const { checkUpdate } = await import('@tauri-apps/api/updater');
         const update = await checkUpdate();
         const { manifest, shouldUpdate } = update;
 
@@ -81,6 +82,7 @@
         if (!newVersion) {
             throw new Error('newVersion is null');
         }
+        const { installUpdate } = await import('@tauri-apps/api/updater');
         await omu.server.shutdown();
         await installUpdate();
         await relaunch();
