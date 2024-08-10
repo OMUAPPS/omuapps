@@ -12,6 +12,11 @@ class User(TypedDict):
     image: str
 
 
+GET_USERS_ENDPOINT_TYPE = EndpointType[None, Mapping[str, User]].create_json(
+    PLUGIN_ID,
+    "get_users",
+)
+
 REFRESH_USERS_ENDPOINT_TYPE = EndpointType[None, Mapping[str, User]].create_json(
     PLUGIN_ID,
     "refresh_users",

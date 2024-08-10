@@ -15,6 +15,26 @@
     let state: 'loading_users' | 'user_notfound' | 'user_select' | 'loading_messages' | 'loaded' =
         'loading_users';
 
+    async function getUsers() {
+        state = 'loading_users';
+        const result = await marshmallow.getUsers();
+        users = result;
+        console.log(result);
+        state = 'loaded';
+        if (Object.keys(users).length === 0) {
+            state = 'user_notfound';
+            return;
+        }
+        if ($config.user && users[$config.user]) {
+            user = users[$config.user];
+        } else if (Object.keys(users).length === 1) {
+            user = users[Object.keys(users)[0]];
+        } else {
+            state = 'user_select';
+        }
+        refreshPromise = null;
+    }
+
     async function refreshUsers() {
         state = 'loading_users';
         const result = await marshmallow.refreshUsers();
@@ -61,7 +81,7 @@
         }
     }
 
-    let refreshPromise: Promise<void> | null = refreshUsers();
+    let refreshPromise: Promise<void> | null = getUsers();
 
     function createAssetUrl() {
         const url = new URL($page.url);
@@ -144,7 +164,7 @@
     <div class="modal">
         <i class="ti ti-alert" />
         ユーザーの認証情報が見つかりませんでした。 ブラウザでログインしてもういちどお試しください。
-        <button on:click={refreshUsers}>再読み込み</button>
+        <button on:click={() => (refreshPromise = refreshUsers())}>もう一度試す</button>
     </div>
 {:else if state === 'user_select'}
     {#if users}

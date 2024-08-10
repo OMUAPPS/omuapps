@@ -1,9 +1,9 @@
+import { makeRegistryWritable } from '$lib/helper.js';
 import { Identifier, Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { APP_ID } from './app.js';
 import { get, type Writable } from 'svelte/store';
-import { makeRegistryWritable } from '$lib/helper.js';
+import { APP_ID } from './app.js';
 
 export const PLUGIN_ID = Identifier.fromKey('com.omuapps:marshmallow/plugin');
 export type User = {
@@ -19,7 +19,9 @@ export type Message = {
     acknowledged: boolean;
     replied: boolean;
 };
-
+const GET_USERS_ENDPOINT_TYPE = EndpointType.createJson<null, Record<string, User>>(PLUGIN_ID, {
+    name: 'get_users',
+});
 const REFRESH_USERS_ENDPOINT_TYPE = EndpointType.createJson<null, Record<string, User>>(PLUGIN_ID, {
     name: 'refresh_users',
 });
@@ -94,6 +96,10 @@ export class MarshmallowApp {
     constructor(private readonly omu: Omu) {
         this.config = makeRegistryWritable(omu.registry.get(MARSHMALLOW_CONFIG_REGISTRY_TYPE));
         this.data = makeRegistryWritable(omu.registry.get(MARSHMALLOW_DATA_REGISTRY_TYPE));
+    }
+
+    async getUsers(): Promise<Record<string, User>> {
+        return this.omu.endpoints.call(GET_USERS_ENDPOINT_TYPE, null);
     }
 
     async refreshUsers(): Promise<Record<string, User>> {

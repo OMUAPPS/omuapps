@@ -6,6 +6,7 @@ from omu import Omu
 from .const import APP
 from .types import (
     GET_MESSAGES_ENDPOINT_TYPE,
+    GET_USERS_ENDPOINT_TYPE,
     REFRESH_USERS_ENDPOINT_TYPE,
     SET_ACKNOWLEDGED_ENDPOINT_TYPE,
     SET_LIKED_ENDPOINT_TYPE,
@@ -19,6 +20,7 @@ from .types import (
 
 omu = Omu(APP)
 sessions: dict[str, MarshmallowSession] = {}
+users: dict[str, User] = {}
 
 
 @omu.endpoints.bind(endpoint_type=GET_MESSAGES_ENDPOINT_TYPE)
@@ -28,11 +30,23 @@ async def get_messages(user: str) -> list[Message]:
     return [Message(**message.model_dump()) for message in fetched]
 
 
+@omu.endpoints.bind(endpoint_type=GET_USERS_ENDPOINT_TYPE)
+async def get_users(_):
+    if not sessions:
+        await refresh_sessions()
+    return users
+
+
 @omu.endpoints.bind(endpoint_type=REFRESH_USERS_ENDPOINT_TYPE)
 async def refresh_users(_):
+    await refresh_sessions()
+    return users
+
+
+async def refresh_sessions():
     cookies = retrieve_cookies(domain="marshmallow-qa.com")
-    users: dict[str, User] = {}
     sessions.clear()
+    users.clear()
     for browser in cookies:
         try:
             marshmallow = await MarshmallowSession.from_cookies(
@@ -43,7 +57,6 @@ async def refresh_users(_):
             users[user.name] = User(**user.model_dump())
         except MarshmallowLoginError as e:
             logger.opt(exception=e).error(f"User {browser} could not be logged in")
-    return users
 
 
 @omu.endpoints.bind(endpoint_type=SET_LIKED_ENDPOINT_TYPE)
