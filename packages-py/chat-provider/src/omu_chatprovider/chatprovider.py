@@ -22,13 +22,12 @@ chat = Chat(omu)
 services: dict[Identifier, ProviderService] = {}
 chat_services: dict[Identifier, ChatService] = {}
 
-for service_class in retrieve_services():
-    service = service_class(omu, chat)
-    services[service.provider.id] = service
-
 
 async def register_services():
-    for service in services.values():
+    services.clear()
+    for service_class in retrieve_services():
+        service = service_class(omu, chat)
+        services[service.provider.id] = service
         await chat.providers.add(service.provider)
 
 
