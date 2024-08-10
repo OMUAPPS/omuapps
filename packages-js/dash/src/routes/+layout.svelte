@@ -1,9 +1,7 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
-    import { screenContext } from '$lib/common/screen/screen.js';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
-    import UpdateScreen from '$lib/main/screen/UpdateScreen.svelte';
     import { installed, language } from '$lib/main/settings.js';
     import {
         invoke,
@@ -16,7 +14,9 @@
     import { NetworkStatus } from '@omujs/omu/network/network.js';
     import '@omujs/ui';
     import { Theme, Tooltip } from '@omujs/ui';
-    import { checkUpdate } from '@tauri-apps/api/updater';
+    import { relaunch } from '@tauri-apps/api/process';
+    import { installUpdate, type UpdateManifest } from '@tauri-apps/api/updater';
+    import { onMount } from 'svelte';
     import './styles.scss';
 
     const ERROR_NAMES: Record<keyof PROGRESS_EVENT, string> = {
@@ -67,17 +67,34 @@
     $: percentage =
         progress && state ? INSTALL_PROGRESS.indexOf(state) / INSTALL_PROGRESS.length : 0;
     $: failed = state ? FAILED_PROGRESS.includes(state) : false;
+    // $: failed = true;
 
     async function checkNewVersion() {
-        const update = await checkUpdate();
-        const { manifest, shouldUpdate } = update;
+        newVersion = {
+            body: 'aaa',
+            date: '2021-01-01',
+            version: '1.0.0',
+        };
+        // const update = await checkUpdate();
+        // const { manifest, shouldUpdate } = update;
 
-        if (shouldUpdate && manifest) {
-            screenContext.push(UpdateScreen, { manifest });
+        // if (shouldUpdate && manifest) {
+        //     newVersion = manifest;
+        // }
+    }
+
+    async function update() {
+        if (!newVersion) {
+            throw new Error('newVersion is null');
         }
+        await omu.server.shutdown();
+        await installUpdate();
+        await relaunch();
     }
 
     async function init() {
+        throw new Error('test');
+        // await new Promise<void>(() => {});
         await loadLocale();
         await waitForTauri();
         await listen('server_state', (state) => {
@@ -101,8 +118,6 @@
             });
         });
 
-        await checkNewVersion();
-
         return new Promise<void>((resolve, reject) => {
             omu.onReady(resolve);
             omu.network.event.status.listen((status) => {
@@ -123,8 +138,18 @@
         }
     }
 
+    let newVersion: UpdateManifest | null = null;
+
+    onMount(() => {
+        checkNewVersion();
+    });
+
+    let generateLogPromise: Promise<void> | null = null;
+
     async function generateLogFile(): Promise<void> {
-        await invoke('generate_log_file');
+        generateLogPromise = invoke('generate_log_file').finally(() => {
+            generateLogPromise = null;
+        });
     }
 
     let promise = init();
@@ -151,15 +176,29 @@
                     {/if}
                 </div>
                 <div>
-                    <button on:click={generateLogFile} class="generate-log">
-                        <Tooltip>調査用のログファイルを生成します</Tooltip>
-                        ログを生成
-                        <i class="ti ti-file" />
-                    </button>
-                    <button on:click={checkNewVersion} class="update">
-                        アップデートを確認
-                        <i class="ti ti-reload" />
-                    </button>
+                    {#if generateLogPromise}
+                        <small>
+                            ログを生成中...
+                            <i class="ti ti-loader-2 spin" />
+                        </small>
+                    {:else}
+                        <button on:click={generateLogFile} class="generate-log">
+                            <Tooltip>調査用のログファイルを生成します</Tooltip>
+                            ログを生成
+                            <i class="ti ti-file" />
+                        </button>
+                    {/if}
+                    {#if newVersion}
+                        <div class="new-version">
+                            <small>
+                                新しいバージョンがあります。起動しない場合はアップデートをお試しください
+                            </small>
+                            <button on:click={update} class="update">
+                                アップデート
+                                <i class="ti ti-reload" />
+                            </button>
+                        </div>
+                    {/if}
                 </div>
             </div>
         {:else}
@@ -171,7 +210,7 @@
                         {:else}
                             loading...
                         {/if}
-                        <i class="ti ti-loader-2" />
+                        <i class="ti ti-loader-2 spin" />
                     </p>
                     <div class="state">
                         <progress value={percentage} />
@@ -180,23 +219,54 @@
                             <small>{JSON.stringify(progress)}</small>
                         {/if}
                     </div>
-                    <button on:click={checkNewVersion} class="update">
-                        アップデートを確認
-                        <i class="ti ti-reload" />
-                    </button>
+                    {#if newVersion}
+                        <div class="new-version">
+                            <small>
+                                新しいバージョンがあります。起動しない場合はアップデートをお試しください
+                            </small>
+                            <button on:click={update} class="update">
+                                アップデート
+                                <i class="ti ti-reload" />
+                            </button>
+                        </div>
+                    {/if}
                 </div>
             {:then}
                 <slot />
             {:catch error}
                 <div class="loading" data-tauri-drag-region>
-                    {error.message}
-                    <p>
-                        {JSON.stringify(progress)}
+                    <p class="failed">
+                        起動に失敗しました
+                        <i class="ti ti-alert-circle" />
                     </p>
-                    <button on:click={checkNewVersion} class="update">
-                        アップデートを確認
-                        <i class="ti ti-reload" />
-                    </button>
+                    <small>
+                        {error.message}
+                    </small>
+                    <div>
+                        {#if generateLogPromise}
+                            <small>
+                                ログを生成中...
+                                <i class="ti ti-loader-2 spin" />
+                            </small>
+                        {:else}
+                            <button on:click={generateLogFile} class="generate-log">
+                                <Tooltip>調査用のログファイルを生成します</Tooltip>
+                                ログを生成
+                                <i class="ti ti-file" />
+                            </button>
+                        {/if}
+                    </div>
+                    {#if newVersion}
+                        <div class="new-version">
+                            <small>
+                                新しいバージョンがあります。起動しない場合はアップデートをお試しください
+                            </small>
+                            <button on:click={update} class="update">
+                                アップデート
+                                <i class="ti ti-reload" />
+                            </button>
+                        </div>
+                    {/if}
                 </div>
             {/await}
         {/if}
@@ -249,8 +319,11 @@
 
         > i {
             margin-left: auto;
-            animation: spin 1s linear infinite;
         }
+    }
+
+    .spin {
+        animation: spin 1s linear infinite;
     }
 
     @keyframes spin {
@@ -287,6 +360,10 @@
         }
     }
 
+    button {
+        cursor: pointer;
+    }
+
     .row {
         display: flex;
         flex-direction: row;
@@ -316,10 +393,28 @@
     .update {
         padding: 0.5rem 1rem;
         border: none;
+        background: var(--color-bg-2);
         outline: 1px solid var(--color-1);
-        background: var(--color-1);
-        color: var(--color-bg-1);
+        color: var(--color-1);
         font-size: 0.8rem;
         font-weight: bold;
+
+        > i {
+            margin-left: 0.1rem;
+        }
+
+        &:hover {
+            background: var(--color-1);
+            color: var(--color-bg-1);
+        }
+    }
+
+    .new-version {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+        font-size: 0.9rem;
+        color: var(--color-text);
     }
 </style>
