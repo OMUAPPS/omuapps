@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.20 (2024-08-10)
+
+
+### Bug Fixes
+
+* **dash:** 起動画面中のアップデートができるように ([6dce0f2](https://github.com/OMUAPPS/omuapps/commit/6dce0f247f1f5d61c361808ea13c84bcf2056567))
+
+
+
+
+
 ## 0.6.19 (2024-08-10)
 
 
