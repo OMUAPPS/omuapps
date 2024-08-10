@@ -41,10 +41,10 @@ jobs:
               with:
                   node-version: 20
 
-            - uses: pnpm/action-setup@v3
+            - uses: pnpm/action-setup@v4
               name: Install pnpm
               with:
-                  version: latest
+                  version: 0.9.6
                   run_install: false
 
             - name: Get pnpm store directory
@@ -194,10 +194,10 @@ jobs:
               with:
                   node-version: 20
 
-            - uses: pnpm/action-setup@v3
+            - uses: pnpm/action-setup@v4
               name: Install pnpm
               with:
-                  version: 9
+                  version: 0.9.6
                   run_install: false
 
             - name: Get pnpm store directory

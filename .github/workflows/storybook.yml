@@ -15,10 +15,10 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Install pnpm
-              uses: pnpm/action-setup@v3
+            - uses: pnpm/action-setup@v4
+              name: Install pnpm
               with:
-                  version: latest
+                  version: 0.9.6
                   run_install: false
 
             - uses: actions/setup-node@v4.0.1
