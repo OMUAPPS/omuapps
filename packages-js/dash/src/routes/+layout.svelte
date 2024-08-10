@@ -15,7 +15,7 @@
     import { createI18nUnion } from '@omujs/i18n';
     import { NetworkStatus } from '@omujs/omu/network/network.js';
     import '@omujs/ui';
-    import { Theme } from '@omujs/ui';
+    import { Theme, Tooltip } from '@omujs/ui';
     import { checkUpdate } from '@tauri-apps/api/updater';
     import './styles.scss';
 
@@ -66,8 +66,16 @@
     let percentage = 0;
     $: percentage =
         progress && state ? INSTALL_PROGRESS.indexOf(state) / INSTALL_PROGRESS.length : 0;
-    // $: failed = state ? FAILED_PROGRESS.includes(state) : false;
     $: failed = state ? FAILED_PROGRESS.includes(state) : false;
+
+    async function checkNewVersion() {
+        const update = await checkUpdate();
+        const { manifest, shouldUpdate } = update;
+
+        if (shouldUpdate && manifest) {
+            screenContext.push(UpdateScreen, { manifest });
+        }
+    }
 
     async function init() {
         await loadLocale();
@@ -93,12 +101,7 @@
             });
         });
 
-        const update = await checkUpdate();
-        const { manifest, shouldUpdate } = update;
-
-        if (shouldUpdate && manifest) {
-            screenContext.push(UpdateScreen, { manifest });
-        }
+        await checkNewVersion();
 
         return new Promise<void>((resolve, reject) => {
             omu.onReady(resolve);
@@ -120,8 +123,8 @@
         }
     }
 
-    async function getLogFile(): Promise<string> {
-        return await invoke('generate_log_file');
+    async function generateLogFile(): Promise<void> {
+        await invoke('generate_log_file');
     }
 
     let promise = init();
@@ -147,14 +150,17 @@
                         <small>{JSON.stringify(progress)}</small>
                     {/if}
                 </div>
-                {#await getLogFile()}
-                    <p>ログファイルを生成中...</p>
-                {:then logFile}
-                    <a href={logFile} download>ログファイルをダウンロード</a>
-                {:catch error}
-                    <p>ログファイルの生成に失敗しました</p>
-                    <small>{error}</small>
-                {/await}
+                <div>
+                    <button on:click={generateLogFile} class="generate-log">
+                        <Tooltip>調査用のログファイルを生成します</Tooltip>
+                        ログを生成
+                        <i class="ti ti-file" />
+                    </button>
+                    <button on:click={checkNewVersion} class="update">
+                        アップデートを確認
+                        <i class="ti ti-reload" />
+                    </button>
+                </div>
             </div>
         {:else}
             {#await promise}
@@ -174,6 +180,10 @@
                             <small>{JSON.stringify(progress)}</small>
                         {/if}
                     </div>
+                    <button on:click={checkNewVersion} class="update">
+                        アップデートを確認
+                        <i class="ti ti-reload" />
+                    </button>
                 </div>
             {:then}
                 <slot />
@@ -183,6 +193,10 @@
                     <p>
                         {JSON.stringify(progress)}
                     </p>
+                    <button on:click={checkNewVersion} class="update">
+                        アップデートを確認
+                        <i class="ti ti-reload" />
+                    </button>
                 </div>
             {/await}
         {/if}
@@ -271,5 +285,41 @@
         > small {
             opacity: 0.6;
         }
+    }
+
+    .row {
+        display: flex;
+        flex-direction: row;
+        gap: 4rem;
+        align-items: center;
+    }
+
+    .generate-log {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: var(--color-bg-2);
+        outline: 1px solid var(--color-1);
+        color: var(--color-1);
+        font-size: 0.8rem;
+        font-weight: bold;
+
+        > i {
+            margin-left: 0.1rem;
+        }
+
+        &:hover {
+            background: var(--color-1);
+            color: var(--color-bg-1);
+        }
+    }
+
+    .update {
+        padding: 0.5rem 1rem;
+        border: none;
+        outline: 1px solid var(--color-1);
+        background: var(--color-1);
+        color: var(--color-bg-1);
+        font-size: 0.8rem;
+        font-weight: bold;
     }
 </style>
