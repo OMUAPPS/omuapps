@@ -1,18 +1,14 @@
 import { execa } from 'execa';
 import './js-build.mjs';
 
-execa('pnpm', ['--filter', 'dash', 'dev'], { stderr: process.stderr, stdout: process.stdout });
-execa('pnpm', ['--filter', 'site', 'dev'], { stderr: process.stderr, stdout: process.stdout });
-execa('pnpm', ['--filter', 'dash', 'ui:check-watch'], {
-    stderr: process.stderr,
-    stdout: process.stdout,
-});
-execa('pnpm', ['--filter', 'site', 'check:watch'], {
-    stderr: process.stderr,
-    stdout: process.stdout,
-});
-execa('pnpm', ['--filter', 'ui', 'watch'], { stderr: process.stderr, stdout: process.stdout });
-execa('pnpm', ['--filter', 'i18n', 'watch'], { stderr: process.stderr, stdout: process.stdout });
-execa('pnpm', ['--filter', 'omu', 'watch'], { stderr: process.stderr, stdout: process.stdout });
-execa('pnpm', ['--filter', 'chat', 'watch'], { stderr: process.stderr, stdout: process.stdout });
-execa('pnpm', ['--filter', 'obs', 'watch'], { stderr: process.stderr, stdout: process.stdout });
+const option = { stderr: process.stderr, stdout: process.stdout }
+
+execa('pnpm', ['--filter', 'dash', 'dev'], option);
+execa('pnpm', ['--filter', 'site', 'dev'], option);
+execa('pnpm', ['--filter', 'dash', 'ui:check-watch'], option);
+execa('pnpm', ['--filter', 'site', 'check:watch'], option);
+execa('pnpm', ['--filter', 'ui', 'watch'], option);
+execa('pnpm', ['--filter', 'i18n', 'watch'], option);
+execa('pnpm', ['--filter', 'omu', 'watch'], option);
+execa('pnpm', ['--filter', 'chat', 'watch'], option);
+execa('pnpm', ['--filter', 'obs', 'watch'], option);
