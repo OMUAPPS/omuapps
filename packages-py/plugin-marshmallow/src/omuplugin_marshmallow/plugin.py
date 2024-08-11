@@ -120,3 +120,8 @@ async def set_reply(set_reply: SetReply) -> Message:
         liked=detail.liked,
         acknowledged=detail.acknowledged,
     )
+
+
+@omu.on_ready
+async def on_ready():
+    await refresh_sessions()
