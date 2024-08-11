@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Tooltip } from '@omujs/ui';
-    import type { MarshmallowApp, Message } from '../marshmallow-app.js';
     import { onMount } from 'svelte';
+    import type { MarshmallowApp, Message } from '../marshmallow-app.js';
 
     export let marshmallow: MarshmallowApp;
     export let message: Message;
@@ -267,8 +267,8 @@
         padding: 1rem;
 
         > img {
-            max-width: 100%;
-            border-radius: 4px;
+            width: 100%;
+            max-width: min(calc(100vw - 2rem), 26rem);
         }
 
         > p {
