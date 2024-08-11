@@ -1,4 +1,4 @@
-import { execa } from 'execa';
+import { execa, execaSync } from 'execa';
 
 const option = { stderr: process.stderr, stdout: process.stdout }
 
