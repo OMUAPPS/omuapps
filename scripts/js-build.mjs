@@ -1,4 +1,4 @@
-import { execa, execaSync } from 'execa';
+import { execa } from 'execa';
 
 const option = { stderr: process.stderr, stdout: process.stdout }
 
@@ -16,7 +16,7 @@ await Promise.all([
 
 if (process.argv.includes('--build')) {
     const targets = process.argv[process.argv.indexOf('--build') + 1];
-    targets.split(',').forEach((target) => {
-        execaSync('pnpm', ['--filter', target, 'build'], option);
-    });
+    Promise.all(targets.split(',').map((target) =>
+        execa('pnpm', ['--filter', target, 'build'], option)
+    ))
 }
