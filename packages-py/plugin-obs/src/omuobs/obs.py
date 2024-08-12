@@ -56,8 +56,10 @@ class OBSFrontendEvent(IntEnum):
 
 class OBS:
     @staticmethod
-    def frontend_get_current_scene() -> OBSSource:
+    def frontend_get_current_scene() -> OBSSource | None:
         obs_source = obspython.obs_frontend_get_current_scene()
+        if obs_source is None:
+            return None
         return OBSSource(obs_source)
 
     @staticmethod
