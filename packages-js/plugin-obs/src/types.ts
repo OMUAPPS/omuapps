@@ -255,7 +255,7 @@ export const SCENE_GET_BY_UUID = EndpointType.createJson<SceneGetByUuidRequest, 
 
 export type SceneGetCurrentRequest = unknown;
 
-export const SCENE_GET_CURRENT = EndpointType.createJson<SceneGetCurrentRequest, SceneJson>(
+export const SCENE_GET_CURRENT = EndpointType.createJson<SceneGetCurrentRequest, SceneJson | null>(
     PLUGIN_ID,
     {
         name: 'scene_get_current',

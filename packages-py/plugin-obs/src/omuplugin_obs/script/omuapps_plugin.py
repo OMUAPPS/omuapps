@@ -72,7 +72,11 @@ def test(props: OBSProperties, prop: OBSProperty):
 
 
 def test2(props: OBSProperties, prop: OBSProperty):
-    scene = OBS.frontend_get_current_scene().scene
+    current_scene = OBS.frontend_get_current_scene()
+    if current_scene is None:
+        print("No scene")
+        return
+    scene = current_scene.scene
     for source in scene.enum_items():
         print(source.source.name)
 

@@ -121,7 +121,10 @@ def get_scene(scene_name: str | None) -> OBSScene:
         if scene is None:
             raise ValueError(f"Scene with name {scene_name} does not exist")
     else:
-        scene = OBS.frontend_get_current_scene().scene
+        current_scene = OBS.frontend_get_current_scene()
+        if current_scene is None:
+            raise ValueError("No current scene")
+        scene = current_scene.scene
     return scene
 
 
@@ -241,7 +244,10 @@ async def source_get_by_uuid(request: SourceGetByUuidRequest) -> SourceJson:
         if scene is None:
             raise ValueError(f"Scene with name {scene_name} does not exist")
     else:
-        scene = OBS.frontend_get_current_scene().scene
+        current_scene = OBS.frontend_get_current_scene()
+        if current_scene is None:
+            raise ValueError("No current scene")
+        scene = current_scene.scene
     source = OBSSource.get_source_by_uuid(request["uuid"])
     if source is None:
         raise ValueError(f"Source with uuid {request['uuid']} does not exist")
@@ -260,7 +266,10 @@ async def source_list(request: SourceListRequest) -> list[SourceJson]:
         if scene is None:
             raise ValueError(f"Scene with name {scene_name} does not exist")
     else:
-        scene = OBS.frontend_get_current_scene().scene
+        current_scene = OBS.frontend_get_current_scene()
+        if current_scene is None:
+            raise ValueError("No current scene")
+        scene = current_scene.scene
     if "scene" in request:
         scene = OBSScene.get_scene_by_name(request["scene"])
         if scene is None:

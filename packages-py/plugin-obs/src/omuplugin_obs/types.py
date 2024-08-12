@@ -311,7 +311,7 @@ SCENE_GET_BY_UUID = EndpointType[SceneGetByUuidRequest, SceneJson].create_json(
 class SceneGetCurrentRequest(TypedDict): ...
 
 
-SCENE_GET_CURRENT = EndpointType[SceneGetCurrentRequest, SceneJson].create_json(
+SCENE_GET_CURRENT = EndpointType[SceneGetCurrentRequest, SceneJson | None].create_json(
     PLUGIN_ID,
     name="scene_get_current",
     permission_id=OBS_SCENE_READ_PERMISSION_ID,

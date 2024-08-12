@@ -116,7 +116,7 @@ export class OBSPlugin {
         return await this.omu.endpoints.call(SCENE_GET_BY_UUID, { uuid });
     }
 
-    async sceneGetCurrent(): Promise<SceneJson> {
+    async sceneGetCurrent(): Promise<SceneJson | null> {
         if (!(await this.isConnected())) {
             throw new Error('Not connected to OBS');
         }
