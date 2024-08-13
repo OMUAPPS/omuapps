@@ -30,5 +30,6 @@
         "eslint": "^9.8.0",
         "nodemon": "^3.1.4"
     },
-    "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"
+    "gitHead": "04559d5aec52117d707e0d554ee429b858da522a",
+    "srcHash": "10f0430ac9748bde5f37a4cfc9001270"
 }

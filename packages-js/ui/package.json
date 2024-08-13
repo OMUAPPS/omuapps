@@ -82,5 +82,6 @@
         "!dist/**/*.test.*",
         "!dist/**/*.spec.*",
         "!dist/**/*.stories.*"
-    ]
+    ],
+    "srcHash": "ed9b0f21a437bf858a7aa6ef4f7152ed"
 }

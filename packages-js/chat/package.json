@@ -36,5 +36,6 @@
     "dependencies": {
         "@omujs/omu": "workspace:*"
     },
-    "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"
+    "gitHead": "04559d5aec52117d707e0d554ee429b858da522a",
+    "srcHash": "bb00248c2ba956dd40c3c4eebe1a5b89"
 }
