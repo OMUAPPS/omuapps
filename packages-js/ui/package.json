@@ -83,5 +83,5 @@
         "!dist/**/*.spec.*",
         "!dist/**/*.stories.*"
     ],
-    "lastBuiltHash": "ecd54b5c8f8fb8c3c264e531f8a4a6433c3b8433f15b1ea52fc2f5be3bbe4573"
+    "srcHash": "ed9b0f21a437bf858a7aa6ef4f7152ed"
 }

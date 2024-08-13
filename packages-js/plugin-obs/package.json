@@ -33,5 +33,5 @@
         "@omujs/omu": "workspace:*"
     },
     "gitHead": "04559d5aec52117d707e0d554ee429b858da522a",
-    "lastBuiltHash": "eda3cc31f8d35df99b805fc55cda07e9defd5031930a257b67b57ecb6125dd16"
+    "srcHash": "360b0c65a551f8df1f721cdb8797080b"
 }

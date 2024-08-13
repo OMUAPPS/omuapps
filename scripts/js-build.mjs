@@ -1,91 +1,63 @@
-import { createHash } from "crypto";
+import { createHash } from 'crypto';
 import { execa } from 'execa';
-import { existsSync } from "fs";
-import { readdir, readFile, stat, writeFile } from "fs/promises";
-import path from 'path';
+import { readdirSync, readFileSync } from 'fs';
+import { readdir, stat, writeFile } from 'fs/promises';
+import Path from 'path';
 
-const packages = await readdir("packages-js")
-const packageNameList = {}
-await Promise.all(packages.map(async (name) => {
-    const pkg = await readFile(`packages-js/${name}/package.json`);
-    const library = JSON.parse(pkg);
-    if (library.name) {
-        if (library.name.includes("@omujs/")) {
-            packageNameList[library.name.replace("@omujs/", "")] = name
-        } else {
-            packageNameList[library.name] = name
-        }
-    }
-}))
+const BUILD_OPTION = { stderr: process.stderr, stdout: process.stdout }
+const PACKAGES_DIR = Path.join(process.cwd(), 'packages-js');
 
-async function computeMetaHash(folder, builtFolders, inputHash = null) {
-    const hash = inputHash ? inputHash : createHash('sha256')
-    const info = await readdir(folder, { withFileTypes: true });
-    files: for (const item of info) {
-        const fullPath = path.join(folder, item.name);
-        for (const ignore of builtFolders) {
-            if (item.name.includes(ignore)) {
-                continue files
-            }
+const packages = new Map([...readdirSync(PACKAGES_DIR)].map((name) => {
+    const path = Path.join(PACKAGES_DIR, name);
+    const pkg = JSON.parse(readFileSync(Path.join(path, 'package.json'), 'utf-8'));
+    return [pkg.name, { path, pkg }];
+}));
+
+async function computeDirHash(dir) {
+    const hash = createHash('md5');
+    const paths = [...await readdir(dir)].map((name) => Path.join(dir, name));
+    while (paths.length) {
+        const path = paths.pop();
+        const fileStat = await stat(path);
+        if (fileStat.isDirectory()) {
+            const filePaths = [...await readdir(path)].map((name) => Path.join(path, name));
+            paths.push(...filePaths);
         }
-        if (item.isFile()) {
-            const statInfo = await stat(fullPath);
-            const fileInfo = `${fullPath}:${statInfo.size}:${statInfo.mtimeMs}`;
-            hash.update(fileInfo);
-        } else if (item.isDirectory()) {
-            hash.update(fullPath);
-            await computeMetaHash(fullPath, builtFolders, hash);
-        }
+        hash.update(fileStat.mtime.toString());
     }
-    if (!inputHash) {
-        return hash.digest().toString("hex");
-    }
+    return hash.digest('hex');
 }
 
-async function build(name, builtFolders) {
-    if (!packageNameList[name]) throw new Error("nonexistent package")
-    const projectName = packageNameList[name]
-
-    const projectPath = `packages-js/${projectName}`
-    const packagePath = `packages-js/${projectName}/package.json`
-    const pkg = await readFile(packagePath);
-    const library = JSON.parse(pkg);
-    const hash = await computeMetaHash(projectPath, ["package.json", ...builtFolders])
-
-    let existBuiltFolder = true
-    for (const builtFolder of builtFolders) {
-        if (existBuiltFolder) existBuiltFolder = existsSync(`${projectPath}/${builtFolder}`)
+async function buildPackage(target) {
+    const pkg = packages.get(target);
+    if (!pkg) {
+        throw new Error(`Package ${target} not found. ${[...packages.keys()]}`);
     }
-
-    if (library.private && library.private == true || !library.lastBuiltHash || library.lastBuiltHash != hash || !existBuiltFolder) {
-        library.lastBuiltHash = hash
-        const newPkg = JSON.stringify(library, null, 4);
-        await writeFile(packagePath, `${newPkg}\n`);
-        return doBuild(name)
-    } else {
-        return console.log(`${name}: build skipped. (last build found)`)
+    const hash = await computeDirHash(Path.join(pkg.path, 'src'));
+    const lastHash = pkg.pkg.srcHash;
+    if (hash === lastHash) {
+        return;
     }
+    await execa('pnpm', ['--filter', pkg.pkg.name, 'build'], BUILD_OPTION);
+    const newHash = await computeDirHash(Path.join(pkg.path, 'src'));
+    pkg.pkg.srcHash = newHash;
+    await writeFile(Path.join(pkg.path, 'package.json'), JSON.stringify(pkg.pkg, null, 4));
 }
 
-function doBuild(name) {
-    return execa('pnpm', ['--filter', name, 'build'], { stderr: process.stderr, stdout: process.stdout })
-}
+await Promise.all([
+    buildPackage('@omujs/ui'),
+    buildPackage('@omujs/i18n'),
+    buildPackage('@omujs/omu'),
+]);
+
+await Promise.all([
+    buildPackage('@omujs/chat'),
+    buildPackage('@omujs/obs'),
+]);
 
 if (process.argv.includes('--build')) {
-    if (!process.argv.includes('--builtFolders')) throw new Error("pnpm build --build <Name> --builtFolders <builtFolderName>")
-    const targets = process.argv[process.argv.indexOf('--build') + 1].split(' ')
-    const builtFolders = process.argv[process.argv.indexOf('--builtFolders') + 1].split(' ')
-    Promise.all(targets.map((target) =>
-        build(target, builtFolders)
+    const targets = process.argv[process.argv.indexOf('--build') + 1];
+    Promise.all(targets.split(',').map((target) =>
+        execa('pnpm', ['--filter', target, 'build'], BUILD_OPTION)
     ))
-} else {
-    await Promise.all([
-        build("ui", ["dist", ".svelte-kit"]),
-        build("i18n", ["built"]),
-        build("omu", ["built"])
-    ]);
-    await build("chat", ["built"])
-    await Promise.all([
-        build("obs", ["built"])
-    ]);
 }
