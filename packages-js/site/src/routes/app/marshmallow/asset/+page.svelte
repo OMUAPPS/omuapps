@@ -82,6 +82,7 @@
 
     img {
         position: absolute;
+        box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.1);
     }
 
     .pointer-container {
@@ -93,9 +94,10 @@
         transform: translate(-25%, -25%);
         width: 20px;
         height: 20px;
-        -webkit-text-stroke: 3px #fff;
+        -webkit-text-stroke: 2.5px #fff;
         color: var(--color-1);
         font-size: 2.6rem;
+        text-shadow: rgba(0, 0, 0, 0.5) 2px 2px 5px;
     }
 
     .async {
