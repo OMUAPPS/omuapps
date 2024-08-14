@@ -52,14 +52,15 @@ if (process.argv.includes('--only')) {
 }
 
 await Promise.all([
-    buildPackage('@omujs/ui'),
     buildPackage('@omujs/i18n'),
     buildPackage('@omujs/omu'),
 ]);
-
 await Promise.all([
     buildPackage('@omujs/chat'),
     buildPackage('@omujs/obs'),
+]);
+await Promise.all([
+    buildPackage('@omujs/ui'),
 ]);
 
 if (process.argv.includes('--build')) {
