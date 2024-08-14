@@ -13,42 +13,49 @@
         "warning": "Warning",
         "info": "Info",
         "success": "Success",
-        "try_again": "Try again",
+        "try_again": "Try Again",
         "retry": "Retry",
-        "in_progress": "In progress...",
-        "choose_file": "Choose file",
-        "choose_folder": "Choose folder",
+        "in_progress": "In Progress...",
+        "choose_file": "Choose File",
+        "choose_folder": "Choose Folder",
         "loading": "Loading...",
         "search": "Search",
         "searching": "Searching...",
-        "no_results": "No results",
-        "show_more": "Show more",
-        "show_less": "Hide",
+        "no_results": "No Results",
+        "show_more": "Show More",
+        "show_less": "Show Less",
         "select": "Select",
-        "select_all": "Select all",
+        "select_all": "Select All",
         "settings": "Settings",
-        "dragdrop": "Drag and drop to add",
-        "second": "second"
+        "dragdrop": "You can add by dragging and dropping",
+        "second": "Second"
     },
     "date": {
-        "just_now": "Just now",
+        "just_now": "Just Now",
         "yesterday": "Yesterday",
         "tomorrow": "Tomorrow",
         "today": "Today",
-        "months_ago": "{time} months ago",
-        "weeks_ago": "{time} weeks ago",
-        "days_ago": "{time} days ago",
-        "hours_ago": "{time} hours ago",
-        "minutes_ago": "{time} minutes ago",
         "seconds_ago": "{time} seconds ago",
-        "in_the_future": "In the future"
+        "minutes_ago": "{time} minutes ago",
+        "hours_ago": "{time} hours ago",
+        "days_ago": "{time} days ago",
+        "weeks_ago": "{time} weeks ago",
+        "months_ago": "{time} months ago",
+        "years_ago": "{time} years ago",
+        "seconds_later": "{time} seconds later",
+        "minutes_later": "{time} minutes later",
+        "hours_later": "{time} hours later",
+        "days_later": "{time} days later",
+        "weeks_later": "{time} weeks later",
+        "months_later": "{time} months later",
+        "years_later": "{time} years later"
     },
     "status": {
         "connecting": "Connecting...",
         "reconnecting": "Reconnecting...",
         "connected": "Connected",
         "disconnected": "Disconnected",
-        "connect_attempt_count": "Connection attempts: {count}"
+        "connect_attempt_count": "Connect Attempt Count: {count}"
     },
     "titlebar": {
         "close": "Close",
@@ -58,11 +65,11 @@
     },
     "panels": {
         "rooms": {
-            "title": "Connected",
+            "title": "Connecting",
             "not_found_rooms": "No rooms found!",
-            "question_add_channel": "Do you want to add a channel?",
-            "see_channel": "View",
-            "viewers": "Viewers (click to copy)"
+            "question_add_channel": "Would you like to add a channel?",
+            "see_channel": "See",
+            "viewers": "Number of viewers (click to copy)"
         },
         "messages": {
             "title": "Comments/Messages",
@@ -71,8 +78,8 @@
         },
         "apps": {
             "title": "Apps",
-            "found_apps": "Search for apps in the browser",
-            "open_apps": "Open apps",
+            "found_apps": "Find apps in the browser",
+            "open_apps": "Open Apps",
             "start_apps": "Start"
         },
         "gifts": {
@@ -81,11 +88,11 @@
         "channels": {
             "title": "Channels",
             "append_channel": "Add",
-            "setup_channel": "Easy setup",
+            "setup_channel": "Easy Setup",
             "next_check": "Next check in",
-            "delete": "Delete channel",
-            "edit": "Edit channel",
-            "open": "Open channel",
+            "delete": "Delete Channel",
+            "edit": "Edit Channel",
+            "open": "Open Channel",
             "connect": "Connect",
             "channel_url": "Channel URL...",
             "append_as": "Add as"
@@ -94,45 +101,45 @@
     "page": {
         "explore": {
             "icon": "ti ti-search",
-            "title": "Explore apps",
-            "tooltip": "You might find a useful app"
+            "title": "Explore Apps",
+            "tooltip": "You might find an app you want to use"
         },
         "connect": {
             "icon": "ti ti-bolt",
-            "title": "Connect streams",
-            "tooltip": "Set up connections for your streams"
+            "title": "Connect Streaming",
+            "tooltip": "Set up to connect streaming"
         },
         "settings": {
             "icon": "ti ti-settings",
             "title": "Settings",
-            "tooltip": "Adjust app settings"
+            "tooltip": "Set up the app"
         }
     },
     "screen": {
         "settings": {
             "name": "Settings",
             "icon": "ti ti-settings",
-            "description": "Modify the settings."
+            "description": "You can change the settings."
         },
         "remote_connect": {
             "name": "Remote Connect",
             "icon": "ti ti-qrcode",
-            "description": "Start a remote connection."
+            "description": "Start remote connection."
         },
         "setup": {
             "name": "Setup",
             "icon": "ti ti-settings",
-            "description": "Start the setup process."
+            "description": "Start setup."
         },
         "add_channel": {
             "name": "Add Channel",
             "icon": "ti ti-plus",
-            "description": "Add a new channel."
+            "description": "Add a channel."
         },
         "permission_request": {
             "name": "Request Permission",
             "icon": "ti ti-lock",
-            "description": "Request permissions."
+            "description": "Request permission."
         },
         "plugin_request": {
             "name": "Request Plugin",
@@ -149,53 +156,53 @@
         "category": {
             "general": {
                 "name": "General",
-                "description": "Modify general settings.",
+                "description": "You can change general settings.",
                 "icon": "ti ti-settings"
             },
             "language": {
                 "name": "Language",
-                "description": "Change the language.",
+                "description": "You can change the language.",
                 "icon": "ti ti-language-hiragana"
             },
             "appearance": {
                 "name": "Appearance",
-                "description": "Change the appearance.",
+                "description": "You can change the appearance.",
                 "icon": "ti ti-palette"
             },
             "advanced": {
                 "name": "Advanced",
-                "description": "Modify advanced settings.",
+                "description": "You can change advanced settings.",
                 "icon": "ti ti-settings"
             },
             "about": {
                 "name": "About",
-                "description": "View information about this app.",
+                "description": "Show information about this app.",
                 "icon": "ti ti-license"
             }
         },
         "setting": {
-            "devMode": "Developer mode",
+            "devMode": "Developer Mode",
             "language": "Language",
-            "layoutInvert": "Invert layout"
+            "layoutInvert": "Invert Layout"
         },
         "about": {
             "version": "Version",
             "contributors": "Contributors",
             "licenses": "Licenses",
             "links": "Links",
-            "source_code": "Source code",
+            "source_code": "Source Code",
             "website": "Website"
         }
     },
     "setup": {
         "title": "Setup",
-        "which_channel": "Which channel do you want to add?",
+        "which_channel": "Which channel would you like to add?",
         "installing": "Installing",
         "append": "Add",
-        "start_again": "Start again",
-        "please_put_in_urls": "Enter URLs to automatically add channels.",
-        "skip": "Skip setup",
-        "app_hint": "You can add various apps from the website!",
+        "start_again": "Start Again",
+        "please_put_in_urls": "Enter the URL to automatically add the channel.",
+        "skip": "Skip Setup",
+        "app_hint": "You can add various apps from the site!",
         "finish": "Got it"
     }
 }

@@ -13,33 +13,20 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const YearsAgo: Story = {
+export const Now: Story = {
     args: {
-        date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365),
+        date: new Date(),
+    },
+};
+export const SecondsAgo: Story = {
+    args: {
+        date: new Date(Date.now() - 1000),
     },
 };
 
-export const MonthsAgo: Story = {
+export const SecondsFromNow: Story = {
     args: {
-        date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
-    },
-};
-
-export const WeeksAgo: Story = {
-    args: {
-        date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
-    },
-};
-
-export const DaysAgo: Story = {
-    args: {
-        date: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    },
-};
-
-export const HoursAgo: Story = {
-    args: {
-        date: new Date(Date.now() - 1000 * 60 * 60),
+        date: new Date(Date.now() + 1000),
     },
 };
 
@@ -49,20 +36,68 @@ export const MinutesAgo: Story = {
     },
 };
 
-export const SecondsAgo: Story = {
+export const MinutesFromNow: Story = {
     args: {
-        date: new Date(Date.now() - 1000),
+        date: new Date(Date.now() + 1000 * 60),
     },
 };
 
-export const Now: Story = {
+export const HoursAgo: Story = {
     args: {
-        date: new Date(),
+        date: new Date(Date.now() - 1000 * 60 * 60),
     },
 };
 
-export const Future: Story = {
+export const HoursFromNow: Story = {
+    args: {
+        date: new Date(Date.now() + 1000 * 60 * 60),
+    },
+};
+
+export const DaysAgo: Story = {
+    args: {
+        date: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    },
+};
+
+export const DaysFromNow: Story = {
+    args: {
+        date: new Date(Date.now() + 1000 * 60 * 60 * 24),
+    },
+};
+
+export const WeeksAgo: Story = {
+    args: {
+        date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+    },
+};
+
+export const WeeksFromNow: Story = {
     args: {
         date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    },
+};
+
+export const MonthsAgo: Story = {
+    args: {
+        date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30),
+    },
+};
+
+export const MonthsFromNow: Story = {
+    args: {
+        date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+    },
+};
+
+export const YearsAgo: Story = {
+    args: {
+        date: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365),
+    },
+};
+
+export const YearsFromNow: Story = {
+    args: {
+        date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
     },
 };

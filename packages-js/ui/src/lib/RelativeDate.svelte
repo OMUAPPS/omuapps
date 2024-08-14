@@ -15,6 +15,14 @@
         { label: 'date.hours_ago', value: 1000 * 60 * 60 },
         { label: 'date.minutes_ago', value: 1000 * 60 },
         { label: 'date.seconds_ago', value: 1000 },
+        { label: 'date.just_now', value: 0 },
+        { label: 'date.seconds_later', value: -1000 },
+        { label: 'date.minutes_later', value: -1000 * 60 },
+        { label: 'date.hours_later', value: -1000 * 60 * 60 },
+        { label: 'date.days_later', value: -1000 * 60 * 60 * 24 },
+        { label: 'date.weeks_later', value: -1000 * 60 * 60 * 24 * 7 },
+        { label: 'date.months_later', value: -1000 * 60 * 60 * 24 * 30.5 },
+        { label: 'date.years_later', value: -1000 * 60 * 60 * 24 * 365.25 },
     ];
 
     function sleep(ms: number) {
@@ -33,22 +41,18 @@
         const now = new Date();
         const diff = now.getTime() - date.getTime();
 
-        if (diff < 0) {
-            sleep(-1 * diff);
-            formattedDate = $translate('date.in_the_future');
-            return;
-        }
-
         for (let i = 0; i < timeUnits.length; i++) {
-            const unit = timeUnits[i];
-            const diffValue = Math.floor(diff / unit.value);
-            if (diffValue > 0) {
-                formattedDate = $translate(unit.label, {
-                    time: diffValue.toString(),
-                });
-                sleep(unit.value - (diff % timeUnits[i].value));
-                break;
+            let unit = timeUnits[i];
+            if (diff < unit.value) {
+                continue;
             }
+            if (diff / unit.value < 1) {
+                unit = timeUnits[i - 1];
+            }
+            const diffValue = Math.round(diff / unit.value);
+            formattedDate = $translate(unit.label, { time: diffValue.toString() });
+            sleep(unit.value - (diff % unit.value));
+            return;
         }
 
         if (!formattedDate) {
@@ -58,7 +62,6 @@
     }
 
     $: {
-        window.clearTimeout(timer);
         formatDate(date);
     }
 
