@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { execa } from 'execa';
 import { readdirSync, readFileSync } from 'fs';
-import { readdir, stat, writeFile } from 'fs/promises';
+import { readdir, readFile, stat } from 'fs/promises';
 import Path from 'path';
 
 const BUILD_OPTION = { stderr: process.stderr, stdout: process.stdout }
@@ -22,8 +22,9 @@ async function computeDirHash(dir) {
         if (fileStat.isDirectory()) {
             const filePaths = [...await readdir(path)].map((name) => Path.join(path, name));
             paths.push(...filePaths);
+        } else {
+            hash.update(await readFile(path));
         }
-        hash.update(fileStat.mtime.toString());
     }
     return hash.digest('hex');
 }
@@ -42,6 +43,11 @@ async function buildPackage(target) {
     const newHash = await computeDirHash(Path.join(pkg.path, 'src'));
     pkg.pkg.srcHash = newHash;
     await writeFile(Path.join(pkg.path, 'package.json'), JSON.stringify(pkg.pkg, null, 4));
+}
+
+if (process.argv.includes('--only')) {
+    await buildPackage(process.argv[process.argv.indexOf('--only') + 1]);
+    process.exit(0)
 }
 
 await Promise.all([

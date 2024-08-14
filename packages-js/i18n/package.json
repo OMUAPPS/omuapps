@@ -20,7 +20,7 @@
         "ts": "pnpm run ts-esm && pnpm run ts-dts",
         "ts-dts": "tsc --outDir built/dts --declaration true --emitDeclarationOnly true --declarationMap true",
         "ts-esm": "tsc --outDir built/esm",
-        "watch": "nodemon -w src -e ts,json --exec \"pnpm run ts\""
+        "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/i18n\""
     },
     "repository": {
         "type": "git",
@@ -31,5 +31,5 @@
         "nodemon": "^3.1.4"
     },
     "gitHead": "04559d5aec52117d707e0d554ee429b858da522a",
-    "srcHash": "10f0430ac9748bde5f37a4cfc9001270"
+    "srcHash": "23abdc10ae92b9ef169802f04186b1b3"
 }

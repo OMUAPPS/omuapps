@@ -20,7 +20,7 @@
         "ts": "pnpm run ts-esm && pnpm run ts-dts",
         "ts-dts": "tsc --outDir built/dts --declaration true --emitDeclarationOnly true --declarationMap true",
         "ts-esm": "tsc --outDir built/esm",
-        "watch": "nodemon -w src -e ts,json --exec \"pnpm run ts\""
+        "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/obs\""
     },
     "repository": {
         "type": "git",
@@ -33,5 +33,5 @@
         "@omujs/omu": "workspace:*"
     },
     "gitHead": "04559d5aec52117d707e0d554ee429b858da522a",
-    "srcHash": "360b0c65a551f8df1f721cdb8797080b"
+    "srcHash": "481bfd9e70c740a108a38f1291dc1518"
 }
