@@ -3,15 +3,11 @@
     import { Identifier } from '@omujs/omu/identifier.js';
     import { client } from '../stores.js';
 
-    const load = () => {
-        const app = new App(new Identifier('com.omuapps', 'test'), {
-            version: '1.0.0',
-        });
-        client.set(new Omu(app));
-        return new Promise<void>((resolve) => $client.onReady(resolve));
-    };
+    const app = new App(Identifier.fromKey('com.omuapps:test'), {
+        version: '1.0.0',
+    });
+    const omu = new Omu(app);
+    client.set(omu);
 </script>
 
-{#await load() then}
-    <slot />
-{/await}
+<slot />
