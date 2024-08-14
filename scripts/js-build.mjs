@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { execa } from 'execa';
 import { readdirSync, readFileSync } from 'fs';
-import { readdir, readFile, stat } from 'fs/promises';
+import { readdir, readFile, stat, writeFile } from 'fs/promises';
 import Path from 'path';
 
 const BUILD_OPTION = { stderr: process.stderr, stdout: process.stdout }
@@ -36,7 +36,8 @@ async function buildPackage(target) {
     }
     const hash = await computeDirHash(Path.join(pkg.path, 'src'));
     const lastHash = pkg.pkg.srcHash;
-    if (hash === lastHash) {
+    const builtExists = await stat(Path.join(pkg.path, 'dist')).catch(() => null);
+    if (builtExists && hash === lastHash) {
         return;
     }
     await execa('pnpm', ['--filter', pkg.pkg.name, 'build'], BUILD_OPTION);
