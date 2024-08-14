@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 
 const paths = [
     'node_modules',
+    'scripts/_hashes.json',
     'packages-js/omu/node_modules',
     'packages-js/omu/dist',
     'packages-js/chat/node_modules',
