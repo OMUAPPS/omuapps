@@ -19,7 +19,7 @@
     },
     "search.exclude": {
         "**/node_modules": true,
-        "**/built": true,
+        "**/dist": true,
     },
     "editor.codeActionsOnSave": {
         "source.fixAll": "always",

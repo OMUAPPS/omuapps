@@ -4,12 +4,12 @@
     "version": "0.6.20",
     "exports": {
         ".": {
-            "import": "./built/esm/index.js",
-            "types": "./built/dts/index.d.ts"
+            "import": "./dist/esm/index.js",
+            "types": "./dist/dts/index.d.ts"
         },
         "./*": {
-            "import": "./built/esm/*",
-            "types": "./built/dts/*"
+            "import": "./dist/esm/*",
+            "types": "./dist/dts/*"
         }
     },
     "scripts": {
@@ -18,8 +18,8 @@
         "format": "eslint . --ext .js,.ts --fix",
         "lint": "eslint . --ext .js,.ts",
         "ts": "pnpm run ts-esm && pnpm run ts-dts",
-        "ts-dts": "tsc --outDir built/dts --declaration true --emitDeclarationOnly true --declarationMap true",
-        "ts-esm": "tsc --outDir built/esm",
+        "ts-dts": "tsc --outDir dist/dts --declaration true --emitDeclarationOnly true --declarationMap true",
+        "ts-esm": "tsc --outDir dist/esm",
         "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/omu\""
     },
     "repository": {
