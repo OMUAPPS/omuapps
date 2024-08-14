@@ -11,7 +11,7 @@
         }
     },
     "scripts": {
-        "build": "vite build && pnpm run package",
+        "build": "pnpm run package",
         "build-storybook": "storybook build",
         "check": "svelte-check --tsconfig ./tsconfig.json",
         "chromatic": "chromatic",
@@ -82,6 +82,5 @@
         "!dist/**/*.test.*",
         "!dist/**/*.spec.*",
         "!dist/**/*.stories.*"
-    ],
-    "srcHash": "ca638252016b1dc48cbb761298eb409c"
+    ]
 }

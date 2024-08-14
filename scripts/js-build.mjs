@@ -6,12 +6,23 @@ import Path from 'path';
 
 const BUILD_OPTION = { stderr: process.stderr, stdout: process.stdout }
 const PACKAGES_DIR = Path.join(process.cwd(), 'packages-js');
+const HASH_PATH = Path.join(process.cwd(), 'scripts', '_hashes.json');
 
 const packages = new Map([...readdirSync(PACKAGES_DIR)].map((name) => {
     const path = Path.join(PACKAGES_DIR, name);
     const pkg = JSON.parse(readFileSync(Path.join(path, 'package.json'), 'utf-8'));
     return [pkg.name, { path, pkg }];
 }));
+const hashes = await readFile(HASH_PATH, {
+    encoding: 'utf-8',
+    flag: 'a+',
+}).then((content) => {
+    try {
+        return JSON.parse(content);
+    } catch (e) {
+        return {};
+    }
+});
 
 async function computeDirHash(dir) {
     const hash = createHash('md5');
@@ -35,15 +46,14 @@ async function buildPackage(target) {
         throw new Error(`Package ${target} not found. ${[...packages.keys()]}`);
     }
     const hash = await computeDirHash(Path.join(pkg.path, 'src'));
-    const lastHash = pkg.pkg.srcHash;
+    const lastHash = hashes[pkg.pkg.name];
     const builtExists = await stat(Path.join(pkg.path, 'dist')).catch(() => null);
     if (builtExists && hash === lastHash) {
         return;
     }
     await execa('pnpm', ['--filter', pkg.pkg.name, 'build'], BUILD_OPTION);
     const newHash = await computeDirHash(Path.join(pkg.path, 'src'));
-    pkg.pkg.srcHash = newHash;
-    await writeFile(Path.join(pkg.path, 'package.json'), JSON.stringify(pkg.pkg, null, 4));
+    hashes[pkg.pkg.name] = newHash;
 }
 
 if (process.argv.includes('--only')) {
@@ -69,3 +79,5 @@ if (process.argv.includes('--build')) {
         execa('pnpm', ['--filter', target, 'build'], BUILD_OPTION)
     ))
 }
+
+await writeFile(HASH_PATH, JSON.stringify(hashes, null, 4));
