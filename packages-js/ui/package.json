@@ -24,7 +24,7 @@
         "preview": "vite preview",
         "storybook": "storybook dev -p 6006",
         "test": "vitest",
-        "watch": "nodemon -w src -e svelte,ts --exec \"pnpm run package && pnpm run check\""
+        "watch": "svelte-package --watch"
     },
     "repository": {
         "type": "git",
