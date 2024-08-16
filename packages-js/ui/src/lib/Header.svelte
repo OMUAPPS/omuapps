@@ -4,7 +4,7 @@
     export let icon: string;
 </script>
 
-<header>
+<div class="header">
     <div class="title">
         {#if icon.startsWith('ti-')}
             <i class="ti {icon}" />
@@ -19,18 +19,18 @@
         </span>
     </div>
     <slot />
-</header>
+</div>
 
 <style lang="scss">
-    header {
+    .header {
         display: flex;
         flex-direction: row;
         gap: 40px;
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        min-height: 80px;
-        padding: 20px 40px;
+        min-height: 4rem;
+        padding: 1.5rem 2.5rem;
         background: var(--color-bg-2);
         color: var(--color-1);
         border-bottom: 1px solid var(--color-outline);
