@@ -5,7 +5,12 @@ description = "Add your description here"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu_chat>=0.1.9", "psutil>=5.9.8"]
+dependencies = [
+    "loguru>=0.7.2",
+    "omu_chat>=0.1.9",
+    "psutil>=5.9.8",
+    "pywin32>=306; sys_platform == 'win32'",
+]
 readme = "README.md"
 requires-python = ">= 3.12"
 

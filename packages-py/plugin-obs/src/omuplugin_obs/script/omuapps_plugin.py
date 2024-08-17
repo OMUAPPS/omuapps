@@ -20,11 +20,7 @@ import subprocess
 from pathlib import Path
 from threading import Thread
 
-from omuobs.data import OBSData
-from omuobs.obs import OBS
 from omuobs.property import OBSProperties, OBSProperty
-from omuobs.scene import OBSScene
-from omuobs.source import OBSSource
 
 
 class g:
@@ -56,44 +52,12 @@ def terminate_server():
         print("Killed")
 
 
-def test(props: OBSProperties, prop: OBSProperty):
-    OBS.frontend_get_current_scene()
-    for source in OBS.get_scenes():
-        print(source.source.name)
-    test_scene = OBSScene.get_scene_by_name("test")
-    if test_scene is None:
-        test_scene = OBSScene.create("test")
-    obs_data = OBSData.create()
-    obs_data.set_string("url", "https://www.google.com")
-    obs_data.set_int("width", 1920)
-    obs_data.set_int("height", 1080)
-    browser = OBSSource.create("browser_source", "browser2", obs_data)
-    test_scene.add(browser)
-
-
-def test2(props: OBSProperties, prop: OBSProperty):
-    current_scene = OBS.frontend_get_current_scene()
-    if current_scene is None:
-        print("No scene")
-        return
-    scene = current_scene.scene
-    for source in scene.enum_items():
-        print(source.source.name)
-
-
-def test3(props: OBSProperties, prop: OBSProperty):
-    # switch to scene test
-    scene = OBSScene.get_scene_by_name("test")
-    if scene is None:
-        scene = OBSScene.create("test")
-    OBS.frontend_set_current_scene(scene)
+def test(props: OBSProperties, prop: OBSProperty): ...
 
 
 def script_properties():  # ui
     props = OBSProperties.create()
-    props.add_button("button", "Add text source", test)
-    props.add_button("button2", "Test2", test2)
-    props.add_button("button3", "Test3", test3)
+    props.add_button("button", "Test", test)
     return props.acquire()
 
 

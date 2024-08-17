@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
+import tkinter
 from pathlib import Path
 from threading import Thread
+from tkinter import messagebox
 from typing import Any, TypedDict
 
 import psutil
 from omu.identifier import Identifier
 from omuserver.server import Server
 
-from .obsconfig import OBSConfig
+from . import obsconfig
 from .permissions import PERMISSION_TYPES
 
 IDENTIFIER = Identifier("com.omuapps", "plugin-obssync")
@@ -24,12 +27,71 @@ class obs:
 
 
 def kill_obs():
+    process = find_process({"obs64.exe", "obs32.exe"})
+    if not process:
+        return
+    obs.launch_command = process.cmdline()
+    obs.cwd = Path(process.cwd())
+
+    root = tkinter.Tk()
+    root.withdraw()
+
+    def update():
+        if process.is_running():
+            root.after(200, update)
+        else:
+            root.destroy()
+
+    root.after(200, update)
+
+    message = messagebox.Message(
+        root,
+        title="OMUAPPS OBSプラグイン",
+        message="導入をするには一度OBSを再起動する必要があります。再起動しますか？",
+        icon=messagebox.WARNING,
+        type=messagebox.YESNO,
+    )
+    res = message.show()
+    if not res:
+        return
+    if res == messagebox.YES:
+        terminate_obs(process)
+    else:
+        raise Exception("TODO: implement")
+    while process.is_running():
+        message = messagebox.Message(
+            root,
+            title="OMUAPPS OBSプラグイン",
+            message="OBSを終了しています。終了しない場合は手動で終了してください。",
+            icon=messagebox.WARNING,
+            type=messagebox.RETRYCANCEL,
+        )
+        res = message.show()
+        if not res:
+            return
+        if res == messagebox.CANCEL:
+            raise Exception("TODO: implement")
+
+
+def terminate_obs(process: psutil.Process):
+    if sys.platform == "win32":
+        from .hwnd_helpers import close_process_window
+
+        close_process_window(process)
+    elif sys.platform == "linux":
+        process.send_signal(signal.SIGINT)
+    elif sys.platform == "darwin":
+        process.send_signal(signal.SIGINT)
+    else:
+        raise Exception(f"Unsupported platform: {sys.platform}")
+
+
+def find_process(names: set[str]) -> psutil.Process | None:
     for proc in psutil.process_iter():
         name = proc.name()
-        if name in {"obs64.exe", "obs32.exe"}:
-            obs.launch_command = proc.cmdline()
-            obs.cwd = Path(proc.cwd())
-            proc.terminate()
+        if name in names:
+            return proc
+    return None
 
 
 def relaunch_obs():
@@ -94,7 +156,7 @@ def install_all_scene() -> bool:
 def setup_python_path() -> bool:
     path = get_obs_path() / "global.ini"
     text = path.read_text(encoding="utf-8-sig")
-    config = OBSConfig.loads(text)
+    config = obsconfig.loads(text)
 
     if "Python" not in config:
         config["Python"] = {}
@@ -106,10 +168,10 @@ def setup_python_path() -> bool:
 
     kill_obs()
     text = path.read_text(encoding="utf-8-sig")
-    config = OBSConfig.loads(text)
+    config = obsconfig.loads(text)
     python["Path64bit"] = python_path
     python["Path32bit"] = python_path
-    path.write_text(OBSConfig.dumps(config), encoding="utf-8-sig")
+    path.write_text(obsconfig.dumps(config), encoding="utf-8-sig")
     return True
 
 

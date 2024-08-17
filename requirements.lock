@@ -65,6 +65,9 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via iwashi
     # via omuserver
+colorama==0.4.6
+    # via click
+    # via loguru
 edgetrans==0.2.3
     # via omuplugin-translator
 frozenlist==1.4.1
@@ -114,6 +117,8 @@ pydantic==2.8.2
     # via marshmallowqa-py
 pydantic-core==2.20.1
     # via pydantic
+pywin32==306
+    # via omuplugin-obs
 requests==2.32.3
     # via yt-dlp
 result==0.17.0
@@ -133,6 +138,8 @@ uv==0.2.33
     # via omuserver
 websockets==12.0
     # via yt-dlp
+win32-setctime==1.1.0
+    # via loguru
 yarl==1.9.4
     # via aiohttp
 yt-dlp==2024.8.1
