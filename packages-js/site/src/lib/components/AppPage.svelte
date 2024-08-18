@@ -4,6 +4,7 @@
     import Spinner from '../../routes/app/archive/components/Spinner.svelte';
 
     let state: 'loading' | 'loaded' | DisconnectType = 'loaded';
+    let message: string | null = null;
 
     state = 'loading';
     client.subscribe((omu) => {
@@ -15,6 +16,7 @@
             state = 'loading';
             if (!reason) return;
             state = reason.type;
+            message = reason.message;
             console.log(reason);
         });
     });
@@ -30,6 +32,11 @@
     <div class="modal">
         <p>同じIDを持つアプリが接続されました</p>
         <small>このアプリを使うにはどちらかを閉じてください</small>
+    </div>
+{:else if state === DisconnectType.PERMISSION_DENIED}
+    <div class="modal">
+        <p>権限がありませんでした</p>
+        <small>{message}</small>
     </div>
 {:else if state === DisconnectType.CLOSE}
     <div class="modal">
@@ -52,6 +59,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
+        font-size: 1.5rem;
+    }
+
+    small {
+        font-size: 1rem;
     }
 </style>
