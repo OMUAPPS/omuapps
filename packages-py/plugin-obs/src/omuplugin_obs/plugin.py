@@ -55,6 +55,7 @@ def ensure_obs_stop() -> bool:
 
     root = tkinter.Tk()
     root.withdraw()
+    root.attributes("-topmost", True)
 
     def wait_for_process_to_end():
         if process.is_running():
