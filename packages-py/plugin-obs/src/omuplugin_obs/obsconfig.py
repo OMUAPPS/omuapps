@@ -1,4 +1,8 @@
-def loads(text: str) -> dict[str, dict[str, str]]:
+from pathlib import Path
+
+
+def load_configuration(path: Path) -> dict[str, dict[str, str]]:
+    text = path.read_text(encoding="utf-8-sig")
     sections: dict[str, dict[str, str]] = {}
     section: str | None = None
     for line in text.splitlines():
@@ -16,10 +20,10 @@ def loads(text: str) -> dict[str, dict[str, str]]:
     return sections
 
 
-def dumps(config: dict[str, dict[str, str]]) -> str:
+def save_configuration(path: Path, config: dict[str, dict[str, str]]):
     lines: list[str] = []
     for section, items in config.items():
         lines.append(f"[{section}]")
         for key, value in items.items():
             lines.append(f"{key}={value}")
-    return "\n".join(lines)
+    path.write_text("\n".join(lines), encoding="utf-8-sig")

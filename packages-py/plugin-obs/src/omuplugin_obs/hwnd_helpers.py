@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import sys
 
+from loguru import logger
+
 if sys.platform != "win32":
     raise NotImplementedError("This module is only implemented for Windows")
 
@@ -52,3 +54,6 @@ def close_process_window(process: psutil.Process):
 
     for hwnd_id in hwnd_ids:
         win32gui.SendMessage(hwnd_id, win32con.WM_CLOSE, 0, 0)
+    else:
+        logger.warning(f"No window found for process {process.pid}")
+        process.terminate()

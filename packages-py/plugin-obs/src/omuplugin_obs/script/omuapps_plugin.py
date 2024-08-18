@@ -3,17 +3,10 @@ if __name__ == "omuapps_plugin":
 
     importlib.invalidate_caches()
 
-    import debug  # type: ignore
+    import venv_loader  # type: ignore
 
-    debug.init()
+    venv_loader.try_load()
 
-try:
-    from loguru import logger
-except ImportError:
-    import logging
-
-    logger = logging.getLogger(__name__)
-    logger.warning("Loguru not found, using logging module")
 
 import json
 import subprocess

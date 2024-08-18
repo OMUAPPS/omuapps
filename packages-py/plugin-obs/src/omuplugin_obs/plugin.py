@@ -12,13 +12,11 @@ from tkinter import messagebox
 from typing import Any, TypedDict
 
 import psutil
-from omu.identifier import Identifier
+from loguru import logger
 from omuserver.server import Server
 
 from . import obsconfig
 from .permissions import PERMISSION_TYPES
-
-IDENTIFIER = Identifier("com.omuapps", "plugin-obssync")
 
 
 class obs:
@@ -26,54 +24,15 @@ class obs:
     cwd: Path | None = None
 
 
-def kill_obs():
-    process = find_process({"obs64.exe", "obs32.exe"})
-    if not process:
-        return
-    obs.launch_command = process.cmdline()
-    obs.cwd = Path(process.cwd())
-
-    root = tkinter.Tk()
-    root.withdraw()
-
-    def update():
-        if process.is_running():
-            root.after(200, update)
-        else:
-            root.destroy()
-
-    root.after(200, update)
-
-    message = messagebox.Message(
-        root,
-        title="OMUAPPS OBSプラグイン",
-        message="導入をするには一度OBSを再起動する必要があります。再起動しますか？",
-        icon=messagebox.WARNING,
-        type=messagebox.YESNO,
-    )
-    res = message.show()
-    if not res:
-        return
-    if res == messagebox.YES:
-        terminate_obs(process)
-    else:
-        raise Exception("TODO: implement")
-    while process.is_running():
-        message = messagebox.Message(
-            root,
-            title="OMUAPPS OBSプラグイン",
-            message="OBSを終了しています。終了しない場合は手動で終了してください。",
-            icon=messagebox.WARNING,
-            type=messagebox.RETRYCANCEL,
-        )
-        res = message.show()
-        if not res:
-            return
-        if res == messagebox.CANCEL:
-            raise Exception("TODO: implement")
+def find_process(names: set[str]) -> psutil.Process | None:
+    for proc in psutil.process_iter():
+        name = proc.name()
+        if name in names:
+            return proc
+    return None
 
 
-def terminate_obs(process: psutil.Process):
+def shutdown_obs(process: psutil.Process):
     if sys.platform == "win32":
         from .hwnd_helpers import close_process_window
 
@@ -86,35 +45,57 @@ def terminate_obs(process: psutil.Process):
         raise Exception(f"Unsupported platform: {sys.platform}")
 
 
-def find_process(names: set[str]) -> psutil.Process | None:
-    for proc in psutil.process_iter():
-        name = proc.name()
-        if name in names:
-            return proc
-    return None
+def ensure_obs_stop() -> bool:
+    process = find_process({"obs64.exe", "obs32.exe"})
+    if not process:
+        return False
 
+    obs.launch_command = process.cmdline()
+    obs.cwd = Path(process.cwd())
 
-def relaunch_obs():
-    if obs.launch_command:
-        subprocess.Popen(obs.launch_command, cwd=obs.cwd)
+    root = tkinter.Tk()
+    root.withdraw()
 
+    def wait_for_process_to_end():
+        if process.is_running():
+            root.after(200, wait_for_process_to_end)
+        else:
+            root.destroy()
 
-class ScriptToolJson(TypedDict):
-    path: str
-    settings: Any
+    root.after(200, wait_for_process_to_end)
 
+    res = messagebox.Message(
+        root,
+        title="OMUAPPS OBSプラグイン",
+        message="導入をするには一度OBSを再起動する必要があります。再起動しますか？",
+        icon=messagebox.WARNING,
+        type=messagebox.YESNO,
+    ).show()
+    if not res:
+        return False
+    elif res == messagebox.YES:
+        shutdown_obs(process)
+    elif res == messagebox.NO:
+        return True
 
-ModulesJson = TypedDict("ModulesJson", {"scripts-tool": list[ScriptToolJson]})
+    while process.is_running():
+        res = messagebox.Message(
+            root,
+            title="OMUAPPS OBSプラグイン",
+            message="OBSを終了しています。終了しない場合は手動で終了してください。",
+            icon=messagebox.WARNING,
+            type=messagebox.RETRYCANCEL,
+        ).show()
+        if not res:
+            return False
+        elif res == messagebox.CANCEL:
+            return True
+        elif res == messagebox.RETRY:
+            pass
+        else:
+            raise Exception(f"Unknown response: {res}")
 
-
-def get_launch_command():
-    import os
-    import sys
-
-    return {
-        "cwd": os.getcwd(),
-        "args": [sys.executable, "-m", "omuserver", *sys.argv[1:]],
-    }
+    return False
 
 
 def get_obs_path():
@@ -127,52 +108,14 @@ def get_obs_path():
         return Path("~/.config/obs-studio").expanduser()
 
 
-def install_script(launcher: Path, scene: Path) -> bool:
-    data: SceneJson = json.loads(scene.read_text(encoding="utf-8"))
-    if "modules" not in data:
-        data["modules"] = {}
-    if "scripts-tool" not in data["modules"]:
-        data["modules"]["scripts-tool"] = []
-    if any(Path(launcher) == Path(x["path"]) for x in data["modules"]["scripts-tool"]):
-        return False
-    new_script_path = str(launcher)
-    data["modules"]["scripts-tool"].append({"path": new_script_path, "settings": {}})
-    scene.write_text(json.dumps(data), encoding="utf-8")
-    return True
-
-
-def install_all_scene() -> bool:
-    obs_path = get_obs_path()
-    scenes_path = obs_path / "basic" / "scenes"
-    launcher_path = Path(__file__).parent / "script" / "omuapps_plugin.py"
-    config_path = Path(__file__).parent / "script" / "config.json"
-    config_path.write_text(json.dumps(get_launch_command()), encoding="utf-8")
-    should_launch = False
-    for scene in scenes_path.glob("*.json"):
-        should_launch |= install_script(launcher_path, scene)
-    return should_launch
-
-
-def setup_python_path() -> bool:
-    path = get_obs_path() / "global.ini"
-    text = path.read_text(encoding="utf-8-sig")
-    config = obsconfig.loads(text)
-
-    if "Python" not in config:
-        config["Python"] = {}
-    python = config["Python"]
-    python_path = get_python_directory()
-
-    if python.get("Path32bit") == python.get("Path64bit") == python_path:
-        return False
-
-    kill_obs()
-    text = path.read_text(encoding="utf-8-sig")
-    config = obsconfig.loads(text)
-    python["Path64bit"] = python_path
-    python["Path32bit"] = python_path
-    path.write_text(obsconfig.dumps(config), encoding="utf-8-sig")
-    return True
+def get_rye_directory():
+    version_string = "cpython@%d.%d.%d" % (
+        sys.version_info.major,
+        sys.version_info.minor,
+        sys.version_info.micro,
+    )
+    rye_dir = Path.home() / ".rye" / "py" / version_string
+    return rye_dir
 
 
 def is_venv():
@@ -182,23 +125,121 @@ def is_venv():
 
 
 def get_python_directory():
-    version_string = f"cpython@{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-    rye_dir = Path.home() / ".rye" / "py" / version_string
+    rye_dir = get_rye_directory()
     if is_venv() and rye_dir.exists():
-        return str(rye_dir)
+        path = rye_dir
+    else:
+        path = Path(sys.executable).parent.parent
+    return str(path).replace("\\\\", "\\").replace("\\", "/")
 
-    path = Path(sys.executable)
-    return str(path.parent.parent).replace("\\\\", "\\").replace("\\", "/")
+
+class ScriptToolJson(TypedDict):
+    path: str
+    settings: Any
 
 
-def install():
-    should_relaunch = setup_python_path()
-    should_relaunch |= install_all_scene()
-    relaunch_obs()
+ModulesJson = TypedDict("ModulesJson", {"scripts-tool": list[ScriptToolJson]})
 
 
 class SceneJson(TypedDict):
     modules: ModulesJson
+
+
+def is_installed():
+    obs_path = get_obs_path()
+
+    launcher_path = Path(__file__).parent / "script" / "omuapps_plugin.py"
+    scenes_path = obs_path / "basic" / "scenes"
+    for scene in scenes_path.glob("*.json"):
+        data = SceneJson(**json.loads(scene.read_text(encoding="utf-8")))
+        is_installed = any(
+            Path(launcher_path) == Path(x["path"])
+            for x in data.get("modules", {}).get("scripts-tool", [])
+        )
+        if not is_installed:
+            return False
+
+    python_path = get_python_directory()
+    path = obs_path / "global.ini"
+    config = obsconfig.load_configuration(path)
+    python = config.get("Python", {})
+    is_python_set = python.get("Path32bit") == python.get("Path64bit") == python_path
+    if not is_python_set:
+        return False
+
+    return True
+
+
+def setup_python_path():
+    path = get_obs_path() / "global.ini"
+    python_path = get_python_directory()
+
+    config = obsconfig.load_configuration(path)
+    config["Python"] = {
+        **config.get("Python", {}),
+        "Path64bit": python_path,
+        "Path32bit": python_path,
+    }
+    obsconfig.save_configuration(path, config)
+
+
+def install_script(launcher: Path, scene: Path):
+    data = SceneJson(**json.loads(scene.read_text(encoding="utf-8")))
+    scripts = data.get("modules", {}).get("scripts-tool", [])
+
+    is_script_installed = any(Path(launcher) == Path(x["path"]) for x in scripts)
+    if is_script_installed:
+        return
+
+    data["modules"]["scripts-tool"] = [
+        *scripts,
+        {
+            "path": str(launcher),
+            "settings": {},
+        },
+    ]
+    scene.write_text(json.dumps(data), encoding="utf-8")
+
+
+def get_launch_command():
+    import os
+    import sys
+
+    return {
+        "cwd": os.getcwd(),
+        "args": [sys.executable, "-m", "omuserver", *sys.argv[1:]],
+    }
+
+
+def install_all_scene():
+    script_path = Path(__file__).parent / "script"
+    config_path = script_path / "config.json"
+    config_path.write_text(json.dumps(get_launch_command()), encoding="utf-8")
+    launcher_path = script_path / "omuapps_plugin.py"
+
+    scenes_path = get_obs_path() / "basic" / "scenes"
+    for scene in scenes_path.glob("*.json"):
+        install_script(launcher_path, scene)
+
+
+def relaunch_obs():
+    if obs.launch_command:
+        subprocess.Popen(obs.launch_command, cwd=obs.cwd)
+
+
+def install():
+    try:
+        if is_installed():
+            return
+
+        ensure_obs_stop()
+        setup_python_path()
+        install_all_scene()
+
+        relaunch_obs()
+    except Exception:
+        logger.opt(exception=True).error("Failed to install OBS plugin: {e}")
+        raise
 
 
 async def on_start_server(server: Server) -> None:
