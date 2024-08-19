@@ -110,21 +110,18 @@
     }
 
     .title {
+        font-weight: 700;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: -webkit-box;
-        line-clamp: 1;
-        -webkit-box-orient: vertical;
+        white-space: nowrap;
     }
 
     .description {
-        font-size: 0.8rem;
+        font-size: 0.65rem;
         font-weight: 500;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: -webkit-box;
-        line-clamp: 1;
-        -webkit-box-orient: vertical;
+        white-space: nowrap;
     }
 
     .buttons {
