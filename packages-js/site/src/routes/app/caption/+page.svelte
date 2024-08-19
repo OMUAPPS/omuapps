@@ -89,13 +89,7 @@
     <section>
         <h3>言語選択</h3>
         <FlexRowWrapper gap>
-            <Combobox
-                options={LANGUAGES_OPTIONS}
-                defaultValue={$config.lang}
-                on:change={(event) => {
-                    $config.lang = event.detail.value;
-                }}
-            />
+            <Combobox options={LANGUAGES_OPTIONS} bind:value={$config.lang} />
             {#if BROWSER && $config.lang !== window.navigator.language}
                 <button on:click={resetLang}> 言語をリセット </button>
             {/if}

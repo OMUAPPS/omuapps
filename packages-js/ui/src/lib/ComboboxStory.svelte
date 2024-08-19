@@ -6,11 +6,8 @@
         b: { value: 'b', label: 'B' },
         c: { value: 'c', label: 'C' },
     };
-    export let defaultValue = 'b';
-
-    let value: string;
+    export let value = 'b';
 </script>
 
-<Combobox {options} {defaultValue} on:change={(e) => (value = e.detail.value)} />
-
-{value}
+<p>value: {value}</p>
+<Combobox {options} bind:value />

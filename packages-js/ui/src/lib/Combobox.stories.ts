@@ -9,7 +9,7 @@ const meta = {
         options: {
             control: 'object',
         },
-        defaultValue: {
+        value: {
             control: 'text',
         },
     },
@@ -25,5 +25,6 @@ export const Example: Story = {
             b: { value: 'b', label: 'B' },
             c: { value: 'c', label: 'C' },
         },
+        value: 'b',
     },
 };

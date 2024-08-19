@@ -7,7 +7,7 @@
             label: string;
         };
     };
-    export let defaultValue: string | undefined = undefined;
+    export let value: T;
 
     const dispatch = createEventDispatcher<{
         change: { key: string; value: T };
@@ -16,19 +16,20 @@
     }>();
 
     function onChange() {
-        if (!defaultValue) {
+        if (!value) {
             return;
         }
-        if (options[defaultValue] === undefined) {
-            throw new Error(`Invalid default value: ${defaultValue}`);
+        const key = Object.keys(options).find((key) => options[key].value === value);
+        if (!key) {
+            return;
         }
-        dispatch('change', { key: defaultValue, value: options[defaultValue].value });
+        dispatch('change', { key, value });
     }
 </script>
 
 <div class="combo-box">
     <select
-        bind:value={defaultValue}
+        bind:value
         on:change={() => onChange()}
         on:focus={() => dispatch('open')}
         on:blur={() => dispatch('close')}

@@ -30,11 +30,7 @@
         <section>
             {#each $config.languages as language, i}
                 <FlexRowWrapper>
-                    <Combobox
-                        options={LANGUAGE_OPTIONS}
-                        defaultValue={language}
-                        on:change={(e) => changeLanguage(e.detail.value, i)}
-                    />
+                    <Combobox options={LANGUAGE_OPTIONS} bind:value={language} />
                     <ButtonMini
                         on:click={() => {
                             $config = {
