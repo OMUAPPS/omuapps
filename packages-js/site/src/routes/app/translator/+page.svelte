@@ -1,9 +1,9 @@
 <script lang="ts">
+    import AppPage from '$lib/components/AppPage.svelte';
     import { AppHeader, ButtonMini, Combobox, FlexRowWrapper, Toggle } from '@omujs/ui';
+    import { APP } from './app.js';
     import { config } from './client.js';
     import { LANGUAGE_OPTIONS, type Language } from './translator.js';
-    import AppPage from '$lib/components/AppPage.svelte';
-    import { APP } from './app.js';
 
     $: console.log($config.languages);
 
@@ -33,7 +33,7 @@
                     <Combobox
                         options={LANGUAGE_OPTIONS}
                         defaultValue={language}
-                        handleChange={(_, language) => changeLanguage(language, i)}
+                        on:change={(e) => changeLanguage(e.detail.value, i)}
                     />
                     <ButtonMini
                         on:click={() => {

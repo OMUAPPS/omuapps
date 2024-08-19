@@ -1,4 +1,6 @@
 <script lang="ts" generics="T">
+    import { createEventDispatcher } from 'svelte';
+
     export let options: {
         [key: string]: {
             value: T;
@@ -6,7 +8,12 @@
         };
     };
     export let defaultValue: string | undefined = undefined;
-    export let handleChange: (key: string, value: T) => void;
+
+    const dispatch = createEventDispatcher<{
+        change: { key: string; value: T };
+        open: void;
+        close: void;
+    }>();
 
     function onChange() {
         if (!defaultValue) {
@@ -15,12 +22,17 @@
         if (options[defaultValue] === undefined) {
             throw new Error(`Invalid default value: ${defaultValue}`);
         }
-        handleChange(defaultValue, options[defaultValue].value);
+        dispatch('change', { key: defaultValue, value: options[defaultValue].value });
     }
 </script>
 
 <div class="combo-box">
-    <select bind:value={defaultValue} on:change={() => onChange()}>
+    <select
+        bind:value={defaultValue}
+        on:change={() => onChange()}
+        on:focus={() => dispatch('open')}
+        on:blur={() => dispatch('close')}
+    >
         {#each Object.entries(options) as [key, option]}
             <option value={key}>{option.label}</option>
         {/each}

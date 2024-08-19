@@ -150,7 +150,7 @@
                     <small>パターンを追加</small>
                     <Combobox
                         options={patternFactory}
-                        handleChange={(key, value) => addPattern(value())}
+                        on:change={(event) => addPattern(event.detail.value())}
                     />
                 </FlexRowWrapper>
             </div>

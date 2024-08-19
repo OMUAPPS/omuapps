@@ -1,10 +1,11 @@
 <script lang="ts">
     import { page } from '$app/stores';
+    import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
     import { Omu } from '@omujs/omu';
     import {
         AppHeader,
         Combobox,
-        DragLink,
         FlexRowWrapper,
         Popup,
         Textbox,
@@ -16,8 +17,6 @@
     import { APP } from './app.js';
     import { CaptionApp } from './caption-app.js';
     import { FONTS, LANGUAGES_OPTIONS, type LanguageKey } from './types.js';
-    import AppPage from '$lib/components/AppPage.svelte';
-    import AssetButton from '$lib/components/AssetButton.svelte';
 
     export const omu = new Omu(APP);
     setClient(omu);
@@ -93,8 +92,8 @@
             <Combobox
                 options={LANGUAGES_OPTIONS}
                 defaultValue={$config.lang}
-                handleChange={(key, value) => {
-                    $config.lang = value;
+                on:change={(event) => {
+                    $config.lang = event.detail.value;
                 }}
             />
             {#if BROWSER && $config.lang !== window.navigator.language}
