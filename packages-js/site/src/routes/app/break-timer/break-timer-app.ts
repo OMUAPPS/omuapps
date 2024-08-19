@@ -1,4 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
+import type { OBSPlugin } from '@omujs/obs';
 import { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import { type Writable } from 'svelte/store';
@@ -6,23 +7,27 @@ import { APP_ID } from './app.js';
 import type { BreakTimerState } from './state.js';
 
 export type BreakTimerConfig = {
-    switchScene: {
-        scene: string;
-    } | null;
+    switch: {
+        scene: string | null;
+    };
     timer: {
         duration: number;
         message: string;
-    } | null;
+    };
+    message: string;
 };
 
 const BREAK_TIMER_CONFIG_REGISTRY_TYPE = RegistryType.createJson<BreakTimerConfig>(APP_ID, {
     name: 'config',
     defaultValue: {
-        switchScene: null,
+        switch: {
+            scene: null,
+        },
         timer: {
             duration: 10 * 60,
-            message: 'ひと休憩',
+            message: '始まるよ',
         },
+        message: 'ひと休憩',
     },
 });
 
@@ -37,8 +42,24 @@ export class BreakTimerApp {
     public readonly config: Writable<BreakTimerConfig>;
     public readonly state: Writable<BreakTimerState>;
 
-    constructor(public readonly omu: Omu) {
+    constructor(
+        public readonly omu: Omu,
+        public readonly obs: OBSPlugin,
+    ) {
         this.config = makeRegistryWritable(omu.registry.get(BREAK_TIMER_CONFIG_REGISTRY_TYPE));
         this.state = makeRegistryWritable(omu.registry.get(BREAK_TIMER_STATE_REGISTRY_TYPE));
+    }
+
+    public async reset(): Promise<void> {
+        this.state.set({ type: 'work' });
+    }
+
+    public async start(): Promise<void> {
+        this.state.set({ type: 'break', start: Date.now() });
+        this.obs.sceneSetCurrentByName('Break');
+    }
+
+    public async resetConfig(): Promise<void> {
+        this.config.set(BREAK_TIMER_CONFIG_REGISTRY_TYPE.defaultValue);
     }
 }
