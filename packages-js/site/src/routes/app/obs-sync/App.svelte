@@ -42,7 +42,7 @@
     }
 
     async function test3() {
-        await obs.sceneSetByName('test');
+        await obs.sceneSetCurrentByName('test');
     }
 </script>
 
@@ -56,10 +56,14 @@
         <p>
             Current Scene:
             {#await obs.sceneGetCurrent() then source}
-                <div class="source">
-                    <p>{source.name}</p>
-                    {JSON.stringify(source)}
-                </div>
+                {#if source}
+                    <div class="source">
+                        <p>{source.name}</p>
+                        {JSON.stringify(source)}
+                    </div>
+                {:else}
+                    <p>no current scene</p>
+                {/if}
             {/await}
         </p>
         <p>
@@ -68,7 +72,7 @@
                 {#each response.scenes as scene}
                     <button
                         class="scene"
-                        on:click={async () => await obs.sceneSetByUuid(scene.uuid)}
+                        on:click={async () => await obs.sceneSetCurrentByUuid(scene.uuid)}
                     >
                         <p>{scene.name}</p>
                     </button>
