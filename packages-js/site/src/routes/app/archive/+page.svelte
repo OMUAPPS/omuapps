@@ -69,15 +69,17 @@
 <style lang="scss">
     main {
         display: flex;
-        height: calc(100vh - 7rem);
+        height: 100%;
         gap: 2rem;
-        padding: 2rem;
-        padding-top: 1rem;
+        margin: 2rem;
         margin-bottom: 2rem;
         color: var(--color-1);
     }
 
     section {
+        display: flex;
+        flex-direction: column;
+        position: relative;
         height: 100%;
         flex: 1;
 
@@ -104,7 +106,6 @@
     .archive-list {
         flex: 1;
         background: var(--color-bg-2);
-        height: 100%;
     }
 
     .yt-dlp-info {

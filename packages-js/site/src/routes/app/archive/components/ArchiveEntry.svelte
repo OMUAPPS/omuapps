@@ -87,6 +87,7 @@
         width: calc(4rem * 16 / 9);
         height: 4rem;
         object-fit: cover;
+        padding: 1px 2px;
     }
 
     .thumbnail-tooltip {
