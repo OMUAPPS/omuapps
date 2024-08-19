@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/svelte';
-import TooltipView from './TooltipStory.svelte';
+import TooltipStory from './TooltipStory.svelte';
 
 // More on how to set up stories at: https://storybook.js.org/docs/svelte/writing-stories/introduction
 const meta = {
     title: 'Components/Tooltip',
-    component: TooltipView,
+    component: TooltipStory,
     tags: ['autodocs'],
     argTypes: {
         text: { control: 'text' },
         image: { control: 'text' },
     },
-} satisfies Meta<TooltipView>;
+} satisfies Meta<TooltipStory>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
