@@ -35,4 +35,5 @@
         "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
         ".eslintrc.cjs": ".eslintignore, .prettierrc.cjs, .prettierignore, .prettierrc, .stylelintrc.json, .stylelintignore",
     },
+    "files.insertFinalNewline": true,
 }
