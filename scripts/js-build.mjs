@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { execa } from 'execa';
-import { readdirSync, readFileSync } from 'fs';
+import { promises as fs, readdirSync, readFileSync } from 'fs';
 import { readdir, readFile, stat, writeFile } from 'fs/promises';
 import Path from 'path';
 
@@ -40,7 +40,7 @@ async function computeDirHash(dir) {
     return hash.digest('hex');
 }
 
-async function buildPackage(target) {
+async function buildPackage(target, options = { cache: true }) {
     const pkg = packages.get(target);
     if (!pkg) {
         throw new Error(`Package ${target} not found. ${[...packages.keys()]}`);
@@ -48,7 +48,7 @@ async function buildPackage(target) {
     const hash = await computeDirHash(Path.join(pkg.path, 'src'));
     const lastHash = hashes[pkg.pkg.name];
     const builtExists = await stat(Path.join(pkg.path, 'dist')).catch(() => null);
-    if (builtExists && hash === lastHash) {
+    if (options.cache && lastHash === hash && builtExists) {
         return;
     }
     await execa('pnpm', ['--filter', pkg.pkg.name, 'build'], BUILD_OPTION);
@@ -69,8 +69,10 @@ await Promise.all([
     buildPackage('@omujs/chat'),
     buildPackage('@omujs/obs'),
 ]);
+
+await fs.rm(Path.join(process.cwd(), 'dist'), { recursive: true, force: true });
 await Promise.all([
-    buildPackage('@omujs/ui'),
+    buildPackage('@omujs/ui', { cache: false }),
 ]);
 
 if (process.argv.includes('--build')) {
