@@ -25,6 +25,10 @@ config_registry = omu.registry.get(CONFIG_REGISTRY_TYPE)
 async def on_config_update(config: ArchiveConfig):
     path = Path(config["output_dir"])
     path.mkdir(parents=True, exist_ok=True)
+    if config["active"]:
+        rooms = await chat.rooms.fetch_items(before=10)
+        for room in rooms.values():
+            await process_room(room)
 
 
 @omu.endpoints.bind(endpoint_type=OPEN_OUTPUT_DIR_ENDPOINT_TYPE)
@@ -75,6 +79,10 @@ async def start_archive(archive: Archive):
 async def on_room_add(room: Room):
     if not config_registry.value["active"]:
         return
+    return await process_room(room)
+
+
+async def process_room(room: Room):
     metadata = room.metadata or {}
     url = metadata.get("url")
     if url is None:
