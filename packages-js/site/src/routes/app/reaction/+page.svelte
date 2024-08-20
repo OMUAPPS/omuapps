@@ -1,26 +1,18 @@
 <script lang="ts">
-    import { page } from '$app/stores';
+    import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
     import { Chat } from '@omujs/chat';
     import { Reaction } from '@omujs/chat/models/reaction.js';
     import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
     import { Omu } from '@omujs/omu';
     import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
     import { Identifier } from '@omujs/omu/identifier.js';
-    import {
-        AppHeader,
-        ButtonMini,
-        DragLink,
-        FileDrop,
-        FlexRowWrapper,
-        Tooltip,
-        setClient,
-    } from '@omujs/ui';
+    import { AppHeader, ButtonMini, FileDrop, Tooltip, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, IDENTIFIER } from './app.js';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
+    import Slider from './components/Slider.svelte';
     import { ReactionApp } from './reaction-app.js';
-    import AppPage from '$lib/components/AppPage.svelte';
-    import AssetButton from '$lib/components/AssetButton.svelte';
 
     const omu = new Omu(APP);
     const chat = new Chat(omu);
@@ -65,92 +57,110 @@
         <AppHeader app={APP} />
     </header>
     <main>
-        <div class="preview">
+        <div class="reaction-preview">
             <ReactionRenderer {omu} {reactionApp} />
         </div>
-        <h3>リアクションをテストする</h3>
-        <section>
-            <FlexRowWrapper gap>
+        <div class="right">
+            <h3>
+                配信ソフトに追加する
+                <i class="ti ti-arrow-bar-to-down" />
+            </h3>
+            <section>
+                <AssetButton />
+            </section>
+            <h3>
+                試してみる
+                <i class="ti ti-rocket" />
+            </h3>
+            <section>
                 <button on:click={test}>
+                    <Tooltip>
+                        <span>テスト用のリアクションを送信します</span>
+                    </Tooltip>
                     <i class="ti ti-player-play" />
-                    テスト
+                    再生
                 </button>
-            </FlexRowWrapper>
-        </section>
-
-        <h3>OBSに貼り付ける</h3>
-        <section>
-            <AssetButton />
-        </section>
-
-        <h3>見た目を変更する</h3>
-        <section>
-            <label for="scale">スケール</label>
-            <input
-                type="range"
-                id="scale"
-                bind:value={$config.scale}
-                min="0.1"
-                max="2"
-                step="0.1"
-            />
-            {$config.scale}
-            <label for="depth">奥行き度</label>
-            <input type="range" id="depth" bind:value={$config.depth} min="0" max="1" step="0.1" />
-            {$config.depth}
-        </section>
-
-        <h3>画像を置き換える</h3>
-        <section>
-            {#each Object.entries($config.replaces) as [key, assetId]}
-                <div class="replace-entry">
-                    <FlexRowWrapper alignItems="center" gap>
-                        <h1>
-                            {key}
-                        </h1>
-                        {#if assetId}
-                            <i class="ti ti-chevron-right" />
-                            <img
-                                src={omu.assets.url(Identifier.fromKey(assetId), { noCache: true })}
-                                alt={key}
-                                class="replace-image"
-                            />
-                        {/if}
-                    </FlexRowWrapper>
-                    <FlexRowWrapper gap alignItems="center">
-                        {#if assetId}
-                            <ButtonMini
-                                on:click={() =>
-                                    ($config.replaces = { ...$config.replaces, [key]: null })}
-                            >
-                                <Tooltip>置き換えを削除</Tooltip>
-                                <i class="ti ti-trash" />
-                            </ButtonMini>
-                        {/if}
-                        <FileDrop handle={(files) => handleReplace(key, files)}>
-                            <i class="ti ti-upload" />
-                            置き換える
-                        </FileDrop>
-                    </FlexRowWrapper>
-                </div>
-            {/each}
-        </section>
+            </section>
+        </div>
+        <div class="left">
+            <h3>
+                見た目を調整する
+                <i class="ti ti-dimensions" />
+            </h3>
+            <section class="settings">
+                <Slider bind:value={$config.scale} min={0.5} max={2.5} step={0.05} type="percent">
+                    大きさ
+                </Slider>
+                <Slider bind:value={$config.depth} min={0} max={1} step={0.01} type="percent">
+                    奥行き感
+                </Slider>
+            </section>
+            <h3>
+                画像を変える
+                <i class="ti ti-mood-wink-2" />
+            </h3>
+            <section>
+                {#each Object.entries($config.replaces) as [key, assetId]}
+                    <div class="replace-entry">
+                        <div class="preview">
+                            <h1>
+                                {key}
+                            </h1>
+                            {#if assetId}
+                                <i class="ti ti-chevron-right" />
+                                <img
+                                    src={omu.assets.url(Identifier.fromKey(assetId), {
+                                        noCache: true,
+                                    })}
+                                    alt={key}
+                                    class="replace-image"
+                                />
+                            {/if}
+                        </div>
+                        <div class="actions">
+                            {#if assetId}
+                                <ButtonMini
+                                    on:click={() =>
+                                        ($config.replaces = { ...$config.replaces, [key]: null })}
+                                >
+                                    <Tooltip>置き換えを削除</Tooltip>
+                                    <i class="ti ti-trash" />
+                                </ButtonMini>
+                            {/if}
+                            <FileDrop handle={(files) => handleReplace(key, files)}>
+                                <i class="ti ti-upload" />
+                                置き換える
+                            </FileDrop>
+                        </div>
+                    </div>
+                {/each}
+            </section>
+        </div>
     </main>
 </AppPage>
 
 <style lang="scss">
     main {
-        position: relative;
         display: flex;
-        flex-direction: column;
-        align-items: start;
-        justify-content: flex-start;
-        width: 100%;
-        height: 100vh;
-        padding: 40px;
+        gap: 20px;
+        padding: 2rem;
     }
 
-    .preview {
+    .left {
+        width: min(100%, 25rem);
+        margin-left: auto;
+    }
+
+    .right {
+        width: 25rem;
+    }
+
+    .settings {
+        background: var(--color-bg-2);
+        padding: 20px;
+    }
+
+    .reaction-preview {
         position: fixed;
         inset: 0;
         pointer-events: none;
@@ -159,12 +169,25 @@
 
     .replace-entry {
         display: flex;
+        flex-wrap: wrap;
         gap: 10px;
         align-items: center;
         justify-content: space-between;
-        width: min(100%, 600px);
-        padding: 10px 20px;
+        width: min(100%, 25rem);
+        padding: 0.5rem 1rem;
         background: var(--color-bg-2);
+
+        .preview {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
     }
 
     .replace-image {
@@ -199,29 +222,18 @@
     }
 
     button {
-        background: none;
+        margin-top: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--color-1);
+        color: var(--color-bg-1);
+        font-size: 0.9rem;
+        font-weight: 500;
         border: none;
+        border-radius: 2.5px;
         cursor: pointer;
-        margin: 0;
-        height: 30px;
-        padding: 10px;
-        display: flex;
-        font-size: 14px;
-        align-items: center;
-        justify-content: center;
-        color: var(--color-1);
-        background: var(--color-bg-2);
-        outline: 1px solid var(--color-1);
-        outline-offset: -1px;
-        border-radius: 4px;
 
         &:hover {
-            background: var(--color-bg-1);
-        }
-
-        &:active {
             background: var(--color-1);
-            color: var(--color-bg-2);
         }
     }
 </style>

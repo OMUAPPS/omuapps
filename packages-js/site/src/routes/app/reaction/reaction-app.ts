@@ -1,11 +1,11 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import type { Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/index.js';
-import type { Writable } from 'svelte/store';
-import { IDENTIFIER } from './app.js';
 import type { Chat } from '@omujs/chat';
 import { Reaction } from '@omujs/chat/models/reaction.js';
+import type { Omu } from '@omujs/omu';
+import { RegistryType } from '@omujs/omu/extension/registry/index.js';
 import type { Signal } from '@omujs/omu/extension/signal/signal.js';
+import type { Writable } from 'svelte/store';
+import { IDENTIFIER } from './app.js';
 
 type ReactionConfig = {
     replaces: Record<string, string | null>;
