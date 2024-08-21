@@ -75,7 +75,6 @@ export function listen<T extends keyof Events>(
 ): Promise<() => void> {
     assertTauri();
     return _listen(command, (event: TauriEvent<Events[T]>) => {
-        event;
         callback(event);
     });
 }

@@ -363,13 +363,6 @@
         cursor: pointer;
     }
 
-    .row {
-        display: flex;
-        flex-direction: row;
-        gap: 4rem;
-        align-items: center;
-    }
-
     .generate-log {
         padding: 0.5rem 1rem;
         border: none;

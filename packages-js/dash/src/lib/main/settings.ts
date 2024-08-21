@@ -30,6 +30,7 @@ export function createSetting<T>(key: string, defaultValue: T) {
         try {
             value = JSON.parse(value);
         } catch (e) {
+            console.error(e);
             localStorage.removeItem(key);
         }
     }
