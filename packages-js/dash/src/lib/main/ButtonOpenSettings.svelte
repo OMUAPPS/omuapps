@@ -6,7 +6,7 @@
     import { Button, Tooltip } from '@omujs/ui';
 
     function openConnectScreen() {
-        screenContext.push(ScreenSettings, {});
+        screenContext.push(ScreenSettings, undefined);
     }
 </script>
 

@@ -13,7 +13,7 @@
 
     export let screen: {
         handle: ScreenHandle;
-        props: {};
+        props: undefined;
     };
 
     let result: IdentifierMap<{ channel: models.Channel; active: boolean }> | undefined;

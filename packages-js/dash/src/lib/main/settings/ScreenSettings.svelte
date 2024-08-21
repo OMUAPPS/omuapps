@@ -9,7 +9,7 @@
 
     export let screen: {
         handle: ScreenHandle;
-        props: {};
+        props: undefined;
     };
 
     const categories = [

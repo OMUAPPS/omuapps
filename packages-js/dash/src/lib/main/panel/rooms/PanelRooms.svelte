@@ -33,7 +33,7 @@
     onDestroy(unlisten);
 
     function openSetup() {
-        screenContext.push(ScreenSetup, {});
+        screenContext.push(ScreenSetup, undefined);
     }
 </script>
 

@@ -14,7 +14,7 @@
     export let filter: (key: string, message: models.Channel) => boolean = () => true;
 
     function openSetupScreen() {
-        screenContext.push(ScreenSetup, {});
+        screenContext.push(ScreenSetup, undefined);
     }
 
     let checkIntervalLeft = 0;
