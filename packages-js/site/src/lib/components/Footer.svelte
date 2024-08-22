@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FlexColWrapper, FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import { FlexRowWrapper, Tooltip } from '@omujs/ui';
 </script>
 
 <footer>
@@ -54,7 +54,7 @@
                     <i class="ti ti-external-link" />
                 </p>
             </a>
-            <p style="text-align: end; margin-top: auto;">
+            <p style:text-align="end" style:margin-top="auto">
                 <a href="https://x.com/2ji_han">🕝</a>
             </p>
         </div>
