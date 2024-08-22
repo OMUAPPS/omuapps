@@ -15,12 +15,12 @@
     "scripts": {
         "build": "pnpm run ts",
         "dev": "pnpm run watch",
-        "format": "eslint . --ext .js,.ts --fix",
-        "lint": "eslint . --ext .js,.ts",
         "ts": "pnpm run ts-esm && pnpm run ts-dts",
         "ts-dts": "tsc --outDir dist/dts --declaration true --emitDeclarationOnly true --declarationMap true",
         "ts-esm": "tsc --outDir dist/esm",
-        "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/chat\""
+        "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/chat\"",
+        "lint": "eslint .",
+        "fix": "eslint . --fix"
     },
     "repository": {
         "type": "git",
@@ -28,9 +28,8 @@
     },
     "devDependencies": {
         "@omujs/omu": "workspace:*",
-        "@typescript-eslint/eslint-plugin": "^8.0.1",
-        "@typescript-eslint/parser": "^8.0.1",
-        "eslint": "^9.8.0",
+        "@omujs/eslint-config": "workspace:*",
+        "eslint": "^9.0.0",
         "nodemon": "^3.1.4"
     },
     "dependencies": {
