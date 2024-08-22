@@ -202,11 +202,9 @@
         ctx.restore();
     }
 
-    let renderHandle: number;
-
     function loop() {
         render();
-        renderHandle = requestAnimationFrame(loop);
+        requestAnimationFrame(loop);
     }
 
     $: {
