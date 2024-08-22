@@ -1,4 +1,4 @@
-import { SvelteComponent, type ComponentType } from 'svelte';
+import { type ComponentType, SvelteComponent } from 'svelte';
 
 export type TypedComponent<Props extends Record<string, unknown> = Record<string, unknown>> =
     ComponentType<SvelteComponent<Props>>;

@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { Omu } from '@omujs/omu';
-    import { Identifier } from '@omujs/omu/identifier.js';
-    import { onDestroy } from 'svelte';
-    import type { ReactionApp } from '../reaction-app.js';
-    import { BROWSER } from 'esm-env';
     import { lerp } from '$lib/math/math.js';
     import { Timer } from '$lib/timer.js';
+    import type { Omu } from '@omujs/omu';
+    import { Identifier } from '@omujs/omu/identifier.js';
+    import { BROWSER } from 'esm-env';
+    import { onDestroy } from 'svelte';
+    import type { ReactionApp } from '../reaction-app.js';
 
     export let omu: Omu;
     export let reactionApp: ReactionApp;

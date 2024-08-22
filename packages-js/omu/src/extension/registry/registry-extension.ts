@@ -5,10 +5,10 @@ import { Identifier, IdentifierMap } from '../../identifier.js';
 import { PacketType } from '../../network/packet/index.js';
 import { Serializer } from '../../serializer.js';
 import { EndpointType } from '../endpoint/endpoint.js';
-import { ExtensionType, type Extension } from '../extension.js';
+import { type Extension, ExtensionType } from '../extension.js';
 
 import { RegistryPacket, RegistryRegisterPacket } from './packets.js';
-import { RegistryType, type Registry } from './registry.js';
+import { type Registry, RegistryType } from './registry.js';
 
 export class RegistryExtension implements Extension {
     public readonly type = REGISTRY_EXTENSION_TYPE;

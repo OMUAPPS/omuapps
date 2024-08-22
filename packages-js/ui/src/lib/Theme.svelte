@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { theme, type Color } from './stores.js';
+    import { type Color, theme } from './stores.js';
 
     let css = '';
 

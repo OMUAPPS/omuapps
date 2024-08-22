@@ -1,5 +1,5 @@
 import type { App } from './app.js';
-import type { Unlisten, EventEmitter } from './event-emitter.js';
+import type { EventEmitter, Unlisten } from './event-emitter.js';
 import type { AssetExtension } from './extension/asset/index.js';
 import type { DashboardExtension } from './extension/dashboard/index.js';
 import type { EndpointExtension } from './extension/endpoint/index.js';

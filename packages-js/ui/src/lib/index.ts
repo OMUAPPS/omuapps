@@ -7,6 +7,7 @@ export { default as Combobox } from './Combobox.svelte';
 export { default as ComponentRenderer } from './ComponentRenderer.svelte';
 export { default as DragLink } from './DragLink.svelte';
 export { default as ExternalLink } from './ExternalLink.svelte';
+export { default as FileDrop } from './FileDrop.svelte';
 export { default as FlexColWrapper } from './FlexColWrapper.svelte';
 export { default as FlexRowWrapper } from './FlexRowWrapper.svelte';
 export { default as Gift } from './Gift.svelte';
@@ -19,15 +20,14 @@ export { default as MessageRenderer } from './MessageRenderer.svelte';
 export { default as Popup } from './Popup.svelte';
 export { default as RelativeDate } from './RelativeDate.svelte';
 export { default as Role } from './Role.svelte';
+export { chat, client, setClient, theme, translate } from './stores.js';
 export { default as TableList } from './TableList.svelte';
 export { default as Textbox } from './Textbox.svelte';
 export { default as Theme } from './Theme.svelte';
 export { default as Toggle } from './Toggle.svelte';
 export { default as Tooltip } from './Tooltip.svelte';
-export { default as FileDrop } from './FileDrop.svelte';
-export { default as VirtualList } from './VirtualList.svelte';
-export { chat, client, setClient, theme, translate } from './stores.js';
 export type { TypedComponent } from './typed-component.js';
-export { applyOpacity, classes, style } from './utils/class-helper.js';
+export { applyOpacity, classes } from './utils/class-helper.js';
+export { default as VirtualList } from './VirtualList.svelte';
 
 import '@tabler/icons-webfont/dist/tabler-icons.scss'; // Import the Tabler Icons CSS

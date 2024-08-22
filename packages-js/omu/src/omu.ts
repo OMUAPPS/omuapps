@@ -20,7 +20,7 @@ import { REGISTRY_EXTENSION_TYPE, type RegistryExtension } from './extension/reg
 import { SERVER_EXTENSION_TYPE, type ServerExtension } from './extension/server/index.js';
 import { SIGNAL_EXTENSION_TYPE, type SignalExtension } from './extension/signal/index.js';
 import { TABLE_EXTENSION_TYPE, type TableExtension } from './extension/table/index.js';
-import type { Connection, Address } from './network/index.js';
+import type { Address, Connection } from './network/index.js';
 import { Network } from './network/index.js';
 import type { PacketType } from './network/packet/packet.js';
 import { WebsocketConnection } from './network/websocket-connection.js';

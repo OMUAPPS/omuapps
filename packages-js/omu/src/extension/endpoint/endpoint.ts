@@ -1,5 +1,5 @@
 import type { Identifier } from '../../identifier.js';
-import { Serializer, type Serializable } from '../../serializer.js';
+import { type Serializable, Serializer } from '../../serializer.js';
 
 export class EndpointType<Req = unknown, Res = unknown> {
     constructor(

@@ -3,7 +3,7 @@ import type { Unlisten } from '../../event-emitter.js';
 import { Identifier, IdentifierMap } from '../../identifier.js';
 import { PacketType } from '../../network/packet/index.js';
 import { Serializer } from '../../serializer.js';
-import { ExtensionType, type Extension } from '../extension.js';
+import { type Extension, ExtensionType } from '../extension.js';
 
 import { SignalPacket, SignalRegisterPacket } from './packets.js';
 import type { Signal } from './signal.js';

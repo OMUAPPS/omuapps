@@ -1,10 +1,9 @@
 <script lang="ts">
-    import { page } from '$app/stores';
     import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
     import { Omu } from '@omujs/omu';
     import {
         AppHeader,
-        DragLink,
         FlexColWrapper,
         FlexRowWrapper,
         setClient,
@@ -16,7 +15,6 @@
     import Align from './components/Align.svelte';
     import Timer from './components/Timer.svelte';
     import { TimerApp } from './timer-app.js';
-    import AssetButton from '$lib/components/AssetButton.svelte';
 
     const omu = new Omu(APP);
     const timer = new TimerApp(omu);

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ButtonMini, FlexRowWrapper, Tooltip, client } from '@omujs/ui';
-    import { EMOJI_TEST_PROVIDER, Emoji, EmojiApp, emojiApp } from './emoji.js';
+    import { Emoji, emojiApp } from './emoji.js';
 
     const { emojis, selectedEmoji } = $emojiApp;
 
