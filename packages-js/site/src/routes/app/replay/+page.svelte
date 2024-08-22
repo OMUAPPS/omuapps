@@ -46,11 +46,12 @@
         console.log($replayData);
     }
 
+    const promise = new Promise<void>((resolve) => omu.onReady(resolve));
+    let search: string = '';
+
     if (BROWSER) {
         omu.start();
     }
-
-    const promise = new Promise<void>((resolve) => omu.onReady(resolve));
 </script>
 
 <svelte:head>
@@ -84,12 +85,25 @@
                 <h3>
                     最近の配信から
                     <i class="ti ti-video" />
+                    <div class="search">
+                        <input type="search" bind:value={search} placeholder="検索" />
+                        {#if !search}
+                            <i class="ti ti-search" />
+                        {/if}
+                    </div>
                 </h3>
                 <div class="table">
                     <TableList
                         table={chat.rooms}
                         component={RoomEntry}
-                        filter={(_, room) => !!room.metadata?.url}
+                        filter={(_, room) =>
+                            !!(
+                                room.metadata?.url &&
+                                (!search ||
+                                    room.metadata.title
+                                        ?.toLowerCase()
+                                        .includes(search.toLowerCase()))
+                            )}
                     />
                 </div>
             </div>
@@ -157,6 +171,49 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+
+            > h3 {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                white-space: nowrap;
+
+                > .search {
+                    position: relative;
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    border-bottom: 1px solid var(--color-1);
+                    margin-left: 1rem;
+
+                    > input {
+                        width: 100%;
+                        border: none;
+                        background: none;
+                        color: var(--color-1);
+                        font-size: 1rem;
+                        padding: 0.25rem 0.1rem;
+
+                        &::placeholder {
+                            font-size: 0.8rem;
+                            font-weight: 500;
+                            color: var(--color-1);
+                        }
+
+                        &:focus {
+                            outline: none;
+                        }
+                    }
+
+                    > .ti-search {
+                        position: absolute;
+                        right: 0;
+                        font-size: 0.8rem;
+                        margin-right: 0.5rem;
+                        pointer-events: none;
+                    }
+                }
+            }
 
             > .table {
                 flex: 1;
