@@ -112,6 +112,7 @@
                 cursor: pointer;
             }
 
+            &:hover,
             &:focus {
                 outline: none;
 
