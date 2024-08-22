@@ -122,6 +122,7 @@ const TABLE_ITEM_CLEAR_PACKET = PacketType.createSerialized<TablePacket>(TABLE_E
 });
 
 export class TableExtension implements Extension {
+    public readonly type = TABLE_EXTENSION_TYPE;
     private readonly tableMap = new IdentifierMap<Table<unknown>>();
 
     constructor(private readonly client: Client) {
