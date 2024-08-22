@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Room } from '@omujs/chat/models/room.js';
+    import { Tooltip } from '@omujs/ui';
     import { playVideo } from '../stores.js';
 
     export let entry: Room;
@@ -15,10 +16,29 @@
 </script>
 
 <button class="room-entry" class:selected on:click={() => play()}>
-    <img src={entry.metadata?.thumbnail} class="thumbnail" alt="" />
+    <div>
+        <Tooltip>
+            <p class="tooltip">
+                <img src={entry.metadata?.thumbnail} class="thumbnail-preview" alt="" />
+            </p>
+        </Tooltip>
+        <img src={entry.metadata?.thumbnail} class="thumbnail" alt="" />
+    </div>
     <div class="info">
-        <div class="title">{entry.metadata?.title}</div>
-        <div class="description">{entry.metadata?.description}</div>
+        <div class="title">
+            <Tooltip>
+                <p class="tooltip">
+                    {entry.metadata?.title}
+                </p>
+            </Tooltip>
+            {entry.metadata?.title}
+        </div>
+        <div class="description">
+            <Tooltip>
+                <p class="tooltip">{entry.metadata?.description}</p>
+            </Tooltip>
+            {entry.metadata?.description}
+        </div>
     </div>
 </button>
 
@@ -33,6 +53,7 @@
         border: none;
         width: 100%;
         background: var(--color-bg-1);
+        color: var(--color-1);
     }
 
     .room-entry.selected {
@@ -40,9 +61,15 @@
     }
 
     .thumbnail {
-        width: 4rem;
-        height: 3rem;
-        border-radius: 0.5rem;
+        width: 6rem;
+        height: 4rem;
+        border-radius: 4px;
+        object-fit: cover;
+    }
+
+    .thumbnail-preview {
+        height: 10rem;
+        border-radius: 4px;
         object-fit: cover;
     }
 
@@ -50,24 +77,32 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
         width: 0;
+        height: 100%;
+        gap: 0.25rem;
     }
 
     .title {
+        font-size: 0.9rem;
+        font-weight: 700;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: -webkit-box;
-        line-clamp: 1;
-        -webkit-box-orient: vertical;
+        white-space: nowrap;
     }
 
     .description {
-        font-size: 0.8rem;
+        font-size: 0.65rem;
         font-weight: 500;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: -webkit-box;
-        line-clamp: 1;
-        -webkit-box-orient: vertical;
+        white-space: nowrap;
+    }
+
+    .tooltip {
+        padding: 0.5rem;
+        font-size: 0.7rem;
+        max-width: 20rem;
+        white-space: normal;
     }
 </style>
