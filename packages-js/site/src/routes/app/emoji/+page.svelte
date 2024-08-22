@@ -24,7 +24,7 @@
 
     let search: string = '';
 
-    let searchFilter = (key: string, emoji: Emoji) => true;
+    let searchFilter: (key: string, emoji: Emoji) => boolean = () => true;
 
     function createFilter(search: string) {
         return (key: string, emoji: Emoji) => emoji.id.includes(search);
