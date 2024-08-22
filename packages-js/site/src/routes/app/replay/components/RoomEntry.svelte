@@ -16,7 +16,7 @@
 </script>
 
 <button class="room-entry" class:selected on:click={() => play()}>
-    <div>
+    <div class="thumbnail-container">
         <Tooltip>
             <p class="tooltip">
                 <img src={entry.metadata?.thumbnail} class="thumbnail-preview" alt="" />
@@ -47,23 +47,29 @@
         display: flex;
         gap: 0.5rem;
         align-items: center;
-        padding: 0.5rem;
+        padding: 0.5rem 0.5rem;
         margin-right: 0.5rem;
         cursor: pointer;
         border: none;
         width: 100%;
-        background: var(--color-bg-1);
+        background: var(--color-bg-2);
+        border-bottom: 2px solid var(--color-bg-1);
         color: var(--color-1);
     }
 
     .room-entry.selected {
-        background: var(--color-bg-2);
+        background: var(--color-bg-1);
+    }
+
+    .thumbnail-container {
+        $height: 3.2rem;
+        height: $height;
+        width: calc($height * 16 / 9);
     }
 
     .thumbnail {
-        width: 6rem;
-        height: 4rem;
-        border-radius: 4px;
+        height: 100%;
+        border-radius: 3px;
         object-fit: cover;
     }
 

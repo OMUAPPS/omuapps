@@ -71,34 +71,27 @@
             <slot />
         {/await}
     </header>
-
     <main>
-        <div class="rooms">
-            <h3>URLから</h3>
-            <Textbox
-                placeholder="URLを入力"
-                on:input={(event) => {
-                    const url = new URL(event.detail);
-                    if (url.hostname === 'youtu.be') {
-                        const videoId = url.pathname.slice(1);
-                        $playVideo(videoId);
-                    } else if (url.hostname.endsWith('youtube.com')) {
-                        const videoId = url.searchParams.get('v');
-                        if (!videoId) return;
-                        $playVideo(videoId);
-                    } else {
-                        console.log('unsupported url', url);
-                    }
-                }}
-                lazy
-            />
-            <h3>最近の配信から</h3>
-            <div class="table">
-                <TableList
-                    table={chat.rooms}
-                    component={RoomEntry}
-                    filter={(_, room) => !!room.metadata?.url}
-                />
+        <div class="menu">
+            <section>
+                <h3>
+                    配信ソフトに追加する
+                    <i class="ti ti-arrow-bar-to-down" />
+                </h3>
+                <AssetButton />
+            </section>
+            <div class="streams">
+                <h3>
+                    最近の配信から
+                    <i class="ti ti-video" />
+                </h3>
+                <div class="table">
+                    <TableList
+                        table={chat.rooms}
+                        component={RoomEntry}
+                        filter={(_, room) => !!room.metadata?.url}
+                    />
+                </div>
             </div>
         </div>
         <div class="player">
@@ -112,38 +105,63 @@
                     },
                 }}
             />
-
-            <h3>アセット</h3>
-            <AssetButton />
+            <section>
+                <p>
+                    URLから
+                    <i class="ti ti-link" />
+                </p>
+                <Textbox
+                    placeholder="URLを入力"
+                    on:input={(event) => {
+                        const url = new URL(event.detail);
+                        if (url.hostname === 'youtu.be') {
+                            const videoId = url.pathname.slice(1);
+                            $playVideo(videoId);
+                        } else if (url.hostname.endsWith('youtube.com')) {
+                            const videoId = url.searchParams.get('v');
+                            if (!videoId) return;
+                            $playVideo(videoId);
+                        } else {
+                            console.log('unsupported url', url);
+                        }
+                    }}
+                    lazy
+                />
+            </section>
         </div>
     </main>
 </AppPage>
 
 <style lang="scss">
     main {
-        position: relative;
+        position: absolute;
+        inset: 0;
         display: flex;
-        height: calc(100vh - 5rem);
         gap: 2rem;
         padding: 2rem;
-        padding-top: 1rem;
-        margin-bottom: 2rem;
         color: var(--color-1);
     }
 
     h3 {
-        margin-top: 1rem;
+        margin-bottom: 0.5rem;
     }
 
-    .rooms {
+    .menu {
         display: flex;
         flex-direction: column;
         height: 100%;
         flex: 0 0 22rem;
+        gap: 1rem;
 
-        > .table {
-            height: calc(100% - 10rem);
+        > .streams {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+
+            > .table {
+                flex: 1;
+                overflow: auto;
+            }
         }
     }
 
@@ -151,5 +169,6 @@
         display: flex;
         flex-direction: column;
         flex: 1;
+        gap: 1rem;
     }
 </style>
