@@ -113,7 +113,7 @@
         align-items: start;
         justify-content: flex-start;
         width: 100%;
-        height: 100vh;
+        height: 100%;
         background: var(--color-bg-1);
         padding: 40px;
     }

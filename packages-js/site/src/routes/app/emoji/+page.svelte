@@ -143,14 +143,14 @@
         display: flex;
         flex-direction: column;
         width: 100%;
-        height: 100vh;
+        height: 100%;
         background: var(--color-bg-1);
     }
 
     .list {
         position: relative;
         width: 100%;
-        max-height: calc(100vh - 170px);
+        height: 100%;
         overflow: hidden;
         background: var(--color-bg-2);
     }

@@ -8,8 +8,8 @@
     import { APP } from './app.js';
     import { ChatSubtitleApp } from './chatsubtitle-app.js';
     import RoomEntry from './components/RoomEntry.svelte';
-    import { AlignType, JustifyType, SubtitleWriter, type Subtitle } from './subtitle.js';
     import { createSubtitle } from './stores.js';
+    import { AlignType, JustifyType, SubtitleWriter } from './subtitle.js';
 
     export const omu = new Omu(APP);
     const chatSubtitleApp = new ChatSubtitleApp(omu);
@@ -203,19 +203,22 @@
                 Download Subtitle
             </a>
         {/if}
-        <section>
-            <TableList
-                table={chat.rooms}
-                component={RoomEntry}
-                filter={(key, room) =>
-                    !!(room.metadata.first_message_id && room.metadata.last_message_id)}
-            />
-        </section>
+        <TableList
+            table={chat.rooms}
+            component={RoomEntry}
+            filter={(key, room) =>
+                !!(room.metadata.first_message_id && room.metadata.last_message_id)}
+        />
     </main>
 </AppPage>
 
 <style lang="scss">
     section {
         padding: 1rem;
+    }
+
+    main {
+        position: absolute;
+        inset: 0;
     }
 </style>

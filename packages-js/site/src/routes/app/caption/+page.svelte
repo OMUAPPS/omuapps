@@ -223,7 +223,7 @@
         outline: 1px solid var(--color-1);
         background: var(--color-bg-2);
         min-height: 200px;
-        height: 100%;
+        height: 10rem;
     }
 
     .font-list {

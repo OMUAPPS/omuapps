@@ -23,7 +23,9 @@
 </script>
 
 <slot name="header" />
-<slot />
+<main>
+    <slot />
+</main>
 {#if state === 'loading'}
     <div class="modal">
         <Spinner />
@@ -46,6 +48,12 @@
 {/if}
 
 <style lang="scss">
+    main {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
     .modal {
         position: fixed;
         display: flex;
