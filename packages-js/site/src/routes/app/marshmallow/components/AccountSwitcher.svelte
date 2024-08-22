@@ -24,7 +24,7 @@
         <Popup noBackground let:close>
             {#if users}
                 <div class="popup">
-                    {#each Object.entries(users) as [id, entry]}
+                    {#each Object.entries(users) as [id, entry] (id)}
                         {@const selected = user === entry}
                         <button
                             on:click={() => {

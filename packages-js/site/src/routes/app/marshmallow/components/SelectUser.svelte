@@ -13,7 +13,7 @@
         <small>あとから切り替えることもできます。</small>
     </span>
     <div class="users">
-        {#each Object.entries(users) as [id, entry]}
+        {#each Object.entries(users) as [id, entry] (id)}
             <button on:click={() => (user = entry)}>
                 <Tooltip>
                     <b>{entry.screen_name}</b>
