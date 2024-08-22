@@ -10,7 +10,7 @@ const preview: Preview = {
             },
         },
     },
-    decorators: decorators as any,
+    decorators: decorators as never,
 };
 
 export default preview;
