@@ -1,29 +1,28 @@
-`
-<?xml version="1.0" encoding="utf-8"?>
-<timedtext format="3">
-  <head>
-    <!--
-      0: center to bottom-right
-      1: center to bottom
-      2: center to bottom-left
-      3: center to right
-      4: center to center
-      5: center to left
-      6: center to top-right
-      7: center to top
-      8: center to top-left
-    -->
-    <wp id="<wp id>" ap="<align type>" ah="<position from left 0-100>" av="position from top 0-100>" />
-    <pen id="<pen id>" sz="<size 0-100?>" fc="#<foreground hex rgb color>" fo="<foreground opacity 0-255>" bc="#<background hex rgb color>" bo="<background opacity 0-255>" />
-    <ws id="<ws id?>" ju="<?>" pd="<?>" sd="<?>" />
-    ...style definitions
-  </head>
-  <body>
-    <p t="<start time ms>" d="<duration ms>" p="<pen id>" wp="<wp id>" ws="<ws id>">{content}</p>
-    ...contents
-  </body>
-</timedtext>
-`;
+/* <?xml version="1.0" encoding="utf-8"?>
+ <timedtext format="3">
+   <head>
+     <!--
+       0: center to bottom-right
+       1: center to bottom
+       2: center to bottom-left
+       3: center to right
+       4: center to center
+       5: center to left
+       6: center to top-right
+       7: center to top
+       8: center to top-left
+     -->
+     <wp id="<wp id>" ap="<align type>" ah="<position from left 0-100>" av="position from top 0-100>" />
+     <pen id="<pen id>" sz="<size 0-100?>" fc="#<foreground hex rgb color>" fo="<foreground opacity 0-255>" bc="#<background hex rgb color>" bo="<background opacity 0-255>" />
+     <ws id="<ws id?>" ju="<?>" pd="<?>" sd="<?>" />
+     ...style definitions
+   </head>
+   <body>
+     <p t="<start time ms>" d="<duration ms>" p="<pen id>" wp="<wp id>" ws="<ws id>">{content}</p>
+     ...contents
+   </body>
+</timedtext> */
+
 export enum AlignType {
     TopLeft = 0,
     Top = 1,
