@@ -3,16 +3,9 @@
     import { AppHeader, ButtonMini, Combobox, FlexRowWrapper, Toggle } from '@omujs/ui';
     import { APP } from './app.js';
     import { config } from './client.js';
-    import { LANGUAGE_OPTIONS, type Language } from './translator.js';
+    import { LANGUAGE_OPTIONS } from './translator.js';
 
     $: console.log($config.languages);
-
-    function changeLanguage(language: Language, i: number) {
-        $config = {
-            ...$config,
-            languages: $config.languages.map((l, j) => (i === j ? language : l)),
-        };
-    }
 </script>
 
 <AppPage>

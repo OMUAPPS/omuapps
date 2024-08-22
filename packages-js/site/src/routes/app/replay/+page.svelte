@@ -1,31 +1,19 @@
 <script lang="ts">
-    import { Omu } from '@omujs/omu';
-    import {
-        AppHeader,
-        DragLink,
-        FlexRowWrapper,
-        TableList,
-        Textbox,
-        Toggle,
-        setClient,
-    } from '@omujs/ui';
-    import { BROWSER } from 'esm-env';
-    import { onMount } from 'svelte';
-    import { APP } from './app.js';
-    import { ReplayApp } from './replay-app.js';
-    import Player from './components/Player.svelte';
-    import { Chat } from '@omujs/chat';
-    import RoomEntry from './components/RoomEntry.svelte';
-    import { playVideo } from './stores.js';
-    import { page } from '$app/stores';
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
+    import { Chat } from '@omujs/chat';
+    import { Omu } from '@omujs/omu';
+    import { AppHeader, FlexRowWrapper, TableList, Textbox, Toggle, setClient } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import { APP } from './app.js';
+    import Player from './components/Player.svelte';
+    import RoomEntry from './components/RoomEntry.svelte';
+    import { ReplayApp } from './replay-app.js';
+    import { playVideo } from './stores.js';
     const omu = new Omu(APP);
     const chat = new Chat(omu);
     const { replayData, config } = new ReplayApp(omu);
     setClient(omu);
-
-    let player: YT.Player | undefined;
 
     $playVideo = (videoId: string) => {
         $replayData = {
@@ -37,7 +25,6 @@
     };
 
     function onReady(event: YT.PlayerEvent) {
-        player = event.target;
         event.target.playVideo();
         event.target.mute();
         if (!$replayData) return;
@@ -57,13 +44,6 @@
             playing: event.data === YT.PlayerState.PLAYING,
         };
         console.log($replayData);
-    }
-
-    function createAssetUrl() {
-        const url = new URL($page.url);
-        url.pathname = `${url.pathname}asset`;
-        url.searchParams.set('assetId', Date.now().toString());
-        return url;
     }
 
     if (BROWSER) {

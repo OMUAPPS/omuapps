@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { page } from '$app/stores';
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { Tooltip } from '@omujs/ui';
     import AccountSwitcher from './components/AccountSwitcher.svelte';
@@ -82,13 +81,6 @@
     }
 
     let refreshPromise: Promise<void> | null = getUsers();
-
-    function createAssetUrl() {
-        const url = new URL($page.url);
-        url.pathname = `${url.pathname}asset`;
-        url.searchParams.set('assetId', Date.now().toString());
-        return url;
-    }
 </script>
 
 <main>
