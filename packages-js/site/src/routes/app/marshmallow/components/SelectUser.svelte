@@ -80,16 +80,15 @@
             width: fit-content;
             padding: 1rem 2rem;
             cursor: pointer;
+            $move: 0.2rem;
+            margin-top: $move;
+            margin-bottom: 0rem;
 
             > img {
                 width: 3rem;
                 height: 3rem;
                 border-radius: 50%;
             }
-
-            $move: 0.2rem;
-            margin-top: $move;
-            margin-bottom: 0rem;
 
             &:focus,
             &:hover {
