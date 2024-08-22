@@ -231,11 +231,21 @@ export class SetPermissionPacket {
             flags |= 0b10000;
         }
         writer.writeByte(flags);
-        packet.all && writer.writeString(packet.all.key());
-        packet.read && writer.writeString(packet.read.key());
-        packet.write && writer.writeString(packet.write.key());
-        packet.remove && writer.writeString(packet.remove.key());
-        packet.proxy && writer.writeString(packet.proxy.key());
+        if (packet.all) {
+            writer.writeString(packet.all.key());
+        }
+        if (packet.read) {
+            writer.writeString(packet.read.key());
+        }
+        if (packet.write) {
+            writer.writeString(packet.write.key());
+        }
+        if (packet.remove) {
+            writer.writeString(packet.remove.key());
+        }
+        if (packet.proxy) {
+            writer.writeString(packet.proxy.key());
+        }
         return writer.finish();
     }
 
