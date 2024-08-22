@@ -153,6 +153,7 @@
         display: flex;
         gap: 2rem;
         padding: 2rem;
+        padding-bottom: 1rem;
         color: var(--color-1);
     }
 

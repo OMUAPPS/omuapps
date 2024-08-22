@@ -59,6 +59,8 @@
 
     .room-entry.selected {
         background: var(--color-bg-1);
+        outline: 1px solid var(--color-1);
+        outline-offset: -2px;
     }
 
     .thumbnail-container {
