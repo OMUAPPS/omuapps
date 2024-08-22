@@ -44,6 +44,7 @@ const REQUIRE_APPS_PACKET_TYPE = PacketType.createJson<Identifier[]>(SERVER_EXTE
 });
 
 export class ServerExtension implements Extension {
+    public readonly type = SERVER_EXTENSION_TYPE;
     public readonly apps: Table<App>;
     public readonly sessions: Table<App>;
     private requiredApps = new IdentifierSet();

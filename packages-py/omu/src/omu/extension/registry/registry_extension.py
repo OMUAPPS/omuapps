@@ -47,6 +47,10 @@ REGISTRY_GET_ENDPOINT = EndpointType[Identifier, RegistryPacket].create_serializ
 
 
 class RegistryExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return REGISTRY_EXTENSION_TYPE
+
     def __init__(self, client: Client) -> None:
         self.client = client
         self.registries: dict[Identifier, Registry] = {}

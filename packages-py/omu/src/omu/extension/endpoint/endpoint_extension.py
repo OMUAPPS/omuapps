@@ -32,6 +32,10 @@ class EndpointHandler:
 
 
 class EndpointExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return ENDPOINT_EXTENSION_TYPE
+
     def __init__(self, client: Client) -> None:
         self.client = client
         self.response_futures: dict[int, Future] = {}

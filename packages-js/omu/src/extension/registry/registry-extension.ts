@@ -11,6 +11,7 @@ import { RegistryPacket, RegistryRegisterPacket } from './packets.js';
 import { RegistryType, type Registry } from './registry.js';
 
 export class RegistryExtension implements Extension {
+    public readonly type = REGISTRY_EXTENSION_TYPE;
     private readonly registries = new IdentifierMap<Registry<unknown>>();
 
     constructor(private readonly client: Client) {

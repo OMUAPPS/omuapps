@@ -77,6 +77,7 @@ const DASHBOARD_APP_TABLE_TYPE = TableType.createModel(DASHBOARD_EXTENSION_TYPE,
 });
 
 export class DashboardExtension {
+    public readonly type = DASHBOARD_EXTENSION_TYPE;
     private dashboard: DashboardHandler | null = null;
     public readonly apps: Table<App>;
 

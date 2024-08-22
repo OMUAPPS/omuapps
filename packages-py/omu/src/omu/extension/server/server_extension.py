@@ -49,6 +49,10 @@ VERSION_REGISTRY_TYPE = RegistryType[str | None].create_json(
 
 
 class ServerExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return SERVER_EXTENSION_TYPE
+
     def __init__(self, client: Client) -> None:
         self._client = client
         self.apps = client.tables.get(SERVER_APP_TABLE_TYPE)

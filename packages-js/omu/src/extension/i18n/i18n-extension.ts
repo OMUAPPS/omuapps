@@ -16,6 +16,7 @@ const I18N_LOCALES_REGISTRY_TYPE = RegistryType.createJson<Locale[]>(I18N_EXTENS
 });
 
 export class I18nExtension implements Extension {
+    public readonly type = I18N_EXTENSION_TYPE;
     public readonly localesRegistry: Registry<Locale[]>;
     public locales?: Locale[];
 

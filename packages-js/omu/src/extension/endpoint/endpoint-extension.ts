@@ -23,6 +23,7 @@ type EndpointHandler = {
 };
 
 export class EndpointExtension {
+    public readonly type = ENDPOINT_EXTENSION_TYPE;
     private readonly registeredEndpoints = new IdentifierMap<EndpointHandler>();
     private readonly promiseMap: Map<number, CallPromise> = new Map();
     private callId: number;

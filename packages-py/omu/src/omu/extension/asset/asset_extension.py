@@ -95,6 +95,10 @@ ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[
 
 
 class AssetExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return ASSET_EXTENSION_TYPE
+
     def __init__(self, client: Client) -> None:
         self.client = client
 

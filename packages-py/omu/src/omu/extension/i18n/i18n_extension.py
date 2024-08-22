@@ -21,6 +21,10 @@ I18N_LOCALES_REGISTRY_TYPE = RegistryType[list[Locale]].create_json(
 
 
 class I18nExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return I18N_EXTENSION_TYPE
+
     def __init__(self, client: Client):
         self.client = client
         client.permissions.require(I18N_GET_LOCALES_PERMISSION_ID)

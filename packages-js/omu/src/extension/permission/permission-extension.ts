@@ -35,6 +35,7 @@ const PERMISSION_GRANT_PACKET = PacketType.createJson<PermissionType[]>(PERMISSI
 });
 
 export class PermissionExtension {
+    public readonly type = PERMISSION_EXTENSION_TYPE;
     private permissions = new IdentifierMap<PermissionType>();
     private readonly registeredPermissions = new IdentifierMap<PermissionType>();
     private readonly requiredPermissions = new IdentifierSet();

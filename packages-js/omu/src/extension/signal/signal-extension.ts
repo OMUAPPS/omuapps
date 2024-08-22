@@ -31,6 +31,7 @@ const SIGNAL_NOTIFY_PACKET = PacketType.createSerialized<SignalPacket>(SIGNAL_EX
 });
 
 export class SignalExtension implements Extension {
+    public readonly type = SIGNAL_EXTENSION_TYPE;
     private readonly signals = new IdentifierMap<SignalType<unknown>>();
 
     constructor(private readonly client: Client) {

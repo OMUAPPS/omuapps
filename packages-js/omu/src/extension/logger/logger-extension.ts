@@ -26,6 +26,7 @@ export const LOGGER_LISTEN_PACKET = PacketType.createJson<Identifier>(LOGGER_EXT
 
 type LogListener = (message: LogMessage) => void;
 export class LoggerExtension {
+    public readonly type = LOGGER_EXTENSION_TYPE;
     private readonly listeners: IdentifierMap<LogListener[]> = new IdentifierMap();
 
     constructor(private readonly client: Client) {

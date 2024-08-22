@@ -8,6 +8,7 @@ export const PLUGIN_EXTENSION_TYPE = new ExtensionType(
 );
 
 export class PluginExtension {
+    public readonly type = PLUGIN_EXTENSION_TYPE;
     private readonly requiredPlugins: Map<string, string | null> = new Map();
 
     constructor(private readonly client: Client) {

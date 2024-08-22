@@ -13,6 +13,10 @@ PLUGIN_EXTENSION_TYPE = ExtensionType(
 
 
 class PluginExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return PLUGIN_EXTENSION_TYPE
+
     def __init__(self, client: Client):
         self.client = client
         self.plugins: dict[str, str | None] = {}

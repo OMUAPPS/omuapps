@@ -89,6 +89,10 @@ DASHBOARD_APP_TABLE_TYPE = TableType.create_model(
 
 
 class DashboardExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return DASHBOARD_EXTENSION_TYPE
+
     def __init__(self, client: Client):
         self.client = client
         self.client.network.register_packet(

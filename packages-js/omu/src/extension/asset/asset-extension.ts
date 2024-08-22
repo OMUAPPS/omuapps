@@ -94,6 +94,8 @@ const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[],
 );
 
 export class AssetExtension {
+    public readonly type = ASSET_EXTENSION_TYPE;
+
     constructor(private readonly client: Client) {}
 
     public async upload(identifier: Identifier, buffer: Uint8Array): Promise<Identifier> {

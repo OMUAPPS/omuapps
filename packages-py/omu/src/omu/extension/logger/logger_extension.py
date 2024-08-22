@@ -29,6 +29,10 @@ LOGGER_SERVER_ID = LOGGER_EXTENSION_TYPE / "server"
 
 
 class LoggerExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return LOGGER_EXTENSION_TYPE
+
     def __init__(self, client: Client):
         client.network.register_packet(
             LOGGER_LOG_PACKET,

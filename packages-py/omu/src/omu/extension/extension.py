@@ -8,7 +8,9 @@ from omu.identifier import Identifier
 
 
 class Extension(abc.ABC):
-    pass
+    @property
+    @abc.abstractmethod
+    def type(self) -> ExtensionType: ...
 
 
 class ExtensionType[T: Extension](Identifier):

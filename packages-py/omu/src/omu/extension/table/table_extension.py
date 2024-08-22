@@ -34,6 +34,10 @@ type ModelType[T: Keyable, D] = JsonSerializable[T, D]
 
 
 class TableExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return TABLE_EXTENSION_TYPE
+
     def __init__(self, client: Client):
         self._client = client
         self._tables: dict[Identifier, Table] = {}

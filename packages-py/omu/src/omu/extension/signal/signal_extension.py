@@ -36,6 +36,10 @@ SIGNAL_NOTIFY_PACKET = PacketType[SignalPacket].create_serialized(
 
 
 class SignalExtension(Extension):
+    @property
+    def type(self) -> ExtensionType:
+        return SIGNAL_EXTENSION_TYPE
+
     def __init__(self, client: Client):
         self.client = client
         self.signals: dict[Identifier, Signal] = {}
