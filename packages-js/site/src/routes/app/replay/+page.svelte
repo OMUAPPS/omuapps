@@ -139,7 +139,7 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        flex: 0 0 20rem;
+        flex: 0 0 22rem;
 
         > .table {
             height: calc(100% - 10rem);
