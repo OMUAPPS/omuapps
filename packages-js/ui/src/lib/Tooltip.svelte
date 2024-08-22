@@ -110,10 +110,81 @@
             },
         };
     }
+
+    function log(value: number) {
+        if (value === 0) {
+            return 0;
+        }
+        if (value < 0) {
+            return -Math.log(-value);
+        }
+        return Math.log(value);
+    }
+
+    let lastMouseMoveTime = 0;
+    let lastMousePos: { x: number; y: number } = { x: 0, y: 0 };
+    let isMouseMoving = false;
+    let timeout: number;
+    let averageMouseVelocity = 0;
+    let lastMouseVelocity = 0;
+    let mouseJerk = 0;
+    function handleMouseMove(event: MouseEvent) {
+        if (event.timeStamp - lastMouseMoveTime < 1000 / 60) {
+            return;
+        }
+        lastMouseMoveTime = event.timeStamp;
+        averageMouseVelocity = average(
+            'velocity',
+            Math.sqrt(
+                Math.pow(event.clientX - lastMousePos.x, 2) +
+                    Math.pow(event.clientY - lastMousePos.y, 2),
+            ),
+            2,
+        );
+        mouseJerk = averageMouseVelocity - lastMouseVelocity;
+        lastMouseVelocity = averageMouseVelocity;
+        lastMousePos = { x: event.clientX, y: event.clientY };
+        if (log(averageMouseVelocity) < 2 || max('jerk', log(mouseJerk)) < 2.6) {
+            return;
+        }
+        if (isMouseMoving) {
+            clearTimeout(timeout);
+        }
+        if (!show) {
+            isMouseMoving = true;
+        }
+        timeout = window.setTimeout(() => {
+            isMouseMoving = false;
+        }, 1000 / 30);
+    }
+
+    const averageTimes: Record<string, number[]> = {};
+    function average(key: string, value: number, length = 10) {
+        if (!averageTimes[key]) {
+            averageTimes[key] = [];
+        }
+        averageTimes[key].push(value);
+        if (averageTimes[key].length > length) {
+            averageTimes[key].shift();
+        }
+        return averageTimes[key].reduce((a, b) => a + b, 0) / averageTimes[key].length;
+    }
+    const maxTimes: Record<string, number[]> = {};
+    function max(key: string, value: number) {
+        if (!maxTimes[key]) {
+            maxTimes[key] = [];
+        }
+        maxTimes[key].push(value);
+        if (maxTimes[key].length > 10) {
+            maxTimes[key].shift();
+        }
+        return Math.max(...maxTimes[key]);
+    }
 </script>
 
+<svelte:window on:mousemove={handleMouseMove} />
 <span class="wrapper" use:attachParent>
-    {#if show}
+    {#if show && !isMouseMoving}
         <div
             class="tooltip"
             class:background={!noBackground}
