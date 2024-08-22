@@ -3,15 +3,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { Omu } from '@omujs/omu';
-    import {
-        AppHeader,
-        Combobox,
-        FlexRowWrapper,
-        Popup,
-        Textbox,
-        setClient,
-        style,
-    } from '@omujs/ui';
+    import { AppHeader, Combobox, FlexRowWrapper, Popup, Textbox, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import CaptionRenderer from './CaptionRenderer.svelte';
     import { APP } from './app.js';
@@ -118,14 +110,12 @@
                                     href={`https://fonts.googleapis.com/css2?family=${font}:ital,wght@0,400&directory=3&display=block&text=サンプルテキスト`}
                                 />
                                 <p
-                                    style={style({
-                                        fontFamily: `'${font}', sans-serif`,
-                                        fontSize: '1rem',
-                                        lineHeight: 1.5,
-                                        margin: 0,
-                                        padding: 0,
-                                        display: 'inline-block',
-                                    })}
+                                    style:font-family="{font}, sans-serif"
+                                    style:font-size="1rem"
+                                    style:line-height="1.5"
+                                    style:margin="0"
+                                    style:padding="0"
+                                    style:display="inline-block"
                                 >
                                     サンプルテキスト
                                 </p>

@@ -45,18 +45,21 @@
     }
 
     $: updateDisplayTime(time);
+    $: background = `${$config.style.backgroundColor}${Math.floor(
+        $config.style.backgroundOpacity * 255,
+    ).toString(16)}`;
 
     if (BROWSER) {
         data.subscribe(update);
     }
 </script>
 
-<h1 style="
-    color: {$config.style.color};
-    background: {$config.style.backgroundColor}{Math.floor($config.style.backgroundOpacity * 255).toString(16)};
-    padding: {$config.style.backgroundPadding[0]}px {$config.style.backgroundPadding[1]}px;
-    font-size: {$config.style.fontSize}px;
-    font-family: {$config.style.fontFamily};
-">
+<h1
+    style:color={$config.style.color}
+    style:background
+    style:padding="{$config.style.backgroundPadding[0]}px {$config.style.backgroundPadding[1]}px"
+    style:font-size="{$config.style.fontSize}px"
+    style:font-family={$config.style.fontFamily}
+>
     {displayTime}
 </h1>

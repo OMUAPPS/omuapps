@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ButtonMini, style, Tooltip } from '@omujs/ui';
+    import { ButtonMini, Tooltip } from '@omujs/ui';
     import type { Archive, ArchiveStatus } from '../archive.js';
     import Spinner from './Spinner.svelte';
 
@@ -64,10 +64,7 @@
                 {#if entry.status === 'processing'}
                     <Spinner />
                 {:else}
-                    <div
-                        class="status"
-                        style={style({ backgroundColor: STATUS_COLORS[entry.status] })}
-                    ></div>
+                    <div class="status" style:background={STATUS_COLORS[entry.status]}></div>
                 {/if}
             </div>
         </div>

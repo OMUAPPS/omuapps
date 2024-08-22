@@ -126,10 +126,10 @@
         <div
             class="arrow"
             class:top={direction === 'up'}
-            style="left: {targetRect.x + targetRect.width / 2 - offset.x}px; top: {(direction ===
-            'down'
+            style:left="${targetRect.x + targetRect.width / 2}px"
+            style:top="{direction === 'down'
                 ? targetRect.y + targetRect.height
-                : targetRect.y - 10) - offset.y}px;"
+                : targetRect.y - 10}px"
         />
     {/if}
 </span>

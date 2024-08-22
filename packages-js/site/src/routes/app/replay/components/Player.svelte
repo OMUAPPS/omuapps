@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { style } from '@omujs/ui';
-
     export let videoId: string | undefined;
     export let player: YT.Player | undefined = undefined;
     export let options: YT.PlayerOptions = {};
@@ -60,10 +58,8 @@
                     id="player"
                     width={playerWidth}
                     height={playerHeight}
-                    style={style({
-                        top: `${-padding}px`,
-                        clipPath: `inset(${padding}px 0 ${padding}px 0)`,
-                    })}
+                    style:top="{-padding}px"
+                    style:clipPath="inset({padding}px 0 {padding}px 0)"
                     src="https://www.youtube.com/embed/{initialVideoId}?enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1"
                     frameborder="0"
                     title="YouTube video player"

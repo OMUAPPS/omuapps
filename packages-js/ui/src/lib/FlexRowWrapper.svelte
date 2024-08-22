@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { style } from './utils/class-helper.js';
-
     export let between = false;
     export let reverse = false;
     export let widthFull = false;
@@ -27,7 +25,8 @@
     class:gap
     class:wrap
     class:baseline
-    style={style({ alignItems, justifyContent })}
+    style:align-items={alignItems}
+    style:justify-content={justifyContent}
 >
     <slot />
 </div>

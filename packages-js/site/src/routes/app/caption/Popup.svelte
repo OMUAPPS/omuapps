@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { style } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { afterUpdate, onDestroy } from 'svelte';
 
@@ -91,7 +90,8 @@
             class="popup"
             class:background={!noBackground}
             class:top={direction === 'top'}
-            style={style({ top: `${popupPos.y}px`, left: `${popupPos.x}px` })}
+            style:top="{popupPos.y}px"
+            style:left="{popupPos.x}px"
             bind:this={popup}
         >
             <slot />
@@ -99,13 +99,10 @@
         <div
             class="pointer"
             class:top={direction === 'top'}
-            style={style({
-                left: `${targetRect.x + targetRect.width / 2}px`,
-                top:
-                    direction === 'bottom'
-                        ? `${targetRect.y + targetRect.height}px`
-                        : `${targetRect.y - 10}px`,
-            })}
+            style:left="{targetRect.x + targetRect.width / 2}px"
+            style:top="{direction === 'bottom'
+                ? targetRect.y + targetRect.height
+                : targetRect.y - 10}px"
         />
     {/if}
 </span>

@@ -32,27 +32,25 @@
                 <img
                     src="https://media.marshmallow-qa.com/system/images/{$data.message
                         .message_id}.png"
-                    alt=""
                     class:async={!$config.syncScroll}
-                    style="transform: translateY(-{$config.syncScroll ? $data.scroll * 100 : 0}%);"
+                    style:transform="translateY(-{$config.syncScroll ? $data.scroll * 100 : 0}%)"
                     bind:this={image}
+                    alt=""
                 />
                 {#if image && $config.showPointer && $data.pointer}
                     {@const pointer = $data.pointer}
                     <div
                         class="pointer-container"
-                        style="
-                                transform: translateY(-{$config.syncScroll
+                        style:width="{image.clientWidth}px"
+                        style:height="{image.clientHeight}px"
+                        style:transform="translateY(-{$config.syncScroll
                             ? $data.scroll * 100
-                            : 0}%);
-                                width: {image.clientWidth}px;
-                                height: {image.clientHeight}px;"
+                            : 0}%)"
                     >
                         <i
                             class="pointer ti ti-pointer-filled"
-                            style="
-                                    left: {pointer.x * image.clientWidth}px;
-                                    top: {pointer.y * image.clientHeight}px;"
+                            style:left="{pointer.x * image.clientWidth}px"
+                            style:top="{pointer.y * image.clientHeight}px"
                         >
                         </i>
                     </div>

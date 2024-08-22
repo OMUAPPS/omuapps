@@ -9,7 +9,7 @@
     import Role from './Role.svelte';
     import Tooltip from './Tooltip.svelte';
     import { client, dateTimeFormats, translate } from './stores.js';
-    import { applyOpacity, style } from './utils/class-helper.js';
+    import { applyOpacity } from './utils/class-helper.js';
 
     export let paid: Paid | undefined = undefined;
     export let gifts: Array<models.Gift> | undefined = undefined;
@@ -23,13 +23,9 @@
 <article
     class:special={!!(paid || gifts?.length)}
     class:selected
-    style={style(
-        paid || gifts?.length
-            ? {
-                  background: `${applyOpacity(paid ? 'var(--color-1)' : 'var(--color-2)', 0.1)}`,
-              }
-            : {},
-    )}
+    style:background={paid || gifts?.length
+        ? applyOpacity(paid ? 'var(--color-1)' : 'var(--color-2)', 0.1)
+        : undefined}
 >
     <FlexRowWrapper widthFull gap>
         {#if author && author.avatarUrl}

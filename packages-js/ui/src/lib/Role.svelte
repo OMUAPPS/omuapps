@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
 
-    import { applyOpacity, style } from '$lib/utils/class-helper.js';
+    import { applyOpacity } from '$lib/utils/class-helper.js';
     import FlexColWrapper from './FlexColWrapper.svelte';
     import FlexRowWrapper from './FlexRowWrapper.svelte';
     import Tooltip from './Tooltip.svelte';
@@ -12,10 +12,8 @@
 
 <div
     class:icon={role.iconUrl}
-    style={style({
-        color: role.color && role.color,
-        background: role.color && applyOpacity(role.color, 0.1),
-    })}
+    style:color={role.color}
+    style:background={role.color && applyOpacity(role.color, 0.1)}
 >
     {#if role.iconUrl}
         <img src={role.iconUrl} alt="role icon" />

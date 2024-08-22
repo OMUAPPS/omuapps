@@ -36,11 +36,7 @@
 
 {#if id}
     <AssetPage>
-        <main
-            style="
-        justify-content: {alignHorizontal};
-        align-items: {alignVertical};"
-        >
+        <main style:justify-content={alignHorizontal} style:align-items={alignVertical}>
             <Timer {timer} />
         </main>
     </AssetPage>

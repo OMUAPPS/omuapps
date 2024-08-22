@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { style } from '@omujs/ui';
     import type { CaptionApp } from './caption-app.js';
 
     export let captionApp: CaptionApp;
@@ -28,19 +27,15 @@
 {/each}
 {#if text}
     <div
-        style={style({
-            minWidth: `${previosWidth}px`,
-            color: $config.style.color,
-            backgroundColor: $config.style.backgroundColor,
-        })}
+        style:min-width="{previosWidth}px"
+        style:color={$config.style.color}
+        style:background={$config.style.backgroundColor}
     >
         <p
             bind:clientWidth
-            style={style({
-                fontFamily,
-                fontSize: `${$config.style.fontSize}px`,
-                fontWeight: $config.style.fontWeight,
-            })}
+            style:font-family={fontFamily}
+            style:font-size="{$config.style.fontSize}px"
+            style:font-weight={$config.style.fontWeight}
         >
             {text}
         </p>
