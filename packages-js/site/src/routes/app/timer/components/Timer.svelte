@@ -41,7 +41,10 @@
                 .padStart(2, '0'),
         };
 
-        displayTime = $config.format.replace(paramRegex, (match, key: keyof typeof times) => times[key]);
+        displayTime = $config.format.replace(
+            paramRegex,
+            (match, key: keyof typeof times) => times[key],
+        );
     }
 
     $: updateDisplayTime(time);

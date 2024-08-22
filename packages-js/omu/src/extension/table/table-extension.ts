@@ -465,15 +465,15 @@ class TableImpl<T> implements Table<T> {
         let items: Map<string, T> = await this.fetchItems(
             backward
                 ? {
-                      before: 0,
-                      after: this.cacheSize ?? 100,
-                      cursor,
-                  }
+                    before: 0,
+                    after: this.cacheSize ?? 100,
+                    cursor,
+                }
                 : {
-                      before: this.cacheSize ?? 100,
-                      after: 0,
-                      cursor,
-                  },
+                    before: this.cacheSize ?? 100,
+                    after: 0,
+                    cursor,
+                },
         );
         yield* items.values();
         while (items.size > 0) {
