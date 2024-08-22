@@ -12,16 +12,17 @@
 
     const unlisten = $client.onReady(() => {
         const metadata = app.metadata;
-        if (metadata) {
-            if (metadata.name) {
-                title = $client.i18n.translate(metadata.name);
-            }
-            if (metadata.icon) {
-                icon = $client.i18n.translate(metadata.icon);
-            }
-            if (metadata.description) {
-                description = $client.i18n.translate(metadata.description);
-            }
+        if (!metadata) {
+            return;
+        }
+        if (metadata.name) {
+            title = $client.i18n.translate(metadata.name);
+        }
+        if (metadata.icon) {
+            icon = $client.i18n.translate(metadata.icon);
+        }
+        if (metadata.description) {
+            description = $client.i18n.translate(metadata.description);
         }
     });
 

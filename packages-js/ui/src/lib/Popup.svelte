@@ -24,7 +24,7 @@
     let popupPos: { x: number; y: number } = { x: 0, y: 0 };
     let direction: 'top' | 'bottom' = 'bottom';
 
-    function handleClick(event: MouseEvent) {
+    function handleClick() {
         targetRect = target.getBoundingClientRect();
         open = true;
     }

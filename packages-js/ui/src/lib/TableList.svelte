@@ -9,7 +9,7 @@
 
     import type { Table } from '@omujs/omu/extension/table/table.js';
     import type { Keyable } from '@omujs/omu/interface.js';
-    import { onDestroy, onMount, tick, type ComponentType, type SvelteComponent } from 'svelte';
+    import { type ComponentType, type SvelteComponent, onDestroy, onMount, tick } from 'svelte';
 
     export let table: Table<T>;
     export let component: ComponentType<SvelteComponent<{ entry: T; selected?: boolean }>>;
@@ -30,27 +30,26 @@
     let updated = false;
     let viewport: HTMLDivElement;
     let last: string | undefined;
-    let loadingLock = false;
     let fetchLock: Promise<boolean> | undefined;
 
     async function fetch(): Promise<boolean> {
         if (fetchLock) {
             await fetchLock;
         }
-        fetchLock = new Promise<boolean>(async (resolve) => {
-            loadingLock = true;
-            const items = await table.fetchItems({
+        fetchLock = table
+            .fetchItems({
                 cursor: last,
                 before: initial,
+            })
+            .then((items) => {
+                last = [...items.keys()].at(-1);
+                updateCache(items);
+                update();
+                return [...items.keys()].filter((key) => key !== last).length > 0;
+            })
+            .finally(() => {
+                fetchLock = undefined;
             });
-            last = [...items.keys()].at(-1);
-            updateCache(items);
-            update();
-            loadingLock = false;
-            resolve([...items.keys()].filter((key) => key !== last).length > 0);
-        }).finally(() => {
-            fetchLock = undefined;
-        });
         return await fetchLock;
     }
 
@@ -270,7 +269,7 @@
             <i class="ti ti-chevron-up" />
         </button>
     {/if}
-    <button class="loading" class:active={loadingLock}>
+    <button class="loading" class:active={fetchLock !== undefined}>
         <i class="ti ti-loader-2" />
     </button>
 </div>

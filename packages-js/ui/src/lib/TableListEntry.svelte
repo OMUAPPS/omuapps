@@ -8,15 +8,15 @@
 
     let element: HTMLElement;
 
-    const timeout = transition
-        ? window.setTimeout(() => {
-              transition = false;
-          }, 200)
-        : 0;
+    if (transition) {
+        const timeout = window.setTimeout(() => {
+            transition = false;
+        }, 200);
 
-    onDestroy(() => {
-        window.clearTimeout(timeout);
-    });
+        onDestroy(() => {
+            window.clearTimeout(timeout);
+        });
+    }
 
     $: if (selected && element) {
         element.focus();
