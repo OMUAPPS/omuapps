@@ -118,7 +118,8 @@
             class="tooltip"
             class:background={!noBackground}
             class:top={direction === 'up'}
-            style="left: {tooltipPos.x - offset.x}px; top: {tooltipPos.y - offset.y}px;"
+            style:left="{tooltipPos.x - offset.x}px"
+            style:top="{tooltipPos.y - offset.y}px"
             bind:this={tooltip}
         >
             <slot />
@@ -126,7 +127,7 @@
         <div
             class="arrow"
             class:top={direction === 'up'}
-            style:left="${targetRect.x + targetRect.width / 2}px"
+            style:left="{targetRect.x + targetRect.width / 2}px"
             style:top="{direction === 'down'
                 ? targetRect.y + targetRect.height
                 : targetRect.y - 10}px"

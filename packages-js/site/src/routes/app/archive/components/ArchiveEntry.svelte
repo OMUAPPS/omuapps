@@ -37,7 +37,7 @@
             </span>
             <span class="description">
                 <Tooltip>
-                    <span style="white-space: pre-wrap;">
+                    <span style:white-space="pre-wrap">
                         {entry.description}
                     </span>
                 </Tooltip>

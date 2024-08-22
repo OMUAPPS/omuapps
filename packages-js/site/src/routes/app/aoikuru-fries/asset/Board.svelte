@@ -9,9 +9,9 @@
 <img
     src={board}
     alt=""
-    style="transform: scale({Math.max(1.4, (textWidth + 200) / width)}, {title.includes('\n')
+    style:transform="scale({Math.max(1.4, (textWidth + 200) / width)}, {title.includes('\n')
         ? 1.4
-        : 1.4}) translateY(-35px);"
+        : 1.4}) translateY(-35px)"
 />
 <h1 bind:clientWidth={textWidth}>
     {#each title.split('\n') as line}

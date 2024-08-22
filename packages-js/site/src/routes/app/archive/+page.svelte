@@ -30,7 +30,7 @@
         </AppHeader>
     </header>
     <main>
-        <section style="flex: 0 0 250px;">
+        <section style:flex="0 0 250px">
             <h2>設定</h2>
             <div class="settings">
                 <div>

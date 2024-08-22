@@ -142,11 +142,12 @@
     bind:offsetHeight={viewport_height}
     on:scroll={handleUpdate}
     on:resize={handleUpdate}
-    style="height: {height};"
+    style:height
 >
     <svelte-virtual-list-contents
         bind:this={contents}
-        style="padding-top: {top}px; padding-bottom: {bottom}px;"
+        style:padding-top="{top}px"
+        style:padding-bottom="{bottom}px"
     >
         {#each visible as row (row.data[0])}
             <svelte-virtual-list-row>
