@@ -1,8 +1,8 @@
+import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { IDENTIFIER } from './app.js';
 import type { Writable } from 'svelte/store';
-import { makeRegistryWritable } from '$lib/helper.js';
+import { IDENTIFIER } from './app.js';
 
 type ReplayData = {
     videoId: string;

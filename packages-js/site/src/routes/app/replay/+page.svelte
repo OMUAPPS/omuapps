@@ -109,16 +109,23 @@
             </div>
         </div>
         <div class="player">
-            <Player
-                videoId={$replayData?.videoId}
-                options={{
-                    events: {
-                        onReady,
-                        onPlaybackRateChange,
-                        onStateChange,
-                    },
-                }}
-            />
+            {#if $replayData}
+                <Player
+                    videoId={$replayData.videoId}
+                    options={{
+                        events: {
+                            onReady,
+                            onPlaybackRateChange,
+                            onStateChange,
+                        },
+                    }}
+                />
+            {:else}
+                <div class="empty">
+                    動画を選択するとここに表示されます
+                    <i class="ti ti-layers-selected-bottom" />
+                </div>
+            {/if}
             <section>
                 <p>
                     URLから
@@ -227,5 +234,16 @@
         flex-direction: column;
         flex: 1;
         gap: 1rem;
+    }
+
+    .empty {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        height: 100%;
+        outline: 1px dashed var(--color-outline);
+        background: var(--color-bg-2);
+        color: #666;
     }
 </style>
