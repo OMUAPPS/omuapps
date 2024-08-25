@@ -15,7 +15,7 @@ export type Config = {
 const CONFIG_REGISTRY = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: {
-        duration: 5,
+        duration: 10,
         editable: true,
     },
 });
