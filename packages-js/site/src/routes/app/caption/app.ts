@@ -10,12 +10,12 @@ export const APP = new App(IDENTIFIER, {
     metadata: {
         locale: 'en',
         name: {
-            en: 'Real-time Caption',
             ja: 'リアルタイム字幕',
+            en: 'Real-time Caption',
         },
         description: {
-            en: 'Displays real-time captions.',
-            ja: 'リアルタイムで字幕を表示します。',
+            ja: '喋った内容をリアルタイムで配信に表示することができます',
+            en: 'Display spoken content in real time on your stream',
         },
         icon: icon,
         tags: ['tool', 'asset'] as TagKey[],

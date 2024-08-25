@@ -10,12 +10,12 @@ export const APP = new App(IDENTIFIER, {
     metadata: {
         locale: 'en',
         name: {
-            en: 'Replay',
             ja: 'リプレイ',
+            en: 'Replay',
         },
         description: {
-            en: 'Replay live streams.',
-            ja: '動画や過去の配信を配信画面に写しながら再生することができます。',
+            ja: '過去の配信や動画を配信に写しながら再生することができます',
+            en: 'Play past streams or videos on your stream',
         },
         icon: icon,
         tags: ['tool', 'youtube', 'asset'] as TagKey[],

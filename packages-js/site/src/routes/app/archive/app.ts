@@ -10,12 +10,12 @@ export const APP = new App(IDENTIFIER, {
     metadata: {
         locale: 'en',
         name: {
-            en: 'Archive',
             ja: 'アーカイブ',
+            en: 'Archive',
         },
         description: {
-            en: 'Automatically archive live streams.',
-            ja: '配信を自動的にアーカイブします。',
+            ja: '配信を自動的に保存することができます',
+            en: 'Automatically save your streams',
         },
         icon: icon,
         tags: ['tool'] as TagKey[],

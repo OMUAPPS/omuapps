@@ -1,9 +1,9 @@
 import { App } from '@omujs/omu';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
-import thumbnail from './thumbnail.png';
 import { ORIGIN } from '../origin.js';
 import icon from './icon.png';
+import thumbnail from './thumbnail.png';
 
 export const IDENTIFIER = new Identifier('com.omuapps', 'reaction');
 
@@ -12,12 +12,12 @@ export const APP = new App(IDENTIFIER, {
     metadata: {
         locale: 'en',
         name: {
-            en: 'Reaction',
             ja: 'リアクション',
+            en: 'Reaction',
         },
         description: {
-            en: 'Show reactions from Youtube chat.',
-            ja: 'Youtubeのチャット欄のリアクションを表示します。',
+            ja: 'Youtubeのチャットに送られたリアクションを配信画面にも乗せることができます',
+            en: 'Display reactions sent to Youtube chat on your stream',
         },
         icon: icon,
         image: thumbnail,

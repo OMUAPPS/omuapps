@@ -11,12 +11,12 @@ export const APP = new App(IDENTIFIER, {
     metadata: {
         locale: 'en',
         name: {
-            en: 'Timer',
             ja: 'タイマー',
+            en: 'Timer',
         },
         description: {
-            en: 'A simple timer app to measure time',
             ja: '時間を計測するためのシンプルなタイマーアプリ',
+            en: 'A simple timer app to measure time',
         },
         icon: 'ti-alarm',
         image: thumbnail,

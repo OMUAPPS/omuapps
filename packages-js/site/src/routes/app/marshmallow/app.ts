@@ -14,8 +14,8 @@ export const APP = new App(APP_ID, {
             en: 'Marshmallow Reader',
         },
         description: {
-            ja: '面倒なことなくマシュマロを読むことが出来ます',
-            en: 'You can read marshmallow without any hassle',
+            ja: '面倒なことなくマシュマロを読むことができます',
+            en: 'Read marshmallows without any hassle',
         },
         icon: 'ti-notes',
         image: thumbnail,
