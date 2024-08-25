@@ -5,6 +5,7 @@ export type WorkTimeState = {
 export type BreakTimeState = {
     type: 'break';
     start: number;
+    scene: string | null;
 };
 
 export type BreakTimerState = WorkTimeState | BreakTimeState;
