@@ -16,6 +16,7 @@
         height = canvas.clientHeight;
         canvas.width = width;
         canvas.height = height;
+        ctx = canvas.getContext('2d');
     }
 
     function getColor(index: number) {
@@ -51,9 +52,10 @@
         return BetterMath.lerp(a, 1, r);
     }
 
+    let ctx: CanvasRenderingContext2D | null;
+
     function render() {
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
         const count = Object.keys($entries).length;
