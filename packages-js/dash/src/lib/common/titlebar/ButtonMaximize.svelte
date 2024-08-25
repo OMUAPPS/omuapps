@@ -3,7 +3,7 @@
     import { listen, tauriWindow } from '$lib/utils/tauri.js';
     import { Button, Tooltip } from '@omujs/ui';
     import { TauriEvent } from '@tauri-apps/api/event';
-    import { onDestroy } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
 
     let maximized = false;
 
@@ -13,6 +13,9 @@
     }
 
     const destroy = listen(TauriEvent.WINDOW_RESIZED, async () => {
+        maximized = await tauriWindow.appWindow.isMaximized();
+    });
+    onMount(async () => {
         maximized = await tauriWindow.appWindow.isMaximized();
     });
     onDestroy(async () => (await destroy)());

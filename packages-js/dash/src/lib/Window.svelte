@@ -1,6 +1,6 @@
 <script lang="ts">
     import { TauriEvent } from '@tauri-apps/api/event';
-    import { onDestroy } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
     import StatusBar from './common/StatusBar.svelte';
     import ScreenRenderer from './common/screen/ScreenRenderer.svelte';
     import ButtonClose from './common/titlebar/ButtonClose.svelte';
@@ -12,6 +12,9 @@
     let maximized = false;
 
     const destroy = listen(TauriEvent.WINDOW_RESIZED, async () => {
+        maximized = await tauriWindow.appWindow.isMaximized();
+    });
+    onMount(async () => {
         maximized = await tauriWindow.appWindow.isMaximized();
     });
     onDestroy(async () => (await destroy)());
