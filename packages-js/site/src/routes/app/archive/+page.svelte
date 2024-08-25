@@ -68,11 +68,11 @@
 
 <style lang="scss">
     main {
+        position: absolute;
+        inset: 0;
         display: flex;
-        height: 100%;
         gap: 2rem;
         margin: 2rem;
-        margin-bottom: 2rem;
         color: var(--color-1);
     }
 
