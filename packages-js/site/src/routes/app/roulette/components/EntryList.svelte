@@ -1,15 +1,17 @@
 <script lang="ts">
+    import { VirtualList } from '@omujs/ui';
     import type { RouletteApp } from '../roulette-app.js';
     import RouletteEntry from './RouletteEntry.svelte';
 
     export let roulette: RouletteApp;
-    const { entries } = roulette;
+    const { entries, state } = roulette;
 </script>
 
 <div class="entries">
-    {#each Object.entries($entries).reverse() as [id, item], index (id)}
-        <RouletteEntry {index} {item} {roulette} />
-    {/each}
+    <VirtualList items={Object.entries($entries).reverse()} let:item let:key>
+        {@const index = Object.keys($entries).length - Object.keys($entries).indexOf(key) - 1}
+        <RouletteEntry {index} {item} {roulette} disabled={$state.type !== 'idle'} />
+    </VirtualList>
 </div>
 
 <style lang="scss">
@@ -18,10 +20,7 @@
         flex-direction: column;
         gap: 0.5rem;
         overflow: auto;
-        padding: 0 0.25rem;
-        margin: 1rem 1rem 1rem 0.75rem;
         height: 100%;
-        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
 
         &::-webkit-scrollbar {
