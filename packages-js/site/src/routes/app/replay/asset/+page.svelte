@@ -45,6 +45,12 @@
         updateReplay();
     }
 
+    let ended = false;
+
+    function onStateChange(event: YT.OnStateChangeEvent) {
+        ended = event.target.getPlayerState() === YT.PlayerState.ENDED;
+    }
+
     replayData.subscribe(() => {
         updateReplay();
         console.log('replayData', $replayData);
@@ -69,10 +75,14 @@
                 options={{
                     events: {
                         onReady,
+                        onStateChange,
                     },
                 }}
                 hide
             />
+            <div class="thumbnail-overlay" class:show={ended}>
+                <img src="https://i.ytimg.com/vi/{$replayData?.videoId}/maxresdefault.jpg" />
+            </div>
         {/if}
     </main>
 </AssetPage>
@@ -85,5 +95,24 @@
 
     :global(body) {
         background: transparent !important;
+    }
+
+    .thumbnail-overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    }
+
+    .thumbnail-overlay.show {
+        display: flex;
     }
 </style>
