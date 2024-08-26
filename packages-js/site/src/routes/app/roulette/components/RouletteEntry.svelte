@@ -6,7 +6,7 @@
     export let index: number;
     export let item: RouletteItem;
     export let roulette: RouletteApp;
-    const { state } = roulette;
+    export let disabled: boolean;
 </script>
 
 <div class="entry">
@@ -25,7 +25,7 @@
         on:click={() => {
             roulette.removeEntry(item.id);
         }}
-        disabled={$state.type !== 'idle'}
+        {disabled}
     >
         <Tooltip>
             <span>Remove</span>

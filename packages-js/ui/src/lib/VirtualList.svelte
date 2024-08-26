@@ -12,7 +12,7 @@
     // read-only, but visible to consumers via bind:start
     export let start = 0;
     export let end = 0;
-    export let viewport: HTMLDivElement;
+    export let viewport: HTMLDivElement | null = null;
 
     // local state
     let height_map: number[] = [];
@@ -42,6 +42,7 @@
         viewport_height: number,
         itemHeight: number | undefined,
     ) {
+        if (!viewport) throw new Error('VirtualList: missing viewport');
         if (first) {
             first = false;
             // render first 3 rows
@@ -87,10 +88,12 @@
     }
 
     function isHidden() {
+        if (!viewport) throw new Error('VirtualList: missing viewport');
         return viewport.offsetParent === null;
     }
 
     async function handleUpdate() {
+        if (!viewport) throw new Error('VirtualList: missing viewport');
         if (isHidden()) return;
         const { scrollTop } = viewport;
 
