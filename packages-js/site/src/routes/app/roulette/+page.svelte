@@ -13,22 +13,5 @@
     <header slot="header">
         <AppHeader app={APP} />
     </header>
-    <main>
-        <App {omu} />
-    </main>
+    <App {omu} />
 </AppPage>
-
-<style lang="scss">
-    main {
-        position: relative;
-        display: flex;
-        align-items: start;
-        justify-content: flex-start;
-        gap: 1rem;
-        width: 100%;
-        height: 100vh;
-        padding: 1rem;
-        background: var(--color-bg-1);
-        overflow: hidden;
-    }
-</style>
