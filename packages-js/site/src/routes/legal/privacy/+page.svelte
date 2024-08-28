@@ -19,11 +19,48 @@
         </FlexRowWrapper>
     </header>
     <main slot="content">
-        <p>現在、プライバシーポリシーを作成中です。</p>
+        <h1 id="privacy">プライバシーポリシー</h1>
+        <p>2024年8月28日</p>
+        <p>
+            本アプリケーション（以下「本アプリ」）は、
+            ウェブブラウザの機能だけでは作れないプログラムを作るために必要な機能をAPIとして提供するアプリケーションです。
+            本アプリを利用するにあたっては、以下のプライバシーポリシーをお読みいただき、
+            これに同意いただいた上でご利用ください。
+        </p>
+        <h2 id="definition">定義</h2>
+        <ol>
+            <li>
+                「本アプリ」とは、本規約に基づいて提供されるアプリケーションを指します。
+            </li>
+            <li>
+                「おむアプリ」とは、本アプリのAPIを利用するアプリケーションを指します。
+            </li>
+        </ol>
+        <h2 id="scope">適応範囲</h2>
+        <p>
+            本プライバシーポリシーは、本アプリにおいてのみ適用されます。
+            おむアプリにおいては、それぞれのアプリのプライバシーポリシーをご確認ください。
+        </p>
+        <h2 id="personal-information">個人情報の取り扱い</h2>
+        <p>
+            本アプリは、ユーザーの個人情報を取得しません。
+            ただし、おむアプリがユーザーの個人情報を取得する場合があります。
+            各アプリのプライバシーポリシーをご確認ください。
+        </p>
     </main>
 </Page>
 
 <style lang="scss">
+    main {
+        font-weight: 500;
+    }
+
+    header {
+        :global(h1) {
+            color: var(--color-1);
+        }
+    }
+
     img {
         width: 50%;
         max-width: 16rem;
@@ -33,6 +70,25 @@
         font-size: 2rem;
         font-weight: 600;
         width: fit-content;
-        color: var(--color-1);
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-top: 2rem;
+    }
+
+    p {
+        margin-top: 1rem;
+        font-size: 1rem;
+    }
+
+    ol {
+        margin-top: 1rem;
+        margin-left: 2rem;
+    }
+
+    li {
+        margin-top: 0.5rem;
     }
 </style>
