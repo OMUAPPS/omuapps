@@ -27,9 +27,9 @@
         "url": "https://github.com/OMUAPPS/omuapps"
     },
     "devDependencies": {
-        "@omujs/omu": "workspace:*",
         "@omujs/eslint-config": "workspace:*",
-        "eslint": "^9.0.0",
+        "@omujs/omu": "workspace:*",
+        "eslint": "^9.9.1",
         "nodemon": "^3.1.4"
     },
     "dependencies": {
