@@ -36,7 +36,6 @@
         "README.md": "LICENSE, CHANGELOG.md, CONTRIBUTING.md, CONTRIBUTORS.md",
         "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, .npmignore",
         "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
-        ".eslintrc.cjs": ".eslintignore, .prettierrc.cjs, .prettierignore, .prettierrc, .stylelintrc.json, .stylelintignore",
     },
     "files.insertFinalNewline": true,
 }

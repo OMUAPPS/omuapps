@@ -2,11 +2,10 @@
     "recommendations": [
         "charliermarsh.ruff",
         "svelte.svelte-vscode",
-        "stylelint.vscode-stylelint",
-        "esbenp.prettier-vscode",
         "Swellaby.rust-pack"
     ],
     "unwantedRecommendations": [
         "ms-python.pylint",
+        "esbenp.prettier-vscode",
     ]
 }
