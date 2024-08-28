@@ -1,4 +1,4 @@
-import type { Author, Message } from "@omujs/chat/models/index.js";
+import type { Author, Message } from '@omujs/chat/models/index.js';
 
 export interface Entry {
   author: Author;

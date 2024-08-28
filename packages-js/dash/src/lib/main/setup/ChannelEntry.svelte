@@ -14,7 +14,7 @@
         <div class="name">{channel.name}</div>
         <div class="provider">{channel.providerId}</div>
     </div>
-    <i class={active ? `ti ti-check` : `ti ti-plus`} />
+    <i class={active ? 'ti ti-check' : 'ti ti-plus'} />
 </button>
 
 <style lang="scss">

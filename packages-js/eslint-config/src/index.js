@@ -27,6 +27,7 @@ export default {
                 '@typescript-eslint/no-explicit-any': 'warn',
                 '@typescript-eslint/no-unused-vars': 'warn',
                 "indent": ["error", 4],
+                "quotes": ["error", "single"],
             },
         },
     ],
@@ -69,6 +70,8 @@ export default {
             rules: {
                 '@typescript-eslint/no-explicit-any': 'warn',
                 '@typescript-eslint/no-unused-vars': 'warn',
+                "indent": ["error", 4],
+                "quotes": ["error", "single"],
                 "svelte/indent": [
                     "error",
                     {

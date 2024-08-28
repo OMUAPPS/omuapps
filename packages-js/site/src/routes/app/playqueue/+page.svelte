@@ -72,7 +72,7 @@
                 </button>
                 <div class="action">
                     <span>
-                        {active ? `終了する` : `開始する`}
+                        {active ? '終了する' : '開始する'}
                     </span>
                     <button class="toggle" on:click={() => (active = !active)} class:active>
                         <i class="ti ti-check" />

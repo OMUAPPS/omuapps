@@ -12,7 +12,6 @@
     import TabEntry from './TabEntry.svelte';
 
     const EXPLORE_PAGE = registerPage({
-        id: `explore`,
         async open() {
             return {
                 component: IframePage,
@@ -24,7 +23,7 @@
     });
 
     const CONNECT_PAGE = registerPage({
-        id: `connect`,
+        id: 'connect',
         async open() {
             return {
                 component: ConnectPage,
@@ -34,7 +33,7 @@
     });
 
     const SETTINGS_PAGE = registerPage({
-        id: `settings`,
+        id: 'settings',
         async open() {
             return {
                 component: SettingsPage,

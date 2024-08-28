@@ -1,10 +1,10 @@
 <script lang="ts">
+    import Page from '$lib/components/Page.svelte';
     import { FlexColWrapper, FlexRowWrapper, Localized, Textbox } from '@omujs/ui';
+    import { omu } from '../client.js';
     import AppEntry from './AppEntry.svelte';
     import { apps } from './apps.js';
     import { TAG_REGISTRY } from './category.js';
-    import Page from '$lib/components/Page.svelte';
-    import { omu } from '../client.js';
 
     let filteredApps = apps;
     let filterTags: string[] = [];

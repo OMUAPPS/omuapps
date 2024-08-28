@@ -69,7 +69,10 @@
                 right: window.innerWidth - margin,
                 bottom: window.innerHeight - margin,
             };
-            direction = targetBounds.bottom + tooltipRect.height > bounds.bottom ? 'up' : 'down';
+            direction =
+                targetBounds.bottom + tooltipRect.height > bounds.bottom
+                    ? 'up'
+                    : 'down';
             tooltipPos = {
                 x: clamp(
                     targetBounds.centerX - tooltipRect.width / 2,
@@ -98,7 +101,9 @@
         }
         target = node.parentElement;
         if (!target.addEventListener || !target.removeEventListener) {
-            throw new Error('target must support addEventListener and removeEventListener');
+            throw new Error(
+                'target must support addEventListener and removeEventListener',
+            );
         }
         target.addEventListener('mouseenter', showTooltip);
         target.addEventListener('mouseleave', hideTooltip);
@@ -144,7 +149,10 @@
         mouseJerk = averageMouseVelocity - lastMouseVelocity;
         lastMouseVelocity = averageMouseVelocity;
         lastMousePos = { x: event.clientX, y: event.clientY };
-        if (log(averageMouseVelocity) < 2 || max('jerk', log(mouseJerk)) < 2.6) {
+        if (
+            log(averageMouseVelocity) < 2 ||
+            max('jerk', log(mouseJerk)) < 2.6
+        ) {
             return;
         }
         if (isMouseMoving) {
@@ -167,7 +175,10 @@
         if (averageTimes[key].length > length) {
             averageTimes[key].shift();
         }
-        return averageTimes[key].reduce((a, b) => a + b, 0) / averageTimes[key].length;
+        return (
+            averageTimes[key].reduce((a, b) => a + b, 0) /
+            averageTimes[key].length
+        );
     }
     const maxTimes: Record<string, number[]> = {};
     function max(key: string, value: number) {
@@ -227,7 +238,7 @@
         position: fixed;
         z-index: 20;
         pointer-events: none;
-        content: '';
+        content: "";
         user-select: none;
         border: 6px solid transparent;
         border-bottom-color: #000;

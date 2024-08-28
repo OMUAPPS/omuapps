@@ -107,7 +107,7 @@
                         const id = Date.now().toString();
                         roulette.addEntry({
                             id,
-                            name: ``,
+                            name: '',
                         });
                     }}
                 >

@@ -25,6 +25,6 @@ export const WithSubtitle: Story = {
     args: {
         title: 'Title',
         subtitle: 'Subtitle',
-        icon: "ti-home",
+        icon: 'ti-home',
     },
 };
