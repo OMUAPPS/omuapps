@@ -12,6 +12,7 @@
     import TabEntry from './TabEntry.svelte';
 
     const EXPLORE_PAGE = registerPage({
+        id: 'explore',
         async open() {
             return {
                 component: IframePage,
