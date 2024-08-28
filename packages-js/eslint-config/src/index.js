@@ -84,7 +84,7 @@ export default {
             }
         },
         {
-            ignores: ['build/', '.svelte-kit/']
+            ignores: ['vite.config.ts.timestamp-*.mjs', 'build/', '.svelte-kit/']
         },
     ],
 };
