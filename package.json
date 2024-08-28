@@ -24,9 +24,10 @@
         "@types/node": "^22.1.0",
         "ajv": "^8.17.1",
         "axios": "^1.7.3",
+        "depcheck": "^1.4.7",
+        "eslint": "^9.9.1",
         "execa": "^9.3.0",
         "lerna": "^8.1.8",
-        "depcheck": "^1.4.7",
         "typescript": "^5.5.4"
     },
     "pnpm": {

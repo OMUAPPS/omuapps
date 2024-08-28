@@ -9,12 +9,15 @@
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
     },
-    "[typescript]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
-    },
     "[svelte]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
+    "eslint.format.enable": true,
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "eslint.validate": [
+        "svelte"
+    ],
+    "prettier.enable": false,
     "files.exclude": {
         "**/__pycache__": true,
         "**/.mypy_cache": true,
