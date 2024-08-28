@@ -59,7 +59,7 @@
                     width={playerWidth}
                     height={playerHeight}
                     style:top="{-padding}px"
-                    style:clipPath="inset({padding}px 0 {padding}px 0)"
+                    style:clip-path="inset({padding}px 0 {padding}px 0)"
                     src="https://www.youtube.com/embed/{initialVideoId}?enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1"
                     frameborder="0"
                     title="YouTube video player"
