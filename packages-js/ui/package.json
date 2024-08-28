@@ -28,7 +28,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/OMUAPPS/omuapps"
+        "url": "git+https://github.com/OMUAPPS/omuapps.git"
     },
     "devDependencies": {
         "@chromatic-com/storybook": "1.6.1",
