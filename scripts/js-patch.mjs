@@ -3,8 +3,8 @@ import { glob } from 'glob';
 
 const original = `/** @param {string} path */
 export function rimraf(path) {
-    fs.rmSync(path, { force: true, recursive: true });
-}`
+	fs.rmSync(path, { force: true, recursive: true });
+}`.replace(/\r\n/g, '\n');
 
 const patch = `/** @param {string} path */
 export function rimraf(path) {
@@ -12,7 +12,7 @@ export function rimraf(path) {
         fs.rmSync(path, { force: true, recursive: true });
     } catch (/** @type {any} */ e) {
     }
-}`
+}`.replace(/\r\n/g, '\n');
 
 const found = await glob('node_modules/.pnpm/@sveltejs+package@*/**/node_modules/@sveltejs/package/src/filesystem.js');
 if (!found.length) {
@@ -20,8 +20,7 @@ if (!found.length) {
 }
 
 for (const path of found) {
-    let content = await fs.readFile(path, 'utf-8');
-    console.log(content.split('\n').slice(13, 18).join('\n'));
+    let content = (await fs.readFile(path, 'utf-8')).replace(/\r\n/g, '\n');
     const alreadyPatched = content.includes(patch);
     if (alreadyPatched) {
         console.log(`Already patched ${path}`);
