@@ -27,7 +27,7 @@ for (const path of found) {
         console.log(`Already patched ${path}`);
     } else {
         if (!content.includes(original)) {
-            throw new Error('Original code not found');
+            throw new Error(`Original not found in ${path}: ${content.split('\n').slice(10, 30).join('\n')}`);
         } else {
             content = content.replace(original, patch);
             await fs.writeFile(path, content, 'utf-8');
