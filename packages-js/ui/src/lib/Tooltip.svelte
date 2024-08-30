@@ -107,11 +107,15 @@
         }
         target.addEventListener('mouseenter', showTooltip);
         target.addEventListener('mouseleave', hideTooltip);
+        target.addEventListener('focus', showTooltip);
+        target.addEventListener('blur', hideTooltip);
 
         return {
             destroy() {
                 target.removeEventListener('mouseenter', showTooltip);
                 target.removeEventListener('mouseleave', hideTooltip);
+                target.removeEventListener('focus', showTooltip);
+                target.removeEventListener('blur', hideTooltip);
             },
         };
     }
