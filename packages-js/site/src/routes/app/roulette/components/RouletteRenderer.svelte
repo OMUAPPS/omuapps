@@ -1,6 +1,7 @@
 <script lang="ts">
     import { BetterMath } from '$lib/math.js';
     import { Timer } from '$lib/timer.js';
+    import { onDestroy } from 'svelte';
     import type { RouletteApp } from '../roulette-app.js';
 
     export let roulette: RouletteApp;
@@ -204,9 +205,11 @@
         ctx.restore();
     }
 
+    let animationFrame: number;
+
     function loop() {
         render();
-        requestAnimationFrame(loop);
+        animationFrame = requestAnimationFrame(loop);
     }
 
     $: {
@@ -215,6 +218,10 @@
             loop();
         }
     }
+
+    onDestroy(() => {
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+    });
 </script>
 
 <svelte:window on:resize={resize} />

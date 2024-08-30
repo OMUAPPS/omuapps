@@ -81,7 +81,7 @@
                 hide
             />
             <div class="thumbnail-overlay" class:show={ended}>
-                <img src="https://i.ytimg.com/vi/{$replayData?.videoId}/maxresdefault.jpg" />
+                <img src="https://i.ytimg.com/vi/{$replayData?.videoId}/maxresdefault.jpg" alt="" />
             </div>
         {/if}
     </main>

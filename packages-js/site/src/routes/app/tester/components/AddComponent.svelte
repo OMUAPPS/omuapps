@@ -10,13 +10,12 @@
     type ComponentType = 'text' | 'image';
 
     function create(type: ComponentType) {
-        switch (type) {
-            case 'text':
-                add(new content.Text(''));
-                break;
-            case 'image':
-                add(new content.Image('', '', ''));
-                break;
+        if (type === 'text') {
+            add(new content.Text(''));
+        } else if (type === 'image') {
+            add(new content.Image('', '', ''));
+        } else {
+            throw new Error(`Unknown type: ${type}`);
         }
     }
 

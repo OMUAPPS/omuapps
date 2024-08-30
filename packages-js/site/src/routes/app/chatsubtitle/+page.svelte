@@ -213,10 +213,6 @@
 </AppPage>
 
 <style lang="scss">
-    section {
-        padding: 1rem;
-    }
-
     main {
         position: absolute;
         inset: 0;

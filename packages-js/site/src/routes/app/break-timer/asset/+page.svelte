@@ -21,8 +21,6 @@
     const { config, state } = breakTimer;
     setClient(omu);
 
-    let image: HTMLImageElement;
-
     if (BROWSER) {
         omu.start();
     }

@@ -161,15 +161,15 @@ export class GlBuffer {
             throw new Error('Buffer not bound');
         }
         switch (usage) {
-            case 'static':
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
-                break;
-            case 'dynamic':
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.DYNAMIC_DRAW);
-                break;
-            case 'stream':
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STREAM_DRAW);
-                break;
+        case 'static':
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
+            break;
+        case 'dynamic':
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.DYNAMIC_DRAW);
+            break;
+        case 'stream':
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STREAM_DRAW);
+            break;
         }
     }
 
@@ -208,14 +208,14 @@ export class GlContext {
     public createShader(source: ShaderSource): GlShader {
         let type: number;
         switch (source.type) {
-            case 'vertex':
-                type = this.gl.VERTEX_SHADER;
-                break;
-            case 'fragment':
-                type = this.gl.FRAGMENT_SHADER;
-                break;
-            default:
-                throw new Error(`Unsupported shader type: ${source.type}`);
+        case 'vertex':
+            type = this.gl.VERTEX_SHADER;
+            break;
+        case 'fragment':
+            type = this.gl.FRAGMENT_SHADER;
+            break;
+        default:
+            throw new Error(`Unsupported shader type: ${source.type}`);
         }
         return GlShader.create(this.gl, type, source.source);
     }

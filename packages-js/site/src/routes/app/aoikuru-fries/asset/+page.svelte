@@ -36,9 +36,7 @@
         };
     }
 
-    state.subscribe((v) => {
-        processQueue();
-    });
+    state.subscribe(() => processQueue());
 
     function isMessageGreasy(message: Message): boolean {
         if (!message.content) return false;

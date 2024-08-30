@@ -1,9 +1,15 @@
 <script lang="ts">
-    import { page } from '$app/stores';
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { Omu } from '@omujs/omu';
-    import { AppHeader, Combobox, FlexRowWrapper, Popup, Textbox, setClient } from '@omujs/ui';
+    import {
+        AppHeader,
+        Combobox,
+        FlexRowWrapper,
+        Popup,
+        Textbox,
+        setClient,
+    } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import CaptionRenderer from './CaptionRenderer.svelte';
     import { APP } from './app.js';
@@ -16,7 +22,8 @@
     const { config } = captionApp;
 
     if (BROWSER) {
-        const recognition = new (webkitSpeechRecognition || SpeechRecognition)();
+        const recognition = new (webkitSpeechRecognition ||
+            SpeechRecognition)();
         recognition.interimResults = true;
         recognition.continuous = false;
         recognition.lang = $config.lang;
@@ -40,13 +47,6 @@
         recognition.start();
 
         omu.start();
-    }
-
-    function createAssetUrl() {
-        const url = new URL($page.url);
-        url.pathname = `${url.pathname}asset`;
-        url.searchParams.set('assetId', Date.now().toString());
-        return url;
     }
 
     function resetLang() {
@@ -141,9 +141,10 @@
                         </span>
                         <button
                             on:click={() => {
-                                $config.style.fonts = $config.style.fonts.filter(
-                                    (_, index) => index !== i,
-                                );
+                                $config.style.fonts =
+                                    $config.style.fonts.filter(
+                                        (_, index) => index !== i,
+                                    );
                             }}
                         >
                             削除
