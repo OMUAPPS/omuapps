@@ -157,6 +157,11 @@
                 <slot key={row.data[0]} item={row.data[1]}>Missing template</slot>
             </svelte-virtual-list-row>
         {/each}
+        {#if items.length === 0}
+            <svelte-virtual-list-row>
+                <slot name="empty" />
+            </svelte-virtual-list-row>
+        {/if}
     </svelte-virtual-list-contents>
 </svelte-virtual-list-viewport>
 

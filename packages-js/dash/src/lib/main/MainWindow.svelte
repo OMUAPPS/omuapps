@@ -4,6 +4,13 @@
     import { TableList, Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import AppEntry from './AppEntry.svelte';
+    import {
+        loadedIds,
+        pageMap,
+        registerPage,
+        type Page,
+        type PageItem,
+    } from './page.js';
     import ConnectPage from './pages/ConnectPage.svelte';
     import IframePage from './pages/IframePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
@@ -18,7 +25,9 @@
             return {
                 component: IframePage,
                 props: {
-                    url: DEV ? 'http://localhost:5173/app/' : 'https://omuapps.com/app/',
+                    url: DEV
+                        ? 'http://localhost:5173/app/'
+                        : 'https://omuapps.com/app/',
                 },
             } as Page<unknown>;
         },
@@ -108,7 +117,28 @@
             {/if}
         </div>
         <div class="list">
-            <TableList table={dashboard.apps} component={AppEntry} />
+            <TableList table={dashboard.apps} component={AppEntry}>
+                <button slot="empty" on:click={() => ($currentPage = EXPLORE_PAGE.id)} class="no-apps">
+                    {#if $currentPage === EXPLORE_PAGE.id}
+                        <p>
+                            右の画面からアプリを追加
+                            <i class="ti ti-arrow-right" />
+                        </p>
+                        <small>
+                            アプリを追加するとここに表示されます
+                        </small>
+                    {:else}
+                        <p>
+                            アプリを追加
+                            <i class="ti ti-plus" />
+                        </p>
+                        <small>
+                            <i class="ti ti-arrow-right" />
+                            「アプリを探す」ページに移動する
+                        </small>
+                    {/if}
+                </button>
+            </TableList>
         </div>
     </div>
     <div class="page-container">
@@ -118,7 +148,10 @@
                     <div>Loading...</div>
                 {:then page}
                     {#if page}
-                        <svelte:component this={page.component} props={page.props} />
+                        <svelte:component
+                            this={page.component}
+                            props={page.props}
+                        />
                     {/if}
                 {:catch error}
                     <div>{error.message}</div>
@@ -220,6 +253,35 @@
         }
     }
 
+    .no-apps {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        border: none;
+        padding: 0.5rem 1rem;
+        width: 100%;
+
+        > p {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 600;
+
+            > i {
+                margin-left: 0.5rem;
+            }
+        }
+
+        &:hover {
+            background: var(--color-bg-1);
+            transition: background 0.0621s;
+        }
+    }
+
     .page-container {
         flex: 1;
         display: flex;
@@ -273,5 +335,10 @@
                 width: calc(100% - #{$tab-width});
             }
         }
+    }
+    
+    *:focus {
+        outline: 1px solid var(--color-1);
+        outline-offset: -1px;
     }
 </style>

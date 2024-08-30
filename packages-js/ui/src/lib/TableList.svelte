@@ -9,10 +9,18 @@
 
     import type { Table } from '@omujs/omu/extension/table/table.js';
     import type { Keyable } from '@omujs/omu/interface.js';
-    import { type ComponentType, type SvelteComponent, onDestroy, onMount, tick } from 'svelte';
+    import {
+        type ComponentType,
+        type SvelteComponent,
+        onDestroy,
+        onMount,
+        tick,
+    } from 'svelte';
 
     export let table: Table<T>;
-    export let component: ComponentType<SvelteComponent<{ entry: T; selected?: boolean }>>;
+    export let component: ComponentType<
+        SvelteComponent<{ entry: T; selected?: boolean }>
+    >;
     export let filter: (key: string, entry: T) => boolean = () => true;
     export let sort: (a: T, b: T) => number = () => 0;
     export let reverse: boolean = false;
@@ -45,7 +53,9 @@
                 last = [...items.keys()].at(-1);
                 updateCache(items);
                 update();
-                return [...items.keys()].filter((key) => key !== last).length > 0;
+                return (
+                    [...items.keys()].filter((key) => key !== last).length > 0
+                );
             })
             .finally(() => {
                 fetchLock = undefined;
@@ -142,7 +152,9 @@
             items = items.filter(([key, entry]) => filter(key, entry));
         }
         if (sort) {
-            items = items.sort(([, entryA], [, entryB]) => sort(entryA, entryB));
+            items = items.sort(([, entryA], [, entryB]) =>
+                sort(entryA, entryB),
+            );
         }
         if (reverse) {
             items = items.reverse();
@@ -259,8 +271,13 @@
                 {selectItem}
                 transition={startIndex === 0 && addedItems.includes(key)}
             >
-                <svelte:component this={component} entry={item} selected={key === selectedItem} />
+                <svelte:component
+                    this={component}
+                    entry={item}
+                    selected={key === selectedItem}
+                />
             </TableListEntry>
+            <slot slot="empty" name="empty" />
         </VirtualList>
     </div>
     {#if updated}
