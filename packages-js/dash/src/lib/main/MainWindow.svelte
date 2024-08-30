@@ -119,23 +119,25 @@
         <div class="list">
             <TableList table={dashboard.apps} component={AppEntry}>
                 <button slot="empty" on:click={() => ($currentPage = EXPLORE_PAGE.id)} class="no-apps">
-                    {#if $currentPage === EXPLORE_PAGE.id}
-                        <p>
-                            右の画面からアプリを追加
-                            <i class="ti ti-arrow-right" />
-                        </p>
-                        <small>
-                            アプリを追加するとここに表示されます
-                        </small>
-                    {:else}
-                        <p>
-                            アプリを追加
-                            <i class="ti ti-plus" />
-                        </p>
-                        <small>
-                            <i class="ti ti-arrow-right" />
-                            「アプリを探す」ページに移動する
-                        </small>
+                    {#if $menuOpen}
+                        {#if $currentPage === EXPLORE_PAGE.id}
+                            <p>
+                                右の画面からアプリを追加
+                                <i class="ti ti-arrow-right" />
+                            </p>
+                            <small>
+                                アプリを追加するとここに表示されます
+                            </small>
+                        {:else}
+                            <p>
+                                アプリを追加
+                                <i class="ti ti-plus" />
+                            </p>
+                            <small>
+                                <i class="ti ti-arrow-right" />
+                                「アプリを探す」ページに移動する
+                            </small>
+                        {/if}
                     {/if}
                 </button>
             </TableList>
