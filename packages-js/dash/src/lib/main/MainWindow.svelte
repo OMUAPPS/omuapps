@@ -1,11 +1,12 @@
 <script lang="ts">
     import { dashboard } from '$lib/client.js';
+    import { screenContext } from '$lib/common/screen/screen.js';
     import { TableList, Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import AppEntry from './AppEntry.svelte';
-    import { loadedIds, pageMap, registerPage, type Page, type PageItem } from './page.js';
     import ConnectPage from './pages/ConnectPage.svelte';
     import IframePage from './pages/IframePage.svelte';
+    import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
     import { currentPage } from './settings.js';
     import SettingsPage from './SettingsPage.svelte';
     import { menuOpen } from './stores.js';
@@ -90,6 +91,20 @@
                     アプリ
                     <i class="ti ti-package" />
                 </span>
+                <div class="buttons">
+                    <button
+                        on:click={() =>
+                            screenContext.push(ManageAppsScreen, undefined)}
+                    >
+                        <Tooltip>
+                            <div class="tooltip">
+                                <h3>アプリを管理</h3>
+                                <small>設定やアンインストールを行います</small>
+                            </div>
+                        </Tooltip>
+                        <i class="ti ti-settings" />
+                    </button>
+                </div>
             {/if}
         </div>
         <div class="list">
@@ -183,6 +198,26 @@
         padding-bottom: 0.75rem;
         margin-top: 2rem;
         padding-left: 1rem;
+
+        > .buttons {
+            margin-left: auto;
+
+            > button {
+                background: none;
+                border: none;
+                color: var(--color-1);
+                font-size: 1rem;
+                font-weight: 600;
+                width: 2rem;
+                height: 2rem;
+
+                &:hover {
+                    background: var(--color-1);
+                    color: var(--color-bg-1);
+                    border-radius: 4px;
+                }
+            }
+        }
     }
 
     .page-container {
