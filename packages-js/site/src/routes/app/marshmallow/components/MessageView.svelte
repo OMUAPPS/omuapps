@@ -109,6 +109,8 @@
         if (messages.length === 0) return;
         message = messages[0];
     }
+
+    let textarea: HTMLTextAreaElement;
 </script>
 
 <div class="buttons" class:locked bind:this={buttons}>
@@ -202,9 +204,14 @@
             確認して次へ
             <i class="ti ti-arrow-right" />
         </button>
-        <p>
-            {message.content}
-        </p>
+        <textarea bind:this={textarea} readonly>{message.content}</textarea>
+        <button class="copy" on:click={() => {
+            textarea.select();
+            document.execCommand('copy');
+        }}>
+            <Tooltip>メッセージをコピー</Tooltip>
+            <i class="ti ti-clipboard" />
+        </button>
     </div>
 </div>
 
@@ -272,22 +279,31 @@
             max-width: min(calc(100vw - 2rem), 26rem);
         }
 
-        > p {
+        > textarea {
             white-space: pre-wrap;
             word-wrap: break-word;
             width: 100%;
+            max-width: 26rem;
+            height: 10rem;
+            background: var(--color-bg-2);
+            border: none;
+            color: var(--color-1);
+            font-size: 0.8rem;
+            padding: 0.5rem;
+
+            &:focus {
+                outline: 2px solid var(--color-1);
+                outline-offset: 1px;
+            }
         }
     }
 
-    .next {
+    button {
         background: var(--color-bg-2);
         outline: 1px solid var(--color-1);
         color: var(--color-1);
-        padding: 0.5rem 1rem;
         border: none;
         display: flex;
-        align-items: center;
-        gap: 0.5rem;
         font-size: 0.9rem;
         font-weight: bold;
         cursor: pointer;
@@ -297,5 +313,19 @@
             background: var(--color-1);
             color: var(--color-bg-2);
         }
+
+    }
+
+    .next {
+        padding: 0.5rem 1rem;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .copy {
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
     }
 </style>
