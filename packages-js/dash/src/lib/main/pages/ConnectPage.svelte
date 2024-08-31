@@ -13,14 +13,14 @@
     <div class="panels">
         <div class="left">
             <p>
-                チャンネル
+                {$t('page.connect.channels')}
                 <i class="ti ti-user" />
             </p>
             <div class="channels">
                 <PanelChannels />
             </div>
             <p>
-                配信
+                {$t('page.connect.rooms')}
                 <i class="ti ti-bolt" />
             </p>
             <div class="rooms">
@@ -29,7 +29,7 @@
         </div>
         <dir class="right">
             <p>
-                チャット
+                {$t('page.connect.chat')}
                 <i class="ti ti-message" />
             </p>
             <div class="chat">

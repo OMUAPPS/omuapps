@@ -7,6 +7,7 @@
         "close": "Close",
         "save": "Save",
         "reset": "Reset",
+        "delete": "Delete",
         "copy": "Copy",
         "copied": "Copied",
         "error": "Error",
@@ -107,13 +108,25 @@
         "connect": {
             "icon": "ti ti-bolt",
             "title": "Connect Streaming",
-            "tooltip": "Set up to connect streaming"
+            "tooltip": "Set up to connect streaming",
+            "channels": "Channels",
+            "rooms": "Streams",
+            "chat": "Chat"
         },
         "settings": {
             "icon": "ti ti-settings",
             "title": "Settings",
             "tooltip": "Set up the app"
         }
+    },
+    "menu": {
+        "collapse": "Collapse",
+        "expand": "Expand",
+        "apps": "Apps",
+        "add-apps": "Add Apps",
+        "add-apps-hint": "Apps will be displayed here when added",
+        "jump-to-explore": "Go to Explore Apps",
+        "jump-to-explore-hint": "Add apps from the right page"
     },
     "screen": {
         "settings": {
@@ -150,6 +163,11 @@
             "name": "Update",
             "icon": "ti ti-download",
             "description": "A new version is available."
+        },
+        "manage-apps": {
+            "name": "Manage Apps",
+            "icon": "ti ti-apps",
+            "description": "Uninstall or change settings"
         }
     },
     "settings": {

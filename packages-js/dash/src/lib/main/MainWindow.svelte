@@ -1,6 +1,7 @@
 <script lang="ts">
     import { dashboard } from '$lib/client.js';
     import { screenContext } from '$lib/common/screen/screen.js';
+    import { t } from '$lib/i18n/i18n-context.js';
     import { TableList, Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import AppEntry from './AppEntry.svelte';
@@ -85,10 +86,10 @@
         <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
             {#if $menuOpen}
                 <i class="ti ti-chevron-left" />
-                <Tooltip>メニューを閉じる</Tooltip>
+                <Tooltip>{$t('menu.collapse')}</Tooltip>
             {:else}
                 <i class="ti ti-menu" />
-                <Tooltip>メニューを開く</Tooltip>
+                <Tooltip>{$t('menu.expand')}</Tooltip>
             {/if}
         </button>
         <TabEntry entry={EXPLORE_PAGE} />
@@ -97,7 +98,7 @@
         <div class="tab-group">
             {#if $menuOpen}
                 <span>
-                    アプリ
+                    {$t('menu.apps')}
                     <i class="ti ti-apps" />
                 </span>
                 <div class="buttons">
@@ -107,8 +108,8 @@
                     >
                         <Tooltip>
                             <div class="tooltip">
-                                <h3>アプリを管理</h3>
-                                <small>設定やアンインストールを行います</small>
+                                <h3>{$t('screen.manage-apps.name')}</h3>
+                                <small>{$t('screen.manage-apps.description')}</small>
                             </div>
                         </Tooltip>
                         <i class="ti ti-settings" />
@@ -122,20 +123,20 @@
                     {#if $menuOpen}
                         {#if $currentPage === EXPLORE_PAGE.id}
                             <p>
-                                右の画面からアプリを追加
+                                {$t('menu.jump-to-explore-hint')}
                                 <i class="ti ti-arrow-right" />
                             </p>
                             <small>
-                                アプリを追加するとここに表示されます
+                                {$t('menu.add-apps-hint')}
                             </small>
                         {:else}
                             <p>
-                                アプリを追加
+                                {$t('menu.add-apps')}
                                 <i class="ti ti-plus" />
                             </p>
                             <small>
                                 <i class="ti ti-arrow-right" />
-                                「アプリを探す」ページに移動する
+                                {$t('menu.jump-to-explore')}
                             </small>
                         {/if}
                     {/if}
