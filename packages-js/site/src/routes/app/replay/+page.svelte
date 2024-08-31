@@ -25,9 +25,9 @@
     };
 
     function onReady(event: YT.PlayerEvent) {
-        event.target.playVideo();
-        event.target.mute();
-        if (!$replayData) return;
+        const player = event.target;
+        player.playVideo();
+        player.mute();
     }
 
     function onPlaybackRateChange(event: YT.OnPlaybackRateChangeEvent) {
@@ -35,7 +35,6 @@
     }
 
     function onStateChange(event: YT.OnStateChangeEvent) {
-        console.log('onStateChange', event.data);
         if (!$replayData) return;
         $replayData = {
             videoId: $replayData.videoId,
@@ -43,7 +42,6 @@
             start: Date.now(),
             playing: event.data === YT.PlayerState.PLAYING,
         };
-        console.log($replayData);
     }
 
     const promise = new Promise<void>((resolve) => omu.onReady(resolve));

@@ -39,10 +39,17 @@
         player.setPlaybackRate($config.playbackRate);
     }
 
-    function onReady(event: YT.PlayerEvent) {
-        event.target.playVideo();
-        event.target.mute();
+    let shorts = false;
+
+    async function onReady() {
+        player.playVideo();
+        player.mute();
         updateReplay();
+        if (!$replayData) return;
+        const { title } = await fetch('https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=' + $replayData.videoId)
+            .then((res) => res.json())
+            .catch(() => {throw new Error('Failed to fetch video data')});
+        shorts = title.includes('#shorts');
     }
 
     let ended = false;
@@ -79,6 +86,7 @@
                     },
                 }}
                 hide
+                heightToWidthRatio={shorts ? 9 / 16 : 16 / 9}
             />
             <div class="thumbnail-overlay" class:show={ended}>
                 <img src="https://i.ytimg.com/vi/{$replayData?.videoId}/maxresdefault.jpg" alt="" />

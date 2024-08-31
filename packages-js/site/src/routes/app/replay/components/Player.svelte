@@ -4,16 +4,26 @@
     export let options: YT.PlayerOptions = {};
     export let hide = false;
     export let iframe: HTMLIFrameElement | undefined = undefined;
-    export let ratio = 16 / 9;
+    export let heightToWidthRatio = 9/16;
     const initialVideoId = videoId;
 
     let width = 0;
     let height = 0;
+    let playerWidth = 0;
+    let playerHeight = 0;
+    let padding = 0;
 
-    $: playerWidth = width;
-    $: playerHeight = height * ratio;
-    $: realHeight = playerWidth / ratio;
-    $: padding = (playerHeight - realHeight) / 2;
+    $: {
+        if (heightToWidthRatio < 1) {
+            playerWidth = width * Math.pow(heightToWidthRatio, 2);
+            playerHeight = height / heightToWidthRatio;
+            padding = (playerHeight - height) / 2;
+        } else {
+            playerWidth = width;
+            playerHeight = height * heightToWidthRatio;
+            padding = (playerHeight - height) / 2;
+        }
+    }
 
     function createPlayer() {
         if (!iframe) return;
@@ -84,6 +94,9 @@
         position: relative;
         width: 100%;
         height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     iframe {
