@@ -18,7 +18,8 @@ const I18N_LOCALES_REGISTRY_TYPE = RegistryType.createJson<Locale[]>(I18N_EXTENS
 export class I18nExtension implements Extension {
     public readonly type = I18N_EXTENSION_TYPE;
     public readonly localesRegistry: Registry<Locale[]>;
-    public locales?: Locale[];
+    private locales?: Locale[];
+    public defaultLocales?: Locale[];
 
     constructor(private readonly client: Client) {
         client.permissions.require(I18N_GET_LOCALES_PERMISSION_ID);
@@ -28,14 +29,22 @@ export class I18nExtension implements Extension {
         });
     }
 
-    public translate(localizedText: LocalizedText): string {
-        if (!this.locales) {
-            throw new Error('Locale not set');
+    public getLocales(): readonly Locale[] {
+        if (this.locales && this.locales.length > 0) {
+            return this.locales;
         }
+        if (!this.defaultLocales || this.defaultLocales.length === 0) {
+            throw new Error('Default locales are not set');
+        }
+        return this.defaultLocales;
+    }
+
+    public translate(localizedText: LocalizedText): string {
+        const locales = this.getLocales();
         if (typeof localizedText === 'string') {
             return localizedText;
         }
-        const translation = this.selectBestTranslation(this.locales, localizedText);
+        const translation = this.selectBestTranslation(locales, localizedText);
         if (!translation) {
             throw new Error(
                 `Missing translation for ${this.locales} in ${JSON.stringify(localizedText)}`,
@@ -45,7 +54,7 @@ export class I18nExtension implements Extension {
     }
 
     public selectBestTranslation(
-        locales: Locale[],
+        locales: readonly Locale[],
         localizedText: LocalizedText,
     ): string | undefined {
         if (typeof localizedText === 'string') {

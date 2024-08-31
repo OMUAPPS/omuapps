@@ -18,7 +18,7 @@ export const chat: Writable<Chat> = writable();
 export function setClient<T extends Client>(newClient: T): T {
     client.set(newClient);
     if (BROWSER) {
-        newClient.i18n.locales = window.navigator.languages as Locale[];
+        newClient.i18n.defaultLocales = window.navigator.languages as Locale[];
     }
     return newClient;
 }

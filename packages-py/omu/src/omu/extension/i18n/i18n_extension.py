@@ -30,28 +30,37 @@ class I18nExtension(Extension):
         client.permissions.require(I18N_GET_LOCALES_PERMISSION_ID)
         self.locales_registry = client.registry.get(I18N_LOCALES_REGISTRY_TYPE)
         self.locales: list[Locale] = []
+        self.default_locales: list[Locale] = []
+
+    def get_locales(self) -> list[Locale]:
+        if self.locales:
+            return self.locales
+        if not self.default_locales:
+            raise ValueError("Default locales are not set")
+        return self.default_locales
 
     def translate(self, localized_text: LocalizedText) -> str:
-        if not self.locales:
+        locales = self.get_locales()
+        if not locales:
             raise RuntimeError("Locales not loaded")
         if isinstance(localized_text, str):
             return localized_text
-        translation = self.select_best_translation(localized_text)
+        translation = self.select_best_translation(locales, localized_text)
         if not translation:
-            raise ValueError(
-                f"Missing translation for {self.locales} in {localized_text}"
-            )
+            raise ValueError(f"Missing translation for {locales} in {localized_text}")
         return translation
 
-    def select_best_translation(self, localized_text: LocalizedText) -> str | None:
+    def select_best_translation(
+        self,
+        locales: list[Locale],
+        localized_text: LocalizedText,
+    ) -> str | None:
         if isinstance(localized_text, str):
             return localized_text
         if not localized_text:
             return None
-        if not self.locales:
-            raise RuntimeError("Locales not loaded")
         translations = localized_text
-        for locale in self.locales:
+        for locale in locales:
             translation = translations.get(locale)
             if translation:
                 return translation

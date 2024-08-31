@@ -22,8 +22,10 @@ import {
     SERVER_SHUTDOWN_PERMISSION_ID,
 } from '@omujs/omu/extension/server/index.js';
 import { Identifier } from '@omujs/omu/identifier.js';
+import type { Locale } from '@omujs/omu/localization/locale.js';
 import { BrowserTokenProvider } from '@omujs/omu/token.js';
 import { setChat } from '../../../ui/dist/stores.js';
+import { language } from './main/settings.js';
 import { version } from './version.json';
 
 const IDENTIFIER = new Identifier('com.omuapps', 'dashboard');
@@ -76,5 +78,11 @@ omu.permissions.require(
     I18N_GET_LOCALES_PERMISSION_ID,
     I18N_SET_LOCALES_PERMISSION_ID,
 );
+
+omu.onReady(() => {
+    language.subscribe((lang) => {
+        omu.i18n.setLocale([lang] as Locale[]);
+    });
+})
 
 export { chat, dashboard, omu };
