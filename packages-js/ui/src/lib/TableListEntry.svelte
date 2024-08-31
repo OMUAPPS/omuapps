@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
 
-    export let selected: boolean;
     export let key: string;
     export let selectItem: (key: string | undefined) => void;
     export let transition: boolean = false;
@@ -16,10 +15,6 @@
         onDestroy(() => {
             window.clearTimeout(timeout);
         });
-    }
-
-    $: if (selected && element) {
-        element.focus();
     }
 </script>
 

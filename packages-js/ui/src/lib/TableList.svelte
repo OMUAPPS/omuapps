@@ -266,7 +266,6 @@
             let:item
         >
             <TableListEntry
-                selected={key === selectedItem}
                 {key}
                 {selectItem}
                 transition={startIndex === 0 && addedItems.includes(key)}
