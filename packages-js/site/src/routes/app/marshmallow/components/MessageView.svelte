@@ -20,6 +20,7 @@
         const imageRect = image.getBoundingClientRect();
         const x = (mouse.x - imageRect.x) / imageRect.width;
         const y = (mouse.y - imageRect.y) / imageRect.height;
+        
         pointer = {
             x,
             y,
@@ -27,7 +28,7 @@
         $data = {
             ...$data,
             scroll: Math.max(0, scroll),
-            pointer,
+            pointer: $data.pointer && pointer,
         };
     }
 
