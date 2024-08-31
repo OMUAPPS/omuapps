@@ -98,7 +98,7 @@
             {#if $menuOpen}
                 <span>
                     アプリ
-                    <i class="ti ti-package" />
+                    <i class="ti ti-apps" />
                 </span>
                 <div class="buttons">
                     <button

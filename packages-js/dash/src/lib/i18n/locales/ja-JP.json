@@ -150,6 +150,11 @@
             "name": "アップデート",
             "icon": "ti ti-download",
             "description": "新しいバージョンがあります。"
+        },
+        "manage-apps": {
+            "name": "アプリを管理",
+            "icon": "ti ti-apps",
+            "description": "アンインストールや設定を変更できます"
         }
     },
     "settings": {
