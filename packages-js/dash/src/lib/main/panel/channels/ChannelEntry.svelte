@@ -50,12 +50,6 @@
                 </Tooltip>
                 <i class="ti ti-trash" />
             </ButtonMini>
-            <ButtonMini>
-                <Tooltip>
-                    <div class="description">{$t('panels.channels.edit')}</div>
-                </Tooltip>
-                <i class="ti ti-settings" />
-            </ButtonMini>
             <a href={entry.url} target="_blank">
                 <ButtonMini>
                     <Tooltip>
