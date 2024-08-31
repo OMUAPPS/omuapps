@@ -233,7 +233,7 @@
         font-size: 0.85rem;
         padding-bottom: 0.75rem;
         margin-top: 2rem;
-        padding-left: 1rem;
+        padding-left: 0.75rem;
 
         > .buttons {
             margin-left: auto;
@@ -338,10 +338,5 @@
                 width: calc(100% - #{$tab-width});
             }
         }
-    }
-    
-    *:focus {
-        outline: 1px solid var(--color-1);
-        outline-offset: -1px;
     }
 </style>
