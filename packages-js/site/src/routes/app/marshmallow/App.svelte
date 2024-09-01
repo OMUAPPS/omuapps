@@ -81,6 +81,8 @@
     }
 
     let refreshPromise: Promise<void> | null = getUsers();
+
+    let container: HTMLDivElement;
 </script>
 
 <main>
@@ -105,7 +107,11 @@
                     <button
                         class="message"
                         class:selected
-                        on:click={() => ($data.message = selected ? null : item)}
+                        on:click={() => {
+                            $data.message = selected ? null : item;
+                            $data.scroll = 0;
+                            container.scrollTop = 0;
+                        }}
                     >
                         <Tooltip>
                             {#if selected}
@@ -129,7 +135,7 @@
             <AssetButton />
         </div>
     </div>
-    <div class="right">
+    <div class="right" bind:this={container}>
         {#if $data.message}
             <MessageView {marshmallow} bind:message={$data.message} />
         {:else}
