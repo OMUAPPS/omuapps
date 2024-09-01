@@ -15,31 +15,12 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - uses: pnpm/action-setup@v4
-              name: Install pnpm
-              with:
-                  version: 9.6.0
-                  run_install: false
+            - run: corepack enable
 
-            - uses: actions/setup-node@v4.0.1
+            - name: Setup Node.js
+              uses: actions/setup-node@v4.0.3
               with:
-                  node-version: '20.x'
-                  registry-url: 'https://registry.npmjs.org'
-                  cache: 'pnpm'
-
-            - name: Get pnpm store directory
-              shell: bash
-              id: pnpm-store
-              run: |
-                  echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-
-            - uses: actions/cache@v4
-              name: Cache pnpm store
-              with:
-                  path: ${{ steps.pnpm-store.outputs.STORE_PATH }}
-                  key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-                  restore-keys: |
-                      pnpm-store-${{ runner.os }}-
+                cache: 'pnpm'
 
             - name: Install dependencies
               run: pnpm i --frozen-lockfile
