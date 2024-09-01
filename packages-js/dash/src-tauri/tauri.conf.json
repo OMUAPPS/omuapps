@@ -82,7 +82,24 @@
                 "digestAlgorithm": "sha256",
                 "timestampUrl": "",
                 "nsis": {
-                    "installerIcon": "icons/icon.ico"
+                    "installerIcon": "icons/icon.ico",
+                    "languages": [
+                        "Arabic",
+                        "Bulgarian",
+                        "Dutch",
+                        "English",
+                        "French",
+                        "German",
+                        "Japanese",
+                        "Korean",
+                        "PortugueseBR",
+                        "SimpChinese",
+                        "Spanish",
+                        "SpanishInternational",
+                        "Swedish",
+                        "TradChinese",
+                        "Turkish"
+                    ]
                 }
             }
         },
