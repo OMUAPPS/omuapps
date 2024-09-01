@@ -76,6 +76,7 @@ jobs:
 
             - name: build-pre
               run: |
+                  pnpm run build
                   pnpm --filter dash run build-pre
 
             - name: Cache rust target
