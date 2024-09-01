@@ -6,6 +6,7 @@
         "type": "git",
         "url": "https://github.com/OMUAPPS/omuapps.git"
     },
+    "packageManager": "pnpm@9.6.0",
     "workspaces": [
         "packages-js/*"
     ],
