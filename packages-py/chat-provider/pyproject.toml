@@ -11,7 +11,7 @@ dependencies = [
     "beautifulsoup4>=4.12.2",
     "lxml>=5.0.0",
     "omu_chat>=0.1.9",
-    "iwashi>=3.0.5",
+    "iwashi>=3.1.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.12"
