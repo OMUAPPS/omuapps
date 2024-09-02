@@ -73,7 +73,7 @@ impl Server {
         option: &ServerOption,
         on_progress: &(impl Fn(Progress) + Send + 'static),
     ) -> Result<String, std::result::Result<Server, String>> {
-        let token = if is_port_available("127.0.0.1", option.port) {
+        let token = if is_port_available(option.port) {
             let token = generate_token();
             match Self::save_token(&token, option) {
                 Ok(_) => token,
@@ -202,9 +202,8 @@ fn generate_token() -> String {
         .collect::<String>()
 }
 
-fn is_port_available(host: &str, port: u16) -> bool {
-    match std::net::TcpListener::bind((host, port)) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+fn is_port_available(port: u16) -> bool {
+    let ok_127 = std::net::TcpListener::bind(("127.0.0.1", port)).is_ok();
+    let ok_0 = std::net::TcpListener::bind(("0.0.0.0", port)).is_ok();
+    ok_127 && ok_0
 }
