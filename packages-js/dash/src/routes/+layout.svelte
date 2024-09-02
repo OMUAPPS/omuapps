@@ -104,6 +104,7 @@
             await invoke('start_server');
         } catch (e) {
             console.error(e);
+            throw e;
         }
         console.log('server started');
 
