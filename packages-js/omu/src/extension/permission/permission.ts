@@ -2,7 +2,7 @@ import { Identifier } from '../../identifier.js';
 import type { LocalizedText } from '../../localization/localization.js';
 import type { Model } from '../../model.js';
 
-type PermissionLevel = 'low' | 'medium' | 'high';
+export type PermissionLevel = 'low' | 'medium' | 'high';
 
 export type PermissionMetadata = {
     name: LocalizedText;

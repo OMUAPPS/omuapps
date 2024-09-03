@@ -11,14 +11,15 @@
 
     async function install() {
         const found = await appTable.get(app.key());
-        if (found) {
-            appTable.remove(app);
-            alreadyAdded = false;
-        } else {
-            appTable.add(app);
-            omu.dashboard.openApp(app);
+        if (!found) {
+            await omu.dashboard.installApp(app);
+            await omu.dashboard.openApp(app);
             alreadyAdded = true;
         }
+    }
+
+    async function launch() {
+        await omu.dashboard.openApp(app);
     }
 
     omu.onReady(async () => {
@@ -81,11 +82,11 @@
                 </small>
             </FlexColWrapper>
             <FlexRowWrapper>
-                <button on:click={install} class:active={alreadyAdded}>
+                <button on:click={() => (alreadyAdded ? launch() : install())} class:active={alreadyAdded}>
                     <Tooltip>
-                        {alreadyAdded ? 'アプリを削除' : 'アプリをインストール'}
+                        {alreadyAdded ? 'アプリを開く' : 'アプリをインストール'}
                     </Tooltip>
-                    <i class="ti ti-{alreadyAdded ? 'x' : 'download'}" />
+                    <i class="ti ti-{alreadyAdded ? 'player-play' : 'download'}" />
                 </button>
             </FlexRowWrapper>
         </FlexRowWrapper>

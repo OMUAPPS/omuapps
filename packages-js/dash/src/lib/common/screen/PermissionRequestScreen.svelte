@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { PermissionRequestPacket } from '@omujs/omu/extension/dashboard/packets.js';
-    import { FlexColWrapper, FlexRowWrapper, JustifyBaselineWrapper } from '@omujs/ui';
+    import type { PermissionLevel } from '@omujs/omu/extension/permission/permission.js';
+    import { FlexColWrapper, FlexRowWrapper, JustifyBaselineWrapper, Tooltip } from '@omujs/ui';
     import PermissionEntry from './PermissionEntry.svelte';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
@@ -23,47 +24,63 @@
         resolve(false);
         screen.handle.pop();
     }
+
+    const LEVELS: Record<PermissionLevel, number> = {
+        low: 0,
+        medium: 1,
+        high: 2,
+    };
+
+    const permissions = request.permissions.sort((a, b) => LEVELS[a.metadata.level] - LEVELS[b.metadata.level]).reverse().map((permission) => ({
+        permission,
+        accepted: permission.metadata.level === 'low',
+    }));
 </script>
 
 <Screen {screen} title="permission_request" disableClose>
-    <FlexColWrapper heightFull between widthFull>
-        <span class="text">
-            <FlexRowWrapper>
-                <FlexColWrapper>
-                    <JustifyBaselineWrapper>
-                        <small>
-                            {request.app.id.namespace.split('.').reverse().join('.')}
-                            <i class="ti ti-slash" />
-                        </small>
-                        <b>
-                            {request.app.id.path.reverse().join('.')}
-                        </b>
-                        <small>
-                            v{request.app.version}
-                        </small>
-                    </JustifyBaselineWrapper>
-                </FlexColWrapper>
-            </FlexRowWrapper>
-            は以下の権限を要求しています。
-        </span>
-        <div class="permissions">
-            <FlexColWrapper widthFull>
-                {#each request.permissions as permission}
-                    <PermissionEntry {permission} />
-                {/each}
+    <span class="text">
+        <FlexRowWrapper>
+            <FlexColWrapper>
+                <JustifyBaselineWrapper>
+                    <small>
+                        {request.app.id.namespace.split('.').reverse().join('.')}
+                        <i class="ti ti-slash" />
+                    </small>
+                    <b>
+                        {request.app.id.path.reverse().join('.')}
+                    </b>
+                    <small>
+                        v{request.app.version}
+                    </small>
+                </JustifyBaselineWrapper>
             </FlexColWrapper>
-        </div>
-        <FlexRowWrapper widthFull between baseline>
-            <button on:click={reject} class="reject">
-                拒否
-                <i class="ti ti-x" />
-            </button>
-            <button on:click={accept} class="accept">
-                許可
-                <i class="ti ti-check" />
-            </button>
         </FlexRowWrapper>
-    </FlexColWrapper>
+        は以下の権限を要求しています。
+    </span>
+    <div class="permissions">
+        <ul>
+            {#each permissions as entry}
+                <li>
+                    <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
+                </li>
+            {/each}
+        </ul>
+    </div>
+    <FlexRowWrapper widthFull between baseline>
+        <button on:click={reject} class="reject">
+            キャンセル
+            <i class="ti ti-x" />
+        </button>
+        <button on:click={accept} class="accept" disabled={!permissions.every((entry) => entry.accepted)}>
+            {#if !permissions.every((entry) => entry.accepted)}
+                <Tooltip>
+                    すべての権限を許可してください
+                </Tooltip>
+            {/if}
+            許可
+            <i class="ti ti-check" />
+        </button>
+    </FlexRowWrapper>
 </Screen>
 
 <style lang="scss">
@@ -91,8 +108,18 @@
     }
 
     .permissions {
+        position: relative;
+        flex: 1;
         width: 100%;
-        overflow-y: auto;
+
+        > ul {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
     }
 
     .accept {
@@ -101,6 +128,12 @@
 
         &:hover {
             outline: 1px solid var(--color-bg-2);
+        }
+
+        &:disabled {
+            color: var(--color-1);
+            background: var(--color-bg-1);
+            cursor: not-allowed;
         }
     }
 

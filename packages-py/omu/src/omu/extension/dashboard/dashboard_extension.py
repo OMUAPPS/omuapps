@@ -12,6 +12,8 @@ from omu.network.packet import PacketType
 from omu.serializer import Serializer
 
 from .packets import (
+    AppInstallRequestPacket,
+    AppUpdateRequestPacket,
     PermissionRequestPacket,
     PluginRequestPacket,
 )
@@ -86,6 +88,46 @@ DASHBOARD_APP_TABLE_TYPE = TableType.create_model(
         remove=DASHOBARD_APP_EDIT_PERMISSION_ID,
     ),
 )
+DASHBOARD_APP_INSTALL_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "install"
+DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType[App, None].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "install_app",
+    request_serializer=Serializer.model(App),
+    permission_id=DASHBOARD_APP_INSTALL_PERMISSION_ID,
+)
+DASHBOARD_APP_INSTALL_PACKET = PacketType[AppInstallRequestPacket].create_serialized(
+    DASHBOARD_EXTENSION_TYPE,
+    "install_app",
+    AppInstallRequestPacket,
+)
+DASHBOARD_APP_INSTALL_ACCEPT_PACKET = PacketType[str].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "install_app_accept",
+)
+DASHBOARD_APP_INSTALL_DENY_PACKET = PacketType[str].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "install_app_deny",
+)
+DASHBOARD_APP_UPDATE_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "update"
+DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType[App, None].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "update_app",
+    request_serializer=Serializer.model(App),
+    permission_id=DASHBOARD_APP_UPDATE_PERMISSION_ID,
+)
+DASHBOARD_APP_UPDATE_PACKET = PacketType[AppUpdateRequestPacket].create_serialized(
+    DASHBOARD_EXTENSION_TYPE,
+    "update_app",
+    AppUpdateRequestPacket,
+)
+DASHBOARD_APP_UPDATE_ACCEPT_PACKET = PacketType[str].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "update_app_accept",
+)
+DASHBOARD_APP_UPDATE_DENY_PACKET = PacketType[str].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "update_app_deny",
+)
 
 
 class DashboardExtension(Extension):
@@ -103,6 +145,12 @@ class DashboardExtension(Extension):
             DASHBOARD_PLUGIN_ACCEPT_PACKET,
             DASHBOARD_PLUGIN_DENY_PACKET,
             DASHBOARD_OPEN_APP_PACKET,
+            DASHBOARD_APP_INSTALL_PACKET,
+            DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
+            DASHBOARD_APP_INSTALL_DENY_PACKET,
+            DASHBOARD_APP_UPDATE_PACKET,
+            DASHBOARD_APP_UPDATE_ACCEPT_PACKET,
+            DASHBOARD_APP_UPDATE_DENY_PACKET,
         )
         self.apps = client.tables.get(DASHBOARD_APP_TABLE_TYPE)
 

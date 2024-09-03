@@ -1,4 +1,6 @@
 from omu.extension.dashboard import (
+    DASHBOARD_APP_INSTALL_PERMISSION_ID,
+    DASHBOARD_APP_UPDATE_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHBOARD_SET_PERMISSION_ID,
     DASHOBARD_APP_EDIT_PERMISSION_ID,
@@ -59,6 +61,34 @@ DASHOBARD_APP_EDIT_PERMISSION = PermissionType(
         "note": {
             "ja": "インストールされたアプリの情報を編集するために使われます",
             "en": "Used to edit information about installed apps",
+        },
+    },
+)
+DASHBOARD_APP_INSTALL_PERMISSION = PermissionType(
+    DASHBOARD_APP_INSTALL_PERMISSION_ID,
+    {
+        "level": "high",
+        "name": {
+            "ja": "アプリをインストール",
+            "en": "Install an app",
+        },
+        "note": {
+            "ja": "アプリをインストールするために使われます",
+            "en": "Used to install an app",
+        },
+    },
+)
+DASHBOARD_APP_UPDATE_PERMISSION = PermissionType(
+    DASHBOARD_APP_UPDATE_PERMISSION_ID,
+    {
+        "level": "high",
+        "name": {
+            "ja": "アプリを更新",
+            "en": "Update an app",
+        },
+        "note": {
+            "ja": "アプリを更新するために使われます",
+            "en": "Used to update an app",
         },
     },
 )

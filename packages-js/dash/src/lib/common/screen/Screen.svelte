@@ -2,8 +2,6 @@
     import { type ScreenHandle } from './screen.js';
     import ScreenHeader from './ScreenHeader.svelte';
 
-    import { classes } from '$lib/utils/class-helper.js';
-
     export let screen: { handle: ScreenHandle };
     export let title: string;
     export let windowed: boolean = true;
@@ -37,7 +35,7 @@
         {#if !disableDecorations && windowed}
             <ScreenHeader {title} />
         {/if}
-        <div class:windowed class={classes('content', disableDecorations && 'no-decorated')}>
+        <div class:windowed class="content" class:no-decorated={disableDecorations}>
             {#if !disableDecorations && !windowed}
                 <ScreenHeader {title} />
             {/if}
@@ -76,6 +74,7 @@
     }
 
     .content {
+        position: relative;
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
