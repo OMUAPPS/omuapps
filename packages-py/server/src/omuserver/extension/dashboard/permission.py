@@ -23,7 +23,7 @@ DASHBOARD_SET_PERMISSION = PermissionType(
 DASHBOARD_OPEN_APP_PERMISSION = PermissionType(
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     {
-        "level": "low",
+        "level": "medium",
         "name": {
             "ja": "アプリを開く",
             "en": "Open an app",
@@ -51,7 +51,7 @@ DASHOBARD_APP_READ_PERMISSION = PermissionType(
 DASHOBARD_APP_EDIT_PERMISSION = PermissionType(
     DASHOBARD_APP_EDIT_PERMISSION_ID,
     {
-        "level": "medium",
+        "level": "high",
         "name": {
             "ja": "インストールされたアプリ情報を編集",
             "en": "Edit Installed App Information",
