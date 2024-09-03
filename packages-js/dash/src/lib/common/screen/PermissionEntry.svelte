@@ -8,13 +8,9 @@
     export let accepted: boolean;
     export let disabled: boolean;
 
-    function handleClick() {
-        if (disabled) return;
-        accepted = !accepted;
-    }
 </script>
 
-<button class:accepted on:click={handleClick}>
+<button class:accepted on:click={() => (accepted = !accepted)} disabled={disabled}>
     <Tooltip>
         {#if permission.metadata.note}
             {omu.i18n.translate(permission.metadata.note)}
@@ -28,16 +24,18 @@
         {/if}
     </div>
     <div class="info">
-        <p>
+        <p class="name">
             {omu.i18n.translate(permission.metadata.name)}
-        </p>
-        <small>
-            {$t(`permission_level.${permission.metadata.level}`)}
-            <i class={$t(`permission_level.${permission.metadata.level}_icon`)} />
             <span class="id">
                 {permission.id.key()}
             </span>
-        </small>
+        </p>
+        {#if !disabled}
+            <small class="level">
+                {$t(`permission_level.${permission.metadata.level}`)}
+                <i class={$t(`permission_level.${permission.metadata.level}_icon`)} />
+            </small>
+        {/if}
     </div>
 </button>
 
@@ -54,30 +52,46 @@
         background: var(--color-bg-1);
         border: none;
         cursor: pointer;
+
+        &:disabled {
+            height: 2rem;
+            color: var(--color-text);
+            background: var(--color-bg-1);
+        }
     }
 
     .info {
-        flex: 1;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         gap: 0.2rem;
         font-size: 0.9rem;
         font-weight: 600;
+        flex: 1;
+    }
 
-        > small {
-            display: flex;
-            align-items: center;
-            width: 100%;
+    .level {
+        display: inline-flex;
+        align-items: center;
+        background: var(--color-bg-2);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4.5px;
+        font-size: 0.7rem;
+    }
 
-            > i {
-                margin-left: 0.5rem;
-            }
+    .name {
+        width: 100%;
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+    }
 
-            > .id {
-                margin-left: auto;
-            }
-        } 
+    .id {
+        margin-left: auto;
+        font-size: 0.7rem;
+        color: var(--color-text);
+        font-weight: 600;
+        opacity: 0.8;
     }
 
     .check {

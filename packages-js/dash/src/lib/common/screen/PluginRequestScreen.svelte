@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { PluginRequestPacket } from '@omujs/omu/extension/dashboard/packets.js';
-    import { FlexColWrapper, FlexRowWrapper, JustifyBaselineWrapper } from '@omujs/ui';
+    import { FlexColWrapper, FlexRowWrapper } from '@omujs/ui';
+    import AppInfo from '../AppInfo.svelte';
     import PackageEntry from './PackageEntry.svelte';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
@@ -28,22 +29,7 @@
 <Screen {screen} title="plugin_request" disableClose>
     <FlexColWrapper heightFull between widthFull>
         <span class="text">
-            <FlexRowWrapper>
-                <FlexColWrapper>
-                    <JustifyBaselineWrapper>
-                        <small>
-                            {request.app.id.namespace.split('.').reverse().join('.')}
-                            <i class="ti ti-slash" />
-                        </small>
-                        <b>
-                            {request.app.id.path.reverse().join('.')}
-                        </b>
-                        <small>
-                            v{request.app.version}
-                        </small>
-                    </JustifyBaselineWrapper>
-                </FlexColWrapper>
-            </FlexRowWrapper>
+            <AppInfo app={request.app} />
             は以下のパッケージのインストールを要求しています。
         </span>
         <div class="permissions">

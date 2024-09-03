@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { AppInstallRequest } from '@omujs/omu/extension/dashboard/packets.js';
-    import { FlexColWrapper, FlexRowWrapper, JustifyBaselineWrapper } from '@omujs/ui';
+    import AppInfo from '../AppInfo.svelte';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
@@ -24,69 +24,50 @@
     }
 </script>
 
-<Screen {screen} title="plugin_request" disableClose>
-    <FlexColWrapper heightFull between widthFull>
-        <span class="text">
-            <FlexRowWrapper>
-                <FlexColWrapper>
-                    <JustifyBaselineWrapper>
-                        <small>
-                            {request.app.id.namespace.split('.').reverse().join('.')}
-                            <i class="ti ti-slash" />
-                        </small>
-                        <b>
-                            {request.app.id.path.reverse().join('.')}
-                        </b>
-                        <small>
-                            v{request.app.version}
-                        </small>
-                    </JustifyBaselineWrapper>
-                </FlexColWrapper>
-            </FlexRowWrapper>
-            は以下のパッケージのインストールを要求しています。
-        </span>
-        <div class="permissions">
-        </div>
-        <FlexRowWrapper widthFull between baseline>
+<Screen {screen} title="app_install" disableClose>
+    <div class="content">
+        <AppInfo app={request.app} />
+        <div>
             <button on:click={reject} class="reject">
-                拒否
+                キャンセル
                 <i class="ti ti-x" />
             </button>
             <button on:click={accept} class="accept">
-                許可
+                追加
                 <i class="ti ti-check" />
             </button>
-        </FlexRowWrapper>
-    </FlexColWrapper>
+        </div>
+    </div>
 </Screen>
 
 <style lang="scss">
+    .content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 4rem;
+        padding-bottom: 2rem;
+    }
+
     button {
-        padding: 8px 14px;
+        padding: 0.5rem 1rem;
         margin-right: 1px;
-        font-size: 16px;
+        font-size: 0.8rem;
         font-weight: 600;
         color: var(--color-1);
         cursor: pointer;
-        background: var(--color-bg-2);
+        background: none;
         border: none;
         outline: none;
         outline-offset: -1px;
-    }
 
-    .text {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 20px;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--color-1);
-    }
-
-    .permissions {
-        width: 100%;
-        overflow-y: auto;
+        &:hover {
+            outline: 1px solid var(--color-1);
+            outline-offset: -2px;
+        }
     }
 
     .accept {
@@ -100,7 +81,6 @@
 
     .reject {
         margin-left: auto;
-        outline: 1px solid var(--color-1);
 
         &:hover {
             outline-offset: -2px;

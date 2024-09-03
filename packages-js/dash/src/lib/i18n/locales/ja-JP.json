@@ -167,6 +167,16 @@
             "icon": "ti ti-plug",
             "description": "プラグインを要求します。"
         },
+        "app_install": {
+            "name": "アプリをインストール",
+            "icon": "ti ti-download",
+            "description": "アプリをインストールします。"
+        },
+        "app_update": {
+            "name": "アプリを更新",
+            "icon": "ti ti-download",
+            "description": "新しいバージョンがあります。"
+        },
         "update": {
             "name": "アップデート",
             "icon": "ti ti-download",

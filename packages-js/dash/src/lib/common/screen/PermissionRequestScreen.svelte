@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { PermissionRequestPacket } from '@omujs/omu/extension/dashboard/packets.js';
     import type { PermissionLevel } from '@omujs/omu/extension/permission/permission.js';
-    import { FlexColWrapper, FlexRowWrapper, JustifyBaselineWrapper, Tooltip } from '@omujs/ui';
+    import { FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import AppInfo from '../AppInfo.svelte';
     import PermissionEntry from './PermissionEntry.svelte';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
@@ -39,22 +40,7 @@
 
 <Screen {screen} title="permission_request" disableClose>
     <span class="text">
-        <FlexRowWrapper>
-            <FlexColWrapper>
-                <JustifyBaselineWrapper>
-                    <small>
-                        {request.app.id.namespace.split('.').reverse().join('.')}
-                        <i class="ti ti-slash" />
-                    </small>
-                    <b>
-                        {request.app.id.path.reverse().join('.')}
-                    </b>
-                    <small>
-                        v{request.app.version}
-                    </small>
-                </JustifyBaselineWrapper>
-            </FlexColWrapper>
-        </FlexRowWrapper>
+        <AppInfo app={request.app} />
         は以下の権限を要求しています。
     </span>
     <div class="permissions">
