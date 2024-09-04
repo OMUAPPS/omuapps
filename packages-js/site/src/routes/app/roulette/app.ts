@@ -1,7 +1,7 @@
 import { App } from '@omujs/omu';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getUrl, ORIGIN } from '../origin.js';
 import thumbnail from './thumbnail.png';
 
 export const APP_ID = new Identifier('com.omuapps', 'roulette');
@@ -18,7 +18,7 @@ export const APP = new App(APP_ID, {
             en: 'You can spin the roulette to select someone or make a decision',
         },
         icon: 'ti-rosette',
-        image: thumbnail,
+        image: getUrl(thumbnail),
         tags: ['asset', 'game', 'tool', 'underdevelopment'] as TagKey[],
     },
 });

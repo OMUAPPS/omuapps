@@ -1,7 +1,7 @@
 import { App } from '@omujs/omu';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getUrl, ORIGIN } from '../origin.js';
 import icon from './icon.png';
 import thumbnail from './thumbnail.png';
 
@@ -19,8 +19,8 @@ export const APP = new App(IDENTIFIER, {
             ja: 'Youtubeのチャットに送られたリアクションを配信画面にも乗せることができます',
             en: 'Display reactions sent to Youtube chat on your stream',
         },
-        icon: icon,
-        image: thumbnail,
+        icon: getUrl(icon),
+        image: getUrl(thumbnail),
         tags: ['youtube', 'asset'] as TagKey[],
     },
 });
