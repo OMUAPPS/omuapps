@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { t } from '$lib/i18n/i18n-context.js';
     import type { PermissionType } from '@omujs/omu/extension/permission/permission.js';
     import { Tooltip } from '@omujs/ui';
     import { omu } from '../../client.js';
@@ -7,7 +6,6 @@
     export let permission: PermissionType;
     export let accepted: boolean;
     export let disabled: boolean;
-
 </script>
 
 <button class:accepted on:click={() => (accepted = !accepted)} disabled={disabled}>
@@ -16,11 +14,11 @@
             {omu.i18n.translate(permission.metadata.note)}
         {/if}
     </Tooltip>
-    <div class="check" class:disabled>
+    <div class="check" class:disabled class:accepted>
         {#if accepted}
             <i class="ti ti-check" />
         {:else}
-            <i class="ti ti-plus" />
+            <i class="ti ti-check" />
         {/if}
     </div>
     <div class="info">
@@ -30,12 +28,6 @@
                 {permission.id.key()}
             </span>
         </p>
-        {#if !disabled}
-            <small class="level">
-                {$t(`permission_level.${permission.metadata.level}`)}
-                <i class={$t(`permission_level.${permission.metadata.level}_icon`)} />
-            </small>
-        {/if}
     </div>
 </button>
 
@@ -46,7 +38,7 @@
         gap: 1rem;
         width: 100%;
         padding: 0.65rem 1rem;
-        margin: 0.1rem;
+        margin: 2px 4px;
         font-weight: 600;
         color: var(--color-1);
         background: var(--color-bg-1);
@@ -70,20 +62,12 @@
         flex: 1;
     }
 
-    .level {
-        display: inline-flex;
-        align-items: center;
-        background: var(--color-bg-2);
-        padding: 0.2rem 0.4rem;
-        border-radius: 4.5px;
-        font-size: 0.7rem;
-    }
-
     .name {
         width: 100%;
         display: flex;
         align-items: baseline;
         gap: 0.5rem;
+        font-size: 0.8rem;
     }
 
     .id {
@@ -102,20 +86,28 @@
         height: 2rem;
         border-radius: 4.5px;
         background: var(--color-bg-2);
-        color: var(--color-text);
+        color: #bbb;
         outline: 1px solid var(--color-outline);
 
         &.disabled {
             visibility: hidden;
         }
-    }
-    
 
-    .accepted {
-        > .check {
+        &.accepted {
             background: var(--color-1);
             color: var(--color-bg-2);
             outline: none;
+        }
+    }
+
+    button {
+        &:hover {
+            outline: 1px solid var(--color-1);
+
+            > .check {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+            }
         }
     }
 </style>

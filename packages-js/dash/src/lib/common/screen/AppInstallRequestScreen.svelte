@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { AppInstallRequest } from '@omujs/omu/extension/dashboard/packets.js';
+    import { Localized } from '@omujs/ui';
     import AppInfo from '../AppInfo.svelte';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
@@ -11,7 +12,7 @@
             resolve: (accept: boolean) => void;
         };
     };
-    const { request, resolve } = screen.props;
+    const { request: { app }, resolve } = screen.props;
 
     function accept() {
         resolve(true);
@@ -26,8 +27,9 @@
 
 <Screen {screen} title="app_install" disableClose>
     <div class="content">
-        <AppInfo app={request.app} />
-        <div>
+        <AppInfo {app} />
+        <Localized text={app.metadata?.image} />
+        <div class="actions">
             <button on:click={reject} class="reject">
                 キャンセル
                 <i class="ti ti-x" />
@@ -52,6 +54,11 @@
         padding-bottom: 2rem;
     }
 
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
     button {
         padding: 0.5rem 1rem;
         margin-right: 1px;
@@ -63,27 +70,17 @@
         border: none;
         outline: none;
         outline-offset: -1px;
+        color: var(--color-1);
+        background: var(--color-bg-1);
 
-        &:hover {
-            outline: 1px solid var(--color-1);
-            outline-offset: -2px;
+        &.accept {
+            background: var(--color-1);
+            color: var(--color-bg-2);
+        }
+    
+        &.reject {
+            margin-left: auto;
         }
     }
 
-    .accept {
-        color: var(--color-bg-2);
-        background: var(--color-1);
-
-        &:hover {
-            outline: 1px solid var(--color-bg-2);
-        }
-    }
-
-    .reject {
-        margin-left: auto;
-
-        &:hover {
-            outline-offset: -2px;
-        }
-    }
 </style>

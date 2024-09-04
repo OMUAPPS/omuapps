@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { PermissionRequestPacket } from '@omujs/omu/extension/dashboard/packets.js';
     import type { PermissionLevel } from '@omujs/omu/extension/permission/permission.js';
-    import { FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import { Tooltip } from '@omujs/ui';
     import AppInfo from '../AppInfo.svelte';
     import PermissionEntry from './PermissionEntry.svelte';
     import Screen from './Screen.svelte';
@@ -39,10 +39,11 @@
 </script>
 
 <Screen {screen} title="permission_request" disableClose>
-    <span class="text">
+    <span class="app-info">
         <AppInfo app={request.app} />
-        は以下の権限を要求しています。
+        <small>は以下の権限を要求しています。</small>
     </span>
+    <hr />
     <div class="permissions">
         <ul>
             {#each permissions as entry}
@@ -52,7 +53,7 @@
             {/each}
         </ul>
     </div>
-    <FlexRowWrapper widthFull between baseline>
+    <div class="actions">
         <button on:click={reject} class="reject">
             キャンセル
             <i class="ti ti-x" />
@@ -66,31 +67,71 @@
             許可
             <i class="ti ti-check" />
         </button>
-    </FlexRowWrapper>
+    </div>
 </Screen>
 
 <style lang="scss">
-    button {
-        padding: 8px 14px;
-        margin-right: 1px;
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--color-1);
-        cursor: pointer;
-        background: var(--color-bg-2);
-        border: none;
-        outline: none;
-        outline-offset: -1px;
+    .actions {
+        display: flex;
+        align-items: end;
+        justify-content: end;
+        gap: 0.5rem;
+        padding: 0.5rem 0.621rem;
+        width: 100%;
+        border-top: 1px solid var(--color-outline);
+
+        > button {
+            border: none;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: var(--color-1);
+            background: var(--color-bg-1);
+            cursor: pointer;
+            border-radius: 4px;
+
+            &.reject {
+                color: var(--color-text);
+                background: var(--color-bg-1);
+            }
+
+            &.accept {
+                background: var(--color-1);
+                color: var(--color-bg-1);
+
+                &:disabled {
+                    background: var(--color-bg-1);
+                    color: var(--color-1);
+                }
+            }
+        }
     }
 
-    .text {
+    .app-info {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        padding: 20px;
+        justify-content: start;
+        width: 100%;
+        padding: 1rem 3.5rem;
+        padding-bottom: 0rem;
         font-size: 14px;
         font-weight: 600;
         color: var(--color-1);
+        gap: 0.5rem;
+
+        > small {
+            margin: 0.5rem;
+            margin-top: 0rem;
+            margin-bottom: 1rem;
+            color: var(--color-1);
+        }
+    }
+
+    hr {
+        width: 100%;
+        height: 1px;
+        border: none;
+        background: var(--color-outline);
     }
 
     .permissions {
@@ -105,30 +146,34 @@
             flex-direction: column;
             overflow-y: auto;
             overflow-x: hidden;
-        }
-    }
+            -webkit-overflow-scrolling: touch;
 
-    .accept {
-        color: var(--color-bg-2);
-        background: var(--color-1);
+            &::-webkit-scrollbar {
+                width: 8px;
+            }
 
-        &:hover {
-            outline: 1px solid var(--color-bg-2);
-        }
+            &::-webkit-scrollbar-track {
+                background: var(--color-bg-2);
+                border-radius: 1px;
+            }
 
-        &:disabled {
-            color: var(--color-1);
-            background: var(--color-bg-1);
-            cursor: not-allowed;
-        }
-    }
+            &::-webkit-scrollbar-thumb {
+                background: color-mix(in srgb, var(--color-1) 10%, transparent 0%);
+                border: 1px solid var(--color-bg-2);
+                border-radius: 1px;
+            }
 
-    .reject {
-        margin-left: auto;
-        outline: 1px solid var(--color-1);
+            &:hover {
+                &::-webkit-scrollbar-thumb {
+                    background: var(--color-1);
+                }
+            }
 
-        &:hover {
-            outline-offset: -2px;
+            @supports not selector(::-webkit-scrollbar) {
+                & {
+                    scrollbar-color: var(--color-1) var(--color-bg-2);
+                }
+            }
         }
     }
 </style>

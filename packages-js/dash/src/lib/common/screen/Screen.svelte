@@ -83,8 +83,8 @@
         background: var(--color-bg-2);
 
         &.windowed {
-            width: 500px;
-            height: 300px;
+            width: 40rem;
+            height: 24rem;
             border: 2px solid var(--color-1);
         }
 
