@@ -112,7 +112,7 @@
         align-items: flex-start;
         justify-content: start;
         width: 100%;
-        padding: 1rem 3.5rem;
+        padding: 1rem 3rem;
         padding-bottom: 0rem;
         font-size: 14px;
         font-weight: 600;
