@@ -11,11 +11,9 @@ from omu.extension.server.server_extension import (
     SERVER_APP_TABLE_TYPE,
     SERVER_SESSION_TABLE_TYPE,
     SHUTDOWN_ENDPOINT_TYPE,
-    VERSION_REGISTRY_TYPE,
 )
 from omu.identifier import Identifier
 
-from omuserver import __version__
 from omuserver.helper import get_launch_command
 from omuserver.server import Server
 from omuserver.session import Session
@@ -56,7 +54,6 @@ class ServerExtension:
             SERVER_SHUTDOWN_PERMISSION,
             SERVER_APPS_READ_PERMISSION,
         )
-        self.version_registry = self._server.registry.register(VERSION_REGISTRY_TYPE)
         self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
         self.sessions = self._server.tables.register(SERVER_SESSION_TABLE_TYPE)
         server.network.event.connected += self.on_connected
@@ -104,7 +101,6 @@ class ServerExtension:
             self._server.loop.stop()
 
     async def on_start(self) -> None:
-        await self.version_registry.set(__version__)
         await self.apps.clear()
 
     async def on_connected(self, session: Session) -> None:

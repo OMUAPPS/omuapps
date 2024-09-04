@@ -2,7 +2,6 @@ from omu.app import App
 from omu.client import Client
 from omu.extension import Extension, ExtensionType
 from omu.extension.endpoint import EndpointType
-from omu.extension.registry import RegistryType
 from omu.extension.table import TablePermissions, TableType
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
@@ -40,11 +39,6 @@ REQUIRE_APPS_PACKET_TYPE = PacketType[list[Identifier]].create_json(
     SERVER_EXTENSION_TYPE,
     "require_apps",
     serializer=Serializer.model(Identifier).to_array(),
-)
-VERSION_REGISTRY_TYPE = RegistryType[str | None].create_json(
-    SERVER_EXTENSION_TYPE,
-    "version",
-    default_value=None,
 )
 
 
