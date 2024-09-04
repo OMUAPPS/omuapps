@@ -11,6 +11,7 @@ from omu.extension.server.server_extension import (
     SERVER_APP_TABLE_TYPE,
     SERVER_SESSION_TABLE_TYPE,
     SHUTDOWN_ENDPOINT_TYPE,
+    TRUSTED_ORIGINS_REGISTRY_TYPE,
 )
 from omu.identifier import Identifier
 
@@ -56,6 +57,9 @@ class ServerExtension:
         )
         self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
         self.sessions = self._server.tables.register(SERVER_SESSION_TABLE_TYPE)
+        self.trusted_origins = self._server.registry.register(
+            TRUSTED_ORIGINS_REGISTRY_TYPE
+        )
         server.network.event.connected += self.on_connected
         server.network.event.disconnected += self.on_disconnected
         server.event.start += self.on_start

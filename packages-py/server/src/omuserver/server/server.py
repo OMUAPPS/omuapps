@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from omuserver.extension.permission import PermissionExtension
     from omuserver.extension.plugin import PluginExtension
     from omuserver.extension.registry import RegistryExtension
+    from omuserver.extension.server import ServerExtension
     from omuserver.extension.signal import SignalExtension
     from omuserver.extension.table import TableExtension
     from omuserver.network import Network
@@ -62,40 +63,34 @@ class Server(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def permissions(self) -> PermissionExtension: ...
-
-    @property
-    @abc.abstractmethod
     def endpoints(self) -> EndpointExtension: ...
-
     @property
     @abc.abstractmethod
-    def dashboard(self) -> DashboardExtension: ...
-
+    def permissions(self) -> PermissionExtension: ...
     @property
     @abc.abstractmethod
     def tables(self) -> TableExtension: ...
-
+    @property
+    @abc.abstractmethod
+    def dashboard(self) -> DashboardExtension: ...
     @property
     @abc.abstractmethod
     def registry(self) -> RegistryExtension: ...
-
+    @property
+    @abc.abstractmethod
+    def server(self) -> ServerExtension: ...
     @property
     @abc.abstractmethod
     def signal(self) -> SignalExtension: ...
-
     @property
     @abc.abstractmethod
     def plugins(self) -> PluginExtension: ...
-
     @property
     @abc.abstractmethod
     def assets(self) -> AssetExtension: ...
-
     @property
     @abc.abstractmethod
     def i18n(self) -> I18nExtension: ...
-
     @property
     @abc.abstractmethod
     def logger(self) -> LoggerExtension: ...

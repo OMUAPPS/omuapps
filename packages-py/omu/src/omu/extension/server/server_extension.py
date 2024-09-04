@@ -2,6 +2,7 @@ from omu.app import App
 from omu.client import Client
 from omu.extension import Extension, ExtensionType
 from omu.extension.endpoint import EndpointType
+from omu.extension.registry import RegistryPermissions, RegistryType
 from omu.extension.table import TablePermissions, TableType
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
@@ -40,6 +41,17 @@ REQUIRE_APPS_PACKET_TYPE = PacketType[list[Identifier]].create_json(
     "require_apps",
     serializer=Serializer.model(Identifier).to_array(),
 )
+TRUSTED_ORIGINS_GET_PERMISSION_ID = SERVER_EXTENSION_TYPE / "trusted_origins" / "get"
+TRUSTED_ORIGINS_SET_PERMISSION_ID = SERVER_EXTENSION_TYPE / "trusted_origins" / "set"
+TRUSTED_ORIGINS_REGISTRY_TYPE = RegistryType[list[str]].create_json(
+    SERVER_EXTENSION_TYPE,
+    "trusted_origins",
+    default_value=[],
+    permissions=RegistryPermissions(
+        read=TRUSTED_ORIGINS_GET_PERMISSION_ID,
+        write=TRUSTED_ORIGINS_SET_PERMISSION_ID,
+    ),
+)
 
 
 class ServerExtension(Extension):
@@ -52,6 +64,7 @@ class ServerExtension(Extension):
         self.apps = client.tables.get(SERVER_APP_TABLE_TYPE)
         self.sessions = client.tables.get(SERVER_APP_TABLE_TYPE)
         self.required_apps: set[Identifier] = set()
+        self.trusted_origins = client.registry.get(TRUSTED_ORIGINS_REGISTRY_TYPE)
         client.network.register_packet(REQUIRE_APPS_PACKET_TYPE)
         client.network.add_task(self.on_task)
 

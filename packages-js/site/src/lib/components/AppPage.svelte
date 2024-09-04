@@ -40,6 +40,11 @@
         <p>権限がありませんでした</p>
         <small>{message}</small>
     </div>
+{:else if state === DisconnectType.INVALID_ORIGIN}
+    <div class="modal">
+        <p>無効なオリジンです</p>
+        <small>{message}</small>
+    </div>
 {:else if state === DisconnectType.CLOSE}
     <div class="modal">
         <p>接続が切断されました</p>

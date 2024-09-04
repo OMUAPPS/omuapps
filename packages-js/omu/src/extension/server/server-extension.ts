@@ -6,6 +6,7 @@ import { Serializer } from '../../serializer.js';
 import { EndpointType } from '../endpoint/endpoint.js';
 import type { Extension } from '../extension.js';
 import { ExtensionType } from '../extension.js';
+import { Registry, RegistryPermissions, RegistryType } from '../registry/registry.js';
 import type { Table } from '../table/index.js';
 import { TABLE_EXTENSION_TYPE } from '../table/table-extension.js';
 import { TableType } from '../table/table.js';
@@ -42,17 +43,29 @@ const REQUIRE_APPS_PACKET_TYPE = PacketType.createJson<Identifier[]>(SERVER_EXTE
     name: 'require_apps',
     serializer: Serializer.model(Identifier).toArray(),
 });
+export const TRUSTED_ORIGINS_GET_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('trusted_origins', 'get');
+export const TRUSTED_ORIGINS_SET_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('trusted_origins', 'set');
+const TRUSTED_ORIGINS_REGISTRY_TYPE = RegistryType.createJson<string[]>(SERVER_EXTENSION_TYPE, {
+    name: 'trusted_origins',
+    defaultValue: [],
+    permissions: new RegistryPermissions(
+        TRUSTED_ORIGINS_GET_PERMISSION_ID,
+        TRUSTED_ORIGINS_SET_PERMISSION_ID,
+    ),
+});
 
 export class ServerExtension implements Extension {
     public readonly type = SERVER_EXTENSION_TYPE;
     public readonly apps: Table<App>;
     public readonly sessions: Table<App>;
+    public readonly trustedOrigins: Registry<string[]>;
     private requiredApps = new IdentifierSet();
 
     constructor(private readonly client: Client) {
         client.network.registerPacket(REQUIRE_APPS_PACKET_TYPE);
         this.apps = client.tables.get(APP_TABLE_TYPE);
         this.sessions = client.tables.get(SESSION_TABLE_TYPE);
+        this.trustedOrigins = client.registry.get(TRUSTED_ORIGINS_REGISTRY_TYPE);
         client.network.addTask(() => this.onTask());
     }
 

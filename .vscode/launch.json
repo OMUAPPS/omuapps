@@ -17,7 +17,9 @@
             "args": [
                 "--debug",
                 "--token-file",
-                "${workspaceFolder}/appdata/token.txt"
+                "${workspaceFolder}/appdata/token.txt",
+                "--extra-trusted-host",
+                "localhost:5173"
             ],
             "cwd": "${workspaceFolder}/appdata",
             "justMyCode": true,

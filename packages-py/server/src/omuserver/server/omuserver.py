@@ -69,7 +69,7 @@ class OmuServer(Server):
         self._dashboard = DashboardExtension(self)
         self._registry = RegistryExtension(self)
         self._server = ServerExtension(self)
-        self._signal = SignalExtension(self)
+        self._signals = SignalExtension(self)
         self._plugins = PluginExtension(self)
         self._assets = AssetExtension(self)
         self._i18n = I18nExtension(self)
@@ -206,43 +206,47 @@ class OmuServer(Server):
         return self._packet_dispatcher
 
     @property
-    def endpoints(self) -> EndpointExtension:
+    def endpoints(self):
         return self._endpoints
 
     @property
-    def dashboard(self) -> DashboardExtension:
-        return self._dashboard
-
-    @property
-    def permissions(self) -> PermissionExtension:
+    def permissions(self):
         return self._permissions
 
     @property
-    def tables(self) -> TableExtension:
+    def tables(self):
         return self._tables
 
     @property
-    def registry(self) -> RegistryExtension:
+    def dashboard(self):
+        return self._dashboard
+
+    @property
+    def registry(self):
         return self._registry
 
     @property
-    def signal(self) -> SignalExtension:
-        return self._signal
+    def server(self):
+        return self._server
 
     @property
-    def plugins(self) -> PluginExtension:
+    def signal(self):
+        return self._signals
+
+    @property
+    def plugins(self):
         return self._plugins
 
     @property
-    def assets(self) -> AssetExtension:
+    def assets(self):
         return self._assets
 
     @property
-    def i18n(self) -> I18nExtension:
+    def i18n(self):
         return self._i18n
 
     @property
-    def logger(self) -> LoggerExtension:
+    def logger(self):
         return self._logger
 
     @property
