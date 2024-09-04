@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { AppInstallRequest } from '@omujs/omu/extension/dashboard/packets.js';
-    import { Localized } from '@omujs/ui';
     import AppInfo from '../AppInfo.svelte';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
@@ -28,7 +27,6 @@
 <Screen {screen} title="app_install" disableClose>
     <div class="content">
         <AppInfo {app} />
-        <Localized text={app.metadata?.image} />
         <div class="actions">
             <button on:click={reject} class="reject">
                 キャンセル
