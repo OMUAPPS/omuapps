@@ -1,9 +1,9 @@
-import { App } from '@omujs/omu';
+import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { getId, getUrl } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 import thumbnail from './thumbnail.png';
 
-export const APP_ID = getId('marshmallow');
+export const APP_ID = new Identifier(NAMESPACE, 'marshmallow');
 export const APP = new App(APP_ID, {
     url: getUrl('/app/marshmallow'),
     metadata: {

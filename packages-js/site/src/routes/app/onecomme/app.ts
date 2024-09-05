@@ -1,8 +1,8 @@
-import { App } from '@omujs/omu';
+import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { getId, getUrl } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 
-export const APP_ID = getId('onecomme');
+export const APP_ID = new Identifier(NAMESPACE, 'onecomme');
 export const APP = new App(APP_ID, {
     url: getUrl('/app/onecomme'),
     metadata: {
