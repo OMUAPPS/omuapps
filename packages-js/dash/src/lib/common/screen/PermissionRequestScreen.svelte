@@ -43,13 +43,10 @@
         <AppInfo app={request.app} />
         <small>は以下の権限を要求しています。</small>
     </span>
-    <hr />
     <div class="permissions">
         <ul>
             {#each permissions as entry}
-                <li>
-                    <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
-                </li>
+                <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
             {/each}
         </ul>
     </div>
@@ -136,6 +133,7 @@
         > ul {
             position: absolute;
             inset: 0;
+            padding-top: 0.25rem;
             display: flex;
             flex-direction: column;
             overflow-y: auto;

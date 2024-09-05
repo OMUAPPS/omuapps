@@ -36,7 +36,6 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-        width: 100%;
         padding: 0.65rem 1rem;
         margin: 2px 4px;
         font-weight: 600;
