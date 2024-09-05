@@ -522,7 +522,8 @@ class YoutubeChat(ChatService):
         id = self._room.id / item["targetItemId"]
         message = await self.chat.messages.get(id.key())
         if message:
-            await self.chat.messages.remove(message)
+            message.deleted = True
+            await self.chat.messages.update(message)
 
     async def process_poll_action(self, action: UpdateLiveChatPollAction):
         poll_renderer = action["pollToUpdate"]["pollRenderer"]
