@@ -46,7 +46,7 @@
                 <i class="ti ti-x" />
             </button>
             <button on:click={accept} class="accept">
-                許可
+                更新
                 <i class="ti ti-check" />
             </button>
         </div>  

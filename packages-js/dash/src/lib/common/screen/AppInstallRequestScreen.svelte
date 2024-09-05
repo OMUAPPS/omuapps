@@ -49,7 +49,6 @@
         align-items: center;
         justify-content: space-between;
         padding-top: 4rem;
-        padding-bottom: 2rem;
     }
 
     .actions {
