@@ -55,4 +55,15 @@
         padding-top: 4rem;
         overflow: hidden;
     }
+
+    h1 {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        background: #000;
+        color: var(--color-1);
+        text-align: center;
+    }
 </style>
