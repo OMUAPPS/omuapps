@@ -124,12 +124,11 @@
         align-items: baseline;
         justify-content: end;
         gap: 0.5rem;
-        padding: 0.5rem 0.621rem;
+        padding: 0.5rem 1rem;
         width: 100%;
         border-top: 1px solid var(--color-outline);
 
         > small {
-            margin-left: 0.5rem;
             margin-right: auto;
             font-size: 0.75rem;
             font-weight: 600;
