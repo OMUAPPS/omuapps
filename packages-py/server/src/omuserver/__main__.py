@@ -8,6 +8,7 @@ from loguru import logger
 from omu.address import Address
 
 from omuserver.config import Config
+from omuserver.migration import migrate
 from omuserver.server.omuserver import OmuServer
 from omuserver.version import VERSION
 
@@ -64,6 +65,8 @@ def main(
         tracemalloc.start()
 
     server = OmuServer(config=config)
+
+    migrate(server)
 
     logger.info(f"Starting omuserver v{VERSION} on {config.address.to_url()}")
     server.run()

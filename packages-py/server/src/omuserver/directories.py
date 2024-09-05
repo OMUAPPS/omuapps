@@ -8,6 +8,7 @@ class Directories:
     data: pathlib.Path
     assets: pathlib.Path
     index: pathlib.Path
+    version: pathlib.Path
 
     @classmethod
     def default(cls):
@@ -16,6 +17,7 @@ class Directories:
             data=cwd / "data",
             assets=cwd / "assets",
             index=pathlib.Path(__file__).parent / "index.html",
+            version=cwd / "VERSION",
         )
 
     def mkdir(self):

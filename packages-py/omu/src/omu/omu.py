@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
+from omu import version
 from omu.address import Address
 from omu.app import App
 from omu.event_emitter import Unlisten
@@ -69,6 +70,7 @@ class Omu(Client):
         extension_registry: ExtensionRegistry | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
     ):
+        self._version = version.VERSION
         self._loop = self.ensure_loop(loop)
         self._ready = False
         self._running = False
@@ -105,6 +107,10 @@ class Omu(Client):
                 loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
         return loop
+
+    @property
+    def version(self) -> str:
+        return self._version
 
     @property
     def ready(self) -> bool:

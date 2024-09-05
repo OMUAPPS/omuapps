@@ -34,6 +34,10 @@ class ClientEvents:
 class Client(abc.ABC):
     @property
     @abc.abstractmethod
+    def version(self) -> str: ...
+
+    @property
+    @abc.abstractmethod
     def ready(self) -> bool: ...
 
     @property

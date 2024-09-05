@@ -8,24 +8,34 @@ import { PacketType } from './packet.js';
 
 const IDENTIFIER = new Identifier('core', 'packet');
 
+type ProtocolInfo = {
+    version: string,
+};
+
 type ConnectPacketJson = {
     app: AppJson,
+    protocol: ProtocolInfo,
     token?: string,
 };
 export class ConnectPacket implements Model<ConnectPacketJson> {
     public readonly app: App;
+    public readonly protocol: ProtocolInfo;
     public readonly token?: string;
+    
     constructor(options: {
         app: App,
+        protocol: ProtocolInfo,
         token?: string,
     }) {
         this.app = options.app;
+        this.protocol = options.protocol;
         this.token = options.token;
     }
 
     static fromJson(data: ConnectPacketJson): ConnectPacket {
         return new ConnectPacket({
             app: App.fromJson(data.app),
+            protocol: data.protocol,
             token: data.token,
         });
     }
@@ -33,6 +43,7 @@ export class ConnectPacket implements Model<ConnectPacketJson> {
     toJson(): ConnectPacketJson {
         return {
             app: this.app.toJson(),
+            protocol: this.protocol,
             token: this.token,
         };
     }
