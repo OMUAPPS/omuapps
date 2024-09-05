@@ -49,7 +49,7 @@ class OmuServer(Server):
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         self._config = config
-        self._loop = self.ensure_loop(loop)
+        self._loop = loop or self.create_loop()
         self._address = config.address
         self._event = ServerEvents()
         self._directories = config.directories
@@ -79,14 +79,8 @@ class OmuServer(Server):
             headers=USER_AGENT_HEADERS,
         )
 
-    def ensure_loop(
-        self, loop: asyncio.AbstractEventLoop | None
-    ) -> asyncio.AbstractEventLoop:
-        if loop is None:
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
+    def create_loop(self) -> asyncio.AbstractEventLoop:
+        loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
         return loop
 
@@ -146,8 +140,6 @@ class OmuServer(Server):
             return web.Response(status=500)
 
     def run(self) -> None:
-        self._loop = self.ensure_loop(self.loop)
-
         try:
             self._loop.create_task(self.start())
             self._loop.run_forever()
