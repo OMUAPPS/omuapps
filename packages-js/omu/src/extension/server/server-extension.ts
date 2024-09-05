@@ -65,7 +65,7 @@ export class ServerExtension implements Extension {
         client.network.registerPacket(REQUIRE_APPS_PACKET_TYPE);
         this.apps = client.tables.get(APP_TABLE_TYPE);
         this.sessions = client.tables.get(SESSION_TABLE_TYPE);
-        this.trustedOrigins = client.registry.get(TRUSTED_ORIGINS_REGISTRY_TYPE);
+        this.trustedOrigins = client.registries.get(TRUSTED_ORIGINS_REGISTRY_TYPE);
         client.network.addTask(() => this.onTask());
     }
 

@@ -103,7 +103,7 @@ export class Chat {
         this.providers = client.tables.get(PROVIDER_TABLE_TYPE);
         this.rooms = client.tables.get(ROOM_TABLE_TYPE);
         this.votes = client.tables.get(VOTE_TABLE_TYPE);
-        this.reactionSignal = client.signal.get(REACTION_SIGNAL);
+        this.reactionSignal = client.signals.get(REACTION_SIGNAL);
         this.messages.setCacheSize(1000);
         this.authors.setCacheSize(500);
     }

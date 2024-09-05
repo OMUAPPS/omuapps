@@ -10,13 +10,13 @@ export class CaptionApp {
     public readonly config: Writable<Config>;
 
     constructor(omu: Omu) {
-        this.captionSignal = omu.signal.get(CAPTION_SIGNAL);
+        this.captionSignal = omu.signals.get(CAPTION_SIGNAL);
         this.captionSignal.listen((caption) => {
             for (const listener of this.listeners) {
                 listener(caption);
             }
         });
-        this.config = makeRegistryWritable(omu.registry.get(CONFIG_REGISTRY));
+        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
     }
 
     public setCaption(caption: Caption) {

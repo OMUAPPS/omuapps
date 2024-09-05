@@ -129,7 +129,7 @@ channels = client.tables.get(CHANNEL_TABLE)
 providers = client.tables.get(PROVIDER_TABLE)
 rooms = client.tables.get(ROOM_TABLE)
 votes = client.tables.get(VOTE_TABLE)
-reaction_signal = client.signal.get(REACTION_SIGNAL)
+reaction_signal = client.signals.get(REACTION_SIGNAL)
 
 
 @client.endpoints.bind(endpoint_type=CREATE_CHANNEL_TREE_ENDPOINT)

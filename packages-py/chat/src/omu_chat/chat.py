@@ -109,7 +109,7 @@ class Chat:
         self.providers = omu.tables.get(PROVIDER_TABLE)
         self.rooms = omu.tables.get(ROOM_TABLE)
         self.votes = omu.tables.get(VOTE_TABLE)
-        self.reaction_signal = omu.signal.get(REACTION_SIGNAL)
+        self.reaction_signal = omu.signals.get(REACTION_SIGNAL)
         self.event_registry = EventRegistry(self)
 
     def on[**P](

@@ -34,7 +34,7 @@ export class ReplayApp {
     public readonly config: Writable<ReplayConfig>;
 
     constructor(private readonly omu: Omu) {
-        this.replayData = makeRegistryWritable(omu.registry.get(REPLAY_DATA_REGISTRY_TYPE));
-        this.config = makeRegistryWritable(omu.registry.get(REPLAY_CONFIG_REGISTRY_TYPE));
+        this.replayData = makeRegistryWritable(omu.registries.get(REPLAY_DATA_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registries.get(REPLAY_CONFIG_REGISTRY_TYPE));
     }
 }

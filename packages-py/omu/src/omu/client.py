@@ -66,11 +66,11 @@ class Client(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def registry(self) -> RegistryExtension: ...
+    def registries(self) -> RegistryExtension: ...
 
     @property
     @abc.abstractmethod
-    def signal(self) -> SignalExtension: ...
+    def signals(self) -> SignalExtension: ...
 
     @property
     @abc.abstractmethod

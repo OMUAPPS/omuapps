@@ -64,7 +64,7 @@ class ServerExtension(Extension):
         self.apps = client.tables.get(SERVER_APP_TABLE_TYPE)
         self.sessions = client.tables.get(SERVER_APP_TABLE_TYPE)
         self.required_apps: set[Identifier] = set()
-        self.trusted_origins = client.registry.get(TRUSTED_ORIGINS_REGISTRY_TYPE)
+        self.trusted_origins = client.registries.get(TRUSTED_ORIGINS_REGISTRY_TYPE)
         client.network.register_packet(REQUIRE_APPS_PACKET_TYPE)
         client.network.add_task(self.on_task)
 

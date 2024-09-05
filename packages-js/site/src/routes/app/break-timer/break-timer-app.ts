@@ -47,8 +47,6 @@ export class BreakTimerApp {
         public readonly omu: Omu,
         public readonly obs: OBSPlugin,
     ) {
-        this.config = makeRegistryWritable(omu.registry.get(BREAK_TIMER_CONFIG_REGISTRY_TYPE));
-        this.state = makeRegistryWritable(omu.registry.get(BREAK_TIMER_STATE_REGISTRY_TYPE));
         this.state.subscribe((state) => this.update(state));
     }
 
@@ -63,6 +61,8 @@ export class BreakTimerApp {
                 this.state.set({ type: 'work' });
             }, config.timer.duration * 1000);
         }
+        this.config = makeRegistryWritable(omu.registries.get(BREAK_TIMER_CONFIG_REGISTRY_TYPE));
+        this.state = makeRegistryWritable(omu.registries.get(BREAK_TIMER_STATE_REGISTRY_TYPE));
     }
 
     public async reset(): Promise<void> {

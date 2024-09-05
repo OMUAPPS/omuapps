@@ -57,7 +57,7 @@ class ServerExtension:
         )
         self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
         self.sessions = self._server.tables.register(SERVER_SESSION_TABLE_TYPE)
-        self.trusted_origins = self._server.registry.register(
+        self.trusted_origins = self._server.registries.register(
             TRUSTED_ORIGINS_REGISTRY_TYPE
         )
         server.network.event.connected += self.on_connected

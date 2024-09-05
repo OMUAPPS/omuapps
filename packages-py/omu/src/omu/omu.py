@@ -86,8 +86,8 @@ class Omu(Client):
         self._endpoints = self.extensions.register(ENDPOINT_EXTENSION_TYPE)
         self._plugins = self.extensions.register(PLUGIN_EXTENSION_TYPE)
         self._tables = self.extensions.register(TABLE_EXTENSION_TYPE)
-        self._registry = self.extensions.register(REGISTRY_EXTENSION_TYPE)
-        self._signal = self.extensions.register(SIGNAL_EXTENSION_TYPE)
+        self._registries = self.extensions.register(REGISTRY_EXTENSION_TYPE)
+        self._signals = self.extensions.register(SIGNAL_EXTENSION_TYPE)
         self._permissions = self.extensions.register(PERMISSION_EXTENSION_TYPE)
         self._server = self.extensions.register(SERVER_EXTENSION_TYPE)
         self._assets = self.extensions.register(ASSET_EXTENSION_TYPE)
@@ -139,12 +139,12 @@ class Omu(Client):
         return self._tables
 
     @property
-    def registry(self) -> RegistryExtension:
-        return self._registry
+    def registries(self) -> RegistryExtension:
+        return self._registries
 
     @property
-    def signal(self) -> SignalExtension:
-        return self._signal
+    def signals(self) -> SignalExtension:
+        return self._signals
 
     @property
     def assets(self) -> AssetExtension:

@@ -342,7 +342,7 @@ async def scene_set_current_by_uuid(
     return {}
 
 
-event_signal = omu.signal.get(EVENT_SIGNAL)
+event_signal = omu.signals.get(EVENT_SIGNAL)
 
 
 @OBS.frontend_add_event_callback

@@ -67,7 +67,7 @@ class OmuServer(Server):
         self._permissions = PermissionExtension(self)
         self._tables = TableExtension(self)
         self._dashboard = DashboardExtension(self)
-        self._registry = RegistryExtension(self)
+        self._registries = RegistryExtension(self)
         self._server = ServerExtension(self)
         self._signals = SignalExtension(self)
         self._plugins = PluginExtension(self)
@@ -222,15 +222,15 @@ class OmuServer(Server):
         return self._dashboard
 
     @property
-    def registry(self):
-        return self._registry
+    def registries(self):
+        return self._registries
 
     @property
     def server(self):
         return self._server
 
     @property
-    def signal(self):
+    def signals(self):
         return self._signals
 
     @property

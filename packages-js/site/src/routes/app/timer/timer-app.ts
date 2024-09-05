@@ -66,8 +66,8 @@ export class TimerApp {
     public readonly config: Writable<TimerConfig>;
 
     constructor(omu: Omu) {
-        this.data = makeRegistryWritable(omu.registry.get(TIMER_REGISTRY_TYPE));
-        this.config = makeRegistryWritable(omu.registry.get(TIMER_CONFIG_REGISTRY_TYPE));
+        this.data = makeRegistryWritable(omu.registries.get(TIMER_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registries.get(TIMER_CONFIG_REGISTRY_TYPE));
     }
 
     public toggle() {

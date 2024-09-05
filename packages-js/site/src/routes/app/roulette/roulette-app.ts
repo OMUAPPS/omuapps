@@ -38,9 +38,9 @@ export class RouletteApp {
     public entries: Writable<Record<string, RouletteItem>>;
 
     constructor(omu: Omu) {
-        this.config = makeRegistryWritable(omu.registry.get(CONFIG_REGISTRY));
-        this.state = makeRegistryWritable(omu.registry.get(STATE_REGISTRY));
-        this.entries = makeRegistryWritable(omu.registry.get(ENTRIES_REGISTRY));
+        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
+        this.state = makeRegistryWritable(omu.registries.get(STATE_REGISTRY));
+        this.entries = makeRegistryWritable(omu.registries.get(ENTRIES_REGISTRY));
     }
 
     public addEntry(...entry: RouletteItem[]) {

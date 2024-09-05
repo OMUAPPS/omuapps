@@ -36,7 +36,7 @@ export class ReactionApp {
         private readonly omu: Omu,
         private readonly chat: Chat,
     ) {
-        this.config = makeRegistryWritable(omu.registry.get(REACTION_REPLACE_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registries.get(REACTION_REPLACE_REGISTRY_TYPE));
         this.reactionSignal = chat.reactionSignal;
     }
 

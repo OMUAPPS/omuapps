@@ -14,4 +14,4 @@ class I18nExtension:
             I18N_GET_LOCALES_PERMISSION,
             I18N_SET_LOCALES_PERMISSION,
         )
-        server.registry.register(I18N_LOCALES_REGISTRY_TYPE)
+        server.registries.register(I18N_LOCALES_REGISTRY_TYPE)

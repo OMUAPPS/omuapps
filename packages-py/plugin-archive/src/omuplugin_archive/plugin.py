@@ -18,7 +18,7 @@ omu = Omu(APP)
 chat = Chat(omu)
 
 archive_table = omu.tables.get(ARCHIVE_TABLE_TYPE)
-config_registry = omu.registry.get(CONFIG_REGISTRY_TYPE)
+config_registry = omu.registries.get(CONFIG_REGISTRY_TYPE)
 
 
 @config_registry.listen

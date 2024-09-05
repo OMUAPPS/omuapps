@@ -94,8 +94,8 @@ export class MarshmallowApp {
     public readonly data: Writable<MarshmallowData>;
 
     constructor(private readonly omu: Omu) {
-        this.config = makeRegistryWritable(omu.registry.get(MARSHMALLOW_CONFIG_REGISTRY_TYPE));
-        this.data = makeRegistryWritable(omu.registry.get(MARSHMALLOW_DATA_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registries.get(MARSHMALLOW_CONFIG_REGISTRY_TYPE));
+        this.data = makeRegistryWritable(omu.registries.get(MARSHMALLOW_DATA_REGISTRY_TYPE));
     }
 
     async getUsers(): Promise<Record<string, User>> {

@@ -1,9 +1,9 @@
-import { SignalType, type Signal } from '@omujs/omu/extension/signal/signal.js';
-import { IDENTIFIER } from './app.js';
+import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { SignalType, type Signal } from '@omujs/omu/extension/signal/signal.js';
 import type { Writable } from 'svelte/store';
-import { makeRegistryWritable } from '$lib/helper.js';
+import { IDENTIFIER } from './app.js';
 import type { State } from './state.js';
 
 const TEST_SIGNAL = SignalType.createJson<null>(IDENTIFIER, {
@@ -36,9 +36,9 @@ export class FriesApp {
     public state: Writable<State>;
 
     constructor(omu: Omu) {
-        this.testSignal = omu.signal.get(TEST_SIGNAL);
-        this.config = makeRegistryWritable(omu.registry.get(CONFIG_REGISTRY));
-        this.state = makeRegistryWritable(omu.registry.get(STATE_REGISTRY));
+        this.testSignal = omu.signals.get(TEST_SIGNAL);
+        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
+        this.state = makeRegistryWritable(omu.registries.get(STATE_REGISTRY));
     }
 
     public async test() {
