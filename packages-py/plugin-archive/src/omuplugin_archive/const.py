@@ -7,7 +7,7 @@ from omu.identifier import Identifier
 from .archive import ArchiveConfig
 from .version import VERSION
 
-IDENTIFIER = Identifier.from_key("omuapps.com:archive/plugin")
+IDENTIFIER = Identifier.from_key("com.omuapps:archive/plugin")
 APP = App(
     id=IDENTIFIER,
     version=VERSION,

@@ -5,7 +5,7 @@ import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import { get, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 
-export const PLUGIN_ID = Identifier.fromKey('omuapps.com:marshmallow/plugin');
+export const PLUGIN_ID = Identifier.fromKey('com.omuapps:marshmallow/plugin');
 export type User = {
     name: string;
     screen_name: string;

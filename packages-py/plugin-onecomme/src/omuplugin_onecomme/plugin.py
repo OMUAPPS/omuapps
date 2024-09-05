@@ -15,7 +15,7 @@ from .types import Badge, Comment, CommentData, CommentServiceData
 from .version import VERSION
 
 APP = App(
-    id="omuapps.com:onecomme/plugin",
+    id="com.omuapps:onecomme/plugin",
     version=VERSION,
 )
 client = Omu(APP)

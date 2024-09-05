@@ -4,7 +4,7 @@ import type { TagKey } from '../category.js';
 import { getUrl, ORIGIN } from '../origin.js';
 import icon from './icon.png';
 
-export const IDENTIFIER = new Identifier('omuapps.com', 'playqueue');
+export const IDENTIFIER = new Identifier('com.omuapps', 'playqueue');
 export const APP = new App(IDENTIFIER, {
     url: `${ORIGIN}/app/playqueue`,
     metadata: {

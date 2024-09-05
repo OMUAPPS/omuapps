@@ -10,7 +10,7 @@ from omu_chat.model.content import Component, Root, System, Text
 
 from .version import VERSION
 
-IDENTIFIER = Identifier("omuapps.com", "translator", "plugin")
+IDENTIFIER = Identifier("com.omuapps", "translator", "plugin")
 APP = App(
     id=IDENTIFIER,
     version=VERSION,

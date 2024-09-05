@@ -61,7 +61,7 @@ class Identifier(Model[str], Keyable):
     @classmethod
     def namespace_from_url(cls, url: str) -> str:
         parsed = urllib.parse.urlparse(url)
-        return parsed.netloc
+        return ".".join(reversed(parsed.netloc.split(".")))
 
     def to_json(self) -> str:
         return self.key()

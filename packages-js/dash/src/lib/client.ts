@@ -28,7 +28,7 @@ import { setChat } from '../../../ui/dist/stores.js';
 import { language } from './main/settings.js';
 import { version } from './version.json';
 
-const IDENTIFIER = new Identifier('omuapps.com', 'dashboard');
+const IDENTIFIER = new Identifier('com.omuapps', 'dashboard');
 const app = new App(IDENTIFIER, {
     version,
 });

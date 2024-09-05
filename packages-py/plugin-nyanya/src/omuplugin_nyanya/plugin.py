@@ -5,7 +5,7 @@ from omu_chat import Chat, content, model
 
 from .version import VERSION
 
-IDENTIFIER = Identifier("omuapps.com", "plugin-nyanya")
+IDENTIFIER = Identifier("com.omuapps", "plugin-nyanya")
 APP = App(
     id=IDENTIFIER,
     version=VERSION,

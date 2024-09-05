@@ -17,7 +17,7 @@ import AppInstallRequestScreen from './common/screen/AppInstallRequestScreen.sve
 import AppUpdateRequestScreen from './common/screen/AppUpdateRequestScreen.svelte';
 import { screenContext } from './common/screen/screen.js';
 
-export const IDENTIFIER = Identifier.fromKey('omuapps.com:dashboard');
+export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 
 export class Dashboard implements DashboardHandler {
     readonly apps: Table<App>;

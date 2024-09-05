@@ -5,7 +5,7 @@
     
     export let app: App;
 
-    $: namespace = app.id.namespace;
+    $: namespace = app.id.namespace.split('.').reverse().join('.');
     $: path=app.id.path.reverse().join('.');
     
     const metadata = app.metadata;

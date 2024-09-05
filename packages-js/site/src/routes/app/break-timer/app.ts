@@ -3,7 +3,7 @@ import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
 import { ORIGIN } from '../origin.js';
 
-export const APP_ID = Identifier.fromKey('omuapps.com:break-timer');
+export const APP_ID = Identifier.fromKey('com.omuapps:break-timer');
 export const APP = new App(APP_ID, {
     url: `${ORIGIN}/app/break-timer`,
     metadata: {

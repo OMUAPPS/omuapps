@@ -4,7 +4,7 @@ import type { TagKey } from '../category.js';
 import { getUrl, ORIGIN } from '../origin.js';
 import thumbnail from './thumbnail.png';
 
-export const APP_ID = Identifier.fromKey('omuapps.com:marshmallow');
+export const APP_ID = Identifier.fromKey('com.omuapps:marshmallow');
 export const APP = new App(APP_ID, {
     url: `${ORIGIN}/app/marshmallow`,
     metadata: {
