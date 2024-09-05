@@ -7,7 +7,4 @@ export function getUrl(path: string): string {
     return url.href;
 }
 
-export const NAMESPACE = Identifier.namespaceFromUrl(ORIGIN);
-export function getId(...path: string[]): Identifier {
-    return new Identifier(NAMESPACE, ...path); 
-}
+export const NAMESPACE = DEV ? 'com.omuapps' : Identifier.namespaceFromUrl(process.env.CF_PAGES_URL);

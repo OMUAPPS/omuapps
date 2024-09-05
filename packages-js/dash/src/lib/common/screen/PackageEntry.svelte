@@ -1,43 +1,47 @@
 <script lang="ts">
     import type { PackageInfo } from '@omujs/omu/extension/plugin/package-info.js';
-    import { FlexColWrapper, FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import SvelteMarkdown from 'svelte-markdown';
 
     export let entry: PackageInfo;
+    let open = false;
 </script>
 
-<div>
-    <Tooltip>
-        {entry.info.summary}
-    </Tooltip>
-    <FlexColWrapper widthFull>
-        <FlexRowWrapper widthFull between>
-            <span>
-                <i class="ti ti-package" />
-                {entry.info.name}
-            </span>
-            <small>
-                {entry.info.name}
-            </small>
-        </FlexRowWrapper>
-        <FlexRowWrapper widthFull between>
-            <small>
-                <a href={entry.info.package_url}>
-                    {entry.info.package_url}
-                    <i class="ti ti-external-link" />
-                </a>
-            </small>
-        </FlexRowWrapper>
-    </FlexColWrapper>
-</div>
+<li>
+    <span class="name">
+        <i class="ti ti-package" />
+        <a href={entry.info.package_url} target="_blank" rel="noopener noreferrer">
+            {entry.info.name}
+        </a>
+        <i class="ti ti-external-link" />
+    </span>
+    {entry.info.summary}
+    {#if open}
+        <span class="description">
+            {#if entry.info.description_content_type === 'text/markdown'}
+                <SvelteMarkdown source={entry.info.description} />
+            {:else}
+                {entry.info.description}
+            {/if}
+        </span>
+    {/if}
+</li>
 
 <style>
-    div {
-        width: 90%;
-        padding: 5px 10px;
-        margin: 4px 10px;
+    li {
+        list-style: none;
+        padding: 1rem;
+        margin: 1rem;
+        display: flex;
+        align-items: start;
+        flex-direction: column;
+        gap: 0.5rem;
+        border: 1px solid var(--color-outline);
+        background: var(--color-bg-1);
         font-weight: 600;
         color: var(--color-1);
-        background: var(--color-bg-1);
-        border: 1px solid var(--color-outline);
+    }
+
+    .name {
+        font-size: 1rem;
     }
 </style>

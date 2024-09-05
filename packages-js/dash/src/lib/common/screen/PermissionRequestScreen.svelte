@@ -71,6 +71,28 @@
 </Screen>
 
 <style lang="scss">
+    .app-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: start;
+        width: 100%;
+        padding: 2rem 3rem;
+        padding-bottom: 0rem;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--color-1);
+        border-bottom: 1px solid var(--color-outline);
+        gap: 0.5rem;
+
+        > small {
+            margin: 0.5rem;
+            margin-top: 0.25rem;
+            margin-bottom: 1rem;
+            color: var(--color-1);
+        }
+    }
+
     .actions {
         display: flex;
         align-items: end;
@@ -104,34 +126,6 @@
                 }
             }
         }
-    }
-
-    .app-info {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: start;
-        width: 100%;
-        padding: 1rem 3rem;
-        padding-bottom: 0rem;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--color-1);
-        gap: 0.5rem;
-
-        > small {
-            margin: 0.5rem;
-            margin-top: 0rem;
-            margin-bottom: 1rem;
-            color: var(--color-1);
-        }
-    }
-
-    hr {
-        width: 100%;
-        height: 1px;
-        border: none;
-        background: var(--color-outline);
     }
 
     .permissions {
