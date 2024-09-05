@@ -1,4 +1,4 @@
-import { ByteReader, ByteWriter } from '../../bytebuffer.js';
+import { ByteReader, ByteWriter, Flags } from '../../bytebuffer.js';
 import { Identifier } from '../../identifier.js';
 
 import type { TableConfig } from './table.js';
@@ -114,31 +114,19 @@ export class TableProxyPacket {
 export class TableFetchPacket {
     constructor(
         public readonly id: Identifier,
-        public readonly before: number | null,
-        public readonly after: number | null,
-        public readonly cursor: string | null,
+        public readonly limit: number,
+        public readonly backward: boolean = false,
+        public readonly cursor: string | null = null,
     ) {}
 
     public static serialize(packet: TableFetchPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.id.key());
-        let flags = 0;
-        if (packet.before !== null) {
-            flags |= 0b1;
-        }
-        if (packet.after !== null) {
-            flags |= 0b10;
-        }
-        if (packet.cursor !== null) {
-            flags |= 0b100;
-        }
-        writer.writeByte(flags);
-        if (packet.before !== null) {
-            writer.writeInt(packet.before);
-        }
-        if (packet.after !== null) {
-            writer.writeInt(packet.after);
-        }
+        writer.writeInt(packet.limit);
+        const flags = new Flags({length: 2});
+        flags.set(0, packet.backward);
+        flags.set(1, packet.cursor !== null);
+        writer.writeFlags(flags);
         if (packet.cursor !== null) {
             writer.writeString(packet.cursor);
         }
@@ -148,11 +136,11 @@ export class TableFetchPacket {
     public static deserialize(data: Uint8Array): TableFetchPacket {
         const reader = new ByteReader(data);
         const id = Identifier.fromKey(reader.readString());
-        const flags = reader.readByte();
-        const before = flags & 0b1 ? reader.readInt() : null;
-        const after = flags & 0b10 ? reader.readInt() : null;
-        const cursor = flags & 0b100 ? reader.readString() : null;
-        return new TableFetchPacket(id, before, after, cursor);
+        const limit = reader.readInt();
+        const flags = reader.readFlags(2);
+        const backward = flags.get(0);
+        const cursor = flags.ifSet(1, () => reader.readString());
+        return new TableFetchPacket(id, limit, backward, cursor);
     }
 }
 

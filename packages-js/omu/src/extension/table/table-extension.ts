@@ -80,6 +80,33 @@ const TABLE_ITEM_GET_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, T
         permissionId: TABLE_PERMISSION_ID,
     },
 );
+const TABLE_ITEM_HAS_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, Record<string, boolean>>(
+    TABLE_EXTENSION_TYPE,
+    {
+        name: 'item_has',
+        requestSerializer: TableKeysPacket,
+        responseSerializer: Serializer.json(),
+        permissionId: TABLE_PERMISSION_ID,
+    },
+);
+const TABLE_ITEM_HAS_ALL_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, boolean>(
+    TABLE_EXTENSION_TYPE,
+    {
+        name: 'item_has_all',
+        requestSerializer: TableKeysPacket,
+        responseSerializer: Serializer.json(),
+        permissionId: TABLE_PERMISSION_ID,
+    },
+);
+const TABLE_ITEM_HAS_ANY_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, boolean>(
+    TABLE_EXTENSION_TYPE,
+    {
+        name: 'item_has_any',
+        requestSerializer: TableKeysPacket,
+        responseSerializer: Serializer.json(),
+        permissionId: TABLE_PERMISSION_ID,
+    },
+);
 const TABLE_FETCH_ENDPOINT = EndpointType.createSerialized<TableFetchPacket, TableItemsPacket>(
     TABLE_EXTENSION_TYPE,
     {
@@ -277,6 +304,7 @@ class TableImpl<T> implements Table<T> {
         });
         client.event.ready.listen(() => this.onReady());
     }
+    
     private updateCache(items: Map<string, T>): void {
         if (!this.cacheSize) {
             this.cache = items;
@@ -412,18 +440,53 @@ class TableImpl<T> implements Table<T> {
         });
     }
 
+    public async has(key: string): Promise<boolean> {
+        if (this.cache.has(key)) {
+            return true;
+        }
+        const res = await this.client.endpoints.call(TABLE_ITEM_HAS_ENDPOINT, {
+            id: this.id,
+            keys: [key],
+        });
+        return res[key];
+    }
+
+    public async hasMany<T extends Record<string, unknown>>(...keys: (keyof T)[]): Promise<{ [key in keyof T]: boolean }> {
+        const res = await this.client.endpoints.call(TABLE_ITEM_HAS_ENDPOINT, {
+            id: this.id,
+            keys: keys,
+        });
+        return res as { [key in keyof T]: boolean };
+    }
+
+    public async hasAll(...keys: string[]): Promise<boolean> {
+        const res = await this.client.endpoints.call(TABLE_ITEM_HAS_ALL_ENDPOINT, {
+            id: this.id,
+            keys,
+        });
+        return res;
+    }
+
+    public async hasAny(...keys: string[]): Promise<boolean> {
+        const res = await this.client.endpoints.call(TABLE_ITEM_HAS_ANY_ENDPOINT, {
+            id: this.id,
+            keys,
+        });
+        return res;
+    }
+
     public async fetchItems({
-        before,
-        after,
+        limit,
+        backward,
         cursor,
     }: {
-        before: number;
-        after: number;
+        limit: number;
+        backward?: boolean;
         cursor?: string;
     }): Promise<Map<string, T>> {
         const res = await this.client.endpoints.call(
             TABLE_FETCH_ENDPOINT,
-            new TableFetchPacket(this.id, before, after, cursor ?? null),
+            new TableFetchPacket(this.id, limit, backward, cursor),
         );
         const items = this.deserializeItems(res.items);
         this.updateCache(items);
@@ -463,30 +526,17 @@ class TableImpl<T> implements Table<T> {
         backward?: boolean;
         cursor?: string;
     }): AsyncIterable<T> {
-        let items: Map<string, T> = await this.fetchItems(
-            backward
-                ? {
-                    before: 0,
-                    after: this.cacheSize ?? 100,
-                    cursor,
-                }
-                : {
-                    before: this.cacheSize ?? 100,
-                    after: 0,
-                    cursor,
-                },
-        );
-        yield* items.values();
-        while (items.size > 0) {
-            const cursor = this.keyFunction(
-                backward ? items.values().next().value : [...items.values()].pop(),
-            );
-            items = await this.fetchItems(
-                backward
-                    ? { before: 0, after: this.cacheSize ?? 100, cursor }
-                    : { before: this.cacheSize ?? 100, after: 0, cursor },
-            );
+        while (true) {
+            const items = await this.fetchItems({
+                limit: this.cacheSize ?? 100,
+                backward,
+                cursor,
+            });
+            if (items.size === 0) {
+                break;
+            }
             yield* items.values();
+            cursor = this.keyFunction(backward ? items.values().next().value : [...items.values()].pop());
         }
     }
 

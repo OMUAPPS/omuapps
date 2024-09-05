@@ -10,7 +10,7 @@
     let alreadyAdded = false;
 
     async function install() {
-        const found = await appTable.get(app.key());
+        const found = await appTable.has(app.key());
         if (!found) {
             await omu.dashboard.installApp(app);
             await omu.dashboard.openApp(app);
@@ -23,7 +23,7 @@
     }
 
     omu.onReady(async () => {
-        alreadyAdded = !!(await appTable.get(app.key()));
+        alreadyAdded = await appTable.has(app.key());
     });
 
     $: tags =

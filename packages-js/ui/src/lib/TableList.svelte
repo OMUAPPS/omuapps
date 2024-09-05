@@ -46,6 +46,7 @@
         }
         fetchLock = table
             .fetchItems({
+                limit: initial,
                 cursor: last,
                 before: initial,
             })

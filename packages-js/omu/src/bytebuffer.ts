@@ -1,10 +1,13 @@
 import { textDecoder, textEncoder } from './const.js';
 
 export class Flags {
-    constructor(
-        private value: number,
-        private length: number,
-    ) { }
+    private value: number;
+    private length: number;
+
+    constructor(options: { value?: number, length?: number }) {
+        this.value = options.value ?? 0;
+        this.length = options.length ?? 32;
+    }
 
     public has(position: number): boolean {
         return (this.value & (1 << position)) !== 0;
@@ -38,11 +41,11 @@ export class Flags {
     }
 
     public static read(reader: ByteReader, length: number): Flags {
-        let bits = 0;
+        let value = 0;
         for (let i = 0; i < (length + 7) / 8; i++) {
-            bits |= reader.readByte() << (i * 8);
+            value |= reader.readByte() << (i * 8);
         }
-        return new Flags(bits, length);
+        return new Flags({ value, length });
     }
 }
 

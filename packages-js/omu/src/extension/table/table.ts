@@ -19,14 +19,18 @@ export interface Table<T> {
     update(...item: T[]): Promise<void>;
     remove(...items: T[]): Promise<void>;
     clear(): Promise<void>;
+    has(key: string): Promise<boolean>;
+    hasMany<T extends Record<string, unknown>>(...keys: (keyof T)[]): Promise<{ [key in keyof T]: boolean }>;
+    hasAll(...keys: string[]): Promise<boolean>;
+    hasAny(...keys: string[]): Promise<boolean>;
 
     fetchItems({
-        before,
-        after,
+        limit,
+        backward,
         cursor,
     }: {
-        before?: number;
-        after?: number;
+        limit: number;
+        backward?: boolean;
         cursor?: string;
     }): Promise<Map<string, T>>;
     fetchRange({ start, end }: { start: string; end: string }): Promise<Map<string, T>>;

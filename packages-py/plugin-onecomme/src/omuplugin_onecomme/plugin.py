@@ -121,15 +121,13 @@ sessions: set[web.WebSocketResponse] = set()
 async def handle(request: web.Request) -> web.WebSocketResponse:
     ws = web.WebSocketResponse()
     await ws.prepare(request)
-    messages = [
-        await to_comment(message)
-        for message in (await chat.messages.fetch_items(before=35)).values()
-    ]
+    fetched_messages = await chat.messages.fetch_items(limit=35, backward=True)
+    comments = [await to_comment(message) for message in (fetched_messages).values()]
     await ws.send_json(
         {
             "type": "connected",
             "data": CommentsData(
-                comments=list(reversed(tuple(filter(None, messages))))
+                comments=list(reversed(tuple(filter(None, comments))))
             ),
         }
     )

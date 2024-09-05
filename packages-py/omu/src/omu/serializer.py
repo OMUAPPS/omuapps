@@ -46,7 +46,7 @@ class Serializer[T, D](Serializable[T, D]):
 
     @classmethod
     def model[_T, _D](cls, model: type[JsonSerializable[_T, _D]]) -> Serializer[_T, _D]:
-        return ModelSerializer(model)
+        return ModelSerializer(model)  # type: ignore
 
     @classmethod
     def json(cls) -> Serializer[T, bytes]:

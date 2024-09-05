@@ -13,7 +13,7 @@ export class RegistryPermissions {
     ) { }
 
     public serialize(writer: ByteWriter): void {
-        const flags = new Flags(0, 3);
+        const flags = new Flags({length: 3});
         flags.set(0, this.all !== undefined);
         flags.set(1, this.read !== undefined);
         flags.set(2, this.write !== undefined);

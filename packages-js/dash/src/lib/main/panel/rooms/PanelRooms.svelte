@@ -26,7 +26,8 @@
         }),
         omu.onReady(() => {
             chat.rooms.fetchItems({
-                after: 100,
+                limit: 100,
+                backward: true,
             });
         }),
     );
