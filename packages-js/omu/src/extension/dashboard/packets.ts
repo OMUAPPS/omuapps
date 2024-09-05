@@ -88,3 +88,11 @@ export class AppUpdateRequest {
         return new AppUpdateRequest(requestId, oldApp, newApp);
     }
 }
+
+export type AppInstallResponse = {
+    accepted: boolean;
+}
+
+export type AppUpdateResponse = {
+    accepted: boolean;
+}

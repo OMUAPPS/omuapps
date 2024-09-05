@@ -9,7 +9,7 @@ import type { Table } from '../table/table.js';
 import { TableType } from '../table/table.js';
 
 import type { DashboardHandler } from './dashboard.js';
-import { AppInstallRequest, AppUpdateRequest, PermissionRequestPacket, PluginRequestPacket } from './packets.js';
+import { AppInstallRequest, AppInstallResponse, AppUpdateRequest, AppUpdateResponse, PermissionRequestPacket, PluginRequestPacket } from './packets.js';
 
 export const DASHBOARD_EXTENSION_TYPE = new ExtensionType(
     'dashboard',
@@ -76,7 +76,7 @@ const DASHBOARD_APP_TABLE_TYPE = TableType.createModel(DASHBOARD_EXTENSION_TYPE,
     },
 });
 export const DASHBOARD_APP_INSTALL_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join('app', 'install');
-const DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType.createJson<App, void>(DASHBOARD_EXTENSION_TYPE, {
+const DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType.createJson<App, AppInstallResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'install_app',
     requestSerializer: Serializer.model(App),
     permissionId: DASHBOARD_APP_INSTALL_PERMISSION_ID,
@@ -92,7 +92,7 @@ const DASHBOARD_APP_INSTALL_DENY_PACKET = PacketType.createJson<string>(DASHBOAR
     name: 'install_app_deny',
 });
 const DASHBOARD_APP_UPDATE_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join('app', 'update');
-const DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType.createJson<App, void>(DASHBOARD_EXTENSION_TYPE, {
+const DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType.createJson<App, AppUpdateResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'update_app',
     requestSerializer: Serializer.model(App),
     permissionId: DASHBOARD_APP_UPDATE_PERMISSION_ID,
@@ -228,11 +228,11 @@ export class DashboardExtension {
         return await this.client.endpoints.call(DASHBOARD_OPEN_APP_ENDPOINT, app);
     }
 
-    public async installApp(app: App): Promise<void> {
+    public async installApp(app: App): Promise<AppInstallResponse> {
         return await this.client.endpoints.call(DASHBOARD_APP_INSTALL_ENDPOINT, app);
     }
 
-    public async updateApp(app: App): Promise<void> {
+    public async updateApp(app: App): Promise<AppUpdateResponse> {
         return await this.client.endpoints.call(DASHBOARD_APP_UPDATE_ENDPOINT, app);
     }
 }

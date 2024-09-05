@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from typing import TypedDict
 
 from omu.app import App
 from omu.bytebuffer import ByteReader, ByteWriter
@@ -100,3 +101,11 @@ class AppUpdateRequestPacket:
             old_app = App.from_json(json.loads(reader.read_string()))
             new_app = App.from_json(json.loads(reader.read_string()))
             return cls(request_id, old_app, new_app)
+
+
+class AppInstallResponse(TypedDict):
+    accepted: bool
+
+
+class AppUpdateResponse(TypedDict):
+    accepted: bool

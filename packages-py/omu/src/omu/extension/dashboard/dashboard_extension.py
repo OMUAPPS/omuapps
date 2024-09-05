@@ -13,7 +13,9 @@ from omu.serializer import Serializer
 
 from .packets import (
     AppInstallRequestPacket,
+    AppInstallResponse,
     AppUpdateRequestPacket,
+    AppUpdateResponse,
     PermissionRequestPacket,
     PluginRequestPacket,
 )
@@ -89,7 +91,7 @@ DASHBOARD_APP_TABLE_TYPE = TableType.create_model(
     ),
 )
 DASHBOARD_APP_INSTALL_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "install"
-DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType[App, None].create_json(
+DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType[App, AppInstallResponse].create_json(
     DASHBOARD_EXTENSION_TYPE,
     "install_app",
     request_serializer=Serializer.model(App),
@@ -109,7 +111,7 @@ DASHBOARD_APP_INSTALL_DENY_PACKET = PacketType[str].create_json(
     "install_app_deny",
 )
 DASHBOARD_APP_UPDATE_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "update"
-DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType[App, None].create_json(
+DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType[App, AppUpdateResponse].create_json(
     DASHBOARD_EXTENSION_TYPE,
     "update_app",
     request_serializer=Serializer.model(App),

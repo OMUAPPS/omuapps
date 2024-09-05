@@ -12,7 +12,8 @@
     async function install() {
         const found = await appTable.has(app.key());
         if (!found) {
-            await omu.dashboard.installApp(app);
+            const { accepted } = await omu.dashboard.installApp(app);
+            if (!accepted) return;
             await omu.dashboard.openApp(app);
             alreadyAdded = true;
         }

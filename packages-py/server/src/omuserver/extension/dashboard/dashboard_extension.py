@@ -4,7 +4,6 @@ from asyncio import Future
 
 from omu.app import App
 from omu.errors import PermissionDenied
-from omu.extension.dashboard import PermissionRequestPacket
 from omu.extension.dashboard.dashboard_extension import (
     DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
     DASHBOARD_APP_INSTALL_DENY_PACKET,
@@ -31,7 +30,10 @@ from omu.extension.dashboard.dashboard_extension import (
 )
 from omu.extension.dashboard.packets import (
     AppInstallRequestPacket,
+    AppInstallResponse,
     AppUpdateRequestPacket,
+    AppUpdateResponse,
+    PermissionRequestPacket,
     PluginRequestPacket,
 )
 from omu.identifier import Identifier
@@ -306,7 +308,9 @@ class DashboardExtension:
         future = self.app_install_requests.pop(request_id)
         future.set_result(False)
 
-    async def handle_dashboard_app_install(self, session: Session, app: App) -> None:
+    async def handle_dashboard_app_install(
+        self, session: Session, app: App
+    ) -> AppInstallResponse:
         if not session.permission_handle.has(DASHBOARD_APP_INSTALL_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to install apps")
         request_id = self._get_next_request_id()
@@ -316,9 +320,9 @@ class DashboardExtension:
             AppInstallRequestPacket(request_id=request_id, app=app)
         )
         accepted = await future
-        if not accepted:
-            raise PermissionDenied("App install request was denied")
-        await self.apps.add(app)
+        if accepted:
+            await self.apps.add(app)
+        return AppInstallResponse(accepted=accepted)
 
     async def notify_dashboard_app_install(
         self, request: AppInstallRequestPacket
@@ -346,10 +350,13 @@ class DashboardExtension:
         future = self.app_update_requests.pop(request_id)
         future.set_result(False)
 
-    async def handle_dashboard_app_update(self, session: Session, app: App) -> None:
+    async def handle_dashboard_app_update(
+        self, session: Session, app: App
+    ) -> AppUpdateResponse:
         if not session.permission_handle.has(DASHBOARD_APP_UPDATE_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to update apps")
-        await self.update_app(app)
+        accepted = await self.update_app(app)
+        return AppUpdateResponse(accepted=accepted)
 
     async def update_app(self, app):
         old_app = await self.apps.get(app.id.key())
@@ -366,9 +373,9 @@ class DashboardExtension:
             )
         )
         accepted = await future
-        if not accepted:
-            raise PermissionDenied("App update request was denied")
-        await self.apps.add(app)
+        if accepted:
+            await self.apps.add(app)
+        return accepted
 
     async def notify_dashboard_app_update(
         self, request: AppUpdateRequestPacket
