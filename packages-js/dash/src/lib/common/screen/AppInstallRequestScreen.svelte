@@ -57,28 +57,38 @@
         gap: 0.5rem;
     }
 
-    button {
+    .actions {
+        display: flex;
+        align-items: baseline;
+        justify-content: end;
+        gap: 0.5rem;
         padding: 0.5rem 1rem;
-        margin-right: 1px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--color-1);
-        cursor: pointer;
-        background: none;
-        border: none;
-        outline: none;
-        outline-offset: -1px;
-        color: var(--color-1);
-        background: var(--color-bg-1);
+        width: 100%;
+        border-top: 1px solid var(--color-outline);
 
-        &.accept {
-            background: var(--color-1);
-            color: var(--color-bg-2);
-        }
-    
-        &.reject {
-            margin-left: auto;
+        > button {
+            border: none;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: var(--color-1);
+            background: var(--color-bg-1);
+            cursor: pointer;
+            border-radius: 4px;
+
+            &.reject {
+                color: var(--color-text);
+                background: var(--color-bg-1);
+            }
+
+            &.accept {
+                background: var(--color-1);
+                color: var(--color-bg-1);
+
+                &:disabled {
+                    background: var(--color-bg-1);
+                    color: var(--color-1);
+                }
+            }
         }
     }
-
 </style>

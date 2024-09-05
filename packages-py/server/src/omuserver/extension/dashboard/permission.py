@@ -69,11 +69,11 @@ DASHBOARD_APP_INSTALL_PERMISSION = PermissionType(
     {
         "level": "high",
         "name": {
-            "ja": "アプリをインストール",
+            "ja": "アプリを追加",
             "en": "Install an app",
         },
         "note": {
-            "ja": "アプリをインストールするために使われます",
+            "ja": "新しくアプリを追加するために使われます",
             "en": "Used to install an app",
         },
     },
@@ -83,11 +83,11 @@ DASHBOARD_APP_UPDATE_PERMISSION = PermissionType(
     {
         "level": "high",
         "name": {
-            "ja": "アプリを更新",
+            "ja": "アプリ情報を更新",
             "en": "Update an app",
         },
         "note": {
-            "ja": "アプリを更新するために使われます",
+            "ja": "アプリの情報を更新するために使われます",
             "en": "Used to update an app",
         },
     },

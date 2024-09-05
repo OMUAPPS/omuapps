@@ -1,3 +1,4 @@
+import json
 import time
 from asyncio import Future
 
@@ -122,6 +123,7 @@ class DashboardExtension:
             DASHBOARD_APP_UPDATE_ENDPOINT,
             self.handle_dashboard_app_update,
         )
+        server.network.event.connected += self.handle_session_connected
         self.server = server
         self.apps = server.tables.register(DASHBOARD_APP_TABLE_TYPE)
         self.dashboard_session: Session | None = None
@@ -134,6 +136,17 @@ class DashboardExtension:
         self.pending_app_update_requests: dict[str, AppUpdateRequestPacket] = {}
         self.app_update_requests: dict[str, Future[bool]] = {}
         self.request_id = 0
+
+    async def handle_session_connected(self, session: Session) -> None:
+        if session.kind != SessionType.APP:
+            return
+        exist_app = await self.apps.get(session.app.id.key())
+        if exist_app is None:
+            return
+        old_metadata = json.dumps(exist_app.metadata)
+        new_metadata = json.dumps(session.app.metadata)
+        if old_metadata != new_metadata:
+            await self.update_app(session.app)
 
     async def handle_dashboard_open_app(self, session: Session, app: App) -> None:
         if self.dashboard_session is None:
@@ -336,6 +349,9 @@ class DashboardExtension:
     async def handle_dashboard_app_update(self, session: Session, app: App) -> None:
         if not session.permission_handle.has(DASHBOARD_APP_UPDATE_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to update apps")
+        await self.update_app(app)
+
+    async def update_app(self, app):
         old_app = await self.apps.get(app.id.key())
         if old_app is None:
             raise ValueError(f"App with id {app.id} does not exist")
