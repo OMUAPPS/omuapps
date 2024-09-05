@@ -9,7 +9,7 @@ from .errors import ProviderError
 from .service import ChatService, ProviderService, retrieve_services
 from .version import VERSION
 
-BASE_PROVIDER_IDENTIFIER = Identifier("com.omuapps", "chatprovider")
+BASE_PROVIDER_IDENTIFIER = Identifier("omuapps.com", "chatprovider")
 APP = App(
     id=BASE_PROVIDER_IDENTIFIER,
     version=VERSION,

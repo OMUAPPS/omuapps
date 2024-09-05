@@ -8,9 +8,21 @@ import { Identifier } from '@omujs/omu/identifier.js';
 import { setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 
-const identifier = new Identifier('com.omuapps', 'page');
+const identifier = new Identifier('omuapps.com', 'page');
 const app = new App(identifier, {
     version: '1.0.0',
+    metadata: {
+        locale: 'ja',
+        name: {
+            ja: 'アプリページ',
+            en: 'App Page',
+        },
+        description: {
+            ja: '欲しいアプリを探そう',
+            en: 'Find the app you want',
+        },
+        icon: 'ti-package',
+    }
 });
 export const omu = new Omu(app);
 setClient(omu);

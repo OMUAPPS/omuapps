@@ -3,7 +3,7 @@ import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
 import { ORIGIN } from '../origin.js';
 
-export const IDENTIFIER = Identifier.fromKey('com.omuapps:onecomme');
+export const IDENTIFIER = Identifier.fromKey('omuapps.com:onecomme');
 export const APP = new App(IDENTIFIER, {
     url: `${ORIGIN}/app/onecomme`,
     metadata: {

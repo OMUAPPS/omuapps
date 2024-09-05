@@ -4,7 +4,7 @@ import type { TagKey } from '../category.js';
 import { getUrl, ORIGIN } from '../origin.js';
 import icon from './icon.png';
 
-export const IDENTIFIER = Identifier.fromKey('com.omuapps:chatsubtitle');
+export const IDENTIFIER = Identifier.fromKey('omuapps.com:chatsubtitle');
 export const APP = new App(IDENTIFIER, {
     url: `${ORIGIN}/app/chatsubtitle`,
     metadata: {

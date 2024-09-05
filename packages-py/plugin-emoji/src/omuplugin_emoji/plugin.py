@@ -13,7 +13,7 @@ from omu_chat.model import Message, content
 
 from .version import VERSION
 
-IDENTIFIER = Identifier("com.omuapps", "emoji", "plugin")
+IDENTIFIER = Identifier("omuapps.com", "emoji", "plugin")
 APP = App(
     id=IDENTIFIER,
     version=VERSION,

@@ -62,7 +62,7 @@ export class Identifier implements Model<string>, Keyable {
         } else {
             parsedUrl = url;
         }
-        const namespace = parsedUrl.hostname.split('.').reverse().join('.');
+        const namespace = parsedUrl.hostname;
         const path = parsedUrl.pathname.slice(1).split('/');
         return new Identifier(namespace, ...path);
     }

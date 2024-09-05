@@ -3,7 +3,7 @@ import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
 import { ORIGIN } from '../origin.js';
 
-export const IDENTIFIER = new Identifier('com.omuapps', 'lipsynctest');
+export const IDENTIFIER = new Identifier('omuapps.com', 'lipsynctest');
 export const APP = new App(IDENTIFIER, {
     url: `${ORIGIN}/app/lipsynctest`,
     metadata: {
