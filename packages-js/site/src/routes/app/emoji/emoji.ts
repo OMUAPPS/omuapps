@@ -8,9 +8,9 @@ import { Identifier } from '@omujs/omu/identifier.js';
 import type { Keyable } from '@omujs/omu/interface.js';
 import type { Model } from '@omujs/omu/model.js';
 import { writable, type Writable } from 'svelte/store';
-import { IDENTIFIER } from './app.js';
+import { APP_ID } from './app.js';
 
-const PLUGIN_IDENTIFIER = IDENTIFIER.join('plugin');
+const PLUGIN_IDENTIFIER = APP_ID.join('plugin');
 
 export type TextPattern = {
     type: 'text';
@@ -141,7 +141,7 @@ export class EmojiApp {
 export const emojiApp: Writable<EmojiApp> = writable();
 
 export const EMOJI_TEST_PROVIDER = new Provider({
-    id: IDENTIFIER,
+    id: APP_ID,
     name: 'Emoji Test',
     description: 'Send emoji preview',
     regex: '',

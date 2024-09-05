@@ -1,12 +1,11 @@
 import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
-import { getUrl, ORIGIN } from '../origin.js';
+import { getId, getUrl } from '../origin.js';
 import icon from './icon.png';
 
-export const IDENTIFIER = new Identifier('com.omuapps', 'caption');
-export const APP = new App(IDENTIFIER, {
-    url: `${ORIGIN}/app/caption`,
+export const APP_ID = getId('caption');
+export const APP = new App(APP_ID, {
+    url: getUrl('/app/caption'),
     metadata: {
         locale: 'en',
         name: {

@@ -1,11 +1,10 @@
 import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getId, getUrl } from '../origin.js';
 
-export const IDENTIFIER = new Identifier('com.omuapps', 'lipsynctest');
-export const APP = new App(IDENTIFIER, {
-    url: `${ORIGIN}/app/lipsynctest`,
+export const APP_ID = getId('lipsynctest');
+export const APP = new App(APP_ID, {
+    url: getUrl('/app/lipsynctest'),
     metadata: {
         locale: 'en',
         name: {
@@ -16,7 +15,10 @@ export const APP = new App(IDENTIFIER, {
             en: 'Lipsync technology test',
             ja: 'リップシンク技術のテスト',
         },
-        icon: 'ti-language-katakana',
+        icon: {
+            ja: 'ti-language-katakana',
+            en: 'ti-language',
+        },
         tags: ['tool', 'underdevelopment'] as TagKey[],
     },
 });

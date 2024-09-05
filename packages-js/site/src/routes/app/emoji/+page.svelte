@@ -8,7 +8,7 @@
     import { BROWSER } from 'esm-env';
     import EmojiEdit from './EmojiEdit.svelte';
     import EmojiEntry from './EmojiEntry.svelte';
-    import { APP, IDENTIFIER } from './app.js';
+    import { APP, APP_ID } from './app.js';
     import { Emoji, EmojiApp, emojiApp } from './emoji.js';
 
     const omu = new Omu(APP);
@@ -36,7 +36,7 @@
         uploading++;
         const assets = await omu.assets.uploadMany(
             ...files.map(({ key, buffer }) => ({
-                identifier: IDENTIFIER.join(key),
+                identifier: APP_ID.join(key),
                 buffer,
             })),
         );

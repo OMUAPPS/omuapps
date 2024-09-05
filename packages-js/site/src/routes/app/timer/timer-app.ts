@@ -2,7 +2,7 @@ import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/index.js';
 import type { Writable } from 'svelte/store';
-import { IDENTIFIER } from './app.js';
+import { APP_ID } from './app.js';
 
 export type TimerData = {
     startTime: number;
@@ -35,7 +35,7 @@ export type TimerConfig = {
     };
 };
 
-const TIMER_REGISTRY_TYPE = RegistryType.createJson<TimerData>(IDENTIFIER, {
+const TIMER_REGISTRY_TYPE = RegistryType.createJson<TimerData>(APP_ID, {
     name: 'timer',
     defaultValue: {
         startTime: 0,
@@ -45,7 +45,7 @@ const TIMER_REGISTRY_TYPE = RegistryType.createJson<TimerData>(IDENTIFIER, {
     },
 });
 
-const TIMER_CONFIG_REGISTRY_TYPE = RegistryType.createJson<TimerConfig>(IDENTIFIER, {
+const TIMER_CONFIG_REGISTRY_TYPE = RegistryType.createJson<TimerConfig>(APP_ID, {
     name: 'timer-config',
     defaultValue: {
         format: '{minutes}:{seconds}.{centiseconds}',

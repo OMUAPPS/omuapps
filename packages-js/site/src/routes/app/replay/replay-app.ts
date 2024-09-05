@@ -2,7 +2,7 @@ import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import type { Writable } from 'svelte/store';
-import { IDENTIFIER } from './app.js';
+import { APP_ID } from './app.js';
 
 type ReplayData = {
     videoId: string;
@@ -11,7 +11,7 @@ type ReplayData = {
     playing: boolean;
 };
 
-const REPLAY_DATA_REGISTRY_TYPE = RegistryType.createJson<ReplayData | null>(IDENTIFIER, {
+const REPLAY_DATA_REGISTRY_TYPE = RegistryType.createJson<ReplayData | null>(APP_ID, {
     name: 'replay',
     defaultValue: null,
 });
@@ -21,7 +21,7 @@ type ReplayConfig = {
     playbackRate: number;
 };
 
-const REPLAY_CONFIG_REGISTRY_TYPE = RegistryType.createJson<ReplayConfig>(IDENTIFIER, {
+const REPLAY_CONFIG_REGISTRY_TYPE = RegistryType.createJson<ReplayConfig>(APP_ID, {
     name: 'replay_config',
     defaultValue: {
         active: false,

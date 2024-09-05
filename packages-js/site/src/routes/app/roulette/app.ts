@@ -1,12 +1,11 @@
 import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
-import { getUrl, ORIGIN } from '../origin.js';
+import { getId, getUrl } from '../origin.js';
 import thumbnail from './thumbnail.png';
 
-export const APP_ID = new Identifier('com.omuapps', 'roulette');
+export const APP_ID = getId('roulette');
 export const APP = new App(APP_ID, {
-    url: `${ORIGIN}/app/roulette`,
+    url: getUrl('/app/roulette'),
     metadata: {
         locale: 'ja',
         name: {

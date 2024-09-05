@@ -6,10 +6,10 @@
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import PlayQueueEntry from './PlayQueueEntry.svelte';
-    import { APP, IDENTIFIER } from './app.js';
+    import { APP, APP_ID } from './app.js';
     import type { Entry } from './playqueue.js';
 
-    const app = new App(IDENTIFIER, {
+    const app = new App(APP_ID, {
         version: '0.1.0',
     });
     const omu = new Omu(app);

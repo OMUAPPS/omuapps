@@ -1,11 +1,12 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { Identifier, Omu } from '@omujs/omu';
+import { Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import { get, type Writable } from 'svelte/store';
+import { getId } from '../origin.js';
 import { APP_ID } from './app.js';
 
-export const PLUGIN_ID = Identifier.fromKey('com.omuapps:marshmallow/plugin');
+export const PLUGIN_ID = getId('marshmallow', 'plugin');
 export type User = {
     name: string;
     screen_name: string;

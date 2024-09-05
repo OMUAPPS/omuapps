@@ -1,11 +1,10 @@
 import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getId, getUrl } from '../origin.js';
 
-export const APP_ID = Identifier.fromKey('com.omuapps:break-timer');
+export const APP_ID = getId('break-timer');
 export const APP = new App(APP_ID, {
-    url: `${ORIGIN}/app/break-timer`,
+    url: getUrl('/app/break-timer'),
     metadata: {
         locale: 'en',
         name: {

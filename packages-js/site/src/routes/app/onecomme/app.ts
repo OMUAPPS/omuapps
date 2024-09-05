@@ -1,11 +1,10 @@
 import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getId, getUrl } from '../origin.js';
 
-export const IDENTIFIER = Identifier.fromKey('com.omuapps:onecomme');
-export const APP = new App(IDENTIFIER, {
-    url: `${ORIGIN}/app/onecomme`,
+export const APP_ID = getId('onecomme');
+export const APP = new App(APP_ID, {
+    url: getUrl('/app/onecomme'),
     metadata: {
         locale: 'en',
         name: {
