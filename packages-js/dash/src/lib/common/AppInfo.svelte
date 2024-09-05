@@ -32,7 +32,9 @@
                 <i class="ti ti-slash" />
                 {path}
                 {#if app.version}
-                    <small>v{app.version}</small>
+                    <small class="version">
+                        v{app.version}
+                    </small>
                 {/if}
             </small>
         </p>
@@ -56,6 +58,14 @@
             color: var(--color-text);
             font-weight: 600;
             margin-left: auto;
+            opacity: 0.8;
+        }
+
+        .version {
+            margin-left: 0.5rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--color-text);
             opacity: 0.8;
         }
     }
