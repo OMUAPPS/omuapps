@@ -9,7 +9,7 @@
     import { Identifier } from '@omujs/omu/identifier.js';
     import { AppHeader, ButtonMini, FileDrop, Tooltip, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP, IDENTIFIER } from './app.js';
+    import { APP, APP_ID } from './app.js';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
     import Slider from './components/Slider.svelte';
     import { ReactionApp } from './reaction-app.js';
@@ -22,7 +22,7 @@
 
     function test() {
         const reaction = new Reaction({
-            roomId: IDENTIFIER.join('test'),
+            roomId: APP_ID.join('test'),
             reactions: {
                 '❤': 1,
                 '😄': 1,
