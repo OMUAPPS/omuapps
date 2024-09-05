@@ -46,9 +46,7 @@ export class I18nExtension implements Extension {
         }
         const translation = this.selectBestTranslation(locales, localizedText);
         if (!translation) {
-            throw new Error(
-                `Missing translation for ${this.locales} in ${JSON.stringify(localizedText)}`,
-            );
+            return Object.values(localizedText)[0];
         }
         return translation;
     }
