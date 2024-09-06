@@ -39,7 +39,7 @@ SERVER_SESSIONS_READ_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "ja": "起動中のアプリを取得",
+            "ja": "接続中のアプリを取得",
             "en": "Get Running Apps",
         },
         "note": {
