@@ -1,0 +1,1 @@
+export const CF_PAGES_URL = 'undefined';
