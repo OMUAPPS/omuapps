@@ -23,8 +23,8 @@ let id = 0;
 const stack = writable<Map<number, ScreenComponent<unknown>>>(new Map());
 const current = writable<ScreenComponent<unknown> | null>(null);
 stack.subscribe((stack) => {
-    const last = Array.from(stack.values()).pop() || null;
-    current.set(last);
+    const first = stack.values().next().value;
+    current.set(first ?? null);
 });
 
 function push<T>(component: ScreenComponentType<T>, props: T) {
