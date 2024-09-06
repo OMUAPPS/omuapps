@@ -1,7 +1,7 @@
 [project]
 name = "omuplugin_marshmallow"
 version = "0.6.22"
-description = "Add your description here"
+description = "マシュマロのメッセージを取得するためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
