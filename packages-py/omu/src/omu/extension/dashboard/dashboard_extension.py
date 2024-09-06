@@ -4,6 +4,7 @@ from typing import TypedDict
 
 from omu.app import App
 from omu.client import Client
+from omu.errors import PermissionDenied
 from omu.extension import Extension, ExtensionType
 from omu.extension.endpoint import EndpointType
 from omu.extension.table import TablePermissions, TableType
@@ -159,5 +160,5 @@ class DashboardExtension(Extension):
     async def open_app(self, app: App) -> None:
         if not self.client.permissions.has(DASHBOARD_OPEN_APP_PERMISSION_ID):
             error = f"Pemission {DASHBOARD_OPEN_APP_PERMISSION_ID} required to open app {app}"
-            raise PermissionError(error)
+            raise PermissionDenied(error)
         await self.client.endpoints.call(DASHBOARD_OPEN_APP_ENDPOINT, app)

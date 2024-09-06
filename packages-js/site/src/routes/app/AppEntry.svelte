@@ -10,13 +10,10 @@
     let alreadyAdded = false;
 
     async function install() {
-        const found = await appTable.has(app.key());
-        if (!found) {
-            const { accepted } = await omu.dashboard.installApp(app);
-            if (!accepted) return;
-            await omu.dashboard.openApp(app);
-            alreadyAdded = true;
-        }
+        const { accepted } = await omu.dashboard.installApp(app);
+        if (!accepted) return;
+        await omu.dashboard.openApp(app);
+        alreadyAdded = true;
     }
 
     async function launch() {
@@ -24,7 +21,8 @@
     }
 
     omu.onReady(async () => {
-        alreadyAdded = await appTable.has(app.key());
+        alreadyAdded = await appTable.has(app.id.key());
+        console.log(`App ${app.id.key()} already added: ${alreadyAdded}`);
     });
 
     $: tags =

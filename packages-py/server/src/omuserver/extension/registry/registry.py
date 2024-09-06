@@ -1,5 +1,6 @@
 import asyncio
 
+from loguru import logger
 from omu import Identifier
 from omu.event_emitter import Unlisten
 from omu.extension.registry.packets import RegistryPermissions
@@ -68,7 +69,8 @@ class ServerRegistry:
 
     async def attach_session(self, session: Session) -> None:
         if session.app.id in self._listeners:
-            raise Exception("Session already attached")
+            logger.warning(f"Session {session.app.id} is already to registry {self.id}")
+            return
         unlisten = session.event.disconnected.listen(self.detach_session)
         self._listeners[session.app.id] = session, unlisten
         await session.send(
