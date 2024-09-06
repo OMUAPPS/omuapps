@@ -1,6 +1,6 @@
 [project]
 name = "omuplugin_obs"
-version = "0.6.22"
+version = "0.6.23"
 description = "OBS Studioの操作を行うためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
