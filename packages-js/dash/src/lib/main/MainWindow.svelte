@@ -82,7 +82,7 @@
 </script>
 
 <main class:open={$menuOpen}>
-    <div class="tabs">
+    <div class="tabs" class:open={$menuOpen}>
         <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
             {#if $menuOpen}
                 <i class="ti ti-chevron-left" />
@@ -182,6 +182,13 @@
         border-right: 1px solid var(--color-outline);
         padding: 1rem 0.5rem;
         padding-bottom: 0.5rem;
+        width: 4rem;
+        transition: width 0.0621s;
+
+        &.open {
+            width: $tab-width;
+            transition: width 0.0621s;
+        }
     }
 
     .menu {
@@ -286,23 +293,17 @@
     }
 
     .page-container {
+        position: relative;
         flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
         background: var(--color-bg-1);
     }
 
     .page {
         position: absolute;
-        display: none;
         width: 100%;
         height: 100%;
+        display: none;
         background: var(--color-bg-1);
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
         z-index: 1;
 
         &.visible {
@@ -316,27 +317,5 @@
         height: 100%;
         background: var(--color-bg-1);
         font-weight: 600;
-
-        > .tabs {
-            width: 4rem;
-            transition: width 0.0621s;
-        }
-
-        .page {
-            left: 4rem;
-            width: calc(100% - 4rem);
-        }
-
-        &.open {
-            > .tabs {
-                width: $tab-width;
-                transition: width 0.0621s;
-            }
-
-            .page {
-                left: $tab-width;
-                width: calc(100% - #{$tab-width});
-            }
-        }
     }
 </style>
