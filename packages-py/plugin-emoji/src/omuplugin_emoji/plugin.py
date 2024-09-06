@@ -31,7 +31,7 @@ config = EmojiConfig(
 )
 
 
-@omu.registry.create("config", config).listen
+@omu.registries.create("config", config).listen
 async def on_config_change(new_config: EmojiConfig):
     global config
     config = new_config

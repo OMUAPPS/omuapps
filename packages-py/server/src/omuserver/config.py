@@ -13,6 +13,6 @@ class Config:
         secure=False,
     )
     debug: bool = False
-    strict_origin: bool = True
+    extra_trusted_origins: list[str] = field(default_factory=list)
     directories: Directories = field(default_factory=Directories.default)
     dashboard_token: str | None = None

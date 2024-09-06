@@ -1,16 +1,16 @@
+import { makeRegistryWritable } from '$lib/helper.js';
+import { Chat, models } from '@omujs/chat';
 import { Provider } from '@omujs/chat/models/provider.js';
 import type { Omu } from '@omujs/omu';
+import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import { TableType, type Table } from '@omujs/omu/extension/table/index.js';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Keyable } from '@omujs/omu/interface.js';
 import type { Model } from '@omujs/omu/model.js';
-import { IDENTIFIER } from './app.js';
 import { writable, type Writable } from 'svelte/store';
-import { makeRegistryWritable } from '$lib/helper.js';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { Chat, models } from '@omujs/chat';
+import { APP_ID } from './app.js';
 
-const PLUGIN_IDENTIFIER = IDENTIFIER.join('plugin');
+const PLUGIN_IDENTIFIER = APP_ID.join('plugin');
 
 export type TextPattern = {
     type: 'text';
@@ -110,7 +110,7 @@ export class EmojiApp {
         private readonly chat: Chat,
     ) {
         this.emojis = omu.tables.get(EMOJI_TABLE);
-        this.config = makeRegistryWritable(omu.registry.get(CONFIG_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
         this.selectedEmoji = writable<Emoji | null>(null);
     }
 
@@ -141,7 +141,7 @@ export class EmojiApp {
 export const emojiApp: Writable<EmojiApp> = writable();
 
 export const EMOJI_TEST_PROVIDER = new Provider({
-    id: IDENTIFIER,
+    id: APP_ID,
     name: 'Emoji Test',
     description: 'Send emoji preview',
     regex: '',

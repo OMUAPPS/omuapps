@@ -1,12 +1,11 @@
-import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
+import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 import icon from './icon.png';
 
-export const IDENTIFIER = new Identifier('com.omuapps', 'tester');
-export const APP = new App(IDENTIFIER, {
-    url: `${ORIGIN}/app/tester`,
+export const APP_ID = new Identifier(NAMESPACE, 'tester');
+export const APP = new App(APP_ID, {
+    url: getUrl('/app/tester'),
     metadata: {
         locale: 'en',
         name: {
@@ -17,7 +16,7 @@ export const APP = new App(IDENTIFIER, {
             en: 'Test comments.',
             ja: 'コメントのテストをします。',
         },
-        icon: icon,
+        icon: getUrl(icon),
         tags: ['tool', 'underdevelopment'] as TagKey[],
     },
 });

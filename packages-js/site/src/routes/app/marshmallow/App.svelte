@@ -1,12 +1,16 @@
 <script lang="ts">
     import AssetButton from '$lib/components/AssetButton.svelte';
+    import { OBSPlugin } from '@omujs/obs';
+    import type { Omu } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
     import AccountSwitcher from './components/AccountSwitcher.svelte';
     import MessageView from './components/MessageView.svelte';
     import SelectUser from './components/SelectUser.svelte';
     import { MarshmallowApp, type Message, type User } from './marshmallow-app.js';
 
+    export let omu: Omu;
     export let marshmallow: MarshmallowApp;
+    export let obs: OBSPlugin;
     const { config, data } = marshmallow;
 
     let user: User | null = null;
@@ -132,7 +136,7 @@
         </div>
         <div class="asset">
             <small>OBSで使用する場合は以下のボタンから</small>
-            <AssetButton />
+            <AssetButton {omu} {obs} />
         </div>
     </div>
     <div class="right" bind:this={container}>

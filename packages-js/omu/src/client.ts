@@ -36,8 +36,8 @@ export interface Client {
     readonly dashboard: DashboardExtension;
     readonly extensions: ExtensionRegistry;
     readonly tables: TableExtension;
-    readonly registry: RegistryExtension;
-    readonly signal: SignalExtension;
+    readonly registries: RegistryExtension;
+    readonly signals: SignalExtension;
     readonly assets: AssetExtension;
     readonly i18n: I18nExtension;
     readonly server: ServerExtension;

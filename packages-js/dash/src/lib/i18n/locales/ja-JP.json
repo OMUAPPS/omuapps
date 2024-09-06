@@ -31,6 +31,14 @@
         "dragdrop": "ドラッグアンドドロップして追加できます",
         "second": "秒"
     },
+    "permission_level": {
+        "low": "低",
+        "low_icon": "ti ti-eye",
+        "medium": "中",
+        "medium_icon": "ti ti-exclamation-mark",
+        "high": "高",
+        "high_icon": "ti ti-alert-triangle"
+    },
     "date": {
         "just_now": "今",
         "yesterday": "昨日",
@@ -158,6 +166,16 @@
             "name": "プラグインを要求",
             "icon": "ti ti-plug",
             "description": "プラグインを要求します。"
+        },
+        "app_install": {
+            "name": "アプリをインストール",
+            "icon": "ti ti-download",
+            "description": "アプリをインストールします。"
+        },
+        "app_update": {
+            "name": "アプリを更新",
+            "icon": "ti ti-download",
+            "description": "新しいバージョンがあります。"
         },
         "update": {
             "name": "アップデート",

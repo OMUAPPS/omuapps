@@ -26,7 +26,6 @@
     export let reverse: boolean = false;
     export let initial: number = 40;
     export let limit = 400;
-    export let fitHeight = false;
     export let selectedItem: string | undefined = undefined;
 
     let entries: Map<string, T> = new Map();
@@ -46,8 +45,9 @@
         }
         fetchLock = table
             .fetchItems({
+                limit: initial,
+                backward: true,
                 cursor: last,
-                before: initial,
             })
             .then((items) => {
                 last = [...items.keys()].at(-1);
@@ -254,7 +254,7 @@
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
-<div class="list" class:full={!fitHeight}>
+<div class="list">
     <div class="items">
         <VirtualList
             {items}
@@ -295,9 +295,6 @@
         position: relative;
         display: flex;
         flex-direction: column;
-    }
-
-    .full {
         width: 100%;
         height: 100%;
     }

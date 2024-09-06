@@ -1,6 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
+    import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import {
         AppHeader,
@@ -17,8 +18,10 @@
     import { FONTS, LANGUAGES_OPTIONS, type LanguageKey } from './types.js';
 
     export const omu = new Omu(APP);
-    setClient(omu);
+    const obs = OBSPlugin.create(omu);
     const captionApp = new CaptionApp(omu);
+    setClient(omu);
+
     const { config } = captionApp;
 
     if (BROWSER) {
@@ -46,6 +49,10 @@
 
         recognition.start();
 
+        omu.permissions.require(
+            permissions.OBS_SOURCE_READ_PERMISSION_ID,
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+        );
         omu.start();
     }
 
@@ -76,7 +83,7 @@
     </header>
     <section>
         <h3>字幕</h3>
-        <AssetButton />
+        <AssetButton {omu} {obs} />
     </section>
     <section>
         <h3>言語選択</h3>

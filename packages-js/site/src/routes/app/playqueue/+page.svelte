@@ -1,20 +1,17 @@
 <script lang="ts">
     import { Chat, models } from '@omujs/chat';
-    import { App, Omu } from '@omujs/omu';
+    import { Omu } from '@omujs/omu';
 
     import AppPage from '$lib/components/AppPage.svelte';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import PlayQueueEntry from './PlayQueueEntry.svelte';
-    import { APP, IDENTIFIER } from './app.js';
+    import { APP } from './app.js';
     import type { Entry } from './playqueue.js';
 
-    const app = new App(IDENTIFIER, {
-        version: '0.1.0',
-    });
-    const omu = new Omu(app);
+    const omu = new Omu(APP);
     setClient(omu);
-    const chat = new Chat(omu);
+    const chat = Chat.create(omu);
     chat.authors.listen();
     chat.messages.event.add.listen(async (messages) => {
         if (!active) return;

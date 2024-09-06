@@ -48,22 +48,15 @@ class OBSSource(Reference[obs_source_t]):
         type: str,
         name: str,
         settings: OBSData | None = None,
-        hotkey_data: OBSData | None = None,
     ) -> OBSSource:
         existing_source = cls.get_source_by_name(name)
         if existing_source is not None:
             raise ValueError(f"Source with name {name} already exists")
         settings_data = None
-        hotkey_data_data = None
         if settings is not None:
             with settings as settings_data:
                 settings_data = settings_data
-        if hotkey_data is not None:
-            with hotkey_data as hotkey_data_data:
-                hotkey_data_data = hotkey_data_data
-        obs_source = obspython.obs_source_create(
-            type, name, settings_data, hotkey_data_data
-        )
+        obs_source = obspython.obs_source_create_private(type, name, settings_data)
         if obs_source is None:
             raise ValueError("Failed to create source")
         return cls(obs_source)

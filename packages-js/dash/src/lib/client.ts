@@ -59,7 +59,7 @@ const omu = new Omu(app, {
     address,
     token: new TokenProvider('omu-token'),
 });
-const chat = new Chat(omu);
+const chat = Chat.create(omu);
 const dashboard = new Dashboard(omu);
 setClient(omu);
 setChat(chat);

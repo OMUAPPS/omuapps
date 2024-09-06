@@ -55,16 +55,16 @@ export class Identifier implements Model<string>, Keyable {
         return new Identifier(namespace, ...path.split('/'));
     }
 
-    static fromUrl(url: string | URL): Identifier {
-        let parsedUrl: URL;
-        if (typeof url === 'string') {
-            parsedUrl = new URL(url);
-        } else {
-            parsedUrl = url;
-        }
-        const namespace = parsedUrl.hostname.split('.').reverse().join('.');
+    public static fromUrl(url: string | URL): Identifier {
+        const parsedUrl = new URL(url);
+        const namespace = Identifier.namespaceFromUrl(parsedUrl.href);
         const path = parsedUrl.pathname.slice(1).split('/');
         return new Identifier(namespace, ...path);
+    }
+
+    public static namespaceFromUrl(url: string | URL): string {
+        const parsed = new URL(url);
+        return parsed.hostname.split('.').reverse().join('.');
     }
 
     public toJson(): string {

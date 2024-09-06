@@ -26,7 +26,8 @@
         }),
         omu.onReady(() => {
             chat.rooms.fetchItems({
-                after: 100,
+                limit: 100,
+                backward: true,
             });
         }),
     );
@@ -38,9 +39,7 @@
 </script>
 
 <div class="rooms">
-    {#if rooms.size > 0}
-        <TableList table={chat.rooms} component={RoomEntry} {filter} {sort} />
-    {:else}
+    <TableList table={chat.rooms} component={RoomEntry} {filter} {sort}>
         <div class="empty">
             {$t('panels.rooms.not_found_rooms')}
             <Button on:click={openSetup}>
@@ -48,7 +47,7 @@
                 <i class="ti ti-external-link" />
             </Button>
         </div>
-    {/if}
+    </TableList>
 </div>
 
 <style lang="scss">

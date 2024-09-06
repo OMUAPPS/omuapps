@@ -5,7 +5,7 @@ import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/index.js';
 import type { Signal } from '@omujs/omu/extension/signal/signal.js';
 import type { Writable } from 'svelte/store';
-import { IDENTIFIER } from './app.js';
+import { APP_ID } from './app.js';
 
 type ReactionConfig = {
     replaces: Record<string, string | null>;
@@ -13,7 +13,7 @@ type ReactionConfig = {
     depth: number;
 };
 
-const REACTION_REPLACE_REGISTRY_TYPE = RegistryType.createJson<ReactionConfig>(IDENTIFIER, {
+const REACTION_REPLACE_REGISTRY_TYPE = RegistryType.createJson<ReactionConfig>(APP_ID, {
     name: 'config',
     defaultValue: {
         replaces: {
@@ -36,7 +36,7 @@ export class ReactionApp {
         private readonly omu: Omu,
         private readonly chat: Chat,
     ) {
-        this.config = makeRegistryWritable(omu.registry.get(REACTION_REPLACE_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registries.get(REACTION_REPLACE_REGISTRY_TYPE));
         this.reactionSignal = chat.reactionSignal;
     }
 

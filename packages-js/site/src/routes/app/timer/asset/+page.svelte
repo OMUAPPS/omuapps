@@ -4,13 +4,13 @@
     import { App, Omu } from '@omujs/omu';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { IDENTIFIER } from '../app.js';
+    import { APP_ID } from '../app.js';
     import Timer from '../components/Timer.svelte';
     import { TimerApp } from '../timer-app.js';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();
-    const app = new App(IDENTIFIER.join('asset', id), {
+    const app = new App(APP_ID.join('asset', id), {
         version: '0.1.0',
     });
     const omu = new Omu(app);

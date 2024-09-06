@@ -1,5 +1,5 @@
 import { App } from '@omujs/omu';
-import { BROWSER, DEV } from 'esm-env';
+import { BROWSER } from 'esm-env';
 import { omu } from '../client.js';
 import { APP as fries } from './aoikuru-fries/app.js';
 import { APP as archive } from './archive/app.js';
@@ -41,30 +41,11 @@ const personalApps: Record<string, App[]> = {
 };
 
 if (BROWSER) {
-    const pass = BROWSER && new URL(window.location.href).searchParams.get('pass');
+    const pass = new URL(window.location.href).searchParams.get('pass');
     if (pass && pass in personalApps) {
         apps.unshift(...personalApps[pass]);
     }
 }
 
-if (DEV && BROWSER) {
-    apps.forEach((app) => {
-        const origin = 'http://localhost:5173';
-        if (!app.metadata) return;
-        const icon = app.metadata?.icon;
-        if (icon && typeof icon === 'string' && !icon.startsWith('ti-')) {
-            const url = new URL(icon, origin);
-            app.metadata.icon = url.href;
-        }
-        const image = app.metadata?.image;
-        if (image && typeof image === 'string' && !image.startsWith('ti-')) {
-            const url = new URL(image, origin);
-            app.metadata.image = url.href;
-        }
-    });
-}
-
 export const appTable = omu.dashboard.apps;
-omu.onReady(async () => {
-    console.log(await appTable.fetchAll());
-});
+omu.onReady(() => appTable.fetchAll());

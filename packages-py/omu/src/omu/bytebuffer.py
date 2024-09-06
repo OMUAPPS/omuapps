@@ -20,11 +20,15 @@ class Flags:
             return callback()
         return None
 
-    def set(self, position: int, value: bool) -> Flags:
+    def set(self, position: int, value: bool = True) -> Flags:
         if value:
             self.value |= 1 << position
         else:
             self.value &= ~(1 << position)
+        return self
+
+    def unset(self, position: int) -> Flags:
+        self.value &= ~(1 << position)
         return self
 
     def write(self, writer: ByteWriter) -> ByteWriter:

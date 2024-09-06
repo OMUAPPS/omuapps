@@ -93,7 +93,7 @@ async def recheck_rooms():
     for service in tuple(chat_services.values()):
         if service.closed:
             del chat_services[service.room.id]
-    rooms = await chat.rooms.fetch_items()
+    rooms = await chat.rooms.fetch_all()
     for room in filter(lambda r: r.connected, rooms.values()):
         if room.provider_id not in services:
             continue
@@ -128,7 +128,7 @@ async def should_remove(room: Room, provider_service: ProviderService):
 
 
 async def recheck_channels():
-    all_channels = await chat.channels.fetch_items()
+    all_channels = await chat.channels.fetch_all()
     for channel in all_channels.values():
         provider = get_provider(channel)
         if provider is None:

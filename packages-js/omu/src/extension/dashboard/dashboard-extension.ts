@@ -9,7 +9,7 @@ import type { Table } from '../table/table.js';
 import { TableType } from '../table/table.js';
 
 import type { DashboardHandler } from './dashboard.js';
-import { PermissionRequestPacket, PluginRequestPacket } from './packets.js';
+import { AppInstallRequest, AppInstallResponse, AppUpdateRequest, AppUpdateResponse, PermissionRequestPacket, PluginRequestPacket } from './packets.js';
 
 export const DASHBOARD_EXTENSION_TYPE = new ExtensionType(
     'dashboard',
@@ -75,6 +75,38 @@ const DASHBOARD_APP_TABLE_TYPE = TableType.createModel(DASHBOARD_EXTENSION_TYPE,
         remove: DASHOBARD_APP_EDIT_PERMISSION_ID,
     },
 });
+export const DASHBOARD_APP_INSTALL_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join('app', 'install');
+const DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType.createJson<App, AppInstallResponse>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'install_app',
+    requestSerializer: Serializer.model(App),
+    permissionId: DASHBOARD_APP_INSTALL_PERMISSION_ID,
+});
+const DASHBOARD_APP_INSTALL_PACKET = PacketType.createSerialized<AppInstallRequest>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'install_app',
+    serializer: AppInstallRequest,
+});
+const DASHBOARD_APP_INSTALL_ACCEPT_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'install_app_accept',
+});
+const DASHBOARD_APP_INSTALL_DENY_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'install_app_deny',
+});
+const DASHBOARD_APP_UPDATE_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join('app', 'update');
+const DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType.createJson<App, AppUpdateResponse>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'update_app',
+    requestSerializer: Serializer.model(App),
+    permissionId: DASHBOARD_APP_UPDATE_PERMISSION_ID,
+});
+const DASHBOARD_APP_UPDATE_PACKET = PacketType.createSerialized<AppUpdateRequest>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'update_app',
+    serializer: AppUpdateRequest,
+});
+const DASHBOARD_APP_UPDATE_ACCEPT_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'update_app_accept',
+});
+const DASHBOARD_APP_UPDATE_DENY_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'update_app_deny',
+});
 
 export class DashboardExtension {
     public readonly type = DASHBOARD_EXTENSION_TYPE;
@@ -90,6 +122,12 @@ export class DashboardExtension {
             DASHBOARD_PLUGIN_ACCEPT_PACKET,
             DASHBOARD_PLUGIN_DENY_PACKET,
             DASHBOARD_OPEN_APP_PACKET,
+            DASHBOARD_APP_INSTALL_PACKET,
+            DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
+            DASHBOARD_APP_INSTALL_DENY_PACKET,
+            DASHBOARD_APP_UPDATE_PACKET,
+            DASHBOARD_APP_UPDATE_ACCEPT_PACKET,
+            DASHBOARD_APP_UPDATE_DENY_PACKET,
         );
         client.network.addPacketHandler(DASHBOARD_PERMISSION_REQUEST_PACKET, (request) =>
             this.handlePermissionRequest(request),
@@ -97,9 +135,16 @@ export class DashboardExtension {
         client.network.addPacketHandler(DASHBOARD_PLUGIN_REQUEST_PACKET, (request) =>
             this.handlePluginRequest(request),
         );
+        client.network.addPacketHandler(DASHBOARD_APP_INSTALL_PACKET, async (request) => {
+            this.handleInstallApp(request);
+        });
+        client.network.addPacketHandler(DASHBOARD_APP_UPDATE_PACKET, async (request) => {
+            this.handleUpdateApp(request);
+        });
         client.network.addPacketHandler(DASHBOARD_OPEN_APP_PACKET, (app) =>
             this.handleOpenApp(app),
         );
+            
         this.apps = client.tables.get(DASHBOARD_APP_TABLE_TYPE);
     }
 
@@ -121,6 +166,28 @@ export class DashboardExtension {
                 this.client.send(DASHBOARD_PLUGIN_ACCEPT_PACKET, request.requestId);
             } else {
                 this.client.send(DASHBOARD_PLUGIN_DENY_PACKET, request.requestId);
+            }
+        });
+    }
+
+    private async handleInstallApp(request: AppInstallRequest): Promise<void> {
+        await this.handleDashboard(async (dashboard) => {
+            const response = await dashboard.handleInstallApp(request);
+            if (response) {
+                this.client.send(DASHBOARD_APP_INSTALL_ACCEPT_PACKET, request.requestId);
+            } else {
+                this.client.send(DASHBOARD_APP_INSTALL_DENY_PACKET, request.requestId);
+            }
+        });
+    }
+
+    private async handleUpdateApp(request: AppUpdateRequest): Promise<void> {
+        await this.handleDashboard(async (dashboard) => {
+            const response = await dashboard.handleUpdateApp(request);
+            if (response) {
+                this.client.send(DASHBOARD_APP_UPDATE_ACCEPT_PACKET, request.requestId);
+            } else {
+                this.client.send(DASHBOARD_APP_UPDATE_DENY_PACKET, request.requestId);
             }
         });
     }
@@ -159,5 +226,13 @@ export class DashboardExtension {
 
     public async openApp(app: App): Promise<void> {
         return await this.client.endpoints.call(DASHBOARD_OPEN_APP_ENDPOINT, app);
+    }
+
+    public async installApp(app: App): Promise<AppInstallResponse> {
+        return await this.client.endpoints.call(DASHBOARD_APP_INSTALL_ENDPOINT, app);
+    }
+
+    public async updateApp(app: App): Promise<AppUpdateResponse> {
+        return await this.client.endpoints.call(DASHBOARD_APP_UPDATE_ENDPOINT, app);
     }
 }

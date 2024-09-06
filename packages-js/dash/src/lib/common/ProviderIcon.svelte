@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { Provider } from '@omujs/chat/models/index.js';
 
-    import { classes } from '$lib/utils/class-helper.js';
     import type { Identifier } from '@omujs/omu/identifier.js';
     import { chat, omu } from '../client.js';
 
@@ -19,7 +18,8 @@
             <img
                 src={omu.assets.proxy(provider.imageUrl || `https://${provider.url}/favicon.ico`)}
                 alt="icon"
-                class={classes('provider-icon', provider.imageUrl && 'custom')}
+                class="provider-icon"
+                class:image={provider.imageUrl}
                 width="16"
                 height="16"
             />
@@ -36,7 +36,7 @@
         height: 32px;
     }
 
-    .custom {
+    .image {
         width: 32px;
         height: 32px;
     }

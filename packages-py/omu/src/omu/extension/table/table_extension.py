@@ -140,6 +140,29 @@ TABLE_ITEM_GET_ENDPOINT = EndpointType[
     response_serializer=TableItemsPacket,
     permission_id=TABLE_PERMISSION_ID,
 )
+TABLE_ITEM_HAS_ENDPOINT = EndpointType[
+    TableKeysPacket, dict[str, bool]
+].create_serialized(
+    TABLE_EXTENSION_TYPE,
+    "item_has",
+    request_serializer=TableKeysPacket,
+    response_serializer=Serializer.json(),
+    permission_id=TABLE_PERMISSION_ID,
+)
+TABLE_ITEM_HAS_ALL_ENDPOINT = EndpointType[TableKeysPacket, bool].create_serialized(
+    TABLE_EXTENSION_TYPE,
+    "item_has_all",
+    request_serializer=TableKeysPacket,
+    response_serializer=Serializer.json(),
+    permission_id=TABLE_PERMISSION_ID,
+)
+TABLE_ITEM_HAS_ANY_ENDPOINT = EndpointType[TableKeysPacket, bool].create_serialized(
+    TABLE_EXTENSION_TYPE,
+    "item_has_any",
+    request_serializer=TableKeysPacket,
+    response_serializer=Serializer.json(),
+    permission_id=TABLE_PERMISSION_ID,
+)
 TABLE_FETCH_ENDPOINT = EndpointType[
     TableFetchPacket, TableItemsPacket
 ].create_serialized(
@@ -230,7 +253,7 @@ class TableImpl[T](Table[T]):
         if key in self._cache:
             return self._cache[key]
         res = await self._client.endpoints.call(
-            TABLE_ITEM_GET_ENDPOINT, TableKeysPacket(id=self._id, keys=[key])
+            TABLE_ITEM_GET_ENDPOINT, TableKeysPacket(id=self._id, keys=(key,))
         )
         items = self._parse_items(res.items)
         self._cache.update(items)
@@ -267,15 +290,46 @@ class TableImpl[T](Table[T]):
     async def clear(self) -> None:
         await self._client.send(TABLE_ITEM_CLEAR_PACKET, TablePacket(id=self._id))
 
+    async def has(self, key: str) -> bool:
+        if key in self._cache:
+            return True
+        res = await self._client.endpoints.call(
+            TABLE_ITEM_HAS_ENDPOINT, TableKeysPacket(id=self._id, keys=(key,))
+        )
+        return res[key]
+
+    async def has_many(self, *keys: str) -> dict[str, bool]:
+        res = await self._client.endpoints.call(
+            TABLE_ITEM_HAS_ENDPOINT, TableKeysPacket(id=self._id, keys=keys)
+        )
+        return res
+
+    async def has_all(self, *keys: str) -> bool:
+        res = await self._client.endpoints.call(
+            TABLE_ITEM_HAS_ALL_ENDPOINT, TableKeysPacket(id=self._id, keys=keys)
+        )
+        return res
+
+    async def has_any(self, *keys: str) -> bool:
+        res = await self._client.endpoints.call(
+            TABLE_ITEM_HAS_ANY_ENDPOINT, TableKeysPacket(id=self._id, keys=keys)
+        )
+        return res
+
     async def fetch_items(
         self,
-        before: int | None = None,
-        after: int | None = None,
+        limit: int,
+        backward: bool = False,
         cursor: str | None = None,
     ) -> dict[str, T]:
         items_response = await self._client.endpoints.call(
             TABLE_FETCH_ENDPOINT,
-            TableFetchPacket(id=self._id, before=before, after=after, cursor=cursor),
+            TableFetchPacket(
+                id=self._id,
+                limit=limit,
+                backward=backward,
+                cursor=cursor,
+            ),
         )
         items = self._parse_items(items_response.items)
         await self.update_cache(items)
@@ -303,23 +357,17 @@ class TableImpl[T](Table[T]):
         backward: bool = False,
         cursor: str | None = None,
     ) -> AsyncGenerator[T, None]:
-        items = await self.fetch_items(
-            before=self._chunk_size if backward else None,
-            after=self._chunk_size if not backward else None,
-            cursor=cursor,
-        )
-        for item in items.values():
-            yield item
-        while len(items) > 0:
-            cursor = next(iter(items.keys()))
+        while True:
             items = await self.fetch_items(
-                before=self._chunk_size if backward else None,
-                after=self._chunk_size if not backward else None,
+                limit=self._chunk_size,
+                backward=backward,
                 cursor=cursor,
             )
+            if len(items) == 0:
+                break
             for item in items.values():
                 yield item
-            items.pop(cursor, None)
+            cursor = next(iter(items.keys()))
 
     async def size(self) -> int:
         res = await self._client.endpoints.call(

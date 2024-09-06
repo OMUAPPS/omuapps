@@ -17,7 +17,7 @@
         version: '0.1.0',
     });
     const omu = new Omu(ASSET_APP);
-    const chat = new Chat(omu);
+    const chat = Chat.create(omu);
     const roulette = new RouletteApp(omu);
     const { state } = roulette;
     setClient(omu);

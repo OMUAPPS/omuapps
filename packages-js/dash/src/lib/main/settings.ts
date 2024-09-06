@@ -1,10 +1,11 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 
 import { LOCALES } from '$lib/i18n/i18n.js';
 import type { TypedComponent } from '@omujs/ui';
+import About from './settings/about/About.svelte';
 import Checkbox from './settings/CheckboxField.svelte';
 import Combobox from './settings/ComboboxField.svelte';
-import About from './settings/about/About.svelte';
+import DevSettings from './settings/DevSettings.svelte';
 
 function getSystemLanguage(): keyof typeof LOCALES {
     if (typeof window === 'undefined') {
@@ -101,3 +102,6 @@ registerSetting('language', 'language', Combobox, {
     ) as (keyof typeof LOCALES)[],
 });
 registerSetting('about', 'licenses', About, {});
+if (get(devMode)) {
+    registerSetting('developer', 'developer', DevSettings, {});
+}

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 
-from omu.bytebuffer import ByteReader, ByteWriter
+from omu.bytebuffer import ByteReader, ByteWriter, Flags
 from omu.helper import map_optional
 from omu.identifier import Identifier
 
@@ -59,7 +59,7 @@ class TableItemsPacket:
 @dataclass(frozen=True, slots=True)
 class TableKeysPacket:
     id: Identifier
-    keys: Sequence[str]
+    keys: tuple[str, ...]
 
     @classmethod
     def serialize(cls, item: TableKeysPacket) -> bytes:
@@ -76,7 +76,7 @@ class TableKeysPacket:
             id = reader.read_string()
             key_count = reader.read_int()
             keys = [reader.read_string() for _ in range(key_count)]
-        return TableKeysPacket(id=Identifier.from_key(id), keys=keys)
+        return TableKeysPacket(id=Identifier.from_key(id), keys=tuple(keys))
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,26 +117,21 @@ class TableProxyPacket:
 @dataclass(frozen=True, slots=True)
 class TableFetchPacket:
     id: Identifier
-    before: int | None
-    after: int | None
+    limit: int
+    backward: bool
     cursor: str | None
 
     @classmethod
     def serialize(cls, item: TableFetchPacket) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        flags = 0
-        if item.before is not None:
-            flags |= 0b1
-        if item.after is not None:
-            flags |= 0b10
+        writer.write_int(item.limit)
+        flags = Flags(length=2)
+        if item.backward:
+            flags.set(0)
         if item.cursor is not None:
-            flags |= 0b100
-        writer.write_byte(flags)
-        if item.before is not None:
-            writer.write_int(item.before)
-        if item.after is not None:
-            writer.write_int(item.after)
+            flags.set(1)
+        writer.write_flags(flags)
         if item.cursor is not None:
             writer.write_string(item.cursor)
         return writer.finish()
@@ -145,14 +140,14 @@ class TableFetchPacket:
     def deserialize(cls, item: bytes) -> TableFetchPacket:
         with ByteReader(item) as reader:
             id = reader.read_string()
-            flags = reader.read_byte()
-            before = reader.read_int() if flags & 0b1 else None
-            after = reader.read_int() if flags & 0b10 else None
-            cursor = reader.read_string() if flags & 0b100 else None
+            limit = reader.read_int()
+            flags = reader.read_flags(length=2)
+            backward = flags.get(0)
+            cursor = reader.read_string() if flags.has(1) else None
         return TableFetchPacket(
             id=Identifier.from_key(id),
-            before=before,
-            after=after,
+            limit=limit,
+            backward=backward,
             cursor=cursor,
         )
 

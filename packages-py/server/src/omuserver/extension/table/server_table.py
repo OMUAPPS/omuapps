@@ -77,16 +77,28 @@ class ServerTable(abc.ABC):
     async def update(self, items: Mapping[str, bytes]) -> None: ...
 
     @abc.abstractmethod
-    async def remove(self, keys: list[str]) -> None: ...
+    async def remove(self, keys: list[str] | tuple[str, ...]) -> None: ...
 
     @abc.abstractmethod
     async def clear(self) -> None: ...
 
     @abc.abstractmethod
+    async def has(self, key: str) -> bool: ...
+
+    @abc.abstractmethod
+    async def has_many(self, keys: list[str] | tuple[str, ...]) -> dict[str, bool]: ...
+
+    @abc.abstractmethod
+    async def has_all(self, keys: list[str] | tuple[str, ...]) -> bool: ...
+
+    @abc.abstractmethod
+    async def has_any(self, keys: list[str] | tuple[str, ...]) -> bool: ...
+
+    @abc.abstractmethod
     async def fetch_items(
         self,
-        before: int | None = None,
-        after: int | None = None,
+        limit: int,
+        backward: bool = False,
         cursor: str | None = None,
     ) -> dict[str, bytes]: ...
 

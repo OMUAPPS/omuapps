@@ -1,13 +1,12 @@
-import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
+import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 import thumbnail from './thumbnail.png';
 
-export const IDENTIFIER = new Identifier('com.omuapps', 'timer');
+export const APP_ID = new Identifier(NAMESPACE, 'timer');
 
-export const APP = new App(IDENTIFIER, {
-    url: `${ORIGIN}/app/timer`,
+export const APP = new App(APP_ID, {
+    url: getUrl('/app/timer'),
     metadata: {
         locale: 'en',
         name: {
@@ -19,7 +18,7 @@ export const APP = new App(IDENTIFIER, {
             en: 'A simple timer app to measure time',
         },
         icon: 'ti-alarm',
-        image: thumbnail,
+        image: getUrl(thumbnail),
         tags: ['asset', 'tool'] as TagKey[],
     },
 });

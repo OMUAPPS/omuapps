@@ -12,6 +12,7 @@ import {
 import { EventEmitter } from '../event-emitter.js';
 import { IdentifierMap } from '../identifier.js';
 import type { TokenProvider } from '../token.js';
+import { VERSION } from '../version.js';
 
 import type { Connection } from './connection.js';
 import { PacketMapper } from './connection.js';
@@ -138,6 +139,7 @@ export class Network {
             type: PACKET_TYPES.CONNECT,
             data: new ConnectPacket({
                 app: this.client.app,
+                protocol: {version: VERSION},
                 token,
             }),
         });

@@ -16,7 +16,7 @@
             version: '0.1.0',
         }),
     );
-    const obs = new OBSPlugin(omu);
+    const obs = OBSPlugin.create(omu);
     const breakTimer = new BreakTimerApp(omu, obs);
     const { config, state } = breakTimer;
     setClient(omu);
@@ -54,5 +54,16 @@
         align-items: start;
         padding-top: 4rem;
         overflow: hidden;
+    }
+
+    h1 {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        background: #000;
+        color: var(--color-1);
+        text-align: center;
     }
 </style>

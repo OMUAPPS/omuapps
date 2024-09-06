@@ -93,13 +93,25 @@ class SerializedTable[T: Keyable](Table[T]):
     async def clear(self) -> None:
         await self._table.clear()
 
+    async def has(self, key: str) -> bool:
+        return await self._table.has(key)
+
+    async def has_many(self, *keys: str) -> dict[str, bool]:
+        return await self._table.has_many(list(keys))
+
+    async def has_all(self, *keys: str) -> bool:
+        return await self._table.has_all(list(keys))
+
+    async def has_any(self, *keys: str) -> bool:
+        return await self._table.has_any(list(keys))
+
     async def fetch_items(
         self,
-        before: int | None = None,
-        after: int | None = None,
+        limit: int,
+        backward: bool = False,
         cursor: str | None = None,
     ) -> dict[str, T]:
-        items = await self._table.fetch_items(before, after, cursor)
+        items = await self._table.fetch_items(limit, backward, cursor)
         return self._parse_items(items)
 
     async def fetch_range(self, start: str, end: str) -> dict[str, T]:
@@ -115,23 +127,17 @@ class SerializedTable[T: Keyable](Table[T]):
         backward: bool = False,
         cursor: str | None = None,
     ) -> AsyncGenerator[T, None]:
-        items = await self.fetch_items(
-            before=self._chunk_size if backward else None,
-            after=self._chunk_size if not backward else None,
-            cursor=cursor,
-        )
-        for item in items.values():
-            yield item
-        while len(items) > 0:
-            cursor = next(iter(items.keys()))
+        while True:
             items = await self.fetch_items(
-                before=self._chunk_size if backward else None,
-                after=self._chunk_size if not backward else None,
+                limit=self._chunk_size,
+                backward=backward,
                 cursor=cursor,
             )
+            if len(items) == 0:
+                break
             for item in items.values():
                 yield item
-            items.pop(cursor, None)
+            cursor = next(iter(items.keys()))
 
     async def size(self) -> int:
         return await self._table.size()

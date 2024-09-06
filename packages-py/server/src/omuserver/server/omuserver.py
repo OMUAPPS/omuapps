@@ -49,7 +49,7 @@ class OmuServer(Server):
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         self._config = config
-        self._loop = self.ensure_loop(loop)
+        self._loop = loop or self.create_loop()
         self._address = config.address
         self._event = ServerEvents()
         self._directories = config.directories
@@ -67,9 +67,9 @@ class OmuServer(Server):
         self._permissions = PermissionExtension(self)
         self._tables = TableExtension(self)
         self._dashboard = DashboardExtension(self)
-        self._registry = RegistryExtension(self)
+        self._registries = RegistryExtension(self)
         self._server = ServerExtension(self)
-        self._signal = SignalExtension(self)
+        self._signals = SignalExtension(self)
         self._plugins = PluginExtension(self)
         self._assets = AssetExtension(self)
         self._i18n = I18nExtension(self)
@@ -79,14 +79,8 @@ class OmuServer(Server):
             headers=USER_AGENT_HEADERS,
         )
 
-    def ensure_loop(
-        self, loop: asyncio.AbstractEventLoop | None
-    ) -> asyncio.AbstractEventLoop:
-        if loop is None:
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
+    def create_loop(self) -> asyncio.AbstractEventLoop:
+        loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
         return loop
 
@@ -146,8 +140,6 @@ class OmuServer(Server):
             return web.Response(status=500)
 
     def run(self) -> None:
-        self._loop = self.ensure_loop(self.loop)
-
         try:
             self._loop.create_task(self.start())
             self._loop.run_forever()
@@ -206,43 +198,47 @@ class OmuServer(Server):
         return self._packet_dispatcher
 
     @property
-    def endpoints(self) -> EndpointExtension:
+    def endpoints(self):
         return self._endpoints
 
     @property
-    def dashboard(self) -> DashboardExtension:
-        return self._dashboard
-
-    @property
-    def permissions(self) -> PermissionExtension:
+    def permissions(self):
         return self._permissions
 
     @property
-    def tables(self) -> TableExtension:
+    def tables(self):
         return self._tables
 
     @property
-    def registry(self) -> RegistryExtension:
-        return self._registry
+    def dashboard(self):
+        return self._dashboard
 
     @property
-    def signal(self) -> SignalExtension:
-        return self._signal
+    def registries(self):
+        return self._registries
 
     @property
-    def plugins(self) -> PluginExtension:
+    def server(self):
+        return self._server
+
+    @property
+    def signals(self):
+        return self._signals
+
+    @property
+    def plugins(self):
         return self._plugins
 
     @property
-    def assets(self) -> AssetExtension:
+    def assets(self):
         return self._assets
 
     @property
-    def i18n(self) -> I18nExtension:
+    def i18n(self):
         return self._i18n
 
     @property
-    def logger(self) -> LoggerExtension:
+    def logger(self):
         return self._logger
 
     @property

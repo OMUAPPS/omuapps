@@ -28,7 +28,7 @@ class I18nExtension(Extension):
     def __init__(self, client: Client):
         self.client = client
         client.permissions.require(I18N_GET_LOCALES_PERMISSION_ID)
-        self.locales_registry = client.registry.get(I18N_LOCALES_REGISTRY_TYPE)
+        self.locales_registry = client.registries.get(I18N_LOCALES_REGISTRY_TYPE)
         self.locales: list[Locale] = []
         self.default_locales: list[Locale] = []
 

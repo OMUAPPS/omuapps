@@ -8,6 +8,7 @@ from loguru import logger
 from omu.address import Address
 
 from omuserver.config import Config
+from omuserver.migration import migrate
 from omuserver.server.omuserver import OmuServer
 from omuserver.version import VERSION
 
@@ -33,11 +34,13 @@ def setup_logging():
 @click.option("--token", type=str, default=None)
 @click.option("--token-file", type=click.Path(), default=None)
 @click.option("--port", type=int, default=26423)
+@click.option("--extra-trusted-origin", type=str, multiple=True)
 def main(
     debug: bool,
     token: str | None,
     token_file: str | None,
     port: int,
+    extra_trusted_origin: list[str],
 ):
     config = Config()
     config.address = Address(
@@ -53,13 +56,17 @@ def main(
     else:
         config.dashboard_token = None
 
+    config.extra_trusted_origins = list(extra_trusted_origin)
+    if config.extra_trusted_origins:
+        logger.info(f"Extra trusted hosts: {config.extra_trusted_origins}")
+
     if debug:
         logger.warning("Debug mode enabled")
-        logger.warning("Strict origin disabled")
-        config.strict_origin = False
         tracemalloc.start()
 
     server = OmuServer(config=config)
+
+    migrate(server)
 
     logger.info(f"Starting omuserver v{VERSION} on {config.address.to_url()}")
     server.run()

@@ -23,7 +23,7 @@ class SqliteTableAdapter(TableAdapter):
 
     @classmethod
     def create(cls, path: Path) -> TableAdapter:
-        return cls(path)
+        return SqliteTableAdapter(path)
 
     async def store(self) -> None:
         pass
@@ -38,7 +38,7 @@ class SqliteTableAdapter(TableAdapter):
             return None
         return row[0]
 
-    async def get_many(self, keys: list[str]) -> dict[str, bytes]:
+    async def get_many(self, keys: list[str] | tuple[str, ...]) -> dict[str, bytes]:
         cursor = self._conn.execute(
             f"SELECT key, value FROM data WHERE key IN ({','.join('?' for _ in keys)})",
             keys,
@@ -65,56 +65,76 @@ class SqliteTableAdapter(TableAdapter):
         self._conn.execute("DELETE FROM data WHERE key = ?", (key,))
         self._conn.commit()
 
-    async def remove_all(self, keys: list[str]) -> None:
+    async def remove_all(self, keys: list[str] | tuple[str, ...]) -> None:
         self._conn.execute(
             f"DELETE FROM data WHERE key IN ({','.join('?' for _ in keys)})",
             keys,
         )
         self._conn.commit()
 
+    async def has(self, key: str) -> bool:
+        cursor = self._conn.execute("SELECT 1 FROM data WHERE key = ?", (key,))
+        return cursor.fetchone() is not None
+
+    async def has_many(self, keys: list[str] | tuple[str, ...]) -> dict[str, bool]:
+        cursor = self._conn.execute(
+            f"SELECT key FROM data WHERE key IN ({','.join('?' for _ in keys)})",
+            keys,
+        )
+        rows = cursor.fetchall()
+        return {row[0]: True for row in rows}
+
+    async def has_any(self, keys: list[str] | tuple[str, ...]) -> bool:
+        cursor = self._conn.execute(
+            f"SELECT 1 FROM data WHERE key IN ({','.join('?' for _ in keys)})",
+            keys,
+        )
+        return cursor.fetchone() is not None
+
+    async def has_all(self, keys: list[str] | tuple[str, ...]) -> bool:
+        cursor = self._conn.execute(
+            f"SELECT key FROM data WHERE key IN ({','.join('?' for _ in keys)})",
+            keys,
+        )
+        rows = cursor.fetchall()
+        return len(rows) == len(keys)
+
     async def fetch_items(
-        self, before: int | None, after: int | None, cursor: str | None
+        self,
+        limit: int,
+        backward: bool = False,
+        cursor: str | None = None,
     ) -> dict[str, bytes]:
         cursor_id: int | None = None
-        if cursor is not None:
+        if cursor is None:
+            if backward:
+                _cursor = self._conn.execute(
+                    "SELECT id FROM data ORDER BY id DESC LIMIT 1"
+                )
+            else:
+                _cursor = self._conn.execute("SELECT id FROM data ORDER BY id LIMIT 1")
+            row = _cursor.fetchone()
+            if row is None:
+                return {}
+            cursor_id = row[0]
+        else:
             _cursor = self._conn.execute("SELECT id FROM data WHERE key = ?", (cursor,))
             row = _cursor.fetchone()
             if row is None:
                 raise ValueError(f"Cursor {cursor} not found")
             cursor_id = row[0]
 
-        if before is None and after is None:
-            _cursor = self._conn.execute("SELECT key, value FROM data")
-            return {row[0]: (row[1]) for row in _cursor.fetchall()}
-
-        items: dict[int, tuple[str, bytes]] = {}
-        if before is not None:
-            if cursor_id is None:
-                _cursor = self._conn.execute(
-                    "SELECT id, key, value FROM data ORDER BY id DESC LIMIT ?",
-                    (before,),
-                )
-            else:
-                _cursor = self._conn.execute(
-                    "SELECT id, key, value FROM data WHERE id <= ? "
-                    "ORDER BY id DESC LIMIT ?",
-                    (cursor_id, before),
-                )
-            items.update({row[0]: (row[1], (row[2])) for row in _cursor.fetchall()})
-        if after is not None:
-            if cursor_id is None:
-                _cursor = self._conn.execute(
-                    "SELECT id, key, value FROM data ORDER BY id LIMIT ?",
-                    (after,),
-                )
-            else:
-                _cursor = self._conn.execute(
-                    "SELECT id, key, value FROM data WHERE id >= ? "
-                    "ORDER BY id ASC LIMIT ?",
-                    (cursor_id, after),
-                )
-            items.update({row[0]: (row[1], (row[2])) for row in _cursor.fetchall()})
-        return {key: value for _, (key, value) in sorted(items.items(), reverse=True)}
+        if backward:
+            _cursor = self._conn.execute(
+                "SELECT key, value FROM data WHERE id < ? ORDER BY id DESC LIMIT ?",
+                (cursor_id, limit),
+            )
+        else:
+            _cursor = self._conn.execute(
+                "SELECT key, value FROM data WHERE id > ? ORDER BY id LIMIT ?",
+                (cursor_id, limit),
+            )
+        return {row[0]: (row[1]) for row in _cursor.fetchall()}
 
     async def fetch_range(self, start: str, end: str) -> dict[str, bytes]:
         start_id: int

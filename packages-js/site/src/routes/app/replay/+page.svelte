@@ -2,6 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { Chat } from '@omujs/chat';
+    import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { AppHeader, FlexRowWrapper, TableList, Textbox, Toggle, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -10,8 +11,10 @@
     import RoomEntry from './components/RoomEntry.svelte';
     import { ReplayApp } from './replay-app.js';
     import { playVideo } from './stores.js';
+
     const omu = new Omu(APP);
-    const chat = new Chat(omu);
+    const obs = OBSPlugin.create(omu);
+    const chat = Chat.create(omu);
     const { replayData, config } = new ReplayApp(omu);
     setClient(omu);
 
@@ -48,6 +51,10 @@
     let search: string = '';
 
     if (BROWSER) {
+        omu.permissions.require(
+            permissions.OBS_SOURCE_READ_PERMISSION_ID,
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>
@@ -77,7 +84,7 @@
                     配信ソフトに追加する
                     <i class="ti ti-arrow-bar-to-down" />
                 </h3>
-                <AssetButton />
+                <AssetButton {omu} {obs} />
             </section>
             <div class="streams">
                 <h3>

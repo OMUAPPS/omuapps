@@ -2,7 +2,9 @@
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPlugin } from '@omujs/obs';
     import type { SourceType } from '@omujs/obs/types.js';
+    import type { Omu } from '@omujs/omu';
 
+    export let omu: Omu;
     export let obs: OBSPlugin;
     let source: SourceType<string, unknown>;
 
@@ -89,7 +91,7 @@
             {/await}
         </p>
         {JSON.stringify(source)}
-        <AssetButton {obs} />
+        <AssetButton {omu} {obs} />
     </div>
 </main>
 

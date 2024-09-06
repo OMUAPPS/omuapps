@@ -162,6 +162,7 @@ class Network:
                 PACKET_TYPES.CONNECT,
                 ConnectPacket(
                     app=self._client.app,
+                    protocol={"version": self._client.version},
                     token=self._token_provider.get(self._address, self._client.app),
                 ),
             )

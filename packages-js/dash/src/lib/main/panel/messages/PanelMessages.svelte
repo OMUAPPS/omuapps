@@ -7,7 +7,7 @@
     import type { Identifier } from '@omujs/omu/identifier.js';
     import { MessageEntry, TableList } from '@omujs/ui';
 
-    export let filter: (key: string, message: models.Message) => boolean = () => true;
+    export let filter: (key: string, message: models.Message) => boolean = (_, message) => message.deleted !== true;
     export let sort: (a: models.Message, b: models.Message) => number = (a, b) => {
         if (!a.createdAt || !b.createdAt) return 0;
         return a.createdAt.getTime() - b.createdAt.getTime();

@@ -175,7 +175,7 @@ class CachedTable(ServerTable):
         await self.update_cache(items)
         self.mark_changed()
 
-    async def remove(self, keys: list[str]) -> None:
+    async def remove(self, keys: list[str] | tuple[str, ...]) -> None:
         if self._adapter is None:
             raise Exception("Table not set")
         removed = await self._adapter.get_many(keys)
@@ -194,15 +194,35 @@ class CachedTable(ServerTable):
         self._cache.clear()
         self.mark_changed()
 
+    async def has(self, key: str) -> bool:
+        if self._adapter is None:
+            raise Exception("Table not set")
+        return await self._adapter.has(key)
+
+    async def has_many(self, keys: list[str] | tuple[str, ...]) -> dict[str, bool]:
+        if self._adapter is None:
+            raise Exception("Table not set")
+        return await self._adapter.has_many(list(keys))
+
+    async def has_all(self, keys: list[str] | tuple[str, ...]) -> bool:
+        if self._adapter is None:
+            raise Exception("Table not set")
+        return await self._adapter.has_all(list(keys))
+
+    async def has_any(self, keys: list[str] | tuple[str, ...]) -> bool:
+        if self._adapter is None:
+            raise Exception("Table not set")
+        return await self._adapter.has_any(list(keys))
+
     async def fetch_items(
         self,
-        before: int | None = None,
-        after: int | None = None,
+        limit: int,
+        backward: bool = False,
         cursor: str | None = None,
     ) -> dict[str, bytes]:
         if self._adapter is None:
             raise Exception("Table not set")
-        return await self._adapter.fetch_items(before, after, cursor)
+        return await self._adapter.fetch_items(limit, backward, cursor)
 
     async def fetch_range(self, start: str, end: str) -> dict[str, bytes]:
         if self._adapter is None:
@@ -218,7 +238,7 @@ class CachedTable(ServerTable):
         cursor: str | None = None
         while True:
             items = await self.fetch_items(
-                before=self.config.get("chunk_size", 100),
+                limit=self.config.get("chunk_size", 100),
                 cursor=cursor,
             )
             if len(items) == 0:

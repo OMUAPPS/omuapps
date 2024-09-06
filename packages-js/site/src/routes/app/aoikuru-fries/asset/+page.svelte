@@ -7,7 +7,7 @@
     import { App, Omu } from '@omujs/omu';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { IDENTIFIER } from '../app.js';
+    import { APP_ID } from '../app.js';
     import { FriesApp } from '../fries-app.js';
     import { type ThrowData } from '../state.js';
     import Avatar from './Avatar.svelte';
@@ -15,11 +15,11 @@
     import Fries from './Fries.svelte';
     import bg from './img/bg.png';
 
-    const ASSET_APP = new App(IDENTIFIER.join('asset'), {
+    const ASSET_APP = new App(APP_ID.join('asset'), {
         version: '0.1.0',
     });
     const omu = new Omu(ASSET_APP);
-    const chat = new Chat(omu);
+    const chat = Chat.create(omu);
     const friesApp = new FriesApp(omu);
     const { config, state } = friesApp;
     setClient(omu);

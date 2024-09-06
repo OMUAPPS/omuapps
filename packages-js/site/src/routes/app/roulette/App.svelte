@@ -2,6 +2,7 @@
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { Chat, events } from '@omujs/chat';
     import { Message } from '@omujs/chat/models/message.js';
+    import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -11,7 +12,8 @@
     import { RouletteApp } from './roulette-app.js';
 
     export let omu: Omu;
-    const chat = new Chat(omu);
+    const chat = Chat.create(omu);
+    const obs = OBSPlugin.create(omu);
     const roulette = new RouletteApp(omu);
     const { entries, state, config } = roulette;
 
@@ -39,6 +41,10 @@
     chat.messages.listen();
 
     if (BROWSER) {
+        omu.permissions.require(
+            permissions.OBS_SOURCE_READ_PERMISSION_ID,
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>
@@ -123,7 +129,7 @@
     </div>
     <div class="right">
         <div class="buttons">
-            <AssetButton />
+            <AssetButton {omu} {obs} />
         </div>
         <div class="roulette">
             <RouletteRenderer {roulette} />

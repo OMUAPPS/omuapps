@@ -23,7 +23,7 @@ export class I18nExtension implements Extension {
 
     constructor(private readonly client: Client) {
         client.permissions.require(I18N_GET_LOCALES_PERMISSION_ID);
-        this.localesRegistry = client.registry.get(I18N_LOCALES_REGISTRY_TYPE);
+        this.localesRegistry = client.registries.get(I18N_LOCALES_REGISTRY_TYPE);
         this.localesRegistry.listen((locale) => {
             this.locales = locale;
         });
@@ -46,9 +46,7 @@ export class I18nExtension implements Extension {
         }
         const translation = this.selectBestTranslation(locales, localizedText);
         if (!translation) {
-            throw new Error(
-                `Missing translation for ${this.locales} in ${JSON.stringify(localizedText)}`,
-            );
+            return Object.values(localizedText)[0];
         }
         return translation;
     }

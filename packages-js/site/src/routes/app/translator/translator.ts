@@ -1,7 +1,8 @@
+import { Identifier } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/index.js';
-import { Identifier } from '@omujs/omu/identifier.js';
+import { NAMESPACE } from '../origin.js';
 
-const PLUGIN_IDENTIFIER = new Identifier('com.omuapps', 'translator', 'plugin');
+const PLUGIN_IDENTIFIER = new Identifier(NAMESPACE, 'translator', 'plugin');
 
 export type Language =
     | 'en'

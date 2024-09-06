@@ -1,11 +1,11 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { Identifier, Omu } from '@omujs/omu';
+import { Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import { get, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 
-export const PLUGIN_ID = Identifier.fromKey('com.omuapps:marshmallow/plugin');
+export const PLUGIN_ID = APP_ID.join('plugin');
 export type User = {
     name: string;
     screen_name: string;
@@ -94,8 +94,8 @@ export class MarshmallowApp {
     public readonly data: Writable<MarshmallowData>;
 
     constructor(private readonly omu: Omu) {
-        this.config = makeRegistryWritable(omu.registry.get(MARSHMALLOW_CONFIG_REGISTRY_TYPE));
-        this.data = makeRegistryWritable(omu.registry.get(MARSHMALLOW_DATA_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registries.get(MARSHMALLOW_CONFIG_REGISTRY_TYPE));
+        this.data = makeRegistryWritable(omu.registries.get(MARSHMALLOW_DATA_REGISTRY_TYPE));
     }
 
     async getUsers(): Promise<Record<string, User>> {

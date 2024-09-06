@@ -43,13 +43,25 @@ class Table[T](abc.ABC):
     async def remove(self, *items: T) -> None: ...
 
     @abc.abstractmethod
+    async def has(self, key: str) -> bool: ...
+
+    @abc.abstractmethod
+    async def has_many(self, *keys: str) -> dict[str, bool]: ...
+
+    @abc.abstractmethod
+    async def has_all(self, *keys: str) -> bool: ...
+
+    @abc.abstractmethod
+    async def has_any(self, *keys: str) -> bool: ...
+
+    @abc.abstractmethod
     async def clear(self) -> None: ...
 
     @abc.abstractmethod
     async def fetch_items(
         self,
-        before: int | None = None,
-        after: int | None = None,
+        limit: int,
+        backward: bool = False,
         cursor: str | None = None,
     ) -> Mapping[str, T]: ...
 

@@ -23,6 +23,9 @@ from omu.extension.table.table_extension import (
     TABLE_ITEM_ADD_PACKET,
     TABLE_ITEM_CLEAR_PACKET,
     TABLE_ITEM_GET_ENDPOINT,
+    TABLE_ITEM_HAS_ALL_ENDPOINT,
+    TABLE_ITEM_HAS_ANY_ENDPOINT,
+    TABLE_ITEM_HAS_ENDPOINT,
     TABLE_ITEM_REMOVE_PACKET,
     TABLE_ITEM_UPDATE_PACKET,
     TABLE_LISTEN_PACKET,
@@ -119,6 +122,18 @@ class TableExtension:
             self.handle_item_get,
         )
         server.endpoints.bind_endpoint(
+            TABLE_ITEM_HAS_ENDPOINT,
+            self.handle_item_has,
+        )
+        server.endpoints.bind_endpoint(
+            TABLE_ITEM_HAS_ALL_ENDPOINT,
+            self.handle_item_has_all,
+        )
+        server.endpoints.bind_endpoint(
+            TABLE_ITEM_HAS_ANY_ENDPOINT,
+            self.handle_item_has_any,
+        )
+        server.endpoints.bind_endpoint(
             TABLE_FETCH_ENDPOINT,
             self.handle_item_fetch,
         )
@@ -147,13 +162,31 @@ class TableExtension:
             items=items,
         )
 
+    async def handle_item_has(
+        self, session: Session, packet: TableKeysPacket
+    ) -> dict[str, bool]:
+        table = await self.get_table(packet.id)
+        return await table.has_many(packet.keys)
+
+    async def handle_item_has_all(
+        self, session: Session, packet: TableKeysPacket
+    ) -> bool:
+        table = await self.get_table(packet.id)
+        return await table.has_all(packet.keys)
+
+    async def handle_item_has_any(
+        self, session: Session, packet: TableKeysPacket
+    ) -> bool:
+        table = await self.get_table(packet.id)
+        return await table.has_any(packet.keys)
+
     async def handle_item_fetch(
         self, session: Session, packet: TableFetchPacket
     ) -> TableItemsPacket:
         table = await self.get_table(packet.id)
         items = await table.fetch_items(
-            before=packet.before,
-            after=packet.after,
+            limit=packet.limit,
+            backward=packet.backward,
             cursor=packet.cursor,
         )
         return TableItemsPacket(

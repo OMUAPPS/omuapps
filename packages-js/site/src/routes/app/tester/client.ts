@@ -5,7 +5,7 @@ import { BROWSER } from 'esm-env';
 import { APP } from './app.js';
 
 export const omu = new Omu(APP);
-export const chat = new Chat(omu);
+export const chat = Chat.create(omu);
 setClient(omu);
 
 if (BROWSER) {

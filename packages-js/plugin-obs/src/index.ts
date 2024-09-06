@@ -1,5 +1,6 @@
 import type { Omu } from '@omujs/omu';
 
+import { SERVER_SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/extension/server/server-extension.js';
 import { PLUGIN_ID } from './const.js';
 import type { CreateResponse, SceneJson, SceneListResponse, SourceJson } from './types.js';
 import {
@@ -20,23 +21,36 @@ import {
 import { VERSION } from './version.js';
 export * as permissions from './permissions.js';
 
+type Events = {
+    connected: () => void;
+    disconnected: () => void;
+};
+type EventRecord<K extends keyof Events> = {
+    [P in K]?: Array<Events[P]>;
+};
 export class OBSPlugin {
-    constructor(private readonly omu: Omu) {
+    private connected = false;
+    private readonly events: EventRecord<keyof Events> = {};
+    
+    private constructor(private readonly omu: Omu) {
         omu.plugins.require({
             omuplugin_obs: `==${VERSION}`,
         });
+        omu.permissions.require(SERVER_SESSIONS_READ_PERMISSION_ID);
+        omu.server.observeSession(PLUGIN_ID, {
+            onConnect: () => this.setConnected(true),
+            onDisconnect: () => this.setConnected(false),
+        });
+        omu.onReady(async () => {
+            this.setConnected(await omu.server.sessions.has(PLUGIN_ID.key()));
+        });
     }
 
-    public get version(): string {
-        return VERSION;
-    }
-
-    public async isConnected(): Promise<boolean> {
-        return (await this.omu.server.sessions.get(PLUGIN_ID.key())) !== undefined;
-    }
-
-    public requirePlugin(): void {
-        this.omu.server.require(PLUGIN_ID);
+    public on<K extends keyof Events>(event: K, handler: Events[K]): void {
+        if (!this.events[event]) {
+            this.events[event] = [];
+        }
+        this.events[event]?.push(handler);
     }
 
     public static create(omu: Omu): OBSPlugin {
@@ -44,6 +58,30 @@ export class OBSPlugin {
             throw new Error('OMU instance is already started');
         }
         return new OBSPlugin(omu);
+    }
+
+    public get version(): string {
+        return VERSION;
+    }
+
+    public async isConnected(): Promise<boolean> {
+        return this.connected;
+    }
+
+    private async setConnected(connected: boolean): Promise<void> {
+        if (this.connected === connected) {
+            return;
+        }
+        this.connected = connected;
+        if (connected) {
+            this.events.connected?.forEach((handler) => handler());
+        } else {
+            this.events.disconnected?.forEach((handler) => handler());
+        }
+    }
+
+    public requirePlugin(): void {
+        this.omu.server.require(PLUGIN_ID);
     }
 
     async sourceCreate(source: SourceJson): Promise<CreateResponse> {

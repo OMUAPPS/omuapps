@@ -22,6 +22,7 @@ class MessageJson(TypedDict):
     paid: NotRequired[PaidJson] | None
     gifts: NotRequired[list[GiftJson]] | None
     created_at: NotRequired[str] | None  # ISO 8601 date string
+    deleted: NotRequired[bool]
 
 
 @dataclass(slots=True)
@@ -33,6 +34,7 @@ class Message(Keyable, Model[MessageJson]):
     paid: Paid | None = None
     gifts: list[Gift] | None = None
     created_at: datetime | None = None
+    deleted: bool = False
 
     @classmethod
     def from_json(cls, json: MessageJson) -> Message:
@@ -52,6 +54,7 @@ class Message(Keyable, Model[MessageJson]):
                 [],
             ),
             created_at=created_at,
+            deleted=json.get("deleted", False),
         )
 
     def to_json(self) -> MessageJson:
@@ -65,6 +68,7 @@ class Message(Keyable, Model[MessageJson]):
                 self.gifts, lambda gifts: [gift.to_json() for gift in gifts]
             ),
             created_at=map_optional(self.created_at, lambda x: x.isoformat()),
+            deleted=self.deleted,
         )
 
     @property

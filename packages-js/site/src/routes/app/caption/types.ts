@@ -1,14 +1,14 @@
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import { SignalType } from '@omujs/omu/extension/signal/signal.js';
 import { BROWSER } from 'esm-env';
-import { IDENTIFIER } from './app.js';
+import { APP_ID } from './app.js';
 
 export type Caption = {
     readonly texts: string[];
     readonly final: boolean;
 };
 
-export const CAPTION_SIGNAL = SignalType.createJson<Caption>(IDENTIFIER, {
+export const CAPTION_SIGNAL = SignalType.createJson<Caption>(APP_ID, {
     name: 'caption',
 });
 
@@ -30,7 +30,7 @@ export type Config = {
     style: CaptionStyle;
 };
 
-export const CONFIG_REGISTRY = RegistryType.createJson<Config>(IDENTIFIER, {
+export const CONFIG_REGISTRY = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: {
         lang: BROWSER ? (window.navigator.language as LanguageKey) : 'ja-JP',

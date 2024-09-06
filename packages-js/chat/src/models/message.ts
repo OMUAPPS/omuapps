@@ -16,6 +16,7 @@ export type MessageJson = {
     content?: content.ComponentJson;
     paid?: PaidJson;
     gifts?: GiftJson[];
+    deleted?: boolean;
 };
 
 export class Message implements Model<MessageJson>, Keyable, Timestamped {
@@ -26,6 +27,7 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
     public paid?: Paid;
     public gifts?: Gift[];
     public createdAt: Date;
+    public deleted?: boolean;
 
     constructor(options: {
         roomId: Identifier;
@@ -35,6 +37,7 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
         content?: content.Component;
         paid?: Paid;
         gifts?: Gift[];
+        deleted?: boolean;
     }) {
         if (!(options.createdAt instanceof Date)) {
             throw new Error('created_at must be a Date');
@@ -46,6 +49,7 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
         this.paid = options.paid;
         this.gifts = options.gifts;
         this.createdAt = options.createdAt;
+        this.deleted = options.deleted;
     }
 
     static fromJson(info: MessageJson): Message {
@@ -57,6 +61,7 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
             paid: info.paid && Paid.fromJson(info.paid),
             gifts: info.gifts?.map((gift) => Gift.fromJson(gift)),
             createdAt: new Date(info.created_at),
+            deleted: info.deleted,
         });
     }
 
@@ -80,6 +85,7 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
             content: this.content && content.serialize(this.content),
             paid: this.paid?.toJson(),
             gifts: this.gifts?.map((gift) => gift.toJson()),
+            deleted: this.deleted,
         };
     }
 }

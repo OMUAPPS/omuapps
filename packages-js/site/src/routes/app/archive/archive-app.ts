@@ -11,7 +11,7 @@ export class ArchiveApp {
 
     constructor(private readonly omu: Omu) {
         this.archiveTable = omu.tables.get(ARCHIVE_TABLE);
-        this.config = makeRegistryWritable(omu.registry.get(CONFIG_REGISTRY));
+        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
     }
 
     public openOutputDir() {

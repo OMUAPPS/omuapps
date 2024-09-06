@@ -1,6 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
+    import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -10,6 +11,7 @@
     import hint from './img/hint.png';
 
     const omu = new Omu(APP);
+    const obs = OBSPlugin.create(omu);
     setClient(omu);
     const friesApp = new FriesApp(omu);
     const { testSignal, config, state } = friesApp;
@@ -19,6 +21,10 @@
     });
 
     if (BROWSER) {
+        omu.permissions.require(
+            permissions.OBS_SOURCE_READ_PERMISSION_ID,
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+        );
         omu.start();
     }
 
@@ -39,7 +45,7 @@
     <main>
         <p>このアプリは一つのみ配置することができます。</p>
         <section class="asset">
-            <AssetButton />
+            <AssetButton {omu} {obs} />
         </section>
         <section>
             <div>

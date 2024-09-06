@@ -8,12 +8,6 @@
             "isBackground": false,
         },
         {
-            "label": "pyright",
-            "type": "shell",
-            "command": "rye run pyright --watch",
-            "isBackground": true,
-        },
-        {
             "label": "dev",
             "type": "shell",
             "isBackground": true,

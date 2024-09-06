@@ -1,16 +1,15 @@
-import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
+import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 import icon from './icon.png';
 
-export const IDENTIFIER = new Identifier('com.omuapps', 'playqueue');
-export const APP = new App(IDENTIFIER, {
-    url: `${ORIGIN}/app/playqueue`,
+export const APP_ID = new Identifier(NAMESPACE, 'playqueue');
+export const APP = new App(APP_ID, {
+    url: getUrl('/app/playqueue'),
     metadata: {
         locale: 'en',
         name: 'Play Queue',
-        icon: icon,
+        icon: getUrl(icon),
         tags: ['tool', 'underdevelopment'] as TagKey[],
     },
 });

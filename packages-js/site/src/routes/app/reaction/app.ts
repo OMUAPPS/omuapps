@@ -1,14 +1,13 @@
-import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
+import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 import icon from './icon.png';
 import thumbnail from './thumbnail.png';
 
-export const IDENTIFIER = new Identifier('com.omuapps', 'reaction');
+export const APP_ID = new Identifier(NAMESPACE, 'reaction');
 
-export const APP = new App(IDENTIFIER, {
-    url: `${ORIGIN}/app/reaction`,
+export const APP = new App(APP_ID, {
+    url: getUrl('/app/reaction'),
     metadata: {
         locale: 'en',
         name: {
@@ -19,8 +18,8 @@ export const APP = new App(IDENTIFIER, {
             ja: 'Youtubeのチャットに送られたリアクションを配信画面にも乗せることができます',
             en: 'Display reactions sent to Youtube chat on your stream',
         },
-        icon: icon,
-        image: thumbnail,
+        icon: getUrl(icon),
+        image: getUrl(thumbnail),
         tags: ['youtube', 'asset'] as TagKey[],
     },
 });

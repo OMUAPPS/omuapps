@@ -1,11 +1,10 @@
-import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
+import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 
-export const APP_ID = Identifier.fromKey('com.omuapps:obs-sync');
+export const APP_ID = new Identifier(NAMESPACE, 'obs-sync');
 export const APP = new App(APP_ID, {
-    url: `${ORIGIN}/app/obs-sync`,
+    url: getUrl('/app/obs-sync'),
     metadata: {
         locale: 'en',
         name: {

@@ -1,6 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
+    import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import {
         AppHeader,
@@ -17,11 +18,16 @@
     import { TimerApp } from './timer-app.js';
 
     const omu = new Omu(APP);
+    const obs = OBSPlugin.create(omu);
     const timer = new TimerApp(omu);
     const { data, config } = timer;
     setClient(omu);
 
     if (BROWSER) {
+        omu.permissions.require(
+            permissions.OBS_SOURCE_READ_PERMISSION_ID,
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>
@@ -90,9 +96,7 @@
         <FlexColWrapper widthFull>
             <h3>OBSに貼り付ける</h3>
             <section>
-                {#if BROWSER}
-                    <AssetButton />
-                {/if}
+                <AssetButton {omu} {obs} />
             </section>
             <h3>見た目</h3>
             <section>

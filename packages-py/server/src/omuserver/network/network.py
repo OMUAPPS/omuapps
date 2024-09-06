@@ -53,23 +53,25 @@ class Network:
     ) -> None:
         self._app.router.add_get(path, handle)
 
-    async def _validate_origin(self, request: web.Request, session: Session) -> None:
-        origin = request.headers.get("origin")
+    async def _verify_origin(self, request: web.Request, session: Session) -> None:
+        origin = request.headers.get("Origin")
         if origin is None:
             return
-        origin_namespace = Identifier.namespace_from_url(origin)
         namespace = session.app.id.namespace
+        origin_namespace = Identifier.namespace_from_url(origin)
         if origin_namespace == namespace:
             return
+        if origin_namespace in self._server.config.extra_trusted_origins:
+            return
+        trusted_origins = await self._server.server.trusted_origins.get()
+        if origin_namespace in trusted_origins:
+            return
 
-        if self._server.config.strict_origin:
-            await session.disconnect(
-                DisconnectType.INVALID_ORIGIN,
-                f"Invalid origin: {origin_namespace} != {namespace}",
-            )
-            raise ValueError(f"Invalid origin: {origin_namespace} != {namespace}")
-        else:
-            logger.warning(f"Invalid origin: {origin_namespace} != {namespace}")
+        await session.disconnect(
+            DisconnectType.INVALID_ORIGIN,
+            f"Invalid origin: {origin_namespace} != {namespace}",
+        )
+        raise ValueError(f"Invalid origin: {origin_namespace} != {namespace}")
 
     def add_websocket_route(self, path: str) -> None:
         async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
@@ -81,8 +83,8 @@ class Network:
                 self._packet_dispatcher.packet_mapper,
                 connection,
             )
-            if session.kind != SessionType.DASHBOARD:
-                await self._validate_origin(request, session)
+            if session.kind == SessionType.APP:
+                await self._verify_origin(request, session)
             await self.process_session(session)
             return ws
 

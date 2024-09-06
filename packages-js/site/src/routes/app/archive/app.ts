@@ -1,12 +1,11 @@
-import { App } from '@omujs/omu';
-import { Identifier } from '@omujs/omu/identifier.js';
+import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { ORIGIN } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 import icon from './icon.png';
 
-export const IDENTIFIER = Identifier.fromKey('com.omuapps:archive');
-export const APP = new App(IDENTIFIER, {
-    url: `${ORIGIN}/app/archive`,
+export const APP_ID = new Identifier(NAMESPACE, 'archive');
+export const APP = new App(APP_ID, {
+    url: getUrl('/app/archive'),
     metadata: {
         locale: 'en',
         name: {
@@ -17,7 +16,7 @@ export const APP = new App(IDENTIFIER, {
             ja: '配信を自動的に保存することができます',
             en: 'Automatically save your streams',
         },
-        icon: icon,
+        icon: getUrl(icon),
         tags: ['tool'] as TagKey[],
     },
 });

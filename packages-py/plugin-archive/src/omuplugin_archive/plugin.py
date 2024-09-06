@@ -18,7 +18,7 @@ omu = Omu(APP)
 chat = Chat(omu)
 
 archive_table = omu.tables.get(ARCHIVE_TABLE_TYPE)
-config_registry = omu.registry.get(CONFIG_REGISTRY_TYPE)
+config_registry = omu.registries.get(CONFIG_REGISTRY_TYPE)
 
 
 @config_registry.listen
@@ -26,7 +26,7 @@ async def on_config_update(config: ArchiveConfig):
     path = Path(config["output_dir"])
     path.mkdir(parents=True, exist_ok=True)
     if config["active"]:
-        rooms = await chat.rooms.fetch_items(before=10)
+        rooms = await chat.rooms.fetch_items(limit=10, backward=True)
         for room in rooms.values():
             await process_room(room)
 
@@ -135,7 +135,7 @@ async def refresh_ytdlp_info():
 
 
 async def process_pending_archives():
-    archive_records = await archive_table.fetch_items(after=10)
+    archive_records = await archive_table.fetch_items(limit=10, backward=True)
     for archive in archive_records.values():
         if archive.status != "pending":
             continue

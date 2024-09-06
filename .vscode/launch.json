@@ -17,7 +17,9 @@
             "args": [
                 "--debug",
                 "--token-file",
-                "${workspaceFolder}/appdata/token.txt"
+                "${workspaceFolder}/appdata/token.txt",
+                "--extra-trusted-origin",
+                "localhost:5173"
             ],
             "cwd": "${workspaceFolder}/appdata",
             "justMyCode": true,
@@ -29,10 +31,6 @@
             "program": "${file}",
             "console": "integratedTerminal"
         },
-        {
-            "name": "pyright",
-            "preLaunchTask": "pyright"
-        }
     ],
     "compounds": [
         {

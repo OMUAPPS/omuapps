@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
+from omu import version
 from omu.address import Address
 from omu.app import App
 from omu.event_emitter import Unlisten
@@ -69,6 +70,7 @@ class Omu(Client):
         extension_registry: ExtensionRegistry | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
     ):
+        self._version = version.VERSION
         self._loop = self.ensure_loop(loop)
         self._ready = False
         self._running = False
@@ -86,8 +88,8 @@ class Omu(Client):
         self._endpoints = self.extensions.register(ENDPOINT_EXTENSION_TYPE)
         self._plugins = self.extensions.register(PLUGIN_EXTENSION_TYPE)
         self._tables = self.extensions.register(TABLE_EXTENSION_TYPE)
-        self._registry = self.extensions.register(REGISTRY_EXTENSION_TYPE)
-        self._signal = self.extensions.register(SIGNAL_EXTENSION_TYPE)
+        self._registries = self.extensions.register(REGISTRY_EXTENSION_TYPE)
+        self._signals = self.extensions.register(SIGNAL_EXTENSION_TYPE)
         self._permissions = self.extensions.register(PERMISSION_EXTENSION_TYPE)
         self._server = self.extensions.register(SERVER_EXTENSION_TYPE)
         self._assets = self.extensions.register(ASSET_EXTENSION_TYPE)
@@ -105,6 +107,10 @@ class Omu(Client):
                 loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
         return loop
+
+    @property
+    def version(self) -> str:
+        return self._version
 
     @property
     def ready(self) -> bool:
@@ -139,12 +145,12 @@ class Omu(Client):
         return self._tables
 
     @property
-    def registry(self) -> RegistryExtension:
-        return self._registry
+    def registries(self) -> RegistryExtension:
+        return self._registries
 
     @property
-    def signal(self) -> SignalExtension:
-        return self._signal
+    def signals(self) -> SignalExtension:
+        return self._signals
 
     @property
     def assets(self) -> AssetExtension:

@@ -4,25 +4,27 @@
     import { Chat } from '@omujs/chat';
     import { Reaction } from '@omujs/chat/models/reaction.js';
     import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
+    import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
     import { Identifier } from '@omujs/omu/identifier.js';
     import { AppHeader, ButtonMini, FileDrop, Tooltip, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP, IDENTIFIER } from './app.js';
+    import { APP, APP_ID } from './app.js';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
     import Slider from './components/Slider.svelte';
     import { ReactionApp } from './reaction-app.js';
 
     const omu = new Omu(APP);
-    const chat = new Chat(omu);
+    const obs = OBSPlugin.create(omu);
+    const chat = Chat.create(omu);
     const reactionApp = new ReactionApp(omu, chat);
     const { config } = reactionApp;
     setClient(omu);
 
     function test() {
         const reaction = new Reaction({
-            roomId: IDENTIFIER.join('test'),
+            roomId: APP_ID.join('test'),
             reactions: {
                 '❤': 1,
                 '😄': 1,
@@ -47,7 +49,12 @@
     }
 
     if (BROWSER) {
-        omu.permissions.require(ASSET_UPLOAD_PERMISSION_ID, CHAT_REACTION_PERMISSION_ID);
+        omu.permissions.require(
+            permissions.OBS_SOURCE_READ_PERMISSION_ID,
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            ASSET_UPLOAD_PERMISSION_ID,
+            CHAT_REACTION_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>
@@ -66,7 +73,7 @@
                 <i class="ti ti-arrow-bar-to-down" />
             </h3>
             <section>
-                <AssetButton />
+                <AssetButton {omu} {obs} />
             </section>
             <h3>
                 試してみる
@@ -222,7 +229,6 @@
     }
 
     button {
-        margin-top: 0.5rem;
         padding: 0.5rem 1rem;
         background: var(--color-1);
         color: var(--color-bg-1);

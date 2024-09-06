@@ -74,6 +74,7 @@ def update_version(version: str | None = None):
 
     version_ts_paths = {
         Path("packages-js/plugin-obs/src/version.ts"),
+        Path("packages-js/omu/src/version.ts"),
     }
 
     for version_path in version_ts_paths:
