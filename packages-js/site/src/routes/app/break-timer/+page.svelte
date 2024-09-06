@@ -9,7 +9,7 @@
     import { BreakTimerApp } from './break-timer-app.js';
 
     const omu = new Omu(APP);
-    const obs = new OBSPlugin(omu);
+    const obs = OBSPlugin.create(omu);
     omu.permissions.require(
         permissions.OBS_SCENE_SET_CURRENT_PERMISSION_ID,
         permissions.OBS_SCENE_READ_PERMISSION_ID,
@@ -32,6 +32,6 @@
         <AppHeader app={APP} />
     </header>
     {#await waitReady then}
-        <App {breakTimer} {obs} />
+        <App {omu} {breakTimer} {obs} />
     {/await}
 </AppPage>

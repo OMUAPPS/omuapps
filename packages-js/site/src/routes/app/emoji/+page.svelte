@@ -12,7 +12,7 @@
     import { Emoji, EmojiApp, emojiApp } from './emoji.js';
 
     const omu = new Omu(APP);
-    const chat = new Chat(omu);
+    const chat = Chat.create(omu);
     $emojiApp = new EmojiApp(omu, chat);
     const { emojis, config, selectedEmoji } = $emojiApp;
     setClient(omu);

@@ -135,7 +135,6 @@ def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
         source_json["type"],
         source_json["name"],
         map_optional(dict(source_json.get("data")), OBSData.from_json),
-        None,
     )
     scene_item = scene.add(obs_source)
     if "blend_properties" in source_json:

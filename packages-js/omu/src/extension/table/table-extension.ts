@@ -448,7 +448,7 @@ class TableImpl<T> implements Table<T> {
             id: this.id,
             keys: [key],
         });
-        return res[key];
+        return res[key] ?? false;
     }
 
     public async hasMany<T extends Record<string, unknown>>(...keys: (keyof T)[]): Promise<{ [key in keyof T]: boolean }> {

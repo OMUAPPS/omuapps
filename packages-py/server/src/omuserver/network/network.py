@@ -56,7 +56,7 @@ class Network:
     async def _verify_origin(self, request: web.Request, session: Session) -> None:
         origin = request.headers.get("Origin")
         if origin is None:
-            raise ValueError("Origin header not found")
+            return
         namespace = session.app.id.namespace
         origin_namespace = Identifier.namespace_from_url(origin)
         if origin_namespace == namespace:

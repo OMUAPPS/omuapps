@@ -19,7 +19,7 @@
         version: '0.1.0',
     });
     const omu = new Omu(ASSET_APP);
-    const chat = new Chat(omu);
+    const chat = Chat.create(omu);
     const friesApp = new FriesApp(omu);
     const { config, state } = friesApp;
     setClient(omu);

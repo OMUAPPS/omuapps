@@ -93,7 +93,7 @@ export class Chat {
     public readonly reactionSignal: Signal<Reaction>;
     private readonly eventRegistry: EventRegistry;
 
-    constructor(private readonly client: Client) {
+    private constructor(private readonly client: Client) {
         client.server.require(IDENTIFIER);
         client.permissions.require(CHAT_PERMISSION_ID);
         this.eventRegistry = new EventRegistry(this);
@@ -106,6 +106,13 @@ export class Chat {
         this.reactionSignal = client.signals.get(REACTION_SIGNAL);
         this.messages.setCacheSize(1000);
         this.authors.setCacheSize(500);
+    }
+
+    public static create(client: Client): Chat {
+        if (client.ready) {
+            throw new Error('OMU instance is already started');
+        }
+        return new Chat(client);
     }
 
     public async createChannelTree(url: string): Promise<Channel[]> {

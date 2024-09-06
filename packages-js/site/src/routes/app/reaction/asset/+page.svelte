@@ -16,7 +16,7 @@
         version: '0.1.0',
     });
     const omu = new Omu(app);
-    const chat = new Chat(omu);
+    const chat = Chat.create(omu);
     setClient(omu);
     let reactionApp = new ReactionApp(omu, chat);
 

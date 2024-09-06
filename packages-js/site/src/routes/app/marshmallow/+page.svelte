@@ -1,6 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import { version } from '$lib/version.json';
+    import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -9,6 +10,7 @@
     import { MarshmallowApp, PLUGIN_ID } from './marshmallow-app.js';
 
     const omu = new Omu(APP);
+    const obs = OBSPlugin.create(omu);
     const marshmallow = new MarshmallowApp(omu);
     setClient(omu);
 
@@ -20,6 +22,10 @@
     const waitReady = new Promise<void>((resolve) => omu.onReady(resolve));
 
     if (BROWSER) {
+        omu.permissions.require(
+            permissions.OBS_SOURCE_READ_PERMISSION_ID,
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>
@@ -29,6 +35,6 @@
         <AppHeader app={APP} />
     </header>
     {#await waitReady then}
-        <App {marshmallow} />
+        <App {omu} {marshmallow} {obs} />
     {/await}
 </AppPage>

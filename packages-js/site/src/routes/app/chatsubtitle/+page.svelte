@@ -14,7 +14,7 @@
     export const omu = new Omu(APP);
     const chatSubtitleApp = new ChatSubtitleApp(omu);
     const { config } = chatSubtitleApp;
-    const chat = new Chat(omu);
+    const chat = Chat.create(omu);
     setClient(omu);
 
     function isChatSubCreatable(room: Room): boolean {

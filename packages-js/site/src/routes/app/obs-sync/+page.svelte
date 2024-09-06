@@ -1,6 +1,6 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { OBSPlugin } from '@omujs/obs';
+    import { OBSPlugin, permissions } from '@omujs/obs';
     import {
         OBS_SCENE_READ_PERMISSION_ID,
         OBS_SCENE_SET_CURRENT_PERMISSION_ID,
@@ -27,6 +27,10 @@
     const waitReady = new Promise<void>((resolve) => omu.onReady(resolve));
 
     if (BROWSER) {
+        omu.permissions.require(
+            permissions.OBS_SOURCE_READ_PERMISSION_ID,
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>
@@ -36,6 +40,6 @@
         <AppHeader app={APP} />
     </header>
     {#await waitReady then}
-        <App {obs} />
+        <App {omu} {obs} />
     {/await}
 </AppPage>

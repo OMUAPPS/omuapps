@@ -16,7 +16,7 @@
             version: '0.1.0',
         }),
     );
-    const obs = new OBSPlugin(omu);
+    const obs = OBSPlugin.create(omu);
     const breakTimer = new BreakTimerApp(omu, obs);
     const { config, state } = breakTimer;
     setClient(omu);

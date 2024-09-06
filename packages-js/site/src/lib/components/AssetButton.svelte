@@ -1,9 +1,12 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import type { OBSPlugin } from '@omujs/obs';
+    import type { Omu } from '@omujs/omu';
     import { DragLink, Tooltip } from '@omujs/ui';
 
+    export let omu: Omu | null = null;
     export let obs: OBSPlugin | null = null;
+
 
     async function getAvailableName(name: string) {
         if (!obs) {
@@ -25,9 +28,9 @@
         if (!obs) {
             throw new Error('OBSPlugin is not initialized');
         }
-        const name = await getAvailableName('asset');
+        const name = await getAvailableName(omu?.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset');
         const url = generateUrl().toString();
-        const res = await obs.sourceCreate({
+        await obs.sourceCreate({
             type: 'browser_source',
             name: name,
             data: {
@@ -43,10 +46,11 @@
     }
 
     let obsConnected = false;
-
-    obs?.isConnected().then((connected) => {
-        obsConnected = connected;
-    });
+    if (obs) {
+        obs.on('connected', () => (obsConnected = true));
+        obs.on('disconnected', () => (obsConnected = false));
+    }
+    $: console.log(obsConnected);
 
     function generateUrl() {
         const url = new URL($page.url);
