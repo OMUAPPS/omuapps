@@ -43,4 +43,7 @@
         "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
     },
     "files.insertFinalNewline": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
 }
