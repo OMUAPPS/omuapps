@@ -198,11 +198,10 @@ jobs:
                   pnpm run build
                   pnpm --filter dash run build-pre
 
-            - name: Cache rust target
-              uses: actions/cache@v4
+            - name: Rust cache
+              uses: swatinem/rust-cache@v2
               with:
-                  key: rust-target-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-                  path: ./packages-js/dash/src-tauri/target
+                  workspaces: './packages-js/dash/src-tauri -> target'
 
             - uses: tauri-apps/tauri-action@v0.5.9
               env:
