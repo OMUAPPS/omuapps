@@ -7,6 +7,7 @@ import Path from 'path';
 const BUILD_OPTION = { stderr: process.stderr, stdout: process.stdout }
 const PACKAGES_DIR = Path.join(process.cwd(), 'packages-js');
 const HASH_PATH = Path.join(process.cwd(), 'scripts', '_hashes.json');
+const NO_CACHE = process.argv.includes('--no-cache');
 
 const packages = new Map([...readdirSync(PACKAGES_DIR)].map((name) => {
     const path = Path.join(PACKAGES_DIR, name);
@@ -48,7 +49,7 @@ async function buildPackage(target, options = { cache: true }) {
     const hash = await computeDirHash(Path.join(pkg.path, 'src'));
     const lastHash = hashes[pkg.pkg.name];
     const builtExists = await stat(Path.join(pkg.path, 'dist')).catch(() => null);
-    if (options.cache && lastHash === hash && builtExists) {
+    if (!NO_CACHE && options.cache && lastHash === hash && builtExists) {
         return;
     }
     await execa('pnpm', ['--filter', pkg.pkg.name, 'build'], BUILD_OPTION);
