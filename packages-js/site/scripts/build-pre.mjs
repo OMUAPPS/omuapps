@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 async function generateConsts() {
-    const url = process.env.OMU_NAMESPACE || process.env.CF_PAGES_URL;
+    const url = process.env.OMU_ORIGIN || process.env.CF_PAGES_URL;
     const constsFile = path.join('src', 'lib', 'consts.ts');
     await fs.writeFile(constsFile, `export const CF_PAGES_URL = '${url}';`);
 }
