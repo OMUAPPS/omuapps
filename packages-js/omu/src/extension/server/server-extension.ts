@@ -110,7 +110,7 @@ export class ServerExtension implements Extension {
         return await this.client.endpoints.call(SHUTDOWN_ENDPOINT_TYPE, restart ?? false);
     }
 
-    public observeSessions(appId: Identifier, {
+    public observeSession(appId: Identifier, {
         onConnect,
         onDisconnect
     }: {

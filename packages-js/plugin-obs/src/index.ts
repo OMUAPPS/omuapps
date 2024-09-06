@@ -37,7 +37,7 @@ export class OBSPlugin {
             omuplugin_obs: `==${VERSION}`,
         });
         omu.permissions.require(SERVER_SESSIONS_READ_PERMISSION_ID);
-        omu.server.observeSessions(PLUGIN_ID, {
+        omu.server.observeSession(PLUGIN_ID, {
             onConnect: () => this.setConnected(true),
             onDisconnect: () => this.setConnected(false),
         });
