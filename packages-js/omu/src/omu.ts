@@ -75,8 +75,8 @@ export class Omu implements Client {
         this.extensions = new ExtensionRegistry(this);
 
         this.endpoints = this.extensions.register(ENDPOINT_EXTENSION_TYPE);
-        this.permissions = this.extensions.register(PERMISSION_EXTENSION_TYPE);
         this.plugins = this.extensions.register(PLUGIN_EXTENSION_TYPE);
+        this.permissions = this.extensions.register(PERMISSION_EXTENSION_TYPE);
         this.tables = this.extensions.register(TABLE_EXTENSION_TYPE);
         this.dashboard = this.extensions.register(DASHBOARD_EXTENSION_TYPE);
         this.registries = this.extensions.register(REGISTRY_EXTENSION_TYPE);
