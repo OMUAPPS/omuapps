@@ -95,7 +95,7 @@ jobs:
               if: matrix.platform == 'windows-latest'
               with:
                   name: omuapps-windows
-                  path: ./packages-js/dash/src-tauri/target/release/bundle/msi/omuapps_**.msi.*
+                  path: ./packages-js/dash/src-tauri/target/release/bundle/nsis/omuapps_**-setup.exe
 
             - uses: actions/upload-artifact@v3
               if: matrix.platform == 'macos-latest'
