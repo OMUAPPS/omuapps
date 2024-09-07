@@ -5,8 +5,8 @@ from enum import IntEnum
 from typing import TYPE_CHECKING
 
 import obspython  # type: ignore
-from omuobs.data import OBSData, OBSDataArray  # type: ignore
 
+from .data import OBSData, OBSDataArray
 from .reference import Reference
 
 if TYPE_CHECKING:

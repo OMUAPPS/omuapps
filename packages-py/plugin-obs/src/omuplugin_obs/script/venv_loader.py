@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 
 
-def get_python_path():
+def get_python_path() -> Path:
     config_path = Path(__file__).parent / "config.json"
-    return json.loads(config_path.read_text(encoding="utf-8"))["python_path"]
+    return Path(json.loads(config_path.read_text(encoding="utf-8"))["python_path"])
 
 
 def find_venv() -> Path | None:

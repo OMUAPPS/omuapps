@@ -13,8 +13,6 @@ import subprocess
 from pathlib import Path
 from threading import Thread
 
-from ..obs.property import OBSProperties, OBSProperty
-
 
 class g:
     process: subprocess.Popen | None = None
@@ -22,7 +20,7 @@ class g:
 
 def get_launch_command():
     config_path = Path(__file__).parent / "config.json"
-    return json.loads(config_path.read_text(encoding="utf-8"))
+    return json.loads(config_path.read_text(encoding="utf-8"))["launch"]
 
 
 def launch_server():
@@ -43,15 +41,6 @@ def terminate_server():
         g.process.kill()
         g.process = None
         print("Killed")
-
-
-def test(props: OBSProperties, prop: OBSProperty): ...
-
-
-def script_properties():  # ui
-    props = OBSProperties.create()
-    props.add_button("button", "Test", test)
-    return props.acquire()
 
 
 def start_plugin():

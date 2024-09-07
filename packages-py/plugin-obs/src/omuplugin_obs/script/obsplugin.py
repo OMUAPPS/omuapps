@@ -1,12 +1,10 @@
 import asyncio
 from pathlib import Path
 
-from loguru import logger
 from omu.app import App
 from omu.helper import map_optional
 from omu.omu import Omu
 from omu.token import JsonTokenProvider
-
 from omuplugin_obs.const import PLUGIN_ID
 from omuplugin_obs.types import (
     EVENT_SIGNAL,
@@ -353,7 +351,7 @@ def on_event(event: OBSFrontendEvent):
 
 @omu.on_ready
 async def on_ready():
-    logger.info("OBS Plugin is ready")
+    print("OBS Plugin is ready")
 
 
 def start():
