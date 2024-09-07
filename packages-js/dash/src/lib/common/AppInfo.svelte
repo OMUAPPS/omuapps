@@ -28,7 +28,9 @@
     </div>
     <div class="content">
         <p>
-            <Localized text={app.metadata?.name}/>
+            <span class="name">
+                <Localized text={app.metadata?.name}/>
+            </span>
             <small class="id">
                 {namespace}
                 <i class="ti ti-slash" />
@@ -53,8 +55,12 @@
         align-items: center;
         gap: 0.5rem;
 
+        .name {
+            white-space: nowrap;
+        }
+
         .id {
-            display: flex;
+            display: flex wrap;
             align-items: baseline;
             font-size: 0.7rem;
             color: var(--color-text);
