@@ -1,6 +1,6 @@
 [project]
 name = "omuplugin_emoji"
-version = "0.6.26"
+version = "0.6.27"
 description = "メッセージに絵文字を追加するためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
