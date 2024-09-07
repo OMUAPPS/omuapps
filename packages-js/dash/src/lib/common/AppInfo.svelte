@@ -9,7 +9,7 @@
     $: path=app.id.path.reverse().join('.');
     
     const metadata = app.metadata;
-    const icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : 'No icon';
+    const icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
 </script>
 
 
@@ -18,7 +18,9 @@
         <b>{namespace}</b> <small>によって提供されるアプリケーション</small>
     </Tooltip>
     <div class="icon">
-        {#if icon.startsWith('ti-')}
+        {#if !icon}
+            <i class="ti ti-package" />
+        {:else if icon.startsWith('ti-')}
             <i class="ti {icon}" />
         {:else}
             <img src={icon} alt="" />
