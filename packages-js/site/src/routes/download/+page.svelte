@@ -100,6 +100,7 @@
                 {/if}
                 <div class="version-info">
                     <p class="version">
+                        バージョン
                         {data.manifest.version}
                     </p>
                     <p>
@@ -170,12 +171,13 @@
         display: inline-flex;
         gap: 0.2rem;
         align-items: center;
-        padding: 0.6rem;
+        padding: 0.6rem 1rem;
         margin-right: 1rem;
         margin-bottom: 1rem;
         font-size: 1rem;
         color: var(--color-bg-2);
         background: var(--color-1);
+        border-radius: 2px;
 
         &:hover {
             color: var(--color-1);
@@ -189,7 +191,7 @@
         display: inline-flex;
         gap: 0.2rem;
         align-items: center;
-        padding: 0.6rem;
+        padding: 0.6rem 1rem;
         margin-right: 1rem;
         margin-bottom: 1rem;
         font-size: 1rem;
@@ -198,6 +200,7 @@
         outline: 1px solid var(--color-1);
         outline-offset: -1px;
         border: none;
+        border-radius: 2px;
 
         &:hover {
             color: var(--color-1);
