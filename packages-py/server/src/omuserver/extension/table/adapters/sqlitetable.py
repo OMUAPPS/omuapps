@@ -126,12 +126,12 @@ class SqliteTableAdapter(TableAdapter):
 
         if backward:
             _cursor = self._conn.execute(
-                "SELECT key, value FROM data WHERE id < ? ORDER BY id DESC LIMIT ?",
+                "SELECT key, value FROM data WHERE id <= ? ORDER BY id DESC LIMIT ?",
                 (cursor_id, limit),
             )
         else:
             _cursor = self._conn.execute(
-                "SELECT key, value FROM data WHERE id > ? ORDER BY id LIMIT ?",
+                "SELECT key, value FROM data WHERE id >= ? ORDER BY id LIMIT ?",
                 (cursor_id, limit),
             )
         return {row[0]: (row[1]) for row in _cursor.fetchall()}
