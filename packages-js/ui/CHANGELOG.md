@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.26 (2024-09-07)
+
+
+### Bug Fixes
+
+* **plugin-obs:** 正しいpythonパスを指定するように ([c2574ae](https://github.com/OMUAPPS/omuapps/commit/c2574ae82cb89083525dde1e8f67356429b63fc1))
+
+
+
+
+
 ## 0.6.25 (2024-09-07)
 
 
