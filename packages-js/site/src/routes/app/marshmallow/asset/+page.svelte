@@ -4,16 +4,26 @@
     import { App, Omu } from '@omujs/omu';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP_ID } from '../app.js';
+    import { APP, APP_ID } from '../app.js';
     import { MarshmallowApp } from '../marshmallow-app.js';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();
-    const omu = new Omu(
-        new App(APP_ID.join('asset', id), {
-            version: '0.1.0',
-        }),
-    );
+    const ASSET_APP = new App(APP_ID.join('asset', id), {
+        metadata: {
+            ...APP.metadata,
+            locale: 'en',
+            name: {
+                ja: 'マシュマロ読み（アセット側）',
+                en: 'Marshmallow Reader (Asset)',
+            },
+            description: {
+                ja: '面倒なことなくマシュマロを読むことができます',
+                en: 'Read marshmallows without any hassle',
+            },
+        },
+    });
+    const omu = new Omu(ASSET_APP);
     const marshmallow = new MarshmallowApp(omu);
     const { config, data } = marshmallow;
     setClient(omu);
