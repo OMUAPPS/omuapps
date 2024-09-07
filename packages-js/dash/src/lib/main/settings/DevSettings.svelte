@@ -39,13 +39,25 @@
         <button on:click={() => {
             $trustedOrigins = [...$trustedOrigins, newOrigin];
             newOrigin = '';
-        }}>
+        }} class="add">
             <i class="ti ti-plus" />
         </button>
     </div>
 </section>
 
+<h3>Settings</h3>
+<section>
+    <button on:click={() => {
+        window.localStorage.clear();
+    }}>
+        Clear Settings
+    </button>    
+</section>
 <style lang="scss">
+    h3 {
+        margin-bottom: 0.5rem;
+    }
+
     section {
         display: flex;
         flex-direction: column;
@@ -63,7 +75,7 @@
         border: 1px solid var(--color-outline);
     }
 
-    button {
+    .add {
         padding: 0.5rem;
         border: 1px solid var(--color-outline);
         cursor: pointer;

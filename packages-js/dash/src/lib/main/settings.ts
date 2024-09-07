@@ -11,12 +11,11 @@ function getSystemLanguage(): keyof typeof LOCALES {
     if (typeof window === 'undefined') {
         return 'ja-JP';
     }
-    if (window.navigator.language in LOCALES) {
-        return window.navigator.language as keyof typeof LOCALES;
-    }
     for (const lang of window.navigator.languages) {
-        if (lang in LOCALES) {
-            return lang as keyof typeof LOCALES;
+        for (const [key, { alias }] of Object.entries(LOCALES)) {
+            if (alias.includes(lang)) {
+                return key as keyof typeof LOCALES;
+            }
         }
     }
     return 'ja-JP';
@@ -43,6 +42,7 @@ export function createSetting<T>(key: string, defaultValue: T) {
 }
 
 const systemLanguage = getSystemLanguage();
+console.log('systemLanguage', systemLanguage);
 export const language = createSetting<keyof typeof LOCALES>('language', systemLanguage);
 export const devMode = createSetting('devMode', false);
 export const currentPage = createSetting('currentPage', 'explore');
