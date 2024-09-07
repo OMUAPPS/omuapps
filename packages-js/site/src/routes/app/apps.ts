@@ -41,7 +41,7 @@ if (DEV) {
     )
 }
 
-const personalApps: Record<string, App[]> = {
+export const personalApps: Record<string, App[]> = {
     aoikuru: [fries],
 };
 
