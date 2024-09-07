@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.25 (2024-09-07)
+
+
+### Bug Fixes
+
+* **plugin-obs:** プラグインが起動するように ([d012c2d](https://github.com/OMUAPPS/omuapps/commit/d012c2dfd0c8def2a6107e50bc4878f4eacf871a))
+
+
+
+
+
 ## 0.6.24 (2024-09-07)
 
 
