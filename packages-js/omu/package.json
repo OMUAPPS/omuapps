@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/omu",
-    "version": "0.6.26",
+    "version": "0.6.27",
     "exports": {
         ".": {
             "import": "./dist/esm/index.js",
