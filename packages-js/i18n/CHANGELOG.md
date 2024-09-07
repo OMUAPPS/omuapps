@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.28 (2024-09-07)
+
+
+### Bug Fixes
+
+* **server:** テーブルから取得した時最初と最後が取得されるように ([a397dd9](https://github.com/OMUAPPS/omuapps/commit/a397dd9d2e432628e56d94fcace57560134d14ed))
+
+
+
+
+
 ## 0.6.27 (2024-09-07)
 
 **Note:** Version bump only for package @omujs/i18n
