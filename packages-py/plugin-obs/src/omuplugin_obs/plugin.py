@@ -130,7 +130,7 @@ def get_python_directory():
     if is_venv() and rye_dir.exists():
         path = rye_dir
     else:
-        path = Path(sys.executable).parent.parent
+        path = Path(sys.executable).parent
     return str(path).replace("\\\\", "\\").replace("\\", "/")
 
 
