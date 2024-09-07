@@ -1,5 +1,5 @@
 import { App } from '@omujs/omu';
-import { BROWSER } from 'esm-env';
+import { BROWSER, DEV } from 'esm-env';
 import { omu } from '../client.js';
 import { APP as fries } from './aoikuru-fries/app.js';
 import { APP as archive } from './archive/app.js';
@@ -19,22 +19,27 @@ import { APP as timer } from './timer/app.js';
 import { APP as translator } from './translator/app.js';
 
 export const apps = [
-    archive,
-    caption,
-    emoji,
-    lipsynctest,
-    playqueue,
     reaction,
     replay,
-    tester,
-    translator,
-    chatSubtitle,
-    timer,
     marshmallow,
+    timer,
     roulette,
-    obssync,
-    breaktimer,
 ] satisfies App[];
+
+if (DEV) {
+    apps.unshift(
+        caption,
+        emoji,
+        lipsynctest,
+        playqueue,
+        tester,
+        translator,
+        chatSubtitle,
+        obssync,
+        breaktimer,
+        archive,
+    )
+}
 
 const personalApps: Record<string, App[]> = {
     aoikuru: [fries],
