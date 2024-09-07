@@ -3,7 +3,7 @@ from collections.abc import Callable
 # メモリ管理出来るように作ってみたけどクラッシュするので安定した実装になるまで無効化
 # 勝手に安定することを星に願おう
 # https://github.com/OMUAPPS/omuapps/issues/64
-ENABLE_RELEASE = False
+ENABLE_AUTO_RELEASE = False
 
 
 class Reference[T]:
@@ -31,7 +31,7 @@ class Reference[T]:
             raise ValueError("Reference is already released")
         if self.ref_count > 0:
             return
-        if ENABLE_RELEASE:
+        if ENABLE_AUTO_RELEASE:
             self.release(self._ref)
 
     def acquire(self) -> T:

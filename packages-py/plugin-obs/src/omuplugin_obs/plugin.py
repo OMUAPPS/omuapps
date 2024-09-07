@@ -215,7 +215,15 @@ def get_launch_command():
 def install_all_scene():
     script_path = Path(__file__).parent / "script"
     config_path = script_path / "config.json"
-    config_path.write_text(json.dumps(get_launch_command()), encoding="utf-8")
+    config_path.write_text(
+        json.dumps(
+            {
+                "python_path": get_python_directory(),
+                "launch": get_launch_command(),
+            }
+        ),
+        encoding="utf-8",
+    )
     launcher_path = script_path / "omuapps_plugin.py"
 
     scenes_path = get_obs_path() / "basic" / "scenes"

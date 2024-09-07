@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 from threading import Thread
 
-from omuobs.property import OBSProperties, OBSProperty
+from ..obs.property import OBSProperties, OBSProperty
 
 
 class g:
