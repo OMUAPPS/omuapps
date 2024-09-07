@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.24 (2024-09-07)
+
+
+### Bug Fixes
+
+* **plugin-obs:** obsが起動しなくなる問題を修正 ([5bcc406](https://github.com/OMUAPPS/omuapps/commit/5bcc40619762b8b5475fdca1e0d709fa506ed76b))
+
+
+
+
+
 ## 0.6.23 (2024-09-06)
 
 **Note:** Version bump only for package @omujs/omu
