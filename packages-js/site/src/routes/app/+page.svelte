@@ -1,10 +1,8 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
-    import { FlexColWrapper, FlexRowWrapper, Localized, Textbox } from '@omujs/ui';
     import { omu } from '../client.js';
     import AppEntry from './AppEntry.svelte';
     import { apps } from './apps.js';
-    import { TAG_REGISTRY } from './category.js';
 
     let filteredApps = apps;
     let filterTags: string[] = [];
@@ -74,37 +72,19 @@
         <small> アプリを探してみる </small>
     </header>
     <main slot="content">
-        <FlexRowWrapper widthFull heightFull between gap>
-            <div class="tags">
-                <h3>
-                    <i class="ti ti-tag" />
-                    タグから探す
-                </h3>
-                <FlexColWrapper>
-                    {#each Object.entries(TAG_REGISTRY) as [key, tag] (key)}
-                        {@const selected = filterTags.includes(key)}
-                        <button on:click={() => toggleTag(key)} class="tag" class:selected>
-                            <i class={tag.icon} />
-                            <Localized text={tag.name} />
-                            <i class="hint ti ti-{selected ? 'check' : 'plus'}" />
-                        </button>
-                    {/each}
-                </FlexColWrapper>
-            </div>
-            <FlexColWrapper widthFull gap>
-                <div class="search">
-                    <Textbox placeholder="アプリを検索" bind:value={search} />
-                    {#if search}
-                        <button on:click={() => (search = '')} class="clear">
-                            <i class="ti ti-x" />
-                        </button>
-                    {/if}
-                </div>
-                {#each filteredApps as app (app.key())}
-                    <AppEntry {app} />
-                {/each}
-            </FlexColWrapper>
-        </FlexRowWrapper>
+        <div class="apps">
+            <input type="search" placeholder="アプリを検索" bind:value={search} />
+            {#each filteredApps as app (app.key())}
+                <AppEntry {app} />
+            {/each}
+        </div>
+        <div class="tags">
+            <button on:click={() => toggleTag('underdevelopment')} class="tag" class:selected={filterTags.includes('underdevelopment')}>
+                <i class="ti ti-package" />
+                開発中のアプリを表示
+                <span class="hint">{apps.filter((app) => app.metadata?.tags?.includes('underdevelopment')).length}</span>
+            </button>
+        </div>
     </main>
 </Page>
 
@@ -116,37 +96,47 @@
         color: var(--color-1);
     }
 
-    h3 {
-        margin-bottom: 1rem;
-        color: var(--color-1);
+    main {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
     }
 
     .tags {
         width: 300px;
         height: 100%;
-        margin: 30px 0;
         margin-right: 40px;
-
-        > h3 {
-            margin-bottom: 30px;
-        }
     }
 
-    .search {
+    .apps {
+        flex: 1;
         display: flex;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
 
-    .clear {
-        width: 2rem;
-        height: 2rem;
+    input[type='search'] {
+        width: 100%;
+        height: 40px;
         border: none;
-        background: transparent;
+        background: var(--color-bg-1);
         color: var(--color-1);
-        margin-left: 0.5rem;
-        cursor: pointer;
+        font-weight: 600;
+        text-align: start;
+        padding: 0.5rem 0.8rem;
+        margin-bottom: 1rem;
+        outline-color: var(--color-1);
+
+        &::placeholder {
+            color: var(--color-1);
+            font-size: 0.9rem;
+        }
+
+        &:hover,
+        &:focus {
+            outline: 1px solid;
+            outline-offset: -1px;
+        }
     }
 
     .tag {
@@ -160,17 +150,14 @@
         color: var(--color-1);
         font-weight: 600;
         text-align: start;
-        padding: 0 10px;
+        padding: 0.5rem 1rem;
         gap: 10px;
         margin-bottom: 2px;
         outline-color: var(--color-1);
 
-        > i {
-            font-size: 20px;
-        }
-
         > .hint {
-            font-size: 16px;
+            font-size: 0.8rem;
+            font-weight: 400;
             margin-left: auto;
         }
 
@@ -182,10 +169,9 @@
 
         &:hover {
             outline: 1px solid;
-            outline-offset: -3px;
+            outline-offset: -1px;
             transition: 0.0621s;
             transition-property: margin-left;
-            margin-left: 2px;
         }
 
         &:active {
