@@ -44,12 +44,11 @@
         });
     }
 
-    let obsConnected = false;
+    let obsConnected = obs?.isConnected() || false;
     if (obs) {
         obs.on('connected', () => (obsConnected = true));
         obs.on('disconnected', () => (obsConnected = false));
     }
-    $: console.log(obsConnected);
 
     function generateUrl() {
         const url = new URL($page.url);
