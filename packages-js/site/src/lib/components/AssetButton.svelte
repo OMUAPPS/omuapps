@@ -6,7 +6,7 @@
 
     export let omu: Omu | null = null;
     export let obs: OBSPlugin | null = null;
-
+    export let dimensions: { width: number; height: number } = { width: 1920, height: 1080 };
 
     async function getAvailableName(name: string) {
         if (!obs) {
@@ -35,8 +35,7 @@
             name: name,
             data: {
                 url,
-                width: 1920,
-                height: 1080,
+                ...dimensions,
             },
             blend_properties: {
                 blending_method: 'SRGB_OFF',
@@ -111,7 +110,7 @@
         align-items: center;
         justify-content: center;
         gap: 5px;
-        padding: 10px 20px;
+        padding: 0.75rem 1rem;
         background: var(--color-bg-2);
         color: var(--color-1);
         font-weight: bold;

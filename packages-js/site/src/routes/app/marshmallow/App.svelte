@@ -134,8 +134,7 @@
             {/if}
         </div>
         <div class="asset">
-            <small>OBSで使用する場合は以下のボタンから</small>
-            <AssetButton {omu} {obs} />
+            <AssetButton {omu} {obs} dimensions={{width: 700, height: 1080}} />
         </div>
     </div>
     <div class="right" bind:this={container}>
