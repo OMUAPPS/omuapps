@@ -135,7 +135,7 @@ class ServerExtension:
             self._server.loop.stop()
 
     async def on_start(self) -> None:
-        await self.apps.clear()
+        await self.sessions.clear()
 
     async def on_connected(self, session: Session) -> None:
         logger.info(f"Connected: {session.app.key()}")
