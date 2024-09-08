@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.29 (2024-09-08)
+
+
+### Bug Fixes
+
+* **site:** アセット追加ボタンがobsが正しくobsの接続を認識できるように ([bfab88e](https://github.com/OMUAPPS/omuapps/commit/bfab88e2948af89ce3aa69835a650621cb56ac30))
+
+
+
+
+
 ## 0.6.28 (2024-09-07)
 
 
