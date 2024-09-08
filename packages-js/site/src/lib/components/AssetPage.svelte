@@ -67,8 +67,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--color-text);
-            opacity: 0.5;
+            background: var(--color-bg-2);
+            opacity: 0.9;
         }
     }
 
