@@ -44,10 +44,11 @@
         });
     }
 
-    let obsConnected = obs?.isConnected() || false;
+    let obsConnected = false;
     if (obs) {
         obs.on('connected', () => (obsConnected = true));
         obs.on('disconnected', () => (obsConnected = false));
+        obs.isConnected().then((connected) => (obsConnected = connected));
     }
 
     function generateUrl() {
