@@ -20,9 +20,7 @@
 
     async function getUsers() {
         state = 'loading_users';
-        const result = await marshmallow.getUsers();
-        users = result;
-        console.log(result);
+        users = await marshmallow.getUsers();
         state = 'loaded';
         if (Object.keys(users).length === 0) {
             state = 'user_notfound';
@@ -40,22 +38,23 @@
 
     async function refreshUsers() {
         state = 'loading_users';
-        const result = await marshmallow.refreshUsers();
-        users = result;
-        console.log(result);
-        state = 'loaded';
-        if (Object.keys(users).length === 0) {
-            state = 'user_notfound';
-            return;
-        }
-        if ($config.user && users[$config.user]) {
-            user = users[$config.user];
-        } else if (Object.keys(users).length === 1) {
-            user = users[Object.keys(users)[0]];
-        } else {
-            state = 'user_select';
-        }
-        refreshPromise = null;
+        return refreshPromise = marshmallow.refreshUsers().then(async (result) => {
+            users = result;
+            state = 'loaded';
+            if (Object.keys(users).length === 0) {
+                state = 'user_notfound';
+                return;
+            }
+            if ($config.user && users[$config.user]) {
+                user = users[$config.user];
+            } else if (Object.keys(users).length === 1) {
+                user = users[Object.keys(users)[0]];
+            } else {
+                state = 'user_select';
+            }
+        }).finally(() => {
+            refreshPromise = null;
+        });
     }
 
     $: {
@@ -91,7 +90,7 @@
 
 <main>
     <div class="left">
-        <AccountSwitcher {users} bind:user />
+        <AccountSwitcher {users} bind:user {refreshUsers} />
         <div class="messages">
             {#if state === 'loading_messages'}
                 <div class="loading">

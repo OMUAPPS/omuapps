@@ -1,9 +1,12 @@
 <script lang="ts">
     import { BROWSER } from 'esm-env';
-    import { afterUpdate, onDestroy } from 'svelte';
+    import { afterUpdate, createEventDispatcher, onDestroy } from 'svelte';
 
     export let noBackground = false;
-    export let open = false;
+    export let isOpen = false;
+    export let onOpen: () => Promise<void> | void = () => {};
+
+    const eventDistacher = createEventDispatcher<{ open: void, close: void }>();
 
     let element: HTMLElement;
     let target: HTMLElement;
@@ -24,16 +27,25 @@
     let popupPos: { x: number; y: number } = { x: 0, y: 0 };
     let direction: 'top' | 'bottom' = 'bottom';
 
-    function handleClick() {
+    async function handleClick() {
         targetRect = target.getBoundingClientRect();
-        open = true;
+        await onOpen();
+        isOpen = true;
     }
 
     function handleClickOutside(event: MouseEvent) {
-        if (!open) return;
+        if (!isOpen) return;
         if (element.contains(event.target as Node)) return;
         if (event.target === target) return;
-        open = false;
+        isOpen = false;
+    }
+
+    $: {
+        if (isOpen) {
+            eventDistacher('open');
+        } else {
+            eventDistacher('close');
+        }
     }
 
     function clamp(value: number, min: number, max: number) {
@@ -85,7 +97,7 @@
 
 <svelte:window on:click={handleClickOutside} />
 <span class="wrapper" bind:this={element}>
-    {#if open}
+    {#if isOpen}
         <div
             class="popup"
             class:background={!noBackground}
@@ -94,7 +106,7 @@
             style:left="{popupPos.x}px"
             bind:this={popup}
         >
-            <slot close={() => (open = false)} />
+            <slot close={() => (isOpen = false)} />
         </div>
         <div
             class="pointer"
