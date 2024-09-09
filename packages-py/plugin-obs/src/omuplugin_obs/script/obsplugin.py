@@ -137,6 +137,7 @@ def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
         map_optional(dict(source_json.get("data")), OBSData.from_json),
     )
     scene_item = scene.add(obs_source)
+    obs_source.release()
     if "blend_properties" in source_json:
         blending_method = source_json["blend_properties"]["blending_method"]
         blending_mode = source_json["blend_properties"]["blending_mode"]
@@ -152,9 +153,11 @@ def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
 async def source_create(source: SourceJson) -> CreateResponse:
     existing_source = OBSSource.get_source_by_name(source["name"])
     if existing_source is not None and not existing_source.removed:
+        existing_source.release()
         raise ValueError(f"Source with name {source['name']} already exists")
     scene = get_scene(source.get("scene"))
     scene_item = create_obs_source(scene, source)
+    scene.release()
     if "blend_properties" in source:
         blending_method = source["blend_properties"]["blending_method"]
         blending_mode = source["blend_properties"]["blending_mode"]
@@ -164,6 +167,7 @@ async def source_create(source: SourceJson) -> CreateResponse:
         scale_filter = source["scale_properties"]["scale_filter"]
         scene_item.scale_filter = OBSScaleType[scale_filter]
     source_json = source_to_json(scene_item)
+    scene_item.release()
     if source_json is None:
         raise ValueError(f"Source with type {source['type']} is not supported")
     return {"source": source_json}
@@ -177,6 +181,7 @@ async def source_remove_by_name(request: RemoveByNameRequest) -> RemoveResponse:
     if obs_source.removed:
         raise ValueError(f"Source with name {request['name']} is already removed")
     obs_source.remove()
+    obs_source.release()
     return {}
 
 
@@ -188,6 +193,7 @@ async def source_remove_by_uuid(request: RemoveByUuidRequest) -> RemoveResponse:
     if obs_source.removed:
         raise ValueError(f"Source with uuid {request['uuid']} is already removed")
     obs_source.remove()
+    obs_source.release()
     return {}
 
 
@@ -204,9 +210,11 @@ async def source_update(source_json: SourceJson) -> UpdateResponse:
 
     new_data = OBSData.from_json(dict(source_json["data"]))
     source.settings.apply(new_data)
+    new_data.release()
 
     scene = get_scene(source_json.get("scene"))
     scene_item = scene.sceneitem_from_source(source)
+    scene.release()
     if scene_item is None:
         raise ValueError(f"Source with name {source_json['name']} is not in the scene")
     if "blend_properties" in source_json:
@@ -218,8 +226,12 @@ async def source_update(source_json: SourceJson) -> UpdateResponse:
         scale_filter = source_json["scale_properties"]["scale_filter"]
         scene_item.scale_filter = OBSScaleType[scale_filter]
     updated_json = source_to_json(scene_item)
-    if updated_json is None:
-        raise ValueError(f"Source with type {source.id} is not supported")
+    scene_item.release()
+    try:
+        if updated_json is None:
+            raise ValueError(f"Source with type {source.id} is not supported")
+    finally:
+        source.release()
     return {"source": updated_json}
 
 
@@ -227,11 +239,17 @@ async def source_update(source_json: SourceJson) -> UpdateResponse:
 async def source_get_by_name(request: SourceGetByNameRequest) -> SourceJson:
     scene = get_scene(request.get("scene"))
     scene_item = scene.find_source(request["name"])
+    scene.release()
     if scene_item is None:
         raise ValueError(f"Source with name {request['name']} does not exist")
     source_json = source_to_json(scene_item)
-    if source_json is None:
-        raise ValueError(f"Source with type {scene_item.source.id} is not supported")
+    try:
+        if source_json is None:
+            raise ValueError(
+                f"Source with type {scene_item.source.id} is not supported"
+            )
+    finally:
+        scene_item.release()
     return source_json
 
 
@@ -251,9 +269,14 @@ async def source_get_by_uuid(request: SourceGetByUuidRequest) -> SourceJson:
     if source is None:
         raise ValueError(f"Source with uuid {request['uuid']} does not exist")
     scene_item = scene.sceneitem_from_source(source)
+    scene.release()
     source_json = source_to_json(scene_item)
-    if source_json is None:
-        raise ValueError(f"Source with type {source.type} is not supported")
+    scene_item.release()
+    try:
+        if source_json is None:
+            raise ValueError(f"Source with type {source.type} is not supported")
+    finally:
+        source.release()
     return source_json
 
 
@@ -269,19 +292,28 @@ async def source_list(request: SourceListRequest) -> list[SourceJson]:
         if current_scene is None:
             raise ValueError("No current scene")
         scene = current_scene.scene
-    if "scene" in request:
-        scene = OBSScene.get_scene_by_name(request["scene"])
-        if scene is None:
-            raise ValueError(f"Scene with name {request['scene']} does not exist")
     scene_items = scene.enum_items()
-    return [*filter(None, map(source_to_json, scene_items))]
+    scene.release()
+    sources = []
+    for scene_item in scene_items:
+        source_json = source_to_json(scene_item)
+        if source_json is not None:
+            sources.append(source_json)
+        scene_item.release()
+    return sources
 
 
 def scene_to_json(scene: OBSScene) -> SceneJson:
+    sources = []
+    for scene_item in scene.enum_items():
+        source_json = source_to_json(scene_item)
+        if source_json is not None:
+            sources.append(source_json)
+        scene_item.release()
     return {
         "name": scene.source.name,
         "uuid": scene.source.uuid,
-        "sources": [*filter(None, map(source_to_json, scene.enum_items()))],
+        "sources": sources,
     }
 
 
@@ -294,7 +326,9 @@ async def scene_list(request: SceneListRequest) -> SceneListResponse:
 @omu.endpoints.bind(endpoint_type=SCENE_GET_BY_NAME)
 async def scene_get_by_name(request: SceneGetByNameRequest) -> SceneJson:
     scene = get_scene(request["name"])
-    return scene_to_json(scene)
+    scene_json = scene_to_json(scene)
+    scene.release()
+    return scene_json
 
 
 @omu.endpoints.bind(endpoint_type=SCENE_GET_BY_UUID)
@@ -303,15 +337,21 @@ async def scene_get_by_uuid(request: SceneGetByUuidRequest) -> SceneJson:
     if source is None:
         raise ValueError(f"Source with uuid {request['uuid']} does not exist")
     if not source.is_scene:
+        source.release()
         raise ValueError(f"Source with uuid {request['uuid']} is not a scene")
     scene = source.scene
-    return scene_to_json(scene)
+    source.release()
+    scene_json = scene_to_json(scene)
+    scene.release()
+    return scene_json
 
 
 @omu.endpoints.bind(endpoint_type=SCENE_GET_CURRENT)
 async def scene_get_current(request: SceneGetCurrentRequest) -> SceneJson:
     scene = get_scene(request.get("scene"))
-    return scene_to_json(scene)
+    scene_json = scene_to_json(scene)
+    scene.release()
+    return scene_json
 
 
 @omu.endpoints.bind(endpoint_type=SCENE_SET_CURRENT_BY_NAME)
@@ -322,6 +362,7 @@ async def scene_set_current_by_name(
     if scene is None:
         raise ValueError(f"Scene with name {request['name']} does not exist")
     OBS.frontend_set_current_scene(scene)
+    scene.release()
     return {}
 
 
@@ -333,11 +374,15 @@ async def scene_set_current_by_uuid(
     if source is None:
         raise ValueError(f"Source with uuid {request['uuid']} does not exist")
     if not source.is_scene:
+        source.release()
         raise ValueError(f"Source with uuid {request['uuid']} is not a scene")
     scene = source.scene
     if scene is None:
+        source.release()
         raise ValueError(f"Scene with uuid {request['uuid']} does not exist")
     OBS.frontend_set_current_scene(scene)
+    source.release()
+    scene.release()
     return {}
 
 
