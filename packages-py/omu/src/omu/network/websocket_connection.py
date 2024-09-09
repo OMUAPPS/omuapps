@@ -8,7 +8,7 @@ from omu.bytebuffer import ByteReader, ByteWriter
 from omu.client import Client
 from omu.serializer import Serializable
 
-from .connection import Connection
+from .connection import CloseError, Connection
 from .packet import Packet, PacketData
 
 
@@ -55,7 +55,7 @@ class WebsocketsConnection(Connection):
             web.WSMsgType.CLOSING,
             web.WSMsgType.ERROR,
         }:
-            raise RuntimeError(f"Socket {msg.type.name.lower()}")
+            raise CloseError(f"Socket {msg.type.name.lower()}")
         if msg.data is None:
             raise RuntimeError("Received empty message")
         if msg.type == web.WSMsgType.TEXT:
@@ -72,11 +72,7 @@ class WebsocketsConnection(Connection):
     async def close(self) -> None:
         if not self._socket or self._socket.closed:
             return
-        if self._socket:
-            try:
-                await self._socket.close()
-            except AttributeError:
-                pass
+        await self._socket.close()
         self._socket = None
         self._connected = False
 

@@ -195,7 +195,7 @@ class PluginLoader:
             self.instances[plugin_key] = instance
             await self.start_plugin(instance)
 
-    async def start_plugin(self, instance):
+    async def start_plugin(self, instance: PluginInstance):
         try:
             if instance.plugin.on_start_server is not None:
                 await instance.plugin.on_start_server(self._server)

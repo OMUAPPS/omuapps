@@ -69,7 +69,7 @@ class PluginInstance:
                 plugin_client = self.plugin.get_client()
                 plugin_client.network.set_connection(connection)
                 plugin_client.network.set_token_provider(PluginTokenProvider(token))
-                await plugin_client.start()
+                server.loop.create_task(plugin_client.start())
                 session_connection = PluginSessionConnection(connection)
                 session = await Session.from_connection(
                     server,
@@ -113,5 +113,6 @@ def run_plugin_isolated(
         loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
         client.run(loop=loop)
+        loop.run_forever()
     except Exception as e:
         logger.opt(exception=e).error("Error running plugin")

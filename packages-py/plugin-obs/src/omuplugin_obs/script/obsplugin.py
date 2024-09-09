@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from pathlib import Path
+from threading import Thread
 
 from omu.app import App
 from omu.helper import map_optional
@@ -399,5 +402,24 @@ async def on_ready():
     print("OBS Plugin is ready")
 
 
+thread = Thread(target=omu.loop.run_forever).start()
+
+
 def start():
-    omu.run()
+    omu.loop.create_task(start_omu())
+
+
+async def start_omu():
+    if omu.running:
+        await omu.stop()
+    await omu.start()
+
+
+def stop():
+    print("Stopping OBS Plugin")
+    omu.loop.create_task(stop_omu())
+
+
+async def stop_omu():
+    await omu.stop()
+    print("OBS Plugin is stopped")

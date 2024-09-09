@@ -43,12 +43,6 @@ def terminate_server():
         print("Killed")
 
 
-def start_plugin():
-    from omuplugin_obs.script import obsplugin
-
-    obsplugin.start()
-
-
 def script_load(settings):
     thread = Thread(target=start, daemon=True)
     thread.start()
@@ -56,11 +50,16 @@ def script_load(settings):
 
 def start():
     launch_server()
-    start_plugin()
+    from omuplugin_obs.script import obsplugin
+
+    obsplugin.start()
 
 
 def script_unload():
     terminate_server()
+    from omuplugin_obs.script import obsplugin
+
+    obsplugin.stop()
 
 
 def script_description():

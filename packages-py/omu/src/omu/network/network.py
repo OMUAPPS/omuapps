@@ -22,7 +22,7 @@ from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.token import TokenProvider
 
-from .connection import Connection
+from .connection import CloseError, Connection
 from .packet import Packet, PacketType
 from .packet.packet_types import (
     PACKET_TYPES,
@@ -151,7 +151,7 @@ class Network:
             await self._connection.connect()
         except Exception as e:
             if reconnect:
-                logger.error(e)
+                logger.opt(exception=e).error("Failed to connect")
                 await self.try_reconnect()
                 return
             else:
@@ -199,9 +199,15 @@ class Network:
         await self._connection.send(packet, self._packet_mapper)
 
     async def _listen_task(self):
-        while not self._connection.closed:
-            packet = await self._connection.receive(self._packet_mapper)
-            self._client.loop.create_task(self.dispatch_packet(packet))
+        try:
+            while not self._connection.closed:
+                packet = await self._connection.receive(self._packet_mapper)
+                self._client.loop.create_task(self.dispatch_packet(packet))
+        except CloseError as e:
+            logger.opt(exception=e).error("Connection closed")
+        finally:
+            await self.disconnect()
+            self._connected = False
 
     async def dispatch_packet(self, packet: Packet) -> None:
         await self._event.packet.emit(packet)

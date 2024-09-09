@@ -6,6 +6,10 @@ from omu.network.packet import Packet, PacketData
 from omu.serializer import Serializable
 
 
+class CloseError(Exception):
+    pass
+
+
 class Connection(abc.ABC):
     @abc.abstractmethod
     async def connect(self): ...
