@@ -100,14 +100,6 @@ export function listenSync<T extends keyof Events>(
     };
 }
 
-export async function readFile(file: string): Promise<[string, ArrayBuffer]> {
-    assertTauri();
-    const name = file.split(/[\\/]/).pop();
-    if (!name) throw new Error('Invalid file path');
-    const buffer = await tauriFs.readBinaryFile(file);
-    return [name, buffer];
-}
-
 let loaded = false;
 const loadHandlers: (() => void)[] = [];
 const loadPromises: (() => Promise<void>)[] = [];
@@ -142,10 +134,6 @@ export function assertTauri() {
 }
 
 export const tauriWindow = loadLazy(() => import('@tauri-apps/api/window'));
-export const tauriDialog = loadLazy(() => import('@tauri-apps/api/dialog'));
-export const tauriApi = loadLazy(() => import('@tauri-apps/api/tauri'));
-export const tauriEvent = loadLazy(() => import('@tauri-apps/api/event'));
-export const tauriFs = loadLazy(() => import('@tauri-apps/api/fs'));
 
 async function load() {
     if (!checkOnTauri) {

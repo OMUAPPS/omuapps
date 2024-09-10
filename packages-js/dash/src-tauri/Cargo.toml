@@ -12,25 +12,22 @@ rust-version = "1.60"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.4.0", features = [] }
+tauri-build = { version = "1.5.4", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = [
+tauri = { version = "1.7.2", features = [
     "updater",
     "system-tray",
-    "window-set-focus",
-    "window-show",
-    "window-unminimize",
-    "dialog-all",
-    "window-hide",
     "window-close",
     "window-create",
-    "window-start-dragging",
-    "window-minimize",
-    "fs-read-file",
-    "window-unmaximize",
+    "window-hide",
     "window-maximize",
-    "shell-open",
+    "window-minimize",
+    "window-set-focus",
+    "window-show",
+    "window-start-dragging",
+    "window-unmaximize",
+    "window-unminimize",
     "devtools",
 ] }
 serde = { version = "1", features = ["derive"] }
