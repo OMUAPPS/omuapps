@@ -1,6 +1,6 @@
 [project]
 name = "omuplugin_translator"
-version = "0.6.29"
+version = "0.6.30"
 description = "メッセージの翻訳を行うためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
