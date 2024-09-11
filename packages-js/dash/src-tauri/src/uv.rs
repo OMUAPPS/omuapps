@@ -195,7 +195,6 @@ impl Uv {
             .cmd()
             .arg("pip")
             .arg("install")
-            .arg("--upgrade")
             .arg("-r")
             .arg(req_file.path())
             .arg("--python")
