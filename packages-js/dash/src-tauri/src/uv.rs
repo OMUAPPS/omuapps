@@ -148,7 +148,6 @@ impl Uv {
             .cmd()
             .arg("pip")
             .arg("install")
-            .arg("--upgrade")
             .arg(pip_version)
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
