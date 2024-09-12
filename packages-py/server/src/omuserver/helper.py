@@ -1,7 +1,10 @@
 import os
 import sys
+from collections.abc import Generator
 from pathlib import Path
 from typing import TypedDict
+
+import psutil
 
 
 def safe_path(root_path: Path, input_path: Path) -> Path:
@@ -30,3 +33,12 @@ def get_launch_command() -> LaunchCommand:
         "cwd": os.getcwd(),
         "args": args,
     }
+
+
+def find_processes_by_port(port: int) -> Generator[psutil.Process, None, None]:
+    for connection in psutil.net_connections():
+        try:
+            if connection.laddr and connection.laddr.port == port:
+                yield psutil.Process(connection.pid)
+        except psutil.NoSuchProcess:
+            pass

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import socket
 
-import psutil
 from aiohttp import web
 from loguru import logger
 from omu import App, Identifier
@@ -11,6 +10,7 @@ from omu.helper import Coro
 from omu.network.packet import PACKET_TYPES, PacketType
 from omu.network.packet.packet_types import DisconnectType
 
+from omuserver.helper import find_processes_by_port
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
 from omuserver.server import Server
 from omuserver.session import Session, SessionType
@@ -125,17 +125,19 @@ class Network:
         except OSError:
             return False
 
-    def get_process_by_port(self, port: int) -> psutil.Process | None:
-        for connection in psutil.net_connections():
-            if connection.laddr and connection.laddr.port == port:
-                return psutil.Process(connection.pid)
-        return None
-
     def ensure_port_availability(self):
         if not self.is_port_free():
-            process = self.get_process_by_port(self._server.address.port)
-            if process is None:
-                raise OSError(f"Port {self._server.address.port} already in use")
+            found_processes = list(find_processes_by_port(self._server.address.port))
+            if len(found_processes) == 0:
+                raise OSError(
+                    f"Port {self._server.address.port} already in use by unknown process"
+                )
+            if len(found_processes) > 1:
+                processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
+                raise OSError(
+                    f"Port {self._server.address.port} already in use by multiple processes: {processes}"
+                )
+            process = found_processes[0]
             port = self._server.address.port
             name = process.name()
             pid = process.pid

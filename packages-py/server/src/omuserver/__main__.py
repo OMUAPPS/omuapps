@@ -1,13 +1,16 @@
 import io
+import signal
 import sys
 import tracemalloc
 from pathlib import Path
 
 import click
+import psutil
 from loguru import logger
 from omu.address import Address
 
 from omuserver.config import Config
+from omuserver.helper import find_processes_by_port
 from omuserver.migration import migrate
 from omuserver.server.omuserver import OmuServer
 from omuserver.version import VERSION
@@ -29,19 +32,45 @@ def setup_logging():
     )
 
 
+def stop_server_processes(
+    port: int,
+):
+    executable = sys.executable
+    found_processes = find_processes_by_port(port)
+    if not found_processes:
+        logger.info(f"No processes found using port {port}")
+        return
+    for process in found_processes:
+        try:
+            if process.exe() != executable:
+                logger.warning(
+                    f"Process {process.pid} ({process.name()}) is not a Python process"
+                )
+            logger.info(f"Killing process {process.pid} ({process.name()})")
+            process.send_signal(signal.SIGTERM)
+        except psutil.NoSuchProcess:
+            logger.warning(f"Process {process.pid} not found")
+
+
 @click.command()
 @click.option("--debug", is_flag=True)
+@click.option("--stop", is_flag=True)
 @click.option("--token", type=str, default=None)
 @click.option("--token-file", type=click.Path(), default=None)
 @click.option("--port", type=int, default=26423)
 @click.option("--extra-trusted-origin", type=str, multiple=True)
 def main(
     debug: bool,
+    stop: bool,
     token: str | None,
     token_file: str | None,
     port: int,
     extra_trusted_origin: list[str],
 ):
+    if stop:
+        stop_server_processes(port)
+        return
+
     config = Config()
     config.address = Address(
         host=None,
