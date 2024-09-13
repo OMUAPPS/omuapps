@@ -1,6 +1,6 @@
 [project]
 name = "omuplugin_archive"
-version = "0.6.30"
+version = "0.6.31"
 description = "配信をアーカイブするためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
