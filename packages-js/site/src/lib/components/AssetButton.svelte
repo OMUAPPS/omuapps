@@ -131,6 +131,7 @@
         align-items: center;
         justify-content: center;
         width: 100%;
+        min-width: 3rem;
         height: 100%;
         color: var(--color-1);
         background: var(--color-bg-2);
@@ -146,7 +147,7 @@
         }
 
         &:hover {
-            margin-left: 4px;
+            transform: translate(4px, 0);
             outline: 2px solid var(--color-1);
             box-shadow: -4px 4px 0 2px var(--color-2);
             transition: 0.0621s;
