@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.31 (2024-09-13)
+
+
+### Bug Fixes
+
+* **site:** アセットボタンのcss調整 ([2893f15](https://github.com/OMUAPPS/omuapps/commit/2893f1511d0508d7920c614f90c0e86a2fdecf38))
+
+
+
+
+
 ## 0.6.30 (2024-09-10)
 
 **Note:** Version bump only for package @omujs/chat
