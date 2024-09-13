@@ -79,26 +79,26 @@ jobs:
                   updaterJsonPreferNsis: true
                   args: ${{ matrix.args }}
 
-            - uses: actions/upload-artifact@v3
-              if: matrix.platform == 'ubuntu-latest'
+            - uses: actions/upload-artifact@v4.4.0
+              if: matrix.platform == 'ubuntu-22.04'
               with:
                   name: omuapps-appimage-linux
                   path: ./packages-js/dash/src-tauri/target/release/bundle/appimage/omuapps_**.AppImage.*
 
-            - uses: actions/upload-artifact@v3
-              if: matrix.platform == 'ubuntu-latest'
+            - uses: actions/upload-artifact@v4.4.0
+              if: matrix.platform == 'ubuntu-22.04'
               with:
                   name: omuapps-deb-linux
                   path: ./packages-js/dash/src-tauri/target/release/bundle/deb/omuapps_**.deb
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4.4.0
               if: matrix.platform == 'windows-latest'
               with:
                   name: omuapps-windows
                   path: ./packages-js/dash/src-tauri/target/release/bundle/nsis/omuapps_**-setup.exe
 
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v4.4.0
               if: matrix.platform == 'macos-latest'
               with:
                   name: omuapps-macos
-                  path: ./packages-js/dash/src-tauri/target/release/bundle/macos/omuapps.app.tar.*
+                  path: ./packages-js/dash/src-tauri/target/release/bundle/macos/omuapps_**.app.tar.*
