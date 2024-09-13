@@ -77,7 +77,6 @@
 
     .thumbnail-preview {
         height: 10rem;
-        border-radius: 4px;
         object-fit: cover;
     }
 
