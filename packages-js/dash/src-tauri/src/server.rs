@@ -25,6 +25,7 @@ pub struct Server {
     uv: Uv,
     app_handle: Arc<Mutex<Option<AppHandle>>>,
     pub token: String,
+    pub already_started: bool,
 }
 
 impl Server {
@@ -35,9 +36,36 @@ impl Server {
         on_progress: &(impl Fn(Progress) + Send + 'static),
         app_handle: Arc<Mutex<Option<AppHandle>>>,
     ) -> Result<Self, String> {
-        let token = match Self::get_token(&option, on_progress) {
-            Ok(value) => value,
-            Err(value) => return value,
+        let mut already_started = !is_port_free(option.port);
+
+        let version = Self::read_version(&option)?;
+        let needs_update = version.as_deref() != Some(VERSION);
+        let requirements = format!("omuserver=={}", VERSION);
+        if already_started && needs_update {
+            uv.update(LATEST_PIP, &requirements, on_progress)
+                .map_err(|err| err.to_string())?;
+            on_progress(Progress::ServerStoppping(format!(
+                "Server version mismatch ({} != {}), stopping server",
+                version.unwrap(),
+                VERSION
+            )));
+            Self::stop_server(on_progress, &python, &option)?;
+            already_started = false;
+        }
+
+        let token = if already_started {
+            match Self::read_token(&option) {
+                Ok(token) => token,
+                Err(err) => {
+                    on_progress(Progress::ServerTokenReadFailed(err.clone()));
+                    return Err(err);
+                }
+            }
+        } else {
+            match Self::generate_token(&option, on_progress) {
+                Ok(value) => value,
+                Err(value) => return Err(value),
+            }
         };
 
         let server = Self {
@@ -46,6 +74,7 @@ impl Server {
             uv,
             app_handle,
             token,
+            already_started,
         };
 
         if !server.option.data_dir.exists() {
@@ -60,7 +89,6 @@ impl Server {
             })?;
         }
 
-        let requirements = format!("omuserver=={}", VERSION);
         server
             .uv
             .update(LATEST_PIP, &requirements, on_progress)
@@ -69,28 +97,61 @@ impl Server {
         Ok(server)
     }
 
-    fn get_token(
+    fn stop_server(
+        on_progress: &(impl Fn(Progress) + Send + 'static),
+        python: &Python,
+        option: &ServerOption,
+    ) -> Result<(), String> {
+        let mut cmd = python.cmd();
+        cmd.arg("-m");
+        cmd.arg("omuserver");
+        cmd.arg("--port");
+        cmd.arg(option.port.to_string());
+        cmd.arg("--stop");
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+        cmd.current_dir(&option.data_dir);
+        let output = cmd.output().map_err(|err| {
+            let msg = format!("Failed to stop server: {}", err);
+            on_progress(Progress::ServerStoppping(msg.clone()));
+            msg
+        })?;
+        Ok(if !output.status.success() {
+            let msg = format!(
+                "Failed to stop server: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            on_progress(Progress::ServerStopFailed(msg.clone()));
+            return Err(msg);
+        })
+    }
+
+    pub fn read_version(option: &ServerOption) -> Result<Option<String>, String> {
+        let path = option.data_dir.join("VERSION");
+        if !path.exists() {
+            return Ok(None);
+        }
+        match std::fs::read_to_string(&path) {
+            Ok(version) => Ok(Some(version)),
+            Err(err) => Err(format!(
+                "Failed to read version file at {}: {}",
+                path.display(),
+                err
+            )),
+        }
+    }
+
+    fn generate_token(
         option: &ServerOption,
         on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<String, std::result::Result<Server, String>> {
-        let token = if is_port_available(option.port) {
-            let token = generate_token();
-            match Self::save_token(&token, option) {
-                Ok(_) => token,
-                Err(err) => {
-                    on_progress(Progress::ServerTokenWriteFailed(err.clone()));
-                    return Err(Err(err));
-                }
-            }
-        } else {
-            match Self::read_token_file(option) {
-                Ok(token) => token,
-                Err(err) => {
-                    on_progress(Progress::ServerTokenReadFailed(err.clone()));
-                    return Err(Err(err));
-                }
-            }
-        };
+    ) -> Result<String, String> {
+        let token = generate_token();
+        if Self::save_token(&token, option).is_err() {
+            on_progress(Progress::ServerTokenWriteFailed(
+                "Failed to save token".to_string(),
+            ));
+            return Err("Failed to save token".to_string());
+        }
         Ok(token)
     }
 
@@ -107,7 +168,7 @@ impl Server {
         Ok(())
     }
 
-    fn read_token_file(option: &ServerOption) -> Result<String, String> {
+    fn read_token(option: &ServerOption) -> Result<String, String> {
         let token_path = option.data_dir.join("token.txt");
         if !token_path.exists() {
             Err(format!(
@@ -127,6 +188,9 @@ impl Server {
     }
 
     pub fn start(&self, on_progress: &(impl Fn(Progress) + Send + 'static)) -> Result<(), String> {
+        if self.already_started {
+            return Err("Server already started".to_string());
+        }
         let mut cmd = self.python.cmd();
         cmd.arg("-m");
         cmd.arg("omuserver");
@@ -202,7 +266,7 @@ fn generate_token() -> String {
         .collect::<String>()
 }
 
-fn is_port_available(port: u16) -> bool {
+fn is_port_free(port: u16) -> bool {
     let ok_127 = std::net::TcpListener::bind(("127.0.0.1", port)).is_ok();
     let ok_0 = std::net::TcpListener::bind(("0.0.0.0", port)).is_ok();
     ok_127 && ok_0

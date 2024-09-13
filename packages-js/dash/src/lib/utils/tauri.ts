@@ -33,6 +33,8 @@ export type PROGRESS_EVENT = {
     ServerTokenReadFailed: string;
     ServerTokenWriteFailed: string;
     ServerCreateDataDirFailed: string;
+    ServerStoppping: string;
+    ServerStopFailed: string;
     ServerStarting: string;
     ServerStartFailed: string;
     ServerStarted: string;

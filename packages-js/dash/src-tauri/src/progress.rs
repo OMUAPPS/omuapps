@@ -15,6 +15,8 @@ pub enum Progress {
     ServerTokenReadFailed(String),
     ServerTokenWriteFailed(String),
     ServerCreateDataDirFailed(String),
+    ServerStoppping(String),
+    ServerStopFailed(String),
     ServerStarting(String),
     ServerStartFailed(String),
     ServerAlreadyStarted(String),

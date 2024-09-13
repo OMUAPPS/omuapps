@@ -37,6 +37,8 @@
         ServerTokenReadFailed: 'APIの認証情報の読み込みに失敗しました',
         ServerTokenWriteFailed: 'APIの認証情報の書き込みに失敗しました',
         ServerCreateDataDirFailed: 'データフォルダの作成に失敗しました',
+        ServerStoppping: 'サーバーを停止中...',
+        ServerStopFailed: 'サーバーの停止に失敗しました',
         ServerStarting: 'サーバーを起動中...',
         ServerStartFailed: 'サーバーの起動に失敗しました',
         ServerStarted: 'サーバーが起動しました',
@@ -59,6 +61,7 @@
         'ServerTokenReadFailed',
         'ServerTokenWriteFailed',
         'ServerCreateDataDirFailed',
+        'ServerStopFailed',
         'ServerStartFailed',
     ];
 

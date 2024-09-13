@@ -101,22 +101,27 @@ async fn start_server(
         Python::ensure(&options, &on_progress).unwrap()
     };
     let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
-    let server = Server::ensure_server(
+    let server = match Server::ensure_server(
         options.server_options,
         python,
         uv,
         &on_progress,
         state.app_handle.clone(),
-    );
-    let server = match server {
+    ) {
         Ok(server) => server,
         Err(err) => {
             return Err(err.to_string());
         }
     };
 
-    on_progress(Progress::ServerStarting("Starting server".to_string()));
-    server.start(&on_progress).unwrap();
+    if server.already_started {
+        on_progress(Progress::ServerAlreadyStarted(
+            "Server already started".to_string(),
+        ));
+    } else {
+        on_progress(Progress::ServerStarting("Starting server".to_string()));
+        server.start(&on_progress).unwrap();
+    }
 
     let token = server.token.clone();
     *state.server.lock().unwrap() = Some(server);
