@@ -106,7 +106,7 @@
                     </button>
                 {/if}
                 {#each messages as item}
-                    {@const selected = $data.message === item}
+                    {@const selected = $data.message?.message_id === item.message_id}
                     <button
                         class="message"
                         class:selected
