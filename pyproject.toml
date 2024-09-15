@@ -49,6 +49,7 @@ select = [
     "C4", # flake8-comprehensions
     "UP", # pyupgrade
 ]
+exclude = ["packages-py/plugin-obs/src/obspython.pyi"]
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
@@ -65,5 +66,5 @@ exclude = [
     "**/node_modules",
     "**/__pycache__",
     "**/.venv",
-    "packages-py/plugin-obssync/src/obspython.pyi",
+    "packages-py/plugin-obs/src/obspython.pyi",
 ]
