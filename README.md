@@ -15,12 +15,16 @@
     <a href="https://github.com/OMUAPPS/omuapps/pulls">
         <img alt="GitHub Issues or Pull Requests" src="https://img.shields.io/github/issues-pr/OMUAPPS/omuapps">
     </a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2FOMUAPPS%2Fomuapps?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2FOMUAPPS%2Fomuapps.svg?type=shield"/></a>
     <a href="https://github.com/OMUAPPS/omuapps/blob/master/LICENSE">
         <img alt="GitHub License" src="https://img.shields.io/github/license/OMUAPPS/omuapps">
     </a>
     <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/OMUAPPS/omuapps">
 </p>
 <br/>
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FOMUAPPS%2Fomuapps.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FOMUAPPS%2Fomuapps?ref=badge_large)
 
 ## OMUAPPSについて / About OMUAPPS
 
