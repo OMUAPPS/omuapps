@@ -112,7 +112,7 @@
                                 <small>{$t('screen.manage-apps.description')}</small>
                             </div>
                         </Tooltip>
-                        <i class="ti ti-settings" />
+                        <i class="ti ti-edit" />
                     </button>
                 </div>
             {/if}
