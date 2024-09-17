@@ -78,6 +78,12 @@ class OBS:
         return scene_names
 
     @staticmethod
+    def get_scene_from_source(source: OBSSource) -> OBSScene:
+        with source as obs_source:
+            obs_scene = obspython.obs_scene_from_source(obs_source)
+        return OBSScene(obs_scene)
+
+    @staticmethod
     def get_scenes() -> list[OBSScene]:
         scenes = []
         for scene_name in OBS.frontend_get_scene_names():

@@ -127,19 +127,22 @@ def get_scene(scene_name: str | None) -> OBSScene:
         current_scene = OBS.frontend_get_current_scene()
         if current_scene is None:
             raise ValueError("No current scene")
-        scene = current_scene.scene
+        scene = OBS.get_scene_from_source(current_scene)
     return scene
 
 
 def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
     if "uuid" in source_json:
         raise NotImplementedError("uuid is not supported yet")
+    settings = map_optional(dict(source_json.get("data")), OBSData.from_json)
     obs_source = OBSSource.create(
         source_json["type"],
         source_json["name"],
-        map_optional(dict(source_json.get("data")), OBSData.from_json),
+        settings,
     )
     scene_item = scene.add(obs_source)
+    if settings is not None:
+        settings.release()
     obs_source.release()
     if "blend_properties" in source_json:
         blending_method = source_json["blend_properties"]["blending_method"]
@@ -155,9 +158,10 @@ def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
 @omu.endpoints.bind(endpoint_type=SOURCE_CREATE)
 async def source_create(source: SourceJson) -> CreateResponse:
     existing_source = OBSSource.get_source_by_name(source["name"])
-    if existing_source is not None and not existing_source.removed:
+    if existing_source is not None:
         existing_source.release()
-        raise ValueError(f"Source with name {source['name']} already exists")
+        if not existing_source.removed:
+            raise ValueError(f"Source with name {source['name']} already exists")
     scene = get_scene(source.get("scene"))
     scene_item = create_obs_source(scene, source)
     scene.release()
@@ -170,7 +174,6 @@ async def source_create(source: SourceJson) -> CreateResponse:
         scale_filter = source["scale_properties"]["scale_filter"]
         scene_item.scale_filter = OBSScaleType[scale_filter]
     source_json = source_to_json(scene_item)
-    scene_item.release()
     if source_json is None:
         raise ValueError(f"Source with type {source['type']} is not supported")
     return {"source": source_json}

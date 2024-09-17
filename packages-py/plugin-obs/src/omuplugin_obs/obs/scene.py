@@ -540,7 +540,9 @@ class OBSScene(Reference[obs_scene_t]):
     def add(self, source: OBSSource) -> OBSSceneItem:
         with self as scene, source as source_data:
             obs_sceneitem = obspython.obs_scene_add(scene, source_data)
-        return OBSSceneItem(obs_sceneitem)
+        new_scene_item = OBSSceneItem(obs_sceneitem)
+        new_scene_item.acquire()
+        return new_scene_item
 
     def sceneitem_from_source(self, source: OBSSource) -> OBSSceneItem:
         with self as scene, source as source_data:
