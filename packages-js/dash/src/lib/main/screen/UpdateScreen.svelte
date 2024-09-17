@@ -60,7 +60,7 @@
                 <button on:click={() => (open = true)} class="update">
                     アップデート
                     <i class="ti ti-arrow-right" />
-                    <Popup bind:open>
+                    <Popup bind:isOpen={open}>
                         <div class="confirm">
                             <small>アップデートを開始しますか？</small>
                             <button on:click={update}>はい！</button>
