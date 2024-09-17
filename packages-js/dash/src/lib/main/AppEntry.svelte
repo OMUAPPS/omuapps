@@ -4,8 +4,7 @@
     import { Tooltip } from '@omujs/ui';
     import { loadedIds, registerPage, type Page } from './page.js';
     import AppPage from './pages/AppPage.svelte';
-    import { currentPage } from './settings.js';
-    import { menuOpen } from './stores.js';
+    import { currentPage, menuOpen } from './settings.js';
 
     export let entry: App;
     export let selected: boolean = false;

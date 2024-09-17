@@ -15,9 +15,8 @@
     import ConnectPage from './pages/ConnectPage.svelte';
     import IframePage from './pages/IframePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
-    import { currentPage } from './settings.js';
+    import { currentPage, menuOpen } from './settings.js';
     import SettingsPage from './SettingsPage.svelte';
-    import { menuOpen } from './stores.js';
     import TabEntry from './TabEntry.svelte';
 
     const EXPLORE_PAGE = registerPage({
