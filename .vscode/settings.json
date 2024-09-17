@@ -46,4 +46,7 @@
     "[typescript]": {
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
+    "rust-analyzer.linkedProjects": [
+        "./packages-js/dash/src-tauri/Cargo.toml"
+    ],
 }
