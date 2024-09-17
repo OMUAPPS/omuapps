@@ -94,6 +94,7 @@
 
     async function handleUpdate() {
         if (!viewport) throw new Error('VirtualList: missing viewport');
+        viewport_height = viewport.offsetHeight;
         if (isHidden()) return;
         const { scrollTop } = viewport;
 
@@ -135,38 +136,38 @@
 
     // trigger initial refresh
     onMount(() => {
-        rows = contents.getElementsByTagName('svelte-virtual-list-row') as unknown as HTMLElement[];
+        rows = contents.children as unknown as HTMLElement[];
         mounted = true;
     });
 </script>
 
-<svelte-virtual-list-viewport
+<svelte:window on:resize={handleUpdate} />
+<div class="viewport"
     bind:this={viewport}
-    bind:offsetHeight={viewport_height}
     on:scroll={handleUpdate}
-    on:resize={handleUpdate}
     style:height
 >
-    <svelte-virtual-list-contents
+    <div
+        class="contents"
         bind:this={contents}
         style:padding-top="{top}px"
         style:padding-bottom="{bottom}px"
     >
         {#each visible as row (row.data[0])}
-            <svelte-virtual-list-row>
+            <div class="row">
                 <slot key={row.data[0]} item={row.data[1]}>Missing template</slot>
-            </svelte-virtual-list-row>
+            </div>
         {/each}
         {#if items.length === 0}
-            <svelte-virtual-list-row>
+            <div>
                 <slot name="empty" />
-            </svelte-virtual-list-row>
+            </div>
         {/if}
-    </svelte-virtual-list-contents>
-</svelte-virtual-list-viewport>
+    </div>
+</div>
 
 <style lang="scss">
-    svelte-virtual-list-viewport {
+    .viewport {
         position: relative;
         display: block;
         overflow-y: auto;
@@ -200,12 +201,12 @@
         }
     }
 
-    svelte-virtual-list-contents,
-    svelte-virtual-list-row {
+    .contents,
+    .row {
         display: block;
     }
 
-    svelte-virtual-list-row {
+    .row {
         overflow: hidden;
     }
 </style>
