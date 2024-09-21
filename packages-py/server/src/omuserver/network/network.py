@@ -127,21 +127,31 @@ class Network:
 
     def ensure_port_availability(self):
         if not self.is_port_free():
-            found_processes = list(find_processes_by_port(self._server.address.port))
+            found_processes = set(find_processes_by_port(self._server.address.port))
             if len(found_processes) == 0:
                 raise OSError(
                     f"Port {self._server.address.port} already in use by unknown process"
+                )
+            is_system_idle_reserved = any(
+                p.pid == 0 and p.name() == "System Idle Process"
+                for p in found_processes
+            )
+            if is_system_idle_reserved:
+                raise OSError(
+                    f"Port {self._server.address.port} already in use by System Idle Process"
                 )
             if len(found_processes) > 1:
                 processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
                 raise OSError(
                     f"Port {self._server.address.port} already in use by multiple processes: {processes}"
                 )
-            process = found_processes[0]
+            process = found_processes.pop()
             port = self._server.address.port
             name = process.name()
             pid = process.pid
-            raise OSError(f"Port {port} already in use by {name} ({pid=})")
+            parents = process.parents()
+            msg = f"Port {port} already in use by {' -> '.join(f'{p.name()}({p.pid})' for p in parents)} -> {name} ({pid=})"
+            raise OSError(msg)
 
     async def start(self) -> None:
         self.ensure_port_availability()
