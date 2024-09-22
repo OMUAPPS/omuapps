@@ -13,7 +13,17 @@
 
 <Screen {screen} title="manage-apps">
     <div class="container">
-        <ul>
+        <h3>
+            アプリ
+            <small>
+                {#await dashboard.apps.size()}
+                    <i class="spin ti ti-dots" /> 件
+                {:then count}
+                    {count} 件
+                {/await}
+            </small>
+        </h3>
+        <ul class="apps">
             <TableList table={dashboard.apps} component={AppEntry} />
         </ul>
     </div>
@@ -24,6 +34,37 @@
         position: relative;
         height: 100%;
         width: 100%;
+        padding: 2rem 0.75rem;
+        padding-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0rem;
+        text-align: start;
+    }
+
+    h3 {
+        color: var(--color-1);
+        font-size: 1.5rem;
+        margin-left: 0.5rem;
+        padding-bottom: 0.5rem;
+
+        > small {
+            font-size: 1rem;
+        }
+    }
+
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     ul {
