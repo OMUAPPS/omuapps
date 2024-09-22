@@ -165,99 +165,99 @@
 </AppPage>
 
 <style lang="scss">
-  main {
-    display: flex;
-    gap: 20px;
-    padding: 2.5rem 2rem;
-  }
-
-  .left {
-    width: min(100%, 25rem);
-    margin-left: auto;
-  }
-
-  .right {
-    width: 25rem;
-  }
-
-  .settings {
-    background: var(--color-bg-2);
-    padding: 20px;
-  }
-
-  .reaction-preview {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-  }
-
-  .replace-entry {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    justify-content: space-between;
-    width: min(100%, 25rem);
-    padding: 0.5rem 1rem;
-    background: var(--color-bg-2);
-
-    .preview {
-      display: flex;
-      gap: 10px;
-      align-items: center;
+    main {
+        display: flex;
+        gap: 20px;
+        padding: 2.5rem 2rem;
     }
 
-    .actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .left {
+        width: min(100%, 25rem);
+        margin-left: auto;
     }
-  }
 
-  .replace-image {
-    max-height: 50px;
-    min-width: 50px;
-    object-fit: contain;
-  }
-
-  h1 {
-    font-family: "Noto Color Emoji";
-  }
-
-  h3 {
-    color: var(--color-1);
-    margin-bottom: 10px;
-  }
-
-  section {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: start;
-    justify-content: flex-start;
-    width: 100%;
-    padding: 0px;
-    margin-bottom: 20px;
-  }
-
-  img {
-    max-width: 100%;
-    max-height: 40px;
-  }
-
-  button {
-    padding: 0.5rem 1rem;
-    background: var(--color-1);
-    color: var(--color-bg-1);
-    font-size: 0.9rem;
-    font-weight: 500;
-    border: none;
-    border-radius: 2.5px;
-    cursor: pointer;
-
-    &:hover {
-      background: var(--color-1);
+    .right {
+        width: 25rem;
     }
-  }
+
+    .settings {
+        background: var(--color-bg-2);
+        padding: 20px;
+    }
+
+    .reaction-preview {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .replace-entry {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        width: min(100%, 25rem);
+        padding: 0.5rem 1rem;
+        background: var(--color-bg-2);
+
+        .preview {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    }
+
+    .replace-image {
+        max-height: 50px;
+        min-width: 50px;
+        object-fit: contain;
+    }
+
+    h1 {
+        font-family: "Noto Color Emoji";
+    }
+
+    h3 {
+        color: var(--color-1);
+        margin-bottom: 10px;
+    }
+
+    section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: start;
+        justify-content: flex-start;
+        width: 100%;
+        padding: 0px;
+        margin-bottom: 20px;
+    }
+
+    img {
+        max-width: 100%;
+        max-height: 40px;
+    }
+
+    button {
+        padding: 0.5rem 1rem;
+        background: var(--color-1);
+        color: var(--color-bg-1);
+        font-size: 0.9rem;
+        font-weight: 500;
+        border: none;
+        border-radius: 2.5px;
+        cursor: pointer;
+
+        &:hover {
+            background: var(--color-1);
+        }
+    }
 </style>
