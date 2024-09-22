@@ -286,16 +286,22 @@
                 padding-left: 0.25rem;
             }
 
-            &.selected,
-            &:focus,
             &:hover {
-                background: var(--color-bg-1);
-                color: var(--color-1);
                 outline: none;
                 outline-offset: -2px;
                 padding-left: 2.25rem;
                 transition-duration: 0.0621s;
                 transition-property: padding-left, background, color;
+            }
+
+            &:focus {
+                padding-left: 1.85rem;
+            }
+
+            &.selected {
+                background: var(--color-bg-1);
+                color: var(--color-1);
+                padding-left: 2rem;
             }
         }
     }
