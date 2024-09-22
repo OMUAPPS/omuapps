@@ -74,7 +74,7 @@
             const index = Object.keys($entries).indexOf(entry.id);
             const offset = 1 / count;
             const hitRotation = index * offset + offset * $state.random;
-            const rotateTo = hitRotation + Math.floor(lastRotation) + 5;
+            const rotateTo = hitRotation + Math.floor(lastRotation) + 10;
             const time = Date.now() - $state.start;
             tint = BetterMath.clamp01(1 / ((time / 1000) * 3 + 1));
             const t = rouletteEasing(BetterMath.clamp01(time / $state.duration));
