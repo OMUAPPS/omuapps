@@ -57,7 +57,8 @@
         color: var(--color-1);
     }
 
-    .room-entry.selected {
+    .room-entry.selected,
+    .room-entry:hover {
         background: var(--color-bg-1);
         outline: 1px solid var(--color-1);
         outline-offset: -2px;
@@ -67,9 +68,11 @@
         $height: 3.2rem;
         height: $height;
         width: calc($height * 16 / 9);
+        margin-left: 0.25rem;
     }
 
     .thumbnail {
+        width: 100%;
         height: 100%;
         border-radius: 3px;
         object-fit: cover;
@@ -85,6 +88,7 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        align-items: flex-start;
         width: 0;
         height: 100%;
         gap: 0.25rem;
@@ -96,6 +100,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        width: 100%;
     }
 
     .description {
@@ -104,6 +109,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        width: 100%;
     }
 
     .tooltip {
