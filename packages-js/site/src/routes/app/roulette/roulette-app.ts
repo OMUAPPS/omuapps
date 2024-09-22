@@ -3,6 +3,7 @@ import { BetterMath } from '$lib/math.js';
 import { lerp } from '$lib/math/math.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import seedrandom from 'seedrandom';
 import { get, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 import type { RouletteItem, State } from './state.js';
@@ -91,13 +92,15 @@ export class RouletteApp {
     private spinTimeout: number | null = null;
 
     public spin() {
+        const seed = Date.now();
+        const rng = seedrandom(seed.toString());
         const config = get(this.config);
         this.entries.update((value) => {
             if (Object.keys(value).length === 0) {
                 throw new Error('No entries to spin');
             }
             const entries = Object.values(value);
-            const entry = entries[Math.floor(BetterMath.random() * entries.length)];
+            const entry = entries[Math.floor(rng() * entries.length)];
             const start = Date.now();
             const duration = config.duration * 1000;
             const random = this.easeInOutCubic(BetterMath.invjsrandom());
