@@ -43,9 +43,11 @@
                     {#if message && message.authorId}
                         <div class="message">
                             {#await chat.authors.get(message.authorId.key()) then author}
-                                <div class="author">
-                                    <img src={author?.avatarUrl} alt="icon" />
-                                </div>
+                                {#if author?.avatarUrl}
+                                    <div class="author">
+                                        <img src={omu.assets.proxy(author?.avatarUrl)} alt="icon" />
+                                    </div>
+                                {/if}
                                 {#if message.content}
                                     <span class="content">
                                         <ComponentRenderer component={message.content} />
