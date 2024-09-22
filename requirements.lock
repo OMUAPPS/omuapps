@@ -69,7 +69,7 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via iwashi
     # via omuserver
-colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
+colorama==0.4.6 ; platform_system == 'Windows' or sys_platform == 'win32'
     # via click
     # via loguru
 edgetrans==0.2.3
@@ -98,7 +98,7 @@ loguru==0.7.2
     # via omuplugin-onecomme
     # via omuplugin-translator
     # via omuserver
-lxml==5.2.2
+lxml==5.3.0
     # via omu-chatprovider
 marshmallowqa-py==0.6.0
     # via omuplugin-marshmallow

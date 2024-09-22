@@ -1,6 +1,6 @@
 [project]
 name = "omuproject"
-version = "0.4.5"
+version = "0.0.0"
 description = "Add your description here"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
@@ -23,6 +23,7 @@ dev-dependencies = [
     "pytest-asyncio>=0.23.5",
     "pytest-cov>=4.1.0",
     "pyright>=1.1.371",
+    "tomlkit>=0.13.2",
 ]
 
 [tool.rye.scripts]

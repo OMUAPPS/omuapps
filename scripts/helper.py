@@ -1,8 +1,11 @@
 import json
 import re
-import tomllib
 from pathlib import Path
 from typing import TypedDict
+
+import tomlkit
+from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
 
 
 def get_lerna_version():
@@ -15,18 +18,26 @@ def get_lerna_version():
 class Project(TypedDict):
     name: str
     version: str
+    dependencies: list[str]
 
 
-def get_project(project: Path) -> Project:
+def read_project(project: Path) -> Project:
     toml = project / "pyproject.toml"
     if not toml.exists():
         raise FileNotFoundError(f"Could not find {toml}")
-    data = tomllib.loads(toml.read_text(encoding="utf-8"))
+    data = tomlkit.loads(toml.read_text(encoding="utf-8")).value
     return Project(data["project"])
 
 
-def gen_version(path: Path):
-    project = get_project(path)
+def write_project(project: Path, data: Project):
+    toml = project / "pyproject.toml"
+    parsed = tomlkit.loads(toml.read_text(encoding="utf-8"))
+    parsed["project"] = data
+    encoded_toml = parsed.as_string().encode(encoding="utf-8")
+    toml.write_bytes(encoded_toml)
+
+
+def gen_version(project: Project, path: Path):
     version_path = path / "src" / project["name"] / "version.py"
     version_path.write_bytes(
         f"""\
@@ -34,16 +45,6 @@ def gen_version(path: Path):
 VERSION = "{project['version']}"
 """.encode()
     )
-
-
-def get_version(project: Path) -> str:
-    toml = project / "pyproject.toml"
-    version_match = re.search(
-        r"version\s*=\s*\"([0-9.]*)\"", toml.read_text(encoding="utf-8")
-    )
-    if version_match is None:
-        raise ValueError(f"Could not find version in {toml}")
-    return version_match.group(1)
 
 
 def set_version(project: Path, version: str):
@@ -59,10 +60,34 @@ def set_version(project: Path, version: str):
 
 def update_version(version: str | None = None):
     new_version = version or get_lerna_version()
-    for pypackage in Path("packages-py").glob("*"):
-        print(f"[{pypackage.name}] {get_version(pypackage)} -> {new_version}")
+    py_packages = list(Path("packages-py").glob("*"))
+    package_versions: dict[str, str] = {}
+    for pypackage in py_packages:
+        project = read_project(pypackage)
+        print(f"[{pypackage.name}] {project['version']} -> {new_version}")
         set_version(pypackage, new_version)
-        gen_version(pypackage)
+        gen_version(project, pypackage)
+        package_versions[project["name"]] = project["version"]
+    for pypackage in py_packages:
+        project = read_project(pypackage)
+        dependencies: dict[str, Requirement] = {}
+        for dep in project["dependencies"]:
+            requirement = Requirement(dep)
+            name = requirement.name
+            if name is None:
+                raise ValueError(f"Illegal requirement {dep} in {pypackage}")
+            dependencies[name] = requirement
+        for dep in dependencies:
+            if dep not in package_versions:
+                continue
+            dependency = dependencies[dep]
+            updated_version = SpecifierSet(f">={package_versions[dep]}")
+            if updated_version == dependency.specifier:
+                continue
+            dependency.specifier = updated_version
+            print(f"[{pypackage.name}] {dep} -> {dependency}")
+        project["dependencies"] = [str(dependencies[dep]) for dep in dependencies]
+        write_project(pypackage, project)
 
     version_json_paths = {
         Path("packages-js/dash/src/lib/version.json"),
@@ -88,3 +113,7 @@ def update_version(version: str | None = None):
     tauri = json.loads(tauri_path.read_bytes())
     tauri["package"]["version"] = new_version
     tauri_path.write_bytes((json.dumps(tauri, indent=4) + "\n").encode())
+
+
+if __name__ == "__main__":
+    update_version()
