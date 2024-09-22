@@ -28,7 +28,7 @@
         {disabled}
     >
         <Tooltip>
-            <span>Remove</span>
+            <span>エントリーを削除</span>
         </Tooltip>
         <i class="ti ti-x" />
     </button>
@@ -40,13 +40,8 @@
         align-items: center;
         height: 3rem;
         gap: 0.5rem;
-        background: var(--color-bg-1);
-        padding: 0.5rem;
-
-        &:hover {
-            outline: 1px solid var(--color-1);
-            outline-offset: -3px;
-        }
+        padding: 0.25rem 0;
+        padding-right: 1px;
     }
 
     .index {
