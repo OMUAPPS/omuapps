@@ -103,7 +103,7 @@
         }
     }
     
-    function handleKeyDown(event: KeyboardEvent) {
+    function handleKeyDown() {
         keyboardFocus = true;
     }
 
