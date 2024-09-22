@@ -95,6 +95,18 @@
         update(target, tooltip);
     }
 
+    let keyboardFocus = false;
+
+    function handleFocus() {
+        if (!keyboardFocus) {
+            showTooltip();
+        }
+    }
+    
+    function handleKeyDown(event: KeyboardEvent) {
+        keyboardFocus = true;
+    }
+
     function attachParent(node: HTMLElement) {
         if (!node.parentElement) {
             throw new Error('TooltipInline must be a child of another node');
@@ -107,14 +119,14 @@
         }
         target.addEventListener('mouseenter', showTooltip);
         target.addEventListener('mouseleave', hideTooltip);
-        target.addEventListener('focus', showTooltip);
+        target.addEventListener('focus', handleFocus);
         target.addEventListener('blur', hideTooltip);
 
         return {
             destroy() {
                 target.removeEventListener('mouseenter', showTooltip);
                 target.removeEventListener('mouseleave', hideTooltip);
-                target.removeEventListener('focus', showTooltip);
+                target.removeEventListener('focus', handleFocus);
                 target.removeEventListener('blur', hideTooltip);
             },
         };
@@ -138,6 +150,11 @@
     let lastMouseVelocity = 0;
     let mouseJerk = 0;
     function handleMouseMove(event: MouseEvent) {
+        if (keyboardFocus) {
+            hideTooltip();
+            keyboardFocus = false;
+            return;
+        }
         if (event.timeStamp - lastMouseMoveTime < 1000 / 60) {
             return;
         }
@@ -197,7 +214,7 @@
     }
 </script>
 
-<svelte:window on:mousemove={handleMouseMove} />
+<svelte:window on:mousemove={handleMouseMove} on:keyDown={handleKeyDown} />
 <span class="wrapper" use:attachParent>
     {#if show && !isMouseMoving}
         <div
