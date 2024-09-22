@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.33 (2024-09-22)
+
+
+### Bug Fixes
+
+* **dash:** アプリ名を大文字に ([850bc54](https://github.com/OMUAPPS/omuapps/commit/850bc54be5f1e98dd92e6a2eabb1bca621bd3211))
+
+
+
+
+
 ## 0.6.32 (2024-09-22)
 
 **Note:** Version bump only for package @omujs/ui
