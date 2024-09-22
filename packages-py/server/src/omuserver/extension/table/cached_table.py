@@ -248,7 +248,9 @@ class CachedTable(ServerTable):
             *_, cursor = items.keys()
 
     async def size(self) -> int:
-        return len(self._cache)
+        if self._adapter is None:
+            raise Exception("Table not set")
+        return await self._adapter.size()
 
     async def save_task(self) -> None:
         while self._changed:
