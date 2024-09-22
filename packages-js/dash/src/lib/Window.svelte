@@ -6,6 +6,7 @@
     import ButtonClose from './common/titlebar/ButtonClose.svelte';
     import ButtonMaximize from './common/titlebar/ButtonMaximize.svelte';
     import ButtonMinimize from './common/titlebar/ButtonMinimize.svelte';
+    import ButtonPin from './common/titlebar/ButtonPin.svelte';
     import Title from './images/title.svg';
     import { listen, tauriWindow } from './utils/tauri.js';
 
@@ -28,6 +29,7 @@
             <StatusBar />
         </div>
         <div class="buttons">
+            <ButtonPin />
             <ButtonMinimize />
             <ButtonMaximize />
             <ButtonClose />

@@ -23,6 +23,7 @@
                 "unmaximize": true,
                 "unminimize": true,
                 "startDragging": true,
+                "setAlwaysOnTop": true,
                 "create": true,
                 "setFocus": true
             }

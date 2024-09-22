@@ -62,7 +62,9 @@
         "close": "Close",
         "minimize": "Minimize",
         "maximize": "Maximize",
-        "unmaximize": "Unmaximize"
+        "unmaximize": "Unmaximize",
+        "pin-enable": "Pin to Top",
+        "pin-disable": "Unpin from Top"
     },
     "panels": {
         "rooms": {

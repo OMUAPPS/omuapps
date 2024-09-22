@@ -28,6 +28,7 @@ tauri = { version = "1.8.0", features = [
     "window-start-dragging",
     "window-unmaximize",
     "window-unminimize",
+    "window-set-always-on-top",
     "devtools",
 ] }
 serde = { version = "1", features = ["derive"] }
