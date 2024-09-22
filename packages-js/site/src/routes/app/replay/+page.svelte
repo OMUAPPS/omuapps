@@ -78,82 +78,84 @@
         {/await}
     </header>
     <main>
-        <div class="menu">
-            <section>
-                <h3>
-                    配信ソフトに追加する
-                    <i class="ti ti-arrow-bar-to-down" />
-                </h3>
-                <AssetButton {omu} {obs} />
-            </section>
-            <div class="streams">
-                <h3>
-                    最近の配信から
-                    <i class="ti ti-video" />
-                    <div class="search">
-                        <input type="search" bind:value={search} placeholder="検索" />
-                        {#if !search}
-                            <i class="ti ti-search" />
-                        {/if}
+        <div class="container">
+            <div class="menu">
+                <section>
+                    <h3>
+                        配信ソフトに追加する
+                        <i class="ti ti-arrow-bar-to-down" />
+                    </h3>
+                    <AssetButton {omu} {obs} />
+                </section>
+                <div class="streams">
+                    <h3>
+                        最近の配信から
+                        <i class="ti ti-video" />
+                        <div class="search">
+                            <input type="search" bind:value={search} placeholder="検索" />
+                            {#if !search}
+                                <i class="ti ti-search" />
+                            {/if}
+                        </div>
+                    </h3>
+                    <div class="table">
+                        <TableList
+                            table={chat.rooms}
+                            component={RoomEntry}
+                            filter={(_, room) =>
+                                !!(
+                                    room.metadata?.url &&
+                                    (!search ||
+                                        room.metadata.title
+                                            ?.toLowerCase()
+                                            .includes(search.toLowerCase()))
+                                )}
+                        />
                     </div>
-                </h3>
-                <div class="table">
-                    <TableList
-                        table={chat.rooms}
-                        component={RoomEntry}
-                        filter={(_, room) =>
-                            !!(
-                                room.metadata?.url &&
-                                (!search ||
-                                    room.metadata.title
-                                        ?.toLowerCase()
-                                        .includes(search.toLowerCase()))
-                            )}
-                    />
                 </div>
             </div>
-        </div>
-        <div class="player">
-            {#if $replayData}
-                <Player
-                    videoId={$replayData.videoId}
-                    options={{
-                        events: {
-                            onReady,
-                            onPlaybackRateChange,
-                            onStateChange,
-                        },
-                    }}
-                />
-            {:else}
-                <div class="empty">
-                    動画を選択するとここに表示されます
-                    <i class="ti ti-layers-selected-bottom" />
-                </div>
-            {/if}
-            <section>
-                <p>
-                    URLから
-                    <i class="ti ti-link" />
-                </p>
-                <Textbox
-                    placeholder="URLを入力"
-                    on:input={(event) => {
-                        const url = new URL(event.detail);
-                        if (url.hostname === 'youtu.be') {
-                            const videoId = url.pathname.slice(1);
-                            $playVideo(videoId);
-                        } else if (url.hostname.endsWith('youtube.com')) {
-                            const videoId = url.searchParams.get('v');
-                            if (!videoId) return;
-                            $playVideo(videoId);
-                        } else {
-                            console.log('unsupported url', url);
-                        }
-                    }}
-                    lazy
-                />
-            </section>
+            <div class="player">
+                {#if $replayData}
+                    <Player
+                        videoId={$replayData.videoId}
+                        options={{
+                            events: {
+                                onReady,
+                                onPlaybackRateChange,
+                                onStateChange,
+                            },
+                        }}
+                    />
+                {:else}
+                    <div class="empty">
+                        動画を選択するとここに表示されます
+                        <i class="ti ti-video" />
+                    </div>
+                {/if}
+                <section>
+                    <p>
+                        URLから
+                        <i class="ti ti-link" />
+                    </p>
+                    <Textbox
+                        placeholder="URLを入力"
+                        on:input={(event) => {
+                            const url = new URL(event.detail);
+                            if (url.hostname === 'youtu.be') {
+                                const videoId = url.pathname.slice(1);
+                                $playVideo(videoId);
+                            } else if (url.hostname.endsWith('youtube.com')) {
+                                const videoId = url.searchParams.get('v');
+                                if (!videoId) return;
+                                $playVideo(videoId);
+                            } else {
+                                console.log('unsupported url', url);
+                            }
+                        }}
+                        lazy
+                    />
+                </section>
+            </div>
         </div>
     </main>
 </AppPage>
@@ -162,10 +164,18 @@
     main {
         position: absolute;
         inset: 0;
-        display: flex;
-        gap: 2rem;
         padding: 2rem;
         color: var(--color-1);
+        container-type: inline-size;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+    }
+
+    .container {
+        display: flex;
+        gap: 2rem;
+        flex: 1;
     }
 
     h3 {
@@ -230,6 +240,7 @@
             > .table {
                 flex: 1;
                 overflow: auto;
+                overflow-x: hidden;
             }
         }
     }
@@ -250,5 +261,12 @@
         outline: 1px dashed var(--color-outline);
         background: var(--color-bg-2);
         color: #666;
+    }
+
+    @container (width < 800px) {
+        .container {
+            flex-direction: column-reverse;
+            gap: 1rem;
+        }
     }
 </style>
