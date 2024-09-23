@@ -69,7 +69,7 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via iwashi
     # via omuserver
-colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
+colorama==0.4.6 ; platform_system == 'Windows' or sys_platform == 'win32'
     # via click
     # via loguru
     # via pytest

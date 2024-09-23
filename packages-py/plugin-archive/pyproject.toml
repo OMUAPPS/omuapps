@@ -5,7 +5,7 @@ description = "配信をアーカイブするためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu_chat>=0.6.33", "yt-dlp>=2024.4.9"]
+dependencies = ["loguru>=0.7.2", "omu_chat>=0.6.34", "yt-dlp>=2024.4.9"]
 readme = "README.md"
 requires-python = ">= 3.12"
 

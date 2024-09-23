@@ -65,6 +65,7 @@ def update_version(version: str | None = None):
     for pypackage in py_packages:
         project = read_project(pypackage)
         print(f"[{pypackage.name}] {project['version']} -> {new_version}")
+        project["version"] = new_version
         set_version(pypackage, new_version)
         gen_version(project, pypackage)
         package_versions[project["name"]] = project["version"]
