@@ -82,40 +82,42 @@
 
 <main class:open={$menuOpen}>
     <div class="tabs" class:open={$menuOpen}>
-        <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
-            {#if $menuOpen}
-                <i class="ti ti-chevron-left" />
-                <Tooltip>{$t('menu.collapse')}</Tooltip>
-            {:else}
-                <i class="ti ti-menu" />
-                <Tooltip>{$t('menu.expand')}</Tooltip>
-            {/if}
-        </button>
-        <TabEntry entry={EXPLORE_PAGE} />
-        <TabEntry entry={CONNECT_PAGE} />
-        <TabEntry entry={SETTINGS_PAGE} />
-        <div class="tab-group">
-            {#if $menuOpen}
-                <span>
-                    {$t('menu.apps')}
-                    <i class="ti ti-apps" />
-                </span>
-                <div class="buttons">
-                    <button
-                        on:click={() =>
-                            screenContext.push(ManageAppsScreen, undefined)}
-                    >
-                        <Tooltip>
-                            <div class="tooltip">
-                                <h3>{$t('screen.manage-apps.name')}</h3>
-                                <small>{$t('screen.manage-apps.description')}</small>
-                            </div>
-                        </Tooltip>
-                        <i class="ti ti-edit" />
-                    </button>
-                </div>
-            {/if}
-        </div>
+        <section>
+            <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
+                {#if $menuOpen}
+                    <i class="ti ti-chevron-left" />
+                    <Tooltip>{$t('menu.collapse')}</Tooltip>
+                {:else}
+                    <i class="ti ti-menu" />
+                    <Tooltip>{$t('menu.expand')}</Tooltip>
+                {/if}
+            </button>
+            <TabEntry entry={EXPLORE_PAGE} />
+            <TabEntry entry={CONNECT_PAGE} />
+            <TabEntry entry={SETTINGS_PAGE} />
+            <div class="tab-group">
+                {#if $menuOpen}
+                    <span>
+                        {$t('menu.apps')}
+                        <i class="ti ti-apps" />
+                    </span>
+                    <div class="buttons">
+                        <button
+                            on:click={() =>
+                                screenContext.push(ManageAppsScreen, undefined)}
+                        >
+                            <Tooltip>
+                                <div class="tooltip">
+                                    <h3>{$t('screen.manage-apps.name')}</h3>
+                                    <small>{$t('screen.manage-apps.description')}</small>
+                                </div>
+                            </Tooltip>
+                            <i class="ti ti-edit" />
+                        </button>
+                    </div>
+                {/if}
+            </div>
+        </section>
         <div class="list">
             <TableList table={dashboard.apps} component={AppEntry}>
                 <button slot="empty" on:click={() => ($currentPage = EXPLORE_PAGE.id)} class="no-apps">
@@ -179,7 +181,7 @@
         width: $tab-width;
         background: var(--color-bg-2);
         border-right: 1px solid var(--color-outline);
-        padding: 1rem 0.5rem;
+        padding: 1rem 0;
         padding-bottom: 0.5rem;
         width: 4rem;
         transition: width 0.0621s;
@@ -187,6 +189,10 @@
         &.open {
             width: $tab-width;
             transition: width 0.0621s;
+        }
+
+        > section {
+            padding: 0 0.5rem;
         }
     }
 

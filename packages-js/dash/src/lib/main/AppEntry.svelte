@@ -107,6 +107,7 @@
         border-bottom: 1px solid var(--color-outline);
         width: 100%;
         height: 4rem;
+        margin-left: 0.5rem;
 
         &.active {
             background: var(--color-bg-1);
