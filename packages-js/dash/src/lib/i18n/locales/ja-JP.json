@@ -119,7 +119,7 @@
         "connect": {
             "icon": "ti ti-bolt",
             "title": "配信をつなげる",
-            "tooltip": "配信をつなげるための設定を行います",
+            "tooltip": "アプリが配信情報を使えるようにしよう",
             "channels": "チャンネル",
             "rooms": "配信",
             "chat": "チャット"

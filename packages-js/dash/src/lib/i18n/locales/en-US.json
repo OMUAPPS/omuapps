@@ -111,7 +111,7 @@
         "connect": {
             "icon": "ti ti-bolt",
             "title": "Connect Streaming",
-            "tooltip": "Set up to connect streaming",
+            "tooltip": "Let apps use streaming information",
             "channels": "Channels",
             "rooms": "Streams",
             "chat": "Chat"
