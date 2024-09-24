@@ -123,8 +123,8 @@
         }
     },
     "menu": {
-        "collapse": "Collapse",
         "expand": "Expand",
+        "collapse": "Collapse",
         "apps": "Apps",
         "add-apps": "Add Apps",
         "add-apps-hint": "Apps will be displayed here when added",
