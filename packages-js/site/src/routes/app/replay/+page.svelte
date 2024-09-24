@@ -110,7 +110,11 @@
                                             ?.toLowerCase()
                                             .includes(search.toLowerCase()))
                                 )}
-                        />
+                        >
+                            <p slot="empty" class="no-streams">
+                                配信が追加されるとここに表示されます
+                            </p>
+                        </TableList>
                     </div>
                 </div>
             </div>
@@ -243,6 +247,18 @@
                 overflow-x: hidden;
             }
         }
+    }
+
+    .no-streams {
+        color: var(--color-text);
+        background: var(--color-bg-2);
+        font-size: 0.8rem;
+        opacity: 0.621;
+        height: 4rem;
+        margin: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .player {
