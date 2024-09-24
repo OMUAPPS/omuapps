@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { omu } from '$lib/client.js';
+    import { dashboard, omu } from '$lib/client.js';
+    import { PermissionType } from '@omujs/omu/extension/permission/permission.js';
     import type { Registry } from '@omujs/omu/extension/registry/registry.js';
     import type { Writable } from 'svelte/store';
 
@@ -51,8 +52,32 @@
         window.localStorage.clear();
     }}>
         Clear Settings
-    </button>    
+    </button>
 </section>
+
+<h3>
+    Permissions
+</h3>
+<section>
+    <button on:click={() => {
+        dashboard.handlePermissionRequest({
+            app: omu.app,
+            permissions: [
+                PermissionType.fromJson({
+                    id: 'test:test',
+                    metadata: {
+                        level: 'high',
+                        name: 'Test Permission',
+                    },
+                })
+            ],
+            requestId: 'test',
+        });
+    }}>
+        Request Test Permission
+    </button>
+</section>
+
 <style lang="scss">
     h3 {
         margin-bottom: 0.5rem;
