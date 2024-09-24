@@ -29,7 +29,8 @@
         "select_all": "Select All",
         "settings": "Settings",
         "dragdrop": "You can add by dragging and dropping",
-        "second": "Second"
+        "second": "Second",
+        "no_description": "No Description"
     },
     "date": {
         "just_now": "Just Now",

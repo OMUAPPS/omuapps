@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { t } from '$lib/i18n/i18n-context.js';
     import type { PermissionType } from '@omujs/omu/extension/permission/permission.js';
     import { Tooltip } from '@omujs/ui';
     import { omu } from '../../client.js';
@@ -9,11 +10,15 @@
 </script>
 
 <button class:accepted on:click={() => (accepted = !accepted)} disabled={disabled}>
-    <Tooltip>
-        {#if permission.metadata.note}
+    {#if permission.metadata.note}
+        <Tooltip>
             {omu.i18n.translate(permission.metadata.note)}
-        {/if}
-    </Tooltip>
+        </Tooltip>
+    {:else}
+        <Tooltip>
+            {$t('general.no_description')}
+        </Tooltip>
+    {/if}
     <div class="check" class:disabled class:accepted>
         {#if accepted}
             <i class="ti ti-check" />
