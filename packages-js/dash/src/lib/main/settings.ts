@@ -91,16 +91,16 @@ export function registerSetting<T extends Record<string, unknown>>(
     } as Setting<T>;
 }
 
-registerSetting('general', 'devMode', Checkbox, {
-    label: 'settings.setting.devMode',
-    value: devMode,
-});
-registerSetting('language', 'language', Combobox, {
+registerSetting('general', 'language', Combobox, {
     label: 'settings.setting.language',
     value: language,
     options: Object.keys(LOCALES).sort(
         (a, b) => calcLanguageScore(b) - calcLanguageScore(a),
     ) as (keyof typeof LOCALES)[],
+});
+registerSetting('general', 'devMode', Checkbox, {
+    label: 'settings.setting.devMode',
+    value: devMode,
 });
 registerSetting('about', 'licenses', About, {});
 if (get(devMode)) {

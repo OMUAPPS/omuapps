@@ -180,21 +180,6 @@
                 "description": "You can change general settings.",
                 "icon": "ti ti-settings"
             },
-            "language": {
-                "name": "Language",
-                "description": "You can change the language.",
-                "icon": "ti ti-language-hiragana"
-            },
-            "appearance": {
-                "name": "Appearance",
-                "description": "You can change the appearance.",
-                "icon": "ti ti-palette"
-            },
-            "advanced": {
-                "name": "Advanced",
-                "description": "You can change advanced settings.",
-                "icon": "ti ti-settings"
-            },
             "about": {
                 "name": "About",
                 "description": "Show information about this app.",

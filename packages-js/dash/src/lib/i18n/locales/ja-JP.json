@@ -198,21 +198,6 @@
                 "description": "一般的な設定を変更できます。",
                 "icon": "ti ti-settings"
             },
-            "language": {
-                "name": "言語",
-                "description": "言語を変更できます。",
-                "icon": "ti ti-language-hiragana"
-            },
-            "appearance": {
-                "name": "外観",
-                "description": "外観を変更できます。",
-                "icon": "ti ti-palette"
-            },
-            "advanced": {
-                "name": "詳細",
-                "description": "詳細な設定を変更できます。",
-                "icon": "ti ti-settings"
-            },
             "about": {
                 "name": "情報",
                 "description": "このアプリの情報を表示します。",
