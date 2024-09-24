@@ -198,6 +198,11 @@
                 "name": "About",
                 "description": "Show information about this app.",
                 "icon": "ti ti-license"
+            },
+            "developer": {
+                "name": "Developer",
+                "description": "You can change settings for developers.",
+                "icon": "ti ti-code"
             }
         },
         "setting": {

@@ -216,6 +216,11 @@
                 "name": "情報",
                 "description": "このアプリの情報を表示します。",
                 "icon": "ti ti-license"
+            },
+            "developer": {
+                "name": "開発者",
+                "description": "開発者向けの設定を変更できます。",
+                "icon": "ti ti-code"
             }
         },
         "setting": {
