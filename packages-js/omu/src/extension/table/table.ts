@@ -89,4 +89,19 @@ export class TableType<T> {
             permissions,
         );
     }
+
+    public static createJson<T>(
+        identifier: Identifier | ExtensionType,
+        {
+            name,
+            key,
+            permissions,
+        }: {
+            name: string;
+            key: (item: T) => string;
+            permissions?: TablePermissions;
+        },
+    ): TableType<T> {
+        return new TableType<T>(identifier.join(name), Serializer.json<T>(), key, permissions);
+    }
 }

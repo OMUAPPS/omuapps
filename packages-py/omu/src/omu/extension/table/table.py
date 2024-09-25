@@ -163,16 +163,16 @@ class TableType[T]:
         )
 
     @classmethod
-    def create_serialized[_T: Keyable](
+    def create_json[_T](
         cls,
         identifier: Identifier,
         name: str,
-        serializer: Serializable[_T, bytes],
+        key: Callable[[_T], str],
         permissions: TablePermissions | None = None,
     ) -> TableType[_T]:
         return TableType(
             id=identifier / name,
-            serializer=serializer,
-            key_function=lambda item: item.key(),
+            serializer=Serializer.json(),
+            key_function=key,
             permissions=permissions,
         )
