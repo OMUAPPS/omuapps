@@ -28,7 +28,7 @@
     </Tooltip>
     <i class={icon} />
     {#if $menuOpen}
-        <span>{title}</span>
+        <span class="title">{title}</span>
         <i class="open ti ti-chevron-right" />
     {/if}
 </button>
@@ -76,6 +76,10 @@
             color: var(--color-1);
             border-right: 2px solid var(--color-1);
         }
+    }
+
+    .title {
+        white-space: nowrap;
     }
 
     .tooltip {

@@ -97,7 +97,7 @@
             <TabEntry entry={SETTINGS_PAGE} />
             <div class="tab-group">
                 {#if $menuOpen}
-                    <span>
+                    <span class="title">
                         {$t('menu.apps')}
                         <i class="ti ti-apps" />
                     </span>
@@ -246,6 +246,10 @@
         padding-bottom: 0.75rem;
         margin-top: 2rem;
         padding-left: 0.75rem;
+
+        > .title {
+            white-space: nowrap;
+        }
 
         > .buttons {
             margin-left: auto;
