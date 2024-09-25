@@ -176,7 +176,7 @@ export class TableExtension implements Extension {
         return table;
     }
 
-    public get<T extends Keyable>(type: TableType<T>): Table<T> {
+    public get<T>(type: TableType<T>): Table<T> {
         if (this.has(type.id)) {
             return this.tableMap.get(type.id) as Table<T>;
         }
