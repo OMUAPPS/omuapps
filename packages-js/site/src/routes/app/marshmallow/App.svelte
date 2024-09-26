@@ -108,10 +108,6 @@
                     メッセージを読み込んでいます…
                 </div>
             {:else}
-                <h3>
-                    メッセージ
-                    <i class="ti ti-notes" />
-                </h3>
                 {#if user}
                     <div class="messages-header" class:premium={user.premium}>
                         {#if user.premium}
@@ -152,6 +148,10 @@
                         </button>
                     </div>
                 {/if}
+                <h3>
+                    メッセージ
+                    <i class="ti ti-notes" />
+                </h3>
                 <div class="message-list">
                     {#if tab === 'new'}
                         {#each messages as entry}
