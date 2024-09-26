@@ -15,7 +15,7 @@
     const { manifest } = screen.props;
     const date = new Date(manifest.date.replace(/:00$/, ''));
 
-    type State = 'idle' | 'updating' | 'shutting-down';
+    type State = 'idle' | 'updating' | 'shutting-down' | 'restarting';
     let state: State = 'idle';
 
     async function update() {
@@ -24,6 +24,7 @@
         state = 'updating';
         await installUpdate();
         await relaunch();
+        state = 'restarting';
     }
 
     let open = false;
@@ -32,11 +33,15 @@
 <Screen {screen} title="update">
     {#if state === 'updating'}
         <div class="info">
-            <h3>アップデート中...</h3>
+            <h3>新しいバージョンをダウンロードしています...</h3>
         </div>
     {:else if state === 'shutting-down'}
         <div class="info">
             <h3>サーバーをシャットダウンしています...</h3>
+        </div>
+    {:else if state === 'restarting'}
+        <div class="info">
+            <h3>インストーラーを起動しています...</h3>
         </div>
     {:else}
         <div class="info">
