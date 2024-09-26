@@ -142,8 +142,13 @@
         class:active={message.acknowledged}
         on:click={aknowledge}
     >
-        <Tooltip>確認済みにする</Tooltip>
-        <i class="ti ti-check" />
+        {#if message.acknowledged}
+            <Tooltip>確認を解除</Tooltip>
+            <i class="ti ti-check" />
+        {:else}
+            <Tooltip>確認済みにする</Tooltip>
+            <i class="ti ti-check" />
+        {/if}
     </button>
     <button
         class="like"
@@ -152,10 +157,11 @@
             message = await lock(marshmallow.setLiked(message.message_id, !message.liked));
         }}
     >
-        <Tooltip>お気に入りにする</Tooltip>
         {#if message.liked}
+            <Tooltip>お気に入りを解除</Tooltip>
             <i class="ti ti-heart-filled" />
         {:else}
+            <Tooltip>お気に入りにする</Tooltip>
             <i class="ti ti-heart" />
         {/if}
     </button>
