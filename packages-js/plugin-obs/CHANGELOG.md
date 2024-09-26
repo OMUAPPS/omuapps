@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.37 (2024-09-26)
+
+
+### Bug Fixes
+
+* **server:** 127.0.0.1以外からの接続を弾くように ([6d0e7e9](https://github.com/OMUAPPS/omuapps/commit/6d0e7e925188398c783c240d456059f880083d8a))
+
+
+
+
+
 ## 0.6.36 (2024-09-26)
 
 **Note:** Version bump only for package @omujs/obs
