@@ -1,29 +1,17 @@
 <script lang="ts">
-    import { t } from '$lib/i18n/i18n-context.js';
-    import { tauriWindow } from '$lib/utils/tauri.js';
     import { Tooltip } from '@omujs/ui';
 
-    let alwaysOnTop = false;
-
-    function toggle() {
-        alwaysOnTop = !alwaysOnTop;
-        tauriWindow.appWindow.setAlwaysOnTop(alwaysOnTop);
-    }
+    export let icon: string;
+    export let tooltip: string;
 </script>
 
 <button
     class="button"
-    class:enabled={alwaysOnTop}
     type="button"
-    on:click={toggle}
+    on:click
 >
-    {#if alwaysOnTop}
-        <Tooltip>{$t('titlebar.pin-disable')}</Tooltip>
-        <i class="ti ti-pinned-filled" />
-    {:else}
-        <Tooltip>{$t('titlebar.pin-enable')}</Tooltip>
-        <i class="ti ti-pin" />
-    {/if}
+    <Tooltip>{tooltip}</Tooltip>
+    <i class="ti {icon}" />
 </button>
 
 <style lang="scss">

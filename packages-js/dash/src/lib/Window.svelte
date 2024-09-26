@@ -3,13 +3,13 @@
     import { onDestroy, onMount } from 'svelte';
     import StatusBar from './common/StatusBar.svelte';
     import ScreenRenderer from './common/screen/ScreenRenderer.svelte';
-    import ButtonClose from './common/titlebar/ButtonClose.svelte';
-    import ButtonMaximize from './common/titlebar/ButtonMaximize.svelte';
-    import ButtonMinimize from './common/titlebar/ButtonMinimize.svelte';
-    import ButtonPin from './common/titlebar/ButtonPin.svelte';
     import Title from './images/title.svg';
     import { listen, tauriWindow } from './utils/tauri.js';
 
+    import { t } from '$lib/i18n/i18n-context.js';
+    import TitlebarButton from './TitlebarButton.svelte';
+
+    let alwaysOnTop = false;
     let maximized = false;
 
     const destroy = listen(TauriEvent.WINDOW_RESIZED, async () => {
@@ -19,6 +19,24 @@
         maximized = await tauriWindow.appWindow.isMaximized();
     });
     onDestroy(async () => (await destroy)());
+
+    function togglePin() {
+        alwaysOnTop = !alwaysOnTop;
+        tauriWindow.appWindow.setAlwaysOnTop(alwaysOnTop);
+    }
+    
+    function minimize() {
+        tauriWindow.appWindow.minimize();
+    }
+
+    async function maximize() {
+        tauriWindow.appWindow.toggleMaximize();
+        maximized = !(await tauriWindow.appWindow.isMaximized());
+    }
+    
+    function close() {
+        tauriWindow.appWindow.close();
+    }
 </script>
 
 <div class="window">
@@ -29,10 +47,26 @@
             <StatusBar />
         </div>
         <div class="buttons">
-            <ButtonPin />
-            <ButtonMinimize />
-            <ButtonMaximize />
-            <ButtonClose />
+            <TitlebarButton
+                on:click={togglePin}
+                icon={alwaysOnTop ? 'ti-pinned-filled' : 'ti-pin'}
+                tooltip={alwaysOnTop ? $t('titlebar.pin-disable') : $t('titlebar.pin-enable')}
+            />
+            <TitlebarButton
+                on:click={minimize}
+                icon="ti-minus"
+                tooltip={$t('titlebar.minimize')}
+            />
+            <TitlebarButton
+                on:click={maximize}
+                icon={maximized ? 'ti-picture-in-picture-top' : 'ti-rectangle'}
+                tooltip={$t(`titlebar.${maximized ? 'unmaximize' : 'maximize'}`)}
+            />
+            <TitlebarButton
+                on:click={close}
+                icon="ti-x"
+                tooltip={$t('titlebar.close')}
+            />
         </div>
     </div>
     <div class="content">
