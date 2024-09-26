@@ -9,26 +9,14 @@
     let open = false;
 </script>
 
-<button class="switcher" class:switch={users && Object.keys(users).length > 1} on:click={async () => {
+<button class="switcher" class:open class:switch={users && Object.keys(users).length > 1} on:click={async () => {
     if (!open) {
         await refreshUsers();
     }
     open = !open;
 }}>
-    {#if user}
-        <Account {user} />
-    {/if}
-    {#if users && Object.keys(users).length > 1}
-        <Tooltip>
-            {#if user}
-                <b>{user.screen_name}</b> <small>にログインしています</small>
-            {:else}
-                ログインしていません
-            {/if}
-            <br />
-            アカウントを切り替える
-        </Tooltip>
-        <div class="popup" class:open>
+    {#if open}
+        <div class="popup">
             {#if users}
                 {#each Object.entries(users) as [id, entry] (id)}
                     {@const selected = user === entry}
@@ -41,7 +29,7 @@
                         class:selected
                     >
                         <Tooltip>
-                            {entry.screen_name} にログイン
+                            {entry.screen_name} に切り替える
                         </Tooltip>
                         <img src={entry.image} alt={entry.name} />
                         <span class="user-info">
@@ -57,15 +45,30 @@
                 <p>他のアカウントは見つかりませんでした</p>
             {/if}
         </div>
-        <i class="ti ti-chevron-down" />
     {:else}
-        <Tooltip>
-            {#if user}
-                <b>{user.screen_name}</b> <small>にログインしています</small>
-            {:else}
-                ログインしていません
-            {/if}
-        </Tooltip>
+        {#if user}
+            <Account {user} />
+        {/if}
+        {#if users && Object.keys(users).length > 1}
+            <Tooltip>
+                {#if user}
+                    <b>{user.screen_name}</b> <small>にログインしています</small>
+                {:else}
+                    ログインしていません
+                {/if}
+                <br />
+                アカウントを切り替える
+            </Tooltip>
+            <i class="ti ti-chevron-down" />
+        {:else}
+            <Tooltip>
+                {#if user}
+                    <b>{user.screen_name}</b> <small>にログインしています</small>
+                {:else}
+                    ログインしていません
+                {/if}
+            </Tooltip>
+        {/if}
     {/if}
 </button>
 
@@ -109,30 +112,14 @@
         &:focus {
             outline: none;
         }
+
+        &.open {
+            padding-left: 0rem;
+        }
     }
 
     .popup {
-        position: absolute;
-        z-index: 200;
-        top: 100%;
-        margin: 0.25rem 1rem;
-        display: none;
-        min-width: 200px;
-        outline: 1px solid var(--color-outline);
-
-        &.open {
-            display: block;
-        }
-
-        &::before {
-            content: '';
-            position: absolute;
-            top: -1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 0.5rem solid transparent;
-            border-bottom-color: var(--color-outline);
-        }
+        width: 100%;
     }
 
     .user {
@@ -141,7 +128,7 @@
         align-items: center;
         justify-content: start;
         gap: 1rem;
-        padding: 0.6rem 1rem;
+        padding: 0.75rem 1rem;
         width: 100%;
         background: var(--color-bg-2);
         border: none;
