@@ -6,69 +6,31 @@
     export let users: Record<string, User> | null;
     export let user: User | null = null;
     export let refreshUsers: () => Promise<void>;
-    let open = false;
 </script>
 
-<button class="switcher" class:open class:switch={users && Object.keys(users).length > 1} on:click={async () => {
-    if (!open) {
-        await refreshUsers();
-    }
-    open = !open;
-}}>
-    {#if open}
-        <div class="popup">
-            {#if users}
-                {#each Object.entries(users) as [id, entry] (id)}
-                    {@const selected = user === entry}
-                    <button
-                        on:click={() => {
-                            user = entry;
-                            close();
-                        }}
-                        class="user"
-                        class:selected
-                    >
-                        <Tooltip>
-                            {entry.screen_name} に切り替える
-                        </Tooltip>
-                        <img src={entry.image} alt={entry.name} />
-                        <span class="user-info">
-                            <p>{entry.screen_name}</p>
-                            <small>{entry.name}</small>
-                        </span>
-                        {#if selected}
-                            <i class="ti ti-check" />
-                        {/if}
-                    </button>
-                {/each}
+<button class="switcher" class:open class:switch={users && Object.keys(users).length > 1} on:click={refreshUsers}>
+    {#if user}
+        <Account {user} />
+    {/if}
+    {#if users && Object.keys(users).length > 1}
+        <Tooltip>
+            {#if user}
+                <b>{user.screen_name}</b> <small>にログインしています</small>
             {:else}
-                <p>他のアカウントは見つかりませんでした</p>
+                ログインしていません
             {/if}
-        </div>
+            <br />
+            アカウントを切り替える
+        </Tooltip>
+        <i class="ti ti-chevron-down" />
     {:else}
-        {#if user}
-            <Account {user} />
-        {/if}
-        {#if users && Object.keys(users).length > 1}
-            <Tooltip>
-                {#if user}
-                    <b>{user.screen_name}</b> <small>にログインしています</small>
-                {:else}
-                    ログインしていません
-                {/if}
-                <br />
-                アカウントを切り替える
-            </Tooltip>
-            <i class="ti ti-chevron-down" />
-        {:else}
-            <Tooltip>
-                {#if user}
-                    <b>{user.screen_name}</b> <small>にログインしています</small>
-                {:else}
-                    ログインしていません
-                {/if}
-            </Tooltip>
-        {/if}
+        <Tooltip>
+            {#if user}
+                <b>{user.screen_name}</b> <small>にログインしています</small>
+            {:else}
+                ログインしていません
+            {/if}
+        </Tooltip>
     {/if}
 </button>
 
@@ -115,64 +77,6 @@
 
         &.open {
             padding-left: 0rem;
-        }
-    }
-
-    .popup {
-        width: 100%;
-    }
-
-    .user {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: start;
-        gap: 1rem;
-        padding: 0.75rem 1rem;
-        width: 100%;
-        background: var(--color-bg-2);
-        border: none;
-        cursor: pointer;
-
-        > img {
-            width: 2rem;
-            height: 2rem;
-            border-radius: 50%;
-        }
-
-        > .user-info {
-            display: flex;
-            flex-direction: column;
-            align-items: start;
-
-            > p {
-                font-weight: bold;
-                font-size: 0.8rem;
-            }
-
-            > small {
-                font-size: 0.6rem;
-            }
-        }
-
-        &.selected {
-            background: var(--color-1);
-            color: var(--color-bg-2);
-        }
-
-        &:focus,
-        &:hover {
-            padding-left: 1.2rem;
-            padding-right: 0.8rem;
-            transition-duration: 0.0621s;
-            transition-property: padding-left, padding-right, background, color;
-        }
-
-        &:active {
-            padding-left: 0.8rem;
-            padding-right: 1.2rem;
-            transition-duration: 0.0621s;
-            transition-property: padding-left, padding-right, background, color;
         }
     }
 </style>

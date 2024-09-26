@@ -42,17 +42,16 @@
         state = 'loading_users';
         return refreshPromise = marshmallow.refreshUsers().then(async (result) => {
             users = result;
-            state = 'loaded';
             if (Object.keys(users).length === 0) {
                 state = 'user_notfound';
                 return;
             }
-            if ($config.user && users[$config.user]) {
-                user = users[$config.user];
-            } else if (Object.keys(users).length === 1) {
+            if (Object.keys(users).length === 1) {
                 user = users[Object.keys(users)[0]];
+                state = 'loaded';
             } else {
                 state = 'user_select';
+                user = null;
             }
         }).finally(() => {
             refreshPromise = null;
