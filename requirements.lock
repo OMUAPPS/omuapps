@@ -100,7 +100,7 @@ loguru==0.7.2
     # via omuserver
 lxml==5.3.0
     # via omu-chatprovider
-marshmallowqa-py==0.6.0
+marshmallowqa-py==0.7.0
     # via omuplugin-marshmallow
 multidict==6.0.5
     # via aiohttp
