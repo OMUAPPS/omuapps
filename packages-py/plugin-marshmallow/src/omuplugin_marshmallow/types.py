@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from omu.extension.endpoint import EndpointType
 
@@ -29,6 +29,7 @@ class Message(TypedDict):
     liked: bool
     acknowledged: bool
     content: str
+    replied: NotRequired[bool]
 
 
 GET_MESSAGES_ENDPOINT_TYPE = EndpointType[str, list[Message]].create_json(

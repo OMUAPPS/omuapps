@@ -89,6 +89,7 @@ async def set_liked(set_liked: SetLiked) -> Message:
         content=detail.content,
         liked=detail.liked,
         acknowledged=detail.acknowledged,
+        replied=detail.replied,
     )
 
 
@@ -109,6 +110,7 @@ async def set_acknowledged(set_acknowledged: SetAcknowledged) -> Message:
         content=detail.content,
         liked=detail.liked,
         acknowledged=detail.acknowledged,
+        replied=detail.replied,
     )
 
 
@@ -132,6 +134,7 @@ async def set_reply(set_reply: SetReply) -> Message:
         content=detail.content,
         liked=detail.liked,
         acknowledged=detail.acknowledged,
+        replied=detail.replied,
     )
 
 
