@@ -47,12 +47,14 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        padding: 1rem 2rem;
-        padding-right: 1rem;
+        text-align: start;
+        padding: 1rem;
+        padding-right: 0.5rem;
         border: none;
         background: var(--color-bg-2);
-        border-bottom: 1px solid var(--color-outline);
+        color: var(--color-text);
         width: 100%;
+        margin-bottom: 2px;
         cursor: pointer;
 
         &.acknowledged {
@@ -66,27 +68,31 @@
         }
 
         > i {
-            margin-left: auto;
             padding-left: 0.25rem;
         }
 
 
         &.selected,
         &:hover {
-            outline: none;
-            padding-left: 2.25rem;
+            padding-left: 1.1rem;
             transition-duration: 0.0621s;
-            transition-property: padding-left, background, color;
+            transition-property: padding-left, background;
         }
 
         &:focus {
-            padding-left: 1.85rem;
+            padding-left: 0.9rem;
         }
 
         &.current {
-            background: var(--color-bg-1);
+            background: var(--color-bg-2);
             color: var(--color-1);
-            padding-left: 2rem;
+            border-right: 2px solid var(--color-1);
+            padding-left: 1rem;
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--color-1);
+            outline-offset: -2px;
         }
     }
 </style>

@@ -268,34 +268,30 @@
         top: 0;
         display: flex;
         justify-content: flex-end;
-        background: var(--color-bg-2);
-        border-bottom: 1px solid var(--color-outline);
-        padding: 0.5rem 1rem;
+        padding: 1rem;
         gap: 0.5rem;
 
         > button,
         > a {
-            background: none;
+            background: var(--color-bg-1);
             border: none;
+            outline: none;
             cursor: pointer;
-            min-width: 2rem;
-            height: 2rem;
+            padding: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 4px;
+            text-decoration: none;
             color: var(--color-1);
+            border-radius: 2px;
 
-            &:focus {
+            &:focus-visible {
                 outline: 2px solid var(--color-1);
                 outline-offset: 1px;
             }
+            
             &:hover {
-                background: var(--color-bg-1);
-                color: var(--color-1);
-            }
-            &:active {
-                outline: none;
+                outline: 1px solid var(--color-1);
             }
         }
 
@@ -356,10 +352,6 @@
         font-size: 0.9rem;
         font-weight: bold;
         cursor: pointer;
-
-        &:focus,
-        &:hover {
-        }
 
         &:disabled {
             background: var(--color-bg-1);

@@ -18,7 +18,7 @@
         flex-direction: row;
         align-items: center;
         gap: 1rem;
-        padding: 1rem 2rem;
+        padding: 1rem;
         padding-right: 1rem;
         width: 100%;
 

@@ -79,7 +79,7 @@
         background: none;
         border: none;
         cursor: pointer;
-        border-bottom: 1px solid var(--color-outline);
+        background: var(--color-bg-2);
 
         > :not(.popup) {
             pointer-events: none;
@@ -115,7 +115,7 @@
         position: absolute;
         z-index: 200;
         top: 100%;
-        margin: 0.75rem 1rem;
+        margin: 0.25rem 1rem;
         display: none;
         min-width: 200px;
         outline: 1px solid var(--color-outline);
