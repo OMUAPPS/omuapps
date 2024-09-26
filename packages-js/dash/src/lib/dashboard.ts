@@ -1,6 +1,6 @@
-import PermissionRequestScreen from '$lib/common/screen/PermissionRequestScreen.svelte';
-import PluginRequestScreen from '$lib/common/screen/PluginRequestScreen.svelte';
 import { currentPage } from '$lib/main/settings.js';
+import PermissionRequestScreen from '$lib/screen/PermissionRequestScreen.svelte';
+import PluginRequestScreen from '$lib/screen/PluginRequestScreen.svelte';
 import { tauriWindow } from '$lib/tauri.js';
 import { App, Omu } from '@omujs/omu';
 import type { DashboardHandler } from '@omujs/omu/extension/dashboard/dashboard.js';
@@ -13,9 +13,9 @@ import type {
 import type { Table } from '@omujs/omu/extension/table/table.js';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Locale } from '@omujs/omu/localization/locale.js';
-import AppInstallRequestScreen from './common/screen/AppInstallRequestScreen.svelte';
-import AppUpdateRequestScreen from './common/screen/AppUpdateRequestScreen.svelte';
-import { screenContext } from './common/screen/screen.js';
+import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
+import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';
+import { screenContext } from './screen/screen.js';
 
 export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 

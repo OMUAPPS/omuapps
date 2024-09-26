@@ -1,7 +1,7 @@
 <script lang="ts">
     import { dashboard } from '$lib/client.js';
-    import { screenContext } from '$lib/common/screen/screen.js';
     import { t } from '$lib/i18n/i18n-context.js';
+    import { screenContext } from '$lib/screen/screen.js';
     import { TableList, Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import AppEntry from './AppEntry.svelte';

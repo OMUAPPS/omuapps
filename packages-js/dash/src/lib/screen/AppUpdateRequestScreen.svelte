@@ -1,6 +1,6 @@
 <script lang="ts">
+    import AppInfo from '$lib/common/AppInfo.svelte';
     import type { AppUpdateRequest } from '@omujs/omu/extension/dashboard/packets.js';
-    import AppInfo from '../AppInfo.svelte';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 

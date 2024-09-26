@@ -1,8 +1,8 @@
 <script lang="ts">
+    import AppInfo from '$lib/common/AppInfo.svelte';
     import type { PermissionRequestPacket } from '@omujs/omu/extension/dashboard/packets.js';
     import type { PermissionLevel } from '@omujs/omu/extension/permission/permission.js';
     import { Tooltip } from '@omujs/ui';
-    import AppInfo from '../AppInfo.svelte';
     import PermissionEntry from './PermissionEntry.svelte';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';

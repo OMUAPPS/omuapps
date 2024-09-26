@@ -6,8 +6,8 @@
     import RoomEntry from './RoomEntry.svelte';
 
     import { chat } from '$lib/client.js';
-    import { screenContext } from '$lib/common/screen/screen.js';
     import ScreenSetup from '$lib/main/setup/ScreenSetup.svelte';
+    import { screenContext } from '$lib/screen/screen.js';
     import { Button, TableList } from '@omujs/ui';
 
     export let filter: (key: string, room: models.Room) => boolean = () => true;

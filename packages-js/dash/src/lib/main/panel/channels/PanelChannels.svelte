@@ -7,8 +7,8 @@
     import ChannelEntry from './ChannelEntry.svelte';
 
     import { chat } from '$lib/client.js';
-    import { screenContext } from '$lib/common/screen/screen.js';
     import ScreenSetup from '$lib/main/setup/ScreenSetup.svelte';
+    import { screenContext } from '$lib/screen/screen.js';
     import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
 
     export let filter: (key: string, message: models.Channel) => boolean = () => true;

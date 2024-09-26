@@ -1,10 +1,10 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
-    import { screenContext } from '$lib/common/screen/screen.js';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
     import UpdateScreen from '$lib/main/screen/UpdateScreen.svelte';
     import { installed, language } from '$lib/main/settings.js';
+    import { screenContext } from '$lib/screen/screen.js';
     import {
         invoke,
         listen,

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
-    import Screen from '$lib/common/screen/Screen.svelte';
-    import type { ScreenHandle } from '$lib/common/screen/screen.js';
+    import Screen from '$lib/screen/Screen.svelte';
+    import type { ScreenHandle } from '$lib/screen/screen.js';
     import { Popup } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/api/process';
     import { installUpdate, type UpdateManifest } from '@tauri-apps/api/updater';

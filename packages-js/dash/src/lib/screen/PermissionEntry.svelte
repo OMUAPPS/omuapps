@@ -1,8 +1,8 @@
 <script lang="ts">
+    import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import type { PermissionType } from '@omujs/omu/extension/permission/permission.js';
     import { Tooltip } from '@omujs/ui';
-    import { omu } from '../../client.js';
 
     export let permission: PermissionType;
     export let accepted: boolean;

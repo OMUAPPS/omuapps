@@ -4,8 +4,8 @@
     import { onDestroy, onMount } from 'svelte';
     import TitlebarButton from './TitlebarButton.svelte';
     import StatusBar from './common/StatusBar.svelte';
-    import ScreenRenderer from './common/screen/ScreenRenderer.svelte';
     import Title from './images/title.svg';
+    import ScreenRenderer from './screen/ScreenRenderer.svelte';
     import { listen, tauriWindow } from './tauri.js';
 
     let alwaysOnTop = false;

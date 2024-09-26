@@ -1,7 +1,7 @@
 <script lang="ts">
     import { dashboard } from '$lib/client.js';
-    import Screen from '$lib/common/screen/Screen.svelte';
-    import type { ScreenHandle } from '$lib/common/screen/screen.js';
+    import Screen from '$lib/screen/Screen.svelte';
+    import type { ScreenHandle } from '$lib/screen/screen.js';
     import { TableList } from '@omujs/ui';
     import AppEntry from './AppEntry.svelte';
 
