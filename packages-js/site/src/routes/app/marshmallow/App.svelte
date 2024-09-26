@@ -56,6 +56,7 @@
             }
         }).finally(() => {
             refreshPromise = null;
+            tab = 'new';
         });
     }
 
