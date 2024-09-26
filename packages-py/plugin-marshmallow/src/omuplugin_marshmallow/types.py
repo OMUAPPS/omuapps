@@ -10,6 +10,7 @@ class User(TypedDict):
     name: str
     screen_name: str
     image: str
+    premium: bool
 
 
 GET_USERS_ENDPOINT_TYPE = EndpointType[None, Mapping[str, User]].create_json(

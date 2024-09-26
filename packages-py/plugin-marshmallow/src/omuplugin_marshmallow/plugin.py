@@ -27,7 +27,15 @@ users: dict[str, User] = {}
 async def get_messages(user: str) -> list[Message]:
     marshmallow = sessions[user]
     fetched = await marshmallow.fetch_messages()
-    return [Message(**message.model_dump()) for message in fetched]
+    return [
+        Message(
+            message_id=message.message_id,
+            content=message.content,
+            liked=message.liked,
+            acknowledged=message.acknowledged,
+        )
+        for message in fetched
+    ]
 
 
 @omu.endpoints.bind(endpoint_type=GET_USERS_ENDPOINT_TYPE)
@@ -54,7 +62,12 @@ async def refresh_sessions():
             )
             user = await marshmallow.fetch_user()
             sessions[user.name] = marshmallow
-            users[user.name] = User(**user.model_dump())
+            users[user.name] = User(
+                name=user.name,
+                screen_name=user.screen_name,
+                image=user.image,
+                premium=user.premium,
+            )
         except MarshmallowLoginError as e:
             logger.opt(exception=e).error(f"User {browser} could not be logged in")
 
