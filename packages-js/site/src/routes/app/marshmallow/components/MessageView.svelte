@@ -1,10 +1,11 @@
 <script lang="ts">
     import { Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
-    import type { MarshmallowApp, Message } from '../marshmallow-app.js';
+    import type { MarshmallowApp, Message, User } from '../marshmallow-app.js';
 
     export let marshmallow: MarshmallowApp;
     export let message: Message;
+    export let user: User | null;
     const { config, data } = marshmallow;
 
     let container: HTMLElement;
@@ -103,7 +104,7 @@
     }
 
     async function next() {
-        message = await lock(marshmallow.setAcknowledged(message.message_id, true));
+        message = await aknowledge();
         if (!$config.user) return;
         const messages = await marshmallow.getMessages($config.user);
         if (messages.length === 0) return;
@@ -111,17 +112,35 @@
     }
 
     let textarea: HTMLTextAreaElement;
+
+    async function aknowledge() {
+        message = await lock(
+            marshmallow.setAcknowledged(message.message_id, !message.acknowledged),
+        );
+        if ($config.user) {
+            marshmallow.recentMessages.add({
+                ...message,
+                user_id: $config.user,
+            })
+            console.log(await marshmallow.recentMessages.fetchAll());
+        }
+        return message;
+    }
+
+    let replyText: string;
+
+    async function reply() {
+        await marshmallow.setReply(message.message_id, replyText);
+        await next();
+        replyText = '';
+    }
 </script>
 
 <div class="buttons" class:locked bind:this={buttons}>
     <button
         class="check"
         class:active={message.acknowledged}
-        on:click={async () => {
-            message = await lock(
-                marshmallow.setAcknowledged(message.message_id, !message.acknowledged),
-            );
-        }}
+        on:click={aknowledge}
     >
         <Tooltip>確認済みにする</Tooltip>
         <i class="ti ti-check" />
@@ -199,11 +218,33 @@
             on:mouseleave={mouseLeave}
             bind:this={image}
         />
-        <button class="next" on:click={() => next()}>
-            <Tooltip>メッセージを確認済みにして次のメッセージを表示</Tooltip>
-            確認して次へ
-            <i class="ti ti-arrow-right" />
-        </button>
+        {#if !message.acknowledged}
+            <button class="next" on:click={() => next()}>
+                <Tooltip>メッセージを確認済みにして次のメッセージに進む</Tooltip>
+                確認して次へ
+                <i class="ti ti-arrow-right" />
+            </button>
+        {/if}
+        {#if !message.replied}
+            {#if user?.premium}
+                <textarea bind:value={replyText} placeholder="返信を入力" />
+                <button class="next" on:click={() => reply()} disabled={!replyText}>
+                    <Tooltip>
+                        {replyText ? 'メッセージに返信して次のメッセージに進む' : '返信を入力して送信'}
+                    </Tooltip>
+                    送信して次へ
+                    <i class="ti ti-arrow-right" />
+                </button>
+            {:else}
+                <small class="premium">
+                    <Tooltip>
+                        マシュマロ公式サイトからプレミアム会員に入会することができます。
+                    </Tooltip>
+                    マシュマロのプレミアム会員になると返信機能が使えます
+                    <i class="ti ti-crown" />
+                </small>
+            {/if}
+        {/if}
         <textarea bind:this={textarea} readonly>{message.content}</textarea>
         <button class="copy" on:click={() => {
             textarea.select();
@@ -300,20 +341,30 @@
 
     button {
         background: var(--color-bg-2);
-        outline: 1px solid var(--color-1);
         color: var(--color-1);
+        outline: 1px solid var(--color-1);
         border: none;
         display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 0.9rem;
         font-weight: bold;
         cursor: pointer;
 
         &:focus,
         &:hover {
-            background: var(--color-1);
-            color: var(--color-bg-2);
         }
 
+        &:disabled {
+            background: var(--color-bg-1);
+            cursor: not-allowed;
+            
+            &:focus,
+            &:hover {
+                background: var(--color-bg-1);
+                color: var(--color-1);
+            }
+        }
     }
 
     .next {
@@ -323,9 +374,17 @@
     }
     
     .copy {
-        align-items: center;
-        justify-content: center;
         width: 2rem;
         height: 2rem;
+        outline: 1px solid var(--color-1);
+    }
+
+    .premium {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: var(--color-1);
+        margin-top: 1rem;
     }
 </style>

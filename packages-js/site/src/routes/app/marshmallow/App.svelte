@@ -2,11 +2,13 @@
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPlugin } from '@omujs/obs';
     import type { Omu } from '@omujs/omu';
-    import { Tooltip } from '@omujs/ui';
+    import { TableList, Tooltip } from '@omujs/ui';
     import AccountSwitcher from './components/AccountSwitcher.svelte';
+    import MessageEntry from './components/MessageEntry.svelte';
     import MessageView from './components/MessageView.svelte';
     import SelectUser from './components/SelectUser.svelte';
     import { MarshmallowApp, type Message, type User } from './marshmallow-app.js';
+    import { selectedMessageId, selectMessage } from './stores.js';
 
     export let omu: Omu;
     export let marshmallow: MarshmallowApp;
@@ -69,7 +71,6 @@
         marshmallow
             .getMessages(user.name)
             .then((res) => {
-                console.log(res);
                 messages = res;
             })
             .finally(() => {
@@ -82,6 +83,16 @@
             refreshMessages(user);
         }
     }
+
+    $: $selectedMessageId = $data.message?.message_id;
+    $selectMessage = (message: Message) => {
+        const selected = $selectedMessageId === message.message_id;
+        $data.message = selected ? null : message;
+        $data.scroll = 0;
+        container.scrollTop = 0;
+    };
+
+    let tab: 'new' | 'old' = 'new';
 
     let refreshPromise: Promise<void> | null = getUsers();
 
@@ -99,38 +110,51 @@
                 </div>
             {:else}
                 {#if user}
-                    <button class="refresh" on:click={() => user && refreshMessages(user)}>
-                        <Tooltip>読み込み直して新しいメッセージを表示する</Tooltip>
-                        更新
-                        <i class="ti ti-reload" />
-                    </button>
-                {/if}
-                {#each messages as item}
-                    {@const selected = $data.message?.message_id === item.message_id}
-                    <button
-                        class="message"
-                        class:selected
-                        on:click={() => {
-                            $data.message = selected ? null : item;
-                            $data.scroll = 0;
-                            container.scrollTop = 0;
-                        }}
-                    >
-                        <Tooltip>
-                            {#if selected}
-                                クリックで選択を解除
-                                <i class="ti ti-x" />
+                    <div class="messages-header" class:premium={user.premium}>
+                        {#if user.premium}
+                            {#if tab === 'new'}
+                                <button class="message-tab" on:click={() => tab = 'old'}>
+                                    以前のメッセージを表示
+                                    <i class="ti ti-history" />
+                                </button>
                             {:else}
-                                クリックでメッセージを表示
-                                <i class="ti ti-chevron-right" />
+                                <button class="message-tab" on:click={() => tab = 'new'}>
+                                    新しいメッセージを表示
+                                    <i class="ti ti-bell" />
+                                </button>
                             {/if}
-                        </Tooltip>
-                        <p>{item.content}</p>
-                        {#if selected}
-                            <i class="ti ti-chevron-right" />
+                        {:else}
+                            <button class="premium">
+                                <Tooltip>
+                                    <p>
+                                        マシュマロのプレミアム会員に入ることで、以前のメッセージを表示できます。
+                                    </p>
+                                    <small>
+                                        マシュマロ公式サイトからプレミアム会員に入会することができます。
+                                    </small>
+                                </Tooltip>
+                                <i class="ti ti-history" />
+                            </button>
                         {/if}
-                    </button>
-                {/each}
+                        <button class="refresh" on:click={() => user && refreshMessages(user)}>
+                            <Tooltip>読み込み直して新しいメッセージを表示する</Tooltip>
+                            更新
+                            <i class="ti ti-reload" />
+                        </button>
+                    </div>
+                {/if}
+                {#if tab === 'new'}
+                    {#each messages as entry}
+                        <MessageEntry {entry} />
+                    {/each}
+                {:else}
+                    <TableList table={marshmallow.recentMessages} component={MessageEntry} filter={(_, entry) => {
+                        if (!('user_id' in entry)) {
+                            return false;
+                        }
+                        return entry.user_id === $config.user;
+                    }} />
+                {/if}
             {/if}
         </div>
         <div class="asset">
@@ -139,7 +163,7 @@
     </div>
     <div class="right" bind:this={container}>
         {#if $data.message}
-            <MessageView {marshmallow} bind:message={$data.message} />
+            <MessageView {marshmallow} {user} bind:message={$data.message} />
         {:else}
             <div class="select-message">
                 メッセージを選択してください。
@@ -180,29 +204,72 @@
         height: 100%;
     }
 
-    .refresh {
+    button {
+        background: none;
+        color: var(--color-1);
+        border: none;
+        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 1rem 2rem;
-        border: none;
-        background: var(--color-bg-2);
-        color: var(--color-1);
-        border-bottom: 1px solid var(--color-outline);
-        width: 100%;
-        font-size: 0.9rem;
-        font-weight: bold;
-        cursor: pointer;
-
-        > i {
-            font-size: 1rem;
-        }
-
+        gap: 0.25rem;
+        
         &:hover {
             background: var(--color-bg-1);
             color: var(--color-1);
             transition-duration: 0.0621s;
             transition-property: background, color;
+        }
+    }
+    
+    .messages-header {
+        display: flex;
+        flex-direction: row;
+        border-bottom: 1px solid var(--color-outline);
+
+        .message-tab {
+            white-space: nowrap;
+            flex: 1;
+            border-right: 1px solid var(--color-outline);
+            font-size: 0.8rem;
+            font-weight: bold;
+            gap: 0.3rem;
+
+            > i {
+                font-size: 1rem;
+            }
+        }
+
+        .refresh {
+            padding: 1rem 2rem;
+            font-size: 0.8rem;
+            font-weight: bold;
+            white-space: nowrap;
+            flex: 1;
+
+            > i {
+                font-size: 1rem;
+            }
+        }
+
+        > .premium {
+            padding: 1rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid var(--color-outline);
+        
+            &:hover {
+                color: color-mix(in srgb, var(--color-text) 20%, transparent 0%);
+                transition-duration: 0.0621s;
+                transition-property: background, color;
+            }
+        }
+
+        &.premium {
+            .refresh {
+                flex: 0;
+            }
         }
     }
 
@@ -262,48 +329,6 @@
         width: 100%;
         height: 100%;
         overflow-y: auto;
-
-        > .message {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            padding: 1rem 2rem;
-            padding-right: 1rem;
-            border: none;
-            background: var(--color-bg-2);
-            border-bottom: 1px solid var(--color-outline);
-            width: 100%;
-            cursor: pointer;
-
-            > p {
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            > i {
-                margin-left: auto;
-                padding-left: 0.25rem;
-            }
-
-            &:hover {
-                outline: none;
-                outline-offset: -2px;
-                padding-left: 2.25rem;
-                transition-duration: 0.0621s;
-                transition-property: padding-left, background, color;
-            }
-
-            &:focus {
-                padding-left: 1.85rem;
-            }
-
-            &.selected {
-                background: var(--color-bg-1);
-                color: var(--color-1);
-                padding-left: 2rem;
-            }
-        }
     }
 
     $left-width: 20rem;

@@ -2,6 +2,7 @@ import { makeRegistryWritable } from '$lib/helper.js';
 import { Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
 import { get, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 
@@ -10,6 +11,7 @@ export type User = {
     name: string;
     screen_name: string;
     image: string;
+    premium: boolean;
 };
 
 export type Message = {
@@ -52,7 +54,7 @@ const SET_REPLY_ENDPOINT_TYPE = EndpointType.createJson<
     {
         user_id: string;
         message_id: string;
-        content: string;
+        reply: string;
     },
     Message
 >(PLUGIN_ID, {
@@ -89,13 +91,21 @@ const MARSHMALLOW_DATA_REGISTRY_TYPE = RegistryType.createJson<MarshmallowData>(
     },
 });
 
+export type RecentMessage = Message & {user_id: string};
+const RECENT_MESSAGE_TABLE = TableType.createJson<RecentMessage>(APP_ID, {
+    name: 'recent_message',
+    key: (message: Message) => message.message_id
+});
+
 export class MarshmallowApp {
     public readonly config: Writable<MarshmallowConfig>;
     public readonly data: Writable<MarshmallowData>;
+    public readonly recentMessages: Table<RecentMessage>;
 
     constructor(private readonly omu: Omu) {
         this.config = makeRegistryWritable(omu.registries.get(MARSHMALLOW_CONFIG_REGISTRY_TYPE));
         this.data = makeRegistryWritable(omu.registries.get(MARSHMALLOW_DATA_REGISTRY_TYPE));
+        this.recentMessages = omu.tables.get(RECENT_MESSAGE_TABLE);
     }
 
     async getUsers(): Promise<Record<string, User>> {
@@ -124,8 +134,8 @@ export class MarshmallowApp {
         });
     }
 
-    async setReply(message_id: string, content: string): Promise<Message> {
+    async setReply(message_id: string, reply: string): Promise<Message> {
         const user_id = get(this.config).user;
-        return this.omu.endpoints.call(SET_REPLY_ENDPOINT_TYPE, { user_id, message_id, content });
+        return this.omu.endpoints.call(SET_REPLY_ENDPOINT_TYPE, { user_id, message_id, reply });
     }
 }
