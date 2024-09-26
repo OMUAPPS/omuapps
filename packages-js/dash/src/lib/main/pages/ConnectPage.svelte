@@ -57,9 +57,9 @@
         top: 0;
         left: 0;
         right: 0;
-        bottom: 5rem;
+        bottom: 6rem;
         display: flex;
-        padding: 1rem;
+        padding: 0.5rem 2rem;
         gap: 1rem;
     }
 
