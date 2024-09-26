@@ -101,7 +101,6 @@
 
 <main>
     <div class="left">
-        <AccountSwitcher {users} bind:user {refreshUsers} />
         <div class="messages">
             {#if state === 'loading_messages'}
                 <div class="loading">
@@ -143,9 +142,17 @@
                         </button>
                     </div>
                 {/if}
+                <h3>
+                    メッセージ
+                    <i class="ti ti-comment" />
+                </h3>
                 {#if tab === 'new'}
                     {#each messages as entry}
                         <MessageEntry {entry} />
+                    {:else}
+                        <small class="no-messages">
+                            メッセージを受け取るとここに表示されます。
+                        </small>
                     {/each}
                 {:else}
                     <TableList table={marshmallow.recentMessages} component={MessageEntry} filter={(_, entry) => {
@@ -153,13 +160,24 @@
                             return false;
                         }
                         return entry.user_id === $config.user;
-                    }} />
+                    }}>
+                        <small class="no-messages" slot="empty">
+                            メッセージを確認済みにするとここに表示されます。
+                        </small>
+                    </TableList>
                 {/if}
             {/if}
         </div>
-        <div class="asset">
-            <AssetButton {omu} {obs} dimensions={{width: 700, height: 1080}} />
-        </div>
+        <h3>
+            配信に追加
+            <i class="ti ti-arrow-bar-to-down" />
+        </h3>
+        <AssetButton {omu} {obs} dimensions={{width: 700, height: 1080}} />
+        <h3>
+            アカウント
+            <i class="ti ti-user" />
+        </h3>
+        <AccountSwitcher {users} bind:user {refreshUsers} />
     </div>
     <div class="right" bind:this={container}>
         {#if $data.message}
@@ -198,7 +216,8 @@
 
 <style lang="scss">
     main {
-        position: relative;
+        position: absolute;
+        inset: 0;
         display: flex;
         flex-direction: row;
         height: 100%;
@@ -215,7 +234,7 @@
         gap: 0.25rem;
         
         &:hover {
-            background: var(--color-bg-1);
+            background: var(--color-bg-2);
             color: var(--color-1);
             transition-duration: 0.0621s;
             transition-property: background, color;
@@ -225,15 +244,20 @@
     .messages-header {
         display: flex;
         flex-direction: row;
-        border-bottom: 1px solid var(--color-outline);
+        margin-bottom: 0.5rem;
+        gap: 0.25rem;
+        background: var(--color-bg-2);
 
         .message-tab {
+            display: flex;
+            align-items: center;
+            justify-content: start;
+            padding: 0.75rem 1rem;
             white-space: nowrap;
             flex: 1;
             border-right: 1px solid var(--color-outline);
             font-size: 0.8rem;
             font-weight: bold;
-            gap: 0.3rem;
 
             > i {
                 font-size: 1rem;
@@ -241,7 +265,7 @@
         }
 
         .refresh {
-            padding: 1rem 2rem;
+            padding: 0.75rem 1rem;
             font-size: 0.8rem;
             font-weight: bold;
             white-space: nowrap;
@@ -273,6 +297,17 @@
         }
     }
 
+    .no-messages {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--color-bg-2);
+        color: var(--color-text);
+        font-size: 0.8rem;
+    }
+
     .loading {
         display: flex;
         flex-direction: column;
@@ -280,7 +315,6 @@
         justify-content: center;
         padding: 1rem 2rem;
         border: none;
-        background: var(--color-bg-2);
         color: var(--color-1);
         width: 100%;
         font-size: 0.8rem;
@@ -329,28 +363,30 @@
         width: 100%;
         height: 100%;
         overflow-y: auto;
+
+        > h3 {
+            margin-bottom: 0.5rem;
+        }
     }
 
-    $left-width: 20rem;
 
     .left {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: $left-width;
-        min-width: $left-width;
+        width: 20rem;
         display: flex;
         flex-direction: column;
-        background: var(--color-bg-2);
-        border-right: 1px solid var(--color-outline);
+        margin: 1rem;
+        margin-right: 0;
+        gap: 0.5rem;
+    }
+
+    h3 {
+        color: var(--color-1);
+        font-size: 1rem;
+        margin-top: 0.5rem;
     }
 
     .right {
-        position: absolute;
-        left: $left-width;
-        right: 0;
-        top: 0;
-        bottom: 0;
+        position: relative;
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -386,14 +422,6 @@
         align-items: center;
         justify-content: center;
         padding: 1rem;
-        color: var(--color-1);
-    }
-
-    .asset {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 1rem 1rem;
         color: var(--color-1);
     }
 </style>
