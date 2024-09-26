@@ -19,7 +19,7 @@
 >
     {#if alwaysOnTop}
         <Tooltip>{$t('titlebar.pin-disable')}</Tooltip>
-        <i class="ti ti-pinned" />
+        <i class="ti ti-pinned-filled" />
     {:else}
         <Tooltip>{$t('titlebar.pin-enable')}</Tooltip>
         <i class="ti ti-pin" />
