@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
 
-    import { ClipboardHelper } from '$lib/utils/clipboard-helper.js';
     import { ButtonMini, FlexRowWrapper, Tooltip } from '@omujs/ui';
 
     import { omu } from '$lib/client.js';
@@ -15,8 +14,9 @@
     }
 
     function copyViewers() {
-        if (!entry.metadata?.viewers) return;
-        ClipboardHelper.writeText(entry.metadata?.viewers.toString());
+        const viewers = entry.metadata?.viewers;
+        if (viewers == undefined) return;
+        navigator.clipboard.writeText(viewers.toString());
     }
 </script>
 

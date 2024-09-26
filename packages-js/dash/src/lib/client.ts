@@ -3,7 +3,7 @@ import { Dashboard } from './dashboard.js';
 
 import type { Address } from '@omujs/omu/address.js';
 
-import { invoke, IS_TAURI } from '$lib/utils/tauri.js';
+import { invoke, IS_TAURI } from '$lib/tauri.js';
 
 import { Chat } from '@omujs/chat';
 import { CHAT_CHANNEL_TREE_PERMISSION_ID } from '@omujs/chat/permissions.js';

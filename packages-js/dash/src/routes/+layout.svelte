@@ -11,7 +11,7 @@
         waitForTauri,
         type Progress,
         type PROGRESS_EVENT,
-    } from '$lib/utils/tauri.js';
+    } from '$lib/tauri.js';
     import { createI18nUnion } from '@omujs/i18n';
     import { NetworkStatus } from '@omujs/omu/network/network.js';
     import '@omujs/ui';

@@ -1,13 +1,12 @@
 <script lang="ts">
+    import { t } from '$lib/i18n/i18n-context.js';
     import { TauriEvent } from '@tauri-apps/api/event';
     import { onDestroy, onMount } from 'svelte';
+    import TitlebarButton from './TitlebarButton.svelte';
     import StatusBar from './common/StatusBar.svelte';
     import ScreenRenderer from './common/screen/ScreenRenderer.svelte';
     import Title from './images/title.svg';
-    import { listen, tauriWindow } from './utils/tauri.js';
-
-    import { t } from '$lib/i18n/i18n-context.js';
-    import TitlebarButton from './TitlebarButton.svelte';
+    import { listen, tauriWindow } from './tauri.js';
 
     let alwaysOnTop = false;
     let maximized = false;

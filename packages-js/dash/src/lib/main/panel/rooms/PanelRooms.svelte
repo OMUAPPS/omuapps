@@ -1,15 +1,13 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
-    import { onDestroy } from 'svelte';
-
+    
     import { t } from '$lib/i18n/i18n-context.js';
 
     import RoomEntry from './RoomEntry.svelte';
 
-    import { chat, omu } from '$lib/client.js';
+    import { chat } from '$lib/client.js';
     import { screenContext } from '$lib/common/screen/screen.js';
     import ScreenSetup from '$lib/main/setup/ScreenSetup.svelte';
-    import { batchCall } from '$lib/utils/batch.js';
     import { Button, TableList } from '@omujs/ui';
 
     export let filter: (key: string, room: models.Room) => boolean = () => true;
@@ -17,21 +15,6 @@
         if (!a.createdAt || !b.createdAt) return 0;
         return a.createdAt.getTime() - b.createdAt.getTime();
     };
-
-    let rooms = chat.rooms.cache;
-
-    const unlisten = batchCall(
-        chat.rooms.listen((newRooms: Map<string, models.Room>) => {
-            rooms = newRooms;
-        }),
-        omu.onReady(() => {
-            chat.rooms.fetchItems({
-                limit: 100,
-                backward: true,
-            });
-        }),
-    );
-    onDestroy(unlisten);
 
     function openSetup() {
         screenContext.push(ScreenSetup, undefined);

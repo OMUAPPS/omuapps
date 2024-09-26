@@ -1,7 +1,7 @@
 import PermissionRequestScreen from '$lib/common/screen/PermissionRequestScreen.svelte';
 import PluginRequestScreen from '$lib/common/screen/PluginRequestScreen.svelte';
 import { currentPage } from '$lib/main/settings.js';
-import { tauriWindow } from '$lib/utils/tauri.js';
+import { tauriWindow } from '$lib/tauri.js';
 import { App, Omu } from '@omujs/omu';
 import type { DashboardHandler } from '@omujs/omu/extension/dashboard/dashboard.js';
 import type {

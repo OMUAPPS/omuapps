@@ -3,7 +3,6 @@
     import { onDestroy } from 'svelte';
 
     import { chat } from '$lib/client.js';
-    import { batchCall } from '$lib/utils/batch.js';
     import type { Identifier } from '@omujs/omu/identifier.js';
     import { MessageEntry, TableList } from '@omujs/ui';
 
@@ -13,16 +12,13 @@
         return a.createdAt.getTime() - b.createdAt.getTime();
     };
 
-    const unlisten = batchCall(
-        chat.authors.listen(),
-        chat.messages.listen((items) => {
-            const authorKeys = [...items.values()]
-                .map((message) => message.authorId)
-                .filter((key): key is Identifier => !!key);
-            chat.authors.getMany(...authorKeys.map((it) => it.key()));
-        }),
-    );
-    onDestroy(unlisten);
+    onDestroy(chat.authors.listen())
+    onDestroy(chat.messages.listen((items) => {
+        const authorKeys = [...items.values()]
+            .map((message) => message.authorId)
+            .filter((key): key is Identifier => !!key);
+        chat.authors.getMany(...authorKeys.map((it) => it.key()));
+    }));
 </script>
 
 <TableList table={chat.messages} component={MessageEntry} {filter} {sort} reverse={true} />
