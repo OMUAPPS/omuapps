@@ -74,7 +74,9 @@ class Network:
         raise ValueError(f"Invalid origin: {origin_namespace} != {namespace}")
 
     def add_websocket_route(self, path: str) -> None:
-        async def websocket_handler(request: web.Request) -> web.WebSocketResponse:
+        async def websocket_handler(request: web.Request) -> web.Response:
+            if request.remote != "127.0.0.1":
+                return web.Response(status=403)
             ws = web.WebSocketResponse()
             await ws.prepare(request)
             connection = WebsocketsConnection(ws)
