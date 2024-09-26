@@ -54,8 +54,9 @@
         background: var(--color-bg-2);
         color: var(--color-text);
         width: 100%;
-        margin-bottom: 2px;
+        margin-top: 2px;
         cursor: pointer;
+        direction: initial;
 
         &.acknowledged {
             color: color-mix(in srgb, var(--color-text) 80%, transparent 50%);

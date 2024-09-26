@@ -265,15 +265,15 @@
 <style lang="scss">
     .buttons {
         position: sticky;
-        top: 0;
+        top: 0.5rem;
         display: flex;
         justify-content: flex-end;
-        padding: 1rem;
+        margin: 0.5rem;
         gap: 0.5rem;
 
         > button,
         > a {
-            background: var(--color-bg-1);
+            background: var(--color-bg-2);
             border: none;
             outline: none;
             cursor: pointer;

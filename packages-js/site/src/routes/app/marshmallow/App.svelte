@@ -109,16 +109,26 @@
                     メッセージを読み込んでいます…
                 </div>
             {:else}
+                <h3>
+                    メッセージ
+                    <i class="ti ti-notes" />
+                </h3>
                 {#if user}
                     <div class="messages-header" class:premium={user.premium}>
                         {#if user.premium}
                             {#if tab === 'new'}
                                 <button class="message-tab" on:click={() => tab = 'old'}>
+                                    <Tooltip>
+                                        すでに確認したメッセージを見る
+                                    </Tooltip>
                                     以前のメッセージを表示
                                     <i class="ti ti-history" />
                                 </button>
                             {:else}
                                 <button class="message-tab" on:click={() => tab = 'new'}>
+                                    <Tooltip>
+                                        まだ確認していないメッセージを見る
+                                    </Tooltip>
                                     新しいメッセージを表示
                                     <i class="ti ti-bell" />
                                 </button>
@@ -143,30 +153,28 @@
                         </button>
                     </div>
                 {/if}
-                <h3>
-                    メッセージ
-                    <i class="ti ti-comment" />
-                </h3>
-                {#if tab === 'new'}
-                    {#each messages as entry}
-                        <MessageEntry {entry} />
+                <div class="message-list">
+                    {#if tab === 'new'}
+                        {#each messages as entry}
+                            <MessageEntry {entry} />
+                        {:else}
+                            <small class="no-messages">
+                                メッセージを受け取るとここに表示されます。
+                            </small>
+                        {/each}
                     {:else}
-                        <small class="no-messages">
-                            メッセージを受け取るとここに表示されます。
-                        </small>
-                    {/each}
-                {:else}
-                    <TableList table={marshmallow.recentMessages} component={MessageEntry} filter={(_, entry) => {
-                        if (!('user_id' in entry)) {
-                            return false;
-                        }
-                        return entry.user_id === $config.user;
-                    }}>
-                        <small class="no-messages" slot="empty">
-                            メッセージを確認済みにするとここに表示されます。
-                        </small>
-                    </TableList>
-                {/if}
+                        <TableList table={marshmallow.recentMessages} component={MessageEntry} filter={(_, entry) => {
+                            if (!('user_id' in entry)) {
+                                return false;
+                            }
+                            return entry.user_id === $config.user;
+                        }}>
+                            <small class="no-messages" slot="empty">
+                                メッセージを確認済みにするとここに表示されます。
+                            </small>
+                        </TableList>
+                    {/if}
+                </div>
             {/if}
         </div>
         <h3>
@@ -298,6 +306,42 @@
         }
     }
 
+    .message-list {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        direction: rtl;
+
+        &::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--color-bg-2);
+            border-radius: 1px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: color-mix(in srgb, var(--color-1) 10%, transparent 0%);
+            border: 1px solid var(--color-bg-2);
+            border-radius: 1px;
+        }
+
+        &:hover {
+            &::-webkit-scrollbar-thumb {
+                background: var(--color-1);
+            }
+        }
+
+        @supports not selector(::-webkit-scrollbar) {
+            & {
+                scrollbar-color: var(--color-1) var(--color-bg-2);
+            }
+        }
+    }
+
     .no-messages {
         display: flex;
         align-items: center;
@@ -307,6 +351,7 @@
         background: var(--color-bg-2);
         color: var(--color-text);
         font-size: 0.8rem;
+        direction: initial;
     }
 
     .loading {
@@ -378,6 +423,8 @@
         margin: 1rem;
         margin-right: 0;
         gap: 0.5rem;
+        padding-right: 1rem;
+        border-right: 1px solid var(--color-outline);
     }
 
     h3 {
