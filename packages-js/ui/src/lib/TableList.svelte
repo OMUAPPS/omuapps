@@ -1,4 +1,4 @@
-<script lang="ts" generics="T extends Keyable">
+<script lang="ts" generics="T">
     import { batchCall } from './utils/batch.js';
 
     import { client } from './stores.js';
@@ -8,7 +8,6 @@
     import TableListEntry from './TableListEntry.svelte';
 
     import type { Table } from '@omujs/omu/extension/table/table.js';
-    import type { Keyable } from '@omujs/omu/interface.js';
     import {
         type ComponentType,
         type SvelteComponent,
