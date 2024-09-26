@@ -17,13 +17,24 @@
     on:click={() => $selectMessage(entry)}
 >
     <Tooltip>
-        {#if current}
-            クリックで選択を解除
-            <i class="ti ti-x" />
-        {:else}
-            クリックでメッセージを表示
-            <i class="ti ti-chevron-right" />
-        {/if}
+        <p>
+            {entry.content.length}
+            <small>文字</small>
+            {entry.content.split('\n').length}
+            <small>行</small>
+            {#if entry.acknowledged}
+                <small> - 既読</small>
+            {/if}
+        </p>
+        <small>
+            {#if current}
+                クリックで選択を解除
+                <i class="ti ti-x" />
+            {:else}
+                クリックでメッセージを表示
+                <i class="ti ti-chevron-right" />
+            {/if}
+        </small>
     </Tooltip>
     <p>{entry.content}</p>
     {#if current}
