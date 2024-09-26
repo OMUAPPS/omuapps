@@ -19,7 +19,7 @@ export type Message = {
     content: string;
     liked: boolean;
     acknowledged: boolean;
-    replied: boolean;
+    replied?: boolean;
 };
 const GET_USERS_ENDPOINT_TYPE = EndpointType.createJson<null, Record<string, User>>(PLUGIN_ID, {
     name: 'get_users',

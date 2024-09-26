@@ -122,7 +122,6 @@
                 ...message,
                 user_id: $config.user,
             })
-            console.log(await marshmallow.recentMessages.fetchAll());
         }
         return message;
     }
@@ -130,7 +129,8 @@
     let replyText: string;
 
     async function reply() {
-        await marshmallow.setReply(message.message_id, replyText);
+        message = await marshmallow.setReply(message.message_id, replyText);
+        console.log(message);
         await next();
         replyText = '';
     }
