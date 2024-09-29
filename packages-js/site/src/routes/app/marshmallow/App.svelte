@@ -249,6 +249,20 @@
         }
     }
     
+    @keyframes flip {
+        0% {
+            padding-left: 0.9rem;
+            color: var(--color-bg-1);
+        }
+        13.9% {
+            padding-left: 1.4rem;
+            background: var(--color-bg-1);
+        }
+        100% {
+            padding-left: 1rem;
+        }
+    }
+
     .messages-header {
         display: flex;
         flex-direction: row;
@@ -261,11 +275,13 @@
             align-items: center;
             justify-content: start;
             padding: 0.75rem 1rem;
+            padding-right: 0.75rem;
             white-space: nowrap;
             flex: 1;
             border-right: 1px solid var(--color-outline);
             font-size: 0.8rem;
             font-weight: bold;
+            animation: flip 0.0621s;
 
             > i {
                 font-size: 1rem;
