@@ -24,21 +24,21 @@
     <i class="ti ti-click" />
     <div class="info">
         <h3>かんたんに導入</h3>
-        <p>アプリの管理は一つのウィンドウの中で完結し、必要に応じて分けることも出来ます。</p>
+        <p>アプリのインストールは管理画面内で完結します。</p>
     </div>
 </div>
 <div class="card" bind:this={card1} class:visible={isVisible(card1, scroll)}>
     <i class="ti ti-lock" />
     <div class="info">
         <h3>安全な権限管理</h3>
-        <p>アプリは権限がなければデータを保存することすら出来ません。</p>
+        <p>アプリは権限がなければファイルを保存することすら出来ません。</p>
     </div>
 </div>
 <div class="card" bind:this={card2} class:visible={isVisible(card2, scroll)}>
     <i class="ti ti-package" />
     <div class="info">
         <h3>使いやすさ</h3>
-        <p>アプリの管理は一つのウィンドウの中で完結し、必要に応じて分けることも出来ます。</p>
+        <p>アプリの管理は一つのウィンドウの中で完結します。</p>
     </div>
 </div>
 

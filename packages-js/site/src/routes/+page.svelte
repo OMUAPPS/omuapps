@@ -10,7 +10,6 @@
     import { Tooltip } from '@omujs/ui';
     import IndexFeatures from './_components/IndexFeatures.svelte';
     import IndexLinks from './_components/IndexLinks.svelte';
-    console.log(       'aa'  ); // 何もフォーマットされない
 </script>
 
 <svelte:head>
