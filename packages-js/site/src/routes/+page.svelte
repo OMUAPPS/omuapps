@@ -2,12 +2,15 @@
     import Content from '$lib/components/Content.svelte';
     import Footer from '$lib/components/Footer.svelte';
     import Header from '$lib/components/Header.svelte';
+    import background from '$lib/images/background.png';
     import dashboard1 from '$lib/images/dashboard-1.png';
     import indev from '$lib/images/in-dev.png';
+    import opensource from '$lib/images/open-source.png';
     import title from '$lib/images/title.svg';
     import { Tooltip } from '@omujs/ui';
     import IndexFeatures from './_components/IndexFeatures.svelte';
     import IndexLinks from './_components/IndexLinks.svelte';
+    console.log(       'aa'  ); // 何もフォーマットされない
 </script>
 
 <svelte:head>
@@ -15,6 +18,7 @@
     <meta name="description" content="配信者と視聴者をつなぐAPI" />
 </svelte:head>
 
+<img src={background} alt="background" class="background" />
 <Header />
 <main>
     <header class="content-width">
@@ -60,6 +64,27 @@
             <img src={dashboard1} class="dashboard" alt="dashboard" />
         </div>
     </div>
+    <hr>
+    <div class="content-width open-source">
+        <div class="image">
+            <img src={opensource} alt="Open Source" />
+        </div>
+        <div class="info">
+            <i class="ti ti-code" />
+            <div class="info">
+                <h3>オープンソース</h3>
+                <p>APIと管理画面、そしてサイトを含む全てはオープンソースなので、誰でも中身を見ることが出来ます。</p>
+            </div>
+        </div>
+        <a href="https://github.com/omuapps" target="_blank" rel="noopener noreferrer">
+            <Tooltip>
+                <p>GitHubで開発を見る</p>
+            </Tooltip>
+            <i class="ti ti-brand-github" />
+            Github
+            <i class="ti ti-arrow-right" />
+        </a>
+    </div>
 </main>
 <Content>
     <Footer />
@@ -70,9 +95,78 @@
         overflow-x: hidden;
     }
 
+    .background {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        opacity: 0.01;
+    }
+
     .content-width {
         width: min(100%, 80rem);
     }
+
+    .open-source {
+        position: relative;
+        height: 40rem;
+
+        > .info {
+            top: 0;
+            right: 0;
+            position: absolute;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 2rem;
+            padding: 1rem 2rem;
+            background: var(--color-bg-2);
+            border: 1px solid var(--color-1);
+            outline: 0.25rem solid var(--color-bg-2);
+            margin-bottom: 2rem;
+    
+            > i {
+                font-size: 2rem;
+                color: var(--color-1);
+            }
+    
+            > .info {
+                display: flex;
+                flex-direction: column;
+                width: 20rem;
+    
+                > h3 {
+                    color: var(--color-1);
+                    font-size: 1.5rem;
+                    white-space: nowrap;
+                }
+    
+                > p {
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    color: var(--color-text);
+                }
+            }
+        }
+
+        > .image {
+            position: absolute;
+            top: 4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+
+            > img {
+                display: block;
+                width: 100%;
+                flex: 1;
+                object-fit: cover;
+                border-radius: 0.5rem;
+                box-shadow: 0.25rem 0.5rem 1rem var(--color-outline);
+            }
+        }
+    }
+
 
     header {
         position: relative;
