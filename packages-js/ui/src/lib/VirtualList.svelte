@@ -13,6 +13,7 @@
     export let start = 0;
     export let end = 0;
     export let viewport: HTMLDivElement | null = null;
+    export let limit: number | undefined = undefined;
 
     // local state
     let height_map: number[] = [];
@@ -35,7 +36,7 @@
 
     $: visible = items.slice(start, end + 1).map((data, i) => {
         return { index: i + start, data };
-    });
+    }).slice(0, limit);
 
     async function refresh(
         items: [string, T][],

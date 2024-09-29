@@ -257,6 +257,7 @@
     <div class="items">
         <VirtualList
             {items}
+            limit={initial}
             bind:average_height
             bind:viewport
             bind:start={startIndex}
