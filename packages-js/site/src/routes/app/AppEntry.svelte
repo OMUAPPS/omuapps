@@ -100,7 +100,7 @@
         gap: 1rem;
         display: flex;
         width: 100%;
-        height: 130px;
+        height: 8rem;
         padding: 0.5rem;
         color: var(--color-1);
         background: var(--color-bg-2);

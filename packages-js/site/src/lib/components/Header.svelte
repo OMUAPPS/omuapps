@@ -1,10 +1,10 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import title from '$lib/images/title.svg';
-    import { onMount } from 'svelte';
-    import Content from './Content.svelte';
     import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
+    import { onMount } from 'svelte';
+    import Content from './Content.svelte';
 
     let onTop = BROWSER && window.scrollY < 1;
 

@@ -32,8 +32,7 @@
 
     .background {
         position: fixed;
-        top: 0;
-        left: calc(50vw - 10%);
+        inset: 0;
         z-index: -1;
         opacity: 0.5;
     }
