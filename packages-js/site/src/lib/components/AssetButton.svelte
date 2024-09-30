@@ -134,7 +134,11 @@
             font-size: 14px;
         }
 
+        &:focus-visible,
         &:hover {
+            outline: none;
+            background: var(--color-bg-1);
+            color: var(--color-1);
             transition: 0.0621s;
         }
 
