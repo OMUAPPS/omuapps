@@ -129,7 +129,7 @@
                     <i class="ti ti-arrow-bar-to-down" />
                 </span>
             </h3>
-            <AssetButton {omu} {obs} />
+            <AssetButton dimensions={{width: 1080, height: 1080}} {omu} {obs} />
         </div>
         <div class="right">
             <div class="roulette">

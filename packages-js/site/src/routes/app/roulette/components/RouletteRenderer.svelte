@@ -53,6 +53,10 @@
         return BetterMath.lerp(a, 1, r);
     }
 
+    function zoomEasing(t: number) {
+        return 1 + BetterMath.lerp(2 / (t + 1), 0, Math.pow(t, 0.5));
+    }
+
     let ctx: CanvasRenderingContext2D | null;
 
     function render() {
@@ -78,8 +82,7 @@
             tint = BetterMath.clamp01(1 / ((time / 1000) * 3 + 1));
             const t = rouletteEasing(BetterMath.clamp01(time / $state.duration));
             rotation = BetterMath.lerp(lastRotation, rotateTo, t);
-            // scale
-            const scale = 1 + BetterMath.lerp(2 / (t + 1), 0, t);
+            const scale = zoomEasing(t);
             ctx.translate(width / 2, height / 2);
             ctx.scale(scale, scale);
             ctx.translate(-width / 2, -height / 2);
