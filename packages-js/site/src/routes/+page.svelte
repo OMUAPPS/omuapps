@@ -150,18 +150,22 @@
         > .image {
             position: absolute;
             top: 4rem;
+            left: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 2rem;
+            width: calc(100% - 4rem);
+            height: 12rem;
 
             > img {
                 display: block;
                 width: 100%;
-                flex: 1;
                 object-fit: cover;
                 border-radius: 0.5rem;
                 box-shadow: 0.25rem 0.5rem 1rem var(--color-outline);
+                width: 100%;
+                height: 100%;
             }
         }
     }
