@@ -41,9 +41,6 @@
 
 <style lang="scss">
     .spin-button {
-        margin: 1rem;
-        margin-top: auto;
-
         > button {
             width: 100%;
             padding: 0.5rem 1rem;
@@ -53,7 +50,7 @@
             gap: 0.3rem;
             background: var(--color-bg-2);
             color: var(--color-1);
-            outline: 1px solid var(--color-1);
+            outline: 1px solid var(--color-bg-2);
             outline-offset: -1px;
             font-weight: bold;
             cursor: pointer;
@@ -66,7 +63,7 @@
             }
 
             &:hover {
-                animation: spin-button 0.14s forwards;
+                animation: spin-button 0.1621s forwards;
             }
         }
     }

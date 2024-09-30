@@ -140,7 +140,20 @@
                     </div>
                 {/if}
             </div>
-            <SpinButton {roulette} />
+            <div class="status">
+                <div class="spin">
+                    <SpinButton {roulette} />
+                </div>
+                <div class="state">
+                    <span class:current={$state.type === 'spin-start'}>抽選開始</span><i class="ti ti-chevron-right" />
+                    <span class:current={$state.type === 'recruiting'}>募集中</span><i class="ti ti-chevron-right" />
+                    <span class:current={$state.type === 'recruiting-end'}>募集終了</span>
+                    <br>
+                    <span class:current={$state.type === 'idle'}>待機中</span><i class="ti ti-chevron-right" />
+                    <span class:current={$state.type === 'spinning'}>抽選中 <small>({$config.duration}秒)</small></span><i class="ti ti-chevron-right" />
+                    <span class:current={$state.type === 'spin-result'}>結果</span>
+                </div>
+            </div>
         </div>
     </main>
 </AppPage>
@@ -266,8 +279,32 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: calc(100% - 2rem);
+        height: 100%;
+
+        > .status {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            justify-content: space-between;
+            gap: 1rem;
+
+            > .spin {
+                width: 20rem;
+            }
+        
+            > .state {
+                color: var(--color-outline);
+
+                > .current {
+                    color: var(--color-1);
+                }
+            }
+        }
     }
+
 
     .roulette {
         position: relative;
