@@ -11,16 +11,28 @@
     <VirtualList items={Object.entries($entries).reverse()} let:item let:key>
         {@const index = Object.keys($entries).length - Object.keys($entries).indexOf(key) - 1}
         <RouletteEntry {index} {item} {roulette} disabled={$state.type !== 'idle'} />
+        <div class="empty" slot="empty">
+            1つ以上追加する必要があります
+        </div>
     </VirtualList>
 </div>
 
 <style lang="scss">
-    .entries {
+    .empty {
+        width: 100%;
         display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        overflow: auto;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 0;
+        color: var(--color-text);
+        font-size: 0.8rem;
+    }
+
+    .entries {
         height: 100%;
+        border-top: 1px solid var(--color-outline);
+        border-bottom: 1px solid var(--color-outline);
+        padding: 0.5rem 0;
         -webkit-overflow-scrolling: touch;
 
         &::-webkit-scrollbar {

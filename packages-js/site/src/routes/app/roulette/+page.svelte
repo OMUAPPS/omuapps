@@ -21,11 +21,9 @@
     const roulette = new RouletteApp(omu);
     const { entries, state, config } = roulette;
 
-    let tab: 'add' | 'join' = 'join';
     let joinKeyword = '';
 
     async function onMessage(message: Message) {
-        if (tab !== 'join') return;
         if ($state.type !== 'recruiting') return;
         if (!message.authorId) return;
 
@@ -60,58 +58,44 @@
 
     <main>
         <div class="left">
-            <div class="tabs">
-                <button on:click={() => (tab = 'add')} class:selected={tab === 'add'}>
-                    <Tooltip>好きなエントリーだけで</Tooltip>
-                    <i class="ti ti-plus" />
-                    自分で追加
-                </button>
-                <button on:click={() => (tab = 'join')} class:selected={tab === 'join'}>
-                    <Tooltip>視聴者が参加できる</Tooltip>
-                    <i class="ti ti-user" />
-                    視聴者参加
-                </button>
-            </div>
-            {#if tab === 'join'}
-                <h3>
-                    <span>
-                        <i class="ti ti-users" />
-                        募集設定
-                    </span>
-                </h3>
-                <section class="join-settings">
-                    <span style="flex: 1;">
-                        <Tooltip>
-                            参加キーワードを設定すると、チャットにそのキーワードが含まれるメッセージを受信したときに、
-                            エントリーを追加します。
-                        </Tooltip>
-                        <input
-                            type="text"
-                            placeholder="参加キーワード"
-                            bind:value={joinKeyword}
-                            class="join-keyword"
-                        />
-                    </span>
-                    <button
-                        class:recruiting={$state.type === 'recruiting'}
-                        on:click={() => roulette.toggleRecruiting()}
-                    >
-                        {#if $state.type === 'recruiting'}
-                            募集を終了
-                            <i class="ti ti-player-pause" />
-                        {:else}
-                            募集を開始
-                            <i class="ti ti-player-play" />
-                        {/if}
-                    </button>
-                </section>
-            {/if}
             <h3>
                 <span>
-                    <i class="ti ti-list-numbers" />
-                    エントリー
+                    募集設定
+                    <i class="ti ti-users" />
                 </span>
+                <button
+                    class:recruiting={$state.type === 'recruiting'}
+                    on:click={() => roulette.toggleRecruiting()}
+                >
+                    {#if $state.type === 'recruiting'}
+                        募集を終了
+                        <i class="ti ti-player-pause" />
+                    {:else}
+                        募集を開始
+                        <i class="ti ti-player-play" />
+                    {/if}
+                </button>
+            </h3>
+            <div class="join-settings">
                 <span>
+                    <Tooltip>
+                        参加キーワードを設定すると、チャットにそのキーワードが含まれるメッセージを受信したときに、
+                        エントリーを追加します。
+                    </Tooltip>
+                    <input
+                        type="text"
+                        placeholder="参加キーワード…"
+                        bind:value={joinKeyword}
+                        class="join-keyword"
+                    />
+                </span>
+            </div>
+            <h3>
+                <span>
+                    エントリー
+                    <i class="ti ti-list-numbers" />
+                </span>
+                <span class="buttons">
                     <button on:click={() => roulette.clearEntries()}>
                         <Tooltip>エントリーをすべて消す</Tooltip>
                         クリア
@@ -119,10 +103,14 @@
                     </button>
                     <button
                         on:click={() => {
-                            const id = Date.now().toString();
+                            let name = 'エントリー';
+                            let i = 1;
+                            while (Object.values($entries).some(it => it.name == `${name} ${i}`)) {
+                                i ++;
+                            }
                             roulette.addEntry({
-                                id,
-                                name: '',
+                                id: Date.now().toString(),
+                                name: `${name} ${i}`,
                             });
                         }}
                     >
@@ -135,11 +123,15 @@
             <section class="entries">
                 <EntryList {roulette} />
             </section>
+            <h3>
+                <span>
+                    配信ソフトに追加する
+                    <i class="ti ti-arrow-bar-to-down" />
+                </span>
+            </h3>
+            <AssetButton {omu} {obs} />
         </div>
         <div class="right">
-            <div class="buttons">
-                <AssetButton {omu} {obs} />
-            </div>
             <div class="roulette">
                 <RouletteRenderer {roulette} />
                 {#if $state.type === 'spin-result'}
@@ -149,14 +141,6 @@
                 {/if}
             </div>
             <SpinButton {roulette} />
-            <div class="settings">
-                <h3>Settings</h3>
-                <p>state: {$state.type}</p>
-                <!-- duration -->
-                <label for="duration-input">duration</label>
-                <input type="range" min="1" max="10" step="1" bind:value={$config.duration} />
-                <input id="duration-input" type="number" bind:value={$config.duration} />s
-            </div>
         </div>
     </main>
 </AppPage>
@@ -182,69 +166,67 @@
         justify-content: space-between;
         width: 22rem;
         height: 100%;
-        background: var(--color-bg-2);
-    }
-
-    .tabs {
-        display: flex;
-        flex-direction: row;
-        margin: 0 $margin;
-        gap: $margin;
-        padding-top: $margin;
-        margin-bottom: $margin;
-        padding-bottom: 1rem;
-
-        button {
-            padding: 0.5rem 1rem;
-            flex: 1;
-            background: none;
-            border: none;
-            border-bottom: 2px solid var(--color-bg-1);
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: bold;
+        
+        > h3 {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            margin-bottom: .75rem;
+            font-size: 1rem;
             color: var(--color-1);
 
-            &.selected {
-                border-bottom: 2px solid var(--color-1);
-            }
-
-            &:hover {
-                background: var(--color-bg-1);
+            > .buttons {
+                display: flex;
+                gap: 0.25rem;
             }
         }
+
+        > section {
+            margin-bottom: 2rem;
+        }
     }
+
 
     .join-settings {
         display: flex;
-        justify-content: space-between;
+        flex-direction: row;
         gap: 0.5rem;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 2rem;
 
         > span {
             flex: 1;
-        }
-
-        input.join-keyword {
-            flex: 1;
-            padding: 0.25rem 0.2rem;
-            border: none;
-            background: none;
-            border-bottom: 1px solid var(--color-outline);
-            font-size: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
             width: 100%;
+            
+            > input {
+                border: 1px solid var(--color-outline);
+                background: var(--color-bg-2);
+                padding: 0.5rem 0.5rem;
+                border-radius: 2.5px;
 
-            &:focus {
-                outline: none;
-                border-bottom: 2px solid var(--color-1);
+                &::placeholder {
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    padding-left: 0.125rem;
+                }
+
+                &:focus {
+                    outline: 1px solid var(--color-1);
+                    outline-offset: -1px;
+                }
+
+                &:hover {
+                    &::placeholder {
+                        color: var(--color-1);
+                        padding-left: 0.25rem;
+                        transition: padding-left 0.0621s;
+                    }
+                }
             }
-
-            &::placeholder {
-                font-size: 0.8rem;
-            }
-        }
-
-        > button {
-            white-space: nowrap;
         }
     }
 
@@ -256,29 +238,29 @@
         height: 100%;
     }
 
-    h3 {
-        padding: 0 1.5rem;
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        font-size: 1rem;
-    }
-
-    section {
-        padding: 0 1.5rem;
-        margin-bottom: 2rem;
-    }
-
     button {
         background: var(--color-1);
-        color: var(--color-bg-1);
-        padding: 0.25rem 0.5rem;
+        color: var(--color-bg-2);
+        padding: 0.4rem 1rem;
         border: none;
         cursor: pointer;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+        border-radius: 2px;
+        
+        &:focus-visible,
+        &:hover {
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            outline: 1px solid var(--color-1);
+            outline-offset: -1px;
+        }
+
     }
 
     .right {
+        position: relative;
         flex: 1;
         margin-left: 2rem;
         display: flex;
@@ -292,6 +274,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        flex: 1;
 
         > .result {
             position: absolute;

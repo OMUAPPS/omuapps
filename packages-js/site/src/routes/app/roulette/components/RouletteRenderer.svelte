@@ -49,7 +49,7 @@
 
     function rouletteEasing(t: number) {
         const a = Math.pow(t, 0.1);
-        const r = Math.pow(t, 0.5);
+        const r = Math.pow(t, 0.3);
         return BetterMath.lerp(a, 1, r);
     }
 
