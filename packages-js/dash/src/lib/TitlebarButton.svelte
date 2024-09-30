@@ -30,9 +30,10 @@
         border: none;
         outline: none;
 
+        &:focus-visible,
         &:hover {
-            color: var(--color-bg-2);
             background: var(--color-1);
+            color: var(--color-bg-2);
         }
 
         &:disabled {

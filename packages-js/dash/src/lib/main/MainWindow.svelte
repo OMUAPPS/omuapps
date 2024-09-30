@@ -215,7 +215,9 @@
             font-size: 1rem;
         }
 
+        &:focus-visible,
         &:hover {
+            outline: none;
             background: var(--color-bg-1);
             transition: background 0.0621s;
         }
@@ -263,7 +265,9 @@
                 width: 2rem;
                 height: 2rem;
 
+                &:focus-visible,
                 &:hover {
+                    outline: none;
                     background: var(--color-1);
                     color: var(--color-bg-1);
                     border-radius: 4px;

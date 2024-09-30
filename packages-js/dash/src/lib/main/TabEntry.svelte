@@ -59,10 +59,12 @@
             visibility: hidden;
         }
 
+        &:focus-visible,
         &:focus,
         &:hover {
             background: var(--color-bg-1);
             transition: background 0.0621s;
+            outline: none;
 
             > .open {
                 visibility: visible;

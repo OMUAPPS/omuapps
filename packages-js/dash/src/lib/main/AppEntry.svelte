@@ -118,6 +118,7 @@
         &.selected,
         &:focus,
         &:hover {
+            outline: none;
             transition: background 0.0621s;
 
             > .info {
