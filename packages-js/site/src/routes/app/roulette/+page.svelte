@@ -299,9 +299,11 @@
         
             > .state {
                 color: var(--color-outline);
+                font-weight: 500;
 
                 > .current {
                     color: var(--color-1);
+                    font-weight: 600;
                 }
             }
         }
