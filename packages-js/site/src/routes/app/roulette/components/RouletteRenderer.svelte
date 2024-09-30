@@ -61,7 +61,6 @@
 
         const count = Object.keys($entries).length;
         if (count === 0) return;
-
         ctx.save();
 
         let tint = 0;
@@ -229,6 +228,8 @@
 
 <style lang="scss">
     canvas {
+        position: absolute;
+        inset: 0;
         width: 100%;
         height: 100%;
     }
