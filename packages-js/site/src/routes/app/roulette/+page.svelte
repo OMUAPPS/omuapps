@@ -168,7 +168,7 @@
         align-items: start;
         justify-content: flex-start;
         gap: 1rem;
-        padding: 2rem;
+        padding: 0 2rem;
         background: var(--color-bg-1);
         overflow: hidden;
     }
@@ -179,6 +179,7 @@
         justify-content: space-between;
         width: 22rem;
         height: 100%;
+        padding: 2rem 0;
         
         > h3 {
             display: flex;
@@ -290,6 +291,7 @@
             align-items: end;
             justify-content: space-between;
             gap: 1rem;
+            padding: 2rem 0;
 
             > .spin {
                 width: 20rem;
