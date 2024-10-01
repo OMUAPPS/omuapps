@@ -18,6 +18,6 @@ export const APP = new App(APP_ID, {
         },
         icon: 'ti-rosette',
         image: getUrl(thumbnail),
-        tags: ['asset', 'game', 'tool', 'underdevelopment'] as TagKey[],
+        tags: ['asset', 'game', 'tool'] as TagKey[],
     },
 });
