@@ -65,6 +65,7 @@
         'ServerStartFailed',
     ];
 
+    let updating = false;
     let progress: Progress | null = null;
     $: state = progress ? (Object.keys(progress)[0] as keyof PROGRESS_EVENT) : null;
     $: stateMessage = state ? ERROR_NAMES[state] : '';
@@ -87,6 +88,10 @@
         if (!newVersion) {
             throw new Error('newVersion is null');
         }
+        if (updating) {
+            throw new Error('Already updating');
+        }
+        updating = true;
         const { installUpdate } = await import('@tauri-apps/api/updater');
         try {
             await omu.server.shutdown();
@@ -196,9 +201,14 @@
                             <small>
                                 新しいバージョンがあります。起動しない場合はアップデートをお試しください
                             </small>
-                            <button on:click={update} class="update">
-                                アップデート
-                                <i class="ti ti-reload" />
+                            <button on:click={update} class="update" disabled={updating}>
+                                {#if updating}
+                                    更新中…
+                                    <i class="ti ti-reload" />
+                                {:else}
+                                    アップデート
+                                    <i class="ti ti-reload" />
+                                {/if}
                             </button>
                         </div>
                     {/if}
@@ -227,9 +237,14 @@
                             <small>
                                 新しいバージョンがあります。起動しない場合はアップデートをお試しください
                             </small>
-                            <button on:click={update} class="update">
-                                アップデート
-                                <i class="ti ti-reload" />
+                            <button on:click={update} class="update" disabled={updating}>
+                                {#if updating}
+                                    更新中…
+                                    <i class="ti ti-reload" />
+                                {:else}
+                                    アップデート
+                                    <i class="ti ti-reload" />
+                                {/if}
                             </button>
                         </div>
                     {/if}
@@ -264,9 +279,14 @@
                             <small>
                                 新しいバージョンがあります。起動しない場合はアップデートをお試しください
                             </small>
-                            <button on:click={update} class="update">
-                                アップデート
-                                <i class="ti ti-reload" />
+                            <button on:click={update} class="update" disabled={updating}>
+                                {#if updating}
+                                    更新中…
+                                    <i class="ti ti-reload" />
+                                {:else}
+                                    アップデート
+                                    <i class="ti ti-reload" />
+                                {/if}
                             </button>
                         </div>
                     {/if}
@@ -402,6 +422,12 @@
         &:hover {
             background: var(--color-1);
             color: var(--color-bg-1);
+        }
+
+        &:disabled {
+            background: var(--color-bg-1);
+            outline: 1px solid var(--color-text);
+            color: var(--color-text);
         }
     }
 
