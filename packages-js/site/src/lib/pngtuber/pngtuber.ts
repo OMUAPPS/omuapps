@@ -1,5 +1,5 @@
 import { GlBuffer, GlContext, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
-import { Mth } from '$lib/math.js';
+import { BetterMath } from '$lib/math.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
@@ -181,7 +181,7 @@ function calculateRotation(time: number): number {
     const IN_TIME = 200;
     const OUT_TIME = 2000;
     const total = IN_TIME + OUT_TIME;
-    const t = Mth.clamp01(time / total);
+    const t = BetterMath.clamp01(time / total);
     const a = t < IN_TIME / total
         ? easeOutQuart(t / (IN_TIME / total))
         : 1 - easeOutElastic((t - IN_TIME / total) / (OUT_TIME / total));
@@ -195,7 +195,7 @@ function calculateBounce(time: number): number {
     // return 1 - Math.sin(t * Math.PI);
     // 1\ -\ \left(2x-1\right)^{2}
     const BOUNCE_TIME = 400;
-    const t = Mth.clamp01(time / BOUNCE_TIME);
+    const t = BetterMath.clamp01(time / BOUNCE_TIME);
     return Math.pow(2 * t - 1, 2);
 }
 
@@ -204,11 +204,11 @@ function calculateDrag(time: number): number {
     const IN_TIME = 200;
     const OUT_TIME = 200;
     const total = IN_TIME + OUT_TIME;
-    const t = Mth.clamp01(time / total);
+    const t = BetterMath.clamp01(time / total);
     const a = t < IN_TIME / total
         ? easeOutQuart(t / (IN_TIME / total))
         : 1 - easeInQuart((t - IN_TIME / total) / (OUT_TIME / total));
-    return Mth.lerp(1, -1, a);
+    return BetterMath.lerp(1, -1, a);
 }
 
 export type AvatarState = {
@@ -244,17 +244,21 @@ export class PNGTuber {
         return new PNGTuber(glContext, layers);
     }
 
-    public render(state: AvatarState) {
+    public render(state: AvatarState, matrix: Mat4 = Mat4.IDENTITY) {
         const { gl } = this.glContext;
-        const matrix = Mat4.IDENTITY
+        matrix = matrix
             .translate(gl.canvas.width / 2, gl.canvas.height / 2, 0)
             .scale(1 / 2);
-        this.layers.values().filter(layer => layer.parentId === null).forEach(layer => {
-            this.renderLayer(layer, state, matrix);
+        const passes = Array.from(new Set(this.layers.values().map(layer => layer.zindex)));
+        passes.sort((a, b) => a - b);
+        passes.forEach(pass => {
+            this.layers.values().filter(layer => layer.parentId === null).forEach(layer => {
+                this.renderLayer(layer, state, pass, matrix);
+            });
         });
     }
 
-    private renderLayer(layer: Layer, state: AvatarState, matrix: Mat4) {
+    private renderLayer(layer: Layer, state: AvatarState, pass: number, matrix: Mat4) {
         if (layer.showBlink !== 0) {
             if (state.blinking && layer.showBlink === 1) {
                 return;
@@ -272,34 +276,36 @@ export class PNGTuber {
         const { gl } = this.glContext;
         let modelMatrix = matrix;
         modelMatrix = modelMatrix.translate(layer.pos.x, layer.pos.y, 0);
-        modelMatrix = modelMatrix.translate(layer.xAmp * Math.sin(Mth.toRadians(state.time * layer.xFrq)), layer.yAmp * Math.sin(Mth.toRadians(state.time * layer.yFrq)), 0);
+        modelMatrix = modelMatrix.translate(layer.xAmp * Math.sin(BetterMath.toRadians(state.time * layer.xFrq)), layer.yAmp * Math.sin(BetterMath.toRadians(state.time * layer.yFrq)), 0);
         modelMatrix = modelMatrix.translate(calculateDrag(state.talkingTime) * layer.drag, 0, 0);
-        modelMatrix = modelMatrix.rotateZ(Mth.toRadians(Mth.clamp(layer.drag * calculateDrag(state.talkingTime), layer.rLimitMin, layer.rLimitMax)));
-        modelMatrix = modelMatrix.rotateZ(Mth.toRadians(Mth.clamp(layer.rotDrag * calculateRotation(state.talkingTime), layer.rLimitMin, layer.rLimitMax)));
+        modelMatrix = modelMatrix.rotateZ(BetterMath.toRadians(BetterMath.clamp(layer.drag * calculateDrag(state.talkingTime), layer.rLimitMin, layer.rLimitMax)));
+        modelMatrix = modelMatrix.rotateZ(BetterMath.toRadians(BetterMath.clamp(layer.rotDrag * calculateRotation(state.talkingTime), layer.rLimitMin, layer.rLimitMax)));
         if (layer.parentId === null) {
             modelMatrix = modelMatrix.translate(0, calculateBounce(state.talkingTime) * 50, 0);
         }
-    
-        this.program.use(() => {
-            const textureUniform = this.program.getUniform('u_texture').asSampler2D();
-            textureUniform.set(layer.imageData);
-            const projection = this.program.getUniform('u_projection').asMat4();
-            projection.set(Mat4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1));
-            const model = this.program.getUniform('u_model').asMat4();
-            model.set(modelMatrix
-                .translate(layer.offset.x, layer.offset.y, 0)
-                .translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
-            );
-            const view = this.program.getUniform('u_view').asMat4();
-            view.set(Mat4.IDENTITY);
-            const positionAttribute = this.program.getAttribute('a_position');
-            positionAttribute.set(layer.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const uvAttribute = this.program.getAttribute('a_texcoord');
-            uvAttribute.set(layer.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-        })
+        
+        if (layer.zindex === pass) {
+            this.program.use(() => {
+                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+                textureUniform.set(layer.imageData);
+                const projection = this.program.getUniform('u_projection').asMat4();
+                projection.set(Mat4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1));
+                const model = this.program.getUniform('u_model').asMat4();
+                model.set(modelMatrix
+                    .translate(layer.offset.x, layer.offset.y, 0)
+                    .translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
+                );
+                const view = this.program.getUniform('u_view').asMat4();
+                view.set(Mat4.IDENTITY);
+                const positionAttribute = this.program.getAttribute('a_position');
+                positionAttribute.set(layer.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                const uvAttribute = this.program.getAttribute('a_texcoord');
+                uvAttribute.set(layer.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+            })
+        }
         this.layers.values().filter(child => child.parentId === layer.identification).forEach(child => {
-            this.renderLayer(child, state, modelMatrix);
+            this.renderLayer(child, state, pass, modelMatrix);
         });
     }
 }
