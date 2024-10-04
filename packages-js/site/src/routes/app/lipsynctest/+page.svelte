@@ -1,6 +1,7 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import type { GlBuffer, GlContext, GlProgram } from '$lib/components/canvas/glcontext.js';
+    import { Vec3 } from '$lib/math/vec3.js';
     import { LINE_FRAGMENT_SHADER, LIVE_VERTEX_SHADER } from './shader.js';
     import { Spectrum } from './spectrum.js';
     import { vowels } from './vowels.js';
@@ -82,14 +83,14 @@
     async function render(glContext: GlContext) {
         const { gl } = glContext;
         program.use(() => {
-            const u_length = program.getUniform('u_length');
-            const u_minValue = program.getUniform('u_minValue');
-            const u_maxValue = program.getUniform('u_maxValue');
-            const u_color = program.getUniform('u_color');
-            u_length.set1f(timeDomainArray.length);
-            u_minValue.set1f(-1.0);
-            u_maxValue.set1f(1.0);
-            u_color.set3f(1.0, 0.0, 0.0);
+            const u_length = program.getUniform('u_length').asFloat();
+            const u_minValue = program.getUniform('u_minValue').asFloat();
+            const u_maxValue = program.getUniform('u_maxValue').asFloat();
+            const u_color = program.getUniform('u_color').asVec3();
+            u_length.set(timeDomainArray.length);
+            u_minValue.set(-1.0);
+            u_maxValue.set(1.0);
+            u_color.set(new Vec3(1.0, 0.0, 0.0));
 
             analyzer.getFloatTimeDomainData(timeDomainArray);
             timeDomainVbo.bind(() => {
@@ -99,10 +100,10 @@
                 gl.drawArrays(gl.LINE_STRIP, 0, timeDomainArray.length);
             });
 
-            u_length.set1f(frequencyArray.length);
-            u_minValue.set1f(analyzer.minDecibels);
-            u_maxValue.set1f(analyzer.maxDecibels);
-            u_color.set3f(0.0, 0.0, 1.0);
+            u_length.set(frequencyArray.length);
+            u_minValue.set(analyzer.minDecibels);
+            u_maxValue.set(analyzer.maxDecibels);
+            u_color.set(new Vec3(0.0, 0.0, 1.0));
 
             analyzer.getFloatFrequencyData(frequencyArray);
             frequencyVbo.bind(() => {
