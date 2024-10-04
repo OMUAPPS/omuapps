@@ -1,4 +1,12 @@
 export class BetterMath {
+    public static toRadians(degrees: number): number {
+        return degrees * Math.PI / 180;
+    }
+
+    public static toDegrees(radians: number): number {
+        return radians * 180 / Math.PI;
+    }
+
     public static lerp(a: number, b: number, t: number): number {
         return a + (b - a) * t;
     }

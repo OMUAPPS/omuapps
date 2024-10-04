@@ -6,6 +6,7 @@ import { APP as archive } from './archive/app.js';
 import { APP as breaktimer } from './break-timer/app.js';
 import { APP as caption } from './caption/app.js';
 import { APP as chatSubtitle } from './chatsubtitle/app.js';
+import { APP as discordOverlay } from './discord-overlay/app.js';
 import { APP as emoji } from './emoji/app.js';
 import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
@@ -38,6 +39,7 @@ if (DEV) {
         obssync,
         breaktimer,
         archive,
+        discordOverlay,
     )
 }
 
