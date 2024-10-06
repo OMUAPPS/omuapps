@@ -1,24 +1,53 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import type { Omu } from '@omujs/omu';
+import { Identifier, type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import type { Writable } from 'svelte/store';
-import { APP_ID } from './app.js';
 
-type Config = {
-    version: number;
+const PLUGIN_ID = Identifier.fromKey('com.omuapps:plugin-discordrpc');
+type Pan = {
+    left: number;
+    right: number;
+};
+type VoiceState = {
+    mute: boolean;
+    deaf: boolean;
+    self_mute: boolean;
+    self_deaf: boolean;
+    suppress: boolean;
+};
+type VoiceStateUser = {
+    bot: boolean;
+    premium_type: number;
+};
+type VoiceStateItem = {
+    nick: string;
+    mute: boolean;
+    volume: number;
+    pan: Pan;
+    voice_state: VoiceState;
+    user: VoiceStateUser;
 };
 
-const REPLAY_CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
-    name: 'replay_config',
-    defaultValue: {
-        version: 1,
-    },
+const VOICE_STATE_REGISTRY_TYPE = RegistryType.createJson<Record<string, VoiceStateItem>>(PLUGIN_ID, {
+    name: 'voice_states',
+    defaultValue: {},
+});
+type SpeakState = {
+    speaking: boolean;
+    last_timestamp: number;
+}
+const SPEAKING_STATE_REGISTRY_TYPE = RegistryType.createJson<Record<string, SpeakState>>(PLUGIN_ID, {
+    name: 'speaking_states',
+    defaultValue: {},
 });
 
 export class DiscordOverlayApp {
-    public readonly config: Writable<Config>;
+    public readonly voiceState: Writable<Record<string, VoiceStateItem>>;
+    public readonly speakingState: Writable<Record<string, SpeakState>>;
 
-    constructor(private readonly omu: Omu) {
-        this.config = makeRegistryWritable(omu.registries.get(REPLAY_CONFIG_REGISTRY_TYPE));
+    constructor(omu: Omu) {
+        omu.permissions.require(PLUGIN_ID.join('vc', 'read'));
+        this.voiceState = makeRegistryWritable(omu.registries.get(VOICE_STATE_REGISTRY_TYPE));
+        this.speakingState = makeRegistryWritable(omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE));
     }
 }

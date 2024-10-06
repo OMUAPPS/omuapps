@@ -278,9 +278,27 @@ export class PNGTuber {
         modelMatrix = modelMatrix.translate(layer.pos.x, layer.pos.y, 0);
         modelMatrix = modelMatrix.translate(layer.xAmp * Math.sin(BetterMath.toRadians(state.time * layer.xFrq)), layer.yAmp * Math.sin(BetterMath.toRadians(state.time * layer.yFrq)), 0);
         modelMatrix = modelMatrix.translate(calculateDrag(state.talkingTime) * layer.drag, 0, 0);
-        modelMatrix = modelMatrix.rotateZ(BetterMath.toRadians(BetterMath.clamp(layer.drag * calculateDrag(state.talkingTime), layer.rLimitMin, layer.rLimitMax)));
-        modelMatrix = modelMatrix.rotateZ(BetterMath.toRadians(BetterMath.clamp(layer.rotDrag * calculateRotation(state.talkingTime), layer.rLimitMin, layer.rLimitMax)));
-        if (layer.parentId === null) {
+        modelMatrix = modelMatrix.rotateZ(BetterMath.toRadians(BetterMath.clamp(layer.drag * calculateDrag(state.talkingTime) , layer.rLimitMin, layer.rLimitMax)));
+        modelMatrix = modelMatrix.rotateZ(BetterMath.toRadians(BetterMath.clamp(layer.rotDrag * calculateRotation(state.talkingTime) * 2, layer.rLimitMin, layer.rLimitMax)));
+        // const scaleX = 1 + layer.stretchAmount * Math.sin(BetterMath.toRadians(state.time * 0.1)) * 0.01;
+        // const scaleY = 1 + layer.stretchAmount * Math.sin(BetterMath.toRadians(state.time * 0.1 + 45)) * 0.01;
+        // modelMatrix = modelMatrix.multiply(new Mat4(
+        //     scaleX, 0, 0, 0,
+        //     0, scaleY, 0, 0,
+        //     0, 0, 1, 0,
+        //     0, 0, 0, 1,
+        // ))
+        // instead, scale from the center
+        // modelMatrix = modelMatrix.translate(layer.imageData.width / 2, layer.imageData.height / 2, 0);
+        // modelMatrix = modelMatrix.multiply(new Mat4(
+        //     scaleX, 0, 0, 0,
+        //     0, scaleY, 0, 0,
+        //     0, 0, 1, 0,
+        //     -layer.imageData.width / 2 * (scaleX - 1), -layer.imageData.height / 2 * (scaleY - 1), 0, 1,
+        // ));
+        // modelMatrix = modelMatrix.translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0);
+        
+        if (layer.parentId === null && !layer.ignoreBounce) {
             modelMatrix = modelMatrix.translate(0, calculateBounce(state.talkingTime) * 50, 0);
         }
         

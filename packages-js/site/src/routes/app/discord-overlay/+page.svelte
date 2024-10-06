@@ -2,6 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { type GlContext } from '$lib/components/canvas/glcontext.js';
+    import { Mat4 } from '$lib/math/mat4.js';
     import { PNGTuber } from '$lib/pngtuber/pngtuber.js';
     import { Timer } from '$lib/timer.js';
     import { Omu } from '@omujs/omu';
@@ -12,9 +13,8 @@
     import robo from './robo.json';
 
     const omu = new Omu(APP);
-    const { config } = new DiscordOverlayApp(omu);
+    const { voiceState, speakingState } = new DiscordOverlayApp(omu);
     setClient(omu);
-
 
     if (BROWSER) {
         omu.start();
@@ -22,9 +22,6 @@
 
     let avatar: PNGTuber;
     const timer = new Timer();
-    let blinking = false;
-    let talking = false;
-    const talkingTimer = new Timer();
 
     async function init(context: GlContext) {
         avatar = await PNGTuber.load(context, robo);
@@ -38,24 +35,20 @@
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         
-        avatar.render({
-            time: timer.getElapsedMS(),
-            blinking,
-            talking,
-            talkingTime: talkingTimer.getElapsedMS(),
+        const entries = Object.entries($voiceState);
+        const count = entries.length;
+        const now = Date.now();
+        entries.forEach(([id, state], index) => {
+            const speakState = $speakingState[id];
+            const timestamp = speakState?.last_timestamp;
+            const talkingTime = timestamp ? now - timestamp : 0; 
+            avatar.render({
+                time: timer.getElapsedMS(),
+                blinking: state.voice_state.self_mute,
+                talking: speakState?.speaking,
+                talkingTime,
+            }, Mat4.IDENTITY.translate((index - count / 2) * 200, 0, 0));
         });
-        console.log(talkingTimer.getElapsedMS());
-    }
-
-    function toggleTalking() {
-        if (talking) {
-            talking = false;
-        } else {
-            if (talkingTimer.getElapsedMS() > 500) {
-                talkingTimer.reset();
-            }
-            talking = true;
-        }
     }
 </script>
 
@@ -65,12 +58,18 @@
     </header>
     <main>
         <Canvas {init} {render}/>
-        <button on:click={toggleTalking}>
-            {talking ? 'Stop Talking' : 'Start Talking'}
-        </button>
-        <button on:click={() => (blinking = !blinking)}>
-            {blinking ? 'Stop Blinking' : 'Start Blinking'}
-        </button>
+        <div class="debug">
+            <ul>
+                {#each Object.entries($voiceState) as [id, state] (id)}
+                    <li>
+                        {$speakingState[id]?.speaking ? '🎤' : ''}
+                        {state.nick}
+                        {state.voice_state.self_mute ? '🔇' : ''}
+                        {state.voice_state.self_deaf ? '🔊' : ''}
+                    </li>
+                {/each}
+            </ul>
+        </div>
     </main>
 </AppPage>
 
@@ -85,6 +84,13 @@
         overflow-x: hidden;
         display: flex;
         flex-direction: column;
+    }
+
+    .debug {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        padding: 1rem;
     }
 
     @container (width < 800px) {
