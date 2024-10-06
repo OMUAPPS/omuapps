@@ -96,6 +96,10 @@
             timer.reset();
         }
 
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate(deg2rad(45 + 45 / 2));
+        ctx.translate(-width / 2, -height / 2);
+
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
         const scale = 0.75;
@@ -159,8 +163,8 @@
             const textScale = Math.min(1, radius / 1.5 / textWidth);
             ctx.font = `bold ${fontSize * textScale}px "Noto Sans JP"`;
             // draw text
-            const x = width / 2 + Math.cos((i + 0.5) * split + angle) * radius * 0.9;
-            const y = height / 2 + Math.sin((i + 0.5) * split + angle) * radius * 0.9;
+            const x = width / 2 + Math.cos((i + 0.5) * split + angle) * radius * (1 - Math.min(0.1, (1 / Math.sqrt(count)) * 0.5));
+            const y = height / 2 + Math.sin((i + 0.5) * split + angle) * radius * (1 - Math.min(0.1, (1 / Math.sqrt(count)) * 0.5));
             // rotate
             ctx.save();
             ctx.translate(x, y);
