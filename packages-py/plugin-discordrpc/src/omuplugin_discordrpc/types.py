@@ -16,7 +16,8 @@ VOICE_STATE_REGISTRY_TYPE = RegistryType[dict[str, VoiceStateItem]].create_json(
 
 class SpeakState(TypedDict):
     speaking: bool
-    last_timestamp: int
+    speaking_start: int
+    speaking_stop: int
 
 
 SPEAKING_STATE_REGISTRY_TYPE = RegistryType[dict[str, SpeakState]].create_json(

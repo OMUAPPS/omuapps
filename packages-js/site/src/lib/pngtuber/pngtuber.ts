@@ -246,9 +246,6 @@ export class PNGTuber {
 
     public render(state: AvatarState, matrix: Mat4 = Mat4.IDENTITY) {
         const { gl } = this.glContext;
-        matrix = matrix
-            .translate(gl.canvas.width / 2, gl.canvas.height / 2, 0)
-            .scale(1 / 2);
         const passes = Array.from(new Set(this.layers.values().map(layer => layer.zindex)));
         passes.sort((a, b) => a - b);
         passes.forEach(pass => {

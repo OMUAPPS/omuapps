@@ -34,7 +34,8 @@ const VOICE_STATE_REGISTRY_TYPE = RegistryType.createJson<Record<string, VoiceSt
 });
 type SpeakState = {
     speaking: boolean;
-    last_timestamp: number;
+    speaking_start: number;
+    speaking_stop: number;
 }
 const SPEAKING_STATE_REGISTRY_TYPE = RegistryType.createJson<Record<string, SpeakState>>(PLUGIN_ID, {
     name: 'speaking_states',

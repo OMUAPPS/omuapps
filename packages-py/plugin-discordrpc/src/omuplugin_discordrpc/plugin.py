@@ -64,18 +64,22 @@ async def start():
         await rpc.subscribe_voice_state_delete(channel_id, voice_state_delete)
 
         async def speaking_start_handler(data: SpeakingStartData):
+            existing = speaking_states.get(data["user_id"], {})
             speaking_states[data["user_id"]] = {
                 "speaking": True,
-                "last_timestamp": int(time.time() * 1000),
+                "speaking_start": int(time.time() * 1000),
+                "speaking_stop": existing.get("speaking_stop", 0),
             }
             await speaking_state_registry.set(speaking_states)
 
         await rpc.subscribe_speaking_start(channel_id, speaking_start_handler)
 
         async def speaking_stop_handler(data: SpeakingStopData):
+            existing = speaking_states.get(data["user_id"], {})
             speaking_states[data["user_id"]] = {
                 "speaking": False,
-                "last_timestamp": int(time.time() * 1000),
+                "speaking_start": existing.get("speaking_start", 0),
+                "speaking_stop": int(time.time() * 1000),
             }
             await speaking_state_registry.set(speaking_states)
 

@@ -40,14 +40,17 @@
         const now = Date.now();
         entries.forEach(([id, state], index) => {
             const speakState = $speakingState[id];
-            const timestamp = speakState?.last_timestamp;
+            const timestamp = speakState?.speaking_start;
             const talkingTime = timestamp ? now - timestamp : 0; 
             avatar.render({
                 time: timer.getElapsedMS(),
                 blinking: state.voice_state.self_mute,
                 talking: speakState?.speaking,
                 talkingTime,
-            }, Mat4.IDENTITY.translate((index - count / 2) * 200, 0, 0));
+            }, Mat4.IDENTITY
+                .translate((index - count / 2) * 200, 0, 0)
+                .translate(gl.canvas.width / 2, gl.canvas.height - 100, 0)
+                .scale(1 / 3));
         });
     }
 </script>
