@@ -10,11 +10,25 @@
 #   universal: true
 
 -e file:packages-py/chat
+    # via omu-chatprovider
+    # via omuplugin-archive
+    # via omuplugin-chat
+    # via omuplugin-discordrpc
+    # via omuplugin-emoji
+    # via omuplugin-nyanya
+    # via omuplugin-obs
+    # via omuplugin-onecomme
+    # via omuplugin-translator
 -e file:packages-py/chat-provider
+    # via omu-chat-youtube
 -e file:packages-py/chat-youtube
 -e file:packages-py/omu
+    # via omu-chat
+    # via omuplugin-marshmallow
+    # via omuserver
 -e file:packages-py/plugin-archive
 -e file:packages-py/plugin-chat
+-e file:packages-py/plugin-discordrpc
 -e file:packages-py/plugin-emoji
 -e file:packages-py/plugin-marshmallow
 -e file:packages-py/plugin-nyanya
@@ -23,44 +37,119 @@
 -e file:packages-py/plugin-translator
 -e file:packages-py/server
 aiohappyeyeballs==2.4.0
+    # via aiohttp
 aiohttp==3.10.6
+    # via edgetrans
+    # via iwashi
+    # via marshmallowqa-py
+    # via omu
+    # via omu-chatprovider
+    # via omuserver
 aiosignal==1.3.1
+    # via aiohttp
 annotated-types==0.7.0
+    # via pydantic
 attrs==24.2.0
+    # via aiohttp
 beautifulsoup4==4.12.3
+    # via bs4
+    # via marshmallowqa-py
+    # via omu-chatprovider
 brotli==1.1.0 ; implementation_name == 'cpython'
+    # via yt-dlp
 brotlicffi==1.1.0.0 ; implementation_name != 'cpython'
+    # via yt-dlp
 bs4==0.0.2
+    # via iwashi
 certifi==2024.8.30
+    # via requests
+    # via yt-dlp
 cffi==1.17.1 ; implementation_name != 'cpython'
+    # via brotlicffi
 charset-normalizer==3.3.2
+    # via requests
 click==8.1.7
-colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
+    # via iwashi
+    # via omuserver
+colorama==0.4.6 ; platform_system == 'Windows' or sys_platform == 'win32'
+    # via click
+    # via loguru
 edgetrans==0.2.3
+    # via omuplugin-translator
 frozenlist==1.4.1
+    # via aiohttp
+    # via aiosignal
 idna==3.10
+    # via requests
+    # via yarl
 iwashi==3.1.0
+    # via omu-chatprovider
+    # via omuplugin-chat
 loguru==0.7.2
+    # via iwashi
+    # via omu
+    # via omu-chat
+    # via omu-chat-youtube
+    # via omu-chatprovider
+    # via omuplugin-archive
+    # via omuplugin-chat
+    # via omuplugin-discordrpc
+    # via omuplugin-emoji
+    # via omuplugin-marshmallow
+    # via omuplugin-nyanya
+    # via omuplugin-obs
+    # via omuplugin-onecomme
+    # via omuplugin-translator
+    # via omuserver
 lxml==5.3.0
+    # via omu-chatprovider
 marshmallowqa-py==0.7.2
+    # via omuplugin-marshmallow
 multidict==6.1.0
+    # via aiohttp
+    # via yarl
 mutagen==1.47.0
+    # via yt-dlp
 packaging==24.1
+    # via omuserver
 pip==24.2
+    # via omuserver
 psutil==6.0.0
+    # via omuplugin-obs
+    # via omuplugin-onecomme
+    # via omuserver
 pycparser==2.22 ; implementation_name != 'cpython'
+    # via cffi
 pycryptodomex==3.20.0
+    # via yt-dlp
 pydantic==2.9.2
+    # via marshmallowqa-py
 pydantic-core==2.23.4
+    # via pydantic
 pywin32==306 ; sys_platform == 'win32'
+    # via omuplugin-obs
 requests==2.32.3
+    # via yt-dlp
 result==0.17.0
+    # via omu
+    # via omuserver
 rookiepy==0.5.2
+    # via marshmallowqa-py
 soupsieve==2.6
+    # via beautifulsoup4
 typing-extensions==4.12.2
+    # via pydantic
+    # via pydantic-core
 urllib3==2.2.3
+    # via requests
+    # via yt-dlp
 uv==0.4.16
+    # via omuserver
 websockets==13.1
+    # via yt-dlp
 win32-setctime==1.1.0 ; sys_platform == 'win32'
+    # via loguru
 yarl==1.12.1
+    # via aiohttp
 yt-dlp==2024.8.6
+    # via omuplugin-archive
