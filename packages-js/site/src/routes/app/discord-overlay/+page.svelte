@@ -2,7 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { type GlContext } from '$lib/components/canvas/glcontext.js';
-    import { Mat4 } from '$lib/math/mat4.js';
+    import { PoseStack } from '$lib/math/pose-stack.js';
     import { PNGTuber } from '$lib/pngtuber/pngtuber.js';
     import { Timer } from '$lib/timer.js';
     import { Omu } from '@omujs/omu';
@@ -42,15 +42,17 @@
             const speakState = $speakingState[id];
             const timestamp = speakState?.speaking_start;
             const talkingTime = timestamp ? now - timestamp : 0; 
-            avatar.render({
+            const poseStack = new PoseStack();
+            poseStack.identity();
+            poseStack.translate(gl.canvas.width / 2, gl.canvas.height / 2, 0);
+            poseStack.translate(-count * 100 + index * 200, 0, 0);
+            poseStack.scale(1 / count * 2, 1 / count * 2, 1);
+            avatar.render(poseStack, {
                 time: timer.getElapsedMS(),
                 blinking: state.voice_state.self_mute,
                 talking: speakState?.speaking,
                 talkingTime,
-            }, Mat4.IDENTITY
-                .translate((index - count / 2) * 200, 0, 0)
-                .translate(gl.canvas.width / 2, gl.canvas.height - 100, 0)
-                .scale(1 / 3));
+            });
         });
     }
 </script>

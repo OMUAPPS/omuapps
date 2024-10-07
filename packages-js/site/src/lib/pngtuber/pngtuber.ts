@@ -1,6 +1,8 @@
 import { GlBuffer, GlContext, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
 import { BetterMath } from '$lib/math.js';
+import { Axis } from '$lib/math/axis.js';
 import { Mat4 } from '$lib/math/mat4.js';
+import type { PoseStack } from '$lib/math/pose-stack.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
 
@@ -244,18 +246,19 @@ export class PNGTuber {
         return new PNGTuber(glContext, layers);
     }
 
-    public render(state: AvatarState, matrix: Mat4 = Mat4.IDENTITY) {
-        const { gl } = this.glContext;
+    public render(poseStack: PoseStack, state: AvatarState) {
         const passes = Array.from(new Set(this.layers.values().map(layer => layer.zindex)));
         passes.sort((a, b) => a - b);
         passes.forEach(pass => {
             this.layers.values().filter(layer => layer.parentId === null).forEach(layer => {
-                this.renderLayer(layer, state, pass, matrix);
+                poseStack.push();
+                this.renderLayer(layer, state, pass, poseStack);
+                poseStack.pop();
             });
         });
     }
 
-    private renderLayer(layer: Layer, state: AvatarState, pass: number, matrix: Mat4) {
+    private renderLayer(layer: Layer, state: AvatarState, pass: number, poseStack: PoseStack) {
         if (layer.showBlink !== 0) {
             if (state.blinking && layer.showBlink === 1) {
                 return;
@@ -271,32 +274,14 @@ export class PNGTuber {
             }
         }
         const { gl } = this.glContext;
-        let modelMatrix = matrix;
-        modelMatrix = modelMatrix.translate(layer.pos.x, layer.pos.y, 0);
-        modelMatrix = modelMatrix.translate(layer.xAmp * Math.sin(BetterMath.toRadians(state.time * layer.xFrq)), layer.yAmp * Math.sin(BetterMath.toRadians(state.time * layer.yFrq)), 0);
-        modelMatrix = modelMatrix.translate(calculateDrag(state.talkingTime) * layer.drag, 0, 0);
-        modelMatrix = modelMatrix.rotateZ(BetterMath.toRadians(BetterMath.clamp(layer.drag * calculateDrag(state.talkingTime) , layer.rLimitMin, layer.rLimitMax)));
-        modelMatrix = modelMatrix.rotateZ(BetterMath.toRadians(BetterMath.clamp(layer.rotDrag * calculateRotation(state.talkingTime) * 2, layer.rLimitMin, layer.rLimitMax)));
-        // const scaleX = 1 + layer.stretchAmount * Math.sin(BetterMath.toRadians(state.time * 0.1)) * 0.01;
-        // const scaleY = 1 + layer.stretchAmount * Math.sin(BetterMath.toRadians(state.time * 0.1 + 45)) * 0.01;
-        // modelMatrix = modelMatrix.multiply(new Mat4(
-        //     scaleX, 0, 0, 0,
-        //     0, scaleY, 0, 0,
-        //     0, 0, 1, 0,
-        //     0, 0, 0, 1,
-        // ))
-        // instead, scale from the center
-        // modelMatrix = modelMatrix.translate(layer.imageData.width / 2, layer.imageData.height / 2, 0);
-        // modelMatrix = modelMatrix.multiply(new Mat4(
-        //     scaleX, 0, 0, 0,
-        //     0, scaleY, 0, 0,
-        //     0, 0, 1, 0,
-        //     -layer.imageData.width / 2 * (scaleX - 1), -layer.imageData.height / 2 * (scaleY - 1), 0, 1,
-        // ));
-        // modelMatrix = modelMatrix.translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0);
+        poseStack.translate(layer.pos.x, layer.pos.y, 0);
+        poseStack.translate(layer.xAmp * Math.sin(BetterMath.toRadians(state.time * layer.xFrq)), layer.yAmp * Math.sin(BetterMath.toRadians(state.time * layer.yFrq)), 0);
+        poseStack.translate(calculateDrag(state.talkingTime) * layer.drag, 0, 0);
+        poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(layer.drag * calculateDrag(state.talkingTime) , layer.rLimitMin, layer.rLimitMax)));
+        poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(layer.rotDrag * calculateRotation(state.talkingTime) * 2, layer.rLimitMin, layer.rLimitMax)));
         
         if (layer.parentId === null && !layer.ignoreBounce) {
-            modelMatrix = modelMatrix.translate(0, calculateBounce(state.talkingTime) * 50, 0);
+            poseStack.translate(0, calculateBounce(state.talkingTime) * 50, 0);
         }
         
         if (layer.zindex === pass) {
@@ -306,10 +291,11 @@ export class PNGTuber {
                 const projection = this.program.getUniform('u_projection').asMat4();
                 projection.set(Mat4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1));
                 const model = this.program.getUniform('u_model').asMat4();
-                model.set(modelMatrix
-                    .translate(layer.offset.x, layer.offset.y, 0)
-                    .translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
-                );
+                poseStack.push()
+                poseStack.translate(layer.offset.x, layer.offset.y, 0)
+                poseStack.translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
+                model.set(poseStack.get());
+                poseStack.pop();
                 const view = this.program.getUniform('u_view').asMat4();
                 view.set(Mat4.IDENTITY);
                 const positionAttribute = this.program.getAttribute('a_position');
@@ -320,7 +306,9 @@ export class PNGTuber {
             })
         }
         this.layers.values().filter(child => child.parentId === layer.identification).forEach(child => {
-            this.renderLayer(child, state, pass, modelMatrix);
+            poseStack.push();
+            this.renderLayer(child, state, pass, poseStack);
+            poseStack.pop();
         });
     }
 }
