@@ -275,11 +275,15 @@ export class PNGTuber {
         }
         const { gl } = this.glContext;
         poseStack.translate(layer.pos.x, layer.pos.y, 0);
-        poseStack.translate(layer.xAmp * Math.sin(BetterMath.toRadians(state.time * layer.xFrq)), layer.yAmp * Math.sin(BetterMath.toRadians(state.time * layer.yFrq)), 0);
+        const animationX = layer.xAmp * Math.sin(BetterMath.toRadians(state.time * layer.xFrq));
+        const animationY = layer.yAmp * Math.sin(BetterMath.toRadians(state.time * layer.yFrq));
+        poseStack.translate(animationX, animationY, 0);
         poseStack.translate(calculateDrag(state.talkingTime) * layer.drag, 0, 0);
         poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(layer.drag * calculateDrag(state.talkingTime) , layer.rLimitMin, layer.rLimitMax)));
-        poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(layer.rotDrag * calculateRotation(state.talkingTime) * 2, layer.rLimitMin, layer.rLimitMax)));
-        
+
+        const bounceRot = layer.rotDrag * calculateRotation(state.talkingTime) * 2;
+        poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(bounceRot, layer.rLimitMin, layer.rLimitMax)));
+
         if (layer.parentId === null && !layer.ignoreBounce) {
             poseStack.translate(0, calculateBounce(state.talkingTime) * 50, 0);
         }
@@ -292,6 +296,15 @@ export class PNGTuber {
                 projection.set(Mat4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1));
                 const model = this.program.getUniform('u_model').asMat4();
                 poseStack.push()
+                const animationRot = layer.rotDrag * animationY;
+                poseStack.translate(layer.offset.x, layer.offset.y, 0)
+                poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(animationRot, layer.rLimitMin, layer.rLimitMax)));
+                poseStack.scale(
+                    1 + Math.sin(BetterMath.toRadians(state.time * 0.25)) * layer.stretchAmount * 0.005,
+                    1 - Math.sin(BetterMath.toRadians(state.time * 0.25)) * layer.stretchAmount * 0.005,
+                    1
+                );
+                poseStack.translate(-layer.offset.x, -layer.offset.y, 0)
                 poseStack.translate(layer.offset.x, layer.offset.y, 0)
                 poseStack.translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
                 model.set(poseStack.get());

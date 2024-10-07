@@ -55,10 +55,4 @@ export class PoseStack {
         const pose = this.stack[this.stack.length - 1];
         pose.pose = pose.pose.scale(x, y, z);
     }
-
-    public rotateX(angle: number): void {
-        const pose = this.stack[this.stack.length - 1];
-        const quaternion = new Quaternion(Math.sin(angle / 2), 0, 0, Math.cos(angle / 2));
-        pose.pose = pose.pose.rotate(quaternion);
-    }
 }
