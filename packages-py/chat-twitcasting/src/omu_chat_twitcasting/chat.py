@@ -173,6 +173,9 @@ class TwitcastingChat(ChatService):
             provider_id=PROVIDER.id,
             name=sender["name"],
             avatar_url=sender["profileImage"],
+            metadata={
+                "url": f"https://twitcasting.tv/{sender['id']}",
+            },
         )
         return author
 
