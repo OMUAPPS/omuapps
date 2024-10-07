@@ -35,7 +35,6 @@
         while (currentElement) {
             const style = getComputedStyle(currentElement);
             if (
-                style.getPropertyValue('container-type') === 'inline-size' ||
                 style.getPropertyValue('transform') !== 'none'
             ) {
                 const rect = currentElement.getBoundingClientRect();
@@ -214,7 +213,7 @@
     }
 </script>
 
-<svelte:window on:mousemove={handleMouseMove} on:keyDown={handleKeyDown} />
+<svelte:window on:mousemove={handleMouseMove} on:keydown={handleKeyDown} />
 <span class="wrapper" use:attachParent>
     {#if show && !isMouseMoving}
         <div
