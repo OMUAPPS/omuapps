@@ -11,7 +11,7 @@ from omu.model import Model
 from .interface import Keyable
 
 NAMESPACE_REGEX = re.compile(r"^(\.[^/:.]|[\w-])+$")
-NAME_REGEX = re.compile(r"^[^/:.]+$")
+NAME_REGEX = re.compile(r"^[^/:]+$")
 
 
 class Identifier(Model[str], Keyable):

@@ -2,7 +2,7 @@ import type { Keyable } from './interface.js';
 import type { Model } from './model.js';
 
 const NAMESPACE_REGEX = /^(\.[^/:.]|[\w-])+$/;
-const NAME_REGEX = /^[^/:.]+$/;
+const NAME_REGEX = /^[^/:]+$/;
 
 export class Identifier implements Model<string>, Keyable {
     public readonly namespace: string;
