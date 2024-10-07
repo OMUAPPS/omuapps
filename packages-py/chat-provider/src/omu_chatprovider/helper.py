@@ -20,16 +20,14 @@ URL_NORMALIZE_REGEX = (
 
 
 def get_session(omu: Omu, provider: Provider) -> aiohttp.ClientSession:
-    user_agent = json.dumps(
-        [
-            "omu_chatprovider",
-            {
-                "id": provider.id.key(),
-                "version": provider.version,
-                "repository_url": provider.repository_url,
-            },
-        ]
+    ua_data = json.dumps(
+        {
+            "id": provider.id.key(),
+            "version": provider.version,
+            "repository_url": provider.repository_url,
+        },
     )
+    user_agent = f"OMUAPPS/{provider.version} {ua_data}"
     session = aiohttp.ClientSession(
         loop=omu.loop,
         headers={"User-Agent": user_agent},
