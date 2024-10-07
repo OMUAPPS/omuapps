@@ -16,6 +16,7 @@ from omu_chat.model.content import Root, Text
 from omu_chat.model.gift import Gift
 from omu_chatprovider.service import ChatService
 from omu_chatprovider.tasks import Tasks
+from yarl import URL
 
 from .const import PROVIDER
 from .types import events, types
@@ -136,8 +137,18 @@ class TwitcastingChat(ChatService):
             id=item["name"],
             name=item["name"],
             amount=1,
-            image_url=item["image"],
+            image_url=self.get_full_url(item["image"]),
             is_paid=False,
+        )
+
+    def get_full_url(self, path: str) -> str:
+        url = URL(path)
+        return str(
+            URL.build(
+                scheme=url.scheme or "https",
+                host=url.host or "s01.twitcasting.tv",
+                path=url.path,
+            )
         )
 
     def _parse_items(self, items: list[events.ScoreItem]) -> list[Gift]:
