@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 from threading import Thread
 
+from loguru import logger
 from omu.app import App
 from omu.helper import map_optional
 from omu.omu import Omu
@@ -59,6 +59,7 @@ from ..obs.scene import (
     OBSSceneItem,
 )
 from ..obs.source import OBSSource
+from .config import get_token_path
 
 APP = App(
     PLUGIN_ID,
@@ -81,7 +82,7 @@ loop = asyncio.new_event_loop()
 omu = Omu(
     APP,
     loop=loop,
-    token=JsonTokenProvider(Path(__file__).parent / "token.json"),
+    token=JsonTokenProvider(get_token_path()),
 )
 
 
@@ -413,9 +414,12 @@ def start():
 
 
 async def start_omu():
-    if omu.running:
-        await omu.stop()
-    await omu.start()
+    try:
+        if omu.running:
+            await omu.stop()
+        await omu.start()
+    except Exception as e:
+        logger.opt(exception=e).warning("Failed to start OBS Plugin")
 
 
 def stop():

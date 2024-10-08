@@ -17,6 +17,7 @@ from omuserver.server import Server
 
 from . import obsconfig
 from .permissions import PERMISSION_TYPES
+from .script.config import get_config_path
 
 
 class obs:
@@ -26,9 +27,12 @@ class obs:
 
 def find_process(names: set[str]) -> psutil.Process | None:
     for proc in psutil.process_iter():
-        name = proc.name()
-        if name in names:
-            return proc
+        try:
+            name = proc.name()
+            if name in names:
+                return proc
+        except psutil.NoSuchProcess:
+            pass
     return None
 
 
@@ -213,8 +217,7 @@ def get_launch_command():
 
 
 def install_all_scene():
-    script_path = Path(__file__).parent / "script"
-    config_path = script_path / "config.json"
+    config_path = get_config_path()
     config_path.write_text(
         json.dumps(
             {
@@ -224,6 +227,7 @@ def install_all_scene():
         ),
         encoding="utf-8",
     )
+    script_path = Path(__file__).parent / "script"
     launcher_path = script_path / "omuapps_plugin.py"
 
     scenes_path = get_obs_path() / "basic" / "scenes"

@@ -3,8 +3,15 @@ import sys
 from pathlib import Path
 
 
+def get_config_path() -> Path:
+    appdata = Path.home() / ".omuapps"
+    appdata.mkdir(exist_ok=True)
+    config = appdata / "obs_config.json"
+    return config
+
+
 def get_python_path() -> Path:
-    config_path = Path(__file__).parent / "config.json"
+    config_path = get_config_path()
     return Path(json.loads(config_path.read_text(encoding="utf-8"))["python_path"])
 
 

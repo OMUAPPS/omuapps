@@ -10,8 +10,9 @@ if __name__ == "omuapps_plugin":
 
 import json
 import subprocess
-from pathlib import Path
 from threading import Thread
+
+from omuplugin_obs.script.config import get_config_path
 
 
 class g:
@@ -19,8 +20,7 @@ class g:
 
 
 def get_launch_command():
-    config_path = Path(__file__).parent / "config.json"
-    return json.loads(config_path.read_text(encoding="utf-8"))["launch"]
+    return json.loads(get_config_path().read_text(encoding="utf-8"))["launch"]
 
 
 def launch_server():
@@ -56,7 +56,6 @@ def start():
 
 
 def script_unload():
-    terminate_server()
     from omuplugin_obs.script import obsplugin
 
     obsplugin.stop()
