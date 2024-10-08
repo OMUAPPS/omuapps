@@ -20,7 +20,7 @@ use crate::{
 };
 use anyhow::Result;
 use directories::ProjectDirs;
-use log::info;
+use log::{info, warn};
 use once_cell::sync::Lazy;
 use options::AppOptions;
 use sources::py::PythonVersion;
@@ -159,7 +159,12 @@ async fn clean_environment(
 
     let server = state.server.lock().unwrap();
     if server.is_some() {
-        Server::stop_server(&on_progress, &python, &options.server_options).unwrap();
+        match Server::stop_server(&on_progress, &python, &options.server_options) {
+            Ok(_) => {}
+            Err(err) => {
+                warn!("Failed to stop server: {}", err);
+            }
+        }
     };
 
     remove_dir_all(&options.python_path).unwrap();
