@@ -7,7 +7,7 @@ let _listen: typeof event.listen;
 type Commands = {
     start_server: () => string;
     get_token: () => string | null;
-    generate_log_file: () => void;
+    generate_log_file: () => string;
 };
 
 export async function invoke<T extends keyof Commands>(

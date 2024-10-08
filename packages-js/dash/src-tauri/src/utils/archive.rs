@@ -128,23 +128,20 @@ pub fn unpack_archive(contents: &[u8], dst: &Path, strip_components: usize) -> R
 
 pub fn pack_archive(sources: &Vec<PathBuf>, dest: &Path) -> Result<(), Error> {
     let mut archive = tar::Builder::new(Vec::new());
-    let mut queue = sources.clone();
-    while let Some(path) = queue.pop() {
-        if path.is_dir() {
-            for entry in fs::read_dir(&path)? {
-                let entry = entry?;
-                let path = entry.path();
-                if path.is_dir() {
-                    queue.push(path);
-                } else {
-                    archive.append_path_with_name(&path, path.file_name().unwrap())?;
-                }
-            }
+    for source in sources {
+        let source = source.canonicalize().path_context(source, "failed to canonicalize path")?;
+        let source = source.as_path();
+        if source.is_dir() {
+            archive
+                .append_dir_all(source.file_name().unwrap(), source)
+                .path_context(source, "failed to append directory")?;
         } else {
-            archive.append_path_with_name(&path, path.file_name().unwrap())?;
+            archive
+                .append_path_with_name(source, source.file_name().unwrap())
+                .path_context(source, "failed to append file")?;
         }
     }
-    let archive = archive.into_inner()?;
-    fs::write(dest, archive)?;
+    let archive = archive.into_inner().path_context(dest, "failed to create archive")?;
+    fs::write(dest, archive).path_context(dest, "failed to write archive")?;
     Ok(())
 }

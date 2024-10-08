@@ -212,7 +212,11 @@
         "setting": {
             "devMode": "開発者モード",
             "language": "言語",
-            "layoutInvert": "レイアウトを反転"
+            "debug": "デバッグ",
+            "logFileGenerate": "ログファイルを生成",
+            "logFileGenerating": "ログファイルを生成中...",
+            "logFileGenerateError": "ログファイルの生成に失敗しました: {error}",
+            "logFileGenerated": "ログファイルを生成しました: {path}"
         },
         "about": {
             "version": "バージョン",

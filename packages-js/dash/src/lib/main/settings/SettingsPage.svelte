@@ -1,12 +1,27 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
     import { LOCALES } from '$lib/i18n/i18n.js';
+    import { invoke } from '$lib/tauri.js';
     import { Combobox, Header, Toggle, Tooltip } from '@omujs/ui';
     import { currentSettingsCategory, devMode, language } from '../settings.js';
     import About from './about/About.svelte';
     import DevSettings from './DevSettings.svelte';
 
     export const props = {};
+
+    let logPromise: Promise<string> | null = null;
+
+    async function generateLogFile(): Promise<string> {
+        let path: string;
+        try {
+            path = await invoke('generate_log_file');
+        } catch (error) {
+            setTimeout(() => logPromise = null, 3000);
+            throw error;
+        }
+        logPromise = null;
+        return path;
+    }
 </script>
 
 <div class="container">
@@ -54,6 +69,22 @@
                 <span class="setting">
                     <p>{$t('settings.setting.devMode')}</p>
                     <Toggle bind:value={$devMode} />
+                </span>
+                <h3>
+                    {$t('settings.setting.debug')}
+                </h3>
+                <span class="setting">
+                    {#if logPromise}
+                        {#await logPromise}
+                            <button disabled>{$t('settings.setting.logFileGenerating')}</button>
+                        {:then path}
+                            <button>{$t('settings.setting.logFileGenerated', { path })}</button>
+                        {:catch error}
+                            <button>{$t('settings.setting.logFileGenerateError', { error })}</button>
+                        {/await}
+                    {:else}
+                        <button on:click={() => logPromise = generateLogFile()}>{$t('settings.setting.logFileGenerate')}</button>
+                    {/if}
                 </span>
             {:else if $currentSettingsCategory === 'about'}
                 <About />
@@ -140,7 +171,6 @@
         display: flex;
         flex-direction: column;
 
-
         > h2 {
             border-bottom: 1px solid var(--color-1);
             padding-bottom: 0.5rem;
@@ -154,6 +184,11 @@
             }
         }
 
+        > h3 {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--color-1);
+        }
     }
     
     .setting {
@@ -163,5 +198,30 @@
         justify-content: space-between;
         max-width: 20rem;
         margin-bottom: 0.75rem;
+
+        > button {
+            border: none;
+            background: var(--color-1);
+            color: var(--color-bg-2);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 2px;
+            cursor: pointer;
+
+            &:focus-visible,
+            &:hover {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+                background: var(--color-bg-1);
+                color: var(--color-1);
+            }
+
+            &:disabled {
+                background: var(--color-bg-1);
+                color: var(--color-1);
+                cursor: not-allowed;
+            }
+        }
     }
 </style>
