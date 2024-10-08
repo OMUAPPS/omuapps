@@ -10,7 +10,7 @@ from loguru import logger
 from omu.address import Address
 
 from omuserver.config import Config
-from omuserver.helper import find_processes_by_port
+from omuserver.helper import find_processes_by_executable, find_processes_by_port
 from omuserver.migration import migrate
 from omuserver.server.omuserver import OmuServer
 from omuserver.version import VERSION
@@ -50,6 +50,16 @@ def stop_server_processes(
             process.send_signal(signal.SIGTERM)
         except psutil.NoSuchProcess:
             logger.warning(f"Process {process.pid} not found")
+        except psutil.AccessDenied:
+            logger.warning(f"Access denied to process {process.pid}")
+    for process in find_processes_by_executable(Path(executable)):
+        try:
+            logger.info(f"Killing process {process.pid} ({process.name()})")
+            process.send_signal(signal.SIGTERM)
+        except psutil.NoSuchProcess:
+            logger.warning(f"Process {process.pid} not found")
+        except psutil.AccessDenied:
+            logger.warning(f"Access denied to process {process.pid}")
 
 
 @click.command()

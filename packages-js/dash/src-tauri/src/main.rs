@@ -26,7 +26,7 @@ use options::AppOptions;
 use sources::py::PythonVersion;
 use std::{
     borrow,
-    fs::create_dir_all,
+    fs::{create_dir_all, remove_dir_all},
     path::PathBuf,
     sync::{Arc, Mutex},
 };
@@ -129,6 +129,46 @@ async fn start_server(
 }
 
 #[tauri::command]
+async fn clean_environment(
+    window: tauri::Window,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), String> {
+    let on_progress = move |progress: Progress| {
+        info!("{:?}", progress);
+        window.emit("server_state", progress).unwrap();
+    };
+
+    let options = state.option.clone();
+    let python = if cfg!(dev) {
+        Python {
+            path: options.workdir.join("../.venv"),
+            python_bin: options.workdir.join("../.venv/Scripts/python.exe"),
+            version: PythonVersion {
+                major: 3,
+                minor: 12,
+                patch: 3,
+                suffix: None,
+                arch: borrow::Cow::Borrowed(""),
+                name: borrow::Cow::Borrowed(""),
+                os: borrow::Cow::Borrowed(""),
+            },
+        }
+    } else {
+        Python::ensure(&options, &on_progress).unwrap()
+    };
+
+    let server = state.server.lock().unwrap();
+    if server.is_some() {
+        Server::stop_server(&on_progress, &python, &options.server_options).unwrap();
+    };
+
+    remove_dir_all(&options.python_path).unwrap();
+    remove_dir_all(&options.uv_path).unwrap();
+
+    Ok(())
+}
+
+#[tauri::command]
 fn get_token(state: tauri::State<'_, AppState>) -> Result<Option<String>, String> {
     let server = state.server.lock().unwrap();
     if server.is_none() {
@@ -200,6 +240,7 @@ fn main() {
         .manage(server_state)
         .invoke_handler(tauri::generate_handler![
             start_server,
+            clean_environment,
             get_token,
             generate_log_file
         ])

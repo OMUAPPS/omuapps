@@ -42,3 +42,14 @@ def find_processes_by_port(port: int) -> Generator[psutil.Process, None, None]:
                 yield psutil.Process(connection.pid)
         except psutil.NoSuchProcess:
             pass
+
+
+def find_processes_by_executable(
+    executable: Path,
+) -> Generator[psutil.Process, None, None]:
+    for process in psutil.process_iter():
+        try:
+            if Path(process.exe()).resolve() == executable.resolve():
+                yield process
+        except psutil.NoSuchProcess:
+            pass

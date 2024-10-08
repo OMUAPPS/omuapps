@@ -216,7 +216,8 @@
             "logFileGenerate": "ログファイルを生成",
             "logFileGenerating": "ログファイルを生成中...",
             "logFileGenerateError": "ログファイルの生成に失敗しました: {error}",
-            "logFileGenerated": "ログファイルを生成しました: {path}"
+            "logFileGenerated": "ログファイルを生成しました: {path}",
+            "cleanEnvironment": "環境を削除して再起動"
         },
         "about": {
             "version": "バージョン",

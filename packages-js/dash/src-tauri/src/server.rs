@@ -97,7 +97,7 @@ impl Server {
         Ok(server)
     }
 
-    fn stop_server(
+    pub fn stop_server(
         on_progress: &(impl Fn(Progress) + Send + 'static),
         python: &Python,
         option: &ServerOption,

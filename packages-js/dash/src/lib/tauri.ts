@@ -8,6 +8,7 @@ type Commands = {
     start_server: () => string;
     get_token: () => string | null;
     generate_log_file: () => string;
+    clean_environment: () => void;
 };
 
 export async function invoke<T extends keyof Commands>(

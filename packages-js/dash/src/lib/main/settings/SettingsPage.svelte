@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { LOCALES } from '$lib/i18n/i18n.js';
     import { invoke } from '$lib/tauri.js';
@@ -21,6 +22,12 @@
         }
         logPromise = null;
         return path;
+    }
+
+    async function cleanEnvironment(): Promise<void> {
+        await omu.server.shutdown();
+        await invoke('clean_environment');
+        window.location.reload();
     }
 </script>
 
@@ -85,6 +92,10 @@
                     {:else}
                         <button on:click={() => logPromise = generateLogFile()}>{$t('settings.setting.logFileGenerate')}</button>
                     {/if}
+                </span>
+                <small>先にOBSを終了する必要があります</small>
+                <span class="setting">
+                    <button on:click={cleanEnvironment}>{$t('settings.setting.cleanEnvironment')}</button>
                 </span>
             {:else if $currentSettingsCategory === 'about'}
                 <About />
@@ -185,8 +196,8 @@
         }
 
         > h3 {
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
             color: var(--color-1);
         }
     }
