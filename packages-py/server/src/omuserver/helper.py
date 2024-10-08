@@ -42,6 +42,8 @@ def find_processes_by_port(port: int) -> Generator[psutil.Process, None, None]:
                 yield psutil.Process(connection.pid)
         except psutil.NoSuchProcess:
             pass
+        except psutil.AccessDenied:
+            pass
 
 
 def find_processes_by_executable(
@@ -52,4 +54,6 @@ def find_processes_by_executable(
             if Path(process.exe()).resolve() == executable.resolve():
                 yield process
         except psutil.NoSuchProcess:
+            pass
+        except psutil.AccessDenied:
             pass
