@@ -38,9 +38,13 @@ def find_process(names: set[str]) -> psutil.Process | None:
 
 def shutdown_obs(process: psutil.Process):
     if sys.platform == "win32":
-        from .hwnd_helpers import close_process_window
+        try:
+            from .hwnd_helpers import close_process_window
 
-        close_process_window(process)
+            close_process_window(process)
+        except Exception as e:
+            logger.opt(exception=e).error("Failed to close OBS window: {e}")
+        process.terminate()
     elif sys.platform == "linux":
         process.send_signal(signal.SIGINT)
     elif sys.platform == "darwin":
