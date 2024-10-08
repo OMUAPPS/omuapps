@@ -26,6 +26,9 @@
                 "setAlwaysOnTop": true,
                 "create": true,
                 "setFocus": true
+            },
+            "process": {
+                "relaunch": true
             }
         },
         "bundle": {

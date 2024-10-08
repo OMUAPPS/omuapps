@@ -4,6 +4,7 @@
     import { LOCALES } from '$lib/i18n/i18n.js';
     import { invoke } from '$lib/tauri.js';
     import { Combobox, Header, Toggle, Tooltip } from '@omujs/ui';
+    import { relaunch } from '@tauri-apps/api/process';
     import { currentSettingsCategory, devMode, language } from '../settings.js';
     import About from './about/About.svelte';
     import DevSettings from './DevSettings.svelte';
@@ -24,10 +25,14 @@
         return path;
     }
 
+    let isCleaning = false;
+
     async function cleanEnvironment(): Promise<void> {
+        if (isCleaning) return;
+        isCleaning = true;
         await omu.server.shutdown();
         await invoke('clean_environment');
-        window.location.reload();
+        await relaunch();
     }
 </script>
 
@@ -95,7 +100,11 @@
                 </span>
                 <small>先にOBSを終了する必要があります</small>
                 <span class="setting">
-                    <button on:click={cleanEnvironment}>{$t('settings.setting.cleanEnvironment')}</button>
+                    {#if isCleaning}
+                        <button disabled>{$t('settings.setting.cleaningEnvironment')}</button>
+                    {:else}
+                        <button on:click={cleanEnvironment}>{$t('settings.setting.cleanEnvironment')}</button>
+                    {/if}
                 </span>
             {:else if $currentSettingsCategory === 'about'}
                 <About />
