@@ -152,7 +152,7 @@
         checkNewVersionPromise = checkNewVersion();
     });
 
-    let generateLogPromise: Promise<void> | null = null;
+    let generateLogPromise: Promise<string> | null = null;
 
     async function generateLogFile(): Promise<void> {
         generateLogPromise = invoke('generate_log_file').finally(() => {
