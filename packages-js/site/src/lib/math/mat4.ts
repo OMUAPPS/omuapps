@@ -192,26 +192,30 @@ export class Mat4 {
     public inverse(): Mat4 {
         const det = this.determinant();
         if (det === 0) {
-            throw new Error('Matrix is not invertible.');
+            return Mat4.ZERO;
         }
         const invDet = 1 / det;
+        const nm00 = (this.m12 * this.m23 * this.m31 - this.m13 * this.m22 * this.m31 + this.m13 * this.m21 * this.m32 - this.m11 * this.m23 * this.m32 - this.m12 * this.m21 * this.m33 + this.m11 * this.m22 * this.m33) * invDet;
+        const nm01 = (this.m03 * this.m22 * this.m31 - this.m02 * this.m23 * this.m31 - this.m03 * this.m21 * this.m32 + this.m01 * this.m23 * this.m32 + this.m02 * this.m21 * this.m33 - this.m01 * this.m22 * this.m33) * invDet;
+        const nm02 = (this.m02 * this.m13 * this.m31 - this.m03 * this.m12 * this.m31 + this.m03 * this.m11 * this.m32 - this.m01 * this.m13 * this.m32 - this.m02 * this.m11 * this.m33 + this.m01 * this.m12 * this.m33) * invDet;
+        const nm03 = (this.m03 * this.m12 * this.m21 - this.m02 * this.m13 * this.m21 - this.m03 * this.m11 * this.m22 + this.m01 * this.m13 * this.m22 + this.m02 * this.m11 * this.m23 - this.m01 * this.m12 * this.m23) * invDet;
+        const nm10 = (this.m13 * this.m22 * this.m30 - this.m12 * this.m23 * this.m30 - this.m13 * this.m20 * this.m32 + this.m10 * this.m23 * this.m32 + this.m12 * this.m20 * this.m33 - this.m10 * this.m22 * this.m33) * invDet;
+        const nm11 = (this.m02 * this.m23 * this.m30 - this.m03 * this.m22 * this.m30 + this.m03 * this.m20 * this.m32 - this.m00 * this.m23 * this.m32 - this.m02 * this.m20 * this.m33 + this.m00 * this.m22 * this.m33) * invDet;
+        const nm12 = (this.m03 * this.m12 * this.m30 - this.m02 * this.m13 * this.m30 - this.m03 * this.m10 * this.m32 + this.m00 * this.m13 * this.m32 + this.m02 * this.m10 * this.m33 - this.m00 * this.m12 * this.m33) * invDet;
+        const nm13 = (this.m02 * this.m13 * this.m20 - this.m03 * this.m12 * this.m20 + this.m03 * this.m10 * this.m22 - this.m00 * this.m13 * this.m22 - this.m02 * this.m10 * this.m23 + this.m00 * this.m12 * this.m23) * invDet;
+        const nm20 = (this.m11 * this.m23 * this.m30 - this.m13 * this.m21 * this.m30 + this.m13 * this.m20 * this.m31 - this.m10 * this.m23 * this.m31 - this.m11 * this.m20 * this.m33 + this.m10 * this.m21 * this.m33) * invDet;
+        const nm21 = (this.m03 * this.m21 * this.m30 - this.m01 * this.m23 * this.m30 - this.m03 * this.m20 * this.m31 + this.m00 * this.m23 * this.m31 + this.m01 * this.m20 * this.m33 - this.m00 * this.m21 * this.m33) * invDet;
+        const nm22 = (this.m01 * this.m13 * this.m30 - this.m03 * this.m11 * this.m30 + this.m03 * this.m10 * this.m31 - this.m00 * this.m13 * this.m31 - this.m01 * this.m10 * this.m33 + this.m00 * this.m11 * this.m33) * invDet;
+        const nm23 = (this.m03 * this.m11 * this.m20 - this.m01 * this.m13 * this.m20 - this.m03 * this.m10 * this.m21 + this.m00 * this.m13 * this.m21 + this.m01 * this.m10 * this.m23 - this.m00 * this.m11 * this.m23) * invDet;
+        const nm30 = (this.m12 * this.m21 * this.m30 - this.m11 * this.m22 * this.m30 - this.m12 * this.m20 * this.m31 + this.m10 * this.m22 * this.m31 + this.m11 * this.m20 * this.m32 - this.m10 * this.m21 * this.m32) * invDet;
+        const nm31 = (this.m01 * this.m22 * this.m30 - this.m02 * this.m21 * this.m30 + this.m02 * this.m20 * this.m31 - this.m00 * this.m22 * this.m31 - this.m01 * this.m20 * this.m32 + this.m00 * this.m21 * this.m32) * invDet;
+        const nm32 = (this.m02 * this.m11 * this.m30 - this.m01 * this.m12 * this.m30 - this.m02 * this.m10 * this.m31 + this.m00 * this.m12 * this.m31 + this.m01 * this.m10 * this.m32 - this.m00 * this.m11 * this.m32) * invDet;
+        const nm33 = (this.m01 * this.m12 * this.m20 - this.m02 * this.m11 * this.m20 + this.m02 * this.m10 * this.m21 - this.m00 * this.m12 * this.m21 - this.m01 * this.m10 * this.m22 + this.m00 * this.m11 * this.m22) * invDet;
         return new Mat4(
-            invDet * (this.m11 * this.m22 * this.m33 + this.m12 * this.m23 * this.m31 + this.m13 * this.m21 * this.m32 - this.m13 * this.m22 * this.m31 - this.m12 * this.m21 * this.m33 - this.m11 * this.m23 * this.m32),
-            invDet * (this.m03 * this.m22 * this.m31 + this.m02 * this.m23 * this.m33 + this.m01 * this.m21 * this.m32 - this.m01 * this.m22 * this.m33 - this.m02 * this.m21 * this.m31 - this.m03 * this.m23 * this.m32),
-            invDet * (this.m03 * this.m12 * this.m31 + this.m02 * this.m11 * this.m33 + this.m01 * this.m13 * this.m32 - this.m01 * this.m12 * this.m33 - this.m02 * this.m13 * this.m31 - this.m03 * this.m11 * this.m32),
-            invDet * (this.m03 * this.m12 * this.m21 + this.m02 * this.m13 * this.m21 + this.m01 * this.m12 * this.m23 - this.m01 * this.m13 * this.m22 - this.m02 * this.m12 * this.m23 - this.m03 * this.m11 * this.m22),
-            invDet * (this.m13 * this.m22 * this.m30 + this.m12 * this.m20 * this.m32 + this.m10 * this.m23 * this.m32 - this.m10 * this.m22 * this.m33 - this.m12 * this.m23 * this.m30 - this.m13 * this.m20 * this.m32),
-            invDet * (this.m00 * this.m22 * this.m33 + this.m02 * this.m23 * this.m30 + this.m03 * this.m20 * this.m32 - this.m03 * this.m22 * this.m30 - this.m02 * this.m20 * this.m33 - this.m00 * this.m23 * this.m32),
-            invDet * (this.m03 * this.m12 * this.m30 + this.m02 * this.m10 * this.m33 + this.m00 * this.m13 * this.m32 - this.m00 * this.m12 * this.m33 - this.m02 * this.m13 * this.m30 - this.m03 * this.m10 * this.m32),
-            invDet * (this.m03 * this.m12 * this.m20 + this.m02 * this.m13 * this.m20 + this.m00 * this.m12 * this.m23 - this.m00 * this.m13 * this.m22 - this.m02 * this.m12 * this.m23 - this.m03 * this.m10 * this.m22),
-            invDet * (this.m10 * this.m21 * this.m33 + this.m11 * this.m23 * this.m30 + this.m13 * this.m20 * this.m31 - this.m13 * this.m21 * this.m30 - this.m11 * this.m20 * this.m33 - this.m10 * this.m23 * this.m31),
-            invDet * (this.m00 * this.m23 * this.m31 + this.m01 * this.m20 * this.m33 + this.m03 * this.m21 * this.m30 - this.m03 * this.m20 * this.m31 - this.m01 * this.m23 * this.m30 - this.m00 * this.m21 * this.m33),
-            invDet * (this.m03 * this.m11 * this.m30 + this.m01 * this.m13 * this.m30 + this.m00 * this.m11 * this.m33 - this.m00 * this.m13 * this.m31 - this.m01 * this.m10 * this.m33 - this.m03 * this.m10 * this.m31),
-            invDet * (this.m03 * this.m11 * this.m20 + this.m01 * this.m13 * this.m20 + this.m00 * this.m13 * this.m21 - this.m00 * this.m11 * this.m23 - this.m01 * this.m10 * this.m23 - this.m03 * this.m10 * this.m21),
-            invDet * (this.m11 * this.m20 * this.m32 + this.m10 * this.m22 * this.m31 + this.m12 * this.m21 * this.m30 - this.m12 * this.m20 * this.m31 - this.m10 * this.m21 * this.m32 - this.m11 * this.m22 * this.m30),
-            invDet * (this.m00 * this.m22 * this.m31 + this.m02 * this.m20 * this.m31 + this.m01 * this.m22 * this.m30 - this.m01 * this.m20 * this.m32 - this.m02 * this.m21 * this.m30 - this.m00 * this.m21 * this.m32),
-            invDet * (this.m02 * this.m11 * this.m30 + this.m01 * this.m10 * this.m32 + this.m00 * this.m12 * this.m31 - this.m00 * this.m11 * this.m32 - this.m01 * this.m12 * this.m30 - this.m02 * this.m10 * this.m31),
-            invDet * (this.m03 * this.m10 * this.m21 + this.m01 * this.m13 * this.m20 + this.m02 * this.m11 * this.m23 - this.m02 * this.m13 * this.m21 - this.m01 * this.m11 * this.m23 - this.m03 * this.m10 * this.m22),
+            nm00, nm01, nm02, nm03,
+            nm10, nm11, nm12, nm13,
+            nm20, nm21, nm22, nm23,
+            nm30, nm31, nm32, nm33,
         );
     }
 }
