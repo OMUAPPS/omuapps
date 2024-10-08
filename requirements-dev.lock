@@ -20,7 +20,9 @@
     # via omuplugin-onecomme
     # via omuplugin-translator
 -e file:packages-py/chat-provider
+    # via omu-chat-twitcasting
     # via omu-chat-youtube
+-e file:packages-py/chat-twitcasting
 -e file:packages-py/chat-youtube
 -e file:packages-py/omu
     # via omu-chat
@@ -71,7 +73,7 @@ charset-normalizer==3.3.2
 click==8.1.7
     # via iwashi
     # via omuserver
-colorama==0.4.6 ; platform_system == 'Windows' or sys_platform == 'win32'
+colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
     # via click
     # via loguru
     # via pytest
@@ -94,6 +96,7 @@ loguru==0.7.2
     # via iwashi
     # via omu
     # via omu-chat
+    # via omu-chat-twitcasting
     # via omu-chat-youtube
     # via omu-chatprovider
     # via omuplugin-archive
