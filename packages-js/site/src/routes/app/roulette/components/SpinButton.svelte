@@ -6,7 +6,7 @@
     const { state, entries } = roulette;
 </script>
 
-<div class="spin-button">
+<div class="spin-button" class:spinning={$state.type === 'spinning'}>
     {#if $state.type === 'idle' || $state.type === 'recruiting'}
         {@const empty = Object.keys($entries).length === 0}
         <button on:click={() => roulette.spin()} disabled={empty}>
@@ -66,6 +66,15 @@
                 animation: spin-button 0.1621s forwards;
             }
         }
+
+        &.spinning > button {
+            background: var(--color-bg-1);
+            color: var(--color-text);
+
+            &:hover {
+                animation: spin-button-spinning 0.1621s forwards;
+            }
+        }
     }
 
     @keyframes spin-button {
@@ -87,6 +96,29 @@
         100% {
             background: var(--color-1);
             color: var(--color-bg-1);
+            outline-offset: 1px;
+        }
+    }
+
+    @keyframes spin-button-spinning {
+        10% {
+            gap: 0rem;
+        }
+
+        25% {
+            transform: scale(0.98);
+        }
+
+        50% {
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            outline: 2px solid var(--color-1);
+            outline-offset: 3px;
+        }
+
+        100% {
+            background: var(--color-bg-1);
+            color: var(--color-text);
             outline-offset: 1px;
         }
     }

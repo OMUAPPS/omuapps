@@ -5,7 +5,7 @@
     import { Message } from '@omujs/chat/models/message.js';
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { AppHeader, setClient, Tooltip } from '@omujs/ui';
+    import { AppHeader, ComponentRenderer, setClient, Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import EntryList from './components/EntryList.svelte';
@@ -131,15 +131,36 @@
             </h3>
             <AssetButton dimensions={{width: 1080, height: 1080}} {omu} {obs} />
         </div>
-        <div class="right">
+        <div class="right" class:end={$state.type === 'spin-result'}>
             <div class="roulette">
                 <RouletteRenderer {roulette} />
-                {#if $state.type === 'spin-result'}
-                    <div class="result">
-                        <p>{$state.result.entry.name}</p>
-                    </div>
-                {/if}
             </div>
+            {#if $state.type === 'spin-result'}
+                {@const message = $state.result.entry.message && Message.fromJson($state.result.entry.message)}
+                <div class="result-container">
+                    <div class="spin-result">
+                        <p>
+                            {$state.result.entry.name}
+                        </p>
+                        {#if message && message.authorId}
+                            <div class="message">
+                                {#await chat.authors.get(message.authorId.key()) then author}
+                                    {#if author?.avatarUrl}
+                                        <div class="author">
+                                            <img src={omu.assets.proxy(author?.avatarUrl)} alt="icon" />
+                                        </div>
+                                    {/if}
+                                    {#if message.content}
+                                        <span class="content">
+                                            <ComponentRenderer component={message.content} />
+                                        </span>
+                                    {/if}
+                                {/await}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
             <div class="status">
                 <div class="spin">
                     <SpinButton {roulette} />
@@ -317,20 +338,125 @@
         align-items: center;
         flex: 1;
 
-        > .result {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+    }
+    
+    .result-container {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        pointer-events: none;
+    }
+
+    .spin-result {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        color: #fff;
+        filter: drop-shadow(0 0 0.1rem rgba(0.5, 0.5, 0.5, 0.2));
+
+        > p {
+            text-align: center;
+            font-size: 4rem;
+            padding: 1rem 4rem;
+            min-width: 18rem;
+            background: #000;
+        }
+
+        > .message {
+            visibility: hidden;
+            color: #fff;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
-            background: color-mix(in srgb, var(--color-bg-1) 80%, transparent 0%);
-            color: var(--color-1);
-            font-size: 2rem;
-            font-weight: bold;
+            justify-content: center;
+            padding: 1rem;
+            gap: 1rem;
+
+            .author {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            img {
+                width: 4rem;
+                height: 4rem;
+                border-radius: 50%;
+            }
+
+            .content {
+                display: flex;
+                align-items: center;
+                font-size: 1.5rem;
+                padding: 0 1.5rem;
+                height: 4rem;
+                background: #fff;
+                color: #000;
+                margin-right: 2rem;
+            }
+        }
+    }
+    .end {
+        $duration: 0.5s;
+
+        .result-container {
+            animation: result $duration forwards;
+        }
+
+        .message {
+            animation: message $duration forwards;
+            animation-delay: $duration;
+        }
+
+        .roulette {
+            animation: roulette $duration forwards;
+        }
+    }
+
+    @keyframes result {
+        0% {
+            transform: scale(0.78);
+        }
+        22% {
+            transform: scale(1.03);
+        }
+        100% {
+            transform: scale(1.0);
+        }
+    }
+
+    @keyframes message {
+        0% {
+            visibility: visible;
+            transform: translateY(2rem);
+        }
+        28% {
+            visibility: visible;
+            transform: translateY(-0.1rem);
+        }
+        100% {
+            visibility: visible;
+            transform: translateY(0rem);
+        }
+    }
+
+    @keyframes roulette {
+        0% {
+            transform: scale(1.03);
+            opacity: 1;
+        }
+        22% {
+            transform: scale(0.43);
+            opacity: 0.2;
+        }
+        100% {
+            transform: scale(0.45);
+            opacity: 0.23;
         }
     }
 </style>
