@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.43 (2024-10-08)
+
+
+### Bug Fixes
+
+* **dash:** 環境再構築で再起動されるように ([ccbeb94](https://github.com/OMUAPPS/omuapps/commit/ccbeb946395cdf1d6cc134984cb340e530517f18))
+
+
+
+
+
 ## 0.6.42 (2024-10-08)
 
 **Note:** Version bump only for package omuapps
