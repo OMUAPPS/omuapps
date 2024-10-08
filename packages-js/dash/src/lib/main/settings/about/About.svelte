@@ -14,10 +14,9 @@
 
 <style>
     main {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 40px;
-        padding-top: 40px;
-        padding-left: 80px;
+        gap: 3rem;
     }
 </style>

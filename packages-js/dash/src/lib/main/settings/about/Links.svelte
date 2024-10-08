@@ -12,12 +12,14 @@
         <h4>
             <i class="ti ti-brand-github" />
             {$t('settings.about.source_code')}
+            <i class="ti ti-external-link" />
         </h4>
     </ExternalLink>
     <ExternalLink href="https://omuapps.com">
         <h4>
             <i class="ti ti-world" />
             {$t('settings.about.website')}
+            <i class="ti ti-external-link" />
         </h4>
     </ExternalLink>
 </FlexColWrapper>
