@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/ui",
-    "version": "0.6.43",
+    "version": "0.6.44",
     "svelte": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.44 (2024-10-08)
+
+
+### Bug Fixes
+
+* **plugin-obs:** OBSのシャットダウンで失敗する場合を抑制 ([ce6e9b4](https://github.com/OMUAPPS/omuapps/commit/ce6e9b4291fc29abbe3790fb1ecbcd45c6b11a62))
+
+
+
+
+
 ## 0.6.43 (2024-10-08)
 
 
