@@ -25,7 +25,7 @@
         outline: 1px solid var(--color-outline);
         border-radius: 0.1rem;
 
-        &:focus {
+        &:focus-visible {
             outline: 2px solid var(--color-1);
         }
     }
@@ -41,9 +41,9 @@
         }
 
         &:hover {
-            .on {
-                outline: 1px solid var(--color-bg-1);
-                outline-offset: -3px;
+            .off {
+                outline: 1px solid var(--color-1);
+                outline-offset: -2px;
             }
         }
     }
