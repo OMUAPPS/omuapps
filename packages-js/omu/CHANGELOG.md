@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.6.45 (2024-10-09)
+
+
+### Bug Fixes
+
+* **plugin-obs:** 一部のインストールで失敗する場合の修正 ([f2868e3](https://github.com/OMUAPPS/omuapps/commit/f2868e3a22c41f09060a6a995391d19bf099f782))
+
+
+
+
+
 ## 0.6.44 (2024-10-08)
 
 
