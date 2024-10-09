@@ -155,6 +155,10 @@ class SceneJson(TypedDict):
 
 
 def is_installed():
+    config_path = get_config_path()
+    if not config_path.exists():
+        return False
+
     obs_path = get_obs_path()
 
     launcher_path = Path(__file__).parent / "script" / "omuapps_plugin.py"
