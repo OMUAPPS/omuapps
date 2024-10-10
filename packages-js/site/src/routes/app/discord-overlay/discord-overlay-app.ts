@@ -30,7 +30,7 @@ type VoiceState = {
     suppress: boolean;
 };
 
-type VoiceStateUser = {
+export type VoiceStateUser = {
     id: string;
     username: string;
     discriminator: string;
@@ -92,7 +92,7 @@ export class DiscordOverlayApp {
     public readonly speakingState: Writable<Record<string, SpeakState>>;
     public readonly config: Writable<Config>;
 
-    constructor(omu: Omu) {
+    constructor(public readonly omu: Omu) {
         this.voiceState = makeRegistryWritable(omu.registries.get(VOICE_STATE_REGISTRY_TYPE));
         this.speakingState = makeRegistryWritable(omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE));
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));

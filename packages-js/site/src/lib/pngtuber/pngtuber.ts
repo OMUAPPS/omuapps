@@ -1,9 +1,11 @@
 import { GlBuffer, GlContext, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
 import { BetterMath } from '$lib/math.js';
+import { AABB3 } from '$lib/math/aabb3.js';
 import { Axis } from '$lib/math/axis.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import type { PoseStack } from '$lib/math/pose-stack.js';
 import { Vec2 } from '$lib/math/vec2.js';
+import { Vec3 } from '$lib/math/vec3.js';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
 
 export type LayerData = {
@@ -76,6 +78,7 @@ export class Layer {
         public readonly yAmp: number,
         public readonly yFrq: number,
         public readonly zindex: number,
+        public matrix: Mat4 = Mat4.IDENTITY,
     ) {}
 
     public static async load(glContext: GlContext, data: LayerData): Promise<Layer> {
@@ -222,6 +225,7 @@ export type AvatarState = {
 
 export class PNGTuber {
     private readonly program: GlProgram;
+    private projectionMatrix: Mat4 = Mat4.IDENTITY;
 
     constructor(
         private readonly glContext: GlContext,
@@ -236,6 +240,7 @@ export class PNGTuber {
             type: 'fragment',
         })
         this.program = glContext.createProgram([vShader, fShader]);
+        
     }
 
     public static async load(glContext: GlContext, data: PNGTuberData): Promise<PNGTuber> {
@@ -248,17 +253,24 @@ export class PNGTuber {
 
     public render(poseStack: PoseStack, state: AvatarState) {
         const passes = Array.from(new Set(this.layers.values().map(layer => layer.zindex)));
+        
+        this.layers.values().filter(layer => layer.parentId === null).forEach(layer => {
+            poseStack.push();
+            this.calculateAnimation(layer, state, poseStack);
+            poseStack.pop();
+        });
+    
         passes.sort((a, b) => a - b);
         passes.forEach(pass => {
             this.layers.values().filter(layer => layer.parentId === null).forEach(layer => {
                 poseStack.push();
-                this.renderLayer(layer, state, pass, poseStack);
+                this.renderLayer(layer, state, pass);
                 poseStack.pop();
             });
         });
     }
 
-    private renderLayer(layer: Layer, state: AvatarState, pass: number, poseStack: PoseStack) {
+    private renderLayer(layer: Layer, state: AvatarState, pass: number) {
         if (layer.showBlink !== 0) {
             if (state.blinking && layer.showBlink === 1) {
                 return;
@@ -274,6 +286,45 @@ export class PNGTuber {
             }
         }
         const { gl } = this.glContext;
+        
+        if (layer.zindex === pass) {
+            this.program.use(() => {
+                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+                textureUniform.set(layer.imageData);
+                const projection = this.program.getUniform('u_projection').asMat4();
+                // projection.set(this.projectionMatrix);
+                projection.set(Mat4.IDENTITY);
+                const model = this.program.getUniform('u_model').asMat4();
+                model.set(layer.matrix);
+                const view = this.program.getUniform('u_view').asMat4();
+                view.set(Mat4.IDENTITY);
+                const positionAttribute = this.program.getAttribute('a_position');
+                positionAttribute.set(layer.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                const uvAttribute = this.program.getAttribute('a_texcoord');
+                uvAttribute.set(layer.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+            })
+        }
+        this.layers.values().filter(child => child.parentId === layer.identification).forEach(child => {
+            this.renderLayer(child, state, pass);
+        });
+    }
+
+    private calculateAnimation(layer: Layer, state: AvatarState, poseStack: PoseStack) {
+        if (layer.showBlink !== 0) {
+            if (state.blinking && layer.showBlink === 1) {
+                return;
+            } else if (!state.blinking && layer.showBlink === 2) {
+                return;
+            }
+        }
+        if (layer.showTalk !== 0) {
+            if (state.talking && layer.showTalk === 1) {
+                return;
+            } else if (!state.talking && layer.showTalk === 2) {
+                return;
+            }
+        }
         poseStack.translate(layer.pos.x, layer.pos.y, 0);
         const animationX = layer.xAmp * Math.sin(BetterMath.toRadians(state.time * layer.xFrq));
         const animationY = layer.yAmp * Math.sin(BetterMath.toRadians(state.time * layer.yFrq));
@@ -288,40 +339,36 @@ export class PNGTuber {
             poseStack.translate(0, calculateBounce(state.talkingTime) * 50, 0);
         }
         
-        if (layer.zindex === pass) {
-            this.program.use(() => {
-                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
-                textureUniform.set(layer.imageData);
-                const projection = this.program.getUniform('u_projection').asMat4();
-                projection.set(Mat4.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1));
-                const model = this.program.getUniform('u_model').asMat4();
-                poseStack.push()
-                const animationRot = layer.rotDrag * animationY;
-                poseStack.translate(layer.offset.x, layer.offset.y, 0)
-                poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(animationRot, layer.rLimitMin, layer.rLimitMax)));
-                poseStack.scale(
-                    1 + Math.sin(BetterMath.toRadians(state.time * 0.25)) * layer.stretchAmount * 0.005,
-                    1 - Math.sin(BetterMath.toRadians(state.time * 0.25)) * layer.stretchAmount * 0.005,
-                    1
-                );
-                poseStack.translate(-layer.offset.x, -layer.offset.y, 0)
-                poseStack.translate(layer.offset.x, layer.offset.y, 0)
-                poseStack.translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
-                model.set(poseStack.get());
-                poseStack.pop();
-                const view = this.program.getUniform('u_view').asMat4();
-                view.set(Mat4.IDENTITY);
-                const positionAttribute = this.program.getAttribute('a_position');
-                positionAttribute.set(layer.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = this.program.getAttribute('a_texcoord');
-                uvAttribute.set(layer.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
-            })
-        }
+        poseStack.push()
+        const animationRot = layer.rotDrag * animationY;
+        poseStack.translate(layer.offset.x, layer.offset.y, 0)
+        poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(animationRot, layer.rLimitMin, layer.rLimitMax)));
+        poseStack.scale(
+            1 + Math.sin(BetterMath.toRadians(state.time * 0.25)) * layer.stretchAmount * 0.005,
+            1 - Math.sin(BetterMath.toRadians(state.time * 0.25)) * layer.stretchAmount * 0.005,
+            1
+        );
+        poseStack.translate(-layer.offset.x, -layer.offset.y, 0)
+        poseStack.translate(layer.offset.x, layer.offset.y, 0)
+        poseStack.translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
+        layer.matrix = poseStack.get();
+        poseStack.pop();
         this.layers.values().filter(child => child.parentId === layer.identification).forEach(child => {
             poseStack.push();
-            this.renderLayer(child, state, pass, poseStack);
+            this.calculateAnimation(child, state, poseStack);
             poseStack.pop();
         });
+    }
+
+    public calculateBounds(): AABB3 {
+        const points: Vec3[] = [];
+        this.layers.forEach(layer => {
+            const leftTop = new Vec3(...layer.matrix.transformPoint(0, 0, 0));
+            const rightTop = new Vec3(...layer.matrix.transformPoint(layer.imageData.width, 0, 0));
+            const leftBottom = new Vec3(...layer.matrix.transformPoint(0, layer.imageData.height, 0));
+            const rightBottom = new Vec3(...layer.matrix.transformPoint(layer.imageData.width, layer.imageData.height, 0));
+            points.push(leftTop, rightTop, leftBottom, rightBottom);
+        });
+        return AABB3.fromPoints(points);
     }
 }

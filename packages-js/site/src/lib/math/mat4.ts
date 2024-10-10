@@ -218,4 +218,13 @@ export class Mat4 {
             nm30, nm31, nm32, nm33,
         );
     }
+
+    public transformPoint(x: number, y: number, z: number): [number, number, number] {
+        const w = this.m03 * x + this.m13 * y + this.m23 * z + this.m33;
+        return [
+            (this.m00 * x + this.m10 * y + this.m20 * z + this.m30) / w,
+            (this.m01 * x + this.m11 * y + this.m21 * z + this.m31) / w,
+            (this.m02 * x + this.m12 * y + this.m22 * z + this.m32) / w,
+        ];
+    }
 }

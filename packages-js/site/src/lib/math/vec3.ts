@@ -9,11 +9,19 @@ export class Vec3 {
         public readonly z: number,
     ) {}
 
-    lerp(other: Vec3, t: number): Vec3 {
+    public lerp(other: Vec3, t: number): Vec3 {
         return new Vec3(lerp(this.x, other.x, t), lerp(this.y, other.y, t), lerp(this.z, other.z, t));
     }
 
-    add(other: Vec3): Vec3 {
+    public add(other: Vec3): Vec3 {
         return new Vec3(this.x + other.x, this.y + other.y, this.z + other.z);
+    }
+
+    public min(other: Vec3): Vec3 {
+        return new Vec3(Math.min(this.x, other.x), Math.min(this.y, other.y), Math.min(this.z, other.z));
+    }
+
+    public max(other: Vec3): Vec3 {
+        return new Vec3(Math.max(this.x, other.x), Math.max(this.y, other.y), Math.max(this.z, other.z));
     }
 }

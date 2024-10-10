@@ -8,15 +8,23 @@ export class Vec2 {
         public readonly y: number,
     ) {}
 
-    lerp(other: Vec2, t: number): Vec2 {
+    public lerp(other: Vec2, t: number): Vec2 {
         return new Vec2(lerp(this.x, other.x, t), lerp(this.y, other.y, t));
     }
 
-    scale(scalar: number): Vec2 {
+    public scale(scalar: number): Vec2 {
         return new Vec2(this.x * scalar, this.y * scalar);
     }
 
-    add(other: Vec2): Vec2 {
+    public add(other: Vec2): Vec2 {
         return new Vec2(this.x + other.x, this.y + other.y);
+    }
+
+    public max(other: Vec2): Vec2 {
+        return new Vec2(Math.max(this.x, other.x), Math.max(this.y, other.y));
+    }
+
+    public min(other: Vec2): Vec2 {
+        return new Vec2(Math.min(this.x, other.x), Math.min(this.y, other.y));
     }
 }
