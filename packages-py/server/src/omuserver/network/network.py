@@ -88,7 +88,7 @@ class Network:
             if session.kind == SessionType.APP:
                 await self._verify_origin(request, session)
             await self.process_session(session)
-            return ws
+            return web.Response(status=101, headers={"Upgrade": "websocket"})
 
         self._app.router.add_get(path, websocket_handler)
 
