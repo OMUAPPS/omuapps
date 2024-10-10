@@ -2,8 +2,7 @@
     import { page } from '$app/stores';
     import type { OBSPlugin } from '@omujs/obs';
     import type { Omu } from '@omujs/omu';
-    import { DragLink, Tooltip } from '@omujs/ui';
-    import Spinner from '../../routes/app/archive/components/Spinner.svelte';
+    import { DragLink, Spinner, Tooltip } from '@omujs/ui';
 
     export let omu: Omu | null = null;
     export let obs: OBSPlugin | null = null;

@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { ButtonMini, Tooltip } from '@omujs/ui';
+    import { ButtonMini, Spinner, Tooltip } from '@omujs/ui';
     import type { Archive, ArchiveStatus } from '../archive.js';
-    import Spinner from './Spinner.svelte';
 
     export let entry: Archive;
     export let selected: boolean = false;

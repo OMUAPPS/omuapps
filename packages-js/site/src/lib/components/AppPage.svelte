@@ -1,7 +1,6 @@
 <script lang="ts">
     import { DisconnectType } from '@omujs/omu/network/packet/packet-types.js';
-    import { client } from '@omujs/ui';
-    import Spinner from '../../routes/app/archive/components/Spinner.svelte';
+    import { client, Spinner } from '@omujs/ui';
 
     let state: 'loading' | 'loaded' | DisconnectType = 'loaded';
     let message: string | null = null;

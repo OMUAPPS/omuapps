@@ -6,7 +6,7 @@
 
 <style lang="scss">
     i {
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         color: var(--color-1);
@@ -14,6 +14,8 @@
         background: transparent;
         border: none;
         animation: spin 1s linear infinite;
+        width: 1rem;
+        height: 1rem;
 
         &.active {
             visibility: visible;

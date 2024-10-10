@@ -20,6 +20,7 @@ export { default as MessageRenderer } from './MessageRenderer.svelte';
 export { default as Popup } from './Popup.svelte';
 export { default as RelativeDate } from './RelativeDate.svelte';
 export { default as Role } from './Role.svelte';
+export { default as Spinner } from './Spinner.svelte';
 export { chat, client, setClient, theme, translate } from './stores.js';
 export { default as TableList } from './TableList.svelte';
 export { default as Textbox } from './Textbox.svelte';
