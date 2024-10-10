@@ -121,7 +121,6 @@ impl Server {
                 "Failed to stop server: {}",
                 String::from_utf8_lossy(&output.stderr)
             );
-            on_progress(Progress::ServerStopFailed(msg.clone()));
             return Err(msg);
         })
     }

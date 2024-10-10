@@ -167,8 +167,12 @@ async fn clean_environment(
         }
     };
 
-    remove_dir_all(&options.python_path).unwrap();
-    remove_dir_all(&options.uv_path).unwrap();
+    remove_dir_all(&options.python_path).unwrap_or_else(|err| {
+        warn!("Failed to remove python directory: {}", err);
+    });
+    remove_dir_all(&options.uv_path).unwrap_or_else(|err| {
+        warn!("Failed to remove work directory: {}", err);
+    });
 
     Ok(())
 }
