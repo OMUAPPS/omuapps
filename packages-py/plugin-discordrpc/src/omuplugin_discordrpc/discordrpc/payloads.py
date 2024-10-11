@@ -172,7 +172,7 @@ class User(TypedDict):
     id: str
     username: str
     discriminator: str
-    avatar: str
+    avatar: str | None
     avatar_decoration_data: None
     flags: int
     global_name: str

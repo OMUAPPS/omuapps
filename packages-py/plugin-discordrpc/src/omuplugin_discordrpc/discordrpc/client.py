@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 from collections.abc import Callable, Coroutine
@@ -33,6 +35,37 @@ class DiscordRPC:
         self.ws = ws
         self.dispatch_handlers: dict[str, asyncio.Future[ResponsePayloads]] = {}
         self.subscribe_handlers: dict[str, Coro[[ResponsePayloads], None]] = {}
+        self.closed: bool = False
+
+    @staticmethod
+    async def connect(port: int) -> DiscordRPC:
+        session = ClientSession(
+            headers={
+                "accept": "*/*",
+                "accept-language": "ja",
+                "cache-control": "no-cache",
+                "content-type": "application/json",
+                "origin": "https://streamkit.discord.com",
+                "pragma": "no-cache",
+                "referer": "https://streamkit.discord.com/overlay",
+                "user-agent": "OMUAPPS Discord StreamKit/1.0.0",
+            },
+        )
+        ws = await session.ws_connect(
+            f"ws://127.0.0.1:{port}/?v=1&client_id={CLIENT_ID}",
+            autoping=False,
+        )
+        rpc = DiscordRPC(session, ws)
+        msg = await rpc.receive()
+        assert msg is not None
+        assert msg["cmd"] == "DISPATCH", f"Unexpected message: {msg}"
+        assert msg["evt"] == "READY", f"Unexpected event: {msg}"
+        asyncio.create_task(rpc.start())
+        return rpc
+
+    async def close(self) -> None:
+        await self.ws.close()
+        await self.session.close()
 
     async def receive(self) -> ResponsePayloads | None:
         msg = await self.ws.receive()
@@ -40,21 +73,28 @@ class DiscordRPC:
             return json.loads(msg.data)
         elif msg.type == WSMsgType.CLOSED:
             return None
+        elif msg.type == WSMsgType.CLOSING:
+            return None
         else:
             raise ValueError(f"Unexpected message type: {msg.type}")
 
     async def start(self) -> None:
-        while True:
-            msg = await self.receive()
-            if msg is None:
-                break
-            if msg.get("nonce") is not None:
-                future = self.dispatch_handlers.pop(msg["nonce"])
-                future.set_result(msg)
-            elif msg["cmd"] == "DISPATCH":
-                await self.subscribe_handlers[msg["evt"]](msg)
-            else:
-                logger.warning(f"Unhandled message: {msg}")
+        try:
+            while True:
+                msg = await self.receive()
+                if msg is None:
+                    break
+                if msg.get("nonce") is not None:
+                    future = self.dispatch_handlers.pop(msg["nonce"])
+                    future.set_result(msg)
+                elif msg["cmd"] == "DISPATCH":
+                    await self.subscribe_handlers[msg["evt"]](msg)
+                else:
+                    logger.warning(f"Unhandled message: {msg}")
+        except Exception as e:
+            logger.opt(exception=e).error("Error in DiscordRPC.start")
+        finally:
+            self.closed = True
 
     async def send(self, payload: RequestPayloads) -> None:
         await self.ws.send_json(payload)
@@ -69,15 +109,14 @@ class DiscordRPC:
         self, payload: SubscribePayloads, handler: Coro[[ResponsePayloads], None]
     ) -> None:
         self.subscribe_handlers[payload["evt"]] = handler
-        # await self.ws.send_json(payload)
         await self.dispatch(payload)
 
-    async def authorize(self, scopes: list[Scope]) -> AuthorizeResponseData:
+    async def authorize(self, scopes: list[Scope], retry=3) -> AuthorizeResponseData:
         res = await self.dispatch(
             {
                 "cmd": "AUTHORIZE",
                 "args": {
-                    "client_id": "207646673902501888",
+                    "client_id": f"{CLIENT_ID}",
                     "scopes": scopes,
                     "prompt": "none",
                 },
@@ -88,7 +127,10 @@ class DiscordRPC:
         assert res["evt"] is None
         return res["data"]
 
-    async def authenticate(self, code: str) -> AuthenticateResponseData:
+    async def fetch_access_token(
+        self,
+        code: str,
+    ) -> str:
         headers = {}
 
         json_data = {
@@ -102,10 +144,16 @@ class DiscordRPC:
         )
         token_data = await token_res.json()
         token = token_data["access_token"]
+        return token
+
+    async def authenticate(
+        self,
+        access_token: str,
+    ) -> AuthenticateResponseData:
         res = await self.dispatch(
             {
                 "cmd": "AUTHENTICATE",
-                "args": {"access_token": token},
+                "args": {"access_token": access_token},
                 "nonce": str(uuid4()),
             }
         )

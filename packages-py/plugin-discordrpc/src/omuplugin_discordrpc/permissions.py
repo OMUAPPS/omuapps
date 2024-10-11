@@ -28,33 +28,18 @@ DISCORDRPC_VC_SET_PERMISSION_TYPE = PermissionType(
         },
     },
 )
-DISCORDRPC_GUILD_READ_PERMISSION_ID = PLUGIN_ID / "guild" / "read"
-DISCORDRPC_GUILD_READ_PERMISSION_TYPE = PermissionType(
-    DISCORDRPC_GUILD_READ_PERMISSION_ID,
+DISCORDRPC_CHANNELS_READ_PERMISSION_ID = PLUGIN_ID / "channels" / "read"
+DISCORDRPC_CHANNELS_READ_PERMISSION_TYPE = PermissionType(
+    DISCORDRPC_CHANNELS_READ_PERMISSION_ID,
     {
         "level": "low",
         "name": {
-            "ja": "サーバー情報の読み取り",
-            "en": "Read guild",
+            "ja": "サーバー/チャンネル情報の読み取り",
+            "en": "Read servers/channels",
         },
         "note": {
-            "ja": "入っているサーバーを知るために使われます",
-            "en": "Used to know the guild you are in",
-        },
-    },
-)
-DISCORDRPC_CHANNEL_READ_PERMISSION_ID = PLUGIN_ID / "channel" / "read"
-DISCORDRPC_CHANNEL_READ_PERMISSION_TYPE = PermissionType(
-    DISCORDRPC_CHANNEL_READ_PERMISSION_ID,
-    {
-        "level": "low",
-        "name": {
-            "ja": "チャンネル情報の読み取り",
-            "en": "Read channel",
-        },
-        "note": {
-            "ja": "入っているチャンネルを知るために使われます",
-            "en": "Used to know the channel you are in",
+            "ja": "入っているサーバーとそのチャンネルを知るために使われます",
+            "en": "Used to know which servers and channels you are in",
         },
     },
 )

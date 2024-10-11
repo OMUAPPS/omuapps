@@ -1,10 +1,20 @@
 from typing import TypedDict
 
+from omu.extension.endpoint.endpoint import EndpointType
 from omu.extension.registry import RegistryPermissions, RegistryType
 
 from .const import PLUGIN_ID
-from .discordrpc.payloads import VoiceStateItem
-from .permissions import DISCORDRPC_VC_READ_PERMISSION_ID
+from .discordrpc.payloads import (
+    AuthenticateUser,
+    GetChannelsResponseData,
+    GetGuildsResponseData,
+    VoiceStateItem,
+)
+from .permissions import (
+    DISCORDRPC_CHANNELS_READ_PERMISSION_ID,
+    DISCORDRPC_VC_READ_PERMISSION_ID,
+    DISCORDRPC_VC_SET_PERMISSION_ID,
+)
 
 VOICE_STATE_REGISTRY_TYPE = RegistryType[dict[str, VoiceStateItem]].create_json(
     PLUGIN_ID,
@@ -25,4 +35,50 @@ SPEAKING_STATE_REGISTRY_TYPE = RegistryType[dict[str, SpeakState]].create_json(
     "speaking_states",
     default_value={},
     permissions=RegistryPermissions(read=DISCORDRPC_VC_READ_PERMISSION_ID),
+)
+
+
+GET_CLIENTS_ENDPOINT_TYPE = EndpointType[None, dict[str, AuthenticateUser]].create_json(
+    PLUGIN_ID,
+    "get_clients",
+    permission_id=DISCORDRPC_CHANNELS_READ_PERMISSION_ID,
+)
+
+
+class GetGuildsRequest(TypedDict):
+    user_id: str
+
+
+GET_GUILDS_ENDPOINT_TYPE = EndpointType[
+    GetGuildsRequest, GetGuildsResponseData
+].create_json(
+    PLUGIN_ID,
+    "get_guilds",
+    permission_id=DISCORDRPC_CHANNELS_READ_PERMISSION_ID,
+)
+
+
+class GetChannelsRequest(TypedDict):
+    user_id: str
+    guild_id: str
+
+
+GET_CHANNELS_ENDPOINT_TYPE = EndpointType[
+    GetChannelsRequest, GetChannelsResponseData
+].create_json(
+    PLUGIN_ID,
+    "get_channels",
+    permission_id=DISCORDRPC_CHANNELS_READ_PERMISSION_ID,
+)
+
+
+class SetVCRequest(TypedDict):
+    user_id: str
+    channel_id: str
+
+
+SET_VC_ENDPOINT_TYPE = EndpointType[SetVCRequest, None].create_json(
+    PLUGIN_ID,
+    "set_vc",
+    permission_id=DISCORDRPC_VC_SET_PERMISSION_ID,
 )
