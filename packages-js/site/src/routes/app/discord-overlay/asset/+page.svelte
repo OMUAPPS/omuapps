@@ -2,6 +2,7 @@
     import { page } from '$app/stores';
     import AssetPage from '$lib/components/AssetPage.svelte';
     import { App, Omu } from '@omujs/omu';
+    import { ASSET_DOWNLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP_ID } from '../app.js';
@@ -21,6 +22,7 @@
     if (BROWSER) {
         omu.permissions.require(
             DISCORDRPC_PERMISSIONS.DISCORDRPC_VC_READ_PERMISSION_ID,
+            ASSET_DOWNLOAD_PERMISSION_ID,
         )
         omu.start();
     }
