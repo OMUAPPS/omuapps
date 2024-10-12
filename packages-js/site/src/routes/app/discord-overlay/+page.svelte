@@ -12,12 +12,12 @@
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Identifier, Omu } from '@omujs/omu';
     import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-    import { AppHeader, setClient, Spinner } from '@omujs/ui';
+    import { AppHeader, Combobox, setClient, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import UserConfigEntry from './components/UserConfigEntry.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
-    import { DiscordOverlayApp, DISCORDRPC_PERMISSIONS, type Config, type VoiceStateUser } from './discord-overlay-app.js';
+    import { DiscordOverlayApp, DISCORDRPC_PERMISSIONS, type AuthenticateUser, type Channel, type Config, type Guild, type VoiceStateUser } from './discord-overlay-app.js';
     import robo from './robo.json';
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from './shaders.js';
 
@@ -207,7 +207,46 @@
 
     let message: {type: 'loading'| 'failed', text: string} | null = null;
     let dimentions: {width: number, height: number} = {width: 0, height: 0};
-    $: console.log('dimention', dimentions);
+
+    let state: 'wait-for-ready' | 'connecting-vc' | null = 'wait-for-ready';
+    let clients: Record<string, AuthenticateUser> = {};
+    let guilds: Guild[] = [];
+    let channels: Channel[] = [];
+
+    omu.onReady(async () => {
+        await overlayApp.waitForReady();
+        clients = await overlayApp.getClients();
+        state = null;
+    })
+
+    let last_user_id: string | null = null;
+    let last_guild_id: string | null = null;
+    let last_channel_id: string | null = null;
+    async function update(user_id: string | null, guild_id: string | null, channel_id: string | null) {
+        if (user_id === last_user_id && guild_id === last_guild_id && channel_id === last_channel_id) {
+            return;
+        }
+        last_user_id = user_id;
+        last_guild_id = guild_id;
+        last_channel_id = channel_id;
+        if (user_id) {
+            guilds = (await overlayApp.getGuilds(user_id)).guilds;
+        }
+        if (user_id && guild_id) {
+            channels = (await overlayApp.getChannels(user_id, guild_id)).channels.filter((channel) => channel.type === 2);
+        }
+        const foundsGuild = guilds.find((guild) => guild.id === guild_id);
+        const foundChannel = channels.find((channel) => channel.id === channel_id);
+        if (user_id && guild_id && channel_id && foundsGuild && foundChannel) {
+            state = 'connecting-vc';
+            await overlayApp.setVC(user_id, channel_id);
+            state = null;
+        }
+    }
+    
+    $: {
+        update($config.user_id, $config.guild_id, $config.channel_id);
+    }
 </script>
 
 <AppPage>
@@ -216,18 +255,69 @@
     </header>
     <main>
         <div class="controls">
-            <div class="users">
-                <AssetButton {omu} {obs} />
-                {#each Object.entries($voiceState) as [id, state] (id)}
-                    <UserConfigEntry {overlayApp} {id} {state}/>
-                {/each}
+            <div class="config">
+                <span>
+                    {#if Object.keys(clients).length > 0}
+                        <p>
+                            ユーザー
+                            <i class="ti ti-user"/>
+                        </p>
+                        <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
+                    {/if}
+                </span>
+                <span>
+                    {#if guilds.length > 0}
+                        <p>
+                            サーバー
+                            <i class="ti ti-server"/>
+                        </p>
+                        <Combobox options={Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))} bind:value={$config.guild_id}/>
+                    {/if}
+                </span>
+                <span>
+                    {#if channels.length > 0}
+                        <p>
+                            チャンネル
+                            <i class="ti ti-volume"/>
+                        </p>
+                        <Combobox options={Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))} bind:value={$config.channel_id}/>
+                    {/if}
+                </span>
             </div>
+            <div class="users">
+                {#if state === 'connecting-vc'}
+                    <p>
+                        ボイスチャンネルに接続中
+                        <Spinner />
+                    </p>
+                {:else if state === 'wait-for-ready'}
+                    <p>
+                        Discordを待機中
+                        <Spinner />
+                    </p>
+                {:else}
+                    {#each Object.entries($voiceState) as [id, state] (id)}
+                        <UserConfigEntry {overlayApp} {id} {state}/>
+                    {:else}
+                        <p>
+                            まだ誰も居ないようです…
+                            <i class="ti ti-user-off"/>
+                        </p>
+                        <small>誰かがボイスチャンネルに入ると表示されます</small>
+                    {/each}
+                {/if}
+            </div>
+            <h3>
+                配信に追加
+                <i class="ti ti-arrow-bar-to-down" />
+            </h3>
+            <AssetButton {omu} {obs} />
         </div>
         <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
             <Canvas {init} {render}/>
             <div class="avatar-controls">
                 {#if dimentions}
-                    {#each Object.entries($voiceState).filter(([id, state]) => $config.users[id]?.show) as [id, state] (id)}
+                    {#each Object.entries($voiceState).filter(([id, ]) => $config.users[id]?.show) as [id, state] (id)}
                         <UserDragControl {dimentions} {overlayApp} {id} {state}/>
                     {/each}
                 {/if}
@@ -266,7 +356,7 @@
         display: flex;
         flex-direction: row;
         margin: 1rem;
-        gap: 0.5rem;
+        gap: 1rem;
     }
 
     .canvas {
@@ -282,8 +372,21 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        background: var(--color-bg-2);
         width: 20rem;
+    }
+
+    .config {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        > span {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+            white-space: nowrap;
+        }
     }
 
     .avatar-controls {
@@ -316,9 +419,26 @@
     }
 
     .users {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        padding: 1rem 0.5rem;
+        padding: 0.5rem 0;
+        background: var(--color-bg-2);
+
+        > p {
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--color-1);
+            margin-top: 2rem;
+        }
+
+        > small {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--color-text);
+        }
     }
 
     @container (width < 800px) {

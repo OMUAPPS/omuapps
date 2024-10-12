@@ -47,9 +47,10 @@
     });
 
     function getStyle(rect: { width:number, height:number }, dimentions: { width:number, height:number }, position: [number, number]) {
+        const margin = 8;
         return `
-            left: ${BetterMath.clamp(position[0] + dimentions.width / 2 - rect.width / 2, 0, dimentions.width - rect.width)}px;
-            top: ${BetterMath.clamp(position[1] + dimentions.height / 2 - rect.height / 2 + 200, 0, dimentions.height - rect.height)}px;
+            left: ${BetterMath.clamp(position[0] + dimentions.width / 2 - rect.width / 2, margin, dimentions.width - rect.width - margin)}px;
+            top: ${BetterMath.clamp(position[1] + dimentions.height / 2 - rect.height / 2 + 200, margin, dimentions.height - rect.height - margin)}px;
         `;
     }
 </script>
@@ -99,6 +100,7 @@
 
         &:active {
             z-index: 1;
+            cursor: grabbing;
         }
     }
 </style>

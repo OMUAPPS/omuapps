@@ -6,9 +6,9 @@
     export let overlayApp: DiscordOverlayApp;
     export let id: string;
     export let state: VoiceStateItem;
-    const { config } = overlayApp;
+    const { config, speakingState } = overlayApp;
 
-    const avatarUrl = `https://cdn.discordapp.com/avatars/${state.user.id}/${state.user.avatar}.png`;
+    const avatarUrl = state.user.avatar && `https://cdn.discordapp.com/avatars/${state.user.id}/${state.user.avatar}.png`;
 
 
     async function setAvatar(userId: string, avatar: string | null) {
@@ -29,7 +29,6 @@
         const reader = new FileReader();
         reader.onload = () => {
             const base64 = reader.result as string;
-            console.log(base64);
             const decoded = atob(base64.split(',')[1]);
             setAvatar(id, decoded);
         };
@@ -40,8 +39,14 @@
     let files: FileList;
 </script>
 
-<div class="entry">
-    <img class="avatar" src={avatarUrl} alt={state.nick} />
+<div class="entry" class:speaking={$speakingState[id]?.speaking}>
+    <div class="avatar">
+        {#if avatarUrl}
+            <img src={avatarUrl} alt={state.nick} />
+        {:else}
+            <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt={state.nick} />
+        {/if}
+    </div>
     <p>{state.nick}</p>
     <div class="states">
         {#if state.voice_state.self_mute || state.voice_state.mute}
@@ -52,13 +57,13 @@
         {/if}
     </div>
     <div class="actions">
-        <button type="button" on:click={() => fileDrop.click()} class="show">
+        <button type="button" on:click={() => fileDrop.click()}>
             <Tooltip>
                 アバターを変更
             </Tooltip>
             <i class="ti ti-upload" />
         </button>
-        <button class="show" on:click={() => $config.users[id].show = !$config.users[id].show}>
+        <button on:click={() => $config.users[id].show = !$config.users[id].show}>
             {#if $config.users[id].show}
                 <Tooltip>
                     クリックで非表示
@@ -79,7 +84,7 @@
     .entry {
         border: none;
         background: var(--color-bg-2);
-        color: var(--color-1);
+        color: var(--color-text);
         font-weight: 600;
         font-size: 0.9rem;
         width: 100%;
@@ -88,34 +93,31 @@
         gap: 0.5rem;
         height: 3rem;
         padding: 0 0.75rem;
-        border-left: 1px solid var(--color-bg-1);
         margin-bottom: 2px;
 
         &:hover {
             background: var(--color-bg-1);
         }
-    }
 
-    button {
-        border: none;
-        background: var(--color-bg-2);
-        color: var(--color-1);
-        font-weight: 600;
-        font-size: 0.9rem;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        height: 3rem;
-        padding: 0 1rem;
+        &.speaking {
+            > p {
+                color: var(--color-1);
+            }
 
-        &:hover {
-            background: var(--color-bg-1);
+            > .avatar {
+                outline: 2px solid var(--color-1);
+                outline-offset: -1px;
+
+                > img {
+                    outline: 2px solid var(--color-bg-1);
+                    outline-offset: -2px;
+                }
+            }
         }
     }
 
     p {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -131,9 +133,21 @@
         width: 2rem;
         height: 2rem;
         border-radius: 50%;
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
     }
 
-    .show {
+    button {
+        border: none;
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        font-weight: 600;
+        gap: 0.5rem;
         width: 2rem;
         height: 2rem;
         display: flex;
@@ -141,9 +155,15 @@
         justify-content: center;
         font-size: 1rem;
 
+        &:focus-visible,
         &:hover {
             outline: 1px solid var(--color-1);
             background: var(--color-bg-2);
+        }
+
+        &:active {
+            background: var(--color-1);
+            color: var(--color-bg-2);
         }
     }
 </style>
