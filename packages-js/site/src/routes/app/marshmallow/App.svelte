@@ -154,11 +154,17 @@
                     メッセージ
                     <i class="ti ti-notes" />
                     <button class="search-open" on:click={() => searchOpen = !searchOpen}>
+                        <Tooltip>
+                            メッセージを検索する
+                        </Tooltip>
                         <i class="ti ti-search" />
                     </button>
                 </h3>
                 {#if searchOpen}
                     <div class="search">
+                        <Tooltip>
+                            設定した文字列を含むメッセージのみ表示します
+                        </Tooltip>
                         <input type="search" bind:value={search} placeholder="メッセージを検索" />
                     </div>
                 {/if}
