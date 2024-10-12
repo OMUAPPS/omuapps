@@ -93,6 +93,8 @@
     };
 
     let tab: 'new' | 'old' = 'new';
+    let searchOpen = false;
+    let search = '';
 
     let refreshPromise: Promise<void> | null = getUsers();
 
@@ -151,14 +153,26 @@
                 <h3>
                     メッセージ
                     <i class="ti ti-notes" />
+                    <button class="search-open" on:click={() => searchOpen = !searchOpen}>
+                        <i class="ti ti-search" />
+                    </button>
                 </h3>
+                {#if searchOpen}
+                    <div class="search">
+                        <input type="search" bind:value={search} placeholder="メッセージを検索" />
+                    </div>
+                {/if}
                 <div class="message-list">
                     {#if tab === 'new'}
-                        {#each messages as entry}
+                        {#each messages.filter((entry) => entry.content.toLocaleLowerCase().includes(search.toLocaleLowerCase())) as entry}
                             <MessageEntry {entry} />
                         {:else}
                             <small class="no-messages">
-                                メッセージを受け取るとここに表示されます。
+                                {#if search}
+                                    検索する文字列が含まれるメッセージが見つかりませんでした。
+                                {:else}
+                                    メッセージを受け取るとここに表示されます。
+                                {/if}
                             </small>
                         {/each}
                     {:else}
@@ -166,10 +180,20 @@
                             if (!('user_id' in entry)) {
                                 return false;
                             }
-                            return entry.user_id === $config.user;
+                            if (entry.user_id !== $config.user) {
+                                return false;
+                            }
+                            if (!entry.content.toLocaleLowerCase().includes(search.toLocaleLowerCase())) {
+                                return false;
+                            }
+                            return true;
                         }}>
                             <small class="no-messages" slot="empty">
-                                メッセージを確認済みにするとここに表示されます。
+                                {#if search}
+                                    検索する文字列が含まれるメッセージが見つかりませんでした。
+                                {:else}
+                                    メッセージを確認済みにするとここに表示されます。
+                                {/if}
                             </small>
                         </TableList>
                     {/if}
@@ -430,6 +454,82 @@
         }
     }
 
+    .search-open {
+        margin-left: auto;
+        width: 2rem;
+        height: 2rem;
+        margin-right: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+
+        &:hover {
+            background: var(--color-bg-2);
+            color: var(--color-1);
+        }
+    }
+
+    .search {
+        position: relative;
+        padding: 0.5rem;
+        background: var(--color-bg-2);
+        outline: 1px solid var(--color-outline);
+        outline-offset: -1px;
+        margin-top: 0.25rem;
+        margin-bottom: 0.5rem;
+        animation: open 0.0621s;
+        transform-origin: top;
+
+        > input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            border: 1px solid var(--color-outline);
+            font-size: 0.8rem;
+
+            &:focus {
+                outline: none;
+                border-bottom-color: var(--color-1);
+            }
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            top: calc(-1rem);
+            right: 0rem;
+            transform: translateX(-50%);
+            border: 0.5rem solid transparent;
+            border-bottom-color: var(--color-bg-2);
+            pointer-events: none;
+        }
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: calc(-1rem - 1px);
+            right: 0rem;
+            transform: translateX(-50%);
+            border: 0.5rem solid transparent;
+            border-bottom-color: var(--color-outline);
+            pointer-events: none;
+        }
+    }
+
+    @keyframes open {
+        0% {
+            transform: scaleY(0);
+        }
+        13.9% {
+            transform: scaleY(1.0621);
+            background: var(--color-bg-1);
+        }
+        100% {
+            transform: scaleY(1);
+        }
+    }
 
     .left {
         width: 20rem;
@@ -446,6 +546,8 @@
         color: var(--color-1);
         font-size: 1rem;
         margin-top: 0.5rem;
+        display: flex;
+        align-items: baseline;
     }
 
     .right {
