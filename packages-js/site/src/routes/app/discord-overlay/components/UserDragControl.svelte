@@ -51,7 +51,7 @@
         const margin = 8;
         return `
             left: ${BetterMath.clamp(position[0] * zoom + dimentions.width / 2 - rect.width / 2, margin, dimentions.width - rect.width - margin)}px;
-            top: ${BetterMath.clamp(position[1] * zoom + dimentions.height / 2 - rect.height / 2 + 200 * zoom, margin, dimentions.height - rect.height - margin)}px;
+            top: ${BetterMath.clamp(position[1] * zoom + dimentions.height / 2 - rect.height / 2 + 162.1 * zoom + 20, margin, dimentions.height - rect.height - margin)}px;
         `;
     }
 </script>
