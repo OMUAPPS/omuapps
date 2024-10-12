@@ -21,9 +21,12 @@ from .types import (
     GET_CHANNELS_ENDPOINT_TYPE,
     GET_CLIENTS_ENDPOINT_TYPE,
     GET_GUILDS_ENDPOINT_TYPE,
+    REFRESH_ENDPOINT_TYPE,
+    SESSION_REGISTRY_TYPE,
     SET_VC_ENDPOINT_TYPE,
     SPEAKING_STATE_REGISTRY_TYPE,
     VOICE_STATE_REGISTRY_TYPE,
+    WAIT_FOR_READY_ENDPOINT_TYPE,
     GetChannelsRequest,
     GetGuildsRequest,
     SetVCRequest,
@@ -33,6 +36,7 @@ from .types import (
 omu = Omu(PLUGIN_APP)
 voice_state_registry = omu.registries.get(VOICE_STATE_REGISTRY_TYPE)
 speaking_state_registry = omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE)
+session_registry = omu.registries.get(SESSION_REGISTRY_TYPE)
 
 
 @dataclass
@@ -49,9 +53,27 @@ class Client:
 
     @classmethod
     async def try_connect(cls, port: int) -> Client:
+        sessions = await session_registry.get()
+        exist_session = sessions["sessions"].get(port, None)
+        if exist_session:
+            try:
+                rpc = await DiscordRPC.connect(port)
+                authenticate_res = await rpc.authenticate(exist_session["access_token"])
+                return cls(
+                    port,
+                    rpc,
+                    authenticate_res["user"],
+                    exist_session["access_token"],
+                )
+            except Exception as e:
+                logger.warning(f"Failed to connect to {port}: {e}")
+                sessions["sessions"].pop(port)
+                await session_registry.set(sessions)
         rpc = await DiscordRPC.connect(port)
         authorize_res = await rpc.authorize(["rpc", "messages.read"])
         access_token = await rpc.fetch_access_token(authorize_res["code"])
+        sessions["sessions"][port] = {"access_token": access_token}
+        await session_registry.set(sessions)
         authenticate_res = await rpc.authenticate(access_token)
         return cls(
             port,
@@ -169,6 +191,16 @@ async def set_vc(req: SetVCRequest) -> None:
     return None
 
 
+refresh_task: asyncio.Task | None = None
+
+
+@omu.endpoints.bind(endpoint_type=WAIT_FOR_READY_ENDPOINT_TYPE)
+async def wait_for_vc(_: None) -> None:
+    if refresh_task is None:
+        return
+    await refresh_task
+
+
 async def refresh_clients():
     for client in clients.values():
         if client.closed:
@@ -180,10 +212,29 @@ async def refresh_clients():
             clients[client.user["id"]] = client
             logger.info(f"Connected to {port}")
         except Exception as e:
-            logger.opt(exception=e).warning(f"Failed to connect to {port}")
+            logger.warning(f"Failed to connect to {port}: {e}")
             continue
+
+    session = await session_registry.get()
+    user_id = session["user_id"]
+    channel_id = session["channel_id"]
+    if user_id is None or channel_id is None:
+        return
+    if user_id not in clients:
+        return
+    client = clients[user_id]
+    await client.connect_vc(channel_id)
+
+
+@omu.endpoints.bind(endpoint_type=REFRESH_ENDPOINT_TYPE)
+async def refresh(_: None) -> None:
+    await refresh_clients()
+    return None
 
 
 @omu.on_ready
 async def on_ready():
-    asyncio.create_task(refresh_clients())
+    global refresh_task
+    await voice_state_registry.set({})
+    await speaking_state_registry.set({})
+    refresh_task = asyncio.create_task(refresh_clients())
