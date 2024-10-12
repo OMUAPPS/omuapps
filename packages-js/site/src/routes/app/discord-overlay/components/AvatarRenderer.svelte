@@ -12,7 +12,8 @@
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
 
     export let overlayApp: DiscordOverlayApp;
-    export let message: {type: 'loading'| 'failed', text: string} | null;
+    export let message: {type: 'loading'| 'failed', text: string} | null = null;
+    export let showGrid = false;
     const { voiceState, speakingState, config } = overlayApp;
 
     let defaultAvatar: PNGTuber;
@@ -51,44 +52,46 @@
         poseStack.translate(gl.canvas.width / 2, gl.canvas.height / 2, 0);
         poseStack.scale(zoom, zoom, 1);
 
-        const vertexBuffer = context.createBuffer();
-        vertexBuffer.bind(() => {
-            vertexBuffer.setData(new Float32Array([
-                -1, -1, 0,
-                1, -1, 0,
-                -1, 1, 0,
-                -1, 1, 0,
-                1, -1, 0,
-                1, 1, 0,
-            ]), 'static');
-        });
-        const uvBuffer = context.createBuffer();
-        uvBuffer.bind(() => {
-            uvBuffer.setData(new Float32Array([
-                0, 0,
-                1, 0,
-                0, 1,
-                0, 1,
-                1, 0,
-                1, 1,
-            ]), 'static');
-        });
-
-        gridProgram.use(() => {
-            const resolutionUniform = gridProgram.getUniform('u_resolution').asVec2();
-            resolutionUniform.set(new Vec2(gl.canvas.width, gl.canvas.height));
-            const projectionUniform = gridProgram.getUniform('u_projection').asMat4();
-            projectionUniform.set(poseStack.get().inverse());
-            const gridColorUniform = gridProgram.getUniform('u_gridColor').asVec4();
-            gridColorUniform.set(new Vec4(230 / 255, 230 / 255, 230 / 255, 1));
-            const gridBackgroundUniform = gridProgram.getUniform('u_backgroundColor').asVec4();
-            gridBackgroundUniform.set(new Vec4(0, 0, 0, 0));
-            const positionAttribute = gridProgram.getAttribute('a_position');
-            positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const uvAttribute = gridProgram.getAttribute('a_texcoord');
-            uvAttribute.set(uvBuffer, 2, gl.FLOAT, false, 0, 0);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-        })
+        if (showGrid) {
+            const vertexBuffer = context.createBuffer();
+            vertexBuffer.bind(() => {
+                vertexBuffer.setData(new Float32Array([
+                    -1, -1, 0,
+                    1, -1, 0,
+                    -1, 1, 0,
+                    -1, 1, 0,
+                    1, -1, 0,
+                    1, 1, 0,
+                ]), 'static');
+            });
+            const uvBuffer = context.createBuffer();
+            uvBuffer.bind(() => {
+                uvBuffer.setData(new Float32Array([
+                    0, 0,
+                    1, 0,
+                    0, 1,
+                    0, 1,
+                    1, 0,
+                    1, 1,
+                ]), 'static');
+            });
+    
+            gridProgram.use(() => {
+                const resolutionUniform = gridProgram.getUniform('u_resolution').asVec2();
+                resolutionUniform.set(new Vec2(gl.canvas.width, gl.canvas.height));
+                const projectionUniform = gridProgram.getUniform('u_projection').asMat4();
+                projectionUniform.set(poseStack.get().inverse());
+                const gridColorUniform = gridProgram.getUniform('u_gridColor').asVec4();
+                gridColorUniform.set(new Vec4(230 / 255, 230 / 255, 230 / 255, 1));
+                const gridBackgroundUniform = gridProgram.getUniform('u_backgroundColor').asVec4();
+                gridBackgroundUniform.set(new Vec4(0, 0, 0, 0));
+                const positionAttribute = gridProgram.getAttribute('a_position');
+                positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                const uvAttribute = gridProgram.getAttribute('a_texcoord');
+                uvAttribute.set(uvBuffer, 2, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+            })
+        }
         
         const now = Date.now();
         entries.map(([id, state], index) => {

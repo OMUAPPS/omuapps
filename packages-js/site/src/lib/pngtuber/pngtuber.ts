@@ -252,9 +252,9 @@ export class PNGTuber {
     }
 
     public render(poseStack: PoseStack, state: AvatarState) {
-        const passes = Array.from(new Set(this.layers.values().map(layer => layer.zindex)));
+        const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex)));
         
-        this.layers.values().filter(layer => layer.parentId === null).forEach(layer => {
+        [...this.layers.values()].filter(layer => layer.parentId === null).forEach(layer => {
             poseStack.push();
             this.calculateAnimation(layer, state, poseStack);
             poseStack.pop();
@@ -262,7 +262,7 @@ export class PNGTuber {
     
         passes.sort((a, b) => a - b);
         passes.forEach(pass => {
-            this.layers.values().filter(layer => layer.parentId === null).forEach(layer => {
+            [...this.layers.values()].filter(layer => layer.parentId === null).forEach(layer => {
                 poseStack.push();
                 this.renderLayer(layer, state, pass);
                 poseStack.pop();
@@ -305,7 +305,7 @@ export class PNGTuber {
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
         }
-        this.layers.values().filter(child => child.parentId === layer.identification).forEach(child => {
+        [...this.layers.values()].filter(child => child.parentId === layer.identification).forEach(child => {
             this.renderLayer(child, state, pass);
         });
     }
@@ -353,7 +353,7 @@ export class PNGTuber {
         poseStack.translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
         layer.matrix = poseStack.get();
         poseStack.pop();
-        this.layers.values().filter(child => child.parentId === layer.identification).forEach(child => {
+        [...this.layers.values()].filter(child => child.parentId === layer.identification).forEach(child => {
             poseStack.push();
             this.calculateAnimation(child, state, poseStack);
             poseStack.pop();

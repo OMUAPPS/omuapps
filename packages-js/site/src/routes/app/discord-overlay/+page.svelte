@@ -156,7 +156,7 @@
             <AssetButton {omu} {obs} />
         </div>
         <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
-            <AvatarRenderer overlayApp={overlayApp} bind:message />
+            <AvatarRenderer overlayApp={overlayApp} bind:message showGrid />
             <div class="avatar-controls">
                 {#if dimentions}
                     {#each Object.entries($voiceState).filter(([id, ]) => $config.users[id]?.show) as [id, state] (id)}

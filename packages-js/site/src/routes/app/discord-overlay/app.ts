@@ -8,7 +8,7 @@ export const APP = new App(APP_ID, {
     metadata: {
         locale: 'en',
         name: {
-            ja: 'Discordオーバーレイ',
+            ja: 'DiscordのをPNGTuber使って表示できるやつ',
             en: 'Discord Overlay',
         },
         description: {
