@@ -33,6 +33,7 @@
         element.removeEventListener('mouseup', handleMouseUp);
         position = user.position;
         $config = { ...$config };
+        lastMouse = null;
     }
 
     function handleMouseDown(e: MouseEvent) {
@@ -77,6 +78,7 @@
 
 <button
     class="control"
+    class:dragging={lastMouse}
     bind:this={element}
     style={getStyle(rect, dimentions, position)}
     on:mousedown={handleMouseDown}
@@ -114,6 +116,7 @@
             justify-content: center;
         }
 
+        &.dragging,
         &:focus-visible,
         &:hover {
             background: var(--color-1);
