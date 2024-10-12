@@ -48,9 +48,10 @@
 
     function getStyle(rect: { width:number, height:number }, dimentions: { width:number, height:number }, position: [number, number]) {
         const margin = 8;
+        const zoom = 2 ** $config.zoom_level;
         return `
-            left: ${BetterMath.clamp(position[0] + dimentions.width / 2 - rect.width / 2, margin, dimentions.width - rect.width - margin)}px;
-            top: ${BetterMath.clamp(position[1] + dimentions.height / 2 - rect.height / 2 + 200, margin, dimentions.height - rect.height - margin)}px;
+            left: ${BetterMath.clamp(position[0] * zoom + dimentions.width / 2 - rect.width / 2, margin, dimentions.width - rect.width - margin)}px;
+            top: ${BetterMath.clamp(position[1] * zoom + dimentions.height / 2 - rect.height / 2 + 200 * zoom, margin, dimentions.height - rect.height - margin)}px;
         `;
     }
 </script>
