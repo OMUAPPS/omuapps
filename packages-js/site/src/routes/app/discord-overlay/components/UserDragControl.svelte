@@ -17,12 +17,13 @@
     let lastPosition: [number, number] = [0, 0];
     $: rect = element ? element.getBoundingClientRect() : { width: 0, height: 0 };
     $: position = user.position;
+    $: zoom = 2 ** $config.zoom_level;
 
     function handleMouseMove(e: MouseEvent) {
         e.preventDefault();
         if (!lastMouse) return;
-        const dx = e.clientX - lastMouse[0];
-        const dy = e.clientY - lastMouse[1];
+        const dx = (e.clientX - lastMouse[0]) / zoom;
+        const dy = (e.clientY - lastMouse[1]) / zoom;
         user.position = position = [lastPosition[0] + dx, lastPosition[1] + dy];
         element.style.cssText = getStyle(rect, dimentions, position);
     }
@@ -48,7 +49,6 @@
 
     function getStyle(rect: { width:number, height:number }, dimentions: { width:number, height:number }, position: [number, number]) {
         const margin = 8;
-        const zoom = 2 ** $config.zoom_level;
         return `
             left: ${BetterMath.clamp(position[0] * zoom + dimentions.width / 2 - rect.width / 2, margin, dimentions.width - rect.width - margin)}px;
             top: ${BetterMath.clamp(position[1] * zoom + dimentions.height / 2 - rect.height / 2 + 200 * zoom, margin, dimentions.height - rect.height - margin)}px;
