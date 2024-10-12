@@ -103,10 +103,12 @@
             poseStack.push();
             poseStack.translate(user.position[0], user.position[1], 0);
             poseStack.scale(0.5, 0.5, 1);
+            const time = timer.getElapsedMS() / 500 + index * 0.5;
+            const blinking = state.voice_state.self_mute || Math.sin(time) > 0.995;
             const avatar = avatars[index];
             avatar.render(poseStack, {
                 time: timer.getElapsedMS(),
-                blinking: state.voice_state.self_mute,
+                blinking,
                 talking: speakState?.speaking,
                 talkingTime,
             });
