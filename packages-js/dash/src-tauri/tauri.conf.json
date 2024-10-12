@@ -25,7 +25,8 @@
                 "startDragging": true,
                 "setAlwaysOnTop": true,
                 "create": true,
-                "setFocus": true
+                "setFocus": true,
+                "setSize": true
             },
             "process": {
                 "relaunch": true

@@ -15,7 +15,9 @@ rust-version = "1.60"
 tauri-build = { version = "1.5.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.8.0", features = [ "process-relaunch",
+tauri = { version = "1.8.0", features = [
+    "window-set-size",
+    "process-relaunch",
     "updater",
     "system-tray",
     "window-close",

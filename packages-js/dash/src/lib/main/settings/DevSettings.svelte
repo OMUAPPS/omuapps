@@ -2,6 +2,7 @@
     import { dashboard, omu } from '$lib/client.js';
     import { PermissionType } from '@omujs/omu/extension/permission/permission.js';
     import type { Registry } from '@omujs/omu/extension/registry/registry.js';
+    import { appWindow, LogicalSize } from '@tauri-apps/api/window';
     import type { Writable } from 'svelte/store';
 
     function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
@@ -22,6 +23,10 @@
 
     const trustedOrigins = makeRegistryWritable(omu.server.trustedOrigins);
     let newOrigin = '';
+
+    function resetWindowSize() {
+        appWindow.setSize(new LogicalSize(1280, 720));
+    }
 </script>
 
 <h3>Trusted Origins</h3>
@@ -75,6 +80,15 @@
         });
     }}>
         Request Test Permission
+    </button>
+</section>
+
+<h3>
+    Window
+</h3>
+<section>
+    <button on:click={resetWindowSize}>
+        Reset Window Size
     </button>
 </section>
 
