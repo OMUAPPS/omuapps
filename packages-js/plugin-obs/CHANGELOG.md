@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.7.0 (2024-10-12)
+
+
+### Features
+
+* **dash:** 開発者ページからウィンドウを初期のサイズに戻せるように ([9fe689e](https://github.com/OMUAPPS/omuapps/commit/9fe689e605c297262ddae1769c91f1f10123019b))
+
+
+
+
+
 ## 0.6.45 (2024-10-09)
 
 
