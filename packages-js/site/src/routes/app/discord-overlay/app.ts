@@ -8,13 +8,13 @@ export const APP = new App(APP_ID, {
     metadata: {
         locale: 'en',
         name: {
-            ja: 'DiscordのをPNGTuber使って表示できるやつ',
+            ja: 'Discordオーバーレイ',
             en: 'Discord Overlay',
         },
         description: {
-            ja: 'ボイスチャットをいい感じに配信画面に',
+            ja: 'Discordを使ってPNGTuberでいっしょに配信',
         },
         icon: 'ti-brand-discord',
-        tags: ['tool', 'asset'] as TagKey[],
+        tags: ['underdevelopment', 'tool', 'asset'] as TagKey[],
     },
 });

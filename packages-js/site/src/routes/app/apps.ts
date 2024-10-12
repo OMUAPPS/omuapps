@@ -20,6 +20,7 @@ import { APP as timer } from './timer/app.js';
 import { APP as translator } from './translator/app.js';
 
 export const apps = [
+    discordOverlay,
     reaction,
     replay,
     marshmallow,
@@ -39,7 +40,6 @@ if (DEV) {
         obssync,
         breaktimer,
         archive,
-        discordOverlay,
     )
 }
 
