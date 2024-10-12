@@ -54,6 +54,25 @@
             top: ${BetterMath.clamp(position[1] * zoom + dimentions.height / 2 - rect.height / 2 + 162.1 * zoom + 20, margin, dimentions.height - rect.height - margin)}px;
         `;
     }
+
+    function handleKeyDown(e: KeyboardEvent) {
+        const KEY_MAP = {
+            ArrowUp: [0, -1],
+            ArrowDown: [0, 1],
+            ArrowLeft: [-1, 0],
+            ArrowRight: [1, 0],
+        }
+        const found = Object.entries(KEY_MAP).find(([key]) => key === e.key);
+        if (found) {
+            e.preventDefault();
+            const [dx, dy] = found[1];
+            let factor = e.ctrlKey ? 1 : e.shiftKey ? 100 : 10;
+            factor /= zoom;
+            user.position = position = [position[0] + dx * factor, position[1] + dy * factor];
+            element.style.cssText = getStyle(rect, dimentions, position);
+            $config = { ...$config };
+        }
+    }
 </script>
 
 <button
@@ -61,6 +80,7 @@
     bind:this={element}
     style={getStyle(rect, dimentions, position)}
     on:mousedown={handleMouseDown}
+    on:keydown={handleKeyDown}
     draggable="false"
 >
     <i class="grip ti ti-grip-vertical"/>
@@ -94,6 +114,7 @@
             justify-content: center;
         }
 
+        &:focus-visible,
         &:hover {
             background: var(--color-1);
             color: var(--color-bg-2);
