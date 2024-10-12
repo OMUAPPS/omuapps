@@ -176,7 +176,11 @@ class PluginLoader:
             plugin_key = entry_point.dist.name
             if plugin_key in self.instances:
                 raise ValueError(f"Duplicate plugin: {entry_point}")
-            plugin = PluginInstance.from_entry_point(entry_point)
+            try:
+                plugin = PluginInstance.from_entry_point(entry_point)
+            except Exception as e:
+                logger.opt(exception=e).error(f"Error loading plugin: {entry_point}")
+                continue
             self.instances[plugin_key] = plugin
 
     async def load_updated_plugins(self):
