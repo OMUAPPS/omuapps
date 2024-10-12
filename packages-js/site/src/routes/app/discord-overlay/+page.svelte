@@ -87,6 +87,17 @@
     }
     
     $: {
+        if (!$config.user_id && clients) {
+            $config.user_id = Object.keys(clients)[0];
+        }
+        const foundsGuild = guilds.find((guild) => guild.id === $config.guild_id);
+        if (!foundsGuild || !$config.guild_id && guilds) {
+            $config.guild_id = guilds[0]?.id;
+        }
+        const foundChannel = channels.find((channel) => channel.id === $config.channel_id);
+        if (!foundChannel || !$config.channel_id && channels) {
+            $config.channel_id = channels[0]?.id;
+        }
         update($config.user_id, $config.guild_id, $config.channel_id);
     }
 </script>
