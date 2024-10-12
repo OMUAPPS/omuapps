@@ -22,13 +22,14 @@ def setup_logging():
     if isinstance(sys.stderr, io.TextIOWrapper):
         sys.stderr.reconfigure(encoding="utf-8")
     logger.add(
-        "logs/{time:YYYY-MM-DD}.log",
-        rotation="1 day",
+        "logs/{time}.log",
         colorize=False,
         format=(
             "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
             "{name}:{function}:{line} - {message}"
         ),
+        retention="7 days",
+        compression="zip",
     )
 
 

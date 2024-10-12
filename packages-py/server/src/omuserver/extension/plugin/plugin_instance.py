@@ -85,13 +85,14 @@ def setup_logging(app: App) -> None:
     if isinstance(sys.stderr, io.TextIOWrapper):
         sys.stderr.reconfigure(encoding="utf-8")
     logger.add(
-        f"logs/{app.id.get_sanitized_path()}/{{time:YYYY-MM-DD}}.log",
-        rotation="1 day",
+        f"logs/{app.id.get_sanitized_path()}/{{time}}.log",
         colorize=False,
         format=(
             "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
             "{name}:{function}:{line} - {message}"
         ),
+        retention="7 days",
+        compression="zip",
     )
 
 
