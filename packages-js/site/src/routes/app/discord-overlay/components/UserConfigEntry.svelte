@@ -91,7 +91,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        height: 3rem;
+        min-height: 3rem;
         padding: 0 0.75rem;
         margin-bottom: 2px;
 
