@@ -87,14 +87,14 @@
     }
     
     $: {
-        if (!$config.user_id && clients) {
+        if (!$config.user_id && Object.keys(clients).length > 0) {
             $config.user_id = Object.keys(clients)[0];
         }
-        const foundsGuild = guilds.find((guild) => guild.id === $config.guild_id);
+        const foundsGuild = guilds.length > 0 && guilds.find((guild) => guild.id === $config.guild_id);
         if (!foundsGuild || !$config.guild_id && guilds) {
             $config.guild_id = guilds[0]?.id;
         }
-        const foundChannel = channels.find((channel) => channel.id === $config.channel_id);
+        const foundChannel = channels.length && channels.find((channel) => channel.id === $config.channel_id);
         if (!foundChannel || !$config.channel_id && channels) {
             $config.channel_id = channels[0]?.id;
         }
@@ -117,9 +117,9 @@
                         </p>
                         <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
                     {:else}
-                        <p>
-                            起動しているDiscordが見つかりませんでした…
-                        </p>
+                        <small>
+                            起動しているDiscordが見つかりませんでした
+                        </small>
                     {/if}
                 </span>
                 <span>
@@ -129,6 +129,10 @@
                             <i class="ti ti-server"/>
                         </p>
                         <Combobox options={Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))} bind:value={$config.guild_id}/>
+                    {:else}
+                        <small>
+                            入っているサーバーは見つかりませんでした
+                        </small>
                     {/if}
                 </span>
                 <span>
@@ -138,6 +142,10 @@
                             <i class="ti ti-volume"/>
                         </p>
                         <Combobox options={Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))} bind:value={$config.channel_id}/>
+                    {:else}
+                        <small>
+                            ボイスチャンネルは見つかりませんでした
+                        </small>
                     {/if}
                 </span>
             </div>
