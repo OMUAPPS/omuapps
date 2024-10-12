@@ -129,6 +129,7 @@ export type Config = {
     user_id: string | null;
     guild_id: string | null;
     channel_id: string | null;
+    zoom_level: number;
 };
 
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
@@ -138,6 +139,7 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
         user_id: null,
         guild_id: null,
         channel_id: null,
+        zoom_level: 1,
     },
 });
 
@@ -153,6 +155,11 @@ export class DiscordOverlayApp {
         this.voiceState = makeRegistryWritable(omu.registries.get(VOICE_STATE_REGISTRY_TYPE));
         this.speakingState = makeRegistryWritable(omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE));
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
+    }
+
+    public async getAvatar(asset_id: Identifier): Promise<Uint8Array> {
+        const asset = await this.omu.assets.download(asset_id);
+        return asset.buffer;
     }
 
     public async getGuilds(user_id: string): Promise<GetGuildsResponseData> {
