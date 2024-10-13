@@ -202,6 +202,12 @@ SOURCE_CREATE = EndpointType[SourceJson, CreateResponse].create_json(
     permission_id=OBS_SOURCE_CREATE_PERMISSION_ID,
 )
 
+SOURCE_ADD = EndpointType[SourceJson, CreateResponse].create_json(
+    PLUGIN_ID,
+    name="source_add",
+    permission_id=OBS_SOURCE_CREATE_PERMISSION_ID,
+)
+
 
 class RemoveByNameRequest(TypedDict):
     name: str
