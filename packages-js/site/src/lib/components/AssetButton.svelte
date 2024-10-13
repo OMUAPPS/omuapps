@@ -8,29 +8,13 @@
     export let obs: OBSPlugin | null = null;
     export let dimensions: { width: number; height: number } = { width: 1920, height: 1080 };
 
-    async function getAvailableName(name: string) {
-        if (!obs) {
-            throw new Error('OBSPlugin is not initialized');
-        }
-        const sources = await obs.sourceList();
-        const names = sources.map((source) => source.name);
-        if (!names.includes(name)) return name;
-        let i = 1;
-        let newName = name;
-        while (names.includes(newName)) {
-            newName = `${name} (${i})`;
-            i++;
-        }
-        return newName;
-    }
-
     async function create() {
         if (!obs) {
             throw new Error('OBSPlugin is not initialized');
         }
-        const name = await getAvailableName(omu?.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset');
+        const name = omu?.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
         const url = generateUrl().toString();
-        await obs.sourceCreate({
+        await obs.sourceAdd({
             type: 'browser_source',
             name: name,
             data: {

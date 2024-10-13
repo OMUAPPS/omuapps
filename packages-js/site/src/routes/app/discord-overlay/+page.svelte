@@ -23,7 +23,6 @@
             ...Object.values(DISCORDRPC_PERMISSIONS),
             ASSET_UPLOAD_PERMISSION_ID,
             ASSET_DOWNLOAD_PERMISSION_ID,
-            permissions.OBS_SOURCE_READ_PERMISSION_ID,
             permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
         omu.start();

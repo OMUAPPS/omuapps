@@ -4,8 +4,7 @@
     import {
         OBS_SCENE_READ_PERMISSION_ID,
         OBS_SCENE_SET_CURRENT_PERMISSION_ID,
-        OBS_SOURCE_CREATE_PERMISSION_ID,
-        OBS_SOURCE_READ_PERMISSION_ID,
+        OBS_SOURCE_CREATE_PERMISSION_ID
     } from '@omujs/obs/permissions.js';
     import { Omu } from '@omujs/omu';
     import { AppHeader, setClient } from '@omujs/ui';
@@ -18,7 +17,6 @@
     obs.requirePlugin();
     omu.permissions.require(
         OBS_SCENE_READ_PERMISSION_ID,
-        OBS_SOURCE_READ_PERMISSION_ID,
         OBS_SOURCE_CREATE_PERMISSION_ID,
         OBS_SCENE_SET_CURRENT_PERMISSION_ID,
     );
@@ -28,7 +26,6 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_READ_PERMISSION_ID,
             permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
         omu.start();

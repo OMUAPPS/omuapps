@@ -23,7 +23,6 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_READ_PERMISSION_ID,
             permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
         omu.start();
