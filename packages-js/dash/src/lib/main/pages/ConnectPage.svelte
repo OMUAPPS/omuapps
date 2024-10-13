@@ -12,26 +12,26 @@
 <main>
     <div class="panels">
         <div class="left">
-            <p>
+            <h3>
                 {$t('page.connect.channels')}
                 <i class="ti ti-user" />
-            </p>
+            </h3>
             <div class="channels">
                 <PanelChannels />
             </div>
-            <p>
+            <h3>
                 {$t('page.connect.rooms')}
                 <i class="ti ti-bolt" />
-            </p>
+            </h3>
             <div class="rooms">
                 <PanelRooms />
             </div>
         </div>
         <dir class="right">
-            <p>
+            <h3>
                 {$t('page.connect.chat')}
                 <i class="ti ti-message" />
-            </p>
+            </h3>
             <div class="chat">
                 <PanelMessages />
             </div>
@@ -46,7 +46,7 @@
         display: flex;
     }
 
-    p {
+    h3 {
         color: var(--color-1);
         margin-top: 1rem;
         margin-bottom: 0.5rem;
@@ -60,10 +60,10 @@
         bottom: 6rem;
         display: flex;
         padding: 0.5rem 2rem;
-        gap: 1rem;
+        gap: 1.5rem;
     }
 
-    $channel-height: 16rem;
+    $channel-height: clamp(15.5rem, 20vw, 19rem);
     $right-width: 400px;
 
     .left {

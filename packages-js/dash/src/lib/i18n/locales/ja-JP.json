@@ -100,14 +100,15 @@
         "channels": {
             "title": "チャンネル",
             "append_channel": "追加する",
-            "setup_channel": "簡単セットアップ",
+            "setup_channel": "チャンネルを追加",
             "next_check": "再チェックまであと",
             "delete": "チャンネルを削除",
             "edit": "チャンネルを編集",
             "open": "チャンネルを開く",
             "connect": "接続",
             "channel_url": "チャンネルURL...",
-            "append_as": "として追加"
+            "append_as": "として追加",
+            "active": "自動接続"
         }
     },
     "page": {
