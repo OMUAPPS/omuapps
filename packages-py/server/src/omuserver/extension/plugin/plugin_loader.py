@@ -79,8 +79,6 @@ class DependencyResolver:
                 "--upgrade",
                 "-r",
                 req_file.name,
-                "-f",
-                "../dist",
                 "--python",
                 sys.executable,
                 stdout=asyncio.subprocess.PIPE,
