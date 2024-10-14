@@ -21,7 +21,7 @@ async def on_install(ctx: InstallContext) -> None:
 
 
 async def on_update(ctx: InstallContext) -> None:
-    ctx.server.permission_manager.register(*PERMISSION_TYPES)
+    ctx.server.permission_manager.unregister(*PERMISSION_TYPES)
 
 
 plugin = Plugin(
