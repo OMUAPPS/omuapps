@@ -1,11 +1,11 @@
 [project]
 name = "omu_chat_twitcasting"
-version = "0.7.1"
+version = "0.7.2"
 description = "TwitCastingを使えるようにするOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu_chatprovider>=0.7.1"]
+dependencies = ["loguru>=0.7.2", "omu_chatprovider>=0.7.2"]
 readme = "README.md"
 requires-python = ">= 3.12"
 
