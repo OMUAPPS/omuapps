@@ -6,6 +6,7 @@ import importlib.util
 import sys
 import tempfile
 from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import (
     Protocol,
 )
@@ -14,7 +15,7 @@ import aiohttp
 import uv
 from loguru import logger
 from omu.extension.plugin import PackageInfo, PluginPackageInfo
-from omu.plugin import Plugin
+from omu.plugin import InstallContext, Plugin
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
@@ -33,7 +34,7 @@ class DependencyResolver:
     def __init__(self) -> None:
         self._dependencies: dict[str, SpecifierSet] = {}
         self._packages_distributions: Mapping[str, importlib.metadata.Distribution] = {}
-        self._packages_distributions_changed = True
+        self._distributions_change_marked = True
         self.find_packages_distributions()
 
     async def fetch_package_info(self, package: str) -> PackageInfo:
@@ -78,6 +79,8 @@ class DependencyResolver:
                 "--upgrade",
                 "-r",
                 req_file.name,
+                "-f",
+                "../dist",
                 "--python",
                 sys.executable,
                 stdout=asyncio.subprocess.PIPE,
@@ -85,7 +88,8 @@ class DependencyResolver:
             )
             stdout, stderr = await process.communicate()
         if process.returncode != 0:
-            logger.error(f"Error running uv command: {stderr}")
+            logger.error(f"Failed to install dependencies: {stdout.decode()}")
+            logger.error(f"Failed to install dependencies: {stderr.decode()}")
             return
         logger.info(f"Ran uv command: {(stdout or stderr).decode()}")
 
@@ -96,57 +100,72 @@ class DependencyResolver:
         installed_version = Version(package_info.version)
         return installed_version in specifier
 
-    def add_dependencies(self, dependencies: Mapping[str, SpecifierSet | None]) -> bool:
+    def add_dependencies(self, dependencies: Mapping[str, str | None]) -> bool:
         changed = False
-        for dependency, specifier in dependencies.items():
-            if dependency not in self._dependencies:
-                if specifier is not None and self.is_package_satisfied(
-                    dependency, specifier
-                ):
-                    continue
-                self._dependencies[dependency] = specifier or SpecifierSet()
+        for package, specifier in dependencies.items():
+            specifier = SpecifierSet(specifier or "")
+            package_info = self._packages_distributions.get(package)
+            if package_info is None:
+                self._dependencies[package] = specifier
                 changed = True
                 continue
-            if specifier is not None:
-                specifier_set = self._dependencies[dependency]
-                if specifier_set != specifier:
-                    changed = True
-                specifier_set &= specifier
+            satisfied = self.is_package_satisfied(package, specifier)
+            if satisfied:
                 continue
+            self._dependencies[package] = specifier or SpecifierSet()
+            changed = True
         return changed
 
     def find_packages_distributions(
         self,
     ) -> Mapping[str, importlib.metadata.Distribution]:
-        if not self._packages_distributions_changed:
+        if not self._distributions_change_marked:
             return self._packages_distributions
         self._packages_distributions: Mapping[str, importlib.metadata.Distribution] = {
             dist.name: dist for dist in importlib.metadata.distributions()
         }
-        self._packages_distributions_changed = False
+        self._distributions_change_marked = False
         return self._packages_distributions
 
-    async def resolve(self):
+    async def resolve(self) -> ResolveResult:
         packages_distributions = self.find_packages_distributions()
         requirements: dict[str, SpecifierSet] = {}
+        update_distributions: dict[str, importlib.metadata.Distribution] = {}
+        new_distributions: list[str] = []
         skipped: dict[str, SpecifierSet] = {}
         for dependency, specifier in self._dependencies.items():
-            package = packages_distributions.get(dependency)
-            if package is None:
+            exist_package = packages_distributions.get(dependency)
+            if exist_package is None:
                 requirements[dependency] = specifier
+                new_distributions.append(dependency)
                 continue
-            distribution = packages_distributions[package.name]
-            installed_version = Version(distribution.version)
+            installed_version = Version(exist_package.version)
             specifier_set = self._dependencies[dependency]
             if installed_version in specifier_set:
                 skipped[dependency] = specifier_set
                 continue
             requirements[dependency] = specifier_set
+            update_distributions[dependency] = exist_package
         if len(requirements) == 0:
-            return
+            return ResolveResult(
+                new_packages=new_distributions,
+                updated_packages=update_distributions,
+            )
 
         await self.update_requirements(requirements)
-        self._packages_distributions_changed = True
+        self._distributions_change_marked = True
+        logger.info(f"New packages: {new_distributions}")
+        logger.info(f"Updated packages: {update_distributions}")
+        return ResolveResult(
+            new_packages=new_distributions,
+            updated_packages=update_distributions,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ResolveResult:
+    new_packages: list[str]
+    updated_packages: dict[str, importlib.metadata.Distribution]
 
 
 class PluginLoader:
@@ -173,30 +192,72 @@ class PluginLoader:
         for entry_point in entry_points:
             if entry_point.dist is None:
                 raise ValueError(f"Invalid plugin: {entry_point} has no distribution")
-            plugin_key = entry_point.dist.name
-            if plugin_key in self.instances:
+            dist_name = entry_point.dist.name
+            if dist_name in self.instances:
                 raise ValueError(f"Duplicate plugin: {entry_point}")
             try:
                 plugin = PluginInstance.from_entry_point(entry_point)
             except Exception as e:
                 logger.opt(exception=e).error(f"Error loading plugin: {entry_point}")
                 continue
-            self.instances[plugin_key] = plugin
+            self.instances[dist_name] = plugin
 
-    async def load_updated_plugins(self):
-        entry_points = importlib.metadata.entry_points(group=PLUGIN_GROUP)
-        detected_plugins = {
-            entry_point.dist.name for entry_point in entry_points if entry_point.dist
-        }
-        logger.info(f"Detected plugins: {detected_plugins}")
-        for entry_point in entry_points:
+    async def update_plugins(self, resolve_result: ResolveResult):
+        restart_required = False
+        plugins_to_start: list[PluginInstance] = []
+        for new_package in resolve_result.new_packages:
+            entry_points = tuple(
+                importlib.metadata.entry_points(group=PLUGIN_GROUP, module=new_package)
+            )
+            if len(entry_points) == 0:
+                continue
+            if len(entry_points) > 1:
+                raise ValueError(
+                    f"Invalid plugin: {entry_points} has multiple entry points"
+                )
+            entry_point = entry_points[0]
             if entry_point.dist is None:
                 raise ValueError(f"Invalid plugin: {entry_point} has no distribution")
-            plugin_key = entry_point.dist.name
-            if plugin_key in self.instances:
+            if entry_point.dist.name != new_package:
                 continue
             instance = PluginInstance.from_entry_point(entry_point)
-            self.instances[plugin_key] = instance
+            self.instances[new_package] = instance
+            ctx = InstallContext(
+                server=self._server,
+                new_distribution=entry_point.dist,
+            )
+            await instance.notify_install(ctx)
+            if ctx.restart_required:
+                restart_required = True
+                logger.info(f"Plugin {instance.plugin} requires restart")
+            else:
+                plugins_to_start.append(instance)
+
+        for updated_package, dist in resolve_result.updated_packages.items():
+            instance = self.instances.get(updated_package)
+            if instance is None:
+                continue
+            distribution = importlib.metadata.distribution(updated_package)
+            await instance.reload()
+            ctx = InstallContext(
+                server=self._server,
+                old_distribution=distribution,
+                new_distribution=dist,
+                old_plugin=instance.plugin,
+            )
+            await instance.notify_update(ctx)
+            await instance.notify_install(ctx)
+            if ctx.restart_required:
+                restart_required = True
+                logger.info(f"Plugin {instance.plugin} requires restart")
+            else:
+                plugins_to_start.append(instance)
+
+        if restart_required:
+            await self._server.restart()
+            return
+
+        for instance in plugins_to_start:
             await self.start_plugin(instance)
 
     async def start_plugin(self, instance: PluginInstance):

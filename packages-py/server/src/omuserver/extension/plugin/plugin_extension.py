@@ -9,7 +9,6 @@ from omu.extension.plugin.plugin_extension import (
     PLUGIN_ALLOWED_PACKAGE_TABLE,
     PLUGIN_REQUIRE_PACKET,
 )
-from packaging.specifiers import SpecifierSet
 
 from omuserver.server import Server
 from omuserver.session import Session
@@ -42,7 +41,7 @@ class PluginExtension:
         self.request_id += 1
         return f"{self.request_id}-{time.time_ns()}"
 
-    async def request_plugins(
+    async def open_request_plugin_dialog(
         self, session: Session, packages: dict[str, str | None]
     ) -> None:
         to_request: list[PackageInfo] = []
@@ -76,22 +75,16 @@ class PluginExtension:
 
         async def task():
             if session.kind != SessionType.DASHBOARD:
-                await self.request_plugins(session, packages)
+                await self.open_request_plugin_dialog(session, packages)
 
-            changed = False
             self.dependency_resolver.find_packages_distributions()
-            for package, version in packages.items():
-                specifier = None
-                if version is not None:
-                    specifier = SpecifierSet(version)
-                if self.dependency_resolver.add_dependencies({package: specifier}):
-                    changed = True
+            changed = self.dependency_resolver.add_dependencies(packages)
 
             if not changed:
                 return
 
             async with self.lock:
-                await self.dependency_resolver.resolve()
-                await self.loader.load_updated_plugins()
+                resolve_result = await self.dependency_resolver.resolve()
+                await self.loader.update_plugins(resolve_result)
 
         session.add_ready_task(task)

@@ -32,40 +32,6 @@ class PermissionHandle(abc.ABC):
     def has_all(self, permission_ids: Iterable[Identifier]) -> bool: ...
 
 
-class PermissionManager(abc.ABC):
-    @abc.abstractmethod
-    def register(self, *permission_types: PermissionType) -> None: ...
-
-    @abc.abstractmethod
-    def get_permission(self, permission_id: Identifier) -> PermissionType | None: ...
-
-    @abc.abstractmethod
-    def has_permission(self, token: Token, permission_id: Identifier) -> bool: ...
-
-    @abc.abstractmethod
-    def set_permissions(self, token: Token, *permission_ids: Identifier) -> None: ...
-
-    @abc.abstractmethod
-    async def generate_app_token(self, app: App) -> Token: ...
-
-    @abc.abstractmethod
-    async def validate_app_token(self, app: App, token: Token) -> bool: ...
-
-    @abc.abstractmethod
-    async def verify_app_token(
-        self, app: App, token: Token | None
-    ) -> Result[tuple[SessionType, PermissionHandle, Token], str]: ...
-
-    @abc.abstractmethod
-    def generate_plugin_token(self) -> Token: ...
-
-    @abc.abstractmethod
-    def is_plugin_token(self, token: Token) -> bool: ...
-
-    @abc.abstractmethod
-    def is_dashboard_token(self, token: Token) -> bool: ...
-
-
 class TokenGenerator:
     def __init__(self):
         self._chars = string.ascii_letters + string.digits
@@ -74,7 +40,7 @@ class TokenGenerator:
         return "".join(random.choices(self._chars, k=length))
 
 
-class ServerPermissionManager(PermissionManager):
+class PermissionManager:
     def __init__(self, server: Server):
         self._server = server
         self._plugin_tokens: set[str] = set()
@@ -139,6 +105,11 @@ class ServerPermissionManager(PermissionManager):
             if permission.id in self.permissions:
                 raise ValueError(f"Permission {permission.id} already registered")
             self.permissions[permission.id] = permission
+
+    def unregister(self, *permission_types: PermissionType) -> None:
+        for permission in permission_types:
+            if permission.id in self.permissions:
+                del self.permissions[permission.id]
 
     def get_permission(self, permission_id: Identifier) -> PermissionType | None:
         return self.permissions.get(permission_id)

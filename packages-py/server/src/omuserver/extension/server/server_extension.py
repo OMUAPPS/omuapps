@@ -19,7 +19,6 @@ from omu.extension.server.server_extension import (
 )
 from omu.identifier import Identifier
 
-from omuserver.helper import get_launch_command
 from omuserver.server import Server
 from omuserver.session import Session
 
@@ -121,18 +120,14 @@ class ServerExtension:
             session.event.disconnected.listen(on_disconnect)
 
     async def handle_shutdown(self, session: Session, restart: bool = False) -> bool:
-        await self._server.shutdown()
-        self._server.loop.create_task(self.shutdown(restart))
+        await self.shutdown(restart)
         return True
 
     async def shutdown(self, restart: bool = False) -> None:
         if restart:
-            import os
-            import sys
-
-            os.execv(sys.executable, get_launch_command()["args"])
+            await self._server.restart()
         else:
-            self._server.loop.stop()
+            await self._server.stop()
 
     async def on_start(self) -> None:
         await self.sessions.clear()
