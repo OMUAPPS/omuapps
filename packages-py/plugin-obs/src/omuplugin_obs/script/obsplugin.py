@@ -8,8 +8,20 @@ from omu.app import App
 from omu.helper import map_optional
 from omu.omu import Omu
 from omu.token import JsonTokenProvider
-from omuplugin_obs.const import PLUGIN_ID
-from omuplugin_obs.types import (
+from omuplugin_obs.version import VERSION
+
+from ..const import PLUGIN_ID
+from ..obs.data import OBSData
+from ..obs.obs import OBS, OBSFrontendEvent
+from ..obs.scene import (
+    OBSBlendingMethod,
+    OBSBlendingType,
+    OBSScaleType,
+    OBSScene,
+    OBSSceneItem,
+)
+from ..obs.source import OBSSource
+from ..types import (
     EVENT_SIGNAL,
     SCENE_GET_BY_NAME,
     SCENE_GET_BY_UUID,
@@ -17,6 +29,7 @@ from omuplugin_obs.types import (
     SCENE_LIST,
     SCENE_SET_CURRENT_BY_NAME,
     SCENE_SET_CURRENT_BY_UUID,
+    SOURCE_ADD,
     SOURCE_CREATE,
     SOURCE_GET_BY_NAME,
     SOURCE_GET_BY_UUID,
@@ -47,18 +60,6 @@ from omuplugin_obs.types import (
     TextSourceData,
     UpdateResponse,
 )
-from omuplugin_obs.version import VERSION
-
-from ..obs.data import OBSData
-from ..obs.obs import OBS, OBSFrontendEvent
-from ..obs.scene import (
-    OBSBlendingMethod,
-    OBSBlendingType,
-    OBSScaleType,
-    OBSScene,
-    OBSSceneItem,
-)
-from ..obs.source import OBSSource
 from .config import get_token_path
 
 APP = App(
@@ -132,6 +133,23 @@ def get_scene(scene_name: str | None) -> OBSScene:
     return scene
 
 
+def get_name(name: str) -> str:
+    existing_source = OBSSource.get_source_by_name(name)
+    if existing_source is not None:
+        existing_source.release()
+        if not existing_source.removed:
+            raise ValueError(f"Source with name {name} already exists")
+        return name
+    i = 1
+    while True:
+        new_name = f"{name} ({i})"
+        existing_source = OBSSource.get_source_by_name(new_name)
+        if existing_source is None:
+            return new_name
+        existing_source.release()
+        i += 1
+
+
 def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
     if "uuid" in source_json:
         raise NotImplementedError("uuid is not supported yet")
@@ -163,6 +181,26 @@ async def source_create(source: SourceJson) -> CreateResponse:
         existing_source.release()
         if not existing_source.removed:
             raise ValueError(f"Source with name {source['name']} already exists")
+    scene = get_scene(source.get("scene"))
+    scene_item = create_obs_source(scene, source)
+    scene.release()
+    if "blend_properties" in source:
+        blending_method = source["blend_properties"]["blending_method"]
+        blending_mode = source["blend_properties"]["blending_mode"]
+        scene_item.blending_method = OBSBlendingMethod[blending_method]
+        scene_item.blending_mode = OBSBlendingType[blending_mode]
+    if "scale_properties" in source:
+        scale_filter = source["scale_properties"]["scale_filter"]
+        scene_item.scale_filter = OBSScaleType[scale_filter]
+    source_json = source_to_json(scene_item)
+    if source_json is None:
+        raise ValueError(f"Source with type {source['type']} is not supported")
+    return {"source": source_json}
+
+
+@omu.endpoints.bind(endpoint_type=SOURCE_ADD)
+async def source_add(source: SourceJson) -> CreateResponse:
+    source["name"] = get_name(source["name"])
     scene = get_scene(source.get("scene"))
     scene_item = create_obs_source(scene, source)
     scene.release()

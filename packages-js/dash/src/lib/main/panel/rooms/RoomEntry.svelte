@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
 
-    import { ButtonMini, FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import { Tooltip } from '@omujs/ui';
 
     import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
@@ -21,14 +21,30 @@
 </script>
 
 <article class="room" class:selected class:connected={entry.connected}>
-    <div class="top">
-        <div>
-            {#if entry.metadata && entry.metadata.thumbnail}
-                <img
-                    src={omu.assets.proxy(entry.metadata.thumbnail)}
-                    alt="thumbnail"
-                    class="room-thumbnail"
-                />
+    <div class="thumbnail">
+        {#if entry.metadata && entry.metadata.thumbnail}
+            {#if entry.metadata.url}
+                <button on:click={open}>
+                    <Tooltip noBackground>
+                        <img
+                            src={omu.assets.proxy(entry.metadata.thumbnail)}
+                            alt="thumbnail"
+                            class="room-thumbnail-preview"
+                        />
+                    </Tooltip>
+                    <img
+                        src={omu.assets.proxy(entry.metadata.thumbnail)}
+                        alt="thumbnail"
+                        class="room-thumbnail"
+                    />
+                    <div class="overlay">
+                        <p>
+                            {$t('panels.rooms.see_channel')}
+                            <i class="ti ti-external-link" />
+                        </p>
+                    </div>
+                </button>
+            {:else}
                 <Tooltip noBackground>
                     <img
                         src={omu.assets.proxy(entry.metadata.thumbnail)}
@@ -36,32 +52,15 @@
                         class="room-thumbnail-preview"
                     />
                 </Tooltip>
+                <img
+                    src={omu.assets.proxy(entry.metadata.thumbnail)}
+                    alt="thumbnail"
+                    class="room-thumbnail"
+                />
             {/if}
-        </div>
-        <div class="buttons">
-            <FlexRowWrapper widthFull>
-                <ButtonMini on:click={open}>
-                    <Tooltip>{$t('panels.rooms.see_channel')}</Tooltip>
-                    <i class="ti ti-external-link" />
-                </ButtonMini>
-            </FlexRowWrapper>
-            <FlexRowWrapper widthFull between>
-                {#if entry.metadata}
-                    <ButtonMini on:click={copyViewers}>
-                        <Tooltip>{$t('panels.rooms.viewers')}</Tooltip>
-                        {entry.metadata.viewers}
-                        <i class="ti ti-user" />
-                    </ButtonMini>
-                {/if}
-                <i class={`online-state ti ti-bolt ${entry.connected ? 'online' : 'offline'}`}>
-                    <Tooltip>
-                        {entry.connected ? $t('status.connected') : $t('status.disconnected')}
-                    </Tooltip>
-                </i>
-            </FlexRowWrapper>
-        </div>
+        {/if}
     </div>
-    <div>
+    <div class="info">
         {#if entry.metadata}
             <div class="title">
                 <Tooltip>
@@ -78,14 +77,32 @@
                 {entry.metadata.description}
             </div>
         {/if}
+        <div class="buttons">
+            <small class="online-state" class:connected={entry.connected}>
+                <i class={`ti ti-bolt${entry.connected ? '-filled' : ''}`} />
+                {entry.connected ? $t('status.connected') : $t('status.disconnected')}
+            </small>
+            {#if entry.metadata}
+                <button on:click={copyViewers}>
+                    <Tooltip>{$t('panels.rooms.viewers')}</Tooltip>
+                    {entry.metadata.viewers}
+                    <i class="ti ti-user" />
+                </button>
+            {/if}
+        </div>
     </div>
 </article>
 
 <style lang="scss">
     article {
-        padding: 10px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
         background: var(--color-bg-2);
         border-bottom: 1px solid var(--color-bg-1);
+        height: 7rem;
 
         &.selected {
             background: var(--color-bg-1);
@@ -98,38 +115,52 @@
         }
     }
 
-    .top {
-        display: flex;
-        flex-direction: row;
-        width: 100%;
-    }
-
-    .buttons {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-        height: 20px;
-        margin-left: 5px;
-    }
-
-    .online-state {
-        margin-left: 5px;
-    }
-
-    .online {
-        color: var(--color-1);
-    }
-
-    .offline {
-        color: #ccc;
-    }
-
-    .room-thumbnail {
-        width: 100px;
-        min-width: 100px;
-        min-height: 56px;
+    .thumbnail {
+        position: relative;
+        height: 100%;
+        aspect-ratio: 16 / 9;
         object-fit: contain;
+
+        > button {
+            position: relative;
+            border: none;
+            background: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+
+            > img {
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
+        > button > .overlay {
+            position: absolute;
+            inset: 0;
+            background: color-mix(in srgb, var(--color-text) 70%, transparent 0%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+
+            > p {
+                background: var(--color-text);
+                color: var(--color-bg-1);
+                padding: 0.25rem 0.5rem;
+                border-radius: 2px;
+                font-size: 0.8rem;
+            }
+        }
+
+        > button:hover > .overlay {
+            opacity: 1;
+        }
     }
 
     .room-thumbnail-preview {
@@ -138,9 +169,59 @@
         outline: 2px solid #000;
     }
 
+    .info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        height: fit-content;
+    }
+
+    .buttons {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin-top: 0.25rem;
+
+        > button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.5rem;
+            border: none;
+            background: none;
+            height: 2rem;
+            border-radius: 2px;
+            font-size: 0.8rem;
+            cursor: pointer;
+
+            &:hover {
+                background: var(--color-bg-2);
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+            }
+        }
+    }
+
+    .online-state {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--color-text);
+        margin-right: 0.5rem;
+
+        &.connected {
+            color: var(--color-1);
+        }
+    }
+
     .title {
         overflow: hidden;
-        font-size: 14px;
+        font-size: 0.9rem;
         font-weight: bold;
         color: var(--color-1);
         text-overflow: ellipsis;
@@ -149,8 +230,8 @@
 
     .description {
         overflow: hidden;
-        font-size: 12px;
-        color: color-mix(in srgb, var(--color-1) 100%, transparent 50%);
+        font-size: 0.7rem;
+        color: var(--color-text);
         text-overflow: ellipsis;
         white-space: nowrap;
     }

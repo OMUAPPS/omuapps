@@ -3,18 +3,20 @@ from __future__ import annotations
 import asyncio
 import importlib
 import importlib.metadata
+import importlib.util
 import io
 import os
 import sys
 from dataclasses import dataclass
 from multiprocessing import Process
+from types import ModuleType
 
 from loguru import logger
 from omu.address import Address
 from omu.app import App
 from omu.helper import asyncio_error_logger
 from omu.network.websocket_connection import WebsocketsConnection
-from omu.plugin import Plugin
+from omu.plugin import InstallContext, Plugin
 from omu.token import TokenProvider
 
 from omuserver.server import Server
@@ -35,18 +37,58 @@ class PluginTokenProvider(TokenProvider):
         raise NotImplementedError
 
 
-@dataclass(frozen=True, slots=True)
+def deep_reload(module: ModuleType) -> None:
+    to_reload: list[ModuleType] = [module]
+    module_key = module.__name__ + "."
+    for key, module in sys.modules.items():
+        if key.startswith(module_key):
+            to_reload.append(module)
+    for module in to_reload:
+        try:
+            importlib.reload(module)
+        except Exception as e:
+            logger.opt(exception=e).error(f"Error reloading module {module}")
+
+
+@dataclass(slots=True)
 class PluginInstance:
     plugin: Plugin
+    entry_point: importlib.metadata.EntryPoint
+    module: ModuleType
 
     @classmethod
     def from_entry_point(
-        cls, entry_point: importlib.metadata.EntryPoint
+        cls,
+        entry_point: importlib.metadata.EntryPoint,
     ) -> PluginInstance:
         plugin = entry_point.load()
         if not isinstance(plugin, Plugin):
             raise ValueError(f"Invalid plugin: {plugin} is not a Plugin")
-        return cls(plugin=plugin)
+        module = importlib.import_module(entry_point.module)
+        return cls(
+            plugin=plugin,
+            entry_point=entry_point,
+            module=module,
+        )
+
+    async def notify_install(self, ctx: InstallContext):
+        if self.plugin.on_install is not None:
+            await self.plugin.on_install(ctx)
+
+    async def notify_uninstall(self, ctx: InstallContext):
+        if self.plugin.on_uninstall is not None:
+            await self.plugin.on_uninstall(ctx)
+
+    async def notify_update(self, ctx: InstallContext):
+        if self.plugin.on_update is not None:
+            await self.plugin.on_update(ctx)
+
+    async def reload(self):
+        deep_reload(self.module)
+        new_plugin = self.entry_point.load()
+        if not isinstance(new_plugin, Plugin):
+            raise ValueError(f"Invalid plugin: {new_plugin} is not a Plugin")
+        self.plugin = new_plugin
 
     async def start(self, server: Server):
         token = server.permission_manager.generate_plugin_token()

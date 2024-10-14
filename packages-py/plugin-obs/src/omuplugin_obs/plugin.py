@@ -7,16 +7,13 @@ import subprocess
 import sys
 import tkinter
 from pathlib import Path
-from threading import Thread
 from tkinter import messagebox
 from typing import Any, TypedDict
 
 import psutil
 from loguru import logger
-from omuserver.server import Server
 
 from . import obsconfig
-from .permissions import PERMISSION_TYPES
 from .script.config import get_config_path
 
 
@@ -225,16 +222,6 @@ def get_launch_command():
 
 
 def install_all_scene():
-    config_path = get_config_path()
-    config_path.write_text(
-        json.dumps(
-            {
-                "python_path": get_python_directory(),
-                "launch": get_launch_command(),
-            }
-        ),
-        encoding="utf-8",
-    )
     script_path = Path(__file__).parent / "script"
     launcher_path = script_path / "omuapps_plugin.py"
 
@@ -248,7 +235,18 @@ def relaunch_obs():
         subprocess.Popen(obs.launch_command, cwd=obs.cwd)
 
 
-def install():
+async def install():
+    config_path = get_config_path()
+    config_path.write_text(
+        json.dumps(
+            {
+                "python_path": get_python_directory(),
+                "launch": get_launch_command(),
+            }
+        ),
+        encoding="utf-8",
+    )
+
     try:
         if is_installed():
             return
@@ -261,9 +259,3 @@ def install():
     except Exception:
         logger.opt(exception=True).error("Failed to install OBS plugin: {e}")
         raise
-
-
-async def on_start_server(server: Server) -> None:
-    thread = Thread(target=install)
-    thread.start()
-    server.permission_manager.register(*PERMISSION_TYPES)

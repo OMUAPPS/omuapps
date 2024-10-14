@@ -13,7 +13,6 @@
     omu.permissions.require(
         permissions.OBS_SCENE_SET_CURRENT_PERMISSION_ID,
         permissions.OBS_SCENE_READ_PERMISSION_ID,
-        permissions.OBS_SOURCE_READ_PERMISSION_ID,
         permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
     );
     const breakTimer = new BreakTimerApp(omu, obs);

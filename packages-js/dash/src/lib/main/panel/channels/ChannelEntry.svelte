@@ -35,9 +35,9 @@
                 <ProviderIcon providerId={entry.providerId} />
             {/if}
         </div>
-        <div class="description">
-            <div class="channel-name">{entry.name || entry.providerId}</div>
-            <small class="channel-url">
+        <div class="info">
+            <div class="name">{entry.name || entry.providerId}</div>
+            <small class="url">
                 {entry.url}
             </small>
         </div>
@@ -46,14 +46,14 @@
         {#if selected}
             <ButtonMini on:click={remove}>
                 <Tooltip>
-                    <div class="description">{$t('panels.channels.delete')}</div>
+                    <div>{$t('panels.channels.delete')}</div>
                 </Tooltip>
                 <i class="ti ti-trash" />
             </ButtonMini>
             <a href={entry.url} target="_blank">
                 <ButtonMini>
                     <Tooltip>
-                        <div class="description">{$t('panels.channels.open')}</div>
+                        <div>{$t('panels.channels.open')}</div>
                     </Tooltip>
                     <i class="ti ti-external-link" />
                 </ButtonMini>
@@ -61,7 +61,12 @@
         {:else}
             <small>{$t('panels.channels.connect')}</small>
         {/if}
-        <Checkbox bind:value={$active} />
+        <span>
+            <Tooltip>
+                <div>{$t('panels.channels.active')}</div>
+            </Tooltip>
+            <Checkbox bind:value={$active} />
+        </span>
     </div>
 </div>
 
@@ -117,14 +122,20 @@
         }
     }
 
-    .channel-name {
-        font-size: 1rem;
-        opacity: 1;
+    .info {
+        display: flex;
+        flex-direction: column;
     }
 
-    small {
-        font-size: 0.8rem;
+    .name {
+        font-size: 0.9rem;
+        opacity: 1;
         color: var(--color-1);
+    }
+
+    .url {
+        font-size: 0.621rem;
+        color: var(--color-text);
     }
 
     a {

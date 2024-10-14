@@ -1,5 +1,7 @@
 import asyncio
 import json
+import os
+import sys
 
 import aiohttp
 from aiohttp import web
@@ -22,10 +24,10 @@ from omuserver.extension.registry import RegistryExtension
 from omuserver.extension.server import ServerExtension
 from omuserver.extension.signal import SignalExtension
 from omuserver.extension.table import TableExtension
-from omuserver.helper import safe_path_join
+from omuserver.helper import get_launch_command, safe_path_join
 from omuserver.network import Network
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
-from omuserver.security.security import PermissionManager, ServerPermissionManager
+from omuserver.security.security import PermissionManager
 
 from .server import Server, ServerEvents
 
@@ -61,7 +63,7 @@ class OmuServer(Server):
         self._network.add_http_route("/version", self._handle_version)
         self._network.add_http_route("/proxy", self._handle_proxy)
         self._network.add_http_route("/asset", self._handle_assets)
-        self._security = ServerPermissionManager(self)
+        self._security = PermissionManager(self)
         self._running = False
         self._endpoints = EndpointExtension(self)
         self._permissions = PermissionExtension(self)
@@ -145,14 +147,14 @@ class OmuServer(Server):
             self._loop.run_forever()
         finally:
             self._loop.close()
-            asyncio.run(self.shutdown())
+            asyncio.run(self.stop())
 
     async def _handle_network_start(self) -> None:
         logger.info(f"Listening on {self.address}")
         try:
             await self._event.start()
         except Exception as e:
-            await self.shutdown()
+            await self.stop()
             self.loop.stop()
             raise e
 
@@ -161,13 +163,17 @@ class OmuServer(Server):
         try:
             await self._network.start()
         except Exception as e:
-            await self.shutdown()
+            await self.stop()
             self.loop.stop()
             raise e
 
-    async def shutdown(self) -> None:
+    async def stop(self) -> None:
         self._running = False
         await self._event.stop()
+
+    async def restart(self) -> None:
+        await self.stop()
+        os.execv(sys.executable, get_launch_command()["args"])
 
     @property
     def config(self) -> Config:

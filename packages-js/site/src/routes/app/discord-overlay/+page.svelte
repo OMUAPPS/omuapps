@@ -23,7 +23,6 @@
             ...Object.values(DISCORDRPC_PERMISSIONS),
             ASSET_UPLOAD_PERMISSION_ID,
             ASSET_DOWNLOAD_PERMISSION_ID,
-            permissions.OBS_SOURCE_READ_PERMISSION_ID,
             permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
         omu.start();
@@ -100,6 +99,10 @@
         }
         update($config.user_id, $config.guild_id, $config.channel_id);
     }
+
+    $: hasUsers = Object.keys(clients).length > 0;
+    $: hasGuilds = guilds.length > 0;
+    $: hasChannels = channels.length > 0;
 </script>
 
 <AppPage>
@@ -110,7 +113,7 @@
         <div class="controls">
             <div class="config">
                 <span>
-                    {#if Object.keys(clients).length > 0}
+                    {#if hasUsers}
                         <p>
                             ユーザー
                             <i class="ti ti-user"/>
@@ -123,26 +126,26 @@
                     {/if}
                 </span>
                 <span>
-                    {#if guilds.length > 0}
+                    {#if hasGuilds}
                         <p>
                             サーバー
                             <i class="ti ti-server"/>
                         </p>
                         <Combobox options={Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))} bind:value={$config.guild_id}/>
-                    {:else}
+                    {:else if hasUsers}
                         <small>
                             入っているサーバーは見つかりませんでした
                         </small>
                     {/if}
                 </span>
                 <span>
-                    {#if channels.length > 0}
+                    {#if hasChannels}
                         <p>
                             チャンネル
                             <i class="ti ti-volume"/>
                         </p>
                         <Combobox options={Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))} bind:value={$config.channel_id}/>
-                    {:else}
+                    {:else if hasGuilds && hasUsers}
                         <small>
                             ボイスチャンネルは見つかりませんでした
                         </small>

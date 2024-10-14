@@ -157,6 +157,10 @@ export const SOURCE_CREATE = EndpointType.createJson<SourceJson, CreateResponse>
     name: 'source_create',
 });
 
+export const SOURCE_ADD = EndpointType.createJson<SourceJson, CreateResponse>(PLUGIN_ID, {
+    name: 'source_add',
+});
+
 export type RemoveByNameRequest = {
     name: string;
 };

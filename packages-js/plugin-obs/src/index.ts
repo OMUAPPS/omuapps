@@ -10,6 +10,7 @@ import {
     SCENE_LIST,
     SCENE_SET_CURRENT_BY_NAME,
     SCENE_SET_CURRENT_BY_UUID,
+    SOURCE_ADD,
     SOURCE_CREATE,
     SOURCE_GET_BY_NAME,
     SOURCE_GET_BY_UUID,
@@ -89,6 +90,13 @@ export class OBSPlugin {
             throw new Error('Not connected to OBS');
         }
         return await this.omu.endpoints.call(SOURCE_CREATE, source);
+    }
+
+    async sourceAdd(source: SourceJson): Promise<CreateResponse> {
+        if (!(await this.isConnected())) {
+            throw new Error('Not connected to OBS');
+        }
+        return await this.omu.endpoints.call(SOURCE_ADD, source);
     }
 
     async sourceUpdate(source: SourceJson): Promise<void> {
