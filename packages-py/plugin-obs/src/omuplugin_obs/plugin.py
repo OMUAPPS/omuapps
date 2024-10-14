@@ -7,16 +7,13 @@ import subprocess
 import sys
 import tkinter
 from pathlib import Path
-from threading import Thread
 from tkinter import messagebox
 from typing import Any, TypedDict
 
 import psutil
 from loguru import logger
-from omuserver.server import Server
 
 from . import obsconfig
-from .permissions import PERMISSION_TYPES
 from .script.config import get_config_path
 
 
@@ -238,7 +235,7 @@ def relaunch_obs():
         subprocess.Popen(obs.launch_command, cwd=obs.cwd)
 
 
-def install():
+async def install():
     config_path = get_config_path()
     config_path.write_text(
         json.dumps(
@@ -262,9 +259,3 @@ def install():
     except Exception:
         logger.opt(exception=True).error("Failed to install OBS plugin: {e}")
         raise
-
-
-async def on_start_server(server: Server) -> None:
-    thread = Thread(target=install)
-    thread.start()
-    server.permission_manager.register(*PERMISSION_TYPES)

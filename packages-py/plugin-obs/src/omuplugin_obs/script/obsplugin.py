@@ -8,8 +8,20 @@ from omu.app import App
 from omu.helper import map_optional
 from omu.omu import Omu
 from omu.token import JsonTokenProvider
-from omuplugin_obs.const import PLUGIN_ID
-from omuplugin_obs.types import (
+from omuplugin_obs.version import VERSION
+
+from ..const import PLUGIN_ID
+from ..obs.data import OBSData
+from ..obs.obs import OBS, OBSFrontendEvent
+from ..obs.scene import (
+    OBSBlendingMethod,
+    OBSBlendingType,
+    OBSScaleType,
+    OBSScene,
+    OBSSceneItem,
+)
+from ..obs.source import OBSSource
+from ..types import (
     EVENT_SIGNAL,
     SCENE_GET_BY_NAME,
     SCENE_GET_BY_UUID,
@@ -48,18 +60,6 @@ from omuplugin_obs.types import (
     TextSourceData,
     UpdateResponse,
 )
-from omuplugin_obs.version import VERSION
-
-from ..obs.data import OBSData
-from ..obs.obs import OBS, OBSFrontendEvent
-from ..obs.scene import (
-    OBSBlendingMethod,
-    OBSBlendingType,
-    OBSScaleType,
-    OBSScene,
-    OBSSceneItem,
-)
-from ..obs.source import OBSSource
 from .config import get_token_path
 
 APP = App(
