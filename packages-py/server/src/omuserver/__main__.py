@@ -80,6 +80,7 @@ def main(
 ):
     if stop:
         stop_server_processes(port)
+        sys.exit(0)
         return
 
     config = Config()
