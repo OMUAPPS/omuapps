@@ -12,7 +12,7 @@ export const APP = new App(APP_ID, {
             en: 'Discord Overlay',
         },
         description: {
-            ja: 'Discordを使ってPNGTuberでいっしょに配信',
+            ja: 'PNGTuber+のアバターでいっしょに',
         },
         icon: 'ti-brand-discord',
         tags: ['underdevelopment', 'tool', 'asset'] as TagKey[],
