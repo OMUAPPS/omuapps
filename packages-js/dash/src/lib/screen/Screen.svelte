@@ -69,7 +69,7 @@
         }
 
         &.windowed {
-            animation: menu-in 0.2s cubic-bezier(0, 1.14, 0, 1);
+            animation: menu-in 0.1621s cubic-bezier(0, 1.14, 0, 1);
         }
     }
 
@@ -104,6 +104,11 @@
         0% {
             opacity: 0;
             transform: scale(0);
+        }
+
+        86% {
+            opacity: 1;
+            transform: scale(1.001);
         }
 
         100% {
