@@ -48,6 +48,7 @@
 
     h3 {
         color: var(--color-1);
+        font-size: 1rem;
         margin-top: 1rem;
         margin-bottom: 0.5rem;
     }

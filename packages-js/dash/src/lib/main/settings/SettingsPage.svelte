@@ -130,6 +130,7 @@
         border-right: 1px solid var(--color-outline);
         margin: 1rem 0;
         padding: 0 0.5rem;
+        gap: 2px;
 
         > button {
             border: none;
@@ -151,7 +152,7 @@
 
             &:hover {
                 background: var(--color-bg-2);
-                padding-left: 1.25rem;
+                padding-left: 1.1621rem;
                 transition: padding 0.0621s;
 
                 > .ti-chevron-right {
