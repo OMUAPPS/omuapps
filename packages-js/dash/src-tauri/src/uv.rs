@@ -217,6 +217,7 @@ impl Uv {
             on_progress(Progress::UvUpdateRequirementsFailed(
                 update_error_message.clone(),
             ));
+            bail!(update_error_message.clone());
         }
 
         Ok(())
