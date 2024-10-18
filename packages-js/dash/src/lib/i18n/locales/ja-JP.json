@@ -218,7 +218,7 @@
             "logFileGenerating": "ログファイルを生成中...",
             "logFileGenerateError": "ログファイルの生成に失敗しました: {error}",
             "logFileGenerated": "ログファイルを生成しました: {path}",
-            "cleanEnvironment": "環境を削除して再起動",
+            "cleanEnvironment": "動作環境を再構築",
             "cleaningEnvironment": "環境を削除して再起動中..."
         },
         "about": {

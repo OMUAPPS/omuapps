@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { LOCALES } from '$lib/i18n/i18n.js';
+    import { screenContext } from '$lib/screen/screen.js';
     import { invoke } from '$lib/tauri.js';
     import { Combobox, Header, Toggle, Tooltip } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/api/process';
     import { currentSettingsCategory, devMode, language } from '../settings.js';
     import About from './about/About.svelte';
+    import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
 
     export const props = {};
@@ -23,16 +23,6 @@
         }
         logPromise = null;
         return path;
-    }
-
-    let isCleaning = false;
-
-    async function cleanEnvironment(): Promise<void> {
-        if (isCleaning) return;
-        isCleaning = true;
-        await omu.server.shutdown();
-        await invoke('clean_environment');
-        await relaunch();
     }
 </script>
 
@@ -99,12 +89,10 @@
                     {/if}
                 </span>
                 <small>先にOBSを終了する必要があります</small>
-                <span class="setting">
-                    {#if isCleaning}
-                        <button disabled>{$t('settings.setting.cleaningEnvironment')}</button>
-                    {:else}
-                        <button on:click={cleanEnvironment}>{$t('settings.setting.cleanEnvironment')}</button>
-                    {/if}
+                <span class="setting clean-environment">
+                    <button on:click={() => {
+                        screenContext.push(CleaningEnvironmentScreen, undefined)
+                    }}>{$t('settings.setting.cleanEnvironment')}</button>
                 </span>
             {:else if $currentSettingsCategory === 'about'}
                 <About />
@@ -243,5 +231,9 @@
                 cursor: not-allowed;
             }
         }
+    }
+
+    .clean-environment {
+        margin-top: 0.25rem;
     }
 </style>

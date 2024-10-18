@@ -49,7 +49,10 @@ impl Server {
                 version.unwrap(),
                 VERSION
             )));
-            Self::stop_server(on_progress, &python, &option)?;
+            Self::stop_server(&python, &option).map_err(|err| {
+                on_progress(Progress::ServerStopFailed(err.clone()));
+                err
+            })?;
             already_started = false;
         }
 
@@ -97,11 +100,7 @@ impl Server {
         Ok(server)
     }
 
-    pub fn stop_server(
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-        python: &Python,
-        option: &ServerOption,
-    ) -> Result<(), String> {
+    pub fn stop_server(python: &Python, option: &ServerOption) -> Result<(), String> {
         let mut cmd = python.cmd();
         cmd.arg("-m");
         cmd.arg("omuserver");
@@ -113,7 +112,6 @@ impl Server {
         cmd.current_dir(&option.data_dir);
         let output = cmd.output().map_err(|err| {
             let msg = format!("Failed to stop server: {}", err);
-            on_progress(Progress::ServerStoppping(msg.clone()));
             msg
         })?;
         Ok(if !output.status.success() {

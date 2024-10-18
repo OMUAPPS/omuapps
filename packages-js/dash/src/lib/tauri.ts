@@ -9,6 +9,8 @@ type Commands = {
     get_token: () => string | null;
     generate_log_file: () => string;
     clean_environment: () => void;
+    open_python_path: () => void;
+    open_uv_path: () => void;
 };
 
 export async function invoke<T extends keyof Commands>(

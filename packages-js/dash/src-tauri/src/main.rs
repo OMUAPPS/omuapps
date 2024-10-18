@@ -128,11 +128,26 @@ async fn start_server(
     Ok(Some(token))
 }
 
+#[derive(serde::Serialize)]
+#[serde(tag = "type", content = "message")]
+enum CleanEnvironmentError {
+    DevMode(String),
+    PythonError(String),
+    ServerError(String),
+    RemovePythonError(String),
+    RemoveUvError(String),
+}
+
 #[tauri::command]
 async fn clean_environment(
     window: tauri::Window,
     state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
+) -> Result<(), CleanEnvironmentError> {
+    if cfg!(dev) {
+        return Err(CleanEnvironmentError::DevMode(
+            "Cannot clean environment in dev mode".to_string(),
+        ));
+    }
     let on_progress = move |progress: Progress| {
         info!("{:?}", progress);
         window.emit("server_state", progress).unwrap();
@@ -154,27 +169,53 @@ async fn clean_environment(
             },
         }
     } else {
-        Python::ensure(&options, &on_progress).unwrap()
-    };
-
-    let server = state.server.lock().unwrap();
-    if server.is_some() {
-        match Server::stop_server(&on_progress, &python, &options.server_options) {
-            Ok(_) => {}
+        match Python::ensure(&options, &on_progress) {
+            Ok(python) => python,
             Err(err) => {
-                warn!("Failed to stop server: {}", err);
+                return Err(CleanEnvironmentError::PythonError(err.to_string()));
             }
         }
     };
 
-    remove_dir_all(&options.python_path).unwrap_or_else(|err| {
-        warn!("Failed to remove python directory: {}", err);
-    });
-    remove_dir_all(&options.uv_path).unwrap_or_else(|err| {
-        warn!("Failed to remove work directory: {}", err);
-    });
+    let server = state.server.lock().unwrap();
+    if server.is_some() {
+        match Server::stop_server(&python, &options.server_options) {
+            Ok(_) => {}
+            Err(err) => {
+                return Err(CleanEnvironmentError::ServerError(err.to_string()));
+            }
+        }
+    };
+
+    match remove_dir_all(&options.python_path) {
+        Ok(_) => {}
+        Err(err) => {
+            return Err(CleanEnvironmentError::RemovePythonError(err.to_string()));
+        }
+    }
+    match remove_dir_all(&options.uv_path) {
+        Ok(_) => {}
+        Err(err) => {
+            return Err(CleanEnvironmentError::RemoveUvError(err.to_string()));
+        }
+    }
 
     Ok(())
+}
+
+#[tauri::command]
+fn open_python_path(state: tauri::State<'_, AppState>) -> Result<String, String> {
+    let options = state.option.clone();
+    open::that(&options.python_path)
+        .map_err(|err| format!("Failed to open python path: {}", err))?;
+    Ok(options.python_path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn open_uv_path(state: tauri::State<'_, AppState>) -> Result<String, String> {
+    let options = state.option.clone();
+    open::that(&options.uv_path).map_err(|err| format!("Failed to open uv path: {}", err))?;
+    Ok(options.uv_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
@@ -251,7 +292,9 @@ fn main() {
             start_server,
             clean_environment,
             get_token,
-            generate_log_file
+            generate_log_file,
+            open_python_path,
+            open_uv_path
         ])
         .setup(move |app| {
             let main_window = app.get_window("main").unwrap();
