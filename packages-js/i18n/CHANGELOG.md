@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.10 (2024-10-19)
+
+
+### Reverts
+
+* Revert "fix(dash): uvのキャッシュを無効化" ([4dba15a](https://github.com/OMUAPPS/omuapps/commit/4dba15a3e04aa76cfed8a2b4ab0c4550ca99006b))
+
+
+
+
+
 ## 0.7.9 (2024-10-19)
 
 
