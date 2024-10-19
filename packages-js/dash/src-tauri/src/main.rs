@@ -119,10 +119,10 @@ async fn start_server(
 }
 
 #[tauri::command]
-async fn restart_server(
+async fn stop_server(
     window: tauri::Window,
     state: tauri::State<'_, AppState>,
-) -> Result<Option<String>, String> {
+) -> Result<(), String> {
     let on_progress = move |progress: Progress| {
         info!("{:?}", progress);
         window.emit("server_state", progress).unwrap();
@@ -131,52 +131,24 @@ async fn restart_server(
     let python = Python::ensure(&options, &on_progress).unwrap();
     let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
 
-    {
-        let server = state.server.lock().unwrap();
-        if server.is_some() {
-            let server = server.as_ref().unwrap();
-            on_progress(Progress::ServerStopping {
-                msg: "Stopping server".to_string(),
-            });
-            if server.is_running() {
-                server.stop(&on_progress).unwrap();
+    let server = state.server.lock().unwrap();
+    if server.is_some() {
+        let server = server.as_ref().unwrap();
+        on_progress(Progress::ServerStopping {
+            msg: "Stopping server".to_string(),
+        });
+        if server.is_running() {
+            server.stop(&on_progress).unwrap();
+        }
+        match Server::stop_server(&python, &options.server_options) {
+            Ok(_) => {}
+            Err(err) => {
+                warn!("Failed to stop server: {}", err);
             }
-            match Server::stop_server(&python, &options.server_options) {
-                Ok(_) => {}
-                Err(err) => {
-                    return Err(err.to_string());
-                }
-            }
-        };
-    }
-
-    let server = match Server::ensure_server(
-        options.server_options,
-        python,
-        uv,
-        &on_progress,
-        state.app_handle.clone(),
-    ) {
-        Ok(server) => server,
-        Err(err) => {
-            return Err(err.to_string());
         }
     };
 
-    if server.already_started {
-        on_progress(Progress::ServerAlreadyStarted {
-            msg: "Server already started".to_string(),
-        });
-    } else {
-        on_progress(Progress::ServerStarting {
-            msg: "Starting server".to_string(),
-        });
-        server.start(&on_progress).unwrap();
-    }
-
-    let token = server.token.clone();
-    *state.server.lock().unwrap() = Some(server);
-    Ok(Some(token))
+    Ok(())
 }
 
 #[derive(serde::Serialize)]
@@ -354,7 +326,7 @@ fn main() {
         .manage(server_state)
         .invoke_handler(tauri::generate_handler![
             start_server,
-            restart_server,
+            stop_server,
             clean_environment,
             get_token,
             generate_log_file,

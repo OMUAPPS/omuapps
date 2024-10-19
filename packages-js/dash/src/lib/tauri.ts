@@ -6,7 +6,7 @@ let _invoke: typeof api.invoke;
 let _listen: typeof event.listen;
 type Commands = {
     start_server: () => string;
-    restart_server: () => string;
+    stop_server: () => string;
     get_token: () => string | null;
     generate_log_file: () => string;
     clean_environment: () => void;

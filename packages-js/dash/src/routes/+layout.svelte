@@ -229,7 +229,7 @@
                         <GenerateLogButton />
                         {#if disconnectPacket?.type === DisconnectType.INVALID_TOKEN}
                             <button class="primary" on:click={async () => {
-                                await invoke('restart_server');
+                                await invoke('stop_server');
                                 await relaunch();
                             }}>
                                 サーバーを再起動
