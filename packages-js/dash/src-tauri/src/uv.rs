@@ -168,7 +168,6 @@ impl Uv {
             .arg(pip_version)
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
-            .arg("--no-cache")
             .output()
             .with_context(|| {
                 let message = format!(
@@ -222,7 +221,6 @@ impl Uv {
             .arg(req_file.path())
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
-            .arg("--no-cache")
             .output()
             .with_context(|| {
                 let message = format!(
