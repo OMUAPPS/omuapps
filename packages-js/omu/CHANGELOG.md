@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.5 (2024-10-19)
+
+
+### Bug Fixes
+
+* **server:** isolatedのプラグインが生き残り続けないように ([0990347](https://github.com/OMUAPPS/omuapps/commit/0990347945c35627fea8e14307eed234cf44475f))
+
+
+
+
+
 ## 0.7.4 (2024-10-19)
 
 **Note:** Version bump only for package @omujs/omu
