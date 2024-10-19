@@ -14,12 +14,11 @@ where
             on_progress(current as f64, total);
         }
         let entry = entry?;
-        if entry.path().is_dir() {
-            std::fs::remove_dir_all(entry.path())?;
-        } else {
+        if entry.path().is_file() {
             std::fs::remove_file(entry.path())?;
         }
         current += 1;
     }
+    std::fs::remove_dir_all(path)?;
     Ok(())
 }
