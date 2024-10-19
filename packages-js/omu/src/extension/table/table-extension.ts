@@ -536,7 +536,11 @@ class TableImpl<T> implements Table<T> {
                 break;
             }
             yield* items.values();
-            cursor = this.keyFunction(backward ? items.values().next().value : [...items.values()].pop());
+            const cursorItem = backward ? items.values().next().value : [...items.values()].pop();
+            if (!cursorItem) {
+                break;
+            }
+            cursor = this.keyFunction(cursorItem);
         }
     }
 
