@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.8 (2024-10-19)
+
+
+### Bug Fixes
+
+* **server:** --stopで正常にプロセスを殺すように ([19bebe6](https://github.com/OMUAPPS/omuapps/commit/19bebe68a77d1c5e03fe663c4384af7ec403ad26))
+
+
+
+
+
 ## 0.7.7 (2024-10-19)
 
 **Note:** Version bump only for package @omujs/ui
