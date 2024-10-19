@@ -167,8 +167,7 @@ class Network:
                 ),
             )
         )
-        listen_task = self._client.loop.create_task(self._listen_task())
-
+        listen_task = asyncio.create_task(self._listen_task())
         await self._event.status.emit("connected")
         await self._event.connected.emit()
         await self._dispatch_tasks()

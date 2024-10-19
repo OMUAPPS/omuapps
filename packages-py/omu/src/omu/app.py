@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import Final, NotRequired, TypedDict
 
+from omu.helper import map_optional
 from omu.identifier import Identifier
 from omu.interface import Keyable
 from omu.localization import Locale, LocalizedText
@@ -20,10 +22,17 @@ class AppMetadata(TypedDict):
     tags: NotRequired[list[str]]
 
 
+class AppType(Enum):
+    APP = "app"
+    PLUGIN = "plugin"
+    DASHBOARD = "dashboard"
+
+
 class AppJson(TypedDict):
     id: str
     version: NotRequired[str] | None
     url: NotRequired[str] | None
+    type: NotRequired[str] | None
     metadata: NotRequired[AppMetadata] | None
 
 
@@ -34,6 +43,7 @@ class App(Keyable, Model[AppJson]):
         *,
         version: str | None = None,
         url: str | None = None,
+        type: AppType | None = None,
         metadata: AppMetadata | None = None,
     ) -> None:
         if isinstance(id, str):
@@ -41,6 +51,7 @@ class App(Keyable, Model[AppJson]):
         self.id: Final[Identifier] = id
         self.version = version
         self.url = url
+        self.type = type
         self.metadata = metadata
 
     @classmethod
@@ -50,6 +61,7 @@ class App(Keyable, Model[AppJson]):
             id,
             version=json.get("version"),
             url=json.get("url"),
+            type=map_optional(json.get("type"), AppType),
             metadata=json.get("metadata"),
         )
 
@@ -58,6 +70,7 @@ class App(Keyable, Model[AppJson]):
             id=self.key(),
             version=self.version,
             url=self.url,
+            type=self.type.value if self.type is not None else None,
             metadata=self.metadata,
         )
 

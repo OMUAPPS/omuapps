@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import yt_dlp.version
-from omu.app import App
+from omu.app import App, AppType
 from omu.identifier import Identifier
 
 from .archive import ArchiveConfig
@@ -11,6 +11,7 @@ IDENTIFIER = Identifier.from_key("com.omuapps:archive/plugin")
 APP = App(
     id=IDENTIFIER,
     version=VERSION,
+    type=AppType.PLUGIN,
 )
 
 # yt-dlp <url> --live-from-start --wait-for-video 60 --write-thumbnail --write-info-json --write-description --write-annotations --write-sub

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 
+from omu.app import AppType
 from omu.errors import PermissionDenied
 from omu.extension.dashboard.packets import PermissionRequestPacket
 from omu.extension.permission import PermissionType
@@ -14,7 +15,7 @@ from omu.extension.permission.permission_extension import (
 from omu.identifier import Identifier
 
 from omuserver.server import Server
-from omuserver.session import Session, SessionType
+from omuserver.session import Session
 
 
 class PermissionExtension:
@@ -56,7 +57,7 @@ class PermissionExtension:
             raise ValueError("Session is already ready")
         if session.permission_handle.has_all(permission_ids):
             return
-        if session.kind in {SessionType.PLUGIN, SessionType.DASHBOARD}:
+        if session.kind in {AppType.PLUGIN, AppType.DASHBOARD}:
             return
 
         async def task():

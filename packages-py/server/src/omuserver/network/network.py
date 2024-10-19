@@ -5,6 +5,7 @@ import socket
 from aiohttp import web
 from loguru import logger
 from omu import App, Identifier
+from omu.app import AppType
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.network.packet import PACKET_TYPES, PacketType
@@ -13,7 +14,7 @@ from omu.network.packet.packet_types import DisconnectType
 from omuserver.helper import find_processes_by_port
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
 from omuserver.server import Server
-from omuserver.session import Session, SessionType
+from omuserver.session import Session
 from omuserver.session.aiohttp_connection import WebsocketsConnection
 
 
@@ -85,7 +86,7 @@ class Network:
                 self._packet_dispatcher.packet_mapper,
                 connection,
             )
-            if session.kind == SessionType.APP:
+            if session.kind == AppType.APP:
                 await self._verify_origin(request, session)
             await self.process_session(session)
             return web.Response(status=101, headers={"Upgrade": "websocket"})

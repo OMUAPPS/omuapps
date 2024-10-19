@@ -5,6 +5,7 @@ from typing import Literal, TypedDict
 
 from loguru import logger
 from omu import App, Identifier, Omu
+from omu.app import AppType
 from omu.extension.table import TableType
 from omu.interface.keyable import Keyable
 from omu.model import Model
@@ -17,6 +18,7 @@ IDENTIFIER = Identifier("com.omuapps", "emoji", "plugin")
 APP = App(
     id=IDENTIFIER,
     version=VERSION,
+    type=AppType.PLUGIN,
 )
 omu = Omu(APP)
 chat = Chat(omu)

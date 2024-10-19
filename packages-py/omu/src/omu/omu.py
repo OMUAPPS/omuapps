@@ -71,7 +71,7 @@ class Omu(Client):
         loop: asyncio.AbstractEventLoop | None = None,
     ):
         self._version = version.VERSION
-        self._loop = self.ensure_loop(loop)
+        self._loop = self._set_loop(loop or asyncio.new_event_loop())
         self._ready = False
         self._running = False
         self._event = ClientEvents()
@@ -97,15 +97,9 @@ class Omu(Client):
         self._i18n = self.extensions.register(I18N_EXTENSION_TYPE)
         self._logger = self.extensions.register(LOGGER_EXTENSION_TYPE)
 
-    def ensure_loop(
-        self, loop: asyncio.AbstractEventLoop | None
-    ) -> asyncio.AbstractEventLoop:
-        if loop is None:
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
+    def _set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
         loop.set_exception_handler(asyncio_error_logger)
+        self._loop = loop
         return loop
 
     @property
@@ -189,22 +183,22 @@ class Omu(Client):
         loop: asyncio.AbstractEventLoop | None = None,
         reconnect: bool = True,
     ) -> None:
+        self._loop = self._set_loop(loop or self._loop)
+
         async def _run():
             try:
-                loop = asyncio.get_event_loop()
-                self._loop = self.ensure_loop(loop)
                 await self.start(reconnect=reconnect)
             finally:
                 if self._running:
                     await self.stop()
 
-        if loop is None:
+        if self._loop is None:
             asyncio.run(_run())
         else:
-            loop.create_task(_run())
+            self._loop.create_task(_run())
 
     async def start(self, *, reconnect: bool = True) -> None:
-        self._loop = self.ensure_loop(self._loop)
+        self._loop = self._set_loop(self._loop)
         if self._running:
             raise RuntimeError("Already running")
         self._running = True

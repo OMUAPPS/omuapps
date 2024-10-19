@@ -13,7 +13,7 @@ from types import ModuleType
 
 from loguru import logger
 from omu.address import Address
-from omu.app import App
+from omu.app import App, AppType
 from omu.helper import asyncio_error_logger
 from omu.network.websocket_connection import WebsocketsConnection
 from omu.plugin import InstallContext, Plugin
@@ -109,6 +109,10 @@ class PluginInstance:
             if self.plugin.get_client is not None:
                 connection = PluginConnection()
                 plugin_client = self.plugin.get_client()
+                if plugin_client.app.type != AppType.PLUGIN:
+                    raise ValueError(
+                        f"Invalid plugin: {plugin_client.app} is not a plugin"
+                    )
                 plugin_client.network.set_connection(connection)
                 plugin_client.network.set_token_provider(PluginTokenProvider(token))
                 server.loop.create_task(plugin_client.start())
@@ -148,6 +152,8 @@ def run_plugin_isolated(
         if plugin.get_client is None:
             raise ValueError(f"Invalid plugin: {plugin} has no client")
         client = plugin.get_client()
+        if client.app.type != AppType.PLUGIN:
+            raise ValueError(f"Invalid plugin: {client.app} is not a plugin")
         setup_logging(client.app)
         logger.info(f"Starting plugin {client.app.id}")
         connection = WebsocketsConnection(client, address)
@@ -155,6 +161,13 @@ def run_plugin_isolated(
         client.network.set_token_provider(PluginTokenProvider(token))
         loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
+
+        def stop_plugin():
+            logger.info(f"Stopping plugin {client.app.id}")
+            loop.stop()
+            exit(0)
+
+        client.network.event.disconnected += stop_plugin
         client.run(loop=loop)
         loop.run_forever()
     except Exception as e:

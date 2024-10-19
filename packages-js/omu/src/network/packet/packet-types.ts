@@ -16,35 +16,42 @@ type ConnectPacketJson = {
     app: AppJson,
     protocol: ProtocolInfo,
     token?: string,
+    is_dashboard?: boolean,
 };
+
 export class ConnectPacket implements Model<ConnectPacketJson> {
     public readonly app: App;
     public readonly protocol: ProtocolInfo;
     public readonly token?: string;
+    public readonly isDashboard?: boolean;
     
     constructor(options: {
         app: App,
         protocol: ProtocolInfo,
         token?: string,
+        is_dashboard?: boolean,
     }) {
         this.app = options.app;
         this.protocol = options.protocol;
         this.token = options.token;
+        this.isDashboard = options.is_dashboard;
     }
 
-    static fromJson(data: ConnectPacketJson): ConnectPacket {
+    public static fromJson(data: ConnectPacketJson): ConnectPacket {
         return new ConnectPacket({
             app: App.fromJson(data.app),
             protocol: data.protocol,
             token: data.token,
+            is_dashboard: data.is_dashboard,
         });
     }
 
-    toJson(): ConnectPacketJson {
+    public toJson(): ConnectPacketJson {
         return {
             app: this.app.toJson(),
             protocol: this.protocol,
             token: this.token,
+            is_dashboard: this.isDashboard,
         };
     }
 }

@@ -3,6 +3,7 @@ import time
 
 from loguru import logger
 from omu import App, Identifier, Omu
+from omu.app import AppType
 from omu_chat import Channel, Chat, Message, Room, events
 
 from .errors import ProviderError
@@ -13,6 +14,7 @@ BASE_PROVIDER_IDENTIFIER = Identifier("com.omuapps", "chatprovider")
 APP = App(
     id=BASE_PROVIDER_IDENTIFIER,
     version=VERSION,
+    type=AppType.PLUGIN,
 )
 
 

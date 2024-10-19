@@ -1,7 +1,6 @@
-from .session import Session, SessionConnection, SessionType
+from .session import Session, SessionConnection
 
 __all__ = [
     "Session",
     "SessionConnection",
-    "SessionType",
 ]

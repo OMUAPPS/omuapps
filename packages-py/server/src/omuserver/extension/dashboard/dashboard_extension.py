@@ -2,7 +2,7 @@ import json
 import time
 from asyncio import Future
 
-from omu.app import App
+from omu.app import App, AppType
 from omu.errors import PermissionDenied
 from omu.extension.dashboard.dashboard_extension import (
     DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
@@ -40,7 +40,6 @@ from omu.identifier import Identifier
 
 from omuserver.server import Server
 from omuserver.session import Session
-from omuserver.session.session import SessionType
 
 from .permission import (
     DASHBOARD_APP_INSTALL_PERMISSION,
@@ -140,7 +139,7 @@ class DashboardExtension:
         self.request_id = 0
 
     async def handle_session_connected(self, session: Session) -> None:
-        if session.kind != SessionType.APP:
+        if session.kind != AppType.APP:
             return
         exist_app = await self.apps.get(session.app.id.key())
         if exist_app is None:
@@ -163,7 +162,7 @@ class DashboardExtension:
     async def handle_dashboard_set(
         self, session: Session, identifier: Identifier
     ) -> DashboardSetResponse:
-        if session.kind != SessionType.DASHBOARD:
+        if session.kind != AppType.DASHBOARD:
             raise PermissionDenied("Session is not a dashboard")
         self.dashboard_session = session
         session.event.disconnected += self._on_dashboard_disconnected

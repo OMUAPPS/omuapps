@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import time
 
+from omu.app import AppType
 from omu.extension.dashboard.packets import PluginRequestPacket
 from omu.extension.plugin import PackageInfo
 from omu.extension.plugin.plugin_extension import (
@@ -12,7 +13,6 @@ from omu.extension.plugin.plugin_extension import (
 
 from omuserver.server import Server
 from omuserver.session import Session
-from omuserver.session.session import SessionType
 
 from .plugin_loader import DependencyResolver, PluginLoader
 
@@ -74,7 +74,7 @@ class PluginExtension:
             return
 
         async def task():
-            if session.kind != SessionType.DASHBOARD:
+            if session.kind != AppType.DASHBOARD:
                 await self.open_request_plugin_dialog(session, packages)
 
             self.dependency_resolver.find_packages_distributions()

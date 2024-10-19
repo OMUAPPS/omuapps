@@ -3,11 +3,11 @@ from __future__ import annotations
 import abc
 import asyncio
 from dataclasses import dataclass
-from enum import Enum
 from typing import TYPE_CHECKING
 
 from loguru import logger
 from omu import App
+from omu.app import AppType
 from omu.errors import DisconnectReason
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
@@ -55,19 +55,13 @@ class SessionTask:
     name: str
 
 
-class SessionType(Enum):
-    APP = "app"
-    PLUGIN = "plugin"
-    DASHBOARD = "dashboard"
-
-
 class Session:
     def __init__(
         self,
         packet_mapper: PacketMapper,
         app: App,
         permission_handle: PermissionHandle,
-        kind: SessionType,
+        kind: AppType,
         connection: SessionConnection,
     ) -> None:
         self.packet_mapper = packet_mapper
@@ -90,7 +84,9 @@ class Session:
         if packet is None:
             await connection.close()
             raise RuntimeError("Connection closed")
-        if packet.type != PACKET_TYPES.CONNECT:
+        if packet.type != PACKET_TYPES.CONNECT or not isinstance(
+            packet.data, ConnectPacket
+        ):
             await connection.send(
                 Packet(
                     PACKET_TYPES.DISCONNECT,
@@ -104,23 +100,12 @@ class Session:
             raise RuntimeError(
                 f"Expected {PACKET_TYPES.CONNECT.id} but got {packet.type}"
             )
-        if not isinstance(packet.data, ConnectPacket):
-            await connection.send(
-                Packet(
-                    PACKET_TYPES.DISCONNECT,
-                    DisconnectPacket(
-                        DisconnectType.INVALID_PACKET_TYPE, "Expected connect"
-                    ),
-                ),
-                packet_mapper,
-            )
-            await connection.close()
-            raise RuntimeError(f"Invalid packet data: {packet.data}")
-        event = packet.data
-        app = event.app
-        token = event.token
+        connect_packet = packet.data
+        app = connect_packet.app
+        token = connect_packet.token
 
-        match await server.permission_manager.verify_app_token(app, token):
+        verify_result = await server.permission_manager.verify_app_token(app, token)
+        match verify_result:
             case Ok((kind, permission_handle, new_token)):
                 session = Session(
                     packet_mapper=packet_mapper,
@@ -129,7 +114,7 @@ class Session:
                     kind=kind,
                     connection=connection,
                 )
-                if session.kind != SessionType.PLUGIN:
+                if session.kind != AppType.PLUGIN:
                     await session.send(PACKET_TYPES.TOKEN, new_token)
                 return session
             case Err(error):

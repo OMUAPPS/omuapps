@@ -17,10 +17,13 @@ export type AppMetadata = {
     tags?: string[];
 }
 
+export type AppType = 'app' | 'plugin' | 'dashboard';
+
 export type AppJson = {
     id: string;
     version?: string;
     url?: string;
+    type?: AppType;
     metadata?: AppMetadata;
 }
 
@@ -29,16 +32,19 @@ export class App implements Keyable, Model<AppJson> {
     public readonly version?: string;
     public readonly url?: string;
     public readonly metadata?: AppMetadata;
+    public readonly type?: AppType;
 
     constructor(id: Identifier, options: {
         version?: string;
         url?: string;
         metadata?: AppMetadata;
+        type?: AppType;
     }) {
         this.id = id;
         this.version = options.version;
         this.url = options.url;
         this.metadata = options.metadata;
+        this.type = options.type;
     }
 
     public key(): string {
@@ -50,6 +56,7 @@ export class App implements Keyable, Model<AppJson> {
         return new App(id, {
             version: info.version,
             url: info.url,
+            type: info.type,
             metadata: info.metadata,
         });
     }
@@ -59,6 +66,7 @@ export class App implements Keyable, Model<AppJson> {
             id: this.id.key(),
             version: this.version,
             url: this.url,
+            type: this.type,
             metadata: this.metadata,
         };
     }

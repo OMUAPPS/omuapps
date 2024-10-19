@@ -8,6 +8,7 @@ from typing import TypedDict
 from aiohttp import web
 from loguru import logger
 from omu import App, Omu
+from omu.app import AppType
 from omu_chat import Chat, events, model
 from omu_chat.model import content
 
@@ -16,6 +17,7 @@ from .version import VERSION
 
 APP = App(
     id="com.omuapps:onecomme/plugin",
+    type=AppType.PLUGIN,
     version=VERSION,
 )
 client = Omu(APP)

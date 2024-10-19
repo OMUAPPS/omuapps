@@ -51,7 +51,7 @@ class OmuServer(Server):
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         self._config = config
-        self._loop = loop or self.create_loop()
+        self._loop = self._set_loop(loop or asyncio.new_event_loop())
         self._address = config.address
         self._event = ServerEvents()
         self._directories = config.directories
@@ -81,7 +81,7 @@ class OmuServer(Server):
             headers=USER_AGENT_HEADERS,
         )
 
-    def create_loop(self) -> asyncio.AbstractEventLoop:
+    def _set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
         loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)
         return loop
@@ -142,12 +142,18 @@ class OmuServer(Server):
             return web.Response(status=500)
 
     def run(self) -> None:
-        try:
-            self._loop.create_task(self.start())
+        async def _run():
+            try:
+                await self.start()
+            finally:
+                if self._running:
+                    await self.stop()
+
+        if self._loop is None:
+            asyncio.run(_run())
+        else:
+            self._loop.create_task(_run())
             self._loop.run_forever()
-        finally:
-            self._loop.close()
-            asyncio.run(self.stop())
 
     async def _handle_network_start(self) -> None:
         logger.info(f"Listening on {self.address}")

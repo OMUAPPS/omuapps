@@ -8,12 +8,12 @@ from collections.abc import Iterable
 
 from loguru import logger
 from omu import App
+from omu.app import AppType
 from omu.extension.permission.permission import PermissionType
 from omu.identifier import Identifier
-from result import Ok, Result
+from result import Err, Ok, Result
 
 from omuserver.server import Server
-from omuserver.session import SessionType
 
 type Token = str
 
@@ -163,20 +163,32 @@ class PermissionManager:
 
     async def verify_app_token(
         self, app: App, token: str | None
-    ) -> Result[tuple[SessionType, PermissionHandle, Token], str]:
-        if token is None:
-            token = await self.generate_app_token(app)
-        else:
+    ) -> Result[tuple[AppType, PermissionHandle, Token], str]:
+        if app.type == AppType.DASHBOARD:
+            if token is None:
+                return Err("Dashboard token required, but none provided")
             if self.is_dashboard_token(token):
-                return Ok((SessionType.DASHBOARD, DashboardPermissionHandle(), token))
+                return Ok((AppType.DASHBOARD, DashboardPermissionHandle(), token))
+            return Err("Invalid dashboard token provided")
+        elif app.type == AppType.PLUGIN:
+            if token is None:
+                return Err("Plugin token required, but none provided")
             if self.is_plugin_token(token):
-                return Ok((SessionType.PLUGIN, PluginPermissionHandle(), token))
-        verified = await self.validate_app_token(app, token)
-        if not verified:
-            logger.warning(f"Invalid token: {token}")
-            logger.info(f"Generating new token for {app}")
-            token = await self.generate_app_token(app)
-        return Ok((SessionType.APP, SessionPermissionHandle(self, token), token))
+                return Ok((AppType.PLUGIN, PluginPermissionHandle(), token))
+            return Err("Invalid plugin token provided")
+        elif app.type is None or app.type == AppType.APP:
+            if token is None:
+                token = await self.generate_app_token(app)
+                return Ok((AppType.APP, SessionPermissionHandle(self, token), token))
+            verified = await self.validate_app_token(app, token)
+            if not verified:
+                logger.warning(
+                    f"Generating new token for app {app} due to invalid token"
+                )
+                token = await self.generate_app_token(app)
+            return Ok((AppType.APP, SessionPermissionHandle(self, token), token))
+        else:
+            raise ValueError(f"Invalid app type: {app.type}")
 
     def is_dashboard_token(self, token: Token) -> bool:
         dashboard_token = self._server.config.dashboard_token
