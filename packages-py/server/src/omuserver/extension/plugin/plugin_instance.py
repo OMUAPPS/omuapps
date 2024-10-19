@@ -8,10 +8,12 @@ import io
 import os
 import sys
 import threading
+import time
 from dataclasses import dataclass
 from multiprocessing import Process
 from types import ModuleType
 
+import psutil
 from loguru import logger
 from omu.address import Address
 from omu.app import App, AppType
@@ -151,10 +153,10 @@ def run_plugin_isolated(
 ) -> None:
     def _wait_for_parent():
         while True:
-            try:
-                os.kill(pid, 0)
-            except OSError:
+            if not psutil.pid_exists(pid):
+                logger.info(f"Parent process {pid} is dead, stopping plugin")
                 exit(0)
+            time.sleep(1)
 
     threading.Thread(target=_wait_for_parent, daemon=True).start()
 
