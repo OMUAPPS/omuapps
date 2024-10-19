@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.9 (2024-10-19)
+
+
+### Bug Fixes
+
+* **dash:** 環境を再構築でサーバーが閉じられるように ([146416f](https://github.com/OMUAPPS/omuapps/commit/146416f7b14eb4b618ed9f5be44569f4c4a2b525))
+
+
+
+
+
 ## 0.7.8 (2024-10-19)
 
 
