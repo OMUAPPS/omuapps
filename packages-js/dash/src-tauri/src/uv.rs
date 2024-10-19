@@ -1,6 +1,5 @@
 // https://github.com/astral-sh/rye/blob/main/rye/src/uv.rs - MIT licensed
 use std::{
-    fs::remove_dir_all,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -14,7 +13,7 @@ use crate::{
     options::AppOptions,
     progress::Progress,
     sources::uv::{UvDownload, UvRequest},
-    utils::{archive::unpack_archive, download::download_url},
+    utils::{archive::unpack_archive, download::download_url, filesystem::remove_dir_all},
 };
 
 pub struct Uv {
@@ -70,16 +69,18 @@ impl Uv {
             .filter(|entry| entry.path() != current_version);
 
         for entry in versions {
-            on_progress(Progress::UvCleanupOldVersions(format!(
-                "Removing old uv version: {}",
-                entry.path().display()
-            )));
-            if let Err(e) = remove_dir_all(entry.path()) {
-                on_progress(Progress::UvCleanupOldVersionsFailed(format!(
-                    "Failed to remove old uv version: {}",
-                    e
-                )));
-            }
+            on_progress(Progress::UvCleanupOldVersions {
+                msg: format!("Removing old uv version: {}", entry.path().display()),
+                progress: 0.0,
+                total: 0.0,
+            });
+            remove_dir_all(&entry.path(), |progress, total| {
+                on_progress(Progress::UvCleanupOldVersions {
+                    msg: format!("Removing old uv version: {}", entry.path().display()),
+                    progress,
+                    total,
+                });
+            })?;
         }
         Ok(())
     }
@@ -91,18 +92,32 @@ impl Uv {
         let uv_request = UvRequest::default();
         let uv_download = UvDownload::try_from(uv_request).unwrap();
         let uv_url = uv_download.url.as_ref();
-        on_progress(Progress::UvDownloading(format!(
-            "Downloading uv from {}",
-            uv_url
-        )));
-        let contents = download_url(&uv_url).unwrap();
-        on_progress(Progress::UvExtracting(format!(
-            "Extracting uv to {}",
-            options.uv_path.display()
-        )));
+        on_progress(Progress::UvDownloading {
+            msg: format!("Downloading uv from {}", uv_url),
+            progress: 0.0,
+            total: 0.0,
+        });
+        let contents = download_url(&uv_url, |progress, total| {
+            on_progress(Progress::UvDownloading {
+                msg: format!("Downloading uv from {}", uv_url),
+                progress,
+                total,
+            });
+        })?;
+        on_progress(Progress::UvExtracting {
+            msg: format!("Extracting uv to {}", options.uv_path.display()),
+            progress: 0.0,
+            total: 0.0,
+        });
         let dst = options.uv_path.join(uv_download.version());
         let strip = if cfg!(target_os = "windows") { 0 } else { 1 };
-        unpack_archive(&contents, &dst, strip).unwrap();
+        unpack_archive(&contents, &dst, strip, |progress, total| {
+            on_progress(Progress::UvExtracting {
+                msg: format!("Extracting uv to {}", options.uv_path.display()),
+                progress,
+                total,
+            });
+        })?;
         Ok(())
     }
 
@@ -139,11 +154,13 @@ impl Uv {
         pip_version: &str,
         on_progress: &(impl Fn(Progress) + Send + 'static),
     ) -> Result<(), Error> {
-        on_progress(Progress::UvUpdatePip(format!(
-            "Updating pip to {} at {}",
-            pip_version,
-            self.workdir.display()
-        )));
+        on_progress(Progress::UvUpdatePip {
+            msg: format!(
+                "Updating pip to {} at {}",
+                pip_version,
+                self.workdir.display()
+            ),
+        });
         let output = self
             .cmd()
             .arg("pip")
@@ -158,7 +175,9 @@ impl Uv {
                     pip_version,
                     self.workdir.display()
                 );
-                on_progress(Progress::UvUpdatePipFailed(message.clone()));
+                on_progress(Progress::UvUpdatePipFailed {
+                    msg: message.clone(),
+                });
                 message
             })?;
 
@@ -169,7 +188,9 @@ impl Uv {
                 self.workdir.display(),
                 String::from_utf8_lossy(&output.stderr)
             );
-            on_progress(Progress::UvUpdatePipFailed(update_error_message.clone()));
+            on_progress(Progress::UvUpdatePipFailed {
+                msg: update_error_message.clone(),
+            });
             bail!(update_error_message.clone());
         }
         Ok(())
@@ -181,11 +202,13 @@ impl Uv {
         requirements: &str,
         on_progress: &(impl Fn(Progress) + Send + 'static),
     ) -> Result<(), Error> {
-        on_progress(Progress::UvUpdateRequirements(format!(
-            "Updating requirements {} at {}",
-            requirements,
-            self.workdir.display()
-        )));
+        on_progress(Progress::UvUpdateRequirements {
+            msg: format!(
+                "Updating requirements {} at {}",
+                requirements,
+                self.workdir.display()
+            ),
+        });
 
         let mut req_file = NamedTempFile::new()?;
         writeln!(req_file, "{}", requirements)?;
@@ -204,7 +227,9 @@ impl Uv {
                     "unable to update requirements at {}",
                     self.workdir.display()
                 );
-                on_progress(Progress::UvUpdateRequirementsFailed(message.clone()));
+                on_progress(Progress::UvUpdateRequirementsFailed {
+                    msg: message.clone(),
+                });
                 message
             })?;
 
@@ -214,9 +239,9 @@ impl Uv {
                 self.workdir.display(),
                 String::from_utf8_lossy(&output.stderr)
             );
-            on_progress(Progress::UvUpdateRequirementsFailed(
-                update_error_message.clone(),
-            ));
+            on_progress(Progress::UvUpdateRequirementsFailed {
+                msg: update_error_message.clone(),
+            });
             bail!(update_error_message.clone());
         }
 

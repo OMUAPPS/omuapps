@@ -2,26 +2,22 @@
     import { omu } from '$lib/client.js';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
-    import UpdateScreen from '$lib/main/screen/UpdateScreen.svelte';
     import { installed, language } from '$lib/main/settings.js';
-    import { screenContext } from '$lib/screen/screen.js';
     import {
         invoke,
         listen,
         waitForTauri,
         type Progress,
-        type PROGRESS_EVENT,
     } from '$lib/tauri.js';
     import { createI18nUnion } from '@omujs/i18n';
-    import { NetworkStatus } from '@omujs/omu/network/network.js';
+    import { DisconnectType, type DisconnectPacket } from '@omujs/omu/network/packet/packet-types.js';
     import '@omujs/ui';
-    import { Theme, Tooltip } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/api/process';
-    import { type UpdateManifest } from '@tauri-apps/api/updater';
-    import { onMount } from 'svelte';
+    import { Spinner, Theme } from '@omujs/ui';
+    import GenerateLogButton from './GenerateLogButton.svelte';
     import './styles.scss';
+    import UpdateButton from './UpdateButton.svelte';
 
-    const ERROR_NAMES: Record<keyof PROGRESS_EVENT, string> = {
+    const PROGRESS_NAME: Record<Progress['type'], string> = {
         PythonDownloading: '動作環境1をダウンロード中(1/6)',
         PythonUnkownVersion: '内部Pythonのバージョンが不明です',
         PythonChecksumFailed: '内部Pythonの認証に失敗しました',
@@ -44,7 +40,7 @@
         ServerStarted: 'サーバーが起動しました',
         ServerAlreadyStarted: 'サーバーは既に起動しています',
     };
-    const INSTALL_PROGRESS = [
+    const INSTALL_PROGRESS: Progress['type'][] = [
         'PythonDownloading',
         'PythonExtracting',
         'UvDownloading',
@@ -53,7 +49,7 @@
         'UvUpdateRequirements',
         'ServerStarting',
     ];
-    const FAILED_PROGRESS = [
+    const FAILED_PROGRESS: Progress['type'][] = [
         'PythonChecksumFailed',
         'UvCleanupOldVersionsFailed',
         'UvUpdatePipFailed',
@@ -65,48 +61,29 @@
         'ServerStartFailed',
     ];
 
-    let updating = false;
     let progress: Progress | null = null;
-    $: state = progress ? (Object.keys(progress)[0] as keyof PROGRESS_EVENT) : null;
-    $: stateMessage = state ? ERROR_NAMES[state] : '';
     let percentage = 0;
-    $: percentage =
-        progress && state ? INSTALL_PROGRESS.indexOf(state) / INSTALL_PROGRESS.length : 0;
-    $: failed = state ? FAILED_PROGRESS.includes(state) : false;
+    let failed = false;
 
-    async function checkNewVersion() {
-        const { checkUpdate } = await import('@tauri-apps/api/updater');
-        const update = await checkUpdate();
-        const { manifest, shouldUpdate } = update;
-
-        if (shouldUpdate && manifest) {
-            newVersion = manifest;
-        }
+    function lerp(a: number, b: number, t: number): number {
+        return a + (b - a) * t;
     }
 
-    async function update() {
-        if (!newVersion) {
-            throw new Error('newVersion is null');
-        }
-        if (updating) {
-            throw new Error('Already updating');
-        }
-        updating = true;
-        const { installUpdate } = await import('@tauri-apps/api/updater');
-        try {
-            await omu.server.shutdown();
-        } catch (e) {
-            console.error(e);
-        }
-        await installUpdate();
-        await relaunch();
-    }
+    let disconnectPacket: DisconnectPacket | null = null;
 
     async function init() {
         await loadLocale();
         await waitForTauri();
         await listen('server_state', (state) => {
             progress = state.payload;
+            failed = FAILED_PROGRESS.includes(progress.type);
+            const index = INSTALL_PROGRESS.indexOf(progress.type);
+            const {progress: p, total} = progress;
+            if (!p || !total) {
+                percentage = (index + 1) / INSTALL_PROGRESS.length;
+            } else {
+                percentage = lerp(index, index + 1, p / total) / INSTALL_PROGRESS.length;
+            }
         });
         try {
             await invoke('start_server');
@@ -116,22 +93,22 @@
         }
         console.log('server started');
 
-        omu.start();
         language.subscribe(loadLocale);
 
         return new Promise<void>((resolve, reject) => {
             omu.onReady(async () => {
-                await checkNewVersionPromise;
-                if (newVersion) {
-                    screenContext.push(UpdateScreen, { manifest: newVersion });
-                }
                 resolve();
             });
-            omu.network.event.status.listen((status) => {
-                if (status === NetworkStatus.ERROR) {
-                    reject(status);
-                }
-            });
+            omu.network.event.disconnected.listen((packet) => {
+                disconnectPacket = packet;
+                reject(packet);
+            }); 
+
+            try {
+                omu.start()
+            } catch (e) {
+                reject(e);
+            }
         });
     }
 
@@ -143,21 +120,6 @@
         } else {
             i18n.set(lang);
         }
-    }
-
-    let newVersion: UpdateManifest | null = null;
-    let checkNewVersionPromise: Promise<void> | null = null;
-
-    onMount(() => {
-        checkNewVersionPromise = checkNewVersion();
-    });
-
-    let generateLogPromise: Promise<string> | null = null;
-
-    async function generateLogFile(): Promise<void> {
-        generateLogPromise = invoke('generate_log_file').finally(() => {
-            generateLogPromise = null;
-        });
     }
 
     let promise = init();
@@ -178,40 +140,14 @@
                     <i class="ti ti-alert-circle" />
                 </p>
                 <div class="state">
-                    {#if stateMessage}
-                        <p>{stateMessage}</p>
+                    {#if progress}
+                        <p>{progress}</p>
                         <small>{JSON.stringify(progress)}</small>
                     {/if}
                 </div>
                 <div>
-                    {#if generateLogPromise}
-                        <small>
-                            ログを生成中...
-                            <i class="ti ti-loader-2 spin" />
-                        </small>
-                    {:else}
-                        <button on:click={generateLogFile} class="generate-log">
-                            <Tooltip>調査用のログファイルを生成します</Tooltip>
-                            ログを生成
-                            <i class="ti ti-file" />
-                        </button>
-                    {/if}
-                    {#if newVersion}
-                        <div class="new-version">
-                            <small>
-                                新しいバージョンがあります。起動しない場合はアップデートをお試しください
-                            </small>
-                            <button on:click={update} class="update" disabled={updating}>
-                                {#if updating}
-                                    更新中…
-                                    <i class="ti ti-reload" />
-                                {:else}
-                                    アップデート
-                                    <i class="ti ti-reload" />
-                                {/if}
-                            </button>
-                        </div>
-                    {/if}
+                    <GenerateLogButton />
+                    <UpdateButton />
                 </div>
             </div>
         {:else}
@@ -223,31 +159,16 @@
                         {:else}
                             起動中
                         {/if}
-                        <i class="ti ti-loader-2 spin" />
+                        <Spinner />
                     </p>
                     <div class="state">
                         <progress value={percentage} />
-                        {#if stateMessage}
-                            <p>{stateMessage}</p>
+                        {#if progress}
+                            <p>{PROGRESS_NAME[progress.type]}</p>
                             <small>{JSON.stringify(progress)}</small>
                         {/if}
                     </div>
-                    {#if newVersion}
-                        <div class="new-version">
-                            <small>
-                                新しいバージョンがあります。起動しない場合はアップデートをお試しください
-                            </small>
-                            <button on:click={update} class="update" disabled={updating}>
-                                {#if updating}
-                                    更新中…
-                                    <i class="ti ti-reload" />
-                                {:else}
-                                    アップデート
-                                    <i class="ti ti-reload" />
-                                {/if}
-                            </button>
-                        </div>
-                    {/if}
+                    <UpdateButton />
                 </div>
             {:then}
                 <slot />
@@ -258,38 +179,42 @@
                         <i class="ti ti-alert-circle" />
                     </p>
                     <small>
-                        {error.message}
-                    </small>
-                    <div>
-                        {#if generateLogPromise}
+                        {#if disconnectPacket}
+                            <code>
+                                エラーコード: {disconnectPacket.type}
+                                <p>{disconnectPacket.message}</p>
+                            </code>
+                            {#if disconnectPacket.type === DisconnectType.INVALID_TOKEN}
+                                <small>
+                                    サーバーの認証に失敗しました
+                                </small>
+                            {:else if disconnectPacket.type === DisconnectType.CLOSE}
+                                <small>
+                                    サーバーから切断されました
+                                </small>
+                            {/if}
+                        {:else if progress && FAILED_PROGRESS.includes(progress.type)}
+                            <code>
+                                エラーコード: {progress.type}
+                                <p>{progress.msg}</p>
+                            </code>
                             <small>
-                                ログを生成中...
-                                <i class="ti ti-loader-2 spin" />
+                                {PROGRESS_NAME[progress.type]}
                             </small>
                         {:else}
-                            <button on:click={generateLogFile} class="generate-log">
-                                <Tooltip>調査用のログファイルを生成します</Tooltip>
-                                ログを生成
-                                <i class="ti ti-file" />
+                            {error.message}
+                        {/if}
+                    </small>
+                    <div class="actions">
+                        <GenerateLogButton />
+                        {#if disconnectPacket?.type === DisconnectType.INVALID_TOKEN}
+                            <button class="primary">
+                                サーバーを再起動
+                                <i class="ti ti-reload" />
                             </button>
                         {/if}
                     </div>
-                    {#if newVersion}
-                        <div class="new-version">
-                            <small>
-                                新しいバージョンがあります。起動しない場合はアップデートをお試しください
-                            </small>
-                            <button on:click={update} class="update" disabled={updating}>
-                                {#if updating}
-                                    更新中…
-                                    <i class="ti ti-reload" />
-                                {:else}
-                                    アップデート
-                                    <i class="ti ti-reload" />
-                                {/if}
-                            </button>
-                        </div>
-                    {/if}
+                    <UpdateButton />
                 </div>
             {/await}
         {/if}
@@ -339,23 +264,6 @@
         display: flex;
         align-items: baseline;
         gap: 1rem;
-
-        > i {
-            margin-left: auto;
-        }
-    }
-
-    .spin {
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg);
-        }
     }
 
     progress {
@@ -383,60 +291,48 @@
         }
     }
 
+    .actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+        border-top: 1px solid var(--color-outline);
+        padding-top: 1rem;
+
+        > button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: var(--color-bg-2);
+            outline: 1px solid var(--color-1);
+            outline-offset: -1px;
+            color: var(--color-1);
+            font-size: 0.8rem;
+            font-weight: bold;
+
+            > i {
+                margin-left: 0.1rem;
+            }
+
+            &:hover {
+                background: var(--color-1);
+                color: var(--color-bg-1);
+            }
+        }
+
+        > .primary {
+            background: var(--color-1);
+            color: var(--color-bg-1);
+        }
+    }
+
+    code {
+        display: block;
+        padding: 0.5rem;
+        color: var(--color-text);
+        font-size: 0.8rem;
+    }
+
     button {
         cursor: pointer;
-    }
-
-    .generate-log {
-        padding: 0.5rem 1rem;
-        border: none;
-        background: var(--color-bg-2);
-        outline: 1px solid var(--color-1);
-        color: var(--color-1);
-        font-size: 0.8rem;
-        font-weight: bold;
-
-        > i {
-            margin-left: 0.1rem;
-        }
-
-        &:hover {
-            background: var(--color-1);
-            color: var(--color-bg-1);
-        }
-    }
-
-    .update {
-        padding: 0.5rem 1rem;
-        border: none;
-        background: var(--color-bg-2);
-        outline: 1px solid var(--color-1);
-        color: var(--color-1);
-        font-size: 0.8rem;
-        font-weight: bold;
-
-        > i {
-            margin-left: 0.1rem;
-        }
-
-        &:hover {
-            background: var(--color-1);
-            color: var(--color-bg-1);
-        }
-
-        &:disabled {
-            background: var(--color-bg-1);
-            outline: 1px solid var(--color-text);
-            color: var(--color-text);
-        }
-    }
-
-    .new-version {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        align-items: center;
-        font-size: 0.9rem;
-        color: var(--color-text);
+        border-radius: 2px;
     }
 </style>

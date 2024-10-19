@@ -2542,6 +2542,7 @@ dependencies = [
  "tauri-plugin-single-instance",
  "tauri-plugin-window-state",
  "tempfile",
+ "walkdir",
  "window-shadows",
  "zip",
  "zstd",

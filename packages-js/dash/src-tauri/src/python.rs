@@ -56,33 +56,45 @@ impl Python {
         let (version, python_url, checksum) = match get_download_url(&version) {
             Some(result) => result,
             None => {
-                on_progress(Progress::PythonUnkownVersion(format!(
-                    "Unknown Python version: {}",
-                    version
-                )));
+                on_progress(Progress::PythonUnkownVersion {
+                    msg: format!("Unknown Python version: {}", version),
+                });
                 bail!("Unknown Python version: {}", version);
             }
         };
         let python_dir = get_python_directory(options);
-        on_progress(Progress::PythonDownloading(format!(
-            "Downloading Python {} from {}",
-            version, python_url
-        )));
-        let contents = download_url(python_url).unwrap();
+        on_progress(Progress::PythonDownloading {
+            msg: format!("Downloading Python {} from {}", version, python_url),
+            progress: 0.0,
+            total: 0.0,
+        });
+        let contents = download_url(python_url, |progress, total| {
+            on_progress(Progress::PythonDownloading {
+                msg: format!("Downloading Python {} from {}", version, python_url),
+                progress,
+                total,
+            });
+        })?;
         if let Some(checksum) = checksum {
             check_checksum(&contents, &checksum).map_err(|e| {
-                on_progress(Progress::PythonChecksumFailed(format!(
-                    "Checksum failed for Python {}: {}",
-                    version, e
-                )));
+                on_progress(Progress::PythonChecksumFailed {
+                    msg: format!("Checksum failed for Python {}: {}", version, e),
+                });
                 anyhow!("Checksum failed for Python {}: {}", version, e)
             })?;
         }
-        on_progress(Progress::PythonExtracting(format!(
-            "Extracting Python to {}",
-            python_dir.display(),
-        )));
-        unpack_archive(&contents, &python_dir, 1).unwrap();
+        on_progress(Progress::PythonExtracting {
+            msg: format!("Extracting Python to {}", python_dir.display()),
+            progress: 0.0,
+            total: 0.0,
+        });
+        unpack_archive(&contents, &python_dir, 1, |progress, total| {
+            on_progress(Progress::PythonExtracting {
+                msg: format!("Extracting Python to {}", python_dir.display()),
+                progress,
+                total,
+            });
+        })?;
         write_venv_marker(&python_dir, &version).unwrap();
         Ok(version)
     }

@@ -1,16 +1,22 @@
-// https://github.com/astral-sh/rye/blob/ab8d5b433d5c4342c2bb125583c6bff4d29f5fbc/rye/src/bootstrap.rs#L510-L586 - MIT License
+// Modified version of https://github.com/astral-sh/rye/blob/ab8d5b433d5c4342c2bb125583c6bff4d29f5fbc/rye/src/bootstrap.rs#L510-L586 - MIT License
 use std::io::Write;
 
 use anyhow::{bail, Context, Error};
 
-pub fn download_url(url: &str) -> Result<Vec<u8>, Error> {
-    match download_url_ignore_404(url)? {
+pub fn download_url<F>(url: &str, on_progress: F) -> Result<Vec<u8>, Error>
+where
+    F: Fn(f64, f64),
+{
+    match download_url_ignore_404(url, on_progress)? {
         Some(result) => Ok(result),
         None => bail!("Failed to download: 404 not found"),
     }
 }
 
-pub fn download_url_ignore_404(url: &str) -> Result<Option<Vec<u8>>, Error> {
+pub fn download_url_ignore_404<F>(url: &str, on_progress: F) -> Result<Option<Vec<u8>>, Error>
+where
+    F: Fn(f64, f64),
+{
     // for now we only allow HTTPS downloads.
     if !url.starts_with("https://") {
         bail!("Refusing insecure download");
@@ -33,6 +39,10 @@ pub fn download_url_ignore_404(url: &str) -> Result<Option<Vec<u8>>, Error> {
     let write_archive = &mut archive_buffer;
     {
         let mut transfer = handle.transfer();
+        transfer.progress_function(move |dl_total, dl_current, _, _| {
+            on_progress(dl_current, dl_total);
+            true
+        })?;
         transfer.write_function(move |data| {
             write_archive.write_all(data).unwrap();
             Ok(data.len())

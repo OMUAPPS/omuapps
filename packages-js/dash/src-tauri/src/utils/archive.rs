@@ -62,12 +62,22 @@ impl ArchiveFormat {
 ///
 /// Today this assumes that the tarball is zstd compressed which happens
 /// to be what the indygreg python builds use.
-pub fn unpack_archive(contents: &[u8], dst: &Path, strip_components: usize) -> Result<(), Error> {
+pub fn unpack_archive<F>(
+    contents: &[u8],
+    dst: &Path,
+    strip_components: usize,
+    on_progress: F,
+) -> Result<(), Error>
+where
+    F: Fn(f64, f64),
+{
     let format = ArchiveFormat::peek(contents).ok_or_else(|| anyhow!("unknown archive"))?;
 
     if matches!(format, ArchiveFormat::Zip) {
         let mut archive = zip::read::ZipArchive::new(Cursor::new(contents))?;
+        let total = archive.len() as f64;
         for i in 0..archive.len() {
+            on_progress(i as f64, total);
             let mut file = archive.by_index(i)?;
             let name = file
                 .enclosed_name()
@@ -104,7 +114,13 @@ pub fn unpack_archive(contents: &[u8], dst: &Path, strip_components: usize) -> R
         }
     } else {
         let mut archive = tar::Archive::new(format.make_decoder(contents)?);
-        for entry in archive.entries()? {
+        let entries = archive.entries()?;
+        let total = entries.size_hint().0 as f64;
+        for (i, entry) in entries.enumerate() {
+            // on_progress(i as f64, total);
+            if i % 100 == 0 {
+                on_progress(i as f64, total);
+            }
             let mut entry = entry?;
             let name = entry.path()?;
             let mut components = name.components();
@@ -129,7 +145,9 @@ pub fn unpack_archive(contents: &[u8], dst: &Path, strip_components: usize) -> R
 pub fn pack_archive(sources: &Vec<PathBuf>, dest: &Path) -> Result<(), Error> {
     let mut archive = tar::Builder::new(Vec::new());
     for source in sources {
-        let source = source.canonicalize().path_context(source, "failed to canonicalize path")?;
+        let source = source
+            .canonicalize()
+            .path_context(source, "failed to canonicalize path")?;
         let source = source.as_path();
         if source.is_dir() {
             archive
@@ -141,7 +159,9 @@ pub fn pack_archive(sources: &Vec<PathBuf>, dest: &Path) -> Result<(), Error> {
                 .path_context(source, "failed to append file")?;
         }
     }
-    let archive = archive.into_inner().path_context(dest, "failed to create archive")?;
+    let archive = archive
+        .into_inner()
+        .path_context(dest, "failed to create archive")?;
     fs::write(dest, archive).path_context(dest, "failed to write archive")?;
     Ok(())
 }

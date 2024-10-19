@@ -75,31 +75,15 @@ async fn start_server(
     {
         let server = state.server.lock().unwrap();
         if server.is_some() {
-            on_progress(Progress::ServerAlreadyStarted(
-                "Server already started".to_string(),
-            ));
+            on_progress(Progress::ServerAlreadyStarted {
+                msg: "Server already started".to_string(),
+            });
             return Ok(None);
         };
     }
 
     let options = state.option.clone();
-    let python = if cfg!(dev) {
-        Python {
-            path: options.workdir.join("../.venv"),
-            python_bin: options.workdir.join("../.venv/Scripts/python.exe"),
-            version: PythonVersion {
-                major: 3,
-                minor: 12,
-                patch: 3,
-                suffix: None,
-                arch: borrow::Cow::Borrowed(""),
-                name: borrow::Cow::Borrowed(""),
-                os: borrow::Cow::Borrowed(""),
-            },
-        }
-    } else {
-        Python::ensure(&options, &on_progress).unwrap()
-    };
+    let python = Python::ensure(&options, &on_progress).unwrap();
     let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
     let server = match Server::ensure_server(
         options.server_options,
@@ -115,11 +99,13 @@ async fn start_server(
     };
 
     if server.already_started {
-        on_progress(Progress::ServerAlreadyStarted(
-            "Server already started".to_string(),
-        ));
+        on_progress(Progress::ServerAlreadyStarted {
+            msg: "Server already started".to_string(),
+        });
     } else {
-        on_progress(Progress::ServerStarting("Starting server".to_string()));
+        on_progress(Progress::ServerStarting {
+            msg: "Starting server".to_string(),
+        });
         server.start(&on_progress).unwrap();
     }
 

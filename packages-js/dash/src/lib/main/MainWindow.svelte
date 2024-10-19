@@ -4,6 +4,7 @@
     import { screenContext } from '$lib/screen/screen.js';
     import { TableList, Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
+    import { onMount } from 'svelte';
     import AppEntry from './AppEntry.svelte';
     import {
         loadedIds,
@@ -15,6 +16,7 @@
     import ConnectPage from './pages/ConnectPage.svelte';
     import IframePage from './pages/IframePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
+    import UpdateScreen from './screen/UpdateScreen.svelte';
     import { currentPage, menuOpen } from './settings.js';
     import SettingsPage from './settings/SettingsPage.svelte';
     import TabEntry from './TabEntry.svelte';
@@ -78,6 +80,16 @@
             $loadedIds = [...$loadedIds, id];
         }
     });
+
+    onMount(async () => {
+        const { checkUpdate } = await import('@tauri-apps/api/updater');
+        const update = await checkUpdate();
+        const { manifest, shouldUpdate } = update;
+
+        if (shouldUpdate && manifest) {
+            screenContext.push(UpdateScreen, { manifest });
+        }
+    })
 </script>
 
 <main class:open={$menuOpen}>

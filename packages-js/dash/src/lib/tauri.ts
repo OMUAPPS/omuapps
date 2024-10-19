@@ -20,33 +20,29 @@ export async function invoke<T extends keyof Commands>(
     assertTauri();
     return _invoke(command, ...args);
 }
-export type PROGRESS_EVENT = {
-    PythonDownloading: string;
-    PythonUnkownVersion: string;
-    PythonChecksumFailed: string;
-    PythonExtracting: string;
-    UvDownloading: string;
-    UvExtracting: string;
-    UvCleanupOldVersions: string;
-    UvCleanupOldVersionsFailed: string;
-    UvUpdatePip: string;
-    UvUpdatePipFailed: string;
-    UvUpdateRequirements: string;
-    UvUpdateRequirementsFailed: string;
-    ServerTokenReadFailed: string;
-    ServerTokenWriteFailed: string;
-    ServerCreateDataDirFailed: string;
-    ServerStoppping: string;
-    ServerStopFailed: string;
-    ServerStarting: string;
-    ServerStartFailed: string;
-    ServerStarted: string;
-    ServerAlreadyStarted: string;
-};
-export type ProgressMap<T extends keyof PROGRESS_EVENT> = {
-    [K in T]: PROGRESS_EVENT[K];
-};
-export type Progress = ProgressMap<keyof PROGRESS_EVENT>;
+export type Progress = (
+    {type: 'PythonDownloading', msg: string, progress: number, total: number }
+    | {type: 'PythonUnkownVersion', msg: string, progress: undefined, total: undefined}
+    | {type: 'PythonChecksumFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'PythonExtracting', msg: string, progress: number, total: number }
+    | {type: 'UvDownloading', msg: string, progress: number, total: number }
+    | {type: 'UvExtracting', msg: string, progress: number, total: number }
+    | {type: 'UvCleanupOldVersions', msg: string, progress: number, total: number }
+    | {type: 'UvCleanupOldVersionsFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'UvUpdatePip', msg: string, progress: undefined, total: undefined}
+    | {type: 'UvUpdatePipFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'UvUpdateRequirements', msg: string, progress: undefined, total: undefined}
+    | {type: 'UvUpdateRequirementsFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerTokenReadFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerTokenWriteFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerCreateDataDirFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerStoppping', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerStopFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerStarting', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerStartFailed', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerStarted', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerAlreadyStarted', msg: string, progress: undefined, total: undefined}
+)
 type Events = {
     server_state: Progress;
     [event.TauriEvent.WINDOW_RESIZED]: unknown;

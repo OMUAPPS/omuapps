@@ -44,13 +44,15 @@ impl Server {
         if already_started && needs_update {
             uv.update(LATEST_PIP, &requirements, on_progress)
                 .map_err(|err| err.to_string())?;
-            on_progress(Progress::ServerStoppping(format!(
-                "Server version mismatch ({} != {}), stopping server",
-                version.unwrap(),
-                VERSION
-            )));
+            on_progress(Progress::ServerStoppping {
+                msg: format!(
+                    "Server version mismatch ({} != {}), stopping server",
+                    version.unwrap(),
+                    VERSION
+                ),
+            });
             Self::stop_server(&python, &option).map_err(|err| {
-                on_progress(Progress::ServerStopFailed(err.clone()));
+                on_progress(Progress::ServerStopFailed { msg: err.clone() });
                 err
             })?;
             already_started = false;
@@ -60,7 +62,7 @@ impl Server {
             match Self::read_token(&option) {
                 Ok(token) => token,
                 Err(err) => {
-                    on_progress(Progress::ServerTokenReadFailed(err.clone()));
+                    on_progress(Progress::ServerTokenReadFailed { msg: err.clone() });
                     return Err(err);
                 }
             }
@@ -87,7 +89,7 @@ impl Server {
                     server.option.data_dir.display(),
                     err
                 );
-                on_progress(Progress::ServerCreateDataDirFailed(msg.clone()));
+                on_progress(Progress::ServerCreateDataDirFailed { msg: msg.clone() });
                 msg
             })?;
         }
@@ -144,9 +146,9 @@ impl Server {
     ) -> Result<String, String> {
         let token = generate_token();
         if Self::save_token(&token, option).is_err() {
-            on_progress(Progress::ServerTokenWriteFailed(
-                "Failed to save token".to_string(),
-            ));
+            on_progress(Progress::ServerTokenWriteFailed {
+                msg: "Failed to save token".to_string(),
+            });
             return Err("Failed to save token".to_string());
         }
         Ok(token)
@@ -200,7 +202,7 @@ impl Server {
         cmd.current_dir(&self.option.data_dir);
         let child = cmd.spawn().map_err(|err| {
             let msg = format!("Failed to start server: {}", err);
-            on_progress(Progress::ServerStartFailed(msg.clone()));
+            on_progress(Progress::ServerStartFailed { msg: msg.clone() });
             msg
         })?;
         let app_handle = self.app_handle.clone();
@@ -246,9 +248,9 @@ impl Server {
         stdout.join().unwrap();
         stderr.join().unwrap();
         if !exit_status.success() {
-            on_progress(Progress::ServerStartFailed(
-                "Server exited with non-zero status".to_string(),
-            ));
+            on_progress(Progress::ServerStartFailed {
+                msg: "Server exited with non-zero status".to_string(),
+            });
             Err("Server exited with non-zero status".to_string())?;
         }
         Ok(())
