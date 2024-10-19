@@ -51,8 +51,8 @@
     let errorMessage: ErrorType | null = null;
 
     async function cleanEnvironment(): Promise<void> {
-        if (omu.network.status === NetworkStatus.CONNECTED) {
-            await omu.server.shutdown();
+        if (omu.network.status === NetworkStatus.READY || omu.network.status === NetworkStatus.CONNECTED) {
+            omu.server.shutdown();
         }
         try {
             await invoke('clean_environment');
