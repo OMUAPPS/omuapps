@@ -13,6 +13,7 @@
     import { DisconnectType, type DisconnectPacket } from '@omujs/omu/network/packet/packet-types.js';
     import '@omujs/ui';
     import { Spinner, Theme } from '@omujs/ui';
+    import { relaunch } from '@tauri-apps/api/process';
     import GenerateLogButton from './GenerateLogButton.svelte';
     import './styles.scss';
     import UpdateButton from './UpdateButton.svelte';
@@ -144,14 +145,21 @@
                 <div class="state">
                     {#if progress}
                         <p>
-                            {progress}
+                            {PROGRESS_NAME[progress.type]}
                         </p>
                         <small>{JSON.stringify(progress)}</small>
                     {/if}
                 </div>
-                <div>
+                <div class="actions">
                     <GenerateLogButton />
                     <UpdateButton />
+                    <button class="primary" on:click={async () => {
+                        await invoke('clean_environment');
+                        await relaunch();
+                    }}>
+                        環境を再構築
+                        <i class="ti ti-reload" />
+                    </button>
                 </div>
             </div>
         {:else}
@@ -220,7 +228,10 @@
                     <div class="actions">
                         <GenerateLogButton />
                         {#if disconnectPacket?.type === DisconnectType.INVALID_TOKEN}
-                            <button class="primary" on:click={() => invoke('restart_server')}>
+                            <button class="primary" on:click={async () => {
+                                await invoke('restart_server');
+                                await relaunch();
+                            }}>
                                 サーバーを再起動
                                 <i class="ti ti-reload" />
                             </button>
