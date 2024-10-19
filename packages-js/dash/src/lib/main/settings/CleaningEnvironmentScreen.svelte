@@ -3,7 +3,6 @@
     import { type ScreenHandle } from '$lib/screen/screen.js';
     import Screen from '$lib/screen/Screen.svelte';
     import { invoke, listen, type Progress } from '$lib/tauri.js';
-    import { NetworkStatus } from '@omujs/omu/network/network.js';
     import { Spinner } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/api/process';
     import { onMount } from 'svelte';
@@ -51,9 +50,7 @@
     let errorMessage: ErrorType | null = null;
 
     async function cleanEnvironment(): Promise<void> {
-        if (omu.network.status === NetworkStatus.READY || omu.network.status === NetworkStatus.CONNECTED) {
-            omu.server.shutdown();
-        }
+        omu.server.shutdown();
         try {
             await invoke('clean_environment');
         } catch (e) {

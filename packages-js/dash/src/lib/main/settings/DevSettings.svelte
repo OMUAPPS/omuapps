@@ -60,9 +60,7 @@
     </button>
 </section>
 
-<h3>
-    Permissions
-</h3>
+<h3>Permissions</h3>
 <section>
     <button on:click={() => {
         dashboard.handlePermissionRequest({
@@ -83,12 +81,19 @@
     </button>
 </section>
 
-<h3>
-    Window
-</h3>
+<h3>Window</h3>
 <section>
     <button on:click={resetWindowSize}>
         Reset Window Size
+    </button>
+</section>
+
+<h3>Server</h3>
+<section>
+    <button on:click={() => {
+        omu.server.shutdown();
+    }}>
+        Stop Server
     </button>
 </section>
 

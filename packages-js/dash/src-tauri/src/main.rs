@@ -225,13 +225,9 @@ async fn clean_environment(
 
     let server = state.server.lock().unwrap();
     if server.is_some() {
-        let server = server.as_ref().unwrap();
         on_progress(Progress::ServerStopping {
             msg: "Stopping server".to_string(),
         });
-        if server.is_running() {
-            server.stop(&on_progress).unwrap();
-        }
         match Server::stop_server(&python, &options.server_options) {
             Ok(_) => {}
             Err(err) => {
@@ -265,6 +261,8 @@ async fn clean_environment(
             return Err(CleanEnvironmentError::RemoveUvError(err.to_string()));
         }
     }
+
+    info!("Environment cleaned");
 
     Ok(())
 }
