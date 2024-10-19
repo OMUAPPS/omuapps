@@ -126,7 +126,7 @@ class Session:
                     packet_mapper,
                 )
                 await connection.close()
-                raise RuntimeError(f"Invalid token: {error}")
+                raise RuntimeError(f"Invalid token for {app}: {error}")
 
     @property
     def closed(self) -> bool:
