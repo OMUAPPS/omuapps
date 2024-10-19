@@ -31,6 +31,7 @@ import { version } from './version.json';
 const IDENTIFIER = new Identifier('com.omuapps', 'dashboard');
 const app = new App(IDENTIFIER, {
     version,
+    type: 'dashboard',
 });
 
 const address = {
