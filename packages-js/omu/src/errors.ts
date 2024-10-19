@@ -15,38 +15,38 @@ export class DisconnectReason extends OmuError {
     }
 }
 
-export class NetworkError extends OmuError {
-}
-
-export class AnotherConnection extends NetworkError {
-    constructor() {
-        super(DisconnectType.ANOTHER_CONNECTION);
+export class AnotherConnection extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.ANOTHER_CONNECTION, message);
     }
 }
 
-export class PermissionDenied extends NetworkError {
-    constructor() {
-        super(DisconnectType.PERMISSION_DENIED);
+export class PermissionDenied extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.PERMISSION_DENIED, message);
     }
 }
 
-export class InvalidToken extends NetworkError {
-    constructor() {
-        super(DisconnectType.INVALID_TOKEN);
+export class InvalidToken extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.INVALID_TOKEN, message);
     }
 }
 
-export class InvalidOrigin extends NetworkError {
-    constructor() {
-        super(DisconnectType.INVALID_ORIGIN);
+export class InvalidOrigin extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.INVALID_ORIGIN, message);
     }
 }
 
-export class InvalidVersion extends NetworkError {
-    constructor() {
-        super(DisconnectType.INVALID_VERSION);
+export class InvalidVersion extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.INVALID_VERSION, message);
     }
 }
 
-export class InvalidPacket extends NetworkError {
+export class InvalidPacket extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.INVALID_PACKET, message);
+    }
 }
