@@ -118,7 +118,7 @@ class PluginInstance:
                     )
                 plugin_client.network.set_connection(connection)
                 plugin_client.network.set_token_provider(PluginTokenProvider(token))
-                server.loop.create_task(plugin_client.start())
+                server.loop.create_task(plugin_client.start(reconnect=False))
                 session_connection = PluginSessionConnection(connection)
                 session = await Session.from_connection(
                     server,
@@ -180,7 +180,7 @@ def run_plugin_isolated(
             exit(0)
 
         client.network.event.disconnected += stop_plugin
-        client.run(loop=loop)
+        client.run(loop=loop, reconnect=False)
         loop.run_forever()
     except Exception as e:
         logger.opt(exception=e).error("Error running plugin")
