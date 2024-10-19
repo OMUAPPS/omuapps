@@ -7,6 +7,7 @@ import importlib.util
 import io
 import os
 import sys
+import threading
 from dataclasses import dataclass
 from multiprocessing import Process
 from types import ModuleType
@@ -148,6 +149,15 @@ def run_plugin_isolated(
     token: str,
     pid: int,
 ) -> None:
+    def _wait_for_parent():
+        while True:
+            try:
+                os.kill(pid, 0)
+            except OSError:
+                exit(0)
+
+    threading.Thread(target=_wait_for_parent, daemon=True).start()
+
     try:
         if plugin.get_client is None:
             raise ValueError(f"Invalid plugin: {plugin} has no client")
