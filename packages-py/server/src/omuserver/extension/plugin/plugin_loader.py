@@ -170,12 +170,6 @@ class PluginLoader:
     def __init__(self, server: Server) -> None:
         self._server = server
         self.instances: dict[str, PluginInstance] = {}
-        server.event.stop += self.handle_server_stop
-
-    async def handle_server_stop(self) -> None:
-        for instance in self.instances.values():
-            if instance.plugin.on_stop_server is not None:
-                await instance.plugin.on_stop_server(self._server)
 
     async def run_plugins(self):
         self.load_plugins_from_entry_points()
@@ -266,3 +260,10 @@ class PluginLoader:
             await instance.start(self._server)
         except Exception as e:
             logger.opt(exception=e).error(f"Error starting plugin: {instance.plugin}")
+
+    async def stop_plugins(self):
+        for instance in self.instances.values():
+            instance.terminate()
+            if instance.plugin.on_stop_server is not None:
+                await instance.plugin.on_stop_server(self._server)
+        self.instances.clear()

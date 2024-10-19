@@ -1,4 +1,5 @@
 import io
+import os
 import signal
 import sys
 import tracemalloc
@@ -81,7 +82,7 @@ def main(
 ):
     if stop:
         stop_server_processes(port)
-        sys.exit(0)
+        os._exit(0)
 
     config = Config()
     config.address = Address(

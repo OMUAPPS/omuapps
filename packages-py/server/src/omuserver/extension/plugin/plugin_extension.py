@@ -28,6 +28,7 @@ class PluginExtension:
             self.handle_require_packet,
         )
         server.network.event.start += self.on_network_start
+        server.event.stop += self.on_stop
         self.request_id = 0
         self.lock = asyncio.Lock()
         self.loader = PluginLoader(server)
@@ -36,6 +37,9 @@ class PluginExtension:
 
     async def on_network_start(self) -> None:
         await self.loader.run_plugins()
+
+    async def on_stop(self) -> None:
+        await self.loader.stop_plugins()
 
     def _get_next_request_id(self) -> str:
         self.request_id += 1

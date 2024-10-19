@@ -58,6 +58,7 @@ class PluginInstance:
     plugin: Plugin
     entry_point: importlib.metadata.EntryPoint
     module: ModuleType
+    process: Process | None = None
 
     @classmethod
     def from_entry_point(
@@ -93,6 +94,12 @@ class PluginInstance:
             raise ValueError(f"Invalid plugin: {new_plugin} is not a Plugin")
         self.plugin = new_plugin
 
+    def terminate(self):
+        if self.process is not None:
+            self.process.terminate()
+            self.process.join()
+            self.process = None
+
     async def start(self, server: Server):
         token = server.permission_manager.generate_plugin_token()
         pid = os.getpid()
@@ -107,6 +114,7 @@ class PluginInstance:
                 ),
                 daemon=True,
             )
+            self.process = process
             process.start()
         else:
             if self.plugin.get_client is not None:

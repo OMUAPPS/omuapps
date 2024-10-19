@@ -143,11 +143,7 @@ class OmuServer(Server):
 
     def run(self) -> None:
         async def _run():
-            try:
-                await self.start()
-            finally:
-                if self._running:
-                    await self.stop()
+            await self.start()
 
         if self._loop is None:
             asyncio.run(_run())
@@ -174,8 +170,10 @@ class OmuServer(Server):
             raise e
 
     async def stop(self) -> None:
+        logger.info("Stopping server")
         self._running = False
         await self._event.stop()
+        os._exit(0)
 
     async def restart(self) -> None:
         await self.stop()
