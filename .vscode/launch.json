@@ -42,6 +42,20 @@
             "program": "${file}",
             "console": "integratedTerminal"
         },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tauri Development Debug",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--manifest-path=./packages-js/dash/src-tauri/Cargo.toml",
+                    "--no-default-features"
+                ]
+            },
+            // task for the `beforeDevCommand` if used, must be configured in `.vscode/tasks.json`
+            "preLaunchTask": "dev"
+        },
     ],
     "compounds": [
         {
