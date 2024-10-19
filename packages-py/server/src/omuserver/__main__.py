@@ -36,24 +36,25 @@ def setup_logging():
 def stop_server_processes(
     port: int,
 ):
-    executable = sys.executable
-    found_processes = find_processes_by_port(port)
+    executable = Path(sys.executable)
+    found_processes = list(find_processes_by_port(port))
     if not found_processes:
         logger.info(f"No processes found using port {port}")
-        return
-    for process in found_processes:
-        try:
-            if process.exe() != executable:
-                logger.warning(
-                    f"Process {process.pid} ({process.name()}) is not a Python process"
-                )
-            logger.info(f"Killing process {process.pid} ({process.name()})")
-            process.send_signal(signal.SIGTERM)
-        except psutil.NoSuchProcess:
-            logger.warning(f"Process {process.pid} not found")
-        except psutil.AccessDenied:
-            logger.warning(f"Access denied to process {process.pid}")
-    for process in find_processes_by_executable(Path(executable)):
+    else:
+        for process in found_processes:
+            try:
+                if process.exe() != executable:
+                    logger.warning(
+                        f"Process {process.pid} ({process.name()}) is not a Python process"
+                    )
+                logger.info(f"Killing process {process.pid} ({process.name()})")
+                process.send_signal(signal.SIGTERM)
+            except psutil.NoSuchProcess:
+                logger.warning(f"Process {process.pid} not found")
+            except psutil.AccessDenied:
+                logger.warning(f"Access denied to process {process.pid}")
+    executable_processes = list(find_processes_by_executable(executable))
+    for process in executable_processes:
         try:
             logger.info(f"Killing process {process.pid} ({process.name()})")
             process.send_signal(signal.SIGTERM)
@@ -81,7 +82,6 @@ def main(
     if stop:
         stop_server_processes(port)
         sys.exit(0)
-        return
 
     config = Config()
     config.address = Address(
