@@ -7,8 +7,12 @@ where
 {
     let path = path.as_ref();
     let total = walkdir::WalkDir::new(path).into_iter().count() as f64;
+    let step = (total / 100.0 * 5.0).max(1.0).ceil() as usize;
     let mut current = 0;
     for entry in walkdir::WalkDir::new(path) {
+        if current % step == 0 {
+            on_progress(current as f64, total);
+        }
         let entry = entry?;
         if entry.path().is_dir() {
             std::fs::remove_dir_all(entry.path())?;
@@ -16,7 +20,6 @@ where
             std::fs::remove_file(entry.path())?;
         }
         current += 1;
-        on_progress(current as f64, total);
     }
     Ok(())
 }

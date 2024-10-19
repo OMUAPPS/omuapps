@@ -6,6 +6,7 @@ let _invoke: typeof api.invoke;
 let _listen: typeof event.listen;
 type Commands = {
     start_server: () => string;
+    restart_server: () => string;
     get_token: () => string | null;
     generate_log_file: () => string;
     clean_environment: () => void;
@@ -36,12 +37,14 @@ export type Progress = (
     | {type: 'ServerTokenReadFailed', msg: string, progress: undefined, total: undefined}
     | {type: 'ServerTokenWriteFailed', msg: string, progress: undefined, total: undefined}
     | {type: 'ServerCreateDataDirFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerStoppping', msg: string, progress: undefined, total: undefined}
+    | {type: 'ServerStopping', msg: string, progress: undefined, total: undefined}
     | {type: 'ServerStopFailed', msg: string, progress: undefined, total: undefined}
     | {type: 'ServerStarting', msg: string, progress: undefined, total: undefined}
     | {type: 'ServerStartFailed', msg: string, progress: undefined, total: undefined}
     | {type: 'ServerStarted', msg: string, progress: undefined, total: undefined}
     | {type: 'ServerAlreadyStarted', msg: string, progress: undefined, total: undefined}
+    | {type: 'PythonRemoving', msg: string, progress: number, total: number }
+    | {type: 'UvRemoving', msg: string, progress: number, total: number }
 )
 type Events = {
     server_state: Progress;

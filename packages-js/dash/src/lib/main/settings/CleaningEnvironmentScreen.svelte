@@ -2,10 +2,11 @@
     import { omu } from '$lib/client.js';
     import { type ScreenHandle } from '$lib/screen/screen.js';
     import Screen from '$lib/screen/Screen.svelte';
-    import { invoke } from '$lib/tauri.js';
+    import { invoke, listen, type Progress } from '$lib/tauri.js';
     import { NetworkStatus } from '@omujs/omu/network/network.js';
     import { Spinner } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/api/process';
+    import { onMount } from 'svelte';
 
     export let screen: {
         handle: ScreenHandle;
@@ -35,6 +36,17 @@
         },
     }
 
+    let progress: Progress | null = null;
+
+    onMount(() => {
+        const unlisten = listen('server_state', (state) => {
+            progress = state.payload;
+        });
+        return async () => {
+            (await unlisten)();
+        };
+    });
+
     type ErrorType = { type: keyof typeof ERROR_MESSAGES, message: string };
     let errorMessage: ErrorType | null = null;
 
@@ -62,6 +74,18 @@
                     環境の再構築中
                     <Spinner />
                 </h1>
+                <small>
+                    {#if progress?.type === 'PythonRemoving'}
+                        Python環境を削除中...
+                    {:else if progress?.type === 'UvRemoving'}
+                        uv環境を削除中...
+                    {/if}
+                    {JSON.stringify(progress)}
+                    {#if progress?.progress && progress?.total}
+                        {progress?.progress} / {progress?.total}
+                        <progress value={progress?.progress} max={progress?.total} />
+                    {/if}
+                </small>
             {:then}
                 <h1>
                     環境の削除が完了しました

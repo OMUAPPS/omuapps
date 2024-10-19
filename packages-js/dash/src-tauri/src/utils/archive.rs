@@ -114,14 +114,14 @@ where
         }
     } else {
         let mut archive = tar::Archive::new(format.make_decoder(contents)?);
-        let entries = archive.entries()?;
-        let total = entries.size_hint().0 as f64;
-        for (i, entry) in entries.enumerate() {
-            // on_progress(i as f64, total);
-            if i % 100 == 0 {
+        let total = archive.entries()?.count() as f64;
+        let mut archive = tar::Archive::new(format.make_decoder(contents)?);
+        let count_step: usize = (total / 100.0 * 5.0).max(1.0).ceil() as usize;
+        for (i, entry_result) in archive.entries()?.enumerate() {
+            if i % count_step == 0 {
                 on_progress(i as f64, total);
             }
-            let mut entry = entry?;
+            let mut entry = entry_result?;
             let name = entry.path()?;
             let mut components = name.components();
             for _ in 0..strip_components {
@@ -129,7 +129,7 @@ where
             }
             let path = dst.join(components.as_path());
 
-            // only unpack if it's save to do so
+            // only unpack if it's safe to do so
             if path != Path::new("") && path.strip_prefix(dst).is_ok() {
                 if let Some(dir) = path.parent() {
                     fs::create_dir_all(dir).ok();

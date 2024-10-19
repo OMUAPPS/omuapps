@@ -2,7 +2,6 @@
     import Content from '$lib/components/Content.svelte';
     import Footer from '$lib/components/Footer.svelte';
     import Header from '$lib/components/Header.svelte';
-    import background from '$lib/images/background.png';
     import dashboard1 from '$lib/images/dashboard-1.png';
     import indev from '$lib/images/in-dev.png';
     import opensource from '$lib/images/open-source.png';
@@ -17,7 +16,6 @@
     <meta name="description" content="配信者と視聴者をつなぐAPI" />
 </svelte:head>
 
-<img src={background} alt="background" class="background" />
 <Header />
 <main>
     <header class="content-width">
@@ -92,13 +90,6 @@
 <style lang="scss">
     :global(body) {
         overflow-x: hidden;
-    }
-
-    .background {
-        position: fixed;
-        inset: 0;
-        z-index: -1;
-        opacity: 0.01;
     }
 
     .content-width {

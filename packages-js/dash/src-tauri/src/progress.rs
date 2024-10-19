@@ -56,7 +56,7 @@ pub enum Progress {
     ServerCreateDataDirFailed {
         msg: String,
     },
-    ServerStoppping {
+    ServerStopping {
         msg: String,
     },
     ServerStopFailed {
@@ -70,5 +70,15 @@ pub enum Progress {
     },
     ServerAlreadyStarted {
         msg: String,
+    },
+    PythonRemoving {
+        msg: String,
+        progress: f64,
+        total: f64,
+    },
+    UvRemoving {
+        msg: String,
+        progress: f64,
+        total: f64,
     },
 }

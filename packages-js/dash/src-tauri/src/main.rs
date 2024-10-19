@@ -26,12 +26,13 @@ use options::AppOptions;
 use sources::py::PythonVersion;
 use std::{
     borrow,
-    fs::{create_dir_all, remove_dir_all},
+    fs::create_dir_all,
     path::PathBuf,
     sync::{Arc, Mutex},
 };
 use tauri::{api::path::data_dir, Manager};
 use tauri_plugin_log::LogTarget;
+use utils::filesystem::remove_dir_all;
 use uv::Uv;
 use window_shadows::set_shadow;
 
@@ -75,16 +76,80 @@ async fn start_server(
     {
         let server = state.server.lock().unwrap();
         if server.is_some() {
-            on_progress(Progress::ServerAlreadyStarted {
-                msg: "Server already started".to_string(),
-            });
-            return Ok(None);
+            let server = server.as_ref().unwrap();
+            if server.is_running() {
+                on_progress(Progress::ServerAlreadyStarted {
+                    msg: "Server already started".to_string(),
+                });
+                return Ok(None);
+            };
         };
     }
 
     let options = state.option.clone();
     let python = Python::ensure(&options, &on_progress).unwrap();
     let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
+    let server = match Server::ensure_server(
+        options.server_options,
+        python,
+        uv,
+        &on_progress,
+        state.app_handle.clone(),
+    ) {
+        Ok(server) => server,
+        Err(err) => {
+            return Err(err.to_string());
+        }
+    };
+
+    if server.already_started {
+        on_progress(Progress::ServerAlreadyStarted {
+            msg: "Server already started".to_string(),
+        });
+    } else {
+        on_progress(Progress::ServerStarting {
+            msg: "Starting server".to_string(),
+        });
+        server.start(&on_progress).unwrap();
+    }
+
+    let token = server.token.clone();
+    *state.server.lock().unwrap() = Some(server);
+    Ok(Some(token))
+}
+
+#[tauri::command]
+async fn restart_server(
+    window: tauri::Window,
+    state: tauri::State<'_, AppState>,
+) -> Result<Option<String>, String> {
+    let on_progress = move |progress: Progress| {
+        info!("{:?}", progress);
+        window.emit("server_state", progress).unwrap();
+    };
+    let options = state.option.clone();
+    let python = Python::ensure(&options, &on_progress).unwrap();
+    let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
+
+    {
+        let server = state.server.lock().unwrap();
+        if server.is_some() {
+            let server = server.as_ref().unwrap();
+            on_progress(Progress::ServerStopping {
+                msg: "Stopping server".to_string(),
+            });
+            if server.is_running() {
+                server.stop(&on_progress).unwrap();
+            }
+            match Server::stop_server(&python, &options.server_options) {
+                Ok(_) => {}
+                Err(err) => {
+                    return Err(err.to_string());
+                }
+            }
+        };
+    }
+
     let server = match Server::ensure_server(
         options.server_options,
         python,
@@ -129,11 +194,6 @@ async fn clean_environment(
     window: tauri::Window,
     state: tauri::State<'_, AppState>,
 ) -> Result<(), CleanEnvironmentError> {
-    if cfg!(dev) {
-        return Err(CleanEnvironmentError::DevMode(
-            "Cannot clean environment in dev mode".to_string(),
-        ));
-    }
     let on_progress = move |progress: Progress| {
         info!("{:?}", progress);
         window.emit("server_state", progress).unwrap();
@@ -165,21 +225,41 @@ async fn clean_environment(
 
     let server = state.server.lock().unwrap();
     if server.is_some() {
+        let server = server.as_ref().unwrap();
+        on_progress(Progress::ServerStopping {
+            msg: "Stopping server".to_string(),
+        });
+        if server.is_running() {
+            server.stop(&on_progress).unwrap();
+        }
         match Server::stop_server(&python, &options.server_options) {
             Ok(_) => {}
             Err(err) => {
-                return Err(CleanEnvironmentError::ServerError(err.to_string()));
+                // return Err(CleanEnvironmentError::ServerError(err.to_string()));
+                warn!("Failed to stop server: {}", err);
             }
         }
     };
 
-    match remove_dir_all(&options.python_path) {
+    match remove_dir_all(&options.python_path, |current, total| {
+        on_progress(Progress::PythonRemoving {
+            msg: "Removing python".to_string(),
+            progress: current,
+            total,
+        });
+    }) {
         Ok(_) => {}
         Err(err) => {
             return Err(CleanEnvironmentError::RemovePythonError(err.to_string()));
         }
     }
-    match remove_dir_all(&options.uv_path) {
+    match remove_dir_all(&options.uv_path, |current, total| {
+        on_progress(Progress::UvRemoving {
+            msg: "Removing uv".to_string(),
+            progress: current,
+            total,
+        });
+    }) {
         Ok(_) => {}
         Err(err) => {
             return Err(CleanEnvironmentError::RemoveUvError(err.to_string()));
@@ -276,6 +356,7 @@ fn main() {
         .manage(server_state)
         .invoke_handler(tauri::generate_handler![
             start_server,
+            restart_server,
             clean_environment,
             get_token,
             generate_log_file,

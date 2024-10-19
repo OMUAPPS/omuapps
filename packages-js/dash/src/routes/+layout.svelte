@@ -33,12 +33,14 @@
         ServerTokenReadFailed: 'APIの認証情報の読み込みに失敗しました',
         ServerTokenWriteFailed: 'APIの認証情報の書き込みに失敗しました',
         ServerCreateDataDirFailed: 'データフォルダの作成に失敗しました',
-        ServerStoppping: 'サーバーを停止中...',
+        ServerStopping: 'サーバーを停止中...',
         ServerStopFailed: 'サーバーの停止に失敗しました',
         ServerStarting: 'サーバーを起動中...',
         ServerStartFailed: 'サーバーの起動に失敗しました',
         ServerStarted: 'サーバーが起動しました',
         ServerAlreadyStarted: 'サーバーは既に起動しています',
+        PythonRemoving: 'Python環境を削除中...',
+        UvRemoving: 'uv環境を削除中...',
     };
     const INSTALL_PROGRESS: Progress['type'][] = [
         'PythonDownloading',
@@ -96,7 +98,7 @@
         language.subscribe(loadLocale);
 
         return new Promise<void>((resolve, reject) => {
-            omu.onReady(async () => {
+            omu.onReady(() => {
                 resolve();
             });
             omu.network.event.disconnected.listen((packet) => {
@@ -141,7 +143,9 @@
                 </p>
                 <div class="state">
                     {#if progress}
-                        <p>{progress}</p>
+                        <p>
+                            {progress}
+                        </p>
                         <small>{JSON.stringify(progress)}</small>
                     {/if}
                 </div>
@@ -164,7 +168,15 @@
                     <div class="state">
                         <progress value={percentage} />
                         {#if progress}
-                            <p>{PROGRESS_NAME[progress.type]}</p>
+                            <p>
+                                {PROGRESS_NAME[progress.type]}
+                                {#if progress.progress && progress.total}
+                                    {@const percentage = progress.progress / progress.total}
+                                    <small>
+                                        {progress.progress} / {progress.total} ({Math.ceil(percentage * 100)}%)
+                                    </small>
+                                {/if}
+                            </p>
                             <small>{JSON.stringify(progress)}</small>
                         {/if}
                     </div>
@@ -208,7 +220,7 @@
                     <div class="actions">
                         <GenerateLogButton />
                         {#if disconnectPacket?.type === DisconnectType.INVALID_TOKEN}
-                            <button class="primary">
+                            <button class="primary" on:click={() => invoke('restart_server')}>
                                 サーバーを再起動
                                 <i class="ti ti-reload" />
                             </button>

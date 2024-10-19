@@ -19,11 +19,18 @@ pub struct ServerOption {
     pub port: u16,
 }
 
+pub struct ServerProcess {
+    pub handle: std::process::Child,
+    pub stdout: std::thread::JoinHandle<()>,
+    pub stderr: std::thread::JoinHandle<()>,
+}
+
 pub struct Server {
     option: ServerOption,
     python: Python,
     uv: Uv,
     app_handle: Arc<Mutex<Option<AppHandle>>>,
+    process: Arc<Mutex<Option<ServerProcess>>>,
     pub token: String,
     pub already_started: bool,
 }
@@ -44,7 +51,7 @@ impl Server {
         if already_started && needs_update {
             uv.update(LATEST_PIP, &requirements, on_progress)
                 .map_err(|err| err.to_string())?;
-            on_progress(Progress::ServerStoppping {
+            on_progress(Progress::ServerStopping {
                 msg: format!(
                     "Server version mismatch ({} != {}), stopping server",
                     version.unwrap(),
@@ -78,6 +85,7 @@ impl Server {
             python,
             uv,
             app_handle,
+            process: Arc::new(Mutex::new(None)),
             token,
             already_started,
         };
@@ -205,29 +213,11 @@ impl Server {
             on_progress(Progress::ServerStartFailed { msg: msg.clone() });
             msg
         })?;
-        let app_handle = self.app_handle.clone();
-        std::thread::spawn(move || {
-            Self::handle_io(child, app_handle).unwrap();
-        });
+        self.handle_io(child).unwrap();
         Ok(())
     }
 
-    fn handle_io(
-        mut child: std::process::Child,
-        app_handle: Arc<Mutex<Option<AppHandle>>>,
-    ) -> Result<(), String> {
-        let window = app_handle
-            .lock()
-            .unwrap()
-            .as_ref()
-            .unwrap()
-            .get_window("main")
-            .unwrap();
-        let on_progress = move |progress: Progress| {
-            info!("{:?}", progress);
-            window.emit("server_state", progress).unwrap();
-        };
-
+    fn handle_io(&self, mut child: std::process::Child) -> Result<(), String> {
         let stdout = child.stdout.take().unwrap();
         let stderr = child.stderr.take().unwrap();
         let stdout = std::thread::spawn(move || {
@@ -244,16 +234,33 @@ impl Server {
                 }
             });
         });
-        let exit_status = child.wait().map_err(|err| err.to_string())?;
-        stdout.join().unwrap();
-        stderr.join().unwrap();
-        if !exit_status.success() {
-            on_progress(Progress::ServerStartFailed {
-                msg: "Server exited with non-zero status".to_string(),
-            });
-            Err("Server exited with non-zero status".to_string())?;
-        }
+        let process = ServerProcess {
+            handle: child,
+            stdout,
+            stderr,
+        };
+        *self.process.lock().unwrap() = Some(process);
         Ok(())
+    }
+
+    pub fn stop(&self, on_progress: &(impl Fn(Progress) + Send + 'static)) -> Result<(), String> {
+        let process = self.process.lock().unwrap().take();
+        if process.is_none() {
+            return Err("Server is not running".to_string());
+        }
+        let mut process = process.unwrap();
+        process.handle.kill().map_err(|err| {
+            let msg = format!("Failed to stop server: {}", err);
+            on_progress(Progress::ServerStopFailed { msg: msg.clone() });
+            msg
+        })?;
+        process.stdout.join().unwrap();
+        process.stderr.join().unwrap();
+        Ok(())
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.process.lock().unwrap().is_some()
     }
 }
 
