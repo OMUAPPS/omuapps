@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.11 (2024-10-20)
+
+
+### Bug Fixes
+
+* **plugin-obs:** プラグイン側でイベントループを設定するように ([5df75e8](https://github.com/OMUAPPS/omuapps/commit/5df75e8edf8a888605772dffff52852a5adc602f))
+
+
+
+
+
 ## 0.7.10 (2024-10-19)
 
 
