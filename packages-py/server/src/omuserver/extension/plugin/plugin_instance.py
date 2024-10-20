@@ -126,6 +126,7 @@ class PluginInstance:
                     )
                 plugin_client.network.set_connection(connection)
                 plugin_client.network.set_token_provider(PluginTokenProvider(token))
+                plugin_client.set_loop(server.loop)
                 server.loop.create_task(plugin_client.start(reconnect=False))
                 session_connection = PluginSessionConnection(connection)
                 session = await Session.from_connection(

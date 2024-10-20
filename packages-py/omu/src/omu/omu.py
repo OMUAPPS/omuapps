@@ -71,7 +71,7 @@ class Omu(Client):
         loop: asyncio.AbstractEventLoop | None = None,
     ):
         self._version = version.VERSION
-        self._loop = self._set_loop(loop or asyncio.new_event_loop())
+        self._loop = self.set_loop(loop or asyncio.new_event_loop())
         self._ready = False
         self._running = False
         self._event = ClientEvents()
@@ -97,7 +97,7 @@ class Omu(Client):
         self._i18n = self.extensions.register(I18N_EXTENSION_TYPE)
         self._logger = self.extensions.register(LOGGER_EXTENSION_TYPE)
 
-    def _set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
+    def set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
         loop.set_exception_handler(asyncio_error_logger)
         self._loop = loop
         return loop
@@ -183,7 +183,7 @@ class Omu(Client):
         loop: asyncio.AbstractEventLoop | None = None,
         reconnect: bool = True,
     ) -> None:
-        self._loop = self._set_loop(loop or self._loop)
+        self._loop = self.set_loop(loop or self._loop)
 
         async def _run():
             try:
@@ -198,7 +198,9 @@ class Omu(Client):
             self._loop.create_task(_run())
 
     async def start(self, *, reconnect: bool = True) -> None:
-        self._loop = self._set_loop(self._loop)
+        current_loop = asyncio.get_event_loop()
+        if current_loop is not self.loop:
+            raise RuntimeError("Start must be called from the same loop")
         if self._running:
             raise RuntimeError("Already running")
         self._running = True

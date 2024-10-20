@@ -48,6 +48,11 @@ class Client(abc.ABC):
     @abc.abstractmethod
     def loop(self) -> asyncio.AbstractEventLoop: ...
 
+    @abc.abstractmethod
+    def set_loop(
+        self, loop: asyncio.AbstractEventLoop
+    ) -> asyncio.AbstractEventLoop: ...
+
     @property
     @abc.abstractmethod
     def network(self) -> Network: ...
