@@ -92,12 +92,10 @@ class RegistryImpl<T> implements Registry<T> {
     }
 
     public listen(handler: (value: T) => Promise<void> | void): Unlisten {
-        if (!this.listening) {
-            this.client.onReady(() => {
-                this.client.send(REGISTRY_LISTEN_PACKET, this.type.id);
-            });
-            this.listening = true;
+        if (!this.listening && this.client.ready) {
+            this.client.send(REGISTRY_LISTEN_PACKET, this.type.id);
         }
+        this.listening = true;
         return this.eventEmitter.listen(handler);
     }
 
@@ -112,6 +110,9 @@ class RegistryImpl<T> implements Registry<T> {
     }
 
     private onTask(): void {
+        if (this.listening) {
+            this.client.send(REGISTRY_LISTEN_PACKET, this.type.id);
+        }
         if (!this.type.id.isSubpathOf(this.client.app.id)) {
             return;
         }

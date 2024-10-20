@@ -128,13 +128,10 @@ class RegistryImpl[T](Registry[T]):
         await self.set(new_value)
 
     def listen(self, handler: Coro[[T], None] | Callable[[T], None]) -> Unlisten:
-        if not self.listening:
-
-            async def on_ready():
-                await self.client.send(REGISTRY_LISTEN_PACKET, self.type.id)
-
-            self.client.on_ready(on_ready)
-            self.listening = True
+        if not self.listening and self.client.ready:
+            coro = self.client.send(REGISTRY_LISTEN_PACKET, self.type.id)
+            self.client.loop.create_task(coro)
+        self.listening = True
 
         return self.event_emitter.listen(handler)
 
@@ -150,6 +147,8 @@ class RegistryImpl[T](Registry[T]):
         await self.event_emitter.emit(self._value)
 
     async def _on_ready_task(self) -> None:
+        if self.listening:
+            await self.client.send(REGISTRY_LISTEN_PACKET, self.type.id)
         if not self.type.id.is_subpath_of(self.client.app.id):
             return
         packet = RegistryRegisterPacket(
