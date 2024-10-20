@@ -2,12 +2,12 @@
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "aiohttp>=3.10.6", "beautifulsoup4>=4.12.3", "lxml>=5.0.0", "omu_chat>=0.7.10", "iwashi>=3.1.0"]
+dependencies = ["loguru>=0.7.2", "aiohttp>=3.10.6", "beautifulsoup4>=4.12.3", "lxml>=5.0.0", "omu_chat>=0.7.11", "iwashi>=3.1.0"]
 description = "Add your description here"
 name = "omu_chatprovider"
 readme = "README.md"
 requires-python = ">= 3.12"
-version = "0.7.10"
+version = "0.7.11"
 
 [project.entry-points."omu.plugins"]
 plugin = "omu_chatprovider:plugin"
