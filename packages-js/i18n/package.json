@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/i18n",
-    "version": "0.7.11",
+    "version": "0.7.12",
     "exports": {
         ".": {
             "import": "./dist/esm/index.js",
