@@ -201,7 +201,7 @@ class Network:
         try:
             while not self._connection.closed:
                 packet = await self._connection.receive(self._packet_mapper)
-                self._client.loop.create_task(self.dispatch_packet(packet))
+                asyncio.create_task(self.dispatch_packet(packet))
         except CloseError as e:
             logger.opt(exception=e).error("Connection closed")
         finally:
