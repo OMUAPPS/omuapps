@@ -100,9 +100,11 @@ class PermissionManager:
         self.token_permissions[token] = list(permission_ids)
         self.store_permissions()
 
-    def register(self, *permission_types: PermissionType) -> None:
+    def register(
+        self, *permission_types: PermissionType, overwrite: bool = False
+    ) -> None:
         for permission in permission_types:
-            if permission.id in self.permissions:
+            if permission.id in self.permissions and not overwrite:
                 raise ValueError(f"Permission {permission.id} already registered")
             self.permissions[permission.id] = permission
 
