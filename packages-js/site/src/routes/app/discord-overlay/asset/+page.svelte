@@ -26,12 +26,20 @@
         )
         omu.start();
     }
+
+    let promise = new Promise<void>((resolve) => {
+        omu.onReady(async () => {
+            resolve();
+        });
+    });
 </script>
 
 {#if id}
     <AssetPage>
         <main>
-            <AvatarRenderer {overlayApp} />
+            {#await promise then}
+                <AvatarRenderer overlayApp={overlayApp} />
+            {/await}
         </main>
     </AssetPage>
 {:else}
