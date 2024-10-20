@@ -8,6 +8,8 @@ export default defineConfig({
         include: ['src/**/*.{test,spec}.{js,ts}'],
     },
     server: {
+        port: 5173,
+        strictPort: true,
         fs: {
             allow: [searchForWorkspaceRoot(process.cwd() + '..')],
         },
