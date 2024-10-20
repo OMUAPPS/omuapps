@@ -136,10 +136,10 @@ def get_scene(scene_name: str | None) -> OBSScene:
 def get_name(name: str) -> str:
     existing_source = OBSSource.get_source_by_name(name)
     if existing_source is not None:
+        removed = existing_source.removed
         existing_source.release()
-        if not existing_source.removed:
-            raise ValueError(f"Source with name {name} already exists")
-        return name
+        if removed:
+            return name
     i = 1
     while True:
         new_name = f"{name} ({i})"
