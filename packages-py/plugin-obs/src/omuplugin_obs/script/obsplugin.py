@@ -474,8 +474,8 @@ async def start_omu():
         if omu.running:
             await omu.stop()
         await omu.start()
-    except Exception as e:
-        logger.opt(exception=e).warning("Failed to start OBS Plugin")
+    except Exception:
+        logger.warning("Failed to start OBS Plugin: {e}")
 
 
 def script_unload():
