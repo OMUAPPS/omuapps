@@ -1,4 +1,4 @@
-import { setClient } from '@omujs/ui';
+import { setChat, setClient } from '@omujs/ui';
 import { Dashboard } from './dashboard.js';
 
 import type { Address } from '@omujs/omu/address.js';
@@ -24,7 +24,6 @@ import {
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Locale } from '@omujs/omu/localization/locale.js';
 import { BrowserTokenProvider } from '@omujs/omu/token.js';
-import { setChat } from '../../../ui/dist/stores.js';
 import { language } from './main/settings.js';
 import { version } from './version.json';
 
