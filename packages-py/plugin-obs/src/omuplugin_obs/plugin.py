@@ -235,7 +235,7 @@ def relaunch_obs():
         subprocess.Popen(obs.launch_command, cwd=obs.cwd)
 
 
-async def install():
+def write_config():
     config_path = get_config_path()
     config_path.write_text(
         json.dumps(
@@ -246,6 +246,10 @@ async def install():
         ),
         encoding="utf-8",
     )
+
+
+async def install():
+    write_config()
 
     try:
         if is_installed():

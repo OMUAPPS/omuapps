@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from threading import Thread
+import threading
 
 from loguru import logger
 from omu.app import App
@@ -444,11 +444,29 @@ async def on_ready():
     print("OBS Plugin is ready")
 
 
-thread = Thread(target=omu.loop.run_forever).start()
+_LOOP: asyncio.AbstractEventLoop | None = None
+_THREAD: threading.Thread | None = None
 
 
-def start():
+def run_stuff():
+    print("Running OBS Plugin")
+    global _LOOP
+    _LOOP = asyncio.new_event_loop()
+    asyncio.set_event_loop(_LOOP)
+
+    omu.set_loop(_LOOP)
     omu.loop.create_task(start_omu())
+
+    _LOOP.run_forever()
+
+    _LOOP.close()
+    _LOOP = None
+
+
+def script_load():
+    global _THREAD
+    _THREAD = threading.Thread(None, run_stuff, daemon=True)
+    _THREAD.start()
 
 
 async def start_omu():
@@ -460,9 +478,14 @@ async def start_omu():
         logger.opt(exception=e).warning("Failed to start OBS Plugin")
 
 
-def stop():
-    print("Stopping OBS Plugin")
-    omu.loop.create_task(stop_omu())
+def script_unload():
+    global _LOOP, _THREAD
+    if _LOOP is not None:
+        _LOOP.call_soon_threadsafe(lambda l: l.stop(), _LOOP)
+
+    if _THREAD is not None:
+        _THREAD.join(timeout=5)
+        _THREAD = None
 
 
 async def stop_omu():

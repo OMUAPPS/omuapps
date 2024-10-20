@@ -10,8 +10,8 @@ if __name__ == "omuapps_plugin":
 
 import json
 import subprocess
-from threading import Thread
 
+from omuplugin_obs.script import obsplugin
 from omuplugin_obs.script.config import get_config_path
 
 
@@ -44,21 +44,12 @@ def terminate_server():
 
 
 def script_load(settings):
-    thread = Thread(target=start, daemon=True)
-    thread.start()
-
-
-def start():
     launch_server()
-    from omuplugin_obs.script import obsplugin
-
-    obsplugin.start()
+    obsplugin.script_load()
 
 
 def script_unload():
-    from omuplugin_obs.script import obsplugin
-
-    obsplugin.stop()
+    obsplugin.script_unload()
 
 
 def script_description():
