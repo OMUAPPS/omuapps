@@ -18,6 +18,7 @@ async def on_start_server(server: Server):
         DISCORDRPC_VC_READ_PERMISSION_TYPE,
         DISCORDRPC_VC_SET_PERMISSION_TYPE,
         DISCORDRPC_CHANNELS_READ_PERMISSION_TYPE,
+        overwrite=True,
     )
 
 

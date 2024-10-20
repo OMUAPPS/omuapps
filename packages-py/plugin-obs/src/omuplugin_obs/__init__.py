@@ -11,7 +11,10 @@ __all__ = ["plugin"]
 
 async def on_start_server(server: Server) -> None:
     await install()
-    server.permission_manager.register(*PERMISSION_TYPES)
+    server.permission_manager.register(
+        *PERMISSION_TYPES,
+        overwrite=True,
+    )
 
 
 async def on_install(ctx: InstallContext) -> None:
@@ -20,12 +23,7 @@ async def on_install(ctx: InstallContext) -> None:
     relaunch_obs()
 
 
-async def on_update(ctx: InstallContext) -> None:
-    ctx.server.permission_manager.unregister(*PERMISSION_TYPES)
-
-
 plugin = Plugin(
     on_start_server=on_start_server,
     on_install=on_install,
-    on_update=on_update,
 )
