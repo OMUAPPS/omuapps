@@ -146,43 +146,41 @@ class Network:
         if self._closed:
             raise RuntimeError("Connection closed")
 
-        await self.disconnect()
-        try:
-            await self._connection.connect()
-        except Exception as e:
-            if reconnect:
-                logger.opt(exception=e).error("Failed to connect")
-                await self.try_reconnect()
-                return
-            else:
-                raise e
-        self._connected = True
-        await self.send(
-            Packet(
-                PACKET_TYPES.CONNECT,
-                ConnectPacket(
-                    app=self._client.app,
-                    protocol={"version": self._client.version},
-                    token=self._token_provider.get(self._address, self._client.app),
-                ),
+        while True:
+            try:
+                await self._connection.connect()
+            except Exception as e:
+                if reconnect:
+                    logger.opt(exception=e).error("Failed to connect")
+                    continue
+                else:
+                    raise e
+
+            self._connected = True
+            await self.send(
+                Packet(
+                    PACKET_TYPES.CONNECT,
+                    ConnectPacket(
+                        app=self._client.app,
+                        protocol={"version": self._client.version},
+                        token=self._token_provider.get(self._address, self._client.app),
+                    ),
+                )
             )
-        )
-        listen_task = asyncio.create_task(self._listen_task())
-        await self._event.status.emit("connected")
-        await self._event.connected.emit()
-        await self._dispatch_tasks()
+            listen_task = asyncio.create_task(self._listen_task())
+            await self._event.status.emit("connected")
+            await self._event.connected.emit()
+            await self._dispatch_tasks()
 
-        await self.send(Packet(PACKET_TYPES.READY, None))
-        await listen_task
+            await self.send(Packet(PACKET_TYPES.READY, None))
+            await listen_task
 
-        if reconnect:
-            await self.try_reconnect()
+            if not reconnect:
+                break
+            if self._closed:
+                break
 
-    async def try_reconnect(self) -> None:
-        if self._closed:
-            return
-        await asyncio.sleep(1)
-        await self.connect(reconnect=True)
+            await asyncio.sleep(1)
 
     async def disconnect(self) -> None:
         if self._connection.closed:
@@ -191,6 +189,10 @@ class Network:
         await self._connection.close()
         await self._event.status.emit("disconnected")
         await self._event.disconnected.emit()
+
+    async def close(self) -> None:
+        await self.disconnect()
+        self._closed = True
 
     async def send(self, packet: Packet) -> None:
         if not self._connected:

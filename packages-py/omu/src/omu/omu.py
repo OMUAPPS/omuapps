@@ -211,7 +211,7 @@ class Omu(Client):
         if not self._running:
             raise RuntimeError("Not running")
         self._running = False
-        await self._network.disconnect()
+        await self._network.close()
         await self._event.stopped()
 
     @property
