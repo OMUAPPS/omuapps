@@ -35,6 +35,7 @@
         position = user.position;
         $config = { ...$config };
         lastMouse = null;
+        $config.selected_user_id = null;
     }
 
     function handleMouseDown(e: MouseEvent) {
@@ -42,6 +43,7 @@
         lastPosition = user.position;
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
+        $config.selected_user_id = id;
     }
 
     onDestroy(() => {
@@ -92,6 +94,7 @@
     on:keydown={handleKeyDown}
     on:wheel={handleMouseWheel}
     draggable="false"
+    style:opacity={$config.selected_user_id && $config.selected_user_id != id ? 0.2 : 1}
 >
     {#if !lastMouse}
         <Tooltip>

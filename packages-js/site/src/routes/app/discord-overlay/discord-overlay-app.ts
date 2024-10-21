@@ -126,6 +126,7 @@ export type Config = {
     users: {
         [key: string]: UserConfig;
     },
+    selected_user_id: string | null;
     user_id: string | null;
     guild_id: string | null;
     channel_id: string | null;
@@ -137,6 +138,7 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: {
         users: {},
+        selected_user_id: null,
         user_id: null,
         guild_id: null,
         channel_id: null,
