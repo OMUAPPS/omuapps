@@ -16,7 +16,7 @@ export const APP = new App(APP_ID, {
             ja: 'ルーレットを回して、誰かを当てたり選択を決めることができます',
             en: 'You can spin the roulette to select someone or make a decision',
         },
-        icon: 'ti-rosette',
+        icon: 'ti-wheel',
         image: getUrl(thumbnail),
         tags: ['asset', 'game', 'tool'] as TagKey[],
     },
