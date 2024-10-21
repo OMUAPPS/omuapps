@@ -254,7 +254,6 @@
                 <button on:click={() => {
                     const voiceUsers = Object.keys($voiceState);
                     const visibleUsers = voiceUsers.filter((id) => $config.users[id].show).map((id) => ({id, user: $config.users[id]}));
-                    // align users 100px apart from each other and put them in a center. 0,0 is the center of the screen.
                     const gap = 500;
                     const totalWidth = visibleUsers.length * gap;
                     const start = -totalWidth / 2;
