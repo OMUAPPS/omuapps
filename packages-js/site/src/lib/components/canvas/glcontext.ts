@@ -264,7 +264,6 @@ export class GlProgram {
             uniforms.set(name, uniform);
         }
         this.uniforms = uniforms;
-        console.log('uniforms', uniforms);
 
         const attributes = new Map<string, AttribLocation>();
         const attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES);
@@ -278,7 +277,6 @@ export class GlProgram {
             attributes.set(name, location);
         }
         this.attributes = attributes;
-        console.log('attributes', attributes);
     }
 
     public static create(
