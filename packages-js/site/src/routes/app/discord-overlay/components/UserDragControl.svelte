@@ -93,6 +93,22 @@
     on:wheel={handleMouseWheel}
     draggable="false"
 >
+    {#if !lastMouse}
+        <Tooltip>
+            <p>
+                <i class="ti ti-pointer"/>
+                <small>
+                    ドラッグで
+                </small> <b>移動</b>
+            </p>
+            <p>
+                <i class="ti ti-mouse"/>
+                <small>
+                    スクロールで
+                </small> <b>拡大縮小</b>
+            </p>
+        </Tooltip>
+    {/if}
     <i class="grip ti ti-grip-vertical"/>
     {state.nick}
 </button>
