@@ -50,9 +50,10 @@
 
     function getStyle(rect: { width:number, height:number }, dimentions: { width:number, height:number }, position: [number, number]) {
         const margin = 8;
+        let camera = $config.camera_position;
         return `
-            left: ${BetterMath.clamp(position[0] * zoom + dimentions.width / 2 - rect.width / 2, margin, dimentions.width - rect.width - margin)}px;
-            top: ${BetterMath.clamp(position[1] * zoom + dimentions.height / 2 - rect.height / 2 + 162.1 * zoom + 20, margin, dimentions.height - rect.height - margin)}px;
+            left: ${BetterMath.clamp((position[0] + camera[0]) * zoom + dimentions.width / 2 - rect.width / 2, margin, dimentions.width - rect.width - margin)}px;
+            top: ${BetterMath.clamp((position[1] + camera[1]) * zoom + dimentions.height / 2 - rect.height / 2 + 162.1 * zoom + 20, margin, dimentions.height - rect.height - margin)}px;
         `;
     }
 

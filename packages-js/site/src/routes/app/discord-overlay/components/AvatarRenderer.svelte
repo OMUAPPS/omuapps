@@ -102,6 +102,7 @@
             const talkingTime = timestamp ? now - timestamp : 0; 
             poseStack.push();
             poseStack.translate(user.position[0], user.position[1], 0);
+            poseStack.translate($config.camera_position[0], $config.camera_position[1], 0);
             poseStack.scale(0.5, 0.5, 1);
             const time = timer.getElapsedMS() / 500 + index * 0.5;
             const blinking = state.voice_state.self_mute || Math.sin(time) > 0.995;

@@ -130,6 +130,7 @@ export type Config = {
     guild_id: string | null;
     channel_id: string | null;
     zoom_level: number;
+    camera_position: [number, number];
 };
 
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
@@ -140,6 +141,7 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
         guild_id: null,
         channel_id: null,
         zoom_level: 1,
+        camera_position: [0, 0],
     },
 });
 

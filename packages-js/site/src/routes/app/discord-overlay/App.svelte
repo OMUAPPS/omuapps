@@ -3,6 +3,7 @@
     import { OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { Combobox, Spinner } from '@omujs/ui';
+    import { onDestroy } from 'svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
     import UserConfigEntry from './components/UserConfigEntry.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
@@ -12,7 +13,7 @@
     export let obs: OBSPlugin;
     export let overlayApp: DiscordOverlayApp;
     const { voiceState, config } = overlayApp;
-
+    
     function getUser(id: string) {
         let user = $config.users[id];
         if (!user) {
@@ -88,6 +89,45 @@
     $: hasUsers = Object.keys(clients).length > 0;
     $: hasGuilds = guilds.length > 0;
     $: hasChannels = channels.length > 0;
+
+    let dragger: HTMLButtonElement;
+    let lastMouse: [number, number] | null = null;
+    let lastPosition: [number, number] = [0, 0];
+    let position: [number, number] = [0, 0];
+    $: zoom = 2 ** $config.zoom_level;
+    
+    function handleMouseMove(e: MouseEvent) {
+        e.preventDefault();
+        if (!lastMouse) return;
+        const dx = (e.clientX - lastMouse[0]) / zoom;
+        const dy = (e.clientY - lastMouse[1]) / zoom;
+        $config.camera_position = [lastPosition[0] + dx, lastPosition[1] + dy];
+    }
+
+    function handleMouseUp() {
+        window.removeEventListener('mousemove', handleMouseMove);
+        dragger.removeEventListener('mouseup', handleMouseUp);
+        console.log('camera_position', $config.camera_position);
+        lastMouse = null;
+    }
+
+    function handleMouseDown(e: MouseEvent) {
+        lastMouse = [e.clientX, e.clientY];
+        lastPosition = $config.camera_position;
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        console.log('camera_position', $config.camera_position);
+    }
+
+    function handleMouseWheel(e: WheelEvent) {
+        e.preventDefault();
+        $config.zoom_level = Math.max(-2, Math.min(2, $config.zoom_level - e.deltaY / 1000));
+    }
+
+    onDestroy(() => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+    });
 </script>
 
 <main>
@@ -164,13 +204,17 @@
     </div>
     <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
         <AvatarRenderer overlayApp={overlayApp} bind:message showGrid />
-        <div class="avatar-controls">
-            {#if dimentions}
-                {#each Object.entries($voiceState).filter(([id, ]) => $config.users[id]?.show) as [id, state] (id)}
-                    <UserDragControl {dimentions} {overlayApp} {id} {state}/>
-                {/each}
-            {/if}
-        </div>
+        <button class="drag-all"
+            bind:this={dragger}
+            on:mousedown={handleMouseDown}
+            on:mousewheel={handleMouseWheel}
+            draggable="false"
+        />
+        {#if dimentions}
+            {#each Object.entries($voiceState).filter(([id, ]) => $config.users[id]?.show) as [id, state] (id)}
+                <UserDragControl {dimentions} {overlayApp} {id} {state}/>
+            {/each}
+        {/if}
         <div class="camera-controls">
             <span class="zoom-level">
                 <i class="ti ti-zoom-in"/>
@@ -237,9 +281,17 @@
         }
     }
 
-    .avatar-controls {
+    .drag-all {
         position: absolute;
         inset: 0;
+        cursor: grab;
+        background: transparent;
+        border: none;
+        outline: none;
+
+        &:active {
+            cursor: grabbing;
+        }
     }
 
     .camera-controls {
