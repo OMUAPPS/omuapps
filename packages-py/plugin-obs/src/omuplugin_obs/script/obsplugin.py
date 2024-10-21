@@ -470,6 +470,7 @@ def script_load():
 
 
 async def start_omu():
+    omu.network.event.disconnected += stop_omu
     try:
         if omu.running:
             await omu.stop()
@@ -481,7 +482,7 @@ async def start_omu():
 def script_unload():
     global _LOOP, _THREAD
     if _LOOP is not None:
-        _LOOP.call_soon_threadsafe(lambda l: l.stop(), _LOOP)
+        _LOOP.call_soon_threadsafe(lambda loop: loop.stop(), _LOOP)
 
     if _THREAD is not None:
         _THREAD.join(timeout=5)
