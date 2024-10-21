@@ -139,6 +139,17 @@
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
     });
+
+    let refreshPromise: Promise<void> | null = null;
+
+    function refresh() {
+        if (refreshPromise) {
+            return;
+        }
+        refreshPromise = overlayApp.refresh().finally(() => {
+            refreshPromise = null;
+        });
+    }
 </script>
 
 <main>
@@ -156,6 +167,24 @@
                         起動しているDiscordが見つかりませんでした
                     </small>
                 {/if}
+                <button on:click={refresh} disabled={!!refreshPromise}>
+                    {#if refreshPromise}
+                        <Tooltip>
+                            Discordを再検出中…
+                        </Tooltip>
+                        <Spinner />
+                    {:else if hasUsers}
+                        <Tooltip>
+                            Discordを再検出
+                        </Tooltip>
+                        <i class="ti ti-reload"/>
+                    {:else}
+                        <Tooltip>
+                            起動しているDiscordから読み込み直す
+                        </Tooltip>
+                        Discordを検出
+                    {/if}
+                </button>
             </span>
             <span>
                 {#if hasGuilds}
@@ -299,10 +328,34 @@
 
         > span {
             display: flex;
-            gap: 1rem;
+            gap: 0.5rem;
             align-items: center;
-            justify-content: space-between;
             white-space: nowrap;
+
+            > p {
+                margin-right: auto;
+            }
+
+            > button {
+                background: var(--color-bg-2);
+                color: var(--color-1);
+                border: none;
+                outline: none;
+                width: 2rem;
+                height: 2rem;
+                border-radius: 2px;
+                cursor: pointer;
+
+                &:hover {
+                    outline: 1px solid var(--color-1);
+                    outline-offset: -1px;
+                }
+
+                &:disabled {
+                    cursor: not-allowed;
+                    background: var(--color-bg-1);
+                }
+            }
         }
     }
 
