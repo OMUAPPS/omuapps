@@ -309,10 +309,10 @@
     .drag-all {
         position: absolute;
         inset: 0;
-        cursor: grab;
         background: transparent;
         border: none;
         outline: none;
+        cursor: move;
 
         &:active {
             cursor: grabbing;

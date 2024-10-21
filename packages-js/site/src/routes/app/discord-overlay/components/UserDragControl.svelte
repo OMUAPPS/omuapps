@@ -101,9 +101,9 @@
     {#if !lastMouse}
         <Tooltip>
             <p>
-                <i class="ti ti-pointer"/>
+                <i class="ti ti-hand-stop"/>
                 <small>
-                    ドラッグで
+                    つかんで
                 </small> <b>移動</b>
             </p>
             <p>
