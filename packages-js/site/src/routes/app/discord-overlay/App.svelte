@@ -45,6 +45,7 @@
         await overlayApp.waitForReady();
         clients = await overlayApp.getClients();
         state = null;
+        $config.selected_user_id = null;
     })
 
     let last_user_id: string | null = null;
