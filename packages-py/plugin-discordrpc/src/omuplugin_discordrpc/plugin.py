@@ -206,14 +206,16 @@ async def refresh_clients():
         if client.closed:
             await client.close()
 
-    for port in range(PORT_MIN, PORT_MAX):
+    async def connect_client(port: int):
         try:
             client = await Client.try_connect(port)
             clients[client.user["id"]] = client
             logger.info(f"Connected to {port}")
         except Exception as e:
             logger.warning(f"Failed to connect to {port}: {e}")
-            continue
+
+    tasks = [connect_client(port) for port in range(PORT_MIN, PORT_MAX)]
+    await asyncio.gather(*tasks)
 
     session = await session_registry.get()
     user_id = session["user_id"]
