@@ -94,7 +94,6 @@
     let dragger: HTMLButtonElement;
     let lastMouse: [number, number] | null = null;
     let lastPosition: [number, number] = [0, 0];
-    let position: [number, number] = [0, 0];
     $: zoom = 2 ** $config.zoom_level;
     
     function handleMouseMove(e: MouseEvent) {

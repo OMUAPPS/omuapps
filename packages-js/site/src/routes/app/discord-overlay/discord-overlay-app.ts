@@ -123,6 +123,7 @@ export type UserConfig = {
 };
 
 export type Config = {
+    version?: number;
     users: {
         [key: string]: UserConfig;
     },
@@ -137,6 +138,7 @@ export type Config = {
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: {
+        version: 1,
         users: {},
         selected_user_id: null,
         user_id: null,
@@ -159,6 +161,20 @@ export class DiscordOverlayApp {
         this.voiceState = makeRegistryWritable(omu.registries.get(VOICE_STATE_REGISTRY_TYPE));
         this.speakingState = makeRegistryWritable(omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE));
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
+        omu.onReady(() => this.config.update((config) => this.migrateConfig(config)));
+    }
+
+    private migrateConfig(config: Config): Config {
+        if (!config.version) {
+            config = {
+                ...config,
+                selected_user_id: null,
+                camera_position: [0, 0],
+                zoom_level: 1,
+                version: 1,
+            }
+        }
+        return config;
     }
 
     public async getAvatar(asset_id: Identifier): Promise<Uint8Array> {
