@@ -11,8 +11,22 @@ if __name__ == "omuapps_plugin":
 import json
 import subprocess
 
+from loguru import logger
 from omuplugin_obs.script import obsplugin
-from omuplugin_obs.script.config import get_config_path
+from omuplugin_obs.script.config import get_config_path, get_log_path
+
+log_path = get_log_path()
+logger.remove()
+logger.add(
+    f"{log_path}/{{time}}.log",
+    colorize=False,
+    format=(
+        "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
+        "{name}:{function}:{line} - {message}"
+    ),
+    retention="7 days",
+    compression="zip",
+)
 
 
 class g:
