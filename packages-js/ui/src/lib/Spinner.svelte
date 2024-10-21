@@ -8,7 +8,6 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: var(--color-1);
         border: none;
         animation: spin 1s linear infinite;
         transform-origin: center;
