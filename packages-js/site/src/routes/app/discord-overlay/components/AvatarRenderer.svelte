@@ -123,7 +123,6 @@
         if (!userConfig.avatar) {
             return defaultAvatar;
         }
-        const buffer = await overlayApp.getAvatar(Identifier.fromKey(userConfig.avatar));
         const existing = avatarCache.get(user.id);
         if (existing && existing.id === userConfig.avatar) {
             return existing.avatar;
@@ -134,6 +133,7 @@
         }
         let parsedData: PNGTuberData;
         try {
+            const buffer = await overlayApp.getAvatar(Identifier.fromKey(userConfig.avatar));
             parsedData = JSON.parse(new TextDecoder().decode(buffer));
             const pngtuber = await PNGTuber.load(gl, parsedData);
             avatarCache.set(user.id, { id: userConfig.avatar, avatar: pngtuber });
