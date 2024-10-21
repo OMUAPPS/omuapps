@@ -39,7 +39,14 @@
     let files: FileList;
 </script>
 
-<div class="entry" class:speaking={$speakingState[id]?.speaking}>
+<button
+    class="entry"
+    class:speaking={$speakingState[id]?.speaking}
+    on:mouseover={() => ($config.selected_user_id = id)}
+    on:mouseleave={() => ($config.selected_user_id = null)}
+    on:focus={() => ($config.selected_user_id = id)}
+    on:blur={() => ($config.selected_user_id = null)}
+>
     <div class="avatar">
         {#if avatarUrl}
             <img src={avatarUrl} alt={state.nick} />
@@ -77,7 +84,7 @@
             {/if}
         </button>
     </div>
-</div>
+</button>
 <input type="file" bind:this={fileDrop} bind:files on:change={handleReplace} hidden/>
 
 <style lang="scss">

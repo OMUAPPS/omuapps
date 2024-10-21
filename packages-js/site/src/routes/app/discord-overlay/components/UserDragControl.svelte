@@ -87,7 +87,7 @@
 
 <button
     class="control"
-    class:dragging={lastMouse}
+    class:dragging={lastMouse || ($config.selected_user_id && $config.selected_user_id == id)}
     bind:this={element}
     style={getStyle(rect, dimentions, position)}
     on:mousedown={handleMouseDown}
