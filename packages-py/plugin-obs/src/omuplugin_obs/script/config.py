@@ -8,6 +8,13 @@ def get_config_path() -> Path:
     return config
 
 
+def get_log_path() -> Path:
+    appdata = Path.home() / ".omuapps"
+    appdata.mkdir(exist_ok=True)
+    config = appdata / "logs"
+    return config
+
+
 def get_token_path() -> Path:
     appdata = Path.home() / ".omuapps"
     appdata.mkdir(exist_ok=True)
