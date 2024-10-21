@@ -1,5 +1,6 @@
 <script lang="ts">
     import AssetButton from '$lib/components/AssetButton.svelte';
+    import { BetterMath } from '$lib/math.js';
     import { OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { Combobox, Spinner } from '@omujs/ui';
@@ -121,7 +122,18 @@
 
     function handleMouseWheel(e: WheelEvent) {
         e.preventDefault();
-        $config.zoom_level = Math.max(-2, Math.min(2, $config.zoom_level - e.deltaY / 1000));
+        let zoomAmount = -e.deltaY / 1000;
+        zoomAmount = BetterMath.clamp($config.zoom_level + zoomAmount, -2, 2) - $config.zoom_level;
+        $config.zoom_level = BetterMath.clamp($config.zoom_level + zoomAmount, -2, 2);
+        const canvasRect = dragger.getBoundingClientRect();
+        const x = e.clientX - canvasRect.left;
+        const y = e.clientY - canvasRect.top;
+        const dx = (x - dimentions.width / 2) / zoom;
+        const dy = (y - dimentions.height / 2) / zoom;
+        $config.camera_position = [
+            $config.camera_position[0] - dx * zoomAmount,
+            $config.camera_position[1] - dy * zoomAmount,
+        ];
     }
 
     onDestroy(() => {
@@ -207,7 +219,7 @@
         <button class="drag-all"
             bind:this={dragger}
             on:mousedown={handleMouseDown}
-            on:mousewheel={handleMouseWheel}
+            on:wheel={handleMouseWheel}
             draggable="false"
         />
         {#if dimentions}
