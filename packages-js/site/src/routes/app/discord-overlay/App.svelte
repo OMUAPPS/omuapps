@@ -271,9 +271,9 @@
                 </button>
             </div>
             <span class="zoom-level">
-                <i class="ti ti-zoom-in"/>
-                <input type="range" bind:value={$config.zoom_level} min={-2} max={2} step={0.01}/>
                 <i class="ti ti-zoom-out"/>
+                <input type="range" bind:value={$config.zoom_level} min={-2} max={2} step={0.01}/>
+                <i class="ti ti-zoom-in"/>
             </span>
         </div>
         {#if message}
