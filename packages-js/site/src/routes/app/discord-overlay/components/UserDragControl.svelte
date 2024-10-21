@@ -1,5 +1,6 @@
 <script lang="ts">
     import { BetterMath } from '$lib/math.js';
+    import { Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import type { DiscordOverlayApp, VoiceStateItem } from '../discord-overlay-app.js';
 
@@ -75,6 +76,11 @@
             $config = { ...$config };
         }
     }
+
+    function handleMouseWheel(e: WheelEvent) {
+        user.scale = Math.max(0.1, Math.min(10, user.scale - e.deltaY / 1000));
+        $config = { ...$config };
+    }
 </script>
 
 <button
@@ -84,6 +90,7 @@
     style={getStyle(rect, dimentions, position)}
     on:mousedown={handleMouseDown}
     on:keydown={handleKeyDown}
+    on:wheel={handleMouseWheel}
     draggable="false"
 >
     <i class="grip ti ti-grip-vertical"/>
