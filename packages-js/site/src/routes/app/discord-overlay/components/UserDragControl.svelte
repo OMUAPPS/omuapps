@@ -80,7 +80,9 @@
     }
 
     function handleMouseWheel(e: WheelEvent) {
-        user.scale = Math.max(0.1, Math.min(10, user.scale - e.deltaY / 1000));
+        const scaleLevel = Math.log2(user.scale);
+        const scale = Math.pow(2, scaleLevel - e.deltaY / 1000);
+        user.scale = BetterMath.clamp(scale, 0.1, 5);
         $config = { ...$config };
     }
 </script>
