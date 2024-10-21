@@ -94,9 +94,11 @@
         }
         
         const now = Date.now();
-        entries.map(([id, state], index) => {
+        const toRender = entries.filter(([id,]) => $config.users[id].show).map(([id, state], i) => {
             const user = getUser(id);
-            if (!user.show) return;
+            return { id, state, user, avatar: avatars[i] };
+        }).sort((a, b) => b.user.order - a.user.order);
+        toRender.map(({ id, state, user, avatar }, index) => {
             const speakState = $speakingState[id];
             const timestamp = speakState?.speaking_start;
             const talkingTime = timestamp ? now - timestamp : 0; 
@@ -109,7 +111,6 @@
             poseStack.scale(0.5, 0.5, 1);
             const time = timer.getElapsedMS() / 500 + index * 0.5;
             const blinking = state.voice_state.self_mute || Math.sin(time) > 0.995;
-            const avatar = avatars[index];
             avatar.render(poseStack, {
                 time: timer.getElapsedMS(),
                 blinking,
@@ -176,6 +177,7 @@
                 position: [0, 0],
                 scale: 1,
                 avatar: null,
+                order: 0,
             };
             $config.users[id] = user;
         }

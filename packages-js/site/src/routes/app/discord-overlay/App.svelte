@@ -6,8 +6,8 @@
     import { Combobox, Spinner, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
-    import UserConfigEntry from './components/UserConfigEntry.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
+    import UserList from './components/UserList.svelte';
     import { DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
 
     export let omu: Omu;
@@ -23,6 +23,7 @@
                 position: [0, 0],
                 scale: 1,
                 avatar: null,
+                order: 0,
             };
             $config.users[id] = user;
         }
@@ -159,8 +160,8 @@
             <span>
                 {#if hasUsers}
                     <p>
-                        ユーザー
                         <i class="ti ti-user"/>
+                        ユーザー
                     </p>
                     <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
                 {:else}
@@ -190,8 +191,8 @@
             <span>
                 {#if hasGuilds}
                     <p>
-                        サーバー
                         <i class="ti ti-server"/>
+                        サーバー
                     </p>
                     <Combobox options={Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))} bind:value={$config.guild_id}/>
                 {:else if hasUsers}
@@ -203,8 +204,8 @@
             <span>
                 {#if hasChannels}
                     <p>
-                        チャンネル
                         <i class="ti ti-volume"/>
+                        チャンネル
                     </p>
                     <Combobox options={Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))} bind:value={$config.channel_id}/>
                 {:else if hasGuilds && hasUsers}
@@ -226,15 +227,7 @@
                     <Spinner />
                 </p>
             {:else}
-                {#each Object.entries($voiceState) as [id, state] (id)}
-                    <UserConfigEntry {overlayApp} {id} {state}/>
-                {:else}
-                    <p>
-                        まだ誰も居ないようです…
-                        <i class="ti ti-user-off"/>
-                    </p>
-                    <small>誰かがボイスチャンネルに入ると表示されます</small>
-                {/each}
+                <UserList {overlayApp} />
             {/if}
         </div>
         <h3>
@@ -335,6 +328,10 @@
 
             > p {
                 margin-right: auto;
+
+                > i {
+                    margin-right: 0.25rem;
+                }
             }
 
             > button {
@@ -475,13 +472,6 @@
             font-size: 1rem;
             color: var(--color-1);
             margin-top: 2rem;
-        }
-
-        > small {
-            text-align: center;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: var(--color-text);
         }
     }
 

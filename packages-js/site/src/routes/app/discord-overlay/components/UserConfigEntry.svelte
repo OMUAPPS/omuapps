@@ -6,6 +6,7 @@
     export let overlayApp: DiscordOverlayApp;
     export let id: string;
     export let state: VoiceStateItem;
+    export let dragging = false;
     const { config, speakingState } = overlayApp;
 
     const avatarUrl = state.user.avatar && `https://cdn.discordapp.com/avatars/${state.user.id}/${state.user.avatar}.png`;
@@ -41,12 +42,19 @@
 
 <button
     class="entry"
+    class:dragging
     class:speaking={$speakingState[id]?.speaking}
     on:mouseover={() => ($config.selected_user_id = id)}
     on:mouseleave={() => ($config.selected_user_id = null)}
     on:focus={() => ($config.selected_user_id = id)}
     on:blur={() => ($config.selected_user_id = null)}
 >
+    <button class="grid" on:mousedown>
+        <Tooltip>
+            ドラッグで並び替え
+        </Tooltip>
+        <i class="grip ti ti-grip-vertical"/>
+    </button>
     <div class="avatar">
         {#if avatarUrl}
             <img src={avatarUrl} alt={state.nick} />
@@ -89,6 +97,7 @@
 
 <style lang="scss">
     .entry {
+        position: relative;
         border: none;
         background: var(--color-bg-2);
         color: var(--color-text);
@@ -100,11 +109,8 @@
         gap: 0.5rem;
         min-height: 3rem;
         padding: 0 0.75rem;
+        padding-left: 1.5rem;
         margin-bottom: 2px;
-
-        &:hover {
-            background: var(--color-bg-1);
-        }
 
         &.speaking {
             > p {
@@ -121,6 +127,37 @@
                 }
             }
         }
+
+        > .grid {
+            display: none;
+            border: none;
+            background: transparent;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: grab;
+            position: absolute;
+            left: 2px;
+            top: 2px;
+            bottom: 2px;
+            padding: 0 0.5rem;
+            background: var(--color-1);
+            color: var(--color-bg-2);
+
+            &:active {
+                cursor: grabbing;
+            }
+        }
+
+        &.dragging,
+        &:hover {
+            background: var(--color-bg-1);
+            padding-left: 2.5rem;
+            transition: padding-left 0.0621s;
+
+            > .grid {
+                display: flex;
+            }
+        }
     }
 
     p {
@@ -134,6 +171,31 @@
         display: flex;
         margin-left: auto;
         gap: 0.25rem;
+
+        > button {
+            border: none;
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            font-weight: 600;
+            gap: 0.5rem;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+
+            &:focus-visible,
+            &:hover {
+                outline: 1px solid var(--color-1);
+                background: var(--color-bg-2);
+            }
+
+            &:active {
+                background: var(--color-1);
+                color: var(--color-bg-2);
+            }
+        }
     }
 
     .avatar {
@@ -146,31 +208,6 @@
             height: 100%;
             object-fit: cover;
             border-radius: 50%;
-        }
-    }
-
-    button {
-        border: none;
-        background: var(--color-bg-2);
-        color: var(--color-1);
-        font-weight: 600;
-        gap: 0.5rem;
-        width: 2rem;
-        height: 2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-
-        &:focus-visible,
-        &:hover {
-            outline: 1px solid var(--color-1);
-            background: var(--color-bg-2);
-        }
-
-        &:active {
-            background: var(--color-1);
-            color: var(--color-bg-2);
         }
     }
 </style>

@@ -120,6 +120,7 @@ export type UserConfig = {
     position: [number, number];
     scale: number;
     avatar: string | null;
+    order: number;
 };
 
 export type Config = {
