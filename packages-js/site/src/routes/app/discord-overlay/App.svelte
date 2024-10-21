@@ -3,7 +3,7 @@
     import { BetterMath } from '$lib/math.js';
     import { OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { Combobox, Spinner } from '@omujs/ui';
+    import { Combobox, Spinner, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
     import UserConfigEntry from './components/UserConfigEntry.svelte';
@@ -228,6 +228,20 @@
             {/each}
         {/if}
         <div class="camera-controls">
+            <div class="buttons">
+                <button on:click={() => $config.camera_position = [0, 0]}>
+                    <Tooltip>
+                        カメラ位置をリセット
+                    </Tooltip>
+                    <i class="ti ti-compass"/>
+                </button>
+                <button on:click={() => $config.zoom_level = 0}>
+                    <Tooltip>
+                        ズームをリセット
+                    </Tooltip>
+                    <i class="ti ti-search"/>
+                </button>
+            </div>
             <span class="zoom-level">
                 <i class="ti ti-zoom-in"/>
                 <input type="range" bind:value={$config.zoom_level} min={-2} max={2} step={0.01}/>
@@ -310,6 +324,10 @@
         position: absolute;
         bottom: 1rem;
         right: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 1rem;
 
         > .zoom-level {
             display: flex;
@@ -317,6 +335,39 @@
             gap: 0.5rem;
             font-size: 1rem;
             font-weight: 600;
+        }
+
+        > .buttons {
+            display: flex;
+            gap: 0.5rem;
+
+            > button {
+                background: var(--color-bg-2);
+                color: var(--color-1);
+                border: none;
+                outline: none;
+                padding: 0.5rem;
+                border-radius: 999rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                &:hover {
+                    background: var(--color-1);
+                    color: var(--color-bg-2);
+                }
+
+                &:active {
+                    cursor: grabbing;
+                }
+            }
+        }
+
+        &:hover {
+            > .buttons > button {
+                outline: 1px solid var(--color-outline);
+            }
         }
     }
 
