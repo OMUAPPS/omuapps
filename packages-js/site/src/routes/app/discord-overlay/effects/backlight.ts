@@ -45,7 +45,7 @@ void main() {
         float weight = u_weights[int(abs(i) / u_radius * (u_weights_size - 1.0))];
         blur += sampled * weight * 2.0;
     }
-    outColor = color * min(1.1, pow(1.0 - blur + 0.1, 2.0));
+    outColor = max(vec4(0.0, 0.0, 0.0, color.a), color * min(1.1, pow(1.0 - blur + 0.1, 2.0)));
 }
 `;
 
