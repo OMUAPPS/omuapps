@@ -42,11 +42,6 @@
 
     async function render(context: GlContext) {
         const entries = Object.entries($voiceState);
-        const avatars: PNGTuber[] = [];
-        for (const [, state] of entries) {
-            const avatar = await getAvatar(context, state.user);
-            avatars.push(avatar);
-        }
 
         const { gl } = context;
         gl.clearColor(0, 0, 0, 0);
@@ -108,31 +103,34 @@
         ].filter((it): it is Effect => !!it);
         
         const now = Date.now();
-        const toRender = entries.filter(([id,]) => $config.users[id].show).map(([id, state], i) => {
+        const toRender = await Promise.all(entries.filter(([id,]) => $config.users[id].show).map(async ([id, state], i) => {
             const user = getUser(id);
-            return { id, state, user, avatar: avatars[i] };
-        }).sort((a, b) => b.user.order - a.user.order);
-        toRender.map(({ id, state, user, avatar }, index) => {
-            const speakState = $speakingState[id];
-            const timestamp = speakState?.speaking_start;
-            const talkingTime = timestamp ? now - timestamp : 0; 
-            poseStack.push();
-            poseStack.translate(user.position[0], user.position[1], 0);
-            poseStack.translate(0, 162.1 * 0.75, 0);
-            poseStack.scale(user.scale, user.scale, 1);
-            poseStack.translate(0, -162.1 * 0.75, 0);
-            poseStack.scale(0.5, 0.5, 1);
-            const time = timer.getElapsedMS() / 500 + index * 0.5;
-            const blinking = state.voice_state.self_mute || Math.sin(time) > 0.995;
-            avatar.render(poseStack, {
-                time: timer.getElapsedMS(),
-                blinking,
-                talking: speakState?.speaking,
-                talkingTime,
-                effects,
+            const avatar = await getAvatar(context, state.user);
+            return { id, state, user, avatar };
+        }));
+        toRender
+            .sort((a, b) => b.user.order - a.user.order)
+            .map(({ id, state, user, avatar }, index) => {
+                const speakState = $speakingState[id];
+                const timestamp = speakState?.speaking_start;
+                const talkingTime = timestamp ? now - timestamp : 0; 
+                poseStack.push();
+                poseStack.translate(user.position[0], user.position[1], 0);
+                poseStack.translate(0, 162.1 * 0.75, 0);
+                poseStack.scale(user.scale, user.scale, 1);
+                poseStack.translate(0, -162.1 * 0.75, 0);
+                poseStack.scale(0.5, 0.5, 1);
+                const time = timer.getElapsedMS() / 500 + index * 0.5;
+                const blinking = state.voice_state.self_mute || Math.sin(time) > 0.995;
+                avatar.render(poseStack, {
+                    time: timer.getElapsedMS(),
+                    blinking,
+                    talking: speakState?.speaking,
+                    talkingTime,
+                    effects,
+                });
+                poseStack.pop();
             });
-            poseStack.pop();
-        });
     }
 
     const avatarCache = new Map<string, {id: string, avatar: PNGTuber}>();
