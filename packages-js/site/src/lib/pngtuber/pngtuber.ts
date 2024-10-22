@@ -1,4 +1,4 @@
-import { GlBuffer, GlContext, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
+import { GlBuffer, GlContext, GlFramebuffer, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
 import { BetterMath } from '$lib/math.js';
 import { AABB3 } from '$lib/math/aabb3.js';
 import { Axis } from '$lib/math/axis.js';
@@ -216,15 +216,24 @@ function calculateDrag(time: number): number {
     return BetterMath.lerp(1, -1, a);
 }
 
+export type Effect = {
+    render: (state: AvatarState, texture: GlTexture, dest: GlFramebuffer) => void;
+}
+
 export type AvatarState = {
     time: number;
     talking: boolean;
     talkingTime: number;
     blinking: boolean;
+    effects: Effect[];
 };
 
 export class PNGTuber {
     private readonly program: GlProgram;
+    private readonly frameBufferTexture: GlTexture;
+    private readonly frameBuffer: GlFramebuffer;
+    private readonly effectTargetTexture: GlTexture;
+    private readonly effectTargetFrameBuffer: GlFramebuffer;
     private projectionMatrix: Mat4 = Mat4.IDENTITY;
 
     constructor(
@@ -240,7 +249,32 @@ export class PNGTuber {
             type: 'fragment',
         })
         this.program = glContext.createProgram([vShader, fShader]);
-        
+        this.frameBuffer = glContext.createFramebuffer();
+        this.frameBufferTexture = glContext.createTexture();
+        this.frameBufferTexture.use(() => {
+            this.frameBufferTexture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        });
+        this.frameBuffer.use(() => {
+            this.frameBuffer.attachTexture(this.frameBufferTexture);
+        });
+        this.effectTargetTexture = glContext.createTexture();
+        this.effectTargetTexture.use(() => {
+            this.effectTargetTexture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        });
+        this.effectTargetFrameBuffer = glContext.createFramebuffer();
+        this.effectTargetFrameBuffer.use(() => {
+            this.effectTargetFrameBuffer.attachTexture(this.effectTargetTexture);
+        });
     }
 
     public static async load(glContext: GlContext, data: PNGTuberData): Promise<PNGTuber> {
@@ -252,7 +286,15 @@ export class PNGTuber {
     }
 
     public render(poseStack: PoseStack, state: AvatarState) {
+        const { gl } = this.glContext;
         const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex)));
+
+        this.frameBufferTexture.use(() => {
+            this.frameBufferTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+        });
+        this.effectTargetTexture.use(() => {
+            this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+        });
         
         [...this.layers.values()].filter(layer => layer.parentId === null).forEach(layer => {
             poseStack.push();
@@ -261,12 +303,89 @@ export class PNGTuber {
         });
     
         passes.sort((a, b) => a - b);
-        passes.forEach(pass => {
-            [...this.layers.values()].filter(layer => layer.parentId === null).forEach(layer => {
-                poseStack.push();
-                this.renderLayer(layer, state, pass);
-                poseStack.pop();
+
+        const vertexBuffer = this.glContext.createBuffer();
+        vertexBuffer.bind(() => {
+            vertexBuffer.setData(new Float32Array([
+                -1, -1, 0,
+                -1, 1, 0,
+                1, -1, 0,
+                -1, 1, 0,
+                1, 1, 0,
+                1, -1, 0,
+            ]), 'static');
+        });
+        const texcoordBuffer = this.glContext.createBuffer();
+        texcoordBuffer.bind(() => {
+            texcoordBuffer.setData(new Float32Array([
+                0, 0,
+                0, 1,
+                1, 0,
+                0, 1,
+                1, 1,
+                1, 0,
+            ]), 'static');
+        });
+
+        this.frameBuffer.use(() => {
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            passes.forEach(pass => {
+                [...this.layers.values()].filter(layer => layer.parentId === null).forEach(layer => {
+                    poseStack.push();
+                    this.renderLayer(layer, state, pass);
+                    poseStack.pop();
+                });
             });
+        });
+
+        state.effects.forEach(effect => {
+            this.effectTargetFrameBuffer.use(() => {
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+            });
+            effect.render(state, this.frameBufferTexture, this.effectTargetFrameBuffer);
+            this.frameBuffer.use(() => {
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                this.program.use(() => {
+                    const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+                    textureUniform.set(this.effectTargetTexture);
+                    const projection = this.program.getUniform('u_projection').asMat4();
+                    projection.set(Mat4.IDENTITY);
+                    const model = this.program.getUniform('u_model').asMat4();
+                    model.set(Mat4.IDENTITY);
+                    const view = this.program.getUniform('u_view').asMat4();
+                    view.set(Mat4.IDENTITY);
+                    const positionAttribute = this.program.getAttribute('a_position');
+                    positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                    const uvAttribute = this.program.getAttribute('a_texcoord');
+                    uvAttribute.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                    gl.drawArrays(gl.TRIANGLES, 0, 6);
+                });
+            });
+        });
+
+        this.frameBufferTexture.use(() => {
+            const { gl } = this.glContext;
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            this.program.use(() => {
+                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+                textureUniform.set(this.frameBufferTexture);
+                const projection = this.program.getUniform('u_projection').asMat4();
+                projection.set(Mat4.IDENTITY);
+                const model = this.program.getUniform('u_model').asMat4();
+                model.set(Mat4.IDENTITY);
+                const view = this.program.getUniform('u_view').asMat4();
+                view.set(Mat4.IDENTITY);
+                const positionAttribute = this.program.getAttribute('a_position');
+                positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                const uvAttribute = this.program.getAttribute('a_texcoord');
+                uvAttribute.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+            })
         });
     }
 

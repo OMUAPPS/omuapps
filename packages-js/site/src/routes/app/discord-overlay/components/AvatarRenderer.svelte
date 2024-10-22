@@ -3,10 +3,13 @@
     import { GlProgram, type GlContext } from '$lib/components/canvas/glcontext.js';
     import { PoseStack } from '$lib/math/pose-stack.js';
     import { Vec4 } from '$lib/math/vec4.js';
-    import { PNGTuber, type PNGTuberData } from '$lib/pngtuber/pngtuber.js';
+    import { PNGTuber, type Effect, type PNGTuberData } from '$lib/pngtuber/pngtuber.js';
     import { Timer } from '$lib/timer.js';
     import { Identifier } from '@omujs/omu';
     import { DiscordOverlayApp, type Config, type VoiceStateUser } from '../discord-overlay-app.js';
+    import { createBackLightEffect } from '../effects/backlight.js';
+    import { createBloomEffect } from '../effects/bloom.js';
+    import { createShadowEffect } from '../effects/shadow.js';
     import robo from '../robo.json';
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
 
@@ -19,6 +22,9 @@
     let gridProgram: GlProgram;
     $: zoom = 2 ** $config.zoom_level;
     const timer = new Timer();
+    let shadowEffect: Effect;
+    let backlightEffect: Effect;
+    let bloomEffect: Effect;
 
     async function init(context: GlContext) {
         defaultAvatar = await PNGTuber.load(context, robo);
@@ -29,6 +35,9 @@
         for (const [, state] of entries) {
             await getAvatar(context, state.user);
         }
+        shadowEffect = await createShadowEffect(context);
+        backlightEffect = await createBackLightEffect(context);
+        bloomEffect = await createBloomEffect(context);
     }
 
     async function render(context: GlContext) {
@@ -91,6 +100,12 @@
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
         }
+
+        const effects: Effect[] = [
+            $config.effects.shadow && shadowEffect,
+            $config.effects.backlightEffect && backlightEffect,
+            $config.effects.bloom && bloomEffect,
+        ].filter((it): it is Effect => !!it);
         
         const now = Date.now();
         const toRender = entries.filter(([id,]) => $config.users[id].show).map(([id, state], i) => {
@@ -114,6 +129,7 @@
                 blinking,
                 talking: speakState?.speaking,
                 talkingTime,
+                effects,
             });
             poseStack.pop();
         });

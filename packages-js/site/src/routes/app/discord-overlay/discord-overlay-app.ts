@@ -128,6 +128,11 @@ export type Config = {
     users: {
         [key: string]: UserConfig;
     },
+    effects: {
+        shadow: boolean;
+        backlightEffect: boolean;
+        bloom: boolean;
+    },
     selected_user_id: string | null;
     user_id: string | null;
     guild_id: string | null;
@@ -139,8 +144,13 @@ export type Config = {
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: {
-        version: 1,
+        version: 2,
         users: {},
+        effects: {
+            shadow: true,
+            backlightEffect: true,
+            bloom: true,
+        },
         selected_user_id: null,
         user_id: null,
         guild_id: null,
@@ -174,6 +184,17 @@ export class DiscordOverlayApp {
                 zoom_level: 1,
                 version: 1,
             }
+        }
+        if (config.version === 1) {
+            config = {
+                ...config,
+                version: 2,
+                effects: {
+                    shadow: true,
+                    backlightEffect: true,
+                    bloom: true,
+                },
+            };
         }
         return config;
     }

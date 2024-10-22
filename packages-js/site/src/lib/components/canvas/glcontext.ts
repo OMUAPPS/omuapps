@@ -6,9 +6,10 @@ import type { Vec3 } from '$lib/math/vec3.js';
 import type { Vec4 } from '$lib/math/vec4.js';
 
 export class GLStateManager {
+    public static readonly TEXTURE_UNITS = 32;
     private program: GlProgram | null = null;
     private buffer: GlBuffer | null = null;
-    public static readonly TEXTURE_UNITS = 32;
+    private frameBuffer: GlFramebuffer | null = null;
     private textures: Array<GlTexture | null> = [];
     private activeTexture = -1;
 
@@ -38,6 +39,19 @@ export class GLStateManager {
 
     public isBufferBound(buffer: GlBuffer): boolean {
         return this.buffer === buffer;
+    }
+
+    public bindFramebuffer(framebuffer: GlFramebuffer, callback: () => void): void {
+        if (this.frameBuffer != null) {
+            throw new Error('Framebuffer already bound');
+        }
+        this.frameBuffer = framebuffer;
+        callback();
+        this.frameBuffer = null;
+    }
+
+    public isFramebufferBound(framebuffer: GlFramebuffer): boolean {
+        return this.frameBuffer === framebuffer;
     }
 
     public useTexture(
@@ -143,6 +157,12 @@ export class ProgramUniform {
     public asFloat(): Uniform<number> {
         return this.as('float', (value) => {
             this.gl.uniform1f(this.location, value);
+        });
+    }
+
+    public asFloatArray(): Uniform<Iterable<GLfloat>> {
+        return this.as('float', (value) => {
+            this.gl.uniform1fv(this.location, value);
         });
     }
 
@@ -477,6 +497,50 @@ export class GlTexture {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, FILTERS[params.magFilter]);
         }
     }
+
+    public ensureSize(width: number, height: number): void {
+        if (!this.stateManager.isTextureBound(this)) {
+            throw new Error('Texture not bound');
+        }
+        if (width !== this.width || height !== this.height) {
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+            this.width = width;
+            this.height = height;
+        }
+    }
+}
+
+export class GlFramebuffer {
+
+    constructor(
+        public readonly stateManager: GLStateManager,
+        public readonly gl: WebGL2RenderingContext,
+        public readonly framebuffer: WebGLFramebuffer,
+    ) {
+    }
+
+    public static create(stateManager: GLStateManager, gl: WebGL2RenderingContext): GlFramebuffer {
+        const framebuffer = gl.createFramebuffer();
+        if (framebuffer == null) {
+            throw new Error('Failed to create framebuffer');
+        }
+        return new GlFramebuffer(stateManager, gl, framebuffer);
+    }
+
+    public use(callback: () => void): void {
+        this.stateManager.bindFramebuffer(this, () => {
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+            callback();
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        });
+    }
+
+    public attachTexture(texture: GlTexture): void {
+        if (!this.stateManager.isFramebufferBound(this)) {
+            throw new Error('Framebuffer not bound');
+        }
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, texture.texture, 0);
+    }
 }
 
 export class GlContext {
@@ -521,5 +585,9 @@ export class GlContext {
 
     public createTexture(): GlTexture {
         return GlTexture.create(this.stateManager, this.gl);
+    }
+
+    public createFramebuffer(): GlFramebuffer {
+        return GlFramebuffer.create(this.stateManager, this.gl);
     }
 }

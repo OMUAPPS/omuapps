@@ -7,6 +7,7 @@
     import { onDestroy } from 'svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
     import CameraControls from './components/CameraControls.svelte';
+    import EffectControls from './components/EffectControls.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
     import UserList from './components/UserList.svelte';
     import { DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
@@ -250,6 +251,7 @@
                 <UserDragControl {dimentions} {overlayApp} {id} {state}/>
             {/each}
         {/if}
+        <EffectControls {overlayApp} />
         <CameraControls {overlayApp} />
         {#if message}
             <div class="message">
