@@ -2,7 +2,6 @@
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { GlProgram, type GlContext } from '$lib/components/canvas/glcontext.js';
     import { PoseStack } from '$lib/math/pose-stack.js';
-    import { Vec2 } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
     import { PNGTuber, type PNGTuberData } from '$lib/pngtuber/pngtuber.js';
     import { Timer } from '$lib/timer.js';
@@ -51,6 +50,7 @@
         poseStack.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1)
         poseStack.translate(gl.canvas.width / 2, gl.canvas.height / 2, 0);
         poseStack.scale(zoom, zoom, 1);
+        poseStack.translate($config.camera_position[0], $config.camera_position[1], 0);
 
         if (showGrid) {
             const vertexBuffer = context.createBuffer();
@@ -77,10 +77,9 @@
             });
     
             gridProgram.use(() => {
-                const resolutionUniform = gridProgram.getUniform('u_resolution').asVec2();
-                resolutionUniform.set(new Vec2(gl.canvas.width, gl.canvas.height));
-                const projectionUniform = gridProgram.getUniform('u_projection').asMat4();
-                projectionUniform.set(poseStack.get().inverse());
+                const transformUniform = gridProgram.getUniform('u_transform').asMat4();
+                const matrix = poseStack.get().inverse();
+                transformUniform.set(matrix);
                 const gridColorUniform = gridProgram.getUniform('u_gridColor').asVec4();
                 gridColorUniform.set(new Vec4(230 / 255, 230 / 255, 230 / 255, 1));
                 const gridBackgroundUniform = gridProgram.getUniform('u_backgroundColor').asVec4();
@@ -104,7 +103,6 @@
             const talkingTime = timestamp ? now - timestamp : 0; 
             poseStack.push();
             poseStack.translate(user.position[0], user.position[1], 0);
-            poseStack.translate($config.camera_position[0], $config.camera_position[1], 0);
             poseStack.translate(0, 162.1 * 0.75, 0);
             poseStack.scale(user.scale, user.scale, 1);
             poseStack.translate(0, -162.1 * 0.75, 0);

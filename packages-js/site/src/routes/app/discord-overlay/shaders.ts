@@ -2,8 +2,6 @@ export const GRID_VERTEX_SHADER = `#version 300 es
 
 precision highp float;
 
-uniform mat4 u_projection;
-
 in vec3 a_position;
 in vec2 a_texcoord;
 
@@ -20,8 +18,7 @@ export const GRID_FRAGMENT_SHADER = `#version 300 es
 
 precision highp float;
 
-uniform mat4 u_projection;
-uniform vec2 u_resolution;
+uniform mat4 u_transform;
 uniform vec4 u_gridColor;
 uniform vec4 u_backgroundColor;
 
@@ -30,8 +27,8 @@ in vec2 v_texcoord;
 out vec4 outColor;
 
 void main() {
-    vec2 coord = (v_texcoord * 2.0 - 1.0) * u_resolution;
-    vec4 projected = u_projection * vec4(coord, 0.0, 2.0);
+    vec2 coord = (v_texcoord * 2.0 - 1.0) * 2.0;
+    vec4 projected = u_transform * vec4(coord, 0.0, 2.0);
     vec2 gridCoord = mod(projected.xy, 100.0);
     vec2 gridDist = min(gridCoord, 100.0 - gridCoord);
     float gridDistSq = dot(gridDist, gridDist);
@@ -39,6 +36,7 @@ void main() {
     float gridAlpha = smoothstep(0.0, 1.0, 1.0 - gridDistSq / 15.0);
     vec4 gridColor = mix(u_backgroundColor, u_gridColor, gridAlpha);
 
-    outColor = gridColor;
+    float distFromCenter = (sqrt(length(coord.xy)) + 1.0) / 10.0;
+    outColor = gridColor * min(1.0, distFromCenter);
 }
 `;
