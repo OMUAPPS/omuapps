@@ -17,24 +17,20 @@
             visibleUsers.forEach(({ user }, i) => {
                 user.position = [start + (i + 0.5) * gap, 0];
             });
-            $config.camera_position = [0, 0];
         }}>
             <Tooltip>
                 アバターを整列
             </Tooltip>
             <i class="ti ti-keyframes"/>
         </button>
-        <button on:click={() => $config.camera_position = [0, 0]} disabled={$config.camera_position[0] === 0 && $config.camera_position[1] === 0}>
+        <button on:click={() => {
+            $config.camera_position = [0, 0];
+            $config.zoom_level = 0;
+        }} disabled={$config.zoom_level === 0 && $config.camera_position[0] === 0 && $config.camera_position[1] === 0}>
             <Tooltip>
-                カメラ位置をリセット
+                カメラをリセット
             </Tooltip>
             <i class="ti ti-compass"/>
-        </button>
-        <button on:click={() => $config.zoom_level = 0} disabled={$config.zoom_level === 0}>
-            <Tooltip>
-                ズームをリセット
-            </Tooltip>
-            <i class="ti ti-search"/>
         </button>
     </div>
     <span class="zoom-level">
