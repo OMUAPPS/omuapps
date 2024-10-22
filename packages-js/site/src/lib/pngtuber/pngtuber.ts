@@ -368,10 +368,6 @@ export class PNGTuber {
         });
 
         this.frameBufferTexture.use(() => {
-            const { gl } = this.glContext;
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
             this.program.use(() => {
                 const textureUniform = this.program.getUniform('u_texture').asSampler2D();
                 textureUniform.set(this.frameBufferTexture);
