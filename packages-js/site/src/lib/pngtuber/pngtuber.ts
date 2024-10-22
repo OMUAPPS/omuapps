@@ -234,6 +234,8 @@ export class PNGTuber {
     private readonly frameBuffer: GlFramebuffer;
     private readonly effectTargetTexture: GlTexture;
     private readonly effectTargetFrameBuffer: GlFramebuffer;
+    private readonly vertexBuffer: GlBuffer;
+    private readonly texcoordBuffer: GlBuffer;
     private projectionMatrix: Mat4 = Mat4.IDENTITY;
 
     constructor(
@@ -275,6 +277,28 @@ export class PNGTuber {
         this.effectTargetFrameBuffer.use(() => {
             this.effectTargetFrameBuffer.attachTexture(this.effectTargetTexture);
         });
+        this.vertexBuffer = this.glContext.createBuffer();
+        this.vertexBuffer.bind(() => {
+            this.vertexBuffer.setData(new Float32Array([
+                -1, -1, 0,
+                -1, 1, 0,
+                1, -1, 0,
+                -1, 1, 0,
+                1, 1, 0,
+                1, -1, 0,
+            ]), 'static');
+        });
+        this.texcoordBuffer = this.glContext.createBuffer();
+        this.texcoordBuffer.bind(() => {
+            this.texcoordBuffer.setData(new Float32Array([
+                0, 0,
+                0, 1,
+                1, 0,
+                0, 1,
+                1, 1,
+                1, 0,
+            ]), 'static');
+        });
     }
 
     public static async load(glContext: GlContext, data: PNGTuberData): Promise<PNGTuber> {
@@ -303,29 +327,6 @@ export class PNGTuber {
         });
     
         passes.sort((a, b) => a - b);
-
-        const vertexBuffer = this.glContext.createBuffer();
-        vertexBuffer.bind(() => {
-            vertexBuffer.setData(new Float32Array([
-                -1, -1, 0,
-                -1, 1, 0,
-                1, -1, 0,
-                -1, 1, 0,
-                1, 1, 0,
-                1, -1, 0,
-            ]), 'static');
-        });
-        const texcoordBuffer = this.glContext.createBuffer();
-        texcoordBuffer.bind(() => {
-            texcoordBuffer.setData(new Float32Array([
-                0, 0,
-                0, 1,
-                1, 0,
-                0, 1,
-                1, 1,
-                1, 0,
-            ]), 'static');
-        });
 
         this.frameBuffer.use(() => {
             gl.clearColor(0, 0, 0, 0);
@@ -358,9 +359,9 @@ export class PNGTuber {
                     const view = this.program.getUniform('u_view').asMat4();
                     view.set(Mat4.IDENTITY);
                     const positionAttribute = this.program.getAttribute('a_position');
-                    positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                    positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                     const uvAttribute = this.program.getAttribute('a_texcoord');
-                    uvAttribute.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                    uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                     gl.drawArrays(gl.TRIANGLES, 0, 6);
                 });
             });
@@ -381,9 +382,9 @@ export class PNGTuber {
                 const view = this.program.getUniform('u_view').asMat4();
                 view.set(Mat4.IDENTITY);
                 const positionAttribute = this.program.getAttribute('a_position');
-                positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 const uvAttribute = this.program.getAttribute('a_texcoord');
-                uvAttribute.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
         });
@@ -411,7 +412,6 @@ export class PNGTuber {
                 const textureUniform = this.program.getUniform('u_texture').asSampler2D();
                 textureUniform.set(layer.imageData);
                 const projection = this.program.getUniform('u_projection').asMat4();
-                // projection.set(this.projectionMatrix);
                 projection.set(Mat4.IDENTITY);
                 const model = this.program.getUniform('u_model').asMat4();
                 model.set(layer.matrix);
