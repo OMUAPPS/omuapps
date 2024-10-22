@@ -6,6 +6,7 @@
     import { Combobox, Spinner, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
+    import CameraControls from './components/CameraControls.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
     import UserList from './components/UserList.svelte';
     import { DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
@@ -249,43 +250,7 @@
                 <UserDragControl {dimentions} {overlayApp} {id} {state}/>
             {/each}
         {/if}
-        <div class="camera-controls">
-            <div class="buttons">
-                <button on:click={() => {
-                    const voiceUsers = Object.keys($voiceState);
-                    const visibleUsers = voiceUsers.filter((id) => $config.users[id].show).map((id) => ({id, user: $config.users[id]}));
-                    const gap = 500;
-                    const totalWidth = visibleUsers.length * gap;
-                    const start = -totalWidth / 2;
-                    visibleUsers.forEach(({ user }, i) => {
-                        user.position = [start + (i + 0.5) * gap, 0];
-                    });
-                    $config.camera_position = [0, 0];
-                }}>
-                    <Tooltip>
-                        アバターを整列
-                    </Tooltip>
-                    <i class="ti ti-keyframes"/>
-                </button>
-                <button on:click={() => $config.camera_position = [0, 0]}>
-                    <Tooltip>
-                        カメラ位置をリセット
-                    </Tooltip>
-                    <i class="ti ti-compass"/>
-                </button>
-                <button on:click={() => $config.zoom_level = 0}>
-                    <Tooltip>
-                        ズームをリセット
-                    </Tooltip>
-                    <i class="ti ti-search"/>
-                </button>
-            </div>
-            <span class="zoom-level">
-                <i class="ti ti-zoom-out"/>
-                <input type="range" bind:value={$config.zoom_level} min={-2} max={2} step={0.01}/>
-                <i class="ti ti-zoom-in"/>
-            </span>
-        </div>
+        <CameraControls {overlayApp} />
         {#if message}
             <div class="message">
                 {#if message.type === 'loading'}
@@ -386,57 +351,6 @@
         }
     }
 
-    .camera-controls {
-        position: absolute;
-        bottom: 1rem;
-        right: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 1rem;
-
-        > .zoom-level {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        > .buttons {
-            display: flex;
-            gap: 0.5rem;
-
-            > button {
-                background: var(--color-bg-2);
-                color: var(--color-1);
-                border: none;
-                outline: none;
-                padding: 0.5rem;
-                border-radius: 999rem;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-
-                &:hover {
-                    background: var(--color-1);
-                    color: var(--color-bg-2);
-                }
-
-                &:active {
-                    cursor: grabbing;
-                }
-            }
-        }
-
-        &:hover {
-            > .buttons > button {
-                outline: 1px solid var(--color-outline);
-            }
-        }
-    }
-
     .message {
         position: absolute;
         top: 10rem;
@@ -488,13 +402,6 @@
             font-size: 1rem;
             color: var(--color-1);
             margin-top: 2rem;
-        }
-    }
-
-    @container (width < 800px) {
-        .container {
-            flex-direction: column-reverse;
-            gap: 1rem;
         }
     }
 </style>
