@@ -247,7 +247,7 @@
             draggable="false"
         />
         {#if dimentions}
-            {#each Object.entries($voiceState).filter(([id, ]) => $config.users[id]?.show) as [id, state] (id)}
+            {#each Object.entries($voiceState).filter(([id, ]) => $config.users[id]?.show).sort(([a], [b]) => $config.users[b].order - $config.users[a].order) as [id, state] (id)}
                 <UserDragControl {dimentions} {overlayApp} {id} {state}/>
             {/each}
         {/if}
