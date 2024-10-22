@@ -37,6 +37,7 @@
         if (!draggedItem) return;
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
+        entryElements = Object.fromEntries(Object.entries(entryElements).filter(([, element]) => element));
         lastMouse = event.clientY;
         const listRect = list!.getBoundingClientRect();
         const entryRect = entryElements[draggedItem]!.getBoundingClientRect();
