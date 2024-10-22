@@ -12,8 +12,9 @@
         const totalWidth = visibleUsers.length * gap;
         const start = -totalWidth / 2;
         visibleUsers.forEach(({ user }, i) => {
-            user.position = [start + (i + 0.5) * gap, 0];
+            user.position = [start + (i + 0.5) * gap, 150];
         });
+        $config = { ...$config };
     }
 
     function resetCamera() {
