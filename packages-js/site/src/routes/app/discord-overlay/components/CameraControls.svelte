@@ -4,29 +4,44 @@
 
     export let overlayApp: DiscordOverlayApp;
     const { config, voiceState } = overlayApp;
+
+    function alignAvatars() {
+        const voiceUsers = Object.keys($voiceState);
+        const visibleUsers = voiceUsers.filter((id) => $config.users[id].show).map((id) => ({id, user: $config.users[id]}));
+        const gap = 500;
+        const totalWidth = visibleUsers.length * gap;
+        const start = -totalWidth / 2;
+        visibleUsers.forEach(({ user }, i) => {
+            user.position = [start + (i + 0.5) * gap, 0];
+        });
+    }
+
+    function resetCamera() {
+        $config.camera_position = [0, 0];
+        $config.zoom_level = 0;
+    }
+
+    function onKeyDown(e: KeyboardEvent) {
+        if (e.key === 'r') {
+            resetCamera();
+        }
+        if (e.key === 'a') {
+            alignAvatars();
+        }
+    }
 </script>
+
+<svelte:window on:keydown={onKeyDown} />
 
 <div class="camera-controls">
     <div class="buttons">
-        <button on:click={() => {
-            const voiceUsers = Object.keys($voiceState);
-            const visibleUsers = voiceUsers.filter((id) => $config.users[id].show).map((id) => ({id, user: $config.users[id]}));
-            const gap = 500;
-            const totalWidth = visibleUsers.length * gap;
-            const start = -totalWidth / 2;
-            visibleUsers.forEach(({ user }, i) => {
-                user.position = [start + (i + 0.5) * gap, 0];
-            });
-        }}>
+        <button on:click={alignAvatars}>
             <Tooltip>
                 アバターを整列
             </Tooltip>
             <i class="ti ti-keyframes"/>
         </button>
-        <button on:click={() => {
-            $config.camera_position = [0, 0];
-            $config.zoom_level = 0;
-        }} disabled={$config.zoom_level === 0 && $config.camera_position[0] === 0 && $config.camera_position[1] === 0}>
+        <button on:click={resetCamera} disabled={$config.zoom_level === 0 && $config.camera_position[0] === 0 && $config.camera_position[1] === 0}>
             <Tooltip>
                 カメラをリセット
             </Tooltip>
