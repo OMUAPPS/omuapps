@@ -1,4 +1,5 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
+import { BetterMath } from '$lib/math.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import type { AvatarState, Effect } from '$lib/pngtuber/pngtuber.js';
 
@@ -109,6 +110,7 @@ export async function createBackLightEffect(context: GlContext): Promise<Effect>
     const WEIGHTS_SIZE = 32;
     const WEIGHTS = calculateGaussianWeights(WEIGHTS_SIZE);
     const STEP = 3.0;
+    const ROTAION = BetterMath.toRadians(65);
 
     function render(state: AvatarState, texture: GlTexture, dest: GlFramebuffer) {
         verticalPassTexture.use(() => {
@@ -133,7 +135,7 @@ export async function createBackLightEffect(context: GlContext): Promise<Effect>
                 position.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 texcoord.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 texsizeUniform.set(texelSize);
-                directionUniform.set(new Vec2(0, 1));
+                directionUniform.set(new Vec2(0, 1).rotate(ROTAION));
                 radiusUniform.set(16.0);
                 stepUniform.set(STEP);
                 weightsUniform.set(WEIGHTS);
@@ -161,7 +163,7 @@ export async function createBackLightEffect(context: GlContext): Promise<Effect>
                 position.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 texcoord.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 texsizeUniform.set(texelSize);
-                directionUniform.set(new Vec2(1, 0));
+                directionUniform.set(new Vec2(1, 0).rotate(ROTAION));
                 radiusUniform.set(16.0);
                 stepUniform.set(STEP);
                 weightsUniform.set(WEIGHTS);

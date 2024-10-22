@@ -27,4 +27,10 @@ export class Vec2 {
     public min(other: Vec2): Vec2 {
         return new Vec2(Math.min(this.x, other.x), Math.min(this.y, other.y));
     }
+
+    public rotate(angle: number): Vec2 {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return new Vec2(this.x * cos - this.y * sin, this.x * sin + this.y * cos);
+    }
 }
