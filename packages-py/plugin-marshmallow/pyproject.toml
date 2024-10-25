@@ -1,11 +1,11 @@
 [project]
 name = "omuplugin_marshmallow"
-version = "0.7.12"
+version = "0.7.13"
 description = "マシュマロのメッセージを取得するためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu>=0.7.12", "marshmallowqa.py>=0.7.2"]
+dependencies = ["loguru>=0.7.2", "omu>=0.7.13", "marshmallowqa.py>=0.7.2"]
 readme = "README.md"
 requires-python = ">= 3.12"
 
