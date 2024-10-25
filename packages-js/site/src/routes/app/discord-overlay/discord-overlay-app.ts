@@ -91,7 +91,7 @@ export type Guild = {
 type GetGuildsResponseData = {
     guilds: Guild[];
 }
-const GET_GUILDS_ENDPOINT_TYPE = EndpointType.createJson<{user_id: string}, GetGuildsResponseData>(PLUGIN_ID, {
+const GET_GUILDS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string }, GetGuildsResponseData>(PLUGIN_ID, {
     name: 'get_guilds',
 });
 export type Channel = {
@@ -102,10 +102,10 @@ export type Channel = {
 type GetChannelsResponseData = {
     channels: Channel[];
 }
-const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{user_id: string, guild_id: string}, GetChannelsResponseData>(PLUGIN_ID, {
+const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, guild_id: string }, GetChannelsResponseData>(PLUGIN_ID, {
     name: 'get_channels',
 });
-const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{user_id: string, channel_id: string}, null>(PLUGIN_ID, {
+const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, channel_id: string }, null>(PLUGIN_ID, {
     name: 'set_vc',
 });
 const WAIT_FOR_READY_ENDPOINT_TYPE = EndpointType.createJson<null, null>(PLUGIN_ID, {
@@ -147,9 +147,9 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
         version: 2,
         users: {},
         effects: {
-            shadow: true,
-            backlightEffect: true,
-            bloom: true,
+            shadow: false,
+            backlightEffect: false,
+            bloom: false,
         },
         selected_user_id: null,
         user_id: null,
@@ -190,9 +190,9 @@ export class DiscordOverlayApp {
                 ...config,
                 version: 2,
                 effects: {
-                    shadow: true,
-                    backlightEffect: true,
-                    bloom: true,
+                    shadow: false,
+                    backlightEffect: false,
+                    bloom: false,
                 },
             };
         }
