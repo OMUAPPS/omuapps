@@ -7,8 +7,11 @@
 
     function alignAvatars() {
         const voiceUsers = Object.keys($voiceState);
-        const visibleUsers = voiceUsers.filter((id) => $config.users[id].show).map((id) => ({id, user: $config.users[id]}));
-        const gap = 500;
+        const visibleUsers = voiceUsers
+            .filter((id) => $config.users[id].show)
+            .map((id) => ({id, user: $config.users[id]}))
+            .sort((a, b) => a.user.order - b.user.order);
+        const gap = Math.min(300, 1000 / visibleUsers.length);
         const totalWidth = visibleUsers.length * gap;
         const start = -totalWidth / 2;
         visibleUsers.forEach(({ user }, i) => {
