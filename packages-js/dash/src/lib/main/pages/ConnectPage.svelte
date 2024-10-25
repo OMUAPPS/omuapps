@@ -14,14 +14,14 @@
         <div class="left">
             <h3>
                 {$t('page.connect.channels')}
-                <i class="ti ti-user" />
+                <i class="ti ti-user"></i>
             </h3>
             <div class="channels">
                 <PanelChannels />
             </div>
             <h3>
                 {$t('page.connect.rooms')}
-                <i class="ti ti-bolt" />
+                <i class="ti ti-bolt"></i>
             </h3>
             <div class="rooms">
                 <PanelRooms />
@@ -30,7 +30,7 @@
         <dir class="right">
             <h3>
                 {$t('page.connect.chat')}
-                <i class="ti ti-message" />
+                <i class="ti ti-message"></i>
             </h3>
             <div class="chat">
                 <PanelMessages />

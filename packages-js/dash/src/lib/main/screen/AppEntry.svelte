@@ -25,7 +25,7 @@
                 <img src={icon} alt="" />
             {/if}
         {:else}
-            <i class="ti ti-package" />
+            <i class="ti ti-package"></i>
         {/if}
     </div>
     <div>
@@ -43,7 +43,7 @@
         <Tooltip>
             <span>{$t('general.delete')}</span>
         </Tooltip>
-        <i class="ti ti-trash" />
+        <i class="ti ti-trash"></i>
     </button>
 </li>
 

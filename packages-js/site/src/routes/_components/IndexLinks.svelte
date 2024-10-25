@@ -6,25 +6,25 @@
     <Tooltip>
         <p>OMUAPPSのソースコード</p>
     </Tooltip>
-    <i class="ti ti-brand-github" />
+    <i class="ti ti-brand-github"></i>
     <p>オープンソース</p>
-    <i class="ti ti-external-link" />
+    <i class="ti ti-external-link"></i>
 </a>
 <a class="card" href="https://discord.gg/MZKvbPpsuK">
     <Tooltip>
         <p>OMUAPPSのDiscordコミュニティ</p>
     </Tooltip>
-    <i class="ti ti-brand-discord" />
+    <i class="ti ti-brand-discord"></i>
     <p>コミュニティ</p>
-    <i class="ti ti-external-link" />
+    <i class="ti ti-external-link"></i>
 </a>
 <a class="card" href="https://x.com/omuapps">
     <Tooltip>
         <p>OMUAPPSの情報発信</p>
     </Tooltip>
-    <i class="ti ti-brand-x" />
+    <i class="ti ti-brand-x"></i>
     <p>情報発信</p>
-    <i class="ti ti-external-link" />
+    <i class="ti ti-external-link"></i>
 </a>
 
 <style lang="scss">

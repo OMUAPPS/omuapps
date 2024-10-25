@@ -15,7 +15,7 @@
             <a href={entry.info.package_url} target="_blank" rel="noopener noreferrer">
                 {entry.info.name}
             </a>
-            <i class="ti ti-external-link" />
+            <i class="ti ti-external-link"></i>
             <span class="version">
                 v{entry.info.version}
             </span>

@@ -131,7 +131,7 @@
         </div>
         <button on:click={skip} class="skip">
             {$t('setup.skip')}
-            <i class="ti ti-arrow-right" />
+            <i class="ti ti-arrow-right"></i>
         </button>
     </div>
 </Screen>

@@ -144,10 +144,10 @@
     >
         {#if message.acknowledged}
             <Tooltip>確認を解除</Tooltip>
-            <i class="ti ti-check" />
+            <i class="ti ti-check"></i>
         {:else}
             <Tooltip>確認済みにする</Tooltip>
-            <i class="ti ti-check" />
+            <i class="ti ti-check"></i>
         {/if}
     </button>
     <button
@@ -159,10 +159,10 @@
     >
         {#if message.liked}
             <Tooltip>お気に入りを解除</Tooltip>
-            <i class="ti ti-heart-filled" />
+            <i class="ti ti-heart-filled"></i>
         {:else}
             <Tooltip>お気に入りにする</Tooltip>
-            <i class="ti ti-heart" />
+            <i class="ti ti-heart"></i>
         {/if}
     </button>
     <a
@@ -171,7 +171,7 @@
         rel="noopener noreferrer"
     >
         <Tooltip>ブラウザで開く</Tooltip>
-        <i class="ti ti-external-link" />
+        <i class="ti ti-external-link"></i>
     </a>
     <button
         class="scroll"
@@ -187,7 +187,7 @@
                 スクロール同期を有効にする
             {/if}
         </Tooltip>
-        <i class="ti ti-arrow-autofit-down" />
+        <i class="ti ti-arrow-autofit-down"></i>
     </button>
     <button
         class:active={$config.showPointer}
@@ -202,7 +202,7 @@
                 ポインターを表示する
             {/if}
         </Tooltip>
-        <i class="ti ti-pointer" />
+        <i class="ti ti-pointer"></i>
     </button>
     <button
         class="close"
@@ -211,7 +211,7 @@
         }}
     >
         <Tooltip>メッセージを閉じる</Tooltip>
-        <i class="ti ti-x" />
+        <i class="ti ti-x"></i>
     </button>
 </div>
 <div bind:this={container}>
@@ -228,7 +228,7 @@
             <button class="next" on:click={() => next()}>
                 <Tooltip>メッセージを確認済みにして次のメッセージに進む</Tooltip>
                 確認して次へ
-                <i class="ti ti-arrow-right" />
+                <i class="ti ti-arrow-right"></i>
             </button>
         {/if}
         {#if !message.replied}
@@ -239,7 +239,7 @@
                         {replyText ? 'メッセージに返信して次のメッセージに進む' : '返信を入力して送信'}
                     </Tooltip>
                     送信して次へ
-                    <i class="ti ti-arrow-right" />
+                    <i class="ti ti-arrow-right"></i>
                 </button>
             {:else}
                 <small class="premium">
@@ -247,7 +247,7 @@
                         マシュマロ公式サイトからプレミアム会員に入会することができます。
                     </Tooltip>
                     マシュマロのプレミアム会員になると返信機能が使えます
-                    <i class="ti ti-crown" />
+                    <i class="ti ti-crown"></i>
                 </small>
             {/if}
         {/if}
@@ -257,7 +257,7 @@
             document.execCommand('copy');
         }}>
             <Tooltip>メッセージをコピー</Tooltip>
-            <i class="ti ti-clipboard" />
+            <i class="ti ti-clipboard"></i>
         </button>
     </div>
 </div>

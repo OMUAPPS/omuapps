@@ -7,7 +7,7 @@
 
 <FlexColWrapper gap>
     <h2>
-        <i class="ti ti-letter-v" />
+        <i class="ti ti-letter-v"></i>
         {$t('settings.about.version')}
     </h2>
     {version}{DEV ? ' (dev)' : ''}

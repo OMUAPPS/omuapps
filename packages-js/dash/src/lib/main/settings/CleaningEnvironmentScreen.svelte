@@ -80,16 +80,16 @@
                     {JSON.stringify(progress)}
                     {#if progress?.progress && progress?.total}
                         {progress?.progress} / {progress?.total}
-                        <progress value={progress?.progress} max={progress?.total} />
+                        <progress value={progress?.progress} max={progress?.total}></progress>
                     {/if}
                 </small>
             {:then}
                 <h1>
                     環境の削除が完了しました
-                    <i class="ti ti-check" />
+                    <i class="ti ti-check"></i>
                 </h1>
             {:catch error}
-                <i class="ti ti-alert-circle" />
+                <i class="ti ti-alert-circle"></i>
                 {#if errorMessage}
                     {@const error = ERROR_MESSAGES[errorMessage.type]}
                     <div class="error">
@@ -104,14 +104,14 @@
                             invoke('open_python_path');
                         }}>
                             フォルダーを開く
-                            <i class="ti ti-folder" />
+                            <i class="ti ti-folder"></i>
                         </button>
                     {:else if errorMessage.type === 'RemoveUvError'}
                         <button on:click={() => {
                             invoke('open_uv_path');
                         }}>
                             フォルダーを開く
-                            <i class="ti ti-folder" />
+                            <i class="ti ti-folder"></i>
                         </button>
                     {/if}
                 {:else}
@@ -122,13 +122,13 @@
                         cleanPromise = cleanEnvironment();
                     }}>
                         もう一度試す
-                        <i class="ti ti-reload" />
+                        <i class="ti ti-reload"></i>
                     </button>
                     <button on:click={() => {
                         relaunch();
                     }}>
                         再起動
-                        <i class="ti ti-rotate" />
+                        <i class="ti ti-rotate"></i>
                     </button>
                 </div>
             {/await}

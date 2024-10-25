@@ -60,7 +60,7 @@
             <h3>
                 <span>
                     募集設定
-                    <i class="ti ti-users" />
+                    <i class="ti ti-users"></i>
                 </span>
                 <button
                     class:recruiting={$state.type === 'recruiting'}
@@ -68,10 +68,10 @@
                 >
                     {#if $state.type === 'recruiting'}
                         募集を終了
-                        <i class="ti ti-player-pause" />
+                        <i class="ti ti-player-pause"></i>
                     {:else}
                         募集を開始
-                        <i class="ti ti-player-play" />
+                        <i class="ti ti-player-play"></i>
                     {/if}
                 </button>
             </h3>
@@ -92,13 +92,13 @@
             <h3>
                 <span>
                     エントリー
-                    <i class="ti ti-list-numbers" />
+                    <i class="ti ti-list-numbers"></i>
                 </span>
                 <span class="buttons">
                     <button on:click={() => roulette.clearEntries()}>
                         <Tooltip>エントリーをすべて消す</Tooltip>
                         クリア
-                        <i class="ti ti-trash" />
+                        <i class="ti ti-trash"></i>
                     </button>
                     <button
                         on:click={() => {
@@ -115,7 +115,7 @@
                     >
                         <Tooltip>エントリーを増やす</Tooltip>
                         追加
-                        <i class="ti ti-plus" />
+                        <i class="ti ti-plus"></i>
                     </button>
                 </span>
             </h3>
@@ -125,7 +125,7 @@
             <h3>
                 <span>
                     配信ソフトに追加する
-                    <i class="ti ti-arrow-bar-to-down" />
+                    <i class="ti ti-arrow-bar-to-down"></i>
                 </span>
             </h3>
             <AssetButton dimensions={{width: 1080, height: 1080}} {omu} {obs} />
@@ -165,12 +165,12 @@
                     <SpinButton {roulette} />
                 </div>
                 <div class="state">
-                    <span class:current={$state.type === 'spin-start'}>抽選開始</span><i class="ti ti-chevron-right" />
-                    <span class:current={$state.type === 'recruiting'}>募集中</span><i class="ti ti-chevron-right" />
+                    <span class:current={$state.type === 'spin-start'}>抽選開始</span><i class="ti ti-chevron-right"></i>
+                    <span class:current={$state.type === 'recruiting'}>募集中</span><i class="ti ti-chevron-right"></i>
                     <span class:current={$state.type === 'recruiting-end'}>募集終了</span>
                     <br>
-                    <span class:current={$state.type === 'idle'}>待機中</span><i class="ti ti-chevron-right" />
-                    <span class:current={$state.type === 'spinning'}>抽選中 <small>({$config.duration}秒)</small></span><i class="ti ti-chevron-right" />
+                    <span class:current={$state.type === 'idle'}>待機中</span><i class="ti ti-chevron-right"></i>
+                    <span class:current={$state.type === 'spinning'}>抽選中 <small>({$config.duration}秒)</small></span><i class="ti ti-chevron-right"></i>
                     <span class:current={$state.type === 'spin-result'}>結果</span>
                 </div>
             </div>

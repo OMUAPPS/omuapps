@@ -112,7 +112,7 @@
         <div class="emojis">
             <button on:click={() => fileDrop.click()}>
                 ファイルを選択してアップロード
-                <i class="ti ti-upload" />
+                <i class="ti ti-upload"></i>
             </button>
             <input
                 type="file"
@@ -126,7 +126,7 @@
             />
             {#if uploading > 0}
                 <span>
-                    <i class="ti ti-upload" />
+                    <i class="ti ti-upload"></i>
                     アップロード中…
                 </span>
             {/if}

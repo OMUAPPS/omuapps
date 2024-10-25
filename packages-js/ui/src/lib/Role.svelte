@@ -19,9 +19,9 @@
         <img src={role.iconUrl} alt="role icon" />
     {:else}
         {#if role.isOwner}
-            <i class="ti ti-crown" />
+            <i class="ti ti-crown"></i>
         {:else if role.isModerator}
-            <i class="ti ti-shield" />
+            <i class="ti ti-shield"></i>
         {/if}
         {role.name}
     {/if}

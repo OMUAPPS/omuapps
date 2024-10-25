@@ -30,11 +30,11 @@
         <div class="actions">
             <button on:click={reject} class="reject">
                 キャンセル
-                <i class="ti ti-x" />
+                <i class="ti ti-x"></i>
             </button>
             <button on:click={accept} class="accept">
                 追加
-                <i class="ti ti-check" />
+                <i class="ti ti-check"></i>
             </button>
         </div>
     </div>

@@ -29,16 +29,16 @@
         <small>
             {#if current}
                 クリックで選択を解除
-                <i class="ti ti-x" />
+                <i class="ti ti-x"></i>
             {:else}
                 クリックでメッセージを表示
-                <i class="ti ti-chevron-right" />
+                <i class="ti ti-chevron-right"></i>
             {/if}
         </small>
     </Tooltip>
     <p>{entry.content}</p>
     {#if current}
-        <i class="ti ti-chevron-right" />
+        <i class="ti ti-chevron-right"></i>
     {/if}
 </button>
 

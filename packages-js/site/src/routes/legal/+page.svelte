@@ -6,7 +6,7 @@
     <header slot="header">
         <h1>
             法的事項
-            <i class="ti ti-file" />
+            <i class="ti ti-file"></i>
         </h1>
         <small> 使っていただくにあたって </small>
     </header>
@@ -14,13 +14,13 @@
         <a href="/legal/privacy">
             <p>
                 プライバシーポリシー
-                <i class="ti ti-external-link" />
+                <i class="ti ti-external-link"></i>
             </p>
         </a>
         <a href="/legal/terms">
             <p>
                 利用規約
-                <i class="ti ti-external-link" />
+                <i class="ti ti-external-link"></i>
             </p>
         </a>
     </main>

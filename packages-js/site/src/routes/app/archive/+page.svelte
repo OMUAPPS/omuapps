@@ -37,7 +37,7 @@
                     <h3>出力ディレクトリ</h3>
                     <input type="text" bind:value={$config.output_dir} />
                     <button on:click={() => archiveApp.openOutputDir()}>
-                        <i class="ti ti-folder-open" />
+                        <i class="ti ti-folder-open"></i>
                     </button>
                 </div>
             </div>
@@ -45,7 +45,7 @@
                 <a href="https://github.com/yt-dlp/yt-dlp" target="_blank">
                     <h3>
                         yt-dlp
-                        <i class="ti ti-external-link" />
+                        <i class="ti ti-external-link"></i>
                     </h3>
                 </a>
                 <p>このアプリは yt-dlp を使用しています</p>

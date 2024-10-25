@@ -22,19 +22,19 @@
             {:else}
                 回す
             {/if}
-            <i class="ti ti-rotate-360" />
+            <i class="ti ti-rotate-360"></i>
         </button>
     {:else if $state.type === 'spin-result'}
         <button on:click={() => roulette.stop()}>
             <Tooltip>このルーレットを終わる</Tooltip>
             終了
-            <i class="ti ti-check" />
+            <i class="ti ti-check"></i>
         </button>
     {:else}
         <button on:click={() => roulette.stop()}>
             <Tooltip>このルーレットを強制終了させる</Tooltip>
             強制終了
-            <i class="ti ti-x" />
+            <i class="ti ti-x"></i>
         </button>
     {/if}
 </div>

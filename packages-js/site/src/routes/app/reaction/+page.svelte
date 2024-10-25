@@ -75,21 +75,21 @@
         <div class="right">
             <h3>
                 配信ソフトに追加する
-                <i class="ti ti-arrow-bar-to-down" />
+                <i class="ti ti-arrow-bar-to-down"></i>
             </h3>
             <section>
                 <AssetButton {omu} {obs} />
             </section>
             <h3>
                 試してみる
-                <i class="ti ti-rocket" />
+                <i class="ti ti-rocket"></i>
             </h3>
             <section>
                 <button on:click={test}>
                     <Tooltip>
                         <span>テスト用のリアクションを送信します</span>
                     </Tooltip>
-                    <i class="ti ti-player-play" />
+                    <i class="ti ti-player-play"></i>
                     再生
                 </button>
             </section>
@@ -97,7 +97,7 @@
         <div class="left">
             <h3>
                 見た目を調整する
-                <i class="ti ti-dimensions" />
+                <i class="ti ti-dimensions"></i>
             </h3>
             <section class="settings">
                 <Slider
@@ -121,7 +121,7 @@
             </section>
             <h3>
                 画像を変える
-                <i class="ti ti-mood-wink-2" />
+                <i class="ti ti-mood-wink-2"></i>
             </h3>
             <section>
                 {#each Object.entries($config.replaces) as [key, assetId]}
@@ -131,7 +131,7 @@
                                 {key}
                             </h1>
                             {#if assetId}
-                                <i class="ti ti-chevron-right" />
+                                <i class="ti ti-chevron-right"></i>
                                 <img
                                     src={omu.assets.url(Identifier.fromKey(assetId), {
                                         noCache: true,
@@ -148,11 +148,11 @@
                                         ($config.replaces = { ...$config.replaces, [key]: null })}
                                 >
                                     <Tooltip>置き換えを削除</Tooltip>
-                                    <i class="ti ti-trash" />
+                                    <i class="ti ti-trash"></i>
                                 </ButtonMini>
                             {/if}
                             <FileDrop handle={(files) => handleReplace(key, files)}>
-                                <i class="ti ti-upload" />
+                                <i class="ti ti-upload"></i>
                                 置き換える
                             </FileDrop>
                         </div>

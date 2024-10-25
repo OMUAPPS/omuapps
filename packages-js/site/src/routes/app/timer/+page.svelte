@@ -55,16 +55,16 @@
                         </Tooltip>
                         {#if $data.running}
                             停止
-                            <i class="ti ti-player-pause" />
+                            <i class="ti ti-player-pause"></i>
                         {:else}
                             開始
-                            <i class="ti ti-player-play" />
+                            <i class="ti ti-player-play"></i>
                         {/if}
                     </button>
                     <button on:click={() => timer.reset()}>
                         <Tooltip>タイマーをリセットします</Tooltip>
                         リセット
-                        <i class="ti ti-reload" />
+                        <i class="ti ti-reload"></i>
                     </button>
                 </FlexRowWrapper>
             </section>
@@ -75,17 +75,17 @@
                     それぞれ
                     <p>
                         {'{minutes}'}
-                        <i class="ti ti-chevron-right" />
+                        <i class="ti ti-chevron-right"></i>
                         分
                     </p>
                     <p>
                         {'{seconds}'}
-                        <i class="ti ti-chevron-right" />
+                        <i class="ti ti-chevron-right"></i>
                         秒
                     </p>
                     <p>
                         {'{centiseconds}'}
-                        <i class="ti ti-chevron-right" />
+                        <i class="ti ti-chevron-right"></i>
                         少数第2位までの秒
                     </p>
                     で置換されます。

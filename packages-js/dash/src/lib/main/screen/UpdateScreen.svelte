@@ -60,11 +60,11 @@
             <div class="actions">
                 <button on:click={screen.handle.pop} class="cancel">
                     キャンセル
-                    <i class="ti ti-x" />
+                    <i class="ti ti-x"></i>
                 </button>
                 <button on:click={() => (open = true)} class="update">
                     アップデート
-                    <i class="ti ti-arrow-right" />
+                    <i class="ti ti-arrow-right"></i>
                     <Popup bind:isOpen={open}>
                         <div class="confirm">
                             <small>アップデートを開始しますか？</small>

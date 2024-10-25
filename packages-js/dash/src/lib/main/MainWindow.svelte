@@ -97,10 +97,10 @@
         <section>
             <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
                 {#if $menuOpen}
-                    <i class="ti ti-chevron-left" />
+                    <i class="ti ti-chevron-left"></i>
                     <Tooltip>{$t('menu.collapse')}</Tooltip>
                 {:else}
-                    <i class="ti ti-menu" />
+                    <i class="ti ti-menu"></i>
                     <Tooltip>{$t('menu.expand')}</Tooltip>
                 {/if}
             </button>
@@ -111,7 +111,7 @@
                 {#if $menuOpen}
                     <span class="title">
                         {$t('menu.apps')}
-                        <i class="ti ti-apps" />
+                        <i class="ti ti-apps"></i>
                     </span>
                     <div class="buttons">
                         <button
@@ -124,7 +124,7 @@
                                     <small>{$t('screen.manage-apps.description')}</small>
                                 </div>
                             </Tooltip>
-                            <i class="ti ti-edit" />
+                            <i class="ti ti-edit"></i>
                         </button>
                     </div>
                 {/if}
@@ -137,7 +137,7 @@
                         {#if $currentPage === EXPLORE_PAGE.id}
                             <p>
                                 {$t('menu.jump-to-explore-hint')}
-                                <i class="ti ti-arrow-right" />
+                                <i class="ti ti-arrow-right"></i>
                             </p>
                             <small>
                                 {$t('menu.add-apps-hint')}
@@ -145,10 +145,10 @@
                         {:else}
                             <p>
                                 {$t('menu.add-apps')}
-                                <i class="ti ti-plus" />
+                                <i class="ti ti-plus"></i>
                             </p>
                             <small>
-                                <i class="ti ti-arrow-right" />
+                                <i class="ti ti-arrow-right"></i>
                                 {$t('menu.jump-to-explore')}
                             </small>
                         {/if}

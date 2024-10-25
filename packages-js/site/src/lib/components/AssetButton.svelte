@@ -56,17 +56,17 @@
             {:else}
                 <Tooltip>クリックで追加</Tooltip>
                 OBSの現在のシーンに追加
-                <i class="ti ti-plus" />
+                <i class="ti ti-plus"></i>
             {/if}
         </button>
         <DragLink href={generateUrl}>
             <h3 slot="preview" class="preview">
                 これをOBSにドロップ
-                <i class="ti ti-download" />
+                <i class="ti ti-download"></i>
             </h3>
             <div class="drag">
                 <Tooltip>ドラッグ&ドロップで追加</Tooltip>
-                <i class="ti ti-drag-drop" />
+                <i class="ti ti-drag-drop"></i>
             </div>
         </DragLink>
     </div>
@@ -74,10 +74,10 @@
     <DragLink href={generateUrl}>
         <h3 slot="preview" class="preview">
             これをOBSにドロップ
-            <i class="ti ti-download" />
+            <i class="ti ti-download"></i>
         </h3>
         <div class="drag">
-            <i class="ti ti-drag-drop" />
+            <i class="ti ti-drag-drop"></i>
             ここをOBSにドラッグ&ドロップ
         </div>
     </DragLink>

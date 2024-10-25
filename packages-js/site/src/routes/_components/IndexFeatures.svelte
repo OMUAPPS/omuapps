@@ -21,21 +21,21 @@
 <svelte:window on:scroll={onScroll} />
 
 <div class="card" bind:this={card0} class:visible={isVisible(card0, scroll)}>
-    <i class="ti ti-click" />
+    <i class="ti ti-click"></i>
     <div class="info">
         <h3>かんたんに導入</h3>
         <p>アプリのインストールは管理画面内で完結します。</p>
     </div>
 </div>
 <div class="card" bind:this={card1} class:visible={isVisible(card1, scroll)}>
-    <i class="ti ti-lock" />
+    <i class="ti ti-lock"></i>
     <div class="info">
         <h3>安全な権限管理</h3>
         <p>アプリは権限がなければファイルを保存することすら出来ません。</p>
     </div>
 </div>
 <div class="card" bind:this={card2} class:visible={isVisible(card2, scroll)}>
-    <i class="ti ti-package" />
+    <i class="ti ti-package"></i>
     <div class="info">
         <h3>使いやすさ</h3>
         <p>アプリの管理は一つのウィンドウの中で完結します。</p>

@@ -35,23 +35,23 @@
     <div class="content">
         <div class="categories">
             <button class:selected={$currentSettingsCategory == 'general'} on:click={() => $currentSettingsCategory = 'general'}>
-                <i class="ti {$t('settings.category.general.icon')}" />
+                <i class="ti {$t('settings.category.general.icon')}"></i>
                 <p>{$t('settings.category.general.name')}</p>
                 <Tooltip>{$t('settings.category.general.description')}</Tooltip>
-                <i class="ti ti-chevron-right" />
+                <i class="ti ti-chevron-right"></i>
             </button>
             <button class:selected={$currentSettingsCategory == 'about'} on:click={() => $currentSettingsCategory = 'about'}>
-                <i class="ti {$t('settings.category.about.icon')}" />
+                <i class="ti {$t('settings.category.about.icon')}"></i>
                 <p>{$t('settings.category.about.name')}</p>
                 <Tooltip>{$t('settings.category.about.description')}</Tooltip>
-                <i class="ti ti-chevron-right" />
+                <i class="ti ti-chevron-right"></i>
             </button>
             {#if $devMode}
                 <button class:selected={$currentSettingsCategory == 'developer'} on:click={() => $currentSettingsCategory = 'developer'}>
-                    <i class="ti {$t('settings.category.developer.icon')}" />
+                    <i class="ti {$t('settings.category.developer.icon')}"></i>
                     <p>{$t('settings.category.developer.name')}</p>
                     <Tooltip>{$t('settings.category.developer.description')}</Tooltip>
-                    <i class="ti ti-chevron-right" />
+                    <i class="ti ti-chevron-right"></i>
                 </button>
             {/if}
         </div>

@@ -11,7 +11,7 @@
             <FlexColWrapper gap>
                 <h1>
                     プライバシーポリシー
-                    <i class="ti ti-file" />
+                    <i class="ti ti-file"></i>
                 </h1>
                 <small>使っていただける方へお約束</small>
             </FlexColWrapper>

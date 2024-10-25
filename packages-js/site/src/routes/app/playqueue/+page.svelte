@@ -64,7 +64,7 @@
                         設定を閉じる
                     {:else}
                         設定を編集
-                        <i class="ti ti-chevron-down" />
+                        <i class="ti ti-chevron-down"></i>
                     {/if}
                 </button>
                 <div class="action">
@@ -72,7 +72,7 @@
                         {active ? '終了する' : '開始する'}
                     </span>
                     <button class="toggle" on:click={() => (active = !active)} class:active>
-                        <i class="ti ti-check" />
+                        <i class="ti ti-check"></i>
                     </button>
                 </div>
             </div>
@@ -82,12 +82,12 @@
         {#if settingOpen}
             <div class="settings">
                 <span class="setting">
-                    <i class="ti ti-arrow-down-right" />
+                    <i class="ti ti-arrow-down-right"></i>
                     参加ワード
                     <input type="text" bind:value={joinWord} />
                 </span>
                 <span class="setting">
-                    <i class="ti ti-arrow-up-right" />
+                    <i class="ti ti-arrow-up-right"></i>
                     辞退ワード
                     <input type="text" bind:value={leaveWord} />
                 </span>

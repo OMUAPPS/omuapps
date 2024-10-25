@@ -17,7 +17,7 @@
             <span>
                 <h1>
                     {slug}
-                    <i class="ti ti-pencil" />
+                    <i class="ti ti-pencil"></i>
                 </h1>
                 <small> {title} </small>
             </span>

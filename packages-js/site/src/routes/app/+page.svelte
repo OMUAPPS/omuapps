@@ -71,7 +71,7 @@
     <header slot="header">
         <h1>
             アプリを探す
-            <i class="ti ti-search" />
+            <i class="ti ti-search"></i>
         </h1>
         <small> アプリを探してみる </small>
     </header>
@@ -88,7 +88,7 @@
         <div class="options">
             <h3>表示設定</h3>
             <button on:click={() => toggleTag('underdevelopment')} class="tag" class:selected={filterTags.includes('underdevelopment')}>
-                <i class="ti ti-package" />
+                <i class="ti ti-package"></i>
                 開発中のアプリを表示
                 <span class="hint">{apps.filter((app) => app.metadata?.tags?.includes('underdevelopment')).length}</span>
             </button>

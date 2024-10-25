@@ -140,7 +140,7 @@
             <div class="loading" data-tauri-drag-region>
                 <p class="failed">
                     起動に失敗しました
-                    <i class="ti ti-alert-circle" />
+                    <i class="ti ti-alert-circle"></i>
                 </p>
                 <div class="state">
                     {#if progress}
@@ -158,7 +158,7 @@
                         await relaunch();
                     }}>
                         環境を再構築
-                        <i class="ti ti-reload" />
+                        <i class="ti ti-reload"></i>
                     </button>
                 </div>
             </div>
@@ -174,7 +174,7 @@
                         <Spinner />
                     </p>
                     <div class="state">
-                        <progress value={percentage} />
+                        <progress value={percentage}></progress>
                         {#if progress}
                             <p>
                                 {PROGRESS_NAME[progress.type]}
@@ -196,7 +196,7 @@
                 <div class="loading" data-tauri-drag-region>
                     <p class="failed">
                         起動に失敗しました
-                        <i class="ti ti-alert-circle" />
+                        <i class="ti ti-alert-circle"></i>
                     </p>
                     <small>
                         {#if disconnectPacket}
@@ -233,7 +233,7 @@
                                 await relaunch();
                             }}>
                                 サーバーを再起動
-                                <i class="ti ti-reload" />
+                                <i class="ti ti-reload"></i>
                             </button>
                         {/if}
                     </div>

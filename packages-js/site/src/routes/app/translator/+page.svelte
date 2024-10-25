@@ -32,7 +32,7 @@
                             };
                         }}
                     >
-                        <i class="ti ti-x" />
+                        <i class="ti ti-x"></i>
                     </ButtonMini>
                 </FlexRowWrapper>
             {/each}
@@ -42,7 +42,7 @@
                 }}
             >
                 言語を追加
-                <i class="ti ti-plus" />
+                <i class="ti ti-plus"></i>
             </ButtonMini>
         </section>
     </main>

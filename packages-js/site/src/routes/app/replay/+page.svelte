@@ -82,18 +82,18 @@
                 <section>
                     <h3>
                         配信ソフトに追加する
-                        <i class="ti ti-arrow-bar-to-down" />
+                        <i class="ti ti-arrow-bar-to-down"></i>
                     </h3>
                     <AssetButton {omu} {obs} />
                 </section>
                 <div class="streams">
                     <h3>
                         最近の配信から
-                        <i class="ti ti-video" />
+                        <i class="ti ti-video"></i>
                         <div class="search">
                             <input type="search" bind:value={search} placeholder="検索" />
                             {#if !search}
-                                <i class="ti ti-search" />
+                                <i class="ti ti-search"></i>
                             {/if}
                         </div>
                     </h3>
@@ -132,13 +132,13 @@
                 {:else}
                     <div class="empty">
                         動画を選択するとここに表示されます
-                        <i class="ti ti-video" />
+                        <i class="ti ti-video"></i>
                     </div>
                 {/if}
                 <section>
                     <p>
                         URLから
-                        <i class="ti ti-link" />
+                        <i class="ti ti-link"></i>
                     </p>
                     <Textbox
                         placeholder="URLを入力"

@@ -14,23 +14,23 @@
 
 <p class={status}>
     {#if status === NetworkStatus.CONNECTED}
-        <i class="ti ti-bolt" />
+        <i class="ti ti-bolt"></i>
         接続済み
         <span>
             {omu.network.address.host}:{omu.network.address.port}
             <small> に接続済み </small>
         </span>
     {:else if status === NetworkStatus.READY}
-        <i class="ti ti-check" />
+        <i class="ti ti-check"></i>
     {:else if status === NetworkStatus.CONNECTING}
-        <i class="ti ti-reload" />
+        <i class="ti ti-reload"></i>
         接続中
         <span>
             {omu.network.address.host}:{omu.network.address.port}
             <small> に接続中… </small>
         </span>
     {:else if status === NetworkStatus.DISCONNECTED}
-        <i class="ti ti-x" />
+        <i class="ti ti-x"></i>
         接続されていません
         <span>
             {omu.network.address.host}:{omu.network.address.port}

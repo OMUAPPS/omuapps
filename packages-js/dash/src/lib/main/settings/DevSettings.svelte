@@ -35,8 +35,8 @@
     {#each $trustedOrigins as origin}
         <div class="origin">
             <input type="text" bind:value={origin} />
-            <button on:click={() => trustedOrigins.update((origins) => origins.filter((o) => o !== origin))}>
-                <i class="ti ti-x" />
+            <button on:click={() => trustedOrigins.update((origins) => origins.filter((o) => o !== origin))} aria-label="Remove origin">
+                <i class="ti ti-x"></i>
             </button>
         </div>
     {/each}
@@ -45,8 +45,8 @@
         <button on:click={() => {
             $trustedOrigins = [...$trustedOrigins, newOrigin];
             newOrigin = '';
-        }} class="add">
-            <i class="ti ti-plus" />
+        }} class="add" aria-label="Add origin">
+            <i class="ti ti-plus"></i>
         </button>
     </div>
 </section>

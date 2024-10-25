@@ -7,34 +7,34 @@
         <div class="category">
             <p>
                 Social
-                <i class="ti ti-share" />
+                <i class="ti ti-share"></i>
             </p>
             <a href="https://github.com/OMUAPPS/omuapps">
                 <p>
-                    <i class="ti ti-brand-github" />
+                    <i class="ti ti-brand-github"></i>
                     Github
-                    <i class="ti ti-external-link" />
+                    <i class="ti ti-external-link"></i>
                 </p>
             </a>
             <a href="https://twitter.com/omuapps">
                 <p>
-                    <i class="ti ti-brand-twitter" />
+                    <i class="ti ti-brand-twitter"></i>
                     Twitter
-                    <i class="ti ti-external-link" />
+                    <i class="ti ti-external-link"></i>
                 </p>
             </a>
             <a href="https://discord.gg/MZKvbPpsuK">
                 <p>
-                    <i class="ti ti-brand-discord" />
+                    <i class="ti ti-brand-discord"></i>
                     Discord
-                    <i class="ti ti-external-link" />
+                    <i class="ti ti-external-link"></i>
                 </p>
             </a>
         </div>
         <div class="category">
             <p>
                 Legal
-                <i class="ti ti-file" />
+                <i class="ti ti-file"></i>
             </p>
             <a href="/legal/privacy">
                 <p class="between">
@@ -42,7 +42,7 @@
                         <p class="hint">使っていただける方へお約束</p>
                     </Tooltip>
                     プライバシーポリシー
-                    <i class="ti ti-external-link" />
+                    <i class="ti ti-external-link"></i>
                 </p>
             </a>
             <a href="/legal/terms">
@@ -51,7 +51,7 @@
                         <p class="hint">使っていただくにあたって</p>
                     </Tooltip>
                     利用規約
-                    <i class="ti ti-external-link" />
+                    <i class="ti ti-external-link"></i>
                 </p>
             </a>
             <p style:text-align="end" style:margin-top="auto">

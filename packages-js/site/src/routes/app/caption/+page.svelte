@@ -130,7 +130,7 @@
                     </div>
                 </Popup>
                 フォント追加
-                <i class="ti ti-plus" />
+                <i class="ti ti-plus"></i>
             </button>
         </FlexRowWrapper>
         <div class="font-list">
@@ -154,7 +154,7 @@
                             }}
                         >
                             削除
-                            <i class="ti ti-x" />
+                            <i class="ti ti-x"></i>
                         </button>
                     </span>
                 {/each}
@@ -196,7 +196,7 @@
                     }}
                 >
                     色をリセット
-                    <i class="ti ti-reload" />
+                    <i class="ti ti-reload"></i>
                 </button>
             </FlexRowWrapper>
         </h3>

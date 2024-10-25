@@ -32,7 +32,7 @@
                     <Tooltip>
                         <p>アプリを動かすための手順を見る</p>
                     </Tooltip>
-                    <i class="ti ti-download" />
+                    <i class="ti ti-download"></i>
                     <p>ダウンロード</p>
                 </a>
             </div>
@@ -67,7 +67,7 @@
             <img src={opensource} alt="Open Source" />
         </div>
         <div class="info">
-            <i class="ti ti-code" />
+            <i class="ti ti-code"></i>
             <div class="info">
                 <h3>オープンソース</h3>
                 <p>APIと管理画面、そしてサイトを含む全てはオープンソースなので、誰でも中身を見ることが出来ます。</p>
@@ -77,9 +77,9 @@
             <Tooltip>
                 <p>GitHubで開発を見る</p>
             </Tooltip>
-            <i class="ti ti-brand-github" />
+            <i class="ti ti-brand-github"></i>
             Github
-            <i class="ti ti-arrow-right" />
+            <i class="ti ti-arrow-right"></i>
         </a>
     </div>
 </main>

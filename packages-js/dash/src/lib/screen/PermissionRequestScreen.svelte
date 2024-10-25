@@ -53,7 +53,7 @@
     <div class="actions">
         <button on:click={reject} class="reject">
             キャンセル
-            <i class="ti ti-x" />
+            <i class="ti ti-x"></i>
         </button>
         <button on:click={accept} class="accept" disabled={!permissions.every((entry) => entry.accepted)}>
             {#if !permissions.every((entry) => entry.accepted)}
@@ -62,7 +62,7 @@
                 </Tooltip>
             {/if}
             許可
-            <i class="ti ti-check" />
+            <i class="ti ti-check"></i>
         </button>
     </div>
 </Screen>

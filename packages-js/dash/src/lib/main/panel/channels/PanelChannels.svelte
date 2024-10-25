@@ -32,7 +32,7 @@
     <div class="buttons">
         <ButtonMini on:click={openSetupScreen}>
             <Tooltip>{$t('panels.channels.setup_channel')}</Tooltip>
-            <i class="ti ti-plus" />
+            <i class="ti ti-plus"></i>
         </ButtonMini>
         <small>
             <Tooltip>
@@ -40,7 +40,7 @@
                 {Math.floor(checkIntervalLeft)}
                 {$t('general.second')}
             </Tooltip>
-            <i class="ti ti-reload" />
+            <i class="ti ti-reload"></i>
             {Math.floor(checkIntervalLeft)}
         </small>
     </div>

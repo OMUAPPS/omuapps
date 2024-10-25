@@ -21,9 +21,9 @@
     {/if}
     <div class="check" class:disabled class:accepted>
         {#if accepted}
-            <i class="ti ti-check" />
+            <i class="ti ti-check"></i>
         {:else}
-            <i class="ti ti-check" />
+            <i class="ti ti-check"></i>
         {/if}
     </div>
     <div class="info">

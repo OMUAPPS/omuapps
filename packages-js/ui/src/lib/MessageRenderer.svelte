@@ -105,7 +105,7 @@
                         <div class="actions">
                             <button on:click={handleCopy}>
                                 <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
-                                <i class="ti ti-files" />
+                                <i class="ti ti-files"></i>
                             </button>
                         </div>
                     {/if}

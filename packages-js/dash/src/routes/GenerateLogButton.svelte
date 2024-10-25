@@ -20,7 +20,7 @@
     <button on:click={generateLogFile} class="generate-log">
         <Tooltip>調査用のログファイルを生成します</Tooltip>
         ログを生成
-        <i class="ti ti-file" />
+        <i class="ti ti-file"></i>
     </button>
 {/if}
 

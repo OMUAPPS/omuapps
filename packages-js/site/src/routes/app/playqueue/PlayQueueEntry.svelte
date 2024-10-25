@@ -39,7 +39,7 @@
 <div class="container">
     <div class="entry" bind:this={entry.element} class:dragging>
         <button class="grab" on:mousedown={handleMouseDown} on:mouseup={handleMouseUp}>
-            <i class="ti ti-grip-vertical" />
+            <i class="ti ti-grip-vertical"></i>
         </button>
         <div class="author">
             <img src={entry.author.avatarUrl} width="32" height="32" alt="" />
@@ -50,19 +50,19 @@
                 <Tooltip>
                     <span>ブロック</span>
                 </Tooltip>
-                <i class="ti ti-user-off" />
+                <i class="ti ti-user-off"></i>
             </button>
             <button>
                 <Tooltip>
                     <span>拒否</span>
                 </Tooltip>
-                <i class="ti ti-x" />
+                <i class="ti ti-x"></i>
             </button>
             <button>
                 <Tooltip>
                     <span>参加</span>
                 </Tooltip>
-                <i class="ti ti-check" />
+                <i class="ti ti-check"></i>
             </button>
         </span>
     </div>

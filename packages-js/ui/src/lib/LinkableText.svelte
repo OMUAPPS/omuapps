@@ -33,7 +33,7 @@
     {:else if part.type === 'url'}
         <a href={part.content} target="_blank" rel="noopener noreferrer">
             {part.content}
-            <i class="ti ti-external-link" />
+            <i class="ti ti-external-link"></i>
             <Tooltip>
                 {part.content}
             </Tooltip>

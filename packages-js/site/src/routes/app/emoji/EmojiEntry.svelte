@@ -42,15 +42,15 @@
         <FlexRowWrapper>
             <ButtonMini on:click={testEmoji}>
                 <Tooltip>テスト</Tooltip>
-                <i class="ti ti-send" />
+                <i class="ti ti-send"></i>
             </ButtonMini>
             <ButtonMini on:click={editEmoji}>
                 <Tooltip>編集</Tooltip>
-                <i class="ti ti-pencil" />
+                <i class="ti ti-pencil"></i>
             </ButtonMini>
             <ButtonMini on:click={deleteEmoji}>
                 <Tooltip>削除</Tooltip>
-                <i class="ti ti-trash" />
+                <i class="ti ti-trash"></i>
             </ButtonMini>
         </FlexRowWrapper>
     {/if}

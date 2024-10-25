@@ -28,14 +28,14 @@
     <div class="screen">
         <h3>
             古いバージョン
-            <i class="ti ti-package-export" />
+            <i class="ti ti-package-export"></i>
         </h3>
         <div class="app-info old">
             <AppInfo app={request.oldApp} />
         </div>
         <h3>
             新しいバージョン
-            <i class="ti ti-package-import" />
+            <i class="ti ti-package-import"></i>
         </h3>
         <div class="app-info new">
             <AppInfo app={request.newApp} />
@@ -43,11 +43,11 @@
         <div class="actions">
             <button on:click={reject} class="reject">
                 キャンセル
-                <i class="ti ti-x" />
+                <i class="ti ti-x"></i>
             </button>
             <button on:click={accept} class="accept">
                 更新
-                <i class="ti ti-check" />
+                <i class="ti ti-check"></i>
             </button>
         </div>  
     </div>

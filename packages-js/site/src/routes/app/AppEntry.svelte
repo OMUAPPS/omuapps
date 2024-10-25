@@ -53,7 +53,7 @@
                                     <img src={icon} alt="" />
                                 {/if}
                             {:else}
-                                <i class="ti ti-app" />
+                                <i class="ti ti-app"></i>
                             {/if}
                         </span>
                         <span>
@@ -70,7 +70,7 @@
                     {#each tags || [] as tag, i (i)}
                         <span class="tag">
                             {#if typeof tag === 'string'}
-                                <i class="ti ti-tag" />
+                                <i class="ti ti-tag"></i>
                                 {tag}
                             {:else}
                                 <i class="ti ti-{tag.icon}" />

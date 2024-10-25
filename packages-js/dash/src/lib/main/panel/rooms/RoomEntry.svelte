@@ -40,7 +40,7 @@
                     <div class="overlay">
                         <p>
                             {$t('panels.rooms.see_channel')}
-                            <i class="ti ti-external-link" />
+                            <i class="ti ti-external-link"></i>
                         </p>
                     </div>
                 </button>
@@ -79,14 +79,14 @@
         {/if}
         <div class="buttons">
             <small class="online-state" class:connected={entry.connected}>
-                <i class={`ti ti-bolt${entry.connected ? '-filled' : ''}`} />
+                <i class={`ti ti-bolt${entry.connected ? '-filled' : ''}`}></i>
                 {entry.connected ? $t('status.connected') : $t('status.disconnected')}
             </small>
             {#if entry.metadata}
                 <button on:click={copyViewers}>
                     <Tooltip>{$t('panels.rooms.viewers')}</Tooltip>
                     {entry.metadata.viewers}
-                    <i class="ti ti-user" />
+                    <i class="ti ti-user"></i>
                 </button>
             {/if}
         </div>

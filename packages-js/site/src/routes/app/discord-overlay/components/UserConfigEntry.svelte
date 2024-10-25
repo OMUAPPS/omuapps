@@ -40,7 +40,7 @@
     let files: FileList;
 </script>
 
-<button
+<div
     class="entry"
     class:dragging
     class:speaking={$speakingState[id]?.speaking}
@@ -48,12 +48,14 @@
     on:mouseleave={() => ($config.selected_user_id = null)}
     on:focus={() => ($config.selected_user_id = id)}
     on:blur={() => ($config.selected_user_id = null)}
+    role="button"
+    tabindex="0"
 >
-    <button class="grid" on:mousedown>
+    <button class="grid" on:mousedown aria-label="ドラッグで並び替え">
         <Tooltip>
             ドラッグで並び替え
         </Tooltip>
-        <i class="grip ti ti-grip-vertical"/>
+        <i class="grip ti ti-grip-vertical"></i>
     </button>
     <div class="avatar">
         {#if avatarUrl}
@@ -76,23 +78,23 @@
             <Tooltip>
                 アバターを変更
             </Tooltip>
-            <i class="ti ti-upload" />
+            <i class="ti ti-upload"></i>
         </button>
         <button on:click={() => $config.users[id].show = !$config.users[id].show}>
             {#if $config.users[id].show}
                 <Tooltip>
                     クリックで非表示
                 </Tooltip>
-                <i class="ti ti-eye-filled" />
+                <i class="ti ti-eye-filled"></i>
             {:else}
                 <Tooltip>
                     クリックで表示
                 </Tooltip>
-                <i class="ti ti-eye-off" />
+                <i class="ti ti-eye-off"></i>
             {/if}
         </button>
     </div>
-</button>
+</div>
 <input type="file" bind:this={fileDrop} bind:files on:change={handleReplace} hidden/>
 
 <style lang="scss">

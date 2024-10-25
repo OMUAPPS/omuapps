@@ -38,14 +38,14 @@
 
 <FlexColWrapper widthFull gap>
     <h2>
-        <i class="ti ti-code" />
+        <i class="ti ti-code"></i>
         {$t('settings.about.contributors')}
     </h2>
     {#each contributors as contributor}
         <ExternalLink href={contributor.html_url}>
             <h4>
                 {contributor.login}
-                <i class="ti ti-external-link" />
+                <i class="ti ti-external-link"></i>
             </h4>
         </ExternalLink>
     {/each}

@@ -9,7 +9,7 @@
 
 <div class="container">
     <h2>
-        <i class="ti ti-license" />
+        <i class="ti ti-license"></i>
         {$t('settings.about.licenses')}
     </h2>
     {#each LICENSES as license (license.name)}

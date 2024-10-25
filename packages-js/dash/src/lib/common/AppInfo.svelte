@@ -19,7 +19,7 @@
     </Tooltip>
     <div class="icon">
         {#if !icon}
-            <i class="ti ti-package" />
+            <i class="ti ti-package"></i>
         {:else if icon.startsWith('ti-')}
             <i class="ti {icon}" />
         {:else}
@@ -33,7 +33,7 @@
             </span>
             <small class="id">
                 {namespace}
-                <i class="ti ti-slash" />
+                <i class="ti ti-slash"></i>
                 {path}
                 {#if app.version}
                     <small class="version">

@@ -106,7 +106,7 @@
         <div class="messages">
             {#if state === 'loading_messages'}
                 <div class="loading">
-                    <i class="ti ti-loader-2" />
+                    <i class="ti ti-loader-2"></i>
                     メッセージを読み込んでいます…
                 </div>
             {:else}
@@ -119,7 +119,7 @@
                                         すでに確認したメッセージを見る
                                     </Tooltip>
                                     以前のメッセージを表示
-                                    <i class="ti ti-history" />
+                                    <i class="ti ti-history"></i>
                                 </button>
                             {:else}
                                 <button class="message-tab" on:click={() => tab = 'new'}>
@@ -127,7 +127,7 @@
                                         まだ確認していないメッセージを見る
                                     </Tooltip>
                                     新しいメッセージを表示
-                                    <i class="ti ti-bell" />
+                                    <i class="ti ti-bell"></i>
                                 </button>
                             {/if}
                         {:else}
@@ -140,24 +140,24 @@
                                         マシュマロ公式サイトからプレミアム会員に入会することができます。
                                     </small>
                                 </Tooltip>
-                                <i class="ti ti-history" />
+                                <i class="ti ti-history"></i>
                             </button>
                         {/if}
                         <button class="refresh" on:click={() => user && refreshMessages(user)}>
                             <Tooltip>読み込み直して新しいメッセージを表示する</Tooltip>
                             更新
-                            <i class="ti ti-reload" />
+                            <i class="ti ti-reload"></i>
                         </button>
                     </div>
                 {/if}
                 <h3>
                     メッセージ
-                    <i class="ti ti-notes" />
+                    <i class="ti ti-notes"></i>
                     <button class="search-open" on:click={() => searchOpen = !searchOpen}>
                         <Tooltip>
                             メッセージを検索する
                         </Tooltip>
-                        <i class="ti ti-search" />
+                        <i class="ti ti-search"></i>
                     </button>
                 </h3>
                 {#if searchOpen}
@@ -208,12 +208,12 @@
         </div>
         <h3>
             配信に追加
-            <i class="ti ti-arrow-bar-to-down" />
+            <i class="ti ti-arrow-bar-to-down"></i>
         </h3>
         <AssetButton {omu} {obs} dimensions={{width: 700, height: 1080}} />
         <h3>
             アカウント
-            <i class="ti ti-user" />
+            <i class="ti ti-user"></i>
         </h3>
         <AccountSwitcher {users} bind:user {refreshUsers} />
     </div>
@@ -231,18 +231,18 @@
 {#if state === 'loading_users'}
     <div class="modal">
         {#await refreshPromise}
-            <i class="ti ti-loader-2 spin" />
+            <i class="ti ti-loader-2 spin"></i>
             <p>ブラウザからユーザー情報を読み込んでいます…</p>
             <small>これには数分かかる場合があります</small>
         {:catch error}
-            <i class="ti ti-alert-circle" />
+            <i class="ti ti-alert-circle"></i>
             <p>ユーザー情報の読み込み中にエラーが発生しました。</p>
             <small>{error.message}</small>
         {/await}
     </div>
 {:else if state === 'user_notfound'}
     <div class="modal">
-        <i class="ti ti-alert" />
+        <i class="ti ti-alert"></i>
         ユーザーの認証情報が見つかりませんでした。 ブラウザでログインしてもういちどお試しください。
         <button on:click={() => (refreshPromise = refreshUsers())}>もう一度試す</button>
     </div>

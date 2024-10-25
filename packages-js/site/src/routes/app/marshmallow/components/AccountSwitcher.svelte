@@ -22,7 +22,7 @@
             <br />
             アカウントを切り替える
         </Tooltip>
-        <i class="ti ti-chevron-down" />
+        <i class="ti ti-chevron-down"></i>
     {:else}
         <Tooltip>
             {#if user}
@@ -45,10 +45,6 @@
         border: none;
         cursor: pointer;
         background: var(--color-bg-2);
-
-        > :not(.popup) {
-            pointer-events: none;
-        }
 
         > i {
             display: flex;

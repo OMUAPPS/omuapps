@@ -58,7 +58,7 @@
                 <Spinner />
             {:else}
                 アップデート
-                <i class="ti ti-arrow-right" />
+                <i class="ti ti-arrow-right"></i>
             {/if}
         </button>
     </div>

@@ -162,7 +162,7 @@
             <span>
                 {#if hasUsers}
                     <p>
-                        <i class="ti ti-user"/>
+                        <i class="ti ti-user"></i>
                         ユーザー
                     </p>
                     <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
@@ -181,7 +181,7 @@
                         <Tooltip>
                             Discordを再検出
                         </Tooltip>
-                        <i class="ti ti-reload"/>
+                        <i class="ti ti-reload"></i>
                     {:else}
                         <Tooltip>
                             起動しているDiscordから読み込み直す
@@ -193,7 +193,7 @@
             <span>
                 {#if hasGuilds}
                     <p>
-                        <i class="ti ti-server"/>
+                        <i class="ti ti-server"></i>
                         サーバー
                     </p>
                     <Combobox options={Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))} bind:value={$config.guild_id}/>
@@ -206,7 +206,7 @@
             <span>
                 {#if hasChannels}
                     <p>
-                        <i class="ti ti-volume"/>
+                        <i class="ti ti-volume"></i>
                         チャンネル
                     </p>
                     <Combobox options={Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))} bind:value={$config.channel_id}/>
@@ -234,7 +234,7 @@
         </div>
         <h3>
             配信に追加
-            <i class="ti ti-arrow-bar-to-down" />
+            <i class="ti ti-arrow-bar-to-down"></i>
         </h3>
         <AssetButton {omu} {obs} />
     </div>
@@ -245,7 +245,8 @@
             on:mousedown={handleMouseDown}
             on:wheel={handleMouseWheel}
             draggable="false"
-        />
+            aria-label="Drag All"
+        ></button>
         {#if dimentions}
             {#each Object.entries($voiceState).filter(([id, ]) => $config.users[id]?.show).sort(([a], [b]) => $config.users[b].order - $config.users[a].order) as [id, state] (id)}
                 <UserDragControl {dimentions} {overlayApp} {id} {state}/>

@@ -46,15 +46,15 @@
         <div class="buttons">
             {#if entry.status === 'completed'}
                 <ButtonMini>
-                    <i class="ti ti-player-play" />
+                    <i class="ti ti-player-play"></i>
                 </ButtonMini>
                 <ButtonMini>
-                    <i class="ti ti-folder-open" />
+                    <i class="ti ti-folder-open"></i>
                 </ButtonMini>
             {/if}
             <ButtonMini on:click={() => window.open(entry.url)}>
                 <Tooltip>配信を見る</Tooltip>
-                <i class="ti ti-external-link" />
+                <i class="ti ti-external-link"></i>
             </ButtonMini>
             <div>
                 <Tooltip>

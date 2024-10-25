@@ -27,7 +27,7 @@
             {$t('panels.rooms.not_found_rooms')}
             <Button on:click={openSetup}>
                 {$t('panels.rooms.question_add_channel')}
-                <i class="ti ti-external-link" />
+                <i class="ti ti-external-link"></i>
             </Button>
         </div>
     </TableList>

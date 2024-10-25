@@ -40,15 +40,15 @@
     <div class="actions">
         <small>
             プラグインはPC上のすべてのデータにアクセスできます。
-            <i class="ti ti-alert-triangle" />
+            <i class="ti ti-alert-triangle"></i>
         </small>
         <button on:click={reject} class="reject">
             キャンセル
-            <i class="ti ti-x" />
+            <i class="ti ti-x"></i>
         </button>
         <button on:click={accept} class="accept">
             許可
-            <i class="ti ti-check" />
+            <i class="ti ti-check"></i>
         </button>
     </div>
 </Screen>

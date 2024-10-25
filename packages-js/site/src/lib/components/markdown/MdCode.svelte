@@ -21,7 +21,7 @@
                 }}
             >
                 <Tooltip>Copy</Tooltip>
-                <i class="ti ti-copy" />
+                <i class="ti ti-copy"></i>
             </ButtonMini>
         {/if}
     </span>

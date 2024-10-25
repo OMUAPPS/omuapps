@@ -282,11 +282,11 @@
     {#if updated}
         <button class="update" on:click={scrollToTop}>
             更新があります
-            <i class="ti ti-chevron-up" />
+            <i class="ti ti-chevron-up"></i>
         </button>
     {/if}
-    <button class="loading" class:active={fetchLock !== undefined}>
-        <i class="ti ti-loader-2" />
+    <button class="loading" class:active={fetchLock !== undefined} aria-label="loading">
+        <i class="ti ti-loader-2"></i>
     </button>
 </div>
 

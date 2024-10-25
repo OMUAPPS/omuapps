@@ -48,14 +48,14 @@
                 <Tooltip>
                     <div>{$t('panels.channels.delete')}</div>
                 </Tooltip>
-                <i class="ti ti-trash" />
+                <i class="ti ti-trash"></i>
             </ButtonMini>
             <a href={entry.url} target="_blank">
                 <ButtonMini>
                     <Tooltip>
                         <div>{$t('panels.channels.open')}</div>
                     </Tooltip>
-                    <i class="ti ti-external-link" />
+                    <i class="ti ti-external-link"></i>
                 </ButtonMini>
             </a>
         {:else}

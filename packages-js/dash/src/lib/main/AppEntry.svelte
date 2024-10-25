@@ -46,7 +46,7 @@
                     <h3>
                         <span class="loaded">
                             読み込み済み
-                            <i class="ti ti-check" />
+                            <i class="ti ti-check"></i>
                         </span>
                     </h3>
                 {/if}
@@ -56,7 +56,7 @@
                     {#if loaded}
                         <span class="loaded">
                             読み込み済み
-                            <i class="ti ti-check" />
+                            <i class="ti ti-check"></i>
                         </span>
                     {/if}
                 </h3>
@@ -80,7 +80,7 @@
                 {name}
             </p>
             <div class="open">
-                <i class="ti ti-chevron-right" />
+                <i class="ti ti-chevron-right"></i>
             </div>
         </div>
     {:else}

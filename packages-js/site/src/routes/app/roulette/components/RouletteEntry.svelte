@@ -32,7 +32,7 @@
         <Tooltip>
             <span>エントリーを削除</span>
         </Tooltip>
-        <i class="ti ti-x" />
+        <i class="ti ti-x"></i>
     </button>
 </div>
 

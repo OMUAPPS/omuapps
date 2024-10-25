@@ -90,11 +90,11 @@
                 <FlexRowWrapper gap>
                     <ButtonMini on:click={save}>
                         <Tooltip>保存</Tooltip>
-                        <i class="ti ti-device-floppy" />
+                        <i class="ti ti-device-floppy"></i>
                     </ButtonMini>
                     <ButtonMini on:click={remove}>
                         <Tooltip>削除</Tooltip>
-                        <i class="ti ti-trash" />
+                        <i class="ti ti-trash"></i>
                     </ButtonMini>
                 </FlexRowWrapper>
             </FlexRowWrapper>
@@ -106,7 +106,7 @@
                             <FlexRowWrapper widthFull between baseline>
                                 {#if pattern.type === 'text'}
                                     <span>
-                                        <i class="ti ti-txt" />
+                                        <i class="ti ti-txt"></i>
                                         文字
                                     </span>
                                     <input
@@ -116,7 +116,7 @@
                                     />
                                 {:else if pattern.type === 'image'}
                                     <span>
-                                        <i class="ti ti-photo" />
+                                        <i class="ti ti-photo"></i>
                                         絵文字
                                     </span>
                                     <input
@@ -126,7 +126,7 @@
                                     />
                                 {:else if pattern.type === 'regex'}
                                     <span>
-                                        <i class="ti ti-regex" />
+                                        <i class="ti ti-regex"></i>
                                         正規表現
                                     </span>
                                     <input
@@ -142,7 +142,7 @@
                                 (emoji.patterns = emoji.patterns.filter((p) => p !== pattern))}
                         >
                             <Tooltip>削除</Tooltip>
-                            <i class="ti ti-trash" />
+                            <i class="ti ti-trash"></i>
                         </ButtonMini>
                     </FlexRowWrapper>
                 {/each}

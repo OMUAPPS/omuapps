@@ -68,24 +68,24 @@
         <section>
             <FlexRowWrapper gap>
                 <button on:click={reset}>
-                    <i class="ti ti-reload" />
+                    <i class="ti ti-reload"></i>
                     Reset
                 </button>
                 <button on:click={send}>
-                    <i class="ti ti-send" />
+                    <i class="ti ti-send"></i>
                     Send
                 </button>
             </FlexRowWrapper>
         </section>
         <h3>
-            <i class="ti ti-eye" />
+            <i class="ti ti-eye"></i>
             Preview
         </h3>
         <section class="fill">
             <MessageRenderer bind:content={component} />
         </section>
         <h3>
-            <i class="ti ti-pencil" />
+            <i class="ti ti-pencil"></i>
             Content
         </h3>
         <section>

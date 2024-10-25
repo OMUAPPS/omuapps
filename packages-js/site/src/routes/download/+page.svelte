@@ -35,7 +35,7 @@
     <header slot="header">
         <h1>
             ダウンロード
-            <i class="ti ti-download" />
+            <i class="ti ti-download"></i>
         </h1>
         <small> OMUAPPSをダウンロードして使ってみる </small>
     </header>
@@ -46,14 +46,14 @@
                     <small>使っていただくにあたって</small>
                     <p>
                         利用規約
-                        <i class="ti ti-external-link" />
+                        <i class="ti ti-external-link"></i>
                     </p>
                 </a>
                 <a href="/legal/privacy" class="legal-link">
                     <small>使っていただける方へお約束</small>
                     <p>
                         プライバシーポリシー
-                        <i class="ti ti-external-link" />
+                        <i class="ti ti-external-link"></i>
                     </p>
                 </a>
                 <p class="legal">
@@ -73,7 +73,7 @@
                         {:else}
                             ダウンロード
                         {/if}
-                        <i class="ti ti-download" />
+                        <i class="ti ti-download"></i>
                     </a>
                     <button on:click={() => (showExtra = !showExtra)} class="extra">
                         <small>
@@ -92,7 +92,7 @@
                                     on:click={() => (downloading = true)}
                                 >
                                     {key}
-                                    <i class="ti ti-download" />
+                                    <i class="ti ti-download"></i>
                                 </a>
                             </li>
                         {/each}

@@ -11,7 +11,7 @@
             <FlexColWrapper gap>
                 <h1>
                     利用規約
-                    <i class="ti ti-file" />
+                    <i class="ti ti-file"></i>
                 </h1>
                 <small>使っていただくにあたって</small>
             </FlexColWrapper>
@@ -52,7 +52,7 @@
                         )}
                 >
                     <Tooltip>クリップボードにコピー</Tooltip>
-                    <i class="ti ti-copy" />
+                    <i class="ti ti-copy"></i>
                 </button>
             </code>
         </p>

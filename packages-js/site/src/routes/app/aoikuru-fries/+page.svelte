@@ -51,7 +51,7 @@
                 <h3>試しに投げてみる</h3>
                 <button on:click={() => friesApp.test()}>
                     投げる
-                    <i class="ti ti-arrow-up-right" />
+                    <i class="ti ti-arrow-up-right"></i>
                 </button>
             </div>
         </section>
@@ -77,7 +77,7 @@
                     状態
                     <button on:click={() => ($state = { type: 'idle' })}>
                         状態をリセット
-                        <i class="ti ti-reload" />
+                        <i class="ti ti-reload"></i>
                     </button>
                 </h3>
                 <code>

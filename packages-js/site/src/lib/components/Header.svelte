@@ -35,14 +35,14 @@
                             : undefined}
                     >
                         <Tooltip>アプリを動かすための手順を見る</Tooltip>
-                        <i class="ti ti-download" />
+                        <i class="ti ti-download"></i>
                         ダウンロード
                     </li>
                 </a>
                 <a href="/app">
                     <li aria-current={$page.url.pathname.startsWith('/app') ? 'page' : undefined}>
                         <Tooltip>何か使いたいアプリがあるかも</Tooltip>
-                        <i class="ti ti-search" />
+                        <i class="ti ti-search"></i>
                         アプリを探す
                     </li>
                 </a>
@@ -51,7 +51,7 @@
                         aria-current={$page.url.pathname.startsWith('/create') ? 'page' : undefined}
                     >
                         <Tooltip>あったらいいなが作れるかも</Tooltip>
-                        <i class="ti ti-pencil" />
+                        <i class="ti ti-pencil"></i>
                         アプリを作る
                     </li>
                 </a>
