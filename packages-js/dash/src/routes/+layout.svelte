@@ -14,22 +14,24 @@
     import '@omujs/ui';
     import { Spinner, Theme } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/api/process';
+    import { DEV } from 'esm-env';
     import GenerateLogButton from './GenerateLogButton.svelte';
     import './styles.scss';
     import UpdateButton from './UpdateButton.svelte';
 
     const PROGRESS_NAME: Record<Progress['type'], string> = {
-        PythonDownloading: '動作環境1をダウンロード中(1/6)',
+        PythonDownloading: '(1/6)動作環境1をダウンロード中',
         PythonUnkownVersion: '内部Pythonのバージョンが不明です',
         PythonChecksumFailed: '内部Pythonの認証に失敗しました',
-        PythonExtracting: '動作環境1をインストール中(2/6)',
-        UvDownloading: '動作環境2をダウンロード中(3/6)',
-        UvExtracting: '動作環境2をインストール中(4/6)',
+        PythonExtracting: '(2/6)動作環境1をインストール中',
+        PythonExtractFailed: '動作環境の展開に失敗しました',
+        UvDownloading: '(3/6)動作環境2をダウンロード中',
+        UvExtracting: '(4/6)動作環境2をインストール中',
         UvCleanupOldVersions: '古い動作環境を削除中',
         UvCleanupOldVersionsFailed: '古い動作環境の削除に失敗しました',
-        UvUpdatePip: '動作環境3を更新中(5/6)',
+        UvUpdatePip: '(5/6)動作環境3を更新中',
         UvUpdatePipFailed: '動作環境3の更新に失敗しました',
-        UvUpdateRequirements: '動作環境4を更新中(6/6)',
+        UvUpdateRequirements: '(6/6)動作環境4を更新中',
         UvUpdateRequirementsFailed: '動作環境4の更新に失敗しました',
         ServerTokenReadFailed: 'APIの認証情報の読み込みに失敗しました',
         ServerTokenWriteFailed: 'APIの認証情報の書き込みに失敗しました',
@@ -54,6 +56,7 @@
     ];
     const FAILED_PROGRESS: Progress['type'][] = [
         'PythonChecksumFailed',
+        'PythonExtractFailed',
         'UvCleanupOldVersionsFailed',
         'UvUpdatePipFailed',
         'UvUpdateRequirementsFailed',
@@ -125,6 +128,13 @@
         }
     }
 
+
+    async function restart() {
+        progress = null;
+        await invoke('stop_server');
+        await relaunch();
+    }
+
     let promise = init();
 </script>
 
@@ -138,106 +148,118 @@
     <main>
         {#if failed}
             <div class="loading" data-tauri-drag-region>
-                <p class="failed">
-                    起動に失敗しました
-                    <i class="ti ti-alert-circle"></i>
-                </p>
-                <div class="state">
-                    {#if progress}
-                        <p>
-                            {PROGRESS_NAME[progress.type]}
-                        </p>
-                        <small>{JSON.stringify(progress)}</small>
-                    {/if}
+                <div class="container">
+                    <p class="failed">
+                        起動に失敗しました
+                        <i class="ti ti-alert-circle"></i>
+                    </p>
+                    <div class="state">
+                        {#if progress}
+                            <p>
+                                {PROGRESS_NAME[progress.type]}
+                            </p>
+                        {/if}
+                    </div>
+                    <div class="actions">
+                        <GenerateLogButton />
+                        <UpdateButton />
+                        <button class="primary" on:click={async () => {
+                            await invoke('clean_environment');
+                            await relaunch();
+                        }}>
+                            環境を再構築
+                            <i class="ti ti-reload"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="actions">
-                    <GenerateLogButton />
-                    <UpdateButton />
-                    <button class="primary" on:click={async () => {
-                        await invoke('clean_environment');
-                        await relaunch();
-                    }}>
-                        環境を再構築
-                        <i class="ti ti-reload"></i>
-                    </button>
-                </div>
+            </div>
+            <div class="debug">
+                debug:
+                {JSON.stringify(progress)}
             </div>
         {:else}
             {#await promise}
                 <div class="loading" data-tauri-drag-region>
-                    <p class="text">
-                        {#if !$installed}
-                            インストール中
-                        {:else}
-                            起動中
-                        {/if}
-                        <Spinner />
-                    </p>
-                    <div class="state">
-                        <progress value={percentage}></progress>
-                        {#if progress}
-                            <p>
-                                {PROGRESS_NAME[progress.type]}
-                                {#if progress.progress && progress.total}
-                                    {@const percentage = progress.progress / progress.total}
-                                    <small>
-                                        {progress.progress} / {progress.total} ({Math.ceil(percentage * 100)}%)
-                                    </small>
-                                {/if}
-                            </p>
-                            <small>{JSON.stringify(progress)}</small>
-                        {/if}
+                    <div class="container">
+                        <p class="text">
+                            {#if !$installed}
+                                インストール中
+                            {:else}
+                                起動中
+                            {/if}
+                            <Spinner />
+                        </p>
+                        <div class="state">
+                            {#if progress}
+                                <div class="progress">
+                                    {#if progress.progress !== undefined && progress.total !== undefined}
+                                        {@const percentage = progress.progress / progress.total * 100}
+                                        <progress value={progress.progress} max={progress.total}></progress>
+                                        <p>
+                                            {PROGRESS_NAME[progress.type]}
+                                            {progress.progress} / {progress.total} ({Math.round(percentage || 0)}%)
+                                        </p>
+                                    {/if}
+                                </div>
+                            {/if}
+                        </div>
+                        <UpdateButton />
                     </div>
-                    <UpdateButton />
+                </div>
+                <div class="debug">
+                    debug: {JSON.stringify(progress)}
                 </div>
             {:then}
                 <slot />
             {:catch error}
                 <div class="loading" data-tauri-drag-region>
-                    <p class="failed">
-                        起動に失敗しました
-                        <i class="ti ti-alert-circle"></i>
-                    </p>
-                    <small>
-                        {#if disconnectPacket}
-                            <code>
-                                エラーコード: {disconnectPacket.type}
-                                <p>{disconnectPacket.message}</p>
-                            </code>
-                            {#if disconnectPacket.type === DisconnectType.INVALID_TOKEN}
+                    <div class="container">
+                        <p class="failed">
+                            起動に失敗しました
+                            <i class="ti ti-alert-circle"></i>
+                        </p>
+                        <small>
+                            {#if disconnectPacket}
+                                <code>
+                                    エラーコード: {disconnectPacket.type}
+                                    <p>{disconnectPacket.message}</p>
+                                </code>
+                                {#if disconnectPacket.type === DisconnectType.INVALID_TOKEN}
+                                    <small>
+                                        サーバーの認証に失敗しました
+                                    </small>
+                                {:else if disconnectPacket.type === DisconnectType.CLOSE}
+                                    <small>
+                                        サーバーから切断されました
+                                    </small>
+                                {/if}
+                            {:else if progress && FAILED_PROGRESS.includes(progress.type)}
+                                <code>
+                                    エラーコード: {progress.type}
+                                    <p>{progress.msg}</p>
+                                </code>
                                 <small>
-                                    サーバーの認証に失敗しました
+                                    {PROGRESS_NAME[progress.type]}
                                 </small>
-                            {:else if disconnectPacket.type === DisconnectType.CLOSE}
-                                <small>
-                                    サーバーから切断されました
-                                </small>
+                            {:else}
+                                {error.message}
                             {/if}
-                        {:else if progress && FAILED_PROGRESS.includes(progress.type)}
-                            <code>
-                                エラーコード: {progress.type}
-                                <p>{progress.msg}</p>
-                            </code>
-                            <small>
-                                {PROGRESS_NAME[progress.type]}
-                            </small>
-                        {:else}
-                            {error.message}
-                        {/if}
-                    </small>
+                        </small>
+                    </div>
                     <div class="actions">
                         <GenerateLogButton />
-                        {#if disconnectPacket?.type === DisconnectType.INVALID_TOKEN}
-                            <button class="primary" on:click={async () => {
-                                await invoke('stop_server');
-                                await relaunch();
-                            }}>
-                                サーバーを再起動
-                                <i class="ti ti-reload"></i>
-                            </button>
-                        {/if}
+                        <button class="primary" on:click={() => {
+                            promise = restart();
+                        }}>
+                            サーバーを再起動
+                            <i class="ti ti-reload"></i>
+                        </button>
+                        <UpdateButton />
                     </div>
-                    <UpdateButton />
+                </div>
+                <div class="debug">
+                    debug:
+                    {JSON.stringify(progress)}
                 </div>
             {/await}
         {/if}
@@ -245,6 +267,31 @@
 </div>
 
 <style lang="scss">
+    .debug {
+        position: fixed;
+        bottom: 2rem;
+        font-weight: 600;
+        font-size: 0.72rem;
+        color: var(--color-text);
+        opacity: 0.5;
+        user-select: all;
+        cursor: text;
+        width: 100%;
+        padding: 0 1rem;
+        white-space: wrap;
+        text-align: center;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        padding: 3rem 2rem;
+        width: 30rem;
+        background: var(--color-bg-2);
+    }
+
     .app {
         display: flex;
         flex-direction: column;
@@ -308,18 +355,12 @@
     .state {
         font-size: 0.8rem;
         color: var(--color-text);
-
-        > small {
-            opacity: 0.6;
-        }
     }
 
     .actions {
         display: flex;
         gap: 1rem;
         margin-top: 1rem;
-        border-top: 1px solid var(--color-outline);
-        padding-top: 1rem;
 
         > button {
             padding: 0.5rem 1rem;

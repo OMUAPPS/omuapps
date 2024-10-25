@@ -79,7 +79,7 @@ async fn start_server(
             let server = server.as_ref().unwrap();
             if server.is_running() {
                 on_progress(Progress::ServerAlreadyStarted {
-                    msg: "Server already started".to_string(),
+                    msg: "Existing server is already running".to_string(),
                 });
                 return Ok(None);
             };
@@ -122,32 +122,46 @@ async fn start_server(
 async fn stop_server(
     window: tauri::Window,
     state: tauri::State<'_, AppState>,
-) -> Result<(), String> {
+) -> Result<(), CleanEnvironmentError> {
     let on_progress = move |progress: Progress| {
         info!("{:?}", progress);
         window.emit("server_state", progress).unwrap();
     };
-    let options = state.option.clone();
-    let python = Python::ensure(&options, &on_progress).unwrap();
-    let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
 
-    let server = state.server.lock().unwrap();
-    if server.is_some() {
-        let server = server.as_ref().unwrap();
-        on_progress(Progress::ServerStopping {
-            msg: "Stopping server".to_string(),
-        });
-        if server.is_running() {
-            server.stop(&on_progress).unwrap();
+    let options = state.option.clone();
+    let python = if cfg!(dev) {
+        Python {
+            path: options.workdir.join("../.venv"),
+            python_bin: options.workdir.join("../.venv/Scripts/python.exe"),
+            version: PythonVersion {
+                major: 3,
+                minor: 12,
+                patch: 3,
+                suffix: None,
+                arch: borrow::Cow::Borrowed(""),
+                name: borrow::Cow::Borrowed(""),
+                os: borrow::Cow::Borrowed(""),
+            },
         }
-        match Server::stop_server(&python, &options.server_options) {
-            Ok(_) => {}
+    } else {
+        match Python::ensure(&options, &on_progress) {
+            Ok(python) => python,
             Err(err) => {
-                warn!("Failed to stop server: {}", err);
+                return Err(CleanEnvironmentError::PythonError(err.to_string()));
             }
         }
     };
 
+    on_progress(Progress::ServerStopping {
+        msg: "Stopping server".to_string(),
+    });
+    match Server::stop_server(&python, &options.server_options) {
+        Ok(_) => {}
+        Err(err) => {
+            // return Err(CleanEnvironmentError::ServerError(err.to_string()));
+            warn!("Failed to stop server: {}", err);
+        }
+    };
     Ok(())
 }
 
