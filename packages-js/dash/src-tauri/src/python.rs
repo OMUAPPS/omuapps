@@ -88,12 +88,32 @@ impl Python {
             progress: 0.0,
             total: 0.0,
         });
+        if python_dir.exists() {
+            std::fs::remove_dir_all(&python_dir).map_err(|e| {
+                let msg = format!(
+                    "Failed to remove existing Python directory {}: {}",
+                    python_dir.display(),
+                    e
+                );
+                on_progress(Progress::PythonExtractFailed { msg: msg.clone() });
+                anyhow!("{}", msg)
+            })?;
+        }
         unpack_archive(&contents, &python_dir, 1, |progress, total| {
             on_progress(Progress::PythonExtracting {
                 msg: format!("Extracting Python to {}", python_dir.display()),
                 progress,
                 total,
             });
+        })
+        .map_err(|e| {
+            let msg = format!(
+                "Failed to extract Python to {}: {}",
+                python_dir.display(),
+                e
+            );
+            on_progress(Progress::PythonExtractFailed { msg: msg.clone() });
+            anyhow!("{}", msg)
         })?;
         write_venv_marker(&python_dir, &version).unwrap();
         Ok(version)

@@ -26,6 +26,7 @@ export type Progress = (
     | {type: 'PythonUnkownVersion', msg: string, progress: undefined, total: undefined}
     | {type: 'PythonChecksumFailed', msg: string, progress: undefined, total: undefined}
     | {type: 'PythonExtracting', msg: string, progress: number, total: number }
+    | {type: 'PythonExtractFailed', msg: string, progress: undefined, total: undefined}
     | {type: 'UvDownloading', msg: string, progress: number, total: number }
     | {type: 'UvExtracting', msg: string, progress: number, total: number }
     | {type: 'UvCleanupOldVersions', msg: string, progress: number, total: number }

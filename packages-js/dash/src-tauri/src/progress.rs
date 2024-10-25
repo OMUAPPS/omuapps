@@ -17,6 +17,9 @@ pub enum Progress {
         progress: f64,
         total: f64,
     },
+    PythonExtractFailed {
+        msg: String,
+    },
     UvDownloading {
         msg: String,
         progress: f64,
