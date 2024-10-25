@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.13 (2024-10-25)
+
+
+### Bug Fixes
+
+* **dash:** インストールに失敗した時にやり直せるように ([b16a261](https://github.com/OMUAPPS/omuapps/commit/b16a261865a266b43c9ad666fa419bb6b320d767))
+
+
+
+
+
 ## 0.7.12 (2024-10-20)
 
 **Note:** Version bump only for package @omujs/ui
