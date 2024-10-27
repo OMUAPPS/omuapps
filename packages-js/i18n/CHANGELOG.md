@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.14 (2024-10-27)
+
+
+### Bug Fixes
+
+* **plugin-marshmallow:** またchromiumで認証情報を取得できるように ([bfb546e](https://github.com/OMUAPPS/omuapps/commit/bfb546e4a3c9483b63d17830695f9aa25f2e4501))
+
+
+
+
+
 ## 0.7.13 (2024-10-25)
 
 
