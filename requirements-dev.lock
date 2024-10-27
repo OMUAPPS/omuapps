@@ -152,8 +152,9 @@ requests==2.32.3
 result==0.17.0
     # via omu
     # via omuserver
-rookiepy==0.5.2
+rookiepy==0.5.3
     # via marshmallowqa-py
+    # via omuplugin-marshmallow
 ruff==0.6.7
 soupsieve==2.6
     # via beautifulsoup4
