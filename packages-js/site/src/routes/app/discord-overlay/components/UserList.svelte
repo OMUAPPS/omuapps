@@ -126,7 +126,7 @@
         </div>
     {:else}
         <div class="message">
-            {#if $config.channel_id}
+            {#if $config.channel_id && $config.guild_id}
                 <p>
                     まだ誰も居ないようです…
                     <i class="ti ti-user-off"/>
