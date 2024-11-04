@@ -8,6 +8,7 @@
         };
     };
     export let value: T;
+    $: key = Object.keys(options).find((key) => options[key].value === value);
 
     const dispatch = createEventDispatcher<{
         change: { key: string; value: T };
@@ -15,22 +16,20 @@
         close: void;
     }>();
 
-    function onChange() {
-        if (!value) {
-            return;
-        }
-        const key = Object.keys(options).find((key) => options[key].value === value);
-        if (!key) {
-            return;
-        }
+    function onChange(event: Event & {
+        currentTarget: EventTarget & HTMLSelectElement;
+    }) {
+        const key = event.currentTarget.value;
+        value = options[key].value;
+        console.log('change', { key, value });
         dispatch('change', { key, value });
     }
 </script>
 
 <div class="combo-box">
     <select
-        bind:value
-        on:change={() => onChange()}
+        value={key}
+        on:change={(event) => onChange(event)}
         on:focus={() => dispatch('open')}
         on:blur={() => dispatch('close')}
     >
