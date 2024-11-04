@@ -89,15 +89,21 @@ class Client:
             channel_id=None,
             handler=self._handle_voice_channel_change,
         )
-        selected_vc = await self.rpc.get_selected_voice_channel()
-        if selected_vc is None:
-            await self.stop()
-            return
-        await self._connect_vc(selected_vc["guild_id"], selected_vc["id"])
+        session = await session_registry.get()
+        if session["guild_id"] and session["channel_id"]:
+            await self._connect_vc(session["guild_id"], session["channel_id"])
+        else:
+            selected_vc = await self.rpc.get_selected_voice_channel()
+            if selected_vc is None:
+                await self.stop()
+                return
+            await self._connect_vc(selected_vc["guild_id"], selected_vc["id"])
 
     async def _handle_voice_channel_change(self, vc: VoiceChannelSelect):
         session = await session_registry.get()
         if session["user_id"] != self.user["id"]:
+            return
+        if session["guild_id"] and vc.get("guild_id") != session["guild_id"]:
             return
         channel_id = vc["channel_id"]
         if self.channel_id == channel_id:
@@ -124,7 +130,11 @@ class Client:
             return
         if session["guild_id"] and guild_id != session["guild_id"]:
             return
-        if session["channel_id"] and channel_id != session["channel_id"]:
+        if (
+            session["guild_id"]
+            and session["channel_id"]
+            and channel_id != session["channel_id"]
+        ):
             return
         if self.vc_rpc is not None:
             await self.vc_rpc.close()
