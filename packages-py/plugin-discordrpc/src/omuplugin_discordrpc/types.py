@@ -45,6 +45,7 @@ class SessionData(TypedDict):
 class SessionRegistry(TypedDict):
     sessions: dict[int, SessionData]
     user_id: str | None
+    guild_id: str | None
     channel_id: str | None
 
 
@@ -54,6 +55,7 @@ SESSION_REGISTRY_TYPE = RegistryType[SessionRegistry].create_json(
     default_value={
         "sessions": {},
         "user_id": None,
+        "guild_id": None,
         "channel_id": None,
     },
 )
@@ -95,7 +97,8 @@ GET_CHANNELS_ENDPOINT_TYPE = EndpointType[
 
 class SetVCRequest(TypedDict):
     user_id: str
-    channel_id: str
+    guild_id: str | None
+    channel_id: str | None
 
 
 SET_VC_ENDPOINT_TYPE = EndpointType[SetVCRequest, None].create_json(

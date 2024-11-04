@@ -260,6 +260,16 @@ class GetChannelsResponsePayload(
 ): ...
 
 
+class GetSelectedVoiceChannelArgs(TypedDict): ...
+
+
+class GetSelectedVoiceChannelPayload(
+    Payload[Literal["GET_SELECTED_VOICE_CHANNEL"]],
+    Args[GetSelectedVoiceChannelArgs],
+    Nonce,
+): ...
+
+
 class VoiceStateSubscriptionArgs(TypedDict):
     channel_id: str
 
@@ -329,6 +339,18 @@ class VoiceStateUpdateDispatchPayload(
 class VoiceStateDeleteDispatchPayload(
     DispatchPayload[Literal["VOICE_STATE_DELETE"]],
     Data[VoiceStateItem],
+    NullNonce,
+): ...
+
+
+class VoiceChannelSelect(TypedDict):
+    channel_id: str | None
+    guild_id: NotRequired[str]
+
+
+class VoiceChannelSelectDispatchPayload(
+    DispatchPayload[Literal["VOICE_CHANNEL_SELECT"]],
+    Data[VoiceChannelSelect],
     NullNonce,
 ): ...
 
@@ -406,6 +428,14 @@ class GetChannelResponsePayload(
 ): ...
 
 
+class GetSelectedVoiceChannelResponsePayload(
+    Payload[Literal["GET_SELECTED_VOICE_CHANNEL"]],
+    NullEvent,
+    Data[GetChannelResponseData],
+    Nonce,
+): ...
+
+
 class SpeakingStartSubscriptionArgs(TypedDict):
     channel_id: str
 
@@ -424,6 +454,18 @@ class SpeakingStopSubscriptionArgs(TypedDict):
 class SpeakingStopSubscriptionPayload(
     SubscribeRequestPayload[Literal["SPEAKING_STOP"]],
     Args[SpeakingStopSubscriptionArgs],
+    Nonce,
+): ...
+
+
+class VoiceChannelSelectSubscriptionArgs(TypedDict):
+    channel_id: str | None
+    guild_id: str | None
+
+
+class VoiceChannelSelectSubscriptionPayload(
+    SubscribeRequestPayload[Literal["VOICE_CHANNEL_SELECT"]],
+    Args[VoiceChannelSelectSubscriptionArgs],
     Nonce,
 ): ...
 
@@ -466,6 +508,7 @@ type SubscribePayloads = (
     | VoiceStateDeleteSubscriptionPayload
     | SpeakingStartSubscriptionPayload
     | SpeakingStopSubscriptionPayload
+    | VoiceChannelSelectSubscriptionPayload
 )
 type RequestPayloads = (
     SubscribePayloads
@@ -474,11 +517,13 @@ type RequestPayloads = (
     | GetGuildsRequestPayload
     | GetChannelsRequestPayload
     | GetChannelRequestPayload
+    | GetSelectedVoiceChannelPayload
     | UnsubscribeRequestPayload[Literal["VOICE_STATE_CREATE"]]
     | UnsubscribeRequestPayload[Literal["VOICE_STATE_UPDATE"]]
     | UnsubscribeRequestPayload[Literal["VOICE_STATE_DELETE"]]
     | UnsubscribeRequestPayload[Literal["SPEAKING_START"]]
     | UnsubscribeRequestPayload[Literal["SPEAKING_STOP"]]
+    | UnsubscribeRequestPayload[Literal["VOICE_CHANNEL_SELECT"]]
 )
 type ResponsePayloads = (
     SubscribeResponsePayload
@@ -487,9 +532,11 @@ type ResponsePayloads = (
     | AuthenticateResponsePayload
     | GetGuildsResponsePayload
     | GetChannelsResponsePayload
+    | GetSelectedVoiceChannelResponsePayload
     | VoiceStateCreateDispatchPayload
     | VoiceStateUpdateDispatchPayload
     | VoiceStateDeleteDispatchPayload
+    | VoiceChannelSelectDispatchPayload
     | SpeakingStartDispatchPayload
     | SpeakingStopDispatchPayload
     | GetChannelResponsePayload

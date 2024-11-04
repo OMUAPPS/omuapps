@@ -15,6 +15,7 @@ from .discordrpc.payloads import (
     GetGuildsResponseData,
     SpeakingStartData,
     SpeakingStopData,
+    VoiceChannelSelect,
     VoiceStateItem,
 )
 from .types import (
@@ -66,7 +67,7 @@ class Client:
                     exist_session["access_token"],
                 )
             except Exception as e:
-                logger.warning(f"Failed to connect to {port}: {e}")
+                logger.warning(f"Failed to connect with existing session: {e}")
                 sessions["sessions"].pop(port)
                 await session_registry.set(sessions)
         rpc = await DiscordRPC.connect(port)
@@ -82,14 +83,49 @@ class Client:
             access_token,
         )
 
+    async def start(self):
+        await self.rpc.subscribe_voice_channel_select(
+            guild_id=None,
+            channel_id=None,
+            handler=self._handle_voice_channel_change,
+        )
+        selected_vc = await self.rpc.get_selected_voice_channel()
+        if selected_vc is None:
+            await self.stop()
+            return
+        await self._connect_vc(selected_vc["guild_id"], selected_vc["id"])
+
+    async def _handle_voice_channel_change(self, vc: VoiceChannelSelect):
+        session = await session_registry.get()
+        if session["user_id"] != self.user["id"]:
+            return
+        channel_id = vc["channel_id"]
+        if self.channel_id == channel_id:
+            return
+        await self._connect_vc(vc.get("guild_id"), channel_id)
+
     async def get_guilds(self) -> GetGuildsResponseData:
         return await self.rpc.get_guilds()
 
     async def get_channels(self, guild_id: str) -> GetChannelsResponseData:
         return await self.rpc.get_channels(guild_id)
 
-    async def connect_vc(self, channel_id: str):
+    async def _connect_vc(
+        self,
+        guild_id: str | None,
+        channel_id: str | None,
+    ):
         self.channel_id = channel_id
+        if channel_id is None:
+            await self.stop()
+            return
+        session = await session_registry.get()
+        if session["user_id"] != self.user["id"]:
+            return
+        if session["guild_id"] and guild_id != session["guild_id"]:
+            return
+        if session["channel_id"] and channel_id != session["channel_id"]:
+            return
         if self.vc_rpc is not None:
             await self.vc_rpc.close()
         self.vc_rpc = await DiscordRPC.connect(self.port)
@@ -137,10 +173,12 @@ class Client:
 
         await self.vc_rpc.subscribe_speaking_stop(channel_id, speaking_stop_handler)
 
-    async def close_vc(self):
+    async def stop(self):
         if self.vc_rpc is not None:
             await self.vc_rpc.close()
             self.vc_rpc = None
+        await voice_state_registry.set({})
+        await speaking_state_registry.set({})
 
     async def close(self):
         await self.rpc.close()
@@ -178,16 +216,20 @@ async def get_channels(req: GetChannelsRequest) -> GetChannelsResponseData:
 @omu.endpoints.bind(endpoint_type=SET_VC_ENDPOINT_TYPE)
 async def set_vc(req: SetVCRequest) -> None:
     global current_client
-    if current_client is not None and current_client.channel_id == req["channel_id"]:
-        return None
+    session = await session_registry.get()
+    session["user_id"] = req["user_id"]
+    session["guild_id"] = req["guild_id"]
+    session["channel_id"] = req["channel_id"]
+    await session_registry.set(session)
+
+    if current_client is not None:
+        await current_client.stop()
     user_id = req["user_id"]
     if user_id not in clients:
         raise Exception(f"User {user_id} not found. {clients.keys()}")
     client = clients[user_id]
-    if current_client is not None:
-        await current_client.close_vc()
     current_client = client
-    await client.connect_vc(req["channel_id"])
+    await client.start()
     return None
 
 
@@ -205,6 +247,7 @@ async def refresh_clients():
     for client in clients.values():
         if client.closed:
             await client.close()
+    clients.clear()
 
     async def connect_client(port: int):
         try:
@@ -219,13 +262,10 @@ async def refresh_clients():
 
     session = await session_registry.get()
     user_id = session["user_id"]
-    channel_id = session["channel_id"]
-    if user_id is None or channel_id is None:
-        return
     if user_id not in clients:
         return
     client = clients[user_id]
-    await client.connect_vc(channel_id)
+    await client.start()
 
 
 @omu.endpoints.bind(endpoint_type=REFRESH_ENDPOINT_TYPE)

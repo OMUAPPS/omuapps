@@ -20,6 +20,7 @@ from .payloads import (
     SpeakingStartData,
     SpeakingStopData,
     SubscribePayloads,
+    VoiceChannelSelect,
     VoiceStateItem,
 )
 
@@ -197,6 +198,18 @@ class DiscordRPC:
         assert res["evt"] is None
         return res["data"]
 
+    async def get_selected_voice_channel(self) -> GetChannelResponseData | None:
+        res = await self.dispatch(
+            {
+                "cmd": "GET_SELECTED_VOICE_CHANNEL",
+                "args": {},
+                "nonce": str(uuid4()),
+            }
+        )
+        assert res["cmd"] == "GET_SELECTED_VOICE_CHANNEL"
+        assert res["evt"] is None
+        return res["data"]
+
     async def subscribe_voice_state_create(
         self, channel_id: str, handler: Coro[[VoiceStateItem], None]
     ) -> None:
@@ -310,4 +323,39 @@ class DiscordRPC:
                 "nonce": str(uuid4()),
             },
             handle,
+        )
+
+    async def subscribe_voice_channel_select(
+        self,
+        channel_id: str | None,
+        guild_id: str | None,
+        handler: Coro[[VoiceChannelSelect], None],
+    ) -> Coro[[], ResponsePayloads]:
+        async def handle(payload: ResponsePayloads):
+            if payload["cmd"] == "SUBSCRIBE":
+                return
+            assert payload["cmd"] == "DISPATCH"
+            assert payload["evt"] == "VOICE_CHANNEL_SELECT"
+            data = payload["data"]
+            await handler(data)
+
+        nonce = str(uuid4())
+        await self.subscribe(
+            {
+                "cmd": "SUBSCRIBE",
+                "evt": "VOICE_CHANNEL_SELECT",
+                "args": {
+                    "channel_id": channel_id,
+                    "guild_id": guild_id,
+                },
+                "nonce": nonce,
+            },
+            handle,
+        )
+        return lambda: self.dispatch(
+            {
+                "cmd": "UNSUBSCRIBE",
+                "evt": "VOICE_CHANNEL_SELECT",
+                "nonce": nonce,
+            }
         )
