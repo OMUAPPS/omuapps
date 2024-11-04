@@ -165,6 +165,7 @@ class OmuServer(Server):
         try:
             await self._network.start()
         except Exception as e:
+            logger.opt(exception=e).error("Failed to start server")
             await self.stop()
             self.loop.stop()
             raise e
