@@ -105,7 +105,7 @@ type GetChannelsResponseData = {
 const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, guild_id: string }, GetChannelsResponseData>(PLUGIN_ID, {
     name: 'get_channels',
 });
-const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, channel_id: string }, null>(PLUGIN_ID, {
+const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, guild_id: string | null, channel_id: string | null }, null>(PLUGIN_ID, {
     name: 'set_vc',
 });
 const WAIT_FOR_READY_ENDPOINT_TYPE = EndpointType.createJson<null, null>(PLUGIN_ID, {
@@ -212,8 +212,10 @@ export class DiscordOverlayApp {
         return await this.omu.endpoints.call(GET_CHANNELS_ENDPOINT_TYPE, { user_id, guild_id });
     }
 
-    public async setVC(user_id: string, channel_id: string): Promise<void> {
-        await this.omu.endpoints.call(SET_VC_ENDPOINT_TYPE, { user_id, channel_id });
+    public async setVC(args: {
+        user_id: string, guild_id: string | null, channel_id: string | null
+    }): Promise<void> {
+        await this.omu.endpoints.call(SET_VC_ENDPOINT_TYPE, args);
     }
 
     public async getClients(): Promise<Record<string, AuthenticateUser>> {

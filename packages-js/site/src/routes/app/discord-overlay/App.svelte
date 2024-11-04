@@ -66,27 +66,24 @@
         }
         if (user_id && guild_id) {
             channels = (await overlayApp.getChannels(user_id, guild_id)).channels.filter((channel) => channel.type === 2);
+        } else {
+            channels = [];
         }
-        const foundsGuild = guilds.find((guild) => guild.id === guild_id);
-        const foundChannel = channels.find((channel) => channel.id === channel_id);
-        if (user_id && guild_id && channel_id && foundsGuild && foundChannel) {
+        if (user_id) {
             state = 'connecting-vc';
-            await overlayApp.setVC(user_id, channel_id);
+            await overlayApp.setVC({
+                user_id,
+                guild_id,
+                channel_id,
+            });
             state = null;
         }
     }
     
     $: {
-        if (Object.keys(clients).length > 0 && (!$config.user_id)) {
+        const userFound = $config.user_id && clients[$config.user_id] || null;
+        if (Object.keys(clients).length > 0 && !userFound) {
             $config.user_id = Object.keys(clients)[0];
-        }
-        const foundsGuild = guilds.find((guild) => guild.id === $config.guild_id);
-        if (guilds.length > 0 && (!foundsGuild || !$config.guild_id && guilds)) {
-            $config.guild_id = guilds[0]?.id;
-        }
-        const foundChannel = channels.find((channel) => channel.id === $config.channel_id);
-        if (channels.length > 0 && (!foundChannel || !$config.channel_id && channels)) {
-            $config.channel_id = channels[0]?.id;
         }
         update($config.user_id, $config.guild_id, $config.channel_id);
     }
@@ -154,19 +151,33 @@
             refreshPromise = null;
         });
     }
+    $: guildOptions = {
+        auto: {
+            label: '自動',
+            value: null,
+        },
+        ...Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))
+    }
+    $: channelOptions = {
+        auto: {
+            label: '自動',
+            value: null,
+        },
+        ...Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))
+    }
 </script>
 
 <main>
     <div class="controls">
         <div class="config">
             <span>
-                {#if hasUsers}
+                {#if hasUsers && Object.keys(clients).length > 1}
                     <p>
                         <i class="ti ti-user"></i>
                         ユーザー
                     </p>
                     <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
-                {:else}
+                {:else if Object.keys(clients).length === 0}
                     <small>
                         起動しているDiscordが見つかりませんでした
                     </small>
@@ -196,7 +207,7 @@
                         <i class="ti ti-server"></i>
                         サーバー
                     </p>
-                    <Combobox options={Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))} bind:value={$config.guild_id}/>
+                    <Combobox options={guildOptions} bind:value={$config.guild_id}/>
                 {:else if hasUsers}
                     <small>
                         入っているサーバーは見つかりませんでした
@@ -209,8 +220,8 @@
                         <i class="ti ti-volume"></i>
                         チャンネル
                     </p>
-                    <Combobox options={Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))} bind:value={$config.channel_id}/>
-                {:else if hasGuilds && hasUsers}
+                    <Combobox options={channelOptions} bind:value={$config.channel_id}/>
+                {:else if hasGuilds && hasUsers && $config.guild_id}
                     <small>
                         ボイスチャンネルは見つかりませんでした
                     </small>

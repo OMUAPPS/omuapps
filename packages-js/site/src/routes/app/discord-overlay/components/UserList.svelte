@@ -125,11 +125,21 @@
             </div>
         </div>
     {:else}
-        <p>
-            まだ誰も居ないようです…
-            <i class="ti ti-user-off"/>
-        </p>
-        <small>誰かがボイスチャンネルに入ると表示されます</small>
+        <div class="message">
+            {#if $config.channel_id}
+                <p>
+                    まだ誰も居ないようです…
+                    <i class="ti ti-user-off"/>
+                </p>
+                <small>誰かがボイスチャンネルに入ると表示されます</small>
+            {:else}
+                <p>
+                    チャンネルに入ると表示されます
+                    <i class="ti ti-user-off"/>
+                </p>
+                <small>ボイスチャンネルに入ってみましょう</small>
+            {/if}
+        </div>
     {/each}
 </div>
 
@@ -143,6 +153,20 @@
         &.dragging {
             pointer-events: none;
         }
+    }
+
+    .message {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 1rem;
+        padding-top: 2rem;
+    }
+
+    small {
+        color: var(--color-text);
+        font-size: 0.8rem;
     }
 
     .entry {

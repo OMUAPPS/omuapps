@@ -12,7 +12,6 @@
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const overlayApp = new DiscordOverlayApp(omu);
-    const { voiceState, config } = overlayApp;
     setClient(omu);
 
     if (BROWSER) {
