@@ -90,6 +90,8 @@ class Client:
             handler=self._handle_voice_channel_change,
         )
         session = await session_registry.get()
+        if session["user_id"] != self.user["id"]:
+            return
         if session["guild_id"] and session["channel_id"]:
             await self._connect_vc(session["guild_id"], session["channel_id"])
         else:
@@ -103,9 +105,27 @@ class Client:
         session = await session_registry.get()
         if session["user_id"] != self.user["id"]:
             return
-        if session["guild_id"] and vc.get("guild_id") != session["guild_id"]:
+        is_different_guild = (
+            session["guild_id"] is not None
+            and vc.get("guild_id") is not None
+            and session["guild_id"] != vc.get("guild_id")
+        )
+        is_selected_channel_present = (
+            session["guild_id"] is not None and session["channel_id"] is not None
+        )
+        is_different_channel = (
+            is_selected_channel_present
+            and vc.get("channel_id") is not None
+            and session["channel_id"] != vc.get("channel_id")
+        )
+        if is_different_guild or is_different_channel:
             return
         channel_id = vc["channel_id"]
+        is_selected_channel = (
+            is_selected_channel_present and session["channel_id"] == self.channel_id
+        )
+        if channel_id is None and is_selected_channel:
+            return
         if self.channel_id == channel_id:
             return
         await self._connect_vc(vc.get("guild_id"), channel_id)
@@ -126,10 +146,6 @@ class Client:
             await self.stop()
             return
         session = await session_registry.get()
-        if session["user_id"] != self.user["id"]:
-            return
-        if session["guild_id"] and guild_id != session["guild_id"]:
-            return
         if (
             session["guild_id"]
             and session["channel_id"]
