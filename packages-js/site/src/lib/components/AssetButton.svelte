@@ -6,7 +6,7 @@
 
     export let omu: Omu | null = null;
     export let obs: OBSPlugin | null = null;
-    export let dimensions: { width: number; height: number } = { width: 1920, height: 1080 };
+    export let dimensions: { width: number; height: number } | undefined = undefined;
 
     async function create() {
         if (!obs) {
