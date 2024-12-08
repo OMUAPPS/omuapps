@@ -238,6 +238,7 @@
             <i class="ti ti-alert-circle"></i>
             <p>ユーザー情報の読み込み中にエラーが発生しました。</p>
             <small>{error.message}</small>
+            <button on:click={() => (refreshPromise = refreshUsers())}>もう一度試す</button>
         {/await}
     </div>
 {:else if state === 'user_notfound'}

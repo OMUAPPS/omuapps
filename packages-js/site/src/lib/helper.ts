@@ -20,7 +20,7 @@ export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
         },
         update: (fn) => {
             if (!ready) {
-                throw new Error('Registry is not ready');
+                throw new Error(`Registry ${registry.type.id.key()} is not ready`);
             }
             registry.update(fn);
         },

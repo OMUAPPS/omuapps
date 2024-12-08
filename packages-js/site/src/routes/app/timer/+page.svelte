@@ -4,6 +4,7 @@
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import {
+        Align,
         AppHeader,
         FlexColWrapper,
         FlexRowWrapper,
@@ -13,7 +14,6 @@
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
-    import Align from './components/Align.svelte';
     import Timer from './components/Timer.svelte';
     import { TimerApp } from './timer-app.js';
 
@@ -101,7 +101,7 @@
             <section>
                 <p class="setting">
                     <small>配置</small>
-                    <Align bind:align={$config.style.align} />
+                    <Align bind:horizontal={$config.style.align.x} bind:vertical={$config.style.align.y} />
                 </p>
                 <p class="setting">
                     <small>文字の色</small>

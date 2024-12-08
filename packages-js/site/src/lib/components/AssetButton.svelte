@@ -56,7 +56,7 @@
             {:else}
                 <Tooltip>クリックで追加</Tooltip>
                 OBSの現在のシーンに追加
-                <i class="ti ti-plus"></i>
+                <i class="ti ti-download"></i>
             {/if}
         </button>
         <DragLink href={generateUrl}>
