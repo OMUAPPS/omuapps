@@ -49,6 +49,7 @@
 <style>
     :global(body) {
         background: transparent !important;
+        overflow: hidden;
     }
 
     main {
@@ -57,6 +58,5 @@
         display: flex;
         justify-content: center;
         align-items: end;
-        padding: 1rem;
     }
 </style>

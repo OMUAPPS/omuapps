@@ -40,7 +40,7 @@ void main() {
     for (float i = -u_radius; i <= u_radius; i++) {
         vec2 offset = u_direction * i * u_texsize;
         vec4 sampled = texture(u_texture, v_texcoord + offset);
-        sampled = max(vec4(0.0), sampled - vec4(0.88));
+        sampled = max(vec4(0.0), sampled - vec4(0.92));
         float weight = u_weights[int(abs(i) / u_radius * (u_weights_size - 1.0))];
         blur += sampled * weight * 2.0;
     }

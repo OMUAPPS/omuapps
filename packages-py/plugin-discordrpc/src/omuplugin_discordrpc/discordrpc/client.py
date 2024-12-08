@@ -13,6 +13,7 @@ from .payloads import (
     AuthorizeResponseData,
     GetChannelResponseData,
     GetChannelsResponseData,
+    GetGuildResponseData,
     GetGuildsResponseData,
     RequestPayloads,
     ResponsePayloads,
@@ -89,7 +90,9 @@ class DiscordRPC:
                     future = self.dispatch_handlers.pop(msg["nonce"])
                     future.set_result(msg)
                 elif msg["cmd"] == "DISPATCH":
-                    await self.subscribe_handlers[msg["evt"]](msg)
+                    coro = self.subscribe_handlers.get(msg["evt"])
+                    if coro is not None:
+                        asyncio.create_task(coro(msg))
                 else:
                     logger.warning(f"Unhandled message: {msg}")
         except Exception as e:
@@ -195,6 +198,18 @@ class DiscordRPC:
             }
         )
         assert res["cmd"] == "GET_CHANNEL"
+        assert res["evt"] is None
+        return res["data"]
+
+    async def get_guild(self, guild_id: str) -> GetGuildResponseData:
+        res = await self.dispatch(
+            {
+                "cmd": "GET_GUILD",
+                "args": {"guild_id": guild_id, "timeout": 60},
+                "nonce": str(uuid4()),
+            }
+        )
+        assert res["cmd"] == "GET_GUILD"
         assert res["evt"] is None
         return res["data"]
 

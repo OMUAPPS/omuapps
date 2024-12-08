@@ -1,4 +1,6 @@
 export class BetterMath {
+    public static TAU = Math.PI * 2;
+
     public static toRadians(degrees: number): number {
         return degrees * Math.PI / 180;
     }
@@ -36,5 +38,39 @@ export class BetterMath {
         } else {
             return 0.5 - x;
         }
+    }
+
+    public static wrapDegrees(degrees: number): number {
+        // wrap degrees to -180 to 180
+        degrees = degrees % 360;
+        if (degrees > 180) {
+            degrees -= 360;
+        }
+        if (degrees < -180) {
+            degrees += 360;
+        }
+        return degrees;
+    }
+
+
+    public static angleDifference(a: number, b: number): number {
+        const difference = (b - a) % this.TAU;
+        return (2 * difference) % this.TAU - difference;
+    }
+
+    public static lerpAngle(a: number, b: number, t: number): number {
+        return a + BetterMath.angleDifference(a, b) * t;
+    }
+
+    public static clampDegrees(value: number, min: number, max: number): number {
+        // wrap value to -180 to 180
+        value = BetterMath.wrapDegrees(value);
+
+        // wrap min and max to -180 to 180
+        min = BetterMath.wrapDegrees(min);
+        max = BetterMath.wrapDegrees(max);
+
+        // interpolate the wrapped values
+        return BetterMath.wrapDegrees(BetterMath.clamp(value, min, max));
     }
 }

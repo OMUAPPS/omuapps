@@ -22,16 +22,16 @@
         omu.start();
     }
 
-    $: alignVertical = {
-        top: 'start',
-        center: 'center',
-        bottom: 'end',
-    }[$config.style.align.split('-')[0]];
     $: alignHorizontal = {
-        left: 'start',
-        center: 'center',
-        right: 'end',
-    }[$config.style.align.split('-')[1]];
+        start: 'start',
+        middle: 'center',
+        end: 'end',
+    }[$config.style.align.x];
+    $: alignVertical = {
+        start: 'start',
+        middle: 'center',
+        end: 'end',
+    }[$config.style.align.y];
 </script>
 
 {#if id}

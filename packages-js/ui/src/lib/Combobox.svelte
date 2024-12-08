@@ -21,7 +21,6 @@
     }) {
         const key = event.currentTarget.value;
         value = options[key].value;
-        console.log('change', { key, value });
         dispatch('change', { key, value });
     }
 </script>
@@ -43,17 +42,16 @@
     select {
         width: 100%;
         padding: 5px 5px;
-        font-size: 14px;
+        font-size: 0.75rem;
         font-weight: 600;
         color: var(--color-1);
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
         border: none;
-        outline: none;
         cursor: pointer;
 
-        &:focus {
-            outline: 2px solid var(--color-1);
+        &:focus-within {
+            outline: 1px solid var(--color-1);
         }
     }
 </style>

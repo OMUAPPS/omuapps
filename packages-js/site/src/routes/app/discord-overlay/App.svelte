@@ -1,16 +1,19 @@
 <script lang="ts">
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { BetterMath } from '$lib/math.js';
+    import { Mat4 } from '$lib/math/mat4.js';
     import { OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { Combobox, Spinner, Tooltip } from '@omujs/ui';
-    import { onDestroy } from 'svelte';
+    import { Spinner, Tooltip } from '@omujs/ui';
+    import { DEV } from 'esm-env';
+    import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
-    import CameraControls from './components/CameraControls.svelte';
-    import EffectControls from './components/EffectControls.svelte';
+    import SelectedChannel from './components/SelectedChannel.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
     import UserList from './components/UserList.svelte';
+    import VCConfig from './components/VCConfig.svelte';
+    import VisualConfig from './components/VisualConfig.svelte';
     import { DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
+    import { heldAvatar, heldUser } from './states.js';
 
     export let omu: Omu;
     export let obs: OBSPlugin;
@@ -25,7 +28,6 @@
                 position: [0, 0],
                 scale: 1,
                 avatar: null,
-                order: 0,
             };
             $config.users[id] = user;
         }
@@ -43,12 +45,14 @@
     let clients: Record<string, AuthenticateUser> = {};
     let guilds: Guild[] = [];
     let channels: Channel[] = [];
+    let ready = false;
 
     omu.onReady(async () => {
         await overlayApp.waitForReady();
         clients = await overlayApp.getClients();
         state = null;
-        $config.selected_user_id = null;
+        ready = true;
+        config.update((config) => overlayApp.migrateConfig(config));
     })
 
     let last_user_id: string | null = null;
@@ -85,148 +89,94 @@
         if (Object.keys(clients).length > 0 && !userFound) {
             $config.user_id = Object.keys(clients)[0];
         }
-        update($config.user_id, $config.guild_id, $config.channel_id);
-    }
-
-    $: hasUsers = Object.keys(clients).length > 0;
-    $: hasGuilds = guilds.length > 0;
-    $: hasChannels = channels.length > 0;
-
-    let dragger: HTMLButtonElement;
-    let lastMouse: [number, number] | null = null;
-    let lastPosition: [number, number] = [0, 0];
-    $: zoom = 2 ** $config.zoom_level;
-    
-    function handleMouseMove(e: MouseEvent) {
-        e.preventDefault();
-        if (!lastMouse) return;
-        const dx = (e.clientX - lastMouse[0]) / zoom;
-        const dy = (e.clientY - lastMouse[1]) / zoom;
-        $config.camera_position = [lastPosition[0] + dx, lastPosition[1] + dy];
-    }
-
-    function handleMouseUp() {
-        window.removeEventListener('mousemove', handleMouseMove);
-        dragger.removeEventListener('mouseup', handleMouseUp);
-        console.log('camera_position', $config.camera_position);
-        lastMouse = null;
-    }
-
-    function handleMouseDown(e: MouseEvent) {
-        lastMouse = [e.clientX, e.clientY];
-        lastPosition = $config.camera_position;
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-        console.log('camera_position', $config.camera_position);
-    }
-
-    function handleMouseWheel(e: WheelEvent) {
-        e.preventDefault();
-        let zoomAmount = -e.deltaY / 1000;
-        zoomAmount = BetterMath.clamp($config.zoom_level + zoomAmount, -2, 2) - $config.zoom_level;
-        $config.zoom_level = BetterMath.clamp($config.zoom_level + zoomAmount, -2, 2);
-        const canvasRect = dragger.getBoundingClientRect();
-        const x = e.clientX - canvasRect.left;
-        const y = e.clientY - canvasRect.top;
-        const dx = (x - dimentions.width / 2) / zoom;
-        const dy = (y - dimentions.height / 2) / zoom;
-        $config.camera_position = [
-            $config.camera_position[0] - dx * zoomAmount,
-            $config.camera_position[1] - dy * zoomAmount,
-        ];
-    }
-
-    onDestroy(() => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-    });
-
-    let refreshPromise: Promise<void> | null = null;
-
-    function refresh() {
-        if (refreshPromise) {
-            return;
+        if ($config.user_id && clients[$config.user_id]) {
+            update($config.user_id, $config.guild_id, $config.channel_id);
         }
-        refreshPromise = overlayApp.refresh().finally(() => {
-            refreshPromise = null;
-        });
     }
-    $: guildOptions = {
-        auto: {
-            label: '自動',
-            value: null,
-        },
-        ...Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))
-    }
-    $: channelOptions = {
-        auto: {
-            label: '自動',
-            value: null,
-        },
-        ...Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))
+
+    let tab: 'visual' | 'config' | 'users' | null = null;
+    let view: Mat4 = Mat4.IDENTITY;
+    $: {
+        if ($heldAvatar || $heldUser) {
+            tab = null;
+        }
     }
 </script>
 
 <main>
-    <div class="controls">
-        <div class="config">
-            <span>
-                {#if hasUsers && Object.keys(clients).length > 1}
-                    <p>
-                        <i class="ti ti-user"></i>
-                        ユーザー
-                    </p>
-                    <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
-                {:else if Object.keys(clients).length === 0}
-                    <small>
-                        起動しているDiscordが見つかりませんでした
-                    </small>
-                {/if}
-                <button on:click={refresh} disabled={!!refreshPromise}>
-                    {#if refreshPromise}
-                        <Tooltip>
-                            Discordを再検出中…
-                        </Tooltip>
-                        <Spinner />
-                    {:else if hasUsers}
-                        <Tooltip>
-                            Discordを再検出
-                        </Tooltip>
-                        <i class="ti ti-reload"></i>
-                    {:else}
-                        <Tooltip>
-                            起動しているDiscordから読み込み直す
-                        </Tooltip>
-                        Discordを検出
+    <div class="top">
+        {#if ready}
+            <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
+                <AvatarRenderer overlayApp={overlayApp} bind:message bind:view showGrid />
+                {#if $heldAvatar}
+                    <AvatarAdjustModal overlayApp={overlayApp} />
+                {:else}
+                    {#if dimentions && view}
+                        {#each Object.entries($voiceState)
+                            .filter(([id, ]) => $config.users[id]?.show)
+                            .sort(([a,], [b,]) => $config.users[a].position[0] - $config.users[b].position[0]) as [id, state] (id)}
+                            <UserDragControl {view} {dimentions} {overlayApp} {id} {state}/>
+                        {/each}
                     {/if}
-                </button>
-            </span>
-            <span>
-                {#if hasGuilds}
-                    <p>
-                        <i class="ti ti-server"></i>
-                        サーバー
-                    </p>
-                    <Combobox options={guildOptions} bind:value={$config.guild_id}/>
-                {:else if hasUsers}
-                    <small>
-                        入っているサーバーは見つかりませんでした
-                    </small>
                 {/if}
-            </span>
-            <span>
-                {#if hasChannels}
-                    <p>
-                        <i class="ti ti-volume"></i>
-                        チャンネル
-                    </p>
-                    <Combobox options={channelOptions} bind:value={$config.channel_id}/>
-                {:else if hasGuilds && hasUsers && $config.guild_id}
-                    <small>
-                        ボイスチャンネルは見つかりませんでした
-                    </small>
+                {#if message}
+                    <div class="message">
+                        {#if message.type === 'loading'}
+                            <p>
+                                {message.text}
+                                <Spinner />
+                            </p>
+                        {/if}
+                    </div>
                 {/if}
-            </span>
+            </div>
+        {/if}
+    </div>
+    <div class="bottom">
+        {#if !DEV}
+            <AssetButton {omu} {obs} />
+        {/if}
+        <div class="config">
+            <div class="tabs">
+                {#if tab}
+                    <button on:click={() => tab = null} class="back">
+                        <Tooltip>
+                            戻る
+                        </Tooltip>
+                        <i class="ti ti-chevron-left"></i>
+                    </button>
+                {:else}
+                    <button on:click={() => tab = 'config'}>
+                        <Tooltip>
+                            {#if $config.user_id && clients[$config.user_id]}
+                                {@const user = clients[$config.user_id]}
+                                <div class="logged-user">
+                                    {#if user.avatar}
+                                        <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar"/>
+                                    {:else}
+                                        <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar"/>
+                                    {/if}
+                                    <span>{user.global_name}</span>
+                                    <small>にログイン中</small>
+                                </div>
+                            {:else}
+                                ユーザーを選択
+                            {/if}
+                            接続設定
+                        </Tooltip>
+                        <i class="ti ti-settings"></i>
+                    </button>
+                    <button on:click={() => tab = 'visual'}>
+                        <Tooltip>
+                            見た目設定
+                        </Tooltip>
+                        <i class="ti ti-layout"></i>
+                    </button>
+                {/if}
+            </div>
+            <div class="asset">
+                <AssetButton {omu} {obs} />
+            </div>
         </div>
         <div class="users">
             {#if state === 'connecting-vc'}
@@ -239,43 +189,25 @@
                     Discordを待機中
                     <Spinner />
                 </p>
-            {:else}
-                <UserList {overlayApp} />
+            {/if}
+            <UserList {overlayApp} />
+        </div>
+    </div>
+    {#if tab}
+        <div class="tab">
+            {#if tab === 'users'}
+                <SelectedChannel {overlayApp} />
+            {:else if tab === 'config'}
+                <h3>
+                    接続設定
+                    <i class="ti ti-user"></i>
+                </h3>
+                <VCConfig {overlayApp} bind:clients bind:guilds bind:channels />
+            {:else if tab === 'visual'}
+                <VisualConfig {overlayApp} />
             {/if}
         </div>
-        <h3>
-            配信に追加
-            <i class="ti ti-arrow-bar-to-down"></i>
-        </h3>
-        <AssetButton {omu} {obs} />
-    </div>
-    <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
-        <AvatarRenderer overlayApp={overlayApp} bind:message showGrid />
-        <button class="drag-all"
-            bind:this={dragger}
-            on:mousedown={handleMouseDown}
-            on:wheel={handleMouseWheel}
-            draggable="false"
-            aria-label="Drag All"
-        ></button>
-        {#if dimentions}
-            {#each Object.entries($voiceState).filter(([id, ]) => $config.users[id]?.show).sort(([a], [b]) => $config.users[b].order - $config.users[a].order) as [id, state] (id)}
-                <UserDragControl {dimentions} {overlayApp} {id} {state}/>
-            {/each}
-        {/if}
-        <EffectControls {overlayApp} />
-        <CameraControls {overlayApp} />
-        {#if message}
-            <div class="message">
-                {#if message.type === 'loading'}
-                    <p>
-                        {message.text}
-                        <Spinner />
-                    </p>
-                {/if}
-            </div>
-        {/if}
-    </div>
+    {/if}
 </main>
 
 <style lang="scss">
@@ -289,9 +221,7 @@
         color: var(--color-1);
         container-type: inline-size;
         display: flex;
-        flex-direction: row;
-        margin: 1rem;
-        gap: 1rem;
+        flex-direction: column;
     }
 
     .canvas {
@@ -300,68 +230,102 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        outline: 1px solid #e6e6e6;
+        outline: 1px solid var(--color-outline);
     }
 
-    .controls {
+    .top {
         display: flex;
         flex-direction: column;
+        flex: 1;
+    }
+
+    .bottom {
+        display: flex;
         gap: 1rem;
+        padding: 1rem 0.5rem;
+        background: var(--color-bg-1);
+    }
+
+    .tab {
+        position: absolute;
+        z-index: 1;
+        left: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
         width: 20rem;
+        padding: 2rem 0.75rem;
+        padding-top: 1rem;
+        bottom: 11rem;
+        max-height: calc(100% - 12rem);
+        overflow-y: auto;
+        background: var(--color-bg-2);
+        outline: 1px solid var(--color-outline);
+
+        > h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-1);
+            border-bottom: 1px solid var(--color-outline);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
     }
 
     .config {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        justify-content: space-between;
+        padding: 0.5rem;
+        z-index: 1;
+    }
 
-        > span {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
+    .tabs {
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+
+        > .back {
+            width: 100%;
+        }
+        
+        > button {
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            outline: 1px solid var(--color-outline);
+            border: none;
+            padding: 1rem;
+            border-radius: 2px;
             white-space: nowrap;
+            font-weight: 600;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
 
-            > p {
-                margin-right: auto;
-
-                > i {
-                    margin-right: 0.25rem;
-                }
-            }
-
-            > button {
+            &:hover {
                 background: var(--color-bg-2);
                 color: var(--color-1);
-                border: none;
-                outline: none;
-                width: 2rem;
-                height: 2rem;
-                border-radius: 2px;
-                cursor: pointer;
-
-                &:hover {
-                    outline: 1px solid var(--color-1);
-                    outline-offset: -1px;
-                }
-
-                &:disabled {
-                    cursor: not-allowed;
-                    background: var(--color-bg-1);
-                }
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
             }
         }
     }
 
-    .drag-all {
-        position: absolute;
-        inset: 0;
-        background: transparent;
-        border: none;
-        outline: none;
-        cursor: move;
+    .logged-user {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem;
 
-        &:active {
-            cursor: grabbing;
+        > .avatar {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 100%;
         }
     }
 
@@ -377,39 +341,10 @@
 
     .users {
         flex: 1;
+        position: relative;
         display: flex;
-        flex-direction: column;
-        padding: 0.5rem 0;
-        background: var(--color-bg-2);
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        height: 8rem;
 
-        &::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--color-bg-2);
-            border-radius: 1px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: color-mix(in srgb, var(--color-1) 10%, transparent 0%);
-            border: 1px solid var(--color-bg-2);
-            border-radius: 1px;
-        }
-
-        &:hover {
-            &::-webkit-scrollbar-thumb {
-                background: var(--color-1);
-            }
-        }
-
-        @supports not selector(::-webkit-scrollbar) {
-            & {
-                scrollbar-color: var(--color-1) var(--color-bg-2);
-            }
-        }
         > p {
             text-align: center;
             font-weight: 600;

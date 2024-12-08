@@ -37,12 +37,21 @@ void main() {
     vec2 offset = vec2(-10.0, 10.0);
     vec4 shadow = texture(u_texture, (v_texcoord * u_resolution + offset) / u_resolution);
     float shadowAlpha = shadow.a - color.a;
-    // float shadowAlpha = max(0.0, shadow.a - color.a);
-    outColor = mix(color, u_color, shadowAlpha);
+    outColor = color + u_color * pow(clamp(shadowAlpha, 0.0, 1.0), 0.5);
 }
 `;
 
-export async function createShadowEffect(context: GlContext): Promise<Effect> {
+export type Options = {
+    active: boolean;
+    color: {
+        r: number;
+        g: number;
+        b: number;
+        a: number;
+    }
+};
+
+export async function createShadowEffect(context: GlContext, getOptions: () => Options): Promise<Effect> {
     const { gl } = context;
     const vertexBuffer = context.createBuffer();
     vertexBuffer.bind(() => {
@@ -74,6 +83,7 @@ export async function createShadowEffect(context: GlContext): Promise<Effect> {
     function render(state: AvatarState, texture: GlTexture, dest: GlFramebuffer) {
         dest.use(() => {
             const resolution = [texture.width, texture.height];
+            const options = getOptions();
             program.use(() => {
                 const position = program.getAttribute('a_position');
                 const texcoord = program.getAttribute('a_texcoord');
@@ -85,7 +95,8 @@ export async function createShadowEffect(context: GlContext): Promise<Effect> {
                 texcoord.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 resolutionUniform.set(new Vec2(resolution[0], resolution[1]));
                 textureUniform.set(texture);
-                colorUniform.set(new Vec4(0, 0, 0, 1));
+                const { r, g, b, a } = options.color;
+                colorUniform.set(new Vec4(r, g, b, a));
                 
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             });

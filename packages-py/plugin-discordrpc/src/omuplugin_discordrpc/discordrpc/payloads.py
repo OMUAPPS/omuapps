@@ -366,6 +366,18 @@ class GetChannelRequestPayload(
 ): ...
 
 
+class GetGuildRequestArgs(TypedDict):
+    guild_id: str
+    timeout: int
+
+
+class GetGuildRequestPayload(
+    Payload[Literal["GET_GUILD"]],
+    Args[GetGuildRequestArgs],
+    Nonce,
+): ...
+
+
 class Author(User):
     banner: None
     email: str | None
@@ -414,7 +426,7 @@ class GetChannelResponseData(TypedDict):
     topic: str
     bitrate: int
     user_limit: int
-    guild_id: str
+    guild_id: str | None
     position: int
     messages: list[Message]
     voice_states: list[VoiceStateItem]
@@ -424,6 +436,24 @@ class GetChannelResponsePayload(
     Payload[Literal["GET_CHANNEL"]],
     NullEvent,
     Data[GetChannelResponseData],
+    Nonce,
+): ...
+
+
+class GetGuildResponseData(TypedDict):
+    id: str
+    name: str
+    icon_url: str | None
+    members: tuple[
+        ()
+    ]  # deprecated; always empty array. see https://discord.com/developers/docs/topics/rpc#getguild-get-guild-response-structure
+    vanity_url_code: str | None
+
+
+class GetGuildResponsePayload(
+    Payload[Literal["GET_GUILD"]],
+    NullEvent,
+    Data[GetGuildResponseData],
     Nonce,
 ): ...
 
@@ -517,6 +547,7 @@ type RequestPayloads = (
     | GetGuildsRequestPayload
     | GetChannelsRequestPayload
     | GetChannelRequestPayload
+    | GetGuildRequestPayload
     | GetSelectedVoiceChannelPayload
     | UnsubscribeRequestPayload[Literal["VOICE_STATE_CREATE"]]
     | UnsubscribeRequestPayload[Literal["VOICE_STATE_UPDATE"]]
@@ -540,4 +571,5 @@ type ResponsePayloads = (
     | SpeakingStartDispatchPayload
     | SpeakingStopDispatchPayload
     | GetChannelResponsePayload
+    | GetGuildResponsePayload
 )

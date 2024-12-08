@@ -1,11 +1,10 @@
 import { GlBuffer, GlContext, GlFramebuffer, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
 import { BetterMath } from '$lib/math.js';
-import { AABB3 } from '$lib/math/aabb3.js';
-import { Axis } from '$lib/math/axis.js';
+import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
-import type { PoseStack } from '$lib/math/pose-stack.js';
+import { Node2D } from '$lib/math/node2d.js';
+import { PoseStack } from '$lib/math/pose-stack.js';
 import { Vec2 } from '$lib/math/vec2.js';
-import { Vec3 } from '$lib/math/vec3.js';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
 
 export type LayerData = {
@@ -50,7 +49,6 @@ export type PNGTuberData = Record<string, LayerData>;
 
 export class Layer {
     constructor(
-        private readonly glContext: GlContext,
         public readonly vertexBuffer: GlBuffer,
         public readonly texcoordBuffer: GlBuffer,
         public readonly animSpeed: number,
@@ -78,8 +76,7 @@ export class Layer {
         public readonly yAmp: number,
         public readonly yFrq: number,
         public readonly zindex: number,
-        public matrix: Mat4 = Mat4.IDENTITY,
-    ) {}
+    ) { }
 
     public static async load(glContext: GlContext, data: LayerData): Promise<Layer> {
         const img = new Image();
@@ -104,12 +101,12 @@ export class Layer {
         const vertexBuffer = glContext.createBuffer();
         vertexBuffer.bind(() => {
             vertexBuffer.setData(new Float32Array([
-                0, 0, 0,
-                0, img.height, 0,
-                img.width, 0, 0,
-                0, img.height, 0,
-                img.width, img.height, 0,
-                img.width, 0, 0,
+                -img.width / 2, -img.height / 2, 0,
+                -img.width / 2, img.height / 2, 0,
+                img.width / 2, -img.height / 2, 0,
+                -img.width / 2, img.height / 2, 0,
+                img.width / 2, img.height / 2, 0,
+                img.width / 2, -img.height / 2, 0,
             ]), 'static');
         });
         const uvBuffer = glContext.createBuffer();
@@ -131,7 +128,6 @@ export class Layer {
         const offset = parseVector2(data.offset);
         const pos = parseVector2(data.pos);
         return new Layer(
-            glContext,
             vertexBuffer,
             uvBuffer,
             data.animSpeed,
@@ -163,59 +159,6 @@ export class Layer {
     }
 }
 
-function easeOutQuart(x: number): number {
-    return 1 - Math.pow(1 - x, 4);
-}
-
-function easeInQuart(x: number): number {
-    return x * x * x * x;
-}
-
-function easeOutElastic(x: number): number {
-    const c4 = (2 * Math.PI) / 3;
-    
-    return x === 0
-        ? 0
-        : x === 1
-            ? 1
-            : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
-}
-
-function calculateRotation(time: number): number {
-    // start with easeOutQuart from 0 to 1 and then easeOutElastic from 1 to 0
-    const IN_TIME = 200;
-    const OUT_TIME = 2000;
-    const total = IN_TIME + OUT_TIME;
-    const t = BetterMath.clamp01(time / total);
-    const a = t < IN_TIME / total
-        ? easeOutQuart(t / (IN_TIME / total))
-        : 1 - easeOutElastic((t - IN_TIME / total) / (OUT_TIME / total));
-    return a;
-}
-
-function calculateBounce(time: number): number {
-    // sin bounce 0 to 1 to 0
-    // const BOUNCE_TIME = 200;
-    // const t = BetterMath.clamp01(time / BOUNCE_TIME);
-    // return 1 - Math.sin(t * Math.PI);
-    // 1\ -\ \left(2x-1\right)^{2}
-    const BOUNCE_TIME = 400;
-    const t = BetterMath.clamp01(time / BOUNCE_TIME);
-    return Math.pow(2 * t - 1, 2);
-}
-
-function calculateDrag(time: number): number {
-    // start with easeOutQuart from 0 to 1 and then easeOutElastic from 1 to 0
-    const IN_TIME = 200;
-    const OUT_TIME = 200;
-    const total = IN_TIME + OUT_TIME;
-    const t = BetterMath.clamp01(time / total);
-    const a = t < IN_TIME / total
-        ? easeOutQuart(t / (IN_TIME / total))
-        : 1 - easeInQuart((t - IN_TIME / total) / (OUT_TIME / total));
-    return BetterMath.lerp(1, -1, a);
-}
-
 export type Effect = {
     render: (state: AvatarState, texture: GlTexture, dest: GlFramebuffer) => void;
 }
@@ -228,6 +171,75 @@ export type AvatarState = {
     effects: Effect[];
 };
 
+class SpriteGroup {
+    public readonly sprite: Node2D;
+    public readonly dragOrigin: Node2D;
+    public readonly dragger: Node2D;
+    public readonly wob: Node2D;
+    public readonly group: Node2D;
+    public tick: number = 0;
+    public parentSprite: SpriteGroup | null = null;
+
+    constructor(
+        public readonly layer: Layer,
+        origin: Node2D,
+    ) {
+        this.group = new Node2D(this.layer.pos, 0, Vec2.ONE, origin);
+        this.wob = new Node2D(Vec2.ZERO, 0, Vec2.ONE, this.group);
+        this.dragger = new Node2D(this.layer.pos, 0, Vec2.ONE, null);
+        this.dragOrigin = new Node2D(Vec2.ZERO, 0, Vec2.ONE, this.wob);
+        this.sprite = new Node2D(Vec2.ZERO, 0, Vec2.ONE, this.dragOrigin);
+    }
+
+    public setParent(parent: SpriteGroup | null) {
+        this.group.parent = null;
+        if (!parent) return;
+        this.group.parent = parent.sprite
+        this.parentSprite = parent;
+    }
+
+    public process(state: AvatarState) {
+        this.tick += 1;
+
+        const glob = this.dragger.globalPosition;
+        this.drag();
+        this.wobble();
+
+        const length = glob.y - this.dragger.globalPosition.y;
+
+        this.rotationalDrag(length);
+        this.stretch(length);
+    }
+
+    private drag() {
+        if (this.layer.drag === 0) {
+            this.dragger.globalPosition = this.wob.globalPosition;
+        } else {
+            this.dragger.globalPosition = this.dragger.globalPosition.lerp(this.wob.globalPosition, 1 / this.layer.drag);
+            this.dragOrigin.globalPosition = this.dragger.globalPosition;
+        }
+    }
+
+    private wobble() {
+        this.wob.position = new Vec2(
+            Math.sin(this.tick * this.layer.xFrq) * this.layer.xAmp,
+            Math.sin(this.tick * this.layer.yFrq) * this.layer.yAmp,
+        );
+    }
+
+    private rotationalDrag(length: number) {
+        let yvel = length * this.layer.rotDrag;
+        yvel = BetterMath.clamp(yvel, this.layer.rLimitMin, this.layer.rLimitMax);
+        this.sprite.rotation = BetterMath.lerpAngle(this.sprite.rotation, BetterMath.toRadians(yvel), 0.25);
+    }
+
+    private stretch(length: number) {
+        const yvel = length * this.layer.stretchAmount * 0.01;
+        const target = new Vec2(1 - yvel, 1 + yvel);
+        this.sprite.scale = this.sprite.scale.lerp(target, 0.5);
+    }
+}
+
 export class PNGTuber {
     private readonly program: GlProgram;
     private readonly frameBufferTexture: GlTexture;
@@ -236,12 +248,29 @@ export class PNGTuber {
     private readonly effectTargetFrameBuffer: GlFramebuffer;
     private readonly vertexBuffer: GlBuffer;
     private readonly texcoordBuffer: GlBuffer;
-    private projectionMatrix: Mat4 = Mat4.IDENTITY;
+    private readonly spriteGroups: Map<number, SpriteGroup>;
+    private readonly origin: Node2D;
+    private bounceVelocity: number = 0;
+    private bounceTick: number = 0;
 
     constructor(
         private readonly glContext: GlContext,
         public readonly layers: Map<number, Layer>,
     ) {
+        this.spriteGroups = new Map();
+        this.origin = new Node2D(Vec2.ZERO, 0, Vec2.ONE, null);
+        for (const layer of layers.values()) {
+            this.spriteGroups.set(layer.identification, new SpriteGroup(layer, this.origin));
+        }
+        for (const layer of layers.values()) {
+            if (layer.parentId !== null) {
+                const parent = this.spriteGroups.get(layer.parentId);
+                if (!parent) {
+                    throw new Error('Invalid parent');
+                }
+                this.spriteGroups.get(layer.identification)?.setParent(parent);
+            }
+        }
         const vShader = glContext.createShader({
             source: VERTEX_SHADER,
             type: 'vertex',
@@ -311,6 +340,7 @@ export class PNGTuber {
 
     public render(poseStack: PoseStack, state: AvatarState) {
         const { gl } = this.glContext;
+
         const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex)));
 
         this.frameBufferTexture.use(() => {
@@ -320,11 +350,17 @@ export class PNGTuber {
             this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
         });
         
-        [...this.layers.values()].filter(layer => layer.parentId === null).forEach(layer => {
-            poseStack.push();
-            this.calculateAnimation(layer, state, poseStack);
-            poseStack.pop();
-        });
+        if (state.talking && this.origin.position.y >= 0 && this.bounceVelocity === 0) {
+            this.bounceVelocity = 250;
+            this.bounceTick += 1;
+        }
+        this.bounceVelocity = this.bounceVelocity - 1000 * 0.0166;
+        this.origin.position = this.origin.position.add(new Vec2(0, -this.bounceVelocity * 0.0166)).min(Vec2.ZERO);
+        if (!state.talking && this.origin.position.y >= -1) {
+            this.bounceVelocity = 0;
+        }
+
+        [...this.spriteGroups.values()].forEach(sprite => sprite.process(state));
     
         passes.sort((a, b) => a - b);
 
@@ -332,9 +368,9 @@ export class PNGTuber {
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
             passes.forEach(pass => {
-                [...this.layers.values()].filter(layer => layer.parentId === null).forEach(layer => {
+                [...this.spriteGroups.values()].filter(sprite => sprite.layer.parentId === null).forEach(sprite => {
                     poseStack.push();
-                    this.renderLayer(layer, state, pass);
+                    this.renderLayer(poseStack, sprite, state, pass);
                     poseStack.pop();
                 });
             });
@@ -386,104 +422,66 @@ export class PNGTuber {
         });
     }
 
-    private renderLayer(layer: Layer, state: AvatarState, pass: number) {
-        if (layer.showBlink !== 0) {
-            if (state.blinking && layer.showBlink === 1) {
+    private renderLayer(poseStack: PoseStack, sprite: SpriteGroup, state: AvatarState, pass: number) {
+        if (sprite.layer.showBlink !== 0) {
+            if (state.blinking && sprite.layer.showBlink === 1) {
                 return;
-            } else if (!state.blinking && layer.showBlink === 2) {
+            } else if (!state.blinking && sprite.layer.showBlink === 2) {
                 return;
             }
         }
-        if (layer.showTalk !== 0) {
-            if (state.talking && layer.showTalk === 1) {
+        if (sprite.layer.showTalk !== 0) {
+            if (state.talking && sprite.layer.showTalk === 1) {
                 return;
-            } else if (!state.talking && layer.showTalk === 2) {
+            } else if (!state.talking && sprite.layer.showTalk === 2) {
                 return;
             }
         }
         const { gl } = this.glContext;
         
-        if (layer.zindex === pass) {
+        if (sprite.layer.zindex === pass) {
             this.program.use(() => {
                 const textureUniform = this.program.getUniform('u_texture').asSampler2D();
-                textureUniform.set(layer.imageData);
+                textureUniform.set(sprite.layer.imageData);
                 const projection = this.program.getUniform('u_projection').asMat4();
                 projection.set(Mat4.IDENTITY);
                 const model = this.program.getUniform('u_model').asMat4();
-                model.set(layer.matrix);
+                const matrix = sprite.sprite
+                    .globalTransform
+                    .getMat4()
+                    .translate(sprite.layer.offset.x, sprite.layer.offset.y, 0);
+                model.set(matrix);
                 const view = this.program.getUniform('u_view').asMat4();
-                view.set(Mat4.IDENTITY);
+                view.set(poseStack.get());
                 const positionAttribute = this.program.getAttribute('a_position');
-                positionAttribute.set(layer.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                positionAttribute.set(sprite.layer.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 const uvAttribute = this.program.getAttribute('a_texcoord');
-                uvAttribute.set(layer.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                uvAttribute.set(sprite.layer.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
         }
-        [...this.layers.values()].filter(child => child.parentId === layer.identification).forEach(child => {
-            this.renderLayer(child, state, pass);
+        [...this.spriteGroups.values()].filter(child => child.layer.parentId === sprite.layer.identification).forEach(child => {
+            this.renderLayer(poseStack, child, state, pass);
         });
     }
 
-    private calculateAnimation(layer: Layer, state: AvatarState, poseStack: PoseStack) {
-        if (layer.showBlink !== 0) {
-            if (state.blinking && layer.showBlink === 1) {
-                return;
-            } else if (!state.blinking && layer.showBlink === 2) {
-                return;
+    public getBoundingBox(): AABB2 {
+        const points: Vec2[] = [];
+        for (const sprite of this.spriteGroups.values()) {
+            const transform = sprite.sprite.globalTransform;
+            const { width, height } = sprite.layer.imageData;
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            const corners = [
+                new Vec2(-halfWidth, -halfHeight),
+                new Vec2(-halfWidth, halfHeight),
+                new Vec2(halfWidth, -halfHeight),
+                new Vec2(halfWidth, halfHeight),
+            ];
+            for (const corner of corners) {
+                points.push(transform.xform(corner));
             }
         }
-        if (layer.showTalk !== 0) {
-            if (state.talking && layer.showTalk === 1) {
-                return;
-            } else if (!state.talking && layer.showTalk === 2) {
-                return;
-            }
-        }
-        poseStack.translate(layer.pos.x, layer.pos.y, 0);
-        const animationX = layer.xAmp * Math.sin(BetterMath.toRadians(state.time * layer.xFrq));
-        const animationY = layer.yAmp * Math.sin(BetterMath.toRadians(state.time * layer.yFrq));
-        poseStack.translate(animationX, animationY, 0);
-        poseStack.translate(calculateDrag(state.talkingTime) * layer.drag, 0, 0);
-        poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(layer.drag * calculateDrag(state.talkingTime) , layer.rLimitMin, layer.rLimitMax)));
-
-        const bounceRot = layer.rotDrag * calculateRotation(state.talkingTime) * 2;
-        poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(bounceRot, layer.rLimitMin, layer.rLimitMax)));
-
-        if (layer.parentId === null && !layer.ignoreBounce) {
-            poseStack.translate(0, calculateBounce(state.talkingTime) * 50, 0);
-        }
-        
-        poseStack.push()
-        const animationRot = layer.rotDrag * animationY;
-        poseStack.translate(layer.offset.x, layer.offset.y, 0)
-        poseStack.rotate(Axis.Z_POS.rotateDeg(BetterMath.clamp(animationRot, layer.rLimitMin, layer.rLimitMax)));
-        poseStack.scale(
-            1 + Math.sin(BetterMath.toRadians(state.time * 0.25)) * layer.stretchAmount * 0.005,
-            1 - Math.sin(BetterMath.toRadians(state.time * 0.25)) * layer.stretchAmount * 0.005,
-            1
-        );
-        poseStack.translate(-layer.offset.x, -layer.offset.y, 0)
-        poseStack.translate(layer.offset.x, layer.offset.y, 0)
-        poseStack.translate(-layer.imageData.width / 2, -layer.imageData.height / 2, 0)
-        layer.matrix = poseStack.get();
-        poseStack.pop();
-        [...this.layers.values()].filter(child => child.parentId === layer.identification).forEach(child => {
-            poseStack.push();
-            this.calculateAnimation(child, state, poseStack);
-            poseStack.pop();
-        });
-    }
-
-    public calculateBounds(): AABB3 {
-        const points: Vec3[] = [];
-        this.layers.forEach(layer => {
-            const leftTop = new Vec3(...layer.matrix.transformPoint(0, 0, 0));
-            const rightTop = new Vec3(...layer.matrix.transformPoint(layer.imageData.width, 0, 0));
-            const leftBottom = new Vec3(...layer.matrix.transformPoint(0, layer.imageData.height, 0));
-            const rightBottom = new Vec3(...layer.matrix.transformPoint(layer.imageData.width, layer.imageData.height, 0));
-            points.push(leftTop, rightTop, leftBottom, rightBottom);
-        });
-        return AABB3.fromPoints(points);
+        return AABB2.fromPoints(points);
     }
 }

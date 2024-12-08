@@ -1,4 +1,6 @@
 // Reexport your entry components here
+export { default as Align } from './Align.svelte';
+export type { AlignType } from './Align.svelte';
 export { default as AppHeader } from './AppHeader.svelte';
 export { default as Button } from './Button.svelte';
 export { default as ButtonMini } from './ButtonMini.svelte';

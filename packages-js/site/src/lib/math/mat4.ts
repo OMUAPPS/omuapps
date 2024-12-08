@@ -1,4 +1,6 @@
 import type { Quaternion } from './quaternion.js';
+import { Vec2 } from './vec2.js';
+import { Vec3 } from './vec3.js';
 
 export class Mat4 {
     public static readonly IDENTITY = new Mat4(
@@ -219,12 +221,25 @@ export class Mat4 {
         );
     }
 
-    public transformPoint(x: number, y: number, z: number): [number, number, number] {
-        const w = this.m03 * x + this.m13 * y + this.m23 * z + this.m33;
-        return [
-            (this.m00 * x + this.m10 * y + this.m20 * z + this.m30) / w,
-            (this.m01 * x + this.m11 * y + this.m21 * z + this.m31) / w,
-            (this.m02 * x + this.m12 * y + this.m22 * z + this.m32) / w,
-        ];
+    public xform3(point: Vec3): Vec3 {
+        const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30;
+        const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31;
+        const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32;
+        return new Vec3(x, y, z);
+    }
+
+    public xform2(point: Vec2): Vec2 {
+        const x = this.m00 * point.x + this.m10 * point.y + this.m30;
+        const y = this.m01 * point.x + this.m11 * point.y + this.m31;
+        return new Vec2(x, y);
+    }
+
+    public equals(other: Mat4): boolean {
+        return (
+            this.m00 === other.m00 && this.m01 === other.m01 && this.m02 === other.m02 && this.m03 === other.m03 &&
+            this.m10 === other.m10 && this.m11 === other.m11 && this.m12 === other.m12 && this.m13 === other.m13 &&
+            this.m20 === other.m20 && this.m21 === other.m21 && this.m22 === other.m22 && this.m23 === other.m23 &&
+            this.m30 === other.m30 && this.m31 === other.m31 && this.m32 === other.m32 && this.m33 === other.m33
+        );
     }
 }

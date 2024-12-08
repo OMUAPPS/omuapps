@@ -33,10 +33,10 @@ void main() {
     vec2 gridDist = min(gridCoord, 100.0 - gridCoord);
     float gridDistSq = dot(gridDist, gridDist);
     
-    float gridAlpha = smoothstep(0.0, 1.0, 1.0 - gridDistSq / 15.0);
-    vec4 gridColor = mix(u_backgroundColor, u_gridColor, gridAlpha);
+    float gridAlpha = smoothstep(0.0, 0.5, 1.0 - gridDistSq / 15.0);
 
     float distFromCenter = (sqrt(length(coord.xy)) + 1.0) / 10.0;
-    outColor = gridColor * min(1.0, distFromCenter);
+    // outColor = gridColor * min(1.0, distFromCenter);
+    outColor = mix(u_backgroundColor, u_gridColor, gridAlpha);
 }
 `;

@@ -1,9 +1,14 @@
 <script lang="ts">
     import { BetterMath } from '$lib/math.js';
+    import type { Mat4 } from '$lib/math/mat4.js';
+    import { Vec2 } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import type { DiscordOverlayApp, VoiceStateItem } from '../discord-overlay-app.js';
+    import { dragUser, heldUser } from '../states.js';
+    import UserSettings from './UserSettings.svelte';
 
+    export let view: Mat4;
     export let dimentions: { width: number; height: number };
     export let overlayApp: DiscordOverlayApp;
     export let id: string;
@@ -15,18 +20,22 @@
 
     let element: HTMLButtonElement;
     let lastMouse: [number, number] | null = null;
-    let lastPosition: [number, number] = [0, 0];
+    let clickTime = 0;
+    let clickDistance = 0;
     $: rect = element ? element.getBoundingClientRect() : { width: 0, height: 0 };
     $: position = user.position;
-    $: zoom = 2 ** $config.zoom_level;
 
     function handleMouseMove(e: MouseEvent) {
         e.preventDefault();
         if (!lastMouse) return;
-        const dx = (e.clientX - lastMouse[0]) / zoom;
-        const dy = (e.clientY - lastMouse[1]) / zoom;
-        user.position = position = [lastPosition[0] + dx, lastPosition[1] + dy];
+        const dx = (e.clientX - lastMouse[0]);
+        const dy = (e.clientY - lastMouse[1]);
+        lastMouse = [e.clientX, e.clientY];
+        const screen = worldToScreen(position[0], position[1]);
+        const world = screenToWorld(screen.x + dx, screen.y - dy);
+        user.position = position = [world.x, world.y];
         element.style.cssText = getStyle(rect, dimentions, position);
+        clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
     }
 
     function handleMouseUp() {
@@ -35,15 +44,16 @@
         position = user.position;
         $config = { ...$config };
         lastMouse = null;
-        $config.selected_user_id = null;
+        $dragUser = null;
     }
 
     function handleMouseDown(e: MouseEvent) {
         lastMouse = [e.clientX, e.clientY];
-        lastPosition = user.position;
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
-        $config.selected_user_id = id;
+        $dragUser = id;
+        clickTime = performance.now();
+        clickDistance = 0;
     }
 
     onDestroy(() => {
@@ -51,13 +61,44 @@
         window.removeEventListener('mouseup', handleMouseUp);
     });
 
-    function getStyle(rect: { width:number, height:number }, dimentions: { width:number, height:number }, position: [number, number]) {
+    function getStyle(
+        rect: { width: number, height: number },
+        dimentions: { width: number, height: number },
+        position: [number, number],
+        offset: [number, number] = [0, 250]
+    ) {
         const margin = 8;
-        let camera = $config.camera_position;
+        const screen = worldToScreen(position[0] + offset[0], position[1] + offset[1]);
+        const clamped = screen
+            .add(new Vec2(-rect.width / 2, -rect.height))
+            .max(new Vec2(margin, margin))
+            .min(new Vec2(dimentions.width - rect.width - margin, dimentions.height - rect.height - margin));
         return `
-            left: ${BetterMath.clamp((position[0] + camera[0]) * zoom + dimentions.width / 2 - rect.width / 2, margin, dimentions.width - rect.width - margin)}px;
-            top: ${BetterMath.clamp((position[1] + camera[1]) * zoom + dimentions.height / 2 - rect.height / 2 + 162.1 * zoom + 20, margin, dimentions.height - rect.height - margin)}px;
+            left: ${clamped.x}px;
+            bottom: ${clamped.y}px;
         `;
+    }
+
+    function worldToScreen(x: number, y: number) {
+        const projected = view.xform2(new Vec2(
+            x / 2,
+            y / 2,
+        ));
+        const screen = new Vec2(
+            projected.x * dimentions.width + dimentions.width / 2,
+            projected.y * dimentions.height + dimentions.height / 2
+        );
+        return screen;
+    }
+
+    function screenToWorld(x: number, y: number) {
+        const projected = new Vec2(
+            (x - dimentions.width / 2) / dimentions.width,
+            (y - dimentions.height / 2) / dimentions.height
+        );
+        const viewInv = view.inverse();
+        const world = viewInv.xform2(projected).scale(2);
+        return world;
     }
 
     function handleKeyDown(e: KeyboardEvent) {
@@ -67,15 +108,20 @@
             ArrowLeft: [-1, 0],
             ArrowRight: [1, 0],
         }
+        if (e.key === 'r') {
+            user.position = position = [0, 0];
+            element.style.cssText = getStyle(rect, dimentions, position);
+            $config = { ...$config };
+        }
         const found = Object.entries(KEY_MAP).find(([key]) => key === e.key);
         if (found) {
             e.preventDefault();
             const [dx, dy] = found[1];
             let factor = e.ctrlKey ? 1 : e.shiftKey ? 100 : 10;
-            factor /= zoom;
             user.position = position = [position[0] + dx * factor, position[1] + dy * factor];
             element.style.cssText = getStyle(rect, dimentions, position);
             $config = { ...$config };
+            return;
         }
     }
 
@@ -89,28 +135,53 @@
 
 <button
     class="control"
-    class:dragging={lastMouse || ($config.selected_user_id && $config.selected_user_id == id)}
+    class:dragging={lastMouse || ($dragUser && $dragUser == id)}
     bind:this={element}
     style={getStyle(rect, dimentions, position)}
     on:mousedown={handleMouseDown}
+    on:click={() => {
+        const elapsed = performance.now() - clickTime;
+        if (elapsed > 200 || clickDistance > 2) {
+            return;
+        }
+        $heldUser = $heldUser == id ? null : id;
+    }}
     on:keydown={handleKeyDown}
     on:wheel={handleMouseWheel}
     draggable="false"
-    style:opacity={$config.selected_user_id && $config.selected_user_id != id ? 0.2 : 1}
+    style:opacity={$dragUser && $dragUser != id ? 0.2 : 1}
 >
     {#if !lastMouse}
         <Tooltip>
-            <p>
+            <p class="action-hint">
                 <i class="ti ti-hand-stop"/>
                 <small>
                     つかんで
-                </small> <b>移動</b>
+                </small>
+                <b>
+                    {$config.align.auto ? '並び替え' : '移動'}
+                    <i class="ti ti-drag-drop"/>
+                </b>
             </p>
-            <p>
+            <p class="action-hint">
                 <i class="ti ti-mouse"/>
                 <small>
                     スクロールで
-                </small> <b>拡大縮小</b>
+                </small>
+                <b>
+                    拡大縮小
+                    <i class="ti ti-zoom-in"/>
+                </b>
+            </p>
+            <p class="action-hint">
+                <i class="ti ti-pointer"/>
+                <small>
+                    クリックで
+                </small>
+                <b>
+                    設定
+                    <i class="ti ti-settings"/>
+                </b>
             </p>
         </Tooltip>
     {/if}
@@ -118,7 +189,91 @@
     {state.nick}
 </button>
 
+{#if $heldUser == id}
+    <div
+        class="settings"
+        style={getStyle(rect, dimentions, position, [0, 100])}
+        style:opacity={$heldUser && $heldUser != id ? 0.2 : 1}
+        class:side-right={position[0] > 0}
+    >
+        <UserSettings {overlayApp} {state} {id} />
+    </div>
+{/if}
+
 <style lang="scss">
+    .settings {
+        position: absolute;
+        background: var(--color-bg-2);
+        filter: drop-shadow(3px 5px 0 rgba(0, 0, 0, 0.0621)) drop-shadow(-3px -5px 10px rgba(0, 0, 0, 0.1621));
+        outline: 1px solid var(--color-outline);
+        border-radius: 0.5rem;
+        z-index: 1;
+
+        &.side-right {
+            animation: slide-in-right 0.0621s forwards;
+
+            &::before {
+                content: '';
+                position: absolute;
+                right: -0.5rem;
+                top: 50%;
+                transform: translate(50%, -50%);
+                border: 0.5rem solid transparent;
+                border-left-color: var(--color-outline);
+                text-shadow: 0 0 0.25rem rgba(0, 0, 0, 0.1621);
+            }
+            
+            &::after {
+                content: '';
+                position: absolute;
+                right: -0.49rem;
+                top: 50%;
+                transform: translate(50%, -50%);
+                border: 0.5rem solid transparent;
+                border-left-color: var(--color-bg-2);
+            }
+        }
+
+        &:not(.side-right) {
+            animation: slide-in-left 0.0621s forwards;
+            &::before {
+                content: '';
+                position: absolute;
+                left: -0.49rem;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                border: 0.5rem solid transparent;
+                border-right-color: var(--color-bg-2);
+            }
+        }
+    }
+
+    @keyframes slide-in-right {
+        0% {
+            opacity: 0;
+            transform: translate(-100%, 0) translate(-5rem, 0);
+        }
+        97.9% {
+            transform: translate(-100%, 0) translate(-6.1rem, 0);
+        }
+        100% {
+            transform: translate(-100%, 0) translate(-6rem, 0);
+        }
+    }
+
+    @keyframes slide-in-left {
+        0% {
+            opacity: 0;
+            transform: translate(50%, 0) translate(3rem, 0);
+        }
+        97.9% {
+            transform: translate(50%, 0) translate(4.1rem, 0);
+        }
+        100% {
+            transform: translate(50%, 0) translate(4rem, 0);
+        }
+    }
+
     .control {
         position: absolute;
         background: var(--color-bg-2);
@@ -155,6 +310,26 @@
         &:active {
             z-index: 1;
             cursor: grabbing;
+        }
+    }
+
+    .action-hint {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin: 0.5rem 0;
+
+        > b {
+            margin-left: auto;
+            padding-left: 2rem;
+
+            > i {
+                margin-left: 0.25rem;
+            }
+        }
+
+        i {
+            font-size: 1rem;
         }
     }
 </style>

@@ -1,3 +1,5 @@
+import { Vec2 } from './vec2.js';
+
 export class Mat2 {
     public static readonly IDENTITY = new Mat2(1, 0, 0, 1);
     public readonly elements: Float32Array;
@@ -51,6 +53,27 @@ export class Mat2 {
 
     public determinant(): number {
         return this.m00 * this.m11 - this.m01 * this.m10;
+    }
+
+    public affineInverse(): Mat2 {
+        const det = this.determinant();
+        if (det === 0) {
+            throw new Error('Matrix is not invertible');
+        }
+        const invDet = 1 / det;
+        return new Mat2(
+            this.m11 * invDet,
+            this.m01 * -invDet,
+            this.m10 * -invDet,
+            this.m00 * invDet
+        );
+    }
+
+    public xform(v: Vec2): Vec2 {
+        return new Vec2(
+            this.m00 * v.x + this.m01 * v.y,
+            this.m10 * v.x + this.m11 * v.y
+        );
     }
 
     public transpose(): Mat2 {
