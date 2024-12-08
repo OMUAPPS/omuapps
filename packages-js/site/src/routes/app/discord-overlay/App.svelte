@@ -4,7 +4,6 @@
     import { OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { Spinner, Tooltip } from '@omujs/ui';
-    import { DEV } from 'esm-env';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
     import SelectedChannel from './components/SelectedChannel.svelte';
@@ -133,9 +132,6 @@
         {/if}
     </div>
     <div class="bottom">
-        {#if !DEV}
-            <AssetButton {omu} {obs} />
-        {/if}
         <div class="config">
             <div class="tabs">
                 {#if tab}
