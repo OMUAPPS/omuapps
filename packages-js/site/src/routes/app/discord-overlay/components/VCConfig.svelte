@@ -123,7 +123,10 @@
             <i class="ti ti-layout"/>
             設定をリセット
         </p>
-        <button on:click={() => overlayApp.resetConfig()}>
+        <button on:click={() => {
+            overlayApp.resetConfig();
+            location.reload();
+        }}>
             <Tooltip>
                 設定をリセット
             </Tooltip>
