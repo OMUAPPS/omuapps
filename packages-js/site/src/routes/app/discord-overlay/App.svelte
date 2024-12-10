@@ -11,6 +11,7 @@
     import UserList from './components/UserList.svelte';
     import VCConfig from './components/VCConfig.svelte';
     import VisualConfig from './components/VisualConfig.svelte';
+    import VoiceChannelStatus from './components/VoiceChannelStatus.svelte';
     import { DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
     import { heldAvatar, heldUser } from './states.js';
 
@@ -168,11 +169,10 @@
                         </Tooltip>
                         <i class="ti ti-layout"></i>
                     </button>
+                    <VoiceChannelStatus {overlayApp} />
                 {/if}
             </div>
-            <div class="asset">
-                <AssetButton {omu} {obs} />
-            </div>
+            <AssetButton {omu} {obs} />
         </div>
         <div class="users">
             {#if state === 'connecting-vc'}
@@ -281,7 +281,7 @@
 
     .tabs {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         gap: 0.25rem;
 
         > .back {
