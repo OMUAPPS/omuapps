@@ -3,8 +3,14 @@ import { type Writable } from 'svelte/store';
 
 export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
     let ready = false;
-    registry.listen(() => {
+    let value: T = registry.value;
+    const listeners = new Set<(value: T) => void>();
+    registry.listen((newValue) => {
         ready = true;
+        value = newValue;
+        listeners.forEach((run) => {
+            run(value);
+        });
     });
     return {
         set: (value: T) => {
@@ -14,9 +20,11 @@ export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
             registry.set(value);
         },
         subscribe: (run) => {
-            const unlisten = registry.listen(run);
-            run(registry.value);
-            return unlisten;
+            listeners.add(run);
+            run(value);
+            return () => {
+                listeners.delete(run);
+            };
         },
         update: (fn) => {
             if (!ready) {
