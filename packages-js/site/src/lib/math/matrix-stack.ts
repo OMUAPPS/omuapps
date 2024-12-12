@@ -5,7 +5,7 @@ type Pose = {
     pose: Mat4;
 };
 
-export class PoseStack {
+export class MatrixStack {
     constructor(
         private readonly stack: Pose[] = [{pose: Mat4.IDENTITY}],
     ) { }
@@ -18,7 +18,7 @@ export class PoseStack {
         this.stack.pop();
         if (this.stack.length === 0) {
             this.stack.push({pose: Mat4.IDENTITY});
-            console.warn('PoseStack underflow');
+            console.warn('MatrixStack underflow');
         }
     }
 

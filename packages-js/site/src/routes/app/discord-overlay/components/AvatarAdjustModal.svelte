@@ -12,7 +12,7 @@
     function handleMouseMove(event: MouseEvent) {
         if (!lastMouse) return;
         const avatarConfig = $heldAvatar && $config.avatars[$heldAvatar];
-        if (avatarConfig) {
+        if (avatarConfig && avatarConfig.type === 'pngtuber') {
             const [x, y] = avatarConfig.offset;
             const dx = event.clientX - lastMouse.x;
             const dy = event.clientY - lastMouse.y;
@@ -29,7 +29,7 @@
 
     function handleMouseWheel(event: WheelEvent) {
         const avatarConfig = $heldAvatar && $config.avatars[$heldAvatar];
-        if (avatarConfig) {
+        if (avatarConfig && avatarConfig.type === 'pngtuber') {
             avatarConfig.scale -= event.deltaY / 1000 * 0.5;
         }
     }

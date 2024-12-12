@@ -144,19 +144,24 @@ const REFRESH_ENDPOINT_TYPE = EndpointType.createJson<null, null>(PLUGIN_ID, {
 });
 
 export type Align = 'start' | 'middle' | 'end';
-
+export type Source = {
+    type: 'asset';
+    asset_id: string;
+} | {
+    type: 'url';
+    url: string;
+};
 export type UserConfig = {
     show: boolean;
     position: [number, number];
     scale: number;
     avatar: string | null;
 };
-
-export type AvatarConfig = {
-    offset: [number, number];
-    scale: number;
-    flipHorizontal: boolean;
-    flipVertical: boolean;
+export const DEFAULT_USER_CONFIG: UserConfig = {
+    show: true,
+    position: [0, 0],
+    scale: 1,
+    avatar: null,
 };
 
 export type Config = {
@@ -165,7 +170,17 @@ export type Config = {
         [key: string]: UserConfig;
     },
     avatars: {
-        [key: string]: AvatarConfig;
+        [key: string]: {
+            type: 'pngtuber';
+            source: Source;
+            offset: [number, number];
+            scale: number;
+            flipHorizontal: boolean;
+            flipVertical: boolean;
+        } | {
+            type: 'png';
+            source: Source;
+        };
     }
     effects: {
         shadow: {

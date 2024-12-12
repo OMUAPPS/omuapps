@@ -2,7 +2,7 @@
     import { Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
     import type { DiscordOverlayApp, VoiceStateItem } from '../discord-overlay-app.js';
-    import { heldAvatar, heldUser } from '../states.js';
+    import { contextCache, heldAvatar, heldUser } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let state: VoiceStateItem;
@@ -16,14 +16,26 @@
         });
         const avatarId = APP_ID.join('avatar', hash);
         overlayApp.omu.assets.upload(avatarId, encoded);
+        const existAvatarConfig = $config.avatars[avatarId.key()];
+        $config.avatars[avatarId.key()] = {
+            type: 'pngtuber',
+            offset: [0, 0],
+            scale: 1,
+            flipHorizontal: false,
+            flipVertical: false,
+            source: {
+                type: 'asset',
+                asset_id: avatarId.key(),
+            }
+        };
         $config.users[userId] = {
             ...$config.users[userId],
             avatar: avatarId.key(),
         };
-        const existAvatarConfig = $config.avatars[avatarId.key()];
         if (!existAvatarConfig) {
             $heldAvatar = avatarId.key();
         }
+        contextCache.delete(userId);
     }
 
     function handleReplace() {

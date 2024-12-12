@@ -2,9 +2,11 @@ import { GlBuffer, GlContext, GlFramebuffer, GlProgram, type GlTexture } from '$
 import { BetterMath } from '$lib/math.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
+import { MatrixStack } from '$lib/math/matrix-stack.js';
 import { Node2D } from '$lib/math/node2d.js';
-import { PoseStack } from '$lib/math/pose-stack.js';
 import { Vec2 } from '$lib/math/vec2.js';
+import { Timer } from '$lib/timer.js';
+import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
 
 export type LayerData = {
@@ -159,18 +161,6 @@ export class Layer {
     }
 }
 
-export type Effect = {
-    render: (state: AvatarState, texture: GlTexture, dest: GlFramebuffer) => void;
-}
-
-export type AvatarState = {
-    time: number;
-    talking: boolean;
-    talkingTime: number;
-    blinking: boolean;
-    effects: Effect[];
-};
-
 class SpriteGroup {
     public readonly sprite: Node2D;
     public readonly dragOrigin: Node2D;
@@ -198,7 +188,7 @@ class SpriteGroup {
         this.parentSprite = parent;
     }
 
-    public process(state: AvatarState) {
+    public process() {
         this.tick += 1;
 
         const glob = this.dragger.globalPosition;
@@ -240,7 +230,17 @@ class SpriteGroup {
     }
 }
 
-export class PNGTuber {
+interface PNGTuberContext {
+    readonly timer: Timer;
+    readonly spriteGroups: Map<number, SpriteGroup>;
+    readonly origin: Node2D;
+    bounceVelocity: number;
+    bounceTick: number;
+    blinking: boolean;
+    talking: boolean;
+}
+
+export class PNGTuber implements Avatar {
     private readonly program: GlProgram;
     private readonly frameBufferTexture: GlTexture;
     private readonly frameBuffer: GlFramebuffer;
@@ -248,29 +248,41 @@ export class PNGTuber {
     private readonly effectTargetFrameBuffer: GlFramebuffer;
     private readonly vertexBuffer: GlBuffer;
     private readonly texcoordBuffer: GlBuffer;
-    private readonly spriteGroups: Map<number, SpriteGroup>;
-    private readonly origin: Node2D;
-    private bounceVelocity: number = 0;
-    private bounceTick: number = 0;
+
+    public create(): AvatarContext {
+        const spriteGroups = new Map<number, SpriteGroup>();
+        const origin = new Node2D(Vec2.ZERO, 0, Vec2.ONE, null);
+        for (const layer of this.layers.values()) {
+            spriteGroups.set(layer.identification, new SpriteGroup(layer, origin));
+        }
+        for (const layer of this.layers.values()) {
+            if (layer.parentId !== null) {
+                const parent = spriteGroups.get(layer.parentId);
+                if (!parent) {
+                    throw new Error('Invalid parent');
+                }
+                spriteGroups.get(layer.identification)?.setParent(parent);
+            }
+        }
+        const context = {
+            timer: new Timer(),
+            spriteGroups,
+            origin,
+            bounceVelocity: 0,
+            bounceTick: 0,
+            blinking: false,
+            talking: false,
+        }
+        const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
+        return {
+            render
+        };
+    }
 
     constructor(
         private readonly glContext: GlContext,
         public readonly layers: Map<number, Layer>,
     ) {
-        this.spriteGroups = new Map();
-        this.origin = new Node2D(Vec2.ZERO, 0, Vec2.ONE, null);
-        for (const layer of layers.values()) {
-            this.spriteGroups.set(layer.identification, new SpriteGroup(layer, this.origin));
-        }
-        for (const layer of layers.values()) {
-            if (layer.parentId !== null) {
-                const parent = this.spriteGroups.get(layer.parentId);
-                if (!parent) {
-                    throw new Error('Invalid parent');
-                }
-                this.spriteGroups.get(layer.identification)?.setParent(parent);
-            }
-        }
         const vShader = glContext.createShader({
             source: VERTEX_SHADER,
             type: 'vertex',
@@ -338,8 +350,11 @@ export class PNGTuber {
         return new PNGTuber(glContext, layers);
     }
 
-    public render(poseStack: PoseStack, state: AvatarState) {
+    public render(matrices: MatrixStack, context: PNGTuberContext, action: AvatarAction, options: RenderOptions): void {
         const { gl } = this.glContext;
+        const time = context.timer.getElapsedMS() / 500;
+        context.blinking = action.self_mute || Math.sin(time) > 0.995;
+        context.talking = action.talking;
 
         const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex)));
 
@@ -350,17 +365,17 @@ export class PNGTuber {
             this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
         });
         
-        if (state.talking && this.origin.position.y >= 0 && this.bounceVelocity === 0) {
-            this.bounceVelocity = 250;
-            this.bounceTick += 1;
+        if (action.talking && context.origin.position.y >= 0 && context.bounceVelocity === 0) {
+            context.bounceVelocity = 250;
+            context.bounceTick += 1;
         }
-        this.bounceVelocity = this.bounceVelocity - 1000 * 0.0166;
-        this.origin.position = this.origin.position.add(new Vec2(0, -this.bounceVelocity * 0.0166)).min(Vec2.ZERO);
-        if (!state.talking && this.origin.position.y >= -1) {
-            this.bounceVelocity = 0;
+        context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
+        context.origin.position = context.origin.position.add(new Vec2(0, -context.bounceVelocity * 0.0166)).min(Vec2.ZERO);
+        if (!action.talking && context.origin.position.y >= -1) {
+            context.bounceVelocity = 0;
         }
 
-        [...this.spriteGroups.values()].forEach(sprite => sprite.process(state));
+        [...context.spriteGroups.values()].forEach(sprite => sprite.process());
     
         passes.sort((a, b) => a - b);
 
@@ -368,20 +383,20 @@ export class PNGTuber {
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
             passes.forEach(pass => {
-                [...this.spriteGroups.values()].filter(sprite => sprite.layer.parentId === null).forEach(sprite => {
-                    poseStack.push();
-                    this.renderLayer(poseStack, sprite, state, pass);
-                    poseStack.pop();
+                [...context.spriteGroups.values()].filter(sprite => sprite.layer.parentId === null).forEach(sprite => {
+                    matrices.push();
+                    this.renderLayer(matrices, sprite, context, pass);
+                    matrices.pop();
                 });
             });
         });
 
-        state.effects.forEach(effect => {
+        options.effects.forEach(effect => {
             this.effectTargetFrameBuffer.use(() => {
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
             });
-            effect.render(state, this.frameBufferTexture, this.effectTargetFrameBuffer);
+            effect.render(action, this.frameBufferTexture, this.effectTargetFrameBuffer);
             this.frameBuffer.use(() => {
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
@@ -422,18 +437,18 @@ export class PNGTuber {
         });
     }
 
-    private renderLayer(poseStack: PoseStack, sprite: SpriteGroup, state: AvatarState, pass: number) {
+    private renderLayer(matrices: MatrixStack, sprite: SpriteGroup, context: PNGTuberContext, pass: number) {
         if (sprite.layer.showBlink !== 0) {
-            if (state.blinking && sprite.layer.showBlink === 1) {
+            if (context.blinking && sprite.layer.showBlink === 1) {
                 return;
-            } else if (!state.blinking && sprite.layer.showBlink === 2) {
+            } else if (!context.blinking && sprite.layer.showBlink === 2) {
                 return;
             }
         }
         if (sprite.layer.showTalk !== 0) {
-            if (state.talking && sprite.layer.showTalk === 1) {
+            if (context.talking && sprite.layer.showTalk === 1) {
                 return;
-            } else if (!state.talking && sprite.layer.showTalk === 2) {
+            } else if (!context.talking && sprite.layer.showTalk === 2) {
                 return;
             }
         }
@@ -452,7 +467,7 @@ export class PNGTuber {
                     .translate(sprite.layer.offset.x, sprite.layer.offset.y, 0);
                 model.set(matrix);
                 const view = this.program.getUniform('u_view').asMat4();
-                view.set(poseStack.get());
+                view.set(matrices.get());
                 const positionAttribute = this.program.getAttribute('a_position');
                 positionAttribute.set(sprite.layer.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 const uvAttribute = this.program.getAttribute('a_texcoord');
@@ -460,14 +475,14 @@ export class PNGTuber {
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
         }
-        [...this.spriteGroups.values()].filter(child => child.layer.parentId === sprite.layer.identification).forEach(child => {
-            this.renderLayer(poseStack, child, state, pass);
+        [...context.spriteGroups.values()].filter(child => child.layer.parentId === sprite.layer.identification).forEach(child => {
+            this.renderLayer(matrices, child, context, pass);
         });
     }
 
-    public getBoundingBox(): AABB2 {
+    public getBoundingBox(context: PNGTuberContext): AABB2 {
         const points: Vec2[] = [];
-        for (const sprite of this.spriteGroups.values()) {
+        for (const sprite of context.spriteGroups.values()) {
             const transform = sprite.sprite.globalTransform;
             const { width, height } = sprite.layer.imageData;
             const halfWidth = width / 2;
