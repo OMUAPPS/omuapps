@@ -57,7 +57,9 @@
     <button on:click={() => {
         if (!$heldAvatar) return;
         const avatarConfig = $config.avatars[$heldAvatar];
+        if (avatarConfig.type !== 'pngtuber') return;
         avatarConfig.flipHorizontal = !avatarConfig.flipHorizontal;
+        avatarConfig.offset[0] = -avatarConfig.offset[0];
         $config.avatars[$heldAvatar] = avatarConfig;
     }} class="flip">
         左右を反転
