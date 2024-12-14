@@ -179,7 +179,10 @@ export type Config = {
             flipVertical: boolean;
         } | {
             type: 'png';
-            source: Source;
+            base: Source;
+            active?: Source;
+            deafened?: Source;
+            muted?: Source;
         };
     }
     effects: {
@@ -312,9 +315,18 @@ export class DiscordOverlayApp {
         return config;
     }
 
-    public async getAvatar(asset_id: Identifier): Promise<Uint8Array> {
-        const asset = await this.omu.assets.download(asset_id);
-        return asset.buffer;
+    public async getSource(source: Source): Promise<Uint8Array> {
+        const type = source.type;
+        if (type === 'asset') {
+            const file = await this.omu.assets.download(Identifier.fromKey(source.asset_id));
+            return file.buffer;
+        } else if (type === 'url') {
+            const proxyUrl = this.omu.assets.proxy(source.url);
+            const response = await fetch(proxyUrl);
+            const buffer = new Uint8Array(await response.arrayBuffer());
+            return buffer;
+        }
+        throw new Error(`Invalid source type: ${type}`);
     }
 
     public async getGuilds(user_id: string): Promise<GetGuildsResponseData> {

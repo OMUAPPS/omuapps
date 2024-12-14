@@ -1,58 +1,87 @@
 <script lang="ts">
-    import { Tooltip } from '@omujs/ui';
+    import { FileDrop, Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
     import type { DiscordOverlayApp, VoiceStateItem } from '../discord-overlay-app.js';
-    import { contextCache, heldAvatar, heldUser } from '../states.js';
+    import { heldAvatar, heldUser } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let state: VoiceStateItem;
     export let id: string;
     const { config } = overlayApp;
 
-    async function setAvatar(userId: string, avatar: string | null) {
-        const encoded = new TextEncoder().encode(avatar || '');
-        const hash = await crypto.subtle.digest('SHA-256', encoded).then((buf) => {
-            return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
-        });
-        const avatarId = APP_ID.join('avatar', hash);
-        overlayApp.omu.assets.upload(avatarId, encoded);
-        const existAvatarConfig = $config.avatars[avatarId.key()];
-        $config.avatars[avatarId.key()] = {
-            type: 'pngtuber',
-            offset: [0, 0],
-            scale: 1,
-            flipHorizontal: false,
-            flipVertical: false,
-            source: {
-                type: 'asset',
-                asset_id: avatarId.key(),
-            }
-        };
-        $config.users[userId] = {
-            ...$config.users[userId],
-            avatar: avatarId.key(),
-        };
-        if (!existAvatarConfig) {
-            $heldAvatar = avatarId.key();
+    function isJsonString(str: string) {
+        try {
+            JSON.parse(str);
+        } catch {
+            return false;
         }
-        contextCache.delete(userId);
+        return true;
     }
 
-    function handleReplace() {
+    async function setAvatar(file: File) {
+        const buffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(buffer);
+        const decoder = new TextDecoder();
+        const isPngtuber = file.name.endsWith('.save');
+        if (isPngtuber) {
+            if (!isJsonString(decoder.decode(uint8Array))) {
+                throw new Error(`Invalid save file: ${file.name} is not a valid JSON file`);
+            }
+            const hash = await crypto.subtle.digest('SHA-256', buffer).then((buf) => {
+                return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+            });
+            const avatarId = APP_ID.join('avatar', hash);
+            overlayApp.omu.assets.upload(avatarId, new Uint8Array(buffer));
+            const existAvatarConfig = $config.avatars[avatarId.key()];
+            $config.users[id] = {
+                ...$config.users[id],
+                avatar: avatarId.key(),
+            };
+            if (!existAvatarConfig) {
+                $config.avatars[avatarId.key()] = {
+                    type: 'pngtuber',
+                    offset: [0, 0],
+                    scale: 1,
+                    flipHorizontal: false,
+                    flipVertical: false,
+                    source: {
+                        type: 'asset',
+                        asset_id: avatarId.key(),
+                    }
+                };
+                $heldAvatar = avatarId.key();
+            }
+        } else {
+            const hash = await crypto.subtle.digest('SHA-256', buffer).then((buf) => {
+                return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+            });
+            const avatarId = APP_ID.join('avatar', hash);
+            overlayApp.omu.assets.upload(avatarId, new Uint8Array(buffer));
+            const existAvatarConfig = $config.avatars[avatarId.key()];
+            $config.users[id] = {
+                ...$config.users[id],
+                avatar: avatarId.key(),
+            };
+            if (!existAvatarConfig) {
+                $config.avatars[avatarId.key()] = {
+                    type: 'png',
+                    base: {
+                        type: 'asset',
+                        asset_id: avatarId.key(),
+                    }
+                };
+                $heldAvatar = avatarId.key();
+            }
+        }
+    }
+
+    async function handleReplace(files: FileList) {
         const file = files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-            const base64 = reader.result as string;
-            const decoded = atob(base64.split(',')[1]);
-            setAvatar(id, decoded);
-        };
-        reader.readAsDataURL(file);
+        await setAvatar(file);
     }
 
     const avatarUrl = state.user.avatar && `https://cdn.discordapp.com/avatars/${state.user.id}/${state.user.avatar}.png`;
 
-    let fileDrop: HTMLInputElement;
-    let files: FileList;
     let settingElement: HTMLElement;
 
     function handleWindowClick(event: MouseEvent) {
@@ -67,6 +96,8 @@
         }
         $heldUser = null;
     }
+
+    $: avatar = $config.users[id].avatar;
 </script>
 
 <svelte:window on:mousedown={handleWindowClick} />
@@ -102,16 +133,16 @@
         </button>
     </div>
     <div class="actions">
-        <button type="button" on:click={() => fileDrop.click()}>
+        <FileDrop handle={handleReplace} accept=".save,image/*,.apng,.gif,.webp">
             <Tooltip>
                 pngもしくはPNGTuber+のアバターが使えます
             </Tooltip>
             アバターを変更
             <i class="ti ti-upload"></i>
-        </button>
-        {#if $config.users[id].avatar}
+        </FileDrop>
+        {#if avatar}
             <button type="button" on:click={()=>{
-                $heldAvatar = $config.users[id].avatar;
+                $heldAvatar = avatar;
                 $heldUser = null;
             }}>
                 アバターを調整
@@ -120,7 +151,7 @@
         {/if}
     </div>
 </div>
-<input type="file" bind:this={fileDrop} bind:files on:change={handleReplace} hidden/>
+
 
 <style lang="scss">
     .settings {

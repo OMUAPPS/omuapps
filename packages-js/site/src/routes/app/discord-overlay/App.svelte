@@ -53,7 +53,7 @@
         state = null;
         ready = true;
         config.update((config) => overlayApp.migrateConfig(config));
-    })
+    });
 
     let last_user_id: string | null = null;
     let last_guild_id: string | null = null;

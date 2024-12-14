@@ -1,6 +1,7 @@
 <script lang="ts">
     export let multiple = false;
     export let files: FileList | null = null;
+    export let accept: string | null = null;
     export let handle: (files: FileList) => void = () => {};
     export let fileDrop: HTMLInputElement | null = null;
     export const open = (): void => {
@@ -17,7 +18,7 @@
     }
 </script>
 
-<input type="file" bind:this={fileDrop} bind:files on:change={handleChange} {multiple} hidden />
+<input type="file" bind:this={fileDrop} bind:files on:change={handleChange} {multiple} {accept} hidden />
 <slot {open} name="button">
     <button on:click={open}>
         <slot />

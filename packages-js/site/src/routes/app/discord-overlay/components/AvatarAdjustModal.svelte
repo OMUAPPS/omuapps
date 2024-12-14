@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { FileDrop, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
-    import type { DiscordOverlayApp } from '../discord-overlay-app.js';
+    import { APP_ID } from '../app.js';
+    import type { DiscordOverlayApp, Source } from '../discord-overlay-app.js';
     import { heldAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
@@ -11,7 +13,8 @@
     
     function handleMouseMove(event: MouseEvent) {
         if (!lastMouse) return;
-        const avatarConfig = $heldAvatar && $config.avatars[$heldAvatar];
+        if (!$heldAvatar) return;
+        const avatarConfig = $config.avatars[$heldAvatar];
         if (avatarConfig && avatarConfig.type === 'pngtuber') {
             const [x, y] = avatarConfig.offset;
             const dx = event.clientX - lastMouse.x;
@@ -38,12 +41,30 @@
         lastMouse = null;
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
+        $config.avatars = {...$config.avatars};
     }
 
     onDestroy(() => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
     });
+
+    async function upload(file: File): Promise<Source> {
+        const hash = await crypto.subtle.digest('SHA-256', await file.arrayBuffer()).then((buf) => {
+            return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+        });
+        const avatarId = APP_ID.join('avatar', hash);
+        overlayApp.omu.assets.upload(avatarId, new Uint8Array(await file.arrayBuffer()));
+        return {
+            type: 'asset',
+            asset_id: avatarId.key(),
+        };
+    }
+
+    async function getSourceUrl(source: Source): Promise<string> {
+        const buffer = await overlayApp.getSource(source);
+        return URL.createObjectURL(new Blob([buffer]));
+    }
 </script>
 
 <button
@@ -54,20 +75,102 @@
     class="origin"
 ></button>
 <div class="actions">
-    <button on:click={() => {
-        if (!$heldAvatar) return;
-        const avatarConfig = $config.avatars[$heldAvatar];
-        if (avatarConfig.type !== 'pngtuber') return;
-        avatarConfig.flipHorizontal = !avatarConfig.flipHorizontal;
-        avatarConfig.offset[0] = -avatarConfig.offset[0];
-        $config.avatars[$heldAvatar] = avatarConfig;
-    }} class="flip">
-        左右を反転
-        <i class="ti ti-arrows-horizontal"></i>
-    </button>
-    <small>
-        左側を向くように調整してください
-    </small>
+    {#if $heldAvatar && $config.avatars[$heldAvatar].type === 'pngtuber'}
+        <button on:click={() => {
+            if (!$heldAvatar) return;
+            const avatarConfig = $config.avatars[$heldAvatar];
+            if (avatarConfig.type !== 'pngtuber') return;
+            avatarConfig.flipHorizontal = !avatarConfig.flipHorizontal;
+            avatarConfig.offset[0] = -avatarConfig.offset[0];
+            $config.avatars[$heldAvatar] = avatarConfig;
+        }} class="flip">
+            左右を反転
+            <i class="ti ti-arrows-horizontal"></i>
+        </button>
+        <small>
+            左側を向くように調整してください
+        </small>
+    {/if}
+    {#if $heldAvatar && $config.avatars[$heldAvatar]}
+        {@const avatarConfig = $config.avatars[$heldAvatar]}
+        {@const avatar = $heldAvatar}
+        <div class="png-settings">
+            {#if avatarConfig.type === 'png'}
+                {#await getSourceUrl(avatarConfig.base) then url}
+                    <img src={url} alt="avatar" class="png-avatar" />
+                {/await}
+                <div class="sprite">
+                    {#if avatarConfig.active}
+                        {#await getSourceUrl(avatarConfig.active) then url}
+                            <img src={url} alt="avatar" class="png-avatar" />
+                        {/await}
+                    {:else}
+                        未設定
+                        <i class="ti ti-upload"></i>
+                    {/if}
+                    <FileDrop handle={async (files) => {
+                        if (files.length !== 1) return;
+                        const file = files[0];
+                        if (avatarConfig.type !== 'png') return;
+                        $config.avatars[avatar] = {
+                            ...avatarConfig,
+                            active: await upload(file),
+                        };
+                    }}>
+                        <Tooltip>
+                            アクティブ時のアバターを設定
+                        </Tooltip>
+                    </FileDrop>
+                </div>
+                <div class="sprite">
+                    {#if avatarConfig.deafened}
+                        {#await getSourceUrl(avatarConfig.deafened) then url}
+                            <img src={url} alt="avatar" class="png-avatar" />
+                        {/await}
+                    {:else}
+                        未設定
+                        <i class="ti ti-upload"></i>
+                    {/if}
+                    <FileDrop handle={async (files) => {
+                        if (files.length !== 1) return;
+                        const file = files[0];
+                        if (avatarConfig.type !== 'png') return;
+                        $config.avatars[avatar] = {
+                            ...avatarConfig,
+                            deafened: await upload(file),
+                        };
+                    }}>
+                        <Tooltip>
+                            アクティブ時のアバターを設定
+                        </Tooltip>
+                    </FileDrop>
+                </div>
+                <div class="sprite">
+                    {#if avatarConfig.muted}
+                        {#await getSourceUrl(avatarConfig.muted) then url}
+                            <img src={url} alt="avatar" class="png-avatar" />
+                        {/await}
+                    {:else}
+                        未設定
+                        <i class="ti ti-upload"></i>
+                    {/if}
+                    <FileDrop handle={async (files) => {
+                        if (files.length !== 1) return;
+                        const file = files[0];
+                        if (avatarConfig.type !== 'png') return;
+                        $config.avatars[avatar] = {
+                            ...avatarConfig,
+                            muted: await upload(file),
+                        };
+                    }}>
+                        <Tooltip>
+                            アクティブ時のアバターを設定
+                        </Tooltip>
+                    </FileDrop>
+                </div>
+            {/if}
+        </div>
+    {/if}
     <button on:click={() => {
         $heldAvatar = null;
     }} class="close">
@@ -106,6 +209,7 @@
         position: absolute;
         right: 6rem;
         bottom: 2rem;
+        color: var(--color-bg-1);
     }
 
     .close {
@@ -139,5 +243,10 @@
         color: var(--color-1);
         background: var(--color-bg-2);
         pointer-events: none;
+    }
+
+    .png-avatar {
+        height: 4rem;
+        object-fit: contain;
     }
 </style>

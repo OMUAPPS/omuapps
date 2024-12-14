@@ -404,7 +404,7 @@ export type TextureParams = {
     magFilter?: 'nearest' | 'linear';
 };
 
-export type ColorFormat = 'rgba8' | 'rgb8' | 'rgba16f' | 'rgb16f';
+export type ColorFormat = 'rgba' | 'rgb' | 'rgba16f' | 'rgb16f';
 
 export class GlTexture {
     constructor(
@@ -455,8 +455,8 @@ export class GlTexture {
         this.width = width;
         this.height = height;
         const COLOR_FORMATS: Record<ColorFormat, number> = {
-            rgba8: this.gl.RGBA,
-            rgb8: this.gl.RGB,
+            rgba: this.gl.RGBA,
+            rgb: this.gl.RGB,
             rgba16f: this.gl.RGBA16F,
             rgb16f: this.gl.RGB16F,
         };

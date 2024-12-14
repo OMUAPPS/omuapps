@@ -7,16 +7,16 @@
     import { MatrixStack } from '$lib/math/matrix-stack.js';
     import { Vec2 } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
-    import { Identifier } from '@omujs/omu';
     import { DiscordOverlayApp, type Config, type UserConfig, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
     import { createShadowEffect } from '../effects/shadow.js';
     import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
+    import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
     import robo from '../robo.json';
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
-    import { avatarCache, contextCache, dragUser, heldAvatar } from '../states.js';
+    import { dragUser, heldAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let message: {type: 'loading'| 'failed', text: string} | null = null;
@@ -287,34 +287,109 @@
             flipVertical ? -1 : 1,
         );
     }
+    
+    const avatarCache = new Map<string, Avatar>();
+    const contextCache = new Map<string, {id: string, avatar: AvatarContext}>();
+
+    function getFileType(source: Uint8Array): string {
+        const HEADER_MAP: Record<string, string | undefined> = {
+            '89504e47': 'image/png',
+            '47494638': 'image/gif',
+            'ffd8ffe0': 'image/jpeg',
+            'ffd8ffe1': 'image/jpeg',
+            'ffd8ffe2': 'image/jpeg',
+            'ffd8ffe3': 'image/jpeg',
+            'ffd8ffe8': 'image/jpeg',
+        }
+        const header = source.slice(0, 4).reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
+        const type = HEADER_MAP[header];
+        if (type) {
+            return type;
+        }
+        console.warn(`Unknown file type: ${header}`);
+        return 'image/png';
+    }
+
+    async function createSourceElement(source: Uint8Array): Promise<HTMLImageElement> {
+        const type = getFileType(source);
+        const blob = new Blob([source], {type});
+        const url = URL.createObjectURL(blob);
+        const img = document.createElement('img');
+        img.src = url;
+        await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+        });
+        return img;
+    }
 
     async function getAvatarById(gl: GlContext, avatarId: string): Promise<Avatar> {
+        const avatarConfig = $config.avatars[avatarId];
         const existing = avatarCache.get(avatarId);
         if (existing) {
             return existing;
         }
         let parsedData: PNGTuberData;
-        try {
-            const buffer = await overlayApp.getAvatar(Identifier.fromKey(avatarId));
-            parsedData = JSON.parse(new TextDecoder().decode(buffer));
-            const pngtuber = await PNGTuber.load(gl, parsedData);
-            avatarCache.set(avatarId, pngtuber);
-            return pngtuber;
-        } catch (e) {
-            console.error(e);
-            throw new Error(`Failed to load avatar: ${e}`);
+        const avatarType = avatarConfig.type;
+        if (avatarType === 'pngtuber') {
+            try {
+                const buffer = await overlayApp.getSource(avatarConfig.source);
+                parsedData = JSON.parse(new TextDecoder().decode(buffer));
+                const pngtuber = await PNGTuber.load(gl, parsedData);
+                avatarCache.set(avatarId, pngtuber);
+                return pngtuber;
+            } catch (e) {
+                console.error(e);
+                throw new Error(`Failed to load avatar: ${e}`);
+            }
+        } else if (avatarType === 'png') {
+            try {
+                const baseElement = await createSourceElement(await overlayApp.getSource(avatarConfig.base));
+                const active = avatarConfig.active && await createSourceElement(await overlayApp.getSource(avatarConfig.active));
+                const deafened = avatarConfig.deafened && await createSourceElement(await overlayApp.getSource(avatarConfig.deafened));
+                const muted = avatarConfig.muted && await createSourceElement(await overlayApp.getSource(avatarConfig.muted));
+                const avatar = await PNGAvatar.load(gl, {
+                    base: {
+                        source: baseElement,
+                        width: baseElement.width,
+                        height: baseElement.height,
+                    },
+                    active: active && {
+                        source: active,
+                        width: active.width,
+                        height: active.height,
+                    },
+                    deafened: deafened && {
+                        source: deafened,
+                        width: deafened.width,
+                        height: deafened.height,
+                    },
+                    muted: muted && {
+                        source: muted,
+                        width: muted.width,
+                        height: muted.height,
+                    },
+                });
+                avatarCache.set(avatarId, avatar);
+                return avatar;
+            } catch (e) {
+                console.error(e);
+                throw new Error(`Failed to load avatar: ${e}`);
+            }
+        } else {
+            throw new Error(`Unknown avatar type: ${avatarType}`);
         }
     }
 
     async function getAvatarByUser(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
         const existing = contextCache.get(user.id);
-        if (existing) {
-            return existing;
-        }
         const userConfig = getUser(user.id);
+        if (existing && existing.id === userConfig.avatar) {
+            return existing.avatar;
+        }
         if (!userConfig.avatar) {
             const avatar = defaultAvatar.create();
-            contextCache.set(user.id, avatar);   
+            contextCache.set(user.id, {id: 'default', avatar});
             return avatar;
         }
         message = {
@@ -325,7 +400,7 @@
             const avatar = await getAvatarById(gl, userConfig.avatar);
             message = null;
             const context = avatar.create();
-            contextCache.set(user.id, context);
+            contextCache.set(user.id, {id: userConfig.avatar, avatar: context});
             return context;
         } catch (e) {
             message = {
@@ -336,7 +411,7 @@
                 message = null;
             }, 5000);
             const avatar = defaultAvatar.create();
-            contextCache.set(user.id, avatar);   
+            contextCache.set(user.id, {id: 'failed', avatar});   
             return avatar;
         }
     }

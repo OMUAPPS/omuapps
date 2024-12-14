@@ -128,9 +128,23 @@
             location.reload();
         }}>
             <Tooltip>
-                設定をリセット
+                設定を初期化して再読み込み
             </Tooltip>
             <i class="ti ti-trash"></i>
+        </button>
+    </span>
+    <span>
+        <p>
+            <i class="ti ti-reload"/>
+            再読み込み
+        </p>
+        <button on:click={() => {
+            location.reload();
+        }}>
+            <Tooltip>
+                アプリを再読み込みする  
+            </Tooltip>
+            <i class="ti ti-reload"></i>
         </button>
     </span>
 </div>
