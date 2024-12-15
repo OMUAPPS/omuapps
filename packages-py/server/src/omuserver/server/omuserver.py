@@ -79,6 +79,7 @@ class OmuServer(Server):
         self.client = aiohttp.ClientSession(
             loop=self.loop,
             headers=USER_AGENT_HEADERS,
+            timeout=aiohttp.ClientTimeout(total=10),
         )
 
     def _set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
@@ -102,7 +103,9 @@ class OmuServer(Server):
         if not url:
             return web.Response(status=400)
         try:
-            async with self.client.get(url) as resp:
+            async with self.client.get(
+                url,
+            ) as resp:
                 headers = {
                     "Cache-Control": "no-cache" if no_cache else "max-age=3600",
                     "Content-Type": resp.content_type,
@@ -119,6 +122,8 @@ class OmuServer(Server):
                 except ConnectionResetError:
                     pass
                 return response
+        except TimeoutError:
+            return web.Response(status=504)
         except aiohttp.ClientResponseError as e:
             return web.Response(status=e.status, text=e.message)
         except Exception as e:
