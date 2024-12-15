@@ -57,6 +57,7 @@ class DisconnectType(str, Enum):
     INVALID_PACKET = "invalid_packet"
     ANOTHER_CONNECTION = "another_connection"
     PERMISSION_DENIED = "permission_denied"
+    SERVER_RESTART = "server_restart"
     SHUTDOWN = "shutdown"
     CLOSE = "close"
 

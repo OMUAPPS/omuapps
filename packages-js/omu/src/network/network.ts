@@ -63,7 +63,9 @@ export class Network {
         });
         this.addPacketHandler(PACKET_TYPES.DISCONNECT, async (reason) => {
             await this.event.disconnected.emit(reason);
-            if (reason.type === DisconnectType.SHUTDOWN || reason.type === DisconnectType.CLOSE) {
+            if (reason.type === DisconnectType.SHUTDOWN
+                ||reason.type === DisconnectType.CLOSE
+                ||reason.type === DisconnectType.SERVER_RESTART) {
                 return;
             }
             this.setStatus(NetworkStatus.ERROR);
@@ -76,6 +78,7 @@ export class Network {
                 [DisconnectType.INVALID_PACKET]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_TYPE]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_DATA]: InvalidPacket,
+                [DisconnectType.SERVER_RESTART]: undefined,
                 [DisconnectType.CLOSE]: undefined,
                 [DisconnectType.SHUTDOWN]: undefined,
             };

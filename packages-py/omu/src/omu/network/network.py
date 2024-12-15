@@ -76,6 +76,7 @@ class Network:
         if reason.type in {
             DisconnectType.SHUTDOWN,
             DisconnectType.CLOSE,
+            DisconnectType.SERVER_RESTART,
         }:
             return
 
