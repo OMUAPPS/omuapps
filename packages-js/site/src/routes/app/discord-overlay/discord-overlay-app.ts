@@ -164,26 +164,33 @@ export const DEFAULT_USER_CONFIG: UserConfig = {
     avatar: null,
 };
 
+export type PngTuberAvatarConfig = {
+    type: 'pngtuber';
+    key: string;
+    source: Source;
+    offset: [number, number];
+    scale: number;
+    flipHorizontal: boolean;
+    flipVertical: boolean;
+};
+export type PngAvatarConfig = {
+    type: 'png';
+    key: string;
+    offset: [number, number];
+    scale: number;
+    base: Source;
+    active?: Source;
+    deafened?: Source;
+    muted?: Source;
+};
+
 export type Config = {
     version?: number;
     users: {
         [key: string]: UserConfig;
     },
     avatars: {
-        [key: string]: {
-            type: 'pngtuber';
-            source: Source;
-            offset: [number, number];
-            scale: number;
-            flipHorizontal: boolean;
-            flipVertical: boolean;
-        } | {
-            type: 'png';
-            base: Source;
-            active?: Source;
-            deafened?: Source;
-            muted?: Source;
-        };
+        [key: string]: PngTuberAvatarConfig | PngAvatarConfig;
     }
     effects: {
         shadow: {

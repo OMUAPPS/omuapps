@@ -6,7 +6,7 @@
     import { heldAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
-    const { config } = overlayApp;
+    const { config, voiceState, speakingState } = overlayApp;
 
     let lastMouse: {x: number, y: number} | null = null;
     let dragger: HTMLElement | null = null;
@@ -15,13 +15,11 @@
         if (!lastMouse) return;
         if (!$heldAvatar) return;
         const avatarConfig = $config.avatars[$heldAvatar];
-        if (avatarConfig && avatarConfig.type === 'pngtuber') {
-            const [x, y] = avatarConfig.offset;
-            const dx = event.clientX - lastMouse.x;
-            const dy = event.clientY - lastMouse.y;
-            avatarConfig.offset = [x + dx, y + dy];
-            lastMouse = {x: event.clientX, y: event.clientY};
-        }
+        const [x, y] = avatarConfig.offset;
+        const dx = event.clientX - lastMouse.x;
+        const dy = event.clientY - lastMouse.y;
+        avatarConfig.offset = [x + dx, y + dy];
+        lastMouse = {x: event.clientX, y: event.clientY};
     }
 
     function handleMouseDown(event: MouseEvent) {
@@ -32,9 +30,8 @@
 
     function handleMouseWheel(event: WheelEvent) {
         const avatarConfig = $heldAvatar && $config.avatars[$heldAvatar];
-        if (avatarConfig && avatarConfig.type === 'pngtuber') {
-            avatarConfig.scale -= event.deltaY / 1000 * 0.5;
-        }
+        if (!avatarConfig) return;
+        avatarConfig.scale -= event.deltaY / 1000 * 0.5;
     }
 
     function handleMouseUp() {
@@ -91,86 +88,6 @@
             左側を向くように調整してください
         </small>
     {/if}
-    {#if $heldAvatar && $config.avatars[$heldAvatar]}
-        {@const avatarConfig = $config.avatars[$heldAvatar]}
-        {@const avatar = $heldAvatar}
-        <div class="png-settings">
-            {#if avatarConfig.type === 'png'}
-                {#await getSourceUrl(avatarConfig.base) then url}
-                    <img src={url} alt="avatar" class="png-avatar" />
-                {/await}
-                <div class="sprite">
-                    {#if avatarConfig.active}
-                        {#await getSourceUrl(avatarConfig.active) then url}
-                            <img src={url} alt="avatar" class="png-avatar" />
-                        {/await}
-                    {:else}
-                        未設定
-                        <i class="ti ti-upload"></i>
-                    {/if}
-                    <FileDrop handle={async (files) => {
-                        if (files.length !== 1) return;
-                        const file = files[0];
-                        if (avatarConfig.type !== 'png') return;
-                        $config.avatars[avatar] = {
-                            ...avatarConfig,
-                            active: await upload(file),
-                        };
-                    }}>
-                        <Tooltip>
-                            アクティブ時のアバターを設定
-                        </Tooltip>
-                    </FileDrop>
-                </div>
-                <div class="sprite">
-                    {#if avatarConfig.deafened}
-                        {#await getSourceUrl(avatarConfig.deafened) then url}
-                            <img src={url} alt="avatar" class="png-avatar" />
-                        {/await}
-                    {:else}
-                        未設定
-                        <i class="ti ti-upload"></i>
-                    {/if}
-                    <FileDrop handle={async (files) => {
-                        if (files.length !== 1) return;
-                        const file = files[0];
-                        if (avatarConfig.type !== 'png') return;
-                        $config.avatars[avatar] = {
-                            ...avatarConfig,
-                            deafened: await upload(file),
-                        };
-                    }}>
-                        <Tooltip>
-                            アクティブ時のアバターを設定
-                        </Tooltip>
-                    </FileDrop>
-                </div>
-                <div class="sprite">
-                    {#if avatarConfig.muted}
-                        {#await getSourceUrl(avatarConfig.muted) then url}
-                            <img src={url} alt="avatar" class="png-avatar" />
-                        {/await}
-                    {:else}
-                        未設定
-                        <i class="ti ti-upload"></i>
-                    {/if}
-                    <FileDrop handle={async (files) => {
-                        if (files.length !== 1) return;
-                        const file = files[0];
-                        if (avatarConfig.type !== 'png') return;
-                        $config.avatars[avatar] = {
-                            ...avatarConfig,
-                            muted: await upload(file),
-                        };
-                    }}>
-                        <Tooltip>
-                            アクティブ時のアバターを設定
-                        </Tooltip>
-                    </FileDrop>
-                </div>
-            {/if}
-        </div>
-    {/if}
     <button on:click={() => {
         $heldAvatar = null;
     }} class="close">
@@ -191,6 +108,125 @@
         <p>つかんで移動</p>
     </small>
 </span>
+{#if $heldAvatar && $config.avatars[$heldAvatar]}
+    {@const avatarConfig = $config.avatars[$heldAvatar]}
+    {@const avatar = $heldAvatar}
+    <div class="png-settings">
+        {#if avatarConfig.type === 'png'}
+            {@const stateVoice = $config.user_id && $voiceState[$config.user_id]?.voice_state}
+            {@const stateSpeaking = $config.user_id && $speakingState[$config.user_id]?.speaking}
+            {@const stateType =
+                stateVoice && (stateVoice.self_deaf || stateVoice.deaf) ? 'deafened' :
+                    stateVoice && (stateVoice.self_mute || stateVoice.mute) ? 'muted' :
+                        stateSpeaking ? 'active' : null
+            }
+            <div class="sprite">
+                <div class="png-avatar">
+                    {#await getSourceUrl(avatarConfig.base) then url}
+                        <img src={url} alt="avatar" />
+                    {/await}
+                </div>
+                <p class:active={!stateType}>基本</p>
+            </div>
+            <div class="sprite">
+                <FileDrop handle={async (files) => {
+                    if (files.length !== 1) return;
+                    const file = files[0];
+                    if (avatarConfig.type !== 'png') return;
+                    const newConfig = {
+                        ...avatarConfig,
+                        active: await upload(file),
+                    };
+                    newConfig.key = JSON.stringify({
+                        base: newConfig.base,
+                        active: newConfig.active,
+                        deafened: newConfig.deafened,
+                        muted: newConfig.muted,
+                    });
+                    $config.avatars[avatar] = newConfig;
+                }}>
+                    <Tooltip>
+                        喋っている時のアバターを設定
+                    </Tooltip>
+                    <div class="png-avatar">
+                        {#if avatarConfig.active}
+                            {#await getSourceUrl(avatarConfig.active) then url}
+                                <img src={url} alt="avatar" />
+                            {/await}
+                        {:else}
+                            <p>未設定</p>
+                        {/if}
+                    </div>
+                </FileDrop>
+                <p class:active={stateType === 'active'}>喋っている時</p>
+            </div>
+            <div class="sprite">
+                <FileDrop handle={async (files) => {
+                    if (files.length !== 1) return;
+                    const file = files[0];
+                    if (avatarConfig.type !== 'png') return;
+                    const newConfig = {
+                        ...avatarConfig,
+                        muted: await upload(file),
+                    };
+                    newConfig.key = JSON.stringify({
+                        base: newConfig.base,
+                        active: newConfig.active,
+                        deafened: newConfig.deafened,
+                        muted: newConfig.muted,
+                    });
+                    $config.avatars[avatar] = newConfig;
+                }}>
+                    <Tooltip>
+                        喋れない時のアバターを設定
+                    </Tooltip>
+                    <div class="png-avatar">
+                        {#if avatarConfig.muted}
+                            {#await getSourceUrl(avatarConfig.muted) then url}
+                                <img src={url} alt="avatar" />
+                            {/await}
+                        {:else}
+                            <p>未設定</p>
+                        {/if}
+                    </div>
+                </FileDrop>
+                <p class:active={stateType === 'muted'}>喋れない時</p>
+            </div>
+            <div class="sprite">
+                <FileDrop handle={async (files) => {
+                    if (files.length !== 1) return;
+                    const file = files[0];
+                    if (avatarConfig.type !== 'png') return;
+                    const newConfig = {
+                        ...avatarConfig,
+                        deafened: await upload(file),
+                    };
+                    newConfig.key = JSON.stringify({
+                        base: newConfig.base,
+                        active: newConfig.active,
+                        deafened: newConfig.deafened,
+                        muted: newConfig.muted,
+                    });
+                    $config.avatars[avatar] = newConfig;
+                }}>
+                    <Tooltip>
+                        聞こえない時のアバターを設定
+                    </Tooltip>
+                    <div class="png-avatar">
+                        {#if avatarConfig.deafened}
+                            {#await getSourceUrl(avatarConfig.deafened) then url}
+                                <img src={url} alt="avatar" />
+                            {/await}
+                        {:else}
+                            <p>未設定</p>
+                        {/if}
+                    </div>
+                </FileDrop>
+                <p class:active={stateType === 'deafened'}>聞こえない時</p>
+            </div>
+        {/if}
+    </div>
+{/if}
 
 <style lang="scss">
 
@@ -207,7 +243,7 @@
         flex-direction: column;
         gap: 0.5rem;
         position: absolute;
-        right: 6rem;
+        right: 5rem;
         bottom: 2rem;
         color: var(--color-bg-1);
     }
@@ -234,19 +270,66 @@
     .message {
         position: absolute;
         left: 50%;
-        top: calc(50% + 12rem);
+        top: 4rem;
         transform: translate(-50%, 0);
         padding: 0.25rem 1rem;
         font-size: 1rem;
         font-weight: 600;
         white-space: nowrap;
-        color: var(--color-1);
-        background: var(--color-bg-2);
+        color: var(--color-bg-1);
         pointer-events: none;
     }
 
+    .png-settings {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        margin: 2rem;
+        display: flex;
+        width: max(20rem, 25%);
+        gap: 2rem;
+    }
+
+    .sprite {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 0.5rem;
+        color: var(--color-bg-2);
+        width: 8rem;
+
+        > p {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0rem;
+            text-align: center;
+
+            &.active {
+                background: var(--color-1);
+                color: var(--color-bg-2);
+                padding: 0.25rem 0.5rem;
+                text-align: center;
+            }
+        }
+    }
+
     .png-avatar {
-        height: 4rem;
-        object-fit: contain;
+        height: 10rem;
+        width: 5.5rem;
+
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        > p {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--color-1);
+            text-align: center;
+            line-height: 10rem;
+            background: var(--color-bg-1);
+        }
     }
 </style>

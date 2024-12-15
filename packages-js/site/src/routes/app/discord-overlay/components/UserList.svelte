@@ -10,9 +10,7 @@
 <div class="list">
     {#each Object.entries($voiceState)
         .sort(([a,], [b,]) => $config.users[a]?.position[0] - $config.users[b]?.position[0]) as [id, state] (id)}
-        <div class="entry">
-            <UserConfigEntry {overlayApp} {id} {state} />
-        </div>
+        <UserConfigEntry {overlayApp} {id} {state} />
     {:else}
         <div class="message">
             {#if $config.channel_id && $config.guild_id}
@@ -36,12 +34,13 @@
         inset: 0;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 3px;
-        align-content: start;
         border-left: 1px solid var(--color-outline);
         padding-left: 1rem;
+        padding-right: 0.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+        grid-template-rows: 3.5rem;
+        gap: 3px;
 
         &::-webkit-scrollbar {
             width: 8px;
@@ -83,10 +82,5 @@
     small {
         color: var(--color-text);
         font-size: 0.7rem;
-    }
-
-    .entry {
-        width: 14rem;
-        height: fit-content;
     }
 </style>

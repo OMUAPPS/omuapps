@@ -1,7 +1,7 @@
 <script lang="ts">
     import { FileDrop, Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
-    import type { DiscordOverlayApp, VoiceStateItem } from '../discord-overlay-app.js';
+    import type { DiscordOverlayApp, PngAvatarConfig, VoiceStateItem } from '../discord-overlay-app.js';
     import { heldAvatar, heldUser } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
@@ -40,6 +40,7 @@
             if (!existAvatarConfig) {
                 $config.avatars[avatarId.key()] = {
                     type: 'pngtuber',
+                    key: '',
                     offset: [0, 0],
                     scale: 1,
                     flipHorizontal: false,
@@ -63,13 +64,23 @@
                 avatar: avatarId.key(),
             };
             if (!existAvatarConfig) {
-                $config.avatars[avatarId.key()] = {
+                const newConfig: PngAvatarConfig = {
                     type: 'png',
+                    key: '',
+                    offset: [0, 0],
+                    scale: 1,
                     base: {
                         type: 'asset',
                         asset_id: avatarId.key(),
                     }
                 };
+                newConfig.key = JSON.stringify({
+                    base: newConfig.base,
+                    active: newConfig.active,
+                    deafened: newConfig.deafened,
+                    muted: newConfig.muted,
+                })
+                $config.avatars[avatarId.key()] = newConfig;
                 $heldAvatar = avatarId.key();
             }
         }

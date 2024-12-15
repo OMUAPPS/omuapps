@@ -93,10 +93,10 @@ export class PNGAvatar implements Avatar {
         const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => {
             const { gl } = this.glContext;
             let textureMesh = this.base;
-            if (action.mute && this.muted) {
-                textureMesh = this.muted;
-            } else if (action.deaf && this.deafened) {
+            if ((action.deaf || action.self_deaf) && this.deafened) {
                 textureMesh = this.deafened;
+            } else if ((action.mute || action.self_mute) && this.muted) {
+                textureMesh = this.muted;
             } else if (action.talking && this.active) {
                 textureMesh = this.active;
             }

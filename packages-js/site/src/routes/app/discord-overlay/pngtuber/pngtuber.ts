@@ -103,12 +103,12 @@ export class Layer {
         const vertexBuffer = glContext.createBuffer();
         vertexBuffer.bind(() => {
             vertexBuffer.setData(new Float32Array([
-                0, 0, 0,
-                0, 1, 0,
-                1, 0, 0,
-                0, 1, 0,
-                1, 1, 0,
-                1, 0, 0,
+                -img.width / 2, -img.height / 2, 0,
+                -img.width / 2, img.height / 2, 0,
+                img.width / 2, -img.height / 2, 0,
+                -img.width / 2, img.height / 2, 0,
+                img.width / 2, img.height / 2, 0,
+                img.width / 2, -img.height / 2, 0,
             ]), 'static');
         });
         const uvBuffer = glContext.createBuffer();
@@ -464,9 +464,7 @@ export class PNGTuber implements Avatar {
                 const matrix = sprite.sprite
                     .globalTransform
                     .getMat4()
-                    .translate(sprite.layer.offset.x, sprite.layer.offset.y, 0)
-                    .translate(-sprite.layer.imageData.width / 2, -sprite.layer.imageData.height / 2, 0)
-                    .scale(sprite.layer.imageData.width, sprite.layer.imageData.height, 1);
+                    .translate(sprite.layer.offset.x, sprite.layer.offset.y, 0);
                 model.set(matrix);
                 const view = this.program.getUniform('u_view').asMat4();
                 view.set(matrices.get());

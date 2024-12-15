@@ -166,15 +166,17 @@
                     matrices.scale(flipDirection.x, flipDirection.y, 1);
                 }
                 const avatarConfig = user.avatar && $config.avatars[user.avatar];
-                if (avatarConfig && avatarConfig.type === 'pngtuber') {
+                if (avatarConfig) {
                     const position = Vec2.fromArray(avatarConfig.offset);
                     matrices.translate(position.x, position.y, 0);
                     matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
-                    if (avatarConfig.flipHorizontal) {
-                        matrices.scale(-1, 1, 1);
-                    }
-                    if (avatarConfig.flipVertical) {
-                        matrices.scale(1, -1, 1);
+                    if (avatarConfig.type === 'pngtuber') {
+                        if (avatarConfig.flipHorizontal) {
+                            matrices.scale(-1, 1, 1);
+                        }
+                        if (avatarConfig.flipVertical) {
+                            matrices.scale(1, -1, 1);
+                        }
                     }
                 }
                 avatar.render(matrices, {
@@ -189,14 +191,14 @@
             const avatarConfig = $config.avatars[$heldAvatar];
             gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, new Vec4(0, 0, 0, 0.8));
             gizmo.rect(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 0.8));
-            const avatar = await getAvatarById(context, $heldAvatar);
+            const { avatar } = await getAvatarById(context, $heldAvatar);
             const avatarContext = heldAvatarContext || avatar.create();
             heldAvatarContext = avatarContext;
             matrices.push();
+            const position = Vec2.fromArray(avatarConfig.offset);
+            matrices.translate(position.x, position.y, 0);
+            matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
             if (avatarConfig.type === 'pngtuber') {
-                const position = Vec2.fromArray(avatarConfig.offset);
-                matrices.translate(position.x, position.y, 0);
-                matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
                 if (avatarConfig.flipHorizontal) {
                     matrices.scale(-1, 1, 1);
                 }
@@ -288,8 +290,8 @@
         );
     }
     
-    const avatarCache = new Map<string, Avatar>();
-    const contextCache = new Map<string, {id: string, avatar: AvatarContext}>();
+    const avatarCache = new Map<string, {key: string, avatar: Avatar}>();
+    const contextCache = new Map<string, {id: string, key: string, avatar: AvatarContext}>();
 
     function getFileType(source: Uint8Array): string {
         const HEADER_MAP: Record<string, string | undefined> = {
@@ -323,10 +325,10 @@
         return img;
     }
 
-    async function getAvatarById(gl: GlContext, avatarId: string): Promise<Avatar> {
+    async function getAvatarById(gl: GlContext, avatarId: string): Promise<{key:string, avatar: Avatar}> {
         const avatarConfig = $config.avatars[avatarId];
         const existing = avatarCache.get(avatarId);
-        if (existing) {
+        if (existing && existing.key === avatarConfig.key) {
             return existing;
         }
         let parsedData: PNGTuberData;
@@ -335,9 +337,9 @@
             try {
                 const buffer = await overlayApp.getSource(avatarConfig.source);
                 parsedData = JSON.parse(new TextDecoder().decode(buffer));
-                const pngtuber = await PNGTuber.load(gl, parsedData);
-                avatarCache.set(avatarId, pngtuber);
-                return pngtuber;
+                const avatar = await PNGTuber.load(gl, parsedData);
+                avatarCache.set(avatarId, {key: avatarConfig.key, avatar});
+                return {key: avatarConfig.key, avatar};
             } catch (e) {
                 console.error(e);
                 throw new Error(`Failed to load avatar: ${e}`);
@@ -370,8 +372,8 @@
                         height: muted.height,
                     },
                 });
-                avatarCache.set(avatarId, avatar);
-                return avatar;
+                avatarCache.set(avatarId, {key: avatarConfig.key, avatar});
+                return {key: avatarConfig.key, avatar};
             } catch (e) {
                 console.error(e);
                 throw new Error(`Failed to load avatar: ${e}`);
@@ -384,12 +386,12 @@
     async function getAvatarByUser(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
         const existing = contextCache.get(user.id);
         const userConfig = getUser(user.id);
-        if (existing && existing.id === userConfig.avatar) {
+        if (existing && existing.id === userConfig.avatar && existing.key === userConfig.avatar) {
             return existing.avatar;
         }
         if (!userConfig.avatar) {
             const avatar = defaultAvatar.create();
-            contextCache.set(user.id, {id: 'default', avatar});
+            contextCache.set(user.id, {id: 'default', key: '', avatar});
             return avatar;
         }
         message = {
@@ -397,10 +399,10 @@
             text: `${user.username}のアバターを読み込み中...`,
         }
         try {
-            const avatar = await getAvatarById(gl, userConfig.avatar);
+            const { key, avatar } = await getAvatarById(gl, userConfig.avatar);
             message = null;
             const context = avatar.create();
-            contextCache.set(user.id, {id: userConfig.avatar, avatar: context});
+            contextCache.set(user.id, {id: userConfig.avatar, key, avatar: context});
             return context;
         } catch (e) {
             message = {
@@ -411,7 +413,7 @@
                 message = null;
             }, 5000);
             const avatar = defaultAvatar.create();
-            contextCache.set(user.id, {id: 'failed', avatar});   
+            contextCache.set(user.id, {id: 'failed', key: '', avatar});
             return avatar;
         }
     }
