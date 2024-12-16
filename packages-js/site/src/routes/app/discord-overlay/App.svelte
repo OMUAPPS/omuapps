@@ -159,13 +159,13 @@
                             {:else}
                                 ユーザーを選択
                             {/if}
-                            接続設定
+                            設定
                         </Tooltip>
                         <i class="ti ti-settings"></i>
                     </button>
                     <button on:click={() => tab = 'visual'}>
                         <Tooltip>
-                            見た目設定
+                            見た目を設定
                         </Tooltip>
                         <i class="ti ti-layout"></i>
                     </button>

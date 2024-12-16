@@ -144,13 +144,25 @@
         </button>
     </div>
     <div class="actions">
-        <FileDrop handle={handleReplace} accept=".save,image/*,.apng,.gif,.webp">
-            <Tooltip>
-                pngもしくはPNGTuber+のアバターが使えます
-            </Tooltip>
-            アバターを変更
-            <i class="ti ti-upload"></i>
-        </FileDrop>
+        <span style="display: flex; gap: 0.5rem;">
+            <FileDrop handle={handleReplace} accept=".save,image/*,.apng,.gif,.webp">
+                <Tooltip>
+                    画像もしくはPNGTuber+のアバターが使えます
+                </Tooltip>
+                アバターを変更
+                <i class="ti ti-upload"></i>
+            </FileDrop>
+            {#if avatar}
+                <button type="button" on:click={()=>{
+                    $config.users[id].avatar = '';
+                }}>
+                    <Tooltip>
+                        アバターを削除
+                    </Tooltip>
+                    <i class="ti ti-trash"></i>
+                </button>
+            {/if}
+        </span>
         {#if avatar}
             <button type="button" on:click={()=>{
                 $heldAvatar = avatar;
@@ -183,6 +195,7 @@
         button {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
             border: none;
             background: var(--color-1);
