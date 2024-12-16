@@ -3,6 +3,7 @@ import { version } from '$lib/version.json';
 import { Identifier, type Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { DEV } from 'esm-env';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 
@@ -228,6 +229,9 @@ export type Config = {
         spacing: number;
         scaling: boolean;
     };
+    reactive: {
+        enabled: boolean;
+    };
 };
 const DEFAULT_CONFIG: Config = {
     version: 4,
@@ -268,6 +272,9 @@ const DEFAULT_CONFIG: Config = {
         },
         spacing: 250,
         scaling: true,
+    },
+    reactive: {
+        enabled: false,
     }
 };
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
@@ -312,11 +319,12 @@ export class DiscordOverlayApp {
                 effects: DEFAULT_CONFIG.effects,
             };
         }
-        if (config.version === 3) {
+        if (config.version === 3 || DEV) {
             config = {
                 ...config,
                 version: 4,
                 align: DEFAULT_CONFIG.align,
+                reactive: DEFAULT_CONFIG.reactive,
             };
         }
         return config;

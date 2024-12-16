@@ -118,6 +118,14 @@
             </small>
         {/if}
     </span>
+</div>
+
+<h2>
+    設定
+    <i class="ti ti-settings"></i>
+</h2>
+
+<div class="config">
     <span>
         <p>
             <i class="ti ti-layout"/>
@@ -147,6 +155,14 @@
             <i class="ti ti-reload"></i>
         </button>
     </span>
+    <span>
+        <p>
+            <i class="ti ti-reload"/>
+            Reactiveアバターを使う
+        </p>
+        <input type="checkbox" bind:checked={$config.reactive.enabled}/>
+    </span>
+    
 </div>
 
 <style lang="scss">
