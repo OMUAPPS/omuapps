@@ -64,7 +64,6 @@
         if (!ctx) return;
 
         const count = Object.keys($entries).length;
-        if (count === 0) return;
         ctx.save();
 
         let tint = 0;
@@ -96,10 +95,6 @@
             timer.reset();
         }
 
-        ctx.translate(width / 2, height / 2);
-        ctx.rotate(deg2rad(45 + 45 / 2));
-        ctx.translate(-width / 2, -height / 2);
-
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
         const scale = 0.75;
@@ -116,6 +111,29 @@
         ctx.beginPath();
         ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
         ctx.fill();
+
+        if (count === 0) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            ctx.beginPath();
+            ctx.arc(width / 2, height / 2, radius, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.save();
+            const scale = Math.min(width, height) / 300;
+            ctx.translate(width / 2, height / 2);
+            ctx.scale(scale, scale);
+            ctx.translate(-width / 2, -height / 2);
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const text = '募集中';
+            ctx.fillStyle = 'black';
+            ctx.fillText(text, width / 2, height / 2);
+            ctx.restore();
+        }
+
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate(deg2rad(45 + 45 / 2));
+        ctx.translate(-width / 2, -height / 2);
 
         // Draw texts
         ctx.font = `bold ${0.04 * radius}px "Noto Sans JP"`;
