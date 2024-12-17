@@ -6,12 +6,11 @@ import { APP as archive } from './archive/app.js';
 import { APP as breaktimer } from './break-timer/app.js';
 import { APP as caption } from './caption/app.js';
 import { APP as chatSubtitle } from './chatsubtitle/app.js';
+import { APP as clock } from './clock/app.js';
 import { APP as discordOverlay } from './discord-overlay/app.js';
 import { APP as emoji } from './emoji/app.js';
 import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
-import { APP as obssync } from './obs-sync/app.js';
-import { APP as playqueue } from './playqueue/app.js';
 import { APP as reaction } from './reaction/app.js';
 import { APP as replay } from './replay/app.js';
 import { APP as roulette } from './roulette/app.js';
@@ -33,13 +32,12 @@ if (DEV) {
         caption,
         emoji,
         lipsynctest,
-        playqueue,
         tester,
         translator,
         chatSubtitle,
-        obssync,
         breaktimer,
         archive,
+        clock,
     )
 }
 
