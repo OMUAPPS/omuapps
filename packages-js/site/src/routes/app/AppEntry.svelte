@@ -160,6 +160,7 @@
         gap: 10px;
         align-items: center;
         font-size: 0.6rem;
+        color: var(--color-text);
     }
 
     .tag-list {

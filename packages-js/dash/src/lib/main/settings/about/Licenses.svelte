@@ -51,12 +51,16 @@
         width: 100%;
     }
 
+    h2 {
+        margin-bottom: 1rem;
+    }
+
     button {
         display: flex;
         flex-direction: column;
         gap: 10px;
         width: 100%;
-        padding: 20px 0;
+        padding: 0.5rem 0;
         text-align: left;
         cursor: pointer;
         background: none;

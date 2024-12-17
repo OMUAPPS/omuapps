@@ -15,16 +15,17 @@
     style:color={role.color}
     style:background={role.color && applyOpacity(role.color, 0.1)}
 >
-    {#if role.iconUrl}
-        <img src={role.iconUrl} alt="role icon" />
-    {:else}
-        {#if role.isOwner}
-            <i class="ti ti-crown"></i>
-        {:else if role.isModerator}
-            <i class="ti ti-shield"></i>
+    <span class="icon">
+        {#if role.iconUrl}
+            <img src={role.iconUrl} alt="role" />
+        {:else}
+            {#if role.isOwner}
+                <i class="ti ti-crown-filled"></i>
+            {:else if role.isModerator}
+                <i class="ti ti-shield-filled"></i>
+            {/if}
         {/if}
-        {role.name}
-    {/if}
+    </span>
     <Tooltip>
         <FlexColWrapper>
             <FlexRowWrapper gap alignItems="center">
@@ -49,36 +50,40 @@
     </Tooltip>
 </div>
 
-<style>
+<style lang="scss">
     div {
         display: flex;
         flex-direction: row;
         gap: 2px;
-        align-items: center;
+        align-items: baseline;
         width: fit-content;
         height: calc(1.4rem);
-        padding: 4px 8px;
         margin-right: 5px;
         font-size: 0.8rem;
         font-weight: bold;
         line-height: 1rem;
         color: var(--color-1);
         white-space: nowrap;
-
-        &.icon {
-            padding: 0;
-        }
-
-        &:not(.icon) {
-            background: var(--color-1);
-            color: var(--color-bg-2);
-        }
     }
 
-    img {
-        height: 100%;
-        vertical-align: middle;
-        object-fit: contain;
+    .icon {
+        width: 1.4rem;
+        height: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-1);
+
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 100%;
+        }
+
+        > i {
+            font-size: 0.8rem;
+        }
     }
 
     .preview {
@@ -95,6 +100,6 @@
         padding: 2px;
         font-size: 0.6rem;
         font-weight: normal;
-        color: var(--color-2);
+        color: var(--color-bg-1);
     }
 </style>

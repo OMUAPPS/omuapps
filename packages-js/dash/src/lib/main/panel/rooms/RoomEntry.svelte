@@ -79,8 +79,11 @@
         {/if}
         <div class="buttons">
             <small class="online-state" class:connected={entry.connected}>
+                <Tooltip>
+                    {entry.connected ? $t('status.connected') : $t('status.disconnected')}
+                </Tooltip>
                 <i class={`ti ti-bolt${entry.connected ? '-filled' : ''}`}></i>
-                {entry.connected ? $t('status.connected') : $t('status.disconnected')}
+                {entry.connected ? $t('status.connected') : ''}
             </small>
             {#if entry.metadata}
                 <button on:click={copyViewers}>
