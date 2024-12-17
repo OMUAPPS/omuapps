@@ -125,7 +125,7 @@
             ctx.font = 'bold 24px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const text = '募集中';
+            const text = $state.type === 'recruiting' ? '募集中' : '';
             ctx.fillStyle = 'black';
             ctx.fillText(text, width / 2, height / 2);
             ctx.restore();
