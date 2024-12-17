@@ -27,10 +27,19 @@ class Network:
         self._event = NetworkEvents()
         self._sessions: dict[Identifier, Session] = {}
         self._app = web.Application()
+        self._runner: web.AppRunner | None = None
         self.add_websocket_route("/ws")
         self.register_packet(PACKET_TYPES.CONNECT, PACKET_TYPES.READY)
         self.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
         self.event.connected += self._packet_dispatcher.process_connection
+        server.event.stop += self._handle_stop
+
+    async def _handle_stop(self) -> None:
+        if self._runner is None:
+            raise ValueError("Server not started")
+        await self._app.shutdown()
+        await self._app.cleanup()
+        await self._runner.cleanup()
 
     async def _handle_ready(self, session: Session, packet: None) -> None:
         await session.process_ready_tasks()
@@ -157,8 +166,11 @@ class Network:
             raise OSError(msg)
 
     async def start(self) -> None:
+        if self._runner is not None:
+            raise ValueError("Server already started")
         self.ensure_port_availability()
         runner = web.AppRunner(self._app)
+        self._runner = runner
         await runner.setup()
         site = web.TCPSite(
             runner,
