@@ -40,7 +40,7 @@
         });
         chat.authors.add(author);
         const room = new Room({
-            id: TEST_PROVIDER.id.join(`${Date.now()}`),
+            id: TEST_PROVIDER.id.join('test-room'),
             connected: false,
             createdAt: new Date(),
             providerId: TEST_PROVIDER.id,
