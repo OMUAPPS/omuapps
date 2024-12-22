@@ -136,26 +136,29 @@ export class Network {
                 throw error;
             }
         }
-        this.setStatus(NetworkStatus.CONNECTING);
-        const token = await this.tokenProvider.get(this.address, this.client.app);
-        this.send({
-            type: PACKET_TYPES.CONNECT,
-            data: new ConnectPacket({
-                app: this.client.app,
-                protocol: {version: VERSION},
-                token,
-            }),
-        });
-        const listenPromise = this.listen();
-        await this.event.status.emit(NetworkStatus.CONNECTED);
-        await this.event.connected.emit();
-        await this.dispatchTasks();
-        this.send({
-            type: PACKET_TYPES.READY,
-            data: null,
-        });
-        await listenPromise;
-
+        try {
+            this.setStatus(NetworkStatus.CONNECTING);
+            const token = await this.tokenProvider.get(this.address, this.client.app);
+            this.send({
+                type: PACKET_TYPES.CONNECT,
+                data: new ConnectPacket({
+                    app: this.client.app,
+                    protocol: {version: VERSION},
+                    token,
+                }),
+            });
+            const listenPromise = this.listen();
+            await this.event.status.emit(NetworkStatus.CONNECTED);
+            await this.event.connected.emit();
+            await this.dispatchTasks();
+            this.send({
+                type: PACKET_TYPES.READY,
+                data: null,
+            });
+            await listenPromise;
+        } finally {
+            this.disconnect();
+        }
         if (recconect) {
             await this.tryReconnect();
         }

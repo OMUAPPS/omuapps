@@ -64,10 +64,13 @@ export class WebsocketConnection implements Connection {
         if (!this.connected || !this.socket) {
             return null;
         }
-        while (this.packetQueue.length === 0) {
+        while (this.packetQueue.length === 0 && this.connected) {
             await new Promise<void>((resolve) => {
                 this.receiveWaiter = (): void => resolve();
             });
+        }
+        if (!this.connected) {
+            return null;
         }
         const packet = serializer.deserialize(this.packetQueue.shift()!);
         this.receiveWaiter = null;
@@ -86,6 +89,10 @@ export class WebsocketConnection implements Connection {
         if (this.socket) {
             this.socket.close();
             this.socket = null;
+        }
+        if (this.receiveWaiter) {
+            this.receiveWaiter();
+            this.receiveWaiter = null;
         }
     }
 
