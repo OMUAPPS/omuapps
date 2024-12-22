@@ -60,7 +60,7 @@ class ServerRegistry:
                 if listener == session:
                     continue
                 if listener.closed:
-                    raise Exception(f"Session {listener.app=} closed")
+                    continue
                 send = listener.send(
                     REGISTRY_UPDATE_PACKET,
                     RegistryPacket(id=self.id, value=self.value),
