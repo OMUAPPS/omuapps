@@ -160,14 +160,14 @@ def run_plugin_isolated(
     token: str,
     pid: int,
 ) -> None:
-    def _wait_for_parent():
+    def _watch_parent_process():
         while True:
             if not psutil.pid_exists(pid):
                 logger.info(f"Parent process {pid} is dead, stopping plugin")
                 exit(0)
             time.sleep(1)
 
-    threading.Thread(target=_wait_for_parent, daemon=True).start()
+    threading.Thread(target=_watch_parent_process, daemon=True).start()
 
     try:
         if plugin.get_client is None:
