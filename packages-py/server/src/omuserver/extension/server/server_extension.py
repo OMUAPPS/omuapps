@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from asyncio import Future
 from collections import defaultdict
 from collections.abc import Callable
@@ -125,16 +126,19 @@ class ServerExtension:
         return True
 
     async def shutdown(self, restart: bool = False) -> None:
-        if restart:
-            for session in self._server.network._sessions.values():
-                if session.closed:
-                    continue
-                await session.disconnect(
-                    DisconnectType.SERVER_RESTART, "Server is restarting"
-                )
-            await self._server.restart()
-        else:
-            await self._server.stop()
+        try:
+            if restart:
+                for session in [*self._server.network._sessions.values()]:
+                    if session.closed:
+                        continue
+                    await session.disconnect(
+                        DisconnectType.SERVER_RESTART, "Server is restarting"
+                    )
+                await self._server.restart()
+            else:
+                await self._server.stop()
+        finally:
+            os._exit(0)
 
     async def on_start(self) -> None:
         await self.sessions.clear()

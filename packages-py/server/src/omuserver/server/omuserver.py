@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import subprocess
 import sys
 
 import aiohttp
@@ -24,7 +25,7 @@ from omuserver.extension.registry import RegistryExtension
 from omuserver.extension.server import ServerExtension
 from omuserver.extension.signal import SignalExtension
 from omuserver.extension.table import TableExtension
-from omuserver.helper import get_launch_command, safe_path_join
+from omuserver.helper import safe_path_join
 from omuserver.network import Network
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
 from omuserver.security.security import PermissionManager
@@ -179,11 +180,13 @@ class OmuServer(Server):
         logger.info("Stopping server")
         self._running = False
         await self._event.stop()
-        os._exit(0)
 
     async def restart(self) -> None:
         await self.stop()
-        os.execv(sys.executable, get_launch_command()["args"])
+        child = subprocess.Popen(
+            args=[sys.executable, "-m", "omuserver", *sys.argv[1:]],
+            cwd=os.getcwd(),
+        )
 
     @property
     def config(self) -> Config:
