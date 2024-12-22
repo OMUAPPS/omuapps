@@ -15,7 +15,6 @@
     import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
     import { ReactiveAPI } from '../pngtuber/reactive.js';
-    import robo from '../robo.json';
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
     import { dragUser, heldAvatar } from '../states.js';
 
@@ -26,7 +25,6 @@
     export let view: Mat4 = Mat4.IDENTITY;
     const { voiceState, speakingState, config } = overlayApp;
 
-    let defaultAvatar: PNGTuber;
     let gridProgram: GlProgram;
     let shadowEffect: Effect;
     let backlightEffect: Effect;
@@ -41,7 +39,6 @@
     }
 
     async function init(context: GlContext) {
-        defaultAvatar = await PNGTuber.load(context, robo);
         const vertexShader = context.createShader({source: GRID_VERTEX_SHADER, type: 'vertex'});
         const fragmentShader = context.createShader({source: GRID_FRAGMENT_SHADER, type: 'fragment'});
         gridProgram = context.createProgram([vertexShader, fragmentShader]);
@@ -315,20 +312,20 @@
         return 'image/png';
     }
 
-    async function createSourceElement(source: Uint8Array): Promise<{width: number, height: number, source: HTMLImageElement}> {
+    async function createSourceElement(source: Uint8Array): Promise<{width: number, height: number, image: HTMLImageElement}> {
         const type = getFileType(source);
         const blob = new Blob([source], {type});
         const url = URL.createObjectURL(blob);
-        const img = document.createElement('img');
-        img.src = url;
+        const image = document.createElement('img');
+        image.src = url;
         await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
+            image.onload = resolve;
+            image.onerror = reject;
         });
         return {
-            width: img.width,
-            height: img.height,
-            source: img,
+            width: image.width,
+            height: image.height,
+            image,
         };
     }
 
@@ -393,6 +390,32 @@
         if (!modelData.inactive) {
             return null;
         }
+        $config.avatars[userId] = {
+            type: 'png',
+            key: '',
+            offset: [0, 0],
+            scale: 1,
+            base: {
+                type: 'url',
+                url: overlayApp.omu.assets.proxy(modelData.inactive),
+            },
+            active: modelData.speaking ? {
+                type: 'url',
+                url: overlayApp.omu.assets.proxy(modelData.speaking),
+            } : undefined,
+            deafened: modelData.deafened ? {
+                type: 'url',
+                url: overlayApp.omu.assets.proxy(modelData.deafened),
+            } : undefined,
+            muted: modelData.muted ? {
+                type: 'url',
+                url: overlayApp.omu.assets.proxy(modelData.muted),
+            } : undefined,
+        }
+        $config.users[userId] = {
+            ...$config.users[userId],
+            avatar: userId,
+        }
         const base = await createSourceElement(await proxy(modelData.inactive).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
         const active = await createSourceElement(await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
         const deafened = await createSourceElement(await proxy(modelData.deafened).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
@@ -452,9 +475,7 @@
             setTimeout(() => {
                 message = null;
             }, 5000);
-            const avatar = defaultAvatar.create();
-            contextCache.set(user.id, {id: 'default', key: '', avatar});
-            return avatar;
+            throw e;
         }
     }
 

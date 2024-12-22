@@ -5,7 +5,7 @@ import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avata
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
 
 type TextureSource = {
-    source: TexImageSource;
+    image: TexImageSource;
     width: number;
     height: number;
 }
@@ -14,17 +14,28 @@ type TextureMesh = {
     vertices: GlBuffer;
     texCoords: GlBuffer;
     texture: GlTexture;
+    source: TextureSource;
 }
 
 export class PNGAvatar implements Avatar {
+    public base: TextureMesh;
+    public active?: TextureMesh;
+    public deafened?: TextureMesh;
+    public muted?: TextureMesh;
+    
     constructor(
         private readonly glContext: GlContext,
         public program: GlProgram,
-        public base: TextureMesh,
-        public active?: TextureMesh,
-        public deafened?: TextureMesh,
-        public muted?: TextureMesh,
-    ) {}
+        public baseTexture: TextureSource,
+        public activeTexture?: TextureSource | undefined,
+        public deafenedTexture?: TextureSource | undefined,
+        public mutedTexture?: TextureSource | undefined,
+    ) {
+        this.base = PNGAvatar.createTextureMesh(glContext, baseTexture);
+        this.active = activeTexture ? PNGAvatar.createTextureMesh(glContext, activeTexture) : this.base;
+        this.deafened = deafenedTexture ? PNGAvatar.createTextureMesh(glContext, deafenedTexture) : this.base;
+        this.muted = mutedTexture ? PNGAvatar.createTextureMesh(glContext, mutedTexture) : this.base;
+    }
     
     public static async load(context: GlContext, options: {
         base: TextureSource;
@@ -32,20 +43,16 @@ export class PNGAvatar implements Avatar {
         deafened?: TextureSource;
         muted?: TextureSource;
     }): Promise<PNGAvatar> {
-        const baseTexture = PNGAvatar.createTextureMesh(context, options.base);
-        const activeTexture = options.active ? PNGAvatar.createTextureMesh(context, options.active) : baseTexture;
-        const deafenedTexture = options.deafened ? PNGAvatar.createTextureMesh(context, options.deafened) : baseTexture;
-        const mutedTexture = options.muted ? PNGAvatar.createTextureMesh(context, options.muted) : baseTexture;
         const vertexShader = context.createShader({type: 'vertex', source: VERTEX_SHADER});
         const fragmentShader = context.createShader({type: 'fragment', source: FRAGMENT_SHADER});
         const program = context.createProgram([vertexShader, fragmentShader]);
         return new PNGAvatar(
             context,
             program,
-            baseTexture,
-            activeTexture,
-            deafenedTexture,
-            mutedTexture,
+            options.base,
+            options.active,
+            options.deafened,
+            options.muted,
         );
     }
 
@@ -58,7 +65,7 @@ export class PNGAvatar implements Avatar {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-            texture.setImage(source.source, {
+            texture.setImage(source.image, {
                 format: 'rgba',
                 width: source.width,
                 height: source.height,
@@ -86,7 +93,18 @@ export class PNGAvatar implements Avatar {
                 0, 0,
             ]), 'static');
         });
-        return {vertices, texCoords, texture};
+        return {vertices, texCoords, texture, source};
+    }
+
+    private updateTextureMesh(mesh: TextureMesh) {
+        mesh.texture.use(() => {
+            const { source } = mesh
+            mesh.texture.setImage(source.image, {
+                format: 'rgba',
+                width: source.width,
+                height: source.height,
+            });
+        });
     }
     
     public create(): AvatarContext {
@@ -100,6 +118,7 @@ export class PNGAvatar implements Avatar {
             } else if (action.talking && this.active) {
                 textureMesh = this.active;
             }
+            this.updateTextureMesh(textureMesh);
             this.program.use(() => {
                 const textureUniform = this.program.getUniform('u_texture').asSampler2D();
                 textureUniform.set(textureMesh.texture);
