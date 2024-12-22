@@ -135,12 +135,6 @@ class RegistryExtension:
         if registry.id.is_namepath_equal(session.app.id, path_length=1):
             return
         require_permissions = get_scopes(registry.permissions)
-        # if not any(
-        #     self._server.permissions.has_permission(session, permission)
-        #     for permission in filter(None, require_permissions)
-        # ):
-        #     msg = f"App {session.app.id=} not allowed to access {registry.id=}"
-        #     raise PermissionDenied(msg)
         if not session.permission_handle.has_any(filter(None, require_permissions)):
             msg = f"App {session.app.id=} not allowed to access {registry.id=}"
             raise PermissionDenied(msg)
