@@ -1,3 +1,5 @@
+import asyncio
+
 from loguru import logger
 from marshmallowqa import MarshmallowSession, MessageDetail, retrieve_cookies
 from marshmallowqa.errors import MarshmallowLoginError
@@ -68,8 +70,8 @@ async def refresh_sessions():
                 image=user.image,
                 premium=user.premium,
             )
-        except MarshmallowLoginError as e:
-            logger.opt(exception=e).error(f"User {browser} could not be logged in")
+        except MarshmallowLoginError:
+            logger.warning(f"User {browser} could not be logged in")
 
 
 @omu.endpoints.bind(endpoint_type=SET_LIKED_ENDPOINT_TYPE)
@@ -140,4 +142,4 @@ async def set_reply(set_reply: SetReply) -> Message:
 
 @omu.on_ready
 async def on_ready():
-    await refresh_sessions()
+    asyncio.create_task(refresh_sessions())
