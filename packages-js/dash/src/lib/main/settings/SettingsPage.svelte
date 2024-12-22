@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { LOCALES } from '$lib/i18n/i18n.js';
     import { screenContext } from '$lib/screen/screen.js';
@@ -75,6 +76,11 @@
                 <h3>
                     {$t('settings.setting.debug')}
                 </h3>
+                <span class="setting">
+                    <button on:click={() => {
+                        omu.server.shutdown(true);
+                    }}>{$t('settings.setting.serverRestart')}</button>
+                </span>
                 <span class="setting">
                     {#if logPromise}
                         {#await logPromise}
