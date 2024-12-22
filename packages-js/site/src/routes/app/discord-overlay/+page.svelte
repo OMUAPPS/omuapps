@@ -39,4 +39,3 @@
         <App {omu} {obs} {overlayApp} />
     {/await}
 </AppPage>
-
