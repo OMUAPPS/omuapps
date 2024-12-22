@@ -1,5 +1,6 @@
 <script lang="ts">
     import AppInfo from '$lib/common/AppInfo.svelte';
+    import { t } from '$lib/i18n/i18n-context.js';
     import type { PermissionRequestPacket } from '@omujs/omu/extension/dashboard/packets.js';
     import type { PermissionLevel } from '@omujs/omu/extension/permission/permission.js';
     import { Tooltip } from '@omujs/ui';
@@ -45,9 +46,24 @@
     </span>
     <div class="permissions">
         <ul>
-            {#each permissions as entry}
-                <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
-            {/each}
+            {#if permissions.some(({permission}) => permission.metadata.level === 'high')}
+                <li><span class="level">{$t('permission_level.high')}<small>{$t('permission_level.high_hint')}</small></span></li>
+                {#each permissions.filter(({permission}) => permission.metadata.level === 'high') as entry}
+                    <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
+                {/each}
+            {/if}
+            {#if permissions.some(({permission}) => permission.metadata.level === 'medium')}
+                <li><span class="level">{$t('permission_level.medium')}<small>{$t('permission_level.medium_hint')}</small></span></li>
+                {#each permissions.filter(({permission}) => permission.metadata.level === 'medium') as entry}
+                    <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
+                {/each}
+            {/if}
+            {#if permissions.some(({permission}) => permission.metadata.level === 'low')}
+                <li><span class="level">{$t('permission_level.low')}<small>{$t('permission_level.low_hint')}</small></span></li>
+                {#each permissions.filter(({permission}) => permission.metadata.level === 'low') as entry}
+                    <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
+                {/each}
+            {/if}
         </ul>
     </div>
     <div class="actions">
@@ -58,7 +74,7 @@
         <button on:click={accept} class="accept" disabled={!permissions.every((entry) => entry.accepted)}>
             {#if !permissions.every((entry) => entry.accepted)}
                 <Tooltip>
-                    すべての権限を許可してください
+                    確認が必要な権限があります
                 </Tooltip>
             {/if}
             許可
@@ -71,12 +87,12 @@
     .app-info {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         justify-content: start;
         width: 100%;
         padding: 2rem 3rem;
         padding-bottom: 0rem;
-        font-size: 14px;
+        font-size: 0.8rem;
         font-weight: 600;
         color: var(--color-1);
         border-bottom: 1px solid var(--color-outline);
@@ -87,6 +103,22 @@
             margin-top: 0.25rem;
             margin-bottom: 1rem;
             color: var(--color-1);
+        }
+    }
+
+    .level {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--color-1);
+        text-align: left;
+
+        > small {
+            font-size: 0.6rem;
+            color: var(--color-text);
         }
     }
 

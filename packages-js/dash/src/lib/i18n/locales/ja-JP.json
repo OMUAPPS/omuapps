@@ -33,12 +33,15 @@
         "no_description": "説明がありません"
     },
     "permission_level": {
-        "low": "低",
+        "low": "影響レベル: 低",
         "low_icon": "ti ti-eye",
-        "medium": "中",
+        "low_hint": "この権限がPCに影響を与える可能性は低いです。",
+        "medium": "影響レベル: 中",
         "medium_icon": "ti ti-exclamation-mark",
-        "high": "高",
-        "high_icon": "ti ti-alert-triangle"
+        "medium_hint": "この権限はプライバシーに影響を与える可能性があります。",
+        "high": "影響レベル: 高",
+        "high_icon": "ti ti-alert-triangle",
+        "high_hint": "この権限は信用できるアプリにのみ許可することをお勧めします。"
     },
     "date": {
         "just_now": "今",
@@ -219,7 +222,8 @@
             "logFileGenerateError": "ログファイルの生成に失敗しました: {error}",
             "logFileGenerated": "ログファイルを生成しました: {path}",
             "cleanEnvironment": "動作環境を再構築",
-            "cleaningEnvironment": "環境を削除して再起動中..."
+            "cleaningEnvironment": "環境を削除して再起動中...",
+            "serverRestart": "サーバーを再起動"
         },
         "about": {
             "version": "バージョン",
