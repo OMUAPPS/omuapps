@@ -19,6 +19,11 @@ from .discordrpc.payloads import (
     VoiceChannelSelect,
     VoiceStateItem,
 )
+from .permissions import (
+    DISCORDRPC_CHANNELS_READ_PERMISSION_TYPE,
+    DISCORDRPC_VC_READ_PERMISSION_TYPE,
+    DISCORDRPC_VC_SET_PERMISSION_TYPE,
+)
 from .types import (
     GET_CHANNELS_ENDPOINT_TYPE,
     GET_CLIENTS_ENDPOINT_TYPE,
@@ -37,6 +42,11 @@ from .types import (
 )
 
 omu = Omu(PLUGIN_APP)
+omu.permissions.register(
+    DISCORDRPC_VC_READ_PERMISSION_TYPE,
+    DISCORDRPC_VC_SET_PERMISSION_TYPE,
+    DISCORDRPC_CHANNELS_READ_PERMISSION_TYPE,
+)
 voice_state_registry = omu.registries.get(VOICE_STATE_REGISTRY_TYPE)
 speaking_state_registry = omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE)
 session_registry = omu.registries.get(SESSION_REGISTRY_TYPE)

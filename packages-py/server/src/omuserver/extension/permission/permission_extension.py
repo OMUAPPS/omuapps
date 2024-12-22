@@ -50,7 +50,7 @@ class PermissionExtension:
                     f"is not a subpart of app identifier {session.app.id}"
                 )
                 raise ValueError(msg)
-        self.server.permission_manager.register(*permissions)
+        self.server.permission_manager.register(*permissions, overwrite=True)
 
     async def handle_require(self, session: Session, permission_ids: list[Identifier]):
         if session.ready:
