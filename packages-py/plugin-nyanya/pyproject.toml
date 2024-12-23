@@ -1,11 +1,11 @@
 [project]
 name = "omuplugin_nyanya"
-version = "0.7.14"
+version = "0.7.15"
 description = "にゃにゃにゃ？？"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu_chat>=0.7.14"]
+dependencies = ["loguru>=0.7.2", "omu_chat>=0.7.15"]
 readme = "README.md"
 requires-python = ">= 3.12"
 

@@ -17,7 +17,6 @@
     # via omuplugin-emoji
     # via omuplugin-nyanya
     # via omuplugin-obs
-    # via omuplugin-onecomme
     # via omuplugin-translator
 -e file:packages-py/chat-provider
     # via omu-chat-twitcasting
@@ -35,7 +34,6 @@
 -e file:packages-py/plugin-marshmallow
 -e file:packages-py/plugin-nyanya
 -e file:packages-py/plugin-obs
--e file:packages-py/plugin-onecomme
 -e file:packages-py/plugin-translator
 -e file:packages-py/server
 aiohappyeyeballs==2.4.0
@@ -106,7 +104,6 @@ loguru==0.7.2
     # via omuplugin-marshmallow
     # via omuplugin-nyanya
     # via omuplugin-obs
-    # via omuplugin-onecomme
     # via omuplugin-translator
     # via omuserver
 lxml==5.3.0
@@ -129,7 +126,6 @@ pluggy==1.5.0
     # via pytest
 psutil==6.0.0
     # via omuplugin-obs
-    # via omuplugin-onecomme
     # via omuserver
 pycparser==2.22 ; implementation_name != 'cpython'
     # via cffi
