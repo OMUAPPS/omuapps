@@ -1,6 +1,4 @@
 <script lang="ts" generics="T">
-    import { batchCall } from './utils/batch.js';
-
     import { client } from './stores.js';
 
     import VirtualList from './VirtualList.svelte';
@@ -118,7 +116,7 @@
         }, 200);
     }
 
-    const unlisten = batchCall(
+    const unlisten = [
         $client.onReady(() => {
             entries.clear();
             fetch();
@@ -129,9 +127,11 @@
         table.event.remove.listen(onRemove),
         table.event.update.listen(onUpdate),
         table.event.add.listen(onAdd),
-    );
+    ];
 
-    onDestroy(unlisten);
+    onDestroy(() => {
+        unlisten.forEach((unlisten) => unlisten());
+    });
     onMount(() => {
         viewport.addEventListener('scroll', handleScroll);
         return () => viewport.removeEventListener('scroll', handleScroll);
