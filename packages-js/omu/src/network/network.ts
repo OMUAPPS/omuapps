@@ -135,7 +135,15 @@ export class Network {
 
         while (true) {
             try {
-                await this.connection.connect();
+                try {
+                    await this.connection.connect();
+                } catch (error) {
+                    if (!recconect) {
+                        throw error;
+                    }
+                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                    continue;
+                }
                 await this.setStatus({type: 'connecting'});
                 const token = await this.tokenProvider.get(this.address, this.client.app);
                 this.send({
