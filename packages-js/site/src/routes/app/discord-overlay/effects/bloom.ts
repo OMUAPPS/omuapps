@@ -1,6 +1,6 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Vec2 } from '$lib/math/vec2.js';
-import type { AvatarState, Effect } from '$lib/pngtuber/pngtuber.js';
+import type { AvatarAction, Effect } from '../pngtuber/avatar.js';
 
 const BLOOM_VERTEX_SHADER = `#version 300 es
 
@@ -109,7 +109,7 @@ export async function createBloomEffect(context: GlContext): Promise<Effect> {
     const WEIGHTS_SIZE = 32;
     const WEIGHTS = calculateGaussianWeights(WEIGHTS_SIZE);
 
-    function render(state: AvatarState, texture: GlTexture, dest: GlFramebuffer) {
+    function render(action: AvatarAction, texture: GlTexture, dest: GlFramebuffer) {
         verticalPassTexture.use(() => {
             verticalPassTexture.ensureSize(texture.width, texture.height);
         });

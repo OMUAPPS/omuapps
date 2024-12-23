@@ -1,7 +1,7 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { BetterMath } from '$lib/math.js';
 import { Vec2 } from '$lib/math/vec2.js';
-import type { AvatarState, Effect } from '$lib/pngtuber/pngtuber.js';
+import type { AvatarAction, Effect } from '../pngtuber/avatar.js';
 
 const BACKLIGHT_VERTEX_SHADER = `#version 300 es
 
@@ -112,7 +112,7 @@ export async function createBackLightEffect(context: GlContext): Promise<Effect>
     const STEP = 3.0;
     const ROTAION = BetterMath.toRadians(65);
 
-    function render(state: AvatarState, texture: GlTexture, dest: GlFramebuffer) {
+    function render(action: AvatarAction, texture: GlTexture, dest: GlFramebuffer) {
         verticalPassTexture.use(() => {
             verticalPassTexture.ensureSize(texture.width, texture.height);
         });

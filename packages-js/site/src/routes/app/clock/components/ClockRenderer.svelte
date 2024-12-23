@@ -82,12 +82,6 @@
 </svelte:element>
 
 <style lang="scss">
-    :global(body) {
-        // --color-1: #444;
-        // --color-bg-1: #fafafa;
-        // --color-text: #888;
-    }
-
     .container {
         display: flex;
         flex-direction: column;
