@@ -25,17 +25,24 @@ type PacketHandler<T> = {
     event: EventEmitter<[T]>;
 };
 
-export enum NetworkStatus {
-    DISCONNECTED = 'disconnected',
-    CONNECTING = 'connecting',
-    CONNECTED = 'connected',
-    READY = 'ready',
-    ERROR = 'error',
-    CLOSED = 'closed',
-}
+// export enum NetworkStatus {
+//     DISCONNECTED = 'disconnected',
+//     CONNECTING = 'connecting',
+//     CONNECTED = 'connected',
+//     READY = 'ready',
+//     ERROR = 'error',
+//     CLOSED = 'closed',
+// }
+type StatusType<T> = {
+    type: T,
+};
+export type NetworkStatus = StatusType<'disconnected'> | StatusType<'connecting'> | StatusType<'connected'> | StatusType<'ready'> | {
+    type: 'error',
+    error: OmuError,
+} | StatusType<'closed'>;
 
 export class Network {
-    public status: NetworkStatus = NetworkStatus.DISCONNECTED;
+    public status: NetworkStatus = {type: 'disconnected'};
     public readonly event = {
         connected: new EventEmitter<[]>(),
         disconnected: new EventEmitter<[DisconnectPacket | null]>(),
@@ -68,7 +75,6 @@ export class Network {
                 ||reason.type === DisconnectType.SERVER_RESTART) {
                 return;
             }
-            this.setStatus(NetworkStatus.ERROR);
             const ERROR_MAP: Record<DisconnectType, typeof OmuError | undefined> = {
                 [DisconnectType.ANOTHER_CONNECTION]: AnotherConnection,
                 [DisconnectType.PERMISSION_DENIED]: PermissionDenied,
@@ -84,21 +90,21 @@ export class Network {
             };
             const error = ERROR_MAP[reason.type];
             if (error) {
-                throw new error(reason.message);
+                const omuError = new error(reason.message);
+                await this.setStatus({type: 'error', error: omuError});
             }
         });
         this.addPacketHandler(PACKET_TYPES.READY, () => {
-            if (this.status === NetworkStatus.READY) {
+            if (this.status.type === 'ready') {
                 throw new Error('Received READY packet when already ready');
             }
-            this.setStatus(NetworkStatus.READY);
-            this.event.status.emit(NetworkStatus.READY);
+            this.setStatus({type: 'ready'});
             this.client.event.ready.emit();
         });
     }
 
     public setConnection(connection: Connection): void {
-        if (this.status !== NetworkStatus.DISCONNECTED) {
+        if (this.status.type !== 'disconnected') {
             throw new Error('Cannot change connection while connected');
         }
         this.connection = connection;
@@ -123,61 +129,54 @@ export class Network {
     }
 
     public async connect(recconect = true): Promise<void> {
-        if (this.status !== NetworkStatus.DISCONNECTED) {
-            throw new Error(`Cannot connect while ${this.status}`);
+        if (!this.isState('disconnected')) {
+            throw new Error(`Cannot connect while ${this.status.type}`);
         }
 
-        try {
-            await this.connection.connect();
-        } catch (error) {
-            if (recconect) {
-                await this.tryReconnect();
-            } else {
-                throw error;
+        while (true) {
+            try {
+                await this.connection.connect();
+                await this.setStatus({type: 'connecting'});
+                const token = await this.tokenProvider.get(this.address, this.client.app);
+                this.send({
+                    type: PACKET_TYPES.CONNECT,
+                    data: new ConnectPacket({
+                        app: this.client.app,
+                        protocol: {version: VERSION},
+                        token,
+                    }),
+                });
+                const listenPromise = this.listen();
+                await this.setStatus({type: 'connected'});
+                await this.event.connected.emit();
+                await this.dispatchTasks();
+                this.send({
+                    type: PACKET_TYPES.READY,
+                    data: null,
+                });
+                await listenPromise;
+                if (this.status.type === 'error') {
+                    throw this.status.error;
+                }
+            } finally {
+                this.disconnect();
             }
-        }
-        try {
-            this.setStatus(NetworkStatus.CONNECTING);
-            const token = await this.tokenProvider.get(this.address, this.client.app);
-            this.send({
-                type: PACKET_TYPES.CONNECT,
-                data: new ConnectPacket({
-                    app: this.client.app,
-                    protocol: {version: VERSION},
-                    token,
-                }),
-            });
-            const listenPromise = this.listen();
-            await this.event.status.emit(NetworkStatus.CONNECTED);
-            await this.event.connected.emit();
-            await this.dispatchTasks();
-            this.send({
-                type: PACKET_TYPES.READY,
-                data: null,
-            });
-            await listenPromise;
-        } finally {
-            this.disconnect();
-        }
-        if (recconect) {
-            await this.tryReconnect();
+            if (!recconect) {
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
     }
 
-    private async tryReconnect(): Promise<void> {
-        if (this.status === NetworkStatus.CLOSED) {
-            return;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        await this.connect();
+    private isState(state: NetworkStatus['type']): boolean {
+        return this.status.type === state;
     }
 
     public disconnect(): void {
-        if (this.status === NetworkStatus.CLOSED) {
+        if (this.status.type === 'disconnected') {
             return;
         }
-        this.setStatus(NetworkStatus.DISCONNECTED);
-        this.event.status.emit(NetworkStatus.DISCONNECTED);
+        this.setStatus({type: 'disconnected'});
         this.connection.close();
         this.event.disconnected.emit(null);
     }
@@ -225,11 +224,11 @@ export class Network {
         }
     }
 
-    private setStatus(status: NetworkStatus): void {
+    private async setStatus(status: NetworkStatus): Promise<void> {
         if (this.status === status) {
             throw new Error(`Cannot set status to ${status} when already ${status}`);
         }
         this.status = status;
-        this.event.status.emit(status);
+        await this.event.status.emit(status);
     }
 }

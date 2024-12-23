@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
     
-    import { NetworkStatus } from '@omujs/omu/network/network.js';
+    import type { NetworkStatus } from '@omujs/omu/network/network.js';
     import { omu } from '../client.js';
 
     let status: NetworkStatus = omu.network.status;
@@ -12,29 +12,39 @@
     onDestroy(unlisten);
 </script>
 
-<p class={status}>
-    {#if status === NetworkStatus.CONNECTED}
+<p class={status.type}>
+    {#if status.type === 'connected'}
         <i class="ti ti-bolt"></i>
         接続済み
         <span>
             {omu.network.address.host}:{omu.network.address.port}
             <small> に接続済み </small>
         </span>
-    {:else if status === NetworkStatus.READY}
+    {:else if status.type === 'ready'}
         <i class="ti ti-check"></i>
-    {:else if status === NetworkStatus.CONNECTING}
+    {:else if status.type === 'connecting'}
         <i class="ti ti-reload"></i>
         接続中
         <span>
             {omu.network.address.host}:{omu.network.address.port}
             <small> に接続中… </small>
         </span>
-    {:else if status === NetworkStatus.DISCONNECTED}
+    {:else if status.type === 'disconnected'}
         <i class="ti ti-x"></i>
         接続されていません
         <span>
             {omu.network.address.host}:{omu.network.address.port}
             <small> に接続できませんでした </small>
+        </span>
+    {:else if status.type === 'error'}
+        <i class="ti ti-x"></i>
+        接続されていません
+        <span>
+            {omu.network.address.host}:{omu.network.address.port}
+            <small> に接続できませんでした </small>
+        </span>
+        <span>
+            {status.error.message}
         </span>
     {/if}
 </p>
