@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
 
-    import { ClipboardHelper } from '$lib/utils/clipboard-helper.js';
     import MessageRenderer from './MessageRenderer.svelte';
     import { chat } from './stores.js';
 
@@ -17,7 +16,7 @@
     }
 
     function handleCopy() {
-        ClipboardHelper.writeText(entry.text);
+        navigator.clipboard.writeText(entry.text);
     }
 </script>
 

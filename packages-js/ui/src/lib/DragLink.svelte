@@ -1,14 +1,13 @@
 <script lang="ts">
-    import { DragHelper } from './utils/drag-helper.js';
-
     export let href: (() => string | URL) | string | URL;
 
     let preview: HTMLDivElement;
 
     function handleDragStart(event: DragEvent) {
-        DragHelper.setDragImage(event, preview);
+        event.dataTransfer?.setDragImage(preview, 0, 0);
         const url = typeof href === 'function' ? href() : href;
-        DragHelper.setUrl(event, url);
+        const urlString = typeof url === 'string' ? url : url.toString();
+        event.dataTransfer?.setData('text/uri-list', urlString);
     }
 </script>
 
