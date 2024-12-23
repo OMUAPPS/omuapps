@@ -190,7 +190,7 @@ export type Config = {
         [key: string]: UserConfig;
     },
     avatars: {
-        [key: string]: PngTuberAvatarConfig | PngAvatarConfig;
+        [key: string]: PngTuberAvatarConfig | PngAvatarConfig | undefined;
     }
     effects: {
         shadow: {

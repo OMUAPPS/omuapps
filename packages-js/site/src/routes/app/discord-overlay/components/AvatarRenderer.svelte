@@ -177,8 +177,6 @@
                             matrices.scale(1, -1, 1);
                         }
                     }
-                } else {
-                    matrices.scale(2.5, 2.5, 1);
                 }
                 avatar.render(matrices, {
                     talking: speakState?.speaking || false,
@@ -187,7 +185,7 @@
                 matrices.pop();
             });
 
-        if ($heldAvatar) {
+        if ($heldAvatar && $config.avatars[$heldAvatar]) {
             const faceSize = 400;
             const avatarConfig = $config.avatars[$heldAvatar];
             gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, new Vec4(0, 0, 0, 0.8));
@@ -303,6 +301,7 @@
             'ffd8ffe2': 'image/jpeg',
             'ffd8ffe3': 'image/jpeg',
             'ffd8ffe8': 'image/jpeg',
+            '52494646': 'image/webp',
         }
         const header = source.slice(0, 4).reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
         const type = HEADER_MAP[header];
@@ -332,6 +331,9 @@
 
     async function getAvatarById(gl: GlContext, avatarId: string): Promise<{key:string, avatar: Avatar}> {
         const avatarConfig = $config.avatars[avatarId];
+        if (!avatarConfig) {
+            throw new Error(`Avatar not found: ${avatarId}`);
+        }
         const existing = avatarCache.get(avatarId);
         if (existing && existing.key === avatarConfig.key) {
             return existing;
@@ -421,7 +423,6 @@
         const active = await createSourceElement(await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
         const deafened = await createSourceElement(await proxy(modelData.deafened).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
         const muted = await createSourceElement(await proxy(modelData.muted).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
-        
         const avatar = await PNGAvatar.load(gl, {
             base,
             active,
@@ -429,6 +430,16 @@
             muted,
         });
         return avatar;
+    }
+
+    async function createDefaultAvatar(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
+        const url = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
+        const source = await fetch(url).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
+        const base = await createSourceElement(source);
+        const avatar = await PNGAvatar.load(gl, {
+            base,
+        });
+        return avatar.create();
     }
 
     async function getAvatarByUser(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
@@ -442,19 +453,13 @@
             return existing.avatar;
         }
         if (!userConfig.avatar) {
-            const reactiveAvatar = await getReactiveAvatar(gl, user.id);
+            const reactiveAvatar = $config.reactive.enabled && await getReactiveAvatar(gl, user.id);
             if (reactiveAvatar) {
                 const context = reactiveAvatar.create();
                 contextCache.set(user.id, {id: 'default', key: '', avatar: context});
                 return context;
             }
-            const url = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
-            const source = await fetch(url).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-            const base = await createSourceElement(source);
-            const avatar = await PNGAvatar.load(gl, {
-                base,
-            });
-            const context = avatar.create();
+            const context = await createDefaultAvatar(gl, user);
             contextCache.set(user.id, {id: 'default', key: '', avatar: context});
             return context;
         }
@@ -476,8 +481,10 @@
             setTimeout(() => {
                 message = null;
             }, 5000);
-            throw e;
         }
+        const context = await createDefaultAvatar(gl, user);
+        contextCache.set(user.id, {id: 'default', key: '', avatar: context});
+        return context;
     }
 
     function invalidateAvatarCache(config: Config) {

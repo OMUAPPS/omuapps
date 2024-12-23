@@ -126,9 +126,11 @@ export class PNGAvatar implements Avatar {
                 projection.set(Mat4.IDENTITY);
                 const model = this.program.getUniform('u_model').asMat4();
                 const { width, height } = textureMesh.texture;
+                const targetWidth = 126 * 2.5;
+                const widthToHeightRatio = height / width;
                 model.set(Mat4.IDENTITY
-                    .translate(-width / 2, -height / 2, 0)
-                    .scale(width, height, 1)
+                    .translate(-targetWidth / 2, -targetWidth / 2 * widthToHeightRatio, 0)
+                    .scale(targetWidth, targetWidth * widthToHeightRatio, 1)
                 );
                 const view = this.program.getUniform('u_view').asMat4();
                 view.set(matrices.get().scale(1, -1, 1));

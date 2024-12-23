@@ -15,6 +15,7 @@
         if (!lastMouse) return;
         if (!$heldAvatar) return;
         const avatarConfig = $config.avatars[$heldAvatar];
+        if (!avatarConfig) return;
         const [x, y] = avatarConfig.offset;
         const dx = event.clientX - lastMouse.x;
         const dy = event.clientY - lastMouse.y;
@@ -62,170 +63,173 @@
         const buffer = await overlayApp.getSource(source);
         return URL.createObjectURL(new Blob([buffer]));
     }
+
+    $: avatarConfig = $heldAvatar && $config.avatars[$heldAvatar];
 </script>
 
-<button
-    bind:this={dragger}
-    on:mousedown={handleMouseDown}
-    on:wheel={handleMouseWheel}
-    aria-label="Avatar Origin"
-    class="origin"
-></button>
-<div class="actions">
-    {#if $heldAvatar && $config.avatars[$heldAvatar].type === 'pngtuber'}
+{#if $heldAvatar && avatarConfig}
+    {@const avatar = $heldAvatar}
+    <button
+        bind:this={dragger}
+        on:mousedown={handleMouseDown}
+        on:wheel={handleMouseWheel}
+        aria-label="Avatar Origin"
+        class="origin"
+    ></button>
+    <div class="actions">
+        {#if avatarConfig.type === 'pngtuber'}
+            <button on:click={() => {
+                if (!$heldAvatar) return;
+                if (!avatarConfig) return;
+                if (avatarConfig.type !== 'pngtuber') return;
+                avatarConfig.flipHorizontal = !avatarConfig.flipHorizontal;
+                avatarConfig.offset[0] = -avatarConfig.offset[0];
+                $config.avatars[$heldAvatar] = avatarConfig;
+            }} class="flip">
+                左右を反転
+                <i class="ti ti-arrows-horizontal"></i>
+            </button>
+            <small>
+                左側を向くように調整してください
+            </small>
+        {/if}
         <button on:click={() => {
-            if (!$heldAvatar) return;
-            const avatarConfig = $config.avatars[$heldAvatar];
-            if (avatarConfig.type !== 'pngtuber') return;
-            avatarConfig.flipHorizontal = !avatarConfig.flipHorizontal;
-            avatarConfig.offset[0] = -avatarConfig.offset[0];
-            $config.avatars[$heldAvatar] = avatarConfig;
-        }} class="flip">
-            左右を反転
-            <i class="ti ti-arrows-horizontal"></i>
+            $heldAvatar = null;
+        }} class="close">
+            完了
+            <i class="ti ti-check"></i>
         </button>
-        <small>
-            左側を向くように調整してください
-        </small>
-    {/if}
+    </div>
     <button on:click={() => {
         $heldAvatar = null;
     }} class="close">
         完了
         <i class="ti ti-check"></i>
     </button>
-</div>
-<button on:click={() => {
-    $heldAvatar = null;
-}} class="close">
-    完了
-    <i class="ti ti-check"></i>
-</button>
-<span class="message">
-    <p>アバターを移動して上の枠に顔が合うように調整してください</p>
-    <small>
-        <p>マウスホイールで拡大縮小</p>
-        <p>つかんで移動</p>
-    </small>
-</span>
-{#if $heldAvatar && $config.avatars[$heldAvatar]}
-    {@const avatarConfig = $config.avatars[$heldAvatar]}
-    {@const avatar = $heldAvatar}
-    <div class="png-settings">
-        {#if avatarConfig.type === 'png'}
-            {@const stateVoice = $config.user_id && $voiceState[$config.user_id]?.voice_state}
-            {@const stateSpeaking = $config.user_id && $speakingState[$config.user_id]?.speaking}
-            {@const stateType =
-                stateVoice && (stateVoice.self_deaf || stateVoice.deaf) ? 'deafened' :
-                    stateVoice && (stateVoice.self_mute || stateVoice.mute) ? 'muted' :
-                        stateSpeaking ? 'active' : null
-            }
-            <div class="sprite">
-                <div class="png-avatar">
-                    {#await getSourceUrl(avatarConfig.base) then url}
-                        <img src={url} alt="avatar" />
-                    {/await}
+    <span class="message">
+        <p>アバターを移動して上の枠に顔が合うように調整してください</p>
+        <small>
+            <p>マウスホイールで拡大縮小</p>
+            <p>つかんで移動</p>
+        </small>
+    </span>
+    {#if avatarConfig}
+        <div class="png-settings">
+            {#if avatarConfig.type === 'png'}
+                {@const stateVoice = $config.user_id && $voiceState[$config.user_id]?.voice_state}
+                {@const stateSpeaking = $config.user_id && $speakingState[$config.user_id]?.speaking}
+                {@const stateType =
+                    stateVoice && (stateVoice.self_deaf || stateVoice.deaf) ? 'deafened' :
+                        stateVoice && (stateVoice.self_mute || stateVoice.mute) ? 'muted' :
+                            stateSpeaking ? 'active' : null
+                }
+                <div class="sprite">
+                    <div class="png-avatar">
+                        {#await getSourceUrl(avatarConfig.base) then url}
+                            <img src={url} alt="avatar" />
+                        {/await}
+                    </div>
+                    <p class:active={!stateType}>基本</p>
                 </div>
-                <p class:active={!stateType}>基本</p>
-            </div>
-            <div class="sprite">
-                <FileDrop handle={async (files) => {
-                    if (files.length !== 1) return;
-                    const file = files[0];
-                    if (avatarConfig.type !== 'png') return;
-                    const newConfig = {
-                        ...avatarConfig,
-                        active: await upload(file),
-                    };
-                    newConfig.key = JSON.stringify({
-                        base: newConfig.base,
-                        active: newConfig.active,
-                        deafened: newConfig.deafened,
-                        muted: newConfig.muted,
-                    });
-                    $config.avatars[avatar] = newConfig;
-                }}>
-                    <Tooltip>
-                        喋っている時のアバターを設定
-                    </Tooltip>
-                    <div class="png-avatar">
-                        {#if avatarConfig.active}
-                            {#await getSourceUrl(avatarConfig.active) then url}
-                                <img src={url} alt="avatar" />
-                            {/await}
-                        {:else}
-                            <p>未設定</p>
-                        {/if}
-                    </div>
-                </FileDrop>
-                <p class:active={stateType === 'active'}>喋っている時</p>
-            </div>
-            <div class="sprite">
-                <FileDrop handle={async (files) => {
-                    if (files.length !== 1) return;
-                    const file = files[0];
-                    if (avatarConfig.type !== 'png') return;
-                    const newConfig = {
-                        ...avatarConfig,
-                        muted: await upload(file),
-                    };
-                    newConfig.key = JSON.stringify({
-                        base: newConfig.base,
-                        active: newConfig.active,
-                        deafened: newConfig.deafened,
-                        muted: newConfig.muted,
-                    });
-                    $config.avatars[avatar] = newConfig;
-                }}>
-                    <Tooltip>
-                        喋れない時のアバターを設定
-                    </Tooltip>
-                    <div class="png-avatar">
-                        {#if avatarConfig.muted}
-                            {#await getSourceUrl(avatarConfig.muted) then url}
-                                <img src={url} alt="avatar" />
-                            {/await}
-                        {:else}
-                            <p>未設定</p>
-                        {/if}
-                    </div>
-                </FileDrop>
-                <p class:active={stateType === 'muted'}>喋れない時</p>
-            </div>
-            <div class="sprite">
-                <FileDrop handle={async (files) => {
-                    if (files.length !== 1) return;
-                    const file = files[0];
-                    if (avatarConfig.type !== 'png') return;
-                    const newConfig = {
-                        ...avatarConfig,
-                        deafened: await upload(file),
-                    };
-                    newConfig.key = JSON.stringify({
-                        base: newConfig.base,
-                        active: newConfig.active,
-                        deafened: newConfig.deafened,
-                        muted: newConfig.muted,
-                    });
-                    $config.avatars[avatar] = newConfig;
-                }}>
-                    <Tooltip>
-                        聞こえない時のアバターを設定
-                    </Tooltip>
-                    <div class="png-avatar">
-                        {#if avatarConfig.deafened}
-                            {#await getSourceUrl(avatarConfig.deafened) then url}
-                                <img src={url} alt="avatar" />
-                            {/await}
-                        {:else}
-                            <p>未設定</p>
-                        {/if}
-                    </div>
-                </FileDrop>
-                <p class:active={stateType === 'deafened'}>聞こえない時</p>
-            </div>
-        {/if}
-    </div>
+                <div class="sprite">
+                    <FileDrop handle={async (files) => {
+                        if (files.length !== 1) return;
+                        const file = files[0];
+                        if (avatarConfig.type !== 'png') return;
+                        const newConfig = {
+                            ...avatarConfig,
+                            active: await upload(file),
+                        };
+                        newConfig.key = JSON.stringify({
+                            base: newConfig.base,
+                            active: newConfig.active,
+                            deafened: newConfig.deafened,
+                            muted: newConfig.muted,
+                        });
+                        $config.avatars[avatar] = newConfig;
+                    }}>
+                        <Tooltip>
+                            喋っている時のアバターを設定
+                        </Tooltip>
+                        <div class="png-avatar">
+                            {#if avatarConfig.active}
+                                {#await getSourceUrl(avatarConfig.active) then url}
+                                    <img src={url} alt="avatar" />
+                                {/await}
+                            {:else}
+                                <p>未設定</p>
+                            {/if}
+                        </div>
+                    </FileDrop>
+                    <p class:active={stateType === 'active'}>喋っている時</p>
+                </div>
+                <div class="sprite">
+                    <FileDrop handle={async (files) => {
+                        if (files.length !== 1) return;
+                        const file = files[0];
+                        if (avatarConfig.type !== 'png') return;
+                        const newConfig = {
+                            ...avatarConfig,
+                            muted: await upload(file),
+                        };
+                        newConfig.key = JSON.stringify({
+                            base: newConfig.base,
+                            active: newConfig.active,
+                            deafened: newConfig.deafened,
+                            muted: newConfig.muted,
+                        });
+                        $config.avatars[avatar] = newConfig;
+                    }}>
+                        <Tooltip>
+                            喋れない時のアバターを設定
+                        </Tooltip>
+                        <div class="png-avatar">
+                            {#if avatarConfig.muted}
+                                {#await getSourceUrl(avatarConfig.muted) then url}
+                                    <img src={url} alt="avatar" />
+                                {/await}
+                            {:else}
+                                <p>未設定</p>
+                            {/if}
+                        </div>
+                    </FileDrop>
+                    <p class:active={stateType === 'muted'}>喋れない時</p>
+                </div>
+                <div class="sprite">
+                    <FileDrop handle={async (files) => {
+                        if (files.length !== 1) return;
+                        const file = files[0];
+                        if (avatarConfig.type !== 'png') return;
+                        const newConfig = {
+                            ...avatarConfig,
+                            deafened: await upload(file),
+                        };
+                        newConfig.key = JSON.stringify({
+                            base: newConfig.base,
+                            active: newConfig.active,
+                            deafened: newConfig.deafened,
+                            muted: newConfig.muted,
+                        });
+                        $config.avatars[avatar] = newConfig;
+                    }}>
+                        <Tooltip>
+                            聞こえない時のアバターを設定
+                        </Tooltip>
+                        <div class="png-avatar">
+                            {#if avatarConfig.deafened}
+                                {#await getSourceUrl(avatarConfig.deafened) then url}
+                                    <img src={url} alt="avatar" />
+                                {/await}
+                            {:else}
+                                <p>未設定</p>
+                            {/if}
+                        </div>
+                    </FileDrop>
+                    <p class:active={stateType === 'deafened'}>聞こえない時</p>
+                </div>
+            {/if}
+        </div>
+    {/if}
 {/if}
 
 <style lang="scss">
