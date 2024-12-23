@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.15 (2024-12-23)
+
+
+### Bug Fixes
+
+* **omu, dash:** 接続に正常に失敗しても再接続しないように ([a7b294c](https://github.com/OMUAPPS/omuapps/commit/a7b294c07cdcd97892a013d8ca4ab85ef219b627))
+
+
+
+
+
 ## 0.7.14 (2024-10-27)
 
 
