@@ -1,7 +1,7 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
-import type { AvatarState, Effect } from '$lib/pngtuber/pngtuber.js';
+import type { AvatarAction, Effect } from '../pngtuber/avatar.js';
 
 const SHADOW_VERTEX_SHADER = `#version 300 es
 
@@ -35,9 +35,9 @@ void main() {
     vec2 coord = v_texcoord * u_resolution;
     vec4 color = texture(u_texture, v_texcoord);
     vec2 offset = vec2(-10.0, 10.0);
-    vec4 shadow = texture(u_texture, (v_texcoord * u_resolution + offset) / u_resolution);
-    float shadowAlpha = shadow.a - color.a;
-    outColor = color + u_color * pow(clamp(shadowAlpha, 0.0, 1.0), 0.5);
+    float shadow = texture(u_texture, (v_texcoord * u_resolution + offset) / u_resolution).a;
+    float shadowAlpha = shadow - color.a;
+    outColor = mix(color, u_color, clamp(shadowAlpha, 0.0, 1.0));
 }
 `;
 
@@ -80,7 +80,7 @@ export async function createShadowEffect(context: GlContext, getOptions: () => O
     const fragmentShader = context.createShader({ type: 'fragment', source: SHADOW_FRAGMENT_SHADER });
     const program = context.createProgram([vertexShader, fragmentShader]);
 
-    function render(state: AvatarState, texture: GlTexture, dest: GlFramebuffer) {
+    function render(action: AvatarAction, texture: GlTexture, dest: GlFramebuffer) {
         dest.use(() => {
             const resolution = [texture.width, texture.height];
             const options = getOptions();

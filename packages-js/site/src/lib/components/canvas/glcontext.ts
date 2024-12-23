@@ -444,14 +444,15 @@ export class GlTexture {
         
 
     public setImage(image: TexImageSource, params: {
-        format: ColorFormat;
+        internalFormat: ColorFormat;
+        format?: ColorFormat;
         width: number;
         height: number;
     }): void {
         if (!this.stateManager.isTextureBound(this)) {
             throw new Error('Texture not bound');
         }
-        const { format, width, height } = params;
+        const { internalFormat, width, height } = params;
         this.width = width;
         this.height = height;
         const COLOR_FORMATS: Record<ColorFormat, number> = {
@@ -460,11 +461,7 @@ export class GlTexture {
             rgba16f: this.gl.RGBA16F,
             rgb16f: this.gl.RGB16F,
         };
-        const internalFormat = COLOR_FORMATS[format];
-        if (internalFormat == null) {
-            throw new Error(`Unsupported format: ${format}`);
-        }
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, internalFormat, width, height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, COLOR_FORMATS[internalFormat], width, height, 0, COLOR_FORMATS[params.format ?? internalFormat], this.gl.UNSIGNED_BYTE, image);
     }
 
     public setParams(params: TextureParams): void {
@@ -553,7 +550,7 @@ export class GlContext {
     public destroy(): void {}
 
     public static create(canvas: HTMLCanvasElement): GlContext {
-        const gl = canvas.getContext('webgl2');
+        const gl = canvas.getContext('webgl2', { premultipliedAlpha: false });
         if (gl == null) {
             throw new Error('WebGL2 not supported');
         }

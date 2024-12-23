@@ -95,7 +95,7 @@ export class Layer {
                 wrapT: 'clamp-to-edge',
             });
             texture.setImage(img, {
-                format: 'rgba',
+                internalFormat: 'rgba',
                 width: img.width,
                 height: img.height,
             });

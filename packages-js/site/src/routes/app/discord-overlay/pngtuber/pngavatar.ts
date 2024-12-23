@@ -66,7 +66,7 @@ export class PNGAvatar implements Avatar {
                 wrapT: 'clamp-to-edge',
             });
             texture.setImage(source.image, {
-                format: 'rgba',
+                internalFormat: 'rgba',
                 width: source.width,
                 height: source.height,
             });
@@ -100,7 +100,7 @@ export class PNGAvatar implements Avatar {
         mesh.texture.use(() => {
             const { source } = mesh
             mesh.texture.setImage(source.image, {
-                format: 'rgba',
+                internalFormat: 'rgba',
                 width: source.width,
                 height: source.height,
             });
