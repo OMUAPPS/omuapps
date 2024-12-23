@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.7.16 (2024-12-23)
+
+
+### Bug Fixes
+
+* **server:** レジストリにアクセスする時に権限取得まで処理を待機するように ([3ce47dc](https://github.com/OMUAPPS/omuapps/commit/3ce47dc626cc44c774b7b96de4787f26458b7253))
+
+
+
+
+
 ## 0.7.15 (2024-12-23)
 
 
