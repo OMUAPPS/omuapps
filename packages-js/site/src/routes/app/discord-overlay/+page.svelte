@@ -7,7 +7,7 @@
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import App from './App.svelte';
-    import { DiscordOverlayApp, DISCORDRPC_PERMISSIONS } from './discord-overlay-app.js';
+    import { DiscordOverlayApp, DISCORDRPC_PERMISSIONS, PLUGIN_ID } from './discord-overlay-app.js';
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
@@ -21,6 +21,7 @@
             ASSET_DOWNLOAD_PERMISSION_ID,
             permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
+        omu.server.require(PLUGIN_ID);
         omu.start();
     }
 

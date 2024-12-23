@@ -3,11 +3,10 @@ import { version } from '$lib/version.json';
 import { Identifier, type Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { DEV } from 'esm-env';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 
-const PLUGIN_ID = Identifier.fromKey('com.omuapps:plugin-discordrpc');
+export const PLUGIN_ID = Identifier.fromKey('com.omuapps:plugin-discordrpc');
 const DISCORDRPC_VC_READ_PERMISSION_ID = PLUGIN_ID.join('vc', 'read');
 const DISCORDRPC_VC_SET_PERMISSION_ID = PLUGIN_ID.join('vc', 'set');
 const DISCORDRPC_CHANNELS_READ_PERMISSION_ID = PLUGIN_ID.join('channels', 'read');
@@ -234,7 +233,7 @@ export type Config = {
     };
 };
 const DEFAULT_CONFIG: Config = {
-    version: 4,
+    version: 5,
     users: {},
     avatars: {},
     effects: {
@@ -303,7 +302,7 @@ export class DiscordOverlayApp {
     }
 
     public migrateConfig(config: Config): Config {
-        if (!config.version) {
+        if (!config.version || config.version < 1) {
             config = DEFAULT_CONFIG;
         }
         if (config.version === 1) {
@@ -319,12 +318,19 @@ export class DiscordOverlayApp {
                 effects: DEFAULT_CONFIG.effects,
             };
         }
-        if (config.version === 3 || DEV) {
+        if (config.version === 3) {
             config = {
                 ...config,
                 version: 4,
                 align: DEFAULT_CONFIG.align,
                 reactive: DEFAULT_CONFIG.reactive,
+            };
+        }
+        if (config.version === 4) {
+            config = {
+                ...config,
+                version: 5,
+                avatars: DEFAULT_CONFIG.avatars,
             };
         }
         return config;
