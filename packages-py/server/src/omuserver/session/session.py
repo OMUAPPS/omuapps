@@ -71,6 +71,7 @@ class Session:
         self.connection = connection
         self.event = SessionEvents()
         self.ready_tasks: list[SessionTask] = []
+        self.ready_waiters: list[asyncio.Future[None]] = []
         self.ready = False
 
     @classmethod
@@ -170,11 +171,20 @@ class Session:
         )
         self.ready_tasks.append(task)
 
+    async def wait_ready(self) -> None:
+        if self.ready:
+            return
+        waiter = asyncio.get_running_loop().create_future()
+        self.ready_waiters.append(waiter)
+        await waiter
+
     async def process_ready_tasks(self) -> None:
         if self.ready:
             raise RuntimeError("Session is already ready")
+        self.ready = True
         for task in self.ready_tasks:
             await task.coro()
         self.ready_tasks.clear()
-        self.ready = True
+        for waiter in self.ready_waiters:
+            waiter.set_result(None)
         await self.event.ready.emit(self)

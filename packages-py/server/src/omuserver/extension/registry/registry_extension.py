@@ -75,28 +75,17 @@ class RegistryExtension:
         registry.permissions = packet.permissions
 
     async def handle_listen(self, session: Session, id: Identifier) -> None:
-        if session.ready:
-            registry = await self.get(id)
-            self.verify_permission(
-                registry,
-                session,
-                lambda permissions: [permissions.all, permissions.read],
-            )
-            await registry.attach_session(session)
-        else:
-
-            async def task():
-                registry = await self.get(id)
-                self.verify_permission(
-                    registry,
-                    session,
-                    lambda permissions: [permissions.all, permissions.read],
-                )
-                await registry.attach_session(session)
-
-            session.add_ready_task(task)
+        await session.wait_ready()
+        registry = await self.get(id)
+        self.verify_permission(
+            registry,
+            session,
+            lambda permissions: [permissions.all, permissions.read],
+        )
+        await registry.attach_session(session)
 
     async def handle_update(self, session: Session, packet: RegistryPacket) -> None:
+        await session.wait_ready()
         registry = await self.get(packet.id)
         self.verify_permission(
             registry,
@@ -107,6 +96,7 @@ class RegistryExtension:
         await registry.notify(session)
 
     async def handle_get(self, session: Session, id: Identifier) -> RegistryPacket:
+        await session.wait_ready()
         registry = await self.get(id)
         self.verify_permission(
             registry,
