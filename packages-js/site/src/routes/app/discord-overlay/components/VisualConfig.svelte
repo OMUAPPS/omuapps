@@ -20,11 +20,6 @@
         </label>
     </span>
     <span>
-        整列する面
-        <hr>
-        <Align bind:horizontal={$config.align.horizontal} bind:vertical={$config.align.vertical} />
-    </span>
-    <span>
         <label>
             面に応じて反転
             <hr>
@@ -37,6 +32,11 @@
             <hr>
             <input type="checkbox" bind:checked={$config.align.scaling} />
         </label>
+    </span>
+    <span>
+        整列する面
+        <hr>
+        <Align bind:horizontal={$config.align.horizontal} bind:vertical={$config.align.vertical} />
     </span>
 </section>
 
@@ -83,6 +83,20 @@
 </section>
 
 <h2>
+    表示
+    <i class="ti ti-eye"></i>
+</h2>
+<section>
+    <span>
+        <label>
+            名前を表示
+            <hr>
+            <input type="checkbox" bind:checked={$config.show_name_tags} />
+        </label>
+    </span>
+</section>
+
+<h2>
     エフェクト
     <i class="ti ti-filters"></i>
 </h2>
@@ -116,7 +130,6 @@
         flex: 1;
         height: 1px;
         border: none;
-        background: var(--color-outline);
         margin: 0.5rem 0.5rem;
     }
 
@@ -126,7 +139,7 @@
         width: 100%;
         gap: 0.5rem;
         font-size: 0.9rem;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
     }
 
     section {
@@ -134,6 +147,8 @@
         flex-direction: column;
         gap: 0.25rem;
         padding-left: 0.5rem;
+        margin-top: 0.5rem;
+        margin-bottom: 1rem;
     }
 
     input {

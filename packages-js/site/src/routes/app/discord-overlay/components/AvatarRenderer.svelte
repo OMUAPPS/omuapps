@@ -238,16 +238,65 @@
         }
     }
 
+    async function render2D(context: CanvasRenderingContext2D) {
+        if (!$config.show_name_tags) return;
+        // draw name tags
+        const matrices = new MatrixStack();
+        setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
+        const view = matrices.get();
+        const entries = Object.entries($voiceState);
+        const scaleFactor = getScaleFactor(context.canvas.width, context.canvas.height);
+        for (const [id, state] of entries) {
+            const user = getUser(id);
+            if (!user.show) {
+                continue;
+            }
+            // const renderPosition = view.xform2(new Vec2(0, 0));
+            const position = getPosition($config, id, user, entries.length, entries.length - entries.findIndex(([id,]) => id === state.user.id) - 1);
+            const renderPosition = view.xform2(new Vec2(position[0], position[1]));
+            context.save();
+            const fontSize = 28 * scaleFactor;
+            const offset = $config.align.vertical === 'start' ? -44 : 74 * scaleFactor;
+            context.font = `bold ${fontSize}px "Noto Sans JP"`;
+            context.fillStyle = 'white';
+            context.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+            context.lineWidth = 6 * scaleFactor;
+            context.lineJoin = 'round';
+            context.textAlign = 'center';
+            context.textBaseline = 'top';
+            const size = context.measureText(state.nick);
+            const maxWidth = 200 * scaleFactor;
+            const scale = Math.min(1, maxWidth / size.width);
+            context.font = `bold ${fontSize * scale}px "Noto Sans JP"`;
+            context.strokeText(
+                state.nick,
+                renderPosition.x * 0.5 * context.canvas.width + context.canvas.width / 2,
+                context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset
+            );
+            context.fillText(
+                state.nick,
+                renderPosition.x * 0.5 * context.canvas.width + context.canvas.width / 2,
+                context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset
+            );
+            context.restore();
+        }
+    }
+
     let heldAvatarContext: AvatarContext | null = null;
     const lastPositions = new Map<string, Vec2>();
+
+    function getScaleFactor(width: number, height: number): number {
+        if(showGrid) {
+            return Math.min((width - dimensions.margin) / dimensions.width, (height - dimensions.margin) / dimensions.height);
+        }
+        return 1;
+    }
 
     function setupViewMatrix(matrices: MatrixStack, width: number, height: number) {
         matrices.orthographic(0, width, height, 0, -1, 1);
         matrices.translate(width / 2, height / 2, 0);
-        if(showGrid) {
-            const fitScale=Math.min((width - dimensions.margin) / dimensions.width, (height - dimensions.margin) / dimensions.height);
-            matrices.scale(fitScale, fitScale,1);
-        }
+        const fitScale = getScaleFactor(width, height);
+        matrices.scale(fitScale, fitScale, 1);
     }
 
     function getPosition(config: Config, id: string, user: UserConfig, length: number, index: number): [number, number] {
@@ -525,7 +574,7 @@
 </script>
 
 <div class="canvas">
-    <Canvas {init} {render} {resize}/>
+    <Canvas {init} {render} {render2D} {resize}/>
 </div>
 
 <style lang="scss">

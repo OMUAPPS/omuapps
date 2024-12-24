@@ -9,8 +9,12 @@
     export let fps: number = 60;
     export let requestId: number | null = null;
     export let render: (gl: GlContext) => Promise<void>;
+    export let render2D: (context: CanvasRenderingContext2D) => void = () => {};
     export let init: (gl: GlContext) => Promise<void>;
     export let resize: (gl: GlContext) => void = () => {};
+
+    let context: CanvasRenderingContext2D | null = null;
+    let offscreen: OffscreenCanvas | null = null;
 
     function handleResize() {
         if (!canvas) return;
@@ -25,8 +29,11 @@
     let timeout: number | null = null;
 
     async function renderLoop() {
-        if (!glContext) return;
+        if (!glContext || !context || !offscreen) return;
+        context.clearRect(0, 0, width, height);
         await render(glContext);
+        context.drawImage(offscreen!, 0, 0);
+        render2D(context);
         const currentTime = performance.now();
         const interval = 1000 / fps;
         const elapsed = currentTime - lastTime;
@@ -38,7 +45,9 @@
 
     onMount(() => {
         if (!canvas) return;
-        glContext = GlContext.create(canvas);
+        offscreen = new OffscreenCanvas(width, height);
+        context = canvas.getContext('2d');
+        glContext = GlContext.create(offscreen);
         handleResize();
         init(glContext).then(() => {
             renderLoop();

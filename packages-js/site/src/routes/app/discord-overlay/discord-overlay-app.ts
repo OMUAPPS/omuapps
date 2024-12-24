@@ -209,6 +209,7 @@ export type Config = {
     channel_id: string | null;
     zoom_level: number;
     camera_position: [number, number];
+    show_name_tags: boolean;
     align: {
         horizontal: Align;
         vertical: Align;
@@ -228,7 +229,7 @@ export type Config = {
     };
 };
 const DEFAULT_CONFIG: Config = {
-    version: 6,
+    version: 7,
     users: {},
     avatars: {},
     effects: {
@@ -246,6 +247,7 @@ const DEFAULT_CONFIG: Config = {
     channel_id: null,
     zoom_level: 1,
     camera_position: [0, 0],
+    show_name_tags: true,
     align: {
         auto: true,
         horizontal: 'end',
@@ -329,6 +331,13 @@ export class DiscordOverlayApp {
                     ...config.effects,
                     speech: DEFAULT_SPEECH_EFFECT_OPTIONS,
                 },
+            };
+        }
+        if (config.version === 6) {
+            config = {
+                ...config,
+                version: 7,
+                show_name_tags: true,
             };
         }
         return config;
