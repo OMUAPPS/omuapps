@@ -17,10 +17,11 @@
     let offscreen: OffscreenCanvas | null = null;
 
     function handleResize() {
-        if (!canvas) return;
-        if (!glContext) return;
+        if (!canvas || !offscreen || !glContext) return;
         canvas.width = width;
         canvas.height = height;
+        offscreen.width = width;
+        offscreen.height = height;
         glContext.gl.viewport(0, 0, width, height);
         resize(glContext);
     }
