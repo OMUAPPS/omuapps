@@ -30,10 +30,12 @@
     let timeout: number | null = null;
 
     async function renderLoop() {
-        if (!glContext || !context || !offscreen) return;
+        requestId = requestAnimationFrame(renderLoop);
+        if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) return;
+        if (canvas.width !== width || canvas.height !== height) return;
         context.clearRect(0, 0, width, height);
         await render(glContext);
-        context.drawImage(offscreen!, 0, 0);
+        context.drawImage(offscreen, 0, 0);
         render2D(context);
         const currentTime = performance.now();
         const interval = 1000 / fps;
@@ -41,7 +43,6 @@
         const delay = Math.max(interval - elapsed, 0);
         lastTime = currentTime + delay;
         if (delay > 0) await new Promise(resolve => (timeout = window.setTimeout(resolve, delay)));
-        requestId = requestAnimationFrame(renderLoop);
     }
 
     onMount(() => {
