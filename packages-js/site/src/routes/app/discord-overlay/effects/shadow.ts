@@ -41,17 +41,17 @@ void main() {
 }
 `;
 
-export type Options = {
-    active: boolean;
+export const DEFAULT_SHADOW_EFFECT_OPTIONS = {
+    active: true,
     color: {
-        r: number;
-        g: number;
-        b: number;
-        a: number;
-    }
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 0.25,
+    },
 };
 
-export async function createShadowEffect(context: GlContext, getOptions: () => Options): Promise<Effect> {
+export async function createShadowEffect(context: GlContext, getOptions: () => typeof DEFAULT_SHADOW_EFFECT_OPTIONS): Promise<Effect> {
     const { gl } = context;
     const vertexBuffer = context.createBuffer();
     vertexBuffer.bind(() => {

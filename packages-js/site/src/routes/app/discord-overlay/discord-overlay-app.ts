@@ -5,6 +5,7 @@ import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
+import { DEFAULT_SHADOW_EFFECT_OPTIONS } from './effects/shadow.js';
 import { DEFAULT_SPEECH_EFFECT_OPTIONS } from './effects/speech.js';
 
 export const PLUGIN_ID = Identifier.fromKey('com.omuapps:plugin-discordrpc');
@@ -195,15 +196,7 @@ export type Config = {
     }
     effects: {
         speech: typeof DEFAULT_SPEECH_EFFECT_OPTIONS,
-        shadow: {
-            active: boolean,
-            color: {
-                r: number,
-                g: number,
-                b: number,
-                a: number,
-            }
-        };
+        shadow: typeof DEFAULT_SHADOW_EFFECT_OPTIONS;
         backlightEffect: {
             active: boolean,
         };
@@ -240,15 +233,7 @@ const DEFAULT_CONFIG: Config = {
     avatars: {},
     effects: {
         speech: DEFAULT_SPEECH_EFFECT_OPTIONS,
-        shadow: {
-            active: true,
-            color: {
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 0.25,
-            }
-        },
+        shadow: DEFAULT_SHADOW_EFFECT_OPTIONS,
         backlightEffect: {
             active: false,
         },
