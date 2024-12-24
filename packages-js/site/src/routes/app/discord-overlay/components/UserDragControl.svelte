@@ -22,6 +22,7 @@
     let lastMouse: [number, number] | null = null;
     let clickTime = 0;
     let clickDistance = 0;
+    let lastUpdate = performance.now();
     $: rect = element ? element.getBoundingClientRect() : { width: 0, height: 0 };
     $: position = user.position;
 
@@ -36,6 +37,12 @@
         user.position = position = [world.x, world.y];
         element.style.cssText = getStyle(rect, dimentions, position);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
+
+        const now = performance.now();
+        if (now - lastUpdate > 1000 / 60) {
+            $config = { ...$config };
+            lastUpdate = now;
+        }
     }
 
     function handleMouseUp() {
