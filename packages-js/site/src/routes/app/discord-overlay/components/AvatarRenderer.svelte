@@ -11,6 +11,7 @@
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
     import { createShadowEffect } from '../effects/shadow.js';
+    import { createSpeechEffect } from '../effects/speech.js';
     import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
     import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
@@ -29,6 +30,7 @@
     let shadowEffect: Effect;
     let backlightEffect: Effect;
     let bloomEffect: Effect;
+    let speechEffect: Effect;
     let gizmo: Gizmo;
 
     async function resize(context: GlContext) {
@@ -46,6 +48,7 @@
         for (const [, state] of entries) {
             await getAvatarByUser(context, state.user);
         }
+        speechEffect = await createSpeechEffect(context, () => $config.effects.speech);
         shadowEffect = await createShadowEffect(context, () => $config.effects.shadow);
         backlightEffect = await createBackLightEffect(context);
         bloomEffect = await createBloomEffect(context);
@@ -120,6 +123,7 @@
         }
 
         const effects: Effect[] = [
+            $config.effects.speech.active && speechEffect,
             $config.effects.shadow.active && shadowEffect,
             $config.effects.backlightEffect.active && backlightEffect,
             $config.effects.bloom.active && bloomEffect,
@@ -179,6 +183,7 @@
                     }
                 }
                 avatar.render(matrices, {
+                    id: state.user.id,
                     talking: speakState?.speaking || false,
                     ...state.voice_state,
                 }, renderOptions);
@@ -206,6 +211,7 @@
                 }
             }
             avatarContext.render(matrices, {
+                id: 'held',
                 talking: false,
                 mute: false,
                 deaf: false,

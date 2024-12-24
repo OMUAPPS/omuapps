@@ -5,6 +5,7 @@ import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
+import { DEFAULT_SPEECH_EFFECT_OPTIONS } from './effects/speech.js';
 
 export const PLUGIN_ID = Identifier.fromKey('com.omuapps:plugin-discordrpc');
 const DISCORDRPC_VC_READ_PERMISSION_ID = PLUGIN_ID.join('vc', 'read');
@@ -193,6 +194,7 @@ export type Config = {
         [key: string]: PngTuberAvatarConfig | PngAvatarConfig | undefined;
     }
     effects: {
+        speech: typeof DEFAULT_SPEECH_EFFECT_OPTIONS,
         shadow: {
             active: boolean,
             color: {
@@ -233,10 +235,11 @@ export type Config = {
     };
 };
 const DEFAULT_CONFIG: Config = {
-    version: 5,
+    version: 6,
     users: {},
     avatars: {},
     effects: {
+        speech: DEFAULT_SPEECH_EFFECT_OPTIONS,
         shadow: {
             active: true,
             color: {
@@ -331,6 +334,16 @@ export class DiscordOverlayApp {
                 ...config,
                 version: 5,
                 avatars: DEFAULT_CONFIG.avatars,
+            };
+        }
+        if (config.version === 5) {
+            config = {
+                ...config,
+                version: 6,
+                effects: {
+                    ...config.effects,
+                    speech: DEFAULT_SPEECH_EFFECT_OPTIONS,
+                },
             };
         }
         return config;

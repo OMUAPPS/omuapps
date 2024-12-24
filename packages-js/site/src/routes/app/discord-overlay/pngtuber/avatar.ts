@@ -2,6 +2,7 @@ import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.
 import type { MatrixStack } from '$lib/math/matrix-stack.js';
 
 export type AvatarAction = {
+    id: string;
     talking: boolean;
     mute: boolean;
     deaf: boolean;

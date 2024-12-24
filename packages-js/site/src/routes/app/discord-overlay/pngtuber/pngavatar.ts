@@ -1,4 +1,4 @@
-import type { GlBuffer, GlContext, GlProgram, GlTexture } from '$lib/components/canvas/glcontext.js';
+import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import type { MatrixStack } from '$lib/math/matrix-stack.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
@@ -22,6 +22,12 @@ export class PNGAvatar implements Avatar {
     public active?: TextureMesh;
     public deafened?: TextureMesh;
     public muted?: TextureMesh;
+    private readonly frameBufferTexture: GlTexture;
+    private readonly frameBuffer: GlFramebuffer;
+    private readonly effectTargetTexture: GlTexture;
+    private readonly effectTargetFrameBuffer: GlFramebuffer;
+    private readonly vertexBuffer: GlBuffer;
+    private readonly texcoordBuffer: GlBuffer;
     
     constructor(
         private readonly glContext: GlContext,
@@ -35,6 +41,58 @@ export class PNGAvatar implements Avatar {
         this.active = activeTexture ? PNGAvatar.createTextureMesh(glContext, activeTexture) : this.base;
         this.deafened = deafenedTexture ? PNGAvatar.createTextureMesh(glContext, deafenedTexture) : this.base;
         this.muted = mutedTexture ? PNGAvatar.createTextureMesh(glContext, mutedTexture) : this.base;
+        this.frameBuffer = glContext.createFramebuffer();
+        this.frameBufferTexture = glContext.createTexture();
+        this.frameBufferTexture.use(() => {
+            this.frameBufferTexture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        });
+        this.frameBuffer.use(() => {
+            this.frameBuffer.attachTexture(this.frameBufferTexture);
+        });
+        this.effectTargetTexture = glContext.createTexture();
+        this.effectTargetTexture.use(() => {
+            this.effectTargetTexture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        });
+        this.effectTargetFrameBuffer = glContext.createFramebuffer();
+        this.effectTargetFrameBuffer.use(() => {
+            this.effectTargetFrameBuffer.attachTexture(this.effectTargetTexture);
+        });
+        this.effectTargetFrameBuffer = glContext.createFramebuffer();
+        this.effectTargetFrameBuffer.use(() => {
+            this.effectTargetFrameBuffer.attachTexture(this.effectTargetTexture);
+        });
+        this.vertexBuffer = this.glContext.createBuffer();
+        this.vertexBuffer.bind(() => {
+            this.vertexBuffer.setData(new Float32Array([
+                -1, -1, 0,
+                -1, 1, 0,
+                1, -1, 0,
+                -1, 1, 0,
+                1, 1, 0,
+                1, -1, 0,
+            ]), 'static');
+        });
+        this.texcoordBuffer = this.glContext.createBuffer();
+        this.texcoordBuffer.bind(() => {
+            this.texcoordBuffer.setData(new Float32Array([
+                0, 0,
+                0, 1,
+                1, 0,
+                0, 1,
+                1, 1,
+                1, 0,
+            ]), 'static');
+        });
     }
     
     public static async load(context: GlContext, options: {
@@ -106,40 +164,118 @@ export class PNGAvatar implements Avatar {
             });
         });
     }
+
+    private getTextureMesh(action: AvatarAction): TextureMesh {
+        if (action.talking && this.active) {
+            return this.active;
+        } else if (action.deaf || action.self_deaf) {
+            return this.deafened || this.base;
+        } else if (action.mute || action.self_mute) {
+            return this.muted || this.base;
+        } else {
+            return this.base;
+        }
+    }
     
     public create(): AvatarContext {
+        const context = {
+            y: 0,
+            bounceVelocity: 0,
+            bounceTick: 0,
+        };
+            
         const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => {
             const { gl } = this.glContext;
-            let textureMesh = this.base;
-            if ((action.deaf || action.self_deaf) && this.deafened) {
-                textureMesh = this.deafened;
-            } else if ((action.mute || action.self_mute) && this.muted) {
-                textureMesh = this.muted;
-            } else if (action.talking && this.active) {
-                textureMesh = this.active;
+
+            if (action.talking && context.y >= 0 && context.bounceVelocity === 0) {
+                context.bounceVelocity = 250;
+                context.bounceTick += 1;
             }
-            this.updateTextureMesh(textureMesh);
-            this.program.use(() => {
-                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
-                textureUniform.set(textureMesh.texture);
-                const projection = this.program.getUniform('u_projection').asMat4();
-                projection.set(Mat4.IDENTITY);
-                const model = this.program.getUniform('u_model').asMat4();
-                const { width, height } = textureMesh.texture;
-                const targetWidth = 126 * 2.5;
-                const widthToHeightRatio = height / width;
-                model.set(Mat4.IDENTITY
-                    .translate(-targetWidth / 2, -targetWidth / 2 * widthToHeightRatio, 0)
-                    .scale(targetWidth, targetWidth * widthToHeightRatio, 1)
-                );
-                const view = this.program.getUniform('u_view').asMat4();
-                view.set(matrices.get().scale(1, -1, 1));
-                const positionAttribute = this.program.getAttribute('a_position');
-                positionAttribute.set(textureMesh.vertices, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = this.program.getAttribute('a_texcoord');
-                uvAttribute.set(textureMesh.texCoords, 2, gl.FLOAT, false, 0, 0);
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
-            })
+            context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
+            context.y = Math.min(0, context.y - context.bounceVelocity * 0.0166);
+            if (!action.talking && context.y >= -1) {
+                context.bounceVelocity = 0;
+            }
+
+            this.frameBufferTexture.use(() => {
+                this.frameBufferTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+            });
+            this.effectTargetTexture.use(() => {
+                this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+            });
+            
+            const textureMesh = this.getTextureMesh(action);
+            this.frameBuffer.use(() => {
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                this.program.use(() => {
+                    const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+                    textureUniform.set(textureMesh.texture);
+                    const projection = this.program.getUniform('u_projection').asMat4();
+                    projection.set(Mat4.IDENTITY);
+                    const model = this.program.getUniform('u_model').asMat4();
+                    const { width, height } = textureMesh.texture;
+                    const targetWidth = 126 * 2.5;
+                    const widthToHeightRatio = height / width;
+                    model.set(Mat4.IDENTITY
+                        .translate(-targetWidth / 2, -targetWidth / 2 * widthToHeightRatio, 0)
+                        .scale(targetWidth, targetWidth * widthToHeightRatio, 1)
+                        .translate(0, -context.y * 0.0166 / 4, 0)
+                    );
+                    const view = this.program.getUniform('u_view').asMat4();
+                    view.set(matrices.get().scale(1, -1, 1));
+                    const positionAttribute = this.program.getAttribute('a_position');
+                    positionAttribute.set(textureMesh.vertices, 3, gl.FLOAT, false, 0, 0);
+                    const uvAttribute = this.program.getAttribute('a_texcoord');
+                    uvAttribute.set(textureMesh.texCoords, 2, gl.FLOAT, false, 0, 0);
+                    gl.drawArrays(gl.TRIANGLES, 0, 6);
+                });
+            });
+            
+            options.effects.forEach(effect => {
+                this.effectTargetFrameBuffer.use(() => {
+                    gl.clearColor(0, 0, 0, 0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                });
+                effect.render(action, this.frameBufferTexture, this.effectTargetFrameBuffer);
+                this.frameBuffer.use(() => {
+                    gl.clearColor(0, 0, 0, 0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    this.program.use(() => {
+                        const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+                        textureUniform.set(this.effectTargetTexture);
+                        const projection = this.program.getUniform('u_projection').asMat4();
+                        projection.set(Mat4.IDENTITY);
+                        const model = this.program.getUniform('u_model').asMat4();
+                        model.set(Mat4.IDENTITY);
+                        const view = this.program.getUniform('u_view').asMat4();
+                        view.set(Mat4.IDENTITY);
+                        const positionAttribute = this.program.getAttribute('a_position');
+                        positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                        const uvAttribute = this.program.getAttribute('a_texcoord');
+                        uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                        gl.drawArrays(gl.TRIANGLES, 0, 6);
+                    });
+                });
+            });
+
+            this.frameBufferTexture.use(() => {
+                this.program.use(() => {
+                    const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+                    textureUniform.set(this.frameBufferTexture);
+                    const projection = this.program.getUniform('u_projection').asMat4();
+                    projection.set(Mat4.IDENTITY);
+                    const model = this.program.getUniform('u_model').asMat4();
+                    model.set(Mat4.IDENTITY);
+                    const view = this.program.getUniform('u_view').asMat4();
+                    view.set(Mat4.IDENTITY);
+                    const positionAttribute = this.program.getAttribute('a_position');
+                    positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                    const uvAttribute = this.program.getAttribute('a_texcoord');
+                    uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                    gl.drawArrays(gl.TRIANGLES, 0, 6);
+                })
+            });
         }
         return { render };
     }

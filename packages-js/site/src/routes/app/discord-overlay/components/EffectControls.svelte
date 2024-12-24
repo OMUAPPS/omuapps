@@ -5,7 +5,7 @@
     export let overlayApp: DiscordOverlayApp;
     const { config } = overlayApp;
 
-    let shadowOpen: boolean = false;
+    let selectedEffectType: 'speech' | 'shadow' | null = null;
     let shadowColorElement: HTMLInputElement | null = null;
 
     function rgbToHex(r: number, g: number, b: number): string {
@@ -15,15 +15,15 @@
 
 <span>
     <button on:click={() => {
-        $config.effects.shadow.active = !$config.effects.shadow.active;
-    }} class:active={$config.effects.shadow.active} class="effect">
-        <i class="ti ti-square-half"/>
-        影
+        $config.effects.speech.active = !$config.effects.speech.active;
+    }} class:active={$config.effects.speech.active} class="effect">
+        <i class="ti ti-brightness"/>
+        明るさを調整
     </button>
     <button class="option" on:click={() => {
-        shadowOpen = !shadowOpen;
+        selectedEffectType = selectedEffectType === 'speech' ? null : 'speech';
     }}>
-        {#if shadowOpen}
+        {#if selectedEffectType === 'speech'}
             <Tooltip>
                 設定を閉じる
             </Tooltip>
@@ -36,7 +36,50 @@
         {/if}
     </button>
 </span>
-{#if shadowOpen}
+{#if selectedEffectType === 'speech'}
+    <div class="options">
+        <span>
+            <label for="shadow-color">喋ってる時の明るさ</label>
+            <input type="range" id="shadow-color" min="0" max="1" step="0.01" bind:value={$config.effects.speech.intensity.speaking}/>
+        </span>
+        <span>
+            <label for="shadow-color">喋ってない時の明るさ</label>
+            <input type="range" id="shadow-color" min="0" max="1" step="0.01" bind:value={$config.effects.speech.intensity.inactive}/>
+        </span>
+        <span>
+            <label for="shadow-color">ミュート時の明るさ</label>
+            <input type="range" id="shadow-color" min="0" max="1" step="0.01" bind:value={$config.effects.speech.intensity.muted}/>
+        </span>
+        <span>
+            <label for="shadow-color">聞こえない時の明るさ</label>
+            <input type="range" id="shadow-color" min="0" max="1" step="0.01" bind:value={$config.effects.speech.intensity.deafened}/>
+        </span>
+    </div>
+{/if}
+<span>
+    <button on:click={() => {
+        $config.effects.shadow.active = !$config.effects.shadow.active;
+    }} class:active={$config.effects.shadow.active} class="effect">
+        <i class="ti ti-square-half"/>
+        影
+    </button>
+    <button class="option" on:click={() => {
+        selectedEffectType = selectedEffectType === 'shadow' ? null : 'shadow';
+    }}>
+        {#if selectedEffectType === 'shadow'}
+            <Tooltip>
+                設定を閉じる
+            </Tooltip>
+            <i class="ti ti-chevron-up"/>
+        {:else}
+            <Tooltip>
+                設定を開く
+            </Tooltip>
+            <i class="ti ti-chevron-down"/>
+        {/if}
+    </button>
+</span>
+{#if selectedEffectType === 'shadow'}
     <div class="options">
         <span>
             <label for="shadow-color">色</label>
