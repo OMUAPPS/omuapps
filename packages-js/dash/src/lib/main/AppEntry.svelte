@@ -37,7 +37,7 @@
     $: active = $currentPage === appPage.id;
 </script>
 
-<button class="app" class:active class:selected on:click={handleClick}>
+<button on:click={handleClick}>
     <Tooltip>
         <div class="tooltip">
             {#if $menuOpen}
@@ -64,39 +64,50 @@
             {/if}
         </div>
     </Tooltip>
-    {#if image}
-        <img src={image} alt="" class="image" />
-    {/if}
-    {#if $menuOpen}
-        <div class="info">
-            <span class="icon">
-                {#if icon.startsWith('ti-')}
-                    <i class="ti {icon}"></i>
-                {:else}
-                    <img src={icon} alt={name} />
-                {/if}
-            </span>
-            <p class="name">
-                {name}
-            </p>
-            <div class="open">
-                <i class="ti ti-chevron-right"></i>
+    <div class="app" class:selected class:active>
+        {#if image}
+            <img src={image} alt="" class="image" />
+        {/if}
+        {#if $menuOpen}
+            <div class="info">
+                <span class="icon">
+                    {#if icon.startsWith('ti-')}
+                        <i class="ti {icon}"></i>
+                    {:else}
+                        <img src={icon} alt={name} />
+                    {/if}
+                </span>
+                <p class="name">
+                    {name}
+                </p>
+                <div class="open">
+                    <i class="ti ti-chevron-right"></i>
+                </div>
             </div>
-        </div>
-    {:else}
-        <div class="info">
-            <span class="icon">
-                {#if icon.startsWith('ti-')}
-                    <i class="ti {icon}"></i>
-                {:else}
-                    <img src={icon} alt={name} />
-                {/if}
-            </span>
-        </div>
-    {/if}
+        {:else}
+            <div class="info">
+                <span class="icon">
+                    {#if icon.startsWith('ti-')}
+                        <i class="ti {icon}"></i>
+                    {:else}
+                        <img src={icon} alt={name} />
+                    {/if}
+                </span>
+            </div>
+        {/if}
+    </div>
 </button>
 
 <style lang="scss">
+    button {
+        border: none;
+        background: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        width: 100%;
+    }
+    
     .app {
         position: relative;
         display: flex;
