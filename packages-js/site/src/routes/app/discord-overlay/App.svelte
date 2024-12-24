@@ -172,7 +172,7 @@
                     <VoiceChannelStatus {overlayApp} />
                 {/if}
             </div>
-            <AssetButton {omu} {obs} />
+            <AssetButton {omu} {obs} dimensions={{width: 1920, height: 1080}} />
         </div>
         <div class="users">
             {#if state === 'connecting-vc'}
