@@ -574,7 +574,7 @@
 </script>
 
 <div class="canvas">
-    <Canvas {init} {render} {render2D} {resize}/>
+    <Canvas {init} {render} {render2D} {resize} fps={30}/>
 </div>
 
 <style lang="scss">

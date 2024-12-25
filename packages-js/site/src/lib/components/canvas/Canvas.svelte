@@ -6,7 +6,7 @@
     export let canvas: HTMLCanvasElement | undefined = undefined;
     export let width: number = 0;
     export let height: number = 0;
-    export let fps: number = 60;
+    export let fps: number = 30;
     export let requestId: number | null = null;
     export let render: (gl: GlContext) => Promise<void>;
     export let render2D: (context: CanvasRenderingContext2D) => void = () => {};
