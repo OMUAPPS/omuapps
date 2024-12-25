@@ -16,6 +16,6 @@ export const APP = new App(APP_ID, {
             en: 'Show discord voice chat on your stream',
         },
         icon: 'ti-brand-discord',
-        tags: ['underdevelopment', 'tool', 'asset'] as TagKey[],
+        tags: ['tool', 'asset'] as TagKey[],
     },
 });
