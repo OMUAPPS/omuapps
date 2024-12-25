@@ -156,11 +156,13 @@
         </button>
     </span>
     <span>
-        <p>
-            <i class="ti ti-reload"/>
+        <label>
+            <i class="ti ti-mountain"/>
             Reactiveアバターを使う
-        </p>
-        <input type="checkbox" bind:checked={$config.reactive.enabled}/>
+            <input type="checkbox" bind:checked={$config.reactive.enabled} on:change={() => {
+                window.location.reload();
+            }}/>
+        </label>
     </span>
     
 </div>
@@ -213,5 +215,24 @@
         height: 1.5rem;
         border-radius: 100%;
         margin-right: 0.25rem;
+    }
+
+    label {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 0.5rem;
+        font-size: 0.8621rem;
+
+        > input {
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: var(--color-1);
+            margin-left: auto;
+
+            &:hover {
+                accent-color: var(--color-1);
+            }
+        }
     }
 </style>
