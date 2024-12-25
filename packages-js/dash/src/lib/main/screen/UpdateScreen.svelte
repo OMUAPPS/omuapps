@@ -2,6 +2,7 @@
     import { omu } from '$lib/client.js';
     import Screen from '$lib/screen/Screen.svelte';
     import type { ScreenHandle } from '$lib/screen/screen.js';
+    import { invoke } from '$lib/tauri.js';
     import { Popup } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/api/process';
     import { installUpdate, type UpdateManifest } from '@tauri-apps/api/updater';
@@ -20,7 +21,12 @@
 
     async function update() {
         state = 'shutting-down';
-        await omu.server.shutdown();
+        try {
+            await omu.server.shutdown();
+            await invoke('stop_server');
+        } catch (e) {
+            console.error(e);
+        }
         state = 'updating';
         await installUpdate();
         await relaunch();
