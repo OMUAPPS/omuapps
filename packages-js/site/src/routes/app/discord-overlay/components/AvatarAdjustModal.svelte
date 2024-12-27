@@ -3,7 +3,7 @@
     import { onDestroy } from 'svelte';
     import { APP_ID } from '../app.js';
     import type { DiscordOverlayApp, Source } from '../discord-overlay-app.js';
-    import { heldAvatar } from '../states.js';
+    import { selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     const { config, voiceState, speakingState } = overlayApp;
@@ -13,8 +13,8 @@
     
     function handleMouseMove(event: MouseEvent) {
         if (!lastMouse) return;
-        if (!$heldAvatar) return;
-        const avatarConfig = $config.avatars[$heldAvatar];
+        if (!$selectedAvatar) return;
+        const avatarConfig = $config.avatars[$selectedAvatar];
         if (!avatarConfig) return;
         const [x, y] = avatarConfig.offset;
         const dx = event.clientX - lastMouse.x;
@@ -30,7 +30,7 @@
     }
 
     function handleMouseWheel(event: WheelEvent) {
-        const avatarConfig = $heldAvatar && $config.avatars[$heldAvatar];
+        const avatarConfig = $selectedAvatar && $config.avatars[$selectedAvatar];
         if (!avatarConfig) return;
         avatarConfig.scale -= event.deltaY / 1000 * 0.5;
     }
@@ -64,11 +64,11 @@
         return URL.createObjectURL(new Blob([buffer]));
     }
 
-    $: avatarConfig = $heldAvatar && $config.avatars[$heldAvatar];
+    $: avatarConfig = $selectedAvatar && $config.avatars[$selectedAvatar];
 </script>
 
-{#if $heldAvatar && avatarConfig}
-    {@const avatar = $heldAvatar}
+{#if $selectedAvatar && avatarConfig}
+    {@const avatar = $selectedAvatar}
     <button
         bind:this={dragger}
         on:mousedown={handleMouseDown}
@@ -79,12 +79,12 @@
     <div class="actions">
         {#if avatarConfig.type === 'pngtuber'}
             <button on:click={() => {
-                if (!$heldAvatar) return;
+                if (!$selectedAvatar) return;
                 if (!avatarConfig) return;
                 if (avatarConfig.type !== 'pngtuber') return;
                 avatarConfig.flipHorizontal = !avatarConfig.flipHorizontal;
                 avatarConfig.offset[0] = -avatarConfig.offset[0];
-                $config.avatars[$heldAvatar] = avatarConfig;
+                $config.avatars[$selectedAvatar] = avatarConfig;
             }} class="flip">
                 左右を反転
                 <i class="ti ti-arrows-horizontal"></i>
@@ -94,14 +94,14 @@
             </small>
         {/if}
         <button on:click={() => {
-            $heldAvatar = null;
+            $selectedAvatar = null;
         }} class="close">
             完了
             <i class="ti ti-check"></i>
         </button>
     </div>
     <button on:click={() => {
-        $heldAvatar = null;
+        $selectedAvatar = null;
     }} class="close">
         完了
         <i class="ti ti-check"></i>

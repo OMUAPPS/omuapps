@@ -2,7 +2,7 @@
     import { FileDrop, Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
     import type { DiscordOverlayApp, PngAvatarConfig, VoiceStateItem } from '../discord-overlay-app.js';
-    import { heldAvatar, heldUser } from '../states.js';
+    import { heldUser, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let state: VoiceStateItem;
@@ -50,7 +50,7 @@
                         asset_id: avatarId.key(),
                     }
                 };
-                $heldAvatar = avatarId.key();
+                $selectedAvatar = avatarId.key();
             }
         } else {
             const hash = await crypto.subtle.digest('SHA-256', buffer).then((buf) => {
@@ -81,7 +81,7 @@
                     muted: newConfig.muted,
                 })
                 $config.avatars[avatarId.key()] = newConfig;
-                $heldAvatar = avatarId.key();
+                $selectedAvatar = avatarId.key();
             }
         }
     }
@@ -165,7 +165,7 @@
         </span>
         {#if avatar}
             <button type="button" on:click={()=>{
-                $heldAvatar = avatar;
+                $selectedAvatar = avatar;
                 $heldUser = null;
             }}>
                 アバターを調整

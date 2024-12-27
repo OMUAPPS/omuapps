@@ -8,12 +8,11 @@
     import AvatarRenderer from './components/AvatarRenderer.svelte';
     import SelectedChannel from './components/SelectedChannel.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
-    import UserList from './components/UserList.svelte';
     import VCConfig from './components/VCConfig.svelte';
     import VisualConfig from './components/VisualConfig.svelte';
     import VoiceChannelStatus from './components/VoiceChannelStatus.svelte';
     import { DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
-    import { heldAvatar, heldUser } from './states.js';
+    import { heldUser, selectedAvatar } from './states.js';
 
     export let omu: Omu;
     export let obs: OBSPlugin;
@@ -97,41 +96,38 @@
     let tab: 'visual' | 'config' | 'users' | null = null;
     let view: Mat4 = Mat4.IDENTITY;
     $: {
-        if ($heldAvatar || $heldUser) {
+        if ($selectedAvatar || $heldUser) {
             tab = null;
         }
     }
 </script>
 
 <main>
-    <div class="top">
-        {#if ready}
-            <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
-                <AvatarRenderer overlayApp={overlayApp} bind:message bind:view showGrid />
-                {#if $heldAvatar}
-                    <AvatarAdjustModal overlayApp={overlayApp} />
-                {:else}
-                    {#if dimentions && view}
-                        {#each Object.entries($voiceState)
-                            .filter(([id, ]) => $config.users[id]?.show)
-                            .sort(([a,], [b,]) => $config.users[a].position[0] - $config.users[b].position[0]) as [id, state] (id)}
-                            <UserDragControl {view} {dimentions} {overlayApp} {id} {state}/>
-                        {/each}
+    {#if ready}
+        <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
+            <AvatarRenderer overlayApp={overlayApp} bind:message bind:view showGrid />
+            {#if $selectedAvatar}
+                <AvatarAdjustModal overlayApp={overlayApp} />
+            {:else}
+                {#if dimentions && view}
+                    {#each Object.entries($voiceState)
+                        .sort(([a,], [b,]) => $config.users[a].position[0] - $config.users[b].position[0]) as [id, state] (id)}
+                        <UserDragControl {view} {dimentions} {overlayApp} {id} {state}/>
+                    {/each}
+                {/if}
+            {/if}
+            {#if message}
+                <div class="message">
+                    {#if message.type === 'loading'}
+                        <p>
+                            {message.text}
+                            <Spinner />
+                        </p>
                     {/if}
-                {/if}
-                {#if message}
-                    <div class="message">
-                        {#if message.type === 'loading'}
-                            <p>
-                                {message.text}
-                                <Spinner />
-                            </p>
-                        {/if}
-                    </div>
-                {/if}
-            </div>
-        {/if}
-    </div>
+                </div>
+            {/if}
+        </div>
+    {/if}
     <div class="bottom">
         <div class="config">
             <div class="tabs">
@@ -186,7 +182,6 @@
                     <Spinner />
                 </p>
             {/if}
-            <UserList {overlayApp} />
         </div>
     </div>
     {#if tab}
@@ -221,18 +216,13 @@
     }
 
     .canvas {
-        position: relative;
+        position: absolute;
+        inset: 0;
         flex: 1;
         display: flex;
         justify-content: center;
         align-items: center;
         outline: 1px solid var(--color-outline);
-    }
-
-    .top {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
     }
 
     .bottom {

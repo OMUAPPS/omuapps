@@ -17,12 +17,19 @@
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
     import { ReactiveAPI } from '../pngtuber/reactive.js';
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
-    import { dragUser, heldAvatar } from '../states.js';
+    import { dragUser, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let message: {type: 'loading'| 'failed', text: string} | null = null;
     export let showGrid = false;
-    export let dimensions = { width: 1920, height: 1080, margin: 60 };
+    export let dimensions = {
+        width: 1920,
+        height: 1080,
+        margin: {
+            horizontal: 400,
+            vertical: 60,
+        },
+    };
     export let view: Mat4 = Mat4.IDENTITY;
     const { voiceState, speakingState, config } = overlayApp;
 
@@ -68,6 +75,9 @@
 
         const matrices = new MatrixStack();
         setupViewMatrix(matrices, gl.canvas.width, gl.canvas.height);
+        if (!view.equals(matrices.get())) {
+            view = matrices.get();
+        }
 
         if (showGrid) {
             const vertexBuffer = context.createBuffer();
@@ -146,11 +156,11 @@
             .map(({ id, state, user, avatar }, index) => {
                 const speakState = $speakingState[id];
                 const flipDirection = getFlipDirection();
-                matrices.push();
                 const position = getPosition($config, id, user, toRender.length, toRender.length - index - 1);
                 if (showGrid && (user.position[0] !== position[0] || user.position[1] !== position[1])) {
                     $config.users[id].position = position;
                 }
+                matrices.push();
                 const last = lastPositions.get(id) || new Vec2(position[0], position[1]);
                 const renderPosition = new Vec2(position[0], position[1]).lerp(last, 0.7);
                 lastPositions.set(id, renderPosition);
@@ -190,12 +200,12 @@
                 matrices.pop();
             });
 
-        if ($heldAvatar && $config.avatars[$heldAvatar]) {
+        if ($selectedAvatar && $config.avatars[$selectedAvatar]) {
             const faceSize = 400;
-            const avatarConfig = $config.avatars[$heldAvatar];
+            const avatarConfig = $config.avatars[$selectedAvatar];
             gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, new Vec4(0, 0, 0, 0.8));
             gizmo.rect(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 0.8));
-            const { avatar } = await getAvatarById(context, $heldAvatar);
+            const { avatar } = await getAvatarById(context, $selectedAvatar);
             const avatarContext = heldAvatarContext || avatar.create();
             heldAvatarContext = avatarContext;
             matrices.push();
@@ -239,8 +249,43 @@
     }
 
     async function render2D(context: CanvasRenderingContext2D) {
+        if ($selectedAvatar) return;
+        renderHideAreaHint(context);
+        renderNametags(context);
+    }
+
+    function renderHideAreaHint(context: CanvasRenderingContext2D) {
+        const { width, height } = context.canvas;
+        const margin = 10;
+        const hideAreaBounds = new AABB2(
+            new Vec2(width - 240 + margin, margin),
+            new Vec2(width - margin, height - margin),
+        );
+        const hideAreaCenter = hideAreaBounds.center();
+        const alpha = $dragUser ? 0.2 : 0.1;
+        context.beginPath();
+        context.rect(width - 240, margin, 1, height - margin * 2);
+        context.fillStyle = 'rgba(0, 0, 0, 0.1621)';
+        context.fill();
+        context.closePath();
+        context.beginPath();
+        context.fillStyle = `rgba(42, 42, 42, ${alpha})`;
+        context.rect(width - 240, 0, 240, height);
+        context.fill();
+        context.closePath();
+        if ($dragUser) {
+            context.fillStyle = 'black';
+            context.strokeStyle = 'white';
+            context.lineWidth = 2;
+            context.font = 'bold 14px "Noto Sans JP"';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText('ここにドラッグして非表示', hideAreaCenter.x, hideAreaCenter.y);
+        }
+    }
+
+    function renderNametags(context: CanvasRenderingContext2D) {
         if (!$config.show_name_tags) return;
-        // draw name tags
         const matrices = new MatrixStack();
         setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
         const view = matrices.get();
@@ -252,9 +297,9 @@
                 continue;
             }
             // const renderPosition = view.xform2(new Vec2(0, 0));
-            const position = getPosition($config, id, user, entries.length, entries.length - entries.findIndex(([id,]) => id === state.user.id) - 1);
-            const renderPosition = view.xform2(new Vec2(position[0], position[1]));
-            context.save();
+            // const position = getPosition($config, id, user, entries.length, entries.length - entries.findIndex(([id,]) => id === state.user.id) - 1);
+            const position = lastPositions.get(id) || new Vec2(0, 0);
+            const renderPosition = view.xform2(position);
             const fontSize = 28 * scaleFactor;
             const offset = $config.align.vertical === 'start' ? -44 : 74 * scaleFactor;
             context.font = `bold ${fontSize}px "Noto Sans JP"`;
@@ -278,7 +323,6 @@
                 renderPosition.x * 0.5 * context.canvas.width + context.canvas.width / 2,
                 context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset
             );
-            context.restore();
         }
     }
 
@@ -287,16 +331,60 @@
 
     function getScaleFactor(width: number, height: number): number {
         if(showGrid) {
-            return Math.min((width - dimensions.margin) / dimensions.width, (height - dimensions.margin) / dimensions.height);
+            if ($config.align.auto) {
+                return Math.min(
+                    (width - dimensions.margin.horizontal / 2) / dimensions.width,
+                    (height - dimensions.margin.vertical / 2) / dimensions.height,
+                );
+            }
+            const { margin: { horizontal, vertical } } = dimensions;
+            return Math.min(
+                (width - horizontal * 1) / dimensions.width,
+                (height - vertical * 1) / dimensions.height,
+            );
         }
         return 1;
     }
 
     function setupViewMatrix(matrices: MatrixStack, width: number, height: number) {
         matrices.orthographic(0, width, height, 0, -1, 1);
-        matrices.translate(width / 2, height / 2, 0);
-        const fitScale = getScaleFactor(width, height);
-        matrices.scale(fitScale, fitScale, 1);
+        const { width: w, height: h, margin } = dimensions;
+        const align: {
+            horizontal: 'start' | 'middle' | 'end',
+            vertical: 'start' | 'middle' | 'end',
+        } = $config.align.auto ? $config.align : {
+            horizontal: 'middle',
+            vertical: 'middle',
+        };
+        const offset = new Vec2(
+            {
+                start: w / 2 + margin.horizontal,
+                middle: width / 2,
+                end: width - w / 2 - margin.horizontal
+            }[align.horizontal],
+            {
+                start: h / 2 + h / 3 + margin.vertical,
+                middle: height / 2,
+                end: height - h / 2 - h / 3 - margin.vertical
+            }[align.vertical],
+        );
+        const scaleOrigin = new Vec2(
+            {
+                start: margin.horizontal,
+                middle: width / 2,
+                end: width - margin.horizontal
+            }[align.horizontal],
+            {
+                start: -h / 3 + margin.vertical,
+                middle: height / 2,
+                end: height + h / 3 - margin.vertical
+            }[align.vertical],
+        );
+        const scaleFactor = getScaleFactor(width, height);
+        matrices.translate(scaleOrigin.x, scaleOrigin.y, 0);
+        matrices.scale(scaleFactor, scaleFactor, 1);
+        matrices.translate(-scaleOrigin.x, -scaleOrigin.y, 0);
+        matrices.translate(offset.x, offset.y, 0);
     }
 
     function getPosition(config: Config, id: string, user: UserConfig, length: number, index: number): [number, number] {
@@ -546,6 +634,9 @@
         for (const [id, user] of Object.entries(config.users)) {
             if (!user.avatar) {
                 avatarCache.delete(id);
+            }
+            if (!user.show) {
+                lastPositions.delete(id);
             }
         }
     }

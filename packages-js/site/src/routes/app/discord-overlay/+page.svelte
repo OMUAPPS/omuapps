@@ -3,7 +3,7 @@
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-    import { AppHeader, setClient } from '@omujs/ui';
+    import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import App from './App.svelte';
@@ -33,9 +33,6 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={omu.app} />
-    </header>
     {#await promise then}
         <App {omu} {obs} {overlayApp} />
     {/await}
