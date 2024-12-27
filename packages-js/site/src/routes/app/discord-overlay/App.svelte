@@ -12,7 +12,7 @@
     import VisualConfig from './components/VisualConfig.svelte';
     import VoiceChannelStatus from './components/VoiceChannelStatus.svelte';
     import { DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
-    import { heldUser, selectedAvatar } from './states.js';
+    import { dragUser, heldUser, selectedAvatar } from './states.js';
 
     export let omu: Omu;
     export let obs: OBSPlugin;
@@ -96,7 +96,7 @@
     let tab: 'visual' | 'config' | 'users' | null = null;
     let view: Mat4 = Mat4.IDENTITY;
     $: {
-        if ($selectedAvatar || $heldUser) {
+        if ($selectedAvatar || $heldUser || $dragUser) {
             tab = null;
         }
     }

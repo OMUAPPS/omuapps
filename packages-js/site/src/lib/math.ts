@@ -13,6 +13,12 @@ export class BetterMath {
         return a + (b - a) * t;
     }
 
+    public static inverseLerp(a: number, b: number, value: number): number {
+        // (b - a): distance between origin and target
+        // (value - a): distance between origin and value
+        return (value - a) / (b - a);
+    }
+
     public static clamp(value: number, min: number, max: number): number {
         return Math.min(Math.max(value, min), max);
     }

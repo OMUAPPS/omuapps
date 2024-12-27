@@ -17,7 +17,7 @@
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
     import { ReactiveAPI } from '../pngtuber/reactive.js';
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
-    import { dragUser, selectedAvatar } from '../states.js';
+    import { dragPosition, dragUser, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let message: {type: 'loading'| 'failed', text: string} | null = null;
@@ -26,7 +26,7 @@
         width: 1920,
         height: 1080,
         margin: {
-            horizontal: 400,
+            horizontal: 300,
             vertical: 60,
         },
     };
@@ -149,9 +149,19 @@
         }));
         toRender
             .sort((a, b) => {
-                const xDiff = a.user.position[0] - b.user.position[0];
-                const direction = $config.align.horizontal === 'end' ? 1 : -1;
-                return xDiff * direction;
+                const axis = $config.align.direction === 'horizontal' ? 0 : 1;
+                const xDiff = a.user.position[axis] - b.user.position[axis];
+                const isCenter = $config.align.horizontal === 'middle' && $config.align.vertical === 'middle';
+                const dir = $config.align.direction === 'horizontal' ? {
+                    start: -1,
+                    middle: 0,
+                    end: 1,
+                }[$config.align.horizontal] : {
+                    start: -1,
+                    middle: 0,
+                    end: 1,
+                }[$config.align.vertical];
+                return xDiff * (isCenter ? -1 : 1) * dir;
             })
             .map(({ id, state, user, avatar }, index) => {
                 const speakState = $speakingState[id];
@@ -250,8 +260,115 @@
 
     async function render2D(context: CanvasRenderingContext2D) {
         if ($selectedAvatar) return;
+        if (showGrid) {
+            renderAlignHint(context);
+        }
         renderHideAreaHint(context);
         renderNametags(context);
+    }
+
+    function worldToScreen(view: Mat4, point: Vec2, width: number, height: number) {
+        const screen = view.xform2(point);
+        const zeroToOne = screen.mul(new Vec2(0.5, -0.5)).add(new Vec2(0.5, 0.5));
+        const screenSpace = zeroToOne.mul(new Vec2(width, height));
+        return screenSpace;
+    }
+
+    function renderAlignHint(context: CanvasRenderingContext2D) {
+        const matrices = new MatrixStack();
+        setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
+        const view = matrices.get();
+        const worldBounds = new AABB2(
+            new Vec2(-dimensions.width / 2, -dimensions.height / 2),
+            new Vec2(dimensions.width / 2, dimensions.height / 2),
+        );
+        const screenBounds = new AABB2(
+            worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
+            worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
+        );
+        const visibleBounds = new AABB2(
+            new Vec2(dimensions.margin.horizontal, dimensions.margin.vertical),
+            new Vec2(context.canvas.width - dimensions.margin.horizontal, context.canvas.height - dimensions.margin.vertical),
+        );
+        const a = 20;
+        const b = 1;
+        const c = 100;
+        const bounds = screenBounds.intersect(visibleBounds).expand(Vec2.ONE.scale(a + 10));
+        const hoverColor = '#ff0000';
+        const color = 'rgba(0, 0, 0, 0.5)';
+        const directions = [
+            {origin: bounds.min, direction: new Vec2(-1, -1)},
+            {origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1)},
+            {origin: bounds.max, direction: new Vec2(1, 1)},
+            {origin: new Vec2(bounds.max.x, bounds.min.y), direction: new Vec2(1, -1)},
+        ]
+        context.fillStyle = 'black';
+        context.beginPath();
+        context.arc($dragPosition.x, $dragPosition.y, a, 0, Math.PI * 2);
+        context.fill();
+        context.closePath();
+        for (const {origin, direction} of directions) {
+            const dirFromCenter = bounds.center().sub($dragPosition).normalize();
+            const dotFromCenter = dirFromCenter.dot(direction);
+            const offset = origin.sub($dragPosition).normalize();
+            const distance = offset.length();
+            const offsetRotatedToDirection = offset.mul(direction.scale(-1));
+            const dot = offsetRotatedToDirection.dot(Vec2.ONE);
+            const inDirection = dot > -1;
+            context.fillStyle = `rgba(255, 255, 255, ${Math.max(0, 1 - 1 / distance)})`;
+            context.beginPath();
+            context.arc(origin.x, origin.y, a, 0, Math.PI * 2);
+            context.fill();
+            context.closePath();
+            context.fillStyle = 'black';
+            context.fillText(`${offsetRotatedToDirection.x.toFixed(2)}, ${offsetRotatedToDirection.y.toFixed(2)}`, origin.x, origin.y - 20);
+            context.fillText(`${dotFromCenter.toFixed(2)}`, origin.x, origin.y + 20);
+            const dir = offsetRotatedToDirection.x < offsetRotatedToDirection.y ? 'horizontal' : 'vertical';
+            context.fillStyle = dir === 'vertical' ? hoverColor : (inDirection ? color : color);
+            context.beginPath();
+            context.rect(origin.x, origin.y, b, -c * direction.y);
+            context.fill();
+            context.closePath();
+            context.fillStyle = dir === 'horizontal' ? hoverColor : (inDirection ? color : color);
+            context.beginPath();
+            context.rect(origin.x, origin.y, -c * direction.x, b);
+            context.fill();
+            context.closePath();
+            if (dotFromCenter > -1) {
+                continue;
+            }
+            if (!inDirection) {
+                continue;
+            }
+            $config.align.horizontal = direction.x > 0 ? 'end' : 'start';
+            $config.align.vertical = direction.y > 0 ? 'end' : 'start';
+            $config.align.direction = dir;
+        }
+        const centerRadius = Math.min(bounds.size().x, bounds.size().y) / 2;
+        const center = bounds.center();
+        if (center.distance($dragPosition) < centerRadius) {
+            const direction = $dragPosition.sub(center).normalize();
+            const dir = Math.abs(direction.x) > Math.abs(direction.y) ? 'horizontal' : 'vertical';
+            context.fillStyle = dir === 'horizontal' ? hoverColor : color;
+            context.beginPath();
+            context.moveTo(center.x, center.y);
+            context.arc(center.x, center.y, centerRadius, -Math.PI * 3 / 4, Math.PI * 3 / 4, true);
+            context.moveTo(center.x, center.y);
+            context.arc(center.x, center.y, centerRadius, Math.PI / 4, -Math.PI / 4, true);
+            context.fill();
+            context.closePath();
+            context.fillStyle = dir === 'vertical' ? hoverColor : color;
+            context.beginPath();
+            context.moveTo(center.x, center.y);
+            context.arc(center.x, center.y, centerRadius, -Math.PI / 4, -Math.PI / 4 * 3, true);
+            context.moveTo(center.x, center.y);
+            context.arc(center.x, center.y, centerRadius, Math.PI / 4, Math.PI / 4 * 3, false);
+            context.fill();
+            context.closePath();
+            $config.align.horizontal = 'middle';
+            $config.align.vertical = 'middle';
+            $config.align.direction = dir;
+        }
     }
 
     function renderHideAreaHint(context: CanvasRenderingContext2D) {
@@ -296,8 +413,6 @@
             if (!user.show) {
                 continue;
             }
-            // const renderPosition = view.xform2(new Vec2(0, 0));
-            // const position = getPosition($config, id, user, entries.length, entries.length - entries.findIndex(([id,]) => id === state.user.id) - 1);
             const position = lastPositions.get(id) || new Vec2(0, 0);
             const renderPosition = view.xform2(position);
             const fontSize = 28 * scaleFactor;
@@ -348,6 +463,10 @@
 
     function setupViewMatrix(matrices: MatrixStack, width: number, height: number) {
         matrices.orthographic(0, width, height, 0, -1, 1);
+        if (!showGrid) {
+            matrices.translate(width / 2, height / 2, 0);
+            return;
+        }
         const { width: w, height: h, margin } = dimensions;
         const align: {
             horizontal: 'start' | 'middle' | 'end',
@@ -391,7 +510,7 @@
         if (!config.align.auto || $dragUser === id) {
             return user.position;
         }
-        const { align: {horizontal, vertical, padding, spacing, scaling} } = config;
+        const { align: {horizontal, vertical, padding, spacing, scaling, direction} } = config;
         const bounds = new AABB2(
             new Vec2(-dimensions.width / 2, -dimensions.height / 2).add(new Vec2(padding.left, padding.top)),
             new Vec2(dimensions.width / 2, dimensions.height / 2).add(new Vec2(-padding.right, -padding.bottom)),
@@ -407,17 +526,25 @@
         );
         const start = bounds.at(uv);
         const center = horizontal == 'middle';
-        const offsetDirection = center ? new Vec2(
-            1,
-            0,
-        ) : new Vec2(
-            ALIGN[horizontal] - 0.5,
-            0,
-        ).normalize();
+        const offsetDirection =new Vec2(
+            direction === 'horizontal' ? 1 : 0,
+            direction === 'vertical' ? 1 : 0,
+        ).mul(center ? Vec2.ONE : new Vec2(
+            {
+                start: 1,
+                middle: 0,
+                end: -1,
+            }[horizontal],
+            {
+                start: 1,
+                middle: 0,
+                end: -1,
+            }[vertical],
+        ));
         const scale = scaling ? Math.min(1, 4 / length) : 1;
         const offset = offsetDirection.scale(spacing * scale);
         const position = start
-            .add(offset.scale(center ? index - (length - 1) / 2 : -index))
+            .add(offset.scale(center ? index - (length - 1) / 2 : index))
             .toArray();
         return position;
     }

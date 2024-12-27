@@ -37,6 +37,10 @@ export class AABB2 {
         return new AABB2(this.min.min(other.min), this.max.max(other.max));
     }
 
+    public intersect(other: AABB2): AABB2 {
+        return new AABB2(this.min.max(other.min), this.max.min(other.max));
+    }
+
     public at(position: Vec2): Vec2 {
         return new Vec2(
             this.min.x + (this.max.x - this.min.x) * position.x,

@@ -45,6 +45,10 @@ export class Vec2 {
         return new Vec2(Math.min(this.x, other.x), Math.min(this.y, other.y));
     }
 
+    public distance(other: Vec2): number {
+        return this.sub(other).length();
+    }
+
     public rotate(angle: number): Vec2 {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);

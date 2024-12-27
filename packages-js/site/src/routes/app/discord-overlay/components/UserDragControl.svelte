@@ -6,7 +6,7 @@
     import { Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import { DEFAULT_USER_CONFIG, type Config, type DiscordOverlayApp, type VoiceStateItem } from '../discord-overlay-app.js';
-    import { dragUser, heldUser } from '../states.js';
+    import { dragPosition, dragUser, heldUser } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
     export let view: Mat4;
@@ -29,6 +29,7 @@
     
     const hideAreaWidth = 240;
     const hideAreaMargin = 10;
+    const OFFSET = 150;
 
     function isInHideArea(position: Vec2): boolean {
         const leftTop = screenToWorld(dimentions.width - hideAreaWidth, hideAreaMargin);
@@ -49,12 +50,14 @@
         const screen = worldToScreen(position[0], position[1]);
         const world = screenToWorld(screen.x + dx, screen.y - dy);
         user.position = position = [world.x, world.y];
+        const a = worldToScreen(position[0], position[1] + OFFSET + rect.height / 2);
+        $dragPosition = new Vec2(a.x, dimentions.height - a.y);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         const hide = isInHideArea(new Vec2(position[0], position[1]));
 
         const now = performance.now();
         if (now - lastUpdate > 1000 / 60) {
-            $config.users[id].show = !hide;
+            user.show = !hide;
             $config = { ...$config };
             lastUpdate = now;
         }
@@ -70,7 +73,7 @@
                 .map(([id]) => id);
             const index = invisible.indexOf(id);
             const hideAreaPosition = getHideAreaPosition(index);
-            $config.users[id].position = screenToWorld(hideAreaPosition[0] + rect.width / 2, hideAreaPosition[1] + 150 - rect.height / 2).toArray();
+            user.position = screenToWorld(hideAreaPosition[0] + rect.width / 2, hideAreaPosition[1] + OFFSET - rect.height / 2).toArray();
         }
         position = user.position;
         $config = { ...$config };
@@ -86,7 +89,7 @@
                 .map(([id]) => id);
             const index = invisible.indexOf(id);
             const hideAreaPosition = getHideAreaPosition(index);
-            $config.users[id].position = screenToWorld(hideAreaPosition[0] + rect.width / 2, hideAreaPosition[1] + 150 - rect.height / 2).toArray();
+            user.position = screenToWorld(hideAreaPosition[0] + rect.width / 2, hideAreaPosition[1] + OFFSET - rect.height / 2).toArray();
         }
         lastMouse = [e.clientX, e.clientY];
         window.addEventListener('mousemove', handleMouseMove);
@@ -112,7 +115,7 @@
         return [dimentions.width - hideAreaWidth + hideAreaMargin + 20, y];
     }
 
-    function getPosition(rect: { width: number, height: number }, offset: [number, number] = [0, 150]): [number, number] {
+    function getPosition(rect: { width: number, height: number }, offset: [number, number] = [0, OFFSET]): [number, number] {
         const show = user.show || $dragUser == id;
         if (show) {
             const margin = 8;
@@ -136,7 +139,7 @@
         config: Config,
         view: Mat4,
         directions: { width: number, height: number },
-        offset: [number, number] = [0, 150],
+        offset: [number, number] = [0, OFFSET],
     ) {
         const clamped = getPosition(rect, offset);
         return `

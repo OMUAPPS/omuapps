@@ -36,6 +36,11 @@ export class MatrixStack {
         pose.pose = Mat4.orthographic(left, right, bottom, top, near, far);
     }
 
+    public perspective(fov: number, aspect: number, near: number, far: number): void {
+        const pose = this.stack[this.stack.length - 1];
+        pose.pose = Mat4.perspective(fov, aspect, near, far);
+    }
+
     public translate(x: number, y: number, z: number): void {
         const pose = this.stack[this.stack.length - 1];
         pose.pose = pose.pose.translate(x, y, z);

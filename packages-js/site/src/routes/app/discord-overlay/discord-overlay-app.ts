@@ -213,6 +213,7 @@ export type Config = {
     align: {
         horizontal: Align;
         vertical: Align;
+        direction: 'horizontal' | 'vertical';
         auto: boolean;
         flip: boolean;
         padding: {
@@ -252,6 +253,7 @@ const DEFAULT_CONFIG: Config = {
         auto: true,
         horizontal: 'end',
         vertical: 'end',
+        direction: 'horizontal',
         flip: true,
         padding: {
             left: 150,
@@ -338,6 +340,16 @@ export class DiscordOverlayApp {
                 ...config,
                 version: 7,
                 show_name_tags: true,
+            };
+        }
+        if (config.version === 7) {
+            config = {
+                ...config,
+                version: 8,
+                align: {
+                    ...config.align,
+                    direction: 'horizontal',
+                },
             };
         }
         return config;
