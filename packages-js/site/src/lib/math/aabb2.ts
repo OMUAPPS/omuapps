@@ -43,4 +43,12 @@ export class AABB2 {
             this.min.y + (this.max.y - this.min.y) * position.y,
         );
     }
+    
+    public center(): Vec2 {
+        return this.min.add(this.max).scale(0.5);
+    }
+
+    public size(): Vec2 {
+        return this.max.sub(this.min);
+    }
 }
