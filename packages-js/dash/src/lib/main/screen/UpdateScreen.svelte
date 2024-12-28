@@ -22,8 +22,8 @@
     async function update() {
         state = 'shutting-down';
         try {
-            await omu.server.shutdown();
-            await invoke('stop_server');
+            omu.server.shutdown();
+            invoke('stop_server');
         } catch (e) {
             console.error(e);
         }
