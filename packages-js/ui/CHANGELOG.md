@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.8.0 (2024-12-28)
+
+
+### Features
+
+* **app-discord-overlay:** ドラッグで整列方法を切り替えれるように ([2ba63fd](https://github.com/OMUAPPS/omuapps/commit/2ba63fd84e84affa1a395cdd77980bcd52cf5254))
+
+
+
+
+
 ## 0.7.17 (2024-12-23)
 
 **Note:** Version bump only for package @omujs/ui
