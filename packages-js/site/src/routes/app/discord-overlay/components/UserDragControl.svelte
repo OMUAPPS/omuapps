@@ -6,7 +6,7 @@
     import { Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import { DEFAULT_USER_CONFIG, type Config, type DiscordOverlayApp, type VoiceStateItem } from '../discord-overlay-app.js';
-    import { dragPosition, dragUser, heldUser } from '../states.js';
+    import { dragPosition, dragUser, heldUser, isDraggingFinished } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
     export let view: Mat4;
@@ -79,6 +79,7 @@
         $config = { ...$config };
         lastMouse = null;
         $dragUser = null;
+        $isDraggingFinished = user.show;
     }
 
     function handleMouseDown(e: MouseEvent) {

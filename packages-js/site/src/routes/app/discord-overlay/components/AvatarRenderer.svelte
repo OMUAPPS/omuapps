@@ -3,6 +3,7 @@
     import { Gizmo } from '$lib/components/canvas/gizmo.js';
     import { GlProgram, type GlContext } from '$lib/components/canvas/glcontext.js';
     import { AABB2 } from '$lib/math/aabb2.js';
+    import { Axis } from '$lib/math/axis.js';
     import { Mat4 } from '$lib/math/mat4.js';
     import { MatrixStack } from '$lib/math/matrix-stack.js';
     import { Vec2 } from '$lib/math/vec2.js';
@@ -17,7 +18,7 @@
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
     import { ReactiveAPI } from '../pngtuber/reactive.js';
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
-    import { dragPosition, dragUser, selectedAvatar } from '../states.js';
+    import { dragPosition, dragUser, isDraggingFinished, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let message: {type: 'loading'| 'failed', text: string} | null = null;
@@ -187,6 +188,10 @@
                 matrices.translate(0, -scaleOffset, 0);
                 if ($config.align.flip) {
                     matrices.scale(flipDirection.x, flipDirection.y, 1);
+                    if ($config.align.direction === 'vertical') {
+                        const rotation = $config.align.horizontal === 'start' ? 90 : $config.align.horizontal === 'end' ? -90 : 0;
+                        matrices.rotate(Axis.Z_POS.rotateDeg($config.align.vertical === 'start' ? -rotation : -rotation));
+                    }
                 }
                 const avatarConfig = user.avatar && $config.avatars[user.avatar];
                 if (avatarConfig) {
@@ -265,6 +270,7 @@
         }
         renderHideAreaHint(context);
         renderNametags(context);
+        context.globalAlpha = 1;
     }
 
     function worldToScreen(view: Mat4, point: Vec2, width: number, height: number) {
@@ -275,6 +281,7 @@
     }
 
     function renderAlignHint(context: CanvasRenderingContext2D) {
+        if (!$dragPosition) return;
         const matrices = new MatrixStack();
         setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
         const view = matrices.get();
@@ -291,60 +298,47 @@
             new Vec2(context.canvas.width - dimensions.margin.horizontal, context.canvas.height - dimensions.margin.vertical),
         );
         const a = 20;
-        const b = 1;
         const c = 100;
         const bounds = screenBounds.intersect(visibleBounds).expand(Vec2.ONE.scale(a + 10));
-        const hoverColor = '#ff0000';
-        const color = 'rgba(0, 0, 0, 0.5)';
+        const hoverColor = '#000';
+        const color = 'rgba(0, 0, 0, 0.3)';
         const directions = [
             {origin: bounds.min, direction: new Vec2(-1, -1)},
             {origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1)},
             {origin: bounds.max, direction: new Vec2(1, 1)},
             {origin: new Vec2(bounds.max.x, bounds.min.y), direction: new Vec2(1, -1)},
         ]
-        context.fillStyle = 'black';
-        context.beginPath();
-        context.arc($dragPosition.x, $dragPosition.y, a, 0, Math.PI * 2);
-        context.fill();
-        context.closePath();
         for (const {origin, direction} of directions) {
             const dirFromCenter = bounds.center().sub($dragPosition).normalize();
             const dotFromCenter = dirFromCenter.dot(direction);
             const offset = origin.sub($dragPosition).normalize();
-            const distance = offset.length();
             const offsetRotatedToDirection = offset.mul(direction.scale(-1));
             const dot = offsetRotatedToDirection.dot(Vec2.ONE);
             const inDirection = dot > -1;
-            context.fillStyle = `rgba(255, 255, 255, ${Math.max(0, 1 - 1 / distance)})`;
-            context.beginPath();
-            context.arc(origin.x, origin.y, a, 0, Math.PI * 2);
-            context.fill();
-            context.closePath();
-            context.fillStyle = 'black';
-            context.fillText(`${offsetRotatedToDirection.x.toFixed(2)}, ${offsetRotatedToDirection.y.toFixed(2)}`, origin.x, origin.y - 20);
-            context.fillText(`${dotFromCenter.toFixed(2)}`, origin.x, origin.y + 20);
             const dir = offsetRotatedToDirection.x < offsetRotatedToDirection.y ? 'horizontal' : 'vertical';
-            context.fillStyle = dir === 'vertical' ? hoverColor : (inDirection ? color : color);
+            context.globalAlpha = inDirection && dotFromCenter <= -1 ? 1 : 0.3;
+            const b = 10;
+            context.fillStyle = dir === 'vertical' && inDirection && dotFromCenter <= -1 ? hoverColor : color;
             context.beginPath();
-            context.rect(origin.x, origin.y, b, -c * direction.y);
+            context.rect(origin.x - b / 2, origin.y, b, -c * direction.y);
             context.fill();
             context.closePath();
-            context.fillStyle = dir === 'horizontal' ? hoverColor : (inDirection ? color : color);
+            context.fillStyle = dir === 'horizontal' && inDirection && dotFromCenter <= -1 ? hoverColor : color;
             context.beginPath();
-            context.rect(origin.x, origin.y, -c * direction.x, b);
+            context.rect(origin.x, origin.y - b / 2, -c * direction.x, b);
             context.fill();
             context.closePath();
-            if (dotFromCenter > -1) {
-                continue;
-            }
-            if (!inDirection) {
-                continue;
-            }
+            if (dotFromCenter > -1) continue;
+            if (!inDirection) continue;
+            if (!$isDraggingFinished) continue;
+            $isDraggingFinished = false;
             $config.align.horizontal = direction.x > 0 ? 'end' : 'start';
             $config.align.vertical = direction.y > 0 ? 'end' : 'start';
             $config.align.direction = dir;
+            $dragPosition = null;
+            return;
         }
-        const centerRadius = Math.min(bounds.size().x, bounds.size().y) / 2;
+        const centerRadius = Math.min(bounds.size().x, bounds.size().y) / 4;
         const center = bounds.center();
         if (center.distance($dragPosition) < centerRadius) {
             const direction = $dragPosition.sub(center).normalize();
@@ -365,9 +359,12 @@
             context.arc(center.x, center.y, centerRadius, Math.PI / 4, Math.PI / 4 * 3, false);
             context.fill();
             context.closePath();
+            if (!$isDraggingFinished) return;
+            $isDraggingFinished = false;
             $config.align.horizontal = 'middle';
             $config.align.vertical = 'middle';
             $config.align.direction = dir;
+            $dragPosition = null;
         }
     }
 
