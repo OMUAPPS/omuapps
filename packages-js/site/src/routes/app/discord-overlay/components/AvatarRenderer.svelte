@@ -289,8 +289,8 @@
             } else {
                 renderAlignHintAuto(context);
             }
+            renderHideAreaHint(context);
         }
-        renderHideAreaHint(context);
         renderNametags(context);
         context.globalAlpha = 1;
         if ($isDraggingFinished) {
