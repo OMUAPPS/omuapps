@@ -113,7 +113,7 @@
             .sort(([,a], [,b]) => b.position[1] - a.position[1])
             .map(([id]) => id);
         const offset1 = -Math.min(60, (dimentions.height - 80) / invisible.length);
-        const startY = dimentions.height - hideAreaMargin - 20;
+        const startY = dimentions.height - hideAreaMargin - 80;
         const y = startY + (index * offset1);
         return [dimentions.width - hideAreaWidth + hideAreaMargin + 20, y];
     }
