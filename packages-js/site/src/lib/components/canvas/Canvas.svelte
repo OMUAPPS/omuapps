@@ -20,9 +20,8 @@
 
     function handleResize() {
         if (!canvas || !offscreen || !glContext) return;
-        const pixelRatio = window.devicePixelRatio;
-        width = canvas.clientWidth * pixelRatio;
-        height = canvas.clientHeight * pixelRatio;
+        width = canvas.clientWidth;
+        height = canvas.clientHeight;
         canvas.width = width;
         canvas.height = height;
         offscreen.width = width;
