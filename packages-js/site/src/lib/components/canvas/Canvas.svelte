@@ -6,10 +6,10 @@
     export let canvas: HTMLCanvasElement | undefined = undefined;
     export let width: number = 0;
     export let height: number = 0;
-    export let fps: number = 30;
+    export let fps: number = 60;
     export let requestId: number | null = null;
     export let render: (gl: GlContext) => Promise<void>;
-    export let render2D: (context: CanvasRenderingContext2D) => void = () => {};
+    export let render2D: (context: CanvasRenderingContext2D) => Promise<void> | void = () => {};
     export let init: (gl: GlContext) => Promise<void>;
     export let resize: (gl: GlContext) => void = () => {};
 
@@ -27,28 +27,43 @@
     }
 
     let lastTime = performance.now();
-    let timeout: number | null = null;
+    let resolve: () => void = () => {};
+
+    async function renderInternal() {
+        while (true) {
+            await new Promise<void>((r) => {
+                resolve = r;
+            });
+            if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
+                continue;
+            }
+            if (canvas.width !== width || canvas.height !== height) {
+                continue;
+            }
+            context.clearRect(0, 0, width, height);
+            await render(glContext);
+            context.drawImage(offscreen, 0, 0);
+            await render2D(context);
+            const currentTime = performance.now();
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+            const interval = 1000 / fps;
+            const delay = interval - deltaTime;
+            if (delay > 0) {
+                await new Promise((r) => setTimeout(r, delay));
+            }
+        }
+    }
 
     async function renderLoop() {
+        requestId = requestAnimationFrame(renderLoop);
         if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
-            requestId = requestAnimationFrame(renderLoop);
             return;
         }
         if (canvas.width !== width || canvas.height !== height) {
-            requestId = requestAnimationFrame(renderLoop);
             return;
         }
-        context.clearRect(0, 0, width, height);
-        await render(glContext);
-        context.drawImage(offscreen, 0, 0);
-        render2D(context);
-        const currentTime = performance.now();
-        const interval = 1000 / fps;
-        const elapsed = currentTime - lastTime;
-        const delay = Math.max(interval - elapsed, 0);
-        lastTime = currentTime + delay;
-        if (delay > 0) await new Promise(resolve => (timeout = window.setTimeout(resolve, delay)));
-        requestId = requestAnimationFrame(renderLoop);
+        resolve();
     }
 
     onMount(() => {
@@ -60,6 +75,7 @@
         init(glContext).then(() => {
             renderLoop();
         });
+        renderInternal();
         const resizeObserver = new ResizeObserver(() => {
             if (!canvas) return;
             width = canvas.clientWidth;
@@ -73,8 +89,7 @@
     onDestroy(() => {
         if (requestId) cancelAnimationFrame(requestId);
         if (glContext) glContext.destroy();
-        if (timeout) clearTimeout(timeout);
-    })
+    });
 </script>
 
 <canvas bind:this={canvas} bind:clientWidth={width} bind:clientHeight={height} />
