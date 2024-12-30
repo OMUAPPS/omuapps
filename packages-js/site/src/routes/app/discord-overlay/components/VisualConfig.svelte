@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { Align } from '@omujs/ui';
     import type { DiscordOverlayApp } from '../discord-overlay-app.js';
     import EffectControls from './EffectControls.svelte';
 
@@ -14,13 +13,6 @@
 <section class="align">
     <span>
         <label>
-            自動で整列
-            <hr>
-            <input type="checkbox" bind:checked={$config.align.auto} />
-        </label>
-    </span>
-    <span>
-        <label>
             面に応じて反転
             <hr>
             <input type="checkbox" bind:checked={$config.align.flip} />
@@ -33,10 +25,19 @@
             <input type="checkbox" bind:checked={$config.align.scaling} />
         </label>
     </span>
+</section>
+
+<h2>
+    表示
+    <i class="ti ti-eye"></i>
+</h2>
+<section>
     <span>
-        整列する面
-        <hr>
-        <Align bind:horizontal={$config.align.horizontal} bind:vertical={$config.align.vertical} />
+        <label>
+            名前を表示
+            <hr>
+            <input type="checkbox" bind:checked={$config.show_name_tags} />
+        </label>
     </span>
 </section>
 
@@ -78,20 +79,6 @@
             間隔
             <hr>
             <input type="range" bind:value={$config.align.spacing} min="0" step="1" max="500" /><p>{$config.align.spacing}</p>
-        </label>
-    </span>
-</section>
-
-<h2>
-    表示
-    <i class="ti ti-eye"></i>
-</h2>
-<section>
-    <span>
-        <label>
-            名前を表示
-            <hr>
-            <input type="checkbox" bind:checked={$config.show_name_tags} />
         </label>
     </span>
 </section>

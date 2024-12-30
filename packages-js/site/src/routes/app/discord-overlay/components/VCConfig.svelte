@@ -164,7 +164,6 @@
             }}/>
         </label>
     </span>
-    
 </div>
 
 <style lang="scss">

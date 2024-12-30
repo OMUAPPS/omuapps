@@ -8,12 +8,12 @@
     import { MatrixStack } from '$lib/math/matrix-stack.js';
     import { Vec2 } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
-    import { DiscordOverlayApp, type Config, type UserConfig, type VoiceStateUser } from '../discord-overlay-app.js';
+    import { DiscordOverlayApp, type Config, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
     import { createShadowEffect } from '../effects/shadow.js';
     import { createSpeechEffect } from '../effects/speech.js';
-    import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
+    import type { Avatar, AvatarAction, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
     import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
     import { ReactiveAPI } from '../pngtuber/reactive.js';
@@ -27,12 +27,24 @@
         width: 1920,
         height: 1080,
         margin: {
-            horizontal: 300,
-            vertical: 60,
+            left: 400,
+            right: 340,
+            top: 80,
+            bottom: 80,
         },
     };
     export let view: Mat4 = Mat4.IDENTITY;
     const { voiceState, speakingState, config } = overlayApp;
+
+    const DEFAULT_AVATAR_ACTION: AvatarAction = {
+        id: 'held',
+        talking: false,
+        mute: false,
+        deaf: false,
+        self_mute: false,
+        self_deaf: false,
+        suppress: false,
+    };
 
     let gridProgram: GlProgram;
     let shadowEffect: Effect;
@@ -109,9 +121,9 @@
                 const matrix = matrices.get().inverse();
                 transformUniform.set(matrix);
                 const gridColorUniform = gridProgram.getUniform('u_gridColor').asVec4();
-                gridColorUniform.set(new Vec4(0.7, 0.7, 0.7, 1));
+                gridColorUniform.set(new Vec4(230 / 255, 230 / 255, 230 / 255, 1));
                 const gridBackgroundUniform = gridProgram.getUniform('u_backgroundColor').asVec4();
-                gridBackgroundUniform.set(new Vec4(0.9, 0.9, 0.9, 1));
+                gridBackgroundUniform.set(new Vec4(246 / 255, 242 / 255, 235 / 255, 1));
                 const positionAttribute = gridProgram.getAttribute('a_position');
                 positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 const uvAttribute = gridProgram.getAttribute('a_texcoord');
@@ -143,11 +155,13 @@
             effects,
         }
         
-        const toRender = await Promise.all(entries.filter(([id,]) => $config.users[id] && $config.users[id].show).map(async ([id, state]) => {
+        const toRender: { id: string, state: VoiceStateItem, user: UserConfig, avatar: AvatarContext }[] = [];
+        for (const [id, state] of entries) {
+            if (!$config.users[id] || !$config.users[id].show) continue;
             const user = getUser(id);
             const avatar = await getAvatarByUser(context, state.user);
-            return { id, state, user, avatar };
-        }));
+            toRender.push({ id, state, user, avatar });
+        }
         toRender
             .sort((a, b) => {
                 const axis = $config.align.direction === 'horizontal' ? 0 : 1;
@@ -184,13 +198,16 @@
                     const scaleFactor = Math.min(1, 4 / toRender.length);
                     matrices.scale(scaleFactor, scaleFactor, 1);
                 }
-                matrices.translate(0, -scaleOffset, 0);
-                matrices.translate(0, -scaleOffset, 0);
+                matrices.translate(0, -scaleOffset * 2, 0);
                 if ($config.align.flip) {
                     matrices.scale(flipDirection.x, flipDirection.y, 1);
                     if ($config.align.direction === 'vertical') {
-                        const rotation = $config.align.horizontal === 'start' ? 90 : $config.align.horizontal === 'end' ? -90 : 0;
-                        matrices.rotate(Axis.Z_POS.rotateDeg($config.align.vertical === 'start' ? -rotation : -rotation));
+                        const rotation = {
+                            start: -90,
+                            middle: 0,
+                            end: -90,
+                        }[$config.align.horizontal];
+                        matrices.rotate(Axis.Z_POS.rotateDeg(rotation));
                     }
                 }
                 const avatarConfig = user.avatar && $config.avatars[user.avatar];
@@ -216,6 +233,11 @@
             });
 
         if ($selectedAvatar && $config.avatars[$selectedAvatar]) {
+            matrices.push();
+            matrices.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+            matrices.translate(gl.canvas.width / 2, gl.canvas.height / 2, 0);
+            const scaleFactor = getScaleFactor(gl.canvas.width, gl.canvas.height);
+            matrices.scale(scaleFactor, scaleFactor, 1);
             const faceSize = 400;
             const avatarConfig = $config.avatars[$selectedAvatar];
             gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, new Vec4(0, 0, 0, 0.8));
@@ -235,21 +257,9 @@
                     matrices.scale(1, -1, 1);
                 }
             }
-            avatarContext.render(matrices, {
-                id: 'held',
-                talking: false,
-                mute: false,
-                deaf: false,
-                self_mute: false,
-                self_deaf: false,
-                suppress: false,
-            }, { effects: [] });
+            avatarContext.render(matrices, DEFAULT_AVATAR_ACTION, { effects: [] });
             matrices.pop();
-            // draw offset center cross
-            gizmo.rect(matrices.get(), -16, -4, 16, 4, new Vec4(1, 1, 1, 0.8));
-            gizmo.rect(matrices.get(), -4, -16, 4, 16, new Vec4(1, 1, 1, 0.8));
-            gizmo.rect(matrices.get(), -14, -2, 14, 2, new Vec4(0, 0, 0, 0.8));
-            gizmo.rect(matrices.get(), -2, -14, 2, 14, new Vec4(0, 0, 0, 0.8));
+            renderCross(matrices, 0, 0, 16, 2);
             gizmo.rect(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 0.2));
             gizmo.rectOutline(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(0, 0, 0, 1), 4);
             gizmo.rectOutline(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 1), 2);
@@ -258,19 +268,35 @@
             gizmo.rect(matrices.get(), -faceSize / 2 - 80 - stroke, -3 - stroke, -faceSize / 2 - 20 + stroke, 3 + stroke, new Vec4(0, 0, 0, 1));
             gizmo.triangle(matrices.get(), -faceSize / 2 - 100, 0, -faceSize / 2 - 80, -20, -faceSize / 2 - 80, 20, new Vec4(1, 1, 1, 1));
             gizmo.rect(matrices.get(), -faceSize / 2 - 80, -3, -faceSize / 2 - 20, 3, new Vec4(1, 1, 1, 1));
+            matrices.pop();
         } else {
             heldAvatarContext = null;
         }
     }
 
+    function renderCross(matrices: MatrixStack, x: number, y: number, size: number, outline: number) {
+        gizmo.rect(matrices.get(), -size - outline, -outline * 2, size + outline, outline * 2, new Vec4(1, 1, 1, 0.8));
+        gizmo.rect(matrices.get(), -outline * 2, -size - outline, outline * 2, size + outline, new Vec4(1, 1, 1, 0.8));
+        gizmo.rect(matrices.get(), -size, -outline, size, outline, new Vec4(0, 0, 0, 0.8));
+        gizmo.rect(matrices.get(), -outline, -size, outline, size, new Vec4(0, 0, 0, 0.8));
+    }
+
     async function render2D(context: CanvasRenderingContext2D) {
         if ($selectedAvatar) return;
         if (showGrid) {
-            renderAlignHint(context);
+            if ($config.align.auto) {
+                renderAlignHint(context);
+            } else {
+                renderAlignHintAuto(context);
+            }
         }
         renderHideAreaHint(context);
         renderNametags(context);
         context.globalAlpha = 1;
+        if ($isDraggingFinished) {
+            $isDraggingFinished = false;
+            $dragPosition = null;
+        }
     }
 
     function worldToScreen(view: Mat4, point: Vec2, width: number, height: number) {
@@ -294,77 +320,137 @@
             worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
         );
         const visibleBounds = new AABB2(
-            new Vec2(dimensions.margin.horizontal, dimensions.margin.vertical),
-            new Vec2(context.canvas.width - dimensions.margin.horizontal, context.canvas.height - dimensions.margin.vertical),
+            new Vec2(dimensions.margin.left, dimensions.margin.top),
+            new Vec2(context.canvas.width - dimensions.margin.right, context.canvas.height - dimensions.margin.bottom),
         );
         const a = 20;
         const c = 100;
         const bounds = screenBounds.intersect(visibleBounds).expand(Vec2.ONE.scale(a + 10));
-        const hoverColor = '#000';
-        const color = 'rgba(0, 0, 0, 0.3)';
+        const hoverColor = '#0B6F72';
+        const color = '#BFBFBF';
         const directions = [
-            {origin: bounds.min, direction: new Vec2(-1, -1)},
-            {origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1)},
-            {origin: bounds.max, direction: new Vec2(1, 1)},
-            {origin: new Vec2(bounds.max.x, bounds.min.y), direction: new Vec2(1, -1)},
+            {origin: bounds.min, direction: new Vec2(-1, -1), name: '左上'},
+            {origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1), name: '左下'},
+            {origin: bounds.max, direction: new Vec2(1, 1), name: '右下'},
+            {origin: new Vec2(bounds.max.x, bounds.min.y), direction: new Vec2(1, -1), name: '右上'},
         ]
-        for (const {origin, direction} of directions) {
+        for (const {origin, direction, name} of directions) {
             const dirFromCenter = bounds.center().sub($dragPosition).normalize();
             const dotFromCenter = dirFromCenter.dot(direction);
             const offset = origin.sub($dragPosition).normalize();
             const offsetRotatedToDirection = offset.mul(direction.scale(-1));
             const dot = offsetRotatedToDirection.dot(Vec2.ONE);
             const inDirection = dot > -1;
+            const left = new Vec2(-direction.y, direction.x);
             const dir = offsetRotatedToDirection.x < offsetRotatedToDirection.y ? 'horizontal' : 'vertical';
             context.globalAlpha = inDirection && dotFromCenter <= -1 ? 1 : 0.3;
-            const b = 10;
+            const b = 4;
             context.fillStyle = dir === 'vertical' && inDirection && dotFromCenter <= -1 ? hoverColor : color;
+            context.fillRect(origin.x - b / 2, origin.y - b * direction.y, b, -c * direction.y);
+            const verticalStartX = origin.x - b / 2 + b - 1.5;
+            const verticalStartY = origin.y - b * direction.y - (c + 10) * direction.y;
+            
             context.beginPath();
-            context.rect(origin.x - b / 2, origin.y, b, -c * direction.y);
+            context.moveTo(verticalStartX, verticalStartY);
+            context.lineTo(verticalStartX + 10 * left.x, verticalStartY + 10 * direction.y);
+            context.lineTo(verticalStartX - 10 * left.x, verticalStartY + 10 * direction.y);
             context.fill();
             context.closePath();
             context.fillStyle = dir === 'horizontal' && inDirection && dotFromCenter <= -1 ? hoverColor : color;
+            context.fillRect(origin.x - b * direction.x, origin.y - b / 2, -c * direction.x, b);
+            const horizontalStartX = origin.x - b * direction.x - (c + 10) * direction.x;
+            const horizontalStartY = origin.y - b / 2 + b - 1.5;
             context.beginPath();
-            context.rect(origin.x, origin.y - b / 2, -c * direction.x, b);
+            context.moveTo(horizontalStartX, horizontalStartY);
+            context.lineTo(horizontalStartX + 10 * direction.x, horizontalStartY + 10 * left.y);
+            context.lineTo(horizontalStartX + 10 * direction.x, horizontalStartY - 10 * left.y);
             context.fill();
             context.closePath();
+            context.globalAlpha = 1;
             if (dotFromCenter > -1) continue;
             if (!inDirection) continue;
+            context.fillStyle = hoverColor;
+            context.font = 'bold 12px "Noto Sans JP"';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            const text = `${name} から ${dir === 'vertical' ? '縦' : '横'} に揃える`;
+            const size = context.measureText(text);
+            context.fillStyle = '#000';
+            const padding = 10;
+            context.fillRect(origin.x - size.width / 2 - padding, origin.y + (direction.y || -1) * 20 - padding, size.width + padding * 2, 12 + padding);
+            context.fillStyle = '#fff';
+            context.fillText(text, origin.x, origin.y + (direction.y || -1) * 20 + 2);
             if (!$isDraggingFinished) continue;
-            $isDraggingFinished = false;
             $config.align.horizontal = direction.x > 0 ? 'end' : 'start';
             $config.align.vertical = direction.y > 0 ? 'end' : 'start';
             $config.align.direction = dir;
             $dragPosition = null;
             return;
         }
-        const centerRadius = Math.min(bounds.size().x, bounds.size().y) / 4;
+    }
+
+    function renderAlignHintAuto(context: CanvasRenderingContext2D) {
+        if (!$dragPosition) return;
+        const matrices = new MatrixStack();
+        setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
+        const view = matrices.get();
+        const worldBounds = new AABB2(
+            new Vec2(-dimensions.width / 2, -dimensions.height / 2),
+            new Vec2(dimensions.width / 2, dimensions.height / 2),
+        );
+        const screenBounds = new AABB2(
+            worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
+            worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
+        );
+        const visibleBounds = new AABB2(
+            new Vec2(10, dimensions.margin.top),
+            new Vec2(context.canvas.width - dimensions.margin.right, context.canvas.height - dimensions.margin.bottom),
+        );
+        const a = 20;
+        const bounds = screenBounds.intersect(visibleBounds).expand(Vec2.ONE.scale(a + 10));
+        const hoverColor = '#000';
+        const color = 'rgba(0, 0, 0, 0.3)';
         const center = bounds.center();
-        if (center.distance($dragPosition) < centerRadius) {
-            const direction = $dragPosition.sub(center).normalize();
-            const dir = Math.abs(direction.x) > Math.abs(direction.y) ? 'horizontal' : 'vertical';
-            context.fillStyle = dir === 'horizontal' ? hoverColor : color;
+        const directions = [
+            {origin: new Vec2(center.x, bounds.min.y), direction: new Vec2(0, -1), name: '上'},
+            {origin: new Vec2(center.x, bounds.max.y), direction: new Vec2(0, 1), name: '下'},
+            {origin: new Vec2(bounds.min.x, center.y), direction: new Vec2(-1, 0), name: '左'},
+            {origin: new Vec2(bounds.max.x, center.y), direction: new Vec2(1, 0), name: '右'},
+        ]
+        for (const {origin, direction, name} of directions) {
+            const offset = origin.sub($dragPosition).normalize();
+            const inDirection = offset.dot(direction) < 0;
+            const directionLeft = new Vec2(-direction.y, direction.x);
+            const lineStart = origin.add(directionLeft.scale(10));
+            const lineEnd = origin.add(directionLeft.scale(-10));
+            context.strokeStyle = inDirection ? hoverColor : color;
             context.beginPath();
-            context.moveTo(center.x, center.y);
-            context.arc(center.x, center.y, centerRadius, -Math.PI * 3 / 4, Math.PI * 3 / 4, true);
-            context.moveTo(center.x, center.y);
-            context.arc(center.x, center.y, centerRadius, Math.PI / 4, -Math.PI / 4, true);
-            context.fill();
+            context.moveTo(lineStart.x, lineStart.y);
+            context.lineTo(lineEnd.x, lineEnd.y);
+            context.moveTo(origin.x - direction.x * 10, origin.y - direction.y * 10);
+            context.lineTo(origin.x - direction.x * 20, origin.y - direction.y * 20);
+            context.stroke();
             context.closePath();
-            context.fillStyle = dir === 'vertical' ? hoverColor : color;
-            context.beginPath();
-            context.moveTo(center.x, center.y);
-            context.arc(center.x, center.y, centerRadius, -Math.PI / 4, -Math.PI / 4 * 3, true);
-            context.moveTo(center.x, center.y);
-            context.arc(center.x, center.y, centerRadius, Math.PI / 4, Math.PI / 4 * 3, false);
-            context.fill();
-            context.closePath();
-            if (!$isDraggingFinished) return;
-            $isDraggingFinished = false;
-            $config.align.horizontal = 'middle';
-            $config.align.vertical = 'middle';
-            $config.align.direction = dir;
+            if (inDirection) {
+                context.fillStyle = hoverColor;
+                context.font = 'bold 14px "Noto Sans JP"';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                const text = `${name} に揃える`;
+                const size = context.measureText(text);
+                context.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                const padding = 10;
+                context.fillRect(origin.x - size.width / 2 - padding, origin.y + (direction.y || -1) * 20 - padding, size.width + padding * 2, 14 + padding);
+                context.fillStyle = 'white';
+                context.fillText(text, origin.x, origin.y + (direction.y || -1) * 20 + 2);
+            }
+            if (!inDirection) continue;
+            if (!$isDraggingFinished) continue;
+            $config.align.horizontal = direction.x === 0 ? 'middle' : direction.x > 0 ? 'end' : 'start';
+            $config.align.vertical = direction.y === 0 ? 'middle' : direction.y > 0 ? 'end' : 'start';
+            $config.align.direction = direction.y === 0 ? 'vertical' : 'horizontal';
             $dragPosition = null;
+            return;
         }
     }
 
@@ -376,19 +462,19 @@
             new Vec2(width - margin, height - margin),
         );
         const hideAreaCenter = hideAreaBounds.center();
-        const alpha = $dragUser ? 0.2 : 0.1;
-        context.beginPath();
-        context.rect(width - 240, margin, 1, height - margin * 2);
-        context.fillStyle = 'rgba(0, 0, 0, 0.1621)';
-        context.fill();
-        context.closePath();
-        context.beginPath();
-        context.fillStyle = `rgba(42, 42, 42, ${alpha})`;
-        context.rect(width - 240, 0, 240, height);
-        context.fill();
-        context.closePath();
+        const isInHideArea = $dragPosition && hideAreaBounds.contains($dragPosition);
+        const hasHideUser = Object.keys($speakingState).some(id => !$config.users[id]?.show);
+        context.globalAlpha = hasHideUser || $dragPosition ? 1 : 0.6;
+        context.fillStyle = $dragPosition ? '#FFFEFC' : 'rgba(255, 255, 255, 0.8)';
+        context.fillRect(width - 240, margin, 240 - margin, height - margin * 2);
         if ($dragUser) {
-            context.fillStyle = 'black';
+            context.strokeStyle = isInHideArea ? '#0B6F72' : '#E6E6E6';
+            const offset = 4;
+            context.lineWidth = 2;
+            context.strokeRect(width - 240 + offset, margin + offset, 240 - margin - offset * 2, height - margin * 2 - offset * 2);
+        }
+        if ($dragUser) {
+            context.fillStyle = '#0B6F72';
             context.strokeStyle = 'white';
             context.lineWidth = 2;
             context.font = 'bold 14px "Noto Sans JP"';
@@ -396,6 +482,7 @@
             context.textBaseline = 'middle';
             context.fillText('ここにドラッグして非表示', hideAreaCenter.x, hideAreaCenter.y);
         }
+        context.globalAlpha = 1;
     }
 
     function renderNametags(context: CanvasRenderingContext2D) {
@@ -442,18 +529,18 @@
     const lastPositions = new Map<string, Vec2>();
 
     function getScaleFactor(width: number, height: number): number {
+        const MIN_SCALE_FACTOR = 0.5;
         if(showGrid) {
             if ($config.align.auto) {
-                return Math.min(
-                    (width - dimensions.margin.horizontal / 2) / dimensions.width,
-                    (height - dimensions.margin.vertical / 2) / dimensions.height,
-                );
+                const widthScale = (width - (dimensions.margin.left + dimensions.margin.right)) / dimensions.width;
+                const heightScale = (height - (dimensions.margin.top + dimensions.margin.bottom)) / dimensions.height;
+                return Math.max(MIN_SCALE_FACTOR, Math.min(widthScale, heightScale));
             }
-            const { margin: { horizontal, vertical } } = dimensions;
-            return Math.min(
-                (width - horizontal * 1) / dimensions.width,
-                (height - vertical * 1) / dimensions.height,
-            );
+            const { margin } = dimensions;
+            return Math.max(MIN_SCALE_FACTOR, Math.min(
+                (width - (margin.left + margin.right) / 2) / dimensions.width,
+                (height - (margin.top + margin.bottom) / 2) / dimensions.height,
+            ));
         }
         return 1;
     }
@@ -474,26 +561,26 @@
         };
         const offset = new Vec2(
             {
-                start: w / 2 + margin.horizontal,
+                start: w / 2 + margin.left,
                 middle: width / 2,
-                end: width - w / 2 - margin.horizontal
+                end: width - w / 2 - margin.right,
             }[align.horizontal],
             {
-                start: h / 2 + h / 3 + margin.vertical,
+                start: h / 2 + h / 4 + margin.top,
                 middle: height / 2,
-                end: height - h / 2 - h / 3 - margin.vertical
+                end: height - h / 2 - h / 4 - margin.bottom,
             }[align.vertical],
         );
         const scaleOrigin = new Vec2(
             {
-                start: margin.horizontal,
+                start: margin.left,
                 middle: width / 2,
-                end: width - margin.horizontal
+                end: width - margin.right,
             }[align.horizontal],
             {
-                start: -h / 3 + margin.vertical,
+                start: Math.max(margin.top, height / 2 - h / 4),
                 middle: height / 2,
-                end: height + h / 3 - margin.vertical
+                end: Math.min(height - margin.bottom, height / 2 + h / 4),
             }[align.vertical],
         );
         const scaleFactor = getScaleFactor(width, height);
@@ -522,26 +609,26 @@
             ALIGN[vertical],
         );
         const start = bounds.at(uv);
-        const center = horizontal == 'middle';
-        const offsetDirection =new Vec2(
+        const center = horizontal == 'middle' && vertical == 'middle';
+        const offsetDirection = new Vec2(
             direction === 'horizontal' ? 1 : 0,
             direction === 'vertical' ? 1 : 0,
         ).mul(center ? Vec2.ONE : new Vec2(
             {
                 start: 1,
-                middle: 0,
+                middle: 1,
                 end: -1,
             }[horizontal],
             {
                 start: 1,
-                middle: 0,
+                middle: 1,
                 end: -1,
             }[vertical],
         ));
         const scale = scaling ? Math.min(1, 4 / length) : 1;
         const offset = offsetDirection.scale(spacing * scale);
         const position = start
-            .add(offset.scale(center ? index - (length - 1) / 2 : index))
+            .add(offset.scale(horizontal === 'middle' || vertical === 'middle' ? index - (length - 1) / 2 : index))
             .toArray();
         return position;
     }
@@ -641,15 +728,20 @@
         }
     }
 
-    async function getReactiveAvatar(gl: GlContext, userId: string): Promise<Avatar | null> {
+    async function getReactiveAvatar(gl: GlContext, avatarId: string, userId: string): Promise<Avatar | null> {
         if (!$config.user_id) {
             throw new Error('User ID is not set');
         }
-        const proxy = async (url: string) => {
-            const proxyUrl = overlayApp.omu.assets.proxy(url);
-            return await fetch(proxyUrl);
-        };
-        const api = new ReactiveAPI($config.user_id, proxy)
+        async function proxy(url: string) {
+            try {
+                const proxyUrl = overlayApp.omu.assets.proxy(url);
+                return await window.fetch(proxyUrl);
+            } catch (e) {
+                console.error(e);
+                throw e;
+            }
+        }
+        const api = new ReactiveAPI($config.user_id, (url: string) => proxy(url));
         const user = await api.user(userId);
         const model = user.activeModelID !== 'always' && await api.model(user.activeModelID);
         const override = await api.override(userId);
@@ -660,31 +752,27 @@
         if (!modelData.inactive) {
             return null;
         }
-        $config.avatars[userId] = {
+        $config.avatars[avatarId] = {
             type: 'png',
             key: '',
             offset: [0, 0],
             scale: 1,
             base: {
                 type: 'url',
-                url: overlayApp.omu.assets.proxy(modelData.inactive),
+                url: modelData.inactive,
             },
             active: modelData.speaking ? {
                 type: 'url',
-                url: overlayApp.omu.assets.proxy(modelData.speaking),
+                url: modelData.speaking,
             } : undefined,
             deafened: modelData.deafened ? {
                 type: 'url',
-                url: overlayApp.omu.assets.proxy(modelData.deafened),
+                url: modelData.deafened,
             } : undefined,
             muted: modelData.muted ? {
                 type: 'url',
-                url: overlayApp.omu.assets.proxy(modelData.muted),
+                url: modelData.muted,
             } : undefined,
-        }
-        $config.users[userId] = {
-            ...$config.users[userId],
-            avatar: userId,
         }
         const base = await createSourceElement(await proxy(modelData.inactive).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
         const active = await createSourceElement(await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
@@ -701,7 +789,7 @@
 
     async function createDefaultAvatar(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
         const url = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
-        const source = await fetch(url).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
+        const source = await window.fetch(url).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
         const base = await createSourceElement(source);
         const avatar = await PNGAvatar.load(gl, {
             base,
@@ -719,16 +807,28 @@
         if (existing && existing.id === 'default' && !userConfig.avatar) {
             return existing.avatar;
         }
+        console.log(existing, existing && existing.id === userConfig.avatar, avatarConfig, existing && avatarConfig && existing.key === avatarConfig.key);
         if (!userConfig.avatar) {
-            const reactiveAvatar = $config.reactive.enabled && await getReactiveAvatar(gl, user.id);
-            if (reactiveAvatar) {
-                const context = reactiveAvatar.create();
+            try {
+                if ($config.reactive.enabled) {
+                    const avatarId = user.id;
+                    const reactiveAvatar = await getReactiveAvatar(gl, avatarId, user.id);
+                    if (reactiveAvatar) {
+                        $config.users[user.id].avatar = avatarId;
+                        const context = reactiveAvatar.create();
+                        contextCache.set(avatarId, {id: user.id, key: '', avatar: context});
+                        return context;
+                    }
+                }
+                const context = await createDefaultAvatar(gl, user);
+                contextCache.set(user.id, {id: 'default', key: '', avatar: context});
+                return context;
+            } catch (e) {
+                console.error(e);
+                const context = await createDefaultAvatar(gl, user);
                 contextCache.set(user.id, {id: 'default', key: '', avatar: context});
                 return context;
             }
-            const context = await createDefaultAvatar(gl, user);
-            contextCache.set(user.id, {id: 'default', key: '', avatar: context});
-            return context;
         }
         message = {
             type: 'loading',
@@ -741,6 +841,7 @@
             contextCache.set(user.id, {id: userConfig.avatar, key, avatar: context});
             return context;
         } catch (e) {
+            console.error(e);
             message = {
                 type: 'failed',
                 text: `${user.username}のアバターの読み込みに失敗しました: ${e}`,

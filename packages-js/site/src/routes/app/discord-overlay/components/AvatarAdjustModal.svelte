@@ -256,6 +256,7 @@
         background: var(--color-1);
         color: var(--color-bg-2);
         outline: 1px solid var(--color-bg-2);
+        outline-offset: -1px;
         border: none;
         padding: 0.5rem 1rem;
         border-radius: 2px;
@@ -267,7 +268,28 @@
             background: var(--color-bg-1);
             color: var(--color-1);
             outline: 1px solid var(--color-1);
-            outline-offset: -1px;
+        }
+    }
+
+    .flip {
+        background: var(--color-bg-2);
+        color: var(--color-1);
+        outline: 1px solid var(--color-bg-2);
+        outline-offset: -1px;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 2px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        &:hover {
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            outline: 1px solid var(--color-1);
         }
     }
 

@@ -27,6 +27,8 @@ export class ReactiveAPI {
         const result: Record<string, string> = {};
         if (data[0] === '{' && data[data.length - 1] === '}') {
             data = data.slice(1, data.length - 1);
+        } else {
+            return result;
         }
         while (data.length > 0) {
             const keyEnd = data.indexOf(':');

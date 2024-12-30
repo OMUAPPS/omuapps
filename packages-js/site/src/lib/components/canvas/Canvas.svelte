@@ -30,9 +30,14 @@
     let timeout: number | null = null;
 
     async function renderLoop() {
-        requestId = requestAnimationFrame(renderLoop);
-        if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) return;
-        if (canvas.width !== width || canvas.height !== height) return;
+        if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
+            requestId = requestAnimationFrame(renderLoop);
+            return;
+        }
+        if (canvas.width !== width || canvas.height !== height) {
+            requestId = requestAnimationFrame(renderLoop);
+            return;
+        }
         context.clearRect(0, 0, width, height);
         await render(glContext);
         context.drawImage(offscreen, 0, 0);
@@ -43,6 +48,7 @@
         const delay = Math.max(interval - elapsed, 0);
         lastTime = currentTime + delay;
         if (delay > 0) await new Promise(resolve => (timeout = window.setTimeout(resolve, delay)));
+        requestId = requestAnimationFrame(renderLoop);
     }
 
     onMount(() => {

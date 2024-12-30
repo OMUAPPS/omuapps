@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { Tooltip } from '@omujs/ui';
+    import { Spinner, Tooltip } from '@omujs/ui';
     import type { DiscordOverlayApp } from '../discord-overlay-app.js';
 
     export let overlayApp: DiscordOverlayApp;
-    const { selectedVoiceChannel } = overlayApp;
+    export let state: 'wait-for-ready' | 'connecting-vc' | null;
+    const { config, selectedVoiceChannel } = overlayApp;
 
     const CHANNEL_TYPE = {
         GUILD_TEXT: 0,
@@ -22,7 +23,7 @@
     }
 </script>
 
-{#if $selectedVoiceChannel}
+{#if $selectedVoiceChannel && !state}
     {@const { guild, channel } = $selectedVoiceChannel}
     <div class="server">
         {#if channel}
@@ -75,24 +76,58 @@
         {/if}
     </div>
 {:else}
-    <div class="server">
-        <Tooltip>
-            ボイスチャンネルに接続していません
-        </Tooltip>
-        <div class="icon">
-            <i class="ti ti-server"></i>
+    {#if state === 'connecting-vc'}
+        <div class="server">
+            <Tooltip>
+                {#if $selectedVoiceChannel}
+                    {#if $selectedVoiceChannel.guild}
+                        {$selectedVoiceChannel.guild.name}の
+                    {/if}
+                    {$selectedVoiceChannel.channel.name}に接続しています
+                {:else}
+                    現在入っている通話に接続しています
+                {/if}
+            </Tooltip>
+            <div class="icon">
+                <i class="ti ti-server"></i>
+            </div>
+            <p>
+                ボイスチャンネルに接続中
+                <Spinner />
+            </p>
         </div>
-        <p>
-            接続していません
-        </p>
-    </div>
+    {:else if state === 'wait-for-ready'}
+        <div class="server">
+            <Tooltip>
+                起動しているDiscordを検出しています
+            </Tooltip>
+            <div class="icon">
+                <i class="ti ti-search"></i>
+            </div>
+            <p>
+                Discordを待機中
+                <Spinner />
+            </p>
+        </div>
+    {:else}
+        <div class="server">
+            <Tooltip>
+                ボイスチャンネルに接続していません
+            </Tooltip>
+            <div class="icon">
+                <i class="ti ti-server"></i>
+            </div>
+            <p>
+                接続していません
+            </p>
+        </div>
+    {/if}
 {/if}
 
 <style lang="scss">
     .server {
         display: flex;
         align-items: center;
-        margin-left: 0.5rem;
         color: var(--color-1);
         font-size: 0.9rem;
         border-bottom: 2px solid var(--color-1);
@@ -128,6 +163,7 @@
         > p {
             display: flex;
             align-items: baseline;
+            gap: 0.5rem;
             font-weight: 600;
             font-size: 0.9rem;
             white-space: nowrap;

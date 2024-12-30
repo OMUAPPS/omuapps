@@ -53,11 +53,10 @@
         const a = worldToScreen(position[0], position[1] + OFFSET + rect.height / 2);
         $dragPosition = new Vec2(a.x, dimentions.height - a.y);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
-        const hide = isInHideArea(new Vec2(position[0], position[1]));
+        user.show = !isInHideArea(new Vec2(position[0], position[1]));
 
         const now = performance.now();
         if (now - lastUpdate > 1000 / 60) {
-            user.show = !hide;
             $config = { ...$config };
             lastUpdate = now;
         }
@@ -65,7 +64,7 @@
 
     function handleMouseUp() {
         window.removeEventListener('mousemove', handleMouseMove);
-        element.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('mouseup', handleMouseUp);
         if (!user.show) {
             const invisible = Object.entries($config.users)
                 .filter(([,user]) => !user.show)
@@ -80,6 +79,9 @@
         lastMouse = null;
         $dragUser = null;
         $isDraggingFinished = user.show;
+        if (!user.show) {
+            $dragPosition = null;
+        }
     }
 
     function handleMouseDown(e: MouseEvent) {
@@ -110,8 +112,8 @@
             .filter(([,user]) => !user.show)
             .sort(([,a], [,b]) => b.position[1] - a.position[1])
             .map(([id]) => id);
-        const offset1 = Math.min(60, (dimentions.height - 80) / invisible.length);
-        const startY = 40;
+        const offset1 = -Math.min(60, (dimentions.height - 80) / invisible.length);
+        const startY = dimentions.height - hideAreaMargin - 20;
         const y = startY + (index * offset1);
         return [dimentions.width - hideAreaWidth + hideAreaMargin + 20, y];
     }
@@ -268,7 +270,7 @@
         filter: drop-shadow(3px 5px 0 rgba(0, 0, 0, 0.0621)) drop-shadow(-3px -5px 10px rgba(0, 0, 0, 0.1621));
         outline: 1px solid var(--color-outline);
         border-radius: 0.25rem;
-        z-index: 1;
+        z-index: 2;
 
         &.side-right {
             animation: slide-in-right 0.0621s forwards;
@@ -340,7 +342,7 @@
         background: var(--color-bg-2);
         color: var(--color-1);
         border: 1px solid var(--color-1);
-        outline: 0.25rem solid var(--color-outline);
+        outline: 0.25rem solid color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%);
         font-weight: 600;
         font-size: 0.9rem;
         padding: 1rem;
@@ -351,7 +353,7 @@
         align-items: center;
         white-space: nowrap;
         cursor: grab;
-        z-index: 999;
+        z-index: 2;
 
         > .grip {
             border-radius: 100%;
