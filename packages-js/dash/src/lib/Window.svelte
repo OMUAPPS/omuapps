@@ -1,12 +1,14 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
     import { TauriEvent } from '@tauri-apps/api/event';
+    import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
     import TitlebarButton from './TitlebarButton.svelte';
     import StatusBar from './common/StatusBar.svelte';
     import Title from './images/title.svg';
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
     import { listen, tauriWindow } from './tauri.js';
+    import { version } from './version.json';
 
     let alwaysOnTop = false;
     let maximized = false;
@@ -43,6 +45,10 @@
         <div data-tauri-drag-region class:margin={!maximized} />
         <div class="title">
             <img src={Title} alt="title" width="64" height="10" />
+            <span class="version">
+                {version}
+                {DEV && ' (dev)' || ''}
+            </span>
             <StatusBar />
         </div>
         <div class="buttons">
@@ -117,11 +123,20 @@
         outline-offset: -1px;
     }
 
+    .version {
+        color: var(--color-1);
+        font-size: 0.6rem;
+        font-weight: 600;
+        // upper alignment
+        position: relative;
+        top: -2px;
+    }
+
     .title {
         position: absolute;
         display: flex;
         flex-direction: row;
-        gap: 10px;
+        gap: 0.25rem;
         align-items: center;
         justify-content: center;
         margin-left: 10px;
