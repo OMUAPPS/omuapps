@@ -4,6 +4,8 @@
 
     export let glContext: GlContext | undefined = undefined;
     export let canvas: HTMLCanvasElement | undefined = undefined;
+    export let canvasWidth: number = 0;
+    export let canvasHeight: number = 0;
     export let width: number = 0;
     export let height: number = 0;
     export let fps: number = 60;
@@ -18,6 +20,9 @@
 
     function handleResize() {
         if (!canvas || !offscreen || !glContext) return;
+        const pixelRatio = window.devicePixelRatio;
+        width = canvas.clientWidth * pixelRatio;
+        height = canvas.clientHeight * pixelRatio;
         canvas.width = width;
         canvas.height = height;
         offscreen.width = width;
@@ -92,7 +97,7 @@
     });
 </script>
 
-<canvas bind:this={canvas} bind:clientWidth={width} bind:clientHeight={height} />
+<canvas bind:this={canvas} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight} />
 
 <style lang="scss">
     canvas {

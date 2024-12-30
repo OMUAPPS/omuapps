@@ -807,7 +807,6 @@
         if (existing && existing.id === 'default' && !userConfig.avatar) {
             return existing.avatar;
         }
-        console.log(existing, existing && existing.id === userConfig.avatar, avatarConfig, existing && avatarConfig && existing.key === avatarConfig.key);
         if (!userConfig.avatar) {
             try {
                 if ($config.reactive.enabled) {
