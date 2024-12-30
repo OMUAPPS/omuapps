@@ -139,6 +139,7 @@
     }
 
     function getStyle(
+        rect: { width: number, height: number },
         config: Config,
         view: Mat4,
         directions: { width: number, height: number },
@@ -200,7 +201,7 @@
     class="control"
     class:dragging={lastMouse || ($dragUser && $dragUser == id)}
     bind:this={element}
-    style={getStyle($config, view, dimentions)}
+    style={getStyle(rect, $config, view, dimentions)}
     on:mousedown={handleMouseDown}
     on:click={() => {
         const elapsed = performance.now() - clickTime;
@@ -255,7 +256,7 @@
 {#if $heldUser == id}
     <div
         class="settings"
-        style={getStyle($config, view, dimentions, [0, 100])}
+        style={getStyle(rect, $config, view, dimentions, [0, 100])}
         style:opacity={$heldUser && $heldUser != id ? 0.2 : 1}
         class:side-right={position[0] > 0}
     >
