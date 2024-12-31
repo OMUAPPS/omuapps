@@ -169,11 +169,11 @@
                 const isCenter = $config.align.horizontal === 'middle' && $config.align.vertical === 'middle';
                 const dir = $config.align.direction === 'horizontal' ? {
                     start: -1,
-                    middle: 0,
+                    middle: -1,
                     end: 1,
                 }[$config.align.horizontal] : {
                     start: -1,
-                    middle: 0,
+                    middle: -1,
                     end: 1,
                 }[$config.align.vertical];
                 return xDiff * (isCenter ? -1 : 1) * dir;
