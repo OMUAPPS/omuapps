@@ -3,7 +3,7 @@
     import { onDestroy } from 'svelte';
     import { APP_ID } from '../app.js';
     import type { DiscordOverlayApp, Source } from '../discord-overlay-app.js';
-    import { selectedAvatar } from '../states.js';
+    import { scaleFactor, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     const { config, voiceState, speakingState } = overlayApp;
@@ -19,7 +19,7 @@
         const [x, y] = avatarConfig.offset;
         const dx = event.clientX - lastMouse.x;
         const dy = event.clientY - lastMouse.y;
-        avatarConfig.offset = [x + dx, y + dy];
+        avatarConfig.offset = [x + dx / $scaleFactor, y + dy / $scaleFactor];
         lastMouse = {x: event.clientX, y: event.clientY};
     }
 

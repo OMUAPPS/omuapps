@@ -299,6 +299,7 @@
             border-radius: 2px;
             white-space: nowrap;
             font-weight: 600;
+            font-size: 0.9rem;
             display: flex;
             align-items: baseline;
             justify-content: start;

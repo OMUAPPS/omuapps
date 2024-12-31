@@ -6,3 +6,4 @@ export const dragUser = writable<string | null>(null);
 export const dragPosition = writable<Vec2 | null>(null);
 export const heldUser = writable<string | null>(null);
 export const isDraggingFinished = writable<boolean>(false);
+export const scaleFactor = writable<number>(1);

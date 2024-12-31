@@ -18,7 +18,7 @@
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
     import { ReactiveAPI } from '../pngtuber/reactive.js';
     import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
-    import { dragPosition, dragUser, isDraggingFinished, selectedAvatar } from '../states.js';
+    import { dragPosition, dragUser, isDraggingFinished, scaleFactor, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let message: {type: 'loading'| 'failed', text: string} | null = null;
@@ -58,6 +58,7 @@
         const matrices = new MatrixStack();
         setupViewMatrix(matrices, gl.canvas.width, gl.canvas.height);
         view = matrices.get();
+        $scaleFactor = getScaleFactor(gl.canvas.width, gl.canvas.height);
     }
 
     async function init(context: GlContext) {
@@ -246,8 +247,8 @@
             const avatarContext = heldAvatarContext || avatar.create();
             heldAvatarContext = avatarContext;
             matrices.push();
-            const position = Vec2.fromArray(avatarConfig.offset);
-            matrices.translate(position.x, position.y, 0);
+            const offset = Vec2.fromArray(avatarConfig.offset);
+            matrices.translate(offset.x, offset.y, 0);
             matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
             if (avatarConfig.type === 'pngtuber') {
                 if (avatarConfig.flipHorizontal) {
