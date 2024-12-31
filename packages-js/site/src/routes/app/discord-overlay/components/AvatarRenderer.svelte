@@ -240,8 +240,9 @@
             matrices.scale(scaleFactor, scaleFactor, 1);
             const faceSize = 400;
             const avatarConfig = $config.avatars[$selectedAvatar];
-            gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, new Vec4(0, 0, 0, 0.8));
-            gizmo.rect(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 0.8));
+            gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, new Vec4(246 / 255, 242 / 255, 235 / 255, 0.8));
+            gizmo.circle(matrices.get(), 0, 0, faceSize / 2, new Vec4(1, 1, 1, 0.8), 32);
+            // gizmo.rect(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 0.8));
             const { avatar } = await getAvatarById(context, $selectedAvatar);
             const avatarContext = heldAvatarContext || avatar.create();
             heldAvatarContext = avatarContext;
@@ -260,9 +261,9 @@
             avatarContext.render(matrices, DEFAULT_AVATAR_ACTION, { effects: [] });
             matrices.pop();
             renderCross(matrices, 0, 0, 16, 2);
-            gizmo.rect(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 0.2));
-            gizmo.rectOutline(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(0, 0, 0, 1), 4);
-            gizmo.rectOutline(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 1), 2);
+            gizmo.circle(matrices.get(), 0, 0, faceSize / 2, new Vec4(1, 1, 1, 0.2), 32);
+            gizmo.circleOutline(matrices.get(), 0, 0, faceSize / 2, new Vec4(1, 1, 1, 1), 6, 32);
+            gizmo.circleOutline(matrices.get(), 0, 0, faceSize / 2, new Vec4(11 / 255, 111 / 255, 114 / 255, 1), 3, 32);
             const stroke = 2;
             gizmo.triangle(matrices.get(), -faceSize / 2 - 100 - stroke, 0, -faceSize / 2 - 80 + stroke, -20 - stroke * 2, -faceSize / 2 - 80 + stroke, 20 + stroke * 2, new Vec4(0, 0, 0, 1));
             gizmo.rect(matrices.get(), -faceSize / 2 - 80 - stroke, -3 - stroke, -faceSize / 2 - 20 + stroke, 3 + stroke, new Vec4(0, 0, 0, 1));

@@ -129,6 +129,97 @@ export class Gizmo {
         });
     }
 
+    public circle(matrix: Mat4, x: number, y: number, radius: number, color: Vec4, segments: number = 32): void {
+        const vertices = new Float32Array(segments * 3 * 3);
+        const angle = 2 * Math.PI / segments;
+        for (let i = 0; i < segments; i++) {
+            const x1 = x + Math.cos(i * angle) * radius;
+            const y1 = y + Math.sin(i * angle) * radius;
+            const x2 = x + Math.cos((i + 1) * angle) * radius;
+            const y2 = y + Math.sin((i + 1) * angle) * radius;
+            const offset = i * 3 * 3;
+            vertices[offset + 0] = x;
+            vertices[offset + 1] = y;
+            vertices[offset + 2] = 0;
+            vertices[offset + 3] = x1;
+            vertices[offset + 4] = y1;
+            vertices[offset + 5] = 0;
+            vertices[offset + 6] = x2;
+            vertices[offset + 7] = y2;
+            vertices[offset + 8] = 0;
+        }
+        const vertexBuffer = this.buildVertexBuffer(vertices);
+        const { gl } = this.context;
+
+        this.program.use(() => {
+            const projectionUniform = this.program.getUniform('u_projection').asMat4();
+            const viewUniform = this.program.getUniform('u_view').asMat4();
+            const modelUniform = this.program.getUniform('u_model').asMat4();
+            const colorUniform = this.program.getUniform('u_color').asVec4();
+            
+            projectionUniform.set(matrix);
+            viewUniform.set(Mat4.IDENTITY);
+            modelUniform.set(Mat4.IDENTITY);
+            colorUniform.set(color);
+
+            const position = this.program.getAttribute('a_position');
+            position.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, segments * 3);
+        });
+    }
+
+    public circleOutline(matrix: Mat4, x: number, y: number, radius: number, color: Vec4, lineWidth: number = 1, segments: number = 32): void {
+        const vertices = new Float32Array(segments * 3 * 6);
+        const angle = 2 * Math.PI / segments;
+        for (let i = 0; i < segments; i++) {
+            const cx1 = x + Math.cos(i * angle);
+            const x1 = cx1 * radius;
+            const sy1 = y + Math.sin(i * angle);
+            const y1 = sy1 * radius;
+            const cx2 = x + Math.cos((i + 1) * angle);
+            const x2 = cx2 * radius;
+            const sy2 = y + Math.sin((i + 1) * angle);
+            const y2 = sy2 * radius;
+            const offset = i * 3 * 6;
+            vertices[offset + 0] = x1 - lineWidth * cx1;
+            vertices[offset + 1] = y1 - lineWidth * sy1;
+            vertices[offset + 2] = 0;
+            vertices[offset + 3] = x2 + lineWidth * cx2;
+            vertices[offset + 4] = y2 + lineWidth * sy2;
+            vertices[offset + 5] = 0;
+            vertices[offset + 6] = x2 - lineWidth * cx2;
+            vertices[offset + 7] = y2 - lineWidth * sy2;
+            vertices[offset + 8] = 0;
+            vertices[offset + 9] = x1 - lineWidth * cx1;
+            vertices[offset + 10] = y1 - lineWidth * sy1;
+            vertices[offset + 11] = 0;
+            vertices[offset + 12] = x2 + lineWidth * cx2;
+            vertices[offset + 13] = y2 + lineWidth * sy2;
+            vertices[offset + 14] = 0;
+            vertices[offset + 15] = x1 + lineWidth * cx1;
+            vertices[offset + 16] = y1 + lineWidth * sy1;
+            vertices[offset + 17] = 0;
+        }
+        const vertexBuffer = this.buildVertexBuffer(vertices);
+        const { gl } = this.context;
+
+        this.program.use(() => {
+            const projectionUniform = this.program.getUniform('u_projection').asMat4();
+            const viewUniform = this.program.getUniform('u_view').asMat4();
+            const modelUniform = this.program.getUniform('u_model').asMat4();
+            const colorUniform = this.program.getUniform('u_color').asVec4();
+            
+            projectionUniform.set(matrix);
+            viewUniform.set(Mat4.IDENTITY);
+            modelUniform.set(Mat4.IDENTITY);
+            colorUniform.set(color);
+
+            const position = this.program.getAttribute('a_position');
+            position.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, segments * 3 * 2);
+        });
+    }
+
     public triangle(matrix: Mat4, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, color: Vec4): void {
         const vertexBuffer = this.buildVertexBuffer(new Float32Array([
             x1, y1, 0,

@@ -109,7 +109,7 @@
                 if (!avatarConfig) return;
                 if (avatarConfig.type !== 'pngtuber') return;
                 avatarConfig.flipVertical = !avatarConfig.flipVertical;
-                avatarConfig.offset[0] = -avatarConfig.offset[0];
+                avatarConfig.offset[1] = -avatarConfig.offset[1];
                 $config.avatars[$selectedAvatar] = avatarConfig;
             }} class="flip">
                 上下を反転
@@ -275,7 +275,11 @@
         position: absolute;
         right: 5rem;
         bottom: 2rem;
-        color: var(--color-bg-1);
+        color: var(--color-1);
+
+        > small {
+            margin-bottom: 1rem;
+        }
     }
 
     .close {
@@ -328,7 +332,7 @@
         font-size: 1rem;
         font-weight: 600;
         white-space: nowrap;
-        color: var(--color-bg-1);
+        color: var(--color-1);
         pointer-events: none;
     }
 
@@ -347,7 +351,7 @@
         flex-direction: column;
         justify-content: space-between;
         gap: 0.5rem;
-        color: var(--color-bg-2);
+        color: var(--color-1);
         width: 8rem;
 
         > p {
