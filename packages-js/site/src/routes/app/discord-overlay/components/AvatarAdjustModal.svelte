@@ -32,7 +32,8 @@
     function handleMouseWheel(event: WheelEvent) {
         const avatarConfig = $selectedAvatar && $config.avatars[$selectedAvatar];
         if (!avatarConfig) return;
-        avatarConfig.scale -= event.deltaY / 1000 * 0.5;
+        const level = Math.log2(avatarConfig.scale);
+        avatarConfig.scale = Math.pow(2, level - event.deltaY / 1000 * 0.5);
     }
 
     function handleMouseUp() {
@@ -77,6 +78,20 @@
         class="origin"
     ></button>
     <div class="actions">
+        <button on:click={() => {
+            if (!$selectedAvatar) return;
+            if (!avatarConfig) return;
+            avatarConfig.offset = [0, 0];
+            avatarConfig.scale = 1;
+            if (avatarConfig.type === 'pngtuber') {
+                avatarConfig.flipHorizontal = false;
+                avatarConfig.flipVertical = false;
+            }
+            $config.avatars[$selectedAvatar] = avatarConfig;
+        }} class="flip">
+            もとに戻す
+            <i class="ti ti-refresh"></i>
+        </button>
         {#if avatarConfig.type === 'pngtuber'}
             <button on:click={() => {
                 if (!$selectedAvatar) return;
@@ -88,6 +103,17 @@
             }} class="flip">
                 左右を反転
                 <i class="ti ti-arrows-horizontal"></i>
+            </button>
+            <button on:click={() => {
+                if (!$selectedAvatar) return;
+                if (!avatarConfig) return;
+                if (avatarConfig.type !== 'pngtuber') return;
+                avatarConfig.flipVertical = !avatarConfig.flipVertical;
+                avatarConfig.offset[0] = -avatarConfig.offset[0];
+                $config.avatars[$selectedAvatar] = avatarConfig;
+            }} class="flip">
+                上下を反転
+                <i class="ti ti-arrows-vertical"></i>
             </button>
             <small>
                 左側を向くように調整してください
