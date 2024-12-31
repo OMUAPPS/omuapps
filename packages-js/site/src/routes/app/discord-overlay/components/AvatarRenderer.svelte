@@ -200,6 +200,7 @@
                     matrices.scale(scaleFactor, scaleFactor, 1);
                 }
                 matrices.translate(0, -scaleOffset * 2, 0);
+                const avatarConfig = user.avatar && $config.avatars[user.avatar] || null;
                 if ($config.align.flip) {
                     matrices.scale(flipDirection.x, flipDirection.y, 1);
                     if ($config.align.direction === 'vertical') {
@@ -208,10 +209,9 @@
                             middle: 0,
                             end: -90,
                         }[$config.align.horizontal];
-                        matrices.rotate(Axis.Z_POS.rotateDeg(rotation));
+                        matrices.rotate(Axis.Z_POS.rotateDeg(avatarConfig?.type === 'pngtuber' ? rotation : -rotation));
                     }
                 }
-                const avatarConfig = user.avatar && $config.avatars[user.avatar];
                 if (avatarConfig) {
                     const position = Vec2.fromArray(avatarConfig.offset);
                     matrices.translate(position.x, position.y, 0);
