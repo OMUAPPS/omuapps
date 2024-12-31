@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.2 (2024-12-31)
+
+
+### Bug Fixes
+
+* **dash:** サーバー再起動時に管理画面を再読み込みするように ([7373a1b](https://github.com/OMUAPPS/omuapps/commit/7373a1bcefdc66ca535c10e75ff844f103d549da))
+
+
+
+
+
 ## 0.8.1 (2024-12-28)
 
 **Note:** Version bump only for package @omujs/omu
