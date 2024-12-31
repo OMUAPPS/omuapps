@@ -79,6 +79,7 @@
                 <span class="setting">
                     <button on:click={() => {
                         omu.server.shutdown(true);
+                        window.location.reload();
                     }}>{$t('settings.setting.serverRestart')}</button>
                 </span>
                 <span class="setting">
