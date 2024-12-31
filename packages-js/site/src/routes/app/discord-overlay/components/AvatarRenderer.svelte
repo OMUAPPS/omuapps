@@ -335,12 +335,12 @@
             worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
         );
         const visibleBounds = new AABB2(
-            new Vec2(dimensions.margin.left, dimensions.margin.top),
+            new Vec2(60, dimensions.margin.top),
             new Vec2(context.canvas.width - dimensions.margin.right, context.canvas.height - dimensions.margin.bottom),
         );
         const a = 20;
         const c = 100;
-        const bounds = screenBounds.intersect(visibleBounds).expand(Vec2.ONE.scale(a + 10));
+        const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
         const color = PALETTE_HEX.OUTLINE_2;
         const directions = [
             {origin: bounds.min, direction: new Vec2(-1, -1), name: '左上'},
@@ -412,11 +412,11 @@
             worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
         );
         const visibleBounds = new AABB2(
-            new Vec2(10, dimensions.margin.top),
+            new Vec2(60, dimensions.margin.top),
             new Vec2(context.canvas.width - dimensions.margin.right, context.canvas.height - dimensions.margin.bottom),
         );
         const a = 20;
-        const bounds = screenBounds.intersect(visibleBounds).expand(Vec2.ONE.scale(a + 10));
+        const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
         const center = bounds.center();
         const directions = [
             {origin: new Vec2(center.x, bounds.min.y), direction: Vec2.DOWN, name: '上'},
@@ -530,7 +530,7 @@
     const lastPositions = new Map<string, Vec2>();
 
     function getScaleFactor(width: number, height: number): number {
-        const MIN_SCALE_FACTOR = 0.5;
+        const MIN_SCALE_FACTOR = 1 / 3;
         if(showGrid) {
             if ($config.align.auto) {
                 const widthScale = (width - (dimensions.margin.left + dimensions.margin.right)) / dimensions.width;
