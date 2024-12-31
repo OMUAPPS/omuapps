@@ -134,10 +134,10 @@
     </button>
     <span class="message">
         <p>アバターを移動して上の枠に顔が合うように調整してください</p>
-        <small>
-            <p>マウスホイールで拡大縮小</p>
-            <p>つかんで移動</p>
-        </small>
+        <ul>
+            <li>マウスホイールで拡大縮小</li>
+            <li>つかんで移動</li>
+        </ul>
     </span>
     {#if avatarConfig}
         <div class="png-settings">
@@ -329,11 +329,23 @@
         top: 4rem;
         transform: translate(-50%, 0);
         padding: 0.25rem 1rem;
-        font-size: 1rem;
         font-weight: 600;
         white-space: nowrap;
         color: var(--color-1);
         pointer-events: none;
+
+        > p {
+            border-bottom: 1px solid var(--color-1);
+            padding-bottom: 0.25rem;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        > ul {
+            margin-left: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--color-text);
+        }
     }
 
     .png-settings {
