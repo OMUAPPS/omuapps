@@ -7,7 +7,7 @@
     import { Mat4 } from '$lib/math/mat4.js';
     import { MatrixStack } from '$lib/math/matrix-stack.js';
     import { Vec2 } from '$lib/math/vec2.js';
-    import { Vec4 } from '$lib/math/vec4.js';
+    import { PALETTE_HEX, PALETTE_RGB } from '../consts.js';
     import { DiscordOverlayApp, type Config, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
@@ -121,9 +121,9 @@
                 const matrix = matrices.get().inverse();
                 transformUniform.set(matrix);
                 const gridColorUniform = gridProgram.getUniform('u_gridColor').asVec4();
-                gridColorUniform.set(new Vec4(230 / 255, 230 / 255, 230 / 255, 1));
+                gridColorUniform.set(PALETTE_RGB.OUTLINE_1);
                 const gridBackgroundUniform = gridProgram.getUniform('u_backgroundColor').asVec4();
-                gridBackgroundUniform.set(new Vec4(246 / 255, 242 / 255, 235 / 255, 1));
+                gridBackgroundUniform.set(PALETTE_RGB.BACKGROUND_1);
                 const positionAttribute = gridProgram.getAttribute('a_position');
                 positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 const uvAttribute = gridProgram.getAttribute('a_texcoord');
@@ -136,13 +136,13 @@
                 -dimensions.height / 2,
                 dimensions.width / 2,
                 dimensions.height / 2,
-                new Vec4(0, 0, 0, 0.1));
+                PALETTE_RGB.BACKGROUND_3);
             gizmo.rectOutline(matrices.get(),
                 -dimensions.width / 2,
                 -dimensions.height / 2,
                 dimensions.width / 2,
                 dimensions.height / 2,
-                new Vec4(0, 0, 0, 0.5));
+                PALETTE_RGB.BACKGROUND_3);
         }
 
         const effects: Effect[] = [
@@ -240,9 +240,8 @@
             matrices.scale(scaleFactor, scaleFactor, 1);
             const faceSize = 400;
             const avatarConfig = $config.avatars[$selectedAvatar];
-            gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, new Vec4(246 / 255, 242 / 255, 235 / 255, 0.8));
-            gizmo.circle(matrices.get(), 0, 0, faceSize / 2, new Vec4(1, 1, 1, 0.8), 32);
-            // gizmo.rect(matrices.get(), -faceSize / 2, -faceSize / 2, faceSize / 2, faceSize / 2, new Vec4(1, 1, 1, 0.8));
+            gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, PALETTE_RGB.BACKGROUND_1_TRANSPARENT);
+            gizmo.circle(matrices.get(), 0, 0, faceSize / 2, PALETTE_RGB.BACKGROUND_1_TRANSPARENT, 32);
             const { avatar } = await getAvatarById(context, $selectedAvatar);
             const avatarContext = heldAvatarContext || avatar.create();
             heldAvatarContext = avatarContext;
@@ -261,14 +260,13 @@
             avatarContext.render(matrices, DEFAULT_AVATAR_ACTION, { effects: [] });
             matrices.pop();
             renderCross(matrices, 0, 0, 16, 2);
-            gizmo.circle(matrices.get(), 0, 0, faceSize / 2, new Vec4(1, 1, 1, 0.2), 32);
-            gizmo.circleOutline(matrices.get(), 0, 0, faceSize / 2, new Vec4(1, 1, 1, 1), 6, 32);
-            gizmo.circleOutline(matrices.get(), 0, 0, faceSize / 2, new Vec4(11 / 255, 111 / 255, 114 / 255, 1), 3, 32);
+            gizmo.circleOutline(matrices.get(), 0, 0, faceSize / 2, PALETTE_RGB.BACKGROUND_2_TRANSPARENT, 6, 32);
+            gizmo.circleOutline(matrices.get(), 0, 0, faceSize / 2, PALETTE_RGB.ACCENT, 3, 32);
             const stroke = 2;
-            gizmo.triangle(matrices.get(), -faceSize / 2 - 100 - stroke, 0, -faceSize / 2 - 80 + stroke, -20 - stroke * 2, -faceSize / 2 - 80 + stroke, 20 + stroke * 2, new Vec4(0, 0, 0, 1));
-            gizmo.rect(matrices.get(), -faceSize / 2 - 80 - stroke, -3 - stroke, -faceSize / 2 - 20 + stroke, 3 + stroke, new Vec4(0, 0, 0, 1));
-            gizmo.triangle(matrices.get(), -faceSize / 2 - 100, 0, -faceSize / 2 - 80, -20, -faceSize / 2 - 80, 20, new Vec4(1, 1, 1, 1));
-            gizmo.rect(matrices.get(), -faceSize / 2 - 80, -3, -faceSize / 2 - 20, 3, new Vec4(1, 1, 1, 1));
+            gizmo.triangle(matrices.get(), -faceSize / 2 - 100 - stroke, 0, -faceSize / 2 - 80 + stroke, -20 - stroke * 2, -faceSize / 2 - 80 + stroke, 20 + stroke * 2, PALETTE_RGB.BACKGROUND_1);
+            gizmo.rect(matrices.get(), -faceSize / 2 - 80 - stroke, -3 - stroke, -faceSize / 2 - 20 + stroke, 3 + stroke, PALETTE_RGB.BACKGROUND_2);
+            gizmo.triangle(matrices.get(), -faceSize / 2 - 100, 0, -faceSize / 2 - 80, -20, -faceSize / 2 - 80, 20, PALETTE_RGB.ACCENT);
+            gizmo.rect(matrices.get(), -faceSize / 2 - 80, -3, -faceSize / 2 - 20, 3, PALETTE_RGB.ACCENT);
             matrices.pop();
         } else {
             heldAvatarContext = null;
@@ -276,10 +274,33 @@
     }
 
     function renderCross(matrices: MatrixStack, x: number, y: number, size: number, outline: number) {
-        gizmo.rect(matrices.get(), -size - outline, -outline * 2, size + outline, outline * 2, new Vec4(1, 1, 1, 0.8));
-        gizmo.rect(matrices.get(), -outline * 2, -size - outline, outline * 2, size + outline, new Vec4(1, 1, 1, 0.8));
-        gizmo.rect(matrices.get(), -size, -outline, size, outline, new Vec4(0, 0, 0, 0.8));
-        gizmo.rect(matrices.get(), -outline, -size, outline, size, new Vec4(0, 0, 0, 0.8));
+        gizmo.rect(matrices.get(), -size - outline, -outline * 2, size + outline, outline * 2, PALETTE_RGB.BACKGROUND_2);
+        gizmo.rect(matrices.get(), -outline * 2, -size - outline, outline * 2, size + outline, PALETTE_RGB.BACKGROUND_2);
+        gizmo.rect(matrices.get(), -size, -outline, size, outline, PALETTE_RGB.ACCENT);
+        gizmo.rect(matrices.get(), -outline, -size, outline, size, PALETTE_RGB.ACCENT);
+    }
+
+    function worldToScreen(view: Mat4, point: Vec2, width: number, height: number) {
+        const screen = view.xform2(point);
+        const zeroToOne = screen.mul(new Vec2(0.5, -0.5)).add(new Vec2(0.5, 0.5));
+        const screenSpace = zeroToOne.mul(new Vec2(width, height));
+        return screenSpace;
+    }
+
+    function renderTooltip(context: CanvasRenderingContext2D, text: string, position: Vec2) {
+        const size = context.measureText(text);
+        context.fillStyle = PALETTE_HEX.TOOLTIP_BACKGROUND;
+        const padding = 10;
+        const bgLeft = {
+            center: position.x - size.width / 2,
+            left: position.x,
+            start: position.x,
+            end: position.x - size.width,
+            right: position.x - size.width,
+        }[context.textAlign];
+        context.fillRect(bgLeft - padding, position.y - padding, size.width + padding * 2, 12 + padding);
+        context.fillStyle = PALETTE_HEX.TOOLTIP_TEXT;
+        context.fillText(text, position.x, position.y + 2);
     }
 
     async function render2D(context: CanvasRenderingContext2D) {
@@ -298,13 +319,6 @@
             $isDraggingFinished = false;
             $dragPosition = null;
         }
-    }
-
-    function worldToScreen(view: Mat4, point: Vec2, width: number, height: number) {
-        const screen = view.xform2(point);
-        const zeroToOne = screen.mul(new Vec2(0.5, -0.5)).add(new Vec2(0.5, 0.5));
-        const screenSpace = zeroToOne.mul(new Vec2(width, height));
-        return screenSpace;
     }
 
     function renderAlignHint(context: CanvasRenderingContext2D) {
@@ -327,8 +341,7 @@
         const a = 20;
         const c = 100;
         const bounds = screenBounds.intersect(visibleBounds).expand(Vec2.ONE.scale(a + 10));
-        const hoverColor = '#0B6F72';
-        const color = '#BFBFBF';
+        const color = PALETTE_HEX.OUTLINE_2;
         const directions = [
             {origin: bounds.min, direction: new Vec2(-1, -1), name: '左上'},
             {origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1), name: '左下'},
@@ -346,7 +359,7 @@
             const dir = offsetRotatedToDirection.x < offsetRotatedToDirection.y ? 'horizontal' : 'vertical';
             context.globalAlpha = inDirection && dotFromCenter <= -1 ? 1 : 0.3;
             const b = 4;
-            context.fillStyle = dir === 'vertical' && inDirection && dotFromCenter <= -1 ? hoverColor : color;
+            context.fillStyle = dir === 'vertical' && inDirection && dotFromCenter <= -1 ? PALETTE_HEX.ACCENT : color;
             context.fillRect(origin.x - b / 2, origin.y - b * direction.y, b, -c * direction.y);
             const verticalStartX = origin.x - b / 2 + b - 1.5;
             const verticalStartY = origin.y - b * direction.y - (c + 10) * direction.y;
@@ -357,7 +370,7 @@
             context.lineTo(verticalStartX - 10 * left.x, verticalStartY + 10 * direction.y);
             context.fill();
             context.closePath();
-            context.fillStyle = dir === 'horizontal' && inDirection && dotFromCenter <= -1 ? hoverColor : color;
+            context.fillStyle = dir === 'horizontal' && inDirection && dotFromCenter <= -1 ? PALETTE_HEX.ACCENT : color;
             context.fillRect(origin.x - b * direction.x, origin.y - b / 2, -c * direction.x, b);
             const horizontalStartX = origin.x - b * direction.x - (c + 10) * direction.x;
             const horizontalStartY = origin.y - b / 2 + b - 1.5;
@@ -370,17 +383,12 @@
             context.globalAlpha = 1;
             if (dotFromCenter > -1) continue;
             if (!inDirection) continue;
-            context.fillStyle = hoverColor;
+            context.fillStyle = PALETTE_HEX.ACCENT;
             context.font = 'bold 12px "Noto Sans JP"';
-            context.textAlign = 'center';
+            context.textAlign = direction.x === 0 ? 'center' : direction.x > 0 ? 'end' : 'start';
             context.textBaseline = 'middle';
             const text = `${name} から ${dir === 'vertical' ? '縦' : '横'} に揃える`;
-            const size = context.measureText(text);
-            context.fillStyle = '#000';
-            const padding = 10;
-            context.fillRect(origin.x - size.width / 2 - padding, origin.y + (direction.y || -1) * 20 - padding, size.width + padding * 2, 12 + padding);
-            context.fillStyle = '#fff';
-            context.fillText(text, origin.x, origin.y + (direction.y || -1) * 20 + 2);
+            renderTooltip(context, text, origin.add(Vec2.UP.scale((direction.y || -1) * 20)));
             if (!$isDraggingFinished) continue;
             $config.align.horizontal = direction.x > 0 ? 'end' : 'start';
             $config.align.vertical = direction.y > 0 ? 'end' : 'start';
@@ -409,22 +417,20 @@
         );
         const a = 20;
         const bounds = screenBounds.intersect(visibleBounds).expand(Vec2.ONE.scale(a + 10));
-        const hoverColor = '#000';
-        const color = 'rgba(0, 0, 0, 0.3)';
         const center = bounds.center();
         const directions = [
-            {origin: new Vec2(center.x, bounds.min.y), direction: new Vec2(0, -1), name: '上'},
-            {origin: new Vec2(center.x, bounds.max.y), direction: new Vec2(0, 1), name: '下'},
-            {origin: new Vec2(bounds.min.x, center.y), direction: new Vec2(-1, 0), name: '左'},
-            {origin: new Vec2(bounds.max.x, center.y), direction: new Vec2(1, 0), name: '右'},
+            {origin: new Vec2(center.x, bounds.min.y), direction: Vec2.DOWN, name: '上'},
+            {origin: new Vec2(center.x, bounds.max.y), direction: Vec2.UP, name: '下'},
+            {origin: new Vec2(bounds.min.x, center.y), direction: Vec2.LEFT, name: '左'},
+            {origin: new Vec2(bounds.max.x, center.y), direction: Vec2.RIGHT, name: '右'},
         ]
         for (const {origin, direction, name} of directions) {
             const offset = origin.sub($dragPosition).normalize();
             const inDirection = offset.dot(direction) < 0;
-            const directionLeft = new Vec2(-direction.y, direction.x);
+            const directionLeft = direction.turnLeft();
             const lineStart = origin.add(directionLeft.scale(10));
             const lineEnd = origin.add(directionLeft.scale(-10));
-            context.strokeStyle = inDirection ? hoverColor : color;
+            context.strokeStyle = inDirection ? PALETTE_HEX.ACCENT : PALETTE_HEX.OUTLINE_1;
             context.beginPath();
             context.moveTo(lineStart.x, lineStart.y);
             context.lineTo(lineEnd.x, lineEnd.y);
@@ -432,20 +438,14 @@
             context.lineTo(origin.x - direction.x * 20, origin.y - direction.y * 20);
             context.stroke();
             context.closePath();
-            if (inDirection) {
-                context.fillStyle = hoverColor;
-                context.font = 'bold 14px "Noto Sans JP"';
-                context.textAlign = 'center';
-                context.textBaseline = 'middle';
-                const text = `${name} に揃える`;
-                const size = context.measureText(text);
-                context.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                const padding = 10;
-                context.fillRect(origin.x - size.width / 2 - padding, origin.y + (direction.y || -1) * 20 - padding, size.width + padding * 2, 14 + padding);
-                context.fillStyle = 'white';
-                context.fillText(text, origin.x, origin.y + (direction.y || -1) * 20 + 2);
-            }
             if (!inDirection) continue;
+            
+            context.fillStyle = PALETTE_HEX.ACCENT;
+            context.font = 'bold 14px "Noto Sans JP"';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            const text = `${name} に揃える`;
+            renderTooltip(context, text, origin.add(Vec2.UP.scale((direction.y || -1) * 20)));
             if (!$isDraggingFinished) continue;
             $config.align.horizontal = direction.x === 0 ? 'middle' : direction.x > 0 ? 'end' : 'start';
             $config.align.vertical = direction.y === 0 ? 'middle' : direction.y > 0 ? 'end' : 'start';
@@ -466,16 +466,16 @@
         const isInHideArea = $dragPosition && hideAreaBounds.contains($dragPosition);
         const hasHideUser = Object.keys($speakingState).some(id => !$config.users[id]?.show);
         context.globalAlpha = hasHideUser || $dragPosition ? 1 : 0.6;
-        context.fillStyle = $dragPosition ? '#FFFEFC' : 'rgba(255, 255, 255, 0.8)';
+        context.fillStyle = $dragPosition ? PALETTE_HEX.BACKGROUND_2 : PALETTE_HEX.BACKGROUND_2_TRANSPARENT;
         context.fillRect(width - 240, margin, 240 - margin, height - margin * 2);
         if ($dragUser) {
-            context.strokeStyle = isInHideArea ? '#0B6F72' : '#E6E6E6';
+            context.strokeStyle = isInHideArea ? PALETTE_HEX.ACCENT : PALETTE_HEX.OUTLINE_1;
             const offset = 4;
             context.lineWidth = 2;
             context.strokeRect(width - 240 + offset, margin + offset, 240 - margin - offset * 2, height - margin * 2 - offset * 2);
         }
         if ($dragUser) {
-            context.fillStyle = '#0B6F72';
+            context.fillStyle = PALETTE_HEX.ACCENT;
             context.strokeStyle = 'white';
             context.lineWidth = 2;
             context.font = 'bold 14px "Noto Sans JP"';

@@ -3,6 +3,10 @@ import { lerp } from './math.js';
 export class Vec2 {
     public static ZERO = new Vec2(0, 0);
     public static ONE = new Vec2(1, 1);
+    public static UP = new Vec2(0, 1);
+    public static DOWN = new Vec2(0, -1);
+    public static LEFT = new Vec2(-1, 0);
+    public static RIGHT = new Vec2(1, 0);
 
     constructor(
         public readonly x: number,
@@ -53,6 +57,14 @@ export class Vec2 {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
         return new Vec2(this.x * cos - this.y * sin, this.x * sin + this.y * cos);
+    }
+
+    public turnLeft(): Vec2 {
+        return new Vec2(-this.y, this.x);
+    }
+
+    public turnRight(): Vec2 {
+        return new Vec2(this.y, -this.x);
     }
 
     public normalize(): Vec2 {
