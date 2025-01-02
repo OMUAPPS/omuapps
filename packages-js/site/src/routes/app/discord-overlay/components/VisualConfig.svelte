@@ -20,7 +20,7 @@
     </span>
     <span>
         <label>
-            人数におおじて大きさを調節
+            人数に応じて大きさを調節
             <hr>
             <input type="checkbox" bind:checked={$config.align.scaling} />
         </label>
