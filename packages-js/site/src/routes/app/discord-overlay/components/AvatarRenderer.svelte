@@ -674,10 +674,7 @@
         const url = URL.createObjectURL(blob);
         const image = document.createElement('img');
         image.src = url;
-        await new Promise((resolve, reject) => {
-            image.onload = resolve;
-            image.onerror = reject;
-        });
+        await image.decode();
         return {
             width: image.width,
             height: image.height,

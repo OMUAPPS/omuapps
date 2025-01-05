@@ -10,9 +10,9 @@
     export let height: number = 0;
     export let fps: number = 60;
     export let requestId: number | null = null;
-    export let render: (gl: GlContext) => Promise<void>;
+    export let render: (gl: GlContext) => Promise<void> | void = () => {};
     export let render2D: (context: CanvasRenderingContext2D) => Promise<void> | void = () => {};
-    export let init: (gl: GlContext) => Promise<void>;
+    export let init: (gl: GlContext) => Promise<void> = async () => {};
     export let resize: (gl: GlContext) => void = () => {};
 
     let context: CanvasRenderingContext2D | null = null;

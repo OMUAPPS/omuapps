@@ -83,9 +83,7 @@ export class Layer {
     public static async load(glContext: GlContext, data: LayerData): Promise<Layer> {
         const img = new Image();
         img.src = `data:image/png;base64,${data.imageData}`;
-        await new Promise<void>(resolve => {
-            img.onload = () => resolve();
-        });
+        await img.decode();
         const texture = glContext.createTexture();
         texture.use(() => {
             texture.setParams({
