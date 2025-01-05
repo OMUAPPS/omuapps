@@ -21,6 +21,7 @@
     export let filter: (key: string, entry: T) => boolean = () => true;
     export let sort: (a: T, b: T) => number = () => 0;
     export let reverse: boolean = false;
+    export let backward: boolean = true;
     export let initial: number = 40;
     export let limit = 400;
     export let selectedItem: string | undefined = undefined;
@@ -40,19 +41,26 @@
         if (fetchLock) {
             await fetchLock;
         }
+        let cursor: string | undefined = last;
+        while (cursor && !await table.has(cursor)) {
+            if (entries.size === 0) {
+                cursor = undefined;
+                break;
+            }
+            cursor = [...entries.keys()].at(backward ? 0 : -1);
+        }
         fetchLock = table
             .fetchItems({
                 limit: initial,
-                backward: true,
-                cursor: last,
+                backward,
+                cursor,
             })
             .then((items) => {
-                last = [...items.keys()].at(-1);
+                last = [...items.keys()].at(backward ? -1 : -1);
                 updateCache(items);
                 update();
-                return (
-                    [...items.keys()].filter((key) => key !== last).length > 0
-                );
+                return [...items.keys()].filter((key) => !entries.has(key))
+                    .length > 0;
             })
             .finally(() => {
                 fetchLock = undefined;
@@ -86,7 +94,7 @@
             }
         }
         if (changed) {
-            updated = true;
+            update();
         }
     }
 
@@ -103,7 +111,7 @@
             changed = true;
         }
         if (changed) {
-            updated = true;
+            update();
         }
     }
     function onAdd(items: Map<string, T>) {
@@ -171,25 +179,33 @@
         update(filter, sort, reverse);
     }
 
+    let scrollLock: Promise<void> | undefined;
+
     async function handleScroll(e: Event) {
-        const target = e.target as HTMLDivElement;
-        let { scrollTop, scrollHeight, clientHeight } = target;
-        while (scrollTop + clientHeight >= scrollHeight - 4000) {
-            if (fetchLock) {
-                await fetchLock;
+        if (scrollLock) return;
+        scrollLock = (async () => {
+            const target = e.target as HTMLDivElement;
+            let { scrollTop, scrollHeight, clientHeight } = target;
+            while (scrollTop + clientHeight >= scrollHeight - 4000) {
+                if (fetchLock) {
+                    await fetchLock;
+                    fetchLock = undefined;
+                    await tick();
+                    scrollTop = target.scrollTop;
+                    scrollHeight = target.scrollHeight;
+                    clientHeight = target.clientHeight;
+                    continue;
+                }
+                const result = await fetch();
+                if (!result) break;
                 await tick();
                 scrollTop = target.scrollTop;
                 scrollHeight = target.scrollHeight;
                 clientHeight = target.clientHeight;
-                continue;
             }
-            const result = await fetch();
-            if (!result) break;
-            await tick();
-            scrollTop = target.scrollTop;
-            scrollHeight = target.scrollHeight;
-            clientHeight = target.clientHeight;
-        }
+        })().finally(() => {
+            scrollLock = undefined;
+        });
     }
 
     function handleSelectItem(e: KeyboardEvent) {
