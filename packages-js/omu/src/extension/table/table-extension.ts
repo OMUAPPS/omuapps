@@ -536,6 +536,9 @@ class TableImpl<T> implements Table<T> {
                 break;
             }
             yield* items.values();
+            if (cursor !== undefined) {
+                items.delete(cursor);
+            }
             const cursorItem = backward ? items.values().next().value : [...items.values()].pop();
             if (!cursorItem) {
                 break;
