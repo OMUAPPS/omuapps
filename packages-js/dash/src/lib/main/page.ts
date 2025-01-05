@@ -28,12 +28,13 @@ export function registerPage<Props, T extends PageItem<Props>>(page: T): T {
     return page;
 }
 
+export function unregisterPage(id: string) {
+    pageMap.update((map) => {
+        delete map[id];
+        return map;
+    });
+}
+
 export function setPage(id: string) {
     currentPage.set(id);
-    loadedIds.update((ids) => {
-        if (!ids.includes(id)) {
-            ids.push(id);
-        }
-        return ids;
-    });
 }

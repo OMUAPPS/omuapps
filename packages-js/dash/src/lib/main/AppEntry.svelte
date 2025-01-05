@@ -107,7 +107,41 @@
         cursor: pointer;
         width: 100%;
     }
-    
+
+    .tooltip {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        text-wrap: wrap;
+        text-align: start;
+        padding: 0.1rem;
+        gap: 0.5rem;
+
+        > h3 {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--color-text-1);
+            width: 100%;
+
+            > .loaded {
+                font-size: 0.6rem;
+                padding: 0.1rem 0.25rem;
+                background: var(--color-bg-1);
+                color: var(--color-1);
+            }
+        }
+
+        > small {
+            font-size: 0.621rem;
+            color: var(--color-text-2);
+        }
+    }
+
     .app {
         position: relative;
         display: flex;
@@ -141,40 +175,6 @@
                     margin-right: 0rem;
                     transition: margin 0.0621s;
                 }
-            }
-        }
-
-        .tooltip {
-            display: flex;
-            flex-direction: column;
-            align-items: start;
-            text-wrap: wrap;
-            text-align: start;
-            padding: 0.1rem;
-            gap: 0.5rem;
-
-            > h3 {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                gap: 1rem;
-                font-size: 0.9rem;
-                font-weight: 600;
-                color: var(--color-text-1);
-                width: 100%;
-
-                > .loaded {
-                    font-size: 0.6rem;
-                    padding: 0.1rem 0.25rem;
-                    background: var(--color-bg-1);
-                    color: var(--color-1);
-                }
-            }
-
-            > small {
-                font-size: 0.621rem;
-                color: var(--color-text-2);
             }
         }
 

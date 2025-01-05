@@ -97,7 +97,6 @@
         }
     })
 </script>
-
 <main class:open={$menuOpen}>
     <div class="tabs" class:open={$menuOpen}>
         <section>

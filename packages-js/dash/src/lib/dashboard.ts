@@ -30,7 +30,6 @@ export class Dashboard implements DashboardHandler {
         });
         this.apps.event.add.listen(() => {
             tauriWindow.appWindow.setFocus();
-            currentPage.set('main');
         });
     }
 
