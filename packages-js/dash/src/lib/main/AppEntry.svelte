@@ -154,12 +154,6 @@
         height: 4rem;
         margin-left: 0.5rem;
 
-        &.active {
-            background: var(--color-bg-1);
-            border-right: 2px solid var(--color-1);
-            transition: background 0.0621s;
-        }
-
         &.selected,
         &:focus,
         &:hover {
@@ -176,6 +170,12 @@
                     transition: margin 0.0621s;
                 }
             }
+        }
+
+        &.active {
+            background: var(--color-bg-1);
+            border-right: 0.65rem solid var(--color-1);
+            transition: background 0.0621s;
         }
 
         > .image {
