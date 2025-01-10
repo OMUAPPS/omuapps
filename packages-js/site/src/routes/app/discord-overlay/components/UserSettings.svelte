@@ -175,13 +175,6 @@
         {/if}
     </div>
     {#if avatar && $config.avatars[avatar]?.type === 'pngtuber'}
-        <button on:click={()=>{configOpen = !configOpen;}} class="config-toggle">
-            <Tooltip>
-                レイヤーを変更
-            </Tooltip>
-            PNGTuber+
-            <i class="ti ti-chevron-down"></i>
-        </button>
         {#if configOpen}
             <div class="pngtuber-config">
                 {#each Array.from({ length: 10 }) as _, i}
@@ -197,6 +190,17 @@
                 {/each}
             </div>
         {/if}
+        <button on:click={()=>{configOpen = !configOpen;}} class="config-toggle">
+            <Tooltip>
+                レイヤーを変更
+            </Tooltip>
+            PNGTuber+
+            {#if configOpen}
+                <i class="ti ti-chevron-down"></i>
+            {:else}
+                <i class="ti ti-chevron-up"></i>
+            {/if}
+        </button>
     {/if}
 </div>
 
@@ -296,7 +300,6 @@
         outline-offset: -1px;
         cursor: pointer;
         border: none;
-        margin-bottom: 0.5rem;
     }
 
     .pngtuber-config {
@@ -305,6 +308,7 @@
         gap: 0.5rem;
         justify-content: start;
         width: 100%;
+        margin-bottom: 0.5rem;
 
         .layer {
             background: var(--color-bg-1);
