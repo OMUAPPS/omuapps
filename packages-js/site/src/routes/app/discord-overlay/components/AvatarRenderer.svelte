@@ -201,7 +201,7 @@
                 matrices.translate(0, -scaleOffset * 2, 0);
                 const avatarConfig = user.avatar && $config.avatars[user.avatar] || null;
                 setupAvatarTransform(matrices, avatarConfig);
-                setupFlipTransform(matrices, flipDirection);
+                setupFlipTransform(matrices, flipDirection, avatarConfig);
                 avatar.render(matrices, {
                     id: state.user.id,
                     talking: speakState?.speaking || false,
@@ -247,7 +247,7 @@
         }
     }
 
-    function setupFlipTransform(matrices: MatrixStack, flipDirection: Vec2) {
+    function setupFlipTransform(matrices: MatrixStack, flipDirection: Vec2, avatarConfig: AvatarConfig | null) {
         if (!$config.align.flip) return;
 
         if ($config.align.direction === 'vertical') {
@@ -256,7 +256,7 @@
                 middle: 0,
                 end: -90,
             }[$config.align.horizontal];
-            matrices.rotate(Axis.Z_POS.rotateDeg(rotation));
+            matrices.rotate(Axis.Z_POS.rotateDeg(avatarConfig?.type === 'pngtuber' ? rotation : -rotation));
             matrices.scale(1, {
                 start: -1,
                 middle: 1,
