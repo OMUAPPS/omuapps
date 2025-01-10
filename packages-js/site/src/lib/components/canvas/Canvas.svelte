@@ -59,7 +59,7 @@
         }
     }
 
-    async function renderLoop() {
+    function renderLoop() {
         requestId = requestAnimationFrame(renderLoop);
         if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
             return;

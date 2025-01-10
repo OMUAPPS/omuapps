@@ -218,6 +218,16 @@
     {#if !lastMouse}
         <Tooltip>
             <p class="action-hint">
+                <i class="ti ti-pointer"/>
+                <small>
+                    クリックで
+                </small>
+                <b>
+                    設定
+                    <i class="ti ti-settings"/>
+                </b>
+            </p>
+            <p class="action-hint">
                 <i class="ti ti-hand-stop"/>
                 <small>
                     つかんで
@@ -235,16 +245,6 @@
                 <b>
                     拡大縮小
                     <i class="ti ti-zoom-in"/>
-                </b>
-            </p>
-            <p class="action-hint">
-                <i class="ti ti-pointer"/>
-                <small>
-                    クリックで
-                </small>
-                <b>
-                    設定
-                    <i class="ti ti-settings"/>
                 </b>
             </p>
         </Tooltip>

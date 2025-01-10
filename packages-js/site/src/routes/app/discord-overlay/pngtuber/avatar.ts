@@ -1,5 +1,6 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import type { MatrixStack } from '$lib/math/matrix-stack.js';
+import type { UserAvatarConfig } from '../discord-overlay-app.js';
 
 export type AvatarAction = {
     id: string;
@@ -9,6 +10,7 @@ export type AvatarAction = {
     self_mute: boolean;
     self_deaf: boolean;
     suppress: boolean;
+    config: UserAvatarConfig;
 }
 
 export type Effect = {

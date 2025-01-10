@@ -9,7 +9,7 @@ import { Timer } from '$lib/timer.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
 
-export type LayerData = {
+export type LayerJson = {
     animSpeed: number;
     clipped: boolean;
     costumeLayers: string;
@@ -47,9 +47,9 @@ function parseVector2(data: string): Vec2 {
     return new Vec2(x, y);
 }
 
-export type PNGTuberData = Record<string, LayerData>;
+export type PNGTuberData = Record<string, LayerJson>;
 
-export class Layer {
+export class LayerData {
     constructor(
         public readonly vertexBuffer: GlBuffer,
         public readonly texcoordBuffer: GlBuffer,
@@ -80,7 +80,7 @@ export class Layer {
         public readonly zindex: number,
     ) { }
 
-    public static async load(glContext: GlContext, data: LayerData): Promise<Layer> {
+    public static async load(glContext: GlContext, data: LayerJson): Promise<LayerData> {
         const img = new Image();
         img.src = `data:image/png;base64,${data.imageData}`;
         await img.decode();
@@ -123,11 +123,11 @@ export class Layer {
 
         const costumeLayers = JSON.parse(data.costumeLayers);
         if (!Array.isArray(costumeLayers)) {
-            throw new Error('Invalid costumeLayers');
+            throw new Error(`Invalid costume layers: ${data.costumeLayers}`);
         }
         const offset = parseVector2(data.offset);
         const pos = parseVector2(data.pos);
-        return new Layer(
+        return new LayerData(
             vertexBuffer,
             uvBuffer,
             data.animSpeed,
@@ -169,12 +169,12 @@ class SpriteGroup {
     public parentSprite: SpriteGroup | null = null;
 
     constructor(
-        public readonly layer: Layer,
+        public readonly layerData: LayerData,
         origin: Node2D,
     ) {
-        this.group = new Node2D(this.layer.pos, 0, Vec2.ONE, origin);
+        this.group = new Node2D(this.layerData.pos, 0, Vec2.ONE, origin);
         this.wob = new Node2D(Vec2.ZERO, 0, Vec2.ONE, this.group);
-        this.dragger = new Node2D(this.layer.pos, 0, Vec2.ONE, null);
+        this.dragger = new Node2D(this.layerData.pos, 0, Vec2.ONE, null);
         this.dragOrigin = new Node2D(Vec2.ZERO, 0, Vec2.ONE, this.wob);
         this.sprite = new Node2D(Vec2.ZERO, 0, Vec2.ONE, this.dragOrigin);
     }
@@ -200,29 +200,29 @@ class SpriteGroup {
     }
 
     private drag() {
-        if (this.layer.drag === 0) {
+        if (this.layerData.drag === 0) {
             this.dragger.globalPosition = this.wob.globalPosition;
         } else {
-            this.dragger.globalPosition = this.dragger.globalPosition.lerp(this.wob.globalPosition, 1 / this.layer.drag);
+            this.dragger.globalPosition = this.dragger.globalPosition.lerp(this.wob.globalPosition, 1 / this.layerData.drag);
             this.dragOrigin.globalPosition = this.dragger.globalPosition;
         }
     }
 
     private wobble() {
         this.wob.position = new Vec2(
-            Math.sin(this.tick * this.layer.xFrq) * this.layer.xAmp,
-            Math.sin(this.tick * this.layer.yFrq) * this.layer.yAmp,
+            Math.sin(this.tick * this.layerData.xFrq) * this.layerData.xAmp,
+            Math.sin(this.tick * this.layerData.yFrq) * this.layerData.yAmp,
         );
     }
 
     private rotationalDrag(length: number) {
-        let yvel = length * this.layer.rotDrag;
-        yvel = BetterMath.clamp(yvel, this.layer.rLimitMin, this.layer.rLimitMax);
+        let yvel = length * this.layerData.rotDrag;
+        yvel = BetterMath.clamp(yvel, this.layerData.rLimitMin, this.layerData.rLimitMax);
         this.sprite.rotation = BetterMath.lerpAngle(this.sprite.rotation, BetterMath.toRadians(yvel), 0.25);
     }
 
     private stretch(length: number) {
-        const yvel = length * this.layer.stretchAmount * 0.01;
+        const yvel = length * this.layerData.stretchAmount * 0.01;
         const target = new Vec2(1 - yvel, 1 + yvel);
         this.sprite.scale = this.sprite.scale.lerp(target, 0.5);
     }
@@ -236,6 +236,7 @@ interface PNGTuberContext {
     bounceTick: number;
     blinking: boolean;
     talking: boolean;
+    layer: number;
 }
 
 export class PNGTuber implements Avatar {
@@ -270,6 +271,9 @@ export class PNGTuber implements Avatar {
             bounceTick: 0,
             blinking: false,
             talking: false,
+            layer: 0,
+            showOnTalk: 0,
+            showOnBlink: 0,
         }
         const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
         return {
@@ -279,7 +283,7 @@ export class PNGTuber implements Avatar {
 
     constructor(
         private readonly glContext: GlContext,
-        public readonly layers: Map<number, Layer>,
+        public readonly layers: Map<number, LayerData>,
     ) {
         const vShader = glContext.createShader({
             source: VERTEX_SHADER,
@@ -341,9 +345,9 @@ export class PNGTuber implements Avatar {
     }
 
     public static async load(glContext: GlContext, data: PNGTuberData): Promise<PNGTuber> {
-        const layers = new Map<number, Layer>();
+        const layers = new Map<number, LayerData>();
         for (const key in data) {
-            layers.set(data[key].identification, await Layer.load(glContext, data[key]));
+            layers.set(data[key].identification, await LayerData.load(glContext, data[key]));
         }
         return new PNGTuber(glContext, layers);
     }
@@ -381,7 +385,7 @@ export class PNGTuber implements Avatar {
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
             passes.forEach(pass => {
-                [...context.spriteGroups.values()].filter(sprite => sprite.layer.parentId === null).forEach(sprite => {
+                [...context.spriteGroups.values()].filter(sprite => sprite.layerData.parentId === null).forEach(sprite => {
                     matrices.push();
                     this.renderLayer(matrices, sprite, context, pass);
                     matrices.pop();
@@ -436,44 +440,48 @@ export class PNGTuber implements Avatar {
     }
 
     private renderLayer(matrices: MatrixStack, sprite: SpriteGroup, context: PNGTuberContext, pass: number) {
-        if (sprite.layer.showBlink !== 0) {
-            if (context.blinking && sprite.layer.showBlink === 1) {
+        const { layerData } = sprite;
+        if (layerData.showBlink !== 0) {
+            if (context.blinking && layerData.showBlink === 1) {
                 return;
-            } else if (!context.blinking && sprite.layer.showBlink === 2) {
+            } else if (!context.blinking && layerData.showBlink === 2) {
                 return;
             }
         }
-        if (sprite.layer.showTalk !== 0) {
-            if (context.talking && sprite.layer.showTalk === 1) {
+        if (layerData.showTalk !== 0) {
+            if (context.talking && layerData.showTalk === 1) {
                 return;
-            } else if (!context.talking && sprite.layer.showTalk === 2) {
+            } else if (!context.talking && layerData.showTalk === 2) {
                 return;
             }
+        }
+        if (layerData.costumeLayers[context.layer] !== 1) {
+            return;
         }
         const { gl } = this.glContext;
         
-        if (sprite.layer.zindex === pass) {
+        if (layerData.zindex === pass) {
             this.program.use(() => {
                 const textureUniform = this.program.getUniform('u_texture').asSampler2D();
-                textureUniform.set(sprite.layer.imageData);
+                textureUniform.set(layerData.imageData);
                 const projection = this.program.getUniform('u_projection').asMat4();
                 projection.set(Mat4.IDENTITY);
                 const model = this.program.getUniform('u_model').asMat4();
                 const matrix = sprite.sprite
                     .globalTransform
                     .getMat4()
-                    .translate(sprite.layer.offset.x, sprite.layer.offset.y, 0);
+                    .translate(layerData.offset.x, layerData.offset.y, 0);
                 model.set(matrix);
                 const view = this.program.getUniform('u_view').asMat4();
                 view.set(matrices.get());
                 const positionAttribute = this.program.getAttribute('a_position');
-                positionAttribute.set(sprite.layer.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+                positionAttribute.set(layerData.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 const uvAttribute = this.program.getAttribute('a_texcoord');
-                uvAttribute.set(sprite.layer.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+                uvAttribute.set(layerData.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
         }
-        [...context.spriteGroups.values()].filter(child => child.layer.parentId === sprite.layer.identification).forEach(child => {
+        [...context.spriteGroups.values()].filter(child => child.layerData.parentId === layerData.identification).forEach(child => {
             this.renderLayer(matrices, child, context, pass);
         });
     }
@@ -482,7 +490,7 @@ export class PNGTuber implements Avatar {
         const points: Vec2[] = [];
         for (const sprite of context.spriteGroups.values()) {
             const transform = sprite.sprite.globalTransform;
-            const { width, height } = sprite.layer.imageData;
+            const { width, height } = sprite.layerData.imageData;
             const halfWidth = width / 2;
             const halfHeight = height / 2;
             const corners = [

@@ -94,6 +94,7 @@
     const avatarUrl = state.user.avatar && `https://cdn.discordapp.com/avatars/${state.user.id}/${state.user.avatar}.png`;
 
     let settingElement: HTMLElement;
+    let configOpen = false;
 
     function handleWindowClick(event: MouseEvent) {
         if (!$heldUser) return;
@@ -173,6 +174,30 @@
             </button>
         {/if}
     </div>
+    {#if avatar && $config.avatars[avatar]?.type === 'pngtuber'}
+        <button on:click={()=>{configOpen = !configOpen;}} class="config-toggle">
+            <Tooltip>
+                レイヤーを変更
+            </Tooltip>
+            PNGTuber+
+            <i class="ti ti-chevron-down"></i>
+        </button>
+        {#if configOpen}
+            <div class="pngtuber-config">
+                {#each Array.from({ length: 10 }) as _, i}
+                    <button
+                        type="button"
+                        on:click={()=>{
+                            $config.users[id].config.pngtuber.layer = i;
+                        }}
+                        class="layer"
+                        class:active={$config.users[id].config.pngtuber.layer === i}>
+                        {i}
+                    </button>
+                {/each}
+            </div>
+        {/if}
+    {/if}
 </div>
 
 
@@ -183,7 +208,6 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        gap: 1rem;
         padding: 1.5rem 4rem;
     }
 
@@ -191,6 +215,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        margin-bottom: 1rem;
 
         button {
             display: flex;
@@ -220,6 +245,7 @@
         align-items: center;
         gap: 0.5rem;
         color: var(--color-text);
+        margin-bottom: 1rem;
 
         .avatar {
             width: 2rem;
@@ -250,6 +276,57 @@
             color: var(--color-1);
             font-size: 1.25rem;
             cursor: pointer;
+        }
+    }
+
+    .config-toggle {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        text-align: start;
+        width: 100%;
+        background: var(--color-1);
+        color: var(--color-bg-1);
+        padding: 0.5rem 1rem;
+        border-radius: 2px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        outline: 1px solid var(--color-1);
+        outline-offset: -1px;
+        cursor: pointer;
+        border: none;
+        margin-bottom: 0.5rem;
+    }
+
+    .pngtuber-config {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.5rem;
+        justify-content: start;
+        width: 100%;
+
+        .layer {
+            background: var(--color-bg-1);
+            border: none;
+            color: var(--color-text);
+            outline: 1px solid var(--color-outline);
+            width: 2rem;
+            height: 2rem;
+            border-radius: 2px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            outline-offset: -1px;
+            cursor: pointer;
+
+            &.active {
+                background: var(--color-1);
+                color: var(--color-bg-1);
+            }
+
+            &:hover {
+                outline: 1px solid var(--color-1);
+            }
         }
     }
 </style>

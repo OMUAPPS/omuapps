@@ -153,17 +153,28 @@ export type Source = {
     type: 'url';
     url: string;
 };
+export type UserAvatarConfig = {
+    pngtuber: {
+        layer: number;
+    };
+};
 export type UserConfig = {
     show: boolean;
     position: [number, number];
     scale: number;
     avatar: string | null;
+    config: UserAvatarConfig;
 };
 export const DEFAULT_USER_CONFIG: UserConfig = {
     show: true,
     position: [0, 0],
     scale: 1,
     avatar: null,
+    config: {
+        pngtuber: {
+            layer: 0,
+        },
+    },
 };
 
 export type PngTuberAvatarConfig = {
@@ -186,13 +197,15 @@ export type PngAvatarConfig = {
     muted?: Source;
 };
 
+export type AvatarConfig = PngTuberAvatarConfig | PngAvatarConfig;
+
 export type Config = {
     version?: number;
     users: {
         [key: string]: UserConfig;
     },
     avatars: {
-        [key: string]: PngTuberAvatarConfig | PngAvatarConfig | undefined;
+        [key: string]: AvatarConfig | undefined;
     }
     effects: {
         speech: typeof DEFAULT_SPEECH_EFFECT_OPTIONS,
@@ -350,6 +363,18 @@ export class DiscordOverlayApp {
                     ...config.align,
                     direction: 'horizontal',
                 },
+            };
+        }
+        if (config.version === 8) {
+            config = {
+                ...config,
+                version: 9,
+                users: Object.fromEntries(Object.entries(config.users).map(([key, user]) => {
+                    return [key, {
+                        ...user,
+                        config: DEFAULT_USER_CONFIG.config,
+                    }];
+                })),
             };
         }
         return config;

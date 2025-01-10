@@ -8,7 +8,7 @@
     import { MatrixStack } from '$lib/math/matrix-stack.js';
     import { Vec2 } from '$lib/math/vec2.js';
     import { PALETTE_HEX, PALETTE_RGB } from '../consts.js';
-    import { DiscordOverlayApp, type Config, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
+    import { DEFAULT_USER_CONFIG, DiscordOverlayApp, type AvatarConfig, type Config, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
     import { createShadowEffect } from '../effects/shadow.js';
@@ -44,6 +44,7 @@
         self_mute: false,
         self_deaf: false,
         suppress: false,
+        ...DEFAULT_USER_CONFIG,
     };
 
     let gridProgram: GlProgram;
@@ -181,15 +182,13 @@
             })
             .map(({ id, state, user, avatar }, index) => {
                 const speakState = $speakingState[id];
-                const flipDirection = getFlipDirection();
                 const position = getPosition($config, id, user, toRender.length, toRender.length - index - 1);
                 if (showGrid && (user.position[0] !== position[0] || user.position[1] !== position[1])) {
                     $config.users[id].position = position;
                 }
                 matrices.push();
-                const last = lastPositions.get(id) || new Vec2(position[0], position[1]);
-                const renderPosition = new Vec2(position[0], position[1]).lerp(last, 0.7);
-                lastPositions.set(id, renderPosition);
+                const flipDirection = getFlipDirection();
+                const renderPosition = getRenderPosition(id, position);
                 matrices.translate(renderPosition.x, renderPosition.y, 0);
                 const scaleOffset = flipDirection.y > 0 ? $config.align.padding.bottom : -$config.align.padding.top;
                 matrices.translate(0, scaleOffset, 0);
@@ -201,38 +200,22 @@
                 }
                 matrices.translate(0, -scaleOffset * 2, 0);
                 const avatarConfig = user.avatar && $config.avatars[user.avatar] || null;
-                if ($config.align.flip) {
-                    matrices.scale(flipDirection.x, flipDirection.y, 1);
-                    if ($config.align.direction === 'vertical') {
-                        const rotation = {
-                            start: -90,
-                            middle: 0,
-                            end: -90,
-                        }[$config.align.horizontal];
-                        matrices.rotate(Axis.Z_POS.rotateDeg(avatarConfig?.type === 'pngtuber' ? rotation : -rotation));
-                    }
-                }
-                if (avatarConfig) {
-                    const position = Vec2.fromArray(avatarConfig.offset);
-                    matrices.translate(position.x, position.y, 0);
-                    matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
-                    if (avatarConfig.type === 'pngtuber') {
-                        if (avatarConfig.flipHorizontal) {
-                            matrices.scale(-1, 1, 1);
-                        }
-                        if (avatarConfig.flipVertical) {
-                            matrices.scale(1, -1, 1);
-                        }
-                    }
-                }
+                setupAvatarTransform(matrices, avatarConfig);
+                setupFlipTransform(matrices, flipDirection);
                 avatar.render(matrices, {
                     id: state.user.id,
                     talking: speakState?.speaking || false,
                     ...state.voice_state,
+                    config: user.config,
                 }, renderOptions);
                 matrices.pop();
             });
+        
+        await renderHeldAvatar(matrices, context);
+    }
 
+    async function renderHeldAvatar(matrices: MatrixStack, context: GlContext) {
+        const { gl } = context;
         if ($selectedAvatar && $config.avatars[$selectedAvatar]) {
             matrices.push();
             matrices.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
@@ -247,17 +230,7 @@
             const avatarContext = heldAvatarContext || avatar.create();
             heldAvatarContext = avatarContext;
             matrices.push();
-            const offset = Vec2.fromArray(avatarConfig.offset);
-            matrices.translate(offset.x, offset.y, 0);
-            matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
-            if (avatarConfig.type === 'pngtuber') {
-                if (avatarConfig.flipHorizontal) {
-                    matrices.scale(-1, 1, 1);
-                }
-                if (avatarConfig.flipVertical) {
-                    matrices.scale(1, -1, 1);
-                }
-            }
+            setupAvatarTransform(matrices, avatarConfig);
             avatarContext.render(matrices, DEFAULT_AVATAR_ACTION, { effects: [] });
             matrices.pop();
             renderCross(matrices, 0, 0, 16, 2);
@@ -271,6 +244,41 @@
             matrices.pop();
         } else {
             heldAvatarContext = null;
+        }
+    }
+
+    function setupFlipTransform(matrices: MatrixStack, flipDirection: Vec2) {
+        if (!$config.align.flip) return;
+
+        if ($config.align.direction === 'vertical') {
+            const rotation = {
+                start: -90,
+                middle: 0,
+                end: -90,
+            }[$config.align.horizontal];
+            matrices.rotate(Axis.Z_POS.rotateDeg(rotation));
+            matrices.scale(1, {
+                start: -1,
+                middle: 1,
+                end: 1,
+            }[$config.align.vertical], 1);
+        }
+        matrices.scale(flipDirection.x, flipDirection.y, 1);
+    }
+
+    function setupAvatarTransform(matrices: MatrixStack, avatarConfig: AvatarConfig | null) {
+        if (avatarConfig) {
+            const position = Vec2.fromArray(avatarConfig.offset);
+            matrices.translate(position.x, position.y, 0);
+            matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
+            if (avatarConfig.type === 'pngtuber') {
+                if (avatarConfig.flipHorizontal) {
+                    matrices.scale(-1, 1, 1);
+                }
+                if (avatarConfig.flipVertical) {
+                    matrices.scale(1, -1, 1);
+                }
+            }
         }
     }
 
@@ -633,6 +641,13 @@
             .add(offset.scale(horizontal === 'middle' || vertical === 'middle' ? index - (length - 1) / 2 : index))
             .toArray();
         return position;
+    }
+
+    function getRenderPosition(id: string, position: [number, number]) {
+        const last = lastPositions.get(id) || new Vec2(position[0], position[1]);
+        const renderPosition = new Vec2(position[0], position[1]).lerp(last, 0.7);
+        lastPositions.set(id, renderPosition);
+        return renderPosition;
     }
 
     function getFlipDirection(): Vec2 {
