@@ -357,6 +357,7 @@ export class PNGTuber implements Avatar {
         const time = context.timer.getElapsedMS() / 500;
         context.blinking = action.self_mute || Math.sin(time) > 0.995;
         context.talking = action.talking;
+        context.layer = action.config.pngtuber.layer;
 
         const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex)));
 
