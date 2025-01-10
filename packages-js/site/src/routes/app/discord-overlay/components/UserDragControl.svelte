@@ -5,7 +5,7 @@
     import { Vec2 } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
-    import { DEFAULT_USER_CONFIG, type Config, type DiscordOverlayApp, type VoiceStateItem } from '../discord-overlay-app.js';
+    import { createUserConfig, type Config, type DiscordOverlayApp, type VoiceStateItem } from '../discord-overlay-app.js';
     import { dragPosition, dragUser, heldUser, isDraggingFinished } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
@@ -17,7 +17,7 @@
     
     const { config } = overlayApp;
 
-    $: user = $config.users[id] || DEFAULT_USER_CONFIG;
+    $: user = $config.users[id] || createUserConfig();
 
     let element: HTMLButtonElement;
     let lastMouse: [number, number] | null = null;

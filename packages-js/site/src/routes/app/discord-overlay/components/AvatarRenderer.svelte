@@ -8,7 +8,7 @@
     import { MatrixStack } from '$lib/math/matrix-stack.js';
     import { Vec2 } from '$lib/math/vec2.js';
     import { PALETTE_HEX, PALETTE_RGB } from '../consts.js';
-    import { DEFAULT_USER_CONFIG, DiscordOverlayApp, type AvatarConfig, type Config, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
+    import { createUserConfig, DiscordOverlayApp, type AvatarConfig, type Config, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
     import { createShadowEffect } from '../effects/shadow.js';
@@ -44,7 +44,7 @@
         self_mute: false,
         self_deaf: false,
         suppress: false,
-        ...DEFAULT_USER_CONFIG,
+        ...createUserConfig(),
     };
 
     let gridProgram: GlProgram;
@@ -886,13 +886,7 @@
     function getUser(id: string) {
         let user = $config.users[id];
         if (!user) {
-            user = {
-                show: true,
-                position: [0, 0],
-                scale: 1,
-                avatar: null,
-            };
-            $config.users[id] = user;
+            $config.users[id] = createUserConfig();
         }
         return user;
     }

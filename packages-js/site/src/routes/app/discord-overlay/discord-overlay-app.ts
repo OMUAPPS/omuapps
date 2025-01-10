@@ -176,6 +176,9 @@ export const DEFAULT_USER_CONFIG: UserConfig = {
         },
     },
 };
+export function createUserConfig(): UserConfig {
+    return JSON.parse(JSON.stringify(DEFAULT_USER_CONFIG));
+}
 
 export type PngTuberAvatarConfig = {
     type: 'pngtuber';
@@ -372,7 +375,7 @@ export class DiscordOverlayApp {
                 users: Object.fromEntries(Object.entries(config.users).map(([key, user]) => {
                     return [key, {
                         ...user,
-                        config: DEFAULT_USER_CONFIG.config,
+                        config: createUserConfig().config,
                     }];
                 })),
             };
