@@ -102,7 +102,7 @@
         display: flex;
         width: 100%;
         height: 8rem;
-        padding: 0.5rem;
+        padding: 1rem;
         color: var(--color-1);
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
@@ -122,7 +122,7 @@
         width: calc(100% - 2px);
         height: calc(100% - 2px);
         object-fit: cover;
-        filter: blur(.0621rem);
+        filter: blur(.0621rem) contrast(0.621) brightness(1.23621);
     }
 
     .overlay {
@@ -164,7 +164,7 @@
         display: flex;
         gap: 10px;
         align-items: center;
-        font-size: 0.6rem;
+        font-size: 0.65rem;
         color: var(--color-text);
     }
 
