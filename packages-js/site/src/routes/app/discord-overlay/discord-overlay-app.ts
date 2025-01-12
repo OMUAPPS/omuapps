@@ -380,6 +380,17 @@ export class DiscordOverlayApp {
                 })),
             };
         }
+        config = {
+            ...config,
+            version: 9,
+            users: Object.fromEntries(Object.entries(config.users).map(([key, user]) => {
+                return [key, {
+                    ...DEFAULT_USER_CONFIG,
+                    ...user,
+                    config: createUserConfig().config,
+                }];
+            })),
+        };
         return config;
     }
 

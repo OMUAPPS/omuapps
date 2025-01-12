@@ -1,7 +1,7 @@
 <script lang="ts">
     import { FileDrop, Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
-    import type { DiscordOverlayApp, PngAvatarConfig, VoiceStateItem } from '../discord-overlay-app.js';
+    import { DEFAULT_USER_CONFIG, type DiscordOverlayApp, type PngAvatarConfig, type VoiceStateItem } from '../discord-overlay-app.js';
     import { heldUser, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
@@ -34,6 +34,7 @@
             overlayApp.omu.assets.upload(avatarId, new Uint8Array(buffer));
             const existAvatarConfig = $config.avatars[avatarId.key()];
             $config.users[id] = {
+                ...DEFAULT_USER_CONFIG,
                 ...$config.users[id],
                 avatar: avatarId.key(),
             };
