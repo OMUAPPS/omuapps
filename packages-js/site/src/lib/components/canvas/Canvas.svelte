@@ -31,12 +31,12 @@
     }
 
     let lastTime = performance.now();
-    let resolve: () => void = () => {};
+    let resolveFrameBlock: () => void = () => {};
 
     async function renderInternal() {
         while (true) {
             await new Promise<void>((r) => {
-                resolve = r;
+                resolveFrameBlock = r;
             });
             if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
                 continue;
@@ -67,7 +67,7 @@
         if (canvas.width !== width || canvas.height !== height) {
             return;
         }
-        resolve();
+        resolveFrameBlock();
     }
 
     onMount(() => {
@@ -77,9 +77,9 @@
         glContext = GlContext.create(offscreen);
         handleResize();
         init(glContext).then(() => {
+            renderInternal();
             renderLoop();
         });
-        renderInternal();
         const resizeObserver = new ResizeObserver(() => {
             if (!canvas) return;
             width = canvas.clientWidth;
