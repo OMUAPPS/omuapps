@@ -28,11 +28,17 @@
     $: tags =
         app.metadata?.tags?.map((tag) => {
             const tagData = REGISTRIES[tag];
-            if (tagData) {
-                return tagData;
+            if (!tagData) {
+                return {
+                    id: tag,
+                    data: null,
+                };
             }
-            return tag;
-        }) || [];
+            return {
+                id: tag,
+                data: tagData,
+            }
+        }).sort((a,) => -(a.id === 'underdevelopment')) || [];
 </script>
 
 <article class:added={alreadyAdded}>
@@ -41,7 +47,7 @@
     {/if}
     <div class="overlay">
         <FlexRowWrapper alignItems="start" widthFull heightFull between>
-            <FlexColWrapper heightFull between>
+            <FlexColWrapper widthFull heightFull between>
                 {#if app.metadata}
                     <FlexRowWrapper alignItems="center">
                         <span class="icon">
@@ -67,14 +73,17 @@
                     </FlexRowWrapper>
                 {/if}
                 <small class="tag-list">
-                    {#each tags || [] as tag, i (i)}
-                        <span class="tag">
-                            {#if typeof tag === 'string'}
-                                <i class="ti ti-tag"></i>
-                                {tag}
+                    {#each tags || [] as { id, data }, i (id)}
+                        <span class="tag" class:dev={id === 'underdevelopment'}>
+                            {#if data}
+                                <i class="ti ti-{data.icon}" />
+                                <p><Localized text={data.name} /></p>
+                                <Tooltip>
+                                    <Localized text={data.description} />
+                                </Tooltip>
                             {:else}
-                                <i class="ti ti-{tag.icon}" />
-                                <Localized text={tag.name} />
+                                <i class="ti ti-tag"></i>
+                                {id}
                             {/if}
                         </span>
                     {/each}
@@ -83,7 +92,7 @@
             <FlexRowWrapper>
                 <button on:click={() => (alreadyAdded ? launch() : install())} class:active={alreadyAdded}>
                     <Tooltip>
-                        {alreadyAdded ? '管理画面から起動する' : '管理画面に追加する'}
+                        {alreadyAdded ? 'このアプリを起動する' : '管理画面に追加する'}
                     </Tooltip>
                     {alreadyAdded ? '開く' : '追加'}
                     <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'} />
@@ -113,6 +122,7 @@
         &:hover {
             transform: translateX(1px);
             transition: all 0.0621s;
+            z-index: 1;
         }
     }
 
@@ -157,6 +167,9 @@
     .name {
         font-weight: bold;
         width: fit-content;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .description {
@@ -166,6 +179,10 @@
         align-items: center;
         font-size: 0.65rem;
         color: var(--color-text);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .tag-list {
@@ -173,15 +190,65 @@
         gap: 0.5rem;
         flex-wrap: wrap;
         margin-top: 0.5rem;
+        container-type: inline-size;
+        width: 100%;
     }
 
     .tag {
+        position: relative;
         padding: 0.25rem 0.5rem;
-        background: var(--color-bg-1);
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        padding-left: 0.75rem;
+        z-index: 1;
 
         > i {
             font-size: 0.8rem;
             margin-right: 0.2rem;
+        }
+
+        &.dev {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            outline: 1px dashed var(--color-1);
+            outline-offset: -1px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-right: 0.25rem;
+            padding-left: 0.5rem;
+
+            &::before {
+                position: absolute;
+                z-index: -1;
+                inset: 0;
+                content: '';
+                background: var(--color-2);
+                clip-path: polygon(0 100%, 100% 100%, 100% 0%);
+                opacity: 0.0621;
+            }
+        }
+
+        &:not(.dev) {
+            background: var(--color-bg-1);
+        }
+    }
+
+    @container (max-width: 400px) {
+        .tag {
+            &:not(.dev) {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 1.75rem;
+                height: 1.75rem;
+                padding-left: 0.75rem;
+
+                > p {
+                    display: none;
+                }
+            }
         }
     }
 
