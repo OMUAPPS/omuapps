@@ -11,6 +11,7 @@ import { APP as discordOverlay } from './discord-overlay/app.js';
 import { APP as emoji } from './emoji/app.js';
 import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
+import { APP as omucafe } from './omucafe/app.js';
 import { APP as reaction } from './reaction/app.js';
 import { APP as replay } from './replay/app.js';
 import { APP as roulette } from './roulette/app.js';
@@ -38,6 +39,7 @@ if (DEV) {
         breaktimer,
         archive,
         clock,
+        omucafe,
     )
 }
 
