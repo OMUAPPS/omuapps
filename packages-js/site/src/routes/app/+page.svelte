@@ -12,6 +12,7 @@
     let search = '';
     let password = '';
     let status: NetworkStatus = omu.network.status;
+    let connecting = true;
 
     function toggleTag(category: string) {
         if (filterTags.includes(category)) {
@@ -65,6 +66,9 @@
         status = omu.network.status;
         const unlisten = omu.network.event.status.listen((value) => {
             status = value;
+            if (status.type === 'connected') {
+                connecting = false;
+            }
         });
         return unlisten;
     });
@@ -98,7 +102,19 @@
                     {/each}
                 {:else}
                     <div class="loading">
-                        {#if status['type'] === 'connecting' || status['type'] === 'disconnected'}
+                        {#if status['type'] === 'disconnected'}
+                            {#if connecting}
+                                <p>
+                                    接続中
+                                    <Spinner />
+                                </p>
+                            {:else}
+                                <p>
+                                    接続が切断されました
+                                    <button on:click={() => omu.network.connect()}>再接続</button>
+                                </p>
+                            {/if}
+                        {:else if status['type'] === 'connecting'}
                             <p>
                                 接続中
                                 <Spinner />
