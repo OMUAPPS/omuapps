@@ -1,5 +1,8 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
+    import type { NetworkStatus } from '@omujs/omu/network/network.js';
+    import { Spinner } from '@omujs/ui';
+    import { onMount } from 'svelte';
     import { omu } from '../client.js';
     import AppEntry from './AppEntry.svelte';
     import { apps, personalApps } from './apps.js';
@@ -8,6 +11,7 @@
     let filterTags: string[] = [];
     let search = '';
     let password = '';
+    let status: NetworkStatus = omu.network.status;
 
     function toggleTag(category: string) {
         if (filterTags.includes(category)) {
@@ -57,6 +61,14 @@
         }
     }
 
+    onMount(() => {
+        status = omu.network.status;
+        const unlisten = omu.network.event.status.listen((value) => {
+            status = value;
+        });
+        return unlisten;
+    });
+
     $: {
         updateFilters(filterTags, search, password);
     }
@@ -80,9 +92,38 @@
             <h3>アプリ</h3>
             <input type="search" placeholder="アプリを検索 ..." bind:value={search} />
             <div class="apps">
-                {#each filteredApps as app (app.key())}
-                    <AppEntry {app} />
-                {/each}
+                {#if status['type'] === 'ready'}
+                    {#each filteredApps as app (app.key())}
+                        <AppEntry {app} />
+                    {/each}
+                {:else}
+                    <div class="loading">
+                        {#if status['type'] === 'connecting' || status['type'] === 'disconnected'}
+                            <p>
+                                接続中
+                                <Spinner />
+                            </p>
+                        {:else if status['type'] === 'connected'}
+                            <p>
+                                認証中
+                                <Spinner />
+                            </p>
+                        {:else if status['type'] === 'closed'}
+                            <p>
+                                接続が切断されました
+                                <button on:click={() => omu.network.connect()}>再接続</button>
+                            </p>
+                        {:else if status['type'] === 'error'}
+                            <p>
+                                エラーが発生しました
+                                <button on:click={() => omu.network.connect()}>再接続</button>
+                            </p>
+                            <small>
+                                {status['error'].message}
+                            </small>
+                        {/if}
+                    </div>
+                {/if}
             </div>
         </div>
         <div class="options">
@@ -135,6 +176,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 1rem;
+        flex: 1;
     }
 
     input {
@@ -197,6 +239,49 @@
 
         &:active {
             margin-left: 1px;
+        }
+    }
+
+    .loading {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        outline: 1px solid var(--color-bg-1);
+        outline-offset: -1px;
+        border-radius: 3px;
+        padding: 4rem 2rem;
+
+        > p {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--color-1);
+
+            > button {
+                padding: 0.5rem 1rem;
+                border: none;
+                background: var(--color-1);
+                color: var(--color-bg-2);
+                font-size: 0.8rem;
+                font-weight: 600;
+                border-radius: 3px;
+
+                &:hover {
+                    outline: 1px solid var(--color-1);
+                    outline-offset: -1px;
+                    background: var(--color-bg-2);
+                    color: var(--color-1);
+                }
+            }
+        }
+
+        > small {
+            font-size: 0.8rem;
+            color: var(--color-text);
         }
     }
 </style>

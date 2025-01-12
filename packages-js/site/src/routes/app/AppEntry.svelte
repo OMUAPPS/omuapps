@@ -83,9 +83,10 @@
             <FlexRowWrapper>
                 <button on:click={() => (alreadyAdded ? launch() : install())} class:active={alreadyAdded}>
                     <Tooltip>
-                        {alreadyAdded ? 'アプリを開く' : 'アプリをインストール'}
+                        {alreadyAdded ? '管理画面から起動する' : '管理画面に追加する'}
                     </Tooltip>
-                    <i class="ti ti-{alreadyAdded ? 'player-play' : 'download'}" />
+                    {alreadyAdded ? '開く' : '追加'}
+                    <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'} />
                 </button>
             </FlexRowWrapper>
         </FlexRowWrapper>
@@ -105,19 +106,23 @@
         color: var(--color-1);
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
+        outline-offset: -1px;
+        box-shadow: 0 0.25rem 0rem 0px color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%);
+        border-radius: 2px;
 
         &:hover {
-            transition: 0.0621s;
-            margin-left: 2px;
+            transform: translateX(1px);
+            transition: all 0.0621s;
         }
     }
 
     .thumbnail {
         position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
+        inset: 1px;
+        width: calc(100% - 2px);
+        height: calc(100% - 2px);
         object-fit: cover;
+        filter: blur(.0621rem);
     }
 
     .overlay {
@@ -181,15 +186,28 @@
     }
 
     button {
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
         margin-left: 0.5rem;
-        width: 40px;
-        height: 40px;
+        padding: 0.5rem 1rem;
         border: none;
         color: var(--color-bg-1);
         background: var(--color-1);
         border-bottom: 1px solid var(--color-outline);
+        border-radius: 3px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
 
         &.active {
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            outline: 1px solid var(--color-1);
+            outline-offset: -2px;
+        }
+
+        &:hover {
             background: var(--color-bg-2);
             color: var(--color-1);
             outline: 1px solid var(--color-1);
