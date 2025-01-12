@@ -13,8 +13,8 @@ export const TAG_REGISTRY = {
             ja: 'Youtube',
         },
         description: {
-            en: 'Apps related to Youtube.',
-            ja: 'Youtubeに関連するアプリ。',
+            ja: 'Youtubeの機能を使ったアプリ',
+            en: 'The app uses Youtube features',
         },
         icon: 'ti ti-brand-youtube',
     },
@@ -24,8 +24,8 @@ export const TAG_REGISTRY = {
             ja: 'アセット',
         },
         description: {
-            en: 'Apps that provide assets.',
-            ja: 'アセットを提供するアプリ。',
+            ja: '配信ソフトに追加することができるアプリ',
+            en: 'The app can be added to streaming software',
         },
         icon: 'ti ti-library-photo',
     },
@@ -35,8 +35,8 @@ export const TAG_REGISTRY = {
             ja: 'ゲーム',
         },
         description: {
-            en: 'Game apps.',
-            ja: 'ゲームアプリ。',
+            ja: 'ひとりじゃないゲームで遊べるアプリ',
+            en: 'Play games with others',
         },
         icon: 'ti ti-device-gamepad',
     },
@@ -46,8 +46,8 @@ export const TAG_REGISTRY = {
             ja: 'ツール',
         },
         description: {
-            en: 'Tool apps.',
-            ja: 'ツールアプリ。',
+            ja: 'ちょっとした作業を効率化するツール',
+            en: 'Tools to streamline your work',
         },
         icon: 'ti ti-tools',
     },
@@ -57,10 +57,10 @@ export const TAG_REGISTRY = {
             ja: '開発中',
         },
         description: {
-            ja: '開発中のアプリ。',
-            en: 'Apps under development.',
+            ja: 'まだ最低限の動作の安定性が確保されていないアプリ',
+            en: 'The app has not yet achieved the minimum stability of operation.',
         },
-        icon: 'ti ti-package',
+        icon: 'ti ti-flask-filled',
     },
 } as const satisfies Record<string, Tag>;
 export const REGISTRIES = { ...TAG_REGISTRY } as Record<string, Tag>;
