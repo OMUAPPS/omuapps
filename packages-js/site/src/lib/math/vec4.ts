@@ -2,6 +2,7 @@ import { lerp } from './math.js';
 
 export class Vec4 {
     public static ZERO = new Vec4(0, 0, 0, 0);
+    public static ONE = new Vec4(1, 1, 1, 1);
 
     constructor(
         public readonly x: number,
