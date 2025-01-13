@@ -7,7 +7,7 @@
     import StatusBar from './common/StatusBar.svelte';
     import Title from './images/title.svg';
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
-    import { listen, tauriWindow } from './tauri.js';
+    import { invoke, listen, tauriWindow } from './tauri.js';
     import { version } from './version.json';
 
     let alwaysOnTop = false;
@@ -36,7 +36,7 @@
     }
     
     function close() {
-        tauriWindow.appWindow.close();
+        invoke('close_window');
     }
 </script>
 
