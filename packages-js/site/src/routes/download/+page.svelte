@@ -24,6 +24,8 @@
             downloading = false;
         }, 1000);
     }
+
+    $: daysAgo = Math.floor((Date.now() - new Date(data.manifest.pub_date).getTime()) / (1000 * 60 * 60 * 24));
 </script>
 
 <svelte:head>
@@ -43,18 +45,18 @@
         <p>
             {#if version}
                 <a href="/legal/terms" class="legal-link">
-                    <small>使っていただくにあたって</small>
                     <p>
                         利用規約
                         <i class="ti ti-external-link"></i>
                     </p>
+                    <small>使っていただくにあたって</small>
                 </a>
                 <a href="/legal/privacy" class="legal-link">
-                    <small>使っていただける方へお約束</small>
                     <p>
                         プライバシーポリシー
                         <i class="ti ti-external-link"></i>
                     </p>
+                    <small>使っていただける方へお約束</small>
                 </a>
                 <p class="legal">
                     OMUAPPSをダウンロードすることで、
@@ -108,6 +110,12 @@
                         {date.toLocaleDateString()}
                         {date.toLocaleTimeString()}
                     </p>
+                    {#if daysAgo > 0}
+                        <small>
+                            {daysAgo}
+                            日前
+                        </small>
+                    {/if}
                 </div>
             {:else}
                 <small> お使いのプラットフォームはサポートされていませんでした… </small>
@@ -130,7 +138,7 @@
         font-size: 0.9rem;
         color: var(--color-1);
 
-        .version {
+        > .version {
             font-weight: 600;
         }
     }
@@ -148,6 +156,7 @@
 
         > small {
             font-size: 0.6rem;
+            color: var(--color-text);
         }
 
         &:hover {
@@ -174,7 +183,8 @@
         padding: 0.6rem 1rem;
         margin-right: 1rem;
         margin-bottom: 1rem;
-        font-size: 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
         color: var(--color-bg-2);
         background: var(--color-1);
         border-radius: 2px;
@@ -195,6 +205,7 @@
         margin-right: 1rem;
         margin-bottom: 1rem;
         font-size: 1rem;
+        font-weight: 600;
         color: var(--color-1);
         background: var(--color-bg-1);
         outline: 1px solid var(--color-1);
