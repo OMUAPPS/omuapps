@@ -25,20 +25,19 @@ type PacketHandler<T> = {
     event: EventEmitter<[T]>;
 };
 
-// export enum NetworkStatus {
-//     DISCONNECTED = 'disconnected',
-//     CONNECTING = 'connecting',
-//     CONNECTED = 'connected',
-//     READY = 'ready',
-//     ERROR = 'error',
-//     CLOSED = 'closed',
-// }
 type StatusType<T> = {
     type: T,
 };
+
 export type NetworkStatus = StatusType<'disconnected'> | StatusType<'connecting'> | StatusType<'connected'> | StatusType<'ready'> | {
     type: 'error',
     error: OmuError,
+} | {
+    type: 'reconnecting',
+    attempt: number,
+    timeout: number,
+    date: Date,
+    cancel: () => void,
 } | StatusType<'closed'>;
 
 export class Network {
@@ -128,20 +127,45 @@ export class Network {
         listeners.event.listen(handler as (packet: unknown) => void);
     }
 
+    private async scheduleReconnect(attempt: number): Promise<boolean> {
+        const timeout = Math.min(30000, 2000 * Math.pow(2, attempt));
+        const date = new Date();
+        let cancelled = false;
+        await this.setStatus({
+            type: 'reconnecting',
+            attempt,
+            timeout,
+            date,
+            cancel: () => {cancelled = true;}
+        });
+        if (cancelled) {
+            return false;
+        }
+        const remaining = timeout - (new Date().getTime() - date.getTime());
+        await new Promise((resolve) => setTimeout(resolve, remaining));
+        return true;
+    }
+
     public async connect(recconect = true): Promise<void> {
         if (!this.isState('disconnected')) {
             throw new Error(`Cannot connect while ${this.status.type}`);
         }
 
+        let attempt = 0;
+
         while (true) {
+            attempt++;
             try {
                 try {
                     await this.connection.connect();
+                    attempt = 0;
                 } catch (error) {
                     if (!recconect) {
                         throw error;
                     }
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                    if (!await this.scheduleReconnect(attempt)) {
+                        return;
+                    }
                     continue;
                 }
                 await this.setStatus({type: 'connecting'});
@@ -172,7 +196,9 @@ export class Network {
             if (!recconect) {
                 break;
             }
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            if (!await this.scheduleReconnect(attempt)) {
+                break;
+            }
         }
     }
 
