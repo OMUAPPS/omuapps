@@ -10,7 +10,7 @@
     import VCConfig from './components/VCConfig.svelte';
     import VisualConfig from './components/VisualConfig.svelte';
     import VoiceChannelStatus from './components/VoiceChannelStatus.svelte';
-    import { DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
+    import { createUserConfig, DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
     import { dragUser, heldUser, selectedAvatar } from './states.js';
 
     export let omu: Omu;
@@ -21,12 +21,7 @@
     function getUser(id: string) {
         let user = $config.users[id];
         if (!user) {
-            user = {
-                show: true,
-                position: [0, 0],
-                scale: 1,
-                avatar: null,
-            };
+            user = createUserConfig();
             $config.users[id] = user;
         }
         return user;
