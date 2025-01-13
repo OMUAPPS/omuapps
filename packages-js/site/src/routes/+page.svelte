@@ -4,11 +4,11 @@
     import Header from '$lib/components/Header.svelte';
     import dashboard1 from '$lib/images/dashboard-1.png';
     import indev from '$lib/images/in-dev.png';
-    import opensource from '$lib/images/open-source.png';
     import title from '$lib/images/title.svg';
     import { Tooltip } from '@omujs/ui';
     import IndexFeatures from './_components/IndexFeatures.svelte';
     import IndexLinks from './_components/IndexLinks.svelte';
+    import IndexOpenSource from './_components/IndexOpenSource.svelte';
 </script>
 
 <svelte:head>
@@ -47,11 +47,10 @@
             <div class="information">
                 <div class="info">
                     <h3>
-                        ブラウザ上のアプリを使いやすく
+                        配信向けアプリを使いやすく
                     </h3>
                     <p>
-                        ブラウザだけでは作れないアプリがたくさんあります。
-                        OMUAPPSは、ブラウザ向けに作りながら、より多くの機能を使えるようにするためのAPIを提供します。
+                        OMUAPPSは、ブラウザソース向けに作りながら、より快適に使えるようにするためのAPIを提供します。
                     </p>
                 </div>
             </div>
@@ -62,25 +61,8 @@
         </div>
     </div>
     <hr>
-    <div class="content-width open-source">
-        <div class="image">
-            <img src={opensource} alt="Open Source" />
-        </div>
-        <div class="info">
-            <i class="ti ti-code"></i>
-            <div class="info">
-                <h3>オープンソース</h3>
-                <p>APIと管理画面、そしてサイトを含む全てはオープンソースなので、誰でも中身を見ることが出来ます。</p>
-            </div>
-        </div>
-        <a href="https://github.com/omuapps" target="_blank" rel="noopener noreferrer">
-            <Tooltip>
-                <p>GitHubで開発を見る</p>
-            </Tooltip>
-            <i class="ti ti-brand-github"></i>
-            Github
-            <i class="ti ti-arrow-right"></i>
-        </a>
+    <div class="content-width">
+        <IndexOpenSource />
     </div>
 </main>
 <Content>
@@ -94,71 +76,6 @@
 
     .content-width {
         width: min(100%, 80rem);
-    }
-
-    .open-source {
-        position: relative;
-        height: 40rem;
-
-        > .info {
-            top: 0;
-            right: 0;
-            position: absolute;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 2rem;
-            padding: 1rem 2rem;
-            background: var(--color-bg-2);
-            border: 1px solid var(--color-1);
-            outline: 0.25rem solid var(--color-bg-2);
-            margin-bottom: 2rem;
-    
-            > i {
-                font-size: 2rem;
-                color: var(--color-1);
-            }
-    
-            > .info {
-                display: flex;
-                flex-direction: column;
-                width: 20rem;
-    
-                > h3 {
-                    color: var(--color-1);
-                    font-size: 1.5rem;
-                    white-space: nowrap;
-                }
-    
-                > p {
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    color: var(--color-text);
-                }
-            }
-        }
-
-        > .image {
-            position: absolute;
-            top: 4rem;
-            left: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2rem;
-            width: calc(100% - 4rem);
-            height: 12rem;
-
-            > img {
-                display: block;
-                width: 100%;
-                object-fit: cover;
-                border-radius: 0.5rem;
-                box-shadow: 0.25rem 0.5rem 1rem var(--color-outline);
-                width: 100%;
-                height: 100%;
-            }
-        }
     }
 
 
@@ -282,10 +199,8 @@
                 flex-direction: row;
                 align-items: center;
                 gap: 2rem;
-                padding: 1rem 0;
-                border-bottom: 3px solid var(--color-1);
-                margin-bottom: 2rem;
                 width: 30rem;
+                margin-bottom: 1rem;
 
                 > .info {
                     display: flex;
@@ -295,6 +210,9 @@
                         color: var(--color-1);
                         font-size: 2rem;
                         white-space: nowrap;
+                        border-bottom: 3px solid var(--color-1);
+                        margin-bottom: 0.5rem;
+                        padding: 0.5rem 0;
                     }
 
                     > p {
