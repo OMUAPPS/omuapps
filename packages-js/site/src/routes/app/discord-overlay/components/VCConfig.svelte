@@ -43,6 +43,24 @@
 </script>
 
 <div class="config">
+    <button on:click={refresh} disabled={!!refreshPromise} class="refresh">
+        {#if refreshPromise}
+            再検出中…
+            <Spinner />
+        {:else if hasUsers}
+            <Tooltip>
+                Discordを再検出
+            </Tooltip>
+            ユーザーを再読み込み
+            <i class="ti ti-reload"></i>
+        {:else}
+            <Tooltip>
+                起動しているDiscordから読み込み直す
+            </Tooltip>
+            Discordを再検出
+            <i class="ti ti-reload"></i>
+        {/if}
+    </button>
     <span>
         {#if hasUsers && Object.keys(clients).length > 1}
             <p>
@@ -73,24 +91,6 @@
                 ユーザーを選択
             </small>
         {/if}
-        <button on:click={refresh} disabled={!!refreshPromise}>
-            {#if refreshPromise}
-                <Tooltip>
-                    Discordを再検出中…
-                </Tooltip>
-                <Spinner />
-            {:else if hasUsers}
-                <Tooltip>
-                    Discordを再検出
-                </Tooltip>
-                <i class="ti ti-reload"></i>
-            {:else}
-                <Tooltip>
-                    起動しているDiscordから読み込み直す
-                </Tooltip>
-                <i class="ti ti-reload"></i>
-            {/if}
-        </button>
     </span>
     <span>
         {#if hasGuilds}
@@ -209,6 +209,37 @@
         }
     }
 
+    .refresh {
+        display: flex;
+        gap: 0.5rem;
+        align-items: baseline;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        font-size: 0.8621rem;
+        font-weight: 600;
+        background: var(--color-1);
+        color: var(--color-bg-1);
+        border: none;
+        border-radius: 2px;
+        outline: 1px solid var(--color-outline);
+        outline-offset: -1px;
+        border-radius: 2px;
+        cursor: pointer;
+
+        &:hover {
+            outline: 1px solid var(--color-1);
+            outline-offset: -1px;
+            background: var(--color-bg-1);
+            color: var(--color-1);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            background: var(--color-bg-1);
+            color: var(--color-1);
+        }
+    }
+
     .avatar {
         width: 1.5rem;
         height: 1.5rem;
@@ -233,5 +264,10 @@
                 accent-color: var(--color-1);
             }
         }
+    }
+
+    small {
+        font-size: 0.8rem;
+        color: var(--color-text);
     }
 </style>
