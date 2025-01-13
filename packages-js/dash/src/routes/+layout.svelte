@@ -14,7 +14,6 @@
     import '@omujs/ui';
     import { Spinner, Theme } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/api/process';
-    import { DEV } from 'esm-env';
     import GenerateLogButton from './GenerateLogButton.svelte';
     import './styles.scss';
     import UpdateButton from './UpdateButton.svelte';
@@ -242,7 +241,7 @@
                                     {PROGRESS_NAME[progress.type]}
                                 </small>
                             {:else}
-                                {error.message}
+                                {error?.message || error || '起動に失敗しました'}
                             {/if}
                         </small>
                     </div>
