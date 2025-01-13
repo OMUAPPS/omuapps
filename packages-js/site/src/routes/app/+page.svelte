@@ -65,6 +65,7 @@
     onMount(() => {
         status = omu.network.status;
         const unlisten = omu.network.event.status.listen((value) => {
+            console.log('Network status:', value);
             status = value;
             if (status.type === 'connected') {
                 connecting = false;
@@ -93,8 +94,10 @@
     </header>
     <main slot="content">
         <div class="left">
-            <h3>アプリ</h3>
-            <input type="search" placeholder="アプリを検索 ..." bind:value={search} />
+            <h3>
+                アプリ
+                <i class="ti ti-apps"></i>
+            </h3>
             <div class="apps">
                 {#if status['type'] === 'ready'}
                     {#each filteredApps as app (app.key())}
@@ -114,6 +117,15 @@
                                     <button on:click={() => omu.network.connect()}>再接続</button>
                                 </p>
                             {/if}
+                        {:else if status['type'] === 'reconnecting'}
+                            <p>
+                                接続に失敗しました ({status.attempt}回目)
+                                <button on:click={() => omu.network.connect()}>再接続</button>
+                            </p>
+                            <small>
+                                <p>APIが起動していない可能性があります。</p>
+                                <p>管理画面が起動してあるか確認してください。</p>
+                            </small>
                         {:else if status['type'] === 'connecting'}
                             <p>
                                 接続中
@@ -143,7 +155,11 @@
             </div>
         </div>
         <div class="options">
-            <h3>表示設定</h3>
+            <h3>
+                表示設定
+                <i class="ti ti-filter"></i>
+            </h3>
+            <input type="search" placeholder="アプリを検索 ..." bind:value={search} />
             <button on:click={() => toggleTag('underdevelopment')} class="tag" class:selected={filterTags.includes('underdevelopment')}>
                 <i class="ti ti-package"></i>
                 開発中のアプリを表示
@@ -164,6 +180,8 @@
     
     h3 {
         font-size: 0.9rem;
+        color: var(--color-1);
+        margin-bottom: 0.25rem;
     }
 
     main {
@@ -173,9 +191,8 @@
     }
 
     .options {
-        width: 300px;
+        width: 15rem;
         height: 100%;
-        margin-right: 40px;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
@@ -184,13 +201,14 @@
     .left {
         flex: 1;
         display: flex;
+        flex-direction: column;
         flex-wrap: wrap;
         gap: 0.5rem;
     }
 
     .apps {
         display: flex;
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 1rem;
         flex: 1;
     }
@@ -247,7 +265,9 @@
         }
 
         &:hover {
-            outline: 1px solid;
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            outline: 1px solid var(--color-1);
             outline-offset: -1px;
             transition: 0.0621s;
             transition-property: margin-left;
