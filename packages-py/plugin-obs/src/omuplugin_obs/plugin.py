@@ -12,6 +12,7 @@ from typing import Any, TypedDict
 
 import psutil
 from loguru import logger
+from omuserver.server import Server
 
 from . import obsconfig
 from .script.config import get_config_path
@@ -211,16 +212,6 @@ def install_script(launcher: Path, scene: Path):
     scene.write_text(json.dumps(data), encoding="utf-8")
 
 
-def get_launch_command():
-    import os
-    import sys
-
-    return {
-        "cwd": os.getcwd(),
-        "args": [sys.executable, "-m", "omuserver", *sys.argv[1:]],
-    }
-
-
 def install_all_scene():
     script_path = Path(__file__).parent / "script"
     launcher_path = script_path / "omuapps_plugin.py"
@@ -235,21 +226,23 @@ def relaunch_obs():
         subprocess.Popen(obs.launch_command, cwd=obs.cwd)
 
 
-def write_config():
+def write_config(dashboard_bin: Path | None):
+    launch_command = None
+    if dashboard_bin:
+        launch_command = [
+            dashboard_bin,
+            "--background",
+        ]
     config_path = get_config_path()
     config_path.write_text(
-        json.dumps(
-            {
-                "python_path": get_python_directory(),
-                "launch": get_launch_command(),
-            }
-        ),
+        json.dumps({"python_path": get_python_directory(), "launch": launch_command}),
         encoding="utf-8",
     )
 
 
-async def install():
-    write_config()
+async def install(server: Server):
+    dashboard = server.directories.dashboard
+    write_config(dashboard)
 
     try:
         if is_installed():

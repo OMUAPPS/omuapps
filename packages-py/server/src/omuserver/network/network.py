@@ -46,7 +46,10 @@ class Network:
         if session.closed:
             return
         await session.send(PACKET_TYPES.READY, None)
-        logger.info(f"Ready: {session.app.key()} v{session.app.version} {session.kind}")
+        parts = [session.app.key()]
+        if session.app.version is not None:
+            parts.append(f"v{session.app.version}")
+        logger.info(f"Ready: {parts}")
 
     def register_packet(self, *packet_types: PacketType) -> None:
         self._packet_dispatcher.register(*packet_types)

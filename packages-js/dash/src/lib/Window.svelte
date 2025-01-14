@@ -11,7 +11,6 @@
 
     let alwaysOnTop = false;
     let maximized = false;
-
     
     const destroy = listen('single-instance', async ({payload}) => {
         console.log(`single-instance: ${payload}`);

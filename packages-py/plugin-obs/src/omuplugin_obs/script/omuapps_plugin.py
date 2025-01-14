@@ -29,32 +29,24 @@ logger.add(
 )
 
 
-class g:
-    process: subprocess.Popen | None = None
-
-
 def get_launch_command():
     return json.loads(get_config_path().read_text(encoding="utf-8"))["launch"]
 
 
 def launch_server():
-    if g.process:
-        terminate_server()
+    launch_command = get_launch_command()
+    if launch_command is None:
+        logger.info("No launch command found. Skipping")
+        return
     startup_info = subprocess.STARTUPINFO()
     startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-    g.process = subprocess.Popen(
-        **get_launch_command(),
+    process = subprocess.Popen(
+        **launch_command,
         startupinfo=startup_info,
         creationflags=subprocess.CREATE_NO_WINDOW,
     )
-
-
-def terminate_server():
-    if g.process:
-        g.process.kill()
-        g.process = None
-        print("Killed")
+    logger.info(f"Launched {process.pid}")
 
 
 def script_load(settings):
