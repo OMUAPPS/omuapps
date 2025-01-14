@@ -3,12 +3,13 @@ from dataclasses import dataclass
 from typing import LiteralString
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class Directories:
     data: pathlib.Path
     assets: pathlib.Path
     index: pathlib.Path
     version: pathlib.Path
+    dashboard: pathlib.Path | None = None
 
     @classmethod
     def default(cls):

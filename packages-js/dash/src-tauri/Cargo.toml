@@ -16,6 +16,7 @@ tauri-build = { version = "1.5.5", features = [] }
 
 [dependencies]
 tauri = { version = "1.8.0", features = [
+    "cli",
     "window-set-size",
     "process-relaunch",
     "updater",

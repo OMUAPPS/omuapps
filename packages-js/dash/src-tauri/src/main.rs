@@ -23,6 +23,7 @@ use directories::ProjectDirs;
 use log::{info, warn};
 use once_cell::sync::Lazy;
 use options::AppOptions;
+use serde_json::Value;
 use sources::py::PythonVersion;
 use std::{
     borrow,
@@ -31,8 +32,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tauri::{
-    api::path::data_dir, CustomMenuItem, Event, Manager, RunEvent, SystemTray, SystemTrayEvent,
-    SystemTrayMenu,
+    api::path::data_dir, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu,
 };
 use tauri_plugin_log::LogTarget;
 use utils::filesystem::remove_dir_all;
@@ -409,6 +409,21 @@ fn main() {
         .setup(move |app| {
             let main_window = app.get_window("main").unwrap();
             set_shadow(&main_window, true).unwrap();
+
+            match app.get_cli_matches() {
+                Ok(matches) => {
+                    if Some(Value::Bool(true))
+                        == matches.args.get("background").map(|arg| arg.value.clone())
+                    {
+                        main_window.hide().unwrap();
+                        app.tray_handle()
+                            .get_item("toggle")
+                            .set_title("Show")
+                            .unwrap();
+                    }
+                }
+                Err(_) => {}
+            }
 
             *app_handle.lock().unwrap() = Some(app.handle().clone());
 

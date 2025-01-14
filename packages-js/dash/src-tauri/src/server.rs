@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 use log::info;
 use rand::Rng;
+use tauri::utils::platform::current_exe;
 use tauri::{AppHandle, Manager};
 
 use crate::version::VERSION;
@@ -205,6 +206,8 @@ impl Server {
         cmd.arg(self.token.clone());
         cmd.arg("--port");
         cmd.arg(self.option.port.to_string());
+        cmd.arg("--dashboard-path");
+        cmd.arg(current_exe().unwrap());
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.current_dir(&self.option.data_dir);
