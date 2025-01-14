@@ -50,6 +50,10 @@ export type Progress = (
 )
 type Events = {
     server_state: Progress;
+    'single-instance': {
+        args: string[],
+        cwd: string,
+    }
     [event.TauriEvent.WINDOW_RESIZED]: unknown;
     [event.TauriEvent.WINDOW_MOVED]: unknown;
     [event.TauriEvent.WINDOW_CLOSE_REQUESTED]: unknown;
