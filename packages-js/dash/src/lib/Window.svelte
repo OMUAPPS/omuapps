@@ -1,21 +1,24 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
-    import { TauriEvent } from '@tauri-apps/api/event';
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
     import TitlebarButton from './TitlebarButton.svelte';
     import StatusBar from './common/StatusBar.svelte';
     import Title from './images/title.svg';
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
-    import { listen, tauriWindow } from './tauri.js';
+    import { invoke, listen, tauriWindow } from './tauri.js';
     import { version } from './version.json';
 
     let alwaysOnTop = false;
     let maximized = false;
 
-    const destroy = listen(TauriEvent.WINDOW_RESIZED, async () => {
-        maximized = await tauriWindow.appWindow.isMaximized();
-    });
+    
+    const destroy = listen('single-instance', async ({payload}) => {
+        console.log(`single-instance: ${payload}`);
+        await tauriWindow.appWindow.show();
+        await tauriWindow.appWindow.setFocus();
+        window.location.reload();
+    })
     onMount(async () => {
         maximized = await tauriWindow.appWindow.isMaximized();
     });
@@ -36,8 +39,9 @@
     }
     
     function close() {
-        tauriWindow.appWindow.close();
+        invoke('close_window');
     }
+    
 </script>
 
 <div class="window">

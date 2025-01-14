@@ -5,6 +5,7 @@ import { BROWSER } from 'esm-env';
 let _invoke: typeof api.invoke;
 let _listen: typeof event.listen;
 type Commands = {
+    close_window: () => void;
     start_server: () => string;
     stop_server: () => string;
     get_token: () => string | null;
@@ -49,6 +50,10 @@ export type Progress = (
 )
 type Events = {
     server_state: Progress;
+    'single-instance': {
+        args: string[],
+        cwd: string,
+    }
     [event.TauriEvent.WINDOW_RESIZED]: unknown;
     [event.TauriEvent.WINDOW_MOVED]: unknown;
     [event.TauriEvent.WINDOW_CLOSE_REQUESTED]: unknown;

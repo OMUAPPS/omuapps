@@ -30,7 +30,10 @@ use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
-use tauri::{api::path::data_dir, Manager};
+use tauri::{
+    api::path::data_dir, CustomMenuItem, Event, Manager, RunEvent, SystemTray, SystemTrayEvent,
+    SystemTrayMenu,
+};
 use tauri_plugin_log::LogTarget;
 use utils::filesystem::remove_dir_all;
 use uv::Uv;
@@ -56,6 +59,11 @@ struct AppState {
     option: AppOptions,
     server: Arc<Mutex<Option<Server>>>,
     app_handle: Arc<Mutex<Option<tauri::AppHandle>>>,
+}
+
+#[tauri::command]
+fn close_window(window: tauri::Window) {
+    window.hide().unwrap();
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -324,6 +332,56 @@ fn main() {
     };
 
     tauri::Builder::default()
+        .system_tray(
+            SystemTray::new().with_menu(
+                SystemTrayMenu::new()
+                    .add_item(CustomMenuItem::new("toggle", "Toggle"))
+                    .add_item(CustomMenuItem::new("exit_app", "Quit")),
+            ),
+        )
+        .on_system_tray_event(|app, event| match event {
+            SystemTrayEvent::LeftClick {
+                position: _,
+                size: _,
+                ..
+            } => {
+                let window = app.get_window("main").unwrap();
+                window.show().unwrap();
+                window.set_focus().unwrap();
+            }
+            SystemTrayEvent::MenuItemClick { id, .. } => {
+                let item_handle = app.tray_handle().get_item(&id);
+                match id.as_str() {
+                    "exit_app" => {
+                        // exit the app
+                        app.exit(0);
+                    }
+                    "toggle" => {
+                        let window = match app.get_window("main") {
+                            Some(window) => window,
+                            None => return,
+                        };
+                        let new_title = if window.is_visible().unwrap() {
+                            window.hide().unwrap();
+                            "Show"
+                        } else {
+                            window.show().unwrap();
+                            "Hide"
+                        };
+                        item_handle.set_title(new_title).unwrap();
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        })
+        .on_window_event(|event| match event.event() {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                event.window().hide().unwrap();
+                api.prevent_close();
+            }
+            _ => {}
+        })
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             info!("{}, {argv:?}, {cwd}", app.package_info().name);
 
@@ -339,6 +397,7 @@ fn main() {
         )
         .manage(server_state)
         .invoke_handler(tauri::generate_handler![
+            close_window,
             start_server,
             stop_server,
             clean_environment,
@@ -355,8 +414,14 @@ fn main() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| match event {
+            tauri::RunEvent::ExitRequested { api, .. } => {
+                api.prevent_exit();
+            }
+            _ => {}
+        });
 }
 
 fn get_data_dir() -> std::path::PathBuf {
