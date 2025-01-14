@@ -32,8 +32,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tauri::{
-    api::path::data_dir, CustomMenuItem, Event, Manager, RunEvent, SystemTray, SystemTrayEvent,
-    SystemTrayMenu,
+    api::path::data_dir, utils::platform::current_exe, CustomMenuItem, Event, Manager, RunEvent,
+    SystemTray, SystemTrayEvent, SystemTrayMenu,
 };
 use tauri_plugin_log::LogTarget;
 use utils::filesystem::remove_dir_all;
