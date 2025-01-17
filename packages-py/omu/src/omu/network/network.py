@@ -52,7 +52,6 @@ class Network:
         self._token_provider = token_provider
         self._connection = connection
         self._connected = False
-        self._closed = False
         self._event = NetworkEvents()
         self._tasks: list[Coro[[], None]] = []
         self._packet_mapper = PacketMapper()
@@ -80,7 +79,6 @@ class Network:
         }:
             return
 
-        self._closed = True
         ERROR_MAP: dict[DisconnectType, type[OmuError]] = {
             DisconnectType.ANOTHER_CONNECTION: AnotherConnection,
             DisconnectType.PERMISSION_DENIED: PermissionDenied,
@@ -144,8 +142,6 @@ class Network:
     async def connect(self, *, reconnect: bool = True) -> None:
         if self._connected:
             raise RuntimeError("Already connected")
-        if self._closed:
-            raise RuntimeError("Connection closed")
 
         while True:
             try:
@@ -178,14 +174,18 @@ class Network:
 
             if not reconnect:
                 break
-            if self._closed:
-                break
 
             await asyncio.sleep(1)
 
     async def disconnect(self) -> None:
         if self._connection.closed:
             return
+        await self.send(
+            Packet(
+                PACKET_TYPES.DISCONNECT,
+                DisconnectPacket(DisconnectType.CLOSE, "Client disconnected"),
+            )
+        )
         self._connected = False
         await self._connection.close()
         await self._event.status.emit("disconnected")
@@ -193,7 +193,6 @@ class Network:
 
     async def close(self) -> None:
         await self.disconnect()
-        self._closed = True
 
     async def send(self, packet: Packet) -> None:
         if not self._connected:

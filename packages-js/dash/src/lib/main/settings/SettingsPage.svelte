@@ -9,6 +9,7 @@
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
+    import PluginSettings from './PluginSettings.svelte';
 
     export const props = {};
 
@@ -39,6 +40,12 @@
                 <i class="ti {$t('settings.category.general.icon')}"></i>
                 <p>{$t('settings.category.general.name')}</p>
                 <Tooltip>{$t('settings.category.general.description')}</Tooltip>
+                <i class="ti ti-chevron-right"></i>
+            </button>
+            <button class:selected={$currentSettingsCategory == 'plugins'} on:click={() => $currentSettingsCategory = 'plugins'}>
+                <i class="ti {$t('settings.category.plugins.icon')}"></i>
+                <p>{$t('settings.category.plugins.name')}</p>
+                <Tooltip>{$t('settings.category.plugins.description')}</Tooltip>
                 <i class="ti ti-chevron-right"></i>
             </button>
             <button class:selected={$currentSettingsCategory == 'about'} on:click={() => $currentSettingsCategory = 'about'}>
@@ -101,6 +108,8 @@
                         screenContext.push(CleaningEnvironmentScreen, undefined)
                     }}>{$t('settings.setting.cleanEnvironment')}</button>
                 </span>
+            {:else if $currentSettingsCategory === 'plugins'}
+                <PluginSettings />
             {:else if $currentSettingsCategory === 'about'}
                 <About />
             {:else if $currentSettingsCategory === 'developer'}

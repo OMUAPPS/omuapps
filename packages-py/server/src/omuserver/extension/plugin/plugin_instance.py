@@ -17,6 +17,7 @@ import psutil
 from loguru import logger
 from omu.address import Address
 from omu.app import App, AppType
+from omu.client import Client
 from omu.helper import asyncio_error_logger
 from omu.network.websocket_connection import WebsocketsConnection
 from omu.plugin import InstallContext, Plugin
@@ -59,6 +60,7 @@ class PluginInstance:
     entry_point: importlib.metadata.EntryPoint
     module: ModuleType
     process: Process | None = None
+    client: Client | None = None
 
     @classmethod
     def from_entry_point(
@@ -94,16 +96,25 @@ class PluginInstance:
             raise ValueError(f"Invalid plugin: {new_plugin} is not a Plugin")
         self.plugin = new_plugin
 
-    def terminate(self):
+    async def terminate(self, server: Server):
         if self.process is not None:
             self.process.terminate()
             self.process.join()
             self.process = None
+        if self.client is not None:
+            await self.client.stop()
+            self.client = None
+        if self.plugin.on_stop is not None:
+            await self.plugin.on_stop(server)
 
     async def start(self, server: Server):
+        if self.plugin.on_start is not None:
+            await self.plugin.on_start(server)
         token = server.permission_manager.generate_plugin_token()
-        pid = os.getpid()
         if self.plugin.isolated:
+            pid = os.getpid()
+            if self.process:
+                raise ValueError(f'Plugin "{self.plugin}" already started')
             process = Process(
                 target=run_plugin_isolated,
                 args=(
@@ -112,22 +123,25 @@ class PluginInstance:
                     token,
                     pid,
                 ),
+                name=f"Plugin {self.entry_point.value}",
                 daemon=True,
             )
             self.process = process
             process.start()
         else:
+            if self.client:
+                raise ValueError(f'Plugin "{self.plugin}" already started')
             if self.plugin.get_client is not None:
                 connection = PluginConnection()
-                plugin_client = self.plugin.get_client()
-                if plugin_client.app.type != AppType.PLUGIN:
+                self.client = self.plugin.get_client()
+                if self.client.app.type != AppType.PLUGIN:
                     raise ValueError(
-                        f"Invalid plugin: {plugin_client.app} is not a plugin"
+                        f"Invalid plugin: {self.client.app} is not a plugin"
                     )
-                plugin_client.network.set_connection(connection)
-                plugin_client.network.set_token_provider(PluginTokenProvider(token))
-                plugin_client.set_loop(server.loop)
-                server.loop.create_task(plugin_client.start(reconnect=False))
+                self.client.network.set_connection(connection)
+                self.client.network.set_token_provider(PluginTokenProvider(token))
+                self.client.set_loop(server.loop)
+                server.loop.create_task(self.client.start(reconnect=False))
                 session_connection = PluginSessionConnection(connection)
                 session = await Session.from_connection(
                     server,

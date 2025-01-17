@@ -230,6 +230,7 @@ class PluginLoader:
             if instance is None:
                 continue
             distribution = importlib.metadata.distribution(updated_package)
+            await instance.terminate(self._server)
             await instance.reload()
             ctx = InstallContext(
                 server=self._server,
@@ -254,16 +255,11 @@ class PluginLoader:
 
     async def start_plugin(self, instance: PluginInstance):
         try:
-            if instance.plugin.on_start_server is not None:
-                await instance.plugin.on_start_server(self._server)
-
             await instance.start(self._server)
         except Exception as e:
             logger.opt(exception=e).error(f"Error starting plugin: {instance.plugin}")
 
     async def stop_plugins(self):
         for instance in self.instances.values():
-            instance.terminate()
-            if instance.plugin.on_stop_server is not None:
-                await instance.plugin.on_stop_server(self._server)
+            await instance.terminate(self._server)
         self.instances.clear()

@@ -29,17 +29,20 @@ class Network:
         self._app = web.Application()
         self._runner: web.AppRunner | None = None
         self.add_websocket_route("/ws")
-        self.register_packet(PACKET_TYPES.CONNECT, PACKET_TYPES.READY)
+        self.register_packet(
+            PACKET_TYPES.CONNECT,
+            PACKET_TYPES.READY,
+            PACKET_TYPES.DISCONNECT,
+        )
         self.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
+        self.add_packet_handler(PACKET_TYPES.DISCONNECT, self._handle_disconnection)
         self.event.connected += self._packet_dispatcher.process_connection
-        server.event.stop += self._handle_stop
 
-    async def _handle_stop(self) -> None:
+    async def stop(self) -> None:
         if self._runner is None:
             raise ValueError("Server not started")
         await self._app.shutdown()
         await self._app.cleanup()
-        await self._runner.cleanup()
 
     async def _handle_ready(self, session: Session, packet: None) -> None:
         await session.process_ready_tasks()
@@ -49,7 +52,12 @@ class Network:
         parts = [session.app.key()]
         if session.app.version is not None:
             parts.append(f"v{session.app.version}")
-        logger.info(f"Ready: {parts}")
+        logger.info(f"Ready: {' '.join(parts)}")
+
+    async def _handle_disconnection(
+        self, session: Session, packet: DisconnectType
+    ) -> None:
+        await session.disconnect(packet, "Disconnect packet received")
 
     def register_packet(self, *packet_types: PacketType) -> None:
         self._packet_dispatcher.register(*packet_types)

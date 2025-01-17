@@ -8,13 +8,20 @@ from omu.extension.dashboard.packets import PluginRequestPacket
 from omu.extension.plugin import PackageInfo
 from omu.extension.plugin.plugin_extension import (
     PLUGIN_ALLOWED_PACKAGE_TABLE,
+    PLUGIN_RELOAD_ENDPOINT_TYPE,
     PLUGIN_REQUIRE_PACKET,
+    ReloadOptions,
+    ReloadResult,
 )
 
 from omuserver.server import Server
 from omuserver.session import Session
 
 from .plugin_loader import DependencyResolver, PluginLoader
+from .plugin_permissions import (
+    PLUGIN_MANAGE_PERMISSION,
+    PLUGIN_READ_PERMISSION,
+)
 
 
 class PluginExtension:
@@ -27,6 +34,11 @@ class PluginExtension:
             PLUGIN_REQUIRE_PACKET,
             self.handle_require_packet,
         )
+        server.permission_manager.register(
+            PLUGIN_MANAGE_PERMISSION,
+            PLUGIN_READ_PERMISSION,
+        )
+        server.endpoints.bind_endpoint(PLUGIN_RELOAD_ENDPOINT_TYPE, self.handle_reload)
         server.network.event.start += self.on_network_start
         server.event.stop += self.on_stop
         self.request_id = 0
@@ -92,3 +104,20 @@ class PluginExtension:
                 await self.loader.update_plugins(resolve_result)
 
         session.add_ready_task(task)
+
+    async def handle_reload(
+        self, session: Session, options: ReloadOptions
+    ) -> ReloadResult:
+        packages = self.loader.instances
+        if options.get("packages") is not None:
+            filters = options["packages"] or []
+            packages = {
+                name: version for name, version in packages.items() if name in filters
+            }
+        for package in packages.values():
+            await package.terminate(self.server)
+            await package.reload()
+            await package.start(self.server)
+        return {
+            "packages": {},
+        }

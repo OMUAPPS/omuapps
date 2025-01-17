@@ -377,3 +377,9 @@ async def on_ready():
     if refresh_task is not None:
         refresh_task.cancel()
     refresh_task = asyncio.create_task(refresh_clients())
+
+
+@omu.event.stopped.listen
+async def on_stop():
+    for client in clients.values():
+        await client.close()

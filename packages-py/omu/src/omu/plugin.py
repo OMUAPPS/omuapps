@@ -32,15 +32,13 @@ class InstallContext:
 @dataclass(frozen=True, slots=True)
 class Plugin:
     get_client: Callable[[], Client] | None = None
-    on_start_server: Coro[[Server], None] | None = None
-    on_stop_server: Coro[[Server], None] | None = None
+    on_start: Coro[[Server], None] | None = None
+    on_stop: Coro[[Server], None] | None = None
     on_install: Coro[[InstallContext], None] | None = None
     on_uninstall: Coro[[InstallContext], None] | None = None
     on_update: Coro[[InstallContext], None] | None = None
-    isolated: bool = False
+    isolated: bool = True
 
     def __post_init__(self):
         if self.isolated:
-            assert self.on_start_server is None, "Isolated plugins cannot have on_start"
-            assert self.on_stop_server is None, "Isolated plugins cannot have on_stop"
             assert self.get_client is not None, "Isolated plugins must have get_client"

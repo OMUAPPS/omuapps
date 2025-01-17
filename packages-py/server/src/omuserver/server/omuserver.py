@@ -180,6 +180,7 @@ class OmuServer(Server):
         logger.info("Stopping server")
         self._running = False
         await self._event.stop()
+        await self.network.stop()
 
     async def restart(self) -> None:
         await self.stop()

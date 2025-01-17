@@ -24,6 +24,7 @@ async def on_install(ctx: InstallContext) -> None:
 
 
 plugin = Plugin(
-    on_start_server=on_start_server,
+    on_start=on_start_server,
     on_install=on_install,
+    isolated=False,
 )
