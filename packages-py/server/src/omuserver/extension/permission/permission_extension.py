@@ -56,6 +56,14 @@ class PermissionExtension:
         if session.ready:
             raise ValueError("Session is already ready")
         if session.permission_handle.has_all(permission_ids):
+            permissions = filter(
+                None,
+                [
+                    self.server.permission_manager.get_permission(permission_id)
+                    for permission_id in permission_ids
+                ],
+            )
+            await session.send(PERMISSION_GRANT_PACKET, list(permissions))
             return
         if session.kind in {AppType.PLUGIN, AppType.DASHBOARD}:
             return

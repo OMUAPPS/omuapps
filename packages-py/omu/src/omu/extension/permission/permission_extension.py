@@ -91,7 +91,7 @@ PERMISSION_REQUEST_ENDPOINT = EndpointType[list[Identifier], None].create_json(
     "request",
     request_serializer=Serializer.model(Identifier).to_array(),
 )
-PERMISSION_GRANT_PACKET = PacketType.create_json(
+PERMISSION_GRANT_PACKET = PacketType[list[PermissionType]].create_json(
     PERMISSION_EXTENSION_TYPE,
     "grant",
     Serializer.model(PermissionType).to_array(),

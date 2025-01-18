@@ -199,17 +199,22 @@
         "category": {
             "general": {
                 "name": "一般",
-                "description": "一般的な設定を変更できます",
+                "description": "言語や再起動など",
                 "icon": "ti ti-settings"
+            },
+            "plugins": {
+                "name": "プラグイン",
+                "description": "削除や再読み込みなど",
+                "icon": "ti ti-plug"
             },
             "about": {
                 "name": "情報",
-                "description": "バージョン・ライセンスなどの情報を確認できます",
+                "description": "バージョンやライセンスなど",
                 "icon": "ti ti-license"
             },
             "developer": {
                 "name": "開発者",
-                "description": "開発者向けの設定を変更できます",
+                "description": "開発者向け設定",
                 "icon": "ti ti-code"
             }
         },

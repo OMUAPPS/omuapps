@@ -172,47 +172,66 @@ class PluginLoader:
         self.instances: dict[str, PluginInstance] = {}
 
     async def run_plugins(self):
-        self.load_plugins_from_entry_points()
+        self.load_plugins()
 
         logger.info(f"Loaded plugins: {self.instances.keys()}")
 
         for instance in self.instances.values():
-            await self.start_plugin(instance)
+            await instance.start(self._server)
 
-    def load_plugins_from_entry_points(self):
+    def retrieve_valid_entry_points(self) -> dict[str, importlib.metadata.EntryPoint]:
+        valid_entry_points: dict[str, importlib.metadata.EntryPoint] = {}
         entry_points = importlib.metadata.entry_points(group=PLUGIN_GROUP)
         for entry_point in entry_points:
-            if entry_point.dist is None:
-                raise ValueError(f"Invalid plugin: {entry_point} has no distribution")
-            dist_name = entry_point.dist.name
-            if dist_name in self.instances:
-                raise ValueError(f"Duplicate plugin: {entry_point}")
-            try:
-                plugin = PluginInstance.from_entry_point(entry_point)
-            except Exception as e:
-                logger.opt(exception=e).error(f"Error loading plugin: {entry_point}")
+            assert entry_point.dist is not None
+            package = entry_point.dist.name
+            if package in valid_entry_points:
+                logger.warning(f"Duplicate plugin: {entry_point}")
                 continue
-            self.instances[dist_name] = plugin
+            if entry_point.dist is None:
+                logger.warning(f"Invalid plugin: {entry_point} has no distribution")
+                continue
+            if len(entry_point.dist.entry_points) == 0:
+                logger.warning(f"Plugin {entry_point.dist.name} has no entry points")
+                continue
+            valid_entry_points[package] = entry_point
+        return valid_entry_points
+
+    def load_plugins(self):
+        for package, entry_point in self.retrieve_valid_entry_points().items():
+            if package in self.instances:
+                logger.warning(f"Duplicate plugin {package}: {entry_point}")
+                continue
+            plugin = PluginInstance.try_load(entry_point)
+            if plugin is None:
+                logger.warning(f"Failed to load plugin {package}: {entry_point}")
+                continue
+            self.instances[package] = plugin
 
     async def update_plugins(self, resolve_result: ResolveResult):
         restart_required = False
-        plugins_to_start: list[PluginInstance] = []
+        plugins_pending_start: list[PluginInstance] = []
         for new_package in resolve_result.new_packages:
             entry_points = tuple(
                 importlib.metadata.entry_points(group=PLUGIN_GROUP, module=new_package)
             )
             if len(entry_points) == 0:
+                logger.warning(f"Plugin {new_package} has no entry points")
                 continue
             if len(entry_points) > 1:
-                raise ValueError(
-                    f"Invalid plugin: {entry_points} has multiple entry points"
+                logger.warning(
+                    f"Plugin {new_package} has multiple entry points {entry_points}"
                 )
+                continue
             entry_point = entry_points[0]
             if entry_point.dist is None:
                 raise ValueError(f"Invalid plugin: {entry_point} has no distribution")
             if entry_point.dist.name != new_package:
                 continue
-            instance = PluginInstance.from_entry_point(entry_point)
+            instance = PluginInstance.try_load(entry_point)
+            if instance is None:
+                logger.warning(f"Failed to load plugin: {entry_point}")
+                continue
             self.instances[new_package] = instance
             ctx = InstallContext(
                 server=self._server,
@@ -223,13 +242,14 @@ class PluginLoader:
                 restart_required = True
                 logger.info(f"Plugin {instance.plugin} requires restart")
             else:
-                plugins_to_start.append(instance)
+                plugins_pending_start.append(instance)
 
         for updated_package, dist in resolve_result.updated_packages.items():
             instance = self.instances.get(updated_package)
             if instance is None:
                 continue
             distribution = importlib.metadata.distribution(updated_package)
+            await instance.terminate(self._server)
             await instance.reload()
             ctx = InstallContext(
                 server=self._server,
@@ -243,27 +263,16 @@ class PluginLoader:
                 restart_required = True
                 logger.info(f"Plugin {instance.plugin} requires restart")
             else:
-                plugins_to_start.append(instance)
+                plugins_pending_start.append(instance)
 
         if restart_required:
             await self._server.restart()
             return
 
-        for instance in plugins_to_start:
-            await self.start_plugin(instance)
-
-    async def start_plugin(self, instance: PluginInstance):
-        try:
-            if instance.plugin.on_start_server is not None:
-                await instance.plugin.on_start_server(self._server)
-
+        for instance in plugins_pending_start:
             await instance.start(self._server)
-        except Exception as e:
-            logger.opt(exception=e).error(f"Error starting plugin: {instance.plugin}")
 
     async def stop_plugins(self):
         for instance in self.instances.values():
-            instance.terminate()
-            if instance.plugin.on_stop_server is not None:
-                await instance.plugin.on_stop_server(self._server)
+            await instance.terminate(self._server)
         self.instances.clear()

@@ -9,6 +9,7 @@
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
+    import PluginSettings from './PluginSettings.svelte';
 
     export const props = {};
 
@@ -36,23 +37,37 @@
     <div class="content">
         <div class="categories">
             <button class:selected={$currentSettingsCategory == 'general'} on:click={() => $currentSettingsCategory = 'general'}>
-                <i class="ti {$t('settings.category.general.icon')}"></i>
-                <p>{$t('settings.category.general.name')}</p>
-                <Tooltip>{$t('settings.category.general.description')}</Tooltip>
-                <i class="ti ti-chevron-right"></i>
+                <span>
+                    <i class="ti {$t('settings.category.general.icon')}"></i>
+                    <p>{$t('settings.category.general.name')}</p>
+                    <Tooltip>{$t('settings.category.general.description')}</Tooltip>
+                    <i class="ti ti-chevron-right"></i>
+                </span>
             </button>
             <button class:selected={$currentSettingsCategory == 'about'} on:click={() => $currentSettingsCategory = 'about'}>
-                <i class="ti {$t('settings.category.about.icon')}"></i>
-                <p>{$t('settings.category.about.name')}</p>
-                <Tooltip>{$t('settings.category.about.description')}</Tooltip>
-                <i class="ti ti-chevron-right"></i>
+                <span>
+                    <i class="ti {$t('settings.category.about.icon')}"></i>
+                    <p>{$t('settings.category.about.name')}</p>
+                    <Tooltip>{$t('settings.category.about.description')}</Tooltip>
+                    <i class="ti ti-chevron-right"></i>
+                </span>
             </button>
             {#if $devMode}
+                <button class:selected={$currentSettingsCategory == 'plugins'} on:click={() => $currentSettingsCategory = 'plugins'}>
+                    <span>
+                        <i class="ti {$t('settings.category.plugins.icon')}"></i>
+                        <p>{$t('settings.category.plugins.name')}</p>
+                        <Tooltip>{$t('settings.category.plugins.description')}</Tooltip>
+                        <i class="ti ti-chevron-right"></i>
+                    </span>
+                </button>
                 <button class:selected={$currentSettingsCategory == 'developer'} on:click={() => $currentSettingsCategory = 'developer'}>
-                    <i class="ti {$t('settings.category.developer.icon')}"></i>
-                    <p>{$t('settings.category.developer.name')}</p>
-                    <Tooltip>{$t('settings.category.developer.description')}</Tooltip>
-                    <i class="ti ti-chevron-right"></i>
+                    <span>
+                        <i class="ti {$t('settings.category.developer.icon')}"></i>
+                        <p>{$t('settings.category.developer.name')}</p>
+                        <Tooltip>{$t('settings.category.developer.description')}</Tooltip>
+                        <i class="ti ti-chevron-right"></i>
+                    </span>
                 </button>
             {/if}
         </div>
@@ -101,6 +116,8 @@
                         screenContext.push(CleaningEnvironmentScreen, undefined)
                     }}>{$t('settings.setting.cleanEnvironment')}</button>
                 </span>
+            {:else if $currentSettingsCategory === 'plugins'}
+                <PluginSettings />
             {:else if $currentSettingsCategory === 'about'}
                 <About />
             {:else if $currentSettingsCategory === 'developer'}
@@ -140,39 +157,44 @@
         gap: 2px;
 
         > button {
-            border: none;
-            background: none;
-            height: 3rem;
-            padding: 0 1rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            border: none;
+            background: none;
             color: var(--color-text);
             font-size: 1rem;
             font-weight: 600;
-
-            > .ti-chevron-right {
-                margin-left: auto;
-                color: transparent;
-                padding-right: 0.25rem;
-            }
-
-            &:hover {
-                background: var(--color-bg-2);
-                padding-left: 1.1621rem;
-                transition: padding 0.0621s;
-
-                > .ti-chevron-right {
-                    color: var(--color-1);
-                    padding-right: 0;
-                    transition: padding 0.0621s;
-                }
-            }
+            height: 3rem;
+            padding: 0 1rem;
 
             &.selected {
                 background: var(--color-bg-2);
                 color: var(--color-1);
                 border-right: 2px solid var(--color-1);
+            }
+
+            &:hover {
+                background: var(--color-bg-2);
+                transition: padding 0.0621s;
+
+                > span > .ti-chevron-right {
+                    color: var(--color-1);
+                    padding-right: 0;
+                    transition: padding 0.0621s;
+                }
+            }
+        }
+
+        > button > span {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            flex: 1;
+
+            > .ti-chevron-right {
+                margin-left: auto;
+                color: transparent;
+                padding-right: 0.25rem;
             }
         }
     }

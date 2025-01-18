@@ -28,7 +28,7 @@ export const TABLE_EXTENSION_TYPE: ExtensionType<TableExtension> = new Extension
     'table',
     (client) => new TableExtension(client),
 );
-const TABLE_PERMISSION_ID = TABLE_EXTENSION_TYPE.join('permission');
+export const TABLE_PERMISSION_ID = TABLE_EXTENSION_TYPE.join('permission');
 
 const TABLE_SET_PERMISSION_PACKET = PacketType.createSerialized<SetPermissionPacket>(
     TABLE_EXTENSION_TYPE,
