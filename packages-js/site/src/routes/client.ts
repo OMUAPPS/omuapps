@@ -1,3 +1,4 @@
+import { version } from '$lib/version.json';
 import { App, Omu } from '@omujs/omu';
 import {
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
@@ -7,10 +8,18 @@ import {
 import { Identifier } from '@omujs/omu/identifier.js';
 import { setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
+import { NAMESPACE } from './app/origin.js';
 
-const identifier = new Identifier('com.omuapps', 'page');
-const app = new App(identifier, {
-    version: '1.0.0',
+export const APP = new Identifier(NAMESPACE, 'page');
+const app = new App(APP, {
+    version,
+    metadata: {
+        locale: 'en',
+        name: {
+            ja: 'アプリを探す',
+            en: 'Find Apps',
+        },
+    },
 });
 export const omu = new Omu(app);
 setClient(omu);
