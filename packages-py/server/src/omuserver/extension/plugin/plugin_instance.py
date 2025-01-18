@@ -63,19 +63,29 @@ class PluginInstance:
     client: Client | None = None
 
     @classmethod
-    def from_entry_point(
+    def try_load(
         cls,
         entry_point: importlib.metadata.EntryPoint,
-    ) -> PluginInstance:
-        plugin = entry_point.load()
-        if not isinstance(plugin, Plugin):
-            raise ValueError(f"Invalid plugin: {plugin} is not a Plugin")
-        module = importlib.import_module(entry_point.module)
-        return cls(
-            plugin=plugin,
-            entry_point=entry_point,
-            module=module,
-        )
+    ) -> PluginInstance | None:
+        package = entry_point.dist
+        stage = "loading"
+        try:
+            plugin = entry_point.load()
+            stage = "validating"
+            if not isinstance(plugin, Plugin):
+                raise ValueError(f"Invalid plugin: {plugin} is not a Plugin")
+            stage = "importing"
+            module = importlib.import_module(entry_point.module)
+            return cls(
+                plugin=plugin,
+                entry_point=entry_point,
+                module=module,
+            )
+        except Exception as e:
+            logger.opt(exception=e).error(
+                f"Error while {stage} plugin {entry_point.name} from {package}"
+            )
+            return None
 
     async def notify_install(self, ctx: InstallContext):
         if self.plugin.on_install is not None:
@@ -108,47 +118,60 @@ class PluginInstance:
             await self.plugin.on_stop(server)
 
     async def start(self, server: Server):
-        if self.plugin.on_start is not None:
-            await self.plugin.on_start(server)
-        token = server.permission_manager.generate_plugin_token()
-        if self.plugin.isolated:
-            pid = os.getpid()
-            if self.process:
-                raise ValueError(f'Plugin "{self.plugin}" already started')
-            process = Process(
-                target=run_plugin_isolated,
-                args=(
-                    self.plugin,
-                    server.address,
-                    token,
-                    pid,
-                ),
-                name=f"Plugin {self.entry_point.value}",
-                daemon=True,
+        stage = "invoking on_start"
+        try:
+            if self.plugin.on_start is not None:
+                await self.plugin.on_start(server)
+            stage = "generating token"
+            token = server.permission_manager.generate_plugin_token()
+            if self.plugin.isolated:
+                stage = "starting isolated"
+                self._start_isolated(server, token)
+            else:
+                stage = "starting internally"
+                await self._start_internally(server, token)
+        except Exception as e:
+            logger.opt(exception=e).error(
+                f"Error while {stage} plugin {self.entry_point.name}"
             )
-            self.process = process
-            process.start()
-        else:
-            if self.client:
-                raise ValueError(f'Plugin "{self.plugin}" already started')
-            if self.plugin.get_client is not None:
-                connection = PluginConnection()
-                self.client = self.plugin.get_client()
-                if self.client.app.type != AppType.PLUGIN:
-                    raise ValueError(
-                        f"Invalid plugin: {self.client.app} is not a plugin"
-                    )
-                self.client.network.set_connection(connection)
-                self.client.network.set_token_provider(PluginTokenProvider(token))
-                self.client.set_loop(server.loop)
-                server.loop.create_task(self.client.start(reconnect=False))
-                session_connection = PluginSessionConnection(connection)
-                session = await Session.from_connection(
-                    server,
-                    server.packet_dispatcher.packet_mapper,
-                    session_connection,
-                )
-                server.loop.create_task(server.network.process_session(session))
+
+    async def _start_internally(self, server, token):
+        if self.client:
+            raise ValueError(f'Plugin "{self.plugin}" already started')
+        if self.plugin.get_client is not None:
+            connection = PluginConnection()
+            self.client = self.plugin.get_client()
+            if self.client.app.type != AppType.PLUGIN:
+                raise ValueError(f"Invalid plugin: {self.client.app} is not a plugin")
+            self.client.network.set_connection(connection)
+            self.client.network.set_token_provider(PluginTokenProvider(token))
+            self.client.set_loop(server.loop)
+            server.loop.create_task(self.client.start(reconnect=False))
+            session_connection = PluginSessionConnection(connection)
+            session = await Session.from_connection(
+                server,
+                server.packet_dispatcher.packet_mapper,
+                session_connection,
+            )
+            server.loop.create_task(server.network.process_session(session))
+
+    def _start_isolated(self, server, token):
+        pid = os.getpid()
+        if self.process:
+            raise ValueError(f'Plugin "{self.plugin}" already started')
+        process = Process(
+            target=run_plugin_isolated,
+            args=(
+                self.plugin,
+                server.address,
+                token,
+                pid,
+            ),
+            name=f"Plugin {self.entry_point.value}",
+            daemon=True,
+        )
+        self.process = process
+        process.start()
 
 
 def setup_logging(app: App) -> None:

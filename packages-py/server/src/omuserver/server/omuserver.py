@@ -158,7 +158,7 @@ class OmuServer(Server):
             self._loop.run_forever()
 
     async def _handle_network_start(self) -> None:
-        logger.info(f"Listening on {self.address}")
+        logger.info(f"Listening on {self.address.host}:{self.address.port}")
         try:
             await self._event.start()
         except Exception as e:
@@ -188,6 +188,8 @@ class OmuServer(Server):
             args=[sys.executable, "-m", "omuserver", *sys.argv[1:]],
             cwd=os.getcwd(),
         )
+        logger.info(f"Restarting server with PID {child.pid}")
+        os._exit(0)
 
     @property
     def config(self) -> Config:
