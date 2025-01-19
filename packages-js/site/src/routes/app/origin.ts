@@ -5,7 +5,7 @@ import type { LocalizedText } from '@omujs/omu/localization/localization.js';
 import { DEV } from 'esm-env';
 
 export const ORIGIN = DEV ? 'http://localhost:5173' : new URL(CF_PAGES_URL).origin;
-export const CHANNEL = IS_BETA ? ' (Beta)' : '';
+export const CHANNEL = IS_BETA ? ' (開発版)' : '';
 
 export function getUrl(path: string): string {
     const url = new URL(path, ORIGIN);
