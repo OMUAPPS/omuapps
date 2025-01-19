@@ -106,6 +106,8 @@
         margin: 0;
         cursor: pointer;
         width: 100%;
+        height: 4rem;
+        display: flex;
     }
 
     .tooltip {
@@ -160,21 +162,16 @@
             outline: none;
             transition: background 0.0621s;
 
-            > .info {
-                margin: 0.1rem;
+            > .info > .open {
+                visibility: visible;
+                margin-right: 0rem;
                 transition: margin 0.0621s;
-
-                > .open {
-                    visibility: visible;
-                    margin-right: 0rem;
-                    transition: margin 0.0621s;
-                }
             }
         }
 
         &.active {
             background: var(--color-bg-1);
-            border-right: 0.65rem solid var(--color-1);
+            border-right: 2px solid var(--color-1);
             transition: background 0.0621s;
         }
 
@@ -184,7 +181,8 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.5;
+            opacity: 0.8;
+            filter: blur(.0621rem) contrast(0.621) brightness(1.23621);
         }
 
         > .info {
@@ -235,7 +233,7 @@
                 align-items: center;
                 justify-content: center;
                 margin-left: auto;
-                margin-right: 0.1rem;
+                margin-right: 0.25rem;
                 min-width: 2rem;
                 height: 2rem;
                 color: var(--color-1);
