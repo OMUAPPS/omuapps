@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import socket
+import threading
 import time
 from dataclasses import dataclass, field
 
@@ -69,10 +70,11 @@ class Client:
     @classmethod
     async def try_connect(cls, port: int) -> Client:
         sessions = await session_registry.get()
-        exist_session = sessions["sessions"].get(port, None)
+        session_key = f"{port}"
+        exist_session = sessions["sessions"].get(session_key, None)
         if exist_session:
+            rpc = await DiscordRPC.connect(port)
             try:
-                rpc = await DiscordRPC.connect(port)
                 authenticate_res = await rpc.authenticate(exist_session["access_token"])
                 return cls(
                     port,
@@ -82,12 +84,12 @@ class Client:
                 )
             except Exception as e:
                 logger.warning(f"Failed to connect with existing session: {e}")
-                sessions["sessions"].pop(port)
+                sessions["sessions"].pop(session_key)
                 await session_registry.set(sessions)
         rpc = await DiscordRPC.connect(port)
         authorize_res = await rpc.authorize(["rpc", "messages.read"])
         access_token = await rpc.fetch_access_token(authorize_res["code"])
-        sessions["sessions"][port] = {"access_token": access_token}
+        sessions["sessions"][session_key] = {"access_token": access_token}
         await session_registry.set(sessions)
         authenticate_res = await rpc.authenticate(access_token)
         return cls(
@@ -310,31 +312,44 @@ async def wait_for_vc(_: None) -> None:
     await refresh_task
 
 
-def is_port_available(port: int) -> bool:
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(
-                (
-                    "127.0.0.1",
-                    port,
-                )
-            )
-            return True
-    except OSError:
-        return False
+def is_port_open(port: int) -> bool:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1)
+    result = sock.connect_ex(("127.0.0.1", port))
+    sock.close()
+    return result == 0
+
+
+async def retrieve_open_ports() -> asyncio.Future[list[int]]:
+    future = asyncio.Future()
+
+    def retrieve():
+        open_ports: list[int] = []
+
+        def check_port(port: int):
+            if is_port_open(port):
+                open_ports.append(port)
+
+        threads = [
+            threading.Thread(target=check_port, args=(port,))
+            for port in range(PORT_MIN, PORT_MAX)
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        future.set_result(open_ports)
+
+    threading.Thread(target=retrieve).start()
+    return await future
 
 
 async def refresh_clients():
     PARALLEL = True
     try:
-        for client in clients.values():
-            if client.closed:
-                await client.close()
-        clients.clear()
+        await shutdown_clients()
 
         async def connect_client(port: int):
-            if is_port_available(port):
-                return
             try:
                 client = await Client.try_connect(port)
                 clients[client.user["id"]] = client
@@ -342,11 +357,12 @@ async def refresh_clients():
             except Exception as e:
                 logger.warning(f"Failed to connect to {port}: {e}")
 
+        open_ports = await retrieve_open_ports()
         if PARALLEL:
-            tasks = [connect_client(port) for port in range(PORT_MIN, PORT_MAX)]
+            tasks = [connect_client(port) for port in open_ports]
             await asyncio.gather(*tasks)
         else:
-            for port in range(PORT_MIN, PORT_MAX):
+            for port in open_ports:
                 await connect_client(port)
 
         session = await session_registry.get()
@@ -358,6 +374,12 @@ async def refresh_clients():
     finally:
         global refresh_task
         refresh_task = None
+
+
+async def shutdown_clients():
+    for client in clients.values():
+        await client.close()
+    clients.clear()
 
 
 @omu.endpoints.bind(endpoint_type=REFRESH_ENDPOINT_TYPE)

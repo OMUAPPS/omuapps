@@ -270,6 +270,13 @@ class GetSelectedVoiceChannelPayload(
 ): ...
 
 
+class ErrorSubscribePayload(
+    SubscribeRequestPayload[Literal["ERROR"]],
+    Args[None],
+    Nonce,
+): ...
+
+
 class VoiceStateSubscriptionArgs(TypedDict):
     channel_id: str
 
@@ -292,6 +299,18 @@ class VoiceStateDeleteSubscriptionPayload(
     SubscribeRequestPayload[Literal["VOICE_STATE_DELETE"]],
     Args[VoiceStateSubscriptionArgs],
     Nonce,
+): ...
+
+
+class ErrorData(TypedDict):
+    code: int
+    message: str
+
+
+class ErrorDispatchPayload(
+    DispatchPayload[Literal["ERROR"]],
+    Data[ErrorData],
+    NullNonce,
 ): ...
 
 
@@ -533,6 +552,7 @@ class UnsubscribeRequestPayload[Evt: LiteralString](
 
 type SubscribePayloads = (
     SubscribeRequestPayload
+    | ErrorSubscribePayload
     | VoiceStateCreateSubscriptionPayload
     | VoiceStateUpdateSubscriptionPayload
     | VoiceStateDeleteSubscriptionPayload
@@ -564,6 +584,7 @@ type ResponsePayloads = (
     | GetGuildsResponsePayload
     | GetChannelsResponsePayload
     | GetSelectedVoiceChannelResponsePayload
+    | ErrorDispatchPayload
     | VoiceStateCreateDispatchPayload
     | VoiceStateUpdateDispatchPayload
     | VoiceStateDeleteDispatchPayload

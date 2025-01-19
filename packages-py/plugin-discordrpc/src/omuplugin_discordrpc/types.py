@@ -60,7 +60,7 @@ class SessionData(TypedDict):
 
 
 class SessionRegistry(TypedDict):
-    sessions: dict[int, SessionData]
+    sessions: dict[str, SessionData]
     user_id: str | None
     guild_id: str | None
     channel_id: str | None
