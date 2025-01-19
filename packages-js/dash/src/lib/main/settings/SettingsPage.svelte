@@ -4,8 +4,8 @@
     import { LOCALES } from '$lib/i18n/i18n.js';
     import { screenContext } from '$lib/screen/screen.js';
     import { invoke } from '$lib/tauri.js';
-    import { Combobox, Header, Toggle, Tooltip } from '@omujs/ui';
-    import { currentSettingsCategory, devMode, language } from '../settings.js';
+    import { Combobox, Header, Tooltip } from '@omujs/ui';
+    import { currentSettingsCategory, devMode, isBetaEnabled, language } from '../settings.js';
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
@@ -26,6 +26,10 @@
         logPromise = null;
         return path;
     }
+
+    $: {
+        $devMode &&= $isBetaEnabled;
+    }
 </script>
 
 <div class="container">
@@ -37,35 +41,37 @@
     <div class="content">
         <div class="categories">
             <button class:selected={$currentSettingsCategory == 'general'} on:click={() => $currentSettingsCategory = 'general'}>
+                <Tooltip>{$t('settings.category.general.description')}</Tooltip>
                 <span>
                     <i class="ti {$t('settings.category.general.icon')}"></i>
                     <p>{$t('settings.category.general.name')}</p>
-                    <Tooltip>{$t('settings.category.general.description')}</Tooltip>
                     <i class="ti ti-chevron-right"></i>
                 </span>
             </button>
             <button class:selected={$currentSettingsCategory == 'about'} on:click={() => $currentSettingsCategory = 'about'}>
+                <Tooltip>{$t('settings.category.about.description')}</Tooltip>
                 <span>
                     <i class="ti {$t('settings.category.about.icon')}"></i>
                     <p>{$t('settings.category.about.name')}</p>
-                    <Tooltip>{$t('settings.category.about.description')}</Tooltip>
                     <i class="ti ti-chevron-right"></i>
                 </span>
             </button>
-            {#if $devMode}
+            {#if $isBetaEnabled}
                 <button class:selected={$currentSettingsCategory == 'plugins'} on:click={() => $currentSettingsCategory = 'plugins'}>
+                    <Tooltip>{$t('settings.category.plugins.description')}</Tooltip>
                     <span>
                         <i class="ti {$t('settings.category.plugins.icon')}"></i>
                         <p>{$t('settings.category.plugins.name')}</p>
-                        <Tooltip>{$t('settings.category.plugins.description')}</Tooltip>
                         <i class="ti ti-chevron-right"></i>
                     </span>
                 </button>
+            {/if}
+            {#if $devMode}
                 <button class:selected={$currentSettingsCategory == 'developer'} on:click={() => $currentSettingsCategory = 'developer'}>
+                    <Tooltip>{$t('settings.category.developer.description')}</Tooltip>
                     <span>
                         <i class="ti {$t('settings.category.developer.icon')}"></i>
                         <p>{$t('settings.category.developer.name')}</p>
-                        <Tooltip>{$t('settings.category.developer.description')}</Tooltip>
                         <i class="ti ti-chevron-right"></i>
                     </span>
                 </button>
@@ -84,10 +90,19 @@
                     <p>{$t('settings.setting.language')}</p>
                     <Combobox bind:value={$language} options={Object.fromEntries(Object.entries(LOCALES).map(([key, value]) => [key, {value: value.code, label: value.name}]))} />
                 </span>
-                <span class="setting">
-                    <p>{$t('settings.setting.devMode')}</p>
-                    <Toggle bind:value={$devMode} />
-                </span>
+                <label class="setting">
+                    <p>{$t('settings.setting.betaMode')}</p>
+                    <input type="checkbox" bind:checked={$isBetaEnabled} />
+                </label>
+                <small>
+                    {$t('settings.setting.betaModeDescription')}
+                </small>
+                {#if $isBetaEnabled}
+                    <label class="setting">
+                        <p>{$t('settings.setting.devMode')}</p>
+                        <input type="checkbox" bind:checked={$devMode} />
+                    </label>
+                {/if}
                 <h3>
                     {$t('settings.setting.debug')}
                 </h3>
@@ -110,12 +125,12 @@
                         <button on:click={() => logPromise = generateLogFile()}>{$t('settings.setting.logFileGenerate')}</button>
                     {/if}
                 </span>
-                <small>先にOBSを終了する必要があります</small>
                 <span class="setting clean-environment">
                     <button on:click={() => {
                         screenContext.push(CleaningEnvironmentScreen, undefined)
                     }}>{$t('settings.setting.cleanEnvironment')}</button>
                 </span>
+                <small>先にOBSを終了する必要があります</small>
             {:else if $currentSettingsCategory === 'plugins'}
                 <PluginSettings />
             {:else if $currentSettingsCategory === 'about'}
@@ -223,10 +238,22 @@
         }
 
         > h3 {
-            margin-top: 2rem;
-            margin-bottom: 1rem;
+            border-top: 1px solid var(--color-outline);
+            padding-top: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
             color: var(--color-1);
         }
+    }
+
+    .settings > small {
+        color: var(--color-text);
+        font-size: 0.7rem;
+        margin-bottom: 2rem;
+        border-top: 1px solid var(--color-outline);
+        width: fit-content;
+        padding-top: 0.125rem;
+        margin-top: 0.125rem;
     }
     
     .setting {
@@ -235,7 +262,9 @@
         align-items: center;
         justify-content: space-between;
         max-width: 20rem;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.25rem;
+        margin-top: 0.5rem;
+        color: var(--color-1);
 
         > button {
             border: none;
@@ -261,9 +290,15 @@
                 cursor: not-allowed;
             }
         }
-    }
 
-    .clean-environment {
-        margin-top: 0.25rem;
+        > input {
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: var(--color-1);
+
+            &:hover {
+                accent-color: var(--color-1);
+            }
+        }
     }
 </style>

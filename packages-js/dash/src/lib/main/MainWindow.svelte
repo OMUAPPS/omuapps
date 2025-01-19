@@ -3,7 +3,6 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
     import { TableList, Tooltip } from '@omujs/ui';
-    import { DEV } from 'esm-env';
     import { onMount } from 'svelte';
     import AppEntry from './AppEntry.svelte';
     import {
@@ -14,7 +13,7 @@
         type PageItem,
     } from './page.js';
     import ConnectPage from './pages/ConnectPage.svelte';
-    import IframePage from './pages/IframePage.svelte';
+    import ExplorePage from './pages/ExplorePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
     import UpdateScreen from './screen/UpdateScreen.svelte';
     import { currentPage, installed, menuOpen } from './settings.js';
@@ -26,12 +25,8 @@
         id: 'explore',
         async open() {
             return {
-                component: IframePage,
-                props: {
-                    url: DEV
-                        ? 'http://localhost:5173/app/'
-                        : 'https://omuapps.com/app/',
-                },
+                component: ExplorePage,
+                props: {},
             } as Page<unknown>;
         },
     });

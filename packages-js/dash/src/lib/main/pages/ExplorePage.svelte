@@ -1,11 +1,15 @@
 <script lang="ts">
-    export let props: {
-        url: string;
-    };
+    import { DEV } from 'esm-env';
+    import { isBetaEnabled } from '../settings.js';
+    
+    export const props = {};
+
+    $: url = DEV ? 'http://localhost:5173/app/' :
+        ($isBetaEnabled ? 'https://beta.omuapps.com/app/' : 'https://omuapps.com/app/');
 </script>
 
 <div class="container">
-    <iframe src={props.url} title="" frameborder="0" allow="camera; microphone"></iframe>
+    <iframe src={url} title="" frameborder="0" allow="camera; microphone"></iframe>
     <div class="window-resize bottom" />
     <div class="window-resize right" />
 </div>
