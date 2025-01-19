@@ -1,12 +1,12 @@
 import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { getUrl, NAMESPACE } from '../origin.js';
+import { buildMetadata, getUrl, NAMESPACE } from '../origin.js';
 import icon from './icon.png';
 
 export const APP_ID = new Identifier(NAMESPACE, 'emoji');
 export const APP = new App(APP_ID, {
     url: getUrl('/app/emoji'),
-    metadata: {
+    metadata: buildMetadata({
         locale: 'en',
         name: {
             en: 'Emoji',
@@ -16,7 +16,7 @@ export const APP = new App(APP_ID, {
             en: 'Convert specific strings to emojis.',
             ja: '特定の文字列を絵文字に変換します。',
         },
-        icon: getUrl(icon),
+        icon,
         tags: ['underdevelopment'] as TagKey[],
-    },
+    }),
 });

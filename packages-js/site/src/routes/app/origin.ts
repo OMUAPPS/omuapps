@@ -1,11 +1,35 @@
-import { CF_PAGES_URL } from '$lib/consts.js';
+import { CF_PAGES_URL, IS_BETA } from '$lib/consts.js';
 import { Identifier } from '@omujs/omu';
+import type { AppMetadata } from '@omujs/omu/app.js';
+import type { LocalizedText } from '@omujs/omu/localization/localization.js';
 import { DEV } from 'esm-env';
 
 export const ORIGIN = DEV ? 'http://localhost:5173' : new URL(CF_PAGES_URL).origin;
+export const CHANNEL = IS_BETA ? ' (Beta)' : '';
+
 export function getUrl(path: string): string {
     const url = new URL(path, ORIGIN);
     return url.href;
+}
+
+function mapLocalized(value: LocalizedText, fn: (value: string, locale?: string) => string): LocalizedText {
+    if (typeof value === 'string') {
+        return fn(value);
+    }
+    return Object.fromEntries(Object.entries(value).map(([key, value]) => [key, fn(value, key)]));
+}
+
+export function buildMetadata(metadata: AppMetadata): AppMetadata {
+    if (metadata.icon) {
+        metadata.icon = mapLocalized(metadata.icon, (value) => value.startsWith('ti-') ? value : getUrl(value));
+    }
+    if (metadata.image) {
+        metadata.image = mapLocalized(metadata.image, getUrl);
+    }
+    if (metadata.name) {
+        metadata.name = mapLocalized(metadata.name, value => `${value}${CHANNEL}`);
+    }
+    return metadata;
 }
 
 export const NAMESPACE = DEV ? 'com.omuapps' : Identifier.namespaceFromUrl(CF_PAGES_URL);
