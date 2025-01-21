@@ -33,6 +33,7 @@ const { data: assets } = await github.rest.repos.listReleaseAssets({
     release_id: release.id,
 });
 // download assets to ./release-assets
+await fs.mkdir('./release-assets', { recursive: true });
 for (const asset of assets) {
     const url = asset.browser_download_url;
     const name = asset.name;
