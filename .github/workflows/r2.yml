@@ -45,6 +45,5 @@ jobs:
             pnpm wrangler whoami
             for file in ./release-assets/*; do
                 echo "Uploading $file"
-                # pnpm wrangler r2 object put omuapps-app/test/README.md --file .\README.md
-                pnpm wrangler r2 object put omuapps-app/test/$(basename $file) --file $file
+                cat $file | pnpm wrangler r2 object put omuapps-app/test/$(basename $file) --pipe
             done
