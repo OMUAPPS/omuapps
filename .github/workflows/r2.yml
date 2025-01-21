@@ -38,16 +38,22 @@ jobs:
           with:
               path: ./release-assets
 
+        # - name: Upload to Cloudflare R2
+        #   uses: cloudflare/wrangler-action@v3
+        #   with:
+        #         apiToken: ${{ secrets.CF_API_TOKEN }}
+        #         packageManager: pnpm
+        #         # for file in ./release-assets/*; do
+        #         #     aws s3 cp "$file" "s3://${R2_BUCKET_NAME}/$(basename "$file")" --endpoint-url "${R2_ENDPOINT}"
+        #         # done
+        #         # wrangler r2 object put omuapps-app/<file_name> --file <file_path>
+        #         command: |
+        #             for file in ./release-assets/*; do
+        #                 wrangler r2 object put omuapps-app/test/$(basename "$file") --file "$file"
+        #             done
         - name: Upload to Cloudflare R2
-          uses: cloudflare/wrangler-action@v3
-          with:
-                apiToken: ${{ secrets.CF_API_TOKEN }}
-                packageManager: pnpm
-                # for file in ./release-assets/*; do
-                #     aws s3 cp "$file" "s3://${R2_BUCKET_NAME}/$(basename "$file")" --endpoint-url "${R2_ENDPOINT}"
-                # done
-                # wrangler r2 object put omuapps-app/<file_name> --file <file_path>
-                command: |
-                    for file in ./release-assets/*; do
-                        wrangler r2 object put omuapps-app/test/$(basename "$file") --file "$file"
-                    done
+          run: |
+            for file in ./release-assets/*; do
+                echo "Uploading $file"
+                pnpm wrangler r2 object put omuapps-app/test/$(basename "$file") --file "$file"
+            done
