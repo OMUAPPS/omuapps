@@ -229,10 +229,12 @@ def relaunch_obs():
 def write_config(dashboard_bin: Path | None):
     launch_command = None
     if dashboard_bin:
-        launch_command = [
-            str(dashboard_bin),
-            "--background",
-        ]
+        launch_command = {
+            "args": [
+                str(dashboard_bin),
+                "--background",
+            ]
+        }
     config_path = get_config_path()
     config_path.write_text(
         json.dumps({"python_path": get_python_directory(), "launch": launch_command}),
