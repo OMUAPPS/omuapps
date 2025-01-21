@@ -18,7 +18,10 @@ const options = (() => {
 
 const github = getOctokit(process.env.GITHUB_TOKEN);
 const { owner, repo } = context.repo;
-const { data: releases } = await github.rest.repos.listReleases();
+const { data: releases } = await github.rest.repos.listReleases({
+    owner,
+    repo,
+});
 console.log(releases);
 const release = releases.find(release => release.tag_name === options.tag);
 if (!release) {
