@@ -28,13 +28,6 @@ jobs:
         - name: Install dependencies
           run: pnpm i --frozen-lockfile
 
-        - name: Download release assets
-          uses: robinraju/release-downloader@v1
-          with:
-                token: ${{ secrets.GITHUB_TOKEN }}
-                tag: ${{ github.event.inputs.tag }}
-                out-file-path:  ./release-assets
-
         - name: Upload to Cloudflare R2
           env:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
