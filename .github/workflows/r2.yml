@@ -52,6 +52,8 @@ jobs:
         #                 wrangler r2 object put omuapps-app/test/$(basename "$file") --file "$file"
         #             done
         - name: Upload to Cloudflare R2
+          env:
+            CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           run: |
             for file in ./release-assets/*; do
                 echo "Uploading $file"
