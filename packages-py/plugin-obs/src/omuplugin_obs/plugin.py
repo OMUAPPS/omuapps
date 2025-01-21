@@ -230,7 +230,7 @@ def write_config(dashboard_bin: Path | None):
     launch_command = None
     if dashboard_bin:
         launch_command = [
-            dashboard_bin,
+            str(dashboard_bin),
             "--background",
         ]
     config_path = get_config_path()
