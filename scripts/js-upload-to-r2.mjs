@@ -1,5 +1,5 @@
 import { context, getOctokit } from '@actions/github';
-import { execaSync } from 'execa';
+import { execa, execaSync } from 'execa';
 import { readdirSync } from 'fs';
 const option = { stderr: process.stderr, stdout: process.stdout }
 const options = (() => {
@@ -36,7 +36,7 @@ const { data: assets } = await github.rest.repos.listReleaseAssets({
 for (const asset of assets) {
     const url = asset.browser_download_url;
     const name = asset.name;
-    execaSync('curl', ['-LJO', url, '--header', 'User-Agent: pnpm', '--header', `Authorization: token ${process.env.GITHUB_TOKEN}`, '-o', `./release-assets/${name}`], option);
+    await execa('curl', ['-LJO', url, '--header', 'User-Agent: pnpm', '--header', `Authorization: token ${process.env.GITHUB_TOKEN}`, '-o', `./release-assets/${name}`], option);
 }
 
 const BASE_URL = 'https://obj.omuapps.com/'
