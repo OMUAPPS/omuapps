@@ -51,7 +51,7 @@ for (const asset of assets) {
     ], option);
 }
 
-const BASE_URL = 'https://obj.omuapps.com/';
+const BASE_URL = 'https://obj.omuapps.com';
 const BUCKET = 'omuapps-app';
 const PATH = `app/${tag}`;
 
