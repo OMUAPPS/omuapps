@@ -1,6 +1,6 @@
 import { context, getOctokit } from '@actions/github';
 import { execa, execaSync } from 'execa';
-import { readdirSync } from 'fs';
+import fs from 'fs/promises';
 const option = { stderr: process.stderr, stdout: process.stdout }
 const options = (() => {
     const args = process.argv.slice(2);
@@ -36,14 +36,16 @@ const { data: assets } = await github.rest.repos.listReleaseAssets({
 for (const asset of assets) {
     const url = asset.browser_download_url;
     const name = asset.name;
-    await execa('curl', ['-LJO', url, '--header', 'User-Agent: pnpm', '--header', `Authorization: token ${process.env.GITHUB_TOKEN}`, '-o', `./release-assets/${name}`], option);
+    await execa('bash', ['-c', `curl -L -o ./release-assets/${name} ${url}`], option);
 }
 
 const BASE_URL = 'https://obj.omuapps.com/'
 const BUCKET = 'omuapps-app'
 const PATH = 'app'
 
-const urls = readdirSync('./release-assets').map(file => {
+const files = await fs.readdir('./release-assets');
+console.log(files);
+const urls = files.map(async file => {
     execaSync('bash', ['-c', `cat ./release-assets/${file} | pnpm wrangler r2 object put ${BUCKET}/${PATH}/${file} --pipe`], option);
     return `${BASE_URL}/${PATH}/${file}`;
 });
