@@ -166,8 +166,6 @@ jobs:
                       args: ''
                     - platform: 'windows-latest'
                       args: ''
-        outputs:
-            RELEASE_VERSION: ${{ steps.pass_version.outputs.VERSION }}
 
         runs-on: ${{ matrix.platform }}
         steps:
@@ -225,13 +223,9 @@ jobs:
                   updaterJsonPreferNsis: true
                   args: ${{ matrix.args }}
             
-            - name: Pass version to next job
-              id: pass_version
-              run: echo "VERSION=$(jq -r '.package.version' ./packages-js/dash/tauri.conf.json)" >> "$GITHUB_OUTPUT"
-
     upload-to-r2:
         if: ${{ github.event.inputs.upload == 'true' }}
-        needs: publish-tauri
+        needs: publish-npm
         runs-on: ubuntu-latest
 
         steps:
@@ -247,17 +241,10 @@ jobs:
         - name: Install dependencies
           run: pnpm i --frozen-lockfile
 
-        - name: Download release assets
-          uses: robinraju/release-downloader@v1
-          with:
-                token: ${{ secrets.GITHUB_TOKEN }}
-                tag: v${{ needs.publish-tauri.outputs.RELEASE_VERSION }}
-                out-file-path:  ./release-assets
-
         - name: Upload to Cloudflare R2
           env:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             pnpm wrangler whoami
-            node ./scripts/js-upload-to-r2.mjs --version ${{ needs.publish-tauri.outputs.RELEASE_VERSION }}
+            node ./scripts/js-upload-to-r2.mjs --version ${{ needs.publish-npm.outputs.VERSION }}
