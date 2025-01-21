@@ -1,8 +1,12 @@
 name: Upload Release to Cloudflare R2
 
 on:
-    release:
     workflow_dispatch:
+        inputs:
+            tag:
+                description: 'Tag to upload'
+                required: true
+                type: string
 
 permissions:
     contents: read
@@ -24,26 +28,17 @@ jobs:
         - name: Install dependencies
           run: pnpm i --frozen-lockfile
 
-        - name: Create test file
-          run: echo "Hello, world!" > test.txt
-
-        - name: Upload test file
-          uses: actions/upload-artifact@v4.6.0
-          with:
-                name: test
-                path: test.txt
-
         - name: Download release assets
-          uses: actions/download-artifact@v4.1.8
+          uses: robinraju/release-downloader@v1
           with:
-              path: ./release-assets
+                token: ${{ secrets.GITHUB_TOKEN }}
+                tag: ${{ github.event.inputs.tag }}
+                out-file-path:  ./release-assets
 
         - name: Upload to Cloudflare R2
           env:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             pnpm wrangler whoami
-            for file in ./release-assets/*; do
-                echo "Uploading $file"
-                cat $file | pnpm wrangler r2 object put omuapps-app/test/$(basename $file) --pipe
-            done
+            node ./scripts/js-upload-to-r2.mjs --tag ${{ github.event.inputs.tag }}
