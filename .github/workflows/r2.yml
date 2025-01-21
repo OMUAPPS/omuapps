@@ -1,0 +1,43 @@
+name: Upload Release to Cloudflare R2
+
+on:
+    release:
+
+permissions:
+    contents: read
+
+jobs:
+    upload-to-r2:
+        runs-on: ubuntu-latest
+
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Create test file
+          run: echo "Hello, world!" > test.txt
+
+        - name: Upload test file
+          uses: actions/upload-artifact@v2
+          with:
+                name: test
+                path: test.txt
+
+        - name: Download release assets
+          uses: actions/download-artifact@v4.1.8
+          with:
+              path: ./release-assets
+
+        - name: Upload to Cloudflare R2
+          uses: cloudflare/wrangler-action@v3
+          with:
+                apiToken: ${{ secrets.CF_API_TOKEN }}
+                workingDirectory: ./release-assets
+                # for file in ./release-assets/*; do
+                #     aws s3 cp "$file" "s3://${R2_BUCKET_NAME}/$(basename "$file")" --endpoint-url "${R2_ENDPOINT}"
+                # done
+                # wrangler r2 object put omuapps-app/<file_name> --file <file_path>
+                command: |
+                    for file in ./release-assets/*; do
+                        wrangler r2 object put omuapps-app/test/$(basename "$file") --file "$file"
+                    done
