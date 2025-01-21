@@ -2,6 +2,7 @@ name: Upload Release to Cloudflare R2
 
 on:
     release:
+    workflow_dispatch:
 
 permissions:
     contents: read
