@@ -663,40 +663,6 @@
     const avatarCache = new Map<string, {key: string, avatar: Avatar}>();
     const contextCache = new Map<string, {id: string, key: string, avatar: AvatarContext}>();
 
-    function getFileType(source: Uint8Array): string {
-        const HEADER_MAP: Record<string, string | undefined> = {
-            '89504e47': 'image/png',
-            '47494638': 'image/gif',
-            'ffd8ffe0': 'image/jpeg',
-            'ffd8ffe1': 'image/jpeg',
-            'ffd8ffe2': 'image/jpeg',
-            'ffd8ffe3': 'image/jpeg',
-            'ffd8ffe8': 'image/jpeg',
-            '52494646': 'image/webp',
-        }
-        const header = source.slice(0, 4).reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
-        const type = HEADER_MAP[header];
-        if (type) {
-            return type;
-        }
-        console.warn(`Unknown file type: ${header}`);
-        return 'image/png';
-    }
-
-    async function createSourceElement(source: Uint8Array): Promise<{width: number, height: number, image: HTMLImageElement}> {
-        const type = getFileType(source);
-        const blob = new Blob([source], {type});
-        const url = URL.createObjectURL(blob);
-        const image = document.createElement('img');
-        image.src = url;
-        await image.decode();
-        return {
-            width: image.width,
-            height: image.height,
-            image,
-        };
-    }
-
     async function getAvatarById(gl: GlContext, avatarId: string): Promise<{key:string, avatar: Avatar}> {
         const avatarConfig = $config.avatars[avatarId];
         if (!avatarConfig) {
@@ -721,10 +687,10 @@
             }
         } else if (avatarType === 'png') {
             try {
-                const base = await createSourceElement(await overlayApp.getSource(avatarConfig.base));
-                const active = avatarConfig.active && await createSourceElement(await overlayApp.getSource(avatarConfig.active));
-                const deafened = avatarConfig.deafened && await createSourceElement(await overlayApp.getSource(avatarConfig.deafened));
-                const muted = avatarConfig.muted && await createSourceElement(await overlayApp.getSource(avatarConfig.muted));
+                const base = await overlayApp.getSource(avatarConfig.base);
+                const active = avatarConfig.active && await overlayApp.getSource(avatarConfig.active);
+                const deafened = avatarConfig.deafened && await overlayApp.getSource(avatarConfig.deafened);
+                const muted = avatarConfig.muted && await overlayApp.getSource(avatarConfig.muted);
                 const avatar = await PNGAvatar.load(gl, {
                     base,
                     active,
@@ -788,10 +754,10 @@
                 url: modelData.muted,
             } : undefined,
         }
-        const base = await createSourceElement(await proxy(modelData.inactive).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
-        const active = await createSourceElement(await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
-        const deafened = await createSourceElement(await proxy(modelData.deafened).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
-        const muted = await createSourceElement(await proxy(modelData.muted).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
+        const base = await proxy(modelData.inactive).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
+        const active = await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
+        const deafened = await proxy(modelData.deafened).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
+        const muted = await proxy(modelData.muted).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
         const avatar = await PNGAvatar.load(gl, {
             base,
             active,
@@ -804,9 +770,8 @@
     async function createDefaultAvatar(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
         const url = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
         const source = await window.fetch(url).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const base = await createSourceElement(source);
         const avatar = await PNGAvatar.load(gl, {
-            base,
+            base: source,
         });
         return avatar.create();
     }

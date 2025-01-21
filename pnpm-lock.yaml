@@ -237,6 +237,9 @@ importers:
       '@types/dom-speech-recognition':
         specifier: ^0.0.4
         version: 0.0.4
+      '@types/dom-webcodecs':
+        specifier: ^0.1.13
+        version: 0.1.13
       '@types/pako':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2153,6 +2156,9 @@ packages:
   '@types/dom-speech-recognition@0.0.4':
     resolution: {integrity: sha512-zf2GwV/G6TdaLwpLDcGTIkHnXf8JEf/viMux+khqKQKDa8/8BAUtXXZS563GnvJ4Fg0PBLGAaFf2GekEVSZ6GQ==}
 
+  '@types/dom-webcodecs@0.1.13':
+    resolution: {integrity: sha512-O5hkiFIcjjszPIYyUSyvScyvrBoV3NOEEZx/pMlsu44TKzWNkLVBBxnxJz42in5n3QIolYOcBYFCPZZ0h8SkwQ==}
+
   '@types/emscripten@1.39.13':
     resolution: {integrity: sha512-cFq+fO/isvhvmuP/+Sl4K4jtU6E23DoivtbO4r50e3odaxAiVdbfSYRDdJ4gCdxx+3aRjhphS5ZMwIH4hFy/Cw==}
 
@@ -3258,6 +3264,7 @@ packages:
   eslint@8.4.1:
     resolution: {integrity: sha512-TxU/p7LB1KxQ6+7aztTnO7K0i+h0tDi81YRY9VzB6Id71kNz+fFYnf5HD5UOQmxkzcoa0TlVZf9dpMtUv0GpWg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   eslint@9.9.1:
@@ -8298,6 +8305,8 @@ snapshots:
       '@types/node': 22.1.0
 
   '@types/dom-speech-recognition@0.0.4': {}
+
+  '@types/dom-webcodecs@0.1.13': {}
 
   '@types/emscripten@1.39.13': {}
 
