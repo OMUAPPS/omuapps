@@ -21,6 +21,9 @@ jobs:
           with:
             cache: 'pnpm'
 
+        - name: Install dependencies
+          run: pnpm i --frozen-lockfile
+
         - name: Create test file
           run: echo "Hello, world!" > test.txt
 
@@ -39,7 +42,6 @@ jobs:
           uses: cloudflare/wrangler-action@v3
           with:
                 apiToken: ${{ secrets.CF_API_TOKEN }}
-                workingDirectory: ./release-assets
                 packageManager: pnpm
                 # for file in ./release-assets/*; do
                 #     aws s3 cp "$file" "s3://${R2_BUCKET_NAME}/$(basename "$file")" --endpoint-url "${R2_ENDPOINT}"
