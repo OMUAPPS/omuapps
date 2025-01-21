@@ -44,8 +44,8 @@
             if (canvas.width !== width || canvas.height !== height) {
                 continue;
             }
-            context.clearRect(0, 0, width, height);
             await render(glContext);
+            context.clearRect(0, 0, width, height);
             context.drawImage(offscreen, 0, 0);
             await render2D(context);
             const currentTime = performance.now();
