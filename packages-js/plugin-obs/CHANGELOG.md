@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.9 (2025-01-21)
+
+
+### Bug Fixes
+
+* **plugin-obs:** 起動の引数が正しく設定されてない問題を修正 ([86b20d7](https://github.com/OMUAPPS/omuapps/commit/86b20d72ce53d2f14663e8b603e7a127c31488cf))
+
+
+
+
+
 ## 0.8.8 (2025-01-21)
 
 
