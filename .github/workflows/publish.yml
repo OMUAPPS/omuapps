@@ -225,7 +225,7 @@ jobs:
             
     upload-to-r2:
         if: ${{ github.event.inputs.upload == 'true' }}
-        needs: publish-npm
+        needs: [publish-npm, publish-pypi, publish-tauri]
         runs-on: ubuntu-latest
 
         steps:
