@@ -18,7 +18,7 @@ jobs:
           run: echo "Hello, world!" > test.txt
 
         - name: Upload test file
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4.6.0
           with:
                 name: test
                 path: test.txt
