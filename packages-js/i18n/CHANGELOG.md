@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.8 (2025-01-21)
+
+
+### Bug Fixes
+
+* **plugin-obs:** 起動パスが設定されない問題を修正 ([47cea24](https://github.com/OMUAPPS/omuapps/commit/47cea244e61555ad79ab3982f5b06e94de48adf4))
+
+
+
+
+
 ## 0.8.7 (2025-01-21)
 
 **Note:** Version bump only for package @omujs/i18n
