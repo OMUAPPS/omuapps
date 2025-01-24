@@ -111,7 +111,7 @@ async function uploadBeta() {
 
     const releaseData = {
         version: VERSION,
-        notes: release.body,
+        notes: release.notes,
         pub_date: new Date(release.published_at).toISOString(),
         platforms: Object.fromEntries(
             await Promise.all(PLATFORMS.map(async platform => {
@@ -143,7 +143,7 @@ async function graduateBeta() {
 
     const releaseData = {
         version: VERSION,
-        notes: release.body,
+        notes: release.notes,
         pub_date: new Date(release.published_at).toISOString(),
         platforms: Object.fromEntries(
             await Promise.all(PLATFORMS.map(async platform => {
