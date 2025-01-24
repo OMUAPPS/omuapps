@@ -57,8 +57,9 @@ const BUCKET = 'omuapps-app';
 const PATH = `app/${TAG}`;
 
 async function uploadToR2(file, path) {
-    const exists = await fs.access(file);
-    if (!exists) {
+    try {
+        await fs.access(file);
+    } catch (e) {
         throw new Error(`File not found: ${file}`);
     }
     await execa('bash', [
