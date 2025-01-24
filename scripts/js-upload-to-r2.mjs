@@ -95,7 +95,7 @@ async function uploadVersion() {
     const urls = {};
     for (const file of files) {
         const path = `${PATH}/${file}`;
-        if (!options["no-upload"]) {
+        if (options["no-upload"]) {
             urls[file] = `${BASE_URL}/${path}`;
         } else {
             const url = await uploadToR2(`./release-assets/${file}`, path);
