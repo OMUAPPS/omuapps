@@ -1,14 +1,14 @@
-name: Upload Release to Cloudflare R2
+name: Graduate Version
 
 on:
     workflow_dispatch:
         inputs:
             version:
-                description: 'Tag to upload'
+                description: 'Version to graduate'
                 required: true
                 type: string
             no-upload:
-                description: 'Do not upload to R2'
+                description: 'Don''t upload to Cloudflare R2'
                 required: false
                 type: boolean
 

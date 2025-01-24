@@ -27,7 +27,7 @@ async function downloadRelease() {
         owner,
         repo,
     });
-    console.log(releases);
+    console.log(releases.map(release => release.tag_name).join(', '));
 
     const release = releases.find(release => release.tag_name === TAG);
     if (!release) {
@@ -89,6 +89,7 @@ const PLATFORMS = [
 
 async function uploadVersion() {
     const files = await fs.readdir('./release-assets');
+    console.log(files);
     const urls = Object.fromEntries(
         await Promise.all(files.map(async file => {
             const path = `${PATH}/${file}`;

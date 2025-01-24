@@ -247,4 +247,4 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             pnpm wrangler whoami
-            node ./scripts/js-upload-to-r2.mjs --version ${{ needs.publish-npm.outputs.VERSION }} --beta
+            node ./scripts/js-upload-to-r2.mjs --version ${{ needs.publish-npm.outputs.VERSION }} --beta true
