@@ -5,6 +5,7 @@
     import TitlebarButton from './TitlebarButton.svelte';
     import StatusBar from './common/StatusBar.svelte';
     import Title from './images/title.svg';
+    import { isBetaEnabled } from './main/settings.js';
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
     import { invoke, listen, tauriWindow } from './tauri.js';
     import { version } from './version.json';
@@ -54,7 +55,7 @@
             <img src={Title} alt="title" width="64" height="10" />
             <span class="version">
                 {version}
-                {DEV && ' (dev)' || ''}
+                {DEV && ' (dev)' || ($isBetaEnabled && ' (beta)') || ''}
             </span>
             <StatusBar />
         </div>
