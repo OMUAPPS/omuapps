@@ -1,8 +1,6 @@
 import { context, getOctokit } from '@actions/github';
-import { execa, execaSync } from 'execa';
+import { execa } from 'execa';
 import fs from 'fs/promises';
-
-const option = { stderr: process.stderr, stdout: process.stdout };
 
 const options = (() => {
     const args = process.argv.slice(2);
@@ -18,60 +16,59 @@ const options = (() => {
     return options;
 })();
 
-const version = options.version;
-const tag = `app-v${version}`;
-const github = getOctokit(process.env.GITHUB_TOKEN);
-const { owner, repo } = context.repo;
+const VERSION = options.version;
+const TAG = `app-v${VERSION}`;
 
-const { data: releases } = await github.rest.repos.listReleases({
-    owner,
-    repo,
-});
-console.log(releases);
+async function downloadRelease() {
+    const github = getOctokit(process.env.GITHUB_TOKEN);
+    const { owner, repo } = context.repo;
 
-const release = releases.find(release => release.tag_name === tag);
-if (!release) {
-    throw new Error(`Release not found: ${tag}`);
-}
+    const { data: releases } = await github.rest.repos.listReleases({
+        owner,
+        repo,
+    });
+    console.log(releases);
 
-const { data: assets } = await github.rest.repos.listReleaseAssets({
-    owner,
-    repo,
-    release_id: release.id,
-});
+    const release = releases.find(release => release.tag_name === TAG);
+    if (!release) {
+        throw new Error(`Release not found: ${TAG}`);
+    }
 
-// download assets to ./release-assets
-await fs.mkdir('./release-assets', { recursive: true });
-for (const asset of assets) {
-    const url = asset.browser_download_url;
-    const name = asset.name;
-    await execa('bash', [
-        '-c',
-        `curl -L -o ./release-assets/${name} ${url}`
-    ], option);
+    const { data: assets } = await github.rest.repos.listReleaseAssets({
+        owner,
+        repo,
+        release_id: release.id,
+    });
+
+    // download assets to ./release-assets
+    await fs.mkdir('./release-assets', { recursive: true });
+    for (const asset of assets) {
+        const url = asset.browser_download_url;
+        const name = asset.name;
+        await execa('bash', [
+            '-c',
+            `curl -L -o ./release-assets/${name} ${url}`
+        ], { stderr: process.stderr, stdout: process.stdout });
+    }
 }
 
 const BASE_URL = 'https://obj.omuapps.com';
 const BUCKET = 'omuapps-app';
-const PATH = `app/${tag}`;
+const PATH = `app/${TAG}`;
 
-const files = await fs.readdir('./release-assets');
-const urls = Object.fromEntries(
-    await Promise.all(files.map(async file => {
-        execaSync('bash', [
-            '-c',
-            `cat ./release-assets/${file} | pnpm wrangler r2 object put ${BUCKET}/${PATH}/${file} --pipe`
-        ], option);
-        return [file, `${BASE_URL}/${PATH}/${file}`];
-    }))
-);
+async function uploadToR2(file, path) {
+    const exists = await fs.access(file);
+    if (!exists) {
+        throw new Error(`File not found: ${file}`);
+    }
+    await execa('bash', [
+        '-c',
+        `cat ${file} | pnpm wrangler r2 object put ${BUCKET}/${path} --pipe`
+    ], { stderr: process.stderr, stdout: process.stdout });
+    return `${BASE_URL}/${path}`;
+}
 
-execaSync('bash', [
-    '-c',
-    `cat ./release-assets/latest-beta.json | pnpm wrangler r2 object put ${BUCKET}/app/latest-beta.json --pipe`
-], option);
-
-const platforms = [
+const PLATFORMS = [
     {
         type: 'windows-x86_64',
         filename: '{NAME_UPPER}_{VERSION}_x64-setup.exe',
@@ -90,29 +87,88 @@ const platforms = [
     },
 ];
 
-const releaseData = {
-    version: options.version,
-    notes: release.body,
-    pub_date: new Date(release.published_at).toISOString(),
-    platforms: Object.fromEntries(
-        await Promise.all(platforms.map(async platform => {
-            const { type, filename } = platform;
-            const name = filename
-                .replace('{NAME_UPPER}', 'OMUAPPS')
-                .replace('{NAME_LOWER}', 'omuapps')
-                .replace('{VERSION}', options.version);
-            const url = urls[name];
-            return [type, { url }];
+async function uploadVersion() {
+    const files = await fs.readdir('./release-assets');
+    const urls = Object.fromEntries(
+        await Promise.all(files.map(async file => {
+            const path = `${PATH}/${file}`;
+            if (!options["no-upload"]) {
+                return [file, `${BASE_URL}/${path}`];
+            }
+            const url = await uploadToR2(`./release-assets/${file}`, path);
+            return [file, url];
         }))
-    ),
-};
+    );
+    return urls;
+}
 
-await fs.writeFile(
-    './release-assets/version-beta.json',
-    JSON.stringify(releaseData, null, 4)
-);
+async function uploadBeta() {
+    const urls = await uploadVersion();
+    await uploadToR2('./release-assets/latest.json', 'app/latest-beta.json');
 
-execaSync('bash', [
-    '-c',
-    `cat ./release-assets/version-beta.json | pnpm wrangler r2 object put ${BUCKET}/app/version-beta.json --pipe`
-], option);
+    const releaseData = {
+        version: VERSION,
+        notes: release.body,
+        pub_date: new Date(release.published_at).toISOString(),
+        platforms: Object.fromEntries(
+            await Promise.all(PLATFORMS.map(async platform => {
+                const { type, filename } = platform;
+                const name = filename
+                    .replace('{NAME_UPPER}', 'OMUAPPS')
+                    .replace('{NAME_LOWER}', 'omuapps')
+                    .replace('{VERSION}', VERSION);
+                const url = urls[name];
+                if (!url) {
+                    throw new Error(`URL not found: ${name}`);
+                }
+                return [type, { url }];
+            }))
+        ),
+    };
+
+    await fs.writeFile(
+        './release-assets/version-beta.json',
+        JSON.stringify(releaseData, null, 4)
+    );
+    await uploadToR2('./release-assets/version-beta.json', 'app/version-beta.json');
+}
+
+async function graduateBeta() {
+    const urls = await uploadVersion();
+
+    await uploadToR2('./release-assets/latest.json', 'app/latest.json');
+
+    const releaseData = {
+        version: VERSION,
+        notes: release.body,
+        pub_date: new Date(release.published_at).toISOString(),
+        platforms: Object.fromEntries(
+            await Promise.all(PLATFORMS.map(async platform => {
+                const { type, filename } = platform;
+                const name = filename
+                    .replace('{NAME_UPPER}', 'OMUAPPS')
+                    .replace('{NAME_LOWER}', 'omuapps')
+                    .replace('{VERSION}', VERSION);
+                const url = urls[name];
+                if (!url) {
+                    throw new Error(`URL not found: ${name}`);
+                }
+                return [type, { url }];
+            }))
+        ),
+    };
+
+    await fs.writeFile(
+        './release-assets/version.json',
+        JSON.stringify(releaseData, null, 4)
+    );
+    await uploadToR2('./release-assets/version.json', 'app/version.json');
+}
+
+await downloadRelease();
+if (options.beta) {
+    await uploadBeta();
+}
+if (options.graduate) {
+    await graduateBeta();
+}

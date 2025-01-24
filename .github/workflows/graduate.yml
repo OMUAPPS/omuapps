@@ -3,10 +3,14 @@ name: Upload Release to Cloudflare R2
 on:
     workflow_dispatch:
         inputs:
-            tag:
+            version:
                 description: 'Tag to upload'
                 required: true
                 type: string
+            no-upload:
+                description: 'Do not upload to R2'
+                required: false
+                type: boolean
 
 permissions:
     contents: read
@@ -34,4 +38,4 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             pnpm wrangler whoami
-            node ./scripts/js-upload-to-r2.mjs --tag ${{ github.event.inputs.tag }}
+            node ./scripts/js-upload-to-r2.mjs --version ${{ github.event.inputs.version }} --graduate true ${{ github.event.inputs.no-upload && '--no-upload true' || '' }}
