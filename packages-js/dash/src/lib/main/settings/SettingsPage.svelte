@@ -5,6 +5,7 @@
     import { screenContext } from '$lib/screen/screen.js';
     import { invoke } from '$lib/tauri.js';
     import { Combobox, Header, Tooltip } from '@omujs/ui';
+    import { relaunch } from '@tauri-apps/api/process';
     import { currentSettingsCategory, devMode, isBetaEnabled, language } from '../settings.js';
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
@@ -92,7 +93,16 @@
                 </span>
                 <label class="setting">
                     <p>{$t('settings.setting.betaMode')}</p>
-                    <input type="checkbox" bind:checked={$isBetaEnabled} />
+                    <input type="checkbox" bind:checked={$isBetaEnabled} on:change={async () => {
+                        await invoke('set_config', {config: {enable_beta: $isBetaEnabled}});
+                        console.log('config', await invoke('get_config'));
+                        try {
+                            await omu.server.shutdown();
+                        } catch (e) {
+                            console.error(e);
+                        }
+                        await relaunch();
+                    }} />
                 </label>
                 <small>
                     {$t('settings.setting.betaModeDescription')}

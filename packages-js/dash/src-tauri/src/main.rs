@@ -23,6 +23,7 @@ use directories::ProjectDirs;
 use log::{info, warn};
 use once_cell::sync::Lazy;
 use options::AppOptions;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sources::py::PythonVersion;
 use std::{
@@ -32,7 +33,8 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tauri::{
-    api::path::data_dir, CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu,
+    api::path::data_dir, utils::config::UpdaterEndpoint, CustomMenuItem, Manager, SystemTray,
+    SystemTrayEvent, SystemTrayMenu,
 };
 use tauri_plugin_log::LogTarget;
 use utils::filesystem::remove_dir_all;
@@ -55,10 +57,45 @@ static PYTHON_VERSION: PythonVersionRequest = PythonVersionRequest {
     suffix: None,
 };
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Config {
+    pub enable_beta: bool,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self { enable_beta: false }
+    }
+}
+
+impl Config {
+    pub fn ensure_exists(path: &PathBuf) -> Self {
+        if !path.exists() {
+            let config = Config::default();
+            config.store(path).unwrap();
+            config
+        } else {
+            Config::load(path).unwrap()
+        }
+    }
+
+    pub fn store(&self, path: &PathBuf) -> Result<(), std::io::Error> {
+        let content = serde_json::to_string_pretty(self).unwrap();
+        std::fs::write(path, content)
+    }
+
+    pub fn load(path: &PathBuf) -> Result<Self, std::io::Error> {
+        let content = std::fs::read_to_string(path)?;
+        let config = serde_json::from_str(&content).unwrap();
+        Ok(config)
+    }
+}
+
 struct AppState {
     option: AppOptions,
     server: Arc<Mutex<Option<Server>>>,
     app_handle: Arc<Mutex<Option<tauri::AppHandle>>>,
+    config: Arc<Mutex<Config>>,
 }
 
 #[tauri::command]
@@ -287,6 +324,22 @@ fn get_token(state: tauri::State<'_, AppState>) -> Result<Option<String>, String
 }
 
 #[tauri::command]
+fn get_config(state: tauri::State<'_, AppState>) -> Result<Config, String> {
+    let config = state.config.lock().unwrap();
+    Ok(config.clone())
+}
+
+#[tauri::command]
+fn set_config(state: tauri::State<'_, AppState>, config: Config) -> Result<(), String> {
+    let mut config_state = state.config.lock().unwrap();
+    *config_state = config.clone();
+    config
+        .store(&state.option.config_path)
+        .map_err(|err| format!("Failed to store config: {}", err))?;
+    Ok(())
+}
+
+#[tauri::command]
 async fn generate_log_file(state: tauri::State<'_, AppState>) -> Result<String, String> {
     // pack log files into a zip file, return the path
     let options = state.option.clone();
@@ -323,13 +376,35 @@ fn main() {
             data_dir: data_dir.clone(),
             port: 26423,
         },
+        config_path: bin_dir.join("config.json"),
     };
     let app_handle = Arc::new(Mutex::new(None));
+    let config = Config::ensure_exists(&options.config_path);
     let server_state = AppState {
         option: options,
         server: Arc::new(Mutex::new(None)),
         app_handle: app_handle.clone(),
+        config: Arc::new(Mutex::new(config.clone())),
     };
+
+    let mut context = tauri::generate_context!();
+
+    let updater = &mut context.config_mut().tauri.updater;
+    let update_endpoint_url = if config.enable_beta {
+        "https://obj.omuapps.com/app/latest-beta.json"
+    } else {
+        "https://obj.omuapps.com/app/latest.json"
+    };
+    let urls = vec![
+        UpdaterEndpoint(update_endpoint_url.to_string().parse().unwrap()),
+        UpdaterEndpoint(
+            "https://github.com/OMUAPPS/omuapps/releases/latest/download/latest.json"
+                .to_string()
+                .parse()
+                .unwrap(),
+        ),
+    ];
+    updater.endpoints.replace(urls);
 
     tauri::Builder::default()
         .system_tray(
@@ -402,6 +477,8 @@ fn main() {
             stop_server,
             clean_environment,
             get_token,
+            get_config,
+            set_config,
             generate_log_file,
             open_python_path,
             open_uv_path
@@ -429,7 +506,7 @@ fn main() {
 
             Ok(())
         })
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while building tauri application")
         .run(|_app_handle, event| match event {
             tauri::RunEvent::ExitRequested { api, .. } => {

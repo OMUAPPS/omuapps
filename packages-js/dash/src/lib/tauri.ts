@@ -4,11 +4,17 @@ import { BROWSER } from 'esm-env';
 
 let _invoke: typeof api.invoke;
 let _listen: typeof event.listen;
+
+export type Config = {
+    enable_beta: boolean;
+};
 type Commands = {
     close_window: () => void;
     start_server: () => string;
     stop_server: () => string;
     get_token: () => string | null;
+    get_config: () => Config;
+    set_config: (args: {config: Config}) => void;
     generate_log_file: () => string;
     clean_environment: () => void;
     open_python_path: () => void;
