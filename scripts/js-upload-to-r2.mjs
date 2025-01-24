@@ -20,21 +20,21 @@ console.log(options);
 const VERSION = options.version;
 const TAG = `app-v${VERSION}`;
 
+const github = getOctokit(process.env.GITHUB_TOKEN);
+const { owner, repo } = context.repo;
+
+const { data: releases } = await github.rest.repos.listReleases({
+    owner,
+    repo,
+});
+console.log(releases.map(release => release.tag_name).join(', '));
+
+const release = releases.find(release => release.tag_name === TAG);
+if (!release) {
+    throw new Error(`Release not found: ${TAG}`);
+}
+
 async function downloadRelease() {
-    const github = getOctokit(process.env.GITHUB_TOKEN);
-    const { owner, repo } = context.repo;
-
-    const { data: releases } = await github.rest.repos.listReleases({
-        owner,
-        repo,
-    });
-    console.log(releases.map(release => release.tag_name).join(', '));
-
-    const release = releases.find(release => release.tag_name === TAG);
-    if (!release) {
-        throw new Error(`Release not found: ${TAG}`);
-    }
-
     const { data: assets } = await github.rest.repos.listReleaseAssets({
         owner,
         repo,
@@ -111,7 +111,7 @@ async function uploadBeta() {
 
     const releaseData = {
         version: VERSION,
-        notes: release.notes,
+        notes: release.body,
         pub_date: new Date(release.published_at).toISOString(),
         platforms: Object.fromEntries(
             await Promise.all(PLATFORMS.map(async platform => {
@@ -143,7 +143,7 @@ async function graduateBeta() {
 
     const releaseData = {
         version: VERSION,
-        notes: release.notes,
+        notes: release.body,
         pub_date: new Date(release.published_at).toISOString(),
         platforms: Object.fromEntries(
             await Promise.all(PLATFORMS.map(async platform => {
