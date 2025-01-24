@@ -15,6 +15,7 @@ const options = (() => {
     }
     return options;
 })();
+console.log(options);
 
 const VERSION = options.version;
 const TAG = `app-v${VERSION}`;
