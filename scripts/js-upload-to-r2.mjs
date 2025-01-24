@@ -90,16 +90,16 @@ const PLATFORMS = [
 async function uploadVersion() {
     const files = await fs.readdir('./release-assets');
     console.log(files);
-    const urls = Object.fromEntries(
-        await Promise.all(files.map(async file => {
-            const path = `${PATH}/${file}`;
-            if (!options["no-upload"]) {
-                return [file, `${BASE_URL}/${path}`];
-            }
+    const urls = {};
+    for (const file of files) {
+        const path = `${PATH}/${file}`;
+        if (!options["no-upload"]) {
+            urls[file] = `${BASE_URL}/${path}`;
+        } else {
             const url = await uploadToR2(`./release-assets/${file}`, path);
-            return [file, url];
-        }))
-    );
+            urls[file] = url;
+        }
+    }
     return urls;
 }
 

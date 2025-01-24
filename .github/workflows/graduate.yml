@@ -9,6 +9,7 @@ on:
                 type: string
             no-upload:
                 description: 'Don''t upload to Cloudflare R2'
+                default: true
                 required: false
                 type: boolean
 
