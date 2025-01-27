@@ -321,6 +321,10 @@
         padding: 2rem;
         margin-left: 4rem;
         background: var(--color-bg-2);
+        box-shadow: 3px 5px rgba(0, 0, 0, 0.02);
+        outline: 4px solid #fff;
+        outline-offset: -4px;
+        border-radius: 2px;
 
         > p {
             display: flex;
