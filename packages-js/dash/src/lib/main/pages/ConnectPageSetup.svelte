@@ -29,8 +29,11 @@
     <div class="left">
         {#if stage.type === 'input'}
             <p>{$t('page.connect.input_url')}</p>
-            <input type="text" bind:value={url} placeholder="youtube.com/watch?v=..." class="input" />
-            
+            <input type="text" bind:value={url} on:keypress={(event) => {
+                if (event.key === 'Enter') {
+                    search(url);
+                }
+            }} placeholder="youtube.com/watch?v=..." class="input" />
             <div class="actions">
                 <button on:click={() => {
                     cancel();
@@ -69,8 +72,14 @@
                         checked = !checked;
                     }}>
                         {#if checked}
+                            <Tooltip>
+                                <p>{$t('page.connect.selected_tooltip')}</p>
+                            </Tooltip>
                             <i class="ti ti-circle-check-filled"></i>
                         {:else}
+                            <Tooltip>
+                                <p>{$t('page.connect.select_tooltip')}</p>
+                            </Tooltip>
                             <i class="ti ti-plus"></i>
                         {/if}
                         <img src={channel.iconUrl} alt="thumbnail" />

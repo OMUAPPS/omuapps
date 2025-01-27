@@ -146,7 +146,9 @@
             "setup_no_results_tooltip": "URLが正しいか確認してください。",
             "search_back": "もう一度検索する",
             "select_submit_tooltip": "一つ以上選択してください。",
-            "input_cancel": "やめておく"
+            "input_cancel": "やめておく",
+            "selected_tooltip": "クリックで選択を解除",
+            "select_tooltip": "クリックで選択"
         },
         "settings": {
             "icon": "ti ti-settings",
