@@ -4,7 +4,7 @@
     import { Chat } from '@omujs/chat';
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { AppHeader, FlexRowWrapper, TableList, Textbox, Toggle, setClient } from '@omujs/ui';
+    import { AppHeader, TableList, Textbox, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import Player from './components/Player.svelte';
@@ -64,17 +64,7 @@
 
 <AppPage>
     <header slot="header">
-        {#await promise}
-            <AppHeader app={omu.app} />
-        {:then}
-            <AppHeader app={omu.app}>
-                <FlexRowWrapper alignItems="center" gap>
-                    <small>表示</small>
-                    <Toggle bind:value={$config.active} />
-                </FlexRowWrapper>
-            </AppHeader>
-            <slot />
-        {/await}
+        <AppHeader app={omu.app} />
     </header>
     <main>
         <div class="container">
