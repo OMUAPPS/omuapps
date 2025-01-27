@@ -14,10 +14,15 @@
     export let paid: Paid | undefined = undefined;
     export let gifts: Array<models.Gift> | undefined = undefined;
     export let author: models.Author | undefined = undefined;
+    export let room: models.Room | undefined = undefined;
     export let createdAt: Date | undefined = undefined;
     export let content: models.content.Component | undefined = undefined;
     export let handleCopy: () => void = () => {};
     export let selected: boolean = false;
+
+    $: roomStartedAt = room?.metadata.started_at && new Date(room.metadata.started_at);
+    $: time = createdAt && roomStartedAt && new Date(createdAt.getTime() - roomStartedAt.getTime()) || null;
+    $: url = room?.metadata.url || null;
 </script>
 
 <article
@@ -103,6 +108,16 @@
                     </FlexColWrapper>
                     {#if selected}
                         <div class="actions">
+                            {#if time}
+                                {@const timedLink = `${url}&t=${Math.floor(time.getTime()/1000)+10}s`}
+                                <button on:click={() => window.open(timedLink, '_blank')}>
+                                    <Tooltip>
+                                        <p>{$translate('panels.messages.see_in_room')}</p>
+                                        <p>{time.getMinutes()}:{time.getSeconds().toString().padStart(2, '0')}</p>
+                                    </Tooltip>
+                                    <i class="ti ti-external-link"></i>
+                                </button>
+                            {/if}
                             <button on:click={handleCopy}>
                                 <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
                                 <i class="ti ti-files"></i>
@@ -149,8 +164,8 @@
     article {
         display: flex;
         flex-direction: row;
-        gap: 10px;
-        padding: 15px;
+        gap: 1rem;
+        padding: 1rem;
         font-weight: 500;
         border-bottom: 1px solid var(--color-bg-1);
 
@@ -175,30 +190,6 @@
         width: 128px;
         height: 128px;
         outline: 2px solid #000;
-    }
-
-    button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        font-size: 1rem;
-        color: var(--color-1);
-        cursor: pointer;
-        background: var(--color-bg-1);
-        border: none;
-        outline: none;
-
-        &:hover {
-            color: var(--color-bg-1);
-            background: var(--color-1);
-        }
-
-        &:focus {
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
-        }
     }
 
     .name {
@@ -244,5 +235,30 @@
     .actions {
         display: flex;
         align-self: flex-end;
+        gap: 2px;
+
+        > button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 1rem;
+            color: var(--color-1);
+            cursor: pointer;
+            background: var(--color-bg-1);
+            border-radius: 2px;
+            border: none;
+            outline: none;
+
+            &:hover {
+                color: var(--color-bg-1);
+                background: var(--color-1);
+            }
+
+            &:focus {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+            }
+        }
     }
 </style>
