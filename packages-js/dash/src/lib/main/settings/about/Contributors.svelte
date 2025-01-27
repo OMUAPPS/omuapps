@@ -44,7 +44,10 @@
     {#each contributors as contributor}
         <ExternalLink href={contributor.html_url}>
             <h4>
-                {contributor.login}
+                {$t('settings.about.contributor', {
+                    name: contributor.login,
+                    contributions: contributor.contributions.toString(),
+                })}
                 <i class="ti ti-external-link"></i>
             </h4>
         </ExternalLink>

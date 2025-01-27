@@ -260,7 +260,8 @@
             "licenses": "ライセンス",
             "links": "リンク",
             "source_code": "ソースコード",
-            "website": "ウェブサイト"
+            "website": "ウェブサイト",
+            "contributor": "{name} - {contributions}の貢献"
         }
     },
     "setup": {
