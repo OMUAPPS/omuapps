@@ -25,6 +25,9 @@
     })
     onMount(async () => {
         maximized = await tauriWindow.appWindow.isMaximized();
+        window.addEventListener('resize', async () => {
+            maximized = await tauriWindow.appWindow.isMaximized();
+        });
     });
     onDestroy(async () => (await destroy)());
 
