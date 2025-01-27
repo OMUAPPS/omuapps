@@ -89,7 +89,8 @@
         "messages": {
             "title": "コメント／メッセージ",
             "bookmark": "ブックマーク",
-            "copy": "コピー"
+            "copy": "コピー",
+            "see_in_room": "配信で見る"
         },
         "apps": {
             "title": "アプリ",
@@ -102,7 +103,7 @@
         },
         "channels": {
             "title": "チャンネル",
-            "append_channel": "追加する",
+            "append_channel": "チャンネルを接続",
             "setup_channel": "チャンネルを追加",
             "next_check": "再チェックまであと",
             "delete": "チャンネルを削除",
@@ -126,7 +127,26 @@
             "tooltip": "アプリが配信情報を使えるようにしよう",
             "channels": "チャンネル",
             "rooms": "接続中/過去の配信",
-            "chat": "チャット"
+            "chat": "チャット",
+            "setup": "セットアップ",
+            "setup_tooltip": "アプリがチャットを使えるようにチャンネルを接続しましょう",
+            "input_url": "URLを入力",
+            "setup_input": "追加するチャンネルを探す",
+            "setup_input_tooltip": "URLを入力すると、チャンネルを自動で追加します。",
+            "input_submit": "探す",
+            "select_channel": "チャンネルを選択",
+            "setup_select": "追加するチャンネルを選択",
+            "setup_select_tooltip": "使うチャンネルを選択してください。",
+            "select_submit": "追加",
+            "setup_searching": "探しています...",
+            "setup_searching_tooltip": "URLからチャンネルを探しています。",
+            "search_no_results": "結果がありません",
+            "searching": "検索中",
+            "setup_no_results": "チャンネルが見つかりませんでした",
+            "setup_no_results_tooltip": "URLが正しいか確認してください。",
+            "search_back": "もう一度検索する",
+            "select_submit_tooltip": "一つ以上選択してください。",
+            "input_cancel": "やめておく"
         },
         "settings": {
             "icon": "ti ti-settings",

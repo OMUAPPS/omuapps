@@ -6,19 +6,14 @@
     import RoomEntry from './RoomEntry.svelte';
 
     import { chat } from '$lib/client.js';
-    import ScreenSetup from '$lib/main/setup/ScreenSetup.svelte';
-    import { screenContext } from '$lib/screen/screen.js';
     import { Button, TableList } from '@omujs/ui';
 
+    export let openSetup: () => void = () => {};
     export let filter: (key: string, room: models.Room) => boolean = () => true;
     export let sort: (a: models.Room, b: models.Room) => number = (a, b) => {
         if (!a.createdAt || !b.createdAt) return 0;
         return a.createdAt.getTime() - b.createdAt.getTime();
     };
-
-    function openSetup() {
-        screenContext.push(ScreenSetup, undefined);
-    }
 </script>
 
 <div class="rooms">

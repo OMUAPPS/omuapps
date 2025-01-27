@@ -16,9 +16,8 @@
     import ExplorePage from './pages/ExplorePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
     import UpdateScreen from './screen/UpdateScreen.svelte';
-    import { currentPage, installed, menuOpen } from './settings.js';
+    import { currentPage, menuOpen } from './settings.js';
     import SettingsPage from './settings/SettingsPage.svelte';
-    import ScreenSetup from './setup/ScreenSetup.svelte';
     import TabEntry from './TabEntry.svelte';
 
     const EXPLORE_PAGE = registerPage({
@@ -84,11 +83,6 @@
 
         if (shouldUpdate && manifest) {
             screenContext.push(UpdateScreen, { manifest });
-        }
-
-        if (!$installed) {
-            screenContext.push(ScreenSetup, undefined);
-            $installed = true;
         }
     })
 </script>
