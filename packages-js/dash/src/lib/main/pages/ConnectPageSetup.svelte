@@ -183,6 +183,8 @@
             background: var(--color-bg-1);
             border: none;
             font-weight: 600;
+            box-shadow: 3px 5px rgba(255, 255, 255, 0.02);
+            border-radius: 2px;
 
             > i {
                 margin-right: 0.75rem;
