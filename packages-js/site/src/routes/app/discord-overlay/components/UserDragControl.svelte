@@ -145,7 +145,7 @@
         directions: { width: number, height: number },
         offset: [number, number] = [0, OFFSET],
     ) {
-        const clamped = getPosition(rect, offset);
+        const clamped = getPosition(rect, [offset[0], config.align.vertical === 'start' ?  -offset[1] : offset[1]]);
         return `
             left: ${clamped[0]}px;
             bottom: ${clamped[1]}px;
