@@ -126,12 +126,11 @@
         </section>
         <div class="list">
             <TableList table={dashboard.apps} component={AppEntry}>
-                <button slot="empty" on:click={() => ($currentPage = EXPLORE_PAGE.id)} class="no-apps">
+                <button on:click={() => ($currentPage = EXPLORE_PAGE.id)} slot="empty" class="no-apps">
                     {#if $menuOpen}
                         {#if $currentPage === EXPLORE_PAGE.id}
                             <p>
                                 {$t('menu.jump-to-explore-hint')}
-                                <i class="ti ti-arrow-right"></i>
                             </p>
                             <small>
                                 {$t('menu.add-apps-hint')}
@@ -139,10 +138,9 @@
                         {:else}
                             <p>
                                 {$t('menu.add-apps')}
-                                <i class="ti ti-plus"></i>
+                                <i class="ti ti-external-link"></i>
                             </p>
                             <small>
-                                <i class="ti ti-arrow-right"></i>
                                 {$t('menu.jump-to-explore')}
                             </small>
                         {/if}
@@ -286,26 +284,26 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        width: calc(100% - 2rem);
+        margin: 0 1rem;
+        padding: 1rem 1rem;
+        border: 1px dashed var(--color-outline);
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 2px;
         background: var(--color-bg-2);
         color: var(--color-1);
-        border: none;
-        padding: 0.5rem 1rem;
-        width: 100%;
+        cursor: pointer;
 
-        > p {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
+        > small {
+            color: var(--color-text);
             font-weight: 600;
-
-            > i {
-                margin-left: 0.5rem;
-            }
+            font-size: 0.7rem;
         }
 
+        &:focus-visible,
         &:hover {
+            outline: none;
             background: var(--color-bg-1);
             transition: background 0.0621s;
         }
