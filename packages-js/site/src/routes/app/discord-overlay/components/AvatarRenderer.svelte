@@ -200,7 +200,7 @@
                 }
                 matrices.translate(0, -scaleOffset * 2, 0);
                 const avatarConfig = user.avatar && $config.avatars[user.avatar] || null;
-                setupAvatarTransform(matrices, avatarConfig);
+                setupAvatarTransform(matrices, flipDirection, avatarConfig);
                 setupFlipTransform(matrices, flipDirection, avatarConfig);
                 avatar.render(matrices, {
                     id: state.user.id,
@@ -230,7 +230,7 @@
             const avatarContext = heldAvatarContext || avatar.create();
             heldAvatarContext = avatarContext;
             matrices.push();
-            setupAvatarTransform(matrices, avatarConfig);
+            setupAvatarTransform(matrices, Vec2.ONE, avatarConfig);
             avatarContext.render(matrices, DEFAULT_AVATAR_ACTION, { effects: [] });
             matrices.pop();
             renderCross(matrices, 0, 0, 16, 2);
@@ -241,6 +241,11 @@
             gizmo.rect(matrices.get(), -faceSize / 2 - 80 - stroke, -3 - stroke, -faceSize / 2 - 20 + stroke, 3 + stroke, PALETTE_RGB.BACKGROUND_2);
             gizmo.triangle(matrices.get(), -faceSize / 2 - 100, 0, -faceSize / 2 - 80, -20, -faceSize / 2 - 80, 20, PALETTE_RGB.ACCENT);
             gizmo.rect(matrices.get(), -faceSize / 2 - 80, -3, -faceSize / 2 - 20, 3, PALETTE_RGB.ACCENT);
+
+            const groundY = $config.align.vertical === 'end' ?
+                $config.align.padding.bottom * 2 : $config.align.vertical === 'middle' ? 0 : $config.align.padding.top * 2;
+            gizmo.rect(matrices.get(), -200 - stroke, groundY - 3 - stroke, 200 + stroke, groundY + 3 + stroke, PALETTE_RGB.BACKGROUND_2);
+            gizmo.rect(matrices.get(), -200, groundY - 3, 200, groundY + 3, PALETTE_RGB.OUTLINE_2);
             matrices.pop();
         } else {
             heldAvatarContext = null;
@@ -266,10 +271,10 @@
         matrices.scale(flipDirection.x, flipDirection.y, 1);
     }
 
-    function setupAvatarTransform(matrices: MatrixStack, avatarConfig: AvatarConfig | null) {
+    function setupAvatarTransform(matrices: MatrixStack, flipDirection: Vec2, avatarConfig: AvatarConfig | null) {
         if (avatarConfig) {
             const position = Vec2.fromArray(avatarConfig.offset);
-            matrices.translate(position.x, position.y, 0);
+            matrices.translate(position.x, flipDirection.y * position.y, 0);
             matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
             if (avatarConfig.type === 'pngtuber') {
                 if (avatarConfig.flipHorizontal) {
