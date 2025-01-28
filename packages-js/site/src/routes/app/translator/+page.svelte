@@ -2,19 +2,27 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import { AppHeader, ButtonMini, Combobox, FlexRowWrapper, Toggle } from '@omujs/ui';
     import { APP } from './app.js';
-    import { config } from './client.js';
+    import { config, omu } from './client.js';
     import { LANGUAGE_OPTIONS } from './translator.js';
 
     $: console.log($config.languages);
+
+    let promise = new Promise<void>((resolve) => {
+        omu.onReady(async () => {
+            resolve();
+        });
+    });
 </script>
 
 <AppPage>
     <header slot="header">
         <AppHeader app={APP}>
-            <FlexRowWrapper alignItems="center" gap>
-                <small>オン/オフ</small>
-                <Toggle bind:value={$config.active} />
-            </FlexRowWrapper>
+            {#await promise then }
+                <FlexRowWrapper alignItems="center" gap>
+                    <small>オン/オフ</small>
+                    <Toggle bind:value={$config.active} />
+                </FlexRowWrapper>
+            {/await}
         </AppHeader>
     </header>
 
