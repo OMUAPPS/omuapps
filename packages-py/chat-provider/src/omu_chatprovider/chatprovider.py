@@ -51,6 +51,8 @@ async def update_channel(channel: Channel, service: ProviderService):
             logger.info(f"Started chat for {item.room.key()}")
     except ProviderError as e:
         logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
+    except Exception as e:
+        logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
 
 
 @chat.on(events.channel.add)
