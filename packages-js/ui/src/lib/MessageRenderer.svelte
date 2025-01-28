@@ -113,7 +113,13 @@
                                 <button on:click={() => window.open(timedLink, '_blank')}>
                                     <Tooltip>
                                         <p>{$translate('panels.messages.see_in_room')}</p>
-                                        <p>{time.getMinutes()}:{time.getSeconds().toString().padStart(2, '0')}</p>
+                                        <p>
+                                            {
+                                                (time.getTime() / 1000 > 60*60 ? Math.floor(time.getTime() / 1000 / 60 / 60)+'h ' : '')+
+                                                    time.getMinutes().toString().padStart(2, '0')+'m '+
+                                                    time.getSeconds().toString().padStart(2, '0')+'s'
+                                            }
+                                        </p>
                                     </Tooltip>
                                     <i class="ti ti-external-link"></i>
                                 </button>
