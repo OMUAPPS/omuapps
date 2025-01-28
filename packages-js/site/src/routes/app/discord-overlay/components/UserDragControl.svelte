@@ -370,10 +370,11 @@
         &:hover {
             background: var(--color-1);
             color: var(--color-bg-2);
+            z-index: 3;
         }
 
         &:active {
-            z-index: 1;
+            z-index: 3;
             cursor: grabbing;
         }
     }
