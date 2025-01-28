@@ -62,7 +62,7 @@ class ServerExtension:
             SESSION_CONNECT_PACKET_TYPE,
             SESSION_DISCONNECT_PACKET_TYPE,
         )
-        server.permission_manager.register(
+        server.security.register(
             SERVER_SHUTDOWN_PERMISSION,
             SERVER_APPS_READ_PERMISSION,
             SERVER_SESSIONS_READ_PERMISSION,

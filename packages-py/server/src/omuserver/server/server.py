@@ -10,12 +10,10 @@ import aiohttp
 from aiohttp import web
 from loguru import logger
 from omu import Identifier
-from omu.address import Address
 from omu.event_emitter import EventEmitter
 from omu.helper import asyncio_error_logger
 
 from omuserver.config import Config
-from omuserver.directories import Directories
 from omuserver.extension.asset import AssetExtension
 from omuserver.extension.dashboard import DashboardExtension
 from omuserver.extension.endpoint import EndpointExtension
@@ -33,13 +31,6 @@ from omuserver.network.packet_dispatcher import ServerPacketDispatcher
 from omuserver.security.security import PermissionManager
 from omuserver.version import VERSION
 
-
-class ServerEvents:
-    def __init__(self) -> None:
-        self.start = EventEmitter[[]]()
-        self.stop = EventEmitter[[]]()
-
-
 USER_AGENT_HEADERS = {"User-Agent": json.dumps(["omu", {"name": "omuserver", "version": VERSION}])}
 
 
@@ -49,33 +40,32 @@ class Server:
         config: Config,
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
-        self._config = config
+        self.config = config
         self._loop = self._set_loop(loop or asyncio.new_event_loop())
-        self._address = config.address
-        self._event = ServerEvents()
-        self._directories = config.directories
-        self._directories.mkdir()
-        self._packet_dispatcher = ServerPacketDispatcher()
-        self._network = Network(self, self._packet_dispatcher)
-        self._network.event.start += self._handle_network_start
-        self._network.add_http_route("/", self._handle_index)
-        self._network.add_http_route("/version", self._handle_version)
-        self._network.add_http_route("/proxy", self._handle_proxy)
-        self._network.add_http_route("/asset", self._handle_assets)
-        self._security = PermissionManager(self)
-        self._running = False
-
-        self._endpoints = EndpointExtension(self)
-        self._permissions = PermissionExtension(self)
-        self._tables = TableExtension(self)
-        self._dashboard = DashboardExtension(self)
-        self._registries = RegistryExtension(self)
-        self._server = ServerExtension(self)
-        self._signals = SignalExtension(self)
-        self._plugins = PluginExtension(self)
-        self._assets = AssetExtension(self)
-        self._i18n = I18nExtension(self)
-        self._logger = LoggerExtension(self)
+        self.address = config.address
+        self.event = ServerEvents()
+        self.directories = config.directories
+        self.directories.mkdir()
+        self.packets = ServerPacketDispatcher()
+        self.network = Network(self, self.packets)
+        self.network.event.start += self._handle_network_start
+        self.network.add_http_route("/", self._handle_index)
+        self.network.add_http_route("/version", self._handle_version)
+        self.network.add_http_route("/proxy", self._handle_proxy)
+        self.network.add_http_route("/asset", self._handle_assets)
+        self.security = PermissionManager(self)
+        self.running = False
+        self.endpoints = EndpointExtension(self)
+        self.permissions = PermissionExtension(self)
+        self.tables = TableExtension(self)
+        self.dashboard = DashboardExtension(self)
+        self.registries = RegistryExtension(self)
+        self.server = ServerExtension(self)
+        self.signals = SignalExtension(self)
+        self.plugins = PluginExtension(self)
+        self.assets = AssetExtension(self)
+        self.i18n = I18nExtension(self)
+        self.logger = LoggerExtension(self)
         self.client = aiohttp.ClientSession(
             loop=self.loop,
             headers=USER_AGENT_HEADERS,
@@ -88,14 +78,10 @@ class Server:
         return loop
 
     async def _handle_index(self, request: web.Request) -> web.StreamResponse:
-        return web.FileResponse(self._directories.index)
+        return web.FileResponse(self.directories.index)
 
     async def _handle_version(self, request: web.Request) -> web.Response:
-        return web.json_response(
-            {
-                "version": __version__,
-            }
-        )
+        return web.json_response({"version": VERSION})
 
     async def _handle_proxy(self, request: web.Request) -> web.StreamResponse:
         url = request.query.get("url")
@@ -111,23 +97,19 @@ class Server:
                     "Content-Type": resp.content_type,
                     "Access-Control-Allow-Origin": "*",
                 }
-                response = web.StreamResponse(
-                    status=resp.status,
-                    headers=headers,
-                )
+                response = web.StreamResponse(status=resp.status, headers=headers)
                 await response.prepare(request)
-                try:
-                    async for chunk in resp.content.iter_any():
-                        await response.write(chunk)
-                except ConnectionResetError:
-                    pass
+                async for chunk in resp.content.iter_any():
+                    await response.write(chunk)
                 return response
         except TimeoutError:
             return web.Response(status=504)
+        except aiohttp.ClientConnectionResetError:
+            return web.Response(status=502)
         except aiohttp.ClientResponseError as e:
             return web.Response(status=e.status, text=e.message)
-        except Exception as e:
-            logger.opt(exception=e).error("Failed to proxy request")
+        except Exception:
+            logger.error("Failed to proxy request")
             return web.Response(status=500)
 
     async def _handle_assets(self, request: web.Request) -> web.StreamResponse:
@@ -137,7 +119,7 @@ class Server:
         identifier = Identifier.from_key(id)
         path = identifier.get_sanitized_path()
         try:
-            path = safe_path_join(self._directories.assets, path)
+            path = safe_path_join(self.directories.assets, path)
 
             if not path.exists():
                 return web.Response(status=404)
@@ -159,16 +141,16 @@ class Server:
     async def _handle_network_start(self) -> None:
         logger.info(f"Listening on {self.address.host}:{self.address.port}")
         try:
-            await self._event.start()
+            await self.event.start()
         except Exception as e:
             await self.stop()
             self.loop.stop()
             raise e
 
     async def start(self) -> None:
-        self._running = True
+        self.running = True
         try:
-            await self._network.start()
+            await self.network.start()
         except Exception as e:
             logger.opt(exception=e).error("Failed to start server")
             await self.stop()
@@ -177,8 +159,8 @@ class Server:
 
     async def stop(self) -> None:
         logger.info("Stopping server")
-        self._running = False
-        await self._event.stop()
+        self.running = False
+        await self.event.stop()
         await self.network.stop()
 
     async def restart(self) -> None:
@@ -191,81 +173,11 @@ class Server:
         os._exit(0)
 
     @property
-    def config(self) -> Config:
-        return self._config
-
-    @property
     def loop(self) -> asyncio.AbstractEventLoop:
         return self._loop
 
-    @property
-    def address(self) -> Address:
-        return self._address
 
-    @property
-    def permission_manager(self) -> PermissionManager:
-        return self._security
-
-    @property
-    def directories(self) -> Directories:
-        return self._directories
-
-    @property
-    def network(self) -> Network:
-        return self._network
-
-    @property
-    def packets(self) -> ServerPacketDispatcher:
-        return self._packet_dispatcher
-
-    @property
-    def endpoints(self):
-        return self._endpoints
-
-    @property
-    def permissions(self):
-        return self._permissions
-
-    @property
-    def tables(self):
-        return self._tables
-
-    @property
-    def dashboard(self):
-        return self._dashboard
-
-    @property
-    def registries(self):
-        return self._registries
-
-    @property
-    def server(self):
-        return self._server
-
-    @property
-    def signals(self):
-        return self._signals
-
-    @property
-    def plugins(self):
-        return self._plugins
-
-    @property
-    def assets(self):
-        return self._assets
-
-    @property
-    def i18n(self):
-        return self._i18n
-
-    @property
-    def logger(self):
-        return self._logger
-
-    @property
-    def running(self) -> bool:
-        return self._running
-
-    @property
-    def event(self) -> ServerEvents:
-        return self._event
+class ServerEvents:
+    def __init__(self) -> None:
+        self.start = EventEmitter[[]]()
+        self.stop = EventEmitter[[]]()

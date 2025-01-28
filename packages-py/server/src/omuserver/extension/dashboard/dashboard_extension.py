@@ -72,7 +72,7 @@ class DashboardExtension:
             DASHBOARD_APP_UPDATE_ACCEPT_PACKET,
             DASHBOARD_APP_UPDATE_DENY_PACKET,
         )
-        server.permission_manager.register(
+        server.security.register(
             DASHBOARD_SET_PERMISSION,
             DASHBOARD_OPEN_APP_PERMISSION,
             DASHOBARD_APP_READ_PERMISSION,

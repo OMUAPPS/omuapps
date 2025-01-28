@@ -93,7 +93,7 @@ class Session:
         app = connect_packet.app
         token = connect_packet.token
 
-        verify_result = await server.permission_manager.verify_app_token(app, token)
+        verify_result = await server.security.verify_app_token(app, token)
         match verify_result:
             case Ok((kind, permission_handle, new_token)):
                 session = Session(

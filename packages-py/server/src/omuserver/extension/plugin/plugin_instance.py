@@ -124,7 +124,7 @@ class PluginInstance:
             if self.plugin.on_start is not None:
                 await self.plugin.on_start(server)
             stage = "generating token"
-            token = server.permission_manager.generate_plugin_token()
+            token = server.security.generate_plugin_token()
             if self.plugin.isolated:
                 stage = "starting isolated"
                 self._start_isolated(server, token)

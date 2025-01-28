@@ -70,27 +70,19 @@ class PermissionExtension(Extension):
                 [*self.registered_permissions.values()],
             )
 
-    async def handle_grant(self, permissions: list[PermissionType]):
-        self.permissions = permissions
+    async def handle_grant(self, permission_types: list[PermissionType]):
+        self.permissions = permission_types
 
 
 PERMISSION_REGISTER_PACKET = PacketType[list[PermissionType]].create_json(
-    PERMISSION_EXTENSION_TYPE,
-    "register",
-    Serializer.model(PermissionType).to_array(),
+    PERMISSION_EXTENSION_TYPE, "register", Serializer.model(PermissionType).to_array()
 )
 PERMISSION_REQUIRE_PACKET = PacketType[list[Identifier]].create_json(
-    PERMISSION_EXTENSION_TYPE,
-    "require",
-    serializer=Serializer.model(Identifier).to_array(),
+    PERMISSION_EXTENSION_TYPE, "require", serializer=Serializer.model(Identifier).to_array()
 )
 PERMISSION_REQUEST_ENDPOINT = EndpointType[list[Identifier], None].create_json(
-    PERMISSION_EXTENSION_TYPE,
-    "request",
-    request_serializer=Serializer.model(Identifier).to_array(),
+    PERMISSION_EXTENSION_TYPE, "request", request_serializer=Serializer.model(Identifier).to_array()
 )
 PERMISSION_GRANT_PACKET = PacketType[list[PermissionType]].create_json(
-    PERMISSION_EXTENSION_TYPE,
-    "grant",
-    Serializer.model(PermissionType).to_array(),
+    PERMISSION_EXTENSION_TYPE, "grant", Serializer.model(PermissionType).to_array()
 )

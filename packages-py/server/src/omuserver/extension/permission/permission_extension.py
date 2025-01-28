@@ -35,7 +35,7 @@ class PermissionExtension:
             if not perm.id.is_subpath_of(session.app.id):
                 msg = f"Permission identifier {perm.id} " f"is not a subpart of app identifier {session.app.id}"
                 raise ValueError(msg)
-        self.server.permission_manager.register(*permission_types, overwrite=True)
+        self.server.security.register(*permission_types, overwrite=True)
 
     async def handle_require(self, session: Session, permission_ids: list[Identifier]):
         if session.ready:
@@ -43,7 +43,7 @@ class PermissionExtension:
         if session.permissions.has_all(permission_ids):
             permissions = filter(
                 None,
-                [self.server.permission_manager.get_permission(permission_id) for permission_id in permission_ids],
+                [self.server.security.get_permission(permission_id) for permission_id in permission_ids],
             )
             await session.send(PERMISSION_GRANT_PACKET, list(permissions))
             return
@@ -53,7 +53,7 @@ class PermissionExtension:
         async def task():
             permissions: list[PermissionType] = []
             for permission_id in permission_ids:
-                permission = self.server.permission_manager.get_permission(permission_id)
+                permission = self.server.security.get_permission(permission_id)
                 if permission is None:
                     raise ValueError(f"Permission {permission_id} not registered")
                 permissions.append(permission)

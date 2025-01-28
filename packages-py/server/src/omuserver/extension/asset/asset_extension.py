@@ -45,7 +45,7 @@ class AssetExtension:
     def __init__(self, server: Server) -> None:
         self._server = server
         self.storage = FileStorage(server.directories.assets)
-        server.permission_manager.register(ASSET_UPLOAD_PERMISSION, ASSET_DOWNLOAD_PERMISSION)
+        server.security.register(ASSET_UPLOAD_PERMISSION, ASSET_DOWNLOAD_PERMISSION)
         server.endpoints.bind(ASSET_UPLOAD_ENDPOINT, self.handle_upload)
         server.endpoints.bind(ASSET_UPLOAD_MANY_ENDPOINT, self.handle_upload_many)
         server.endpoints.bind(ASSET_DOWNLOAD_ENDPOINT, self.handle_download)

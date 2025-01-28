@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class I18nExtension:
     def __init__(self, server: Server):
-        server.permission_manager.register(
+        server.security.register(
             I18N_GET_LOCALES_PERMISSION,
             I18N_SET_LOCALES_PERMISSION,
         )

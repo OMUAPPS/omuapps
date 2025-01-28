@@ -59,16 +59,11 @@ async def refresh_sessions():
     users.clear()
     for browser in cookies:
         try:
-            marshmallow = await MarshmallowSession.from_cookies(
-                cookies=cookies[browser],
-            )
+            marshmallow = await MarshmallowSession.from_cookies(cookies=cookies[browser])
             user = await marshmallow.fetch_user()
             sessions[user.name] = marshmallow
             users[user.name] = User(
-                name=user.name,
-                screen_name=user.screen_name,
-                image=user.image,
-                premium=user.premium,
+                name=user.name, screen_name=user.screen_name, image=user.image, premium=user.premium
             )
         except MarshmallowLoginError:
             logger.warning(f"User {browser} could not be logged in")
@@ -77,15 +72,9 @@ async def refresh_sessions():
 @omu.endpoints.bind(endpoint_type=SET_LIKED_ENDPOINT_TYPE)
 async def set_liked(set_liked: SetLiked) -> Message:
     session = sessions[set_liked["user_id"]]
-    detail = await MessageDetail.from_id(
-        marshmallow=session,
-        message_id=set_liked["message_id"],
-    )
+    detail = await MessageDetail.from_id(marshmallow=session, message_id=set_liked["message_id"])
     await detail.like(session, liked=set_liked["liked"])
-    detail = await MessageDetail.from_id(
-        marshmallow=session,
-        message_id=set_liked["message_id"],
-    )
+    detail = await MessageDetail.from_id(marshmallow=session, message_id=set_liked["message_id"])
     return Message(
         message_id=detail.message_id,
         content=detail.content,
@@ -98,15 +87,9 @@ async def set_liked(set_liked: SetLiked) -> Message:
 @omu.endpoints.bind(endpoint_type=SET_ACKNOWLEDGED_ENDPOINT_TYPE)
 async def set_acknowledged(set_acknowledged: SetAcknowledged) -> Message:
     session = sessions[set_acknowledged["user_id"]]
-    detail = await MessageDetail.from_id(
-        marshmallow=session,
-        message_id=set_acknowledged["message_id"],
-    )
+    detail = await MessageDetail.from_id(marshmallow=session, message_id=set_acknowledged["message_id"])
     await detail.acknowledge(session, acknowledged=set_acknowledged["acknowledged"])
-    detail = await MessageDetail.from_id(
-        marshmallow=session,
-        message_id=set_acknowledged["message_id"],
-    )
+    detail = await MessageDetail.from_id(marshmallow=session, message_id=set_acknowledged["message_id"])
     return Message(
         message_id=detail.message_id,
         content=detail.content,
@@ -119,18 +102,12 @@ async def set_acknowledged(set_acknowledged: SetAcknowledged) -> Message:
 @omu.endpoints.bind(endpoint_type=SET_REPLY_ENDPOINT_TYPE)
 async def set_reply(set_reply: SetReply) -> Message:
     session = sessions[set_reply["user_id"]]
-    detail = await MessageDetail.from_id(
-        marshmallow=session,
-        message_id=set_reply["message_id"],
-    )
+    detail = await MessageDetail.from_id(marshmallow=session, message_id=set_reply["message_id"])
     if detail.replied:
         await detail.try_edit_reply(session, content=set_reply["reply"])
     else:
         await detail.reply(session, content=set_reply["reply"])
-    detail = await MessageDetail.from_id(
-        marshmallow=session,
-        message_id=set_reply["message_id"],
-    )
+    detail = await MessageDetail.from_id(marshmallow=session, message_id=set_reply["message_id"])
     return Message(
         message_id=detail.message_id,
         content=detail.content,

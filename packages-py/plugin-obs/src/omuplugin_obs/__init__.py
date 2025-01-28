@@ -11,7 +11,7 @@ __all__ = ["plugin"]
 
 async def on_start_server(server: Server) -> None:
     await install(server)
-    server.permission_manager.register(
+    server.security.register(
         *PERMISSION_TYPES,
         overwrite=True,
     )

@@ -29,7 +29,7 @@ class PluginExtension:
         self.server = server
         server.packets.register(PLUGIN_REQUIRE_PACKET)
         server.packets.bind(PLUGIN_REQUIRE_PACKET, self.handle_require_packet)
-        server.permission_manager.register(PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION)
+        server.security.register(PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION)
         server.endpoints.bind(PLUGIN_RELOAD_ENDPOINT_TYPE, self.handle_reload)
         server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
         server.network.event.start += self.on_network_start
