@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from omu.errors import PermissionDenied
 from omu.extension.permission import PermissionType
@@ -16,10 +17,12 @@ from omu.extension.registry.registry_extension import (
 )
 from omu.identifier import Identifier
 
-from omuserver.server import Server
 from omuserver.session import Session
 
 from .registry import Registry, ServerRegistry
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 REGISTRY_PERMISSION = PermissionType(
     REGISTRY_PERMISSION_ID,
@@ -43,15 +46,11 @@ class RegistryExtension:
         self.registries: dict[Identifier, ServerRegistry] = {}
         self._startup_registries: list[ServerRegistry] = []
         server.permission_manager.register(REGISTRY_PERMISSION)
-        server.packet_dispatcher.register(
-            REGISTRY_REGISTER_PACKET,
-            REGISTRY_LISTEN_PACKET,
-            REGISTRY_UPDATE_PACKET,
-        )
-        server.packet_dispatcher.add_packet_handler(REGISTRY_REGISTER_PACKET, self.handle_register)
-        server.packet_dispatcher.add_packet_handler(REGISTRY_LISTEN_PACKET, self.handle_listen)
-        server.packet_dispatcher.add_packet_handler(REGISTRY_UPDATE_PACKET, self.handle_update)
-        server.endpoints.bind_endpoint(REGISTRY_GET_ENDPOINT, self.handle_get)
+        server.packets.register(REGISTRY_REGISTER_PACKET, REGISTRY_LISTEN_PACKET, REGISTRY_UPDATE_PACKET)
+        server.packets.bind(REGISTRY_REGISTER_PACKET, self.handle_register)
+        server.packets.bind(REGISTRY_LISTEN_PACKET, self.handle_listen)
+        server.packets.bind(REGISTRY_UPDATE_PACKET, self.handle_update)
+        server.endpoints.bind(REGISTRY_GET_ENDPOINT, self.handle_get)
         server.event.start += self._on_start
 
     async def _on_start(self) -> None:
@@ -68,33 +67,18 @@ class RegistryExtension:
 
     async def handle_listen(self, session: Session, id: Identifier) -> None:
         await session.wait_ready()
-        registry = await self.get(id)
-        self.verify_permission(
-            registry,
-            session,
-            lambda permissions: [permissions.all, permissions.read],
-        )
+        registry = await self.get_with_perm(id, session, lambda perms: [perms.all, perms.read])
         await registry.attach_session(session)
 
     async def handle_update(self, session: Session, packet: RegistryPacket) -> None:
         await session.wait_ready()
-        registry = await self.get(packet.id)
-        self.verify_permission(
-            registry,
-            session,
-            lambda permissions: [permissions.all, permissions.write],
-        )
+        registry = await self.get_with_perm(packet.id, session, lambda perms: [perms.all, perms.write])
         await registry.store(packet.value)
         await registry.notify(session)
 
     async def handle_get(self, session: Session, id: Identifier) -> RegistryPacket:
         await session.wait_ready()
-        registry = await self.get(id)
-        self.verify_permission(
-            registry,
-            session,
-            lambda permissions: [permissions.all, permissions.read],
-        )
+        registry = await self.get_with_perm(id, session, lambda perms: [perms.all, perms.read])
         return RegistryPacket(id, registry.value)
 
     async def get(self, id: Identifier) -> ServerRegistry:
@@ -108,16 +92,23 @@ class RegistryExtension:
             await registry.load()
         return registry
 
+    async def get_with_perm(
+        self, id: Identifier, session: Session, get_scope: Callable[[RegistryPermissions], list[Identifier | None]]
+    ) -> ServerRegistry:
+        registry = await self.get(id)
+        self.verify_permission(registry, session, get_scope)
+        return registry
+
     def verify_permission(
         self,
         registry: ServerRegistry,
         session: Session,
         get_scopes: Callable[[RegistryPermissions], list[Identifier | None]],
     ) -> None:
-        if registry.id.is_namepath_equal(session.app.id, path_length=1):
+        if registry.id.is_namepath_equal(session.app.id, max_depth=1):
             return
         require_permissions = get_scopes(registry.permissions)
-        if not session.permission_handle.has_any(filter(None, require_permissions)):
+        if not session.permissions.has_any(filter(None, require_permissions)):
             msg = f"App {session.app.id=} not allowed to access {registry.id=}"
             raise PermissionDenied(msg)
 
@@ -139,7 +130,3 @@ class RegistryExtension:
             registry_type.default_value,
             registry_type.serializer,
         )
-
-    async def store(self, id: Identifier, value: bytes) -> None:
-        registry = await self.get(id)
-        await registry.store(value)

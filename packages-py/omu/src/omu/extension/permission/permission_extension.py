@@ -40,7 +40,7 @@ class PermissionExtension(Extension):
         for permission in permission_types:
             if permission.id in self.registered_permissions:
                 raise ValueError(f"Permission {permission.id} already registered")
-            if not permission.id.is_namepath_equal(base_identifier, path_length=1):
+            if not permission.id.is_namepath_equal(base_identifier, max_depth=1):
                 msg = f"Permission identifier {permission.id} is not a subpath of {base_identifier}"
                 raise ValueError(msg)
             self.registered_permissions[permission.id] = permission

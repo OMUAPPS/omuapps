@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import datetime
 import json
@@ -5,6 +7,7 @@ import random
 import sqlite3
 import string
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 from loguru import logger
 from omu import App
@@ -13,7 +16,8 @@ from omu.extension.permission.permission import PermissionType
 from omu.identifier import Identifier
 from result import Err, Ok, Result
 
-from omuserver.server import Server
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 type Token = str
 

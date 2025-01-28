@@ -3,8 +3,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from importlib.metadata import Distribution
+from typing import TYPE_CHECKING
 
-from omuserver.server import Server
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 from omu.helper import Coro
 

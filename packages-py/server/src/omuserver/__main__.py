@@ -13,7 +13,7 @@ from omu.address import Address
 from omuserver.config import Config
 from omuserver.helper import find_processes_by_executable, find_processes_by_port
 from omuserver.migration import migrate
-from omuserver.server.omuserver import OmuServer
+from omuserver.server.server import Server
 from omuserver.version import VERSION
 
 
@@ -105,7 +105,7 @@ def main(
         logger.warning("Debug mode enabled")
         tracemalloc.start()
 
-    server = OmuServer(config=config)
+    server = Server(config=config)
 
     migrate(server)
 

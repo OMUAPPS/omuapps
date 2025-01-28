@@ -72,8 +72,10 @@ class Identifier(Model[str], Keyable):
         return self.format(self.namespace, *self.path)
 
     def get_sanitized_path(self) -> Path:
-        namespace = f"{sanitize_filename(self.namespace)}-{generate_md5_hash(self.namespace)}"
-        return Path(namespace, *self.path)
+        sanitized_namespace = f"{sanitize_filename(self.namespace)}-{generate_md5_hash(self.namespace)}"
+        path_hash = generate_md5_hash("/".join(self.path))
+        sanitized_path = f"{'-'.join(sanitize_filename(name) for name in self.path)}-{path_hash}"
+        return Path(sanitized_namespace, sanitized_path)
 
     def is_subpath_of(self, base: Identifier) -> bool:
         return self.namespace == base.namespace and self.path[: len(base.path)] == base.path
@@ -81,11 +83,11 @@ class Identifier(Model[str], Keyable):
     def is_namepath_equal(
         self,
         other: Identifier,
-        path_length: int | None = None,
+        max_depth: int | None = None,
     ) -> bool:
-        if path_length is None:
-            path_length = len(self.path)
-        return self.namespace == other.namespace and self.path[:path_length] == other.path[:path_length]
+        if max_depth is None:
+            max_depth = len(self.path)
+        return self.namespace == other.namespace and self.path[:max_depth] == other.path[:max_depth]
 
     def join(self, *path: str) -> Identifier:
         return Identifier(self.namespace, *self.path, *path)

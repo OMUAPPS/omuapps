@@ -1,11 +1,13 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from omu.extension.i18n.i18n_extension import I18N_LOCALES_REGISTRY_TYPE
 
-from omuserver.server import Server
+from .permissions import I18N_GET_LOCALES_PERMISSION, I18N_SET_LOCALES_PERMISSION
 
-from .permissions import (
-    I18N_GET_LOCALES_PERMISSION,
-    I18N_SET_LOCALES_PERMISSION,
-)
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 
 class I18nExtension:

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 import time
 from asyncio import Future
+from typing import TYPE_CHECKING
 
 from omu.app import App, AppType
 from omu.errors import PermissionDenied
@@ -38,7 +41,6 @@ from omu.extension.dashboard.packets import (
 )
 from omu.identifier import Identifier
 
-from omuserver.server import Server
 from omuserver.session import Session
 
 from .permission import (
@@ -50,10 +52,13 @@ from .permission import (
     DASHOBARD_APP_READ_PERMISSION,
 )
 
+if TYPE_CHECKING:
+    from omuserver.server import Server
+
 
 class DashboardExtension:
     def __init__(self, server: Server) -> None:
-        server.packet_dispatcher.register(
+        server.packets.register(
             DASHBOARD_PERMISSION_REQUEST_PACKET,
             DASHBOARD_PERMISSION_ACCEPT_PACKET,
             DASHBOARD_PERMISSION_DENY_PACKET,
@@ -75,55 +80,18 @@ class DashboardExtension:
             DASHBOARD_APP_INSTALL_PERMISSION,
             DASHBOARD_APP_UPDATE_PERMISSION,
         )
-        server.packet_dispatcher.add_packet_handler(
-            DASHBOARD_PERMISSION_ACCEPT_PACKET,
-            self.handle_permission_accept,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            DASHBOARD_PERMISSION_DENY_PACKET,
-            self.handle_permission_deny,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            DASHBOARD_PLUGIN_ACCEPT_PACKET,
-            self.handle_plugin_accept,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            DASHBOARD_PLUGIN_DENY_PACKET,
-            self.handle_plugin_deny,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
-            self.handle_app_install_accept,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            DASHBOARD_APP_INSTALL_DENY_PACKET,
-            self.handle_app_install_deny,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            DASHBOARD_APP_UPDATE_ACCEPT_PACKET,
-            self.handle_app_update_accept,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            DASHBOARD_APP_UPDATE_DENY_PACKET,
-            self.handle_app_update_deny,
-        )
-
-        server.endpoints.bind_endpoint(
-            DASHBOARD_SET_ENDPOINT,
-            self.handle_dashboard_set,
-        )
-        server.endpoints.bind_endpoint(
-            DASHBOARD_OPEN_APP_ENDPOINT,
-            self.handle_dashboard_open_app,
-        )
-        server.endpoints.bind_endpoint(
-            DASHBOARD_APP_INSTALL_ENDPOINT,
-            self.handle_dashboard_app_install,
-        )
-        server.endpoints.bind_endpoint(
-            DASHBOARD_APP_UPDATE_ENDPOINT,
-            self.handle_dashboard_app_update,
-        )
+        server.packets.bind(DASHBOARD_PERMISSION_ACCEPT_PACKET, self.handle_permission_accept)
+        server.packets.bind(DASHBOARD_PERMISSION_DENY_PACKET, self.handle_permission_deny)
+        server.packets.bind(DASHBOARD_PLUGIN_ACCEPT_PACKET, self.handle_plugin_accept)
+        server.packets.bind(DASHBOARD_PLUGIN_DENY_PACKET, self.handle_plugin_deny)
+        server.packets.bind(DASHBOARD_APP_INSTALL_ACCEPT_PACKET, self.handle_app_install_accept)
+        server.packets.bind(DASHBOARD_APP_INSTALL_DENY_PACKET, self.handle_app_install_deny)
+        server.packets.bind(DASHBOARD_APP_UPDATE_ACCEPT_PACKET, self.handle_app_update_accept)
+        server.packets.bind(DASHBOARD_APP_UPDATE_DENY_PACKET, self.handle_app_update_deny)
+        server.endpoints.bind(DASHBOARD_SET_ENDPOINT, self.handle_dashboard_set)
+        server.endpoints.bind(DASHBOARD_OPEN_APP_ENDPOINT, self.handle_dashboard_open_app)
+        server.endpoints.bind(DASHBOARD_APP_INSTALL_ENDPOINT, self.handle_dashboard_app_install)
+        server.endpoints.bind(DASHBOARD_APP_UPDATE_ENDPOINT, self.handle_dashboard_app_update)
         server.network.event.connected += self.handle_session_connected
         self.server = server
         self.apps = server.tables.register(DASHBOARD_APP_TABLE_TYPE)
@@ -152,12 +120,9 @@ class DashboardExtension:
     async def handle_dashboard_open_app(self, session: Session, app: App) -> None:
         if self.dashboard_session is None:
             raise ValueError("Dashboard session not set")
-        if not session.permission_handle.has(DASHBOARD_OPEN_APP_PERMISSION_ID):
+        if not session.permissions.has(DASHBOARD_OPEN_APP_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to open apps")
-        await self.dashboard_session.send(
-            DASHBOARD_OPEN_APP_PACKET,
-            app,
-        )
+        await self.dashboard_session.send(DASHBOARD_OPEN_APP_PACKET, app)
 
     async def handle_dashboard_set(self, session: Session, identifier: Identifier) -> DashboardSetResponse:
         if session.kind != AppType.DASHBOARD:
@@ -296,7 +261,7 @@ class DashboardExtension:
         future.set_result(False)
 
     async def handle_dashboard_app_install(self, session: Session, app: App) -> AppInstallResponse:
-        if not session.permission_handle.has(DASHBOARD_APP_INSTALL_PERMISSION_ID):
+        if not session.permissions.has(DASHBOARD_APP_INSTALL_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to install apps")
         request_id = self._get_next_request_id()
         future = Future[bool]()
@@ -332,7 +297,7 @@ class DashboardExtension:
         future.set_result(False)
 
     async def handle_dashboard_app_update(self, session: Session, app: App) -> AppUpdateResponse:
-        if not session.permission_handle.has(DASHBOARD_APP_UPDATE_PERMISSION_ID):
+        if not session.permissions.has(DASHBOARD_APP_UPDATE_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to update apps")
         accepted = await self.update_app(app)
         return AppUpdateResponse(accepted=accepted)

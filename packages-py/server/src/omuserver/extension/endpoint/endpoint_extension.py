@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+from typing import TYPE_CHECKING
 
 from loguru import logger
 from omu.errors import PermissionDenied
@@ -17,8 +18,10 @@ from omu.extension.endpoint.packets import EndpointRegisterPacket
 from omu.helper import Coro
 from omu.identifier import Identifier
 
-from omuserver.server import Server
 from omuserver.session import Session
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 
 class Endpoint(abc.ABC):
@@ -119,16 +122,16 @@ class EndpointExtension:
         self._server = server
         self._endpoints: dict[Identifier, Endpoint] = {}
         self._calls: dict[tuple[Identifier, int], EndpointCall] = {}
-        server.packet_dispatcher.register(
+        server.packets.register(
             ENDPOINT_REGISTER_PACKET,
             ENDPOINT_CALL_PACKET,
             ENDPOINT_RECEIVE_PACKET,
             ENDPOINT_ERROR_PACKET,
         )
-        server.packet_dispatcher.add_packet_handler(ENDPOINT_REGISTER_PACKET, self.handle_register)
-        server.packet_dispatcher.add_packet_handler(ENDPOINT_CALL_PACKET, self.handle_call)
-        server.packet_dispatcher.add_packet_handler(ENDPOINT_RECEIVE_PACKET, self.handle_receive)
-        server.packet_dispatcher.add_packet_handler(ENDPOINT_ERROR_PACKET, self.handle_error)
+        server.packets.bind(ENDPOINT_REGISTER_PACKET, self.handle_register)
+        server.packets.bind(ENDPOINT_CALL_PACKET, self.handle_call)
+        server.packets.bind(ENDPOINT_RECEIVE_PACKET, self.handle_receive)
+        server.packets.bind(ENDPOINT_ERROR_PACKET, self.handle_error)
 
     async def handle_register(self, session: Session, packet: EndpointRegisterPacket) -> None:
         for id, permission in packet.endpoints.items():
@@ -141,7 +144,7 @@ class EndpointExtension:
                 permission=permission,
             )
 
-    def bind_endpoint[Req, Res](
+    def bind[Req, Res](
         self,
         type: EndpointType[Req, Res],
         callback: Coro[[Session, Req], Res],
@@ -157,14 +160,12 @@ class EndpointExtension:
         self._endpoints[type.id] = endpoint
 
     def verify_permission(self, endpoint: Endpoint, session: Session):
-        if endpoint.id.is_namepath_equal(session.app.id, path_length=1):
+        if endpoint.id.is_namepath_equal(session.app.id, max_depth=1):
             return
-        if endpoint.permission and session.permission_handle.has(endpoint.permission):
+        if endpoint.permission and session.permissions.has(endpoint.permission):
             return
-        logger.warning(
-            f"{session.app.key()} tried to call endpoint {endpoint.id} " f"without permission {endpoint.permission}"
-        )
-        error = f"Permission denied for endpoint {endpoint.id} " f"with permission {endpoint.permission}"
+        error = f"{session.app.key()} tried to call endpoint {endpoint.id} without permission {endpoint.permission}"
+        logger.warning(error)
         raise PermissionDenied(error)
 
     async def handle_call(self, session: Session, packet: EndpointDataPacket) -> None:

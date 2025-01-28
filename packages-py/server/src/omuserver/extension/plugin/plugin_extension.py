@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from typing import TYPE_CHECKING
 
 from omu.app import AppType
 from omu.extension.dashboard.packets import PluginRequestPacket
@@ -14,31 +15,23 @@ from omu.extension.plugin.plugin_extension import (
     ReloadResult,
 )
 
-from omuserver.server import Server
 from omuserver.session import Session
 
 from .plugin_loader import DependencyResolver, PluginLoader
-from .plugin_permissions import (
-    PLUGIN_MANAGE_PERMISSION,
-    PLUGIN_READ_PERMISSION,
-)
+from .plugin_permissions import PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 
 class PluginExtension:
     def __init__(self, server: Server) -> None:
         self.server = server
-        server.packet_dispatcher.register(
-            PLUGIN_REQUIRE_PACKET,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            PLUGIN_REQUIRE_PACKET,
-            self.handle_require_packet,
-        )
-        server.permission_manager.register(
-            PLUGIN_MANAGE_PERMISSION,
-            PLUGIN_READ_PERMISSION,
-        )
-        server.endpoints.bind_endpoint(PLUGIN_RELOAD_ENDPOINT_TYPE, self.handle_reload)
+        server.packets.register(PLUGIN_REQUIRE_PACKET)
+        server.packets.bind(PLUGIN_REQUIRE_PACKET, self.handle_require_packet)
+        server.permission_manager.register(PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION)
+        server.endpoints.bind(PLUGIN_RELOAD_ENDPOINT_TYPE, self.handle_reload)
+        server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
         server.network.event.start += self.on_network_start
         server.event.stop += self.on_stop
         self.request_id = 0

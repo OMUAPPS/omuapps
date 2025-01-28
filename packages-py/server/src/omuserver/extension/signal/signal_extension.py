@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from omu.errors import PermissionDenied
 from omu.event_emitter import Unlisten
@@ -14,22 +15,24 @@ from omu.extension.signal.signal_extension import (
 )
 from omu.identifier import Identifier
 
-from omuserver import Server
 from omuserver.session import Session
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 
 class SignalExtension:
     def __init__(self, server: Server):
         self._server = server
         self.signals: dict[Identifier, ServerSignal] = {}
-        server.packet_dispatcher.register(
+        server.packets.register(
             SIGNAL_REGISTER_PACKET,
             SIGNAL_LISTEN_PACKET,
             SIGNAL_NOTIFY_PACKET,
         )
-        server.packet_dispatcher.add_packet_handler(SIGNAL_REGISTER_PACKET, self.handle_register)
-        server.packet_dispatcher.add_packet_handler(SIGNAL_LISTEN_PACKET, self.handle_listen)
-        server.packet_dispatcher.add_packet_handler(SIGNAL_NOTIFY_PACKET, self.handle_notify)
+        server.packets.bind(SIGNAL_REGISTER_PACKET, self.handle_register)
+        server.packets.bind(SIGNAL_LISTEN_PACKET, self.handle_listen)
+        server.packets.bind(SIGNAL_NOTIFY_PACKET, self.handle_notify)
 
     def get_signal(self, id: Identifier) -> ServerSignal:
         if id in self.signals:
@@ -48,12 +51,12 @@ class SignalExtension:
         session: Session,
         get_scopes: Callable[[SignalPermissions], list[Identifier | None]],
     ) -> None:
-        if signal.id.is_namepath_equal(session.app.id, path_length=1):
+        if signal.id.is_namepath_equal(session.app.id, max_depth=1):
             return
         for permission in get_scopes(signal.permissions):
             if permission is None:
                 continue
-            if session.permission_handle.has(permission):
+            if session.permissions.has(permission):
                 return
         msg = f"App {session.app.id=} not allowed to access {signal.id=}"
         raise PermissionDenied(msg)

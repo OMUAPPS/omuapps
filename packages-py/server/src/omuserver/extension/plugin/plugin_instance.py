@@ -12,6 +12,7 @@ import time
 from dataclasses import dataclass
 from multiprocessing import Process
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 import psutil
 from loguru import logger
@@ -23,11 +24,13 @@ from omu.network.websocket_connection import WebsocketsConnection
 from omu.plugin import InstallContext, Plugin
 from omu.token import TokenProvider
 
-from omuserver.server import Server
 from omuserver.session import Session
 
 from .plugin_connection import PluginConnection
 from .plugin_session_connection import PluginSessionConnection
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 
 class PluginTokenProvider(TokenProvider):
@@ -131,7 +134,7 @@ class PluginInstance:
         except Exception as e:
             logger.opt(exception=e).error(f"Error while {stage} plugin {self.entry_point.name}")
 
-    async def _start_internally(self, server, token):
+    async def _start_internally(self, server: Server, token: str):
         if self.client:
             raise ValueError(f'Plugin "{self.plugin}" already started')
         if self.plugin.get_client is not None:
@@ -146,7 +149,7 @@ class PluginInstance:
             session_connection = PluginSessionConnection(connection)
             session = await Session.from_connection(
                 server,
-                server.packet_dispatcher.packet_mapper,
+                server.packets.packet_mapper,
                 session_connection,
             )
             server.loop.create_task(server.network.process_session(session))

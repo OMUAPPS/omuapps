@@ -12,18 +12,13 @@ from omu.errors import DisconnectReason
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.network.packet import PACKET_TYPES, Packet, PacketType
-from omu.network.packet.packet_types import (
-    ConnectPacket,
-    DisconnectPacket,
-    DisconnectType,
-)
+from omu.network.packet.packet_types import ConnectPacket, DisconnectPacket, DisconnectType
 from omu.network.packet_mapper import PacketMapper
 from result import Err, Ok
 
-from omuserver.server import Server
-
 if TYPE_CHECKING:
     from omuserver.security import PermissionHandle
+    from omuserver.server import Server
 
 
 class SessionConnection(abc.ABC):
@@ -66,7 +61,7 @@ class Session:
     ) -> None:
         self.packet_mapper = packet_mapper
         self.app = app
-        self.permission_handle = permission_handle
+        self.permissions = permission_handle
         self.kind = kind
         self.connection = connection
         self.event = SessionEvents()
@@ -88,8 +83,7 @@ class Session:
         if packet.type != PACKET_TYPES.CONNECT or not isinstance(packet.data, ConnectPacket):
             await connection.send(
                 Packet(
-                    PACKET_TYPES.DISCONNECT,
-                    DisconnectPacket(DisconnectType.INVALID_PACKET_TYPE, "Expected connect"),
+                    PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_PACKET_TYPE, "Expected connect")
                 ),
                 packet_mapper,
             )

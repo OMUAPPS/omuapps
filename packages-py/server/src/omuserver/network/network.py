@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import socket
+from typing import TYPE_CHECKING
 
 from aiohttp import web
 from loguru import logger
@@ -13,9 +14,11 @@ from omu.network.packet.packet_types import DisconnectType
 
 from omuserver.helper import find_processes_by_port
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
-from omuserver.server import Server
 from omuserver.session import Session
 from omuserver.session.aiohttp_connection import WebsocketsConnection
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 
 class Network:
@@ -27,11 +30,7 @@ class Network:
         self._app = web.Application()
         self._runner: web.AppRunner | None = None
         self.add_websocket_route("/ws")
-        self.register_packet(
-            PACKET_TYPES.CONNECT,
-            PACKET_TYPES.READY,
-            PACKET_TYPES.DISCONNECT,
-        )
+        self.register_packet(PACKET_TYPES.CONNECT, PACKET_TYPES.READY, PACKET_TYPES.DISCONNECT)
         self.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
         self.add_packet_handler(PACKET_TYPES.DISCONNECT, self._handle_disconnection)
         self.event.connected += self._packet_dispatcher.process_connection
@@ -63,7 +62,7 @@ class Network:
         packet_type: PacketType[T],
         coro: Coro[[Session, T], None],
     ) -> None:
-        self._packet_dispatcher.add_packet_handler(packet_type, coro)
+        self._packet_dispatcher.bind(packet_type, coro)
 
     def add_http_route(self, path: str, handle: Coro[[web.Request], web.StreamResponse]) -> None:
         self._app.router.add_get(path, handle)

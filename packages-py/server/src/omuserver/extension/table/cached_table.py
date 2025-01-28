@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncGenerator, Mapping
+from typing import TYPE_CHECKING
 
 from omu.extension.table import TableConfig, TablePermissions
 from omu.extension.table.table_extension import TABLE_PROXY_PACKET, TableProxyPacket
 from omu.identifier import Identifier
 
-from omuserver.server import Server
 from omuserver.session import Session
 
 from .adapters.tableadapter import TableAdapter
 from .server_table import ServerTable, ServerTableEvents
 from .session_table_handler import SessionTableListener
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 
 class CachedTable(ServerTable):

@@ -8,6 +8,7 @@ import tempfile
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import (
+    TYPE_CHECKING,
     Protocol,
 )
 
@@ -19,9 +20,10 @@ from omu.plugin import InstallContext, Plugin
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from omuserver.server import Server
-
 from .plugin_instance import PluginInstance
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 PLUGIN_GROUP = "omu.plugins"
 

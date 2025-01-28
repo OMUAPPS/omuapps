@@ -1,17 +1,19 @@
+from __future__ import annotations
+
 import asyncio
+from typing import TYPE_CHECKING
 
 from loguru import logger
 from omu import Identifier
 from omu.event_emitter import Unlisten
 from omu.extension.registry.packets import RegistryPermissions
-from omu.extension.registry.registry_extension import (
-    REGISTRY_UPDATE_PACKET,
-    RegistryPacket,
-)
+from omu.extension.registry.registry_extension import REGISTRY_UPDATE_PACKET, RegistryPacket
 from omu.serializer import Serializable
 
-from omuserver.server import Server
 from omuserver.session import Session
+
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
 
 class ServerRegistry:
