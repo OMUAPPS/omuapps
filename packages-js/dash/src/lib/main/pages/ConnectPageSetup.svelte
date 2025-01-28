@@ -165,9 +165,9 @@
 
     .channels {
         display: flex;
+        flex-direction: column;
         flex: 1;
         max-height: fit-content;
-        flex-direction: column;
         gap: 0.25rem;
         border-top: 1px solid var(--color-outline);
         border-bottom: 1px solid var(--color-outline);
@@ -175,6 +175,7 @@
         padding-bottom: 1rem;
         margin: 1rem 0;
         overflow-y: auto;
+        overflow-x: hidden;
 
         .channel {
             display: flex;

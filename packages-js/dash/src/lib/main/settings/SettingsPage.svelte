@@ -156,18 +156,14 @@
     .container {
         position: absolute;
         inset: 0;
+        padding: 0;
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        justify-content: flex-start;
-        padding: 0;
         background: var(--color-bg-2);
     }
 
     .content {
-        position: absolute;
-        inset: 0;
-        top: 5rem;
+        flex: 1;
         display: flex;
         background: var(--color-bg-1);
     }
