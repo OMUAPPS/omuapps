@@ -66,7 +66,7 @@
         <FlexColWrapper widthFull>
             {#if author}
                 <FlexRowWrapper widthFull gap>
-                    <FlexRowWrapper baseline>
+                    <div class="author">
                         <span class="name">
                             {author.name}
                         </span>
@@ -76,7 +76,7 @@
                         <small>
                             {author.metadata?.screen_id || author.id.path.at(-1)}
                         </small>
-                    </FlexRowWrapper>
+                    </div>
                     {#if createdAt}
                         <span class="time">
                             <Tooltip>
@@ -198,6 +198,11 @@
         width: 128px;
         height: 128px;
         outline: 2px solid #000;
+    }
+
+    .author {
+        display: flex;
+        align-items: center;
     }
 
     .name {
