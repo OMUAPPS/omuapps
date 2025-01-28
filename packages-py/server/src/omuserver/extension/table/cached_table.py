@@ -137,9 +137,7 @@ class CachedTable(ServerTable):
             ),
         )
 
-    async def proxy(
-        self, session: Session, key: int, items: Mapping[str, bytes]
-    ) -> int:
+    async def proxy(self, session: Session, key: int, items: Mapping[str, bytes]) -> int:
         adapter = self._adapter
         if adapter is None:
             raise Exception("Table not set")

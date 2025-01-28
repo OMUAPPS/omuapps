@@ -69,9 +69,7 @@ class ServerExtension:
         )
         self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
         self.sessions = self._server.tables.register(SERVER_SESSION_TABLE_TYPE)
-        self.trusted_origins = self._server.registries.register(
-            TRUSTED_ORIGINS_REGISTRY_TYPE
-        )
+        self.trusted_origins = self._server.registries.register(TRUSTED_ORIGINS_REGISTRY_TYPE)
         server.network.event.connected += self.on_connected
         server.network.event.disconnected += self.on_disconnected
         server.event.start += self.on_start
@@ -79,18 +77,12 @@ class ServerExtension:
             SHUTDOWN_ENDPOINT_TYPE,
             self.handle_shutdown,
         )
-        server.packet_dispatcher.add_packet_handler(
-            REQUIRE_APPS_PACKET_TYPE, self.handle_require_apps
-        )
-        server.packet_dispatcher.add_packet_handler(
-            SESSION_OBSERVE_PACKET_TYPE, self.handle_observe_session
-        )
+        server.packet_dispatcher.add_packet_handler(REQUIRE_APPS_PACKET_TYPE, self.handle_require_apps)
+        server.packet_dispatcher.add_packet_handler(SESSION_OBSERVE_PACKET_TYPE, self.handle_observe_session)
         self._app_waiters: dict[Identifier, list[WaitHandle]] = defaultdict(list)
         self._session_observers: dict[Identifier, list[Session]] = defaultdict(list)
 
-    async def handle_require_apps(
-        self, session: Session, app_ids: list[Identifier]
-    ) -> None:
+    async def handle_require_apps(self, session: Session, app_ids: list[Identifier]) -> None:
         for identifier in self._server.network._sessions.keys():
             if identifier not in app_ids:
                 continue
@@ -106,9 +98,7 @@ class ServerExtension:
 
         session.add_ready_task(task)
 
-    async def handle_observe_session(
-        self, session: Session, app_ids: list[Identifier]
-    ) -> None:
+    async def handle_observe_session(self, session: Session, app_ids: list[Identifier]) -> None:
         if not session.permission_handle.has(SERVER_SESSIONS_READ_PERMISSION.id):
             error = f"Pemission {SERVER_SESSIONS_READ_PERMISSION.id} required to observe session"
             raise PermissionDenied(error)
@@ -131,9 +121,7 @@ class ServerExtension:
                 for session in [*self._server.network._sessions.values()]:
                     if session.closed:
                         continue
-                    await session.disconnect(
-                        DisconnectType.SERVER_RESTART, "Server is restarting"
-                    )
+                    await session.disconnect(DisconnectType.SERVER_RESTART, "Server is restarting")
                 await self._server.restart()
             else:
                 await self._server.stop()

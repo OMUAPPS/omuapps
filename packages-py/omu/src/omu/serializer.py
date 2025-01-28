@@ -76,9 +76,7 @@ class NoopSerializer[T](Serializer[T, T]):
 class ModelSerializer[M: JsonSerializable, D](Serializer[M, D]):
     def __init__(self, model: type[JsonSerializable[M, D]]):
         self._model = model
-        super().__init__(
-            lambda item: item.to_json(), lambda item: model.from_json(item)
-        )
+        super().__init__(lambda item: item.to_json(), lambda item: model.from_json(item))
 
     def __repr__(self) -> str:
         return f"ModelSerializer({self._model})"
@@ -129,9 +127,7 @@ class MapSerializer[T, D](Serializer[Mapping[str, T], Mapping[str, D]]):
         return {key: self._serializer.serialize(value) for key, value in items.items()}
 
     def _deserialize(self, items: Mapping[str, D]) -> Mapping[str, T]:
-        return {
-            key: self._serializer.deserialize(value) for key, value in items.items()
-        }
+        return {key: self._serializer.deserialize(value) for key, value in items.items()}
 
     def __repr__(self) -> str:
         return f"MapSerializer({self._serializer})"

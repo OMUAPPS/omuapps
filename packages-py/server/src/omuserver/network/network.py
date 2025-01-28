@@ -19,9 +19,7 @@ from omuserver.session.aiohttp_connection import WebsocketsConnection
 
 
 class Network:
-    def __init__(
-        self, server: Server, packet_dispatcher: ServerPacketDispatcher
-    ) -> None:
+    def __init__(self, server: Server, packet_dispatcher: ServerPacketDispatcher) -> None:
         self._server = server
         self._packet_dispatcher = packet_dispatcher
         self._event = NetworkEvents()
@@ -54,9 +52,7 @@ class Network:
             parts.append(f"v{session.app.version}")
         logger.info(f"Ready: {' '.join(parts)}")
 
-    async def _handle_disconnection(
-        self, session: Session, packet: DisconnectType
-    ) -> None:
+    async def _handle_disconnection(self, session: Session, packet: DisconnectType) -> None:
         await session.disconnect(packet, "Disconnect packet received")
 
     def register_packet(self, *packet_types: PacketType) -> None:
@@ -69,9 +65,7 @@ class Network:
     ) -> None:
         self._packet_dispatcher.add_packet_handler(packet_type, coro)
 
-    def add_http_route(
-        self, path: str, handle: Coro[[web.Request], web.StreamResponse]
-    ) -> None:
+    def add_http_route(self, path: str, handle: Coro[[web.Request], web.StreamResponse]) -> None:
         self._app.router.add_get(path, handle)
 
     async def _verify_origin(self, request: web.Request, session: Session) -> None:
@@ -152,22 +146,13 @@ class Network:
         if not self.is_port_free():
             found_processes = set(find_processes_by_port(self._server.address.port))
             if len(found_processes) == 0:
-                raise OSError(
-                    f"Port {self._server.address.port} already in use by unknown process"
-                )
-            is_system_idle_reserved = any(
-                p.pid == 0 and p.name() == "System Idle Process"
-                for p in found_processes
-            )
+                raise OSError(f"Port {self._server.address.port} already in use by unknown process")
+            is_system_idle_reserved = any(p.pid == 0 and p.name() == "System Idle Process" for p in found_processes)
             if is_system_idle_reserved:
-                raise OSError(
-                    f"Port {self._server.address.port} already in use by System Idle Process"
-                )
+                raise OSError(f"Port {self._server.address.port} already in use by System Idle Process")
             if len(found_processes) > 1:
                 processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
-                raise OSError(
-                    f"Port {self._server.address.port} already in use by multiple processes: {processes}"
-                )
+                raise OSError(f"Port {self._server.address.port} already in use by multiple processes: {processes}")
             process = found_processes.pop()
             port = self._server.address.port
             name = process.name()

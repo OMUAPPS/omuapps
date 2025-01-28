@@ -159,9 +159,7 @@ class DashboardExtension:
             app,
         )
 
-    async def handle_dashboard_set(
-        self, session: Session, identifier: Identifier
-    ) -> DashboardSetResponse:
+    async def handle_dashboard_set(self, session: Session, identifier: Identifier) -> DashboardSetResponse:
         if session.kind != AppType.DASHBOARD:
             raise PermissionDenied("Session is not a dashboard")
         self.dashboard_session = session
@@ -235,17 +233,13 @@ class DashboardExtension:
 
     async def request_permissions(self, request: PermissionRequestPacket) -> bool:
         if request.request_id in self.permission_requests:
-            raise ValueError(
-                f"Permission request with id {request.request_id} already exists"
-            )
+            raise ValueError(f"Permission request with id {request.request_id} already exists")
         future = Future[bool]()
         self.permission_requests[request.request_id] = future
         await self.notify_dashboard_permission_request(request)
         return await future
 
-    async def notify_dashboard_permission_request(
-        self, request: PermissionRequestPacket
-    ) -> None:
+    async def notify_dashboard_permission_request(self, request: PermissionRequestPacket) -> None:
         self.pending_permission_requests[request.request_id] = request
         if self.dashboard_session is not None:
             await self.dashboard_session.send(
@@ -271,17 +265,13 @@ class DashboardExtension:
 
     async def request_plugins(self, request: PluginRequestPacket) -> bool:
         if request.request_id in self.plugin_requests:
-            raise ValueError(
-                f"Plugin request with id {request.request_id} already exists"
-            )
+            raise ValueError(f"Plugin request with id {request.request_id} already exists")
         future = Future[bool]()
         self.plugin_requests[request.request_id] = future
         await self.notify_dashboard_plugin_request(request)
         return await future
 
-    async def notify_dashboard_plugin_request(
-        self, request: PluginRequestPacket
-    ) -> None:
+    async def notify_dashboard_plugin_request(self, request: PluginRequestPacket) -> None:
         self.pending_plugin_requests[request.request_id] = request
         if self.dashboard_session is not None:
             await self.dashboard_session.send(
@@ -289,9 +279,7 @@ class DashboardExtension:
                 request,
             )
 
-    async def handle_app_install_accept(
-        self, session: Session, request_id: str
-    ) -> None:
+    async def handle_app_install_accept(self, session: Session, request_id: str) -> None:
         self.ensure_dashboard_session(session)
         if request_id not in self.app_install_requests:
             raise ValueError(f"App install request with id {request_id} does not exist")
@@ -307,25 +295,19 @@ class DashboardExtension:
         future = self.app_install_requests.pop(request_id)
         future.set_result(False)
 
-    async def handle_dashboard_app_install(
-        self, session: Session, app: App
-    ) -> AppInstallResponse:
+    async def handle_dashboard_app_install(self, session: Session, app: App) -> AppInstallResponse:
         if not session.permission_handle.has(DASHBOARD_APP_INSTALL_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to install apps")
         request_id = self._get_next_request_id()
         future = Future[bool]()
         self.app_install_requests[request_id] = future
-        await self.notify_dashboard_app_install(
-            AppInstallRequestPacket(request_id=request_id, app=app)
-        )
+        await self.notify_dashboard_app_install(AppInstallRequestPacket(request_id=request_id, app=app))
         accepted = await future
         if accepted:
             await self.apps.add(app)
         return AppInstallResponse(accepted=accepted)
 
-    async def notify_dashboard_app_install(
-        self, request: AppInstallRequestPacket
-    ) -> None:
+    async def notify_dashboard_app_install(self, request: AppInstallRequestPacket) -> None:
         self.pending_app_install_requests[request.request_id] = request
         if self.dashboard_session is not None:
             await self.dashboard_session.send(
@@ -349,9 +331,7 @@ class DashboardExtension:
         future = self.app_update_requests.pop(request_id)
         future.set_result(False)
 
-    async def handle_dashboard_app_update(
-        self, session: Session, app: App
-    ) -> AppUpdateResponse:
+    async def handle_dashboard_app_update(self, session: Session, app: App) -> AppUpdateResponse:
         if not session.permission_handle.has(DASHBOARD_APP_UPDATE_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to update apps")
         accepted = await self.update_app(app)
@@ -376,9 +356,7 @@ class DashboardExtension:
             await self.apps.add(app)
         return accepted
 
-    async def notify_dashboard_app_update(
-        self, request: AppUpdateRequestPacket
-    ) -> None:
+    async def notify_dashboard_app_update(self, request: AppUpdateRequestPacket) -> None:
         self.pending_app_update_requests[request.request_id] = request
         if self.dashboard_session is not None:
             await self.dashboard_session.send(

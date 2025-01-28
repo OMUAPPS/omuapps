@@ -82,9 +82,7 @@ class PluginInstance:
                 module=module,
             )
         except Exception as e:
-            logger.opt(exception=e).error(
-                f"Error while {stage} plugin {entry_point.name} from {package}"
-            )
+            logger.opt(exception=e).error(f"Error while {stage} plugin {entry_point.name} from {package}")
             return None
 
     async def notify_install(self, ctx: InstallContext):
@@ -131,9 +129,7 @@ class PluginInstance:
                 stage = "starting internally"
                 await self._start_internally(server, token)
         except Exception as e:
-            logger.opt(exception=e).error(
-                f"Error while {stage} plugin {self.entry_point.name}"
-            )
+            logger.opt(exception=e).error(f"Error while {stage} plugin {self.entry_point.name}")
 
     async def _start_internally(self, server, token):
         if self.client:
@@ -182,10 +178,7 @@ def setup_logging(app: App) -> None:
     logger.add(
         f"logs/{app.id.get_sanitized_path()}/{{time}}.log",
         colorize=False,
-        format=(
-            "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
-            "{name}:{function}:{line} - {message}"
-        ),
+        format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | " "{name}:{function}:{line} - {message}"),
         retention="7 days",
         compression="zip",
     )

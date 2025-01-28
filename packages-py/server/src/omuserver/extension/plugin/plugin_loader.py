@@ -42,9 +42,7 @@ class DependencyResolver:
             async with session.get(f"https://pypi.org/pypi/{package}/json") as response:
                 return await response.json()
 
-    async def get_installed_package_info(
-        self, package: str
-    ) -> PluginPackageInfo | None:
+    async def get_installed_package_info(self, package: str) -> PluginPackageInfo | None:
         try:
             package_info = importlib.metadata.distribution(package)
         except importlib.metadata.PackageNotFoundError:
@@ -54,9 +52,7 @@ class DependencyResolver:
             version=package_info.version,
         )
 
-    def format_dependencies(
-        self, dependencies: Mapping[str, SpecifierSet | None]
-    ) -> list[str]:
+    def format_dependencies(self, dependencies: Mapping[str, SpecifierSet | None]) -> list[str]:
         args = []
         for dependency, specifier in dependencies.items():
             if specifier is not None:
@@ -212,16 +208,12 @@ class PluginLoader:
         restart_required = False
         plugins_pending_start: list[PluginInstance] = []
         for new_package in resolve_result.new_packages:
-            entry_points = tuple(
-                importlib.metadata.entry_points(group=PLUGIN_GROUP, module=new_package)
-            )
+            entry_points = tuple(importlib.metadata.entry_points(group=PLUGIN_GROUP, module=new_package))
             if len(entry_points) == 0:
                 logger.warning(f"Plugin {new_package} has no entry points")
                 continue
             if len(entry_points) > 1:
-                logger.warning(
-                    f"Plugin {new_package} has multiple entry points {entry_points}"
-                )
+                logger.warning(f"Plugin {new_package} has multiple entry points {entry_points}")
                 continue
             entry_point = entry_points[0]
             if entry_point.dist is None:

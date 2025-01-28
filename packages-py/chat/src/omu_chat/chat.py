@@ -112,9 +112,7 @@ class Chat:
         self.reaction_signal = omu.signals.get(REACTION_SIGNAL)
         self.event_registry = EventRegistry(self)
 
-    def on[**P](
-        self, event: EventSource[P]
-    ) -> Callable[[EventHandler[P]], EventHandler[P]]:
+    def on[**P](self, event: EventSource[P]) -> Callable[[EventHandler[P]], EventHandler[P]]:
         def decorator(listener: EventHandler[P]) -> EventHandler[P]:
             self.event_registry.register(event, listener)
             return listener

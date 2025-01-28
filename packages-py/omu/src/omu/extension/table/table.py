@@ -82,9 +82,7 @@ class Table[T](abc.ABC):
     async def size(self) -> int: ...
 
     @abc.abstractmethod
-    def listen(
-        self, listener: AsyncCallback[Mapping[str, T]] | None = None
-    ) -> Unlisten: ...
+    def listen(self, listener: AsyncCallback[Mapping[str, T]] | None = None) -> Unlisten: ...
 
     @abc.abstractmethod
     def proxy(self, callback: Coro[[T], T | None]) -> Unlisten: ...
@@ -111,21 +109,11 @@ class TableEvents[T]:
             if self.unlisten:
                 self.unlisten()
 
-        self.add: EventEmitter[Mapping[str, T]] = EventEmitter(
-            on_subscribe=listen, on_empty=unlisten
-        )
-        self.update: EventEmitter[Mapping[str, T]] = EventEmitter(
-            on_subscribe=listen, on_empty=unlisten
-        )
-        self.remove: EventEmitter[Mapping[str, T]] = EventEmitter(
-            on_subscribe=listen, on_empty=unlisten
-        )
-        self.clear: EventEmitter[[]] = EventEmitter(
-            on_subscribe=listen, on_empty=unlisten
-        )
-        self.cache_update: EventEmitter[Mapping[str, T]] = EventEmitter(
-            on_subscribe=listen, on_empty=unlisten
-        )
+        self.add: EventEmitter[Mapping[str, T]] = EventEmitter(on_subscribe=listen, on_empty=unlisten)
+        self.update: EventEmitter[Mapping[str, T]] = EventEmitter(on_subscribe=listen, on_empty=unlisten)
+        self.remove: EventEmitter[Mapping[str, T]] = EventEmitter(on_subscribe=listen, on_empty=unlisten)
+        self.clear: EventEmitter[[]] = EventEmitter(on_subscribe=listen, on_empty=unlisten)
+        self.cache_update: EventEmitter[Mapping[str, T]] = EventEmitter(on_subscribe=listen, on_empty=unlisten)
 
 
 type ModelEntry[T: Keyable, D] = JsonSerializable[T, D]

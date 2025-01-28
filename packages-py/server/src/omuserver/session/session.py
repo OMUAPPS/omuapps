@@ -85,22 +85,16 @@ class Session:
         if packet is None:
             await connection.close()
             raise RuntimeError("Connection closed")
-        if packet.type != PACKET_TYPES.CONNECT or not isinstance(
-            packet.data, ConnectPacket
-        ):
+        if packet.type != PACKET_TYPES.CONNECT or not isinstance(packet.data, ConnectPacket):
             await connection.send(
                 Packet(
                     PACKET_TYPES.DISCONNECT,
-                    DisconnectPacket(
-                        DisconnectType.INVALID_PACKET_TYPE, "Expected connect"
-                    ),
+                    DisconnectPacket(DisconnectType.INVALID_PACKET_TYPE, "Expected connect"),
                 ),
                 packet_mapper,
             )
             await connection.close()
-            raise RuntimeError(
-                f"Expected {PACKET_TYPES.CONNECT.id} but got {packet.type}"
-            )
+            raise RuntimeError(f"Expected {PACKET_TYPES.CONNECT.id} but got {packet.type}")
         connect_packet = packet.data
         app = connect_packet.app
         token = connect_packet.token
@@ -133,13 +127,9 @@ class Session:
     def closed(self) -> bool:
         return self.connection.closed
 
-    async def disconnect(
-        self, disconnect_type: DisconnectType, message: str | None = None
-    ) -> None:
+    async def disconnect(self, disconnect_type: DisconnectType, message: str | None = None) -> None:
         if not self.connection.closed:
-            await self.send(
-                PACKET_TYPES.DISCONNECT, DisconnectPacket(disconnect_type, message)
-            )
+            await self.send(PACKET_TYPES.DISCONNECT, DisconnectPacket(disconnect_type, message))
         await self.connection.close()
         await self.event.disconnected.emit(self)
 

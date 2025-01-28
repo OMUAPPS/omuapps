@@ -152,9 +152,7 @@ class TableExtension:
         server.event.start += self.on_server_start
         server.event.stop += self.on_server_stop
 
-    async def handle_item_get(
-        self, session: Session, packet: TableKeysPacket
-    ) -> TableItemsPacket:
+    async def handle_item_get(self, session: Session, packet: TableKeysPacket) -> TableItemsPacket:
         table = await self.get_table(packet.id)
         items = await table.get_many(*packet.keys)
         return TableItemsPacket(
@@ -162,27 +160,19 @@ class TableExtension:
             items=items,
         )
 
-    async def handle_item_has(
-        self, session: Session, packet: TableKeysPacket
-    ) -> dict[str, bool]:
+    async def handle_item_has(self, session: Session, packet: TableKeysPacket) -> dict[str, bool]:
         table = await self.get_table(packet.id)
         return await table.has_many(packet.keys)
 
-    async def handle_item_has_all(
-        self, session: Session, packet: TableKeysPacket
-    ) -> bool:
+    async def handle_item_has_all(self, session: Session, packet: TableKeysPacket) -> bool:
         table = await self.get_table(packet.id)
         return await table.has_all(packet.keys)
 
-    async def handle_item_has_any(
-        self, session: Session, packet: TableKeysPacket
-    ) -> bool:
+    async def handle_item_has_any(self, session: Session, packet: TableKeysPacket) -> bool:
         table = await self.get_table(packet.id)
         return await table.has_any(packet.keys)
 
-    async def handle_item_fetch(
-        self, session: Session, packet: TableFetchPacket
-    ) -> TableItemsPacket:
+    async def handle_item_fetch(self, session: Session, packet: TableFetchPacket) -> TableItemsPacket:
         table = await self.get_table(packet.id)
         items = await table.fetch_items(
             limit=packet.limit,
@@ -194,9 +184,7 @@ class TableExtension:
             items=items,
         )
 
-    async def handle_item_fetch_range(
-        self, session: Session, packet: TableFetchRangePacket
-    ) -> TableItemsPacket:
+    async def handle_item_fetch_range(self, session: Session, packet: TableFetchRangePacket) -> TableItemsPacket:
         table = await self.get_table(packet.id)
         items = await table.fetch_range(packet.start, packet.end)
         return TableItemsPacket(
@@ -204,9 +192,7 @@ class TableExtension:
             items=items,
         )
 
-    async def handle_item_fetch_all(
-        self, session: Session, packet: TablePacket
-    ) -> TableItemsPacket:
+    async def handle_item_fetch_all(self, session: Session, packet: TablePacket) -> TableItemsPacket:
         table = await self.get_table(packet.id)
         items = await table.fetch_all()
         return TableItemsPacket(
@@ -218,9 +204,7 @@ class TableExtension:
         table = await self.get_table(packet.id)
         return await table.size()
 
-    async def handle_bind_permission(
-        self, session: Session, packet: SetPermissionPacket
-    ) -> None:
+    async def handle_bind_permission(self, session: Session, packet: SetPermissionPacket) -> None:
         table = await self.get_table(packet.id)
         await self.verify_permission(
             session,
@@ -236,9 +220,7 @@ class TableExtension:
         )
         table.set_permissions(permissions)
 
-    async def handle_table_config(
-        self, session: Session, packet: SetConfigPacket
-    ) -> None:
+    async def handle_table_config(self, session: Session, packet: SetConfigPacket) -> None:
         table = await self.get_table(packet.id)
         await self.verify_permission(
             session,
@@ -283,9 +265,7 @@ class TableExtension:
         )
         await table.add(packet.items)
 
-    async def handle_item_update(
-        self, session: Session, packet: TableItemsPacket
-    ) -> None:
+    async def handle_item_update(self, session: Session, packet: TableItemsPacket) -> None:
         table = await self.get_table(packet.id)
         await self.verify_permission(
             session,
@@ -294,9 +274,7 @@ class TableExtension:
         )
         await table.update(packet.items)
 
-    async def handle_item_remove(
-        self, session: Session, packet: TableItemsPacket
-    ) -> None:
+    async def handle_item_remove(self, session: Session, packet: TableItemsPacket) -> None:
         table = await self.get_table(packet.id)
         await self.verify_permission(
             session,
@@ -358,9 +336,7 @@ class TableExtension:
             if session.permission_handle.has(permission):
                 return
 
-        raise PermissionDenied(
-            f"Table {table.id} does not have permission {table.permissions}"
-        )
+        raise PermissionDenied(f"Table {table.id} does not have permission {table.permissions}")
 
     def register[T: Keyable](self, table_type: TableType[T]) -> Table[T]:
         table = CachedTable(self.server, table_type.id)

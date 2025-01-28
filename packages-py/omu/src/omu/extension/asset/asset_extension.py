@@ -66,9 +66,7 @@ ASSET_UPLOAD_ENDPOINT = EndpointType[File, Identifier].create_serialized(
     response_serializer=Serializer.model(Identifier).to_json(),
     permission_id=ASSET_UPLOAD_PERMISSION_ID,
 )
-ASSET_UPLOAD_MANY_ENDPOINT = EndpointType[
-    list[File], list[Identifier]
-].create_serialized(
+ASSET_UPLOAD_MANY_ENDPOINT = EndpointType[list[File], list[Identifier]].create_serialized(
     ASSET_EXTENSION_TYPE,
     "upload_many",
     request_serializer=FileArraySerializer,
@@ -83,9 +81,7 @@ ASSET_DOWNLOAD_ENDPOINT = EndpointType[Identifier, File].create_serialized(
     response_serializer=FileSerializer,
     permission_id=ASSET_DOWNLOAD_PERMISSION_ID,
 )
-ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[
-    list[Identifier], list[File]
-].create_serialized(
+ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[list[Identifier], list[File]].create_serialized(
     ASSET_EXTENSION_TYPE,
     "download_many",
     request_serializer=Serializer.model(Identifier).to_array().to_json(),
@@ -112,9 +108,7 @@ class AssetExtension(Extension):
         return await self.client.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, identifier)
 
     async def download_many(self, identifiers: list[Identifier]) -> list[File]:
-        return await self.client.endpoints.call(
-            ASSET_DOWNLOAD_MANY_ENDPOINT, identifiers
-        )
+        return await self.client.endpoints.call(ASSET_DOWNLOAD_MANY_ENDPOINT, identifiers)
 
     def url(self, identifier: Identifier) -> str:
         address = self.client.network.address

@@ -117,9 +117,7 @@ class DiscordRPC:
         self.dispatch_handlers[req["nonce"]] = future
         return await future
 
-    async def subscribe(
-        self, payload: SubscribePayloads, handler: Coro[[ResponsePayloads], None]
-    ) -> None:
+    async def subscribe(self, payload: SubscribePayloads, handler: Coro[[ResponsePayloads], None]) -> None:
         self.subscribe_handlers[payload["evt"]] = handler
         await self.dispatch(payload)
 
@@ -255,9 +253,7 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_voice_state_create(
-        self, channel_id: str, handler: Coro[[VoiceStateItem], None]
-    ) -> None:
+    async def subscribe_voice_state_create(self, channel_id: str, handler: Coro[[VoiceStateItem], None]) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return
@@ -278,9 +274,7 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_voice_state_update(
-        self, channel_id: str, handler: Coro[[VoiceStateItem], None]
-    ) -> None:
+    async def subscribe_voice_state_update(self, channel_id: str, handler: Coro[[VoiceStateItem], None]) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return
@@ -301,9 +295,7 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_voice_state_delete(
-        self, channel_id: str, handler: Coro[[VoiceStateItem], None]
-    ) -> None:
+    async def subscribe_voice_state_delete(self, channel_id: str, handler: Coro[[VoiceStateItem], None]) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return
@@ -324,9 +316,7 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_speaking_start(
-        self, channel_id: str, handler: Coro[[SpeakingStartData], None]
-    ) -> None:
+    async def subscribe_speaking_start(self, channel_id: str, handler: Coro[[SpeakingStartData], None]) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return
@@ -347,9 +337,7 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_speaking_stop(
-        self, channel_id: str, handler: Coro[[SpeakingStopData], None]
-    ) -> None:
+    async def subscribe_speaking_stop(self, channel_id: str, handler: Coro[[SpeakingStopData], None]) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return

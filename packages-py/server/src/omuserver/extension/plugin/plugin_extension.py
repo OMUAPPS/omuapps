@@ -57,18 +57,12 @@ class PluginExtension:
         self.request_id += 1
         return f"{self.request_id}-{time.time_ns()}"
 
-    async def open_request_plugin_dialog(
-        self, session: Session, packages: dict[str, str | None]
-    ) -> None:
+    async def open_request_plugin_dialog(self, session: Session, packages: dict[str, str | None]) -> None:
         to_request: list[PackageInfo] = []
         for package in packages.keys():
-            package_info = await self.dependency_resolver.get_installed_package_info(
-                package
-            )
+            package_info = await self.dependency_resolver.get_installed_package_info(package)
             if package_info is None:
-                package_info = await self.dependency_resolver.fetch_package_info(
-                    package
-                )
+                package_info = await self.dependency_resolver.fetch_package_info(package)
                 to_request.append(package_info)
                 continue
             await self.allowed_packages.add(package_info)
@@ -83,9 +77,7 @@ class PluginExtension:
         if not accepted:
             raise Exception("Request was not accepted")
 
-    async def handle_require_packet(
-        self, session: Session, packages: dict[str, str | None]
-    ) -> None:
+    async def handle_require_packet(self, session: Session, packages: dict[str, str | None]) -> None:
         if not packages:
             return
 
@@ -105,15 +97,11 @@ class PluginExtension:
 
         session.add_ready_task(task)
 
-    async def handle_reload(
-        self, session: Session, options: ReloadOptions
-    ) -> ReloadResult:
+    async def handle_reload(self, session: Session, options: ReloadOptions) -> ReloadResult:
         packages = self.loader.instances
         if options.get("packages") is not None:
             filters = options["packages"] or []
-            packages = {
-                name: version for name, version in packages.items() if name in filters
-            }
+            packages = {name: version for name, version in packages.items() if name in filters}
         for package in packages.values():
             await package.terminate(self.server)
             await package.reload()

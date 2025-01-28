@@ -63,9 +63,7 @@ def retrieve_services():
     services: list[type[ProviderService]] = []
     for entry_point in entry_points:
         service = entry_point.load()
-        assert issubclass(
-            service, ProviderService
-        ), f"{service} is not a ProviderService"
+        assert issubclass(service, ProviderService), f"{service} is not a ProviderService"
         services.append(service)
 
     return services

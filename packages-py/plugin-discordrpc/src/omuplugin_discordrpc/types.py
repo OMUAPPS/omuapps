@@ -45,9 +45,7 @@ class SelectedVoiceChannel(TypedDict):
     channel: GetChannelResponseData
 
 
-SELECTED_VOICE_CHANNEL_REGISTRY_TYPE = RegistryType[
-    SelectedVoiceChannel | None
-].create_json(
+SELECTED_VOICE_CHANNEL_REGISTRY_TYPE = RegistryType[SelectedVoiceChannel | None].create_json(
     PLUGIN_ID,
     "selected_voice_channel",
     default_value=None,
@@ -89,9 +87,7 @@ class GetGuildsRequest(TypedDict):
     user_id: str
 
 
-GET_GUILDS_ENDPOINT_TYPE = EndpointType[
-    GetGuildsRequest, GetGuildsResponseData
-].create_json(
+GET_GUILDS_ENDPOINT_TYPE = EndpointType[GetGuildsRequest, GetGuildsResponseData].create_json(
     PLUGIN_ID,
     "get_guilds",
     permission_id=DISCORDRPC_CHANNELS_READ_PERMISSION_ID,
@@ -103,9 +99,7 @@ class GetChannelsRequest(TypedDict):
     guild_id: str
 
 
-GET_CHANNELS_ENDPOINT_TYPE = EndpointType[
-    GetChannelsRequest, GetChannelsResponseData
-].create_json(
+GET_CHANNELS_ENDPOINT_TYPE = EndpointType[GetChannelsRequest, GetChannelsResponseData].create_json(
     PLUGIN_ID,
     "get_channels",
     permission_id=DISCORDRPC_CHANNELS_READ_PERMISSION_ID,

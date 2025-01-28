@@ -48,15 +48,9 @@ class RegistryExtension:
             REGISTRY_LISTEN_PACKET,
             REGISTRY_UPDATE_PACKET,
         )
-        server.packet_dispatcher.add_packet_handler(
-            REGISTRY_REGISTER_PACKET, self.handle_register
-        )
-        server.packet_dispatcher.add_packet_handler(
-            REGISTRY_LISTEN_PACKET, self.handle_listen
-        )
-        server.packet_dispatcher.add_packet_handler(
-            REGISTRY_UPDATE_PACKET, self.handle_update
-        )
+        server.packet_dispatcher.add_packet_handler(REGISTRY_REGISTER_PACKET, self.handle_register)
+        server.packet_dispatcher.add_packet_handler(REGISTRY_LISTEN_PACKET, self.handle_listen)
+        server.packet_dispatcher.add_packet_handler(REGISTRY_UPDATE_PACKET, self.handle_update)
         server.endpoints.bind_endpoint(REGISTRY_GET_ENDPOINT, self.handle_get)
         server.event.start += self._on_start
 
@@ -65,9 +59,7 @@ class RegistryExtension:
             await registry.load()
         self._startup_registries.clear()
 
-    async def handle_register(
-        self, session: Session, packet: RegistryRegisterPacket
-    ) -> None:
+    async def handle_register(self, session: Session, packet: RegistryRegisterPacket) -> None:
         registry = await self.get(packet.id)
         if not registry.id.is_subpath_of(session.app.id):
             msg = f"App {session.app.id=} not allowed to register {packet.id=}"

@@ -125,9 +125,7 @@ async def should_remove(room: Room, provider_service: ProviderService):
     try:
         return not await provider_service.is_online(room)
     except Exception as e:
-        logger.opt(exception=e).error(
-            f"Error checking if room {room.key()} should be removed"
-        )
+        logger.opt(exception=e).error(f"Error checking if room {room.key()} should be removed")
         return True
 
 

@@ -40,15 +40,10 @@ class PermissionExtension:
         self.server = server
         self.request_key = 0
 
-    async def handle_register(
-        self, session: Session, permissions: list[PermissionType]
-    ) -> None:
+    async def handle_register(self, session: Session, permissions: list[PermissionType]) -> None:
         for permission in permissions:
             if not permission.id.is_subpath_of(session.app.id):
-                msg = (
-                    f"Permission identifier {permission.id} "
-                    f"is not a subpart of app identifier {session.app.id}"
-                )
+                msg = f"Permission identifier {permission.id} " f"is not a subpart of app identifier {session.app.id}"
                 raise ValueError(msg)
         self.server.permission_manager.register(*permissions, overwrite=True)
 
@@ -58,10 +53,7 @@ class PermissionExtension:
         if session.permission_handle.has_all(permission_ids):
             permissions = filter(
                 None,
-                [
-                    self.server.permission_manager.get_permission(permission_id)
-                    for permission_id in permission_ids
-                ],
+                [self.server.permission_manager.get_permission(permission_id) for permission_id in permission_ids],
             )
             await session.send(PERMISSION_GRANT_PACKET, list(permissions))
             return
@@ -71,9 +63,7 @@ class PermissionExtension:
         async def task():
             permissions: list[PermissionType] = []
             for permission_id in permission_ids:
-                permission = self.server.permission_manager.get_permission(
-                    permission_id
-                )
+                permission = self.server.permission_manager.get_permission(permission_id)
                 if permission is None:
                     raise ValueError(f"Permission {permission_id} not registered")
                 permissions.append(permission)
@@ -92,9 +82,7 @@ class PermissionExtension:
 
         session.add_ready_task(task)
 
-    async def handle_request(
-        self, session: Session, permission_identifiers: list[Identifier]
-    ): ...
+    async def handle_request(self, session: Session, permission_identifiers: list[Identifier]): ...
 
     def _get_next_request_key(self) -> str:
         self.request_key += 1

@@ -335,17 +335,13 @@ class SceneSetCurrentByUuidRequest(TypedDict):
 class SceneSetCurrentResponse(TypedDict): ...
 
 
-SCENE_SET_CURRENT_BY_NAME = EndpointType[
-    SceneSetCurrentByNameRequest, SceneSetCurrentResponse
-].create_json(
+SCENE_SET_CURRENT_BY_NAME = EndpointType[SceneSetCurrentByNameRequest, SceneSetCurrentResponse].create_json(
     PLUGIN_ID,
     name="scene_set_current_by_name",
     permission_id=OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 )
 
-SCENE_SET_CURRENT_BY_UUID = EndpointType[
-    SceneSetCurrentByUuidRequest, SceneSetCurrentResponse
-].create_json(
+SCENE_SET_CURRENT_BY_UUID = EndpointType[SceneSetCurrentByUuidRequest, SceneSetCurrentResponse].create_json(
     PLUGIN_ID,
     name="scene_set_current_by_uuid",
     permission_id=OBS_SCENE_SET_CURRENT_PERMISSION_ID,

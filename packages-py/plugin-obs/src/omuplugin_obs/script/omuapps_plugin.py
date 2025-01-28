@@ -20,10 +20,7 @@ logger.remove()
 logger.add(
     f"{log_path}/{{time}}.log",
     colorize=False,
-    format=(
-        "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
-        "{name}:{function}:{line} - {message}"
-    ),
+    format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | " "{name}:{function}:{line} - {message}"),
     retention="7 days",
     compression="zip",
 )

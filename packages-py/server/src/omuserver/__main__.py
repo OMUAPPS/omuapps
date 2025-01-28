@@ -25,10 +25,7 @@ def setup_logging():
     logger.add(
         "logs/{time}.log",
         colorize=False,
-        format=(
-            "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
-            "{name}:{function}:{line} - {message}"
-        ),
+        format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | " "{name}:{function}:{line} - {message}"),
         retention="7 days",
         compression="zip",
     )
@@ -45,9 +42,7 @@ def stop_server_processes(
         for process in found_processes:
             try:
                 if process.exe() != executable:
-                    logger.warning(
-                        f"Process {process.pid} ({process.name()}) is not a Python process"
-                    )
+                    logger.warning(f"Process {process.pid} ({process.name()}) is not a Python process")
                 logger.info(f"Killing process {process.pid} ({process.name()})")
                 process.send_signal(signal.SIGTERM)
             except psutil.NoSuchProcess:

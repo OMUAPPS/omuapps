@@ -76,9 +76,7 @@ class AssetExtension:
         identifier = await self.storage.store(file)
         return identifier
 
-    async def handle_upload_many(
-        self, session: Session, files: list[File]
-    ) -> list[Identifier]:
+    async def handle_upload_many(self, session: Session, files: list[File]) -> list[Identifier]:
         identifiers: list[Identifier] = []
         for file in files:
             identifier = await self.storage.store(file)
@@ -88,9 +86,7 @@ class AssetExtension:
     async def handle_download(self, session: Session, identifier: Identifier) -> File:
         return await self.storage.retrieve(identifier)
 
-    async def handle_download_many(
-        self, session: Session, identifiers: list[Identifier]
-    ) -> list[File]:
+    async def handle_download_many(self, session: Session, identifiers: list[Identifier]) -> list[File]:
         files: list[File] = []
         for identifier in identifiers:
             file = await self.storage.retrieve(identifier)

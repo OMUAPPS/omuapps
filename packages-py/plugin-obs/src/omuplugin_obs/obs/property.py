@@ -338,9 +338,7 @@ class OBSProperty(Reference[obs_property_t]):
 
     def frame_rate_option_insert(self, idx: int, name: str, description: str):
         with self as prop:
-            obspython.obs_property_frame_rate_option_insert(
-                prop, idx, name, description
-            )
+            obspython.obs_property_frame_rate_option_insert(prop, idx, name, description)
 
     def frame_rate_fps_range_insert(self, idx: int, min: int, max: int):
         with self as prop:
@@ -501,9 +499,7 @@ class OBSProperties(Reference[obs_properties_t]):
         description: str,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_bool(
-                properties, name, description
-            )
+            obs_property = obspython.obs_properties_add_bool(properties, name, description)
         return OBSProperty(obs_property)
 
     def add_int(
@@ -515,9 +511,7 @@ class OBSProperties(Reference[obs_properties_t]):
         step: int,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_int(
-                properties, name, description, min, max, step
-            )
+            obs_property = obspython.obs_properties_add_int(properties, name, description, min, max, step)
         return OBSProperty(obs_property)
 
     def add_float(
@@ -529,9 +523,7 @@ class OBSProperties(Reference[obs_properties_t]):
         step: float,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_float(
-                properties, name, description, min, max, step
-            )
+            obs_property = obspython.obs_properties_add_float(properties, name, description, min, max, step)
         return OBSProperty(obs_property)
 
     def add_int_slider(
@@ -543,9 +535,7 @@ class OBSProperties(Reference[obs_properties_t]):
         step: int,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_int_slider(
-                properties, name, description, min, max, step
-            )
+            obs_property = obspython.obs_properties_add_int_slider(properties, name, description, min, max, step)
         return OBSProperty(obs_property)
 
     def add_float_slider(
@@ -557,9 +547,7 @@ class OBSProperties(Reference[obs_properties_t]):
         step: float,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_float_slider(
-                properties, name, description, min, max, step
-            )
+            obs_property = obspython.obs_properties_add_float_slider(properties, name, description, min, max, step)
         return OBSProperty(obs_property)
 
     def add_text(
@@ -569,9 +557,7 @@ class OBSProperties(Reference[obs_properties_t]):
         text_type: OBSTextType,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_text(
-                properties, name, description, text_type.value
-            )
+            obs_property = obspython.obs_properties_add_text(properties, name, description, text_type.value)
         return OBSProperty(obs_property)
 
     def add_path(
@@ -607,9 +593,7 @@ class OBSProperties(Reference[obs_properties_t]):
         description: str,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_color(
-                properties, name, description
-            )
+            obs_property = obspython.obs_properties_add_color(properties, name, description)
         return OBSProperty(obs_property)
 
     def add_color_alpha(
@@ -618,9 +602,7 @@ class OBSProperties(Reference[obs_properties_t]):
         description: str,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_color_alpha(
-                properties, name, description
-            )
+            obs_property = obspython.obs_properties_add_color_alpha(properties, name, description)
         return OBSProperty(obs_property)
 
     def add_button(
@@ -633,9 +615,7 @@ class OBSProperties(Reference[obs_properties_t]):
             callback(OBSProperties(props), OBSProperty(prop))
 
         with self as properties:
-            obs_property = obspython.obs_properties_add_button(
-                properties, name, text, _callback
-            )
+            obs_property = obspython.obs_properties_add_button(properties, name, text, _callback)
         return OBSProperty(obs_property)
 
     def add_button2(
@@ -646,9 +626,7 @@ class OBSProperties(Reference[obs_properties_t]):
         priv: object | None = None,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_button2(
-                properties, name, text, callback, priv
-            )
+            obs_property = obspython.obs_properties_add_button2(properties, name, text, callback, priv)
         return OBSProperty(obs_property)
 
     def add_font(
@@ -657,9 +635,7 @@ class OBSProperties(Reference[obs_properties_t]):
         description: str,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_font(
-                properties, name, description
-            )
+            obs_property = obspython.obs_properties_add_font(properties, name, description)
         return OBSProperty(obs_property)
 
     def add_editable_list(
@@ -682,9 +658,7 @@ class OBSProperties(Reference[obs_properties_t]):
         description: str,
     ) -> OBSProperty:
         with self as properties:
-            obs_property = obspython.obs_properties_add_frame_rate(
-                properties, name, description
-            )
+            obs_property = obspython.obs_properties_add_frame_rate(properties, name, description)
         return OBSProperty(obs_property)
 
     def add_group(
@@ -695,9 +669,7 @@ class OBSProperties(Reference[obs_properties_t]):
         group: OBSProperties,
     ) -> OBSProperty:
         with self as properties, group as grp:
-            obs_property = obspython.obs_properties_add_group(
-                properties, name, description, group_type.value, grp
-            )
+            obs_property = obspython.obs_properties_add_group(properties, name, description, group_type.value, grp)
         return OBSProperty(obs_property)
 
     @property

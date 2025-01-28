@@ -146,9 +146,7 @@ def transform(component: content.Component) -> content.Component:
                     id=emoji.id,
                 )
     if isinstance(component, content.Parent):
-        component.set_children(
-            [transform(sibling) for sibling in component.get_children()]
-        )
+        component.set_children([transform(sibling) for sibling in component.get_children()])
     return component
 
 

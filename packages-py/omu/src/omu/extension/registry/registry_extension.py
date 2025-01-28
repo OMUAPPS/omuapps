@@ -107,9 +107,7 @@ class RegistryImpl[T](Registry[T]):
         try:
             return self.type.serializer.deserialize(result.value)
         except SerializeError as e:
-            raise SerializeError(
-                f"Failed to deserialize registry value for identifier {self.type.id}"
-            ) from e
+            raise SerializeError(f"Failed to deserialize registry value for identifier {self.type.id}") from e
 
     async def set(self, value: T) -> None:
         packet = RegistryPacket(

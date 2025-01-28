@@ -201,9 +201,7 @@ class YoutubeChatAPI:
             if "updateTitleAction" in action:
                 title = _parse_runs(action["updateTitleAction"]["title"])
             if "updateDescriptionAction" in action:
-                description = _parse_runs(
-                    action["updateDescriptionAction"].get("description")
-                )
+                description = _parse_runs(action["updateDescriptionAction"].get("description"))
         metadata = RoomMetadata()
         if viewer_count:
             metadata["viewers"] = viewer_count
@@ -282,9 +280,7 @@ class YoutubeChat(ChatService):
             .map(lambda x: x.get("playerMicroformatRenderer"))
             .get()
         )
-        broadcast_details = (
-            microformat.get("liveBroadcastDetails") if microformat else None
-        )
+        broadcast_details = microformat.get("liveBroadcastDetails") if microformat else None
         if microformat and "publishDate" in microformat:
             created_at = datetime.fromisoformat(microformat["publishDate"])
             self.room.metadata |= {
@@ -340,17 +336,9 @@ class YoutubeChat(ChatService):
             else:
                 logger.warning(f"Unknown chat action: {action}")
         if len(authors) > 0:
-            to_fetch_authors = [
-                author
-                for author in authors
-                if author.id.key() not in self.chat.authors.cache
-            ]
+            to_fetch_authors = [author for author in authors if author.id.key() not in self.chat.authors.cache]
             self.author_fetch_queue.extend(to_fetch_authors)
-            new_authors = [
-                author
-                for author in authors
-                if await self.chat.authors.get(author.id.key()) is None
-            ]
+            new_authors = [author for author in authors if await self.chat.authors.get(author.id.key()) is None]
             await self.chat.authors.add(*new_authors)
         if len(messages) > 0:
             await self.chat.messages.add(*messages)
@@ -579,12 +567,7 @@ class YoutubeChat(ChatService):
                 continue
             emoji_data = payload["emojiFountainDataEntity"]
             for bucket in emoji_data["reactionBuckets"]:
-                reaction_counts.update(
-                    {
-                        reaction["key"]: reaction["value"]
-                        for reaction in bucket.get("reactions", [])
-                    }
-                )
+                reaction_counts.update({reaction["key"]: reaction["value"] for reaction in bucket.get("reactions", [])})
                 reaction_counts.update(
                     {
                         reaction["unicodeEmojiId"]: reaction["reactionCount"]
@@ -601,12 +584,7 @@ class YoutubeChat(ChatService):
         await self.chat.reaction_signal.notify(reaction)
 
     def _parse_author(self, message: AuthorInfo, id: str | None = None) -> Author:
-        name = (
-            traverse(message)
-            .map(lambda x: x.get("authorName"))
-            .map(lambda x: x.get("simpleText"))
-            .get()
-        )
+        name = traverse(message).map(lambda x: x.get("authorName")).map(lambda x: x.get("simpleText")).get()
         id = message.get("authorExternalChannelId") or id
         if id is None:
             raise ProviderError("Could not find author id")
@@ -631,9 +609,7 @@ class YoutubeChat(ChatService):
                 else:
                     raise ProviderError(f"Unknown badge type: {icon_type}")
             elif "customThumbnail" in badge["liveChatAuthorBadgeRenderer"]:
-                custom_thumbnail = badge["liveChatAuthorBadgeRenderer"][
-                    "customThumbnail"
-                ]
+                custom_thumbnail = badge["liveChatAuthorBadgeRenderer"]["customThumbnail"]
                 roles.append(
                     Role(
                         id=custom_thumbnail["thumbnails"][0]["url"],
@@ -653,22 +629,13 @@ class YoutubeChat(ChatService):
         )
 
     def _parse_paid(self, message: LiveChatPaidMessageRenderer) -> Paid:
-        currency_match = re.search(
-            r"[^0-9]+", message["purchaseAmountText"]["simpleText"]
-        )
+        currency_match = re.search(r"[^0-9]+", message["purchaseAmountText"]["simpleText"])
         if currency_match is None:
-            raise ProviderError(
-                "Could not parse currency: "
-                f"{message['purchaseAmountText']['simpleText']}"
-            )
+            raise ProviderError("Could not parse currency: " f"{message['purchaseAmountText']['simpleText']}")
         currency = currency_match.group(0)
-        amount_match = re.search(
-            r"[\d,\.]+", message["purchaseAmountText"]["simpleText"]
-        )
+        amount_match = re.search(r"[\d,\.]+", message["purchaseAmountText"]["simpleText"])
         if amount_match is None:
-            raise ProviderError(
-                f"Could not parse amount: {message['purchaseAmountText']['simpleText']}"
-            )
+            raise ProviderError(f"Could not parse amount: {message['purchaseAmountText']['simpleText']}")
         amount = float(amount_match.group(0).replace(",", ""))
 
         return Paid(

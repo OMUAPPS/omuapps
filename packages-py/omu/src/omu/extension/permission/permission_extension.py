@@ -53,9 +53,7 @@ class PermissionExtension(Extension):
             *self.required_permission_ids,
             *permissions_ids,
         }
-        await self.client.endpoints.call(
-            PERMISSION_REQUEST_ENDPOINT, [*self.required_permission_ids]
-        )
+        await self.client.endpoints.call(PERMISSION_REQUEST_ENDPOINT, [*self.required_permission_ids])
 
     def has(self, permission_identifier: Identifier):
         return permission_identifier in self.permissions

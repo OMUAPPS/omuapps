@@ -27,9 +27,7 @@ class LoggerExtension:
             LOGGER_LOG_PACKET,
             self.handle_log,
         )
-        server.packet_dispatcher.add_packet_handler(
-            LOGGER_LISTEN_PACKET, self.handle_listen
-        )
+        server.packet_dispatcher.add_packet_handler(LOGGER_LISTEN_PACKET, self.handle_listen)
         self.listeners: dict[Identifier, set[Session]] = {}
 
     async def broadcast(self, id: Identifier, message: LogMessage) -> None:

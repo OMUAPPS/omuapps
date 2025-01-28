@@ -108,9 +108,7 @@ class SqliteTableAdapter(TableAdapter):
         cursor_id: int | None = None
         if cursor is None:
             if backward:
-                _cursor = self._conn.execute(
-                    "SELECT id FROM data ORDER BY id DESC LIMIT 1"
-                )
+                _cursor = self._conn.execute("SELECT id FROM data ORDER BY id DESC LIMIT 1")
             else:
                 _cursor = self._conn.execute("SELECT id FROM data ORDER BY id LIMIT 1")
             row = _cursor.fetchone()

@@ -27,9 +27,7 @@ class Identifier(Model[str], Keyable):
         if len(path) == 0:
             raise Exception("Invalid path: Path must have at least one name")
         if not NAMESPACE_REGEX.match(namespace):
-            raise Exception(
-                f"Invalid namespace: Namespace must match {NAMESPACE_REGEX.pattern}"
-            )
+            raise Exception(f"Invalid namespace: Namespace must match {NAMESPACE_REGEX.pattern}")
         for name in path:
             if not NAME_REGEX.match(name):
                 raise Exception(f"Invalid name: Name must match {NAME_REGEX.pattern}")
@@ -74,16 +72,11 @@ class Identifier(Model[str], Keyable):
         return self.format(self.namespace, *self.path)
 
     def get_sanitized_path(self) -> Path:
-        namespace = (
-            f"{sanitize_filename(self.namespace)}-{generate_md5_hash(self.namespace)}"
-        )
+        namespace = f"{sanitize_filename(self.namespace)}-{generate_md5_hash(self.namespace)}"
         return Path(namespace, *self.path)
 
     def is_subpath_of(self, base: Identifier) -> bool:
-        return (
-            self.namespace == base.namespace
-            and self.path[: len(base.path)] == base.path
-        )
+        return self.namespace == base.namespace and self.path[: len(base.path)] == base.path
 
     def is_namepath_equal(
         self,
@@ -92,10 +85,7 @@ class Identifier(Model[str], Keyable):
     ) -> bool:
         if path_length is None:
             path_length = len(self.path)
-        return (
-            self.namespace == other.namespace
-            and self.path[:path_length] == other.path[:path_length]
-        )
+        return self.namespace == other.namespace and self.path[:path_length] == other.path[:path_length]
 
     def join(self, *path: str) -> Identifier:
         return Identifier(self.namespace, *self.path, *path)

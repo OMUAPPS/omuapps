@@ -57,12 +57,8 @@ async def translate(component: Component, lang: Language) -> Component:
 
 
 def is_same_content(a: Component, b: Component) -> bool:
-    texts_a = [
-        sibling.text.lower() for sibling in a.iter() if isinstance(sibling, Text)
-    ]
-    texts_b = [
-        sibling.text.lower() for sibling in b.iter() if isinstance(sibling, Text)
-    ]
+    texts_a = [sibling.text.lower() for sibling in a.iter() if isinstance(sibling, Text)]
+    texts_b = [sibling.text.lower() for sibling in b.iter() if isinstance(sibling, Text)]
     return all(a == b for a, b in zip(texts_a, texts_b, strict=False))
 
 
@@ -82,8 +78,7 @@ async def on_message_add(message: model.Message) -> model.Message:
         translated = await translate(message.content, lang)
         translations[lang] = translated
     if all(
-        is_same_content(translations[lang], translations[config["languages"][0]])
-        for lang in config["languages"][1:]
+        is_same_content(translations[lang], translations[config["languages"][0]]) for lang in config["languages"][1:]
     ):
         message.content = translations[config["languages"][0]]
         return message

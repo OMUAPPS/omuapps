@@ -27,15 +27,9 @@ class SignalExtension:
             SIGNAL_LISTEN_PACKET,
             SIGNAL_NOTIFY_PACKET,
         )
-        server.packet_dispatcher.add_packet_handler(
-            SIGNAL_REGISTER_PACKET, self.handle_register
-        )
-        server.packet_dispatcher.add_packet_handler(
-            SIGNAL_LISTEN_PACKET, self.handle_listen
-        )
-        server.packet_dispatcher.add_packet_handler(
-            SIGNAL_NOTIFY_PACKET, self.handle_notify
-        )
+        server.packet_dispatcher.add_packet_handler(SIGNAL_REGISTER_PACKET, self.handle_register)
+        server.packet_dispatcher.add_packet_handler(SIGNAL_LISTEN_PACKET, self.handle_listen)
+        server.packet_dispatcher.add_packet_handler(SIGNAL_NOTIFY_PACKET, self.handle_notify)
 
     def get_signal(self, id: Identifier) -> ServerSignal:
         if id in self.signals:
@@ -64,9 +58,7 @@ class SignalExtension:
         msg = f"App {session.app.id=} not allowed to access {signal.id=}"
         raise PermissionDenied(msg)
 
-    async def handle_register(
-        self, session: Session, data: SignalRegisterPacket
-    ) -> None:
+    async def handle_register(self, session: Session, data: SignalRegisterPacket) -> None:
         if not data.id.is_subpath_of(session.app.id):
             raise PermissionDenied("App not allowed to register signal")
         signal = self.get_signal(data.id)

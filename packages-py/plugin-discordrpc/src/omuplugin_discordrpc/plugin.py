@@ -115,9 +115,7 @@ class Client:
             if selected_vc is None:
                 await self.stop()
                 return
-            if not await self.is_channel_match(
-                selected_vc.get("guild_id"), selected_vc["id"]
-            ):
+            if not await self.is_channel_match(selected_vc.get("guild_id"), selected_vc["id"]):
                 return
             await self._connect_vc(selected_vc["guild_id"], selected_vc["id"])
 
@@ -145,11 +143,7 @@ class Client:
         session = await session_registry.get()
         if session["guild_id"] and guild_id and session["guild_id"] != guild_id:
             return False
-        if (
-            session["guild_id"]
-            and session["channel_id"]
-            and session["channel_id"] != channel_id
-        ):
+        if session["guild_id"] and session["channel_id"] and session["channel_id"] != channel_id:
             return False
         if guild_id:
             channels = await self.get_channels(guild_id)
@@ -172,21 +166,13 @@ class Client:
         self.guild_id = guild_id
         self.channel_id = channel_id
         session = await session_registry.get()
-        if (
-            session["guild_id"]
-            and session["channel_id"]
-            and channel_id != session["channel_id"]
-        ):
+        if session["guild_id"] and session["channel_id"] and channel_id != session["channel_id"]:
             return
         channel = await self.rpc.get_channel(channel_id)
         if channel is None:
             logger.warning(f"Voice channel {channel_id} not found")
             return
-        guild = (
-            await self.rpc.get_guild(channel["guild_id"])
-            if channel["guild_id"]
-            else None
-        )
+        guild = await self.rpc.get_guild(channel["guild_id"]) if channel["guild_id"] else None
         await selected_vc_channel_registry.set(
             {
                 "guild": guild,
@@ -330,10 +316,7 @@ async def retrieve_open_ports() -> asyncio.Future[list[int]]:
             if is_port_open(port):
                 open_ports.append(port)
 
-        threads = [
-            threading.Thread(target=check_port, args=(port,))
-            for port in range(PORT_MIN, PORT_MAX)
-        ]
+        threads = [threading.Thread(target=check_port, args=(port,)) for port in range(PORT_MIN, PORT_MAX)]
         for thread in threads:
             thread.start()
         for thread in threads:

@@ -126,9 +126,7 @@ def get_rye_directory():
 
 
 def is_venv():
-    return hasattr(sys, "real_prefix") or (
-        hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
-    )
+    return hasattr(sys, "real_prefix") or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
 
 
 def get_python_directory():
@@ -164,8 +162,7 @@ def is_installed():
     for scene in scenes_path.glob("*.json"):
         data = SceneJson(**json.loads(scene.read_text(encoding="utf-8")))
         is_installed = any(
-            Path(launcher_path) == Path(x["path"])
-            for x in data.get("modules", {}).get("scripts-tool", [])
+            Path(launcher_path) == Path(x["path"]) for x in data.get("modules", {}).get("scripts-tool", [])
         )
         if not is_installed:
             return False

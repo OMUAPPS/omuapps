@@ -22,9 +22,7 @@ class PluginConnection(Connection):
     def add_receive(self, packet: Packet) -> None:
         self._to_client_queue.put_nowait(packet)
 
-    async def send(
-        self, packet: Packet, packet_mapper: Serializable[Packet, PacketData]
-    ) -> None:
+    async def send(self, packet: Packet, packet_mapper: Serializable[Packet, PacketData]) -> None:
         self._to_server_queue.put_nowait(packet)
 
     async def dequeue_to_server_packet(self) -> Packet:

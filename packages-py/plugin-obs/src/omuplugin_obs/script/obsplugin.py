@@ -290,9 +290,7 @@ async def source_get_by_name(request: SourceGetByNameRequest) -> SourceJson:
     source_json = source_to_json(scene_item)
     try:
         if source_json is None:
-            raise ValueError(
-                f"Source with type {scene_item.source.id} is not supported"
-            )
+            raise ValueError(f"Source with type {scene_item.source.id} is not supported")
     finally:
         scene_item.release()
     return source_json

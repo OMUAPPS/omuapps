@@ -47,9 +47,7 @@ class PermissionManager:
         self._token_generator = TokenGenerator()
         self.permissions: dict[Identifier, PermissionType] = {}
         self.token_permissions: dict[str, list[Identifier]] = {}
-        self._token_db = sqlite3.connect(
-            server.directories.get("security") / "tokens.sqlite"
-        )
+        self._token_db = sqlite3.connect(server.directories.get("security") / "tokens.sqlite")
         self._token_db.execute(
             """
             CREATE TABLE IF NOT EXISTS tokens (
@@ -81,9 +79,7 @@ class PermissionManager:
         for row in cursor:
             token = row[0]
             permissions = json.loads(row[1])
-            self.token_permissions[token] = [
-                Identifier.from_key(key) for key in permissions
-            ]
+            self.token_permissions[token] = [Identifier.from_key(key) for key in permissions]
 
     def store_permissions(self) -> None:
         cursor = self.permission_db.cursor()
@@ -100,9 +96,7 @@ class PermissionManager:
         self.token_permissions[token] = list(permission_ids)
         self.store_permissions()
 
-    def register(
-        self, *permission_types: PermissionType, overwrite: bool = False
-    ) -> None:
+    def register(self, *permission_types: PermissionType, overwrite: bool = False) -> None:
         for permission in permission_types:
             if permission.id in self.permissions and not overwrite:
                 raise ValueError(f"Permission {permission.id} already registered")
@@ -184,9 +178,7 @@ class PermissionManager:
                 return Ok((AppType.APP, SessionPermissionHandle(self, token), token))
             verified = await self.validate_app_token(app, token)
             if not verified:
-                logger.warning(
-                    f"Generating new token for app {app} due to invalid token"
-                )
+                logger.warning(f"Generating new token for app {app} due to invalid token")
                 token = await self.generate_app_token(app)
             return Ok((AppType.APP, SessionPermissionHandle(self, token), token))
         else:

@@ -125,22 +125,12 @@ class EndpointExtension:
             ENDPOINT_RECEIVE_PACKET,
             ENDPOINT_ERROR_PACKET,
         )
-        server.packet_dispatcher.add_packet_handler(
-            ENDPOINT_REGISTER_PACKET, self.handle_register
-        )
-        server.packet_dispatcher.add_packet_handler(
-            ENDPOINT_CALL_PACKET, self.handle_call
-        )
-        server.packet_dispatcher.add_packet_handler(
-            ENDPOINT_RECEIVE_PACKET, self.handle_receive
-        )
-        server.packet_dispatcher.add_packet_handler(
-            ENDPOINT_ERROR_PACKET, self.handle_error
-        )
+        server.packet_dispatcher.add_packet_handler(ENDPOINT_REGISTER_PACKET, self.handle_register)
+        server.packet_dispatcher.add_packet_handler(ENDPOINT_CALL_PACKET, self.handle_call)
+        server.packet_dispatcher.add_packet_handler(ENDPOINT_RECEIVE_PACKET, self.handle_receive)
+        server.packet_dispatcher.add_packet_handler(ENDPOINT_ERROR_PACKET, self.handle_error)
 
-    async def handle_register(
-        self, session: Session, packet: EndpointRegisterPacket
-    ) -> None:
+    async def handle_register(self, session: Session, packet: EndpointRegisterPacket) -> None:
         for id, permission in packet.endpoints.items():
             if not id.is_subpath_of(session.app.id):
                 msg = f"App {session.app.key()} not allowed to register endpoint {id}"
@@ -172,21 +162,15 @@ class EndpointExtension:
         if endpoint.permission and session.permission_handle.has(endpoint.permission):
             return
         logger.warning(
-            f"{session.app.key()} tried to call endpoint {endpoint.id} "
-            f"without permission {endpoint.permission}"
+            f"{session.app.key()} tried to call endpoint {endpoint.id} " f"without permission {endpoint.permission}"
         )
-        error = (
-            f"Permission denied for endpoint {endpoint.id} "
-            f"with permission {endpoint.permission}"
-        )
+        error = f"Permission denied for endpoint {endpoint.id} " f"with permission {endpoint.permission}"
         raise PermissionDenied(error)
 
     async def handle_call(self, session: Session, packet: EndpointDataPacket) -> None:
         endpoint = await self._get_endpoint(packet, session)
         if endpoint is None:
-            logger.warning(
-                f"{session.app.key()} tried to call unknown endpoint {packet.id}"
-            )
+            logger.warning(f"{session.app.key()} tried to call unknown endpoint {packet.id}")
             await session.send(
                 ENDPOINT_ERROR_PACKET,
                 EndpointErrorPacket(
@@ -202,9 +186,7 @@ class EndpointExtension:
         key = (packet.id, packet.key)
         self._calls[key] = EndpointCall(session, packet)
 
-    async def handle_receive(
-        self, session: Session, packet: EndpointDataPacket
-    ) -> None:
+    async def handle_receive(self, session: Session, packet: EndpointDataPacket) -> None:
         key = (packet.id, packet.key)
         call = self._calls.get(key)
         if call is None:
@@ -234,9 +216,7 @@ class EndpointExtension:
         else:
             await call.error(packet.error)
 
-    async def _get_endpoint(
-        self, packet: EndpointDataPacket, session: Session
-    ) -> Endpoint | None:
+    async def _get_endpoint(self, packet: EndpointDataPacket, session: Session) -> Endpoint | None:
         endpoint = self._endpoints.get(packet.id)
         if endpoint is None:
             await session.send(
@@ -247,8 +227,6 @@ class EndpointExtension:
                     error=f"Endpoint {packet.id} not found",
                 ),
             )
-            logger.warning(
-                f"{session.app.key()} tried to call unconnected endpoint {packet.id}"
-            )
+            logger.warning(f"{session.app.key()} tried to call unconnected endpoint {packet.id}")
             return
         return endpoint
