@@ -5,7 +5,7 @@ description = "チャットを管理するためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu_chat>=0.8.9", "iwashi>=3.1.0"]
+dependencies = ["loguru>=0.7.2", "omu_chat>=0.8.9", "iwashi>=3.1.1"]
 readme = "README.md"
 requires-python = ">= 3.12"
 
