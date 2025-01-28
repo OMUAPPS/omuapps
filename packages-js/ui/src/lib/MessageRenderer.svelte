@@ -115,7 +115,9 @@
                                         <p>{$translate('panels.messages.see_in_room')}</p>
                                         <p>
                                             {
-                                                (time.getTime() / 1000 > 60*60 ? Math.floor(time.getTime() / 1000 / 60 / 60)+'h ' : '')+
+                                                (time.getTime() / 1000 > 60*60*24*30 ? Math.floor(time.getTime() / 1000 / 60 / 60 / 24 / 30)+'/' : '')+
+                                                    (time.getTime() / 1000 > 60*60*24 ? Math.floor(time.getTime() / 1000 / 60 / 60 / 24) % 30+' ' : '')+
+                                                    (time.getTime() / 1000 > 60*60 ? Math.floor(time.getTime() / 1000 / 60 / 60) % 24+'h ' : '')+
                                                     time.getMinutes().toString().padStart(2, '0')+'m '+
                                                     time.getSeconds().toString().padStart(2, '0')+'s'
                                             }
