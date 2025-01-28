@@ -1,8 +1,5 @@
-import os
-import sys
 from collections.abc import Generator
 from pathlib import Path
-from typing import TypedDict
 
 import psutil
 
@@ -20,19 +17,6 @@ def safe_path(root_path: Path, input_path: Path) -> Path:
 
 def safe_path_join(root: Path, *paths: Path | str) -> Path:
     return root / safe_path(root, root.joinpath(*paths))
-
-
-class LaunchCommand(TypedDict):
-    cwd: str
-    args: list[str]
-
-
-def get_launch_command() -> LaunchCommand:
-    args = [sys.executable, "-m", "omuserver", *sys.argv[1:]]
-    return {
-        "cwd": os.getcwd(),
-        "args": args,
-    }
 
 
 def find_processes_by_port(port: int) -> Generator[psutil.Process, None, None]:
