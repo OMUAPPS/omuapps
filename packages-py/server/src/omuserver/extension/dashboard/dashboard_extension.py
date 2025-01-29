@@ -58,6 +58,7 @@ if TYPE_CHECKING:
 
 class DashboardExtension:
     def __init__(self, server: Server) -> None:
+        self.server = server
         server.packets.register(
             DASHBOARD_PERMISSION_REQUEST_PACKET,
             DASHBOARD_PERMISSION_ACCEPT_PACKET,
@@ -93,7 +94,6 @@ class DashboardExtension:
         server.endpoints.bind(DASHBOARD_APP_INSTALL_ENDPOINT, self.handle_dashboard_app_install)
         server.endpoints.bind(DASHBOARD_APP_UPDATE_ENDPOINT, self.handle_dashboard_app_update)
         server.network.event.connected += self.handle_session_connected
-        self.server = server
         self.apps = server.tables.register(DASHBOARD_APP_TABLE_TYPE)
         self.dashboard_session: Session | None = None
         self.pending_permission_requests: dict[str, PermissionRequestPacket] = {}
