@@ -14,31 +14,33 @@ from omu.extension.plugin.plugin_extension import (
     ReloadOptions,
     ReloadResult,
 )
+from omu.network.packet.packet_types import DisconnectType
 
 from omuserver.session import Session
 
-from .plugin_loader import DependencyResolver, PluginLoader
+from .plugin_loader import DependencyResolver, PluginLoader, RequiredVersionTooOld
 from .plugin_permissions import PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION
 
 if TYPE_CHECKING:
     from omuserver.server import Server
+RESTART = True
 
 
 class PluginExtension:
     def __init__(self, server: Server) -> None:
-        self.server = server
-        server.packets.register(PLUGIN_REQUIRE_PACKET)
-        server.packets.bind(PLUGIN_REQUIRE_PACKET, self.handle_require_packet)
+        self.allowed_packages = server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
         server.security.register(PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION)
-        server.endpoints.bind(PLUGIN_RELOAD_ENDPOINT_TYPE, self.handle_reload)
+        server.packets.register(PLUGIN_REQUIRE_PACKET)
         server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
+        server.packets.bind(PLUGIN_REQUIRE_PACKET, self.handle_require)
+        server.endpoints.bind(PLUGIN_RELOAD_ENDPOINT_TYPE, self.handle_reload)
         server.network.event.start += self.on_network_start
         server.event.stop += self.on_stop
+        self.server = server
         self.request_id = 0
         self.lock = asyncio.Lock()
         self.loader = PluginLoader(server)
         self.dependency_resolver = DependencyResolver()
-        self.allowed_packages = server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
 
     async def on_network_start(self) -> None:
         await self.loader.run_plugins()
@@ -70,23 +72,30 @@ class PluginExtension:
         if not accepted:
             raise Exception("Request was not accepted")
 
-    async def handle_require_packet(self, session: Session, packages: dict[str, str | None]) -> None:
-        if not packages:
+    async def handle_require(self, session: Session, requirements: dict[str, str | None]) -> None:
+        if not requirements:
             return
 
         async def task():
             if session.kind != AppType.DASHBOARD:
-                await self.open_request_plugin_dialog(session, packages)
+                await self.open_request_plugin_dialog(session, requirements)
 
             self.dependency_resolver.find_packages_distributions()
-            changed = self.dependency_resolver.add_dependencies(packages)
+            try:
+                changed = self.dependency_resolver.add_dependencies(requirements)
+            except RequiredVersionTooOld as e:
+                await session.disconnect(DisconnectType.INVALID_VERSION, str(e))
+                return
 
             if not changed:
                 return
 
             async with self.lock:
                 resolve_result = await self.dependency_resolver.resolve()
-                await self.loader.update_plugins(resolve_result)
+                if RESTART:
+                    await self.server.restart()
+                else:
+                    await self.loader.update_plugins(resolve_result)
 
         session.add_ready_task(task)
 

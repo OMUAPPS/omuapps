@@ -90,15 +90,27 @@ class PluginInstance:
 
     async def notify_install(self, ctx: InstallContext):
         if self.plugin.on_install is not None:
-            await self.plugin.on_install(ctx)
+            arg_count = self.plugin.on_install.__code__.co_argcount
+            if arg_count == 1:
+                await self.plugin.on_install(ctx)
+            elif arg_count == 0:
+                await self.plugin.on_install()  # type: ignore
 
     async def notify_uninstall(self, ctx: InstallContext):
         if self.plugin.on_uninstall is not None:
-            await self.plugin.on_uninstall(ctx)
+            arg_count = self.plugin.on_uninstall.__code__.co_argcount
+            if arg_count == 1:
+                await self.plugin.on_uninstall(ctx)
+            elif arg_count == 0:
+                await self.plugin.on_uninstall()  # type: ignore
 
     async def notify_update(self, ctx: InstallContext):
         if self.plugin.on_update is not None:
-            await self.plugin.on_update(ctx)
+            arg_count = self.plugin.on_update.__code__.co_argcount
+            if arg_count == 1:
+                await self.plugin.on_update(ctx)
+            elif arg_count == 0:
+                await self.plugin.on_update()  # type: ignore
 
     async def reload(self):
         deep_reload(self.module)

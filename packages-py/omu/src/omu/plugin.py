@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from omuserver.server import Server
 
-from omu.helper import Coro
+from omu.helper import AsyncCallback
 
 from .client import Client
 
@@ -34,11 +34,11 @@ class InstallContext:
 @dataclass(frozen=True, slots=True)
 class Plugin:
     get_client: Callable[[], Client] | None = None
-    on_start: Coro[[Server], None] | None = None
-    on_stop: Coro[[Server], None] | None = None
-    on_install: Coro[[InstallContext], None] | None = None
-    on_uninstall: Coro[[InstallContext], None] | None = None
-    on_update: Coro[[InstallContext], None] | None = None
+    on_start: AsyncCallback[[Server]] | None = None
+    on_stop: AsyncCallback[[Server]] | None = None
+    on_install: AsyncCallback[[InstallContext]] | None = None
+    on_uninstall: AsyncCallback[[InstallContext]] | None = None
+    on_update: AsyncCallback[[InstallContext]] | None = None
     isolated: bool = True
 
     def __post_init__(self):

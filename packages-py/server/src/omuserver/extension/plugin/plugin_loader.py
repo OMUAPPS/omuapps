@@ -32,6 +32,10 @@ class PluginModule(Protocol):
     plugin: Plugin
 
 
+class RequiredVersionTooOld(Exception):
+    pass
+
+
 class DependencyResolver:
     def __init__(self) -> None:
         self._dependencies: dict[str, SpecifierSet] = {}
@@ -96,20 +100,42 @@ class DependencyResolver:
         installed_version = Version(package_info.version)
         return installed_version in specifier
 
+    def _get_minimum_version(self, specifier: SpecifierSet) -> Version:
+        minimum_version = Version("0")
+        for spec in specifier:
+            if spec.operator == ">=":
+                minimum_version = max(minimum_version, Version(spec.version))
+            elif spec.operator == "==":
+                minimum_version = Version(spec.version)
+        return minimum_version
+
+    def is_package_version_too_old(self, package: str, specifier: SpecifierSet) -> bool:
+        exist_package = self._packages_distributions.get(package)
+        if exist_package is None:
+            return False
+        exist_version = Version(exist_package.version)
+        minimum_version = self._get_minimum_version(specifier)
+        return minimum_version < exist_version
+
     def add_dependencies(self, dependencies: Mapping[str, str | None]) -> bool:
         changed = False
+        new_dependencies: dict[str, SpecifierSet] = {}
         for package, specifier in dependencies.items():
             specifier = SpecifierSet(specifier or "")
             package_info = self._packages_distributions.get(package)
             if package_info is None:
-                self._dependencies[package] = specifier
+                new_dependencies[package] = specifier
                 changed = True
                 continue
             satisfied = self.is_package_satisfied(package, specifier)
             if satisfied:
                 continue
-            self._dependencies[package] = specifier or SpecifierSet()
+            too_old = self.is_package_version_too_old(package, specifier)
+            if too_old:
+                raise RequiredVersionTooOld(f"Package {package} is too old: {package_info.version}")
+            new_dependencies[package] = specifier or SpecifierSet()
             changed = True
+        self._dependencies.update(new_dependencies)
         return changed
 
     def find_packages_distributions(
@@ -209,55 +235,67 @@ class PluginLoader:
     async def update_plugins(self, resolve_result: ResolveResult):
         restart_required = False
         plugins_pending_start: list[PluginInstance] = []
-        for new_package in resolve_result.new_packages:
-            entry_points = tuple(importlib.metadata.entry_points(group=PLUGIN_GROUP, module=new_package))
-            if len(entry_points) == 0:
-                logger.warning(f"Plugin {new_package} has no entry points")
+        new_packages = resolve_result.new_packages
+        for updated_package in resolve_result.updated_packages.keys():
+            instance = self.instances.get(updated_package)
+            if instance is not None:
                 continue
-            if len(entry_points) > 1:
-                logger.warning(f"Plugin {new_package} has multiple entry points {entry_points}")
-                continue
-            entry_point = entry_points[0]
-            if entry_point.dist is None:
-                raise ValueError(f"Invalid plugin: {entry_point} has no distribution")
-            if entry_point.dist.name != new_package:
-                continue
-            instance = PluginInstance.try_load(entry_point)
-            if instance is None:
-                logger.warning(f"Failed to load plugin: {entry_point}")
-                continue
-            self.instances[new_package] = instance
-            ctx = InstallContext(
-                server=self._server,
-                new_distribution=entry_point.dist,
-            )
-            await instance.notify_install(ctx)
-            if ctx.restart_required:
-                restart_required = True
-                logger.info(f"Plugin {instance.plugin} requires restart")
-            else:
-                plugins_pending_start.append(instance)
+            new_packages.append(updated_package)
+        for new_package in new_packages:
+            try:
+                entry_points = tuple(importlib.metadata.entry_points(group=PLUGIN_GROUP, module=new_package))
+                if len(entry_points) == 0:
+                    logger.warning(f"Plugin {new_package} has no entry points")
+                    continue
+                if len(entry_points) > 1:
+                    logger.warning(f"Plugin {new_package} has multiple entry points {entry_points}")
+                    continue
+                entry_point = entry_points[0]
+                if entry_point.dist is None:
+                    raise ValueError(f"Invalid plugin: {entry_point} has no distribution")
+                if entry_point.dist.name != new_package:
+                    continue
+                instance = PluginInstance.try_load(entry_point)
+                if instance is None:
+                    logger.warning(f"Failed to load plugin: {entry_point}")
+                    continue
+                self.instances[new_package] = instance
+                ctx = InstallContext(
+                    server=self._server,
+                    new_distribution=entry_point.dist,
+                )
+                await instance.notify_install(ctx)
+                if ctx.restart_required:
+                    restart_required = True
+                    logger.info(f"Plugin {instance.plugin} requires restart")
+                else:
+                    plugins_pending_start.append(instance)
+            except Exception as e:
+                logger.opt(exception=e).error(f"Error installing plugin {new_package}")
 
         for updated_package, dist in resolve_result.updated_packages.items():
-            instance = self.instances.get(updated_package)
-            if instance is None:
-                continue
-            distribution = importlib.metadata.distribution(updated_package)
-            await instance.terminate(self._server)
-            await instance.reload()
-            ctx = InstallContext(
-                server=self._server,
-                old_distribution=distribution,
-                new_distribution=dist,
-                old_plugin=instance.plugin,
-            )
-            await instance.notify_update(ctx)
-            await instance.notify_install(ctx)
-            if ctx.restart_required:
-                restart_required = True
-                logger.info(f"Plugin {instance.plugin} requires restart")
-            else:
-                plugins_pending_start.append(instance)
+            try:
+                instance = self.instances.get(updated_package)
+                if instance is None:
+                    continue
+                distribution = importlib.metadata.distribution(updated_package)
+                await instance.terminate(self._server)
+                await instance.reload()
+                ctx = InstallContext(
+                    server=self._server,
+                    old_distribution=distribution,
+                    new_distribution=dist,
+                    old_plugin=instance.plugin,
+                )
+                await instance.notify_update(ctx)
+                await instance.notify_install(ctx)
+                if ctx.restart_required:
+                    restart_required = True
+                    logger.info(f"Plugin {instance.plugin} requires restart")
+                else:
+                    plugins_pending_start.append(instance)
+            except Exception as e:
+                logger.opt(exception=e).error(f"Error updating plugin {updated_package}")
 
         if restart_required:
             await self._server.restart()
