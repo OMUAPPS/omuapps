@@ -116,11 +116,7 @@ def get_obs_path():
 
 
 def get_rye_directory():
-    version_string = "cpython@%d.%d.%d" % (
-        sys.version_info.major,
-        sys.version_info.minor,
-        sys.version_info.micro,
-    )
+    version_string = f"cpython@{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     rye_dir = Path.home() / ".rye" / "py" / version_string
     return rye_dir
 
@@ -161,10 +157,18 @@ def is_installed():
     scenes_path = obs_path / "basic" / "scenes"
     for scene in scenes_path.glob("*.json"):
         data = SceneJson(**json.loads(scene.read_text(encoding="utf-8")))
-        is_installed = any(
-            Path(launcher_path) == Path(x["path"]) for x in data.get("modules", {}).get("scripts-tool", [])
-        )
-        if not is_installed:
+        scripts = data.get("modules", {}).get("scripts-tool", [])
+        found = False
+        for script in scripts:
+            path_text = script.get("path")
+            if not path_text:
+                continue
+            path = Path(path_text)
+            if path.name == launcher_path.name and not path.samefile(launcher_path):
+                return False
+            if path.samefile(launcher_path):
+                found = True
+        if not found:
             return False
 
     python_path = get_python_directory()
@@ -191,21 +195,25 @@ def setup_python_path():
     obsconfig.save_configuration(path, config)
 
 
-def install_script(launcher: Path, scene: Path):
+def install_script(script_path: Path, scene: Path):
     data = SceneJson(**json.loads(scene.read_text(encoding="utf-8")))
     scripts = data.get("modules", {}).get("scripts-tool", [])
+    filtered_scripts: list[ScriptToolJson] = []
+    for script in scripts:
+        path_text = script.get("path")
+        if not path_text:
+            continue
+        path = Path(path_text)
+        if not path.exists():
+            continue
+        if path.name == script_path.name:
+            continue
+        if path.samefile(script_path):
+            continue
+        filtered_scripts.append(script)
 
-    is_script_installed = any(Path(launcher) == Path(x["path"]) for x in scripts)
-    if is_script_installed:
-        return
-
-    data["modules"]["scripts-tool"] = [
-        *scripts,
-        {
-            "path": str(launcher),
-            "settings": {},
-        },
-    ]
+    filtered_scripts.append({"path": str(script_path), "settings": {}})
+    data["modules"]["scripts-tool"] = filtered_scripts
     scene.write_text(json.dumps(data), encoding="utf-8")
 
 
@@ -226,12 +234,7 @@ def relaunch_obs():
 def write_config(dashboard_bin: Path | None):
     launch_command = None
     if dashboard_bin:
-        launch_command = {
-            "args": [
-                str(dashboard_bin),
-                "--background",
-            ]
-        }
+        launch_command = {"args": [str(dashboard_bin), "--background"]}
     config_path = get_config_path()
     config_path.write_text(
         json.dumps({"python_path": get_python_directory(), "launch": launch_command}),
@@ -246,13 +249,13 @@ async def install(server: Server):
     try:
         if is_installed():
             return
-
         if ensure_obs_stop():
             return
+
         setup_python_path()
         install_all_scene()
 
         relaunch_obs()
-    except Exception:
-        logger.opt(exception=True).error("Failed to install OBS plugin: {e}")
-        raise
+    except Exception as e:
+        logger.opt(exception=e).error("Failed to install OBS plugin")
+        raise e
