@@ -254,6 +254,13 @@
                             <i class="ti ti-reload"></i>
                         </button>
                         <UpdateButton />
+                        <button class="primary" on:click={async () => {
+                            await invoke('clean_environment');
+                            await relaunch();
+                        }}>
+                            環境を再構築
+                            <i class="ti ti-reload"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="debug">
