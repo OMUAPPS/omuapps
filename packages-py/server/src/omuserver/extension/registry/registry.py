@@ -26,7 +26,7 @@ class ServerRegistry:
         self.id = id
         self.permissions = permissions or RegistryPermissions()
         self._listeners: dict[Identifier, tuple[Session, Unlisten]] = {}
-        self._path = server.directories.get("registry") / id.get_sanitized_path().with_suffix(".json")
+        self._path = server.directories.get("registry") / id.get_sanitized_path()
         self._changed = False
         self.value: bytes | None = None
         self.save_task: asyncio.Task | None = None
