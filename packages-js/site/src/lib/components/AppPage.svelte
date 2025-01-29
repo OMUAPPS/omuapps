@@ -44,10 +44,29 @@
         <p>無効なオリジンです</p>
         <small>{message}</small>
     </div>
+{:else if state === DisconnectType.INVALID_VERSION}
+    <div class="modal">
+        <p>無効なバージョンです</p>
+        <small>{message}</small>
+    </div>
+{:else if state === DisconnectType.INVALID_TOKEN}
+    <div class="modal">
+        <p>無効な認証情報です</p>
+        <small>{message}</small>
+    </div>
+{:else if state === DisconnectType.SERVER_RESTART}
+    <div class="modal">
+        <p>サーバーが再起動されました</p>
+    </div>
 {:else if state === DisconnectType.CLOSE}
     <div class="modal">
         <p>接続が切断されました</p>
         <button on:click={() => location.reload()}>再接続</button>
+    </div>
+{:else}
+    <div class="modal">
+        <p>エラーが発生しました</p>
+        <small>{message}</small>
     </div>
 {/if}
 
