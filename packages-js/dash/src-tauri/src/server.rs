@@ -4,7 +4,7 @@ use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use log::info;
+use log::{info, warn};
 use rand::Rng;
 use tauri::utils::platform::current_exe;
 use tauri::{AppHandle, Manager};
@@ -60,9 +60,8 @@ impl Server {
                 ),
             });
             Self::stop_server(&python, &option).map_err(|err| {
-                on_progress(Progress::ServerStopFailed { msg: err.clone() });
-                err
-            })?;
+                warn!("Failed to stop server: {}", err);
+            });
             already_started = false;
         }
 
@@ -243,22 +242,6 @@ impl Server {
             stderr,
         };
         *self.process.lock().unwrap() = Some(process);
-        Ok(())
-    }
-
-    pub fn stop(&self, on_progress: &(impl Fn(Progress) + Send + 'static)) -> Result<(), String> {
-        let process = self.process.lock().unwrap().take();
-        if process.is_none() {
-            return Err("Server is not running".to_string());
-        }
-        let mut process = process.unwrap();
-        process.handle.kill().map_err(|err| {
-            let msg = format!("Failed to stop server: {}", err);
-            on_progress(Progress::ServerStopFailed { msg: msg.clone() });
-            msg
-        })?;
-        process.stdout.join().unwrap();
-        process.stderr.join().unwrap();
         Ok(())
     }
 
