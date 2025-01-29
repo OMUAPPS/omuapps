@@ -164,6 +164,8 @@ def is_installed():
             if not path_text:
                 continue
             path = Path(path_text)
+            if not path.exists():
+                continue
             if path.name == launcher_path.name and not path.samefile(launcher_path):
                 return False
             if path.samefile(launcher_path):
