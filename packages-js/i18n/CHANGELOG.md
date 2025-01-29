@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.10 (2025-01-29)
+
+
+### Bug Fixes
+
+* **plugin-obs:** 同じ名前のスクリプトを消すようにする ([6f5ca48](https://github.com/OMUAPPS/omuapps/commit/6f5ca48274f841d630bb0ddf5348222bb143ba36))
+
+
+
+
+
 ## 0.8.9 (2025-01-21)
 
 
