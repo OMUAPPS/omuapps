@@ -247,7 +247,8 @@ async def install(server: Server):
         if is_installed():
             return
 
-        ensure_obs_stop()
+        if ensure_obs_stop():
+            return
         setup_python_path()
         install_all_scene()
 
