@@ -2,14 +2,14 @@
     import { DisconnectType } from '@omujs/omu/network/packet/packet-types.js';
     import { client, Spinner } from '@omujs/ui';
 
-    let state: 'loading' | 'loaded' | DisconnectType = 'loaded';
+    let state: 'loading' | DisconnectType | null = 'loading';
     let message: string | null = null;
 
     state = 'loading';
     client.subscribe((omu) => {
         if (!omu) return;
         omu.onReady(() => {
-            state = 'loaded';
+            state = null;
         });
         omu.network.event.disconnected.listen((reason) => {
             state = 'loading';
@@ -63,10 +63,10 @@
         <p>接続が切断されました</p>
         <button on:click={() => location.reload()}>再接続</button>
     </div>
-{:else}
+{:else if state !== null}
     <div class="modal">
         <p>エラーが発生しました</p>
-        <small>{message}</small>
+        <small>{JSON.stringify(state)}</small>
     </div>
 {/if}
 
