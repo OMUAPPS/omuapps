@@ -167,7 +167,12 @@ class Session:
             raise RuntimeError("Session is already ready")
         self.ready = True
         for task in self.ready_tasks:
-            await task.coro()
+            try:
+                await task.coro()
+            except Exception as e:
+                logger.opt(exception=e).error(f"Error while processing ready task {task.name}")
+                await self.disconnect(DisconnectType.INTERNAL_ERROR, "Error while processing ready tasks")
+                return
         self.ready_tasks.clear()
         for waiter in self.ready_waiters:
             waiter.set_result(None)
