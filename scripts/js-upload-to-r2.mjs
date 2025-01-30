@@ -107,7 +107,6 @@ async function uploadVersion() {
 
 async function uploadBeta() {
     const urls = await uploadVersion();
-    await uploadToR2('./release-assets/latest.json', 'app/latest-beta.json');
 
     const releaseData = {
         version: VERSION,
@@ -134,12 +133,39 @@ async function uploadBeta() {
         JSON.stringify(releaseData, null, 4)
     );
     await uploadToR2('./release-assets/version-beta.json', 'app/version-beta.json');
+
+    const original = await fs.readFile('./release-assets/latest.json', 'utf-8');
+    const release = JSON.parse(original);
+    release.platforms = Object.fromEntries(
+        await Promise.all(PLATFORMS.map(async platform => {
+            const existing = original.platforms[platform.type];
+            if (!existing) {
+                throw new Error(`Platform not found: ${platform.type}`);
+            }
+            const { type, filename } = platform;
+            const name = filename
+                .replace('{NAME_UPPER}', 'OMUAPPS')
+                .replace('{NAME_LOWER}', 'omuapps')
+                .replace('{VERSION}', VERSION);
+            const url = urls[name];
+            if (!url) {
+                throw new Error(`URL not found: ${name}`);
+            }
+            return [type, {
+                url,
+                signature: existing.signature,
+            }];
+        }))
+    );
+    await fs.writeFile(
+        './release-assets/latest-beta.json',
+        JSON.stringify(release, null, 4)
+    );
+    await uploadToR2('./release-assets/latest.json', 'app/latest.json');
 }
 
 async function graduateBeta() {
     const urls = await uploadVersion();
-
-    await uploadToR2('./release-assets/latest.json', 'app/latest.json');
 
     const releaseData = {
         version: VERSION,
@@ -166,6 +192,35 @@ async function graduateBeta() {
         JSON.stringify(releaseData, null, 4)
     );
     await uploadToR2('./release-assets/version.json', 'app/version.json');
+
+    const original = await fs.readFile('./release-assets/latest.json', 'utf-8');
+    const release = JSON.parse(original);
+    release.platforms = Object.fromEntries(
+        await Promise.all(PLATFORMS.map(async platform => {
+            const existing = original.platforms[platform.type];
+            if (!existing) {
+                throw new Error(`Platform not found: ${platform.type}`);
+            }
+            const { type, filename } = platform;
+            const name = filename
+                .replace('{NAME_UPPER}', 'OMUAPPS')
+                .replace('{NAME_LOWER}', 'omuapps')
+                .replace('{VERSION}', VERSION);
+            const url = urls[name];
+            if (!url) {
+                throw new Error(`URL not found: ${name}`);
+            }
+            return [type, {
+                url,
+                signature: existing.signature,
+            }];
+        }))
+    );
+    await fs.writeFile(
+        './release-assets/latest.json',
+        JSON.stringify(release, null, 4)
+    );
+    await uploadToR2('./release-assets/latest.json', 'app/latest.json');
 }
 
 await downloadRelease();
