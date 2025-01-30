@@ -103,8 +103,13 @@
         return new Promise<void>((resolve, reject) => {
             omu.onReady(() => {
                 resolve();
+                disconnectPacket = null;
+                promise = Promise.resolve();
             });
             omu.network.event.disconnected.listen((packet) => {
+                if (packet?.type === DisconnectType.SERVER_RESTART) {
+                    return;
+                }
                 disconnectPacket = packet;
                 reject(packet);
             }); 
