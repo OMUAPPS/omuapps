@@ -212,6 +212,9 @@
     }}
     on:keydown={handleKeyDown}
     on:wheel={handleMouseWheel}
+    on:resize={() => {
+        rect = element.getBoundingClientRect();
+    }}
     draggable="false"
     style:opacity={$dragUser && $dragUser != id ? 0.2 : 1}
 >
