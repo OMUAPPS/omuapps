@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.15 (2025-01-30)
+
+
+### Bug Fixes
+
+* **omu, site:** 内部エラー時のエラー表示を追加 ([a37c800](https://github.com/OMUAPPS/omuapps/commit/a37c80061b1ae828b310a2b34923d4ce68e03345))
+
+
+
+
+
 ## 0.8.14 (2025-01-30)
 
 **Note:** Version bump only for package @omujs/obs
