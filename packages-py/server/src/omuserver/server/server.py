@@ -32,6 +32,7 @@ from omuserver.security.security import PermissionManager
 from omuserver.version import VERSION
 
 USER_AGENT_HEADERS = {"User-Agent": json.dumps(["omu", {"name": "omuserver", "version": VERSION}])}
+RESTART_EXIT_CODE = 100
 
 
 class Server:
@@ -170,7 +171,7 @@ class Server:
             cwd=os.getcwd(),
         )
         logger.info(f"Restarting server with PID {child.pid}")
-        os._exit(0)
+        os._exit(RESTART_EXIT_CODE)
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:

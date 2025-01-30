@@ -56,6 +56,7 @@ export type Progress = (
 )
 type Events = {
     server_state: Progress;
+    server_restart: unknown;
     'single-instance': {
         args: string[],
         cwd: string,

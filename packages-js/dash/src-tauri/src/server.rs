@@ -30,8 +30,8 @@ pub struct Server {
     option: ServerOption,
     python: Python,
     uv: Uv,
-    app_handle: Arc<Mutex<Option<AppHandle>>>,
     process: Arc<Mutex<Option<ServerProcess>>>,
+    app_handle: Arc<Mutex<Option<AppHandle>>>,
     pub token: String,
     pub already_started: bool,
 }
@@ -87,8 +87,8 @@ impl Server {
             option,
             python,
             uv,
-            app_handle,
             process: Arc::new(Mutex::new(None)),
+            app_handle,
             token,
             already_started,
         };
@@ -245,6 +245,36 @@ impl Server {
             stderr,
         };
         *self.process.lock().unwrap() = Some(process);
+        let process = self.process.clone();
+        let app_handle = self.app_handle.clone();
+        std::thread::spawn(move || {
+            let exit = process.lock().unwrap().as_mut().unwrap().handle.wait();
+            *process.lock().unwrap() = None;
+            if let Err(err) = &exit {
+                warn!("Server process exited with error: {}", err);
+            }
+            // if exit code is 100, it means the server is going to restart
+            if let Ok(code) = &exit {
+                let code = code.code().unwrap_or(0);
+                if code == 0 {
+                    info!("Server process exited with code: {}", code);
+                } else if code != 100 {
+                    warn!("Server process exited with code: {}", code);
+                    let app_handle = app_handle.lock().unwrap();
+                    if let Some(app_handle) = &*app_handle {
+                        app_handle
+                            .emit_all(
+                                "server_state",
+                                Progress::ServerStopped {
+                                    msg: format!("Server exited with code {}", code),
+                                },
+                            )
+                            .unwrap();
+                    }
+                }
+                info!("Server process exited with code: {}", code);
+            }
+        });
         Ok(())
     }
 

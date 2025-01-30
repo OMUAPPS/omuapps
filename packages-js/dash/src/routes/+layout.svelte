@@ -127,10 +127,14 @@
         }
     }
 
-
     async function restart() {
         progress = null;
         await invoke('stop_server');
+        await relaunch();
+    }
+
+    async function cleanEnvironment() {
+        await invoke('clean_environment');
         await relaunch();
     }
 
@@ -162,10 +166,7 @@
                     <div class="actions">
                         <GenerateLogButton />
                         <UpdateButton />
-                        <button class="primary" on:click={async () => {
-                            await invoke('clean_environment');
-                            await relaunch();
-                        }}>
+                        <button class="primary" on:click={cleanEnvironment}>
                             環境を再構築
                             <i class="ti ti-reload"></i>
                         </button>
