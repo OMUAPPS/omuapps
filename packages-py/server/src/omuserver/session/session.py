@@ -108,10 +108,7 @@ class Session:
                 return session
             case Err(error):
                 await connection.send(
-                    Packet(
-                        PACKET_TYPES.DISCONNECT,
-                        DisconnectPacket(DisconnectType.INVALID_TOKEN, error),
-                    ),
+                    Packet(PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_TOKEN, error)),
                     packet_mapper,
                 )
                 await connection.close()
@@ -148,11 +145,7 @@ class Session:
     def add_ready_task(self, coro: Coro[[], None]):
         if self.ready:
             raise RuntimeError("Session is already ready")
-        task = SessionTask(
-            session=self,
-            coro=coro,
-            name=coro.__name__,
-        )
+        task = SessionTask(session=self, coro=coro, name=coro.__name__)
         self.ready_tasks.append(task)
 
     async def wait_ready(self) -> None:
@@ -177,3 +170,6 @@ class Session:
         for waiter in self.ready_waiters:
             waiter.set_result(None)
         await self.event.ready.emit(self)
+
+    def __repr__(self) -> str:
+        return f"Session({self.app.key()}, kind={self.kind}, ready={self.ready})"
