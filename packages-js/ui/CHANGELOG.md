@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.16 (2025-01-30)
+
+
+### Bug Fixes
+
+* **dash:** バックグラウンドで起動したときに起動しても出てこない問題を修正 ([9306bbc](https://github.com/OMUAPPS/omuapps/commit/9306bbc2d7c0befb5f2072a8c2f2ff0bed1af7ae))
+
+
+
+
+
 ## 0.8.15 (2025-01-30)
 
 
