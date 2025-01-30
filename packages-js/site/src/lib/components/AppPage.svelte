@@ -57,6 +57,12 @@
 {:else if state === DisconnectType.SERVER_RESTART}
     <div class="modal">
         <p>サーバーが再起動されました</p>
+        <small>{message}</small>
+    </div>
+{:else if state === DisconnectType.INTERNAL_ERROR}
+    <div class="modal">
+        <p>内部エラーが発生しました</p>
+        <small>{message}</small>
     </div>
 {:else if state === DisconnectType.CLOSE}
     <div class="modal">

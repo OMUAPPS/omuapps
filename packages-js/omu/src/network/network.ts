@@ -3,6 +3,7 @@ import type { Client } from '../client.js';
 import type { OmuError } from '../errors.js';
 import {
     AnotherConnection,
+    InternalError,
     InvalidOrigin,
     InvalidPacket,
     InvalidToken,
@@ -84,6 +85,7 @@ export class Network {
                 [DisconnectType.INVALID_TOKEN]: InvalidToken,
                 [DisconnectType.INVALID_ORIGIN]: InvalidOrigin,
                 [DisconnectType.INVALID_VERSION]: InvalidVersion,
+                [DisconnectType.INTERNAL_ERROR]: InternalError,
                 [DisconnectType.INVALID_PACKET]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_TYPE]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_DATA]: InvalidPacket,
@@ -195,7 +197,7 @@ export class Network {
                     throw this.status.error;
                 }
             } finally {
-                if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting') {
+                if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting' && this.status.type !== 'error') {
                     this.setStatus({type: 'disconnected', attempt});
                     this.event.disconnected.emit(null);
                 }
