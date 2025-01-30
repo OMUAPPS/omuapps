@@ -254,19 +254,13 @@ async fn clean_environment(
         }
     };
 
-    let server = state.server.lock().unwrap();
-    if server.is_some() {
-        on_progress(Progress::ServerStopping {
-            msg: "Stopping server".to_string(),
-        });
-        match Server::stop_server(&python, &options.server_options) {
-            Ok(_) => {}
-            Err(err) => {
-                // return Err(CleanEnvironmentError::ServerError(err.to_string()));
-                warn!("Failed to stop server: {}", err);
-            }
+    match Server::stop_server(&python, &options.server_options) {
+        Ok(_) => {}
+        Err(err) => {
+            // return Err(CleanEnvironmentError::ServerError(err.to_string()));
+            warn!("Failed to stop server: {}", err);
         }
-    };
+    }
 
     match remove_dir_all(&options.python_path, |current, total| {
         on_progress(Progress::PythonRemoving {
@@ -277,6 +271,11 @@ async fn clean_environment(
     }) {
         Ok(_) => {}
         Err(err) => {
+            on_progress(Progress::PythonRemoving {
+                msg: "Failed to remove python".to_string(),
+                progress: 0.0,
+                total: 0.0,
+            });
             return Err(CleanEnvironmentError::RemovePythonError(err.to_string()));
         }
     }

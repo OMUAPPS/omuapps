@@ -59,9 +59,12 @@ impl Server {
                     VERSION
                 ),
             });
-            Self::stop_server(&python, &option).map_err(|err| {
-                warn!("Failed to stop server: {}", err);
-            });
+            match Self::stop_server(&python, &option) {
+                Ok(_) => {}
+                Err(err) => {
+                    on_progress(Progress::ServerStopFailed { msg: err });
+                }
+            }
             already_started = false;
         }
 
