@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.12 (2025-01-30)
+
+
+### Bug Fixes
+
+* サーバーの再起動でエラーを吐かないように ([1b8d750](https://github.com/OMUAPPS/omuapps/commit/1b8d75018dfb9d95ea9dd87369ebaa9d7840601e))
+
+
+
+
+
 ## 0.8.11 (2025-01-29)
 
 **Note:** Version bump only for package @omujs/obs
