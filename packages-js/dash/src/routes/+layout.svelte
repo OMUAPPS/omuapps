@@ -107,11 +107,21 @@
                 promise = Promise.resolve();
             });
             omu.network.event.disconnected.listen((packet) => {
-                if (packet?.type === DisconnectType.SERVER_RESTART) {
+                if (!packet) return;
+                if (packet.type === DisconnectType.SERVER_RESTART) return;
+                disconnectPacket = packet;
+                reject(`${packet.type}: ${packet.message}`);
+            }); 
+            omu.network.event.status.listen((status) => {
+                if (status.type !== 'disconnected') return;
+                if (status.attempt && status.attempt < 3) {
                     return;
                 }
-                disconnectPacket = packet;
-                reject(packet);
+                if (status.attempt && status.attempt >= 3) {
+                    reject(`Connection failed after ${status.attempt} attempts`);
+                } else {
+                    reject('Connection failed');
+                }
             }); 
 
             try {

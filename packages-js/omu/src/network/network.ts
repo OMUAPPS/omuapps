@@ -29,7 +29,10 @@ type StatusType<T> = {
     type: T,
 };
 
-export type NetworkStatus = StatusType<'disconnected'> | StatusType<'connecting'> | StatusType<'connected'> | StatusType<'ready'> | {
+export type NetworkStatus = StatusType<'connecting'> | StatusType<'connected'> | StatusType<'ready'> | {
+    type: 'disconnected',
+    attempt?: number,
+} | {
     type: 'error',
     error: OmuError,
 } | {
@@ -72,6 +75,7 @@ export class Network {
             if (reason.type === DisconnectType.SHUTDOWN
                 ||reason.type === DisconnectType.CLOSE
                 ||reason.type === DisconnectType.SERVER_RESTART) {
+                this.setStatus({type: 'disconnected'});
                 return;
             }
             const ERROR_MAP: Record<DisconnectType, typeof OmuError | undefined> = {
@@ -191,7 +195,11 @@ export class Network {
                     throw this.status.error;
                 }
             } finally {
-                this.disconnect();
+                if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting') {
+                    this.setStatus({type: 'disconnected', attempt});
+                    this.event.disconnected.emit(null);
+                }
+                this.connection.close();
             }
             if (!recconect) {
                 break;
@@ -204,15 +212,6 @@ export class Network {
 
     private isState(state: NetworkStatus['type']): boolean {
         return this.status.type === state;
-    }
-
-    public disconnect(): void {
-        if (this.status.type === 'disconnected') {
-            return;
-        }
-        this.setStatus({type: 'disconnected'});
-        this.connection.close();
-        this.event.disconnected.emit(null);
     }
 
     public send(packet: Packet): void {
