@@ -135,8 +135,8 @@ async function uploadBeta() {
     await uploadToR2('./release-assets/version-beta.json', 'app/version-beta.json');
 
     const original = await fs.readFile('./release-assets/latest.json', 'utf-8');
-    const release = JSON.parse(original);
-    release.platforms = Object.fromEntries(
+    const latest = JSON.parse(original);
+    latest.platforms = Object.fromEntries(
         await Promise.all(PLATFORMS.map(async platform => {
             const existing = original.platforms[platform.type];
             if (!existing) {
@@ -158,8 +158,8 @@ async function uploadBeta() {
         }))
     );
     await fs.writeFile(
-        './release-assets/latest-beta.json',
-        JSON.stringify(release, null, 4)
+        './release-assets/latest.json',
+        JSON.stringify(latest, null, 4)
     );
     await uploadToR2('./release-assets/latest.json', 'app/latest.json');
 }
@@ -194,8 +194,8 @@ async function graduateBeta() {
     await uploadToR2('./release-assets/version.json', 'app/version.json');
 
     const original = await fs.readFile('./release-assets/latest.json', 'utf-8');
-    const release = JSON.parse(original);
-    release.platforms = Object.fromEntries(
+    const latest = JSON.parse(original);
+    latest.platforms = Object.fromEntries(
         await Promise.all(PLATFORMS.map(async platform => {
             const existing = original.platforms[platform.type];
             if (!existing) {
@@ -218,7 +218,7 @@ async function graduateBeta() {
     );
     await fs.writeFile(
         './release-assets/latest.json',
-        JSON.stringify(release, null, 4)
+        JSON.stringify(latest, null, 4)
     );
     await uploadToR2('./release-assets/latest.json', 'app/latest.json');
 }
