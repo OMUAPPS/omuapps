@@ -138,7 +138,7 @@ async function uploadBeta() {
     const latest = JSON.parse(original);
     latest.platforms = Object.fromEntries(
         await Promise.all(PLATFORMS.map(async platform => {
-            const existing = original.platforms[platform.type];
+            const existing = latest.platforms[platform.type];
             if (!existing) {
                 throw new Error(`Platform not found: ${platform.type}`);
             }
@@ -197,7 +197,7 @@ async function graduateBeta() {
     const latest = JSON.parse(original);
     latest.platforms = Object.fromEntries(
         await Promise.all(PLATFORMS.map(async platform => {
-            const existing = original.platforms[platform.type];
+            const existing = latest.platforms[platform.type];
             if (!existing) {
                 throw new Error(`Platform not found: ${platform.type}`);
             }
