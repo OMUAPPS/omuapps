@@ -15,10 +15,6 @@
     
     const destroy = listen('single-instance', async ({payload}) => {
         console.log(`single-instance: ${payload}`);
-        const background = payload.args.includes('--background') || payload.args.includes('-b');
-        if (background) {
-            return;
-        }
         await tauriWindow.appWindow.show();
         await tauriWindow.appWindow.setFocus();
         window.location.reload();
