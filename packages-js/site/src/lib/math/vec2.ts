@@ -1,4 +1,4 @@
-import { lerp } from './math.js';
+import { invLerp, lerp } from './math.js';
 
 export class Vec2 {
     public static ZERO = new Vec2(0, 0);
@@ -17,12 +17,23 @@ export class Vec2 {
         return new Vec2(lerp(this.x, other.x, t), lerp(this.y, other.y, t));
     }
 
+    public remap(minIn: Vec2, maxIn: Vec2, minOut: Vec2, maxOut: Vec2): Vec2 {
+        return new Vec2(
+            lerp(minOut.x, maxOut.x, invLerp(minIn.x, maxIn.x, this.x)),
+            lerp(minOut.y, maxOut.y, invLerp(minIn.y, maxIn.y, this.y)),
+        );
+    }
+
     public scale(scalar: number): Vec2 {
         return new Vec2(this.x * scalar, this.y * scalar);
     }
 
     public mul(other: Vec2): Vec2 {
         return new Vec2(this.x * other.x, this.y * other.y);
+    }
+
+    public div(other: Vec2): Vec2 {
+        return new Vec2(this.x / other.x, this.y / other.y);
     }
 
     public dot(other: Vec2): number {

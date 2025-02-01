@@ -1,6 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import type { TypedComponent } from '@omujs/ui';
+    import Kitchen from './components/Kitchen.svelte';
     import { DEFAULT_CONFIG, DEFAULT_STATES, game, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
     import SceneIngredientEdit from './scenes/SceneIngredientEdit.svelte';
@@ -27,9 +28,12 @@
 
 <AppPage />
 <main>
-    <svelte:component this={SCENES[$scene.type]} context={{
-        time: performance.now(),
-    }} />
+    <Kitchen />
+    <div class="scene">
+        <svelte:component this={SCENES[$scene.type]} context={{
+            time: performance.now(),
+        }} />
+    </div>
 </main>
 <div class="debug">
     <button on:click={async () => {
@@ -87,5 +91,13 @@
             width: fit-content;
             pointer-events: auto;
         }
+    }
+
+    .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 </style>

@@ -3,7 +3,7 @@ import { Chat, events } from '@omujs/chat';
 import type { Message } from '@omujs/chat/models/message.js';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { OBSPlugin, permissions } from '@omujs/obs';
-import { Omu } from '@omujs/omu';
+import { Identifier, Omu } from '@omujs/omu';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
 import { RegistryType } from '@omujs/omu/extension/registry/index.js';
 import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
@@ -24,7 +24,22 @@ export type Ingredient = {
     id: string,
     name: string,
     image?: Asset,
+    transform: Transform,
+    behaviors: Behaviors,
+    bounds: Bounds,
 };
+export function createIngredient(id: string, name: string): Ingredient {
+    return {
+        id,
+        name,
+        transform: createTransform(),
+        behaviors: {},
+        bounds: {
+            min: { x: 0, y: 0 },
+            max: { x: 1, y: 1 },
+        },
+    };
+}
 
 export type Recipe = {
     ingredients: Record<string, {
@@ -112,41 +127,54 @@ const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
     key: (order) => order.id.toString(),
 });
 
-export type Transform = {
+export type Vec2 = {
     x: number,
     y: number,
-    scale: {
-        x: number,
-        y: number,
-    }
-    rotation: number,
 };
+export type Transform = {
+    right: Vec2,
+    up: Vec2,
+    offset: Vec2,
+}
+export function createTransform(): Transform {
+    return {
+        right: { x: 1, y: 0 },
+        up: { x: 0, y: 1 },
+        offset: { x: 0, y: 0 },
+    };
+}
+
+export type Container = {
+    overlay: Asset | null,
+    overlayTransform: Transform,
+    items: Record<string, KitchenItem>,
+}
+export function createContainer(): Container {
+    return {
+        overlay: null,
+        overlayTransform: createTransform(),
+        items: {},
+    };
+}
+export type Fixed = {
+    transform: Transform,
+}
+export function createFixed(options: {transform?: Transform}): Fixed {
+    const { transform } = options;
+    return {
+        transform: copy(transform || createTransform()),
+    };
+}
 
 export type Behaviors = Partial<{
-    plate?: {
-        placed: boolean,
-        image: Asset,
-    },
-    cuttable?: {
-        cut: boolean,
-        image: Asset,
-    },
-    fryable?: {
-        fried: boolean,
-        image: Asset,
-    },
-    mixable?: {
-        mixed: boolean,
-        image: Asset,
-    },
-    boilable?: {
-        boiled: boolean,
-        image: Asset,
-    },
-    stackable?: {
-        items: KitchenItem[],
-    },
+    container: Container,
+    fixed: Fixed,
 }>
+
+export type Bounds = {
+    min: Vec2,
+    max: Vec2,
+};
 
 export type KitchenItem = {
     type: 'ingredient',
@@ -154,7 +182,25 @@ export type KitchenItem = {
     ingredient: Ingredient,
     behaviors: Behaviors,
     transform: Transform,
+    bounds: Bounds,
+    zIndex: number,
 };
+
+function copy<T>(value: T): T {
+    return JSON.parse(JSON.stringify(value));
+}
+
+export function createKitchenItem(id: string, ingredient: Ingredient): KitchenItem {
+    return {
+        type: 'ingredient',
+        id,
+        ingredient: copy(ingredient),
+        transform: copy(ingredient.behaviors.fixed?.transform || ingredient.transform),
+        behaviors: copy(ingredient.behaviors),
+        bounds: copy(ingredient.bounds),
+        zIndex: 0,
+    };
+}
 
 export const DEFAULT_STATES = {
     kitchen: {
@@ -234,4 +280,22 @@ export async function uploadAsset(file: File): Promise<Asset> {
         type: 'asset',
         id: result.key(),
     }
+}
+
+export async function getImage(asset: Asset): Promise<HTMLImageElement> {
+    if (asset.type === 'url') {
+        const image = new Image();
+        image.src = asset.url;
+        await image.decode();
+        return image;
+    }
+    if (asset.type === 'asset') {
+        const result = await game.omu.assets.download(Identifier.fromKey(asset.id));
+        const image = new Image();
+        image.src = URL.createObjectURL(new Blob([result.buffer]));
+        await image.decode();
+        URL.revokeObjectURL(image.src);
+        return image;
+    }
+    throw new Error(`Invalid asset type: ${asset}`);
 }

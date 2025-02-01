@@ -7,10 +7,6 @@
     const { scene, config } = game;
 </script>
 
-<h1>
-    おむカフェ
-</h1>
-
 <div>
     <button on:click={() => {
         $scene = { type: 'photo_mode' };

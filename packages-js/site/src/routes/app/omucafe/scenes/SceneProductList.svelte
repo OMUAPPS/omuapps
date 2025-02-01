@@ -1,7 +1,7 @@
 <script lang="ts">
     import AssetImage from '../components/AssetImage.svelte';
     import BackButton from '../components/BackButton.svelte';
-    import { game, type SceneContext } from '../omucafe-app.js';
+    import { createIngredient, game, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneProductList', context);
@@ -33,10 +33,7 @@
         const id = Date.now().toString();
         $config.ingredients = {
             ...$config.ingredients,
-            [id]: {
-                id,
-                name: '新材料',
-            },
+            [id]: createIngredient(id, '新材料'),
         };
         $scene = { type: 'ingredient_edit', id };
     }}>
