@@ -165,6 +165,7 @@
         white-space: pre-wrap;
         display: -webkit-box;
         max-width: 100%;
+        line-clamp: 2;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
