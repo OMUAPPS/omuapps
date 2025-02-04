@@ -209,6 +209,27 @@ SOURCE_ADD = EndpointType[SourceJson, CreateResponse].create_json(
 )
 
 
+class CreateBrowserRequest(BlendableSource, ScalableSource, TypedDict):
+    name: str
+    url: str
+    width: NotRequired[int | str]
+    height: NotRequired[int | str]
+    css: NotRequired[str]
+
+
+BROWSER_CREATE = EndpointType[CreateBrowserRequest, CreateResponse].create_json(
+    PLUGIN_ID,
+    name="browser_create",
+    permission_id=OBS_SOURCE_CREATE_PERMISSION_ID,
+)
+
+BROWSER_ADD = EndpointType[CreateBrowserRequest, CreateResponse].create_json(
+    PLUGIN_ID,
+    name="browser_add",
+    permission_id=OBS_SOURCE_CREATE_PERMISSION_ID,
+)
+
+
 class RemoveByNameRequest(TypedDict):
     name: str
 

@@ -1,12 +1,13 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import type { OBSPlugin } from '@omujs/obs';
+    import type { BrowserCreateRequest } from '@omujs/obs/types.js';
     import type { Omu } from '@omujs/omu';
     import { DragLink, Spinner, Tooltip } from '@omujs/ui';
 
     export let omu: Omu | null = null;
     export let obs: OBSPlugin | null = null;
-    export let dimensions: { width: number; height: number } | undefined = undefined;
+    export let dimensions: { width: BrowserCreateRequest['width'], height: BrowserCreateRequest['height'] } | undefined = undefined;
 
     async function create() {
         if (!obs) {
@@ -14,17 +15,14 @@
         }
         const name = omu?.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
         const url = generateUrl().toString();
-        await obs.sourceAdd({
-            type: 'browser_source',
+        await obs.browserAdd({
             name: name,
-            data: {
-                url,
-                ...dimensions,
-            },
+            url: url,
             blend_properties: {
                 blending_method: 'SRGB_OFF',
                 blending_mode: 'NORMAL',
             },
+            ...dimensions,
         });
         await new Promise((resolve) => setTimeout(resolve, 500));
         creating = null;

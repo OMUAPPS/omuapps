@@ -104,7 +104,7 @@
                         配信ソフトに追加する
                         <i class="ti ti-arrow-bar-to-down"></i>
                     </h3>
-                    <AssetButton {omu} {obs} />
+                    <AssetButton {omu} {obs} dimensions={{width: '50:%', height: '50:%'}} />
                 </section>
             </div>
             <div class="player">
