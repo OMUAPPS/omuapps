@@ -340,25 +340,25 @@ fn set_config(state: tauri::State<'_, AppState>, config: Config) -> Result<(), S
 
 #[tauri::command]
 async fn generate_log_file(state: tauri::State<'_, AppState>) -> Result<String, String> {
-    // pack log files into a zip file, return the path
+    // pack log files into a tar archive
     let options = state.option.clone();
-    let log_dir1 = options.workdir.join("logs");
-    let log_dir2 = data_dir().unwrap().join("com.omuapps.app/logs");
-    let log_files = vec![log_dir1, log_dir2];
-
-    let download_dir: Option<PathBuf> = match directories::UserDirs::new() {
-        Some(dirs) => dirs.document_dir().map(|dir| dir.to_path_buf()),
+    let log_dir = options.workdir.join("logs");
+    let document_dir: Option<PathBuf> = match directories::UserDirs::new() {
+        Some(dirs) => dirs
+            .document_dir()
+            .map(|dir: &std::path::Path| dir.to_path_buf()),
         None => None,
     };
-    let archive_path = download_dir
+    let output_path = document_dir
         .unwrap_or_else(|| std::env::current_dir().unwrap())
         .join("omuapps");
-    create_dir_all(&archive_path)
+    remove_dir_all(&output_path, |_, _| {}).ok();
+    create_dir_all(&output_path)
         .map_err(|err| format!("Failed to create download directory: {}", err))?;
-    pack_archive(&log_files, &archive_path.join("logs.tar"))
+    pack_archive(&log_dir, &output_path.join("logs.tar.gz"))
         .map_err(|err| format!("Failed to pack log files: {}", err))?;
-    open::that(&archive_path).map_err(|err| format!("Failed to open log file: {}", err))?;
-    Ok(archive_path.to_string_lossy().to_string())
+    open::that(&output_path).map_err(|err| format!("Failed to open log file: {}", err))?;
+    Ok(output_path.to_string_lossy().to_string())
 }
 
 fn main() {
