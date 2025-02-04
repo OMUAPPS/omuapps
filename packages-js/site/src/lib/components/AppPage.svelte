@@ -1,8 +1,10 @@
 <script lang="ts">
+    import type { NetworkStatus } from '@omujs/omu/network/network.js';
     import { DisconnectType } from '@omujs/omu/network/packet/packet-types.js';
     import { client, Spinner } from '@omujs/ui';
 
     let state: 'loading' | DisconnectType | null = 'loading';
+    let networkState: NetworkStatus | null = null;
     let message: string | null = null;
 
     state = 'loading';
@@ -10,6 +12,9 @@
         if (!omu) return;
         omu.onReady(() => {
             state = null;
+        });
+        omu.network.event.status.listen((newState) => {
+            networkState = newState;
         });
         omu.network.event.disconnected.listen((reason) => {
             state = 'loading';
@@ -28,6 +33,13 @@
 {#if state === 'loading'}
     <div class="modal">
         <Spinner />
+        {#if !networkState}
+            <small>接続中...</small>
+        {:else if networkState.type === 'connected'}
+            <small>認証中...</small>
+        {:else if networkState.type === 'reconnecting'}
+            <small>再接続中... {networkState.attempt > 1 && `(${networkState.attempt}回目)` || ''}</small>
+        {/if}
     </div>
 {:else if state === DisconnectType.ANOTHER_CONNECTION}
     <div class="modal">
