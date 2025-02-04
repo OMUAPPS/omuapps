@@ -19,12 +19,11 @@
 
     $: user = $config.users[id] || createUserConfig();
 
-    let element: HTMLButtonElement;
     let lastMouse: [number, number] | null = null;
     let clickTime = 0;
     let clickDistance = 0;
     let lastUpdate = performance.now();
-    $: rect = element ? element.getBoundingClientRect() : { width: 0, height: 0 };
+    let rect = { width: 0, height: 0 };
     $: position = user.position || [0, 0];
     
     const hideAreaWidth = 240;
@@ -200,10 +199,8 @@
 <button
     class="control"
     class:dragging={lastMouse || ($dragUser && $dragUser == id)}
-    on:resize={() => {
-        rect = element.getBoundingClientRect();
-    }}
-    bind:this={element}
+    bind:clientWidth={rect.width}
+    bind:clientHeight={rect.height}
     style={getStyle(rect, $config, view, dimentions)}
     on:mousedown={handleMouseDown}
     on:click={() => {
