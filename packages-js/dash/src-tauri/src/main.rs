@@ -465,7 +465,12 @@ fn main() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(
             tauri_plugin_log::Builder::new()
-                .targets([LogTarget::Stdout, LogTarget::Webview, LogTarget::LogDir])
+                .targets([
+                    LogTarget::Stdout,
+                    LogTarget::Webview,
+                    LogTarget::Folder(data_dir.join("logs")),
+                ])
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll)
                 .level(log::LevelFilter::Debug)
                 .build(),
         )
