@@ -61,10 +61,10 @@
         </button>
         <DragLink href={generateUrl}>
             <h3 slot="preview" class="preview">
-                これをOBSにドロップ
                 <i class="ti ti-download"></i>
+                これをOBSにドロップ
             </h3>
-            <div class="drag">
+            <div class="drag obs">
                 <Tooltip>ドラッグ&ドロップで追加</Tooltip>
                 <i class="ti ti-drag-drop"></i>
             </div>
@@ -73,26 +73,31 @@
 {:else}
     <DragLink href={generateUrl}>
         <h3 slot="preview" class="preview">
-            これをOBSにドロップ
             <i class="ti ti-download"></i>
+            これを配信ソフトに追加
         </h3>
         <div class="drag">
             <i class="ti ti-drag-drop"></i>
-            ここをOBSにドラッグ&ドロップ
+            ここをドラッグ&ドロップ
         </div>
     </DragLink>
 {/if}
 
 <style lang="scss">
     .preview {
-        padding: 10px 20px;
-        background: var(--color-bg-2);
+        background: var(--color-1);
+        color: var(--color-bg-2);
+        outline: 2px solid var(--color-bg-2);
+        outline-offset: -1px;
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+        border-radius: 2px;
     }
 
     .container {
         position: relative;
         display: flex;
-        gap: 10px;
+        gap: 0.5rem;
     }
 
     button {
@@ -105,8 +110,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 5px;
-        padding: 0.75rem 1rem;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
         background: var(--color-bg-2);
         color: var(--color-1);
         font-weight: bold;
@@ -120,9 +125,11 @@
         &:focus-visible,
         &:hover {
             outline: none;
-            background: var(--color-bg-1);
+            // background: var(--color-bg-1);
             color: var(--color-1);
             transition: 0.0621s;
+            box-shadow: 0 0.25rem 0 0px var(--color-2);
+            transform: translateY(-1px);
         }
 
         &:disabled {
@@ -134,6 +141,7 @@
             transform: translateY(2px);
             background: var(--color-1);
             color: var(--color-bg-2);
+            box-shadow: none;
             transition: 0s;
         }
     }
@@ -150,7 +158,7 @@
         outline: 2px solid var(--color-1);
         outline-offset: -2px;
         font-weight: bold;
-        padding: 0.75rem;
+        padding: 0.75rem 2rem;
         gap: 5px;
         cursor: grab;
 
@@ -158,10 +166,14 @@
             font-size: 20px;
         }
 
+        &.obs {
+            padding: 0.75rem 1rem;
+        }
+
         &:hover {
-            transform: translate(4px, 0);
+            transform: translate(2px, 0);
             outline: 2px solid var(--color-1);
-            box-shadow: -4px 4px 0 0px var(--color-2);
+            box-shadow: -2px 3px 0 0px var(--color-2);
             transition: 0.0621s;
         }
     }

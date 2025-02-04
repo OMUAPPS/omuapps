@@ -96,6 +96,7 @@
         outline: 1px solid var(--color-outline);
         background: var(--color-bg-2);
         box-shadow: 2px 0px 1px rgba($color: #000000, $alpha: 0.0621);
+        overflow-y: auto;
 
         > label {
             display: flex;
@@ -141,11 +142,13 @@
         gap: 1rem;
         padding: 1rem;
         width: 20rem;
+        overflow-y: auto;
     }
 
     code {
         white-space: pre-wrap;
         word-break: break-all;
+        height: 18rem;
         overflow: auto;
         background: var(--color-bg-1);
         padding: 0.75rem;
