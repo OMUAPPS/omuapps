@@ -68,6 +68,20 @@
         <small> OMUAPPSをダウンロードして使ってみる </small>
     </header>
     <main slot="content">
+        <div class="warning">
+            <p>現在は<b>ベータ版です。</b></p>
+            <p>バグや不具合が発生し、PCへの影響がある可能性があります。ご利用の際は、自己責任でお願いします。</p>
+            <p>
+                また、不具合の報告などは
+                <b>
+                    <a href="http://discord.gg/MZKvbPpsuK">
+                        discord
+                        <i class="ti ti-external-link"></i>
+                    </a>
+                </b>
+                にお問い合わせいただけると幸いです。
+            </p>
+        </div>
         <p>
             {#if loading}
                 <small> 読み込み中... </small>
@@ -160,11 +174,39 @@
         color: var(--color-1);
     }
 
+    main {
+        display: flex;
+        flex-direction: row;
+        align-items: start;
+        gap: 2rem;
+    }
+
+    .warning {
+        background: var(--color-bg-1);
+        color: var(--color-text);
+        padding: 1rem 2rem;
+        margin-bottom: 4rem;
+        border-radius: 2px;
+        font-size: 0.8rem;
+        font-weight: 600;
+
+        > p {
+            line-height: 2;
+        }
+
+        > p > b {
+            color: var(--color-1);
+            margin: 0 0.25rem;
+            font-size: 1rem;
+        }
+    }
+
     .version-info {
         display: flex;
         gap: 1rem;
         font-size: 0.9rem;
         color: var(--color-1);
+        white-space: nowrap;
 
         > .version {
             font-weight: 600;
@@ -216,6 +258,7 @@
         color: var(--color-bg-2);
         background: var(--color-1);
         border-radius: 2px;
+        white-space: nowrap;
 
         &:hover {
             color: var(--color-1);
@@ -240,6 +283,7 @@
         outline-offset: -1px;
         border: none;
         border-radius: 2px;
+        white-space: nowrap;
 
         &:hover {
             color: var(--color-1);
