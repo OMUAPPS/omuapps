@@ -12,10 +12,11 @@ from typing import Any, TypedDict
 
 import psutil
 from loguru import logger
+from omuserver.helper import LOG_DIRECTORY
 from omuserver.server import Server
 
 from . import obsconfig
-from .script.config import get_config_path
+from .script.config import LaunchCommand, get_config, get_config_path, save_config
 
 
 class obs:
@@ -233,20 +234,18 @@ def relaunch_obs():
         subprocess.Popen(obs.launch_command, cwd=obs.cwd)
 
 
-def write_config(dashboard_bin: Path | None):
-    launch_command = None
-    if dashboard_bin:
-        launch_command = {"args": [str(dashboard_bin), "--background"]}
-    config_path = get_config_path()
-    config_path.write_text(
-        json.dumps({"python_path": get_python_directory(), "launch": launch_command}),
-        encoding="utf-8",
-    )
+def update_config(server: Server):
+    config = get_config()
+    dashboard = server.directories.dashboard
+    if dashboard:
+        config["launch"] = LaunchCommand(args=[str(dashboard), "--background"])
+    config["python_path"] = get_python_directory()
+    config["log_path"] = LOG_DIRECTORY.resolve().as_posix()
+    save_config(config)
 
 
 async def install(server: Server):
-    dashboard = server.directories.dashboard
-    write_config(dashboard)
+    update_config(server)
 
     try:
         if is_installed():

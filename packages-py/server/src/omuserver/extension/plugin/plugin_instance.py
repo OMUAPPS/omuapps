@@ -4,7 +4,6 @@ import asyncio
 import importlib
 import importlib.metadata
 import importlib.util
-import io
 import os
 import sys
 import threading
@@ -24,6 +23,7 @@ from omu.network.websocket_connection import WebsocketsConnection
 from omu.plugin import InstallContext, Plugin
 from omu.token import TokenProvider
 
+from omuserver.helper import setup_logger
 from omuserver.session import Session
 
 from .plugin_connection import PluginConnection
@@ -185,20 +185,6 @@ class PluginInstance:
         process.start()
 
 
-def setup_logging(app: App) -> None:
-    if isinstance(sys.stdout, io.TextIOWrapper):
-        sys.stdout.reconfigure(encoding="utf-8")
-    if isinstance(sys.stderr, io.TextIOWrapper):
-        sys.stderr.reconfigure(encoding="utf-8")
-    logger.add(
-        f"logs/{app.id.get_sanitized_path()}/{{time}}.log",
-        colorize=False,
-        format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | " "{name}:{function}:{line} - {message}"),
-        retention="7 days",
-        compression="zip",
-    )
-
-
 def run_plugin_isolated(
     plugin: Plugin,
     address: Address,
@@ -220,7 +206,7 @@ def run_plugin_isolated(
         client = plugin.get_client()
         if client.app.type != AppType.PLUGIN:
             raise ValueError(f"Invalid plugin: {client.app} is not a plugin")
-        setup_logging(client.app)
+        setup_logger(name=client.app.id.get_sanitized_key())
         logger.info(f"Starting plugin {client.app.id}")
         connection = WebsocketsConnection(client, address)
         client.network.set_connection(connection)

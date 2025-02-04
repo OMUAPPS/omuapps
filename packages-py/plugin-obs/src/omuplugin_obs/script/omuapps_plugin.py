@@ -8,26 +8,17 @@ if __name__ == "omuapps_plugin":
     venv_loader.try_load()
 
 
-import json
 import subprocess
 
 from loguru import logger
 from omuplugin_obs.script import obsplugin
-from omuplugin_obs.script.config import get_config_path, get_log_path
+from omuplugin_obs.script.config import LaunchCommand, get_config, setup_logger
 
-log_path = get_log_path()
-logger.remove()
-logger.add(
-    f"{log_path}/{{time}}.log",
-    colorize=False,
-    format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | " "{name}:{function}:{line} - {message}"),
-    retention="7 days",
-    compression="zip",
-)
+setup_logger()
 
 
-def get_launch_command():
-    return json.loads(get_config_path().read_text(encoding="utf-8"))["launch"]
+def get_launch_command() -> LaunchCommand | None:
+    return get_config().get("launch")
 
 
 def launch_server():

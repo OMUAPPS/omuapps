@@ -1,4 +1,3 @@
-import io
 import os
 import signal
 import sys
@@ -11,24 +10,10 @@ from loguru import logger
 from omu.address import Address
 
 from omuserver.config import Config
-from omuserver.helper import find_processes_by_executable, find_processes_by_port
+from omuserver.helper import find_processes_by_executable, find_processes_by_port, setup_logger
 from omuserver.migration import migrate
 from omuserver.server.server import Server
 from omuserver.version import VERSION
-
-
-def setup_logging():
-    if isinstance(sys.stdout, io.TextIOWrapper):
-        sys.stdout.reconfigure(encoding="utf-8")
-    if isinstance(sys.stderr, io.TextIOWrapper):
-        sys.stderr.reconfigure(encoding="utf-8")
-    logger.add(
-        "logs/{time}.log",
-        colorize=False,
-        format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | " "{name}:{function}:{line} - {message}"),
-        retention="7 days",
-        compression="zip",
-    )
 
 
 def stop_server_processes(
@@ -114,7 +99,7 @@ def main(
 
 
 if __name__ == "__main__":
-    setup_logging()
+    setup_logger("omuserver")
     try:
         main()
     except Exception as e:

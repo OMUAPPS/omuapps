@@ -77,6 +77,10 @@ class Identifier(Model[str], Keyable):
         sanitized_path = f"{'-'.join(sanitize_filename(name) for name in self.path)}-{path_hash}"
         return Path(sanitized_namespace, sanitized_path)
 
+    def get_sanitized_key(self) -> str:
+        key = self.key()
+        return f"{sanitize_filename(key)}-{generate_md5_hash(key)}"
+
     def is_subpath_of(self, base: Identifier) -> bool:
         return self.namespace == base.namespace and self.path[: len(base.path)] == base.path
 
