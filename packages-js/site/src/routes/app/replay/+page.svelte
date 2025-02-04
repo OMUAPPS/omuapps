@@ -69,13 +69,6 @@
     <main>
         <div class="container">
             <div class="menu">
-                <section>
-                    <h3>
-                        配信ソフトに追加する
-                        <i class="ti ti-arrow-bar-to-down"></i>
-                    </h3>
-                    <AssetButton {omu} {obs} />
-                </section>
                 <div class="streams">
                     <h3>
                         最近の配信から
@@ -106,6 +99,13 @@
                         </TableList>
                     </div>
                 </div>
+                <section>
+                    <h3>
+                        配信ソフトに追加する
+                        <i class="ti ti-arrow-bar-to-down"></i>
+                    </h3>
+                    <AssetButton {omu} {obs} />
+                </section>
             </div>
             <div class="player">
                 {#if $replayData}
@@ -125,13 +125,13 @@
                         <i class="ti ti-video"></i>
                     </div>
                 {/if}
-                <section>
+                <section class="url">
                     <p>
                         URLから
                         <i class="ti ti-link"></i>
                     </p>
                     <Textbox
-                        placeholder="URLを入力"
+                        placeholder="https://youtu.be/..."
                         on:input={(event) => {
                             const url = new URL(event.detail);
                             if (url.hostname === 'youtu.be') {
@@ -255,6 +255,12 @@
         flex-direction: column;
         flex: 1;
         gap: 1rem;
+    }
+
+    .url {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     .empty {
