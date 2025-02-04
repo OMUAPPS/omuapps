@@ -319,6 +319,7 @@
 
     async function render2D(context: CanvasRenderingContext2D) {
         if ($selectedAvatar) return;
+        renderNametags(context);
         if (showGrid) {
             if ($config.align.auto) {
                 renderAlignHint(context);
@@ -327,7 +328,6 @@
             }
             renderHideAreaHint(context);
         }
-        renderNametags(context);
         context.globalAlpha = 1;
         if ($isDraggingFinished) {
             $isDraggingFinished = false;

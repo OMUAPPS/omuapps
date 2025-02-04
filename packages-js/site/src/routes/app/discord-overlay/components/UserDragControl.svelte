@@ -51,7 +51,7 @@
         const world = screenToWorld(screen.x + dx, screen.y - dy);
         user.position = position = [world.x, world.y];
         const a = worldToScreen(position[0], position[1] + OFFSET + rect.height / 2);
-        $dragPosition = new Vec2(a.x, dimentions.height - a.y);
+        $dragPosition = new Vec2(e.clientX, e.clientY);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         user.show = !isInHideArea(new Vec2(position[0], position[1]));
 
@@ -200,6 +200,9 @@
 <button
     class="control"
     class:dragging={lastMouse || ($dragUser && $dragUser == id)}
+    on:resize={() => {
+        rect = element.getBoundingClientRect();
+    }}
     bind:this={element}
     style={getStyle(rect, $config, view, dimentions)}
     on:mousedown={handleMouseDown}
@@ -250,7 +253,7 @@
         </Tooltip>
     {/if}
     <i class="grip ti ti-grip-vertical"/>
-    {state.nick}
+    <span class="nick">{state.nick}</span>
 </button>
 
 {#if $heldUser == id}
@@ -365,17 +368,36 @@
             justify-content: center;
         }
 
+        > .nick {
+            overflow: hidden;
+            max-width: 5rem;
+            text-overflow: ellipsis;
+        }
+
         &.dragging,
         &:focus-visible,
         &:hover {
-            background: var(--color-1);
-            color: var(--color-bg-2);
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            border: none;
+            outline: 2px solid var(--color-1);
+            outline-width: 2px;
+            box-shadow: 0 0.3rem 0 0 color-mix(in srgb, var(--color-2) 100%, transparent 0%);
+            margin-bottom: 2px;
+            margin-left: 1px;
+            transition: margin-bottom, outline-width, box-shadow 0.0621s;
             z-index: 3;
         }
 
         &:active {
             z-index: 3;
             cursor: grabbing;
+            box-shadow: none;
+            margin-bottom: -2px;
+            margin-left: 1px;
+            background: var(--color-1);
+            transition: margin-bottom, box-shadow, background 0.0621s;
+            color: var(--color-bg-2);
         }
     }
 
