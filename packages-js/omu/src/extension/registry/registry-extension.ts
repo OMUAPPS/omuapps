@@ -85,10 +85,18 @@ class RegistryImpl<T> implements Registry<T> {
         this.eventEmitter.emit(value);
     }
 
-    public async update(fn: (value: T) => T): Promise<void> {
+    public async update(fn: (value: T) => PromiseLike<T> | T): Promise<T> {
         const value = await this.get();
         const newValue = await fn(value);
         await this.set(newValue);
+        return newValue;
+    }
+
+    public async modify(fn: (value: T) => PromiseLike<T> | T): Promise<T> {
+        const value = await this.get();
+        const newValue = await fn(value);
+        await this.set(newValue);
+        return newValue;
     }
 
     public listen(handler: (value: T) => Promise<void> | void): Unlisten {

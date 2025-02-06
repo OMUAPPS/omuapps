@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
+from typing import Any
 
 from omu.client import Client
 from omu.event_emitter import EventEmitter, Unlisten
@@ -120,10 +122,23 @@ class RegistryImpl[T](Registry[T]):
         )
         await self.event_emitter.emit(value)
 
-    async def update(self, handler: Coro[[T], T]) -> None:
+    async def update(self, handler: Coro[[T], T] | Callable[[T], T]) -> T:
         value = await self.get()
-        new_value = await handler(value)
+        if asyncio.iscoroutinefunction(handler):
+            new_value = await handler(value)
+        else:
+            new_value: T = handler(value)  # type: ignore
         await self.set(new_value)
+        return new_value
+
+    async def modify(self, handler: Coro[[T], Any] | Callable[[T], Any]) -> T:
+        value = await self.get()
+        if asyncio.iscoroutinefunction(handler):
+            await handler(value)
+        else:
+            handler(value)
+        await self.set(value)
+        return value
 
     def listen(self, handler: Coro[[T], None] | Callable[[T], None]) -> Unlisten:
         if not self.listening and self.client.ready:
