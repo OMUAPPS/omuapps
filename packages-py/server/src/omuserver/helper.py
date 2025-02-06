@@ -25,11 +25,13 @@ def _ensure_log_dir(path: Path) -> Path:
 
 def _get_log_path(name: str, base_dir=LOG_DIRECTORY) -> Path:
     time_str = datetime.datetime.now().strftime("%H-%M-%S")
-    path = base_dir / "{time:YYYY-MM-DD}" / f"{time_str}-{name}.log"
+    date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+    base_dir = base_dir.resolve()
+    path = base_dir / date_str / f"{time_str}-{name}.log"
     index = 1
     while path.exists():
         time_str = datetime.datetime.now().strftime("%H-%M-%S")
-        path = base_dir / "{time:YYYY-MM-DD}" / f"{time_str}-{name}-{index}.log"
+        path = base_dir / date_str / f"{time_str}-{name}-{index}.log"
         index += 1
     return path
 
