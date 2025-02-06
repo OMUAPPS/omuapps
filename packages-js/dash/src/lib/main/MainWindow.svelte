@@ -9,6 +9,7 @@
         loadedIds,
         pageMap,
         registerPage,
+        unregisterPage,
         type Page,
         type PageItem,
     } from './page.js';
@@ -84,7 +85,20 @@
         if (shouldUpdate && manifest) {
             screenContext.push(UpdateScreen, { manifest });
         }
-    })
+
+        dashboard.apps.event.remove.listen((removedItems) => {
+            removedItems.forEach((item) => {
+                pages.delete(`app-${item.id.key()}`);
+                unregisterPage(`app-${item.id.key()}`);
+            });
+        });
+        dashboard.apps.event.update.listen((updatedItems) => {
+            updatedItems.forEach((item) => {
+                pages.delete(`app-${item.id.key()}`);
+                unregisterPage(`app-${item.id.key()}`);
+            });
+        });
+    });
 </script>
 <main class:open={$menuOpen}>
     <div class="tabs" class:open={$menuOpen}>
