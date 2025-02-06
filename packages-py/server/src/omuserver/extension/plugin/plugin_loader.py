@@ -196,12 +196,18 @@ class PluginLoader:
         self.instances: dict[str, PluginInstance] = {}
 
     async def run_plugins(self):
-        self.load_plugins()
+        try:
+            self.load_plugins()
+        except Exception as e:
+            logger.opt(exception=e).error("Failed to load plugins")
 
         logger.info(f"Loaded plugins: {self.instances.keys()}")
 
-        for instance in self.instances.values():
-            await instance.start(self._server)
+        try:
+            for instance in self.instances.values():
+                await instance.start(self._server)
+        except Exception as e:
+            logger.opt(exception=e).error("Failed to start plugins")
 
     def retrieve_valid_entry_points(self) -> dict[str, importlib.metadata.EntryPoint]:
         valid_entry_points: dict[str, importlib.metadata.EntryPoint] = {}

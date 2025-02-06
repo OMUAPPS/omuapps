@@ -4,6 +4,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING
 
+from loguru import logger
 from omu.app import AppType
 from omu.extension.dashboard.packets import PluginRequestPacket
 from omu.extension.plugin import PackageInfo
@@ -46,7 +47,10 @@ class PluginExtension:
         await self.loader.run_plugins()
 
     async def on_stop(self) -> None:
-        await self.loader.stop_plugins()
+        try:
+            await self.loader.stop_plugins()
+        except Exception as e:
+            logger.opt(exception=e).error("Error stopping plugins")
 
     def _get_next_request_id(self) -> str:
         self.request_id += 1

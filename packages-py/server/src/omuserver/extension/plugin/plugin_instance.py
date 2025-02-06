@@ -85,7 +85,9 @@ class PluginInstance:
                 module=module,
             )
         except Exception as e:
-            logger.opt(exception=e).error(f"Error while {stage} plugin {entry_point.name} from {package}")
+            logger.opt(exception=e).error(
+                f"Error while {stage} plugin {entry_point.name} from {package.name if package else 'unknown'}"
+            )
             return None
 
     async def notify_install(self, ctx: InstallContext):
@@ -121,8 +123,13 @@ class PluginInstance:
 
     async def terminate(self, server: Server):
         if self.process is not None:
-            self.process.terminate()
-            self.process.join()
+            try:
+                self.process.terminate()
+                self.process.join()
+            except AttributeError:
+                logger.warning(f"Error terminating plugin {self.entry_point.name}")
+            except Exception as e:
+                logger.opt(exception=e).error(f"Error terminating plugin {self.entry_point.name}")
             self.process = None
         if self.client is not None:
             await self.client.stop()
@@ -166,14 +173,14 @@ class PluginInstance:
             )
             server.loop.create_task(server.network.process_session(session))
 
-    def _start_isolated(self, server, token):
+    def _start_isolated(self, server: Server, token: str):
         pid = os.getpid()
         if self.process:
             raise ValueError(f'Plugin "{self.plugin}" already started')
         process = Process(
             target=run_plugin_isolated,
             args=(
-                self.plugin,
+                self.entry_point,
                 server.address,
                 token,
                 pid,
@@ -181,12 +188,12 @@ class PluginInstance:
             name=f"Plugin {self.entry_point.value}",
             daemon=True,
         )
-        self.process = process
         process.start()
+        self.process = process
 
 
 def run_plugin_isolated(
-    plugin: Plugin,
+    entry_point: importlib.metadata.EntryPoint,
     address: Address,
     token: str,
     pid: int,
@@ -200,12 +207,20 @@ def run_plugin_isolated(
 
     threading.Thread(target=_watch_parent_process, daemon=True).start()
 
+    package = entry_point.dist
+    stage = "loading"
     try:
+        plugin = entry_point.load()
+        stage = "validating"
+        if not isinstance(plugin, Plugin):
+            raise ValueError(f"Invalid plugin: {plugin} is not a Plugin")
+        stage = "starting"
         if plugin.get_client is None:
             raise ValueError(f"Invalid plugin: {plugin} has no client")
         client = plugin.get_client()
         if client.app.type != AppType.PLUGIN:
             raise ValueError(f"Invalid plugin: {client.app} is not a plugin")
+        stage = "setting up"
         setup_logger(name=client.app.id.get_sanitized_key())
         logger.info(f"Starting plugin {client.app.id}")
         connection = WebsocketsConnection(client, address)
@@ -220,7 +235,11 @@ def run_plugin_isolated(
             exit(0)
 
         client.network.event.disconnected += stop_plugin
+        stage = "running"
         client.run(loop=loop, reconnect=False)
         loop.run_forever()
     except Exception as e:
-        logger.opt(exception=e).error("Error running plugin")
+        logger.opt(exception=e).error(
+            f"Error while {stage} plugin {entry_point.name} from {package.name if package else 'unknown'}"
+        )
+        return None
