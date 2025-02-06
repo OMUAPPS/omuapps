@@ -172,7 +172,11 @@
     }
 
     h3 {
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
         margin-bottom: 0.5rem;
+        font-size: 1rem;
     }
 
     .menu {
@@ -234,6 +238,9 @@
                 flex: 1;
                 overflow: auto;
                 overflow-x: hidden;
+                border-bottom: 1px solid var(--color-outline);
+                margin-bottom: 0.25rem;
+                padding-bottom: 1rem;
             }
         }
     }
