@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.21 (2025-02-06)
+
+**Note:** Version bump only for package @omujs/obs
+
+
+
+
+
 ## 0.8.20 (2025-01-30)
 
 **Note:** Version bump only for package @omujs/obs
