@@ -19,7 +19,7 @@
         SvelteComponent<{ entry: T; selected?: boolean }>
     >;
     export let filter: (key: string, entry: T) => boolean = () => true;
-    export let sort: (a: T, b: T) => number = () => 0;
+    export let sort: (a: T, b: T) => number | undefined = undefined;
     export let reverse: boolean = false;
     export let backward: boolean = true;
     export let initial: number = 40;
@@ -69,19 +69,55 @@
     }
 
     function updateCache(cache: Map<string, T>) {
+        // if (cache.size === 0) return;
+        // let newItems = [...cache.entries()];
+        // if (filter) {
+        //     newItems = newItems.filter(([key, entry]) => filter(key, entry));
+        // }
+        // if (newItems.length === 0) return;
+        // const existingKeys = new Set(entries.keys());
+        // entries = new Map([
+        //     ...newItems.filter(([key]) => !existingKeys.has(key)),
+        //     ...entries.entries().map(([key, value]): [string, T] => {
+        //         if (existingKeys.has(key)) {
+        //             const entry = newItems.find(([k]) => k === key);
+        //             if (entry) {
+        //                 return [key, entry[1]];
+        //             }
+        //         }
+        //         return [key, value];
+        //     }),
+        // ]);
+        // updated = true;
+        // if (startIndex === 0) {
+        //     entries = new Map([...entries.entries()].slice(-limit));
+        // }
         if (cache.size === 0) return;
-        let newItems = [...cache.entries()];
-        if (filter) {
-            newItems = newItems.filter(([key, entry]) => filter(key, entry));
+        let changed = false;
+        const newItems: [string, T][] = [];
+        for (const [key, value] of cache.entries()) {
+            if (filter && !filter(key, value)) {
+                continue;
+            }
+            if (entries.has(key)) {
+                entries.set(key, value);
+            } else {
+                newItems.push([key, value]);
+                changed = true;
+            }
         }
-        if (newItems.length === 0) return;
-        const prevSize = entries.size;
-        entries = new Map([...entries.entries(), ...newItems]);
-        if (prevSize !== entries.size) {
+        if (changed) {
+            let newEntries = [
+                ...newItems,
+                ...entries.entries(),
+            ];
+            if (sort) {
+                newEntries = newEntries.sort(([, entryA], [, entryB]) =>
+                    sort(entryA, entryB) || 0,
+                );
+            }
+            entries = new Map(newEntries);
             updated = true;
-        }
-        if (startIndex === 0) {
-            entries = new Map([...entries.entries()].slice(-limit));
         }
     }
 
