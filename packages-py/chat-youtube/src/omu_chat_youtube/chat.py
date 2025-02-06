@@ -305,11 +305,11 @@ class YoutubeChat(ChatService):
                 if chat_data is None:
                     break
                 await self.process_chat_data(chat_data)
-                await asyncio.sleep(1 / 3)
                 if count % 10 == 0:
                     self.room.metadata |= await self.youtube_chat.fetch_metadata()
                     await self.chat.rooms.update(self.room)
                 count += 1
+                await asyncio.sleep(1 / 3)
         finally:
             await self.stop()
 
