@@ -41,10 +41,8 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - run: corepack enable
-
             - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
+              uses: actions/setup-node@v4.2.0
               with:
                 cache: 'pnpm'
 
@@ -174,10 +172,8 @@ jobs:
               with:
                   ref: ${{ needs.publish-pypi.outputs.VERSION }}
 
-            - run: corepack enable
-
             - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
+              uses: actions/setup-node@v4.2.0
               with:
                 cache: 'pnpm'
 
@@ -231,10 +227,8 @@ jobs:
         steps:
         - uses: actions/checkout@v4
 
-        - run: corepack enable
-
         - name: Setup Node.js
-          uses: actions/setup-node@v4.0.3
+          uses: actions/setup-node@v4.2.0
           with:
             cache: 'pnpm'
 
