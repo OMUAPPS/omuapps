@@ -41,8 +41,18 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
             - name: Setup Node.js
-              uses: actions/setup-node@v4.2.0
+              uses: actions/setup-node@v4.0.3
+              with:
+                cache: 'pnpm'
+                node-version: '20.18.2'
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4.0.3
               with:
                 cache: 'pnpm'
 
@@ -172,10 +182,15 @@ jobs:
               with:
                   ref: ${{ needs.publish-pypi.outputs.VERSION }}
 
+            - uses: pnpm/action-setup@v4
+              with:
+                version: 9
+
             - name: Setup Node.js
-              uses: actions/setup-node@v4.2.0
+              uses: actions/setup-node@v4.0.3
               with:
                 cache: 'pnpm'
+                node-version: '20.18.2'
 
             - name: Install dependencies
               run: pnpm i --frozen-lockfile
@@ -227,8 +242,19 @@ jobs:
         steps:
         - uses: actions/checkout@v4
 
+
+        - uses: pnpm/action-setup@v4
+          with:
+            version: 9
+
         - name: Setup Node.js
-          uses: actions/setup-node@v4.2.0
+          uses: actions/setup-node@v4.0.3
+          with:
+            cache: 'pnpm'
+            node-version: '20.18.2'
+
+        - name: Setup Node.js
+          uses: actions/setup-node@v4.0.3
           with:
             cache: 'pnpm'
 
