@@ -6,6 +6,7 @@
 
     let formattedDate: string = '';
     let timer: number;
+    let destroyed = false;
 
     const timeUnits = [
         { label: 'date.years_ago', value: 1000 * 60 * 60 * 24 * 365.25 },
@@ -26,6 +27,7 @@
     ];
 
     function sleep(ms: number) {
+        if (destroyed) return;
         window.clearTimeout(timer);
         timer = window.setTimeout(() => {
             timer = 0;
@@ -67,6 +69,7 @@
 
     onDestroy(() => {
         window.clearTimeout(timer);
+        destroyed = true;
     });
 </script>
 

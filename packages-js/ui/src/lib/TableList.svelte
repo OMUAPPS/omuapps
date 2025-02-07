@@ -19,10 +19,11 @@
         SvelteComponent<{ entry: T; selected?: boolean }>
     >;
     export let filter: (key: string, entry: T) => boolean = () => true;
-    export let sort: (a: T, b: T) => number | undefined = undefined;
+    export let sort: ((a: T, b: T) => number) | undefined = undefined;
     export let reverse: boolean = false;
     export let backward: boolean = true;
     export let initial: number = 40;
+     
     export let limit = 400;
     export let selectedItem: string | undefined = undefined;
 
@@ -69,29 +70,6 @@
     }
 
     function updateCache(cache: Map<string, T>) {
-        // if (cache.size === 0) return;
-        // let newItems = [...cache.entries()];
-        // if (filter) {
-        //     newItems = newItems.filter(([key, entry]) => filter(key, entry));
-        // }
-        // if (newItems.length === 0) return;
-        // const existingKeys = new Set(entries.keys());
-        // entries = new Map([
-        //     ...newItems.filter(([key]) => !existingKeys.has(key)),
-        //     ...entries.entries().map(([key, value]): [string, T] => {
-        //         if (existingKeys.has(key)) {
-        //             const entry = newItems.find(([k]) => k === key);
-        //             if (entry) {
-        //                 return [key, entry[1]];
-        //             }
-        //         }
-        //         return [key, value];
-        //     }),
-        // ]);
-        // updated = true;
-        // if (startIndex === 0) {
-        //     entries = new Map([...entries.entries()].slice(-limit));
-        // }
         if (cache.size === 0) return;
         let changed = false;
         const newItems: [string, T][] = [];
@@ -244,73 +222,17 @@
         });
     }
 
-    function handleSelectItem(e: KeyboardEvent) {
-        if (items.length === 0) return false;
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (!selectedItem) {
-                selectedItem = items[startIndex][0];
-                return true;
-            }
-            const index = items.findIndex(([key]) => key === selectedItem);
-            if (index === -1) return true;
-            if (index + 1 < items.length) {
-                selectedItem = items[index + 1][0];
-            }
-            return true;
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (!selectedItem) {
-                selectedItem = items[startIndex][0];
-                return true;
-            }
-            const index = items.findIndex(([key]) => key === selectedItem);
-            if (index === -1) return true;
-            if (index - 1 >= 0) {
-                selectedItem = items[index - 1][0];
-            }
-            return true;
-        }
-        return false;
-    }
-
-    let average_height: number = 0;
-
-    function scrollToSelected() {
-        if (!selectedItem) return;
-        let index = items.findIndex(([key]) => key === selectedItem);
-        if (index === -1) return;
-        if (index < startIndex + 1) {
-            index = Math.max(0, index - 1);
-            const row = index * average_height;
-            viewport.scrollTo({ top: row, behavior: 'instant' });
-            return;
-        }
-        if (index > endIndex - 3) {
-            index = startIndex + 2;
-            const row = index * average_height;
-            viewport.scrollTo({ top: row, behavior: 'instant' });
-        }
-    }
-
-    function handleKeydown(e: KeyboardEvent) {
-        if (handleSelectItem(e)) {
-            scrollToSelected();
-        }
-    }
-
     function selectItem(key: string | undefined) {
         selectedItem = key;
     }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window />
 <div class="list">
     <div class="items">
         <VirtualList
             {items}
             limit={initial}
-            bind:average_height
             bind:viewport
             bind:start={startIndex}
             bind:end={endIndex}

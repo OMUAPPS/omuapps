@@ -26,6 +26,7 @@
     let top = 0;
     let bottom = 0;
     export let average_height: number = 0;
+    export let min_height: number = 20;
     let first = true;
 
     // whenever `items` changes, invalidate the current heightmap
@@ -54,6 +55,7 @@
                 average_height += height_map[i] = itemHeight || rows[i].offsetHeight;
             }
             average_height /= end;
+            average_height = Math.max(average_height, min_height);
             height_map = new Array(items.length).fill(average_height);
         }
         const { scrollTop } = viewport;
@@ -83,6 +85,7 @@
 
         const remaining = items.length - end;
         average_height = (top + content_height) / end;
+        average_height = Math.max(average_height, min_height);
 
         bottom = remaining * average_height;
         height_map.length = items.length;
@@ -130,6 +133,7 @@
 
         const remaining = items.length - end;
         average_height = y / end;
+        average_height = Math.max(average_height, min_height);
 
         while (i < items.length) height_map[i++] = average_height;
         bottom = remaining * average_height;
