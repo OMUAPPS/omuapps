@@ -32,7 +32,7 @@
         ? applyOpacity(paid ? 'var(--color-1)' : 'var(--color-2)', 0.1)
         : undefined}
 >
-    <FlexRowWrapper widthFull gap>
+    <div class="container">
         {#if author && author.avatarUrl}
             <FlexColWrapper>
                 {#if author.metadata?.url}
@@ -63,9 +63,9 @@
                 </Tooltip>
             </FlexColWrapper>
         {/if}
-        <FlexColWrapper widthFull>
+        <div class="message">
             {#if author}
-                <FlexRowWrapper widthFull gap>
+                <div class="author-info">
                     <div class="author">
                         <span class="name">
                             {author.name}
@@ -85,7 +85,7 @@
                             <RelativeDate date={createdAt} />
                         </span>
                     {/if}
-                </FlexRowWrapper>
+                </div>
                 <FlexRowWrapper widthFull between>
                     <FlexColWrapper>
                         {#if content}
@@ -164,8 +164,8 @@
                     {/if}
                 </FlexRowWrapper>
             {/if}
-        </FlexColWrapper>
-    </FlexRowWrapper>
+        </div>
+    </div>
 </article>
 
 <style lang="scss">
@@ -200,6 +200,27 @@
         outline: 2px solid #000;
     }
 
+    .container {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .message {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .author-info {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: space-between;
+    }
+
     .author {
         display: flex;
         align-items: center;
@@ -207,23 +228,30 @@
 
     .name {
         margin-right: 5px;
-        white-space: nowrap;
         user-select: text;
         font-weight: 600;
-        font-size: 12px;
+        font-size: 0.8rem;
+        display: -webkit-box;
+        line-clamp: 1;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+        height: 1.2rem;
     }
 
     small {
         font-size: 0.6rem;
         color: #999;
+        white-space: nowrap;
     }
 
     .time {
         padding: 2px 0;
-        margin-left: auto;
         font-size: 0.8rem;
         color: #666;
         user-select: text;
+        white-space: nowrap;
     }
 
     .message-content {
