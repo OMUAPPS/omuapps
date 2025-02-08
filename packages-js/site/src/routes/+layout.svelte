@@ -1,12 +1,15 @@
 <script lang="ts">
     import { Theme } from '@omujs/ui';
+    import ProgressBar from './_components/ProgressBar.svelte';
     import './styles.css';
+
 </script>
 
 <Theme />
 <div class="app">
     <slot />
 </div>
+<ProgressBar />
 
 <style>
     .app {
