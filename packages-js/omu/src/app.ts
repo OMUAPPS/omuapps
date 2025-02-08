@@ -34,13 +34,17 @@ export class App implements Keyable, Model<AppJson> {
     public readonly metadata?: AppMetadata;
     public readonly type?: AppType;
 
-    constructor(id: Identifier, options: {
+    constructor(id: Identifier | string, options: {
         version?: string;
         url?: string;
         metadata?: AppMetadata;
         type?: AppType;
     }) {
-        this.id = id;
+        if (typeof id === 'string') {
+            this.id = Identifier.fromKey(id);
+        } else {
+            this.id = id;
+        }
         this.version = options.version;
         this.url = options.url;
         this.metadata = options.metadata;
