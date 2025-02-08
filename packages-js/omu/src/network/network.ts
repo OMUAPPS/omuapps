@@ -104,7 +104,6 @@ export class Network {
                 throw new Error('Received READY packet when already ready');
             }
             this.setStatus({type: 'ready'});
-            this.client.event.ready.emit();
         });
     }
 

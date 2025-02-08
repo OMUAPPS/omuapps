@@ -64,7 +64,6 @@ class Network:
         )
         self.add_packet_handler(PACKET_TYPES.TOKEN, self.handle_token)
         self.add_packet_handler(PACKET_TYPES.DISCONNECT, self.handle_disconnect)
-        self.add_packet_handler(PACKET_TYPES.READY, self.handle_ready)
 
     async def handle_token(self, token: str | None):
         if token is None:
@@ -92,9 +91,6 @@ class Network:
         error = ERROR_MAP.get(reason.type)
         if error:
             raise error(reason.message)
-
-    async def handle_ready(self, _: None):
-        await self._client.event.ready.emit()
 
     @property
     def address(self) -> Address:
