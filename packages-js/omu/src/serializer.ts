@@ -73,10 +73,17 @@ export class Serializer<T, D> {
         );
     }
 
-    pipe<E>(serializer: Serializable<D, E>): Serializer<T, E> {
+    public pipe<E>(serializer: Serializable<D, E>): Serializer<T, E> {
         return new Serializer<T, E>(
             (data) => serializer.serialize(this.serialize(data)),
             (data) => this.deserialize(serializer.deserialize(data)),
+        );
+    }
+    
+    public static pipe<T, D, E>(serializer: Serializable<T, D>, next: Serializable<D, E>): Serializer<T, E> {
+        return new Serializer<T, E>(
+            (data) => next.serialize(serializer.serialize(data)),
+            (data) => serializer.deserialize(next.deserialize(data)),
         );
     }
 }
