@@ -72,4 +72,4 @@ myData.listen((data) => {
 });
 ```
 
-[次へ](%DOCS_ROOT%/2-api-3-registry?_style=large)
+[次へ](%DOCS_ROOT%/2-api-3-signal?_style=large)
