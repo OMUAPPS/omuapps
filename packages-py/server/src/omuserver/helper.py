@@ -77,14 +77,15 @@ def setup_logger(name: str | App | Identifier, base_dir=LOG_DIRECTORY) -> None:
     elif isinstance(name, Identifier):
         name = name.get_sanitized_key()
     _ensure_log_dir(base_dir)
+    log_file_path = _get_log_path(name, base_dir=base_dir)
     logger.add(
-        _get_log_path(name, base_dir=base_dir),
+        log_file_path,
         colorize=False,
         format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | " "{name}:{function}:{line} - {message}"),
         retention="7 days",
         compression="zip",
     )
-    logger.info(f"Logging to {_get_log_path(name, base_dir=base_dir)}")
+    logger.info(f"Logging to {log_file_path}")
     _cleanup_logs(base_dir)
 
 
