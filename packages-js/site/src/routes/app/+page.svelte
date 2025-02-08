@@ -120,7 +120,7 @@
                         {:else if status['type'] === 'reconnecting'}
                             <p>
                                 接続に失敗しました ({status.attempt}回目)
-                                <button on:click={() => omu.network.connect()}>再接続</button>
+                                <button disabled>再接続中…</button>
                             </p>
                             <small>
                                 <p>APIが起動していない可能性があります。</p>
@@ -311,6 +311,15 @@
                     outline-offset: -1px;
                     background: var(--color-bg-2);
                     color: var(--color-1);
+                }
+
+                &:disabled {
+                    background: var(--color-bg-1);
+                    color: var(--color-1);
+
+                    &:hover {
+                        outline: none;
+                    }
                 }
             }
         }
