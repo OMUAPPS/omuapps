@@ -74,11 +74,11 @@ class RegistryExtension(Extension):
     def get[T](self, registry_type: RegistryType[T]) -> Registry[T]:
         return self.create_registry(registry_type)
 
-    def create[T](self, name: str, default_value: T) -> Registry[T]:
+    def create[T](self, name: str, *, default: T) -> Registry[T]:
         identifier = self.client.app.id / name
         registry_type = RegistryType(
             identifier,
-            default_value,
+            default,
             Serializer.json(),
         )
         return self.create_registry(registry_type)

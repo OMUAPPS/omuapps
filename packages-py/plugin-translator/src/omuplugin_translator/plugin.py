@@ -32,7 +32,7 @@ config = TrasnlatorConfig(
     active=False,
     languages=["ja", "en"],
 )
-CONFIG_REGISTRY_TYPE = omu.registries.create("config", config)
+CONFIG_REGISTRY_TYPE = omu.registries.create("config", default=config)
 
 
 @CONFIG_REGISTRY_TYPE.listen
