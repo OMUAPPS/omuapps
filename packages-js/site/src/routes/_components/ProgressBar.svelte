@@ -23,8 +23,6 @@
             loading = false;
         }, 162.1);
     }
-
-    $: console.log({ loading, loaded });
 </script>
 
 {#if loading}
