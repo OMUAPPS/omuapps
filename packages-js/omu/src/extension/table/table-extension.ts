@@ -166,7 +166,7 @@ export class TableExtension implements Extension {
         );
     }
 
-    public create<T>(tableType: TableType<T>): Table<T> {
+    private createTable<T>(tableType: TableType<T>): Table<T> {
         this.client.permissions.require(TABLE_PERMISSION_ID);
         if (this.has(tableType.id)) {
             throw new Error('Table already exists');
@@ -176,11 +176,20 @@ export class TableExtension implements Extension {
         return table;
     }
 
+    public create<T>(name: string, options: { key: (item: T) => string; serializer?: Serializable<T, Uint8Array> }): Table<T> {
+        const tableType = new TableType<T>(
+            this.client.app.id.join(name),
+            options.serializer ?? Serializer.json(),
+            options.key,
+        );
+        return this.createTable(tableType);
+    }
+
     public get<T>(type: TableType<T>): Table<T> {
         if (this.has(type.id)) {
             return this.tableMap.get(type.id) as Table<T>;
         }
-        return this.create(type);
+        return this.createTable(type);
     }
 
     public model<T extends Keyable & Model<D>, D = unknown>(
@@ -197,7 +206,7 @@ export class TableExtension implements Extension {
         if (this.has(tableType.id)) {
             throw new Error('Table already exists');
         }
-        return this.create(tableType);
+        return this.createTable(tableType);
     }
 
     public has(identifier: Identifier): boolean {

@@ -228,7 +228,7 @@ function createGame(): Game {
     const config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
     const states = makeRegistryWritable(omu.registries.get(STATES_REGISTRY_TYPE));
     const scene = makeRegistryWritable(omu.registries.get(SCENE_REGISTRY_TYPE));
-    const orders = omu.tables.create(ORDER_TABLE_TYPE);
+    const orders = omu.tables.get(ORDER_TABLE_TYPE);
     setClient(omu);
     setChat(chat);
 
