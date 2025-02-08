@@ -46,7 +46,7 @@
                         アプリを探す
                     </li>
                 </a>
-                <a href="/create/index">
+                <a href="/create/0-index">
                     <li
                         aria-current={$page.url.pathname.startsWith('/create') ? 'page' : undefined}
                     >

@@ -28,13 +28,14 @@
 </main>
 
 <style lang="scss">
-    $haeder-height: min(47vh, calc(100vw));
+    $haeder-height: min(42vh, calc(100vw));
 
     .background {
         position: fixed;
         inset: 0;
         z-index: -1;
         opacity: 0.5;
+        filter: blur(.0621rem) contrast(0.621) brightness(1.23621);
     }
 
     header {

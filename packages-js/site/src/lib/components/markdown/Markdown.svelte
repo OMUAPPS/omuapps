@@ -2,6 +2,7 @@
     import SvelteMarkdown from 'svelte-markdown';
     import MdCode from './MdCode.svelte';
     import MdCodeSpan from './MdCodeSpan.svelte';
+    import MdLink from './MdLink.svelte';
 
     export let source: string;
 </script>
@@ -12,6 +13,7 @@
         renderers={{
             code: MdCode,
             codespan: MdCodeSpan,
+            link: MdLink,
         }}
     />
 </div>
@@ -22,10 +24,9 @@
         flex-direction: column;
         align-items: start;
         padding: 1rem 0;
-        max-width: 800px;
         text-wrap: wrap;
-        white-space: pre-wrap;
         font-size: 0.9rem;
+        width: 100%;
 
         :global(h1) {
             font-size: 2rem;
