@@ -1,13 +1,18 @@
 import { join } from 'path';
 
 export type DocsData = {
-    readonly title: string;
+    readonly meta: DocsMeta;
     readonly slug: string;
     readonly content: string;
 };
 
-export type DocsSection = {
+export type DocsMeta = {
     readonly title: string;
+    readonly description: string;
+};
+
+export type DocsSection = {
+    readonly meta: DocsMeta;
     readonly slug: string;
 };
 
@@ -18,16 +23,18 @@ export async function getDocsData(path = 'create'): Promise<DocsData[]> {
     const docsData: DocsData[] = [];
 
     for (const file of docFiles) {
-        const content = await readFile(join(docsDir, file), 'utf-8');
-        const title = content.match(/# (.+)/)?.[1] ?? 'Untitled';
+        const contentRaw = await readFile(join(docsDir, file), 'utf-8');
+        const metaLines = contentRaw.match(/^---\n([\s\S]*?)\n---\n/)?.[1];
+        const meta: DocsMeta = metaLines ? Object.fromEntries(metaLines.split('\n').map((line) => line.split(': ').map((part) => part.trim()))) : {};
+        const content = contentRaw.replace(/^---\n([\s\S]*?)\n---\n/, '');
         const slug = file.replace(/\.md$/, '');
 
-        docsData.push({ title, slug, content });
+        docsData.push({ meta, slug, content });
     }
 
     return docsData;
 }
 
 export function getDocSections(docsData: DocsData[]): DocsSection[] {
-    return docsData.map(({ title, slug }) => ({ title, slug }));
+    return docsData.map(({ meta, slug }) => ({ meta, slug }));
 }

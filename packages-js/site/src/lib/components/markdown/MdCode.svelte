@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ButtonMini, Tooltip } from '@omujs/ui';
+    import { Tooltip } from '@omujs/ui';
 
     export let lang: string;
     // export let raw: string;
@@ -8,22 +8,19 @@
     $: lines = text.split('\n');
 
     let selectedLine: number | null = null;
-    let isHovered = false;
 </script>
 
-<code on:mouseenter={() => (isHovered = true)} on:mouseleave={() => (isHovered = false)}>
+<code>
     <span class="header">
         <small>{lang}</small>
-        {#if isHovered}
-            <ButtonMini
-                on:click={() => {
-                    navigator.clipboard.writeText(text);
-                }}
-            >
-                <Tooltip>Copy</Tooltip>
-                <i class="ti ti-copy"></i>
-            </ButtonMini>
-        {/if}
+        <button
+            on:click={() => {
+                navigator.clipboard.writeText(text);
+            }}
+        >
+            <Tooltip>Copy</Tooltip>
+            <i class="ti ti-copy"></i>
+        </button>
     </span>
     {#each lines as line, i}
         <span
@@ -45,39 +42,63 @@
 
 <style lang="scss">
     code {
+        position: relative;
         display: flex;
         flex-direction: column;
-        background-color: var(--color-bg-1);
-        color: var(--color-1);
-        padding: 0.5rem 1rem;
+        background-color: #f8f9f8;
+        color: var(--color-text);
+        padding: 1.5rem 0.5rem;
         margin: 1rem 0;
         border-radius: 4px;
         font-size: 0.9rem;
-        font-weight: 600;
+        font-weight: 500;
         font-family: var(--font-mono);
         width: 100%;
+        outline: 1px solid var(--color-outline);
+        user-select: text;
     }
 
     .header {
+        position: absolute;
+        top: -0.75rem;
+        width: calc(100% - 2.5rem);
+        margin: 0 1rem;
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: start;
+        font-weight: 600;
+        height: 1.5rem;
+
+        > button {
+            background: none;
+            border: none;
+            background: var(--color-1);
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+            color: var(--color-bg-1);
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    
+        > small {
+            display: block;
+            background-color: #f8f9f8;
+            border-radius: 3px;
+            padding: 0.2rem 0.5rem;
+            color: var(--color-1);
+            width: fit-content;
+            outline: 1px solid var(--color-outline);
+        }
     }
 
-    small {
-        display: block;
-        background-color: var(--color-bg-2);
-        padding: 0.2rem 0.5rem;
-        margin-bottom: 0.5rem;
-        color: var(--color-2);
-        height: 1.5rem;
-        width: fit-content;
-    }
 
     .line-number {
-        color: var(--color-2);
+        color: var(--color-outline);
         margin: 0 0.5rem;
-        font-size: 0.9rem;
+        font-size: 0.7rem;
         font-weight: 400;
         user-select: none;
     }
@@ -87,10 +108,10 @@
         align-items: baseline;
         height: 1.5rem;
         user-select: text;
-    }
 
-    .selected {
-        width: 100%;
-        background-color: var(--color-bg-2);
+        &.selected {
+            width: 100%;
+            border-bottom: 1px solid var(--color-1);
+        }
     }
 </style>
