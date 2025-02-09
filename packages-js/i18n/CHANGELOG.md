@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.8.22 (2025-02-09)
+
+
+### Bug Fixes
+
+* **site:** ドキュメント内のヘッダーの条件を修正 ([d002aa2](https://github.com/OMUAPPS/omuapps/commit/d002aa2b8fafd4655c415849d2fa91df67865b25))
+
+
+
+
+
 ## 0.8.21 (2025-02-06)
 
 **Note:** Version bump only for package @omujs/i18n
