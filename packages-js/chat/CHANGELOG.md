@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.9.0 (2025-02-09)
+
+
+### Features
+
+* **site:** docsにgithubで編集ボタンを追加 ([b3955c0](https://github.com/OMUAPPS/omuapps/commit/b3955c06c1aab94dab17c77b25fb4603cc70d1ef))
+
+
+
+
+
 ## 0.8.22 (2025-02-09)
 
 
