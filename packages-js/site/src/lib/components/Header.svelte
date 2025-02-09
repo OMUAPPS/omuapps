@@ -19,6 +19,8 @@
             window.removeEventListener('scroll', onScroll);
         };
     });
+
+    $: path = $page.url.pathname;
 </script>
 
 <header class:ontop={onTop}>
@@ -30,7 +32,7 @@
             <ul>
                 <a href="/download">
                     <li
-                        aria-current={$page.url.pathname.startsWith('/download')
+                        aria-current={path.startsWith('/download')
                             ? 'page'
                             : undefined}
                     >
@@ -40,7 +42,7 @@
                     </li>
                 </a>
                 <a href="/docs/1-guide-0-index">
-                    <li aria-current={$page.url.pathname.startsWith('/docs/1-guide-0-index') ? 'page' : undefined}>
+                    <li aria-current={path.startsWith('/docs/1-guide') ? 'page' : undefined}>
                         <Tooltip>アプリの導入から使い方を知る</Tooltip>
                         <i class="ti ti-book"></i>
                         ドキュメント
@@ -48,7 +50,9 @@
                 </a>
                 <a href="/docs/0-index">
                     <li
-                        aria-current={$page.url.pathname.startsWith('/docs') ? 'page' : undefined}
+                        aria-current={path.startsWith('/docs') && !path.startsWith('/docs/1-guide')
+                            ? 'page'
+                            : undefined}
                     >
                         <Tooltip>あったらいいなが作れるかも</Tooltip>
                         <i class="ti ti-pencil"></i>
