@@ -84,7 +84,7 @@
     <meta name="description" content="OMUAPPSで使えるアプリを探してみる" />
 </svelte:head>
 
-<Page>
+<Page header={false}>
     <header slot="header">
         <h1>
             アプリを探す

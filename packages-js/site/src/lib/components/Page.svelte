@@ -5,9 +5,12 @@
     import Header from './Header.svelte';
 
     export let noBackground = false;
+    export let header = true;
 </script>
 
-<Header />
+{#if header}
+    <Header />
+{/if}
 <slot name="banner">
     <img src={background} alt="background" class="background" />
 </slot>
