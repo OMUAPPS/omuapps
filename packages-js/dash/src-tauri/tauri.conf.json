@@ -8,7 +8,7 @@
     },
     "package": {
         "productName": "OMUAPPS",
-        "version": "0.8.22"
+        "version": "0.9.0"
     },
     "tauri": {
         "cli": {
