@@ -2,6 +2,7 @@
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs/index.js';
     import { FlexRowWrapper } from '@omujs/ui';
+    import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
     import { config } from './constants.js';
     import { docs } from './stores.js';
@@ -35,6 +36,9 @@
                 <slot />
             </div>
             <DocsNav {section} {group} />
+            {#if section}
+                <DocsFooter {section} />
+            {/if}
         </div>
         <div class="groups">
             {#each Object.entries(sections) as [group, entries] (group)}
