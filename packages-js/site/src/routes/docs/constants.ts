@@ -8,7 +8,7 @@ const DEFAULT_CONFIG = {
 export const config = writable<typeof DEFAULT_CONFIG>(DEFAULT_CONFIG);
 
 export const CONSTANTS = {
-    'DOCS_ROOT': '/create',
+    'DOCS_ROOT': '/docs',
 };
 
 export function replaceConstants(content: string, config: typeof DEFAULT_CONFIG) {
