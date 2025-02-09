@@ -67,6 +67,10 @@
                         pnpm
                         <i class="ti ti-brand-pnpm"></i>
                     </button>
+                    <button on:click={() => $config.PACKAGE_MANAGER = 'bun'} class:selected={$config.PACKAGE_MANAGER === 'bun'}>
+                        bun
+                        <i class="ti ti-package"></i>
+                    </button>
                 </div>
             </div>
         </div>
