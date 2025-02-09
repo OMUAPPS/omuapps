@@ -86,6 +86,7 @@
         justify-content: space-between;
         gap: 4rem;
         width: 100%;
+        padding-right: min(calc(70rem - 100%), calc(100% - 20rem));
     }
 
     .content {
@@ -113,15 +114,36 @@
     }
 
     .groups {
-        position: sticky;
-        top: 6rem;
+        position: fixed;
+        padding: 2rem;
+        padding-top: 8rem;
+        padding-right: 2rem;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        border-left: 1px solid var(--color-outline);
+        background: var(--color-bg-2);
         display: flex;
         flex-direction: column;
         gap: 1rem;
         font-size: 0.7rem;
-        max-height: calc(100vh - 8rem);
         min-width: 14rem;
         overflow-y: auto;
+
+        &::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: var(--color-bg-2);
+            border-radius: 1px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: color-mix(in srgb, var(--color-1) 10%, transparent 0%);
+            border: 1px solid var(--color-bg-2);
+            border-radius: 1px;
+        }
 
         > h3 {
             font-size: 0.8rem;
