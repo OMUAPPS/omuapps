@@ -1,56 +1,44 @@
 <script lang="ts">
-    import { omu } from '$lib/client.js';
-    import { Spinner, Tooltip } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/api/process';
-    import type { UpdateManifest } from '@tauri-apps/api/updater';
-    import { onMount } from 'svelte';
+    import { applyUpdate } from "$lib/tauri.js";
+    import { Spinner, Tooltip } from "@omujs/ui";
+    import type { Update } from "@tauri-apps/plugin-updater";
+    import { onMount } from "svelte";
 
-    let newVersion: UpdateManifest | null = null;
+    let update: Update | null = null;
     let updating = false;
 
     async function checkNewVersion() {
-        const { checkUpdate } = await import('@tauri-apps/api/updater');
-        const update = await checkUpdate();
-        const { manifest, shouldUpdate } = update;
-
-        if (shouldUpdate && manifest) {
-            newVersion = manifest;
-        }
+        const { check } = await import("@tauri-apps/plugin-updater");
+        update = await check();
     }
 
-    async function update() {
-        if (!newVersion) {
-            throw new Error('newVersion is null');
+    async function doUpdate() {
+        if (!update) {
+            throw new Error("newVersion is null");
         }
         if (updating) {
-            throw new Error('Already updating');
+            throw new Error("Already updating");
         }
-        updating = true;
-        const { installUpdate } = await import('@tauri-apps/api/updater');
-        try {
-            await omu.server.shutdown();
-        } catch (e) {
-            console.error(e);
-        }
-        await installUpdate();
-        await relaunch();
+        await applyUpdate(update, () => {});
     }
-    
+
     onMount(() => checkNewVersion());
 </script>
 
-{#if newVersion}
-    {@const date = new Date(newVersion.date)}
+{#if update}
+    {@const date = update.date && new Date(update.date)}
     <div class="new-version">
         <small>
             新しいバージョンがあります。起動しない場合は最新バージョンにアップデートしてください。
         </small>
-        <button on:click={update} class="update" disabled={updating}>
+        <button on:click={doUpdate} class="update" disabled={updating}>
             <Tooltip>
-                <p><b>{newVersion.version}</b> にアップデート</p>
+                <p><b>{update.version}</b> にアップデート</p>
                 <small>
-                    ({date.toLocaleDateString()})
-                    {newVersion.body}
+                    {#if date}
+                        ({date.toLocaleDateString()})
+                    {/if}
+                    {update.body}
                 </small>
             </Tooltip>
             {#if updating}

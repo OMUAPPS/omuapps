@@ -3,10 +3,15 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import { LOCALES } from '$lib/i18n/i18n.js';
     import { screenContext } from '$lib/screen/screen.js';
-    import { invoke } from '$lib/tauri.js';
+    import { checkUpdate, invoke } from '$lib/tauri.js';
     import { Combobox, Header, Tooltip } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/api/process';
-    import { currentSettingsCategory, devMode, isBetaEnabled, language } from '../settings.js';
+    import { relaunch } from '@tauri-apps/plugin-process';
+    import {
+        currentSettingsCategory,
+        devMode,
+        isBetaEnabled,
+        language,
+    } from '../settings.js';
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
@@ -21,7 +26,7 @@
         try {
             path = await invoke('generate_log_file');
         } catch (error) {
-            setTimeout(() => logPromise = null, 3000);
+            setTimeout(() => (logPromise = null), 3000);
             throw error;
         }
         logPromise = null;
@@ -41,7 +46,10 @@
     />
     <div class="content">
         <div class="categories">
-            <button class:selected={$currentSettingsCategory == 'general'} on:click={() => $currentSettingsCategory = 'general'}>
+            <button
+                class:selected={$currentSettingsCategory == 'general'}
+                on:click={() => ($currentSettingsCategory = 'general')}
+            >
                 <Tooltip>{$t('settings.category.general.description')}</Tooltip>
                 <span>
                     <i class="ti {$t('settings.category.general.icon')}"></i>
@@ -49,7 +57,10 @@
                     <i class="ti ti-chevron-right"></i>
                 </span>
             </button>
-            <button class:selected={$currentSettingsCategory == 'about'} on:click={() => $currentSettingsCategory = 'about'}>
+            <button
+                class:selected={$currentSettingsCategory == 'about'}
+                on:click={() => ($currentSettingsCategory = 'about')}
+            >
                 <Tooltip>{$t('settings.category.about.description')}</Tooltip>
                 <span>
                     <i class="ti {$t('settings.category.about.icon')}"></i>
@@ -58,20 +69,34 @@
                 </span>
             </button>
             {#if $isBetaEnabled}
-                <button class:selected={$currentSettingsCategory == 'plugins'} on:click={() => $currentSettingsCategory = 'plugins'}>
-                    <Tooltip>{$t('settings.category.plugins.description')}</Tooltip>
+                <button
+                    class:selected={$currentSettingsCategory == 'plugins'}
+                    on:click={() => ($currentSettingsCategory = 'plugins')}
+                >
+                    <Tooltip
+                    >{$t('settings.category.plugins.description')}</Tooltip
+                    >
                     <span>
-                        <i class="ti {$t('settings.category.plugins.icon')}"></i>
+                        <i class="ti {$t('settings.category.plugins.icon')}"
+                        ></i>
                         <p>{$t('settings.category.plugins.name')}</p>
                         <i class="ti ti-chevron-right"></i>
                     </span>
                 </button>
             {/if}
             {#if $devMode}
-                <button class:selected={$currentSettingsCategory == 'developer'} on:click={() => $currentSettingsCategory = 'developer'}>
-                    <Tooltip>{$t('settings.category.developer.description')}</Tooltip>
+                <button
+                    class:selected={$currentSettingsCategory == 'developer'}
+                    on:click={() => ($currentSettingsCategory = 'developer')}
+                >
+                    <Tooltip
+                    >{$t(
+                        'settings.category.developer.description',
+                    )}</Tooltip
+                    >
                     <span>
-                        <i class="ti {$t('settings.category.developer.icon')}"></i>
+                        <i class="ti {$t('settings.category.developer.icon')}"
+                        ></i>
                         <p>{$t('settings.category.developer.name')}</p>
                         <i class="ti ti-chevron-right"></i>
                     </span>
@@ -82,27 +107,43 @@
             <h2>
                 {$t(`settings.category.${$currentSettingsCategory}.name`)}
                 <small>
-                    {$t(`settings.category.${$currentSettingsCategory}.description`)}
+                    {$t(
+                        `settings.category.${$currentSettingsCategory}.description`,
+                    )}
                 </small>
             </h2>
 
             {#if $currentSettingsCategory === 'general'}
                 <span class="setting">
                     <p>{$t('settings.setting.language')}</p>
-                    <Combobox bind:value={$language} options={Object.fromEntries(Object.entries(LOCALES).map(([key, value]) => [key, {value: value.code, label: value.name}]))} />
+                    <Combobox
+                        bind:value={$language}
+                        options={Object.fromEntries(
+                            Object.entries(LOCALES).map(([key, value]) => [
+                                key,
+                                { value: value.code, label: value.name },
+                            ]),
+                        )}
+                    />
                 </span>
                 <label class="setting">
                     <p>{$t('settings.setting.betaMode')}</p>
-                    <input type="checkbox" bind:checked={$isBetaEnabled} on:change={async () => {
-                        await invoke('set_config', {config: {enable_beta: $isBetaEnabled}});
-                        console.log('config', await invoke('get_config'));
-                        try {
-                            await omu.server.shutdown();
-                        } catch (e) {
-                            console.error(e);
-                        }
-                        await relaunch();
-                    }} />
+                    <input
+                        type="checkbox"
+                        bind:checked={$isBetaEnabled}
+                        on:change={async () => {
+                            await invoke('set_config', {
+                                config: { enable_beta: $isBetaEnabled },
+                            });
+                            console.log('config', await invoke('get_config'));
+                            try {
+                                await omu.server.shutdown();
+                            } catch (e) {
+                                console.error(e);
+                            }
+                            await relaunch();
+                        }}
+                    />
                 </label>
                 <small>
                     {$t('settings.setting.betaModeDescription')}
@@ -113,32 +154,61 @@
                         <input type="checkbox" bind:checked={$devMode} />
                     </label>
                 {/if}
+                <span class="setting">
+                    {#await checkUpdate($isBetaEnabled) then update}
+                        {JSON.stringify(update)}
+                    {:catch error}
+                        {error}
+                    {/await}
+                </span>
                 <h3>
                     {$t('settings.setting.debug')}
                 </h3>
                 <span class="setting">
-                    <button on:click={() => {
-                        omu.server.shutdown(true);
-                        window.location.reload();
-                    }}>{$t('settings.setting.serverRestart')}</button>
+                    <button
+                        on:click={() => {
+                            omu.server.shutdown(true);
+                            window.location.reload();
+                        }}>{$t('settings.setting.serverRestart')}</button
+                    >
                 </span>
                 <span class="setting">
                     {#if logPromise}
                         {#await logPromise}
-                            <button disabled>{$t('settings.setting.logFileGenerating')}</button>
+                            <button disabled
+                            >{$t(
+                                'settings.setting.logFileGenerating',
+                            )}</button
+                            >
                         {:then path}
-                            <button>{$t('settings.setting.logFileGenerated', { path })}</button>
+                            <button
+                            >{$t('settings.setting.logFileGenerated', {
+                                path,
+                            })}</button
+                            >
                         {:catch error}
-                            <button>{$t('settings.setting.logFileGenerateError', { error })}</button>
+                            <button
+                            >{$t('settings.setting.logFileGenerateError', {
+                                error,
+                            })}</button
+                            >
                         {/await}
                     {:else}
-                        <button on:click={() => logPromise = generateLogFile()}>{$t('settings.setting.logFileGenerate')}</button>
+                        <button
+                            on:click={() => (logPromise = generateLogFile())}
+                        >{$t('settings.setting.logFileGenerate')}</button
+                        >
                     {/if}
                 </span>
                 <span class="setting clean-environment">
-                    <button on:click={() => {
-                        screenContext.push(CleaningEnvironmentScreen, undefined)
-                    }}>{$t('settings.setting.cleanEnvironment')}</button>
+                    <button
+                        on:click={() => {
+                            screenContext.push(
+                                CleaningEnvironmentScreen,
+                                undefined,
+                            );
+                        }}>{$t('settings.setting.cleanEnvironment')}</button
+                    >
                 </span>
                 <small>先にOBSを終了する必要があります</small>
             {:else if $currentSettingsCategory === 'plugins'}
@@ -261,7 +331,7 @@
         padding-top: 0.125rem;
         margin-top: 0.125rem;
     }
-    
+
     .setting {
         display: flex;
         flex-direction: row;

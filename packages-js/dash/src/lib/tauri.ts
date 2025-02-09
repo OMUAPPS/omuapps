@@ -1,9 +1,10 @@
-import type * as event from '@tauri-apps/api/event';
-import type * as api from '@tauri-apps/api/tauri';
+import type * as api from '@tauri-apps/api/core';
+import { relaunch } from '@tauri-apps/plugin-process';
+import { check, type Update } from '@tauri-apps/plugin-updater';
 import { BROWSER } from 'esm-env';
+import { omu } from './client.js';
 
 let _invoke: typeof api.invoke;
-let _listen: typeof event.listen;
 
 export type Config = {
     enable_beta: boolean;
@@ -14,7 +15,7 @@ type Commands = {
     stop_server: () => string;
     get_token: () => string | null;
     get_config: () => Config;
-    set_config: (args: {config: Config}) => void;
+    set_config: (args: { config: Config }) => void;
     generate_log_file: () => string;
     clean_environment: () => void;
     open_python_path: () => void;
@@ -29,30 +30,30 @@ export async function invoke<T extends keyof Commands>(
     return _invoke(command, ...args);
 }
 export type Progress = (
-    {type: 'PythonDownloading', msg: string, progress: number, total: number }
-    | {type: 'PythonUnkownVersion', msg: string, progress: undefined, total: undefined}
-    | {type: 'PythonChecksumFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'PythonExtracting', msg: string, progress: number, total: number }
-    | {type: 'PythonExtractFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'UvDownloading', msg: string, progress: number, total: number }
-    | {type: 'UvExtracting', msg: string, progress: number, total: number }
-    | {type: 'UvCleanupOldVersions', msg: string, progress: number, total: number }
-    | {type: 'UvCleanupOldVersionsFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'UvUpdatePip', msg: string, progress: undefined, total: undefined}
-    | {type: 'UvUpdatePipFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'UvUpdateRequirements', msg: string, progress: undefined, total: undefined}
-    | {type: 'UvUpdateRequirementsFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerTokenReadFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerTokenWriteFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerCreateDataDirFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerStopping', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerStopFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerStarting', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerStartFailed', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerStarted', msg: string, progress: undefined, total: undefined}
-    | {type: 'ServerAlreadyStarted', msg: string, progress: undefined, total: undefined}
-    | {type: 'PythonRemoving', msg: string, progress: number, total: number }
-    | {type: 'UvRemoving', msg: string, progress: number, total: number }
+    { type: 'PythonDownloading', msg: string, progress: number, total: number }
+    | { type: 'PythonUnkownVersion', msg: string, progress: undefined, total: undefined }
+    | { type: 'PythonChecksumFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'PythonExtracting', msg: string, progress: number, total: number }
+    | { type: 'PythonExtractFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'UvDownloading', msg: string, progress: number, total: number }
+    | { type: 'UvExtracting', msg: string, progress: number, total: number }
+    | { type: 'UvCleanupOldVersions', msg: string, progress: number, total: number }
+    | { type: 'UvCleanupOldVersionsFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'UvUpdatePip', msg: string, progress: undefined, total: undefined }
+    | { type: 'UvUpdatePipFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'UvUpdateRequirements', msg: string, progress: undefined, total: undefined }
+    | { type: 'UvUpdateRequirementsFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerTokenReadFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerTokenWriteFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerCreateDataDirFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerStopping', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerStopFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerStarting', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerStartFailed', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerStarted', msg: string, progress: undefined, total: undefined }
+    | { type: 'ServerAlreadyStarted', msg: string, progress: undefined, total: undefined }
+    | { type: 'PythonRemoving', msg: string, progress: number, total: number }
+    | { type: 'UvRemoving', msg: string, progress: number, total: number }
 )
 type Events = {
     server_state: Progress;
@@ -61,49 +62,47 @@ type Events = {
         args: string[],
         cwd: string,
     }
-    [event.TauriEvent.WINDOW_RESIZED]: unknown;
-    [event.TauriEvent.WINDOW_MOVED]: unknown;
-    [event.TauriEvent.WINDOW_CLOSE_REQUESTED]: unknown;
-    [event.TauriEvent.WINDOW_CREATED]: unknown;
-    [event.TauriEvent.WINDOW_DESTROYED]: unknown;
-    [event.TauriEvent.WINDOW_FOCUS]: unknown;
-    [event.TauriEvent.WINDOW_BLUR]: unknown;
-    [event.TauriEvent.WINDOW_SCALE_FACTOR_CHANGED]: unknown;
-    [event.TauriEvent.WINDOW_THEME_CHANGED]: unknown;
-    [event.TauriEvent.WINDOW_FILE_DROP]: string[];
-    [event.TauriEvent.WINDOW_FILE_DROP_HOVER]: unknown;
-    [event.TauriEvent.WINDOW_FILE_DROP_CANCELLED]: unknown;
-    [event.TauriEvent.MENU]: unknown;
-    [event.TauriEvent.CHECK_UPDATE]: unknown;
-    [event.TauriEvent.UPDATE_AVAILABLE]: unknown;
-    [event.TauriEvent.INSTALL_UPDATE]: unknown;
-    [event.TauriEvent.STATUS_UPDATE]: unknown;
-    [event.TauriEvent.DOWNLOAD_PROGRESS]: unknown;
+    [TauriEvent.WINDOW_RESIZED]: unknown;
+    [TauriEvent.WINDOW_RESIZED]: unknown;
+    [TauriEvent.WINDOW_MOVED]: unknown;
+    [TauriEvent.WINDOW_CLOSE_REQUESTED]: unknown;
+    [TauriEvent.WINDOW_DESTROYED]: unknown;
+    [TauriEvent.WINDOW_FOCUS]: unknown;
+    [TauriEvent.WINDOW_BLUR]: unknown;
+    [TauriEvent.WINDOW_SCALE_FACTOR_CHANGED]: unknown;
+    [TauriEvent.WINDOW_THEME_CHANGED]: unknown;
+    [TauriEvent.WINDOW_CREATED]: unknown;
+    [TauriEvent.WEBVIEW_CREATED]: unknown;
+    [TauriEvent.DRAG_ENTER]: unknown;
+    [TauriEvent.DRAG_OVER]: unknown;
+    [TauriEvent.DRAG_DROP]: unknown;
+    [TauriEvent.DRAG_LEAVE]: unknown;
 };
 
-type TauriEvent<T> = {
+type AppEvent<T> = {
     payload: T;
-    windowLabel: string;
 };
+
+import { listen as listenTauri, TauriEvent } from '@tauri-apps/api/event';
 
 export function listen<T extends keyof Events>(
     command: T,
-    callback: (event: TauriEvent<Events[T]>) => void,
+    callback: (event: AppEvent<Events[T]>) => void,
 ): Promise<() => void> {
     assertTauri();
-    return _listen(command, (event: TauriEvent<Events[T]>) => {
+    return listenTauri(command, (event: AppEvent<Events[T]>) => {
         callback(event);
     });
 }
 
 export function listenSync<T extends keyof Events>(
     command: T,
-    callback: (event: TauriEvent<Events[T]>) => void,
+    callback: (event: AppEvent<Events[T]>) => void,
 ): () => void {
     assertTauri();
-    let destroyCallback = () => {};
+    let destroyCallback = () => { };
     let isDestroyed = false;
-    _listen(command, (event: TauriEvent<Events[T]>) => {
+    listenTauri(command, (event: AppEvent<Events[T]>) => {
         callback(event);
     }).then((destroyFunc) => {
         destroyCallback = destroyFunc;
@@ -151,6 +150,17 @@ export function assertTauri() {
 }
 
 export const tauriWindow = loadLazy(() => import('@tauri-apps/api/window'));
+export const appWindow = loadLazy(async () => {
+    const { getCurrentWindow } = await import('@tauri-apps/api/window');
+    return getCurrentWindow();
+});
+
+export function checkOnTauri() {
+    if (typeof window === 'undefined') return false;
+    if (typeof window.__TAURI_INTERNALS__ === 'undefined') return false;
+    return true;
+}
+export const IS_TAURI = checkOnTauri();
 
 async function load() {
     if (!checkOnTauri) {
@@ -159,24 +169,19 @@ async function load() {
     if (loaded) {
         throw new Error('Tauri already loaded');
     }
-    const [{ invoke }, { listen }] = await Promise.all([
-        import('@tauri-apps/api/tauri'),
+    const [{ invoke }] = await Promise.all([
+        import('@tauri-apps/api/core'),
         import('@tauri-apps/api/event'),
     ]);
     _invoke = invoke;
-    _listen = listen;
     await Promise.all(loadPromises.map((it) => it()));
     loadHandlers.forEach((handler) => handler());
     loaded = true;
 }
 
-export function checkOnTauri() {
-    if (typeof window === 'undefined') return false;
-    if (typeof window.__TAURI_IPC__ === 'undefined') return false;
-    return true;
+if (BROWSER) {
+    load();
 }
-export const IS_TAURI = checkOnTauri();
-
 export function waitForTauri() {
     if (!checkOnTauri()) {
         return Promise.resolve();
@@ -189,6 +194,104 @@ export function waitForTauri() {
     });
 }
 
-if (BROWSER) {
-    load();
+export async function checkUpdate(beta: boolean) {
+    return await check({
+        headers: {
+            'Updater-Channel': beta ? 'beta' : 'stable',
+        },
+    });
 }
+
+export type UpdateEvent = {
+    typ: 'shutting-down',
+} | {
+    typ: 'updating',
+    downloaded: number,
+    contentLength: number,
+} | {
+    typ: 'restarting',
+};
+
+export async function applyUpdate(update: Update, progress: (event: UpdateEvent) => void) {
+    // state = 'shutting-down';
+    progress({ typ: 'shutting-down' });
+    try {
+        omu.server.shutdown();
+        invoke('stop_server');
+    } catch (e) {
+        console.error(e);
+    }
+    // state = 'updating';
+    progress({ typ: 'updating', downloaded: 0, contentLength: 0 });
+    let downloaded = 0;
+    let contentLength = 0;
+    // alternatively we could also call update.download() and update.install() separately
+    await update.downloadAndInstall((event) => {
+        switch (event.event) {
+        case 'Started':
+            contentLength = event.data.contentLength || 0;
+            console.log(
+                `started downloading ${event.data.contentLength} bytes`,
+            );
+            break;
+        case 'Progress':
+            downloaded += event.data.chunkLength;
+            console.log(
+                `downloaded ${downloaded} from ${contentLength}`,
+            );
+            break;
+        case 'Finished':
+            console.log('download finished');
+            break;
+        }
+    });
+
+    console.log('update installed');
+    await relaunch();
+    // state = 'restarting';
+    progress({ typ: 'restarting' });
+}
+
+import { defaultWindowIcon } from '@tauri-apps/api/app';
+import { Menu } from '@tauri-apps/api/menu/menu';
+import { TrayIcon } from '@tauri-apps/api/tray';
+
+waitForTauri().then(async () => {
+    let visible = false;
+    visible = await appWindow.isVisible();
+
+    const menu = await Menu.new({
+        id: 'OMUAPPS-menu',
+        items: [
+            {
+                id: 'toggle',
+                text: visible ? 'Hide' : 'Show',
+                action: async () => {
+                    const item = await menu.get('toggle');
+                    if (visible) {
+                        await appWindow.hide();
+                    } else {
+                        await appWindow.show();
+                    }
+                    visible = await appWindow.isVisible();
+                    item.setText(visible ? 'Hide' : 'Show');
+                }
+            }
+        ]
+    });
+
+    listen(TauriEvent.WINDOW_BLUR, async () => {
+        if (await appWindow.isVisible()) return;
+        visible = false;
+        const item = await menu.get('toggle');
+        if (item) {
+            item.setText('Show');
+        }
+    });
+    await TrayIcon.new({
+        id: 'OMUAPPS-tray',
+        icon: await defaultWindowIcon(),
+        menu,
+        showMenuOnLeftClick: true,
+    });
+});

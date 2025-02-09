@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { dashboard } from '$lib/client.js';
-    import { t } from '$lib/i18n/i18n-context.js';
-    import { screenContext } from '$lib/screen/screen.js';
-    import { TableList, Tooltip } from '@omujs/ui';
-    import { onMount } from 'svelte';
-    import AppEntry from './AppEntry.svelte';
+    import { dashboard } from "$lib/client.js";
+    import { t } from "$lib/i18n/i18n-context.js";
+    import { screenContext } from "$lib/screen/screen.js";
+    import { TableList, Tooltip } from "@omujs/ui";
+    import { onMount } from "svelte";
+    import AppEntry from "./AppEntry.svelte";
     import {
         loadedIds,
         pageMap,
@@ -12,17 +12,17 @@
         unregisterPage,
         type Page,
         type PageItem,
-    } from './page.js';
-    import ConnectPage from './pages/ConnectPage.svelte';
-    import ExplorePage from './pages/ExplorePage.svelte';
-    import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
-    import UpdateScreen from './screen/UpdateScreen.svelte';
-    import { currentPage, menuOpen } from './settings.js';
-    import SettingsPage from './settings/SettingsPage.svelte';
-    import TabEntry from './TabEntry.svelte';
+    } from "./page.js";
+    import ConnectPage from "./pages/ConnectPage.svelte";
+    import ExplorePage from "./pages/ExplorePage.svelte";
+    import ManageAppsScreen from "./screen/ManageAppsScreen.svelte";
+    import UpdateScreen from "./screen/UpdateScreen.svelte";
+    import { currentPage, menuOpen } from "./settings.js";
+    import SettingsPage from "./settings/SettingsPage.svelte";
+    import TabEntry from "./TabEntry.svelte";
 
     const EXPLORE_PAGE = registerPage({
-        id: 'explore',
+        id: "explore",
         async open() {
             return {
                 component: ExplorePage,
@@ -32,7 +32,7 @@
     });
 
     const CONNECT_PAGE = registerPage({
-        id: 'connect',
+        id: "connect",
         async open() {
             return {
                 component: ConnectPage,
@@ -42,7 +42,7 @@
     });
 
     const SETTINGS_PAGE = registerPage({
-        id: 'settings',
+        id: "settings",
         async open() {
             return {
                 component: SettingsPage,
@@ -78,12 +78,10 @@
     });
 
     onMount(async () => {
-        const { checkUpdate } = await import('@tauri-apps/api/updater');
-        const update = await checkUpdate();
-        const { manifest, shouldUpdate } = update;
-
-        if (shouldUpdate && manifest) {
-            screenContext.push(UpdateScreen, { manifest });
+        const { check } = await import("@tauri-apps/plugin-updater");
+        const update = await check();
+        if (update) {
+            screenContext.push(UpdateScreen, { update });
         }
 
         dashboard.apps.event.remove.listen((removedItems) => {
@@ -100,16 +98,17 @@
         });
     });
 </script>
+
 <main class:open={$menuOpen}>
     <div class="tabs" class:open={$menuOpen}>
         <section>
             <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
                 {#if $menuOpen}
                     <i class="ti ti-chevron-left"></i>
-                    <Tooltip>{$t('menu.collapse')}</Tooltip>
+                    <Tooltip>{$t("menu.collapse")}</Tooltip>
                 {:else}
                     <i class="ti ti-menu"></i>
-                    <Tooltip>{$t('menu.expand')}</Tooltip>
+                    <Tooltip>{$t("menu.expand")}</Tooltip>
                 {/if}
             </button>
             <TabEntry entry={EXPLORE_PAGE} />
@@ -118,7 +117,7 @@
             <div class="tab-group">
                 {#if $menuOpen}
                     <span class="title">
-                        {$t('menu.apps')}
+                        {$t("menu.apps")}
                         <i class="ti ti-apps"></i>
                     </span>
                     <div class="buttons">
@@ -128,8 +127,12 @@
                         >
                             <Tooltip>
                                 <div class="tooltip">
-                                    <h3>{$t('screen.manage-apps.name')}</h3>
-                                    <small>{$t('screen.manage-apps.description')}</small>
+                                    <h3>{$t("screen.manage-apps.name")}</h3>
+                                    <small
+                                        >{$t(
+                                            "screen.manage-apps.description",
+                                        )}</small
+                                    >
                                 </div>
                             </Tooltip>
                             <i class="ti ti-edit"></i>
@@ -140,22 +143,26 @@
         </section>
         <div class="list">
             <TableList table={dashboard.apps} component={AppEntry}>
-                <button on:click={() => ($currentPage = EXPLORE_PAGE.id)} slot="empty" class="no-apps">
+                <button
+                    on:click={() => ($currentPage = EXPLORE_PAGE.id)}
+                    slot="empty"
+                    class="no-apps"
+                >
                     {#if $menuOpen}
                         {#if $currentPage === EXPLORE_PAGE.id}
                             <p>
-                                {$t('menu.jump-to-explore-hint')}
+                                {$t("menu.jump-to-explore-hint")}
                             </p>
                             <small>
-                                {$t('menu.add-apps-hint')}
+                                {$t("menu.add-apps-hint")}
                             </small>
                         {:else}
                             <p>
-                                {$t('menu.add-apps')}
+                                {$t("menu.add-apps")}
                                 <i class="ti ti-external-link"></i>
                             </p>
                             <small>
-                                {$t('menu.jump-to-explore')}
+                                {$t("menu.jump-to-explore")}
                             </small>
                         {/if}
                     {/if}
@@ -164,7 +171,7 @@
         </div>
     </div>
     <div class="page-container">
-        {#each Object.keys($pageMap).filter((id) => $loadedIds.includes(id)) as id (id)}
+        {#each Object.keys($pageMap).filter( (id) => $loadedIds.includes(id), ) as id (id)}
             <div class="page" class:visible={!loading && $currentPage === id}>
                 {#await loadPage($pageMap, id)}
                     <div>Loading...</div>

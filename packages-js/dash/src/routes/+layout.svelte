@@ -13,7 +13,7 @@
     import { DisconnectType, type DisconnectPacket } from '@omujs/omu/network/packet/packet-types.js';
     import '@omujs/ui';
     import { Spinner, Theme } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/api/process';
+    import { relaunch } from '@tauri-apps/plugin-process';
     import GenerateLogButton from './GenerateLogButton.svelte';
     import './styles.scss';
     import UpdateButton from './UpdateButton.svelte';

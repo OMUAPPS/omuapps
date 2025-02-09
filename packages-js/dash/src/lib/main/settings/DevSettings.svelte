@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { dashboard, omu } from '$lib/client.js';
-    import { PermissionType } from '@omujs/omu/extension/permission/permission.js';
-    import type { Registry } from '@omujs/omu/extension/registry/registry.js';
-    import { appWindow, LogicalSize } from '@tauri-apps/api/window';
-    import type { Writable } from 'svelte/store';
+    import { dashboard, omu } from "$lib/client.js";
+    import { PermissionType } from "@omujs/omu/extension/permission/permission.js";
+    import type { Registry } from "@omujs/omu/extension/registry/registry.js";
+    import { tauriWindow } from "$lib/tauri.js";
+    import type { Writable } from "svelte/store";
+    import { LogicalSize } from "@tauri-apps/api/window";
+    const appWindow = tauriWindow.getCurrentWindow();
 
     function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
         return {
@@ -22,7 +24,7 @@
     }
 
     const trustedOrigins = makeRegistryWritable(omu.server.trustedOrigins);
-    let newOrigin = '';
+    let newOrigin = "";
 
     function resetWindowSize() {
         appWindow.setSize(new LogicalSize(1280, 720));
@@ -35,17 +37,27 @@
     {#each $trustedOrigins as origin}
         <div class="origin">
             <input type="text" bind:value={origin} />
-            <button on:click={() => trustedOrigins.update((origins) => origins.filter((o) => o !== origin))} aria-label="Remove origin">
+            <button
+                on:click={() =>
+                    trustedOrigins.update((origins) =>
+                        origins.filter((o) => o !== origin),
+                    )}
+                aria-label="Remove origin"
+            >
                 <i class="ti ti-x"></i>
             </button>
         </div>
     {/each}
     <div class="origin">
         <input type="text" bind:value={newOrigin} />
-        <button on:click={() => {
-            $trustedOrigins = [...$trustedOrigins, newOrigin];
-            newOrigin = '';
-        }} class="add" aria-label="Add origin">
+        <button
+            on:click={() => {
+                $trustedOrigins = [...$trustedOrigins, newOrigin];
+                newOrigin = "";
+            }}
+            class="add"
+            aria-label="Add origin"
+        >
             <i class="ti ti-plus"></i>
         </button>
     </div>
@@ -53,46 +65,50 @@
 
 <h3>Settings</h3>
 <section>
-    <button on:click={() => {
-        window.localStorage.clear();
-    }}>
+    <button
+        on:click={() => {
+            window.localStorage.clear();
+        }}
+    >
         Clear Settings
     </button>
 </section>
 
 <h3>Permissions</h3>
 <section>
-    <button on:click={() => {
-        dashboard.handlePermissionRequest({
-            app: omu.app,
-            permissions: [
-                PermissionType.fromJson({
-                    id: 'test:test',
-                    metadata: {
-                        level: 'high',
-                        name: 'Test Permission',
-                    },
-                })
-            ],
-            requestId: 'test',
-        });
-    }}>
+    <button
+        on:click={() => {
+            dashboard.handlePermissionRequest({
+                app: omu.app,
+                permissions: [
+                    PermissionType.fromJson({
+                        id: "test:test",
+                        metadata: {
+                            level: "high",
+                            name: "Test Permission",
+                        },
+                    }),
+                ],
+                requestId: "test",
+            });
+        }}
+    >
         Request Test Permission
     </button>
 </section>
 
 <h3>Window</h3>
 <section>
-    <button on:click={resetWindowSize}>
-        Reset Window Size
-    </button>
+    <button on:click={resetWindowSize}> Reset Window Size </button>
 </section>
 
 <h3>Server</h3>
 <section>
-    <button on:click={() => {
-        omu.server.shutdown();
-    }}>
+    <button
+        on:click={() => {
+            omu.server.shutdown();
+        }}
+    >
         Stop Server
     </button>
 </section>

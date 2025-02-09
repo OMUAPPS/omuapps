@@ -7,7 +7,7 @@ use anyhow::Result;
 use log::{info, warn};
 use rand::Rng;
 use tauri::utils::platform::current_exe;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter};
 
 use crate::version::VERSION;
 use crate::Progress;
@@ -263,7 +263,7 @@ impl Server {
                     let app_handle = app_handle.lock().unwrap();
                     if let Some(app_handle) = &*app_handle {
                         app_handle
-                            .emit_all(
+                            .emit(
                                 "server_state",
                                 Progress::ServerStopped {
                                     msg: format!("Server exited with code {}", code),

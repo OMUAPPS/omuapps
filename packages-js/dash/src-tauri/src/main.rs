@@ -32,14 +32,11 @@ use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
-use tauri::{
-    api::path::data_dir, utils::config::UpdaterEndpoint, CustomMenuItem, Manager, SystemTray,
-    SystemTrayEvent, SystemTrayMenu,
-};
-use tauri_plugin_log::LogTarget;
+use tauri::{Emitter, Manager};
+use tauri_plugin_cli::CliExt;
+use tauri_plugin_log::{Target, TargetKind};
 use utils::filesystem::remove_dir_all;
 use uv::Uv;
-use window_shadows::set_shadow;
 
 static APP_DIRECTORY: Lazy<ProjectDirs> =
     Lazy::new(|| match ProjectDirs::from("com", "OMUAPPS", "Dashboard") {
@@ -386,89 +383,26 @@ fn main() {
         config: Arc::new(Mutex::new(config.clone())),
     };
 
-    let mut context = tauri::generate_context!();
-
-    let updater = &mut context.config_mut().tauri.updater;
-    let update_endpoint_url = if config.enable_beta {
-        "https://obj.omuapps.com/app/latest-beta.json"
-    } else {
-        "https://obj.omuapps.com/app/latest.json"
-    };
-    let urls = vec![
-        UpdaterEndpoint(update_endpoint_url.to_string().parse().unwrap()),
-        UpdaterEndpoint(
-            "https://github.com/OMUAPPS/omuapps/releases/latest/download/latest.json"
-                .to_string()
-                .parse()
-                .unwrap(),
-        ),
-    ];
-    updater.endpoints.replace(urls);
-
     tauri::Builder::default()
-        .system_tray(
-            SystemTray::new().with_menu(
-                SystemTrayMenu::new()
-                    .add_item(CustomMenuItem::new("toggle", "Toggle"))
-                    .add_item(CustomMenuItem::new("exit_app", "Quit")),
-            ),
-        )
-        .on_system_tray_event(|app, event| match event {
-            SystemTrayEvent::LeftClick {
-                position: _,
-                size: _,
-                ..
-            } => {
-                let window = app.get_window("main").unwrap();
-                window.show().unwrap();
-                window.set_focus().unwrap();
-            }
-            SystemTrayEvent::MenuItemClick { id, .. } => {
-                let item_handle = app.tray_handle().get_item(&id);
-                match id.as_str() {
-                    "exit_app" => {
-                        // exit the app
-                        app.exit(0);
-                    }
-                    "toggle" => {
-                        let window = match app.get_window("main") {
-                            Some(window) => window,
-                            None => return,
-                        };
-                        let new_title = if window.is_visible().unwrap() {
-                            window.hide().unwrap();
-                            "Show"
-                        } else {
-                            window.show().unwrap();
-                            "Hide"
-                        };
-                        item_handle.set_title(new_title).unwrap();
-                    }
-                    _ => {}
-                }
-            }
-            _ => {}
-        })
-        .on_window_event(|event| match event.event() {
-            tauri::WindowEvent::CloseRequested { api, .. } => {
-                event.window().hide().unwrap();
-                api.prevent_close();
-            }
-            _ => {}
-        })
+        .plugin(tauri_plugin_cli::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             info!("{}, {argv:?}, {cwd}", app.package_info().name);
 
-            app.emit_all("single-instance", Payload { args: argv, cwd })
+            app.emit("single-instance", Payload { args: argv, cwd })
                 .unwrap();
         }))
-        .plugin(tauri_plugin_window_state::Builder::default().build())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
-                    LogTarget::Stdout,
-                    LogTarget::Webview,
-                    LogTarget::Folder(data_dir.join("logs")),
+                    Target::new(TargetKind::Stdout),
+                    Target::new(TargetKind::Stderr),
+                    Target::new(TargetKind::Webview),
+                    Target::new(TargetKind::Folder {
+                        path: data_dir.join("logs"),
+                        file_name: None,
+                    }),
                 ])
                 .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepAll)
                 .level(log::LevelFilter::Debug)
@@ -487,20 +421,22 @@ fn main() {
             open_python_path,
             open_uv_path
         ])
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                window.hide().unwrap();
+                api.prevent_close();
+            }
+            _ => {}
+        })
         .setup(move |app| {
-            let main_window = app.get_window("main").unwrap();
-            set_shadow(&main_window, true).unwrap();
+            let main_window = app.get_webview_window("main").unwrap();
 
-            match app.get_cli_matches() {
+            match app.cli().matches() {
                 Ok(matches) => {
                     if Some(Value::Bool(true))
                         == matches.args.get("background").map(|arg| arg.value.clone())
                     {
                         main_window.hide().unwrap();
-                        app.tray_handle()
-                            .get_item("toggle")
-                            .set_title("Show")
-                            .unwrap();
                     }
                 }
                 Err(_) => {}
@@ -510,7 +446,7 @@ fn main() {
 
             Ok(())
         })
-        .build(context)
+        .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app_handle, event| match event {
             tauri::RunEvent::ExitRequested { api, .. } => {

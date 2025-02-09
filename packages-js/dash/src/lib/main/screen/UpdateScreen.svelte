@@ -1,51 +1,74 @@
 <script lang="ts">
-    import { omu } from '$lib/client.js';
-    import Screen from '$lib/screen/Screen.svelte';
-    import type { ScreenHandle } from '$lib/screen/screen.js';
-    import { invoke } from '$lib/tauri.js';
-    import { Popup } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/api/process';
-    import { installUpdate, type UpdateManifest } from '@tauri-apps/api/updater';
+    import { omu } from "$lib/client.js";
+    import Screen from "$lib/screen/Screen.svelte";
+    import type { ScreenHandle } from "$lib/screen/screen.js";
+    import { invoke } from "$lib/tauri.js";
+    import { Popup } from "@omujs/ui";
+    import { relaunch } from "@tauri-apps/plugin-process";
+    import { type Update } from "@tauri-apps/plugin-updater";
 
     export let screen: {
         handle: ScreenHandle;
         props: {
-            manifest: UpdateManifest;
+            update: Update;
         };
     };
-    const { manifest } = screen.props;
-    const date = new Date(manifest.date.replace(/:00$/, ''));
+    const { update } = screen.props;
+    const date = update.date && new Date(update.date.replace(/:00$/, ""));
 
-    type State = 'idle' | 'updating' | 'shutting-down' | 'restarting';
-    let state: State = 'idle';
+    type State = "idle" | "updating" | "shutting-down" | "restarting";
+    let state: State = "idle";
 
-    async function update() {
-        state = 'shutting-down';
+    async function applyUpdate() {
+        state = "shutting-down";
         try {
             omu.server.shutdown();
-            invoke('stop_server');
+            invoke("stop_server");
         } catch (e) {
             console.error(e);
         }
-        state = 'updating';
-        await installUpdate();
+        state = "updating";
+        let downloaded = 0;
+        let contentLength = 0;
+        // alternatively we could also call update.download() and update.install() separately
+        await update.downloadAndInstall((event) => {
+            switch (event.event) {
+                case "Started":
+                    contentLength = event.data.contentLength || 0;
+                    console.log(
+                        `started downloading ${event.data.contentLength} bytes`,
+                    );
+                    break;
+                case "Progress":
+                    downloaded += event.data.chunkLength;
+                    console.log(
+                        `downloaded ${downloaded} from ${contentLength}`,
+                    );
+                    break;
+                case "Finished":
+                    console.log("download finished");
+                    break;
+            }
+        });
+
+        console.log("update installed");
         await relaunch();
-        state = 'restarting';
+        state = "restarting";
     }
 
     let open = false;
 </script>
 
 <Screen {screen} title="update">
-    {#if state === 'updating'}
+    {#if state === "updating"}
         <div class="info">
             <h3>新しいバージョンをダウンロードしています...</h3>
         </div>
-    {:else if state === 'shutting-down'}
+    {:else if state === "shutting-down"}
         <div class="info">
             <h3>サーバーをシャットダウンしています...</h3>
         </div>
-    {:else if state === 'restarting'}
+    {:else if state === "restarting"}
         <div class="info">
             <h3>インストーラーを起動しています...</h3>
         </div>
@@ -54,14 +77,16 @@
             <h3>
                 新しいバージョンが利用可能です🎉
                 <hr />
-                v{manifest.version}
-                <small>
-                    {date.toLocaleDateString()}
-                    {date.toLocaleTimeString()}
-                </small>
+                v{update.version}
+                {#if date}
+                    <small>
+                        {date.toLocaleDateString()}
+                        {date.toLocaleTimeString()}
+                    </small>
+                {/if}
             </h3>
             <p>
-                {manifest.body}
+                {update.body}
             </p>
             <div class="actions">
                 <button on:click={screen.handle.pop} class="cancel">
@@ -74,7 +99,7 @@
                     <Popup bind:isOpen={open}>
                         <div class="confirm">
                             <small>アップデートを開始しますか？</small>
-                            <button on:click={update}>はい！</button>
+                            <button on:click={applyUpdate}>はい！</button>
                         </div>
                     </Popup>
                 </button>

@@ -4,7 +4,7 @@
     import Screen from "$lib/screen/Screen.svelte";
     import { invoke, listen, type Progress } from "$lib/tauri.js";
     import { Spinner } from "@omujs/ui";
-    import { relaunch } from "@tauri-apps/api/process";
+    import { relaunch } from "@tauri-apps/plugin-process";
     import { DEV } from "esm-env";
     import { onMount } from "svelte";
 
