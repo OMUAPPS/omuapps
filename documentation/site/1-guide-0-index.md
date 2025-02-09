@@ -3,7 +3,7 @@ index: 1
 icon: book
 title: アプリの導入
 group: ガイド
-description: アプリを導入するための手順
+description: アプリの導入から使い方まで
 ---
 
 # アプリの導入

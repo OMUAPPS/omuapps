@@ -21,5 +21,3 @@ description: APIを使うにあたって
 ```bash
 %PACKAGE_MANAGER% install @omujs/omu
 ```
-
-[次へ](%DOCS_ROOT%/2-api-1-omu?_style=large)

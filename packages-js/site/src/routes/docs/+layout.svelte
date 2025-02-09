@@ -2,11 +2,15 @@
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs/index.js';
     import { FlexRowWrapper } from '@omujs/ui';
+    import DocsNav from './_components/DocsNav.svelte';
     import { config } from './constants.js';
     import { docs } from './stores.js';
+    
     export let data: { sections: Record<string, DocsSection[]> };
 
     $: sections = data.sections;
+    $: section = Object.values(sections).flat().find((s) => s.slug === $docs?.slug);
+    $: group = section && Object.entries(sections).find(([, entries]) => entries.includes(section));
 </script>
 
 <Page>
@@ -25,13 +29,19 @@
         {/if}
     </header>
     <main slot="content">
-        <slot />
+        <div class="content">
+            <DocsNav {section} {group} />
+            <div class="markdown">
+                <slot />
+            </div>
+            <DocsNav {section} {group} />
+        </div>
         <div class="groups">
             {#each Object.entries(sections) as [group, entries] (group)}
                 <h3>{group}</h3>
                 <div class="sections">
                     {#each entries as section (section.slug)}
-                        <a href={`/create/${section.slug}`} class:selected={section.slug === $docs?.slug}>
+                        <a href={`/docs/${section.slug}`} class:selected={section.slug === $docs?.slug}>
                             {section.meta.title}
                             <i class="ti ti-chevron-right"></i>
                         </a>
@@ -74,6 +84,18 @@
         width: 100%;
     }
 
+    .content {
+        flex: 1;
+    }
+
+    .markdown {
+        margin: 2rem 0;
+        padding: 2rem 0;
+        border: 1px solid var(--color-outline);
+        border-left: 0;
+        border-right: 0;
+    }
+
     h1 {
         font-size: 2rem;
         font-weight: 600;
@@ -88,12 +110,14 @@
 
     .groups {
         position: sticky;
-        top: 25%;
+        top: 6rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
         font-size: 0.7rem;
-        height: 100%;
+        max-height: calc(100vh - 8rem);
+        min-width: 14rem;
+        overflow-y: auto;
 
         > h3 {
             font-size: 0.8rem;
@@ -105,7 +129,6 @@
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
-        width: 200px;
         background: var(--color-bg-2);
         border-top: 1px solid var(--color-outline);
         padding-top: 0.5rem;

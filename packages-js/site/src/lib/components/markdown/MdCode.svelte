@@ -50,6 +50,8 @@
         border-radius: 3px;
         user-select: text;
         margin: 1rem 0;
+        overflow-x: auto;
+        max-width: 40rem;
     }
 
     .copy {

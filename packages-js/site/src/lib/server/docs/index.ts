@@ -20,7 +20,7 @@ export type DocsSection = Readonly<{
     slug: string;
 }>;
 
-export async function getDocsData(path = 'create'): Promise<DocsData[]> {
+export async function getDocsData(path = 'site'): Promise<DocsData[]> {
     const { readdir, readFile } = await import('node:fs/promises');
     const docsDir = join(process.cwd(), '../..', 'documentation', path);
     const docFiles = await readdir(docsDir);

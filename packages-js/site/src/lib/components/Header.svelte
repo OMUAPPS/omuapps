@@ -39,16 +39,16 @@
                         ダウンロード
                     </li>
                 </a>
-                <a href="/app">
-                    <li aria-current={$page.url.pathname.startsWith('/app') ? 'page' : undefined}>
-                        <Tooltip>何か使いたいアプリがあるかも</Tooltip>
-                        <i class="ti ti-search"></i>
-                        アプリを探す
+                <a href="/docs/1-guide-0-index">
+                    <li aria-current={$page.url.pathname.startsWith('/docs/1-guide-0-index') ? 'page' : undefined}>
+                        <Tooltip>アプリの導入から使い方を知る</Tooltip>
+                        <i class="ti ti-book"></i>
+                        ドキュメント
                     </li>
                 </a>
-                <a href="/create/0-index">
+                <a href="/docs/0-index">
                     <li
-                        aria-current={$page.url.pathname.startsWith('/create') ? 'page' : undefined}
+                        aria-current={$page.url.pathname.startsWith('/docs') ? 'page' : undefined}
                     >
                         <Tooltip>あったらいいなが作れるかも</Tooltip>
                         <i class="ti ti-pencil"></i>

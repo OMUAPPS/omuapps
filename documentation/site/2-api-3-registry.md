@@ -18,12 +18,26 @@ description: データを保持するためのAPI
 // レジストリの定義
 const myData = omu.registries.create('my_data', {
     // データの初期値
-    name: 'No Name Taro',
-    age: 20,
+    default: {
+        name: 'Taro Yamada',
+        age: 20,
+    },
 });
 ```
 
-## データの取得
+[serializer](%DOCS_ROOT%/3-core-1-serializer) を指定することでデータのシリアライズをカスタマイズすることができます。
+
+```typescript
+// レジストリの定義
+const myData = omu.registries.create('my_data', {
+    // データの初期値
+    default: {
+        name: 'Taro Yamada',
+        age: 20,
+    },
+    // シリアライザ
+    serializer: mySerializer,
+});
 
 ```typescript
 // データの取得
@@ -71,5 +85,3 @@ myData.listen((data) => {
     console.log(data);
 });
 ```
-
-[次へ](%DOCS_ROOT%/2-api-3-signal?_style=large)

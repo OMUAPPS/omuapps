@@ -6,7 +6,7 @@ group: API
 description: APIの機能を利用するためのアプリを作成する
 ---
 
-# レジストリ
+# アプリを作成する
 
 ## 概要
 
@@ -36,5 +36,3 @@ const omu = new Omu(APP);
 ```
 
 次のページからは、このomuオブジェクトから利用できるAPIの機能について説明します。
-
-[次へ](%DOCS_ROOT%/2-api-2-registry?_style=large)
