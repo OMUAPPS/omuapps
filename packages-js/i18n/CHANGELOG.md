@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.9.0 (2025-02-09)
+
+
+### Features
+
+* **site:** ドキュメントでグループ内の前後に移動しやすいようにする ([630acbd](https://github.com/OMUAPPS/omuapps/commit/630acbd1640cd5653b46d0bb66c33698e294f7ee))
+
+
+
+
+
 ## 0.8.21 (2025-02-06)
 
 **Note:** Version bump only for package @omujs/i18n
