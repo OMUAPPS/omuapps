@@ -13,6 +13,7 @@
         const { accepted } = await omu.dashboard.installApp(app);
         if (!accepted) return;
         await omu.dashboard.openApp(app);
+        console.log(`App ${app.id.key()} added`);
         alreadyAdded = true;
     }
 
@@ -54,7 +55,7 @@
                             {#if BROWSER && app.metadata.icon}
                                 {@const icon = omu.i18n.translate(app.metadata.icon)}
                                 {#if icon.startsWith('ti-')}
-                                    <i class="ti {icon}" />
+                                    <i class="ti {icon}"></i>
                                 {:else}
                                     <img src={icon} alt="" />
                                 {/if}
@@ -73,10 +74,10 @@
                     </FlexRowWrapper>
                 {/if}
                 <small class="tag-list">
-                    {#each tags || [] as { id, data }, i (id)}
+                    {#each tags || [] as { id, data } (id)}
                         <span class="tag" class:dev={id === 'underdevelopment'}>
                             {#if data}
-                                <i class="ti ti-{data.icon}" />
+                                <i class="ti ti-{data.icon}"></i>
                                 <p><Localized text={data.name} /></p>
                                 <Tooltip>
                                     <Localized text={data.description} />
@@ -95,7 +96,7 @@
                         {alreadyAdded ? 'このアプリを起動する' : '管理画面に追加する'}
                     </Tooltip>
                     {alreadyAdded ? '開く' : '追加'}
-                    <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'} />
+                    <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'}></i>
                 </button>
             </FlexRowWrapper>
         </FlexRowWrapper>

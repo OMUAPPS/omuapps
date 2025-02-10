@@ -64,14 +64,18 @@
 
     onMount(() => {
         status = omu.network.status;
-        const unlisten = omu.network.event.status.listen((value) => {
+        const unlistenNetwork = omu.network.event.status.listen((value) => {
             console.log('Network status:', value);
             status = value;
             if (status.type === 'connected') {
                 connecting = false;
             }
         });
-        return unlisten;
+        const unlistenApps = omu.dashboard.apps.listen();
+        return async () => {
+            unlistenNetwork();
+            unlistenApps();
+        };
     });
 
     $: {
