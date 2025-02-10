@@ -3,6 +3,8 @@ import fs from 'fs/promises';
 import { searchForWorkspaceRoot, type PluginOption } from 'vite';
 import { defineConfig } from 'vitest/config';
 
+const changedFiles = new Map<string, number>();
+
 const reloadPlugin = (): PluginOption => ({
     name: 'reload',
     configureServer(server) {
@@ -10,7 +12,11 @@ const reloadPlugin = (): PluginOption => ({
         (async () => {
             const watcher = fs.watch(path, { recursive: true });
             for await (const event of watcher) {
-                if (event.eventType !== 'change') continue;
+                if (!event.filename || event.eventType !== 'change') continue;
+                const last = changedFiles.get(event.filename);
+                const elapsed = Date.now() - (last || 0);
+                if (last && elapsed < 100) continue;
+                changedFiles.set(event.filename, Date.now());
                 server.watcher.emit('change', event.filename);
                 console.log('[doc]', event.filename);
             }
