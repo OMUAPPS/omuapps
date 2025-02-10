@@ -3,14 +3,14 @@ import { Chat, events } from '@omujs/chat';
 import type { Message } from '@omujs/chat/models/message.js';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { OBSPlugin, permissions } from '@omujs/obs';
-import { Identifier, Omu } from '@omujs/omu';
+import { App, Identifier, Omu } from '@omujs/omu';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
 import { RegistryType } from '@omujs/omu/extension/registry/index.js';
 import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
 import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import type { Writable } from 'svelte/store';
-import { APP, APP_ID } from './app.js';
+import { APP_ID } from './app.js';
 
 export type Asset = {
     type: 'url',
@@ -221,8 +221,8 @@ function processMessage(message: Message) {
     
 }
 
-function createGame(): Game {
-    const omu = new Omu(APP);
+export function createGame(app: App){
+    const omu = new Omu(app);
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
     const config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
@@ -246,7 +246,7 @@ function createGame(): Game {
         omu.start();
     }
 
-    return {
+    game = {
         omu,
         obs,
         chat,
@@ -267,7 +267,14 @@ export type Game = {
     scene: Writable<Scene>,
 };
 
-export const game: Game = createGame();
+let game: Game | null = null;
+
+export function getGame(): Game {
+    if (!game) {
+        throw new Error('Game not created');
+    }
+    return game;
+}
 
 export async function uploadAsset(file: File): Promise<Asset> {
     const buffer = new Uint8Array(await file.arrayBuffer());
@@ -275,7 +282,7 @@ export async function uploadAsset(file: File): Promise<Asset> {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const id = APP_ID.join('asset', hash);
-    const result = await game.omu.assets.upload(id, buffer);
+    const result = await getGame().omu.assets.upload(id, buffer);
     return {
         type: 'asset',
         id: result.key(),
@@ -290,7 +297,7 @@ export async function getImage(asset: Asset): Promise<HTMLImageElement> {
         return image;
     }
     if (asset.type === 'asset') {
-        const result = await game.omu.assets.download(Identifier.fromKey(asset.id));
+        const result = await getGame().omu.assets.download(Identifier.fromKey(asset.id));
         const image = new Image();
         image.src = URL.createObjectURL(new Blob([result.buffer]));
         await image.decode();

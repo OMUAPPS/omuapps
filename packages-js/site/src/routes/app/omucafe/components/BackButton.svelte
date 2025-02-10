@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { game, type Scene } from '../omucafe-app.js';
+    import { getGame, type Scene } from '../omucafe-app.js';
 
     export let to: Scene = { type: 'main_menu' };
 
-    const { scene } = game;
+    const { scene } = getGame();
 </script>
 
 <button class="back" on:click={() => {

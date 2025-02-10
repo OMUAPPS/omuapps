@@ -9,48 +9,82 @@
     import { Identifier } from '@omujs/omu';
     import cursor_grab from '../images/cursor_grab.png';
     import cursor_point from '../images/cursor_point.png';
-    import { createKitchenItem, game, type Asset, type KitchenItem, type Transform } from '../omucafe-app.js';
+    import { createKitchenItem, getGame, type Asset, type KitchenItem, type Transform } from '../omucafe-app.js';
 
-    const { scene, states, config, omu } = game;
+    const { scene, states, config, omu } = getGame();
 
+    export let side: 'client' | 'asset' = 'client';
     const COUNTER_WIDTH = 1920;
     const COUNTER_HEIGHT = 500;
+    const UPDATE_RATE = 60;
+    let lastUpdate = performance.now();
+    let changed = false;
     let glContext: GlContext;
     let matrices: Matrices;
-    let textures: Map<string, GlTexture> = new Map();
+    let textures: Map<string, Texture> = new Map();
     let canvas: HTMLCanvasElement;
     let isMouseOver: boolean = false;
     let clientMouse: Vec2 = Vec2.ZERO;
     let glMouse: Vec2 = Vec2.ZERO;
     let deltaGlMouse: Vec2 = Vec2.ZERO;
     let mouseDown: boolean = false;
+    let mouseDownTime: number = 0;
+    let mouseUpTime: number = 0;
     let draw: Draw;
 
-    async function getTexture(key: string, image: HTMLImageElement): Promise<GlTexture> {
+    type Texture = {
+        tex: GlTexture,
+        width: number,
+        height: number,
+        image: HTMLImageElement,
+        data: Uint8Array,
+    }
+
+    async function getTexture(key: string, image: HTMLImageElement): Promise<Texture> {
         const existing = textures.get(key);
         if (existing) {
             return existing;
         }
-        const texture = glContext.createTexture();
-        texture.use(() => {
-            texture.setImage(image, {
+        const tex = glContext.createTexture();
+        tex.use(() => {
+            tex.setImage(image, {
                 width: image.width,
                 height: image.height,
                 internalFormat: 'rgba',
                 format: 'rgba',
             });
-            texture.setParams({
+            tex.setParams({
                 minFilter: 'nearest',
                 magFilter: 'nearest',
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
         });
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to get 2d context');
+        }
+        context.drawImage(image, 0, 0);
+        const data = new Uint8Array(image.width * image.height * 4);
+        context.getImageData(0, 0, image.width, image.height).data.forEach((value, index) => {
+            data[index] = value;
+        });
+
+        const texture = {
+            tex: tex,
+            width: image.width,
+            height: image.height,
+            image,
+            data,
+        };
         textures.set(key, texture);
         return texture;
     }
 
-    async function getTextureByUri(uri: string): Promise<GlTexture> {
+    async function getTextureByUri(uri: string): Promise<Texture> {
         const existing = textures.get(uri);
         if (existing) {
             return existing;
@@ -61,7 +95,7 @@
         return getTexture(uri, image);
     }
 
-    async function getTextureByAsset(asset: Asset): Promise<GlTexture> {
+    async function getTextureByAsset(asset: Asset): Promise<Texture> {
         if (asset.type === 'url') {
             const existing = textures.get(asset.url);
             if (existing) {
@@ -110,19 +144,36 @@
         return true;
     }
 
-    function isItemHovering(item: KitchenItem): boolean {
+    async function isItemHovering(item: KitchenItem): Promise<boolean> {
+        if (!item.ingredient.image) return false;
         const { bounds } = item;
         const { min, max } = bounds;
         const matrix = transformToMatrix(item.transform);
         const inverse = matrix.inverse();
         const screenMouse = matrices.unprojectPoint(glMouse);
         const mouse = inverse.xform2(screenMouse);
-        return (
+        
+        const aabbTest = (
             mouse.x >= min.x &&
             mouse.y >= min.y &&
             mouse.x <= max.x &&
             mouse.y <= max.y
         );
+        if (!aabbTest) return false;
+
+        const texture = await getTextureByAsset(item.ingredient.image);
+        const uv = mouse.remap(
+            new Vec2(min.x, min.y),
+            new Vec2(max.x, max.y),
+            Vec2.ZERO,
+            Vec2.ONE,
+        );
+        const { width, height } = texture;
+        const x = Math.floor(uv.x * width);
+        const y = Math.floor(uv.y * height);
+        const index = (x + y * width) * 4;
+        const alpha = texture.data[index + 3];
+        return alpha > 0;
     }
 
     function applyDragEffect() {
@@ -135,15 +186,32 @@
         ));
     }
 
-    async function renderItem(item: KitchenItem) {
+    function getItemTransform(item: KitchenItem, options: {
+        parent?: KitchenItem,
+    } = {}): Mat4 {
+        const { transform } = item;
+        const { right, up, offset } = transform;
+        const { max } = item.bounds;
+        const flipY = side === 'asset' && !options.parent;
+        return new Mat4(
+            right.x, right.y, 0, 0,
+            up.x, up.y, 0, 0,
+            0, 0, 1, 0,
+            offset.x, flipY ? (COUNTER_HEIGHT - max.y * up.y) - offset.y : offset.y, 0, 1,
+        );
+    }
+
+    async function renderItem(item: KitchenItem, options: {
+        parent?: KitchenItem,
+    } = {}) {
         const { ingredient } = item;
         const { behaviors } = item;
         if (!ingredient.image) {
             return;
         }
         const texture = await getTextureByAsset(ingredient.image);
-        let { width, height } = texture;
-        const transform = transformToMatrix(item.transform);
+        let { tex, width, height } = texture;
+        const transform = getItemTransform(item, options);
         matrices.model.push();
         matrices.model.multiply(transform);
         if ($states.kitchen.held === item.id) {
@@ -153,31 +221,43 @@
             draw.textureOutline(
                 0, 0,
                 width, height,
-                texture,
+                tex,
                 new Vec4(1, 0, 0, 1),
                 10,
             );
         }
+        draw.textureColor(
+            10, 40,
+            width + 10, height + 40,
+            tex,
+            new Vec4(0, 0, 0, 0.1),
+        );
         draw.texture(
             0, 0,
             width, height,
-            texture,
+            tex,
         );
         if (behaviors.container) {
             const container = behaviors.container;
-            for (const [id, item] of Object.entries(container.items)) {
-                await renderItem(item);
+            for (const [id, item] of Object.entries(container.items).sort(([, a], [, b]) => {
+                const maxA = a.bounds.max;
+                const maxB = b.bounds.max;
+                return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
+            })) {
+                await renderItem(item, {
+                    parent: item,
+                });
             }
             if (container.overlay) {
                 const transform = transformToMatrix(container.overlayTransform);
                 matrices.model.push();
                 matrices.model.multiply(transform);
                 const containerTexture = await getTextureByAsset(container.overlay);
-                let { width, height } = containerTexture;
+                let { tex, width, height } = containerTexture;
                 draw.texture(
                     0, 0,
                     width, height,
-                    containerTexture,
+                    tex,
                 );
                 matrices.model.pop();
             }
@@ -188,25 +268,26 @@
     let scaleFactor = 1;
 
     async function renderCursor() {
-        if (!isMouseOver) {
-            return;
-        }
+        if (side !== 'client') return;
+        if (!isMouseOver) return;
         const mouse = matrices.unprojectPoint(glMouse);
         const deltaMouse = matrices.unprojectPoint(glMouse).sub(matrices.unprojectPoint(glMouse.sub(deltaGlMouse)));
         matrices.model.push();
+        matrices.view.push();
         matrices.model.multiply(new Mat4(
             1, -deltaMouse.y / 100, 0, 0,
             -deltaMouse.x / 100, 1, 0, 0,
             0, 0, 1, 0,
-            mouse.x + deltaMouse.x * 0.5, mouse.y + deltaMouse.y * 0.5, 0, 1,
+            // mouse.x + deltaMouse.x * 0.5, mouse.y + deltaMouse.y * 0.5, 0, 1,
+            mouse.x, mouse.y, 0, 1,
         ));
         const CURSORS = {
             grab: {
                 image: await getTextureByUri(cursor_grab),
                 width: 48,
                 height: 48,
-                x: -16,
-                y: -16,
+                x: -26,
+                y: -26,
             },
             point: {
                 image: await getTextureByUri(cursor_point),
@@ -217,13 +298,27 @@
             },
         }
         const cursor = $states.kitchen.held ? CURSORS.point : CURSORS.grab;
+        const time = performance.now();
+        const duration = time - (mouseDown ? mouseDownTime : mouseUpTime);
+        const a = Math.sin(duration / 40) / (Math.pow(duration / 7, 1.5) / 2 + 1) * (mouseDown ? -1 : 1);
+        const scale = 1 + a;
+        matrices.model.scale(scale, scale, 1);
+        matrices.view.translate(a * 70, a * 70, 0);
 
+        draw.textureColor(
+            cursor.x + 4,
+            cursor.y + 10,
+            cursor.width + cursor.x + 4,
+            cursor.height + cursor.y + 10,
+            cursor.image.tex,
+            new Vec4(0.3, 0.2, 0.2, 0.05),
+        );
         draw.textureOutline(
             cursor.x,
             cursor.y,
             cursor.width + cursor.x,
             cursor.height + cursor.y,
-            cursor.image,
+            cursor.image.tex,
             Vec4.ONE,
             2,
         );
@@ -232,18 +327,19 @@
             cursor.y,
             cursor.width + cursor.x,
             cursor.height + cursor.y,
-            cursor.image,
+            cursor.image.tex,
         );
         matrices.model.pop();
+        matrices.view.pop();
     }
 
     function setupCounterProjection() {
         const { gl } = glContext;
 
         matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
-        draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(0.9, 0.85, 0.8, 1));
+        // draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(0.9, 0.85, 0.8, 1));
         matrices.view.identity();
-        matrices.view.translate(0, gl.canvas.height - COUNTER_HEIGHT, 0);
+        matrices.view.translate(0, gl.canvas.height / 2, 0);
         matrices.view.scale(scaleFactor, scaleFactor, 1);
     }
 
@@ -299,7 +395,8 @@
         }
     }
 
-    function updateMouse() {
+    async function updateMouse() {
+        if (side !== 'client') return;
         if ($scene.type === 'cooking') {
             if (!mouseDown && $states.kitchen.held) {
                 const { hovering, held } = $states.kitchen;
@@ -308,22 +405,32 @@
                 }
                 $states.kitchen.held = null;
             }
+            let hit = false;
             for (const [id, item] of Object.entries($states.kitchen.items).reverse()) {
                 if (id === $states.kitchen.held) continue;
-                if (!canItemBeHeld(item) || item.type !== 'ingredient') continue;
-                const hovered = isItemHovering(item);
+                const hovered = await isItemHovering(item);
                 if (hovered) {
-                    if ($states.kitchen.hovering !== id) {
-                        $states.kitchen.hovering = id;
+                    if ($states.kitchen.held) {
+                        if ($states.kitchen.hovering !== id) {
+                            $states.kitchen.hovering = id;
+                        }
+                    } else {
+                        if (!canItemBeHeld(item)) {
+                            continue;
+                        }
+                        if (mouseDown) {
+                            $states.kitchen.held = id;
+                            $states.kitchen.hovering = null;
+                        } else if ($states.kitchen.hovering !== id) {
+                            $states.kitchen.hovering = id;
+                        }
                     }
-                    if (mouseDown && !$states.kitchen.held) {
-                        $states.kitchen.held = id;
-                        $states.kitchen.hovering = null;
-                    }
+                    hit = true;
                     break;
-                } else if ($states.kitchen.hovering === id) {
-                    $states.kitchen.hovering = null;
                 }
+            }
+            if (!hit && $states.kitchen.hovering) {
+                $states.kitchen.hovering = null;
             }
         } else if ($states.kitchen.held || $states.kitchen.hovering) {
             $states.kitchen.held = null;
@@ -341,6 +448,22 @@
         }
     }
 
+    function markChanged() {
+        changed = true;
+    }
+
+    function syncData() {
+        if (!changed) return;
+        changed = false;
+        const time = performance.now();
+        const delta = time - lastUpdate;
+        if (delta < 1000 / UPDATE_RATE) {
+            return;
+        }
+        lastUpdate = time;
+        $states = $states;
+    }
+
     async function render(context: GlContext) {
         const { gl } = context;
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -354,17 +477,17 @@
         setupCounterProjection();
         const lastGlMouse = glMouse;
         glMouse = clientMouse
-            .sub(new Vec2(rect.left, rect.top))
             .remap(
-                new Vec2(0, 0),
+                new Vec2(rect.left, rect.top),
                 new Vec2(gl.canvas.width, gl.canvas.height),
                 new Vec2(-1, 1),
                 new Vec2(1, -1),
             );
         deltaGlMouse = glMouse.sub(lastGlMouse);
+        await updateMouse();
         
         draw.rectangle(0, 0, gl.canvas.width / scaleFactor, COUNTER_HEIGHT, new Vec4(1, 1, 1, 1));
-        updateMouse();
+        
         await renderItems();
         await renderHoveringItem();
         await renderHeldItem();
@@ -392,6 +515,7 @@
             matrices.view.pop();
         }
         await renderCursor();
+        syncData();
     }
 </script>
 
@@ -399,12 +523,15 @@
     on:mousemove={(e) => {
         clientMouse = new Vec2(e.clientX, e.clientY);
         isMouseOver = true;
+        markChanged();
     }}
     on:mousedown={() => {
         mouseDown = true;
+        mouseDownTime = performance.now();
     }}
     on:mouseup={() => {
         mouseDown = false;
+        mouseUpTime = performance.now();
     }}
     on:mouseout={() => {
         isMouseOver = false;
@@ -420,27 +547,29 @@
     <div class="canvas">
         <Canvas bind:canvas bind:glContext {init} {render} />
     </div>
-    <div class="ui">
-        {#each Object.entries($config.ingredients) as [id, ingredient] (id)}
+    {#if side === 'client'}
+        <div class="ui">
+            {#each Object.entries($config.ingredients) as [id, ingredient] (id)}
+                <button on:click={() => {
+                    const itemId = Date.now().toString();
+                    $states.kitchen.items = {
+                        ...$states.kitchen.items,
+                        [itemId]: createKitchenItem(
+                            itemId,
+                            ingredient,
+                        ),
+                    };
+                }}>
+                    {ingredient.name}
+                </button>
+            {/each}
             <button on:click={() => {
-                const itemId = Date.now().toString();
-                $states.kitchen.items = {
-                    ...$states.kitchen.items,
-                    [itemId]: createKitchenItem(
-                        itemId,
-                        ingredient,
-                    ),
-                };
+                $states.kitchen.items = {};
             }}>
-                {ingredient.name}
+                全部消す
             </button>
-        {/each}
-        <button on:click={() => {
-            $states.kitchen.items = {};
-        }}>
-            全部消す
-        </button>
-    </div>
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">

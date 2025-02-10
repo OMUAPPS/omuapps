@@ -1,12 +1,12 @@
 <script lang="ts">
     import BackButton from '../components/BackButton.svelte';
     import IngredientEdit from '../components/IngredientEdit.svelte';
-    import { game, type SceneContext } from '../omucafe-app.js';
+    import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneIngredientEdit', context);
     
-    const { scene, config } = game;
+    const { scene, config } = getGame();
 </script>
 
 {#if $scene.type === 'ingredient_edit'}
