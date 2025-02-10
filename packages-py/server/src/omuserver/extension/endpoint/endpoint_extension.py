@@ -89,10 +89,10 @@ class ServerEndpoint[Req, Res](Endpoint):
         try:
             req = self._endpoint.request_serializer.deserialize(data.data)
             res = await self._callback(session, req)
-            json = self._endpoint.response_serializer.serialize(res)
+            serialized = self._endpoint.response_serializer.serialize(res)
             await session.send(
                 ENDPOINT_RECEIVE_PACKET,
-                EndpointDataPacket(id=data.id, key=data.key, data=json),
+                EndpointDataPacket(id=data.id, key=data.key, data=serialized),
             )
         except Exception as e:
             await session.send(
@@ -201,6 +201,7 @@ class EndpointExtension:
             )
             return
         await call.receive(packet)
+        del self._calls[key]
 
     async def handle_error(self, session: Session, packet: EndpointErrorPacket) -> None:
         key = (packet.id, packet.key)
@@ -214,8 +215,9 @@ class EndpointExtension:
                     error=f"Endpoint {packet.id} not found",
                 ),
             )
-        else:
-            await call.error(packet.error)
+            return
+        await call.error(packet.error)
+        del self._calls[key]
 
     async def _get_endpoint(self, packet: EndpointDataPacket, session: Session) -> Endpoint | None:
         endpoint = self._endpoints.get(packet.id)
