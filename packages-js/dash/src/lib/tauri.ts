@@ -257,6 +257,9 @@ import { Menu } from '@tauri-apps/api/menu/menu';
 import { TrayIcon } from '@tauri-apps/api/tray';
 
 waitForTauri().then(async () => {
+    if (await TrayIcon.getById('OMUAPPS-tray')) {
+        return;
+    }
     let visible = false;
     visible = await appWindow.isVisible();
 
