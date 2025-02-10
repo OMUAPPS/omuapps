@@ -3,8 +3,6 @@
     import Highlight, { LineNumbers } from 'svelte-highlight';
     import bash from 'svelte-highlight/languages/bash';
     import typescript from 'svelte-highlight/languages/typescript';
-    import github from 'svelte-highlight/styles/github';
-
 
     export let lang: string;
     export let text: string;
@@ -14,12 +12,6 @@
         bash,
     }[lang] || typescript;
 </script>
-
-<svelte:head>
-    <svelte:element this="style">
-        {github}
-    </svelte:element>
-</svelte:head>
 
 <div class="code">
     <Highlight
@@ -43,7 +35,6 @@
         display: flex;
         flex-direction: column;
         align-items: start;
-        text-wrap: wrap;
         width: 100%;
         background: var(--langtag-background);
         outline: 1px solid var(--color-outline);
@@ -51,7 +42,6 @@
         user-select: text;
         margin: 1rem 0;
         overflow-x: auto;
-        max-width: 40rem;
     }
 
     .copy {
@@ -68,7 +58,6 @@
         font-size: 0.8rem;
         padding: 0.5rem 1rem;
         margin: 0.5rem;
-        z-index: 1;
 
         &:hover {
             background: var(--color-1);
