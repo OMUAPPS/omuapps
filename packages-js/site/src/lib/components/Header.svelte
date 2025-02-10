@@ -6,6 +6,8 @@
     import { onMount } from 'svelte';
     import Content from './Content.svelte';
 
+    export let always = false;
+    
     let onTop = BROWSER && window.scrollY < 1;
 
     function onScroll() {
@@ -23,7 +25,7 @@
     $: path = $page.url.pathname;
 </script>
 
-<header class:ontop={onTop}>
+<header class:ontop={!always && onTop}>
     <Content>
         <nav>
             <a href="/" class="title">
@@ -45,7 +47,7 @@
                     <li aria-current={path.startsWith('/docs/1-guide') ? 'page' : undefined}>
                         <Tooltip>アプリの導入から使い方を知る</Tooltip>
                         <i class="ti ti-book"></i>
-                        ドキュメント
+                        導入ガイド
                     </li>
                 </a>
                 <a href="/docs/0-index">
@@ -66,7 +68,7 @@
 
 <style lang="scss">
     header {
-        position: sticky;
+        position: fixed;
         top: 0;
         right: 0;
         left: 0;

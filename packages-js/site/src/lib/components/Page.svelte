@@ -5,11 +5,11 @@
     import Header from './Header.svelte';
 
     export let noBackground = false;
-    export let header = true;
+    export let header: boolean | 'always' = true;
 </script>
 
 {#if header}
-    <Header />
+    <Header always={header==='always'} />
 {/if}
 <slot name="banner">
     <img src={background} alt="background" class="background" />
