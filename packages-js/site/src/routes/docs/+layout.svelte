@@ -2,7 +2,6 @@
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs/index.js';
     import { FlexRowWrapper } from '@omujs/ui';
-    import github from 'svelte-highlight/styles/github';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
     import { config } from './constants.js';
@@ -15,14 +14,7 @@
     $: group = section && Object.entries(sections).find(([, entries]) => entries.includes(section));
 </script>
 
-
-<svelte:head>
-    <svelte:element this="style">
-        {github}
-    </svelte:element>
-</svelte:head>
-
-<Page header="always">
+<Page>
     <header slot="header">
         {#if $docs}
             {@const meta = $docs.meta}
@@ -103,14 +95,11 @@
 
     .content {
         flex: 1;
-        width: 100%;
     }
 
     .markdown {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        margin-bottom: 2rem;
-        padding-bottom: 2rem;
+        margin: 2rem 0;
+        padding: 2rem 0;
         border: 1px solid var(--color-outline);
         border-left: 0;
         border-right: 0;
@@ -131,8 +120,7 @@
     .groups {
         position: fixed;
         padding: 2rem;
-        margin-top: 5rem;
-        padding-top: 4rem;
+        padding-top: 8rem;
         padding-right: 2rem;
         top: 0;
         bottom: 0;
@@ -145,7 +133,6 @@
         font-size: 0.7rem;
         min-width: 14rem;
         overflow-y: auto;
-        z-index: 1;
 
         &::-webkit-scrollbar {
             width: 8px;
