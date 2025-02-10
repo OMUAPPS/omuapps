@@ -10,8 +10,8 @@
 
 <div class="container">
     <iframe src={url} title="" frameborder="0" allow="camera; microphone"></iframe>
-    <div class="window-resize bottom" />
-    <div class="window-resize right" />
+    <div class="window-resize bottom"></div>
+    <div class="window-resize right"></div>
 </div>
 
 <style lang="scss">

@@ -2,7 +2,7 @@
     import { omu } from '$lib/client.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
-    import { loadedIds, registerPage, type Page } from './page.js';
+    import { pages, registerPage, type Page } from './page.js';
     import AppPage from './pages/AppPage.svelte';
     import { currentPage, menuOpen } from './settings.js';
 
@@ -33,7 +33,7 @@
         $currentPage = appPage.id;
     }
 
-    $: loaded = $loadedIds.includes(appPage.id);
+    $: loaded = $pages[appPage.id];
     $: active = $currentPage === appPage.id;
 </script>
 

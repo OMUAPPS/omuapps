@@ -1,28 +1,27 @@
 <script lang="ts">
-    import { dashboard } from "$lib/client.js";
-    import { t } from "$lib/i18n/i18n-context.js";
-    import { screenContext } from "$lib/screen/screen.js";
-    import { TableList, Tooltip } from "@omujs/ui";
-    import { onMount } from "svelte";
-    import AppEntry from "./AppEntry.svelte";
+    import { dashboard } from '$lib/client.js';
+    import { t } from '$lib/i18n/i18n-context.js';
+    import { screenContext } from '$lib/screen/screen.js';
+    import { TableList, Tooltip } from '@omujs/ui';
+    import { onMount } from 'svelte';
+    import AppEntry from './AppEntry.svelte';
     import {
-        loadedIds,
         pageMap,
+        pages,
         registerPage,
         unregisterPage,
-        type Page,
-        type PageItem,
-    } from "./page.js";
-    import ConnectPage from "./pages/ConnectPage.svelte";
-    import ExplorePage from "./pages/ExplorePage.svelte";
-    import ManageAppsScreen from "./screen/ManageAppsScreen.svelte";
-    import UpdateScreen from "./screen/UpdateScreen.svelte";
-    import { currentPage, menuOpen } from "./settings.js";
-    import SettingsPage from "./settings/SettingsPage.svelte";
-    import TabEntry from "./TabEntry.svelte";
+        type Page
+    } from './page.js';
+    import ConnectPage from './pages/ConnectPage.svelte';
+    import ExplorePage from './pages/ExplorePage.svelte';
+    import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
+    import UpdateScreen from './screen/UpdateScreen.svelte';
+    import { currentPage, menuOpen } from './settings.js';
+    import SettingsPage from './settings/SettingsPage.svelte';
+    import TabEntry from './TabEntry.svelte';
 
     const EXPLORE_PAGE = registerPage({
-        id: "explore",
+        id: 'explore',
         async open() {
             return {
                 component: ExplorePage,
@@ -32,7 +31,7 @@
     });
 
     const CONNECT_PAGE = registerPage({
-        id: "connect",
+        id: 'connect',
         async open() {
             return {
                 component: ConnectPage,
@@ -42,7 +41,7 @@
     });
 
     const SETTINGS_PAGE = registerPage({
-        id: "settings",
+        id: 'settings',
         async open() {
             return {
                 component: SettingsPage,
@@ -51,34 +50,32 @@
         },
     });
 
-    const pages: Map<string, Page<unknown>> = new Map();
-    let loading = false;
-
-    async function loadPage(
-        pageMap: Record<string, PageItem<unknown>>,
-        id: string,
-    ): Promise<Page<unknown> | undefined> {
-        loading = true;
-        const pageItem = pageMap[id];
+    currentPage.subscribe(async (value) => {
+        const pageItem = $pageMap[value];
         if (pageItem) {
-            loading = true;
+            $pages[value] = { type: 'loading' };
+            console.log('loading', value);
             const page = await pageItem.open();
-            pages.set(pageItem.id, page);
-            loading = false;
-            return page;
+            $pages[value] = { type: 'loaded', page };
+            console.log('loaded', value);
+        } else {
+            $pages[value] = { type: 'waiting' };
+            console.log('waiting', value);
         }
-        loading = false;
-        return undefined;
-    }
-
-    currentPage.subscribe((id) => {
-        if (!$loadedIds.includes(id)) {
-            $loadedIds = [...$loadedIds, id];
-        }
+    });
+    pageMap.subscribe(async (value) => {
+        const page = $pages[$currentPage];
+        if (!page || page.type !== 'waiting') return;
+        if (!value[$currentPage]) return;
+        const pageItem = value[$currentPage];
+        $pages[$currentPage] = { type: 'loading' };
+        console.log('loading', $currentPage);
+        $pages[$currentPage] = { type: 'loaded', page: await pageItem.open() };
+        console.log('loaded', $currentPage);
     });
 
     onMount(async () => {
-        const { check } = await import("@tauri-apps/plugin-updater");
+        const { check } = await import('@tauri-apps/plugin-updater');
         const update = await check();
         if (update) {
             screenContext.push(UpdateScreen, { update });
@@ -86,13 +83,13 @@
 
         dashboard.apps.event.remove.listen((removedItems) => {
             removedItems.forEach((item) => {
-                pages.delete(`app-${item.id.key()}`);
+                delete $pages[`app-${item.id.key()}`];
                 unregisterPage(`app-${item.id.key()}`);
             });
         });
         dashboard.apps.event.update.listen((updatedItems) => {
             updatedItems.forEach((item) => {
-                pages.delete(`app-${item.id.key()}`);
+                delete $pages[`app-${item.id.key()}`];
                 unregisterPage(`app-${item.id.key()}`);
             });
         });
@@ -105,10 +102,10 @@
             <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
                 {#if $menuOpen}
                     <i class="ti ti-chevron-left"></i>
-                    <Tooltip>{$t("menu.collapse")}</Tooltip>
+                    <Tooltip>{$t('menu.collapse')}</Tooltip>
                 {:else}
                     <i class="ti ti-menu"></i>
-                    <Tooltip>{$t("menu.expand")}</Tooltip>
+                    <Tooltip>{$t('menu.expand')}</Tooltip>
                 {/if}
             </button>
             <TabEntry entry={EXPLORE_PAGE} />
@@ -117,7 +114,7 @@
             <div class="tab-group">
                 {#if $menuOpen}
                     <span class="title">
-                        {$t("menu.apps")}
+                        {$t('menu.apps')}
                         <i class="ti ti-apps"></i>
                     </span>
                     <div class="buttons">
@@ -127,11 +124,11 @@
                         >
                             <Tooltip>
                                 <div class="tooltip">
-                                    <h3>{$t("screen.manage-apps.name")}</h3>
+                                    <h3>{$t('screen.manage-apps.name')}</h3>
                                     <small
-                                        >{$t(
-                                            "screen.manage-apps.description",
-                                        )}</small
+                                    >{$t(
+                                        'screen.manage-apps.description',
+                                    )}</small
                                     >
                                 </div>
                             </Tooltip>
@@ -151,18 +148,18 @@
                     {#if $menuOpen}
                         {#if $currentPage === EXPLORE_PAGE.id}
                             <p>
-                                {$t("menu.jump-to-explore-hint")}
+                                {$t('menu.jump-to-explore-hint')}
                             </p>
                             <small>
-                                {$t("menu.add-apps-hint")}
+                                {$t('menu.add-apps-hint')}
                             </small>
                         {:else}
                             <p>
-                                {$t("menu.add-apps")}
+                                {$t('menu.add-apps')}
                                 <i class="ti ti-external-link"></i>
                             </p>
                             <small>
-                                {$t("menu.jump-to-explore")}
+                                {$t('menu.jump-to-explore')}
                             </small>
                         {/if}
                     {/if}
@@ -171,25 +168,16 @@
         </div>
     </div>
     <div class="page-container">
-        {#each Object.keys($pageMap).filter( (id) => $loadedIds.includes(id), ) as id (id)}
-            <div class="page" class:visible={!loading && $currentPage === id}>
-                {#await loadPage($pageMap, id)}
-                    <div>Loading...</div>
-                {:then page}
-                    {#if page}
-                        <svelte:component
-                            this={page.component}
-                            props={page.props}
-                        />
-                    {/if}
-                {:catch error}
-                    <div>{error.message}</div>
-                {/await}
-            </div>
+        {#each Object.entries($pages) as [id, entry] (id)}
+            {#if entry.type === 'loaded'}
+                <div class="page" class:visible={$currentPage === id}>
+                    <svelte:component
+                        this={entry.page.component}
+                        props={entry.page.props}
+                    />
+                </div>
+            {/if}
         {/each}
-        {#if loading}
-            <div>Loading...</div>
-        {/if}
     </div>
 </main>
 

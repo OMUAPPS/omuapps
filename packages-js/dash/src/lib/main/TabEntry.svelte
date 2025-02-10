@@ -26,10 +26,10 @@
             {/if}
         </div>
     </Tooltip>
-    <i class={icon} />
+    <i class={icon}></i>
     {#if $menuOpen}
         <span class="title">{title}</span>
-        <i class="open ti ti-chevron-right" />
+        <i class="open ti ti-chevron-right"></i>
     {/if}
 </button>
 
