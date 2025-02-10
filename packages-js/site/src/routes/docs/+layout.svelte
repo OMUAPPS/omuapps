@@ -2,6 +2,7 @@
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs/index.js';
     import { FlexRowWrapper } from '@omujs/ui';
+    import github from 'svelte-highlight/styles/github';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
     import { config } from './constants.js';
@@ -13,6 +14,12 @@
     $: section = Object.values(sections).flat().find((s) => s.slug === $docs?.slug);
     $: group = section && Object.entries(sections).find(([, entries]) => entries.includes(section));
 </script>
+
+<svelte:head>
+    <svelte:element this="style">
+        {github}
+    </svelte:element>
+</svelte:head>
 
 <Page>
     <header slot="header">
