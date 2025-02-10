@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import abc
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from omu.app import App
 from omu.errors import PermissionDenied
 from omu.extension.endpoint.endpoint_extension import (
     ENDPOINT_CALL_PACKET,
@@ -35,7 +35,7 @@ class Endpoint(abc.ABC):
     def permission(self) -> Identifier | None: ...
 
     @abc.abstractmethod
-    async def call(self, data: EndpointDataPacket, session: Session) -> bool: ...
+    async def call(self, data: EndpointDataPacket, session: Session) -> Session | None: ...
 
 
 class SessionEndpoint(Endpoint):
@@ -57,11 +57,11 @@ class SessionEndpoint(Endpoint):
     def permission(self) -> Identifier | None:
         return self._permission
 
-    async def call(self, data: EndpointDataPacket, session: Session) -> bool:
+    async def call(self, data: EndpointDataPacket, session: Session) -> Session:
         if self._session.closed:
             raise RuntimeError(f"Session {self._session.app.key()} already closed")
         await self._session.send(ENDPOINT_CALL_PACKET, data)
-        return False
+        return self._session
 
 
 class ServerEndpoint[Req, Res](Endpoint):
@@ -85,7 +85,7 @@ class ServerEndpoint[Req, Res](Endpoint):
     def permission(self) -> Identifier | None:
         return self._permission
 
-    async def call(self, data: EndpointDataPacket, session: Session) -> bool:
+    async def call(self, data: EndpointDataPacket, session: Session) -> None:
         if session.closed:
             raise RuntimeError("Session already closed")
         try:
@@ -102,21 +102,22 @@ class ServerEndpoint[Req, Res](Endpoint):
                 EndpointErrorPacket(id=data.id, key=data.key, error=str(e)),
             )
             raise e
-        return True
+        return None
 
 
+@dataclass(frozen=True, slots=True)
 class EndpointCall:
-    def __init__(self, session: Session, data: EndpointDataPacket) -> None:
-        self._session = session
-        self._data = data
+    caller: Session
+    session: Session
+    packet: EndpointDataPacket
 
     async def receive(self, data: EndpointDataPacket) -> None:
-        await self._session.send(ENDPOINT_RECEIVE_PACKET, data)
+        await self.caller.send(ENDPOINT_RECEIVE_PACKET, data)
 
     async def error(self, error: str) -> None:
-        await self._session.send(
+        await self.caller.send(
             ENDPOINT_ERROR_PACKET,
-            EndpointErrorPacket(id=self._data.id, key=self._data.key, error=error),
+            EndpointErrorPacket(id=self.packet.id, key=self.packet.key, error=error),
         )
 
 
@@ -124,7 +125,7 @@ class EndpointExtension:
     def __init__(self, server: Server) -> None:
         self._server = server
         self._endpoints: dict[Identifier, Endpoint] = {}
-        self._calls: dict[tuple[App, Identifier, int], EndpointCall] = {}
+        self._calls: dict[tuple[Identifier, int], EndpointCall] = {}
         server.packets.register(
             ENDPOINT_REGISTER_PACKET,
             ENDPOINT_CALL_PACKET,
@@ -186,13 +187,18 @@ class EndpointExtension:
             return
         self.verify_permission(endpoint, session)
 
-        if await endpoint.call(packet, session):
+        endpoint_session = await endpoint.call(packet, session)
+        if endpoint_session is None:
             return
-        key = (session.app, packet.id, packet.key)
-        self._calls[key] = EndpointCall(session, packet)
+        key = (packet.id, packet.key)
+        self._calls[key] = EndpointCall(
+            caller=session,
+            session=endpoint_session,
+            packet=packet,
+        )
 
     async def handle_receive(self, session: Session, packet: EndpointDataPacket) -> None:
-        key = (session.app, packet.id, packet.key)
+        key = (packet.id, packet.key)
         call = self._calls.get(key)
         if call is None:
             await session.send(
@@ -204,11 +210,21 @@ class EndpointExtension:
                 ),
             )
             return
+        if session != call.session:
+            await session.send(
+                ENDPOINT_ERROR_PACKET,
+                EndpointErrorPacket(
+                    id=packet.id,
+                    key=packet.key,
+                    error="Session mismatch",
+                ),
+            )
+            return
         await call.receive(packet)
         del self._calls[key]
 
     async def handle_error(self, session: Session, packet: EndpointErrorPacket) -> None:
-        key = (session.app, packet.id, packet.key)
+        key = (packet.id, packet.key)
         call = self._calls.get(key)
         if call is None:
             await session.send(
@@ -217,6 +233,16 @@ class EndpointExtension:
                     id=packet.id,
                     key=packet.key,
                     error=f"Endpoint {packet.id} not found",
+                ),
+            )
+            return
+        if session != call.session:
+            await session.send(
+                ENDPOINT_ERROR_PACKET,
+                EndpointErrorPacket(
+                    id=packet.id,
+                    key=packet.key,
+                    error="Session mismatch",
                 ),
             )
             return
