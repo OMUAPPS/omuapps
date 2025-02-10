@@ -1,4 +1,4 @@
-import { version } from '$lib/version.json';
+import { VERSION } from '$lib/version.js';
 import { App, Omu } from '@omujs/omu';
 import {
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
@@ -12,7 +12,7 @@ import { NAMESPACE } from './app/origin.js';
 
 export const APP = new Identifier(NAMESPACE, 'page');
 const app = new App(APP, {
-    version,
+    version: VERSION,
     metadata: {
         locale: 'en',
         name: {

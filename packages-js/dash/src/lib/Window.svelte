@@ -9,7 +9,7 @@
     import { isBetaEnabled } from './main/settings.js';
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
     import { appWindow, invoke, listen } from './tauri.js';
-    import { version } from './version.json';
+    import { VERSION } from './version.js';
 
     let alwaysOnTop = false;
     let maximized = false;
@@ -60,11 +60,11 @@
 
 <div class="window">
     <div class="titlebar">
-        <div data-tauri-drag-region class:margin={!maximized} />
+        <div data-tauri-drag-region class:margin={!maximized}></div>
         <div class="title">
             <img src={Title} alt="title" width="64" height="10" />
             <span class="version">
-                {version}
+                {VERSION}
                 {(DEV && ' (dev)') || ($isBetaEnabled && ' (beta)') || ''}
             </span>
             <StatusBar />

@@ -1,5 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { version } from '$lib/version.json';
+import { VERSION } from '$lib/version.js';
 import { Identifier, type Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
@@ -297,7 +297,7 @@ export class DiscordOverlayApp {
 
     constructor(public readonly omu: Omu) {
         omu.plugins.require({
-            omuplugin_discordrpc: `>=${version}`,
+            omuplugin_discordrpc: `>=${VERSION}`,
         })
         this.voiceState = makeRegistryWritable(omu.registries.get(VOICE_STATE_REGISTRY_TYPE));
         this.speakingState = makeRegistryWritable(omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE));
