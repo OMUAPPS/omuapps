@@ -15,8 +15,13 @@ description: データを保持するためのAPI
 ## 定義
 
 ```typescript
+type MyData = {
+    name: string;
+    age: number;
+};
+
 // レジストリの定義
-const myData = omu.registries.create('my_data', {
+const myData = omu.registries.create<MyData>('my_data', {
     // データの初期値
     default: {
         name: 'Taro Yamada',
@@ -25,11 +30,11 @@ const myData = omu.registries.create('my_data', {
 });
 ```
 
-[serializer](%DOCS_ROOT%/3-core-1-serializer) を指定することでデータのシリアライズをカスタマイズすることができます。
+[serializer](%DOCS_ROOT%/4-core-1-serializer) を指定することでデータのシリアライズをカスタマイズすることができます。
 
 ```typescript
 // レジストリの定義
-const myData = omu.registries.create('my_data', {
+const myData = omu.registries.create<MyData>('my_data', {
     // データの初期値
     default: {
         name: 'Taro Yamada',
@@ -38,6 +43,9 @@ const myData = omu.registries.create('my_data', {
     // シリアライザ
     serializer: mySerializer,
 });
+```
+
+## データの取得
 
 ```typescript
 // データの取得

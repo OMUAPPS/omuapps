@@ -28,7 +28,7 @@ const mySignal = omu.signals.create<MySignal>('my_signal');
 
 ```typescript
 // シグナルを送信する
-mySignal.notify({
+await mySignal.notify({
     field1: 'Hello',
     field2: 123,
 });

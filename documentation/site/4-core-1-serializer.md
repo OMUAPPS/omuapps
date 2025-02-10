@@ -11,7 +11,7 @@ description: シリアライザを使ってオブジェクトをバイト列に�
 ## 概要
 
 シリアライザを使うことで、オブジェクトをバイト列に変換してオブジェクトを保存したり、他のセッションに送信することができます。
-これにより、オブジェクトを保存する際にJSONに対応した文字列に変換する必要がなくなるため、データの節約や高速化が期待できます。
+これにより、オブジェクトを保存する際にJSONに対応した文字列に変換する必要がなくなるため、データ量の節約や高速化が期待できます。
 
 ## Serializable型
 
@@ -54,9 +54,9 @@ const mySerializer: Serializable<MyData, Uint8Array> = {
 };
 ```
 
-## シリアライザの利用
+## 使用例
 
-例としてregistry機能をシリアライザと組み合わせて使う方法を示します。
+例としてsignal機能をシリアライザと組み合わせて使う方法を示します。
 
 ```typescript
 const DEFAULT_MY_DATA: MyData = {
@@ -64,14 +64,17 @@ const DEFAULT_MY_DATA: MyData = {
     date: new Date(),
 };
 
-const myData = omu.registries.create('my_data', {
+const mySignal = omu.signals.create<MyData>('my_data', {
     serializer: mySerializer,
-    default: DEFAULT_MY_DATA,
 });
 
-// データの保存
-myData.set({ byteArray: new Uint8Array([1, 2, 3]), date: new Date() });
+await mySignal.notify({
+    byteArray: new Uint8Array([1, 2, 3]),
+    date: new Date(),
+})
 
-// データの取得
-const data: MyData = myData.get();
+mySignal.listen((data: MyData) => {
+    console.log(data.byteArray);
+    console.log(data.date);
+});
 ```
