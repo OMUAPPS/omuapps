@@ -40,6 +40,10 @@
         <div class="content">
             <DocsNav {section} {group} />
             <div class="markdown">
+                <h2 class="warning">
+                    現在ドキュメントは制作段階にあるため、多くの情報が不完全なものになっています
+                    <i class="ti ti-alert-hexagon"></i>
+                </h2>
                 <slot />
             </div>
             <DocsNav {section} {group} />
@@ -110,6 +114,19 @@
         border: 1px solid var(--color-outline);
         border-left: 0;
         border-right: 0;
+    }
+
+    .warning {
+        display: flex;
+        align-items: center;
+        padding: 1rem 0;
+        gap: 1rem;
+        border-bottom: 1px solid var(--color-1);
+        color: var(--color-1);
+
+        > i {
+            font-size: 1.5rem;
+        }
     }
 
     h1 {
