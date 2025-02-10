@@ -4,6 +4,7 @@ import abc
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from omu.app import App
 from omu.errors import PermissionDenied
 from omu.extension.endpoint.endpoint_extension import (
     ENDPOINT_CALL_PACKET,
@@ -34,7 +35,7 @@ class Endpoint(abc.ABC):
     def permission(self) -> Identifier | None: ...
 
     @abc.abstractmethod
-    async def call(self, data: EndpointDataPacket, session: Session) -> None: ...
+    async def call(self, data: EndpointDataPacket, session: Session) -> bool: ...
 
 
 class SessionEndpoint(Endpoint):
@@ -56,10 +57,11 @@ class SessionEndpoint(Endpoint):
     def permission(self) -> Identifier | None:
         return self._permission
 
-    async def call(self, data: EndpointDataPacket, session: Session) -> None:
+    async def call(self, data: EndpointDataPacket, session: Session) -> bool:
         if self._session.closed:
             raise RuntimeError(f"Session {self._session.app.key()} already closed")
         await self._session.send(ENDPOINT_CALL_PACKET, data)
+        return False
 
 
 class ServerEndpoint[Req, Res](Endpoint):
@@ -83,7 +85,7 @@ class ServerEndpoint[Req, Res](Endpoint):
     def permission(self) -> Identifier | None:
         return self._permission
 
-    async def call(self, data: EndpointDataPacket, session: Session) -> None:
+    async def call(self, data: EndpointDataPacket, session: Session) -> bool:
         if session.closed:
             raise RuntimeError("Session already closed")
         try:
@@ -100,6 +102,7 @@ class ServerEndpoint[Req, Res](Endpoint):
                 EndpointErrorPacket(id=data.id, key=data.key, error=str(e)),
             )
             raise e
+        return True
 
 
 class EndpointCall:
@@ -121,7 +124,7 @@ class EndpointExtension:
     def __init__(self, server: Server) -> None:
         self._server = server
         self._endpoints: dict[Identifier, Endpoint] = {}
-        self._calls: dict[tuple[Identifier, int], EndpointCall] = {}
+        self._calls: dict[tuple[App, Identifier, int], EndpointCall] = {}
         server.packets.register(
             ENDPOINT_REGISTER_PACKET,
             ENDPOINT_CALL_PACKET,
@@ -183,12 +186,13 @@ class EndpointExtension:
             return
         self.verify_permission(endpoint, session)
 
-        await endpoint.call(packet, session)
-        key = (packet.id, packet.key)
+        if await endpoint.call(packet, session):
+            return
+        key = (session.app, packet.id, packet.key)
         self._calls[key] = EndpointCall(session, packet)
 
     async def handle_receive(self, session: Session, packet: EndpointDataPacket) -> None:
-        key = (packet.id, packet.key)
+        key = (session.app, packet.id, packet.key)
         call = self._calls.get(key)
         if call is None:
             await session.send(
@@ -204,7 +208,7 @@ class EndpointExtension:
         del self._calls[key]
 
     async def handle_error(self, session: Session, packet: EndpointErrorPacket) -> None:
-        key = (packet.id, packet.key)
+        key = (session.app, packet.id, packet.key)
         call = self._calls.get(key)
         if call is None:
             await session.send(
