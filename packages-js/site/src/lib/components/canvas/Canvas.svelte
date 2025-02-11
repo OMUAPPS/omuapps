@@ -96,7 +96,7 @@
     });
 </script>
 
-<canvas bind:this={canvas} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight} />
+<canvas bind:this={canvas} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight}></canvas>
 
 <style lang="scss">
     canvas {

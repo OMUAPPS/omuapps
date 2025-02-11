@@ -273,7 +273,7 @@
 
     function setupAvatarTransform(matrices: MatrixStack, flipDirection: Vec2, avatarConfig: AvatarConfig | null) {
         if (avatarConfig) {
-            const position = Vec2.fromArray(avatarConfig.offset);
+            const position = Vec2.from(avatarConfig.offset);
             matrices.translate(position.x, flipDirection.y * position.y, 0);
             matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
             if (avatarConfig.type === 'pngtuber') {

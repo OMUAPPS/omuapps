@@ -1,5 +1,7 @@
 import { invLerp, lerp } from './math.js';
 
+type PossibleVec2 = Vec2 | [number, number] | { x: number, y: number };
+
 export class Vec2 {
     public static ZERO = new Vec2(0, 0);
     public static ONE = new Vec2(1, 1);
@@ -87,7 +89,13 @@ export class Vec2 {
         return [this.x, this.y];
     }
 
-    public static fromArray([x, y]: [number, number]): Vec2 {
-        return new Vec2(x, y);
+    public static from(obj: PossibleVec2): Vec2 {
+        if (obj instanceof Vec2) {
+            return obj;
+        }
+        if (Array.isArray(obj)) {
+            return new Vec2(obj[0], obj[1]);
+        }
+        return new Vec2(obj.x, obj.y);
     }
 }
