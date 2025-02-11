@@ -89,7 +89,8 @@
     "app": {
         "trayIcon": {
             "iconPath": "icons/icon.png",
-            "iconAsTemplate": true
+            "iconAsTemplate": true,
+            "id": "omuapps"
         },
         "windows": [
             {

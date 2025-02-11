@@ -194,7 +194,9 @@ export function waitForTauri() {
     });
 }
 
-export async function checkUpdate(beta: boolean) {
+export async function checkUpdate() {
+    const beta = get(isBetaEnabled);
+    console.log('beta', beta);
     return await check({
         headers: {
             'Updater-Channel': beta ? 'beta' : 'stable',
@@ -255,13 +257,15 @@ export async function applyUpdate(update: Update, progress: (event: UpdateEvent)
 import { defaultWindowIcon } from '@tauri-apps/api/app';
 import { Menu } from '@tauri-apps/api/menu/menu';
 import { TrayIcon } from '@tauri-apps/api/tray';
+import { exit } from '@tauri-apps/plugin-process';
+import { get } from 'svelte/store';
+import { isBetaEnabled } from './main/settings.js';
 
 waitForTauri().then(async () => {
     let visible = false;
     visible = await appWindow.isVisible();
 
     const menu = await Menu.new({
-        id: 'OMUAPPS-menu',
         items: [
             {
                 id: 'toggle',
@@ -276,6 +280,13 @@ waitForTauri().then(async () => {
                     visible = await appWindow.isVisible();
                     item.setText(visible ? 'Hide' : 'Show');
                 }
+            },
+            {
+                id: 'quit',
+                text: 'Quit',
+                action: async () => {
+                    await exit(0);
+                }
             }
         ]
     });
@@ -288,8 +299,13 @@ waitForTauri().then(async () => {
             item.setText('Show');
         }
     });
+    const tray = await TrayIcon.getById('omuapps');
+    if (tray) {
+        tray.setMenu(menu);
+        return;
+    }
     await TrayIcon.new({
-        id: 'OMUAPPS-tray',
+        id: 'omuapps',
         icon: await defaultWindowIcon(),
         menu,
         showMenuOnLeftClick: true,
