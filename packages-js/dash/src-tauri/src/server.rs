@@ -244,12 +244,16 @@ impl Server {
             stdout,
             stderr,
         };
-        *self.process.lock().unwrap() = Some(process);
+        {
+            *self.process.lock().unwrap() = Some(process);
+        }
         let process = self.process.clone();
         let app_handle = self.app_handle.clone();
         std::thread::spawn(move || {
             let exit = process.lock().unwrap().as_mut().unwrap().handle.wait();
-            *process.lock().unwrap() = None;
+            {
+                *process.lock().unwrap() = None;
+            }
             if let Err(err) = &exit {
                 warn!("Server process exited with error: {}", err);
             }

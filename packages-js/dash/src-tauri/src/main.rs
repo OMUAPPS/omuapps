@@ -115,22 +115,22 @@ async fn start_server(
         info!("{:?}", progress);
         window.emit("server_state", progress).unwrap();
     };
-    {
-        let server = state.server.lock().unwrap();
-        if server.is_some() {
-            let server = server.as_ref().unwrap();
-            if server.is_running() {
-                on_progress(Progress::ServerAlreadyStarted {
-                    msg: "Existing server is already running".to_string(),
-                });
-                return Ok(None);
-            };
+    info!("Starting server");
+    let mut server_mutex = state.server.lock().map_err(|err| err.to_string())?;
+    if server_mutex.is_some() {
+        let server = server_mutex.as_ref().unwrap();
+        if server.is_running() {
+            on_progress(Progress::ServerAlreadyStarted {
+                msg: "Existing server is already running".to_string(),
+            });
+            return Ok(None);
         };
-    }
+    };
 
     let options = state.option.clone();
-    let python = Python::ensure(&options, &on_progress).unwrap();
-    let uv = Uv::ensure(&options, &python.python_bin, &on_progress).unwrap();
+    let python = Python::ensure(&options, &on_progress).map_err(|err| err.to_string())?;
+    let uv =
+        Uv::ensure(&options, &python.python_bin, &on_progress).map_err(|err| err.to_string())?;
     let server = match Server::ensure_server(
         options.server_options,
         python,
@@ -152,11 +152,11 @@ async fn start_server(
         on_progress(Progress::ServerStarting {
             msg: "Starting server".to_string(),
         });
-        server.start(&on_progress).unwrap();
+        server.start(&on_progress).map_err(|err| err.to_string())?;
     }
 
     let token = server.token.clone();
-    *state.server.lock().unwrap() = Some(server);
+    server_mutex.replace(server);
     Ok(Some(token))
 }
 
@@ -398,7 +398,6 @@ fn main() {
             tauri_plugin_log::Builder::new()
                 .targets([
                     Target::new(TargetKind::Stdout),
-                    Target::new(TargetKind::Stderr),
                     Target::new(TargetKind::Webview),
                     Target::new(TargetKind::Folder {
                         path: data_dir.join("logs"),
