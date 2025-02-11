@@ -1,6 +1,9 @@
 <script lang="ts">
     import { FileDrop } from '@omujs/ui';
-    import { createContainer, createFixed, getImage, uploadAsset, type Ingredient } from '../omucafe-app.js';
+    import { getAssetImage, uploadAsset } from '../game/asset.js';
+    import { createContainer } from '../game/behavior/container.js';
+    import { createFixed } from '../game/behavior/fixed.js';
+    import type { Ingredient } from '../game/ingredient.js';
     import AssetImage from './AssetImage.svelte';
     import ContainerEdit from './behavior/ContainerEdit.svelte';
     import FixedEdit from './behavior/FixedEdit.svelte';
@@ -23,7 +26,7 @@
                 throw new Error('FileDrop must receive only one file');
             }
             ingredient.image = await uploadAsset(fileList[0]);
-            const image = await getImage(ingredient.image);
+            const image = await getAssetImage(ingredient.image);
             ingredient.bounds = {
                 min: { x: 0, y: 0 },
                 max: { x: image.width, y: image.height },

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Fixed } from '../../omucafe-app.js';
+    import type { Fixed } from '../../game/behavior/fixed.js';
     import TransformEdit from '../TransformEdit.svelte';
 
     export let fixed: Fixed;

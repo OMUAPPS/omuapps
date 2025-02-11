@@ -1,6 +1,7 @@
 <script lang="ts">
     import { FileDrop } from '@omujs/ui';
-    import { uploadAsset, type Container } from '../../omucafe-app.js';
+    import { uploadAsset } from '../../game/asset.js';
+    import type { Container } from '../../game/behavior/container.js';
     import AssetImage from '../AssetImage.svelte';
     import TransformEdit from '../TransformEdit.svelte';
 

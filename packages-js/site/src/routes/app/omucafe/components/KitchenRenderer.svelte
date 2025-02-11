@@ -6,10 +6,13 @@
     import { Mat4 } from '$lib/math/mat4.js';
     import { Vec2 } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
-    import { Identifier } from '@omujs/omu';
+    import { getAssetImage, type Asset } from '../game/asset.js';
+    import { attachChildren, callBehaviorHandler, createKitchenItem, getItemTransform, type KitchenItem } from '../game/kitchen-item.js';
+    import type { KitchenContext } from '../game/kitchen.js';
+    import { transformToMatrix } from '../game/transform.js';
     import cursor_grab from '../images/cursor_grab.png';
     import cursor_point from '../images/cursor_point.png';
-    import { createKitchenItem, getGame, type Asset, type KitchenItem, type Transform } from '../omucafe-app.js';
+    import { getGame } from '../omucafe-app.js';
 
     const { scene, states, config, omu } = getGame();
 
@@ -17,6 +20,10 @@
     const COUNTER_WIDTH = 1920;
     const COUNTER_HEIGHT = 500;
     const UPDATE_RATE = 60;
+    let context: KitchenContext = {
+        ...$states.kitchen,
+        side,
+    }
     let lastUpdate = performance.now();
     let changed = false;
     let glContext: GlContext;
@@ -96,29 +103,13 @@
     }
 
     async function getTextureByAsset(asset: Asset): Promise<Texture> {
-        if (asset.type === 'url') {
-            const existing = textures.get(asset.url);
-            if (existing) {
-                return existing;
-            }
-            const image = new Image();
-            image.src = asset.url;
-            await image.decode();
-            return getTexture(asset.url, image);
+        const key = asset.type === 'url' ? asset.url : asset.id;
+        const existing = textures.get(key);
+        if (existing) {
+            return existing;
         }
-        if (asset.type === 'asset') {
-            const existing = textures.get(asset.id);
-            if (existing) {
-                return existing;
-            }
-            const result = await omu.assets.download(Identifier.fromKey(asset.id));
-            const image = new Image();
-            image.src = URL.createObjectURL(new Blob([result.buffer]));
-            await image.decode();
-            URL.revokeObjectURL(image.src);
-            return getTexture(asset.id, image);
-        }
-        throw new Error(`Invalid asset type: ${asset}`);
+        const image = await getAssetImage(asset);
+        return getTexture(key, image);
     }
 
     async function init(context: GlContext) {
@@ -126,29 +117,11 @@
         draw = new Draw(matrices, context);
     }
 
-    function transformToMatrix(transform: Transform): Mat4 {
-        const { right, up, offset } = transform;
-        return new Mat4(
-            right.x, right.y, 0, 0,
-            up.x, up.y, 0, 0,
-            0, 0, 1, 0,
-            offset.x, offset.y, 0, 1,
-        );
-    }
-
-    function canItemBeHeld(item: KitchenItem): boolean {
-        const { behaviors } = item;
-        if (behaviors.fixed) {
-            return false;
-        }
-        return true;
-    }
-
     async function isItemHovering(item: KitchenItem): Promise<boolean> {
         if (!item.ingredient.image) return false;
         const { bounds } = item;
         const { min, max } = bounds;
-        const matrix = transformToMatrix(item.transform);
+        const matrix = getItemTransform(context, item);
         const inverse = matrix.inverse();
         const screenMouse = matrices.unprojectPoint(glMouse);
         const mouse = inverse.xform2(screenMouse);
@@ -186,21 +159,6 @@
         ));
     }
 
-    function getItemTransform(item: KitchenItem, options: {
-        parent?: KitchenItem,
-    } = {}): Mat4 {
-        const { transform } = item;
-        const { right, up, offset } = transform;
-        const { max } = item.bounds;
-        const flipY = side === 'asset' && !options.parent;
-        return new Mat4(
-            right.x, right.y, 0, 0,
-            up.x, up.y, 0, 0,
-            0, 0, 1, 0,
-            offset.x, flipY ? (COUNTER_HEIGHT - max.y * up.y) - offset.y : offset.y, 0, 1,
-        );
-    }
-
     async function renderItem(item: KitchenItem, options: {
         parent?: KitchenItem,
     } = {}) {
@@ -211,13 +169,13 @@
         }
         const texture = await getTextureByAsset(ingredient.image);
         let { tex, width, height } = texture;
-        const transform = getItemTransform(item, options);
+        const transform = options.parent ? transformToMatrix(item.transform) :  getItemTransform(context, item, options);
         matrices.model.push();
         matrices.model.multiply(transform);
-        if ($states.kitchen.held === item.id) {
+        if (context.held === item.id) {
             applyDragEffect();
         }
-        if ($states.kitchen.hovering === item.id) {
+        if (side === 'client' && context.hovering === item.id) {
             draw.textureOutline(
                 0, 0,
                 width, height,
@@ -239,11 +197,14 @@
         );
         if (behaviors.container) {
             const container = behaviors.container;
-            for (const [id, item] of Object.entries(container.items).sort(([, a], [, b]) => {
-                const maxA = a.bounds.max;
-                const maxB = b.bounds.max;
-                return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
-            })) {
+            for (const item of container.items
+                .map((id): KitchenItem | undefined => context.items[id])
+                .filter((entry): entry is KitchenItem => !!entry)
+                .sort((a, b) => {
+                    const maxA = a.bounds.max;
+                    const maxB = b.bounds.max;
+                    return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
+                })) {
                 await renderItem(item, {
                     parent: item,
                 });
@@ -278,7 +239,6 @@
             1, -deltaMouse.y / 100, 0, 0,
             -deltaMouse.x / 100, 1, 0, 0,
             0, 0, 1, 0,
-            // mouse.x + deltaMouse.x * 0.5, mouse.y + deltaMouse.y * 0.5, 0, 1,
             mouse.x, mouse.y, 0, 1,
         ));
         const CURSORS = {
@@ -297,7 +257,7 @@
                 y: -4,
             },
         }
-        const cursor = $states.kitchen.held ? CURSORS.point : CURSORS.grab;
+        const cursor = context.held ? CURSORS.point : CURSORS.grab;
         const time = performance.now();
         const duration = time - (mouseDown ? mouseDownTime : mouseUpTime);
         const a = Math.sin(duration / 40) / (Math.pow(duration / 7, 1.5) / 2 + 1) * (mouseDown ? -1 : 1);
@@ -337,7 +297,6 @@
         const { gl } = glContext;
 
         matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
-        // draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(0.9, 0.85, 0.8, 1));
         matrices.view.identity();
         matrices.view.translate(0, gl.canvas.height / 2, 0);
         matrices.view.scale(scaleFactor, scaleFactor, 1);
@@ -351,17 +310,17 @@
     }
 
     async function renderHoveringItem() {
-        const { hovering } = $states.kitchen;
+        const { hovering } = context;
         if (!hovering) return;
-        const item = $states.kitchen.items[hovering];
+        const item = context.items[hovering];
         if (!item) return;
         await renderItem(item);
     }
 
     async function renderHeldItem() {
-        const { held } = $states.kitchen;
+        const { held } = context;
         if (!held) return;
-        const item = $states.kitchen.items[held];
+        const item = context.items[held];
         if (!item) return;
         const deltaMouse = matrices.unprojectPoint(glMouse).sub(matrices.unprojectPoint(glMouse.sub(deltaGlMouse)));
         item.transform.offset = {
@@ -371,18 +330,22 @@
         await renderItem(item);
     }
 
-    function processDrop(heldItem: KitchenItem, hoveringItem: KitchenItem) {
+    function processDrop(hoveringItem: KitchenItem, heldItem: KitchenItem) {
         const { ingredient: heldIng} = heldItem;
         const { ingredient: hoveringIng} = hoveringItem;
         const { behaviors: heldBehaves } = heldItem;
         const { behaviors: hoverBehaves } = hoveringItem;
         if (hoverBehaves.container) {
             const container = hoverBehaves.container;
-            container.items = {
+            if (container.items.includes(heldItem.id)) {
+                return;
+            }
+            container.items = [
                 ...container.items,
-                [heldItem.id]: heldItem,
-            };
-            const containerTransform = transformToMatrix(hoveringItem.transform);
+                heldItem.id,
+            ];
+            attachChildren(hoveringItem, heldItem);
+            const containerTransform = getItemTransform(context, hoveringItem);
             const heldTransform = transformToMatrix(heldItem.transform);
             const inverse = containerTransform.inverse();
             const newMatrix = inverse.multiply(heldTransform);
@@ -391,57 +354,122 @@
                 up: new Vec2(newMatrix.m10, newMatrix.m11),
                 offset: new Vec2(newMatrix.m30, newMatrix.m31),
             };
-            delete $states.kitchen.items[heldItem.id];
         }
+    }
+
+    function processClick(hoveringItem: KitchenItem) {
+        const parent = hoveringItem.parent ? context.items[hoveringItem.parent] : undefined;
+        if (parent) {
+            callBehaviorHandler(context, parent, it => it.handleClickChild, {
+                child: hoveringItem,
+            });
+        }
+        const canBeHeld = callBehaviorHandler(context, hoveringItem, it => it.canItemBeHeld, {
+            canBeHeld: true,
+        }).canBeHeld;
+        if (!canBeHeld) return;
+        context.held = hoveringItem.id;
     }
 
     async function updateMouse() {
         if (side !== 'client') return;
-        if ($scene.type === 'cooking') {
-            if (!mouseDown && $states.kitchen.held) {
-                const { hovering, held } = $states.kitchen;
-                if (hovering && held) {
-                    processDrop($states.kitchen.items[held], $states.kitchen.items[hovering]);
-                }
-                $states.kitchen.held = null;
+        const { gl } = glContext;
+        const lastGlMouse = glMouse;
+        const rect = canvas.getBoundingClientRect();
+        glMouse = clientMouse
+            .remap(
+                new Vec2(rect.left, rect.top),
+                new Vec2(gl.canvas.width, gl.canvas.height),
+                new Vec2(-1, 1),
+                new Vec2(1, -1),
+            );
+        deltaGlMouse = glMouse.sub(lastGlMouse);
+
+        if ($scene.type !== 'cooking') {
+            context.held = null;
+            context.hovering = null;
+            return;
+        }
+        let hit = false;
+        const itemsInOrder: KitchenItem[] = [];
+        function collectItems(item: KitchenItem, passed: string[]) {
+            const children = item.children
+                .map((id) => context.items[id])
+                .filter((entry): entry is KitchenItem => !!entry)
+                .sort((a, b) => {
+                    const maxA = a.bounds.max;
+                    const maxB = b.bounds.max;
+                    return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
+                });
+            for (const child of children) {
+                collectItems(child, [...passed, item.id]);
             }
-            let hit = false;
-            for (const [id, item] of Object.entries($states.kitchen.items).reverse()) {
-                if (id === $states.kitchen.held) continue;
-                const hovered = await isItemHovering(item);
-                if (hovered) {
-                    if ($states.kitchen.held) {
-                        if ($states.kitchen.hovering !== id) {
-                            $states.kitchen.hovering = id;
-                        }
-                    } else {
-                        if (!canItemBeHeld(item)) {
-                            continue;
-                        }
-                        if (mouseDown) {
-                            $states.kitchen.held = id;
-                            $states.kitchen.hovering = null;
-                        } else if ($states.kitchen.hovering !== id) {
-                            $states.kitchen.hovering = id;
-                        }
-                    }
+            if (passed.includes(item.id)) {
+                console.error('Circular reference detected:', passed.join(' -> '), '->', item.id);
+                return;
+            }
+            itemsInOrder.push(item);
+        }
+        for (const [id, item] of Object.entries(context.items).sort(([, a], [, b]) => {
+            const maxA = a.bounds.max;
+            const maxB = b.bounds.max;
+            return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
+        })) {
+            if (!item.parent) {
+                collectItems(item, []);
+            }
+        }
+        for (const item of itemsInOrder) {
+            if (item.id === context.held) continue;
+            const hovered = await isItemHovering(item);
+            if (hovered) {
+                if (context.hovering === item.id) {
                     hit = true;
                     break;
                 }
+                context.hovering = item.id;
+                hit = true;
+                break;
             }
-            if (!hit && $states.kitchen.hovering) {
-                $states.kitchen.hovering = null;
-            }
-        } else if ($states.kitchen.held || $states.kitchen.hovering) {
-            $states.kitchen.held = null;
-            $states.kitchen.hovering = null;
+        }
+        if (!hit && context.hovering) {
+            context.hovering = null;
         }
     }
 
+    async function handleMouseDown() {
+        if (side !== 'client') return;
+        if (context.hovering) {
+            const hoveringItem = context.items[context.hovering];
+            processClick(hoveringItem);
+        }
+    }
+
+    async function handleMouseUp() {
+        if (side !== 'client') return;
+        if (!context.held) return;
+        const { held, hovering } = context;
+        if (held && hovering) {
+            const heldItem = context.items[held];
+            const hoverItem = context.items[hovering];
+            if (heldItem.parent) {
+                processDrop(hoverItem, heldItem);
+            } else {
+                processDrop(hoverItem, heldItem);
+            }
+        }
+        context.held = null;
+    }
+
     async function renderItems() {
-        for (const [id, item] of Object.entries($states.kitchen.items)) {
-            if (id === $states.kitchen.held) continue;
-            if (id === $states.kitchen.hovering) continue;
+        for (const [id, item] of Object.entries(context.items).sort(([, a], [, b]) => {
+            const maxA = a.bounds.max;
+            const maxB = b.bounds.max;
+            return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
+        })) {
+            if (id === context.held) continue;
+            if (id === context.hovering) continue;
+            if (item.parent) continue;
             if (item.type === 'ingredient') {
                 await renderItem(item);
             }
@@ -461,37 +489,11 @@
             return;
         }
         lastUpdate = time;
-        $states = $states;
+        $states.kitchen = {...context};
     }
 
-    async function render(context: GlContext) {
-        const { gl } = context;
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        
-        const rect = canvas.getBoundingClientRect();
-        scaleFactor = rect.width / COUNTER_WIDTH;
-        setupCounterProjection();
-        const lastGlMouse = glMouse;
-        glMouse = clientMouse
-            .remap(
-                new Vec2(rect.left, rect.top),
-                new Vec2(gl.canvas.width, gl.canvas.height),
-                new Vec2(-1, 1),
-                new Vec2(1, -1),
-            );
-        deltaGlMouse = glMouse.sub(lastGlMouse);
-        await updateMouse();
-        
-        draw.rectangle(0, 0, gl.canvas.width / scaleFactor, COUNTER_HEIGHT, new Vec4(1, 1, 1, 1));
-        
-        await renderItems();
-        await renderHoveringItem();
-        await renderHeldItem();
-        setupHUDProjection();
+    async function renderScreen() {
+        const { gl } = glContext;
         const { width, height } = gl.canvas;
         if ($scene.type === 'ingredient_edit') {
             draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(1, 1, 1, 0.5));
@@ -514,8 +516,44 @@
             ));
             matrices.view.pop();
         }
+    }
+
+    async function render(context: GlContext) {
+        if (!omu.ready) return;
+
+        const { gl } = context;
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.enable(gl.BLEND);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        
+        const rect = canvas.getBoundingClientRect();
+        scaleFactor = rect.width / COUNTER_WIDTH;
+        setupCounterProjection();
+        await updateMouse();
+        
+        draw.rectangle(0, 0, gl.canvas.width / scaleFactor, gl.canvas.height / scaleFactor, new Vec4(0.8, 0.8, 0.8, 1));
+        draw.rectangle(0, 0, gl.canvas.width / scaleFactor, COUNTER_HEIGHT, new Vec4(1, 1, 1, 1));
+        
+        await renderItems();
+        await renderHoveringItem();
+        await renderHeldItem();
+        setupHUDProjection();
+        await renderScreen();
         await renderCursor();
-        syncData();
+        if (side === 'client') {
+            syncData();
+        }
+    }
+
+    $: {
+        if (side === 'asset') {
+            context = {
+                ...$states.kitchen,
+                side,
+            }
+        }
     }
 </script>
 
@@ -528,10 +566,12 @@
     on:mousedown={() => {
         mouseDown = true;
         mouseDownTime = performance.now();
+        handleMouseDown();
     }}
     on:mouseup={() => {
         mouseDown = false;
         mouseUpTime = performance.now();
+        handleMouseUp();
     }}
     on:mouseout={() => {
         isMouseOver = false;
@@ -552,19 +592,21 @@
             {#each Object.entries($config.ingredients) as [id, ingredient] (id)}
                 <button on:click={() => {
                     const itemId = Date.now().toString();
-                    $states.kitchen.items = {
-                        ...$states.kitchen.items,
+                    context.items = {
+                        ...context.items,
                         [itemId]: createKitchenItem(
                             itemId,
                             ingredient,
                         ),
                     };
+                    markChanged();
                 }}>
                     {ingredient.name}
                 </button>
             {/each}
             <button on:click={() => {
-                $states.kitchen.items = {};
+                context.items = {};
+                markChanged();
             }}>
                 全部消す
             </button>

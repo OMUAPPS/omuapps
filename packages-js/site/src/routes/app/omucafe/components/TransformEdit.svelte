@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Transform } from '../omucafe-app.js';
+    import type { Transform } from '../game/transform.js';
 
     export let transform: Transform;
 </script>

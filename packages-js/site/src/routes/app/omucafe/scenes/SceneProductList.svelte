@@ -1,7 +1,8 @@
 <script lang="ts">
     import AssetImage from '../components/AssetImage.svelte';
     import BackButton from '../components/BackButton.svelte';
-    import { createIngredient, getGame, type SceneContext } from '../omucafe-app.js';
+    import { createIngredient } from '../game/ingredient.js';
+    import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneProductList', context);
