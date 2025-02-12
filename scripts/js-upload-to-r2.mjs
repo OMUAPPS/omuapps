@@ -88,6 +88,24 @@ const PLATFORMS = [
         filename: '{NAME_UPPER}_x64.app.tar.gz',
     },
 ];
+const PLATFORMS_LATEST = [
+    {
+        type: 'windows-x86_64',
+        filename: '{NAME_UPPER}_{VERSION}_x64-setup.nsis.zip',
+    },
+    {
+        type: 'linux-x86_64',
+        filename: '{NAME_LOWER}_{VERSION}_amd64.AppImage.tar.gz',
+    },
+    {
+        type: 'darwin-aarch64',
+        filename: '{NAME_UPPER}_aarch64.app.tar.gz',
+    },
+    {
+        type: 'darwin-x86_64',
+        filename: '{NAME_UPPER}_x64.app.tar.gz',
+    },
+]
 
 async function uploadVersion() {
     const files = await fs.readdir('./release-assets');
@@ -137,7 +155,7 @@ async function uploadBeta() {
     const original = await fs.readFile('./release-assets/latest.json', 'utf-8');
     const latest = JSON.parse(original);
     latest.platforms = Object.fromEntries(
-        await Promise.all(PLATFORMS.map(async platform => {
+        await Promise.all(PLATFORMS_LATEST.map(async platform => {
             const existing = latest.platforms[platform.type];
             if (!existing) {
                 throw new Error(`Platform not found: ${platform.type}`);
@@ -196,7 +214,7 @@ async function graduateBeta() {
     const original = await fs.readFile('./release-assets/latest.json', 'utf-8');
     const latest = JSON.parse(original);
     latest.platforms = Object.fromEntries(
-        await Promise.all(PLATFORMS.map(async platform => {
+        await Promise.all(PLATFORMS_LATEST.map(async platform => {
             const existing = latest.platforms[platform.type];
             if (!existing) {
                 throw new Error(`Platform not found: ${platform.type}`);
