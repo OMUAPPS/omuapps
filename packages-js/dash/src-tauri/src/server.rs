@@ -257,6 +257,9 @@ impl Server {
                 process.as_ref().unwrap().handle.clone()
             };
             let exit = handle.lock().unwrap().wait();
+            {
+                *process.lock().unwrap() = None;
+            }
 
             match exit {
                 Ok(status) => {
