@@ -5,7 +5,6 @@
 
     function onScroll() {
         scroll = window.scrollY;
-        console.log(scroll);
     }
 
     function isVisible(element: HTMLElement | undefined, _scroll: number) {
