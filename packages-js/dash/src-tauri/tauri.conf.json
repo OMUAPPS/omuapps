@@ -76,7 +76,7 @@
             ]
         },
         "updater": {
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI1NTg0NTQyNkYyRTE3OTUKUldTVkZ5NXZRa1ZZdGRKVEJ2YnFiZ3V1NWx3S0J4QlAvYXFoOHpiMkYvL3IySjdwNVJqL2EyTVgK",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE4NUI3QTQ3MUYwQkE0RjQKUldUMHBBc2ZSM3BicUdKTC9qQUtyV2RBU083cmV5U2t5eWpjaEtMMlo1MGk5VGFxZXplT2RsQUEK",
             "endpoints": [
                 "https://obj.omuapps.com/app/latest.json",
                 "https://github.com/OMUAPPS/omuapps/releases/latest/download/latest.json"
