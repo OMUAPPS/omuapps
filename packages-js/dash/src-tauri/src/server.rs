@@ -12,7 +12,9 @@ use tauri::{AppHandle, Emitter};
 use crate::version::VERSION;
 use crate::Progress;
 use crate::{python::Python, uv::Uv};
+
 const LATEST_PIP: &str = "pip==23.3.2";
+const RESTART_CODE: i32 = 100;
 
 #[derive(Debug, Clone)]
 pub struct ServerOption {
@@ -21,7 +23,7 @@ pub struct ServerOption {
 }
 
 pub struct ServerProcess {
-    pub handle: std::process::Child,
+    pub handle: Arc<Mutex<std::process::Child>>,
     pub stdout: std::thread::JoinHandle<()>,
     pub stderr: std::thread::JoinHandle<()>,
 }
@@ -240,7 +242,7 @@ impl Server {
             });
         });
         let process = ServerProcess {
-            handle: child,
+            handle: Arc::new(Mutex::new(child)),
             stdout,
             stderr,
         };
@@ -250,20 +252,22 @@ impl Server {
         let process = self.process.clone();
         let app_handle = self.app_handle.clone();
         std::thread::spawn(move || {
-            let exit = process.lock().unwrap().as_mut().unwrap().handle.wait();
-            {
-                *process.lock().unwrap() = None;
-            }
-            if let Err(err) = &exit {
-                warn!("Server process exited with error: {}", err);
-            }
-            // if exit code is 100, it means the server is going to restart
-            if let Ok(code) = &exit {
-                let code = code.code().unwrap_or(0);
-                if code == 0 {
-                    info!("Server process exited with code: {}", code);
-                } else if code != 100 {
-                    warn!("Server process exited with code: {}", code);
+            let handle = {
+                let process = process.lock().unwrap();
+                process.as_ref().unwrap().handle.clone()
+            };
+            let exit = handle.lock().unwrap().wait();
+
+            match exit {
+                Ok(status) => {
+                    let code = status.code().unwrap_or(0);
+                    if code == RESTART_CODE {
+                        info!("Restarting server: {}", code);
+                        return;
+                    } else if code == 0 {
+                        info!("Server exited normally: {}", code);
+                        return;
+                    }
                     let app_handle = app_handle.lock().unwrap();
                     if let Some(app_handle) = &*app_handle {
                         app_handle
@@ -276,7 +280,9 @@ impl Server {
                             .unwrap();
                     }
                 }
-                info!("Server process exited with code: {}", code);
+                Err(err) => {
+                    warn!("Server process exited with error: {}", err);
+                }
             }
         });
         Ok(())
