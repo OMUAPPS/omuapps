@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.1 (2025-02-12)
+
+
+### Bug Fixes
+
+* **dash:** 環境を再構築のエラーがログに出力されるように ([b76d81c](https://github.com/OMUAPPS/omuapps/commit/b76d81cf4639f72b9dba482978774c14b999a8f8))
+
+
+
+
+
 # 0.9.0 (2025-02-09)
 
 
