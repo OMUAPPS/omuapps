@@ -269,7 +269,7 @@ async fn clean_environment(
         Ok(_) => {}
         Err(err) => {
             on_progress(Progress::PythonRemoving {
-                msg: "Failed to remove python".to_string(),
+                msg: format!("Failed to remove python: {}", err),
                 progress: 0.0,
                 total: 0.0,
             });
