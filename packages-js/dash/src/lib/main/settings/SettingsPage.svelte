@@ -116,8 +116,8 @@
 
             {#if $currentSettingsCategory === 'general'}
                 {#await checkUpdate() then update}
-                    <span class="update">
-                        {#if update}
+                    {#if update}
+                        <span class="update">
                             <div class="info">
                                 <p>
                                     {$t('settings.setting.newVersionAvailable')}
@@ -139,8 +139,8 @@
                                 {$t('settings.setting.update')}
                                 <i class="ti ti-arrow-up"></i>
                             </button>
-                        {/if}
-                    </span>
+                        </span>
+                    {/if}
                 {:catch error}
                     <span class="update">
                         <p>{$t('settings.setting.checkUpdateError')}</p>
