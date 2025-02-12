@@ -1,23 +1,22 @@
 <script lang="ts">
-    import { applyUpdate } from "$lib/tauri.js";
-    import { Spinner, Tooltip } from "@omujs/ui";
-    import type { Update } from "@tauri-apps/plugin-updater";
-    import { onMount } from "svelte";
+    import { applyUpdate, checkUpdate } from '$lib/tauri.js';
+    import { Spinner, Tooltip } from '@omujs/ui';
+    import type { Update } from '@tauri-apps/plugin-updater';
+    import { onMount } from 'svelte';
 
     let update: Update | null = null;
     let updating = false;
 
     async function checkNewVersion() {
-        const { check } = await import("@tauri-apps/plugin-updater");
-        update = await check();
+        update = await checkUpdate();
     }
 
     async function doUpdate() {
         if (!update) {
-            throw new Error("newVersion is null");
+            throw new Error('newVersion is null');
         }
         if (updating) {
-            throw new Error("Already updating");
+            throw new Error('Already updating');
         }
         await applyUpdate(update, () => {});
     }

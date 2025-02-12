@@ -6,6 +6,7 @@
     import { checkUpdate, invoke } from '$lib/tauri.js';
     import { Combobox, Header, Tooltip } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/plugin-process';
+    import UpdateScreen from '../screen/UpdateScreen.svelte';
     import {
         currentSettingsCategory,
         devMode,
@@ -114,6 +115,38 @@
             </h2>
 
             {#if $currentSettingsCategory === 'general'}
+                {#await checkUpdate() then update}
+                    <span class="update">
+                        {#if update}
+                            <div class="info">
+                                <p>
+                                    {$t('settings.setting.newVersionAvailable')}
+                                </p>
+                                <small>
+                                    {update.currentVersion} → {update.version}
+                                    {#if update.date}
+                                        <!-- 2025-02-06 16:47:41.775 +00:00:00 -->
+                                        <!-- remove seconds in tz offset -->
+                                        {@const isoDate = update.date.replace(/:\d{2}$/, ' ')}
+                                        {@const date = new Date(isoDate)}
+                                        ({date.toLocaleDateString()})
+                                    {/if}
+                                </small>
+                            </div>
+                            <button on:click={() => {
+                                screenContext.push(UpdateScreen, { update });
+                            }}>
+                                {$t('settings.setting.update')}
+                                <i class="ti ti-arrow-up"></i>
+                            </button>
+                        {/if}
+                    </span>
+                {:catch error}
+                    <span class="update">
+                        <p>{$t('settings.setting.checkUpdateError')}</p>
+                        <small>{error}</small>
+                    </span>
+                {/await}
                 <span class="setting">
                     <p>{$t('settings.setting.language')}</p>
                     <Combobox
@@ -154,13 +187,6 @@
                         <input type="checkbox" bind:checked={$devMode} />
                     </label>
                 {/if}
-                <span class="setting">
-                    {#await checkUpdate($isBetaEnabled) then update}
-                        {JSON.stringify(update)}
-                    {:catch error}
-                        {error}
-                    {/await}
-                </span>
                 <h3>
                     {$t('settings.setting.debug')}
                 </h3>
@@ -236,6 +262,7 @@
         flex: 1;
         display: flex;
         background: var(--color-bg-1);
+        overflow: hidden;
     }
 
     .categories {
@@ -330,6 +357,54 @@
         width: fit-content;
         padding-top: 0.125rem;
         margin-top: 0.125rem;
+    }
+
+    .update {
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--color-1);
+        padding: 2rem;
+        color: var(--color-1);
+        background: var(--color-bg-1);
+        white-space: nowrap;
+        border-radius: 2px;
+
+        > .info {
+            > p {
+                font-size: 1rem;
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+            }
+
+            > small {
+                font-size: 0.7621rem;
+                color: var(--color-text);
+            }
+        }
+
+        > button {
+            border: none;
+            background: var(--color-1);
+            color: var(--color-bg-2);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 2px;
+            cursor: pointer;
+
+            &:focus-visible,
+            &:hover {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+                background: var(--color-bg-1);
+                color: var(--color-1);
+            }
+        }
     }
 
     .setting {

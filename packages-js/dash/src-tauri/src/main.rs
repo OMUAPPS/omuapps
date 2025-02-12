@@ -446,14 +446,8 @@ fn main() {
 
             Ok(())
         })
-        .build(tauri::generate_context!())
-        .expect("error while building tauri application")
-        .run(|_app_handle, event| match event {
-            tauri::RunEvent::ExitRequested { api, .. } => {
-                api.prevent_exit();
-            }
-            _ => {}
-        });
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 
 fn get_data_dir() -> std::path::PathBuf {

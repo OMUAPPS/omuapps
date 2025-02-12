@@ -1,11 +1,8 @@
 <script lang="ts">
-    import { omu } from "$lib/client.js";
-    import Screen from "$lib/screen/Screen.svelte";
-    import type { ScreenHandle } from "$lib/screen/screen.js";
-    import { invoke } from "$lib/tauri.js";
-    import { Popup } from "@omujs/ui";
-    import { relaunch } from "@tauri-apps/plugin-process";
-    import { type Update } from "@tauri-apps/plugin-updater";
+    import Screen from '$lib/screen/Screen.svelte';
+    import type { ScreenHandle } from '$lib/screen/screen.js';
+    import { applyUpdate, type UpdateEvent } from '$lib/tauri.js';
+    import { type Update } from '@tauri-apps/plugin-updater';
 
     export let screen: {
         handle: ScreenHandle;
@@ -14,65 +11,13 @@
         };
     };
     const { update } = screen.props;
-    const date = update.date && new Date(update.date.replace(/:00$/, ""));
+    const date = update.date && new Date(update.date.replace(/:00$/, ''));
 
-    type State = "idle" | "updating" | "shutting-down" | "restarting";
-    let state: State = "idle";
-
-    async function applyUpdate() {
-        state = "shutting-down";
-        try {
-            omu.server.shutdown();
-            invoke("stop_server");
-        } catch (e) {
-            console.error(e);
-        }
-        state = "updating";
-        let downloaded = 0;
-        let contentLength = 0;
-        // alternatively we could also call update.download() and update.install() separately
-        await update.downloadAndInstall((event) => {
-            switch (event.event) {
-                case "Started":
-                    contentLength = event.data.contentLength || 0;
-                    console.log(
-                        `started downloading ${event.data.contentLength} bytes`,
-                    );
-                    break;
-                case "Progress":
-                    downloaded += event.data.chunkLength;
-                    console.log(
-                        `downloaded ${downloaded} from ${contentLength}`,
-                    );
-                    break;
-                case "Finished":
-                    console.log("download finished");
-                    break;
-            }
-        });
-
-        console.log("update installed");
-        await relaunch();
-        state = "restarting";
-    }
-
-    let open = false;
+    let state: UpdateEvent | null = null;
 </script>
 
 <Screen {screen} title="update">
-    {#if state === "updating"}
-        <div class="info">
-            <h3>新しいバージョンをダウンロードしています...</h3>
-        </div>
-    {:else if state === "shutting-down"}
-        <div class="info">
-            <h3>サーバーをシャットダウンしています...</h3>
-        </div>
-    {:else if state === "restarting"}
-        <div class="info">
-            <h3>インストーラーを起動しています...</h3>
-        </div>
-    {:else}
+    {#if !state}
         <div class="info">
             <h3>
                 新しいバージョンが利用可能です🎉
@@ -90,20 +35,36 @@
             </p>
             <div class="actions">
                 <button on:click={screen.handle.pop} class="cancel">
-                    キャンセル
+                    スキップ
                     <i class="ti ti-x"></i>
                 </button>
-                <button on:click={() => (open = true)} class="update">
+                <button on:click={() => {
+                    applyUpdate(update, (progress) => state = progress);
+                }} class="update">
                     アップデート
                     <i class="ti ti-arrow-right"></i>
-                    <Popup bind:isOpen={open}>
-                        <div class="confirm">
-                            <small>アップデートを開始しますか？</small>
-                            <button on:click={applyUpdate}>はい！</button>
-                        </div>
-                    </Popup>
                 </button>
             </div>
+        </div>
+    {:else if state.type === 'updating'}
+        <div class="info">
+            <h3>新しいバージョンをダウンロードしています...</h3>
+            <div>
+                <progress value={state.downloaded} max={state.contentLength}></progress>
+                <small>
+                    {state.downloaded}
+                    <i class="ti ti-slash"></i>
+                    {state.contentLength}
+                </small>
+            </div>
+        </div>
+    {:else if state.type === 'shutting-down'}
+        <div class="info">
+            <h3>サーバーを終了しています...</h3>
+        </div>
+    {:else if state.type === 'restarting'}
+        <div class="info">
+            <h3>インストーラーを起動しています...</h3>
         </div>
     {/if}
 </Screen>
@@ -167,13 +128,22 @@
         }
     }
 
-    .confirm {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
-        background: var(--color-bg-2);
+    progress {
+        width: 16rem;
+        height: 6px;
+        border: none;
+        background: var(--color-bg-1);
         color: var(--color-1);
+        border-radius: 0.5rem;
+
+        &::-webkit-progress-bar {
+            background: var(--color-bg-1);
+            border-radius: 0.5rem;
+        }
+
+        &::-webkit-progress-value {
+            background: var(--color-1);
+            border-radius: 0.5rem;
+        }
     }
 </style>

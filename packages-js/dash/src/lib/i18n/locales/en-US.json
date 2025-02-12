@@ -253,7 +253,10 @@
             "logFileGenerated": "Log file generated: {path}",
             "cleanEnvironment": "Rebuild Environment",
             "cleaningEnvironment": "Cleaning environment and restarting...",
-            "serverRestart": "Restart Server"
+            "serverRestart": "Restart Server",
+            "latestVersion": "Latest Version",
+            "newVersionAvailable": "New version available",
+            "update": "Update"
         },
         "about": {
             "version": "Version",

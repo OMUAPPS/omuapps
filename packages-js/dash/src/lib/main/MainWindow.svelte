@@ -2,6 +2,7 @@
     import { dashboard } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
+    import { checkUpdate } from '$lib/tauri.js';
     import { TableList, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AppEntry from './AppEntry.svelte';
@@ -10,7 +11,9 @@
         pages,
         registerPage,
         unregisterPage,
-        type Page
+        type Page,
+
+        type PageItem
     } from './page.js';
     import ConnectPage from './pages/ConnectPage.svelte';
     import ExplorePage from './pages/ExplorePage.svelte';
@@ -50,33 +53,33 @@
         },
     });
 
+    async function loadPage(id: string, pageItem: PageItem<unknown>) {
+        $pages[id] = { type: 'loading' };
+        console.log('loading', id);
+        const page = await pageItem.open();
+        $pages[id] = { type: 'loaded', page };
+        console.log('loaded', id);
+    }
+
     currentPage.subscribe(async (value) => {
         const pageItem = $pageMap[value];
-        if (pageItem) {
-            $pages[value] = { type: 'loading' };
-            console.log('loading', value);
-            const page = await pageItem.open();
-            $pages[value] = { type: 'loaded', page };
-            console.log('loaded', value);
-        } else {
+        if (!pageItem) {
             $pages[value] = { type: 'waiting' };
             console.log('waiting', value);
+            return;
         }
+        await loadPage(value, pageItem);
     });
     pageMap.subscribe(async (value) => {
         const page = $pages[$currentPage];
         if (!page || page.type !== 'waiting') return;
         if (!value[$currentPage]) return;
         const pageItem = value[$currentPage];
-        $pages[$currentPage] = { type: 'loading' };
-        console.log('loading', $currentPage);
-        $pages[$currentPage] = { type: 'loaded', page: await pageItem.open() };
-        console.log('loaded', $currentPage);
+        await loadPage($currentPage, pageItem);
     });
 
     onMount(async () => {
-        const { check } = await import('@tauri-apps/plugin-updater');
-        const update = await check();
+        const update = await checkUpdate();
         if (update) {
             screenContext.push(UpdateScreen, { update });
         }

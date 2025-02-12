@@ -196,7 +196,6 @@ export function waitForTauri() {
 
 export async function checkUpdate() {
     const beta = get(isBetaEnabled);
-    console.log('beta', beta);
     return await check({
         headers: {
             'Updater-Channel': beta ? 'beta' : 'stable',
@@ -205,18 +204,18 @@ export async function checkUpdate() {
 }
 
 export type UpdateEvent = {
-    typ: 'shutting-down',
+    type: 'shutting-down',
 } | {
-    typ: 'updating',
+    type: 'updating',
     downloaded: number,
     contentLength: number,
 } | {
-    typ: 'restarting',
+    type: 'restarting',
 };
 
 export async function applyUpdate(update: Update, progress: (event: UpdateEvent) => void) {
     // state = 'shutting-down';
-    progress({ typ: 'shutting-down' });
+    progress({ type: 'shutting-down' });
     try {
         omu.server.shutdown();
         invoke('stop_server');
@@ -224,7 +223,7 @@ export async function applyUpdate(update: Update, progress: (event: UpdateEvent)
         console.error(e);
     }
     // state = 'updating';
-    progress({ typ: 'updating', downloaded: 0, contentLength: 0 });
+    progress({ type: 'updating', downloaded: 0, contentLength: 0 });
     let downloaded = 0;
     let contentLength = 0;
     // alternatively we could also call update.download() and update.install() separately
@@ -235,15 +234,18 @@ export async function applyUpdate(update: Update, progress: (event: UpdateEvent)
             console.log(
                 `started downloading ${event.data.contentLength} bytes`,
             );
+            progress({ type: 'updating', downloaded, contentLength });
             break;
         case 'Progress':
             downloaded += event.data.chunkLength;
             console.log(
                 `downloaded ${downloaded} from ${contentLength}`,
             );
+            progress({ type: 'updating', downloaded, contentLength });
             break;
         case 'Finished':
             console.log('download finished');
+            progress({ type: 'updating', downloaded, contentLength });
             break;
         }
     });
@@ -251,7 +253,7 @@ export async function applyUpdate(update: Update, progress: (event: UpdateEvent)
     console.log('update installed');
     await relaunch();
     // state = 'restarting';
-    progress({ typ: 'restarting' });
+    progress({ type: 'restarting' });
 }
 
 import { defaultWindowIcon } from '@tauri-apps/api/app';
@@ -285,7 +287,7 @@ waitForTauri().then(async () => {
                 id: 'quit',
                 text: 'Quit',
                 action: async () => {
-                    await exit(0);
+                    await exit();
                 }
             }
         ]
