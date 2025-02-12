@@ -95,7 +95,7 @@ const PLATFORMS_LATEST = [
     },
     {
         type: 'linux-x86_64',
-        filename: '{NAME_LOWER}_{VERSION}_amd64.AppImage.tar.gz',
+        filename: '{NAME_UPPER}_{VERSION}_amd64.AppImage',
     },
     {
         type: 'darwin-aarch64',
