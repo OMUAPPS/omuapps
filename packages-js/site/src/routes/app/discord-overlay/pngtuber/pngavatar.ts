@@ -3,7 +3,7 @@ import { Mat4 } from '$lib/math/mat4.js';
 import type { MatrixStack } from '$lib/math/matrix-stack.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
-import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
+import { MVP_VERTEX_SHADER, SPRITE_FRAGMENT_SHADER } from './shaders.js';
 
 type TextureSource = {
     frames: TexImageSource[];
@@ -131,8 +131,8 @@ export class PNGAvatar implements Avatar {
         deafened?: Uint8Array;
         muted?: Uint8Array;
     }): Promise<PNGAvatar> {
-        const vertexShader = context.createShader({type: 'vertex', source: VERTEX_SHADER});
-        const fragmentShader = context.createShader({type: 'fragment', source: FRAGMENT_SHADER});
+        const vertexShader = context.createShader({type: 'vertex', source: MVP_VERTEX_SHADER});
+        const fragmentShader = context.createShader({type: 'fragment', source: SPRITE_FRAGMENT_SHADER});
         const program = context.createProgram([vertexShader, fragmentShader]);
         const baseMesh = await PNGAvatar.createTextureMesh(context, options.base);
         const activeMesh = options.active ? await PNGAvatar.createTextureMesh(context, options.active) : baseMesh;
