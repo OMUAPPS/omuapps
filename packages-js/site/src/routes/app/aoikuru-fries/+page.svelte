@@ -66,7 +66,7 @@
         <section>
             <div>
                 <h3>看板</h3>
-                <textarea bind:value={$config.text} class="text">
+                <textarea bind:value={$config.text} class="text"></textarea>
             </div>
             <hr />
             <img src={board} alt="" />
