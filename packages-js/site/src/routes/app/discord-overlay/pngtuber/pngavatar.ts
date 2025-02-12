@@ -1,6 +1,7 @@
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import type { MatrixStack } from '$lib/math/matrix-stack.js';
+import { Vec2 } from '$lib/math/vec2.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
 
@@ -341,6 +342,16 @@ export class PNGAvatar implements Avatar {
                 })
             });
         }
-        return { render };
+        const bounds = () => {
+            const { width, height } = this.base.source;
+            return {
+                min: new Vec2(-126 * 2.5 / 2, -126 * 2.5 / 2 * height / width),
+                max: new Vec2(126 * 2.5 / 2, 126 * 2.5 / 2 * height / width),
+            };
+        }
+        return {
+            render,
+            bounds,
+        };
     }
 }

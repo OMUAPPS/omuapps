@@ -1,5 +1,6 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import type { MatrixStack } from '$lib/math/matrix-stack.js';
+import type { Vec2 } from '$lib/math/vec2.js';
 import type { UserAvatarConfig } from '../discord-overlay-app.js';
 
 export type AvatarAction = {
@@ -23,6 +24,10 @@ export type RenderOptions = {
 
 export interface AvatarContext {
     render(matrices: MatrixStack, action: AvatarAction, options: RenderOptions): void;
+    bounds(): {
+        min: Vec2;
+        max: Vec2;
+    }
 }
 
 export interface Avatar {

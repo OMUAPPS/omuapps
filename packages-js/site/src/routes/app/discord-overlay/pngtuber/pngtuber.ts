@@ -100,13 +100,15 @@ export class LayerData {
         })
         const vertexBuffer = glContext.createBuffer();
         vertexBuffer.bind(() => {
+            const widthHalf = img.width / 2;
+            const heightHalf = img.height / 2;
             vertexBuffer.setData(new Float32Array([
-                -img.width / 2, -img.height / 2, 0,
-                -img.width / 2, img.height / 2, 0,
-                img.width / 2, -img.height / 2, 0,
-                -img.width / 2, img.height / 2, 0,
-                img.width / 2, img.height / 2, 0,
-                img.width / 2, -img.height / 2, 0,
+                -widthHalf, -heightHalf, 0,
+                -widthHalf, heightHalf, 0,
+                widthHalf, -heightHalf, 0,
+                -widthHalf, heightHalf, 0,
+                widthHalf, heightHalf, 0,
+                widthHalf, -heightHalf, 0,
             ]), 'static');
         });
         const uvBuffer = glContext.createBuffer();
@@ -276,8 +278,10 @@ export class PNGTuber implements Avatar {
             showOnBlink: 0,
         }
         const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
+        const bounds = () => this.getBoundingBox(context);
         return {
-            render
+            render,
+            bounds,
         };
     }
 
@@ -471,7 +475,8 @@ export class PNGTuber implements Avatar {
                 const matrix = sprite.sprite
                     .globalTransform
                     .getMat4()
-                    .translate(layerData.offset.x, layerData.offset.y, 0);
+                    // .offset(-layerData.imageData.width / 2, -layerData.imageData.height / 2, 0)
+                    .translate(layerData.offset.x, layerData.offset.y, 0)
                 model.set(matrix);
                 const view = this.program.getUniform('u_view').asMat4();
                 view.set(matrices.get());
@@ -500,8 +505,9 @@ export class PNGTuber implements Avatar {
                 new Vec2(halfWidth, -halfHeight),
                 new Vec2(halfWidth, halfHeight),
             ];
+            const offset = new Vec2(sprite.layerData.offset.x, sprite.layerData.offset.y);
             for (const corner of corners) {
-                points.push(transform.xform(corner));
+                points.push(transform.xform(corner.add(offset)));
             }
         }
         return AABB2.fromPoints(points);
