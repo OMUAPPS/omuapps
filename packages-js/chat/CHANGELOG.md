@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.2 (2025-02-12)
+
+
+### Bug Fixes
+
+* **app-discord-overlay:** アバターのバウンディングボックスの計算を修正 ([38adfbb](https://github.com/OMUAPPS/omuapps/commit/38adfbb2d390ba1691baaf12727a35c94299363e))
+
+
+
+
+
 ## 0.9.1 (2025-02-12)
 
 
