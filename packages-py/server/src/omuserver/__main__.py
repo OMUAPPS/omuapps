@@ -35,8 +35,11 @@ def stop_server_processes(
             except psutil.AccessDenied:
                 logger.warning(f"Access denied to process {process.pid}")
     executable_processes = list(find_processes_by_executable(executable))
+    self_pid = os.getpid()
     for process in executable_processes:
         try:
+            if process.pid == self_pid:
+                continue
             logger.info(f"Killing process {process.pid} ({process.name()})")
             process.send_signal(signal.SIGTERM)
         except psutil.NoSuchProcess:
