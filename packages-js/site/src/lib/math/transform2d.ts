@@ -7,6 +7,14 @@ export class Transform2D {
         public columns: [Vec2, Vec2, Vec2],
     ) { }
 
+    public tdotx(p_v: Vec2): number {
+        return this.columns[0].x * p_v.x + this.columns[1].x * p_v.y;
+    }
+
+    public tdoty(p_v: Vec2): number {
+        return this.columns[0].y * p_v.x + this.columns[1].y * p_v.y;
+    }
+
     public basisXForm(point: Vec2): Vec2 {
         return new Vec2(
             this.columns[0].dot(point),
@@ -16,8 +24,8 @@ export class Transform2D {
 
     public xform(point: Vec2): Vec2 {
         return new Vec2(
-            this.columns[0].dot(point),
-            this.columns[1].dot(point)
+            this.tdotx(point),
+            this.tdoty(point)
         ).add(this.columns[2]);
     }
 
