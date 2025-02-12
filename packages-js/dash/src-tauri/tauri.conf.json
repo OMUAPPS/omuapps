@@ -59,7 +59,7 @@
                 "depends": []
             }
         },
-        "createUpdaterArtifacts": "v1Compatible"
+        "createUpdaterArtifacts": true
     },
     "productName": "OMUAPPS",
     "mainBinaryName": "OMUAPPS",
