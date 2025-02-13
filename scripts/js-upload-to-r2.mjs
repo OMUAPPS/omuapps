@@ -238,7 +238,7 @@ async function graduateBeta() {
         './release-assets/latest.json',
         JSON.stringify(latest, null, 4)
     );
-    await uploadToR2('./release-assets/latest.json', 'app/latest.json');
+    await uploadToR2('./release-assets/latest.json', 'app/latest-stable.json');
 }
 
 await downloadRelease();
