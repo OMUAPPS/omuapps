@@ -141,7 +141,12 @@
     const unlisten = [
         $client.onReady(() => {
             entries.clear();
+            last = undefined;
             fetch();
+        }),
+        $client.network.event.disconnected.listen(() => {
+            entries.clear();
+            last = undefined;
         }),
         table.listen((items) => {
             updateCache(items);
