@@ -253,6 +253,9 @@
             "cleanEnvironment": "動作環境を再構築",
             "cleaningEnvironment": "環境を削除して再起動中...",
             "serverRestart": "サーバーを再起動",
+            "serverRestarting": "サーバーを再起動中...",
+            "serverRestarted": "サーバーを再起動しました",
+            "serverRestartError": "サーバーの再起動に失敗しました: {error}",
             "latestVersion": "最新バージョン",
             "newVersionAvailable": "新しいバージョンがあります",
             "update": "アップデート"

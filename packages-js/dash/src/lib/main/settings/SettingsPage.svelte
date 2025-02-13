@@ -21,6 +21,7 @@
     export const props = {};
 
     let logPromise: Promise<string> | null = null;
+    let restartPromise: Promise<void> | null = null;
 
     async function generateLogFile(): Promise<string> {
         let path: string;
@@ -32,6 +33,14 @@
         }
         logPromise = null;
         return path;
+    }
+
+    async function restartServer() {
+        omu.server.shutdown(true);
+        await new Promise<void>((resolve) => omu.network.event.disconnected.listen(() => resolve()));
+        await new Promise<void>((resolve) => omu.onReady(resolve));
+        restartPromise = null;
+        window.location.reload();
     }
 
     $: {
@@ -191,39 +200,51 @@
                     {$t('settings.setting.debug')}
                 </h3>
                 <span class="setting">
-                    <button
-                        on:click={() => {
-                            omu.server.shutdown(true);
-                            window.location.reload();
-                        }}>{$t('settings.setting.serverRestart')}</button
-                    >
+                    {#if restartPromise}
+                        {#await restartPromise}
+                            <button disabled>
+                                {$t('settings.setting.serverRestarting')}
+                            </button>
+                        {:then}
+                            <button>
+                                {$t('settings.setting.serverRestarted')}
+                            </button>
+                        {:catch error}
+                            <button>
+                                {$t('settings.setting.serverRestartError', {
+                                    error,
+                                })}
+                            </button>
+                        {/await}
+                    {:else}
+                        <button on:click={() => (restartPromise = restartServer())}>
+                            {$t('settings.setting.serverRestart')}
+                        </button>
+                    {/if}
                 </span>
                 <span class="setting">
                     {#if logPromise}
                         {#await logPromise}
-                            <button disabled
-                            >{$t(
-                                'settings.setting.logFileGenerating',
-                            )}</button
-                            >
+                            <button disabled>
+                                {$t('settings.setting.logFileGenerating')}
+                            </button>
                         {:then path}
-                            <button
-                            >{$t('settings.setting.logFileGenerated', {
-                                path,
-                            })}</button
-                            >
+                            <button>
+                                {$t('settings.setting.logFileGenerated', {
+                                    path,
+                                })}
+                            </button>
                         {:catch error}
-                            <button
-                            >{$t('settings.setting.logFileGenerateError', {
-                                error,
-                            })}</button
-                            >
+                            <button>
+                                {$t('settings.setting.logFileGenerateError', {
+                                    error,
+                                })}
+                            </button>
                         {/await}
                     {:else}
-                        <button
-                            on:click={() => (logPromise = generateLogFile())}
-                        >{$t('settings.setting.logFileGenerate')}</button
-                        >
+                        <button on:click={() => (logPromise = generateLogFile())}>
+                            {$t('settings.setting.logFileGenerate')}
+                        </button>
                     {/if}
                 </span>
                 <span class="setting clean-environment">

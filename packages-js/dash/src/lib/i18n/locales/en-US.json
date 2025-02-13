@@ -254,6 +254,9 @@
             "cleanEnvironment": "Rebuild Environment",
             "cleaningEnvironment": "Cleaning environment and restarting...",
             "serverRestart": "Restart Server",
+            "serverRestarting": "Restarting server...",
+            "serverRestarted": "Server restarted",
+            "serverRestartError": "Failed to restart server: {error}",
             "latestVersion": "Latest Version",
             "newVersionAvailable": "New version available",
             "update": "Update"
