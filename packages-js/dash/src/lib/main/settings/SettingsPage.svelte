@@ -36,11 +36,27 @@
     }
 
     async function restartServer() {
-        omu.server.shutdown(true);
-        await new Promise<void>((resolve) => omu.network.event.disconnected.listen(() => resolve()));
+        if (omu.ready) {
+            await omu.server.shutdown(true);
+        }
         await new Promise<void>((resolve) => omu.onReady(resolve));
         restartPromise = null;
         window.location.reload();
+    }
+
+    async function updateConfig() {
+        await invoke('set_config', {
+            config: { enable_beta: $isBetaEnabled },
+        });
+        console.log('config', await invoke('get_config'));
+        try {
+            if (omu.ready) {
+                await omu.server.shutdown();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        await relaunch();
     }
 
     $: {
@@ -173,18 +189,7 @@
                     <input
                         type="checkbox"
                         bind:checked={$isBetaEnabled}
-                        on:change={async () => {
-                            await invoke('set_config', {
-                                config: { enable_beta: $isBetaEnabled },
-                            });
-                            console.log('config', await invoke('get_config'));
-                            try {
-                                await omu.server.shutdown();
-                            } catch (e) {
-                                console.error(e);
-                            }
-                            await relaunch();
-                        }}
+                        on:change={async () => updateConfig()}
                     />
                 </label>
                 <small>
