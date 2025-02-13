@@ -231,6 +231,7 @@ def install_all_scene():
 
 def relaunch_obs():
     if obs.launch_command:
+        logger.info(f"Relaunching OBS: {obs.launch_command}")
         subprocess.Popen(obs.launch_command, cwd=obs.cwd)
 
 
@@ -241,6 +242,7 @@ def update_config(server: Server):
         config["launch"] = LaunchCommand(args=[str(dashboard), "--background"])
     config["python_path"] = get_python_directory()
     config["log_path"] = LOG_DIRECTORY.resolve().as_posix()
+    logger.info(f"Updated config: {config}")
     save_config(config)
 
 
@@ -249,8 +251,10 @@ async def install(server: Server):
 
     try:
         if is_installed():
+            logger.info("OBS plugin is already installed")
             return
         if ensure_obs_stop():
+            logger.info("OBS installation cancelled")
             return
 
         setup_python_path()
@@ -260,3 +264,5 @@ async def install(server: Server):
     except Exception as e:
         logger.opt(exception=e).error("Failed to install OBS plugin")
         raise e
+    else:
+        logger.info("Successfully installed OBS plugin")
