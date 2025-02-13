@@ -17,6 +17,7 @@
     },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "^5.0.19",
+        "@tabler/icons-webfont": "^3.19.0",
         "@fontsource/rocknroll-one": "^5.0.14",
         "@omujs/chat": "workspace:*",
         "@omujs/eslint-config": "workspace:*",

@@ -7,7 +7,7 @@
         "build": "pnpm run build-pre && tauri build",
         "build-pre": "node ./scripts/build-pre.mjs",
         "dev": "tauri dev",
-        "dev-release": "tauri dev --release",
+        "dev-release": "tauri dev --release --no-dev-server",
         "prepare": "svelte-kit sync",
         "tauri": "tauri",
         "ui:build": "vite build",
@@ -20,6 +20,7 @@
     },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "5.0.19",
+        "@tabler/icons-webfont": "^3.19.0",
         "@omujs/chat": "workspace:*",
         "@omujs/eslint-config": "workspace:*",
         "@omujs/i18n": "workspace:*",

@@ -33,4 +33,3 @@ export type { TypedComponent } from './typed-component.js';
 export { applyOpacity } from './utils/class-helper.js';
 export { default as VirtualList } from './VirtualList.svelte';
 
-import '@tabler/icons-webfont/dist/tabler-icons.scss'; // Import the Tabler Icons CSS
