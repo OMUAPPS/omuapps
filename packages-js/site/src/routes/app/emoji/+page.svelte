@@ -1,6 +1,6 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { version } from '$lib/version.json';
+    import { VERSION } from '$lib/version.js';
     import { Chat } from '@omujs/chat';
     import { Omu } from '@omujs/omu';
     import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
@@ -18,7 +18,7 @@
     setClient(omu);
 
     omu.plugins.require({
-        omuplugin_emoji: `==${version}`,
+        omuplugin_emoji: `==${VERSION}`,
     });
     omu.permissions.require(ASSET_UPLOAD_PERMISSION_ID);
 

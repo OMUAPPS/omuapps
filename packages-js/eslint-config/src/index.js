@@ -70,7 +70,15 @@ export default {
             rules: {
                 '@typescript-eslint/no-explicit-any': 'warn',
                 '@typescript-eslint/no-unused-vars': 'warn',
-                "indent": ["error", 4],
+                "svelte/indent": [
+                    "error",
+                    {
+                        "indent": 4,
+                        "ignoredNodes": [],
+                        "switchCase": 0,
+                        "alignAttributesVertically": false
+                    }
+                ],
                 "quotes": ["error", "single"],
                 "svelte/indent": [
                     "error",

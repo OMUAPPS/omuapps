@@ -1,5 +1,7 @@
 <script lang="ts">
     import { Theme } from '@omujs/ui';
+    import '@tabler/icons-webfont/dist/tabler-icons.scss';
+    import ProgressBar from './_components/ProgressBar.svelte';
     import './styles.css';
 </script>
 
@@ -7,6 +9,7 @@
 <div class="app">
     <slot />
 </div>
+<ProgressBar />
 
 <style>
     .app {

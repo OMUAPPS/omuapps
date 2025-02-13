@@ -90,17 +90,11 @@ def update_version(version: str | None = None):
         project["dependencies"] = [str(dependencies[dep]) for dep in dependencies]
         write_project(pypackage, project)
 
-    version_json_paths = {
-        Path("packages-js/dash/src/lib/version.json"),
-        Path("packages-js/site/src/lib/version.json"),
-    }
-
-    for version_path in version_json_paths:
-        version_path.write_bytes((json.dumps({"version": new_version}) + "\n").encode())
-
     version_ts_paths = {
         Path("packages-js/plugin-obs/src/version.ts"),
         Path("packages-js/omu/src/version.ts"),
+        Path("packages-js/dash/src/lib/version.ts"),
+        Path("packages-js/site/src/lib/version.ts"),
     }
 
     for version_path in version_ts_paths:
@@ -112,7 +106,7 @@ def update_version(version: str | None = None):
 
     tauri_path = Path("packages-js/dash/src-tauri/tauri.conf.json")
     tauri = json.loads(tauri_path.read_bytes())
-    tauri["package"]["version"] = new_version
+    tauri["version"] = new_version
     tauri_path.write_bytes((json.dumps(tauri, indent=4) + "\n").encode())
 
 

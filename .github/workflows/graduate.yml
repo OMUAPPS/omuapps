@@ -1,0 +1,45 @@
+name: Graduate Version
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Version to graduate'
+                required: true
+                type: string
+            no-upload:
+                description: 'Don''t upload to Cloudflare R2'
+                default: true
+                required: false
+                type: boolean
+
+permissions:
+    contents: read
+
+jobs:
+    upload-to-r2:
+        runs-on: ubuntu-latest
+
+        steps:
+        - uses: actions/checkout@v4
+
+        - uses: pnpm/action-setup@v4
+          with:
+            version: 9.12.2
+
+        - name: Setup Node.js
+          uses: actions/setup-node@v4.0.3
+          with:
+            cache: 'pnpm'
+            node-version: '20.18.2'
+
+        - name: Install dependencies
+          run: pnpm i --frozen-lockfile
+
+        - name: Upload to Cloudflare R2
+          env:
+            CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            pnpm wrangler whoami
+            node ./scripts/js-upload-to-r2.mjs --version ${{ github.event.inputs.version }} --graduate true ${{ github.event.inputs.no-upload && '--no-upload true' || '' }}

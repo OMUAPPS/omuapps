@@ -34,9 +34,7 @@ class WebsocketsConnection(Connection):
         self._socket = await self._session.ws_connect(self._ws_endpoint)
         self._connected = True
 
-    async def send(
-        self, packet: Packet, packet_mapper: Serializable[Packet, PacketData]
-    ) -> None:
+    async def send(self, packet: Packet, packet_mapper: Serializable[Packet, PacketData]) -> None:
         if not self._socket or self._socket.closed or not self._connected:
             raise RuntimeError("Not connected")
         packet_data = packet_mapper.serialize(packet)

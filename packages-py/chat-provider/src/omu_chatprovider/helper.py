@@ -12,10 +12,7 @@ from omu_chat import Provider
 
 HTTP_REGEX = r"(https?://)?(www\.)?"
 URL_NORMALIZE_REGEX = (
-    r"(?P<protocol>https?)?:?\/?\/?"
-    r"(?P<domain>[^.]+\.[^\/]+)"
-    r"(?P<path>[^?#]+)?"
-    r"(?P<query>.+)?"
+    r"(?P<protocol>https?)?:?\/?\/?" r"(?P<domain>[^.]+\.[^\/]+)" r"(?P<path>[^?#]+)?" r"(?P<query>.+)?"
 )
 
 

@@ -107,7 +107,14 @@ export class ServerExtension implements Extension {
     }
 
     public async shutdown(restart?: boolean): Promise<boolean> {
-        return await this.client.endpoints.call(SHUTDOWN_ENDPOINT_TYPE, restart ?? false);
+        this.client.endpoints.call(SHUTDOWN_ENDPOINT_TYPE, restart ?? false);
+        await new Promise<void>((resolve) => {
+            const unlisten = this.client.network.event.disconnected.listen(() => {
+                resolve();
+                unlisten();
+            });
+        });
+        return true;
     }
 
     public observeSession(appId: Identifier, {

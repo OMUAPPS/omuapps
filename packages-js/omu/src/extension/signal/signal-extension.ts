@@ -2,7 +2,7 @@ import type { Client } from '../../client.js';
 import type { Unlisten } from '../../event-emitter.js';
 import { Identifier, IdentifierMap } from '../../identifier.js';
 import { PacketType } from '../../network/packet/index.js';
-import { Serializer } from '../../serializer.js';
+import { Serializable, Serializer } from '../../serializer.js';
 import { type Extension, ExtensionType } from '../extension.js';
 
 import { SignalPacket, SignalRegisterPacket } from './packets.js';
@@ -49,9 +49,12 @@ export class SignalExtension implements Extension {
         return new SignalImpl(this.client, signalType);
     }
 
-    public create<T>(name: string): Signal<T> {
+    public create<T>(name: string, options?: { serializer?: Serializable<T, Uint8Array> }): Signal<T> {
         const id = this.client.app.id.join(name);
-        const type = SignalType.createJson<T>(id, { name });
+        const type = SignalType.createSerialized<T>(id, { 
+            name,
+            serializer: options?.serializer ?? Serializer.json(),
+        });
         return this.createSignal(type);
     }
 

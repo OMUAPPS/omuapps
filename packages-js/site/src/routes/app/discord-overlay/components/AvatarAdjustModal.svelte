@@ -173,7 +173,7 @@
                             muted: newConfig.muted,
                         });
                         $config.avatars[avatar] = newConfig;
-                    }}>
+                    }} accept="image/*">
                         <Tooltip>
                             喋っている時のアバターを設定
                         </Tooltip>
@@ -205,7 +205,7 @@
                             muted: newConfig.muted,
                         });
                         $config.avatars[avatar] = newConfig;
-                    }}>
+                    }} accept="image/*">
                         <Tooltip>
                             喋れない時のアバターを設定
                         </Tooltip>
@@ -237,7 +237,7 @@
                             muted: newConfig.muted,
                         });
                         $config.avatars[avatar] = newConfig;
-                    }}>
+                    }} accept="image/*">
                         <Tooltip>
                             聞こえない時のアバターを設定
                         </Tooltip>

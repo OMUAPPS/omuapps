@@ -57,15 +57,20 @@
 <style lang="scss">
     .input {
         width: 100%;
-        height: 40px;
-        padding: 0 10px;
-        margin: 10px 0;
-        background: var(--color-bg-1);
-        border: 1px solid var(--color-1);
-        border-radius: 5px;
+        height: 2.5rem;
+        padding: 0.5rem 0.75rem;
+        background: var(--color-bg-2);
+        border: none;
+        outline: 1px solid var(--color-outline);
+        outline-offset: -1px;
+        border-bottom: 1px solid var(--color-1);
+        border-radius: 2px;
+        color: var(--color-1);
+        font-weight: 600;
+        font-size: 0.8rem;
 
         &:focus {
-            background: var(--color-bg-1);
+            outline: 1px solid var(--color-1);
         }
 
         &:hover {
@@ -83,7 +88,9 @@
         }
 
         &::placeholder {
-            color: var(--color-1);
+            color: var(--color-text);
+            opacity: 0.5;
+            font-size: 0.8rem;
         }
     }
 </style>

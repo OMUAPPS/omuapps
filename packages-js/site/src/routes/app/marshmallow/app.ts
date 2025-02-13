@@ -1,12 +1,12 @@
 import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { getUrl, NAMESPACE } from '../origin.js';
+import { buildMetadata, getUrl, NAMESPACE } from '../origin.js';
 import thumbnail from './thumbnail.png';
 
 export const APP_ID = new Identifier(NAMESPACE, 'marshmallow');
 export const APP = new App(APP_ID, {
     url: getUrl('/app/marshmallow'),
-    metadata: {
+    metadata: buildMetadata({
         locale: 'en',
         name: {
             ja: 'マシュマロ読み',
@@ -17,7 +17,7 @@ export const APP = new App(APP_ID, {
             en: 'Read marshmallows without any hassle',
         },
         icon: 'ti-notes',
-        image: getUrl(thumbnail),
+        image: thumbnail,
         tags: ['underdevelopment', 'tool'] as TagKey[],
-    },
+    }),
 });

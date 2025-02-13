@@ -64,14 +64,18 @@
 
     onMount(() => {
         status = omu.network.status;
-        const unlisten = omu.network.event.status.listen((value) => {
+        const unlistenNetwork = omu.network.event.status.listen((value) => {
             console.log('Network status:', value);
             status = value;
             if (status.type === 'connected') {
                 connecting = false;
             }
         });
-        return unlisten;
+        const unlistenApps = omu.dashboard.apps.listen();
+        return async () => {
+            unlistenNetwork();
+            unlistenApps();
+        };
     });
 
     $: {
@@ -84,7 +88,7 @@
     <meta name="description" content="OMUAPPSで使えるアプリを探してみる" />
 </svelte:head>
 
-<Page>
+<Page header={false}>
     <header slot="header">
         <h1>
             アプリを探す
@@ -120,7 +124,7 @@
                         {:else if status['type'] === 'reconnecting'}
                             <p>
                                 接続に失敗しました ({status.attempt}回目)
-                                <button on:click={() => omu.network.connect()}>再接続</button>
+                                <button disabled>再接続中…</button>
                             </p>
                             <small>
                                 <p>APIが起動していない可能性があります。</p>
@@ -311,6 +315,15 @@
                     outline-offset: -1px;
                     background: var(--color-bg-2);
                     color: var(--color-1);
+                }
+
+                &:disabled {
+                    background: var(--color-bg-1);
+                    color: var(--color-1);
+
+                    &:hover {
+                        outline: none;
+                    }
                 }
             }
         }

@@ -13,15 +13,11 @@ from omuplugin_obs.version import VERSION
 from ..const import PLUGIN_ID
 from ..obs.data import OBSData
 from ..obs.obs import OBS, OBSFrontendEvent
-from ..obs.scene import (
-    OBSBlendingMethod,
-    OBSBlendingType,
-    OBSScaleType,
-    OBSScene,
-    OBSSceneItem,
-)
+from ..obs.scene import OBSBlendingMethod, OBSBlendingType, OBSScaleType, OBSScene, OBSSceneItem
 from ..obs.source import OBSSource
 from ..types import (
+    BROWSER_ADD,
+    BROWSER_CREATE,
     EVENT_SIGNAL,
     SCENE_GET_BY_NAME,
     SCENE_GET_BY_UUID,
@@ -39,6 +35,7 @@ from ..types import (
     SOURCE_UPDATE,
     BlendProperties,
     BrowserSourceData,
+    CreateBrowserRequest,
     CreateResponse,
     RemoveByNameRequest,
     RemoveByUuidRequest,
@@ -67,24 +64,14 @@ APP = App(
     version=VERSION,
     metadata={
         "locale": "en",
-        "name": {
-            "ja": "OBSプラグイン",
-            "en": "OBS Plugin",
-        },
-        "description": {
-            "ja": "アプリがOBSを制御するためのプラグイン",
-            "en": "Plugin for app to control OBS",
-        },
+        "name": {"ja": "OBSプラグイン", "en": "OBS Plugin"},
+        "description": {"ja": "アプリがOBSを制御するためのプラグイン", "en": "Plugin for app to control OBS"},
     },
 )
 
 global loop
 loop = asyncio.new_event_loop()
-omu = Omu(
-    APP,
-    loop=loop,
-    token=JsonTokenProvider(get_token_path()),
-)
+omu = Omu(APP, loop=loop, token=JsonTokenProvider(get_token_path()))
 
 
 def source_to_json(scene_item: OBSSceneItem) -> SourceJson | None:
@@ -93,9 +80,7 @@ def source_to_json(scene_item: OBSSceneItem) -> SourceJson | None:
         blending_method=scene_item.blending_method.name,
         blending_mode=scene_item.blending_mode.name,
     )
-    scale_properties = ScaleProperties(
-        scale_filter=scene_item.scale_filter.name,
-    )
+    scale_properties = ScaleProperties(scale_filter=scene_item.scale_filter.name)
     if source.id == "browser_source":
         return {
             "type": "browser_source",
@@ -133,7 +118,7 @@ def get_scene(scene_name: str | None) -> OBSScene:
     return scene
 
 
-def get_name(name: str) -> str:
+def get_unique_name(name: str) -> str:
     existing_source = OBSSource.get_source_by_name(name)
     if existing_source is not None:
         removed = existing_source.removed
@@ -159,6 +144,7 @@ def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
         source_json["name"],
         settings,
     )
+    print(f"width: {scene.source.base_width}, height: {scene.source.base_height}")
     scene_item = scene.add(obs_source)
     if settings is not None:
         settings.release()
@@ -200,7 +186,7 @@ async def source_create(source: SourceJson) -> CreateResponse:
 
 @omu.endpoints.bind(endpoint_type=SOURCE_ADD)
 async def source_add(source: SourceJson) -> CreateResponse:
-    source["name"] = get_name(source["name"])
+    source["name"] = get_unique_name(source["name"])
     scene = get_scene(source.get("scene"))
     scene_item = create_obs_source(scene, source)
     scene.release()
@@ -215,6 +201,135 @@ async def source_add(source: SourceJson) -> CreateResponse:
     source_json = source_to_json(scene_item)
     if source_json is None:
         raise ValueError(f"Source with type {source['type']} is not supported")
+    return {"source": source_json}
+
+
+def calculate_dimensions(scene: OBSScene, width: int | str, height: int | str) -> tuple[int, int]:
+    scene_width = scene.source.base_width
+    scene_height = scene.source.base_height
+    # 100:% = full width/height of the scene
+    # 100:vw = full width of the scene
+    # 100:vh = full height of the scene
+    # 100:px = 100 pixels
+    # 100 = raise ValueError
+    if isinstance(width, int):
+        width = int(width)
+    elif isinstance(width, str):
+        if width.count(":") != 1:
+            raise ValueError(f"Invalid width format: {width}")
+        num, unit = width.split(":")
+        if unit == "%":
+            width = int(num) * scene_width // 100
+        elif unit == "vw":
+            width = int(num) * scene_width // 100
+        elif unit == "vh":
+            width = int(num) * scene_height // 100
+        elif unit == "px":
+            width = int(num)
+        else:
+            raise ValueError(f"Unknown unit {unit} in width {width}")
+    else:
+        raise ValueError(f"Invalid width format: {width}")
+    if isinstance(height, int):
+        height = int(height)
+    elif isinstance(height, str):
+        if height.count(":") != 1:
+            raise ValueError(f"Invalid height format: {height}")
+        num, unit = height.split(":")
+        if unit == "%":
+            height = int(num) * scene_height // 100
+        elif unit == "vw":
+            height = int(num) * scene_width // 100
+        elif unit == "vh":
+            height = int(num) * scene_height // 100
+        elif unit == "px":
+            height = int(num)
+        else:
+            raise ValueError(f"Unknown unit {unit} in height {height}")
+    else:
+        raise ValueError(f"Invalid height format: {height}")
+    return width, height
+
+
+@omu.endpoints.bind(endpoint_type=BROWSER_CREATE)
+async def browser_create(browser_source: CreateBrowserRequest) -> CreateResponse:
+    existing_source = OBSSource.get_source_by_name(browser_source["name"])
+    if existing_source is not None:
+        existing_source.release()
+        if not existing_source.removed:
+            raise ValueError(f"Source with name {browser_source['name']} already exists")
+    scene = get_scene(browser_source.get("scene"))
+    scene_width = scene.source.base_width
+    scene_height = scene.source.base_height
+    width, height = calculate_dimensions(
+        scene,
+        browser_source.get("width", scene_width),
+        browser_source.get("height", scene_height),
+    )
+    obs_data = {
+        "url": browser_source["url"],
+        "width": width,
+        "height": height,
+        "css": browser_source.get("css"),
+    }
+    obs_source = OBSSource.create(
+        "browser_source",
+        browser_source["name"],
+        OBSData.from_json(obs_data),
+    )
+    scene_item = scene.add(obs_source)
+    if "blend_properties" in browser_source:
+        blending_method = browser_source["blend_properties"]["blending_method"]
+        blending_mode = browser_source["blend_properties"]["blending_mode"]
+        scene_item.blending_method = OBSBlendingMethod[blending_method]
+        scene_item.blending_mode = OBSBlendingType[blending_mode]
+    if "scale_properties" in browser_source:
+        scale_filter = browser_source["scale_properties"]["scale_filter"]
+        scene_item.scale_filter = OBSScaleType[scale_filter]
+    obs_source.release()
+    scene.release()
+    source_json = source_to_json(scene_item)
+    if source_json is None:
+        raise ValueError("Source with type browser_source is not supported")
+    return {"source": source_json}
+
+
+@omu.endpoints.bind(endpoint_type=BROWSER_ADD)
+async def browser_add(browser_source: CreateBrowserRequest) -> CreateResponse:
+    browser_source["name"] = get_unique_name(browser_source["name"])
+    scene = get_scene(browser_source.get("scene"))
+    scene_width = scene.source.base_width
+    scene_height = scene.source.base_height
+    width, height = calculate_dimensions(
+        scene,
+        browser_source.get("width", scene_width),
+        browser_source.get("height", scene_height),
+    )
+    obs_data = {
+        "url": browser_source["url"],
+        "width": width,
+        "height": height,
+        "css": browser_source.get("css"),
+    }
+    obs_source = OBSSource.create(
+        "browser_source",
+        browser_source["name"],
+        OBSData.from_json(obs_data),
+    )
+    scene_item = scene.add(obs_source)
+    if "blend_properties" in browser_source:
+        blending_method = browser_source["blend_properties"]["blending_method"]
+        blending_mode = browser_source["blend_properties"]["blending_mode"]
+        scene_item.blending_method = OBSBlendingMethod[blending_method]
+        scene_item.blending_mode = OBSBlendingType[blending_mode]
+    if "scale_properties" in browser_source:
+        scale_filter = browser_source["scale_properties"]["scale_filter"]
+        scene_item.scale_filter = OBSScaleType[scale_filter]
+    obs_source.release()
+    scene.release()
+    source_json = source_to_json(scene_item)
+    if source_json is None:
+        raise ValueError("Source with type browser_source is not supported")
     return {"source": source_json}
 
 
@@ -290,9 +405,7 @@ async def source_get_by_name(request: SourceGetByNameRequest) -> SourceJson:
     source_json = source_to_json(scene_item)
     try:
         if source_json is None:
-            raise ValueError(
-                f"Source with type {scene_item.source.id} is not supported"
-            )
+            raise ValueError(f"Source with type {scene_item.source.id} is not supported")
     finally:
         scene_item.release()
     return source_json

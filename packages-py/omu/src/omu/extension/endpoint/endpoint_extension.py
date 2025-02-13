@@ -86,16 +86,11 @@ class EndpointExtension(Extension):
             raise e
 
     async def on_ready(self) -> None:
-        endpoints = {
-            key: endpoint.endpoint_type.permission_id
-            for key, endpoint in self.registered_endpoints.items()
-        }
+        endpoints = {key: endpoint.endpoint_type.permission_id for key, endpoint in self.registered_endpoints.items()}
         packet = EndpointRegisterPacket(endpoints=endpoints)
         await self.client.send(ENDPOINT_REGISTER_PACKET, packet)
 
-    def register[Req, Res](
-        self, type: EndpointType[Req, Res], func: Coro[[Req], Res]
-    ) -> None:
+    def register[Req, Res](self, type: EndpointType[Req, Res], func: Coro[[Req], Res]) -> None:
         if self.client.ready:
             raise Exception("Cannot register endpoint after client is ready")
         if type.id in self.registered_endpoints:
@@ -121,9 +116,7 @@ class EndpointExtension(Extension):
             decorator(handler)
         return decorator
 
-    def listen(
-        self, handler: Coro | None = None, name: str | None = None
-    ) -> Callable[[Coro], Coro]:
+    def listen(self, handler: Coro | None = None, name: str | None = None) -> Callable[[Coro], Coro]:
         def decorator(func: Coro) -> Coro:
             type = EndpointType.create_json(
                 self.client.app.id,

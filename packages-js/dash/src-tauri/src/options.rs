@@ -9,4 +9,5 @@ pub struct AppOptions {
     pub uv_path: PathBuf,
     pub workdir: PathBuf,
     pub server_options: ServerOption,
+    pub config_path: PathBuf,
 }

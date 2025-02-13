@@ -14,10 +14,15 @@
     export let paid: Paid | undefined = undefined;
     export let gifts: Array<models.Gift> | undefined = undefined;
     export let author: models.Author | undefined = undefined;
+    export let room: models.Room | undefined = undefined;
     export let createdAt: Date | undefined = undefined;
     export let content: models.content.Component | undefined = undefined;
     export let handleCopy: () => void = () => {};
     export let selected: boolean = false;
+
+    $: roomStartedAt = room?.metadata.started_at && new Date(room.metadata.started_at);
+    $: time = createdAt && roomStartedAt && new Date(createdAt.getTime() - roomStartedAt.getTime()) || null;
+    $: url = room?.metadata.url || null;
 </script>
 
 <article
@@ -27,7 +32,7 @@
         ? applyOpacity(paid ? 'var(--color-1)' : 'var(--color-2)', 0.1)
         : undefined}
 >
-    <FlexRowWrapper widthFull gap>
+    <div class="container">
         {#if author && author.avatarUrl}
             <FlexColWrapper>
                 {#if author.metadata?.url}
@@ -58,10 +63,10 @@
                 </Tooltip>
             </FlexColWrapper>
         {/if}
-        <FlexColWrapper widthFull>
+        <div class="message">
             {#if author}
-                <FlexRowWrapper widthFull gap>
-                    <FlexRowWrapper baseline>
+                <div class="author-info">
+                    <div class="author">
                         <span class="name">
                             {author.name}
                         </span>
@@ -71,7 +76,7 @@
                         <small>
                             {author.metadata?.screen_id || author.id.path.at(-1)}
                         </small>
-                    </FlexRowWrapper>
+                    </div>
                     {#if createdAt}
                         <span class="time">
                             <Tooltip>
@@ -80,7 +85,7 @@
                             <RelativeDate date={createdAt} />
                         </span>
                     {/if}
-                </FlexRowWrapper>
+                </div>
                 <FlexRowWrapper widthFull between>
                     <FlexColWrapper>
                         {#if content}
@@ -103,6 +108,24 @@
                     </FlexColWrapper>
                     {#if selected}
                         <div class="actions">
+                            {#if time}
+                                {@const timedLink = `${url}&t=${Math.floor(time.getTime()/1000)+10}s`}
+                                <button on:click={() => window.open(timedLink, '_blank')}>
+                                    <Tooltip>
+                                        <p>{$translate('panels.messages.see_in_room')}</p>
+                                        <p>
+                                            {
+                                                (time.getTime() / 1000 > 60*60*24*30 ? Math.floor(time.getTime() / 1000 / 60 / 60 / 24 / 30)+'/' : '')+
+                                                    (time.getTime() / 1000 > 60*60*24 ? Math.floor(time.getTime() / 1000 / 60 / 60 / 24) % 30+' ' : '')+
+                                                    (time.getTime() / 1000 > 60*60 ? Math.floor(time.getTime() / 1000 / 60 / 60) % 24+'h ' : '')+
+                                                    time.getMinutes().toString().padStart(2, '0')+'m '+
+                                                    time.getSeconds().toString().padStart(2, '0')+'s'
+                                            }
+                                        </p>
+                                    </Tooltip>
+                                    <i class="ti ti-external-link"></i>
+                                </button>
+                            {/if}
                             <button on:click={handleCopy}>
                                 <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
                                 <i class="ti ti-files"></i>
@@ -141,16 +164,16 @@
                     {/if}
                 </FlexRowWrapper>
             {/if}
-        </FlexColWrapper>
-    </FlexRowWrapper>
+        </div>
+    </div>
 </article>
 
 <style lang="scss">
     article {
         display: flex;
         flex-direction: row;
-        gap: 10px;
-        padding: 15px;
+        gap: 1rem;
+        padding: 1rem;
         font-weight: 500;
         border-bottom: 1px solid var(--color-bg-1);
 
@@ -177,49 +200,58 @@
         outline: 2px solid #000;
     }
 
-    button {
+    .container {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .message {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .author-info {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .author {
         display: flex;
         align-items: center;
-        justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        font-size: 1rem;
-        color: var(--color-1);
-        cursor: pointer;
-        background: var(--color-bg-1);
-        border: none;
-        outline: none;
-
-        &:hover {
-            color: var(--color-bg-1);
-            background: var(--color-1);
-        }
-
-        &:focus {
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
-        }
     }
 
     .name {
         margin-right: 5px;
-        white-space: nowrap;
         user-select: text;
         font-weight: 600;
-        font-size: 12px;
+        font-size: 0.8rem;
+        display: -webkit-box;
+        line-clamp: 1;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+        height: 1.2rem;
     }
 
     small {
         font-size: 0.6rem;
         color: #999;
+        white-space: nowrap;
     }
 
     .time {
         padding: 2px 0;
-        margin-left: auto;
         font-size: 0.8rem;
         color: #666;
         user-select: text;
+        white-space: nowrap;
     }
 
     .message-content {
@@ -244,5 +276,30 @@
     .actions {
         display: flex;
         align-self: flex-end;
+        gap: 2px;
+
+        > button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 1rem;
+            color: var(--color-1);
+            cursor: pointer;
+            background: var(--color-bg-1);
+            border-radius: 2px;
+            border: none;
+            outline: none;
+
+            &:hover {
+                color: var(--color-bg-1);
+                background: var(--color-1);
+            }
+
+            &:focus {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+            }
+        }
     }
 </style>

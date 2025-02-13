@@ -223,9 +223,7 @@
         margin-bottom: 1rem;
 
         button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            vertical-align: baseline;
             gap: 0.5rem;
             border: none;
             background: var(--color-1);
@@ -241,6 +239,10 @@
             &:hover {
                 background: var(--color-bg-1);
                 color: var(--color-1);
+            }
+
+            > i {
+                margin-left: 0.5rem;
             }
         }
     }

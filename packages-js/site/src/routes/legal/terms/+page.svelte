@@ -19,6 +19,16 @@
         </FlexRowWrapper>
     </header>
     <main slot="content">
+        <div class="summary">
+            <h2>
+                かんたんに3行で言うと（本文はこの下）
+            </h2>
+            <ul>
+                <li>個人・法人・収益問わず利用可能</li>
+                <li>クレジット表記は不要</li>
+                <li>紹介してくれるときだけは絶対にクレジット表記してね</li>
+            </ul>
+        </div>
         <h1 id="terms">利用規約</h1>
         <p>2024年8月28日</p>
         <p>
@@ -83,6 +93,16 @@
 <style lang="scss">
     main {
         font-weight: 500;
+    }
+
+    .summary {
+        border-bottom: 1px solid var(--color-outline);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+
+        > ul {
+            margin-left: 2rem;
+        }
     }
 
     header {

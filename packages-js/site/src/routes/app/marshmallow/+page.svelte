@@ -1,6 +1,6 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { version } from '$lib/version.json';
+    import { VERSION } from '$lib/version.js';
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { AppHeader, setClient } from '@omujs/ui';
@@ -15,7 +15,7 @@
     setClient(omu);
 
     omu.plugins.require({
-        omuplugin_marshmallow: `==${version}`,
+        omuplugin_marshmallow: `==${VERSION}`,
     });
     omu.server.require(PLUGIN_ID);
 

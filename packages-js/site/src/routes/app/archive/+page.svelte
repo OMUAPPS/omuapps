@@ -1,6 +1,6 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { version } from '$lib/version.json';
+    import { VERSION } from '$lib/version.js';
     import { Omu } from '@omujs/omu';
     import { AppHeader, setClient, TableList, Toggle } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -17,7 +17,7 @@
 
     if (BROWSER) {
         omu.plugins.require({
-            omuplugin_archive: `==${version}`,
+            omuplugin_archive: `==${VERSION}`,
         });
         omu.start();
     }
@@ -36,7 +36,7 @@
                 <div>
                     <h3>出力ディレクトリ</h3>
                     <input type="text" bind:value={$config.output_dir} />
-                    <button on:click={() => archiveApp.openOutputDir()}>
+                    <button on:click={() => archiveApp.openOutputDir()} aria-label="Open output directory">
                         <i class="ti ti-folder-open"></i>
                     </button>
                 </div>

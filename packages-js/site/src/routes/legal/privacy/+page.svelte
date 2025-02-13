@@ -19,6 +19,16 @@
         </FlexRowWrapper>
     </header>
     <main slot="content">
+        <div class="summary">
+            <h2>
+                かんたんに3行で言うと（本文はこの下）
+            </h2>
+            <ul>
+                <li>このソフト自体は個人情報は何も取得しないよ</li>
+                <li>「アプリを探す」タブ以外から入れるアプリはそれぞれのプライバシーポリシーを確認してね</li>
+                <li>あくまでアプリ管理ソフトだから、アプリが何をするかはわからないよ</li>
+            </ul>
+        </div>
         <h1 id="privacy">プライバシーポリシー</h1>
         <p>2024年8月28日</p>
         <p>
@@ -53,6 +63,16 @@
 <style lang="scss">
     main {
         font-weight: 500;
+    }
+
+    .summary {
+        border-bottom: 1px solid var(--color-outline);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+
+        > ul {
+            margin-left: 2rem;
+        }
     }
 
     header {

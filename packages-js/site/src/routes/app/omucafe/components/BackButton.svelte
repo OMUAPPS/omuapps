@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { game } from '../omucafe-app.js';
+    import { getGame, type Scene } from '../omucafe-app.js';
 
-    const { scene } = game;
+    export let to: Scene = { type: 'main_menu' };
+
+    const { scene } = getGame();
 </script>
 
 <button class="back" on:click={() => {
-    $scene = { type: 'main_menu' };
+    $scene = to;
 }}>
     <i class="ti ti-arrow-left"></i>
     戻る

@@ -15,9 +15,7 @@ def instance[T](cls: type[T]) -> T:
     return cls()
 
 
-def map_optional[V, T](
-    data: V | None, func: typing.Callable[[V], T], default: T | None = None
-) -> T | None:
+def map_optional[V, T](data: V | None, func: typing.Callable[[V], T], default: T | None = None) -> T | None:
     if data is None:
         return default
     return func(data)
@@ -42,9 +40,7 @@ def batch_call(*funcs: typing.Callable[[], None]) -> typing.Callable[[], None]:
     return wrapper
 
 
-def asyncio_error_logger(
-    loop: asyncio.AbstractEventLoop, context: typing.Mapping
-) -> None:
+def asyncio_error_logger(loop: asyncio.AbstractEventLoop, context: typing.Mapping) -> None:
     exception = context.get("exception")
     logger.opt(exception=exception).error("Unhandled exception")
     if exception:

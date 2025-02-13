@@ -50,3 +50,9 @@ export class InvalidPacket extends DisconnectReason {
         super(DisconnectType.INVALID_PACKET, message);
     }
 }
+
+export class InternalError extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.INTERNAL_ERROR, message);
+    }
+}

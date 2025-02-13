@@ -1,12 +1,12 @@
 import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { getUrl, NAMESPACE } from '../origin.js';
+import { buildMetadata, getUrl, NAMESPACE } from '../origin.js';
 import thumbnail from './thumbnail.png';
 
 export const APP_ID = new Identifier(NAMESPACE, 'roulette');
 export const APP = new App(APP_ID, {
     url: getUrl('/app/roulette'),
-    metadata: {
+    metadata: buildMetadata({
         locale: 'ja',
         name: {
             ja: 'ルーレット',
@@ -17,7 +17,7 @@ export const APP = new App(APP_ID, {
             en: 'You can spin the roulette to select someone or make a decision',
         },
         icon: 'ti-wheel',
-        image: getUrl(thumbnail),
+        image: thumbnail,
         tags: ['asset', 'game', 'tool'] as TagKey[],
-    },
+    }),
 });

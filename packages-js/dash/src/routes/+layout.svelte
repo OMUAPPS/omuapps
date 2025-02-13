@@ -1,22 +1,62 @@
+<script context="module" lang="ts">
+    export type LoadingState = {
+        type: 'loading',
+        message: string,
+    } | {
+        type: 'restart',
+    } | {
+        type: 'cleaning',
+    } | {
+        type: 'failed',
+        message: string,
+        details?: string,
+    } | {
+        type: 'progress',
+        message: string,
+        details?: string,
+        progress?: number,
+        total?: number,
+    } | {
+        type: 'disconnected',
+        packet: DisconnectPacket,
+    } | {
+        type: 'ready',
+    };
+    export const DEFAULT_STATE: Record<LoadingState['type'], LoadingState> = {
+        loading: { type: 'loading', message: 'Loading...' },
+        restart: { type: 'restart' },
+        cleaning: { type: 'cleaning' },
+        failed: { type: 'failed', message: 'Failed', details: 'Details' },
+        progress: { type: 'progress', message: 'Progress', details: 'Details', progress: 0, total: 100 },
+        disconnected: { type: 'disconnected', packet: new DisconnectPacket({ type: DisconnectType.ANOTHER_CONNECTION, message: 'Disconnected' }) },
+        ready: { type: 'ready' },
+    };
+</script>
 <script lang="ts">
     import { omu } from '$lib/client.js';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
-    import { installed, language } from '$lib/main/settings.js';
+    import title from '$lib/images/title.svg';
+    import { language } from '$lib/main/settings.js';
     import {
+        applyUpdate,
+        checkUpdate,
         invoke,
         listen,
         waitForTauri,
         type Progress,
+        type UpdateEvent
     } from '$lib/tauri.js';
-    import { createI18nUnion } from '@omujs/i18n';
-    import { DisconnectType, type DisconnectPacket } from '@omujs/omu/network/packet/packet-types.js';
+    import { createI18nUnion, type I18n } from '@omujs/i18n';
+    import { DisconnectPacket, DisconnectType } from '@omujs/omu/network/packet/packet-types.js';
     import '@omujs/ui';
-    import { Spinner, Theme } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/api/process';
-    import GenerateLogButton from './GenerateLogButton.svelte';
+    import { Theme } from '@omujs/ui';
+    import '@tabler/icons-webfont/dist/tabler-icons.scss';
+    import { exit } from '@tauri-apps/plugin-process';
+    import type { Update } from '@tauri-apps/plugin-updater';
+    import { onMount } from 'svelte';
+    import LoadingStatus from './_components/LoadingStatus.svelte';
     import './styles.scss';
-    import UpdateButton from './UpdateButton.svelte';
 
     const PROGRESS_NAME: Record<Progress['type'], string> = {
         PythonDownloading: '(1/6)動作環境1をダウンロード中',
@@ -66,336 +106,239 @@
         'ServerStartFailed',
     ];
 
-    let progress: Progress | null = null;
-    let percentage = 0;
-    let failed = false;
+    let status: LoadingState = { type: 'loading', message: '読み込み中' };
 
-    function lerp(a: number, b: number, t: number): number {
-        return a + (b - a) * t;
+    function setStatus(value: typeof status) {
+        status = value;
+        console.log('status', JSON.stringify(status));
     }
 
-    let disconnectPacket: DisconnectPacket | null = null;
+    let update: Update | null = null;
+    let updateProgress: UpdateEvent | null = null;
 
     async function init() {
-        await loadLocale();
-        await waitForTauri();
-        await listen('server_state', (state) => {
-            progress = state.payload;
-            failed = FAILED_PROGRESS.includes(progress.type);
-            const index = INSTALL_PROGRESS.indexOf(progress.type);
-            const {progress: p, total} = progress;
-            if (!p || !total) {
-                percentage = (index + 1) / INSTALL_PROGRESS.length;
-            } else {
-                percentage = lerp(index, index + 1, p / total) / INSTALL_PROGRESS.length;
-            }
-        });
+        const STAGES = {
+            checkUpdate: 'Check Update',
+            loadingLocale: 'Loading Locale',
+            waitingForTauri: 'Waiting for Tauri',
+            listeningToServerState: 'Listening to Server State',
+            startingServer: 'Starting Server',
+            startingClient: 'Starting Client',
+        }
+        let stage: keyof typeof STAGES = 'checkUpdate';
         try {
+            try {
+                update = await checkUpdate();
+            } catch (e) {
+                console.error('Failed to check update', e);
+            }
+            await loadLocale();
+            stage = 'waitingForTauri';
+            await waitForTauri();
+            stage = 'listeningToServerState';
+            const unlistenState = await listen('server_state', ({ payload }) => {
+                const { type, progress, total } = payload;
+                if (FAILED_PROGRESS.includes(type)) {
+                    setStatus({ type: 'failed', message: PROGRESS_NAME[type], details: payload.msg });
+                } else if (INSTALL_PROGRESS.includes(type)) {
+                    setStatus({ type: 'progress', message: PROGRESS_NAME[type], details: payload.msg, progress: progress || 0, total: total || 0 });
+                } else {
+                    setStatus({ type: 'progress', message: PROGRESS_NAME[type], details: payload.msg });
+                }
+            });
+            stage = 'startingServer';
             await invoke('start_server');
+            console.log('server started');
+
+            language.subscribe(loadLocale);
+            let unlistenDisconnect = () => {};
+            let unlistenNetwork = () => {};
+            omu.onReady(() => {
+                setStatus({ type: 'ready' });
+                unlistenState();
+                unlistenDisconnect();
+                unlistenNetwork();
+            });
+            unlistenDisconnect = omu.network.event.disconnected.listen((packet) => {
+                if (!packet) return;
+                if (packet.type === DisconnectType.SERVER_RESTART) return;
+                setStatus({ type: 'disconnected', packet });
+            }); 
+            unlistenNetwork = omu.network.event.status.listen((value) => {
+                if (value.type !== 'disconnected') return;
+                if (value.reason) {
+                    setStatus({ type: 'failed', message: 'Connection failed', details: `${value.reason.type}:${value.reason.message}` });
+                    return;
+                }
+                if (value.attempt === undefined) return;
+                if (value.attempt <= 3) return;
+                setStatus({ type: 'failed', message: `Connection failed after ${value.attempt} attempts` });
+            });
+            stage = 'startingClient';
+            await omu.start()
         } catch (e) {
-            console.error(e);
+            const stageName = STAGES[stage];
+            setStatus({
+                type: 'failed',
+                message: `${stageName} failed`,
+                details: typeof e === 'string' ? e : JSON.stringify(e),
+            });
+            console.error(`Failed to ${stageName}`, e);
             throw e;
         }
-        console.log('server started');
-
-        language.subscribe(loadLocale);
-
-        return new Promise<void>((resolve, reject) => {
-            omu.onReady(() => {
-                resolve();
-            });
-            omu.network.event.disconnected.listen((packet) => {
-                disconnectPacket = packet;
-                reject(packet);
-            }); 
-
-            try {
-                omu.start()
-            } catch (e) {
-                reject(e);
-            }
-        });
     }
 
     async function loadLocale() {
-        const lang = await LOCALES[$language].load();
-        const fallbackLang = await LOCALES[DEFAULT_LOCALE].load();
-        if (lang !== fallbackLang) {
-            i18n.set(createI18nUnion([lang, fallbackLang]));
-        } else {
-            i18n.set(lang);
+        const langs: I18n[] = [];
+        langs.push(await LOCALES[$language].load());
+        if ($language !== DEFAULT_LOCALE) {
+            langs.push(await LOCALES[DEFAULT_LOCALE].load());
         }
+        i18n.set(createI18nUnion(langs));
     }
 
-
-    async function restart() {
-        progress = null;
-        await invoke('stop_server');
-        await relaunch();
-    }
-
-    let promise = init();
+    onMount(async () => {
+        await init();
+    });
 </script>
 
 <svelte:head>
     <title>Dashboard</title>
-    <meta name="description" content="Svelte demo app" />
     <Theme />
 </svelte:head>
 
 <div class="app">
-    <main>
-        {#if failed}
-            <div class="loading" data-tauri-drag-region>
-                <div class="container">
-                    <p class="failed">
-                        起動に失敗しました
-                        <i class="ti ti-alert-circle"></i>
-                    </p>
-                    <div class="state">
-                        {#if progress}
+    {#if status.type === 'ready'}
+        <slot />
+    {:else}
+        <div class="window">
+            <div class="title" data-tauri-drag-region>
+                <img src={title} alt="Logo" />
+                <button on:click={() => {
+                    exit();
+                }} aria-label="Close">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+            <div class="status">
+                <LoadingStatus bind:status set={setStatus} />
+            </div>
+            {#if update}
+                <div class="update">
+                    {#if updateProgress}
+                        {#if updateProgress.type === 'restarting'}
+                            <span>再起動中...</span>
+                        {:else if updateProgress.type === 'updating'}
+                            <p>更新中...</p>
                             <p>
-                                {PROGRESS_NAME[progress.type]}
+                                {updateProgress.downloaded}/{updateProgress.contentLength}
                             </p>
+                        {:else if updateProgress.type === 'shutting-down'}
+                            <span>シャットダウン中...</span>
                         {/if}
-                    </div>
-                    <div class="actions">
-                        <GenerateLogButton />
-                        <UpdateButton />
-                        <button class="primary" on:click={async () => {
-                            await invoke('clean_environment');
-                            await relaunch();
+                    {:else}
+                        <p>更新があります</p>
+                        <small>起動しない場合は更新してください</small>
+                        <button on:click={() => {
+                            if (!update) return;
+                            applyUpdate(update, (value) => {
+                                updateProgress = value;
+                            });
                         }}>
-                            環境を再構築
-                            <i class="ti ti-reload"></i>
+                            更新
+                            <i class="ti ti-arrow-up"></i>
                         </button>
-                    </div>
+                    {/if}
                 </div>
-            </div>
-            <div class="debug">
-                debug:
-                {JSON.stringify(progress)}
-            </div>
-        {:else}
-            {#await promise}
-                <div class="loading" data-tauri-drag-region>
-                    <div class="container">
-                        <p class="text">
-                            {#if !$installed}
-                                インストール中
-                            {:else}
-                                起動中
-                            {/if}
-                            <Spinner />
-                        </p>
-                        <div class="state">
-                            {#if progress}
-                                <div class="progress">
-                                    {#if progress.progress !== undefined && progress.total !== undefined}
-                                        {@const percentage = progress.progress / progress.total * 100}
-                                        <progress value={progress.progress} max={progress.total}></progress>
-                                        <p>
-                                            {PROGRESS_NAME[progress.type]}
-                                            {progress.progress} / {progress.total} ({Math.round(percentage || 0)}%)
-                                        </p>
-                                    {/if}
-                                </div>
-                            {/if}
-                        </div>
-                        <UpdateButton />
-                    </div>
-                </div>
-                <div class="debug">
-                    debug: {JSON.stringify(progress)}
-                </div>
-            {:then}
-                <slot />
-            {:catch error}
-                <div class="loading" data-tauri-drag-region>
-                    <div class="container">
-                        <p class="failed">
-                            起動に失敗しました
-                            <i class="ti ti-alert-circle"></i>
-                        </p>
-                        <small>
-                            {#if disconnectPacket}
-                                <code>
-                                    エラーコード: {disconnectPacket.type}
-                                    <p>{disconnectPacket.message}</p>
-                                </code>
-                                {#if disconnectPacket.type === DisconnectType.INVALID_TOKEN}
-                                    <small>
-                                        サーバーの認証に失敗しました
-                                    </small>
-                                {:else if disconnectPacket.type === DisconnectType.CLOSE}
-                                    <small>
-                                        サーバーから切断されました
-                                    </small>
-                                {/if}
-                            {:else if progress && FAILED_PROGRESS.includes(progress.type)}
-                                <code>
-                                    エラーコード: {progress.type}
-                                    <p>{progress.msg}</p>
-                                </code>
-                                <small>
-                                    {PROGRESS_NAME[progress.type]}
-                                </small>
-                            {:else}
-                                {error?.message || error || '起動に失敗しました'}
-                            {/if}
-                        </small>
-                    </div>
-                    <div class="actions">
-                        <GenerateLogButton />
-                        <button class="primary" on:click={() => {
-                            promise = restart();
-                        }}>
-                            サーバーを再起動
-                            <i class="ti ti-reload"></i>
-                        </button>
-                        <UpdateButton />
-                    </div>
-                </div>
-                <div class="debug">
-                    debug:
-                    {JSON.stringify(progress)}
-                </div>
-            {/await}
-        {/if}
-    </main>
+            {/if}
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
-    .debug {
+    .window {
         position: fixed;
-        bottom: 2rem;
-        font-weight: 600;
-        font-size: 0.72rem;
-        color: var(--color-text);
-        opacity: 0.5;
-        user-select: all;
-        cursor: text;
-        width: 100%;
-        padding: 0 1rem;
-        white-space: wrap;
-        text-align: center;
-    }
-
-    .container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2rem;
-        padding: 3rem 2rem;
-        width: 30rem;
-        background: var(--color-bg-2);
-    }
-
-    .app {
-        display: flex;
-        flex-direction: column;
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-    }
-
-    main {
-        flex: 1;
-        overflow: hidden;
-    }
-
-    .loading {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        font-size: 20px;
-        font-weight: bold;
-        color: var(--color-1);
+        inset: 0;
         background: var(--color-bg-1);
-    }
-
-    .failed {
         display: flex;
-        align-items: baseline;
-        color: #dfa207;
-        font-size: 1.475rem;
-
-        > i {
-            margin-left: 0.5rem;
-            font-size: 1.5rem;
-        }
+        flex-direction: column;
+        font-weight: 600;
     }
 
-    .text {
+    .title {
+        background: var(--color-bg-2);
+        height: 2rem;
+        outline: 1px solid var(--color-outline);
         display: flex;
-        align-items: baseline;
-        gap: 1rem;
-    }
+        align-items: center;
+        padding-left: 0.5rem;
 
-    progress {
-        margin-bottom: 1rem;
-        appearance: none;
-        width: 100%;
-        height: 2px;
-        border: none;
-
-        &::-webkit-progress-bar {
-            background: var(--color-outline);
+        > img {
+            margin-right: auto;
+            height: 0.75rem;
         }
-
-        &::-webkit-progress-value {
-            background: var(--color-1);
-        }
-    }
-
-    .state {
-        font-size: 0.8rem;
-        color: var(--color-text);
-    }
-
-    .actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
 
         > button {
-            padding: 0.5rem 1rem;
-            border: none;
-            background: var(--color-bg-2);
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
+            width: 2rem;
+            height: 2rem;
             color: var(--color-1);
-            font-size: 0.8rem;
-            font-weight: bold;
-
-            > i {
-                margin-left: 0.1rem;
-            }
+            background: none;
+            border: none;
+            z-index: 1;
 
             &:hover {
                 background: var(--color-1);
                 color: var(--color-bg-1);
             }
         }
+    }
 
-        > .primary {
+    .status {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+    }
+
+    .update {
+        position: absolute;
+        top: 3rem;
+        right: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0.25rem 1rem;
+        padding-top: 0;
+        border-right: 2px solid var(--color-1);
+
+        > p {
+            color: var(--color-1);
+        }
+
+        > small {
+            color: var(--color-text);
+            font-size: 0.8rem;
+        }
+
+        > button {
+            font-weight: 600;
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
             background: var(--color-1);
             color: var(--color-bg-1);
+            border: none;
+            border-radius: 2px;
+            outline-offset: -1px;
+            cursor: pointer;
+
+            &:hover {
+                background: var(--color-bg-2);
+                outline: 1px solid var(--color-1);
+                color: var(--color-1);
+            }
         }
-    }
-
-    code {
-        display: block;
-        padding: 0.5rem;
-        color: var(--color-text);
-        font-size: 0.8rem;
-    }
-
-    button {
-        cursor: pointer;
-        border-radius: 2px;
     }
 </style>

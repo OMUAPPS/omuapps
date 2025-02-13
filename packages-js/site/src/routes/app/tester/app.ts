@@ -1,12 +1,12 @@
 import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { getUrl, NAMESPACE } from '../origin.js';
+import { buildMetadata, getUrl, NAMESPACE } from '../origin.js';
 import icon from './icon.png';
 
 export const APP_ID = new Identifier(NAMESPACE, 'tester');
 export const APP = new App(APP_ID, {
     url: getUrl('/app/tester'),
-    metadata: {
+    metadata: buildMetadata({
         locale: 'en',
         name: {
             en: 'Tester',
@@ -16,7 +16,7 @@ export const APP = new App(APP_ID, {
             en: 'Test comments.',
             ja: 'コメントのテストをします。',
         },
-        icon: getUrl(icon),
+        icon,
         tags: ['tool', 'underdevelopment'] as TagKey[],
-    },
+    }),
 });

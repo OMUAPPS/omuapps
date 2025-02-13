@@ -1,11 +1,13 @@
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import type { MatrixStack } from '$lib/math/matrix-stack.js';
+import { Vec2 } from '$lib/math/vec2.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
-import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
+import { MVP_VERTEX_SHADER, TEXTURE_FRAGMENT_SHADER } from './shaders.js';
 
 type TextureSource = {
-    image: TexImageSource;
+    frames: TexImageSource[];
+    duration: number;
     width: number;
     height: number;
 }
@@ -15,32 +17,60 @@ type TextureMesh = {
     texCoords: GlBuffer;
     texture: GlTexture;
     source: TextureSource;
+    createdTime: number;
+}
+
+function getFileType(source: Uint8Array): string {
+    const HEADER_MAP: Record<string, string | undefined> = {
+        '89504e47': 'image/png',
+        '47494638': 'image/gif',
+        'ffd8ffe0': 'image/jpeg',
+        'ffd8ffe1': 'image/jpeg',
+        'ffd8ffe2': 'image/jpeg',
+        'ffd8ffe3': 'image/jpeg',
+        'ffd8ffe8': 'image/jpeg',
+        '52494646': 'image/webp',
+    }
+    const header = source.slice(0, 4).reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
+    const type = HEADER_MAP[header];
+    if (type) {
+        return type;
+    }
+    console.warn(`Unknown file type: ${header}`);
+    return 'image/png';
+}
+
+async function createImage(source: Uint8Array): Promise<{width: number, height: number, image: HTMLImageElement}> {
+    const type = getFileType(source);
+    const blob = new Blob([source], {type});
+    const url = URL.createObjectURL(blob);
+    const image = document.createElement('img');
+    image.src = url;
+    await image.decode();
+    return {
+        width: image.width,
+        height: image.height,
+        image,
+    };
 }
 
 export class PNGAvatar implements Avatar {
-    public base: TextureMesh;
-    public active?: TextureMesh;
-    public deafened?: TextureMesh;
-    public muted?: TextureMesh;
     private readonly frameBufferTexture: GlTexture;
     private readonly frameBuffer: GlFramebuffer;
     private readonly effectTargetTexture: GlTexture;
     private readonly effectTargetFrameBuffer: GlFramebuffer;
     private readonly vertexBuffer: GlBuffer;
     private readonly texcoordBuffer: GlBuffer;
+    private readonly frameCounts: number[] = [];
     
     constructor(
         private readonly glContext: GlContext,
         public program: GlProgram,
-        public baseTexture: TextureSource,
-        public activeTexture?: TextureSource | undefined,
-        public deafenedTexture?: TextureSource | undefined,
-        public mutedTexture?: TextureSource | undefined,
+        public base: TextureMesh,
+        public active?: TextureMesh | undefined,
+        public deafened?: TextureMesh | undefined,
+        public muted?: TextureMesh | undefined,
     ) {
-        this.base = PNGAvatar.createTextureMesh(glContext, baseTexture);
-        this.active = activeTexture ? PNGAvatar.createTextureMesh(glContext, activeTexture) : this.base;
-        this.deafened = deafenedTexture ? PNGAvatar.createTextureMesh(glContext, deafenedTexture) : this.base;
-        this.muted = mutedTexture ? PNGAvatar.createTextureMesh(glContext, mutedTexture) : this.base;
         this.frameBuffer = glContext.createFramebuffer();
         this.frameBufferTexture = glContext.createTexture();
         this.frameBufferTexture.use(() => {
@@ -96,25 +126,45 @@ export class PNGAvatar implements Avatar {
     }
     
     public static async load(context: GlContext, options: {
-        base: TextureSource;
-        active?: TextureSource;
-        deafened?: TextureSource;
-        muted?: TextureSource;
+        base: Uint8Array;
+        active?: Uint8Array;
+        deafened?: Uint8Array;
+        muted?: Uint8Array;
     }): Promise<PNGAvatar> {
-        const vertexShader = context.createShader({type: 'vertex', source: VERTEX_SHADER});
-        const fragmentShader = context.createShader({type: 'fragment', source: FRAGMENT_SHADER});
+        const vertexShader = context.createShader({type: 'vertex', source: MVP_VERTEX_SHADER});
+        const fragmentShader = context.createShader({type: 'fragment', source: TEXTURE_FRAGMENT_SHADER});
         const program = context.createProgram([vertexShader, fragmentShader]);
+        const baseMesh = await PNGAvatar.createTextureMesh(context, options.base);
+        const activeMesh = options.active ? await PNGAvatar.createTextureMesh(context, options.active) : baseMesh;
+        const deafenedMesh = options.deafened ? await PNGAvatar.createTextureMesh(context, options.deafened) : baseMesh;
+        const mutedMesh = options.muted ? await PNGAvatar.createTextureMesh(context, options.muted) : baseMesh;
         return new PNGAvatar(
             context,
             program,
-            options.base,
-            options.active,
-            options.deafened,
-            options.muted,
+            baseMesh,
+            activeMesh,
+            deafenedMesh,
+            mutedMesh,
         );
     }
 
-    private static createTextureMesh(context: GlContext, source: TextureSource): TextureMesh {
+    private static async createTextureMesh(context: GlContext, body: Uint8Array): Promise<Promise<TextureMesh>> {
+        const type = getFileType(body);
+        const image = await createImage(body);
+        const imageDecoder = new ImageDecoder({
+            data: body,
+            type: type,
+        });
+        const frames: VideoFrame[] = [];
+        const firstFrame = await imageDecoder.decode();
+        const track = imageDecoder.tracks.selectedTrack;
+        if (!track) {
+            throw new Error('No video track found');
+        }
+        for (let i = 0; i < track.frameCount; i++) {
+            const { image } = await imageDecoder.decode({frameIndex: i, completeFramesOnly: true});
+            frames.push(image);
+        }
         const texture = context.createTexture();
         texture.use(() => {
             texture.setParams({
@@ -123,10 +173,10 @@ export class PNGAvatar implements Avatar {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-            texture.setImage(source.image, {
+            texture.setImage(image.image, {
                 internalFormat: 'rgba',
-                width: source.width,
-                height: source.height,
+                width: image.width,
+                height: image.height,
             });
         });
         const vertices = context.createBuffer();
@@ -151,13 +201,27 @@ export class PNGAvatar implements Avatar {
                 0, 0,
             ]), 'static');
         });
-        return {vertices, texCoords, texture, source};
+        return {
+            vertices,
+            texCoords,
+            texture,
+            source: {
+                frames: frames,
+                duration: firstFrame.image.duration || 1000 / 30,
+                width: image.width,
+                height: image.height,
+            },
+            createdTime: performance.now(),
+        };
     }
 
     private updateTextureMesh(mesh: TextureMesh) {
         mesh.texture.use(() => {
             const { source } = mesh
-            mesh.texture.setImage(source.image, {
+            const time = (performance.now() - mesh.createdTime);
+            const fpm = source.duration / 1000;
+            const frame = source.frames[Math.floor(time / fpm) % source.frames.length];
+            mesh.texture.setImage(frame, {
                 internalFormat: 'rgba',
                 width: source.width,
                 height: source.height,
@@ -205,6 +269,7 @@ export class PNGAvatar implements Avatar {
             });
             
             const textureMesh = this.getTextureMesh(action);
+            this.updateTextureMesh(textureMesh);
             this.frameBuffer.use(() => {
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
@@ -277,6 +342,16 @@ export class PNGAvatar implements Avatar {
                 })
             });
         }
-        return { render };
+        const bounds = () => {
+            const { width, height } = this.base.source;
+            return {
+                min: new Vec2(-126 * 2.5 / 2, -126 * 2.5 / 2 * height / width),
+                max: new Vec2(126 * 2.5 / 2, 126 * 2.5 / 2 * height / width),
+            };
+        }
+        return {
+            render,
+            bounds,
+        };
     }
 }
