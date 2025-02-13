@@ -127,7 +127,11 @@
         }
         let stage: keyof typeof STAGES = 'checkUpdate';
         try {
-            update = await checkUpdate();
+            try {
+                update = await checkUpdate();
+            } catch (e) {
+                console.error('Failed to check update', e);
+            }
             await loadLocale();
             stage = 'waitingForTauri';
             await waitForTauri();
