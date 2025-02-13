@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.6 (2025-02-13)
+
+
+### Bug Fixes
+
+* **dash:** 管理画面の起動画面を作り直した ([a2ba6c8](https://github.com/OMUAPPS/omuapps/commit/a2ba6c8d7b0078e03f437bd3c4ed272f7c6d557c))
+
+
+
+
+
 ## 0.9.5 (2025-02-12)
 
 **Note:** Version bump only for package @omujs/chat
