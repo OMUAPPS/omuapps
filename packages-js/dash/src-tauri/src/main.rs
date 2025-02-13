@@ -156,7 +156,7 @@ async fn start_server(
     }
 
     let token = server.token.clone();
-    server_mutex.replace(server);
+    *server_mutex = Some(server);
     Ok(Some(token))
 }
 
