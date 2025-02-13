@@ -90,7 +90,7 @@ class JsonSerializer[T](Serializer[T, bytes]):
         )
 
     def _serialize(self, item: T) -> bytes:
-        return json.dumps(item).encode("utf-8")
+        return json.dumps(item, ensure_ascii=False).encode("utf-8")
 
     def _deserialize(self, item: bytes) -> T:
         decoded = item.decode("utf-8")
