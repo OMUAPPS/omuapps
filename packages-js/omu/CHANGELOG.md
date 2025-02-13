@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.8 (2025-02-13)
+
+
+### Bug Fixes
+
+* **dash:** タブが保持されない問題を修正 ([bca7ed5](https://github.com/OMUAPPS/omuapps/commit/bca7ed5c86bd3824482c5678daa3830dce640d0c))
+
+
+
+
+
 ## 0.9.7 (2025-02-13)
 
 
