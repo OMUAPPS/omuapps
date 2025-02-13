@@ -172,14 +172,16 @@
     </div>
     <div class="page-container">
         {#each Object.entries($pages) as [id, entry] (id)}
-            {#if entry.type === 'loaded'}
-                <div class="page" class:visible={$currentPage === id}>
-                    <svelte:component
-                        this={entry.page.component}
-                        props={entry.page.props}
-                    />
-                </div>
-            {/if}
+            {#key id}
+                {#if entry.type === 'loaded'}
+                    <div class="page" class:visible={$currentPage === id}>
+                        <svelte:component
+                            this={entry.page.component}
+                            props={entry.page.props}
+                        />
+                    </div>
+                {/if}
+            {/key}
         {/each}
     </div>
 </main>
