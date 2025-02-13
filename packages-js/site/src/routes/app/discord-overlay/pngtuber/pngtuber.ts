@@ -494,8 +494,8 @@ export class PNGTuber implements Avatar {
                 const frameCount = this.spriteProgram.getUniform('u_frame_count').asFloat();
                 frameCount.set(layerData.frames);
                 const frameUniform = this.spriteProgram.getUniform('u_frame').asFloat();
-                const elapsed = context.timer.getElapsedMS();
-                const frame = Math.floor(elapsed / layerData.animSpeed / 60) % layerData.frames;
+                const elapsed = context.timer.getElapsedMS() / 1000 / 6;
+                const frame = Math.floor(elapsed * (layerData.animSpeed + 1)) % layerData.frames;
                 frameUniform.set(layerData.frames > 1 ? frame : 0);
                 const positionAttribute = this.spriteProgram.getAttribute('a_position');
                 positionAttribute.set(layerData.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
