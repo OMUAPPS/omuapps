@@ -54,6 +54,7 @@
     });
 
     async function loadPage(id: string, pageItem: PageItem<unknown>) {
+        if ($pages[id] && $pages[id].type === 'loaded') return;
         $pages[id] = { type: 'loading' };
         console.log('loading', id);
         const page = await pageItem.open();
