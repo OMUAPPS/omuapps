@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.7 (2025-02-13)
+
+
+### Bug Fixes
+
+* **dash:** 起動画面のタイトルバーを修正 ([1b73268](https://github.com/OMUAPPS/omuapps/commit/1b7326893d9d21740a1404cb9f0e50b86f3a8c43))
+
+
+
+
+
 ## 0.9.6 (2025-02-13)
 
 
