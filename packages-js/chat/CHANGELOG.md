@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.10 (2025-02-13)
+
+
+### Bug Fixes
+
+* **omu, dash:** omu.server.shutdownで処理が止まる問題を修正 ([f92e3ff](https://github.com/OMUAPPS/omuapps/commit/f92e3ff11ed79878720bc12bf4f3b20e01d3f970))
+
+
+
+
+
 ## 0.9.9 (2025-02-13)
 
 **Note:** Version bump only for package @omujs/chat
