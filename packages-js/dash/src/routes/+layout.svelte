@@ -36,22 +36,23 @@
     import { omu } from '$lib/client.js';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
+    import title from '$lib/images/title.svg';
     import { language } from '$lib/main/settings.js';
     import {
         applyUpdate,
-        appWindow,
         checkUpdate,
         invoke,
         listen,
         waitForTauri,
         type Progress,
-        type UpdateEvent,
+        type UpdateEvent
     } from '$lib/tauri.js';
     import { createI18nUnion, type I18n } from '@omujs/i18n';
     import { DisconnectPacket, DisconnectType } from '@omujs/omu/network/packet/packet-types.js';
     import '@omujs/ui';
     import { Theme } from '@omujs/ui';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
+    import { exit } from '@tauri-apps/plugin-process';
     import type { Update } from '@tauri-apps/plugin-updater';
     import { onMount } from 'svelte';
     import LoadingStatus from './_components/LoadingStatus.svelte';
@@ -208,8 +209,10 @@
     {:else}
         <div class="window">
             <div class="title" data-tauri-drag-region>
-                <span>aa</span>
-                <button on:click={() => appWindow.close()} aria-label="Close">
+                <img src={title} alt="Logo" />
+                <button on:click={() => {
+                    exit();
+                }} aria-label="Close">
                     <i class="ti ti-x"></i>
                 </button>
             </div>
@@ -263,9 +266,12 @@
         height: 2rem;
         outline: 1px solid var(--color-outline);
         display: flex;
+        align-items: center;
+        padding-left: 0.5rem;
 
-        > span {
+        > img {
             margin-right: auto;
+            height: 0.75rem;
         }
 
         > button {
@@ -274,6 +280,12 @@
             color: var(--color-1);
             background: none;
             border: none;
+            z-index: 1;
+
+            &:hover {
+                background: var(--color-1);
+                color: var(--color-bg-1);
+            }
         }
     }
 
