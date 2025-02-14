@@ -239,7 +239,7 @@ def update_config(server: Server):
     config = get_config()
     dashboard = server.directories.dashboard
     if dashboard:
-        config["launch"] = LaunchCommand(args=[str(dashboard), "--background"])
+        config["launch"] = LaunchCommand(args=[dashboard.resolve().as_posix(), "--background"])
     config["python_path"] = get_python_directory()
     config["log_path"] = LOG_DIRECTORY.resolve().as_posix()
     logger.info(f"Updated config: {config}")

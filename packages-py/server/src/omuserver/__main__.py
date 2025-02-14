@@ -76,7 +76,7 @@ def main(
         secure=False,
     )
     if dashboard_path:
-        config.directories.dashboard = Path(dashboard_path)
+        config.directories.dashboard = Path(dashboard_path).resolve()
 
     if token:
         config.dashboard_token = token
