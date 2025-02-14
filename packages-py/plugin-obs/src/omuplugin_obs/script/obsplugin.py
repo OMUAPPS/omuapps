@@ -583,7 +583,6 @@ def script_load():
 
 
 async def start_omu():
-    omu.network.event.disconnected += stop_omu
     try:
         if omu.running:
             await omu.stop()
@@ -605,3 +604,6 @@ def script_unload():
 async def stop_omu():
     await omu.stop()
     print("OBS Plugin is stopped")
+
+
+omu.network.event.disconnected += stop_omu
