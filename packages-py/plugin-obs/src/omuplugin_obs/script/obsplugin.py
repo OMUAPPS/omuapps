@@ -552,17 +552,22 @@ def on_event(event: OBSFrontendEvent):
     loop.create_task(event_signal.notify(event.name))
 
 
+@omu.network.event.connected.listen
+async def on_connected():
+    logger.info(f"Coneected to {omu.network.address.host}:{omu.network.address.port}")
+
+
 @omu.on_ready
 async def on_ready():
-    print("OBS Plugin is ready")
+    logger.info(f"OBS Plugin {VERSION} is ready!")
 
 
 _LOOP: asyncio.AbstractEventLoop | None = None
 _THREAD: threading.Thread | None = None
 
 
-def run_stuff():
-    print("Running OBS Plugin")
+def setup_obs_plugin():
+    logger.info("Setting up OBS Plugin")
     global _LOOP
     _LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_LOOP)
@@ -578,7 +583,7 @@ def run_stuff():
 
 def script_load():
     global _THREAD
-    _THREAD = threading.Thread(None, run_stuff, daemon=True)
+    _THREAD = threading.Thread(None, setup_obs_plugin, daemon=True)
     _THREAD.start()
 
 

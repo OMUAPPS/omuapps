@@ -34,7 +34,7 @@ def launch_server():
         startupinfo=startup_info,
         creationflags=subprocess.CREATE_NO_WINDOW,
     )
-    logger.info(f"Launched {process.pid}")
+    logger.info(f"Launched dashboard with PID {process.pid} using command {launch_command}")
 
 
 def script_load(settings):
