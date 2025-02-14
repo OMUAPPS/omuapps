@@ -8,7 +8,7 @@
     import Title from './images/title.svg';
     import { isBetaEnabled } from './main/settings.js';
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
-    import { appWindow, invoke, listen } from './tauri.js';
+    import { appWindow, listen } from './tauri.js';
     import { VERSION } from './version.js';
 
     let alwaysOnTop = false;
@@ -39,22 +39,22 @@
 
     onDestroy(async () => (await destroy)());
 
-    function togglePin() {
+    async function togglePin() {
         alwaysOnTop = !alwaysOnTop;
-        appWindow.setAlwaysOnTop(alwaysOnTop);
+        await appWindow.setAlwaysOnTop(alwaysOnTop);
     }
 
-    function minimize() {
-        appWindow.minimize();
+    async function minimize() {
+        await appWindow.minimize();
     }
 
     async function maximize() {
-        appWindow.toggleMaximize();
-        maximized = !(await appWindow.isMaximized());
+        await appWindow.toggleMaximize();
+        maximized = await appWindow.isMaximized();
     }
 
-    function close() {
-        invoke('close_window');
+    async function close() {
+        await appWindow.hide();
     }
 </script>
 

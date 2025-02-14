@@ -1,3 +1,4 @@
+use std::fs::canonicalize;
 use std::io::BufRead;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -9,8 +10,8 @@ use rand::Rng;
 use tauri::utils::platform::current_exe;
 use tauri::{AppHandle, Emitter};
 
+use crate::progress::Progress;
 use crate::version::VERSION;
-use crate::Progress;
 use crate::{python::Python, uv::Uv};
 
 const LATEST_PIP: &str = "pip==23.3.2";
@@ -211,10 +212,19 @@ impl Server {
         cmd.arg("--port");
         cmd.arg(self.option.port.to_string());
         cmd.arg("--dashboard-path");
-        cmd.arg(current_exe().unwrap());
+        let executable = canonicalize(current_exe().unwrap())
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+        info!("Executable: {}", executable);
+        cmd.arg(executable);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.current_dir(&self.option.data_dir);
+        info!(
+            "Starting server with args: {:?} in {:?}",
+            cmd, self.option.data_dir
+        );
         let child = cmd.spawn().map_err(|err| {
             let msg = format!("Failed to start server: {}", err);
             on_progress(Progress::ServerStartFailed { msg: msg.clone() });
