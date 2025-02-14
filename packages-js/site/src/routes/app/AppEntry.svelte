@@ -12,7 +12,6 @@
     async function install() {
         const { accepted } = await omu.dashboard.installApp(app);
         if (!accepted) return;
-        await omu.dashboard.openApp(app);
         console.log(`App ${app.id.key()} added`);
         alreadyAdded = true;
     }
