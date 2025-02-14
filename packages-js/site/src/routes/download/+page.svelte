@@ -1,7 +1,7 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
     import { IS_BETA } from '$lib/consts.js';
-    import { FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import { Tooltip } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import { onMount } from 'svelte';
     import { getPlatform, type Platform, type VersionManifest } from './download.js';
@@ -82,7 +82,7 @@
                 にお問い合わせいただけると幸いです。
             </p>
         </div>
-        <p>
+        <div>
             {#if loading}
                 <small> 読み込み中... </small>
             {:else if manifest && version}
@@ -107,7 +107,7 @@
                 </p>
                 <br />
                 {@const date = new Date(manifest.pub_date)}
-                <FlexRowWrapper>
+                <div>
                     <a href={version.url} class="download" on:click={() => (downloading = true)}>
                         <Tooltip>
                             {version.platform} 用のインストーラーをダウンロードします
@@ -122,10 +122,10 @@
                     <button on:click={() => (showExtra = !showExtra)} class="extra">
                         <small>
                             別のインストール方法
-                            <i class="ti ti-chevron-{showExtra ? 'up' : 'down'}" />
+                            <i class="ti ti-chevron-{showExtra ? 'up' : 'down'}"></i>
                         </small>
                     </button>
-                </FlexRowWrapper>
+                </div>
                 {#if showExtra}
                     <ul>
                         {#each Object.entries(manifest.platforms) as [key, platform] (key)}
@@ -162,7 +162,7 @@
             {:else}
                 <small> お使いのプラットフォームはサポートされていませんでした… </small>
             {/if}
-        </p>
+        </div>
     </main>
 </Page>
 

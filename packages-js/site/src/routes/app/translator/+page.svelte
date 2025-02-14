@@ -1,6 +1,6 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { AppHeader, ButtonMini, Combobox, FlexRowWrapper, Toggle } from '@omujs/ui';
+    import { AppHeader, ButtonMini, Combobox, Toggle } from '@omujs/ui';
     import { APP } from './app.js';
     import { config, omu } from './client.js';
     import { LANGUAGE_OPTIONS } from './translator.js';
@@ -16,44 +16,43 @@
 
 <AppPage>
     <header slot="header">
-        <AppHeader app={APP}>
-            {#await promise then }
-                <FlexRowWrapper alignItems="center" gap>
-                    <small>オン/オフ</small>
-                    <Toggle bind:value={$config.active} />
-                </FlexRowWrapper>
-            {/await}
-        </AppHeader>
+        <AppHeader app={APP} />
     </header>
 
-    <main>
-        <h3>翻訳言語</h3>
-        <section>
-            {#each $config.languages as language, i}
-                <FlexRowWrapper>
-                    <Combobox options={LANGUAGE_OPTIONS} bind:value={language} />
-                    <ButtonMini
-                        on:click={() => {
-                            $config = {
-                                ...$config,
-                                languages: $config.languages.filter((_, j) => i !== j),
-                            };
-                        }}
-                    >
-                        <i class="ti ti-x"></i>
-                    </ButtonMini>
-                </FlexRowWrapper>
-            {/each}
-            <ButtonMini
-                on:click={() => {
-                    $config = { ...$config, languages: [...$config.languages, 'ja'] };
-                }}
-            >
-                言語を追加
-                <i class="ti ti-plus"></i>
-            </ButtonMini>
-        </section>
-    </main>
+    {#await promise then }
+        <main>
+            <section>
+                <small>オン/オフ</small>
+                <Toggle bind:value={$config.active} />
+            </section>
+            <h3>翻訳言語</h3>
+            <section>
+                {#each $config.languages as language, i}
+                    <div class="lang">
+                        <Combobox options={LANGUAGE_OPTIONS} bind:value={language} />
+                        <ButtonMini
+                            on:click={() => {
+                                $config = {
+                                    ...$config,
+                                    languages: $config.languages.filter((_, j) => i !== j),
+                                };
+                            }}
+                        >
+                            <i class="ti ti-x"></i>
+                        </ButtonMini>
+                    </div>
+                {/each}
+                <ButtonMini
+                    on:click={() => {
+                        $config = { ...$config, languages: [...$config.languages, 'ja'] };
+                    }}
+                >
+                    言語を追加
+                    <i class="ti ti-plus"></i>
+                </ButtonMini>
+            </section>
+        </main>
+    {/await}
 </AppPage>
 
 <style lang="scss">
@@ -84,5 +83,11 @@
         margin-bottom: 20px;
         background: var(--color-bg-2);
         color: var(--color-1);
+    }
+
+    .lang {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
 </style>

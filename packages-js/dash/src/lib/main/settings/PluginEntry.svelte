@@ -1,6 +1,7 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
     import type { PluginPackageInfo } from '@omujs/omu/extension/plugin/plugin-extension.js';
+    import { Button } from '@omujs/ui';
 
     export let entry: PluginPackageInfo;
 </script>
@@ -15,20 +16,20 @@
         </small>
     </div>
     <div class="actions">
-        <button on:click={() => {
+        <Button primary onclick={() => {
             const url = `https://pypi.org/project/${entry.package}`;
             window.open(url, '_blank');
         }}>
             PyPi <i class="ti ti-external-link"></i>
-        </button>
-        <button on:click={() => {
+        </Button>
+        <Button primary onclick={() => {
             omu.plugins.reload({
                 packages: [entry.package],
             });
         }}>
             Reload
             <i class="ti ti-reload"></i>
-        </button>
+        </Button>
     </div>
 </li>
 
@@ -64,28 +65,6 @@
     .actions {
         visibility: hidden;
         display: flex;
-
-        button {
-            display: flex;
-            align-items: baseline;
-            gap: 0.25rem;
-            margin-left: 0.5rem;
-            padding: 0.5rem 1rem;
-            border: none;
-            color: var(--color-bg-1);
-            background: var(--color-1);
-            border-bottom: 1px solid var(--color-outline);
-            border-radius: 3px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            white-space: nowrap;
-
-            &:hover {
-                background: var(--color-bg-2);
-                color: var(--color-1);
-                outline: 1px solid var(--color-1);
-                outline-offset: -2px;
-            }
-        }
+        gap: 0.25rem;
     }
 </style>

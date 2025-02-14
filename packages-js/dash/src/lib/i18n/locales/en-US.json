@@ -90,7 +90,8 @@
             "title": "Comments/Messages",
             "bookmark": "Bookmark",
             "copy": "Copy",
-            "see_in_room": "See in stream"
+            "see_in_room": "See in stream",
+            "paid": "Donation"
         },
         "apps": {
             "title": "Apps",

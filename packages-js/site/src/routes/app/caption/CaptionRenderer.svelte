@@ -2,9 +2,10 @@
     import type { CaptionApp } from './caption-app.js';
 
     export let captionApp: CaptionApp;
+    export let placeholder = '';
     const { config } = captionApp;
 
-    let text = '';
+    let text = placeholder;
     captionApp.listen((caption) => {
         text = caption.texts.join(' ');
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { App } from '@omujs/omu';
-    import { FlexColWrapper, FlexRowWrapper, Localized, Tooltip } from '@omujs/ui';
+    import { Button, Localized, Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { omu } from '../client.js';
     import { appTable } from './apps.js';
@@ -46,59 +46,55 @@
         <img src={omu.i18n.translate(app.metadata.image)} alt="" class="thumbnail" />
     {/if}
     <div class="overlay">
-        <FlexRowWrapper alignItems="start" widthFull heightFull between>
-            <FlexColWrapper widthFull heightFull between>
-                {#if app.metadata}
-                    <FlexRowWrapper alignItems="center">
-                        <span class="icon">
-                            {#if BROWSER && app.metadata.icon}
-                                {@const icon = omu.i18n.translate(app.metadata.icon)}
-                                {#if icon.startsWith('ti-')}
-                                    <i class="ti {icon}"></i>
-                                {:else}
-                                    <img src={icon} alt="" />
-                                {/if}
+        <div class="info">
+            {#if app.metadata}
+                <div class="meta">
+                    <span class="icon">
+                        {#if BROWSER && app.metadata.icon}
+                            {@const icon = omu.i18n.translate(app.metadata.icon)}
+                            {#if icon.startsWith('ti-')}
+                                <i class="ti {icon}"></i>
                             {:else}
-                                <i class="ti ti-app"></i>
+                                <img src={icon} alt="" />
                             {/if}
-                        </span>
-                        <span>
-                            <p class="name">
-                                <Localized text={app.metadata.name} />
-                            </p>
-                            <small class="description">
-                                <Localized text={app.metadata.description} />
-                            </small>
-                        </span>
-                    </FlexRowWrapper>
-                {/if}
-                <small class="tag-list">
-                    {#each tags || [] as { id, data } (id)}
-                        <span class="tag" class:dev={id === 'underdevelopment'}>
-                            {#if data}
-                                <i class="ti ti-{data.icon}"></i>
-                                <p><Localized text={data.name} /></p>
-                                <Tooltip>
-                                    <Localized text={data.description} />
-                                </Tooltip>
-                            {:else}
-                                <i class="ti ti-tag"></i>
-                                {id}
-                            {/if}
-                        </span>
-                    {/each}
-                </small>
-            </FlexColWrapper>
-            <FlexRowWrapper>
-                <button on:click={() => (alreadyAdded ? launch() : install())} class:active={alreadyAdded}>
-                    <Tooltip>
-                        {alreadyAdded ? 'このアプリを起動する' : '管理画面に追加する'}
-                    </Tooltip>
-                    {alreadyAdded ? '開く' : '追加'}
-                    <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'}></i>
-                </button>
-            </FlexRowWrapper>
-        </FlexRowWrapper>
+                        {:else}
+                            <i class="ti ti-app"></i>
+                        {/if}
+                    </span>
+                    <span>
+                        <p class="name">
+                            <Localized text={app.metadata.name} />
+                        </p>
+                        <small class="description">
+                            <Localized text={app.metadata.description} />
+                        </small>
+                    </span>
+                </div>
+            {/if}
+            <small class="tag-list">
+                {#each tags || [] as { id, data } (id)}
+                    <span class="tag" class:dev={id === 'underdevelopment'}>
+                        {#if data}
+                            <i class="ti ti-{data.icon}"></i>
+                            <p><Localized text={data.name} /></p>
+                            <Tooltip>
+                                <Localized text={data.description} />
+                            </Tooltip>
+                        {:else}
+                            <i class="ti ti-tag"></i>
+                            {id}
+                        {/if}
+                    </span>
+                {/each}
+            </small>
+        </div>
+        <Button onclick={alreadyAdded ? launch : install} primary={!alreadyAdded}>
+            <Tooltip>
+                {alreadyAdded ? 'このアプリを起動する' : '管理画面に追加する'}
+            </Tooltip>
+            {alreadyAdded ? '開く' : '追加'}
+            <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'}></i>
+        </Button>
     </div>
 </article>
 
@@ -126,6 +122,30 @@
         }
     }
 
+    .overlay {
+        position: relative;
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex: 1;
+    }
+
+    .info {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 0.5rem;
+        width: 100%;
+        height: 100%;
+    }
+
+    .meta {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
     .thumbnail {
         position: absolute;
         inset: 1px;
@@ -133,11 +153,6 @@
         height: calc(100% - 2px);
         object-fit: cover;
         filter: blur(.0621rem) contrast(0.621) brightness(1.23621);
-    }
-
-    .overlay {
-        position: relative;
-        height: 100%;
     }
 
     article:hover {
@@ -153,14 +168,17 @@
         margin-left: 0.25rem;
         margin-top: 0.25rem;
         margin-right: 0.5rem;
-        font-size: 1.25rem;
         width: 40px;
         height: 40px;
 
-        img {
+        > img {
             width: 40px;
             height: 40px;
             border-radius: 50%;
+        }
+
+        > .ti {
+            font-size: 1.25rem;
         }
     }
 
@@ -250,36 +268,6 @@
                     display: none;
                 }
             }
-        }
-    }
-
-    button {
-        display: flex;
-        align-items: baseline;
-        gap: 0.25rem;
-        margin-left: 0.5rem;
-        padding: 0.5rem 1rem;
-        border: none;
-        color: var(--color-bg-1);
-        background: var(--color-1);
-        border-bottom: 1px solid var(--color-outline);
-        border-radius: 3px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        white-space: nowrap;
-
-        &.active {
-            background: var(--color-bg-2);
-            color: var(--color-1);
-            outline: 1px solid var(--color-1);
-            outline-offset: -2px;
-        }
-
-        &:hover {
-            background: var(--color-bg-2);
-            color: var(--color-1);
-            outline: 1px solid var(--color-1);
-            outline-offset: -2px;
         }
     }
 </style>

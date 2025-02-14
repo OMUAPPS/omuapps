@@ -1,7 +1,6 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs/index.js';
-    import { FlexRowWrapper } from '@omujs/ui';
     import github from 'svelte-highlight/styles/github';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
@@ -25,15 +24,13 @@
     <header slot="header">
         {#if $docs}
             {@const meta = $docs.meta}
-            <FlexRowWrapper widthFull heightFull between>
-                <span>
-                    <h1>
-                        {meta.title}
-                        <i class="ti ti-{meta.icon || 'pencil'}"></i>
-                    </h1>
-                    <small> {meta.description} </small>
-                </span>
-            </FlexRowWrapper>
+            <span>
+                <h1>
+                    {meta.title}
+                    <i class="ti ti-{meta.icon || 'pencil'}"></i>
+                </h1>
+                <small> {meta.description} </small>
+            </span>
         {/if}
     </header>
     <main slot="content">

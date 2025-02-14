@@ -1,68 +1,69 @@
 <script lang="ts">
-    import { FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import { Tooltip } from '@omujs/ui';
 </script>
 
 <footer>
-    <FlexRowWrapper gap between heightFull>
-        <div class="category">
+    <div class="category">
+        <p>
+            Social
+            <i class="ti ti-share"></i>
+        </p>
+        <a href="https://github.com/OMUAPPS/omuapps">
             <p>
-                Social
-                <i class="ti ti-share"></i>
+                <i class="ti ti-brand-github"></i>
+                Github
+                <i class="ti ti-external-link"></i>
             </p>
-            <a href="https://github.com/OMUAPPS/omuapps">
-                <p>
-                    <i class="ti ti-brand-github"></i>
-                    Github
-                    <i class="ti ti-external-link"></i>
-                </p>
-            </a>
-            <a href="https://twitter.com/omuapps">
-                <p>
-                    <i class="ti ti-brand-twitter"></i>
-                    Twitter
-                    <i class="ti ti-external-link"></i>
-                </p>
-            </a>
-            <a href="https://discord.gg/MZKvbPpsuK">
-                <p>
-                    <i class="ti ti-brand-discord"></i>
-                    Discord
-                    <i class="ti ti-external-link"></i>
-                </p>
-            </a>
-        </div>
-        <div class="category">
+        </a>
+        <a href="https://twitter.com/omuapps">
             <p>
-                Legal
-                <i class="ti ti-file"></i>
+                <i class="ti ti-brand-twitter"></i>
+                Twitter
+                <i class="ti ti-external-link"></i>
             </p>
-            <a href="/legal/privacy">
-                <p class="between">
-                    <Tooltip>
-                        <p class="hint">使っていただける方へお約束</p>
-                    </Tooltip>
-                    プライバシーポリシー
-                    <i class="ti ti-external-link"></i>
-                </p>
-            </a>
-            <a href="/legal/terms">
-                <p class="between">
-                    <Tooltip>
-                        <p class="hint">使っていただくにあたって</p>
-                    </Tooltip>
-                    利用規約
-                    <i class="ti ti-external-link"></i>
-                </p>
-            </a>
-            <p style:text-align="end" style:margin-top="auto">
-                <a href="https://x.com/2ji_han">🕝</a>
+        </a>
+        <a href="https://discord.gg/MZKvbPpsuK">
+            <p>
+                <i class="ti ti-brand-discord"></i>
+                Discord
+                <i class="ti ti-external-link"></i>
             </p>
-        </div>
-    </FlexRowWrapper>
+        </a>
+    </div>
+    <div class="category">
+        <p>
+            Legal
+            <i class="ti ti-file"></i>
+        </p>
+        <a href="/legal/privacy">
+            <p class="between">
+                <Tooltip>
+                    <p class="hint">使っていただける方へお約束</p>
+                </Tooltip>
+                プライバシーポリシー
+                <i class="ti ti-external-link"></i>
+            </p>
+        </a>
+        <a href="/legal/terms">
+            <p class="between">
+                <Tooltip>
+                    <p class="hint">使っていただくにあたって</p>
+                </Tooltip>
+                利用規約
+                <i class="ti ti-external-link"></i>
+            </p>
+        </a>
+        <p style:text-align="end" style:margin-top="auto">
+            <a href="https://x.com/2ji_han">🕝</a>
+        </p>
+    </div>
 </footer>
 
 <style lang="scss">
     footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 2rem;
         height: fit-content;
         width: 100%;
         margin-top: 10rem;

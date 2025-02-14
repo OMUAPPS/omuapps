@@ -2,6 +2,7 @@
     import Screen from '$lib/screen/Screen.svelte';
     import type { ScreenHandle } from '$lib/screen/screen.js';
     import { applyUpdate, type UpdateEvent } from '$lib/tauri.js';
+    import { Button } from '@omujs/ui';
     import { type Update } from '@tauri-apps/plugin-updater';
 
     export let screen: {
@@ -34,16 +35,14 @@
                 {update.body}
             </p>
             <div class="actions">
-                <button on:click={screen.handle.pop} class="cancel">
+                <Button onclick={screen.handle.pop}>
                     スキップ
                     <i class="ti ti-x"></i>
-                </button>
-                <button on:click={() => {
-                    applyUpdate(update, (progress) => state = progress);
-                }} class="update">
+                </Button>
+                <Button primary onclick={() => applyUpdate(update, (progress) => state = progress)}>
                     アップデート
                     <i class="ti ti-arrow-right"></i>
-                </button>
+                </Button>
             </div>
         </div>
     {:else if state.type === 'updating'}
@@ -99,33 +98,6 @@
         display: flex;
         gap: 1rem;
         margin-top: 1rem;
-    }
-
-    button {
-        padding: 0.5rem 1rem;
-        outline: 1px solid var(--color-1);
-        border: none;
-        background: var(--color-1);
-        color: var(--color-bg-1);
-        font-weight: 600;
-        cursor: pointer;
-
-        &:hover {
-            background: var(--color-bg-1);
-            color: var(--color-1);
-        }
-    }
-
-    .cancel {
-        background: none;
-        outline: none;
-        color: var(--color-1);
-
-        &:hover {
-            background: var(--color-bg-1);
-            color: var(--color-1);
-            outline: 1px solid var(--color-1);
-        }
     }
 
     progress {

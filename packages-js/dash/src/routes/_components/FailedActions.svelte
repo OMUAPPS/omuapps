@@ -1,40 +1,34 @@
 <script lang="ts">
     import { invoke } from '$lib/tauri.js';
-    import { Spinner } from '@omujs/ui';
+    import { Button, Spinner } from '@omujs/ui';
 
     export let restart: () => void;
     export let cleanEnvironment: () => void;
-
-    let logPromise: Promise<unknown> | null = null;
 </script>
 <div class="actions">
-    <button on:click={restart}>
-        再起動
-        <i class="ti ti-rotate-clockwise"></i>
-    </button>
-    <button on:click={cleanEnvironment}>
-        環境を再構築
-        <i class="ti ti-trash-x"></i>
-    </button>
-    <!-- <button on:click={() => invoke('generate_log_file')}>
-        ログを生成
-    </button> -->
-    {#if logPromise}
-        <button disabled>
-            ログを生成中
-            <Spinner />
-        </button>
-    {:else}
-        <button on:click={() => {
-            logPromise = invoke('generate_log_file');
-            logPromise.finally(() => {
-                logPromise = null;
-            });
-        }}>
+    <Button onclick={() => invoke('generate_log_file')} let:promise>
+        {#if promise}
+            {#await promise}
+                ログを生成中
+                <Spinner />
+            {:then}
+                ログを生成しました
+            {:catch e}
+                ログの生成に失敗しました: {e}
+            {/await}
+        {:else}
             ログを生成
             <i class="ti ti-file"></i>
-        </button>
-    {/if}
+        {/if}
+    </Button>
+    <Button primary onclick={restart}>
+        再起動
+        <i class="ti ti-rotate"></i>
+    </Button>
+    <Button primary onclick={cleanEnvironment}>
+        環境を再構築
+        <i class="ti ti-trash-x"></i>
+    </Button>
 </div>
 
 <style lang="scss">
@@ -43,22 +37,5 @@
         gap: 1rem;
         margin-top: 2rem;
         margin-bottom: 2rem;
-
-        > button {
-            padding: 0.5rem 1rem;
-            background: var(--color-1);
-            color: var(--color-bg-2);
-            border: none;
-            border-radius: 2px;
-            font-weight: 600;
-            cursor: pointer;
-
-            &:hover {
-                background: var(--color-bg-1);
-                color: var(--color-1);
-                outline: 1px solid var(--color-1);
-                outline-offset: -1px;
-            }
-        }
     }
 </style>

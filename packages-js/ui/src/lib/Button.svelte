@@ -1,63 +1,88 @@
-<script lang="ts">
-    export let outline = false;
-    export let rounded = false;
-    export let filled = false;
+<script lang="ts" generics="T">
+    export let primary = false;
     export let disabled = false;
+    export let onclick: () => PromiseLike<T> | undefined | void = () => {};
+    export let promise: PromiseLike<T> | undefined | void = undefined;
 </script>
 
 <button
     class="button"
     type="button"
-    on:click
-    class:outline
-    class:rounded
-    class:filled
-    {disabled}
+    on:click={async () => {
+        if (disabled) return;
+        if (promise) {
+            await promise;
+        }
+        promise = onclick();
+        try {
+            await promise;
+        } catch {
+            setTimeout(() => {
+                promise = undefined;
+            }, 3000);
+            return;
+        }
+        promise = undefined;
+    }}
+    class:primary
+    disabled={disabled || !!promise}
 >
-    <slot />
+    <span>
+        <slot {promise} />
+    </span>
 </button>
 
 <style lang="scss">
     .button {
         display: flex;
         align-items: center;
-        justify-content: center;
-        min-width: 40px;
-        min-height: 40px;
-        max-height: 100%;
-        padding-right: 10px;
-        padding-left: 10px;
-        font-size: 16px;
+        background: var(--color-bg-1);
         color: var(--color-1);
-        background: transparent;
+        outline: 1px solid var(--color-1);
+        outline-offset: -1px;
+        border-radius: 2px;
         border: none;
-        outline: none;
-
-        &:hover {
-            color: var(--color-bg-2);
-            background: var(--color-1);
-            outline: 2px solid #fff;
-        }
+        font-weight: 600;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        cursor: pointer;
 
         &:focus {
+            outline: 1px solid var(--color-1);
+            outline-offset: -1px;
+        }
+
+        &:focus-visible {
             outline: 2px solid var(--color-1);
+            outline-offset: 2px;
         }
 
         &:disabled {
-            cursor: not-allowed;
+            background: var(--color-bg-2);
+            outline: 1px solid var(--color-1);
+            color: var(--color-1);
             opacity: 0.5;
+            cursor: not-allowed;
         }
     }
 
-    .outline {
-        border: 1px solid var(--color-1);
+    .primary {
+        background: var(--color-1);
+        color: var(--color-bg-1);
+        justify-content: center;
+
+        &:hover {
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            outline: 1px solid var(--color-1);
+            outline-offset: -1px;
+        }
     }
 
-    .rounded {
-        border-radius: 5px;
-    }
-
-    .filled {
-        background: var(--color-bg-2);
+    span {
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+        padding: 0.5rem 1rem;
     }
 </style>

@@ -90,7 +90,8 @@
             "title": "コメント／メッセージ",
             "bookmark": "ブックマーク",
             "copy": "コピー",
-            "see_in_room": "配信で見る"
+            "see_in_room": "配信で見る",
+            "paid": "投げ銭"
         },
         "apps": {
             "title": "アプリ",

@@ -39,13 +39,10 @@
     import title from '$lib/images/title.svg';
     import { language } from '$lib/main/settings.js';
     import {
-        applyUpdate,
-        checkUpdate,
         invoke,
         listen,
         waitForTauri,
-        type Progress,
-        type UpdateEvent
+        type Progress
     } from '$lib/tauri.js';
     import { createI18nUnion, type I18n } from '@omujs/i18n';
     import { DisconnectPacket, DisconnectType } from '@omujs/omu/network/packet/packet-types.js';
@@ -53,9 +50,9 @@
     import { Theme } from '@omujs/ui';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
     import { exit } from '@tauri-apps/plugin-process';
-    import type { Update } from '@tauri-apps/plugin-updater';
     import { onMount } from 'svelte';
     import LoadingStatus from './_components/LoadingStatus.svelte';
+    import UpdateNotify from './_components/UpdateNotify.svelte';
     import './styles.scss';
 
     const PROGRESS_NAME: Record<Progress['type'], string> = {
@@ -113,25 +110,16 @@
         console.log('status', JSON.stringify(status));
     }
 
-    let update: Update | null = null;
-    let updateProgress: UpdateEvent | null = null;
-
     async function init() {
         const STAGES = {
-            checkUpdate: 'Check Update',
             loadingLocale: 'Loading Locale',
             waitingForTauri: 'Waiting for Tauri',
             listeningToServerState: 'Listening to Server State',
             startingServer: 'Starting Server',
             startingClient: 'Starting Client',
         }
-        let stage: keyof typeof STAGES = 'checkUpdate';
+        let stage: keyof typeof STAGES = 'loadingLocale';
         try {
-            try {
-                update = await checkUpdate();
-            } catch (e) {
-                console.error('Failed to check update', e);
-            }
             await loadLocale();
             stage = 'waitingForTauri';
             await waitForTauri();
@@ -223,34 +211,7 @@
             <div class="status">
                 <LoadingStatus bind:status set={setStatus} />
             </div>
-            {#if update}
-                <div class="update">
-                    {#if updateProgress}
-                        {#if updateProgress.type === 'restarting'}
-                            <span>再起動中...</span>
-                        {:else if updateProgress.type === 'updating'}
-                            <p>更新中...</p>
-                            <p>
-                                {updateProgress.downloaded}/{updateProgress.contentLength}
-                            </p>
-                        {:else if updateProgress.type === 'shutting-down'}
-                            <span>シャットダウン中...</span>
-                        {/if}
-                    {:else}
-                        <p>更新があります</p>
-                        <small>起動しない場合は更新してください</small>
-                        <button on:click={() => {
-                            if (!update) return;
-                            applyUpdate(update, (value) => {
-                                updateProgress = value;
-                            });
-                        }}>
-                            更新
-                            <i class="ti ti-arrow-up"></i>
-                        </button>
-                    {/if}
-                </div>
-            {/if}
+            <UpdateNotify />
         </div>
     {/if}
 </div>
@@ -300,45 +261,5 @@
         align-items: center;
         justify-content: center;
         flex: 1;
-    }
-
-    .update {
-        position: absolute;
-        top: 3rem;
-        right: 2rem;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        justify-content: center;
-        padding: 0.25rem 1rem;
-        padding-top: 0;
-        border-right: 2px solid var(--color-1);
-
-        > p {
-            color: var(--color-1);
-        }
-
-        > small {
-            color: var(--color-text);
-            font-size: 0.8rem;
-        }
-
-        > button {
-            font-weight: 600;
-            margin-top: 1rem;
-            padding: 0.5rem 1rem;
-            background: var(--color-1);
-            color: var(--color-bg-1);
-            border: none;
-            border-radius: 2px;
-            outline-offset: -1px;
-            cursor: pointer;
-
-            &:hover {
-                background: var(--color-bg-2);
-                outline: 1px solid var(--color-1);
-                color: var(--color-1);
-            }
-        }
     }
 </style>

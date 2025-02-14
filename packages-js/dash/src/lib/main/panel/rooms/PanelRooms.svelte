@@ -20,7 +20,7 @@
     <TableList table={chat.rooms} component={RoomEntry} {filter} {sort}>
         <div class="empty">
             {$t('panels.rooms.not_found_rooms')}
-            <Button on:click={openSetup}>
+            <Button onclick={openSetup}>
                 {$t('panels.rooms.question_add_channel')}
                 <i class="ti ti-external-link"></i>
             </Button>

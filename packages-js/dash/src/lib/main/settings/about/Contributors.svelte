@@ -1,6 +1,6 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
-    import { ExternalLink, FlexColWrapper } from '@omujs/ui';
+    import { ExternalLink } from '@omujs/ui';
 
     interface Contributor {
         login: string;
@@ -36,7 +36,7 @@
         });
 </script>
 
-<FlexColWrapper widthFull gap>
+<div class="contributors">
     <h2>
         <i class="ti ti-code"></i>
         {$t('settings.about.contributors')}
@@ -52,9 +52,16 @@
             </h4>
         </ExternalLink>
     {/each}
-</FlexColWrapper>
+</div>
 
 <style lang="scss">
+    .contributors {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: fit-content;
+    }
+
     h4 {
         width: 100%;
         margin: 0;

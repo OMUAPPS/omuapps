@@ -4,7 +4,7 @@
     import { LOCALES } from '$lib/i18n/i18n.js';
     import { screenContext } from '$lib/screen/screen.js';
     import { checkUpdate, invoke } from '$lib/tauri.js';
-    import { Combobox, Header, Tooltip } from '@omujs/ui';
+    import { Button, Combobox, Header, Tooltip } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/plugin-process';
     import UpdateScreen from '../screen/UpdateScreen.svelte';
     import {
@@ -20,27 +20,11 @@
 
     export const props = {};
 
-    let logPromise: Promise<string> | null = null;
-    let restartPromise: Promise<void> | null = null;
-
-    async function generateLogFile(): Promise<string> {
-        let path: string;
-        try {
-            path = await invoke('generate_log_file');
-        } catch (error) {
-            setTimeout(() => (logPromise = null), 3000);
-            throw error;
-        }
-        logPromise = null;
-        return path;
-    }
-
     async function restartServer() {
         if (omu.ready) {
             await omu.server.shutdown(true);
         }
         await new Promise<void>((resolve) => omu.onReady(resolve));
-        restartPromise = null;
         window.location.reload();
     }
 
@@ -158,12 +142,12 @@
                                     {/if}
                                 </small>
                             </div>
-                            <button on:click={() => {
+                            <Button primary onclick={() => {
                                 screenContext.push(UpdateScreen, { update });
                             }}>
                                 {$t('settings.setting.update')}
                                 <i class="ti ti-arrow-up"></i>
-                            </button>
+                            </Button>
                         </span>
                     {/if}
                 {:catch error}
@@ -205,62 +189,50 @@
                     {$t('settings.setting.debug')}
                 </h3>
                 <span class="setting">
-                    {#if restartPromise}
-                        {#await restartPromise}
-                            <button disabled>
+                    <Button primary onclick={restartServer} let:promise>
+                        {#if promise}
+                            {#await promise}
                                 {$t('settings.setting.serverRestarting')}
-                            </button>
-                        {:then}
-                            <button>
+                            {:then}
                                 {$t('settings.setting.serverRestarted')}
-                            </button>
-                        {:catch error}
-                            <button>
+                            {:catch error}
                                 {$t('settings.setting.serverRestartError', {
                                     error,
                                 })}
-                            </button>
-                        {/await}
-                    {:else}
-                        <button on:click={() => (restartPromise = restartServer())}>
+                            {/await}
+                        {:else}
                             {$t('settings.setting.serverRestart')}
-                        </button>
-                    {/if}
+                        {/if}
+                    </Button>
                 </span>
                 <span class="setting">
-                    {#if logPromise}
-                        {#await logPromise}
-                            <button disabled>
+                    <Button primary onclick={() => invoke('generate_log_file')} let:promise>
+                        {#if promise}
+                            {#await promise}
                                 {$t('settings.setting.logFileGenerating')}
-                            </button>
-                        {:then path}
-                            <button>
+                            {:then path}
                                 {$t('settings.setting.logFileGenerated', {
                                     path,
                                 })}
-                            </button>
-                        {:catch error}
-                            <button>
+                            {:catch error}
                                 {$t('settings.setting.logFileGenerateError', {
                                     error,
                                 })}
-                            </button>
-                        {/await}
-                    {:else}
-                        <button on:click={() => (logPromise = generateLogFile())}>
+                            {/await}
+                        {:else}
                             {$t('settings.setting.logFileGenerate')}
-                        </button>
-                    {/if}
+                        {/if}
+                    </Button>
                 </span>
                 <span class="setting clean-environment">
-                    <button
-                        on:click={() => {
-                            screenContext.push(
-                                CleaningEnvironmentScreen,
-                                undefined,
-                            );
-                        }}>{$t('settings.setting.cleanEnvironment')}</button
-                    >
+                    <Button primary onclick={() => {
+                        screenContext.push(
+                            CleaningEnvironmentScreen,
+                            undefined,
+                        );
+                    }}>
+                        {$t('settings.setting.cleanEnvironment')}
+                    </Button>
                 </span>
                 <small>先にOBSを終了する必要があります</small>
             {:else if $currentSettingsCategory === 'plugins'}
@@ -412,25 +384,6 @@
                 color: var(--color-text);
             }
         }
-
-        > button {
-            border: none;
-            background: var(--color-1);
-            color: var(--color-bg-2);
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 0.5rem 1rem;
-            border-radius: 2px;
-            cursor: pointer;
-
-            &:focus-visible,
-            &:hover {
-                outline: 1px solid var(--color-1);
-                outline-offset: -1px;
-                background: var(--color-bg-1);
-                color: var(--color-1);
-            }
-        }
     }
 
     .setting {
@@ -442,31 +395,6 @@
         margin-bottom: 0.25rem;
         margin-top: 0.5rem;
         color: var(--color-1);
-
-        > button {
-            border: none;
-            background: var(--color-1);
-            color: var(--color-bg-2);
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 0.5rem 1rem;
-            border-radius: 2px;
-            cursor: pointer;
-
-            &:focus-visible,
-            &:hover {
-                outline: 1px solid var(--color-1);
-                outline-offset: -1px;
-                background: var(--color-bg-1);
-                color: var(--color-1);
-            }
-
-            &:disabled {
-                background: var(--color-bg-1);
-                color: var(--color-1);
-                cursor: not-allowed;
-            }
-        }
 
         > input {
             width: 1.25rem;

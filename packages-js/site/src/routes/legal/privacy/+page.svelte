@@ -1,22 +1,21 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
-    import { FlexColWrapper, FlexRowWrapper } from '@omujs/ui';
-
+    
     import robotKilled from '$lib/images/robot-killed.svg';
 </script>
 
 <Page>
     <header slot="header">
-        <FlexRowWrapper between alignItems="center">
-            <FlexColWrapper gap>
+        <div class="flex between center">
+            <div class="flex col">
                 <h1>
                     プライバシーポリシー
                     <i class="ti ti-file"></i>
                 </h1>
                 <small>使っていただける方へお約束</small>
-            </FlexColWrapper>
+            </div>
             <img src={robotKilled} alt="robot-reading" />
-        </FlexRowWrapper>
+        </div>
     </header>
     <main slot="content">
         <div class="summary">
@@ -110,5 +109,21 @@
 
     li {
         margin-top: 0.5rem;
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .col {
+        flex-direction: column;
+    }
+
+    .between {
+        justify-content: space-between;
+    }
+
+    .center {
+        align-items: center;
     }
 </style>
