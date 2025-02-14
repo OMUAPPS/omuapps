@@ -19,6 +19,8 @@ jobs:
         with:
           enable-cache: true
           cache-prefix: "rye"
+          version: 0.41.0
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cache dependencies
         id: cache
