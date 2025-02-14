@@ -139,12 +139,17 @@ class Network:
         if self._connected:
             raise RuntimeError("Already connected")
 
+        exception: Exception | None = None
         while True:
             try:
                 await self._connection.connect()
             except Exception as e:
                 if reconnect:
-                    logger.opt(exception=e).error("Failed to connect")
+                    if exception:
+                        logger.error("Failed to reconnect")
+                    else:
+                        logger.opt(exception=e).error(f"Failed to connect to {self._address.host}:{self._address.port}")
+                    exception = e
                     continue
                 else:
                     raise e
