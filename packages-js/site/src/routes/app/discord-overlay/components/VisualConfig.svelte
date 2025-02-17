@@ -88,7 +88,7 @@
     <i class="ti ti-filters"></i>
 </h2>
 <section>
-    <EffectControls {overlayApp} />
+    <EffectControls bind:effects={$config.effects} />
 </section>
 
 <style lang="scss">

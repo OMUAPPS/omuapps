@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FileDrop, Tooltip } from '@omujs/ui';
+    import { Button, FileDrop, Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
     import { DEFAULT_USER_CONFIG, type DiscordOverlayApp, type PngAvatarConfig, type VoiceStateItem } from '../discord-overlay-app.js';
     import { heldUser, selectedAvatar } from '../states.js';
@@ -166,13 +166,13 @@
             {/if}
         </span>
         {#if avatar}
-            <button type="button" on:click={()=>{
+            <Button primary onclick={() => {
                 $selectedAvatar = avatar;
                 $heldUser = null;
             }}>
                 アバターを調整
                 <i class="ti ti-settings"></i>
-            </button>
+            </Button>
         {/if}
     </div>
     {#if avatar && $config.avatars[avatar]?.type === 'pngtuber'}
@@ -180,7 +180,6 @@
             <div class="pngtuber-config">
                 {#each Array.from({ length: 10 }) as _, i}
                     <button
-                        type="button"
                         on:click={()=>{
                             $config.users[id].config.pngtuber.layer = i;
                         }}
@@ -223,9 +222,7 @@
         margin-bottom: 1rem;
 
         button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            vertical-align: baseline;
             gap: 0.5rem;
             border: none;
             background: var(--color-1);
@@ -241,6 +238,10 @@
             &:hover {
                 background: var(--color-bg-1);
                 color: var(--color-1);
+            }
+
+            > i {
+                margin-left: 0.5rem;
             }
         }
     }

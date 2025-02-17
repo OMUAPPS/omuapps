@@ -1,7 +1,5 @@
 <script lang="ts">
     import { content } from '@omujs/chat/models/index.js';
-    import FlexColWrapper from './FlexColWrapper.svelte';
-    import FlexRowWrapper from './FlexRowWrapper.svelte';
     import LinkableText from './LinkableText.svelte';
     import { client } from './stores.js';
     import Tooltip from './Tooltip.svelte';
@@ -14,8 +12,8 @@
 {:else if component instanceof content.Image}
     <span>
         <Tooltip>
-            <FlexRowWrapper alignItems="center" gap>
-                <FlexColWrapper>
+            <div class="flex row gap">
+                <div class="flex col">
                     {#if component.name}
                         {component.name}
                     {/if}
@@ -24,9 +22,9 @@
                             {component.id}
                         </small>
                     {/if}
-                </FlexColWrapper>
+                </div>
                 <img src={component.url} alt={component.id} class="preview" />
-            </FlexRowWrapper>
+            </div>
         </Tooltip>
         <img src={component.url} alt={component.id} />
     </span>
@@ -57,7 +55,7 @@
 
 <style>
     img {
-        max-height: 30px;
+        max-height: 1.5rem;
         vertical-align: middle;
         object-fit: contain;
     }
@@ -79,5 +77,21 @@
         padding: 4px;
         vertical-align: middle;
         object-fit: contain;
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .row {
+        flex-direction: row;
+    }
+
+    .col {
+        flex-direction: column;
+    }
+
+    .gap {
+        gap: 0.5rem;
     }
 </style>

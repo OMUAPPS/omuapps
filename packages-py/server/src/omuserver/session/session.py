@@ -12,18 +12,13 @@ from omu.errors import DisconnectReason
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.network.packet import PACKET_TYPES, Packet, PacketType
-from omu.network.packet.packet_types import (
-    ConnectPacket,
-    DisconnectPacket,
-    DisconnectType,
-)
+from omu.network.packet.packet_types import ConnectPacket, DisconnectPacket, DisconnectType
 from omu.network.packet_mapper import PacketMapper
 from result import Err, Ok
 
-from omuserver.server import Server
-
 if TYPE_CHECKING:
     from omuserver.security import PermissionHandle
+    from omuserver.server import Server
 
 
 class SessionConnection(abc.ABC):
@@ -66,7 +61,7 @@ class Session:
     ) -> None:
         self.packet_mapper = packet_mapper
         self.app = app
-        self.permission_handle = permission_handle
+        self.permissions = permission_handle
         self.kind = kind
         self.connection = connection
         self.event = SessionEvents()
@@ -85,27 +80,20 @@ class Session:
         if packet is None:
             await connection.close()
             raise RuntimeError("Connection closed")
-        if packet.type != PACKET_TYPES.CONNECT or not isinstance(
-            packet.data, ConnectPacket
-        ):
+        if packet.type != PACKET_TYPES.CONNECT or not isinstance(packet.data, ConnectPacket):
             await connection.send(
                 Packet(
-                    PACKET_TYPES.DISCONNECT,
-                    DisconnectPacket(
-                        DisconnectType.INVALID_PACKET_TYPE, "Expected connect"
-                    ),
+                    PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_PACKET_TYPE, "Expected connect")
                 ),
                 packet_mapper,
             )
             await connection.close()
-            raise RuntimeError(
-                f"Expected {PACKET_TYPES.CONNECT.id} but got {packet.type}"
-            )
+            raise RuntimeError(f"Expected {PACKET_TYPES.CONNECT.id} but got {packet.type}")
         connect_packet = packet.data
         app = connect_packet.app
         token = connect_packet.token
 
-        verify_result = await server.permission_manager.verify_app_token(app, token)
+        verify_result = await server.security.verify_app_token(app, token)
         match verify_result:
             case Ok((kind, permission_handle, new_token)):
                 session = Session(
@@ -120,10 +108,7 @@ class Session:
                 return session
             case Err(error):
                 await connection.send(
-                    Packet(
-                        PACKET_TYPES.DISCONNECT,
-                        DisconnectPacket(DisconnectType.INVALID_TOKEN, error),
-                    ),
+                    Packet(PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_TOKEN, error)),
                     packet_mapper,
                 )
                 await connection.close()
@@ -133,13 +118,9 @@ class Session:
     def closed(self) -> bool:
         return self.connection.closed
 
-    async def disconnect(
-        self, disconnect_type: DisconnectType, message: str | None = None
-    ) -> None:
+    async def disconnect(self, disconnect_type: DisconnectType, message: str | None = None) -> None:
         if not self.connection.closed:
-            await self.send(
-                PACKET_TYPES.DISCONNECT, DisconnectPacket(disconnect_type, message)
-            )
+            await self.send(PACKET_TYPES.DISCONNECT, DisconnectPacket(disconnect_type, message))
         await self.connection.close()
         await self.event.disconnected.emit(self)
 
@@ -164,11 +145,7 @@ class Session:
     def add_ready_task(self, coro: Coro[[], None]):
         if self.ready:
             raise RuntimeError("Session is already ready")
-        task = SessionTask(
-            session=self,
-            coro=coro,
-            name=coro.__name__,
-        )
+        task = SessionTask(session=self, coro=coro, name=coro.__name__)
         self.ready_tasks.append(task)
 
     async def wait_ready(self) -> None:
@@ -183,8 +160,16 @@ class Session:
             raise RuntimeError("Session is already ready")
         self.ready = True
         for task in self.ready_tasks:
-            await task.coro()
+            try:
+                await task.coro()
+            except Exception as e:
+                logger.opt(exception=e).error(f"Error while processing ready task {task.name}")
+                await self.disconnect(DisconnectType.INTERNAL_ERROR, "Error while processing ready tasks")
+                return
         self.ready_tasks.clear()
         for waiter in self.ready_waiters:
             waiter.set_result(None)
         await self.event.ready.emit(self)
+
+    def __repr__(self) -> str:
+        return f"Session({self.app.key()}, kind={self.kind}, ready={self.ready})"

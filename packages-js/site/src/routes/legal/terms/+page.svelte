@@ -1,24 +1,34 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
-    import { FlexColWrapper, FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import { Tooltip } from '@omujs/ui';
 
     import robotReading from '$lib/images/robot-reading.svg';
 </script>
 
 <Page>
     <header slot="header">
-        <FlexRowWrapper between alignItems="center">
-            <FlexColWrapper gap>
+        <div class="flex between center">
+            <div class="flex col">
                 <h1>
                     利用規約
                     <i class="ti ti-file"></i>
                 </h1>
                 <small>使っていただくにあたって</small>
-            </FlexColWrapper>
+            </div>
             <img src={robotReading} alt="robot-reading" />
-        </FlexRowWrapper>
+        </div>
     </header>
     <main slot="content">
+        <div class="summary">
+            <h2>
+                かんたんに3行で言うと（本文はこの下）
+            </h2>
+            <ul>
+                <li>個人・法人・収益問わず利用可能</li>
+                <li>クレジット表記は不要</li>
+                <li>紹介してくれるときだけは絶対にクレジット表記してね</li>
+            </ul>
+        </div>
         <h1 id="terms">利用規約</h1>
         <p>2024年8月28日</p>
         <p>
@@ -44,11 +54,11 @@
             確認ができ見落としにくい概要欄などの箇所に以下のような表記をお願いいたします。
             <br />
             <code>
-                配信者と視聴者をつなぐOMUAPPS。https://omuapps.com
+                配信者と視聴者をつなぐアプリ、OMUAPPS。https://omuapps.com
                 <button
                     on:click={() =>
                         navigator.clipboard.writeText(
-                            '配信者と視聴者をつなぐOMUAPPS。https://omuapps.com',
+                            '配信者と視聴者をつなぐアプリ、OMUAPPS。https://omuapps.com',
                         )}
                 >
                     <Tooltip>クリップボードにコピー</Tooltip>
@@ -83,6 +93,16 @@
 <style lang="scss">
     main {
         font-weight: 500;
+    }
+
+    .summary {
+        border-bottom: 1px solid var(--color-outline);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+
+        > ul {
+            margin-left: 2rem;
+        }
     }
 
     header {
@@ -140,5 +160,21 @@
             cursor: pointer;
             white-space: nowrap;
         }
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .col {
+        flex-direction: column;
+    }
+
+    .between {
+        justify-content: space-between;
+    }
+
+    .center {
+        align-items: center;
     }
 </style>

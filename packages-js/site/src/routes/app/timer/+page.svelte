@@ -6,11 +6,9 @@
     import {
         Align,
         AppHeader,
-        FlexColWrapper,
-        FlexRowWrapper,
         setClient,
         Textbox,
-        Tooltip,
+        Tooltip
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
@@ -36,7 +34,7 @@
         <AppHeader app={APP} />
     </header>
     <main>
-        <FlexColWrapper widthFull>
+        <div class="flex col width">
             <h3>タイム</h3>
             <section class="timer">
                 <Timer {timer} />
@@ -44,7 +42,7 @@
 
             <h3>操作</h3>
             <section>
-                <FlexRowWrapper gap>
+                <div class="flex gap">
                     <button on:click={() => timer.toggle()}>
                         <Tooltip>
                             {#if $data.running}
@@ -66,7 +64,7 @@
                         リセット
                         <i class="ti ti-reload"></i>
                     </button>
-                </FlexRowWrapper>
+                </div>
             </section>
             <h3>時間形式</h3>
             <section>
@@ -91,8 +89,8 @@
                     で置換されます。
                 </small>
             </section>
-        </FlexColWrapper>
-        <FlexColWrapper widthFull>
+        </div>
+        <div class="flex col width">
             <h3>OBSに貼り付ける</h3>
             <section>
                 <AssetButton {omu} {obs} />
@@ -141,7 +139,7 @@
                     </span>
                 </p>
                 <div class="setting">
-                    <FlexColWrapper>
+                    <div>
                         <small>背景の余白</small>
                         <div>
                             <input
@@ -159,10 +157,10 @@
                             />
                             <input type="number" bind:value={$config.style.backgroundPadding[1]} />
                         </div>
-                    </FlexColWrapper>
+                    </div>
                 </div>
             </section>
-        </FlexColWrapper>
+        </div>
     </main>
 </AppPage>
 
@@ -265,5 +263,21 @@
         justify-content: flex-start;
         width: 100%;
         margin-bottom: 20px;
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .col {
+        flex-direction: column;
+    }
+
+    .width {
+        width: 100%;
+    }
+
+    .gap {
+        gap: 1rem;
     }
 </style>

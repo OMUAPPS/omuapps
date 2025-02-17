@@ -3,7 +3,7 @@
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { setClient } from '@omujs/ui';
+    import { Button, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import { FriesApp } from './fries-app.js';
@@ -49,16 +49,16 @@
         <section>
             <div>
                 <h3>試しに投げてみる</h3>
-                <button on:click={() => friesApp.test()}>
+                <Button primary onclick={() => friesApp.test()}>
                     投げる
                     <i class="ti ti-arrow-up-right"></i>
-                </button>
+                </Button>
             </div>
         </section>
         <section>
             <div>
                 <h3>ヒント</h3>
-                <textarea bind:value={$config.hint} class="hint" />
+                <textarea bind:value={$config.hint} class="hint"></textarea>
             </div>
             <hr />
             <img src={hint} alt="" />
@@ -66,7 +66,7 @@
         <section>
             <div>
                 <h3>看板</h3>
-                <textarea bind:value={$config.text} class="text" />
+                <textarea bind:value={$config.text} class="text"></textarea>
             </div>
             <hr />
             <img src={board} alt="" />
@@ -75,10 +75,10 @@
             <div>
                 <h3>
                     状態
-                    <button on:click={() => ($state = { type: 'idle' })}>
+                    <Button primary onclick={() => { $state = { type: 'idle' } }}>
                         状態をリセット
                         <i class="ti ti-reload"></i>
-                    </button>
+                    </Button>
                 </h3>
                 <code>
                     {stateText}
@@ -150,22 +150,6 @@
 
         &:focus {
             outline: none;
-        }
-    }
-
-    button {
-        margin-top: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: var(--color-1);
-        color: var(--color-bg-1);
-        font-size: 0.9rem;
-        font-weight: 500;
-        border: none;
-        border-radius: 2.5px;
-        cursor: pointer;
-
-        &:hover {
-            background: var(--color-1);
         }
     }
 

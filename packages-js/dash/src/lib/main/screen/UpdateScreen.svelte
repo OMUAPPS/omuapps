@@ -1,84 +1,69 @@
 <script lang="ts">
-    import { omu } from '$lib/client.js';
     import Screen from '$lib/screen/Screen.svelte';
     import type { ScreenHandle } from '$lib/screen/screen.js';
-    import { invoke } from '$lib/tauri.js';
-    import { Popup } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/api/process';
-    import { installUpdate, type UpdateManifest } from '@tauri-apps/api/updater';
+    import { applyUpdate, type UpdateEvent } from '$lib/tauri.js';
+    import { Button } from '@omujs/ui';
+    import { type Update } from '@tauri-apps/plugin-updater';
 
     export let screen: {
         handle: ScreenHandle;
         props: {
-            manifest: UpdateManifest;
+            update: Update;
         };
     };
-    const { manifest } = screen.props;
-    const date = new Date(manifest.date.replace(/:00$/, ''));
+    const { update } = screen.props;
+    const date = update.date && new Date(update.date.replace(/:00$/, ''));
 
-    type State = 'idle' | 'updating' | 'shutting-down' | 'restarting';
-    let state: State = 'idle';
-
-    async function update() {
-        state = 'shutting-down';
-        try {
-            omu.server.shutdown();
-            invoke('stop_server');
-        } catch (e) {
-            console.error(e);
-        }
-        state = 'updating';
-        await installUpdate();
-        await relaunch();
-        state = 'restarting';
-    }
-
-    let open = false;
+    let state: UpdateEvent | null = null;
 </script>
 
 <Screen {screen} title="update">
-    {#if state === 'updating'}
-        <div class="info">
-            <h3>新しいバージョンをダウンロードしています...</h3>
-        </div>
-    {:else if state === 'shutting-down'}
-        <div class="info">
-            <h3>サーバーをシャットダウンしています...</h3>
-        </div>
-    {:else if state === 'restarting'}
-        <div class="info">
-            <h3>インストーラーを起動しています...</h3>
-        </div>
-    {:else}
+    {#if !state}
         <div class="info">
             <h3>
                 新しいバージョンが利用可能です🎉
                 <hr />
-                v{manifest.version}
-                <small>
-                    {date.toLocaleDateString()}
-                    {date.toLocaleTimeString()}
-                </small>
+                v{update.version}
+                {#if date}
+                    <small>
+                        {date.toLocaleDateString()}
+                        {date.toLocaleTimeString()}
+                    </small>
+                {/if}
             </h3>
             <p>
-                {manifest.body}
+                {update.body}
             </p>
             <div class="actions">
-                <button on:click={screen.handle.pop} class="cancel">
-                    キャンセル
+                <Button onclick={screen.handle.pop}>
+                    スキップ
                     <i class="ti ti-x"></i>
-                </button>
-                <button on:click={() => (open = true)} class="update">
+                </Button>
+                <Button primary onclick={() => applyUpdate(update, (progress) => state = progress)}>
                     アップデート
                     <i class="ti ti-arrow-right"></i>
-                    <Popup bind:isOpen={open}>
-                        <div class="confirm">
-                            <small>アップデートを開始しますか？</small>
-                            <button on:click={update}>はい！</button>
-                        </div>
-                    </Popup>
-                </button>
+                </Button>
             </div>
+        </div>
+    {:else if state.type === 'updating'}
+        <div class="info">
+            <h3>新しいバージョンをダウンロードしています...</h3>
+            <div>
+                <progress value={state.downloaded} max={state.contentLength}></progress>
+                <small>
+                    {state.downloaded}
+                    <i class="ti ti-slash"></i>
+                    {state.contentLength}
+                </small>
+            </div>
+        </div>
+    {:else if state.type === 'shutting-down'}
+        <div class="info">
+            <h3>サーバーを終了しています...</h3>
+        </div>
+    {:else if state.type === 'restarting'}
+        <div class="info">
+            <h3>インストーラーを起動しています...</h3>
         </div>
     {/if}
 </Screen>
@@ -115,40 +100,22 @@
         margin-top: 1rem;
     }
 
-    button {
-        padding: 0.5rem 1rem;
-        outline: 1px solid var(--color-1);
+    progress {
+        width: 16rem;
+        height: 6px;
         border: none;
-        background: var(--color-1);
-        color: var(--color-bg-1);
-        font-weight: 600;
-        cursor: pointer;
-
-        &:hover {
-            background: var(--color-bg-1);
-            color: var(--color-1);
-        }
-    }
-
-    .cancel {
-        background: none;
-        outline: none;
+        background: var(--color-bg-1);
         color: var(--color-1);
-
-        &:hover {
-            background: var(--color-bg-1);
-            color: var(--color-1);
-            outline: 1px solid var(--color-1);
-        }
-    }
-
-    .confirm {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        padding: 0.5rem;
         border-radius: 0.5rem;
-        background: var(--color-bg-2);
-        color: var(--color-1);
+
+        &::-webkit-progress-bar {
+            background: var(--color-bg-1);
+            border-radius: 0.5rem;
+        }
+
+        &::-webkit-progress-value {
+            background: var(--color-1);
+            border-radius: 0.5rem;
+        }
     }
 </style>

@@ -1,4 +1,3 @@
-import io
 import os
 import signal
 import sys
@@ -11,27 +10,10 @@ from loguru import logger
 from omu.address import Address
 
 from omuserver.config import Config
-from omuserver.helper import find_processes_by_executable, find_processes_by_port
+from omuserver.helper import find_processes_by_executable, find_processes_by_port, setup_logger
 from omuserver.migration import migrate
-from omuserver.server.omuserver import OmuServer
+from omuserver.server.server import Server
 from omuserver.version import VERSION
-
-
-def setup_logging():
-    if isinstance(sys.stdout, io.TextIOWrapper):
-        sys.stdout.reconfigure(encoding="utf-8")
-    if isinstance(sys.stderr, io.TextIOWrapper):
-        sys.stderr.reconfigure(encoding="utf-8")
-    logger.add(
-        "logs/{time}.log",
-        colorize=False,
-        format=(
-            "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | "
-            "{name}:{function}:{line} - {message}"
-        ),
-        retention="7 days",
-        compression="zip",
-    )
 
 
 def stop_server_processes(
@@ -45,9 +27,7 @@ def stop_server_processes(
         for process in found_processes:
             try:
                 if process.exe() != executable:
-                    logger.warning(
-                        f"Process {process.pid} ({process.name()}) is not a Python process"
-                    )
+                    logger.warning(f"Process {process.pid} ({process.name()}) is not a Python process")
                 logger.info(f"Killing process {process.pid} ({process.name()})")
                 process.send_signal(signal.SIGTERM)
             except psutil.NoSuchProcess:
@@ -55,8 +35,11 @@ def stop_server_processes(
             except psutil.AccessDenied:
                 logger.warning(f"Access denied to process {process.pid}")
     executable_processes = list(find_processes_by_executable(executable))
+    self_pid = os.getpid()
     for process in executable_processes:
         try:
+            if process.pid == self_pid:
+                continue
             logger.info(f"Killing process {process.pid} ({process.name()})")
             process.send_signal(signal.SIGTERM)
         except psutil.NoSuchProcess:
@@ -93,7 +76,7 @@ def main(
         secure=False,
     )
     if dashboard_path:
-        config.directories.dashboard = Path(dashboard_path)
+        config.directories.dashboard = Path(dashboard_path).resolve()
 
     if token:
         config.dashboard_token = token
@@ -110,7 +93,7 @@ def main(
         logger.warning("Debug mode enabled")
         tracemalloc.start()
 
-    server = OmuServer(config=config)
+    server = Server(config=config)
 
     migrate(server)
 
@@ -119,7 +102,7 @@ def main(
 
 
 if __name__ == "__main__":
-    setup_logging()
+    setup_logger("omuserver")
     try:
         main()
     except Exception as e:

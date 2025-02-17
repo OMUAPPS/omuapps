@@ -10,6 +10,7 @@
     import { Identifier } from '@omujs/omu/identifier.js';
     import {
         AppHeader,
+        Button,
         ButtonMini,
         FileDrop,
         Tooltip,
@@ -72,33 +73,33 @@
         <div class="reaction-preview">
             <ReactionRenderer {omu} {reactionApp} />
         </div>
-        <div class="right">
-            <h3>
+        <div class="actions">
+            <h2>
                 配信ソフトに追加する
                 <i class="ti ti-arrow-bar-to-down"></i>
-            </h3>
+            </h2>
             <section>
                 <AssetButton {omu} {obs} />
             </section>
-            <h3>
+            <h2>
                 試してみる
                 <i class="ti ti-rocket"></i>
-            </h3>
+            </h2>
             <section>
-                <button on:click={test}>
+                <Button primary onclick={test}>
                     <Tooltip>
                         <span>テスト用のリアクションを送信します</span>
                     </Tooltip>
-                    <i class="ti ti-player-play"></i>
                     再生
-                </button>
+                    <i class="ti ti-player-play"></i>
+                </Button>
             </section>
         </div>
-        <div class="left">
-            <h3>
+        <div class="options omu-scroll">
+            <h2>
                 見た目を調整する
                 <i class="ti ti-dimensions"></i>
-            </h3>
+            </h2>
             <section class="settings">
                 <Slider
                     bind:value={$config.scale}
@@ -119,10 +120,10 @@
                     奥行き感
                 </Slider>
             </section>
-            <h3>
+            <h2>
                 画像を変える
                 <i class="ti ti-mood-wink-2"></i>
-            </h3>
+            </h2>
             <section>
                 {#each Object.entries($config.replaces) as [key, assetId]}
                     <div class="replace-entry">
@@ -141,21 +142,19 @@
                                 />
                             {/if}
                         </div>
-                        <div class="actions">
-                            {#if assetId}
-                                <ButtonMini
-                                    on:click={() =>
-                                        ($config.replaces = { ...$config.replaces, [key]: null })}
-                                >
-                                    <Tooltip>置き換えを削除</Tooltip>
-                                    <i class="ti ti-trash"></i>
-                                </ButtonMini>
-                            {/if}
-                            <FileDrop handle={(files) => handleReplace(key, files)}>
-                                <i class="ti ti-upload"></i>
-                                置き換える
-                            </FileDrop>
-                        </div>
+                        {#if assetId}
+                            <ButtonMini
+                                on:click={() =>
+                                    ($config.replaces = { ...$config.replaces, [key]: null })}
+                            >
+                                <Tooltip>置き換えを削除</Tooltip>
+                                <i class="ti ti-trash"></i>
+                            </ButtonMini>
+                        {/if}
+                        <FileDrop handle={(files) => handleReplace(key, files)}>
+                            <i class="ti ti-upload"></i>
+                            置き換える
+                        </FileDrop>
                     </div>
                 {/each}
             </section>
@@ -165,18 +164,23 @@
 
 <style lang="scss">
     main {
+        position: absolute;
+        inset: 0;
         display: flex;
-        gap: 20px;
-        padding: 2.5rem 2rem;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-left: 2rem;
     }
 
-    .left {
-        width: min(100%, 25rem);
-        margin-left: auto;
+    .options {
+        width: 24rem;
+        padding: 2.5rem 0;
+        padding-right: 2rem;
     }
 
-    .right {
+    .actions {
         width: 25rem;
+        padding: 2.5rem 0;
     }
 
     .settings {
@@ -203,14 +207,9 @@
 
         .preview {
             display: flex;
-            gap: 10px;
+            gap: 0.5rem;
             align-items: center;
-        }
-
-        .actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            margin-right: auto;
         }
     }
 
@@ -224,9 +223,9 @@
         font-family: "Noto Color Emoji";
     }
 
-    h3 {
+    h2 {
         color: var(--color-1);
-        margin-bottom: 10px;
+        margin-bottom: 0.5rem;
     }
 
     section {
@@ -237,26 +236,11 @@
         justify-content: flex-start;
         width: 100%;
         padding: 0px;
-        margin-bottom: 20px;
+        margin-bottom: 1rem;
     }
 
     img {
         max-width: 100%;
         max-height: 40px;
-    }
-
-    button {
-        padding: 0.5rem 1rem;
-        background: var(--color-1);
-        color: var(--color-bg-1);
-        font-size: 0.9rem;
-        font-weight: 500;
-        border: none;
-        border-radius: 2.5px;
-        cursor: pointer;
-
-        &:hover {
-            background: var(--color-1);
-        }
     }
 </style>

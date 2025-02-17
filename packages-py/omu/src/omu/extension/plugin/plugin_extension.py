@@ -1,6 +1,10 @@
+from typing import TypedDict
+
 from omu.client import Client
 from omu.extension import Extension, ExtensionType
+from omu.extension.endpoint.endpoint import EndpointType
 from omu.extension.table import TableType
+from omu.extension.table.table import TablePermissions
 from omu.network.packet import PacketType
 
 from .plugin import PluginPackageInfo
@@ -39,8 +43,28 @@ PLUGIN_REQUIRE_PACKET = PacketType[dict[str, str | None]].create_json(
     PLUGIN_EXTENSION_TYPE,
     "require",
 )
+PLUGIN_READ_PACKAGE_PERMISSION_ID = PLUGIN_EXTENSION_TYPE.join("package", "read")
+PLUGIN_MANAGE_PACKAGE_PERMISSION_ID = PLUGIN_EXTENSION_TYPE.join("package", "manage")
 PLUGIN_ALLOWED_PACKAGE_TABLE = TableType.create_model(
     PLUGIN_EXTENSION_TYPE,
     "allowed_package",
     PluginPackageInfo,
+    permissions=TablePermissions(
+        read=PLUGIN_READ_PACKAGE_PERMISSION_ID,
+    ),
+)
+
+
+class ReloadOptions(TypedDict):
+    packages: list[str] | None
+
+
+class ReloadResult(TypedDict):
+    packages: dict[str, str]
+
+
+PLUGIN_RELOAD_ENDPOINT_TYPE = EndpointType[ReloadOptions, ReloadResult].create_json(
+    PLUGIN_EXTENSION_TYPE,
+    name="reload",
+    permission_id=PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
 )

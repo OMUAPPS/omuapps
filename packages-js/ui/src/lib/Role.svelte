@@ -2,8 +2,6 @@
     import type { models } from '@omujs/chat';
 
     import { applyOpacity } from '$lib/utils/class-helper.js';
-    import FlexColWrapper from './FlexColWrapper.svelte';
-    import FlexRowWrapper from './FlexRowWrapper.svelte';
     import Tooltip from './Tooltip.svelte';
     import { client } from './stores.js';
 
@@ -15,25 +13,14 @@
     style:color={role.color}
     style:background={role.color && applyOpacity(role.color, 0.1)}
 >
-    <span class="icon">
-        {#if role.iconUrl}
-            <img src={role.iconUrl} alt="role" />
-        {:else}
-            {#if role.isOwner}
-                <i class="ti ti-crown-filled"></i>
-            {:else if role.isModerator}
-                <i class="ti ti-shield-filled"></i>
-            {/if}
-        {/if}
-    </span>
     <Tooltip>
-        <FlexColWrapper>
-            <FlexRowWrapper gap alignItems="center">
+        <div class="tooltip">
+            <div class="name">
                 {role.name}
                 {#if role.iconUrl}
                     <img class="preview" src={$client.assets.proxy(role.iconUrl)} alt="role icon" />
                 {/if}
-            </FlexRowWrapper>
+            </div>
             {#if role.color}
                 <small>
                     <span> Color: </span>
@@ -46,8 +33,19 @@
             {#if role.isOwner}
                 <small> Owner </small>
             {/if}
-        </FlexColWrapper>
+        </div>
     </Tooltip>
+    <span class="icon">
+        {#if role.iconUrl}
+            <img src={role.iconUrl} alt="role" />
+        {:else}
+            {#if role.isOwner}
+                <i class="ti ti-crown-filled"></i>
+            {:else if role.isModerator}
+                <i class="ti ti-shield-filled"></i>
+            {/if}
+        {/if}
+    </span>
 </div>
 
 <style lang="scss">
@@ -84,6 +82,22 @@
         > i {
             font-size: 0.8rem;
         }
+    }
+
+    .tooltip {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        height: fit-content;
+        color: #fff;
+    }
+
+    .name {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: fit-content;
+        color: #fff;
     }
 
     .preview {

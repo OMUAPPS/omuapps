@@ -1,21 +1,15 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
-    import { onDestroy } from 'svelte';
-
-    import { t } from '$lib/i18n/i18n-context.js';
-
+    
+    
     import ChannelEntry from './ChannelEntry.svelte';
 
     import { chat } from '$lib/client.js';
-    import ScreenSetup from '$lib/main/setup/ScreenSetup.svelte';
-    import { screenContext } from '$lib/screen/screen.js';
-    import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
+    import { t } from '$lib/i18n/i18n-context.js';
+    import { TableList, Tooltip } from '@omujs/ui';
+    import { onDestroy } from 'svelte';
 
     export let filter: (key: string, message: models.Channel) => boolean = () => true;
-
-    function openSetupScreen() {
-        screenContext.push(ScreenSetup, undefined);
-    }
 
     let checkIntervalLeft = 0;
 
@@ -28,50 +22,45 @@
     });
 </script>
 
-<div class="container">
-    <div class="buttons">
-        <ButtonMini on:click={openSetupScreen}>
-            <Tooltip>{$t('panels.channels.setup_channel')}</Tooltip>
-            <i class="ti ti-plus"></i>
-        </ButtonMini>
-        <small>
-            <Tooltip>
-                {$t('panels.channels.next_check')}
-                {Math.floor(checkIntervalLeft)}
-                {$t('general.second')}
-            </Tooltip>
-            <i class="ti ti-reload"></i>
-            {Math.floor(checkIntervalLeft)}
-        </small>
-    </div>
+<div class="list">
     <TableList table={chat.channels} component={ChannelEntry} {filter} />
+    <div class="check-interval">
+        <Tooltip>
+            {$t('panels.channels.next_check')}
+            {Math.floor(checkIntervalLeft)}
+            {$t('general.second')}
+        </Tooltip>
+        <p>
+            {Math.floor(checkIntervalLeft)}
+        </p>
+    </div>
 </div>
 
 <style lang="scss">
-    .container {
+    .list {
         position: relative;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        padding-top: 40px;
-        overflow: auto;
-    }
-
-    .buttons {
-        position: absolute;
-        top: 0;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
+        background: var(--color-bg-2);
         width: 100%;
-        height: 40px;
-        padding: 0 5px;
-        outline: 1px solid var(--color-bg-1);
+        height: 100%;
 
-        small {
-            padding: 5px;
-            font-size: 12px;
-            color: color-mix(in srgb, var(--color-text) 50%, transparent 0%);
+        &:hover {
+            .check-interval {
+                opacity: 1;
+            }
+        }
+    }
+    
+    .check-interval {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        padding: 0.5rem;
+        opacity: 0.2621;
+
+        > p {
+            color: var(--color-text);
+            font-size: 0.8rem;
+            font-weight: 500;
         }
     }
 </style>

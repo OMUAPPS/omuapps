@@ -19,12 +19,11 @@
 
     $: user = $config.users[id] || createUserConfig();
 
-    let element: HTMLButtonElement;
     let lastMouse: [number, number] | null = null;
     let clickTime = 0;
     let clickDistance = 0;
     let lastUpdate = performance.now();
-    $: rect = element ? element.getBoundingClientRect() : { width: 0, height: 0 };
+    let rect = { width: 0, height: 0 };
     $: position = user.position || [0, 0];
     
     const hideAreaWidth = 240;
@@ -51,7 +50,7 @@
         const world = screenToWorld(screen.x + dx, screen.y - dy);
         user.position = position = [world.x, world.y];
         const a = worldToScreen(position[0], position[1] + OFFSET + rect.height / 2);
-        $dragPosition = new Vec2(a.x, dimentions.height - a.y);
+        $dragPosition = new Vec2(e.clientX, e.clientY);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         user.show = !isInHideArea(new Vec2(position[0], position[1]));
 
@@ -145,7 +144,7 @@
         directions: { width: number, height: number },
         offset: [number, number] = [0, OFFSET],
     ) {
-        const clamped = getPosition(rect, offset);
+        const clamped = getPosition(rect, [offset[0], config.align.vertical === 'start' ?  -offset[1] : offset[1]]);
         return `
             left: ${clamped[0]}px;
             bottom: ${clamped[1]}px;
@@ -200,7 +199,8 @@
 <button
     class="control"
     class:dragging={lastMouse || ($dragUser && $dragUser == id)}
-    bind:this={element}
+    bind:clientWidth={rect.width}
+    bind:clientHeight={rect.height}
     style={getStyle(rect, $config, view, dimentions)}
     on:mousedown={handleMouseDown}
     on:click={() => {
@@ -250,7 +250,7 @@
         </Tooltip>
     {/if}
     <i class="grip ti ti-grip-vertical"/>
-    {state.nick}
+    <span class="nick">{state.nick}</span>
 </button>
 
 {#if $heldUser == id}
@@ -365,16 +365,36 @@
             justify-content: center;
         }
 
+        > .nick {
+            overflow: hidden;
+            max-width: 5rem;
+            text-overflow: ellipsis;
+        }
+
         &.dragging,
         &:focus-visible,
         &:hover {
-            background: var(--color-1);
-            color: var(--color-bg-2);
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            border: none;
+            outline: 2px solid var(--color-1);
+            outline-width: 2px;
+            box-shadow: 0 0.3rem 0 0 color-mix(in srgb, var(--color-2) 100%, transparent 0%);
+            margin-bottom: 2px;
+            margin-left: 1px;
+            transition: margin-bottom, outline-width, box-shadow 0.0621s;
+            z-index: 3;
         }
 
         &:active {
-            z-index: 1;
+            z-index: 3;
             cursor: grabbing;
+            box-shadow: none;
+            margin-bottom: -2px;
+            margin-left: 1px;
+            background: var(--color-1);
+            transition: margin-bottom, box-shadow, background 0.0621s;
+            color: var(--color-bg-2);
         }
     }
 

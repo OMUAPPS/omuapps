@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FileDrop, Tooltip } from '@omujs/ui';
+    import { Button, FileDrop, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import { APP_ID } from '../app.js';
     import type { DiscordOverlayApp, Source } from '../discord-overlay-app.js';
@@ -75,8 +75,8 @@
         on:mousedown={handleMouseDown}
         on:wheel={handleMouseWheel}
         aria-label="Avatar Origin"
-        class="origin"
-    ></button>
+        class="origin">
+    </button>
     <div class="actions">
         <button on:click={() => {
             if (!$selectedAvatar) return;
@@ -119,12 +119,12 @@
                 左側を向くように調整してください
             </small>
         {/if}
-        <button on:click={() => {
+        <Button primary onclick={() => {
             $selectedAvatar = null;
-        }} class="close">
+        }}>
             完了
             <i class="ti ti-check"></i>
-        </button>
+        </Button>
     </div>
     <button on:click={() => {
         $selectedAvatar = null;
@@ -173,7 +173,7 @@
                             muted: newConfig.muted,
                         });
                         $config.avatars[avatar] = newConfig;
-                    }}>
+                    }} accept="image/*">
                         <Tooltip>
                             喋っている時のアバターを設定
                         </Tooltip>
@@ -205,7 +205,7 @@
                             muted: newConfig.muted,
                         });
                         $config.avatars[avatar] = newConfig;
-                    }}>
+                    }} accept="image/*">
                         <Tooltip>
                             喋れない時のアバターを設定
                         </Tooltip>
@@ -237,7 +237,7 @@
                             muted: newConfig.muted,
                         });
                         $config.avatars[avatar] = newConfig;
-                    }}>
+                    }} accept="image/*">
                         <Tooltip>
                             聞こえない時のアバターを設定
                         </Tooltip>
@@ -279,25 +279,6 @@
 
         > small {
             margin-bottom: 1rem;
-        }
-    }
-
-    .close {
-        background: var(--color-1);
-        color: var(--color-bg-2);
-        outline: 1px solid var(--color-bg-2);
-        outline-offset: -1px;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 2px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        font-weight: 600;
-
-        &:hover {
-            background: var(--color-bg-1);
-            color: var(--color-1);
-            outline: 1px solid var(--color-1);
         }
     }
 

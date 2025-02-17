@@ -1,11 +1,12 @@
 <script lang="ts">
     import AssetImage from '../components/AssetImage.svelte';
     import BackButton from '../components/BackButton.svelte';
-    import { game, type SceneContext } from '../omucafe-app.js';
+    import { createItem } from '../game/item.js';
+    import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneProductList', context);
-    const { config, scene } = game;
+    const { config, scene } = getGame();
 </script>
 
 <main>
@@ -31,14 +32,14 @@
     </button>
     <button on:click={() => {
         const id = Date.now().toString();
-        $config.ingredients = {
-            ...$config.ingredients,
-            [id]: {
+        $config.items = {
+            ...$config.items,
+            [id]: createItem({
                 id,
-                name: '新材料',
-            },
+                name: '新商品',
+            }),
         };
-        $scene = { type: 'ingredient_edit', id };
+        $scene = { type: 'item_edit', id };
     }}>
         材料を追加
     </button>
@@ -60,15 +61,15 @@
             </div>
         {/each}
     </div>
-    <div class="ingredient-list">
-        {#each Object.entries($config.ingredients) as [id, ingredient] (id)}
-            <div class="ingredient card">
-                {#if ingredient.image}
-                    <AssetImage asset={ingredient.image} />
+    <div class="item-list">
+        {#each Object.entries($config.items) as [id, item] (id)}
+            <div class="item card">
+                {#if item.image}
+                    <AssetImage asset={item.image} />
                 {/if}
-                <h2>{ingredient.name}</h2>
+                <h2>{item.name}</h2>
                 <button on:click={() => {
-                    $scene = { type: 'ingredient_edit', id };
+                    $scene = { type: 'item_edit', id };
                 }}>
                     詳細
                 </button>
@@ -86,7 +87,7 @@
     }
 
     .product-list,
-    .ingredient-list {
+    .item-list {
         margin-top: 1rem;
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

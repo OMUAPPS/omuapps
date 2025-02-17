@@ -71,6 +71,9 @@ pub enum Progress {
     ServerStartFailed {
         msg: String,
     },
+    ServerStopped {
+        msg: String,
+    },
     ServerAlreadyStarted {
         msg: String,
     },

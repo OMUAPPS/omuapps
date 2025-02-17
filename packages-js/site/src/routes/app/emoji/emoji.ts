@@ -60,7 +60,7 @@ export class Emoji implements Model<EmojiData>, Keyable {
                 }
                 return '';
             })
-            .join(' ');
+            .join(', ');
     }
 
     key() {

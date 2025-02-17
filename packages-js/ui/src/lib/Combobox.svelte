@@ -41,8 +41,8 @@
 <style lang="scss">
     select {
         width: 100%;
-        padding: 5px 5px;
-        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.721rem;
         font-weight: 600;
         color: var(--color-1);
         background: var(--color-bg-2);

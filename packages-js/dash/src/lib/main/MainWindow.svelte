@@ -2,36 +2,33 @@
     import { dashboard } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
+    import { checkUpdate } from '$lib/tauri.js';
     import { TableList, Tooltip } from '@omujs/ui';
-    import { DEV } from 'esm-env';
     import { onMount } from 'svelte';
     import AppEntry from './AppEntry.svelte';
     import {
-        loadedIds,
         pageMap,
+        pages,
         registerPage,
+        unregisterPage,
         type Page,
-        type PageItem,
+
+        type PageItem
     } from './page.js';
     import ConnectPage from './pages/ConnectPage.svelte';
-    import IframePage from './pages/IframePage.svelte';
+    import ExplorePage from './pages/ExplorePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
     import UpdateScreen from './screen/UpdateScreen.svelte';
-    import { currentPage, installed, menuOpen } from './settings.js';
+    import { currentPage, menuOpen } from './settings.js';
     import SettingsPage from './settings/SettingsPage.svelte';
-    import ScreenSetup from './setup/ScreenSetup.svelte';
     import TabEntry from './TabEntry.svelte';
 
     const EXPLORE_PAGE = registerPage({
         id: 'explore',
         async open() {
             return {
-                component: IframePage,
-                props: {
-                    url: DEV
-                        ? 'http://localhost:5173/app/'
-                        : 'https://omuapps.com/app/',
-                },
+                component: ExplorePage,
+                props: {},
             } as Page<unknown>;
         },
     });
@@ -56,47 +53,53 @@
         },
     });
 
-    const pages: Map<string, Page<unknown>> = new Map();
-    let loading = false;
-
-    async function loadPage(
-        pageMap: Record<string, PageItem<unknown>>,
-        id: string,
-    ): Promise<Page<unknown> | undefined> {
-        loading = true;
-        const pageItem = pageMap[id];
-        if (pageItem) {
-            loading = true;
-            const page = await pageItem.open();
-            pages.set(pageItem.id, page);
-            loading = false;
-            return page;
-        }
-        loading = false;
-        return undefined;
+    async function loadPage(id: string, pageItem: PageItem<unknown>) {
+        if ($pages[id] && $pages[id].type === 'loaded') return;
+        $pages[id] = { type: 'loading' };
+        console.log('loading', id);
+        const page = await pageItem.open();
+        $pages[id] = { type: 'loaded', page };
+        console.log('loaded', id);
     }
 
-    currentPage.subscribe((id) => {
-        if (!$loadedIds.includes(id)) {
-            $loadedIds = [...$loadedIds, id];
+    currentPage.subscribe(async (value) => {
+        const pageItem = $pageMap[value];
+        if (!pageItem) {
+            $pages[value] = { type: 'waiting' };
+            console.log('waiting', value);
+            return;
         }
+        await loadPage(value, pageItem);
+    });
+    pageMap.subscribe(async (value) => {
+        const page = $pages[$currentPage];
+        if (!page || page.type !== 'waiting') return;
+        if (!value[$currentPage]) return;
+        const pageItem = value[$currentPage];
+        await loadPage($currentPage, pageItem);
     });
 
     onMount(async () => {
-        const { checkUpdate } = await import('@tauri-apps/api/updater');
         const update = await checkUpdate();
-        const { manifest, shouldUpdate } = update;
-
-        if (shouldUpdate && manifest) {
-            screenContext.push(UpdateScreen, { manifest });
+        if (update) {
+            screenContext.push(UpdateScreen, { update });
         }
 
-        if (!$installed) {
-            screenContext.push(ScreenSetup, undefined);
-            $installed = true;
-        }
-    })
+        dashboard.apps.event.remove.listen((removedItems) => {
+            removedItems.forEach((item) => {
+                delete $pages[`app-${item.id.key()}`];
+                unregisterPage(`app-${item.id.key()}`);
+            });
+        });
+        dashboard.apps.event.update.listen((updatedItems) => {
+            updatedItems.forEach((item) => {
+                delete $pages[`app-${item.id.key()}`];
+                unregisterPage(`app-${item.id.key()}`);
+            });
+        });
+    });
 </script>
+
 <main class:open={$menuOpen}>
     <div class="tabs" class:open={$menuOpen}>
         <section>
@@ -126,7 +129,11 @@
                             <Tooltip>
                                 <div class="tooltip">
                                     <h3>{$t('screen.manage-apps.name')}</h3>
-                                    <small>{$t('screen.manage-apps.description')}</small>
+                                    <small
+                                    >{$t(
+                                        'screen.manage-apps.description',
+                                    )}</small
+                                    >
                                 </div>
                             </Tooltip>
                             <i class="ti ti-edit"></i>
@@ -137,12 +144,15 @@
         </section>
         <div class="list">
             <TableList table={dashboard.apps} component={AppEntry}>
-                <button slot="empty" on:click={() => ($currentPage = EXPLORE_PAGE.id)} class="no-apps">
+                <button
+                    on:click={() => ($currentPage = EXPLORE_PAGE.id)}
+                    slot="empty"
+                    class="no-apps"
+                >
                     {#if $menuOpen}
                         {#if $currentPage === EXPLORE_PAGE.id}
                             <p>
                                 {$t('menu.jump-to-explore-hint')}
-                                <i class="ti ti-arrow-right"></i>
                             </p>
                             <small>
                                 {$t('menu.add-apps-hint')}
@@ -150,10 +160,9 @@
                         {:else}
                             <p>
                                 {$t('menu.add-apps')}
-                                <i class="ti ti-plus"></i>
+                                <i class="ti ti-external-link"></i>
                             </p>
                             <small>
-                                <i class="ti ti-arrow-right"></i>
                                 {$t('menu.jump-to-explore')}
                             </small>
                         {/if}
@@ -163,25 +172,18 @@
         </div>
     </div>
     <div class="page-container">
-        {#each Object.keys($pageMap).filter((id) => $loadedIds.includes(id)) as id (id)}
-            <div class="page" class:visible={!loading && $currentPage === id}>
-                {#await loadPage($pageMap, id)}
-                    <div>Loading...</div>
-                {:then page}
-                    {#if page}
+        {#each Object.entries($pages) as [id, entry] (id)}
+            {#key id}
+                {#if entry.type === 'loaded'}
+                    <div class="page" class:visible={$currentPage === id}>
                         <svelte:component
-                            this={page.component}
-                            props={page.props}
+                            this={entry.page.component}
+                            props={entry.page.props}
                         />
-                    {/if}
-                {:catch error}
-                    <div>{error.message}</div>
-                {/await}
-            </div>
+                    </div>
+                {/if}
+            {/key}
         {/each}
-        {#if loading}
-            <div>Loading...</div>
-        {/if}
     </div>
 </main>
 
@@ -297,26 +299,26 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        width: calc(100% - 2rem);
+        margin: 0 1rem;
+        padding: 1rem 1rem;
+        border: 1px dashed var(--color-outline);
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 2px;
         background: var(--color-bg-2);
         color: var(--color-1);
-        border: none;
-        padding: 0.5rem 1rem;
-        width: 100%;
+        cursor: pointer;
 
-        > p {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
+        > small {
+            color: var(--color-text);
             font-weight: 600;
-
-            > i {
-                margin-left: 0.5rem;
-            }
+            font-size: 0.7rem;
         }
 
+        &:focus-visible,
         &:hover {
+            outline: none;
             background: var(--color-bg-1);
             transition: background 0.0621s;
         }

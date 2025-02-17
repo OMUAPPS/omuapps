@@ -27,9 +27,7 @@ class EndpointRegisterPacket:
             for _ in range(count):
                 key = reader.read_string()
                 value = reader.read_string()
-                endpoints[Identifier.from_key(key)] = (
-                    Identifier.from_key(value) if value else None
-                )
+                endpoints[Identifier.from_key(key)] = Identifier.from_key(value) if value else None
         return EndpointRegisterPacket(endpoints=endpoints)
 
 

@@ -7,7 +7,7 @@ import { Node2D } from '$lib/math/node2d.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Timer } from '$lib/timer.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
-import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
+import { MVP_VERTEX_SHADER, SPRITE_FRAGMENT_SHADER, TEXTURE_FRAGMENT_SHADER } from './shaders.js';
 
 export type LayerJson = {
     animSpeed: number;
@@ -78,12 +78,11 @@ export class LayerData {
         public readonly yAmp: number,
         public readonly yFrq: number,
         public readonly zindex: number,
+        public readonly width: number,
+        public readonly height: number,
     ) { }
 
-    public static async load(glContext: GlContext, data: LayerJson): Promise<LayerData> {
-        const img = new Image();
-        img.src = `data:image/png;base64,${data.imageData}`;
-        await img.decode();
+    public static async load(glContext: GlContext, image: HTMLImageElement, data: LayerJson): Promise<LayerData> {
         const texture = glContext.createTexture();
         texture.use(() => {
             texture.setParams({
@@ -92,21 +91,23 @@ export class LayerData {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-            texture.setImage(img, {
+            texture.setImage(image, {
                 internalFormat: 'rgba',
-                width: img.width,
-                height: img.height,
+                width: image.width,
+                height: image.height,
             });
         })
         const vertexBuffer = glContext.createBuffer();
         vertexBuffer.bind(() => {
+            const width = image.width / data.frames;
+            const height = image.height;
             vertexBuffer.setData(new Float32Array([
-                -img.width / 2, -img.height / 2, 0,
-                -img.width / 2, img.height / 2, 0,
-                img.width / 2, -img.height / 2, 0,
-                -img.width / 2, img.height / 2, 0,
-                img.width / 2, img.height / 2, 0,
-                img.width / 2, -img.height / 2, 0,
+                0, 0, 0,
+                0, height, 0,
+                width, 0, 0,
+                0, height, 0,
+                width, height, 0,
+                width, 0, 0,
             ]), 'static');
         });
         const uvBuffer = glContext.createBuffer();
@@ -155,6 +156,8 @@ export class LayerData {
             data.yAmp,
             data.yFrq,
             data.zindex,
+            image.width / data.frames,
+            image.height,
         );
     }
 }
@@ -230,6 +233,7 @@ class SpriteGroup {
 
 interface PNGTuberContext {
     readonly timer: Timer;
+    readonly tickTimer: Timer;
     readonly spriteGroups: Map<number, SpriteGroup>;
     readonly origin: Node2D;
     bounceVelocity: number;
@@ -240,7 +244,8 @@ interface PNGTuberContext {
 }
 
 export class PNGTuber implements Avatar {
-    private readonly program: GlProgram;
+    private readonly spriteProgram: GlProgram;
+    private readonly bufferProgram: GlProgram;
     private readonly frameBufferTexture: GlTexture;
     private readonly frameBuffer: GlFramebuffer;
     private readonly effectTargetTexture: GlTexture;
@@ -265,6 +270,7 @@ export class PNGTuber implements Avatar {
         }
         const context = {
             timer: new Timer(),
+            tickTimer: new Timer(),
             spriteGroups,
             origin,
             bounceVelocity: 0,
@@ -276,8 +282,10 @@ export class PNGTuber implements Avatar {
             showOnBlink: 0,
         }
         const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
+        const bounds = () => this.getBoundingBox(context);
         return {
-            render
+            render,
+            bounds,
         };
     }
 
@@ -285,15 +293,21 @@ export class PNGTuber implements Avatar {
         private readonly glContext: GlContext,
         public readonly layers: Map<number, LayerData>,
     ) {
-        const vShader = glContext.createShader({
-            source: VERTEX_SHADER,
+        const mvpVertexShader = glContext.createShader({
+            source: MVP_VERTEX_SHADER,
             type: 'vertex',
         })
-        const fShader = glContext.createShader({
-            source: FRAGMENT_SHADER,
+        const spriteFShader = glContext.createShader({
+            source: SPRITE_FRAGMENT_SHADER,
             type: 'fragment',
         })
-        this.program = glContext.createProgram([vShader, fShader]);
+        this.spriteProgram = glContext.createProgram([mvpVertexShader, spriteFShader]);
+        const textureFShader = glContext.createShader({
+            source: TEXTURE_FRAGMENT_SHADER,
+            type: 'fragment',
+        })
+        this.bufferProgram = glContext.createProgram([mvpVertexShader, textureFShader]);
+
         this.frameBuffer = glContext.createFramebuffer();
         this.frameBufferTexture = glContext.createTexture();
         this.frameBufferTexture.use(() => {
@@ -345,11 +359,25 @@ export class PNGTuber implements Avatar {
     }
 
     public static async load(glContext: GlContext, data: PNGTuberData): Promise<PNGTuber> {
-        const layers = new Map<number, LayerData>();
-        for (const key in data) {
-            layers.set(data[key].identification, await LayerData.load(glContext, data[key]));
+        const values = Object.values(data);
+        const images: Record<string, HTMLImageElement> = {};
+        await Promise.all(values.map(async (value) => {
+            const image = new Image();
+            image.src = `data:image/png;base64,${value.imageData}`;
+            await new Promise(resolve => {
+                // .decode()を並列で使うとエラー吐くから.decode()の代わりに.onloadを使う (https://issues.chromium.org/issues/40792189#comment7)
+                image.onload = resolve;
+            });
+            images[value.identification] = image;
+        }));
+
+        const layerData = new Map<number, LayerData>();
+        for (const value of values) {
+            const image = images[value.identification];
+            const layer = await LayerData.load(glContext, image, value);
+            layerData.set(value.identification, layer);
         }
-        return new PNGTuber(glContext, layers);
+        return new PNGTuber(glContext, layerData);
     }
 
     public render(matrices: MatrixStack, context: PNGTuberContext, action: AvatarAction, options: RenderOptions): void {
@@ -359,6 +387,23 @@ export class PNGTuber implements Avatar {
         context.talking = action.talking;
         context.layer = action.config.pngtuber.layer;
 
+        const ticks = context.tickTimer.tick(1000 / 60);
+        for (let i = 0; i < ticks; i++) {
+            if (action.talking && context.origin.position.y >= 0 && context.bounceVelocity === 0) {
+                context.bounceVelocity = 250;
+                context.bounceTick += 1;
+            }
+            context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
+            context.origin.position = context.origin.position.add(new Vec2(0, -context.bounceVelocity * 0.0166)).min(Vec2.ZERO);
+            if (!action.talking && context.origin.position.y >= -1) {
+                context.bounceVelocity = 0;
+            }
+
+            for (const sprite of context.spriteGroups.values()) {
+                sprite.process();
+            }
+        }
+
         const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex)));
 
         this.frameBufferTexture.use(() => {
@@ -367,18 +412,6 @@ export class PNGTuber implements Avatar {
         this.effectTargetTexture.use(() => {
             this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
         });
-        
-        if (action.talking && context.origin.position.y >= 0 && context.bounceVelocity === 0) {
-            context.bounceVelocity = 250;
-            context.bounceTick += 1;
-        }
-        context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
-        context.origin.position = context.origin.position.add(new Vec2(0, -context.bounceVelocity * 0.0166)).min(Vec2.ZERO);
-        if (!action.talking && context.origin.position.y >= -1) {
-            context.bounceVelocity = 0;
-        }
-
-        [...context.spriteGroups.values()].forEach(sprite => sprite.process());
     
         passes.sort((a, b) => a - b);
 
@@ -388,7 +421,7 @@ export class PNGTuber implements Avatar {
             passes.forEach(pass => {
                 [...context.spriteGroups.values()].filter(sprite => sprite.layerData.parentId === null).forEach(sprite => {
                     matrices.push();
-                    this.renderLayer(matrices, sprite, context, pass);
+                    this.renderLayer(context, matrices, sprite, pass);
                     matrices.pop();
                 });
             });
@@ -403,18 +436,18 @@ export class PNGTuber implements Avatar {
             this.frameBuffer.use(() => {
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
-                this.program.use(() => {
-                    const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+                this.bufferProgram.use(() => {
+                    const textureUniform = this.bufferProgram.getUniform('u_texture').asSampler2D();
                     textureUniform.set(this.effectTargetTexture);
-                    const projection = this.program.getUniform('u_projection').asMat4();
+                    const projection = this.bufferProgram.getUniform('u_projection').asMat4();
                     projection.set(Mat4.IDENTITY);
-                    const model = this.program.getUniform('u_model').asMat4();
+                    const model = this.bufferProgram.getUniform('u_model').asMat4();
                     model.set(Mat4.IDENTITY);
-                    const view = this.program.getUniform('u_view').asMat4();
+                    const view = this.bufferProgram.getUniform('u_view').asMat4();
                     view.set(Mat4.IDENTITY);
-                    const positionAttribute = this.program.getAttribute('a_position');
+                    const positionAttribute = this.bufferProgram.getAttribute('a_position');
                     positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                    const uvAttribute = this.program.getAttribute('a_texcoord');
+                    const uvAttribute = this.bufferProgram.getAttribute('a_texcoord');
                     uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                     gl.drawArrays(gl.TRIANGLES, 0, 6);
                 });
@@ -422,25 +455,25 @@ export class PNGTuber implements Avatar {
         });
 
         this.frameBufferTexture.use(() => {
-            this.program.use(() => {
-                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+            this.bufferProgram.use(() => {
+                const textureUniform = this.bufferProgram.getUniform('u_texture').asSampler2D();
                 textureUniform.set(this.frameBufferTexture);
-                const projection = this.program.getUniform('u_projection').asMat4();
+                const projection = this.bufferProgram.getUniform('u_projection').asMat4();
                 projection.set(Mat4.IDENTITY);
-                const model = this.program.getUniform('u_model').asMat4();
+                const model = this.bufferProgram.getUniform('u_model').asMat4();
                 model.set(Mat4.IDENTITY);
-                const view = this.program.getUniform('u_view').asMat4();
+                const view = this.bufferProgram.getUniform('u_view').asMat4();
                 view.set(Mat4.IDENTITY);
-                const positionAttribute = this.program.getAttribute('a_position');
+                const positionAttribute = this.bufferProgram.getAttribute('a_position');
                 positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = this.program.getAttribute('a_texcoord');
+                const uvAttribute = this.bufferProgram.getAttribute('a_texcoord');
                 uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
         });
     }
 
-    private renderLayer(matrices: MatrixStack, sprite: SpriteGroup, context: PNGTuberContext, pass: number) {
+    private renderLayer(context: PNGTuberContext, matrices: MatrixStack, sprite: SpriteGroup, pass: number) {
         const { layerData } = sprite;
         if (layerData.showBlink !== 0) {
             if (context.blinking && layerData.showBlink === 1) {
@@ -462,28 +495,35 @@ export class PNGTuber implements Avatar {
         const { gl } = this.glContext;
         
         if (layerData.zindex === pass) {
-            this.program.use(() => {
-                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
+            this.spriteProgram.use(() => {
+                const textureUniform = this.spriteProgram.getUniform('u_texture').asSampler2D();
                 textureUniform.set(layerData.imageData);
-                const projection = this.program.getUniform('u_projection').asMat4();
+                const projection = this.spriteProgram.getUniform('u_projection').asMat4();
                 projection.set(Mat4.IDENTITY);
-                const model = this.program.getUniform('u_model').asMat4();
+                const model = this.spriteProgram.getUniform('u_model').asMat4();
                 const matrix = sprite.sprite
                     .globalTransform
                     .getMat4()
-                    .translate(layerData.offset.x, layerData.offset.y, 0);
+                    .translate(-layerData.width / 2, -layerData.height / 2, 0)
+                    .translate(layerData.offset.x, layerData.offset.y, 0)
                 model.set(matrix);
-                const view = this.program.getUniform('u_view').asMat4();
+                const view = this.spriteProgram.getUniform('u_view').asMat4();
                 view.set(matrices.get());
-                const positionAttribute = this.program.getAttribute('a_position');
+                const frameCount = this.spriteProgram.getUniform('u_frame_count').asFloat();
+                frameCount.set(layerData.frames);
+                const frameUniform = this.spriteProgram.getUniform('u_frame').asFloat();
+                const elapsed = context.timer.getElapsedMS() / 1000 / 6;
+                const frame = Math.floor(elapsed * (layerData.animSpeed + 1)) % layerData.frames;
+                frameUniform.set(layerData.frames > 1 ? frame : 0);
+                const positionAttribute = this.spriteProgram.getAttribute('a_position');
                 positionAttribute.set(layerData.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = this.program.getAttribute('a_texcoord');
+                const uvAttribute = this.spriteProgram.getAttribute('a_texcoord');
                 uvAttribute.set(layerData.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
         }
         [...context.spriteGroups.values()].filter(child => child.layerData.parentId === layerData.identification).forEach(child => {
-            this.renderLayer(matrices, child, context, pass);
+            this.renderLayer(context, matrices, child, pass);
         });
     }
 
@@ -500,8 +540,9 @@ export class PNGTuber implements Avatar {
                 new Vec2(halfWidth, -halfHeight),
                 new Vec2(halfWidth, halfHeight),
             ];
+            const offset = new Vec2(sprite.layerData.offset.x, sprite.layerData.offset.y);
             for (const corner of corners) {
-                points.push(transform.xform(corner));
+                points.push(transform.xform(corner.add(offset)));
             }
         }
         return AABB2.fromPoints(points);

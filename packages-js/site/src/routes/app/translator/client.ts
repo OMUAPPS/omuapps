@@ -1,5 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { version } from '$lib/version.json';
+import { VERSION } from '$lib/version.js';
 import { Omu } from '@omujs/omu';
 import { setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
@@ -13,7 +13,7 @@ export const config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TY
 
 if (BROWSER) {
     omu.plugins.require({
-        omuplugin_translator: `==${version}`,
+        omuplugin_translator: `==${VERSION}`,
     });
     omu.start();
 }

@@ -3,10 +3,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from importlib.metadata import Distribution
+from typing import TYPE_CHECKING
 
-from omuserver.server import Server
+if TYPE_CHECKING:
+    from omuserver.server import Server
 
-from omu.helper import Coro
+from omu.helper import AsyncCallback
 
 from .client import Client
 
@@ -32,15 +34,13 @@ class InstallContext:
 @dataclass(frozen=True, slots=True)
 class Plugin:
     get_client: Callable[[], Client] | None = None
-    on_start_server: Coro[[Server], None] | None = None
-    on_stop_server: Coro[[Server], None] | None = None
-    on_install: Coro[[InstallContext], None] | None = None
-    on_uninstall: Coro[[InstallContext], None] | None = None
-    on_update: Coro[[InstallContext], None] | None = None
-    isolated: bool = False
+    on_start: AsyncCallback[[Server]] | None = None
+    on_stop: AsyncCallback[[Server]] | None = None
+    on_install: AsyncCallback[[InstallContext]] | None = None
+    on_uninstall: AsyncCallback[[InstallContext]] | None = None
+    on_update: AsyncCallback[[InstallContext]] | None = None
+    isolated: bool = True
 
     def __post_init__(self):
         if self.isolated:
-            assert self.on_start_server is None, "Isolated plugins cannot have on_start"
-            assert self.on_stop_server is None, "Isolated plugins cannot have on_stop"
             assert self.get_client is not None, "Isolated plugins must have get_client"

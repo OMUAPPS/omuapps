@@ -25,12 +25,12 @@
     .header {
         display: flex;
         flex-direction: row;
-        gap: 40px;
+        gap: 1rem;
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        min-height: 4rem;
-        padding: 1.5rem 2.5rem;
+        height: 5rem;
+        padding: 2.5rem;
         background: var(--color-bg-2);
         color: var(--color-1);
         border-bottom: 1px solid var(--color-outline);
@@ -56,7 +56,8 @@
     }
 
     .subtitle {
-        font-size: 0.6rem;
+        color: var(--color-text);
+        font-size: 0.6621rem;
         font-weight: 600;
     }
 </style>

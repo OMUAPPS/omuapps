@@ -1,2 +1,4 @@
-export { PLUGIN_EXTENSION_TYPE, PluginExtension } from './plugin-extension.js';
+export {
+    PLUGIN_EXTENSION_TYPE, PLUGIN_MANAGE_PACKAGE_PERMISSION_ID, PLUGIN_READ_PACKAGE_PERMISSION_ID, PluginExtension
+} from './plugin-extension.js';
 

@@ -64,10 +64,6 @@
             color: var(--color-1);
             white-space: nowrap;
         }
-
-        &:hover {
-            background: var(--color-bg-1);
-        }
     }
 
     small {

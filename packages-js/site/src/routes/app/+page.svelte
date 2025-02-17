@@ -1,7 +1,7 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
     import type { NetworkStatus } from '@omujs/omu/network/network.js';
-    import { Spinner } from '@omujs/ui';
+    import { Button, Spinner } from '@omujs/ui';
     import { onMount } from 'svelte';
     import { omu } from '../client.js';
     import AppEntry from './AppEntry.svelte';
@@ -64,14 +64,18 @@
 
     onMount(() => {
         status = omu.network.status;
-        const unlisten = omu.network.event.status.listen((value) => {
+        const unlistenNetwork = omu.network.event.status.listen((value) => {
             console.log('Network status:', value);
             status = value;
             if (status.type === 'connected') {
                 connecting = false;
             }
         });
-        return unlisten;
+        const unlistenApps = omu.dashboard.apps.listen();
+        return async () => {
+            unlistenNetwork();
+            unlistenApps();
+        };
     });
 
     $: {
@@ -84,7 +88,7 @@
     <meta name="description" content="OMUAPPSで使えるアプリを探してみる" />
 </svelte:head>
 
-<Page>
+<Page header={false}>
     <header slot="header">
         <h1>
             アプリを探す
@@ -114,13 +118,13 @@
                             {:else}
                                 <p>
                                     接続が切断されました
-                                    <button on:click={() => omu.network.connect()}>再接続</button>
+                                    <Button primary onclick={() => omu.network.connect()}>再接続</Button>
                                 </p>
                             {/if}
                         {:else if status['type'] === 'reconnecting'}
                             <p>
                                 接続に失敗しました ({status.attempt}回目)
-                                <button on:click={() => omu.network.connect()}>再接続</button>
+                                <Button primary disabled>再接続中…</Button>
                             </p>
                             <small>
                                 <p>APIが起動していない可能性があります。</p>
@@ -139,12 +143,12 @@
                         {:else if status['type'] === 'closed'}
                             <p>
                                 接続が切断されました
-                                <button on:click={() => omu.network.connect()}>再接続</button>
+                                <Button primary onclick={() => omu.network.connect()}>再接続</Button>
                             </p>
                         {:else if status['type'] === 'error'}
                             <p>
                                 エラーが発生しました
-                                <button on:click={() => omu.network.connect()}>再接続</button>
+                                <Button primary onclick={() => omu.network.connect()}>再接続</Button>
                             </p>
                             <small>
                                 {status['error'].message}
@@ -296,23 +300,6 @@
             align-items: center;
             gap: 1rem;
             color: var(--color-1);
-
-            > button {
-                padding: 0.5rem 1rem;
-                border: none;
-                background: var(--color-1);
-                color: var(--color-bg-2);
-                font-size: 0.8rem;
-                font-weight: 600;
-                border-radius: 3px;
-
-                &:hover {
-                    outline: 1px solid var(--color-1);
-                    outline-offset: -1px;
-                    background: var(--color-bg-2);
-                    color: var(--color-1);
-                }
-            }
         }
 
         > small {

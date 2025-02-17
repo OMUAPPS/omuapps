@@ -2,7 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import { type Component } from '@omujs/chat/models/content.js';
     import { Author, Message, Provider, Room, content } from '@omujs/chat/models/index.js';
-    import { AppHeader, FlexColWrapper, FlexRowWrapper, MessageRenderer } from '@omujs/ui';
+    import { AppHeader, MessageRenderer } from '@omujs/ui';
     import { APP } from './app.js';
     import { chat, omu } from './client.js';
     import ComponentEditor from './components/ComponentEditor.svelte';
@@ -66,7 +66,7 @@
     </header>
     <main>
         <section>
-            <FlexRowWrapper gap>
+            <div class="flex gap">
                 <button on:click={reset}>
                     <i class="ti ti-reload"></i>
                     Reset
@@ -75,7 +75,7 @@
                     <i class="ti ti-send"></i>
                     Send
                 </button>
-            </FlexRowWrapper>
+            </div>
         </section>
         <h3>
             <i class="ti ti-eye"></i>
@@ -89,18 +89,18 @@
             Content
         </h3>
         <section>
-            <FlexRowWrapper widthFull gap between>
-                <FlexColWrapper widthFull heightFull>
+            <div class="flex width gap between">
+                <div class="flex col width height">
                     <small>INPUT</small>
                     <div class="editor">
                         <ComponentEditor bind:component remove={reset} />
                     </div>
-                </FlexColWrapper>
-                <FlexColWrapper widthFull heightFull>
+                </div>
+                <div class="flex col width height">
                     <small>JSON</small>
                     <pre>{JSON.stringify(content.serialize(component), null, 4)}</pre>
-                </FlexColWrapper>
-            </FlexRowWrapper>
+                </div>
+            </div>
         </section>
     </main>
 </AppPage>
@@ -184,5 +184,25 @@
             background: var(--color-1);
             color: var(--color-bg-2);
         }
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .col {
+        flex-direction: column;
+    }
+
+    .width {
+        width: 100%;
+    }
+
+    .height {
+        height: 100%;
+    }
+
+    .gap {
+        gap: 1rem;
     }
 </style>

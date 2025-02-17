@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    import { Combobox, Spinner, Tooltip } from '@omujs/ui';
+    import { Button, Combobox, Spinner, Tooltip } from '@omujs/ui';
     import type { AuthenticateUser, Channel, DiscordOverlayApp, Guild } from '../discord-overlay-app.js';
 
     export let overlayApp: DiscordOverlayApp;
@@ -13,18 +13,10 @@
     $: hasGuilds = guilds.length > 0;
     $: hasChannels = channels.length > 0;
 
-    let refreshPromise: Promise<void> | null = null;
-
-    function refresh() {
-        if (refreshPromise) {
-            return;
-        }
-        refreshPromise = overlayApp.refresh().then(async () => {
-            clients = await overlayApp.getClients();
-            console.log(clients);
-        }).finally(() => {
-            refreshPromise = null;
-        });
+    async function refresh() {
+        await overlayApp.refresh()
+        clients = await overlayApp.getClients();
+        console.log(clients);
     }
     $: guildOptions = {
         auto: {
@@ -43,8 +35,8 @@
 </script>
 
 <div class="config">
-    <button on:click={refresh} disabled={!!refreshPromise} class="refresh">
-        {#if refreshPromise}
+    <Button primary onclick={refresh} let:promise>
+        {#if promise}
             再検出中…
             <Spinner />
         {:else if hasUsers}
@@ -60,11 +52,11 @@
             Discordを再検出
             <i class="ti ti-reload"></i>
         {/if}
-    </button>
+    </Button>
     <span>
         {#if hasUsers && Object.keys(clients).length > 1}
             <p>
-                <i class="ti ti-user"/>
+                <i class="ti ti-user"></i>
                 ユーザー
             </p>
             <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
@@ -75,7 +67,7 @@
         {:else if $config.user_id}
             {@const user = clients[$config.user_id]}
             <p>
-                <i class="ti ti-user"/>
+                <i class="ti ti-user"></i>
                 ユーザー
             </p>
             {#if user.avatar}
@@ -95,7 +87,7 @@
     <span>
         {#if hasGuilds}
             <p>
-                <i class="ti ti-server"/>
+                <i class="ti ti-server"></i>
                 サーバー
             </p>
             <Combobox options={guildOptions} bind:value={$config.guild_id}/>
@@ -108,7 +100,7 @@
     <span>
         {#if hasChannels}
             <p>
-                <i class="ti ti-headphones"/>
+                <i class="ti ti-headphones"></i>
                 チャンネル
             </p>
             <Combobox options={channelOptions} bind:value={$config.channel_id}/>
@@ -128,7 +120,7 @@
 <div class="config">
     <span>
         <p>
-            <i class="ti ti-layout"/>
+            <i class="ti ti-layout"></i>
             設定をリセット
         </p>
         <button on:click={() => {
@@ -143,7 +135,7 @@
     </span>
     <span>
         <p>
-            <i class="ti ti-reload"/>
+            <i class="ti ti-reload"></i>
             再読み込み
         </p>
         <button on:click={() => {
@@ -157,7 +149,7 @@
     </span>
     <span>
         <label>
-            <i class="ti ti-mountain"/>
+            <i class="ti ti-mountain"></i>
             Reactiveアバターを使う
             <input type="checkbox" bind:checked={$config.reactive.enabled} on:change={() => {
                 window.location.reload();
@@ -206,37 +198,6 @@
                     background: var(--color-bg-1);
                 }
             }
-        }
-    }
-
-    .refresh {
-        display: flex;
-        gap: 0.5rem;
-        align-items: baseline;
-        justify-content: center;
-        padding: 0.5rem 1rem;
-        font-size: 0.8621rem;
-        font-weight: 600;
-        background: var(--color-1);
-        color: var(--color-bg-1);
-        border: none;
-        border-radius: 2px;
-        outline: 1px solid var(--color-outline);
-        outline-offset: -1px;
-        border-radius: 2px;
-        cursor: pointer;
-
-        &:hover {
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
-            background: var(--color-bg-1);
-            color: var(--color-1);
-        }
-
-        &:disabled {
-            cursor: not-allowed;
-            background: var(--color-bg-1);
-            color: var(--color-1);
         }
     }
 

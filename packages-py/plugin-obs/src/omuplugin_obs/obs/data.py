@@ -295,9 +295,7 @@ class OBSData(Reference[obs_data_t]):
 
     def save_json_pretty_safe(self, file: str, temp_ext: str, backup_ext: str) -> bool:
         with self as data:
-            return obspython.obs_data_save_json_pretty_safe(
-                data, file, temp_ext, backup_ext
-            )
+            return obspython.obs_data_save_json_pretty_safe(data, file, temp_ext, backup_ext)
 
     def apply(self, apply_data: OBSData):
         with self as data, apply_data as new_data:

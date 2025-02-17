@@ -14,9 +14,7 @@ class ExtensionRegistry:
             raise ValueError(f"Extension type {type} already registered")
         for dependency in type.dependencies():
             if not self.has(dependency):
-                raise ValueError(
-                    f"Extension type {type} depends on {dependency} which is not registered"
-                )
+                raise ValueError(f"Extension type {type} depends on {dependency} which is not registered")
         extension = type.create(self._client)
         self._extensions[type.name] = extension
         return extension

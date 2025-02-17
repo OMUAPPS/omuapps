@@ -1,22 +1,15 @@
 <script lang="ts">
-    import { DEFAULT_CONFIG, game, type SceneContext } from '../omucafe-app.js';
+    import AssetButton from '$lib/components/AssetButton.svelte';
+    import { DEFAULT_CONFIG, getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneMainMenu', context);
 
-    const { scene, config } = game;
+    const { scene, config, obs, omu } = getGame();
 </script>
 
-<h1>
-    おむカフェ
-</h1>
-
 <div>
-    <button on:click={() => {
-        $scene = { type: 'photo_mode' };
-    }}>
-        写真モード
-    </button>
+    <AssetButton {obs} {omu} />
     <button on:click={() => {
         $scene = { type: 'cooking' };
     }}>

@@ -89,7 +89,9 @@
         "messages": {
             "title": "コメント／メッセージ",
             "bookmark": "ブックマーク",
-            "copy": "コピー"
+            "copy": "コピー",
+            "see_in_room": "配信で見る",
+            "paid": "投げ銭"
         },
         "apps": {
             "title": "アプリ",
@@ -102,7 +104,7 @@
         },
         "channels": {
             "title": "チャンネル",
-            "append_channel": "追加する",
+            "append_channel": "チャンネルを接続",
             "setup_channel": "チャンネルを追加",
             "next_check": "再チェックまであと",
             "delete": "チャンネルを削除",
@@ -126,7 +128,28 @@
             "tooltip": "アプリが配信情報を使えるようにしよう",
             "channels": "チャンネル",
             "rooms": "接続中/過去の配信",
-            "chat": "チャット"
+            "chat": "チャット",
+            "setup": "セットアップ",
+            "setup_tooltip": "アプリがチャットを使えるようにチャンネルを接続しましょう",
+            "input_url": "URLを入力",
+            "setup_input": "追加するチャンネルを探す",
+            "setup_input_tooltip": "URLを入力すると、チャンネルを自動で追加します。",
+            "input_submit": "探す",
+            "select_channel": "チャンネルを選択",
+            "setup_select": "追加するチャンネルを選択",
+            "setup_select_tooltip": "使うチャンネルを選択してください。",
+            "select_submit": "追加",
+            "setup_searching": "探しています...",
+            "setup_searching_tooltip": "URLからチャンネルを探しています。",
+            "search_no_results": "結果がありません",
+            "searching": "検索中",
+            "setup_no_results": "チャンネルが見つかりませんでした",
+            "setup_no_results_tooltip": "URLが正しいか確認してください。",
+            "search_back": "もう一度検索する",
+            "select_submit_tooltip": "一つ以上選択してください。",
+            "input_cancel": "やめておく",
+            "selected_tooltip": "クリックで選択を解除",
+            "select_tooltip": "クリックで選択"
         },
         "settings": {
             "icon": "ti ti-settings",
@@ -138,7 +161,7 @@
         "expand": "メニューを展開",
         "collapse": "メニューを折りたたむ",
         "apps": "アプリ",
-        "add-apps": "アプリを追加",
+        "add-apps": "アプリを追加しましょう",
         "add-apps-hint": "アプリを追加するとここに表示されます",
         "jump-to-explore": "「アプリを探す」ページに移動する",
         "jump-to-explore-hint": "右の画面からアプリを追加"
@@ -199,22 +222,29 @@
         "category": {
             "general": {
                 "name": "一般",
-                "description": "一般的な設定を変更できます",
+                "description": "言語や再起動など",
                 "icon": "ti ti-settings"
+            },
+            "plugins": {
+                "name": "プラグイン",
+                "description": "削除や再読み込みなど",
+                "icon": "ti ti-plug"
             },
             "about": {
                 "name": "情報",
-                "description": "バージョン・ライセンスなどの情報を確認できます",
+                "description": "バージョンやライセンスなど",
                 "icon": "ti ti-license"
             },
             "developer": {
                 "name": "開発者",
-                "description": "開発者向けの設定を変更できます",
+                "description": "開発者向け設定",
                 "icon": "ti ti-code"
             }
         },
         "setting": {
             "devMode": "開発者モード",
+            "betaMode": "開発版の機能を有効にする",
+            "betaModeDescription": "有効にするにはアプリの再起動が必要です。",
             "language": "言語",
             "debug": "デバッグ",
             "logFileGenerate": "ログファイルを生成",
@@ -223,7 +253,13 @@
             "logFileGenerated": "ログファイルを生成しました: {path}",
             "cleanEnvironment": "動作環境を再構築",
             "cleaningEnvironment": "環境を削除して再起動中...",
-            "serverRestart": "サーバーを再起動"
+            "serverRestart": "サーバーを再起動",
+            "serverRestarting": "サーバーを再起動中...",
+            "serverRestarted": "サーバーを再起動しました",
+            "serverRestartError": "サーバーの再起動に失敗しました: {error}",
+            "latestVersion": "最新バージョン",
+            "newVersionAvailable": "新しいバージョンがあります",
+            "update": "アップデート"
         },
         "about": {
             "version": "バージョン",
@@ -231,7 +267,8 @@
             "licenses": "ライセンス",
             "links": "リンク",
             "source_code": "ソースコード",
-            "website": "ウェブサイト"
+            "website": "ウェブサイト",
+            "contributor": "{name} - {contributions}の貢献"
         }
     },
     "setup": {

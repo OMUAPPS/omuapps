@@ -1,9 +1,9 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
-    import { ExternalLink, FlexColWrapper } from '@omujs/ui';
+    import { ExternalLink } from '@omujs/ui';
 </script>
 
-<FlexColWrapper gap>
+<div class="links">
     <h2>
         <i class="ti ti-link"></i>
         {$t('settings.about.links')}
@@ -22,4 +22,13 @@
             <i class="ti ti-external-link"></i>
         </h4>
     </ExternalLink>
-</FlexColWrapper>
+</div>
+
+<style lang="scss">
+    .links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: fit-content;
+    }
+</style>

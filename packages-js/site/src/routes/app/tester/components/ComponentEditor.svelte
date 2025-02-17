@@ -1,6 +1,6 @@
 <script lang="ts">
     import { content } from '@omujs/chat/models/index.js';
-    import { FlexRowWrapper, Tooltip } from '@omujs/ui';
+    import { Tooltip } from '@omujs/ui';
     import AddComponent from './AddComponent.svelte';
     import ImageEdit from './ImageEdit.svelte';
     import TextEdit from './TextEdit.svelte';
@@ -12,7 +12,7 @@
         text: 'ti ti-txt',
         image: 'ti ti-photo',
     };
-    const icon = component && icons[component.type as 'text' | 'image'];
+    $: icon = component && icons[component.type as 'text' | 'image'];
 
     function removeChild(child: content.Component) {
         if (!component.isParent()) {
@@ -23,26 +23,24 @@
 </script>
 
 {#if component}
-    <FlexRowWrapper baseline>
-        {#if icon}
-            <button on:click={remove}>
-                <Tooltip>コンポーネントを削除</Tooltip>
-                <i class={icon} />
-            </button>
-        {/if}
-        {#if component instanceof content.Text}
-            <TextEdit bind:component />
-        {:else if component instanceof content.Image}
-            <ImageEdit bind:component />
-        {/if}
-    </FlexRowWrapper>
+    {#if icon}
+        <button on:click={remove}>
+            <Tooltip>コンポーネントを削除</Tooltip>
+            <i class={icon}></i>
+        </button>
+    {/if}
+    {#if component instanceof content.Text}
+        <TextEdit bind:component />
+    {:else if component instanceof content.Image}
+        <ImageEdit bind:component />
+    {/if}
     {#if component.isParent()}
-        <FlexRowWrapper wrap>
+        <div>
             {#each component.children as child}
                 <svelte:self bind:component={child} remove={() => removeChild(child)} />
             {/each}
             <AddComponent bind:component />
-        </FlexRowWrapper>
+        </div>
     {/if}
 {:else}
     <AddComponent bind:component />
@@ -53,6 +51,11 @@
         width: 24px;
         height: 24px;
         padding: 4px;
+    }
+
+    div {
+        display: flex;
+        flex-wrap: wrap;
     }
 
     button {

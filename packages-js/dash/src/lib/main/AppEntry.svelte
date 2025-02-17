@@ -2,20 +2,20 @@
     import { omu } from '$lib/client.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
-    import { loadedIds, registerPage, type Page } from './page.js';
+    import { pages, registerPage, type Page } from './page.js';
     import AppPage from './pages/AppPage.svelte';
     import { currentPage, menuOpen } from './settings.js';
 
     export let entry: App;
     export let selected: boolean = false;
 
-    const metadata = entry.metadata;
-    const name = metadata?.name ? omu.i18n.translate(metadata?.name) : entry.id.key();
-    const description = metadata?.description
+    $: metadata = entry.metadata;
+    $: name = metadata?.name ? omu.i18n.translate(metadata?.name) : entry.id.key();
+    $: description = metadata?.description
         ? omu.i18n.translate(metadata?.description)
         : 'No description';
-    const icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : 'No icon';
-    const image = metadata?.image ? omu.i18n.translate(metadata?.image) : null;
+    $: icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : 'No icon';
+    $: image = metadata?.image ? omu.i18n.translate(metadata?.image) : null;
 
     const appPage = registerPage({
         id: `app-${entry.id.key()}`,
@@ -33,7 +33,7 @@
         $currentPage = appPage.id;
     }
 
-    $: loaded = $loadedIds.includes(appPage.id);
+    $: loaded = $pages[appPage.id];
     $: active = $currentPage === appPage.id;
 </script>
 
@@ -69,7 +69,7 @@
             <img src={image} alt="" class="image" />
         {/if}
         {#if $menuOpen}
-            <div class="info">
+            <div class="info" class:open={$menuOpen}>
                 <span class="icon">
                     {#if icon.startsWith('ti-')}
                         <i class="ti {icon}"></i>
@@ -106,6 +106,8 @@
         margin: 0;
         cursor: pointer;
         width: 100%;
+        height: 4rem;
+        display: flex;
     }
 
     .tooltip {
@@ -160,21 +162,16 @@
             outline: none;
             transition: background 0.0621s;
 
-            > .info {
-                margin: 0.1rem;
+            > .info > .open {
+                visibility: visible;
+                margin-right: 0rem;
                 transition: margin 0.0621s;
-
-                > .open {
-                    visibility: visible;
-                    margin-right: 0rem;
-                    transition: margin 0.0621s;
-                }
             }
         }
 
         &.active {
             background: var(--color-bg-1);
-            border-right: 0.65rem solid var(--color-1);
+            border-right: 2px solid var(--color-1);
             transition: background 0.0621s;
         }
 
@@ -184,7 +181,8 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            opacity: 0.5;
+            opacity: 0.8;
+            filter: blur(.0621rem) contrast(0.621) brightness(1.23621);
         }
 
         > .info {
@@ -197,6 +195,10 @@
             width: 100%;
             color: var(--color-1);
 
+            &.open {
+                padding-left: 1rem;
+            }
+
             > .icon {
                 display: flex;
                 justify-content: center;
@@ -205,17 +207,17 @@
                 min-height: 2rem;
                 width: 2rem;
                 height: 2rem;
-                margin-right: 0.25rem;
+                margin-right: 0.5rem;
                 background: var(--color-bg-3);
 
                 > img {
-                    width: 100%;
-                    height: 100%;
+                    width: 2.25rem;
+                    height: 2.25rem;
                     object-fit: contain;
                 }
 
                 > .ti {
-                    font-size: 1.25rem;
+                    font-size: 1.5rem;
                 }
             }
 
@@ -230,12 +232,14 @@
             }
 
             > .open {
+                position: absolute;
+                right: 0;
                 visibility: hidden;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 margin-left: auto;
-                margin-right: 0.1rem;
+                margin-right: 0.25rem;
                 min-width: 2rem;
                 height: 2rem;
                 color: var(--color-1);

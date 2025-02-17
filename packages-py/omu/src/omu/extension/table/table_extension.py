@@ -72,9 +72,7 @@ class TableExtension(Extension):
             return self._tables[type.id]
         return self.create(type)
 
-    def model[T: Keyable, D](
-        self, id: Identifier, name: str, model_type: type[ModelType[T, D]]
-    ) -> Table[T]:
+    def model[T: Keyable, D](self, id: Identifier, name: str, model_type: type[ModelType[T, D]]) -> Table[T]:
         id = id / name
         if self.has(id):
             raise ValueError(f"Table with identifier {id} already exists")
@@ -85,9 +83,7 @@ class TableExtension(Extension):
         return id in self._tables
 
 
-TABLE_EXTENSION_TYPE = ExtensionType(
-    "table", lambda client: TableExtension(client), lambda: []
-)
+TABLE_EXTENSION_TYPE = ExtensionType("table", lambda client: TableExtension(client), lambda: [])
 
 TABLE_PERMISSION_ID = TABLE_EXTENSION_TYPE / "permission"
 
@@ -131,18 +127,14 @@ TABLE_ITEM_REMOVE_PACKET = PacketType[TableItemsPacket].create(
     "item_remove",
     TableItemsPacket,
 )
-TABLE_ITEM_GET_ENDPOINT = EndpointType[
-    TableKeysPacket, TableItemsPacket
-].create_serialized(
+TABLE_ITEM_GET_ENDPOINT = EndpointType[TableKeysPacket, TableItemsPacket].create_serialized(
     TABLE_EXTENSION_TYPE,
     "item_get",
     request_serializer=TableKeysPacket,
     response_serializer=TableItemsPacket,
     permission_id=TABLE_PERMISSION_ID,
 )
-TABLE_ITEM_HAS_ENDPOINT = EndpointType[
-    TableKeysPacket, dict[str, bool]
-].create_serialized(
+TABLE_ITEM_HAS_ENDPOINT = EndpointType[TableKeysPacket, dict[str, bool]].create_serialized(
     TABLE_EXTENSION_TYPE,
     "item_has",
     request_serializer=TableKeysPacket,
@@ -163,27 +155,21 @@ TABLE_ITEM_HAS_ANY_ENDPOINT = EndpointType[TableKeysPacket, bool].create_seriali
     response_serializer=Serializer.json(),
     permission_id=TABLE_PERMISSION_ID,
 )
-TABLE_FETCH_ENDPOINT = EndpointType[
-    TableFetchPacket, TableItemsPacket
-].create_serialized(
+TABLE_FETCH_ENDPOINT = EndpointType[TableFetchPacket, TableItemsPacket].create_serialized(
     TABLE_EXTENSION_TYPE,
     "fetch",
     request_serializer=TableFetchPacket,
     response_serializer=TableItemsPacket,
     permission_id=TABLE_PERMISSION_ID,
 )
-TABLE_FETCH_RANGE_ENDPOINT = EndpointType[
-    TableFetchRangePacket, TableItemsPacket
-].create_serialized(
+TABLE_FETCH_RANGE_ENDPOINT = EndpointType[TableFetchRangePacket, TableItemsPacket].create_serialized(
     TABLE_EXTENSION_TYPE,
     "fetch_range",
     request_serializer=TableFetchRangePacket,
     response_serializer=TableItemsPacket,
     permission_id=TABLE_PERMISSION_ID,
 )
-TABLE_FETCH_ALL_ENDPOINT = EndpointType[
-    TablePacket, TableItemsPacket
-].create_serialized(
+TABLE_FETCH_ALL_ENDPOINT = EndpointType[TablePacket, TableItemsPacket].create_serialized(
     TABLE_EXTENSION_TYPE,
     "fetch_all",
     request_serializer=TablePacket,
@@ -252,9 +238,7 @@ class TableImpl[T](Table[T]):
     async def get(self, key: str) -> T | None:
         if key in self._cache:
             return self._cache[key]
-        res = await self._client.endpoints.call(
-            TABLE_ITEM_GET_ENDPOINT, TableKeysPacket(id=self._id, keys=(key,))
-        )
+        res = await self._client.endpoints.call(TABLE_ITEM_GET_ENDPOINT, TableKeysPacket(id=self._id, keys=(key,)))
         items = self._parse_items(res.items)
         self._cache.update(items)
         if key in items:
@@ -262,30 +246,22 @@ class TableImpl[T](Table[T]):
         return None
 
     async def get_many(self, *keys: str) -> dict[str, T]:
-        res = await self._client.endpoints.call(
-            TABLE_ITEM_GET_ENDPOINT, TableKeysPacket(id=self._id, keys=keys)
-        )
+        res = await self._client.endpoints.call(TABLE_ITEM_GET_ENDPOINT, TableKeysPacket(id=self._id, keys=keys))
         items = self._parse_items(res.items)
         self._cache.update(items)
         return items
 
     async def add(self, *items: T) -> None:
         data = self._serialize_items(items)
-        await self._client.send(
-            TABLE_ITEM_ADD_PACKET, TableItemsPacket(id=self._id, items=data)
-        )
+        await self._client.send(TABLE_ITEM_ADD_PACKET, TableItemsPacket(id=self._id, items=data))
 
     async def update(self, *items: T) -> None:
         data = self._serialize_items(items)
-        await self._client.send(
-            TABLE_ITEM_UPDATE_PACKET, TableItemsPacket(id=self._id, items=data)
-        )
+        await self._client.send(TABLE_ITEM_UPDATE_PACKET, TableItemsPacket(id=self._id, items=data))
 
     async def remove(self, *items: T) -> None:
         data = self._serialize_items(items)
-        await self._client.send(
-            TABLE_ITEM_REMOVE_PACKET, TableItemsPacket(id=self._id, items=data)
-        )
+        await self._client.send(TABLE_ITEM_REMOVE_PACKET, TableItemsPacket(id=self._id, items=data))
 
     async def clear(self) -> None:
         await self._client.send(TABLE_ITEM_CLEAR_PACKET, TablePacket(id=self._id))
@@ -293,27 +269,19 @@ class TableImpl[T](Table[T]):
     async def has(self, key: str) -> bool:
         if key in self._cache:
             return True
-        res = await self._client.endpoints.call(
-            TABLE_ITEM_HAS_ENDPOINT, TableKeysPacket(id=self._id, keys=(key,))
-        )
+        res = await self._client.endpoints.call(TABLE_ITEM_HAS_ENDPOINT, TableKeysPacket(id=self._id, keys=(key,)))
         return res[key]
 
     async def has_many(self, *keys: str) -> dict[str, bool]:
-        res = await self._client.endpoints.call(
-            TABLE_ITEM_HAS_ENDPOINT, TableKeysPacket(id=self._id, keys=keys)
-        )
+        res = await self._client.endpoints.call(TABLE_ITEM_HAS_ENDPOINT, TableKeysPacket(id=self._id, keys=keys))
         return res
 
     async def has_all(self, *keys: str) -> bool:
-        res = await self._client.endpoints.call(
-            TABLE_ITEM_HAS_ALL_ENDPOINT, TableKeysPacket(id=self._id, keys=keys)
-        )
+        res = await self._client.endpoints.call(TABLE_ITEM_HAS_ALL_ENDPOINT, TableKeysPacket(id=self._id, keys=keys))
         return res
 
     async def has_any(self, *keys: str) -> bool:
-        res = await self._client.endpoints.call(
-            TABLE_ITEM_HAS_ANY_ENDPOINT, TableKeysPacket(id=self._id, keys=keys)
-        )
+        res = await self._client.endpoints.call(TABLE_ITEM_HAS_ANY_ENDPOINT, TableKeysPacket(id=self._id, keys=keys))
         return res
 
     async def fetch_items(
@@ -345,9 +313,7 @@ class TableImpl[T](Table[T]):
         return items
 
     async def fetch_all(self) -> dict[str, T]:
-        items_response = await self._client.endpoints.call(
-            TABLE_FETCH_ALL_ENDPOINT, TablePacket(id=self._id)
-        )
+        items_response = await self._client.endpoints.call(TABLE_FETCH_ALL_ENDPOINT, TablePacket(id=self._id))
         items = self._parse_items(items_response.items)
         await self.update_cache(items)
         return items
@@ -370,14 +336,10 @@ class TableImpl[T](Table[T]):
             cursor = next(iter(items.keys()))
 
     async def size(self) -> int:
-        res = await self._client.endpoints.call(
-            TABLE_SIZE_ENDPOINT, TablePacket(id=self._id)
-        )
+        res = await self._client.endpoints.call(TABLE_SIZE_ENDPOINT, TablePacket(id=self._id))
         return res
 
-    def listen(
-        self, listener: AsyncCallback[Mapping[str, T]] | None = None
-    ) -> Unlisten:
+    def listen(self, listener: AsyncCallback[Mapping[str, T]] | None = None) -> Unlisten:
         if not self._listening:
 
             async def on_ready():

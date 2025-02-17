@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { omu } from "$lib/client.js";
-    import { type ScreenHandle } from "$lib/screen/screen.js";
-    import Screen from "$lib/screen/Screen.svelte";
-    import { invoke, listen, type Progress } from "$lib/tauri.js";
-    import { Spinner } from "@omujs/ui";
-    import { relaunch } from "@tauri-apps/api/process";
-    import { DEV } from "esm-env";
-    import { onMount } from "svelte";
+    import { omu } from '$lib/client.js';
+    import { type ScreenHandle } from '$lib/screen/screen.js';
+    import Screen from '$lib/screen/Screen.svelte';
+    import { invoke, listen, type Progress } from '$lib/tauri.js';
+    import { Button, Spinner } from '@omujs/ui';
+    import { relaunch } from '@tauri-apps/plugin-process';
+    import { onMount } from 'svelte';
 
     export let screen: {
         handle: ScreenHandle;
@@ -15,33 +14,33 @@
 
     const ERROR_MESSAGES = {
         DevMode: {
-            title: "開発モードのため環境を削除できません",
-            hint: "ビルドしてからお試しください",
+            title: '開発モードのため環境を削除できません',
+            hint: 'ビルドしてからお試しください',
         },
         PythonError: {
-            title: "Python環境の構築に失敗しました",
-            hint: "OBS Studioを閉じてから再度試すか、手動での削除をお試しください",
+            title: 'Python環境の構築に失敗しました',
+            hint: 'OBS Studioを閉じてから再度試すか、手動での削除をお試しください',
         },
         ServerError: {
-            title: "サーバーの停止に失敗しました",
-            hint: "OBS Studioを閉じてから再度試すか、手動での停止をお試しください",
+            title: 'サーバーの停止に失敗しました',
+            hint: 'OBS Studioを閉じてから再度試すか、手動での停止をお試しください',
         },
         RemovePythonError: {
-            title: "動作環境の削除に失敗しました",
-            hint: "OBS Studioを閉じてから再度試すか、手動での削除をお試しください",
+            title: '動作環境の削除に失敗しました',
+            hint: 'OBS Studioを閉じてから再度試すか、手動での削除をお試しください',
         },
         RemoveUvError: {
-            title: "uv環境の削除に失敗しました",
-            hint: "OBS Studioを閉じてから再度試すか、手動での削除をお試しください",
+            title: 'uv環境の削除に失敗しました',
+            hint: 'OBS Studioを閉じてから再度試すか、手動での削除をお試しください',
         },
     };
 
     let progress: Progress | null = null;
 
     onMount(() => {
-        const unlisten = listen("server_state", (state) => {
+        const unlisten = listen('server_state', (state) => {
             progress = state.payload;
-            console.log("progress", progress);
+            console.log('progress', progress);
         });
         return async () => {
             (await unlisten)();
@@ -52,9 +51,11 @@
     let errorMessage: ErrorType | null = null;
 
     async function cleanEnvironment(): Promise<void> {
-        omu.server.shutdown();
+        if (omu.ready) {
+            await omu.server.shutdown();
+        }
         try {
-            await invoke("clean_environment");
+            await invoke('clean_environment');
         } catch (e) {
             errorMessage = e as ErrorType;
             throw e;
@@ -81,9 +82,9 @@
                                 max={progress.total}
                             ></progress>
                             <p>
-                                {#if progress.type === "PythonRemoving"}
+                                {#if progress.type === 'PythonRemoving'}
                                     Python環境を削除中...
-                                {:else if progress.type === "UvRemoving"}
+                                {:else if progress.type === 'UvRemoving'}
                                     uv環境を削除中...
                                 {/if}
                                 {progress.progress} / {progress.total}
@@ -107,46 +108,38 @@
                         <p>{error.title}</p>
                         <small><code>{error.hint}</code></small>
                     </div>
-                    {#if errorMessage.type === "RemovePythonError"}
-                        <button
-                            on:click={() => {
-                                invoke("open_python_path");
-                            }}
-                        >
+                    {#if errorMessage.type === 'RemovePythonError'}
+                        <Button onclick={() => {
+                            invoke('open_python_path');
+                        }}>
                             フォルダーを開く
                             <i class="ti ti-folder"></i>
-                        </button>
-                    {:else if errorMessage.type === "RemoveUvError"}
-                        <button
-                            on:click={() => {
-                                invoke("open_uv_path");
-                            }}
-                        >
+                        </Button>
+                    {:else if errorMessage.type === 'RemoveUvError'}
+                        <Button onclick={() => {
+                            invoke('open_uv_path');
+                        }}>
                             フォルダーを開く
                             <i class="ti ti-folder"></i>
-                        </button>
+                        </Button>
                     {/if}
                 {:else}
                     <p>エラー: <code>{error.message}</code></p>
                 {/if}
             </div>
             <div class="actions">
-                <button
-                    on:click={() => {
-                        cleanPromise = cleanEnvironment();
-                    }}
-                >
+                <Button primary onclick={() => {
+                    cleanPromise = cleanEnvironment();
+                }}>
                     もう一度試す
                     <i class="ti ti-reload"></i>
-                </button>
-                <button
-                    on:click={() => {
-                        relaunch();
-                    }}
-                >
+                </Button>
+                <Button primary onclick={() => {
+                    relaunch();
+                }}>
                     再起動
                     <i class="ti ti-rotate"></i>
-                </button>
+                </Button>
             </div>
         {/await}
     </div>
@@ -255,24 +248,5 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-    }
-
-    button {
-        padding: 0.5rem 1rem;
-        border: none;
-        background: var(--color-1);
-        color: var(--color-bg-2);
-        font-weight: 600;
-        font-size: 0.8rem;
-        cursor: pointer;
-        border-radius: 2px;
-        width: fit-content;
-
-        &:hover {
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
-            background: var(--color-bg-1);
-            color: var(--color-1);
-        }
     }
 </style>

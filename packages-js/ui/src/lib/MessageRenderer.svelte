@@ -2,8 +2,6 @@
     import type { models } from '@omujs/chat';
     import { Paid } from '@omujs/chat/models/paid.js';
     import ComponentRenderer from './ComponentRenderer.svelte';
-    import FlexColWrapper from './FlexColWrapper.svelte';
-    import FlexRowWrapper from './FlexRowWrapper.svelte';
     import Gift from './Gift.svelte';
     import RelativeDate from './RelativeDate.svelte';
     import Role from './Role.svelte';
@@ -14,10 +12,32 @@
     export let paid: Paid | undefined = undefined;
     export let gifts: Array<models.Gift> | undefined = undefined;
     export let author: models.Author | undefined = undefined;
+    export let room: models.Room | undefined = undefined;
     export let createdAt: Date | undefined = undefined;
     export let content: models.content.Component | undefined = undefined;
     export let handleCopy: () => void = () => {};
     export let selected: boolean = false;
+
+    $: roomStartedAt = room?.metadata.started_at && new Date(room.metadata.started_at);
+    $: time = createdAt && roomStartedAt && new Date(createdAt.getTime() - roomStartedAt.getTime()) || null;
+    $: url = room?.metadata.url || null;
+
+    function formatTime(date: Date): string {
+        const parts: string[] = [];
+        const seconds = Math.floor(date.getTime() / 1000);
+        if (seconds > 60 * 60 * 24 * 30) {
+            parts.push(Math.floor(seconds / 60 / 60 / 24 / 30) + '/');
+        }
+        if (seconds > 60 * 60 * 24) {
+            parts.push(Math.floor(seconds / 60 / 60 / 24) % 30 + ' ');
+        }
+        if (seconds > 60 * 60) {
+            parts.push(Math.floor(seconds / 60 / 60) % 24 + 'h ');
+        }
+        parts.push(date.getMinutes().toString().padStart(2, '0') + 'm ');
+        parts.push(date.getSeconds().toString().padStart(2, '0') + 's');
+        return parts.join('');
+    }
 </script>
 
 <article
@@ -27,132 +47,116 @@
         ? applyOpacity(paid ? 'var(--color-1)' : 'var(--color-2)', 0.1)
         : undefined}
 >
-    <FlexRowWrapper widthFull gap>
-        {#if author && author.avatarUrl}
-            <FlexColWrapper>
-                {#if author.metadata?.url}
-                    <a href={author.metadata.url} target="_blank">
-                        <img
-                            src={$client.assets.proxy(author.avatarUrl)}
-                            alt="avatar"
-                            class="author-avatar"
-                            width="32"
-                            height="32"
-                        />
-                    </a>
-                {:else}
-                    <img
-                        src={$client.assets.proxy(author.avatarUrl)}
-                        alt="avatar"
-                        class="author-avatar"
-                        width="32"
-                        height="32"
-                    />
-                {/if}
-                <Tooltip noBackground>
-                    <img
-                        src={$client.assets.proxy(author.avatarUrl)}
-                        alt="avatar"
-                        class="author-avatar-preview"
-                    />
-                </Tooltip>
-            </FlexColWrapper>
-        {/if}
-        <FlexColWrapper widthFull>
-            {#if author}
-                <FlexRowWrapper widthFull gap>
-                    <FlexRowWrapper baseline>
-                        <span class="name">
-                            {author.name}
-                        </span>
-                        {#each author.roles || [] as role}
-                            <Role {role} />
-                        {/each}
-                        <small>
-                            {author.metadata?.screen_id || author.id.path.at(-1)}
-                        </small>
-                    </FlexRowWrapper>
-                    {#if createdAt}
-                        <span class="time">
-                            <Tooltip>
-                                {$dateTimeFormats.full.format(createdAt)}
-                            </Tooltip>
-                            <RelativeDate date={createdAt} />
-                        </span>
-                    {/if}
-                </FlexRowWrapper>
-                <FlexRowWrapper widthFull between>
-                    <FlexColWrapper>
-                        {#if content}
-                            <div class="message-content">
-                                <ComponentRenderer component={content} />
-                            </div>
-                        {/if}
-                        {#if paid}
-                            <div class="paid">
-                                {paid.currency}{paid.amount}
-                            </div>
-                        {/if}
-                        {#if gifts?.length}
-                            <div>
-                                {#each gifts as gift}
-                                    <Gift {gift} />
-                                {/each}
-                            </div>
-                        {/if}
-                    </FlexColWrapper>
-                    {#if selected}
-                        <div class="actions">
-                            <button on:click={handleCopy}>
-                                <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
-                                <i class="ti ti-files"></i>
-                            </button>
-                        </div>
-                    {/if}
-                </FlexRowWrapper>
+    {#if author && author.avatarUrl}
+        {@const proxyUrl = $client.assets.proxy(author.avatarUrl)}
+        <div class="avatar">
+            <Tooltip noBackground>
+                <img src={proxyUrl} alt="avatar" class="avatar-preview" />
+            </Tooltip>
+            {#if author.metadata?.url}
+                <a href={author.metadata.url} target="_blank" rel="noopener noreferrer">
+                    <img src={proxyUrl} alt="avatar" class="avatar-image" />
+                </a>
             {:else}
-                <FlexRowWrapper widthFull between>
-                    <FlexColWrapper>
-                        {#if content}
-                            <div class="message-content">
-                                <ComponentRenderer component={content} />
-                            </div>
-                        {/if}
-                        {#if paid}
-                            <div class="paid">
-                                {paid.currency}{paid.amount}
-                            </div>
-                        {/if}
-                        {#if gifts?.length}
-                            <div>
-                                {#each gifts as gift}
-                                    <Gift {gift} />
-                                {/each}
-                            </div>
-                        {/if}
-                    </FlexColWrapper>
-                    {#if createdAt}
-                        <span class="time">
-                            <Tooltip>
-                                {$dateTimeFormats.full.format(createdAt)}
-                            </Tooltip>
-                            <RelativeDate date={createdAt} />
-                        </span>
-                    {/if}
-                </FlexRowWrapper>
+                <img src={proxyUrl} alt="avatar" class="avatar-image" />
             {/if}
-        </FlexColWrapper>
-    </FlexRowWrapper>
+        </div>
+    {/if}
+    <div class="message">
+        {#if author}
+            <div class="author-info">
+                <div class="author">
+                    <span>{author.name}</span>
+                    {#each author.roles || [] as role}
+                        <Role {role} />
+                    {/each}
+                    <small>{author.metadata?.screen_id || author.id.path.at(-1)}</small>
+                </div>
+                {#if createdAt}
+                    <span class="time">
+                        <Tooltip>
+                            {$dateTimeFormats.full.format(createdAt)}
+                        </Tooltip>
+                        <RelativeDate date={createdAt} />
+                    </span>
+                {/if}
+            </div>
+        {/if}
+        <div class="flex width between">
+            <div class="content">
+                {#if content}
+                    <div class="content-renderer"><ComponentRenderer component={content} /></div>
+                {/if}
+                {#if gifts?.length}
+                    <div class="gifts">
+                        {#if paid}
+                            {@const currency = {
+                                '¥': 'yen',
+                                '฿': 'baht',
+                                '$': 'dollar',
+                                '€': 'euro',
+                                '£': 'pound',
+                                '₩': 'won',
+                                '₹': 'rupee',
+                                '₽': 'ruble',
+                                '₣': 'franc',
+                                'R$': 'real',
+                                '₺': 'lira',
+                                '₱': 'peso',
+                                'RM': 'ringgit',
+                            }[paid.currency]}
+                            <div class="paid">
+                                <span>
+                                    <i class="ti ti-gift"></i>
+                                    {$translate('panels.messages.paid')}
+                                </span>
+                                <p>
+                                    {#if currency}
+                                        <i class="ti ti-{currency}"></i>
+                                    {:else}
+                                        {paid.currency}
+                                    {/if}
+                                    {paid.amount}
+                                </p>
+                            </div>
+                        {/if}
+                        {#each gifts as gift}
+                            <Gift {gift} />
+                        {/each}
+                    </div>
+                {/if}
+            </div>
+            {#if selected}
+                <div class="actions">
+                    {#if time}
+                        {@const timedLink = `${url}&t=${Math.floor(time.getTime()/1000)+10}s`}
+                        <button on:click={() => window.open(timedLink, '_blank')}>
+                            <Tooltip>
+                                <p>{$translate('panels.messages.see_in_room')}</p>
+                                <p>{formatTime(time)}</p>
+                            </Tooltip>
+                            <i class="ti ti-external-link"></i>
+                        </button>
+                    {/if}
+                    <button on:click={handleCopy}>
+                        <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
+                        <i class="ti ti-files"></i>
+                    </button>
+                </div>
+            {/if}
+        </div>
+    </div>
 </article>
 
 <style lang="scss">
     article {
         display: flex;
         flex-direction: row;
-        gap: 10px;
-        padding: 15px;
+        padding: 1rem;
         font-weight: 500;
         border-bottom: 1px solid var(--color-bg-1);
+        gap: 0.5rem;
+        flex: 1;
 
         &.selected {
             background: var(--color-bg-1);
@@ -165,64 +169,79 @@
         border-left: 2px solid var(--color-1);
     }
 
-    .author-avatar {
-        width: 32px;
-        height: 32px;
+    .avatar {
+        display: flex;
+        flex-direction: column;
+        height: fit-content;
+    }
+
+    .avatar-image {
+        width: 2rem;
+        height: 2rem;
         border-radius: 50%;
     }
 
-    .author-avatar-preview {
-        width: 128px;
-        height: 128px;
+    .avatar-preview {
+        width: 8rem;
+        height: 8rem;
         outline: 2px solid #000;
     }
 
-    button {
+    .message {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .author-info {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .author {
         display: flex;
         align-items: center;
-        justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        font-size: 1rem;
-        color: var(--color-1);
-        cursor: pointer;
-        background: var(--color-bg-1);
-        border: none;
-        outline: none;
 
-        &:hover {
-            color: var(--color-bg-1);
-            background: var(--color-1);
+        > span {
+            margin-right: 0.5rem;
+            user-select: text;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: -webkit-box;
+            line-clamp: 1;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex: 1;
+            height: 1.2rem;
         }
 
-        &:focus {
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
+        > small {
+            font-size: 0.6rem;
+            color: #999;
+            white-space: nowrap;
         }
-    }
-
-    .name {
-        margin-right: 5px;
-        white-space: nowrap;
-        user-select: text;
-        font-weight: 600;
-        font-size: 12px;
-    }
-
-    small {
-        font-size: 0.6rem;
-        color: #999;
     }
 
     .time {
-        padding: 2px 0;
-        margin-left: auto;
+        padding: 0.1rem 0;
         font-size: 0.8rem;
         color: #666;
         user-select: text;
+        white-space: nowrap;
     }
 
-    .message-content {
+    .content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .content-renderer {
         overflow: clip;
         font-size: 0.9rem;
         text-wrap: wrap;
@@ -232,17 +251,76 @@
         user-select: text;
     }
 
-    .paid {
-        width: 100%;
-        padding: 2px;
+    .gifts {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
         font-size: 0.8rem;
         font-weight: bold;
         color: var(--color-1);
         user-select: text;
+        border-top: 1px solid var(--color-outline);
+        padding-top: 0.5rem;
+    }
+
+    .paid {
+        padding: 1rem 0;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: var(--color-1);
+        user-select: text;
+        width: 4rem;
+        height: 4rem;
+        white-space: nowrap;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+
+        > span {
+            font-size: 1rem;
+        }
     }
 
     .actions {
         display: flex;
         align-self: flex-end;
+        gap: 2px;
+
+        > button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            font-size: 1rem;
+            color: var(--color-1);
+            cursor: pointer;
+            background: var(--color-bg-1);
+            border-radius: 2px;
+            border: none;
+            outline: none;
+
+            &:hover {
+                color: var(--color-bg-1);
+                background: var(--color-1);
+            }
+
+            &:focus {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+            }
+        }
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .width {
+        width: 100%;
+    }
+
+    .between {
+        justify-content: space-between;
     }
 </style>

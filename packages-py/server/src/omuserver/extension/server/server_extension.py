@@ -21,7 +21,6 @@ from omu.extension.server.server_extension import (
 from omu.identifier import Identifier
 from omu.network.packet.packet_types import DisconnectType
 
-from omuserver.server import Server
 from omuserver.session import Session
 
 from .permissions import (
@@ -33,6 +32,8 @@ from .permissions import (
 
 if TYPE_CHECKING:
     from loguru import Message
+
+    from omuserver.server import Server
 
 
 class WaitHandle:
@@ -55,13 +56,13 @@ class LogHandler:
 class ServerExtension:
     def __init__(self, server: Server) -> None:
         self._server = server
-        server.packet_dispatcher.register(
+        server.packets.register(
             REQUIRE_APPS_PACKET_TYPE,
             SESSION_OBSERVE_PACKET_TYPE,
             SESSION_CONNECT_PACKET_TYPE,
             SESSION_DISCONNECT_PACKET_TYPE,
         )
-        server.permission_manager.register(
+        server.security.register(
             SERVER_SHUTDOWN_PERMISSION,
             SERVER_APPS_READ_PERMISSION,
             SERVER_SESSIONS_READ_PERMISSION,
@@ -69,28 +70,17 @@ class ServerExtension:
         )
         self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
         self.sessions = self._server.tables.register(SERVER_SESSION_TABLE_TYPE)
-        self.trusted_origins = self._server.registries.register(
-            TRUSTED_ORIGINS_REGISTRY_TYPE
-        )
+        self.trusted_origins = self._server.registries.register(TRUSTED_ORIGINS_REGISTRY_TYPE)
         server.network.event.connected += self.on_connected
         server.network.event.disconnected += self.on_disconnected
         server.event.start += self.on_start
-        server.endpoints.bind_endpoint(
-            SHUTDOWN_ENDPOINT_TYPE,
-            self.handle_shutdown,
-        )
-        server.packet_dispatcher.add_packet_handler(
-            REQUIRE_APPS_PACKET_TYPE, self.handle_require_apps
-        )
-        server.packet_dispatcher.add_packet_handler(
-            SESSION_OBSERVE_PACKET_TYPE, self.handle_observe_session
-        )
+        server.endpoints.bind(SHUTDOWN_ENDPOINT_TYPE, self.handle_shutdown)
+        server.packets.bind(REQUIRE_APPS_PACKET_TYPE, self.handle_require_apps)
+        server.packets.bind(SESSION_OBSERVE_PACKET_TYPE, self.handle_observe_session)
         self._app_waiters: dict[Identifier, list[WaitHandle]] = defaultdict(list)
         self._session_observers: dict[Identifier, list[Session]] = defaultdict(list)
 
-    async def handle_require_apps(
-        self, session: Session, app_ids: list[Identifier]
-    ) -> None:
+    async def handle_require_apps(self, session: Session, app_ids: list[Identifier]) -> None:
         for identifier in self._server.network._sessions.keys():
             if identifier not in app_ids:
                 continue
@@ -106,12 +96,9 @@ class ServerExtension:
 
         session.add_ready_task(task)
 
-    async def handle_observe_session(
-        self, session: Session, app_ids: list[Identifier]
-    ) -> None:
-        if not session.permission_handle.has(SERVER_SESSIONS_READ_PERMISSION.id):
-            error = f"Pemission {SERVER_SESSIONS_READ_PERMISSION.id} required to observe session"
-            raise PermissionDenied(error)
+    async def handle_observe_session(self, session: Session, app_ids: list[Identifier]) -> None:
+        if not session.permissions.has(SERVER_SESSIONS_READ_PERMISSION.id):
+            raise PermissionDenied(f"Pemission {SERVER_SESSIONS_READ_PERMISSION.id} required to observe session")
         for app_id in app_ids:
             self._session_observers[app_id].append(session)
 
@@ -131,9 +118,7 @@ class ServerExtension:
                 for session in [*self._server.network._sessions.values()]:
                     if session.closed:
                         continue
-                    await session.disconnect(
-                        DisconnectType.SERVER_RESTART, "Server is restarting"
-                    )
+                    await session.disconnect(DisconnectType.SERVER_RESTART, "Server is restarting")
                 await self._server.restart()
             else:
                 await self._server.stop()
@@ -168,7 +153,4 @@ class ServerExtension:
         await self.sessions.remove(session.app)
 
         for observer in self._session_observers.get(session.app.id, []):
-            await observer.send(
-                SESSION_DISCONNECT_PACKET_TYPE,
-                session.app,
-            )
+            await observer.send(SESSION_DISCONNECT_PACKET_TYPE, session.app)

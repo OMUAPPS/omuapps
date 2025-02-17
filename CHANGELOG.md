@@ -3,6 +3,296 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.10 (2025-02-13)
+
+
+### Bug Fixes
+
+* **omu, dash:** omu.server.shutdownで処理が止まる問題を修正 ([f92e3ff](https://github.com/OMUAPPS/omuapps/commit/f92e3ff11ed79878720bc12bf4f3b20e01d3f970))
+
+
+
+
+
+## 0.9.9 (2025-02-13)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.9.8 (2025-02-13)
+
+
+### Bug Fixes
+
+* **dash:** タブが保持されない問題を修正 ([bca7ed5](https://github.com/OMUAPPS/omuapps/commit/bca7ed5c86bd3824482c5678daa3830dce640d0c))
+
+
+
+
+
+## 0.9.7 (2025-02-13)
+
+
+### Bug Fixes
+
+* **dash:** 起動画面のタイトルバーを修正 ([1b73268](https://github.com/OMUAPPS/omuapps/commit/1b7326893d9d21740a1404cb9f0e50b86f3a8c43))
+
+
+
+
+
+## 0.9.6 (2025-02-13)
+
+
+### Bug Fixes
+
+* **dash:** 管理画面の起動画面を作り直した ([a2ba6c8](https://github.com/OMUAPPS/omuapps/commit/a2ba6c8d7b0078e03f437bd3c4ed272f7c6d557c))
+
+
+
+
+
+## 0.9.5 (2025-02-12)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.9.4 (2025-02-12)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.9.3 (2025-02-12)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.9.2 (2025-02-12)
+
+
+### Bug Fixes
+
+* **app-discord-overlay:** アバターのバウンディングボックスの計算を修正 ([38adfbb](https://github.com/OMUAPPS/omuapps/commit/38adfbb2d390ba1691baaf12727a35c94299363e))
+
+
+
+
+
+## 0.9.1 (2025-02-12)
+
+
+### Bug Fixes
+
+* **dash:** 環境を再構築のエラーがログに出力されるように ([b76d81c](https://github.com/OMUAPPS/omuapps/commit/b76d81cf4639f72b9dba482978774c14b999a8f8))
+
+
+
+
+
+# 0.9.0 (2025-02-09)
+
+
+### Features
+
+* **site:** docsにgithubで編集ボタンを追加 ([b3955c0](https://github.com/OMUAPPS/omuapps/commit/b3955c06c1aab94dab17c77b25fb4603cc70d1ef))
+
+
+
+
+
+## 0.8.22 (2025-02-09)
+
+
+### Bug Fixes
+
+* **site:** ドキュメント内のヘッダーの条件を修正 ([d002aa2](https://github.com/OMUAPPS/omuapps/commit/d002aa2b8fafd4655c415849d2fa91df67865b25))
+
+
+
+
+
+## 0.8.21 (2025-02-06)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.20 (2025-01-30)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.19 (2025-01-30)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.18 (2025-01-30)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.17 (2025-01-30)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.16 (2025-01-30)
+
+
+### Bug Fixes
+
+* **dash:** バックグラウンドで起動したときに起動しても出てこない問題を修正 ([9306bbc](https://github.com/OMUAPPS/omuapps/commit/9306bbc2d7c0befb5f2072a8c2f2ff0bed1af7ae))
+
+
+
+
+
+## 0.8.15 (2025-01-30)
+
+
+### Bug Fixes
+
+* **omu, site:** 内部エラー時のエラー表示を追加 ([a37c800](https://github.com/OMUAPPS/omuapps/commit/a37c80061b1ae828b310a2b34923d4ce68e03345))
+
+
+
+
+
+## 0.8.14 (2025-01-30)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.13 (2025-01-30)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.12 (2025-01-30)
+
+
+### Bug Fixes
+
+* サーバーの再起動でエラーを吐かないように ([1b8d750](https://github.com/OMUAPPS/omuapps/commit/1b8d75018dfb9d95ea9dd87369ebaa9d7840601e))
+
+
+
+
+
+## 0.8.11 (2025-01-29)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.10 (2025-01-29)
+
+
+### Bug Fixes
+
+* **plugin-obs:** 同じ名前のスクリプトを消すようにする ([6f5ca48](https://github.com/OMUAPPS/omuapps/commit/6f5ca48274f841d630bb0ddf5348222bb143ba36))
+
+
+
+
+
+## 0.8.9 (2025-01-21)
+
+
+### Bug Fixes
+
+* **plugin-obs:** 起動の引数が正しく設定されてない問題を修正 ([86b20d7](https://github.com/OMUAPPS/omuapps/commit/86b20d72ce53d2f14663e8b603e7a127c31488cf))
+
+
+
+
+
+## 0.8.8 (2025-01-21)
+
+
+### Bug Fixes
+
+* **plugin-obs:** 起動パスが設定されない問題を修正 ([47cea24](https://github.com/OMUAPPS/omuapps/commit/47cea244e61555ad79ab3982f5b06e94de48adf4))
+
+
+
+
+
+## 0.8.7 (2025-01-21)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.6 (2025-01-21)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.5 (2025-01-21)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.4 (2025-01-21)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
+## 0.8.3 (2025-01-19)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
 ## 0.8.2 (2024-12-31)
 
 

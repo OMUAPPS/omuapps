@@ -40,14 +40,15 @@ export class RegistryExtension implements Extension {
         return registry as Registry<T>;
     }
 
-    public create<T>(name: string, defaultValue: T): Registry<T> {
+    public create<T>(name: string, options: { default: T, serializer?: Serializer<T, Uint8Array> }): Registry<T> {
         const identifier = this.client.app.id.join(name);
         if (this.registries.has(identifier)) {
             throw new Error(`Registry with name '${name}' already exists`);
         }
-        const tableType = RegistryType.createJson(identifier, {
+        const tableType = RegistryType.createSerialized<T>(identifier, {
             name,
-            defaultValue,
+            defaultValue: options.default,
+            serializer: options.serializer ?? Serializer.json(),
         });
         return this.createRegistry(tableType);
     }
@@ -85,10 +86,18 @@ class RegistryImpl<T> implements Registry<T> {
         this.eventEmitter.emit(value);
     }
 
-    public async update(fn: (value: T) => T): Promise<void> {
+    public async update(fn: (value: T) => PromiseLike<T> | T): Promise<T> {
         const value = await this.get();
         const newValue = await fn(value);
         await this.set(newValue);
+        return newValue;
+    }
+
+    public async modify(fn: (value: T) => PromiseLike<T> | T): Promise<T> {
+        const value = await this.get();
+        const newValue = await fn(value);
+        await this.set(newValue);
+        return newValue;
     }
 
     public listen(handler: (value: T) => Promise<void> | void): Unlisten {

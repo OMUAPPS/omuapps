@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable
+from typing import Any
 
 from omu.client import Client
 from omu.event_emitter import EventEmitter, Unlisten
@@ -72,11 +74,11 @@ class RegistryExtension(Extension):
     def get[T](self, registry_type: RegistryType[T]) -> Registry[T]:
         return self.create_registry(registry_type)
 
-    def create[T](self, name: str, default_value: T) -> Registry[T]:
+    def create[T](self, name: str, *, default: T) -> Registry[T]:
         identifier = self.client.app.id / name
         registry_type = RegistryType(
             identifier,
-            default_value,
+            default,
             Serializer.json(),
         )
         return self.create_registry(registry_type)
@@ -107,9 +109,7 @@ class RegistryImpl[T](Registry[T]):
         try:
             return self.type.serializer.deserialize(result.value)
         except SerializeError as e:
-            raise SerializeError(
-                f"Failed to deserialize registry value for identifier {self.type.id}"
-            ) from e
+            raise SerializeError(f"Failed to deserialize registry value for identifier {self.type.id}") from e
 
     async def set(self, value: T) -> None:
         packet = RegistryPacket(
@@ -122,10 +122,23 @@ class RegistryImpl[T](Registry[T]):
         )
         await self.event_emitter.emit(value)
 
-    async def update(self, handler: Coro[[T], T]) -> None:
+    async def update(self, handler: Coro[[T], T] | Callable[[T], T]) -> T:
         value = await self.get()
-        new_value = await handler(value)
+        if asyncio.iscoroutinefunction(handler):
+            new_value = await handler(value)
+        else:
+            new_value: T = handler(value)  # type: ignore
         await self.set(new_value)
+        return new_value
+
+    async def modify(self, handler: Coro[[T], Any] | Callable[[T], Any]) -> T:
+        value = await self.get()
+        if asyncio.iscoroutinefunction(handler):
+            await handler(value)
+        else:
+            handler(value)
+        await self.set(value)
+        return value
 
     def listen(self, handler: Coro[[T], None] | Callable[[T], None]) -> Unlisten:
         if not self.listening and self.client.ready:

@@ -2,18 +2,17 @@
     import { Author } from '@omujs/chat/models/author.js';
     import { content } from '@omujs/chat/models/index.js';
     import {
-        ButtonMini,
+        Button,
         Combobox,
-        FlexColWrapper,
-        FlexRowWrapper,
         MessageRenderer,
         Tooltip,
-        client,
+        client
     } from '@omujs/ui';
     import dummy_icon from './dummy_icon.svg';
     import { EMOJI_TEST_PROVIDER, emojiApp, type Emoji, type Pattern } from './emoji.js';
 
     export let emoji: Emoji;
+    let serialized = JSON.stringify(emoji);
 
     function addPattern(newPattern: Pattern) {
         emoji.patterns = [...emoji.patterns, newPattern];
@@ -36,176 +35,150 @@
 
     function save() {
         $emojiApp.emojis.update(emoji);
+        serialized = JSON.stringify(emoji);
     }
 
     function remove() {
         $emojiApp.emojis.remove(emoji);
     }
+
+    const TEST_AUTHOR = new Author({
+        providerId: EMOJI_TEST_PROVIDER.id,
+        id: EMOJI_TEST_PROVIDER.id.join(`${Date.now()}`),
+        name: 'test',
+        avatarUrl: new URL(dummy_icon, window.location.origin).toString(),
+    })
 </script>
 
-<FlexRowWrapper widthFull gap>
-    <div class="preview">
-        <MessageRenderer
-            author={new Author({
-                providerId: EMOJI_TEST_PROVIDER.id,
-                id: EMOJI_TEST_PROVIDER.id.join(`${Date.now()}`),
-                name: 'test',
-                avatarUrl: new URL(dummy_icon, window.location.origin).toString(),
-            })}
-            content={new content.Root([new content.Asset(emoji.asset)])}
-        />
-        <MessageRenderer
-            author={new Author({
-                providerId: EMOJI_TEST_PROVIDER.id,
-                id: EMOJI_TEST_PROVIDER.id.join(`${Date.now()}`),
-                name: 'test',
-                avatarUrl: new URL(dummy_icon, window.location.origin).toString(),
-            })}
-            content={new content.Root([new content.Text(emoji.id), new content.Asset(emoji.asset)])}
-        />
-        <MessageRenderer
-            author={new Author({
-                providerId: EMOJI_TEST_PROVIDER.id,
-                id: EMOJI_TEST_PROVIDER.id.join(`${Date.now()}`),
-                name: 'test',
-                avatarUrl: new URL(dummy_icon, window.location.origin).toString(),
-            })}
-            content={new content.Root([
-                new content.Asset(emoji.asset),
-                new content.Asset(emoji.asset),
-                new content.Asset(emoji.asset),
-            ])}
-        />
-    </div>
-    <div class="emoji-edit">
-        <div class="left">
-            <img src={$client.assets.url(emoji.asset)} alt={emoji.asset.key()} />
-        </div>
-        <FlexColWrapper widthFull gap>
-            <FlexRowWrapper widthFull between>
-                <FlexRowWrapper baseline gap>
-                    <small>名前</small>
-                    <input class="name" type="text" bind:value={emoji.id} placeholder="Name" />
-                </FlexRowWrapper>
-                <FlexRowWrapper gap>
-                    <ButtonMini on:click={save}>
-                        <Tooltip>保存</Tooltip>
-                        <i class="ti ti-device-floppy"></i>
-                    </ButtonMini>
-                    <ButtonMini on:click={remove}>
-                        <Tooltip>削除</Tooltip>
-                        <i class="ti ti-trash"></i>
-                    </ButtonMini>
-                </FlexRowWrapper>
-            </FlexRowWrapper>
-            <div class="patterns">
-                <small>パターン</small>
-                {#each emoji.patterns as pattern}
-                    <FlexRowWrapper widthFull between gap>
-                        <div class="pattern">
-                            <FlexRowWrapper widthFull between baseline>
-                                {#if pattern.type === 'text'}
-                                    <span>
-                                        <i class="ti ti-txt"></i>
-                                        文字
-                                    </span>
-                                    <input
-                                        type="text"
-                                        bind:value={pattern.text}
-                                        placeholder="text"
-                                    />
-                                {:else if pattern.type === 'image'}
-                                    <span>
-                                        <i class="ti ti-photo"></i>
-                                        絵文字
-                                    </span>
-                                    <input
-                                        type="text"
-                                        bind:value={pattern.id}
-                                        placeholder="image id"
-                                    />
-                                {:else if pattern.type === 'regex'}
-                                    <span>
-                                        <i class="ti ti-regex"></i>
-                                        正規表現
-                                    </span>
-                                    <input
-                                        type="text"
-                                        bind:value={pattern.regex}
-                                        placeholder="regex"
-                                    />
-                                {/if}
-                            </FlexRowWrapper>
-                        </div>
-                        <ButtonMini
-                            on:click={() =>
-                                (emoji.patterns = emoji.patterns.filter((p) => p !== pattern))}
-                        >
-                            <Tooltip>削除</Tooltip>
-                            <i class="ti ti-trash"></i>
-                        </ButtonMini>
-                    </FlexRowWrapper>
-                {/each}
-                <FlexRowWrapper widthFull baseline gap>
-                    <small>パターンを追加</small>
-                    <Combobox
-                        options={patternFactory}
-                        value={null}
-                        on:change={(event) =>
-                            event.detail.value != null && addPattern(event.detail.value())}
-                    />
-                </FlexRowWrapper>
+<div class="emoji-edit">
+    <div class="flex col width gap">
+        <div class="flex width between">
+            <div class="flex baseline gap">
+                <small>名前</small>
+                <input class="name" type="text" bind:value={emoji.id} placeholder="Name" />
             </div>
-        </FlexColWrapper>
+            <div class="flex gap">
+                <Button primary={serialized !== JSON.stringify(emoji)} onclick={save}>
+                    <Tooltip>保存</Tooltip>
+                    <i class="ti ti-device-floppy"></i>
+                </Button>
+                <Button onclick={remove}>
+                    <Tooltip>削除</Tooltip>
+                    <i class="ti ti-trash"></i>
+                </Button>
+            </div>
+        </div>
+        <div class="patterns">
+            <small>パターン</small>
+            {#each emoji.patterns as pattern}
+                <div class="pattern">
+                    <div class="flex width between baseline">
+                        {#if pattern.type === 'text'}
+                            <span>
+                                <i class="ti ti-txt"></i>
+                                文字
+                            </span>
+                            <input
+                                type="text"
+                                bind:value={pattern.text}
+                                placeholder="text"
+                            />
+                        {:else if pattern.type === 'image'}
+                            <span>
+                                <i class="ti ti-photo"></i>
+                                絵文字
+                            </span>
+                            <input
+                                type="text"
+                                bind:value={pattern.id}
+                                placeholder="image id"
+                            />
+                        {:else if pattern.type === 'regex'}
+                            <span>
+                                <i class="ti ti-regex"></i>
+                                正規表現
+                            </span>
+                            <input
+                                type="text"
+                                bind:value={pattern.regex}
+                                placeholder="regex"
+                            />
+                        {/if}
+                    </div>
+                    <button on:click={() => (emoji.patterns = emoji.patterns.filter((p) => p !== pattern))}>
+                        <Tooltip>削除</Tooltip>
+                        <i class="ti ti-x"></i>
+                    </button>
+                </div>
+            {/each}
+            <div class="flex width baseline gap">
+                <small>パターンを追加</small>
+                <Combobox
+                    options={patternFactory}
+                    value={null}
+                    on:change={(event) =>
+                        event.detail.value != null && addPattern(event.detail.value())}
+                />
+            </div>
+        </div>
     </div>
-</FlexRowWrapper>
+    <img src={$client.assets.url(emoji.asset)} alt={emoji.asset.key()} />
+</div>
+<div class="preview">
+    <MessageRenderer
+        author={TEST_AUTHOR}
+        content={new content.Root([new content.Asset(emoji.asset)])}
+    />
+    <MessageRenderer
+        author={TEST_AUTHOR}
+        content={new content.Root([new content.Text(emoji.id), new content.Asset(emoji.asset)])}
+    />
+    <MessageRenderer
+        author={TEST_AUTHOR}
+        content={new content.Root([
+            new content.Asset(emoji.asset),
+            new content.Asset(emoji.asset),
+            new content.Asset(emoji.asset),
+        ])}
+    />
+</div>
 
 <style lang="scss">
     .emoji-edit {
         display: flex;
         flex-direction: row;
-        gap: 10px;
-        width: 600px;
-        padding: 10px;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
         background: var(--color-bg-2);
     }
 
     .preview {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        width: 100%;
-        padding: 10px;
-        background: var(--color-bg-2);
-    }
-
-    .left {
-        display: flex;
-        flex-direction: column;
-        margin: 10px;
-        gap: 10px;
-        width: 100px;
-        height: 100%;
+        border-top: 1px solid var(--color-outline);
+        padding-top: 1rem;
+        margin-top: 1rem;
     }
 
     .patterns {
         display: flex;
         flex-direction: column;
         width: 100%;
-        padding: 10px;
-        gap: 10px;
+        padding: 1rem;
+        gap: 0.5rem;
         background: var(--color-bg-1);
     }
 
     .pattern {
         display: flex;
         flex-direction: row;
-        gap: 10px;
         justify-content: space-between;
         align-items: baseline;
-        padding: 2px 0;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        padding-right: 0.25rem;
         background: var(--color-bg-2);
-        padding-left: 10px;
         font-size: 0.8rem;
         font-weight: 600;
         width: 100%;
@@ -217,11 +190,26 @@
             background: var(--color-bg-2);
             color: var(--color-1);
         }
+        
+        > button {
+            background: none;
+            border: none;
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            width: 2rem;
+            height: 2rem;
+            cursor: pointer;
+
+            &:hover {
+                background: var(--color-bg-1);
+                color: var(--color-1);
+            }
+        }
     }
 
     img {
-        height: 100px;
-        margin-right: 10px;
+        width: 10rem;
+        margin: 0 2rem;
         object-fit: contain;
     }
 
@@ -237,5 +225,29 @@
         font-size: 0.8em;
         font-weight: bold;
         color: var(--color-1);
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .col {
+        flex-direction: column;
+    }
+
+    .width {
+        width: 100%;
+    }
+
+    .baseline {
+        align-items: baseline;
+    }
+
+    .between {
+        justify-content: space-between;
+    }
+
+    .gap {
+        gap: 1rem;
     }
 </style>

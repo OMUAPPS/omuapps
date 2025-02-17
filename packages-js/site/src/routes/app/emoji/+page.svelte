@@ -1,10 +1,10 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { version } from '$lib/version.json';
+    import { VERSION } from '$lib/version.js';
     import { Chat } from '@omujs/chat';
     import { Omu } from '@omujs/omu';
     import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-    import { AppHeader, FlexRowWrapper, TableList, Textbox, Toggle, setClient } from '@omujs/ui';
+    import { AppHeader, Button, TableList, Textbox, Tooltip, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import EmojiEdit from './EmojiEdit.svelte';
     import EmojiEntry from './EmojiEntry.svelte';
@@ -18,7 +18,7 @@
     setClient(omu);
 
     omu.plugins.require({
-        omuplugin_emoji: `==${version}`,
+        omuplugin_emoji: `==${VERSION}`,
     });
     omu.permissions.require(ASSET_UPLOAD_PERMISSION_ID);
 
@@ -88,115 +88,86 @@
     }
 </script>
 
+<input
+    type="file"
+    multiple
+    hidden
+    bind:files
+    bind:this={fileDrop}
+    on:change={uploadFiles}
+    accept="image/*"
+    placeholder="画像を選択"
+/>
 <AppPage>
     <header slot="header">
-        <AppHeader app={APP}>
-            <FlexRowWrapper gap alignItems="center">
-                <Textbox
-                    placeholder="検索"
-                    bind:value={search}
-                    on:input={() => {
-                        searchFilter = createFilter(search);
-                    }}
-                />
-                <Toggle value={$config.active} handleToggle={toggle} />
-            </FlexRowWrapper>
-        </AppHeader>
+        <AppHeader app={APP} />
     </header>
     <main>
-        {#if $selectedEmoji}
-            <div class="emoji-edit">
-                <EmojiEdit emoji={$selectedEmoji} />
-            </div>
-        {/if}
-        <div class="emojis">
-            <button on:click={() => fileDrop.click()}>
-                ファイルを選択してアップロード
-                <i class="ti ti-upload"></i>
-            </button>
-            <input
-                type="file"
-                multiple
-                hidden
-                bind:files
-                bind:this={fileDrop}
-                on:change={uploadFiles}
-                accept="image/*"
-                placeholder="画像を選択"
-            />
-            {#if uploading > 0}
-                <span>
-                    <i class="ti ti-upload"></i>
-                    アップロード中…
+        <div class="config">
+            <section>
+                <span style="display: flex; gap: 0.5rem;">
+                    <Textbox
+                        placeholder="検索"
+                        bind:value={search}
+                        on:input={() => {
+                            searchFilter = createFilter(search);
+                        }}
+                    />
+                    <Button primary onclick={() => fileDrop.click()}>
+                        <Tooltip>
+                            画像をアップロード
+                        </Tooltip>
+                        <i class="ti ti-upload"></i>
+                    </Button>
                 </span>
-            {/if}
-            <div class="list">
+            </section>
+            <div>
+                {#if uploading > 0}
+                    <span>
+                        <i class="ti ti-upload"></i>
+                        アップロード中…
+                    </span>
+                {/if}
+            </div>
+            <div class="emojis">
                 <TableList table={emojis} component={EmojiEntry} filter={searchFilter} />
             </div>
+        </div>
+        <div class="edit omu-scroll">
+            {#if $selectedEmoji}
+                <div class="emoji-edit">
+                    <EmojiEdit emoji={$selectedEmoji} />
+                </div>
+            {/if}
         </div>
     </main>
 </AppPage>
 
 <style lang="scss">
     main {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        height: 100%;
-        background: var(--color-bg-1);
-    }
-
-    .list {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background: var(--color-bg-2);
-    }
-
-    .emoji-edit {
+        position: absolute;
+        inset: 0;
+        color: var(--color-1);
+        padding: 1rem;
         display: flex;
         flex-direction: row;
-        align-items: center;
-        width: 100%;
-        padding: 20px;
-        padding-bottom: 0;
+        gap: 1rem;
+        justify-content: space-between;
+    }
+
+    .config {
+        width: 24rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .edit {
+        flex: 1;
+        color: var(--color-text);
     }
 
     .emojis {
-        display: flex;
-        flex-flow: column;
-        gap: 10px;
-        width: 100%;
-        height: 100%;
-        padding: 20px;
-        padding-top: 10px;
-        background: var(--color-bg-1);
-    }
-
-    button {
-        outline: 1px solid var(--color-1);
-        align-self: flex-start;
-        display: flex;
-        flex-direction: row;
-        gap: 5px;
-        align-items: center;
-        width: fit-content;
-        padding: 0.5rem 1rem;
-        font-size: 14px;
-        font-weight: bold;
-        color: var(--color-1);
-        cursor: pointer;
-        background: var(--color-bg-2);
-        border: none;
-
-        i {
-            font-size: 1.2em;
-        }
-
-        &:hover {
-            outline: 1px solid var(--color-1);
-        }
+        flex: 1;
     }
 </style>

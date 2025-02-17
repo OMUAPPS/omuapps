@@ -52,7 +52,7 @@ export class AABB2 {
         return this.min.add(this.max).scale(0.5);
     }
 
-    public size(): Vec2 {
+    public dimensions(): Vec2 {
         return this.max.sub(this.min);
     }
 }

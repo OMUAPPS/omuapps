@@ -4,20 +4,28 @@ import { Vec2 } from './vec2.js';
 
 export class Transform2D {
     constructor(
-        public columns: [Vec2, Vec2, Vec2],
+        public columns: readonly [Vec2, Vec2, Vec2],
     ) { }
+
+    public tdotx(p_v: Vec2): number {
+        return this.columns[0].x * p_v.x + this.columns[1].x * p_v.y;
+    }
+
+    public tdoty(p_v: Vec2): number {
+        return this.columns[0].y * p_v.x + this.columns[1].y * p_v.y;
+    }
 
     public basisXForm(point: Vec2): Vec2 {
         return new Vec2(
-            this.columns[0].dot(point),
-            this.columns[1].dot(point)
+            this.tdotx(point),
+            this.tdoty(point)
         );
     }
 
     public xform(point: Vec2): Vec2 {
         return new Vec2(
-            this.columns[0].dot(point),
-            this.columns[1].dot(point)
+            this.tdotx(point),
+            this.tdoty(point)
         ).add(this.columns[2]);
     }
 
@@ -32,11 +40,10 @@ export class Transform2D {
         }
 
         const invDet = 1 / det;
-        return new Transform2D([
-            new Vec2(this.columns[1].y * invDet, this.columns[0].y * -invDet),
-            new Vec2(this.columns[1].x * -invDet, this.columns[0].x * invDet),
-            this.basisXForm(this.columns[2].scale(-1))
-        ]);
+        const col0 = new Vec2(this.columns[1].y, -this.columns[0].y).scale(invDet);
+        const col1 = new Vec2(-this.columns[1].x, this.columns[0].x).scale(invDet);
+        const col2 = col0.scale(-this.columns[2].x).add(col1.scale(-this.columns[2].y));
+        return new Transform2D([col0, col1, col2]);
     }
 
     public multiply(other: Transform2D): Transform2D {

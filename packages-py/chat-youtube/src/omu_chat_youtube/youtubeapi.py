@@ -101,12 +101,8 @@ class YoutubeAPI:
 
         video_id = options.get("video_id") or options.get("video_id_short")
         if video_id is None:
-            channel_id = options.get(
-                "channel_id"
-            ) or await self.get_channel_id_by_vanity(
-                options.get("channel_id_vanity")
-                or options.get("channel_id_user")
-                or options.get("channel_id_c")
+            channel_id = options.get("channel_id") or await self.get_channel_id_by_vanity(
+                options.get("channel_id_vanity") or options.get("channel_id_user") or options.get("channel_id_c")
             )
             if channel_id is None:
                 raise ProviderError("Could not find channel id")

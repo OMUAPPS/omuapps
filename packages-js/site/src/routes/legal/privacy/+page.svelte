@@ -1,24 +1,33 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
-    import { FlexColWrapper, FlexRowWrapper } from '@omujs/ui';
-
+    
     import robotKilled from '$lib/images/robot-killed.svg';
 </script>
 
 <Page>
     <header slot="header">
-        <FlexRowWrapper between alignItems="center">
-            <FlexColWrapper gap>
+        <div class="flex between center">
+            <div class="flex col">
                 <h1>
                     プライバシーポリシー
                     <i class="ti ti-file"></i>
                 </h1>
                 <small>使っていただける方へお約束</small>
-            </FlexColWrapper>
+            </div>
             <img src={robotKilled} alt="robot-reading" />
-        </FlexRowWrapper>
+        </div>
     </header>
     <main slot="content">
+        <div class="summary">
+            <h2>
+                かんたんに3行で言うと（本文はこの下）
+            </h2>
+            <ul>
+                <li>このソフト自体は個人情報は何も取得しないよ</li>
+                <li>「アプリを探す」タブ以外から入れるアプリはそれぞれのプライバシーポリシーを確認してね</li>
+                <li>あくまでアプリ管理ソフトだから、アプリが何をするかはわからないよ</li>
+            </ul>
+        </div>
         <h1 id="privacy">プライバシーポリシー</h1>
         <p>2024年8月28日</p>
         <p>
@@ -53,6 +62,16 @@
 <style lang="scss">
     main {
         font-weight: 500;
+    }
+
+    .summary {
+        border-bottom: 1px solid var(--color-outline);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+
+        > ul {
+            margin-left: 2rem;
+        }
     }
 
     header {
@@ -90,5 +109,21 @@
 
     li {
         margin-top: 0.5rem;
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .col {
+        flex-direction: column;
+    }
+
+    .between {
+        justify-content: space-between;
+    }
+
+    .center {
+        align-items: center;
     }
 </style>

@@ -10,8 +10,6 @@ export { default as ComponentRenderer } from './ComponentRenderer.svelte';
 export { default as DragLink } from './DragLink.svelte';
 export { default as ExternalLink } from './ExternalLink.svelte';
 export { default as FileDrop } from './FileDrop.svelte';
-export { default as FlexColWrapper } from './FlexColWrapper.svelte';
-export { default as FlexRowWrapper } from './FlexRowWrapper.svelte';
 export { default as Gift } from './Gift.svelte';
 export { default as Header } from './Header.svelte';
 export { default as JustifyBaselineWrapper } from './JustifyBaselineWrapper.svelte';
@@ -33,4 +31,3 @@ export type { TypedComponent } from './typed-component.js';
 export { applyOpacity } from './utils/class-helper.js';
 export { default as VirtualList } from './VirtualList.svelte';
 
-import '@tabler/icons-webfont/dist/tabler-icons.scss'; // Import the Tabler Icons CSS
