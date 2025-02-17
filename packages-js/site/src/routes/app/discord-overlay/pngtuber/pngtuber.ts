@@ -82,10 +82,7 @@ export class LayerData {
         public readonly height: number,
     ) { }
 
-    public static async load(glContext: GlContext, data: LayerJson): Promise<LayerData> {
-        const img = new Image();
-        img.src = `data:image/png;base64,${data.imageData}`;
-        await img.decode();
+    public static async load(glContext: GlContext, image: HTMLImageElement, data: LayerJson): Promise<LayerData> {
         const texture = glContext.createTexture();
         texture.use(() => {
             texture.setParams({
@@ -94,16 +91,16 @@ export class LayerData {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-            texture.setImage(img, {
+            texture.setImage(image, {
                 internalFormat: 'rgba',
-                width: img.width,
-                height: img.height,
+                width: image.width,
+                height: image.height,
             });
         })
         const vertexBuffer = glContext.createBuffer();
         vertexBuffer.bind(() => {
-            const width = img.width / data.frames;
-            const height = img.height;
+            const width = image.width / data.frames;
+            const height = image.height;
             vertexBuffer.setData(new Float32Array([
                 0, 0, 0,
                 0, height, 0,
@@ -159,8 +156,8 @@ export class LayerData {
             data.yAmp,
             data.yFrq,
             data.zindex,
-            img.width / data.frames,
-            img.height,
+            image.width / data.frames,
+            image.height,
         );
     }
 }
@@ -236,6 +233,7 @@ class SpriteGroup {
 
 interface PNGTuberContext {
     readonly timer: Timer;
+    readonly tickTimer: Timer;
     readonly spriteGroups: Map<number, SpriteGroup>;
     readonly origin: Node2D;
     bounceVelocity: number;
@@ -272,6 +270,7 @@ export class PNGTuber implements Avatar {
         }
         const context = {
             timer: new Timer(),
+            tickTimer: new Timer(),
             spriteGroups,
             origin,
             bounceVelocity: 0,
@@ -360,11 +359,25 @@ export class PNGTuber implements Avatar {
     }
 
     public static async load(glContext: GlContext, data: PNGTuberData): Promise<PNGTuber> {
-        const layers = new Map<number, LayerData>();
-        for (const key in data) {
-            layers.set(data[key].identification, await LayerData.load(glContext, data[key]));
+        const values = Object.values(data);
+        const images: Record<string, HTMLImageElement> = {};
+        await Promise.all(values.map(async (value) => {
+            const image = new Image();
+            image.src = `data:image/png;base64,${value.imageData}`;
+            await new Promise(resolve => {
+                // .decode()を並列で使うとエラー吐くから.decode()の代わりに.onloadを使う (https://issues.chromium.org/issues/40792189#comment7)
+                image.onload = resolve;
+            });
+            images[value.identification] = image;
+        }));
+
+        const layerData = new Map<number, LayerData>();
+        for (const value of values) {
+            const image = images[value.identification];
+            const layer = await LayerData.load(glContext, image, value);
+            layerData.set(value.identification, layer);
         }
-        return new PNGTuber(glContext, layers);
+        return new PNGTuber(glContext, layerData);
     }
 
     public render(matrices: MatrixStack, context: PNGTuberContext, action: AvatarAction, options: RenderOptions): void {
@@ -374,6 +387,23 @@ export class PNGTuber implements Avatar {
         context.talking = action.talking;
         context.layer = action.config.pngtuber.layer;
 
+        const ticks = context.tickTimer.tick(1000 / 60);
+        for (let i = 0; i < ticks; i++) {
+            if (action.talking && context.origin.position.y >= 0 && context.bounceVelocity === 0) {
+                context.bounceVelocity = 250;
+                context.bounceTick += 1;
+            }
+            context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
+            context.origin.position = context.origin.position.add(new Vec2(0, -context.bounceVelocity * 0.0166)).min(Vec2.ZERO);
+            if (!action.talking && context.origin.position.y >= -1) {
+                context.bounceVelocity = 0;
+            }
+
+            for (const sprite of context.spriteGroups.values()) {
+                sprite.process();
+            }
+        }
+
         const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex)));
 
         this.frameBufferTexture.use(() => {
@@ -382,18 +412,6 @@ export class PNGTuber implements Avatar {
         this.effectTargetTexture.use(() => {
             this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
         });
-        
-        if (action.talking && context.origin.position.y >= 0 && context.bounceVelocity === 0) {
-            context.bounceVelocity = 250;
-            context.bounceTick += 1;
-        }
-        context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
-        context.origin.position = context.origin.position.add(new Vec2(0, -context.bounceVelocity * 0.0166)).min(Vec2.ZERO);
-        if (!action.talking && context.origin.position.y >= -1) {
-            context.bounceVelocity = 0;
-        }
-
-        [...context.spriteGroups.values()].forEach(sprite => sprite.process());
     
         passes.sort((a, b) => a - b);
 
@@ -403,7 +421,7 @@ export class PNGTuber implements Avatar {
             passes.forEach(pass => {
                 [...context.spriteGroups.values()].filter(sprite => sprite.layerData.parentId === null).forEach(sprite => {
                     matrices.push();
-                    this.renderLayer(matrices, sprite, context, pass);
+                    this.renderLayer(context, matrices, sprite, pass);
                     matrices.pop();
                 });
             });
@@ -455,7 +473,7 @@ export class PNGTuber implements Avatar {
         });
     }
 
-    private renderLayer(matrices: MatrixStack, sprite: SpriteGroup, context: PNGTuberContext, pass: number) {
+    private renderLayer(context: PNGTuberContext, matrices: MatrixStack, sprite: SpriteGroup, pass: number) {
         const { layerData } = sprite;
         if (layerData.showBlink !== 0) {
             if (context.blinking && layerData.showBlink === 1) {
@@ -505,7 +523,7 @@ export class PNGTuber implements Avatar {
             })
         }
         [...context.spriteGroups.values()].filter(child => child.layerData.parentId === layerData.identification).forEach(child => {
-            this.renderLayer(matrices, child, context, pass);
+            this.renderLayer(context, matrices, child, pass);
         });
     }
 
