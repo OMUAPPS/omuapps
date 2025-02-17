@@ -18,6 +18,9 @@
     <svelte:element this="style">
         {github}
     </svelte:element>
+    <title>{($docs?.meta.title || 'ドキュメント')} | OMUAPPS</title>
+    <meta name="description" content={$docs?.meta.description} />
+    <link rel="canonical" href={`https://omuapps.com/docs/${$docs?.slug}`} />
 </svelte:head>
 
 <Page>
