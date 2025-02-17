@@ -273,7 +273,8 @@ export class Draw {
             this.textureOutlineProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.textureOutlineProgram.getUniform('u_outlineColor').asVec4().set(color);
             this.textureOutlineProgram.getUniform('u_resolution').asVec2().set(new Vec2(right - left, bottom - top));
-            this.textureOutlineProgram.getUniform('u_outlineWidth').asFloat().set(outlineWidth);
+            const mvp = this.matrices.get();
+            this.textureOutlineProgram.getUniform('u_outlineWidth').asFloat().set(outlineWidth / mvp.m00 / gl.canvas.width);
             
             const position = this.textureOutlineProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);

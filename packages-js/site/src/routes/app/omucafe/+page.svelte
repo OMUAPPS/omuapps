@@ -5,7 +5,7 @@
     import KitchenRenderer from './components/KitchenRenderer.svelte';
     import { createGame, DEFAULT_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
-    import SceneIngredientEdit from './scenes/SceneIngredientEdit.svelte';
+    import SceneItemEdit from './scenes/SceneItemEdit.svelte';
     import SceneLoading from './scenes/SceneLoading.svelte';
     import SceneMainMenu from './scenes/SceneMainMenu.svelte';
     import ScenePhotoMode from './scenes/ScenePhotoMode.svelte';
@@ -24,7 +24,7 @@
         'cooking': SceneCooking,
         'product_list': SceneProductList,
         'product_edit': SceneProductEdit,
-        'ingredient_edit': SceneIngredientEdit,
+        'item_edit': SceneItemEdit,
     }
 </script>
 

@@ -3,21 +3,21 @@
     import { getAssetImage, uploadAsset } from '../game/asset.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createFixed } from '../game/behavior/fixed.js';
-    import type { Ingredient } from '../game/ingredient.js';
+    import type { Item } from '../game/item.js';
     import AssetImage from './AssetImage.svelte';
     import ContainerEdit from './behavior/ContainerEdit.svelte';
     import FixedEdit from './behavior/FixedEdit.svelte';
     import TransformEdit from './TransformEdit.svelte';
 
-    export let ingredient: Ingredient;
+    export let item: Item;
 </script>
 
 <main>
     <div class="info">
         <h3>商品詳細</h3>
-        <div class="image" class:no-image={!ingredient.image}>
-            {#if ingredient.image}
-                {@const asset = ingredient.image}
+        <div class="image" class:no-image={!item.image}>
+            {#if item.image}
+                {@const asset = item.image}
                 <AssetImage asset={asset} />
             {/if}
         </div>
@@ -25,14 +25,14 @@
             if (fileList.length !== 1) {
                 throw new Error('FileDrop must receive only one file');
             }
-            ingredient.image = await uploadAsset(fileList[0]);
-            const image = await getAssetImage(ingredient.image);
-            ingredient.bounds = {
+            item.image = await uploadAsset(fileList[0]);
+            const image = await getAssetImage(item.image);
+            item.bounds = {
                 min: { x: 0, y: 0 },
                 max: { x: image.width, y: image.height },
             }
         }} accept="image/*">
-            {#if ingredient.image}
+            {#if item.image}
                 <p>画像を変更</p>
             {:else}
                 <p>画像を追加</p>
@@ -40,38 +40,38 @@
         </FileDrop>
         <label>
             商品名
-            <input type="text" bind:value={ingredient.name} />
+            <input type="text" bind:value={item.name} />
         </label>
-        <TransformEdit bind:transform={ingredient.transform} />
+        <TransformEdit bind:transform={item.transform} />
         <code>
-            {JSON.stringify(ingredient, null, 2)}
+            {JSON.stringify(item, null, 2)}
         </code>
     </div>
     <div class="behavior-info">
-        {#if ingredient.behaviors.container}
-            <ContainerEdit bind:container={ingredient.behaviors.container} />createContainer
+        {#if item.behaviors.container}
+            <ContainerEdit bind:container={item.behaviors.container} />createContainer
             <button on:click={() => {
-                ingredient.behaviors.container = undefined;
+                item.behaviors.container = undefined;
             }}>
                 容器を削除
             </button>
         {:else}
             <button on:click={() => {
-                ingredient.behaviors.container = createContainer();
+                item.behaviors.container = createContainer();
             }}>
                 容器を設定
             </button>
         {/if}
-        {#if ingredient.behaviors.fixed}
-            <FixedEdit bind:fixed={ingredient.behaviors.fixed} />
+        {#if item.behaviors.fixed}
+            <FixedEdit bind:fixed={item.behaviors.fixed} />
             <button on:click={() => {
-                ingredient.behaviors.fixed = undefined;
+                item.behaviors.fixed = undefined;
             }}>
                 固定を削除
             </button>
         {:else}
             <button on:click={() => {
-                ingredient.behaviors.fixed = createFixed({});
+                item.behaviors.fixed = createFixed({});
             }}>
                 固定を設定
             </button>

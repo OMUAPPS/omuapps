@@ -7,22 +7,35 @@
     import { Vec2 } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
     import { getAssetImage, type Asset } from '../game/asset.js';
-    import { attachChildren, callBehaviorHandler, createKitchenItem, getItemTransform, type KitchenItem } from '../game/kitchen-item.js';
+    import { createContainer } from '../game/behavior/container.js';
+    import { createFixed } from '../game/behavior/fixed.js';
+    import { callBehaviorHandler, createItemState, getItemStateTransform, loadBehaviorHandlers, type ItemState } from '../game/item-state.js';
+    import { createItem } from '../game/item.js';
     import type { KitchenContext } from '../game/kitchen.js';
     import { transformToMatrix } from '../game/transform.js';
+    import background from '../images/background.png';
+    import background2 from '../images/background2.png';
+    import counter from '../images/counter.png';
     import cursor_grab from '../images/cursor_grab.png';
     import cursor_point from '../images/cursor_point.png';
+    import effect from '../images/effect.png';
+    import kitchen from '../images/kitchen.png';
+    import overlay from '../images/overlay.png';
+    import overlay2 from '../images/overlay2.png';
+    import overlay3 from '../images/overlay3.png';
     import { getGame } from '../omucafe-app.js';
 
     const { scene, states, config, omu } = getGame();
 
-    export let side: 'client' | 'asset' = 'client';
+    export let side: 'client' | 'background' | 'overlay' = 'client';
     const COUNTER_WIDTH = 1920;
     const COUNTER_HEIGHT = 500;
     const UPDATE_RATE = 60;
     let context: KitchenContext = {
         ...$states.kitchen,
         side,
+        renderItem: (itemState, options) => renderItem(itemState, options),
+        getTextureByAsset: (asset) => getTextureByAsset(asset),
     }
     let lastUpdate = performance.now();
     let changed = false;
@@ -112,16 +125,48 @@
         return getTexture(key, image);
     }
 
-    async function init(context: GlContext) {
+    async function init(gl: GlContext) {
         matrices = new Matrices();
-        draw = new Draw(matrices, context);
+        draw = new Draw(matrices, gl);
+        await loadBehaviorHandlers();
+        if (side === 'client') {
+            const counterTex = await getTextureByUri(counter);
+            const existCounter = context.items['counter'];
+            const item = createItem({
+                id: 'counter',
+                name: 'カウンター',
+                image: {
+                    type: 'url',
+                    url: counter,
+                },
+                bounds: {
+                    min: Vec2.ZERO,
+                    max: new Vec2(counterTex.width, counterTex.height),
+                },
+                behaviors: {
+                    fixed: createFixed({
+                        transform: {
+                            right: Vec2.RIGHT,
+                            up: Vec2.UP,
+                            offset: new Vec2(0, -COUNTER_HEIGHT),
+                        },
+                    }),
+                    container: existCounter?.behaviors.container ?? createContainer(),
+                },
+            });
+            createItemState(context, {
+                id: 'counter',
+                item,
+                children: existCounter?.children,
+            });
+        }
     }
 
-    async function isItemHovering(item: KitchenItem): Promise<boolean> {
-        if (!item.ingredient.image) return false;
+    async function isItemHovering(item: ItemState): Promise<boolean> {
+        if (!item.item.image) return false;
         const { bounds } = item;
         const { min, max } = bounds;
-        const matrix = getItemTransform(context, item);
+        const matrix = getItemStateTransform(context, item);
         const inverse = matrix.inverse();
         const screenMouse = matrices.unprojectPoint(glMouse);
         const mouse = inverse.xform2(screenMouse);
@@ -134,7 +179,7 @@
         );
         if (!aabbTest) return false;
 
-        const texture = await getTextureByAsset(item.ingredient.image);
+        const texture = await getTextureByAsset(item.item.image);
         const uv = mouse.remap(
             new Vec2(min.x, min.y),
             new Vec2(max.x, max.y),
@@ -146,7 +191,7 @@
         const y = Math.floor(uv.y * height);
         const index = (x + y * width) * 4;
         const alpha = texture.data[index + 3];
-        return alpha > 0;
+        return alpha > 128;
     }
 
     function applyDragEffect() {
@@ -159,30 +204,20 @@
         ));
     }
 
-    async function renderItem(item: KitchenItem, options: {
-        parent?: KitchenItem,
+    async function renderItem(itemState: ItemState, options: {
+        parent?: ItemState,
     } = {}) {
-        const { ingredient } = item;
-        const { behaviors } = item;
-        if (!ingredient.image) {
+        const { item } = itemState;
+        if (!item.image) {
             return;
         }
-        const texture = await getTextureByAsset(ingredient.image);
+        const texture = await getTextureByAsset(item.image);
         let { tex, width, height } = texture;
-        const transform = options.parent ? transformToMatrix(item.transform) :  getItemTransform(context, item, options);
+        const transform = options.parent ? transformToMatrix(itemState.transform) : getItemStateTransform(context, itemState, options);
         matrices.model.push();
         matrices.model.multiply(transform);
         if (context.held === item.id) {
             applyDragEffect();
-        }
-        if (side === 'client' && context.hovering === item.id) {
-            draw.textureOutline(
-                0, 0,
-                width, height,
-                tex,
-                new Vec4(1, 0, 0, 1),
-                10,
-            );
         }
         draw.textureColor(
             10, 40,
@@ -195,41 +230,17 @@
             width, height,
             tex,
         );
-        if (behaviors.container) {
-            const container = behaviors.container;
-            for (const item of container.items
-                .map((id): KitchenItem | undefined => context.items[id])
-                .filter((entry): entry is KitchenItem => !!entry)
-                .sort((a, b) => {
-                    const maxA = a.bounds.max;
-                    const maxB = b.bounds.max;
-                    return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
-                })) {
-                await renderItem(item, {
-                    parent: item,
-                });
-            }
-            if (container.overlay) {
-                const transform = transformToMatrix(container.overlayTransform);
-                matrices.model.push();
-                matrices.model.multiply(transform);
-                const containerTexture = await getTextureByAsset(container.overlay);
-                let { tex, width, height } = containerTexture;
-                draw.texture(
-                    0, 0,
-                    width, height,
-                    tex,
-                );
-                matrices.model.pop();
-            }
-        }
+        await callBehaviorHandler(context, itemState, it => it.render, {
+            gl: glContext,
+            draw,
+            matrices,
+        });
         matrices.model.pop();
     }
 
     let scaleFactor = 1;
 
     async function renderCursor() {
-        if (side !== 'client') return;
         if (!isMouseOver) return;
         const mouse = matrices.unprojectPoint(glMouse);
         const deltaMouse = matrices.unprojectPoint(glMouse).sub(matrices.unprojectPoint(glMouse.sub(deltaGlMouse)));
@@ -293,12 +304,18 @@
         matrices.view.pop();
     }
 
+    function setupBackgroundProjection() {
+        const { gl } = glContext;
+        matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+        matrices.view.identity();
+    }
+
     function setupCounterProjection() {
         const { gl } = glContext;
 
         matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
         matrices.view.identity();
-        matrices.view.translate(0, gl.canvas.height / 2, 0);
+        matrices.view.translate(0, gl.canvas.height / 2 - 100, 0);
         matrices.view.scale(scaleFactor, scaleFactor, 1);
     }
 
@@ -312,9 +329,39 @@
     async function renderHoveringItem() {
         const { hovering } = context;
         if (!hovering) return;
-        const item = context.items[hovering];
-        if (!item) return;
-        await renderItem(item);
+        const itemState = context.items[hovering];
+        if (!itemState) return;
+        const { item } = itemState;
+        if (!item.image) {
+            return;
+        }
+        const canBeHeld = (await callBehaviorHandler(context, itemState, it => it.canItemBeHeld, {
+            canBeHeld: true,
+        })).canBeHeld;
+        if (!canBeHeld) return;
+        const texture = await getTextureByAsset(item.image);
+        let { tex, width, height } = texture;
+        const transform = getItemStateTransform(context, itemState);
+        matrices.model.push();
+        matrices.model.multiply(transform);
+        if (context.held === itemState.id) {
+            applyDragEffect();
+        }
+        draw.textureOutline(
+            0, 0,
+            width, height,
+            tex,
+            new Vec4(0, 0, 0, 0.5),
+            8,
+        );
+        draw.textureOutline(
+            0, 0,
+            width, height,
+            tex,
+            new Vec4(1, 1, 1, 1),
+            4,
+        );
+        matrices.model.pop();
     }
 
     async function renderHeldItem() {
@@ -330,43 +377,22 @@
         await renderItem(item);
     }
 
-    function processDrop(hoveringItem: KitchenItem, heldItem: KitchenItem) {
-        const { ingredient: heldIng} = heldItem;
-        const { ingredient: hoveringIng} = hoveringItem;
-        const { behaviors: heldBehaves } = heldItem;
-        const { behaviors: hoverBehaves } = hoveringItem;
-        if (hoverBehaves.container) {
-            const container = hoverBehaves.container;
-            if (container.items.includes(heldItem.id)) {
-                return;
-            }
-            container.items = [
-                ...container.items,
-                heldItem.id,
-            ];
-            attachChildren(hoveringItem, heldItem);
-            const containerTransform = getItemTransform(context, hoveringItem);
-            const heldTransform = transformToMatrix(heldItem.transform);
-            const inverse = containerTransform.inverse();
-            const newMatrix = inverse.multiply(heldTransform);
-            heldItem.transform = {
-                right: new Vec2(newMatrix.m00, newMatrix.m01),
-                up: new Vec2(newMatrix.m10, newMatrix.m11),
-                offset: new Vec2(newMatrix.m30, newMatrix.m31),
-            };
-        }
+    async function processDrop(hoveringItem: ItemState, heldItem: ItemState) {
+        await callBehaviorHandler(context, hoveringItem, it => it.handleDropChild, {
+            child: heldItem,
+        });
     }
 
-    function processClick(hoveringItem: KitchenItem) {
+    async function processClick(hoveringItem: ItemState) {
         const parent = hoveringItem.parent ? context.items[hoveringItem.parent] : undefined;
         if (parent) {
-            callBehaviorHandler(context, parent, it => it.handleClickChild, {
+            await callBehaviorHandler(context, parent, it => it.handleClickChild, {
                 child: hoveringItem,
             });
         }
-        const canBeHeld = callBehaviorHandler(context, hoveringItem, it => it.canItemBeHeld, {
+        const canBeHeld = (await callBehaviorHandler(context, hoveringItem, it => it.canItemBeHeld, {
             canBeHeld: true,
-        }).canBeHeld;
+        })).canBeHeld;
         if (!canBeHeld) return;
         context.held = hoveringItem.id;
     }
@@ -391,11 +417,11 @@
             return;
         }
         let hit = false;
-        const itemsInOrder: KitchenItem[] = [];
-        function collectItems(item: KitchenItem, passed: string[]) {
+        const itemsInOrder: ItemState[] = [];
+        function collectItems(item: ItemState, passed: string[]) {
             const children = item.children
                 .map((id) => context.items[id])
-                .filter((entry): entry is KitchenItem => !!entry)
+                .filter((entry): entry is ItemState => !!entry)
                 .sort((a, b) => {
                     const maxA = a.bounds.max;
                     const maxB = b.bounds.max;
@@ -441,7 +467,7 @@
         if (side !== 'client') return;
         if (context.hovering) {
             const hoveringItem = context.items[context.hovering];
-            processClick(hoveringItem);
+            await processClick(hoveringItem);
         }
     }
 
@@ -453,9 +479,9 @@
             const heldItem = context.items[held];
             const hoverItem = context.items[hovering];
             if (heldItem.parent) {
-                processDrop(hoverItem, heldItem);
+                await processDrop(hoverItem, heldItem);
             } else {
-                processDrop(hoverItem, heldItem);
+                await processDrop(hoverItem, heldItem);
             }
         }
         context.held = null;
@@ -467,12 +493,10 @@
             const maxB = b.bounds.max;
             return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
         })) {
-            if (id === context.held) continue;
-            if (id === context.hovering) continue;
+            // if (id === context.held) continue;
             if (item.parent) continue;
-            if (item.type === 'ingredient') {
-                await renderItem(item);
-            }
+            if (item.id === 'counter') continue;
+            await renderItem(item);
         }
     }
 
@@ -489,17 +513,22 @@
             return;
         }
         lastUpdate = time;
-        $states.kitchen = {...context};
+        $states.kitchen = {
+            items: context.items,
+            held: context.held,
+            hovering: context.hovering,
+            mouse: glMouse,
+        };
     }
 
     async function renderScreen() {
         const { gl } = glContext;
         const { width, height } = gl.canvas;
-        if ($scene.type === 'ingredient_edit') {
+        if ($scene.type === 'item_edit') {
             draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(1, 1, 1, 0.5));
             matrices.view.push();
             matrices.view.translate(width / 2, height / 2, 0);
-            const ingredient = $config.ingredients[$scene.id];
+            const ingredient = $config.items[$scene.id];
             const transform = transformToMatrix(ingredient.transform);
             const { min, max } = ingredient.bounds;
             const offset = new Vec2(
@@ -510,36 +539,153 @@
                 transform.m11,
             ));
             matrices.view.translate(-offset.x, -offset.y, 0);
-            await renderItem(createKitchenItem(
-                'preview',
-                ingredient,
-            ));
+            await renderItem(createItemState(context, {
+                id: 'preview',
+                item: ingredient,
+            }));
+            delete context.items['preview'];
             matrices.view.pop();
         }
     }
 
-    async function render(context: GlContext) {
+    async function renderCounter() {
+        const kitchenTex = await getTextureByUri(kitchen);
+        matrices.model.push();
+        matrices.model.translate(0, 150, 0);
+        // Kitchen
+        draw.texture(
+            0, 0,
+            kitchenTex.width, kitchenTex.height,
+            kitchenTex.tex,
+        );
+        matrices.model.pop();
+    }
+
+    async function renderBackground() {
+        const tex = side === 'background' ? await getTextureByUri(background2) : await getTextureByUri(background);
+        // Background
+        // fit to screen
+        const { width, height } = glContext.gl.canvas;
+        const scale = height / tex.height;
+        draw.texture(
+            0, 0,
+            tex.width * scale, height,
+            tex.tex,
+        );
+    }
+
+    async function renderEffect() {
+        const gl = glContext.gl;
+        // multiply
+        gl.blendFunc(gl.DST_COLOR, gl.ZERO);
+        const effectTex = await getTextureByUri(effect);
+        // Background
+        // fit to screen
+        const { width, height } = glContext.gl.canvas;
+        const aspect = effectTex.width / effectTex.height;
+        const scale = Math.max(width / effectTex.width, height / effectTex.height);
+        const scaledWidth = effectTex.width * scale;
+        const scaledHeight = effectTex.height * scale;
+        const x = (width - scaledWidth) / 2;
+        const y = (height - scaledHeight) / 2;
+        draw.texture(
+            x, y,
+            scaledWidth, scaledHeight,
+            effectTex.tex,
+        );
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    }
+
+    async function renderOverlay() {
+        const gl = glContext.gl;
+        if (side === 'client') {
+            const tex = await getTextureByUri(overlay2);
+            draw.texture(
+                0, 0,
+                gl.canvas.width, gl.canvas.height,
+                tex.tex,
+            );
+        } else {
+            const tex = await getTextureByUri(overlay);
+            draw.texture(
+                0, 0,
+                gl.canvas.width, gl.canvas.height,
+                tex.tex,
+            );
+        }
+    }
+
+    async function renderOverlay2() {
+        const gl = glContext.gl;
+        if (side === 'overlay') {
+            const tex = await getTextureByUri(overlay3);
+            const { width, height } = gl.canvas;
+            const scale = Math.min(height / tex.height, 1.5);
+            draw.texture(
+                0, height - tex.height * scale,
+                tex.width * scale, height,
+                tex.tex,
+            );
+        // fit height
+            // const { width, height } = gl.canvas;
+            // const halfWidth = tex.width / 2;
+            // const scale = width / halfWidth;
+            // const min = new Vec2(width / 2 - halfWidth * scale, 0);
+            // const max = new Vec2(width / 2 + halfWidth * scale, height);
+            // draw.texture(
+            //     min.x, min.y,
+            //     max.x, max.y,
+            //     tex.tex,
+            // );
+        }
+    }
+
+    async function render(gl: GlContext) {
         if (!omu.ready) return;
 
-        const { gl } = context;
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.enable(gl.BLEND);
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        const { gl: glInternal } = gl;
+        glInternal.viewport(0, 0, glInternal.canvas.width, glInternal.canvas.height);
+        glInternal.clearColor(0, 0, 0, 0);
+        glInternal.clear(glInternal.COLOR_BUFFER_BIT);
+        glInternal.enable(glInternal.BLEND);
+        glInternal.blendFuncSeparate(glInternal.SRC_ALPHA, glInternal.ONE_MINUS_SRC_ALPHA, glInternal.ONE, glInternal.ONE_MINUS_SRC_ALPHA);
         
         const rect = canvas.getBoundingClientRect();
         scaleFactor = rect.width / COUNTER_WIDTH;
-        setupCounterProjection();
-        await updateMouse();
+        setupBackgroundProjection();
+        if (side !== 'overlay') {
+            await renderBackground();
+        }
+        if (side === 'overlay') {
+            await renderEffect();
+        }
         
-        draw.rectangle(0, 0, gl.canvas.width / scaleFactor, gl.canvas.height / scaleFactor, new Vec4(0.8, 0.8, 0.8, 1));
-        draw.rectangle(0, 0, gl.canvas.width / scaleFactor, COUNTER_HEIGHT, new Vec4(1, 1, 1, 1));
+        if (side !== 'background') {
+            setupCounterProjection();
+            await updateMouse();
+            await renderCounter();
+            await renderItems();
+            if (context.items['counter']) {
+                await renderItem(context.items['counter']);
+            }
+            if (side === 'client') {
+                await renderHoveringItem();
+            }
+        }
         
-        await renderItems();
-        await renderHoveringItem();
-        await renderHeldItem();
         setupHUDProjection();
+        if (side !== 'background') {
+            await renderOverlay();
+            setupCounterProjection();
+            if (context.items['counter']) {
+                await renderItem(context.items['counter']);
+            }
+            if (side === 'client') {
+                await renderHeldItem();
+            }
+            setupHUDProjection();
+            await renderOverlay2();
+        }
         await renderScreen();
         await renderCursor();
         if (side === 'client') {
@@ -548,9 +694,11 @@
     }
 
     $: {
-        if (side === 'asset') {
+        if (side !== 'client') {
             context = {
                 ...$states.kitchen,
+                renderItem: (itemState, options) => renderItem(itemState, options),
+                getTextureByAsset: (asset) => getTextureByAsset(asset),
                 side,
             }
         }
@@ -589,23 +737,21 @@
     </div>
     {#if side === 'client'}
         <div class="ui">
-            {#each Object.entries($config.ingredients) as [id, ingredient] (id)}
+            {#each Object.entries($config.items) as [id, item] (id)}
                 <button on:click={() => {
-                    const itemId = Date.now().toString();
-                    context.items = {
-                        ...context.items,
-                        [itemId]: createKitchenItem(
-                            itemId,
-                            ingredient,
-                        ),
-                    };
+                    createItemState(context, {
+                        item,
+                    });
                     markChanged();
                 }}>
-                    {ingredient.name}
+                    {item.name}
                 </button>
             {/each}
             <button on:click={() => {
-                context.items = {};
+                for (const id in context.items) {
+                    if (id === 'counter') continue;
+                    delete context.items[id];
+                }
                 markChanged();
             }}>
                 全部消す

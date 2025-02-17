@@ -11,8 +11,8 @@ import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
-import type { Ingredient } from './game/ingredient.js';
-import type { KitchenItem } from './game/kitchen-item.js';
+import type { ItemState } from './game/item-state.js';
+import type { Item } from './game/item.js';
 import type { Kitchen } from './game/kitchen.js';
 import type { Product } from './game/product.js';
 
@@ -20,7 +20,7 @@ export const DEFAULT_CONFIG = {
     version: 1,
     filter: {},
     products: {} as Record<string, Product>,
-    ingredients: {} as Record<string, Ingredient>,
+    items: {} as Record<string, Item>,
 };
 
 export type Config = typeof DEFAULT_CONFIG;
@@ -44,7 +44,7 @@ export type Scene = {
     type: 'product_edit',
     id: string,
 } | {
-    type: 'ingredient_edit',
+    type: 'item_edit',
     id: string,
 };
 
@@ -85,7 +85,7 @@ const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
 
 export const DEFAULT_STATES = {
     kitchen: {
-        items: {} as Record<string, KitchenItem>,
+        items: {} as Record<string, ItemState>,
         held: null as string | null,
         hovering: null as string | null,
     } as Kitchen,
