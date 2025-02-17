@@ -7,7 +7,7 @@ import { Node2D } from '$lib/math/node2d.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Timer } from '$lib/timer.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
-import { MVP_VERTEX_SHADER, SPRITE_FRAGMENT_SHADER, TEXTURE_FRAGMENT_SHADER } from './shaders.js';
+import { FRAGMENT_SHADER, VERTEX_SHADER } from './shaders.js';
 
 export type LayerJson = {
     animSpeed: number;
@@ -78,8 +78,6 @@ export class LayerData {
         public readonly yAmp: number,
         public readonly yFrq: number,
         public readonly zindex: number,
-        public readonly width: number,
-        public readonly height: number,
     ) { }
 
     public static async load(glContext: GlContext, data: LayerJson): Promise<LayerData> {
@@ -102,15 +100,13 @@ export class LayerData {
         })
         const vertexBuffer = glContext.createBuffer();
         vertexBuffer.bind(() => {
-            const width = img.width / data.frames;
-            const height = img.height;
             vertexBuffer.setData(new Float32Array([
-                0, 0, 0,
-                0, height, 0,
-                width, 0, 0,
-                0, height, 0,
-                width, height, 0,
-                width, 0, 0,
+                -img.width / 2, -img.height / 2, 0,
+                -img.width / 2, img.height / 2, 0,
+                img.width / 2, -img.height / 2, 0,
+                -img.width / 2, img.height / 2, 0,
+                img.width / 2, img.height / 2, 0,
+                img.width / 2, -img.height / 2, 0,
             ]), 'static');
         });
         const uvBuffer = glContext.createBuffer();
@@ -159,8 +155,6 @@ export class LayerData {
             data.yAmp,
             data.yFrq,
             data.zindex,
-            img.width / data.frames,
-            img.height,
         );
     }
 }
@@ -246,8 +240,7 @@ interface PNGTuberContext {
 }
 
 export class PNGTuber implements Avatar {
-    private readonly spriteProgram: GlProgram;
-    private readonly bufferProgram: GlProgram;
+    private readonly program: GlProgram;
     private readonly frameBufferTexture: GlTexture;
     private readonly frameBuffer: GlFramebuffer;
     private readonly effectTargetTexture: GlTexture;
@@ -283,10 +276,8 @@ export class PNGTuber implements Avatar {
             showOnBlink: 0,
         }
         const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
-        const bounds = () => this.getBoundingBox(context);
         return {
-            render,
-            bounds,
+            render
         };
     }
 
@@ -294,21 +285,15 @@ export class PNGTuber implements Avatar {
         private readonly glContext: GlContext,
         public readonly layers: Map<number, LayerData>,
     ) {
-        const mvpVertexShader = glContext.createShader({
-            source: MVP_VERTEX_SHADER,
+        const vShader = glContext.createShader({
+            source: VERTEX_SHADER,
             type: 'vertex',
         })
-        const spriteFShader = glContext.createShader({
-            source: SPRITE_FRAGMENT_SHADER,
+        const fShader = glContext.createShader({
+            source: FRAGMENT_SHADER,
             type: 'fragment',
         })
-        this.spriteProgram = glContext.createProgram([mvpVertexShader, spriteFShader]);
-        const textureFShader = glContext.createShader({
-            source: TEXTURE_FRAGMENT_SHADER,
-            type: 'fragment',
-        })
-        this.bufferProgram = glContext.createProgram([mvpVertexShader, textureFShader]);
-
+        this.program = glContext.createProgram([vShader, fShader]);
         this.frameBuffer = glContext.createFramebuffer();
         this.frameBufferTexture = glContext.createTexture();
         this.frameBufferTexture.use(() => {
@@ -418,18 +403,18 @@ export class PNGTuber implements Avatar {
             this.frameBuffer.use(() => {
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
-                this.bufferProgram.use(() => {
-                    const textureUniform = this.bufferProgram.getUniform('u_texture').asSampler2D();
+                this.program.use(() => {
+                    const textureUniform = this.program.getUniform('u_texture').asSampler2D();
                     textureUniform.set(this.effectTargetTexture);
-                    const projection = this.bufferProgram.getUniform('u_projection').asMat4();
+                    const projection = this.program.getUniform('u_projection').asMat4();
                     projection.set(Mat4.IDENTITY);
-                    const model = this.bufferProgram.getUniform('u_model').asMat4();
+                    const model = this.program.getUniform('u_model').asMat4();
                     model.set(Mat4.IDENTITY);
-                    const view = this.bufferProgram.getUniform('u_view').asMat4();
+                    const view = this.program.getUniform('u_view').asMat4();
                     view.set(Mat4.IDENTITY);
-                    const positionAttribute = this.bufferProgram.getAttribute('a_position');
+                    const positionAttribute = this.program.getAttribute('a_position');
                     positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                    const uvAttribute = this.bufferProgram.getAttribute('a_texcoord');
+                    const uvAttribute = this.program.getAttribute('a_texcoord');
                     uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                     gl.drawArrays(gl.TRIANGLES, 0, 6);
                 });
@@ -437,18 +422,18 @@ export class PNGTuber implements Avatar {
         });
 
         this.frameBufferTexture.use(() => {
-            this.bufferProgram.use(() => {
-                const textureUniform = this.bufferProgram.getUniform('u_texture').asSampler2D();
+            this.program.use(() => {
+                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
                 textureUniform.set(this.frameBufferTexture);
-                const projection = this.bufferProgram.getUniform('u_projection').asMat4();
+                const projection = this.program.getUniform('u_projection').asMat4();
                 projection.set(Mat4.IDENTITY);
-                const model = this.bufferProgram.getUniform('u_model').asMat4();
+                const model = this.program.getUniform('u_model').asMat4();
                 model.set(Mat4.IDENTITY);
-                const view = this.bufferProgram.getUniform('u_view').asMat4();
+                const view = this.program.getUniform('u_view').asMat4();
                 view.set(Mat4.IDENTITY);
-                const positionAttribute = this.bufferProgram.getAttribute('a_position');
+                const positionAttribute = this.program.getAttribute('a_position');
                 positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = this.bufferProgram.getAttribute('a_texcoord');
+                const uvAttribute = this.program.getAttribute('a_texcoord');
                 uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
@@ -477,29 +462,22 @@ export class PNGTuber implements Avatar {
         const { gl } = this.glContext;
         
         if (layerData.zindex === pass) {
-            this.spriteProgram.use(() => {
-                const textureUniform = this.spriteProgram.getUniform('u_texture').asSampler2D();
+            this.program.use(() => {
+                const textureUniform = this.program.getUniform('u_texture').asSampler2D();
                 textureUniform.set(layerData.imageData);
-                const projection = this.spriteProgram.getUniform('u_projection').asMat4();
+                const projection = this.program.getUniform('u_projection').asMat4();
                 projection.set(Mat4.IDENTITY);
-                const model = this.spriteProgram.getUniform('u_model').asMat4();
+                const model = this.program.getUniform('u_model').asMat4();
                 const matrix = sprite.sprite
                     .globalTransform
                     .getMat4()
-                    .translate(-layerData.width / 2, -layerData.height / 2, 0)
-                    .translate(layerData.offset.x, layerData.offset.y, 0)
+                    .translate(layerData.offset.x, layerData.offset.y, 0);
                 model.set(matrix);
-                const view = this.spriteProgram.getUniform('u_view').asMat4();
+                const view = this.program.getUniform('u_view').asMat4();
                 view.set(matrices.get());
-                const frameCount = this.spriteProgram.getUniform('u_frame_count').asFloat();
-                frameCount.set(layerData.frames);
-                const frameUniform = this.spriteProgram.getUniform('u_frame').asFloat();
-                const elapsed = context.timer.getElapsedMS() / 1000 / 6;
-                const frame = Math.floor(elapsed * (layerData.animSpeed + 1)) % layerData.frames;
-                frameUniform.set(layerData.frames > 1 ? frame : 0);
-                const positionAttribute = this.spriteProgram.getAttribute('a_position');
+                const positionAttribute = this.program.getAttribute('a_position');
                 positionAttribute.set(layerData.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = this.spriteProgram.getAttribute('a_texcoord');
+                const uvAttribute = this.program.getAttribute('a_texcoord');
                 uvAttribute.set(layerData.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             })
@@ -522,9 +500,8 @@ export class PNGTuber implements Avatar {
                 new Vec2(halfWidth, -halfHeight),
                 new Vec2(halfWidth, halfHeight),
             ];
-            const offset = new Vec2(sprite.layerData.offset.x, sprite.layerData.offset.y);
             for (const corner of corners) {
-                points.push(transform.xform(corner.add(offset)));
+                points.push(transform.xform(corner));
             }
         }
         return AABB2.fromPoints(points);

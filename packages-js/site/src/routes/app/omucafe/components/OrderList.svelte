@@ -1,9 +1,9 @@
 <script lang="ts">
     import { TableList } from '@omujs/ui';
-    import { getGame } from '../omucafe-app.js';
+    import { game } from '../omucafe-app.js';
     import OrderListItem from './OrderListItem.svelte';
     
-    const { orders } = getGame();
+    const { orders } = game;
 </script>
 
 <div class="order-list">

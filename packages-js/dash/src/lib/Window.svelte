@@ -1,71 +1,60 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
-    import { TauriEvent } from '@tauri-apps/api/event';
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
     import TitlebarButton from './TitlebarButton.svelte';
     import StatusBar from './common/StatusBar.svelte';
     import Title from './images/title.svg';
-    import { isBetaEnabled } from './main/settings.js';
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
-    import { appWindow, invoke, listen } from './tauri.js';
-    import { VERSION } from './version.js';
+    import { invoke, listen, tauriWindow } from './tauri.js';
+    import { version } from './version.json';
 
     let alwaysOnTop = false;
     let maximized = false;
-
-    const destroy = listen('single-instance', async ({ payload }) => {
+    
+    const destroy = listen('single-instance', async ({payload}) => {
         console.log(`single-instance: ${payload}`);
-        const background =
-            payload.args.includes('--background') ||
-                payload.args.includes('-b');
+        const background = payload.args.includes('--background') || payload.args.includes('-b');
         if (background) {
             return;
         }
-        await appWindow.show();
-        await appWindow.setFocus();
+        await tauriWindow.appWindow.show();
+        await tauriWindow.appWindow.setFocus();
         window.location.reload();
-    });
-
+    })
     onMount(async () => {
-        maximized = await appWindow.isMaximized();
-        window.addEventListener('resize', async () => {
-            maximized = await appWindow.isMaximized();
-        });
-        listen(TauriEvent.WINDOW_RESIZED, async () => {
-            maximized = await appWindow.isMaximized();
-        });
+        maximized = await tauriWindow.appWindow.isMaximized();
     });
-
     onDestroy(async () => (await destroy)());
 
     function togglePin() {
         alwaysOnTop = !alwaysOnTop;
-        appWindow.setAlwaysOnTop(alwaysOnTop);
+        tauriWindow.appWindow.setAlwaysOnTop(alwaysOnTop);
     }
-
+    
     function minimize() {
-        appWindow.minimize();
+        tauriWindow.appWindow.minimize();
     }
 
     async function maximize() {
-        appWindow.toggleMaximize();
-        maximized = !(await appWindow.isMaximized());
+        tauriWindow.appWindow.toggleMaximize();
+        maximized = !(await tauriWindow.appWindow.isMaximized());
     }
-
+    
     function close() {
         invoke('close_window');
     }
+    
 </script>
 
 <div class="window">
     <div class="titlebar">
-        <div data-tauri-drag-region class:margin={!maximized}></div>
+        <div data-tauri-drag-region class:margin={!maximized} />
         <div class="title">
             <img src={Title} alt="title" width="64" height="10" />
             <span class="version">
-                {VERSION}
-                {(DEV && ' (dev)') || ($isBetaEnabled && ' (beta)') || ''}
+                {version}
+                {DEV && ' (dev)' || ''}
             </span>
             <StatusBar />
         </div>
@@ -73,9 +62,7 @@
             <TitlebarButton
                 on:click={togglePin}
                 icon={alwaysOnTop ? 'ti-pinned-filled' : 'ti-pin'}
-                tooltip={alwaysOnTop
-                    ? $t('titlebar.pin-disable')
-                    : $t('titlebar.pin-enable')}
+                tooltip={alwaysOnTop ? $t('titlebar.pin-disable') : $t('titlebar.pin-enable')}
             />
             <TitlebarButton
                 on:click={minimize}
@@ -85,9 +72,7 @@
             <TitlebarButton
                 on:click={maximize}
                 icon={maximized ? 'ti-picture-in-picture-top' : 'ti-rectangle'}
-                tooltip={$t(
-                    `titlebar.${maximized ? 'unmaximize' : 'maximize'}`,
-                )}
+                tooltip={$t(`titlebar.${maximized ? 'unmaximize' : 'maximize'}`)}
             />
             <TitlebarButton
                 on:click={close}

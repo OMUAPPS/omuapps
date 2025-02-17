@@ -200,7 +200,7 @@
                 }
                 matrices.translate(0, -scaleOffset * 2, 0);
                 const avatarConfig = user.avatar && $config.avatars[user.avatar] || null;
-                setupAvatarTransform(matrices, flipDirection, avatarConfig);
+                setupAvatarTransform(matrices, avatarConfig);
                 setupFlipTransform(matrices, flipDirection, avatarConfig);
                 avatar.render(matrices, {
                     id: state.user.id,
@@ -230,7 +230,7 @@
             const avatarContext = heldAvatarContext || avatar.create();
             heldAvatarContext = avatarContext;
             matrices.push();
-            setupAvatarTransform(matrices, Vec2.ONE, avatarConfig);
+            setupAvatarTransform(matrices, avatarConfig);
             avatarContext.render(matrices, DEFAULT_AVATAR_ACTION, { effects: [] });
             matrices.pop();
             renderCross(matrices, 0, 0, 16, 2);
@@ -241,11 +241,6 @@
             gizmo.rect(matrices.get(), -faceSize / 2 - 80 - stroke, -3 - stroke, -faceSize / 2 - 20 + stroke, 3 + stroke, PALETTE_RGB.BACKGROUND_2);
             gizmo.triangle(matrices.get(), -faceSize / 2 - 100, 0, -faceSize / 2 - 80, -20, -faceSize / 2 - 80, 20, PALETTE_RGB.ACCENT);
             gizmo.rect(matrices.get(), -faceSize / 2 - 80, -3, -faceSize / 2 - 20, 3, PALETTE_RGB.ACCENT);
-
-            const groundY = $config.align.vertical === 'end' ?
-                $config.align.padding.bottom * 2 : $config.align.vertical === 'middle' ? 0 : $config.align.padding.top * 2;
-            gizmo.rect(matrices.get(), -200 - stroke, groundY - 3 - stroke, 200 + stroke, groundY + 3 + stroke, PALETTE_RGB.BACKGROUND_2);
-            gizmo.rect(matrices.get(), -200, groundY - 3, 200, groundY + 3, PALETTE_RGB.OUTLINE_2);
             matrices.pop();
         } else {
             heldAvatarContext = null;
@@ -271,10 +266,10 @@
         matrices.scale(flipDirection.x, flipDirection.y, 1);
     }
 
-    function setupAvatarTransform(matrices: MatrixStack, flipDirection: Vec2, avatarConfig: AvatarConfig | null) {
+    function setupAvatarTransform(matrices: MatrixStack, avatarConfig: AvatarConfig | null) {
         if (avatarConfig) {
-            const position = Vec2.from(avatarConfig.offset);
-            matrices.translate(position.x, flipDirection.y * position.y, 0);
+            const position = Vec2.fromArray(avatarConfig.offset);
+            matrices.translate(position.x, position.y, 0);
             matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
             if (avatarConfig.type === 'pngtuber') {
                 if (avatarConfig.flipHorizontal) {
@@ -319,7 +314,6 @@
 
     async function render2D(context: CanvasRenderingContext2D) {
         if ($selectedAvatar) return;
-        renderNametags(context);
         if (showGrid) {
             if ($config.align.auto) {
                 renderAlignHint(context);
@@ -328,6 +322,7 @@
             }
             renderHideAreaHint(context);
         }
+        renderNametags(context);
         context.globalAlpha = 1;
         if ($isDraggingFinished) {
             $isDraggingFinished = false;
@@ -668,6 +663,40 @@
     const avatarCache = new Map<string, {key: string, avatar: Avatar}>();
     const contextCache = new Map<string, {id: string, key: string, avatar: AvatarContext}>();
 
+    function getFileType(source: Uint8Array): string {
+        const HEADER_MAP: Record<string, string | undefined> = {
+            '89504e47': 'image/png',
+            '47494638': 'image/gif',
+            'ffd8ffe0': 'image/jpeg',
+            'ffd8ffe1': 'image/jpeg',
+            'ffd8ffe2': 'image/jpeg',
+            'ffd8ffe3': 'image/jpeg',
+            'ffd8ffe8': 'image/jpeg',
+            '52494646': 'image/webp',
+        }
+        const header = source.slice(0, 4).reduce((acc, val) => acc + val.toString(16).padStart(2, '0'), '');
+        const type = HEADER_MAP[header];
+        if (type) {
+            return type;
+        }
+        console.warn(`Unknown file type: ${header}`);
+        return 'image/png';
+    }
+
+    async function createSourceElement(source: Uint8Array): Promise<{width: number, height: number, image: HTMLImageElement}> {
+        const type = getFileType(source);
+        const blob = new Blob([source], {type});
+        const url = URL.createObjectURL(blob);
+        const image = document.createElement('img');
+        image.src = url;
+        await image.decode();
+        return {
+            width: image.width,
+            height: image.height,
+            image,
+        };
+    }
+
     async function getAvatarById(gl: GlContext, avatarId: string): Promise<{key:string, avatar: Avatar}> {
         const avatarConfig = $config.avatars[avatarId];
         if (!avatarConfig) {
@@ -692,10 +721,10 @@
             }
         } else if (avatarType === 'png') {
             try {
-                const base = await overlayApp.getSource(avatarConfig.base);
-                const active = avatarConfig.active && await overlayApp.getSource(avatarConfig.active);
-                const deafened = avatarConfig.deafened && await overlayApp.getSource(avatarConfig.deafened);
-                const muted = avatarConfig.muted && await overlayApp.getSource(avatarConfig.muted);
+                const base = await createSourceElement(await overlayApp.getSource(avatarConfig.base));
+                const active = avatarConfig.active && await createSourceElement(await overlayApp.getSource(avatarConfig.active));
+                const deafened = avatarConfig.deafened && await createSourceElement(await overlayApp.getSource(avatarConfig.deafened));
+                const muted = avatarConfig.muted && await createSourceElement(await overlayApp.getSource(avatarConfig.muted));
                 const avatar = await PNGAvatar.load(gl, {
                     base,
                     active,
@@ -759,10 +788,10 @@
                 url: modelData.muted,
             } : undefined,
         }
-        const base = await proxy(modelData.inactive).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const active = await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const deafened = await proxy(modelData.deafened).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const muted = await proxy(modelData.muted).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
+        const base = await createSourceElement(await proxy(modelData.inactive).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
+        const active = await createSourceElement(await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
+        const deafened = await createSourceElement(await proxy(modelData.deafened).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
+        const muted = await createSourceElement(await proxy(modelData.muted).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer)));
         const avatar = await PNGAvatar.load(gl, {
             base,
             active,
@@ -775,8 +804,9 @@
     async function createDefaultAvatar(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
         const url = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
         const source = await window.fetch(url).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
+        const base = await createSourceElement(source);
         const avatar = await PNGAvatar.load(gl, {
-            base: source,
+            base,
         });
         return avatar.create();
     }

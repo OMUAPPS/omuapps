@@ -236,7 +236,9 @@ class AddChatItemActionItem(TypedDict):
     liveChatPaidMessageRenderer: NotRequired[LiveChatPaidMessageRenderer]
     liveChatPaidStickerRenderer: NotRequired[LiveChatPaidStickerRenderer]
     liveChatMembershipItemRenderer: NotRequired[LiveChatMembershipItemRenderer]
-    liveChatSponsorshipsGiftRedemptionAnnouncementRenderer: NotRequired[LiveChatTextMessageRenderer]
+    liveChatSponsorshipsGiftRedemptionAnnouncementRenderer: NotRequired[
+        LiveChatTextMessageRenderer
+    ]
     liveChatSponsorshipsGiftPurchaseAnnouncementRenderer: NotRequired[
         LiveChatSponsorshipsGiftPurchaseAnnouncementRenderer
     ]

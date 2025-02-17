@@ -58,7 +58,7 @@
         <section>
             <div>
                 <h3>ヒント</h3>
-                <textarea bind:value={$config.hint} class="hint"></textarea>
+                <textarea bind:value={$config.hint} class="hint" />
             </div>
             <hr />
             <img src={hint} alt="" />
@@ -66,7 +66,7 @@
         <section>
             <div>
                 <h3>看板</h3>
-                <textarea bind:value={$config.text} class="text"></textarea>
+                <textarea bind:value={$config.text} class="text" />
             </div>
             <hr />
             <img src={board} alt="" />

@@ -2,6 +2,8 @@
     let width = 0;
     let containerWidth = 0;
     let fontSize = 20;
+
+    $: console.log(containerWidth, width);
 </script>
 
 <div bind:clientWidth={containerWidth} style="position: relative; width: 100%;">

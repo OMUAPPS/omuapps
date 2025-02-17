@@ -75,7 +75,9 @@ class SerializedTable[T: Keyable](Table[T]):
 
     async def get_many(self, *keys: str) -> dict[str, T]:
         items = await self._table.get_many(*keys)
-        return {key: self._type.serializer.deserialize(item) for key, item in items.items()}
+        return {
+            key: self._type.serializer.deserialize(item) for key, item in items.items()
+        }
 
     async def add(self, *items: T) -> None:
         data = {item.key(): self._type.serializer.serialize(item) for item in items}
@@ -144,7 +146,9 @@ class SerializedTable[T: Keyable](Table[T]):
     def event(self) -> TableEvents[T]:
         return self._event
 
-    def listen(self, listener: AsyncCallback[Mapping[str, T]] | None = None) -> Unlisten:
+    def listen(
+        self, listener: AsyncCallback[Mapping[str, T]] | None = None
+    ) -> Unlisten:
         self._listening = True
         if listener:
             return self._event.cache_update.listen(listener)

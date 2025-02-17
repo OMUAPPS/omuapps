@@ -1,11 +1,11 @@
 import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { buildMetadata, getUrl, NAMESPACE } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 
 export const APP_ID = new Identifier(NAMESPACE, 'lipsynctest');
 export const APP = new App(APP_ID, {
     url: getUrl('/app/lipsynctest'),
-    metadata: buildMetadata({
+    metadata: {
         locale: 'en',
         name: {
             en: 'Lipsync Test',
@@ -20,5 +20,5 @@ export const APP = new App(APP_ID, {
             en: 'ti-language',
         },
         tags: ['tool', 'underdevelopment'] as TagKey[],
-    }),
+    },
 });

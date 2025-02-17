@@ -274,7 +274,9 @@ class OBSSceneItem(Reference[obs_sceneitem_t]):
     @property
     def blending_method(self) -> OBSBlendingMethod:
         with self as scene_item:
-            return OBSBlendingMethod(obspython.obs_sceneitem_get_blending_method(scene_item))
+            return OBSBlendingMethod(
+                obspython.obs_sceneitem_get_blending_method(scene_item)
+            )
 
     @blending_method.setter
     def blending_method(self, value: OBSBlendingMethod) -> None:
@@ -284,7 +286,9 @@ class OBSSceneItem(Reference[obs_sceneitem_t]):
     @property
     def blending_mode(self) -> OBSBlendingType:
         with self as scene_item:
-            return OBSBlendingType(obspython.obs_sceneitem_get_blending_mode(scene_item))
+            return OBSBlendingType(
+                obspython.obs_sceneitem_get_blending_mode(scene_item)
+            )
 
     @blending_mode.setter
     def blending_mode(self, value: OBSBlendingType) -> None:
@@ -509,7 +513,9 @@ class OBSScene(Reference[obs_scene_t]):
 
     def insert_group(self, name: str, items: list[OBSSceneItem]) -> OBSSceneItem:
         with self as scene:
-            obs_sceneitem = obspython.obs_scene_insert_group(scene, name, items, len(items))
+            obs_sceneitem = obspython.obs_scene_insert_group(
+                scene, name, items, len(items)
+            )
         return OBSSceneItem(obs_sceneitem)
 
     def add_group2(self, name: str, signal: bool) -> OBSSceneItem:
@@ -517,9 +523,13 @@ class OBSScene(Reference[obs_scene_t]):
             obs_sceneitem = obspython.obs_scene_add_group2(scene, name, signal)
         return OBSSceneItem(obs_sceneitem)
 
-    def insert_group2(self, name: str, items: list[OBSSceneItem], signal: bool) -> OBSSceneItem:
+    def insert_group2(
+        self, name: str, items: list[OBSSceneItem], signal: bool
+    ) -> OBSSceneItem:
         with self as scene:
-            obs_sceneitem = obspython.obs_scene_insert_group2(scene, name, items, len(items), signal)
+            obs_sceneitem = obspython.obs_scene_insert_group2(
+                scene, name, items, len(items), signal
+            )
         return OBSSceneItem(obs_sceneitem)
 
     def get_group(self, name: str) -> OBSSceneItem:
@@ -536,7 +546,9 @@ class OBSScene(Reference[obs_scene_t]):
 
     def sceneitem_from_source(self, source: OBSSource) -> OBSSceneItem:
         with self as scene, source as source_data:
-            obs_sceneitem = obspython.obs_scene_sceneitem_from_source(scene, source_data)
+            obs_sceneitem = obspython.obs_scene_sceneitem_from_source(
+                scene, source_data
+            )
         return OBSSceneItem(obs_sceneitem)
 
     @property

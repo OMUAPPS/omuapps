@@ -153,12 +153,10 @@
                     </Tooltip>
                     <i class="ti ti-settings"></i>
                     設定
-                    <i class="ti ti-chevron-{tab === 'config' ? 'up' : 'down'}"></i>
                 </button>
                 <button class:active={tab === 'visual'} on:click={() => (tab = tab === 'visual' ? null : 'visual')}>
                     <i class="ti ti-eye-check"></i>
                     見た目を調整
-                    <i class="ti ti-chevron-{tab === 'visual' ? 'up' : 'down'}"></i>
                 </button>
             </div>
             {#if tab}
@@ -254,18 +252,6 @@
         z-index: 1;
         width: 20rem;
         margin: 1rem;
-        animation: slide-in 0.0621s ease;
-    }
-
-    @keyframes slide-in {
-        from {
-            transform: translateX(-0.5rem);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
     }
 
     .tab {
@@ -325,10 +311,6 @@
             &.active {
                 background: var(--color-1);
                 color: var(--color-bg-2);
-            }
-
-            > .ti-chevron-up, > .ti-chevron-down {
-                margin-left: auto;
             }
         }
     }

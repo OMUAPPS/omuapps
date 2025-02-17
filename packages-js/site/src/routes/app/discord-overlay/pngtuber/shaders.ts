@@ -1,4 +1,4 @@
-export const MVP_VERTEX_SHADER = `#version 300 es
+export const VERTEX_SHADER = `#version 300 es
 
 precision highp float;
 
@@ -18,7 +18,7 @@ void main() {
 }
 `;
 
-export const TEXTURE_FRAGMENT_SHADER = `#version 300 es
+export const FRAGMENT_SHADER = `#version 300 es
 
 precision highp float;
 
@@ -30,31 +30,6 @@ out vec4 outColor;
 
 void main() {
     vec4 color = texture(u_texture, v_texcoord);
-    if (color.a < 0.1) {
-        discard;
-    }
-    outColor = color;
-}
-`;
-
-
-export const SPRITE_FRAGMENT_SHADER = `#version 300 es
-
-precision highp float;
-
-in vec2 v_texcoord;
-
-uniform sampler2D u_texture;
-uniform float u_frame_count;
-uniform float u_frame;
-
-out vec4 outColor;
-
-void main() {
-    vec2 uv = v_texcoord;
-    uv.x /= u_frame_count;
-    uv.x += u_frame / u_frame_count;
-    vec4 color = texture(u_texture, uv);
     if (color.a < 0.1) {
         discard;
     }

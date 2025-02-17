@@ -3,64 +3,27 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import { LOCALES } from '$lib/i18n/i18n.js';
     import { screenContext } from '$lib/screen/screen.js';
-    import { checkUpdate, invoke } from '$lib/tauri.js';
-    import { Combobox, Header, Tooltip } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/plugin-process';
-    import UpdateScreen from '../screen/UpdateScreen.svelte';
-    import {
-        currentSettingsCategory,
-        devMode,
-        isBetaEnabled,
-        language,
-    } from '../settings.js';
+    import { invoke } from '$lib/tauri.js';
+    import { Combobox, Header, Toggle, Tooltip } from '@omujs/ui';
+    import { currentSettingsCategory, devMode, language } from '../settings.js';
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
-    import PluginSettings from './PluginSettings.svelte';
 
     export const props = {};
 
     let logPromise: Promise<string> | null = null;
-    let restartPromise: Promise<void> | null = null;
 
     async function generateLogFile(): Promise<string> {
         let path: string;
         try {
             path = await invoke('generate_log_file');
         } catch (error) {
-            setTimeout(() => (logPromise = null), 3000);
+            setTimeout(() => logPromise = null, 3000);
             throw error;
         }
         logPromise = null;
         return path;
-    }
-
-    async function restartServer() {
-        if (omu.ready) {
-            await omu.server.shutdown(true);
-        }
-        await new Promise<void>((resolve) => omu.onReady(resolve));
-        restartPromise = null;
-        window.location.reload();
-    }
-
-    async function updateConfig() {
-        await invoke('set_config', {
-            config: { enable_beta: $isBetaEnabled },
-        });
-        console.log('config', await invoke('get_config'));
-        try {
-            if (omu.ready) {
-                await omu.server.shutdown();
-            }
-        } catch (e) {
-            console.error(e);
-        }
-        await relaunch();
-    }
-
-    $: {
-        $devMode &&= $isBetaEnabled;
     }
 </script>
 
@@ -72,60 +35,24 @@
     />
     <div class="content">
         <div class="categories">
-            <button
-                class:selected={$currentSettingsCategory == 'general'}
-                on:click={() => ($currentSettingsCategory = 'general')}
-            >
+            <button class:selected={$currentSettingsCategory == 'general'} on:click={() => $currentSettingsCategory = 'general'}>
+                <i class="ti {$t('settings.category.general.icon')}"></i>
+                <p>{$t('settings.category.general.name')}</p>
                 <Tooltip>{$t('settings.category.general.description')}</Tooltip>
-                <span>
-                    <i class="ti {$t('settings.category.general.icon')}"></i>
-                    <p>{$t('settings.category.general.name')}</p>
-                    <i class="ti ti-chevron-right"></i>
-                </span>
+                <i class="ti ti-chevron-right"></i>
             </button>
-            <button
-                class:selected={$currentSettingsCategory == 'about'}
-                on:click={() => ($currentSettingsCategory = 'about')}
-            >
+            <button class:selected={$currentSettingsCategory == 'about'} on:click={() => $currentSettingsCategory = 'about'}>
+                <i class="ti {$t('settings.category.about.icon')}"></i>
+                <p>{$t('settings.category.about.name')}</p>
                 <Tooltip>{$t('settings.category.about.description')}</Tooltip>
-                <span>
-                    <i class="ti {$t('settings.category.about.icon')}"></i>
-                    <p>{$t('settings.category.about.name')}</p>
-                    <i class="ti ti-chevron-right"></i>
-                </span>
+                <i class="ti ti-chevron-right"></i>
             </button>
-            {#if $isBetaEnabled}
-                <button
-                    class:selected={$currentSettingsCategory == 'plugins'}
-                    on:click={() => ($currentSettingsCategory = 'plugins')}
-                >
-                    <Tooltip
-                    >{$t('settings.category.plugins.description')}</Tooltip
-                    >
-                    <span>
-                        <i class="ti {$t('settings.category.plugins.icon')}"
-                        ></i>
-                        <p>{$t('settings.category.plugins.name')}</p>
-                        <i class="ti ti-chevron-right"></i>
-                    </span>
-                </button>
-            {/if}
             {#if $devMode}
-                <button
-                    class:selected={$currentSettingsCategory == 'developer'}
-                    on:click={() => ($currentSettingsCategory = 'developer')}
-                >
-                    <Tooltip
-                    >{$t(
-                        'settings.category.developer.description',
-                    )}</Tooltip
-                    >
-                    <span>
-                        <i class="ti {$t('settings.category.developer.icon')}"
-                        ></i>
-                        <p>{$t('settings.category.developer.name')}</p>
-                        <i class="ti ti-chevron-right"></i>
-                    </span>
+                <button class:selected={$currentSettingsCategory == 'developer'} on:click={() => $currentSettingsCategory = 'developer'}>
+                    <i class="ti {$t('settings.category.developer.icon')}"></i>
+                    <p>{$t('settings.category.developer.name')}</p>
+                    <Tooltip>{$t('settings.category.developer.description')}</Tooltip>
+                    <i class="ti ti-chevron-right"></i>
                 </button>
             {/if}
         </div>
@@ -133,138 +60,47 @@
             <h2>
                 {$t(`settings.category.${$currentSettingsCategory}.name`)}
                 <small>
-                    {$t(
-                        `settings.category.${$currentSettingsCategory}.description`,
-                    )}
+                    {$t(`settings.category.${$currentSettingsCategory}.description`)}
                 </small>
             </h2>
 
             {#if $currentSettingsCategory === 'general'}
-                {#await checkUpdate() then update}
-                    {#if update}
-                        <span class="update">
-                            <div class="info">
-                                <p>
-                                    {$t('settings.setting.newVersionAvailable')}
-                                </p>
-                                <small>
-                                    {update.currentVersion} → {update.version}
-                                    {#if update.date}
-                                        <!-- 2025-02-06 16:47:41.775 +00:00:00 -->
-                                        <!-- remove seconds in tz offset -->
-                                        {@const isoDate = update.date.replace(/:\d{2}$/, ' ')}
-                                        {@const date = new Date(isoDate)}
-                                        ({date.toLocaleDateString()})
-                                    {/if}
-                                </small>
-                            </div>
-                            <button on:click={() => {
-                                screenContext.push(UpdateScreen, { update });
-                            }}>
-                                {$t('settings.setting.update')}
-                                <i class="ti ti-arrow-up"></i>
-                            </button>
-                        </span>
-                    {/if}
-                {:catch error}
-                    <span class="update">
-                        <p>{$t('settings.setting.checkUpdateError')}</p>
-                        <small>{error}</small>
-                    </span>
-                {/await}
                 <span class="setting">
                     <p>{$t('settings.setting.language')}</p>
-                    <Combobox
-                        bind:value={$language}
-                        options={Object.fromEntries(
-                            Object.entries(LOCALES).map(([key, value]) => [
-                                key,
-                                { value: value.code, label: value.name },
-                            ]),
-                        )}
-                    />
+                    <Combobox bind:value={$language} options={Object.fromEntries(Object.entries(LOCALES).map(([key, value]) => [key, {value: value.code, label: value.name}]))} />
                 </span>
-                <label class="setting">
-                    <p>{$t('settings.setting.betaMode')}</p>
-                    <input
-                        type="checkbox"
-                        bind:checked={$isBetaEnabled}
-                        on:change={async () => updateConfig()}
-                    />
-                </label>
-                <small>
-                    {$t('settings.setting.betaModeDescription')}
-                </small>
-                {#if $isBetaEnabled}
-                    <label class="setting">
-                        <p>{$t('settings.setting.devMode')}</p>
-                        <input type="checkbox" bind:checked={$devMode} />
-                    </label>
-                {/if}
+                <span class="setting">
+                    <p>{$t('settings.setting.devMode')}</p>
+                    <Toggle bind:value={$devMode} />
+                </span>
                 <h3>
                     {$t('settings.setting.debug')}
                 </h3>
                 <span class="setting">
-                    {#if restartPromise}
-                        {#await restartPromise}
-                            <button disabled>
-                                {$t('settings.setting.serverRestarting')}
-                            </button>
-                        {:then}
-                            <button>
-                                {$t('settings.setting.serverRestarted')}
-                            </button>
-                        {:catch error}
-                            <button>
-                                {$t('settings.setting.serverRestartError', {
-                                    error,
-                                })}
-                            </button>
-                        {/await}
-                    {:else}
-                        <button on:click={() => (restartPromise = restartServer())}>
-                            {$t('settings.setting.serverRestart')}
-                        </button>
-                    {/if}
+                    <button on:click={() => {
+                        omu.server.shutdown(true);
+                        window.location.reload();
+                    }}>{$t('settings.setting.serverRestart')}</button>
                 </span>
                 <span class="setting">
                     {#if logPromise}
                         {#await logPromise}
-                            <button disabled>
-                                {$t('settings.setting.logFileGenerating')}
-                            </button>
+                            <button disabled>{$t('settings.setting.logFileGenerating')}</button>
                         {:then path}
-                            <button>
-                                {$t('settings.setting.logFileGenerated', {
-                                    path,
-                                })}
-                            </button>
+                            <button>{$t('settings.setting.logFileGenerated', { path })}</button>
                         {:catch error}
-                            <button>
-                                {$t('settings.setting.logFileGenerateError', {
-                                    error,
-                                })}
-                            </button>
+                            <button>{$t('settings.setting.logFileGenerateError', { error })}</button>
                         {/await}
                     {:else}
-                        <button on:click={() => (logPromise = generateLogFile())}>
-                            {$t('settings.setting.logFileGenerate')}
-                        </button>
+                        <button on:click={() => logPromise = generateLogFile()}>{$t('settings.setting.logFileGenerate')}</button>
                     {/if}
                 </span>
-                <span class="setting clean-environment">
-                    <button
-                        on:click={() => {
-                            screenContext.push(
-                                CleaningEnvironmentScreen,
-                                undefined,
-                            );
-                        }}>{$t('settings.setting.cleanEnvironment')}</button
-                    >
-                </span>
                 <small>先にOBSを終了する必要があります</small>
-            {:else if $currentSettingsCategory === 'plugins'}
-                <PluginSettings />
+                <span class="setting clean-environment">
+                    <button on:click={() => {
+                        screenContext.push(CleaningEnvironmentScreen, undefined)
+                    }}>{$t('settings.setting.cleanEnvironment')}</button>
+                </span>
             {:else if $currentSettingsCategory === 'about'}
                 <About />
             {:else if $currentSettingsCategory === 'developer'}
@@ -278,17 +114,20 @@
     .container {
         position: absolute;
         inset: 0;
-        padding: 0;
         display: flex;
         flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 0;
         background: var(--color-bg-2);
     }
 
     .content {
-        flex: 1;
+        position: absolute;
+        inset: 0;
+        top: 5rem;
         display: flex;
         background: var(--color-bg-1);
-        overflow: hidden;
     }
 
     .categories {
@@ -301,44 +140,39 @@
         gap: 2px;
 
         > button {
-            display: flex;
-            align-items: center;
             border: none;
             background: none;
+            height: 3rem;
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             color: var(--color-text);
             font-size: 1rem;
             font-weight: 600;
-            height: 3rem;
-            padding: 0 1rem;
-
-            &.selected {
-                background: var(--color-bg-2);
-                color: var(--color-1);
-                border-right: 2px solid var(--color-1);
-            }
-
-            &:hover {
-                background: var(--color-bg-2);
-                transition: padding 0.0621s;
-
-                > span > .ti-chevron-right {
-                    color: var(--color-1);
-                    padding-right: 0;
-                    transition: padding 0.0621s;
-                }
-            }
-        }
-
-        > button > span {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            flex: 1;
 
             > .ti-chevron-right {
                 margin-left: auto;
                 color: transparent;
                 padding-right: 0.25rem;
+            }
+
+            &:hover {
+                background: var(--color-bg-2);
+                padding-left: 1.1621rem;
+                transition: padding 0.0621s;
+
+                > .ti-chevron-right {
+                    color: var(--color-1);
+                    padding-right: 0;
+                    transition: padding 0.0621s;
+                }
+            }
+
+            &.selected {
+                background: var(--color-bg-2);
+                color: var(--color-1);
+                border-right: 2px solid var(--color-1);
             }
         }
     }
@@ -367,81 +201,19 @@
         }
 
         > h3 {
-            border-top: 1px solid var(--color-outline);
-            padding-top: 1rem;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
             color: var(--color-1);
         }
     }
-
-    .settings > small {
-        color: var(--color-text);
-        font-size: 0.7rem;
-        margin-bottom: 2rem;
-        border-top: 1px solid var(--color-outline);
-        width: fit-content;
-        padding-top: 0.125rem;
-        margin-top: 0.125rem;
-    }
-
-    .update {
-        display: flex;
-        flex-wrap: wrap;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        gap: 2rem;
-        margin-bottom: 2rem;
-        border: 1px solid var(--color-1);
-        padding: 2rem;
-        color: var(--color-1);
-        background: var(--color-bg-1);
-        white-space: nowrap;
-        border-radius: 2px;
-
-        > .info {
-            > p {
-                font-size: 1rem;
-                font-weight: 600;
-                margin-bottom: 0.25rem;
-            }
-
-            > small {
-                font-size: 0.7621rem;
-                color: var(--color-text);
-            }
-        }
-
-        > button {
-            border: none;
-            background: var(--color-1);
-            color: var(--color-bg-2);
-            font-size: 0.8rem;
-            font-weight: 600;
-            padding: 0.5rem 1rem;
-            border-radius: 2px;
-            cursor: pointer;
-
-            &:focus-visible,
-            &:hover {
-                outline: 1px solid var(--color-1);
-                outline-offset: -1px;
-                background: var(--color-bg-1);
-                color: var(--color-1);
-            }
-        }
-    }
-
+    
     .setting {
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
         max-width: 20rem;
-        margin-bottom: 0.25rem;
-        margin-top: 0.5rem;
-        color: var(--color-1);
+        margin-bottom: 0.75rem;
 
         > button {
             border: none;
@@ -467,15 +239,9 @@
                 cursor: not-allowed;
             }
         }
+    }
 
-        > input {
-            width: 1.25rem;
-            height: 1.25rem;
-            accent-color: var(--color-1);
-
-            &:hover {
-                accent-color: var(--color-1);
-            }
-        }
+    .clean-environment {
+        margin-top: 0.25rem;
     }
 </style>

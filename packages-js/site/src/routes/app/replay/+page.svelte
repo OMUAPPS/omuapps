@@ -4,7 +4,7 @@
     import { Chat } from '@omujs/chat';
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { AppHeader, TableList, Textbox, setClient } from '@omujs/ui';
+    import { AppHeader, FlexRowWrapper, TableList, Textbox, Toggle, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import Player from './components/Player.svelte';
@@ -64,11 +64,28 @@
 
 <AppPage>
     <header slot="header">
-        <AppHeader app={omu.app} />
+        {#await promise}
+            <AppHeader app={omu.app} />
+        {:then}
+            <AppHeader app={omu.app}>
+                <FlexRowWrapper alignItems="center" gap>
+                    <small>表示</small>
+                    <Toggle bind:value={$config.active} />
+                </FlexRowWrapper>
+            </AppHeader>
+            <slot />
+        {/await}
     </header>
     <main>
         <div class="container">
             <div class="menu">
+                <section>
+                    <h3>
+                        配信ソフトに追加する
+                        <i class="ti ti-arrow-bar-to-down"></i>
+                    </h3>
+                    <AssetButton {omu} {obs} />
+                </section>
                 <div class="streams">
                     <h3>
                         最近の配信から
@@ -99,13 +116,6 @@
                         </TableList>
                     </div>
                 </div>
-                <section>
-                    <h3>
-                        配信ソフトに追加する
-                        <i class="ti ti-arrow-bar-to-down"></i>
-                    </h3>
-                    <AssetButton {omu} {obs} dimensions={{width: '50:%', height: '50:%'}} />
-                </section>
             </div>
             <div class="player">
                 {#if $replayData}
@@ -125,13 +135,13 @@
                         <i class="ti ti-video"></i>
                     </div>
                 {/if}
-                <section class="url">
+                <section>
                     <p>
                         URLから
                         <i class="ti ti-link"></i>
                     </p>
                     <Textbox
-                        placeholder="https://youtu.be/..."
+                        placeholder="URLを入力"
                         on:input={(event) => {
                             const url = new URL(event.detail);
                             if (url.hostname === 'youtu.be') {
@@ -172,11 +182,7 @@
     }
 
     h3 {
-        display: flex;
-        align-items: baseline;
-        gap: 0.25rem;
         margin-bottom: 0.5rem;
-        font-size: 1rem;
     }
 
     .menu {
@@ -238,9 +244,6 @@
                 flex: 1;
                 overflow: auto;
                 overflow-x: hidden;
-                border-bottom: 1px solid var(--color-outline);
-                margin-bottom: 0.25rem;
-                padding-bottom: 1rem;
             }
         }
     }
@@ -262,12 +265,6 @@
         flex-direction: column;
         flex: 1;
         gap: 1rem;
-    }
-
-    .url {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
     }
 
     .empty {

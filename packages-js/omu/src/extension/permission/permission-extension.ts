@@ -77,18 +77,15 @@ export class PermissionExtension {
     }
 
     public require(...permissionIds: (Identifier | string)[]): void {
-        const ids: Identifier[] = permissionIds.map((id) =>
-            typeof id === 'string' ? Identifier.fromKey(id) : id,
-        );
-        const missing = ids.filter((id) => !this.permissions.has(id));
         if (this.client.running) {
-            if (missing.length > 0) {
-                throw new Error('Permissions must be registered before the client starts');
-            }
-            return;
+            throw new Error('Permissions must be required before the client starts');
         }
-        for (const id of ids) {
-            this.requiredPermissions.add(id);
+        for (const permissionId of permissionIds) {
+            if (typeof permissionId === 'string') {
+                this.requiredPermissions.add(Identifier.fromKey(permissionId));
+            } else {
+                this.requiredPermissions.add(permissionId);
+            }
         }
     }
 

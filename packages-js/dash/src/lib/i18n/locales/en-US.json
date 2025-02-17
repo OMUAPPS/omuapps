@@ -32,17 +32,6 @@
         "second": "Second",
         "no_description": "No Description"
     },
-    "permission_level": {
-        "low": "Impact Level: Low",
-        "low_icon": "ti ti-eye",
-        "low_hint": "This permission is unlikely to affect your PC.",
-        "medium": "Impact Level: Medium",
-        "medium_icon": "ti ti-exclamation-mark",
-        "medium_hint": "This permission may affect your privacy.",
-        "high": "Impact Level: High",
-        "high_icon": "ti ti-alert-triangle",
-        "high_hint": "It is recommended to grant this permission only to trusted apps."
-    },
     "date": {
         "just_now": "Just Now",
         "yesterday": "Yesterday",
@@ -89,8 +78,7 @@
         "messages": {
             "title": "Comments/Messages",
             "bookmark": "Bookmark",
-            "copy": "Copy",
-            "see_in_room": "See in stream"
+            "copy": "Copy"
         },
         "apps": {
             "title": "Apps",
@@ -111,8 +99,7 @@
             "open": "Open Channel",
             "connect": "Connect",
             "channel_url": "Channel URL...",
-            "append_as": "Add as",
-            "active": "Auto-connect"
+            "append_as": "Add as"
         }
     },
     "page": {
@@ -127,28 +114,7 @@
             "tooltip": "Let apps use streaming information",
             "channels": "Channels",
             "rooms": "Streams",
-            "chat": "Chat",
-            "setup": "Setup",
-            "setup_tooltip": "Connect channels to allow apps to use chat",
-            "input_url": "Enter URL",
-            "setup_input": "Find channel to add",
-            "setup_input_tooltip": "Enter a URL to automatically add the channel.",
-            "input_submit": "Search",
-            "select_channel": "Select Channel",
-            "setup_select": "Select channels to add",
-            "setup_select_tooltip": "Please select the channels to use.",
-            "select_submit": "Add",
-            "setup_searching": "Searching...",
-            "setup_searching_tooltip": "Searching for channels from the URL...",
-            "search_no_results": "No results found",
-            "searching": "Searching",
-            "setup_no_results": "No channels found",
-            "setup_no_results_tooltip": "Please check if the URL is correct.",
-            "search_back": "Search again",
-            "select_submit_tooltip": "Please select at least one.",
-            "input_cancel": "Cancel",
-            "selected_tooltip": "Click to deselect",
-            "select_tooltip": "Click to select"
+            "chat": "Chat"
         },
         "settings": {
             "icon": "ti ti-settings",
@@ -196,16 +162,6 @@
             "icon": "ti ti-plug",
             "description": "Request a plugin."
         },
-        "app_install": {
-            "name": "Install App",
-            "icon": "ti ti-download",
-            "description": "Install the app."
-        },
-        "app_update": {
-            "name": "Update App",
-            "icon": "ti ti-download",
-            "description": "A new version is available."
-        },
         "update": {
             "name": "Update",
             "icon": "ti ti-download",
@@ -224,11 +180,6 @@
                 "description": "You can change general settings.",
                 "icon": "ti ti-settings"
             },
-            "plugins": {
-                "name": "Plugins",
-                "description": "Delete or reload plugins",
-                "icon": "ti ti-plug"
-            },
             "about": {
                 "name": "About",
                 "description": "Show information about this app.",
@@ -242,24 +193,8 @@
         },
         "setting": {
             "devMode": "Developer Mode",
-            "betaMode": "Enable Beta Features",
-            "betaModeDescription": "Requires app restart to enable.",
             "language": "Language",
-            "layoutInvert": "Invert Layout",
-            "debug": "Debug",
-            "logFileGenerate": "Generate Log File",
-            "logFileGenerating": "Generating log file...",
-            "logFileGenerateError": "Failed to generate log file: {error}",
-            "logFileGenerated": "Log file generated: {path}",
-            "cleanEnvironment": "Rebuild Environment",
-            "cleaningEnvironment": "Cleaning environment and restarting...",
-            "serverRestart": "Restart Server",
-            "serverRestarting": "Restarting server...",
-            "serverRestarted": "Server restarted",
-            "serverRestartError": "Failed to restart server: {error}",
-            "latestVersion": "Latest Version",
-            "newVersionAvailable": "New version available",
-            "update": "Update"
+            "layoutInvert": "Invert Layout"
         },
         "about": {
             "version": "Version",
@@ -267,8 +202,7 @@
             "licenses": "Licenses",
             "links": "Links",
             "source_code": "Source Code",
-            "website": "Website",
-            "contributor": "{name} - {contributions} contributions"
+            "website": "Website"
         }
     },
     "setup": {

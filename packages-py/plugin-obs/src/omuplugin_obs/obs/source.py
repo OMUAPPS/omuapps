@@ -55,11 +55,15 @@ class OBSSource(Reference[obs_source_t]):
         hotkey_data = obspython.obs_data_create()
         if settings is None:
             settings_data = obspython.obs_data_create()
-            obs_source = obspython.obs_source_create(type, name, settings_data, hotkey_data)
+            obs_source = obspython.obs_source_create(
+                type, name, settings_data, hotkey_data
+            )
             obspython.obs_data_release(settings_data)
         else:
             with settings as settings_data:
-                obs_source = obspython.obs_source_create(type, name, settings_data, hotkey_data)
+                obs_source = obspython.obs_source_create(
+                    type, name, settings_data, hotkey_data
+                )
         obspython.obs_data_release(hotkey_data)
         if obs_source is None:
             raise ValueError("Failed to create source")
@@ -389,13 +393,17 @@ class OBSSource(Reference[obs_source_t]):
         click_count: int,
     ):
         with self as source:
-            obspython.obs_source_send_mouse_click(source, event, type, mouse_up, click_count)
+            obspython.obs_source_send_mouse_click(
+                source, event, type, mouse_up, click_count
+            )
 
     def send_mouse_move(self, event: obspython.obs_mouse_event, mouse_leave: bool):
         with self as source:
             obspython.obs_source_send_mouse_move(source, event, mouse_leave)
 
-    def send_mouse_wheel(self, event: obspython.obs_mouse_event, x_delta: int, y_delta: int):
+    def send_mouse_wheel(
+        self, event: obspython.obs_mouse_event, x_delta: int, y_delta: int
+    ):
         with self as source:
             obspython.obs_source_send_mouse_wheel(source, event, x_delta, y_delta)
 
@@ -538,9 +546,13 @@ class OBSSource(Reference[obs_source_t]):
             obs_source = obspython.obs_transition_get_active_source(source)
         return OBSSource(obs_source)
 
-    def transition_start(self, mode: OBSTransitionMode, duration_ms: int, dest: OBSSource) -> bool:
+    def transition_start(
+        self, mode: OBSTransitionMode, duration_ms: int, dest: OBSSource
+    ) -> bool:
         with self as source, dest as dest_source:
-            return obspython.obs_transition_start(source, mode.value, duration_ms, dest_source)
+            return obspython.obs_transition_start(
+                source, mode.value, duration_ms, dest_source
+            )
 
     def transition_set(self, source: OBSSource):
         with self as transition, source as source_source:

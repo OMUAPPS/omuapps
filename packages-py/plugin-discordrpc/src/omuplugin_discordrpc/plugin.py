@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import socket
-import threading
 import time
 from dataclasses import dataclass, field
 
@@ -70,11 +69,10 @@ class Client:
     @classmethod
     async def try_connect(cls, port: int) -> Client:
         sessions = await session_registry.get()
-        session_key = f"{port}"
-        exist_session = sessions["sessions"].get(session_key, None)
+        exist_session = sessions["sessions"].get(port, None)
         if exist_session:
-            rpc = await DiscordRPC.connect(port)
             try:
+                rpc = await DiscordRPC.connect(port)
                 authenticate_res = await rpc.authenticate(exist_session["access_token"])
                 return cls(
                     port,
@@ -84,12 +82,12 @@ class Client:
                 )
             except Exception as e:
                 logger.warning(f"Failed to connect with existing session: {e}")
-                sessions["sessions"].pop(session_key)
+                sessions["sessions"].pop(port)
                 await session_registry.set(sessions)
         rpc = await DiscordRPC.connect(port)
         authorize_res = await rpc.authorize(["rpc", "messages.read"])
         access_token = await rpc.fetch_access_token(authorize_res["code"])
-        sessions["sessions"][session_key] = {"access_token": access_token}
+        sessions["sessions"][port] = {"access_token": access_token}
         await session_registry.set(sessions)
         authenticate_res = await rpc.authenticate(access_token)
         return cls(
@@ -115,7 +113,9 @@ class Client:
             if selected_vc is None:
                 await self.stop()
                 return
-            if not await self.is_channel_match(selected_vc.get("guild_id"), selected_vc["id"]):
+            if not await self.is_channel_match(
+                selected_vc.get("guild_id"), selected_vc["id"]
+            ):
                 return
             await self._connect_vc(selected_vc["guild_id"], selected_vc["id"])
 
@@ -143,7 +143,11 @@ class Client:
         session = await session_registry.get()
         if session["guild_id"] and guild_id and session["guild_id"] != guild_id:
             return False
-        if session["guild_id"] and session["channel_id"] and session["channel_id"] != channel_id:
+        if (
+            session["guild_id"]
+            and session["channel_id"]
+            and session["channel_id"] != channel_id
+        ):
             return False
         if guild_id:
             channels = await self.get_channels(guild_id)
@@ -166,13 +170,21 @@ class Client:
         self.guild_id = guild_id
         self.channel_id = channel_id
         session = await session_registry.get()
-        if session["guild_id"] and session["channel_id"] and channel_id != session["channel_id"]:
+        if (
+            session["guild_id"]
+            and session["channel_id"]
+            and channel_id != session["channel_id"]
+        ):
             return
         channel = await self.rpc.get_channel(channel_id)
         if channel is None:
             logger.warning(f"Voice channel {channel_id} not found")
             return
-        guild = await self.rpc.get_guild(channel["guild_id"]) if channel["guild_id"] else None
+        guild = (
+            await self.rpc.get_guild(channel["guild_id"])
+            if channel["guild_id"]
+            else None
+        )
         await selected_vc_channel_registry.set(
             {
                 "guild": guild,
@@ -298,41 +310,31 @@ async def wait_for_vc(_: None) -> None:
     await refresh_task
 
 
-def is_port_open(port: int) -> bool:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(1)
-    result = sock.connect_ex(("127.0.0.1", port))
-    sock.close()
-    return result == 0
-
-
-async def retrieve_open_ports() -> asyncio.Future[list[int]]:
-    future = asyncio.Future()
-
-    def retrieve():
-        open_ports: list[int] = []
-
-        def check_port(port: int):
-            if is_port_open(port):
-                open_ports.append(port)
-
-        threads = [threading.Thread(target=check_port, args=(port,)) for port in range(PORT_MIN, PORT_MAX)]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-        future.set_result(open_ports)
-
-    threading.Thread(target=retrieve).start()
-    return await future
+def is_port_available(port: int) -> bool:
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(
+                (
+                    "127.0.0.1",
+                    port,
+                )
+            )
+            return True
+    except OSError:
+        return False
 
 
 async def refresh_clients():
     PARALLEL = True
     try:
-        await shutdown_clients()
+        for client in clients.values():
+            if client.closed:
+                await client.close()
+        clients.clear()
 
         async def connect_client(port: int):
+            if is_port_available(port):
+                return
             try:
                 client = await Client.try_connect(port)
                 clients[client.user["id"]] = client
@@ -340,12 +342,11 @@ async def refresh_clients():
             except Exception as e:
                 logger.warning(f"Failed to connect to {port}: {e}")
 
-        open_ports = await retrieve_open_ports()
         if PARALLEL:
-            tasks = [connect_client(port) for port in open_ports]
+            tasks = [connect_client(port) for port in range(PORT_MIN, PORT_MAX)]
             await asyncio.gather(*tasks)
         else:
-            for port in open_ports:
+            for port in range(PORT_MIN, PORT_MAX):
                 await connect_client(port)
 
         session = await session_registry.get()
@@ -357,12 +358,6 @@ async def refresh_clients():
     finally:
         global refresh_task
         refresh_task = None
-
-
-async def shutdown_clients():
-    for client in clients.values():
-        await client.close()
-    clients.clear()
 
 
 @omu.endpoints.bind(endpoint_type=REFRESH_ENDPOINT_TYPE)
@@ -382,9 +377,3 @@ async def on_ready():
     if refresh_task is not None:
         refresh_task.cancel()
     refresh_task = asyncio.create_task(refresh_clients())
-
-
-@omu.event.stopped.listen
-async def on_stop():
-    for client in clients.values():
-        await client.close()

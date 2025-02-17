@@ -11,7 +11,6 @@ from loguru import logger
 from .payloads import (
     AuthenticateResponseData,
     AuthorizeResponseData,
-    ErrorData,
     GetChannelResponseData,
     GetChannelsResponseData,
     GetGuildResponseData,
@@ -64,18 +63,11 @@ class DiscordRPC:
         assert msg["cmd"] == "DISPATCH", f"Unexpected message: {msg}"
         assert msg["evt"] == "READY", f"Unexpected event: {msg}"
         asyncio.create_task(rpc.start())
-
-        async def _handle_error(data: ErrorData):
-            logger.error(f"Error with session {port}: {data}")
-
-        await rpc.subscribe_error(_handle_error)
-
         return rpc
 
     async def close(self) -> None:
         await self.ws.close()
         await self.session.close()
-        self.closed = True
 
     async def receive(self) -> ResponsePayloads | None:
         msg = await self.ws.receive()
@@ -90,7 +82,7 @@ class DiscordRPC:
 
     async def start(self) -> None:
         try:
-            while not self.ws.closed:
+            while True:
                 msg = await self.receive()
                 if msg is None:
                     break
@@ -117,7 +109,9 @@ class DiscordRPC:
         self.dispatch_handlers[req["nonce"]] = future
         return await future
 
-    async def subscribe(self, payload: SubscribePayloads, handler: Coro[[ResponsePayloads], None]) -> None:
+    async def subscribe(
+        self, payload: SubscribePayloads, handler: Coro[[ResponsePayloads], None]
+    ) -> None:
         self.subscribe_handlers[payload["evt"]] = handler
         await self.dispatch(payload)
 
@@ -153,10 +147,6 @@ class DiscordRPC:
             json=json_data,
         )
         token_data = await token_res.json()
-        if "error" in token_data:
-            raise Exception(f"Failed to fetch access token: {token_data}")
-        if "access_token" not in token_data:
-            raise Exception(f"Failed to fetch access token: {token_data}")
         token = token_data["access_token"]
         return token
 
@@ -235,25 +225,9 @@ class DiscordRPC:
         assert res["evt"] is None
         return res["data"]
 
-    async def subscribe_error(self, handler: Coro[[ErrorData], None]) -> None:
-        async def handle(payload: ResponsePayloads):
-            if payload["cmd"] == "SUBSCRIBE":
-                return
-            assert payload["cmd"] == "DISPATCH"
-            assert payload["evt"] == "ERROR"
-            await handler(payload["data"])
-
-        await self.subscribe(
-            {
-                "cmd": "SUBSCRIBE",
-                "evt": "ERROR",
-                "args": None,
-                "nonce": str(uuid4()),
-            },
-            handle,
-        )
-
-    async def subscribe_voice_state_create(self, channel_id: str, handler: Coro[[VoiceStateItem], None]) -> None:
+    async def subscribe_voice_state_create(
+        self, channel_id: str, handler: Coro[[VoiceStateItem], None]
+    ) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return
@@ -274,7 +248,9 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_voice_state_update(self, channel_id: str, handler: Coro[[VoiceStateItem], None]) -> None:
+    async def subscribe_voice_state_update(
+        self, channel_id: str, handler: Coro[[VoiceStateItem], None]
+    ) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return
@@ -295,7 +271,9 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_voice_state_delete(self, channel_id: str, handler: Coro[[VoiceStateItem], None]) -> None:
+    async def subscribe_voice_state_delete(
+        self, channel_id: str, handler: Coro[[VoiceStateItem], None]
+    ) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return
@@ -316,7 +294,9 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_speaking_start(self, channel_id: str, handler: Coro[[SpeakingStartData], None]) -> None:
+    async def subscribe_speaking_start(
+        self, channel_id: str, handler: Coro[[SpeakingStartData], None]
+    ) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return
@@ -337,7 +317,9 @@ class DiscordRPC:
             handle,
         )
 
-    async def subscribe_speaking_stop(self, channel_id: str, handler: Coro[[SpeakingStopData], None]) -> None:
+    async def subscribe_speaking_stop(
+        self, channel_id: str, handler: Coro[[SpeakingStopData], None]
+    ) -> None:
         async def handle(payload: ResponsePayloads):
             if payload["cmd"] == "SUBSCRIBE":
                 return

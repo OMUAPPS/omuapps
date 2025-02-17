@@ -33,7 +33,7 @@ config = EmojiConfig(
 )
 
 
-@omu.registries.create("config", default=config).listen
+@omu.registries.create("config", config).listen
 async def on_config_change(new_config: EmojiConfig):
     global config
     config = new_config
@@ -146,7 +146,9 @@ def transform(component: content.Component) -> content.Component:
                     id=emoji.id,
                 )
     if isinstance(component, content.Parent):
-        component.set_children([transform(sibling) for sibling in component.get_children()])
+        component.set_children(
+            [transform(sibling) for sibling in component.get_children()]
+        )
     return component
 
 

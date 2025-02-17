@@ -17,21 +17,19 @@ import {
     I18N_GET_LOCALES_PERMISSION_ID,
     I18N_SET_LOCALES_PERMISSION_ID,
 } from '@omujs/omu/extension/i18n/index.js';
-import { PLUGIN_MANAGE_PACKAGE_PERMISSION_ID, PLUGIN_READ_PACKAGE_PERMISSION_ID } from '@omujs/omu/extension/plugin/plugin-extension.js';
 import {
     SERVER_APPS_READ_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
 } from '@omujs/omu/extension/server/index.js';
-import { TABLE_PERMISSION_ID } from '@omujs/omu/extension/table/index.js';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Locale } from '@omujs/omu/localization/locale.js';
 import { BrowserTokenProvider } from '@omujs/omu/token.js';
 import { language } from './main/settings.js';
-import { VERSION } from './version.js';
+import { version } from './version.json';
 
 const IDENTIFIER = new Identifier('com.omuapps', 'dashboard');
 const app = new App(IDENTIFIER, {
-    version: VERSION,
+    version,
     type: 'dashboard',
 });
 
@@ -66,14 +64,11 @@ const dashboard = new Dashboard(omu);
 setClient(omu);
 setChat(chat);
 omu.plugins.require({
-    omuplugin_chat: `==${VERSION}`,
-    omu_chat_youtube: `==${VERSION}`,
-    omu_chatprovider: `==${VERSION}`,
+    omuplugin_chat: `==${version}`,
+    omu_chat_youtube: `==${version}`,
+    omu_chatprovider: `==${version}`,
 });
 omu.permissions.require(
-    TABLE_PERMISSION_ID,
-    PLUGIN_READ_PACKAGE_PERMISSION_ID,
-    PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
     CHAT_CHANNEL_TREE_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,

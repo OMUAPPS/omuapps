@@ -1,12 +1,11 @@
 <script lang="ts">
     import { Identifier } from '@omujs/omu';
     import { onDestroy } from 'svelte';
-    import type { Asset } from '../game/asset.js';
-    import { getGame } from '../omucafe-app.js';
+    import { game, type Asset } from '../omucafe-app.js';
 
     export let asset: Asset | undefined;
 
-    const { omu } = getGame();
+    const { omu } = game;
 
     let src: string | null = null;
 

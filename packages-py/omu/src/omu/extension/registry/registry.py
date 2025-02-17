@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import abc
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
 
 from omu.bytebuffer import ByteReader, ByteWriter, Flags
 from omu.event_emitter import Unlisten
@@ -95,10 +93,7 @@ class Registry[T](abc.ABC):
     async def set(self, value: T) -> None: ...
 
     @abc.abstractmethod
-    async def update(self, handler: Coro[[T], T] | Callable[[T], T]) -> T: ...
-
-    @abc.abstractmethod
-    async def modify(self, handler: Coro[[T], Any] | Callable[[T], Any]) -> T: ...
+    async def update(self, handler: Coro[[T], T]) -> None: ...
 
     @abc.abstractmethod
     def listen(self, handler: Coro[[T], None]) -> Unlisten: ...

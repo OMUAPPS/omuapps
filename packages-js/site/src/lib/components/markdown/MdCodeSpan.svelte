@@ -1,29 +1,23 @@
 <script lang="ts">
-    import Highlight from 'svelte-highlight';
-    import typescript from 'svelte-highlight/languages/typescript';
-
-    export let lang: string;
+    // export let raw: string;
     export let text: string;
-
-    let language = {
-        typescript
-    }[lang] || typescript;
 </script>
 
 <span>
-    <Highlight
-        {language}
-        code={text}
-    />
+    {text}
 </span>
 
 <style lang="scss">
     span {
-        display: inline-flex;
-        margin: 0 0.25rem;
+        display: inline;
+        background-color: var(--color-bg-1);
+        color: var(--color-1);
         padding: 0.25rem 0.5rem;
-        outline: 1px solid var(--color-outline);
-        border-radius: 3px;
-        user-select: text;
+        margin: 0 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        font-family: var(--font-mono);
+        width: 100%;
+        text-wrap: nowrap;
     }
 </style>

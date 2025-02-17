@@ -39,7 +39,9 @@ DASHBOARD_SET_ENDPOINT = EndpointType[Identifier, DashboardSetResponse].create_j
     request_serializer=Serializer.model(Identifier),
     permission_id=DASHBOARD_SET_PERMISSION_ID,
 )
-DASHBOARD_PERMISSION_REQUEST_PACKET = PacketType[PermissionRequestPacket].create_serialized(
+DASHBOARD_PERMISSION_REQUEST_PACKET = PacketType[
+    PermissionRequestPacket
+].create_serialized(
     DASHBOARD_EXTENSION_TYPE,
     "permission_request",
     serializer=PermissionRequestPacket,

@@ -161,28 +161,6 @@ export const SOURCE_ADD = EndpointType.createJson<SourceJson, CreateResponse>(PL
     name: 'source_add',
 });
 
-// 100:% = full width/height of the scene
-// 100:vw = full width of the scene
-// 100:vh = full height of the scene
-// 100:px = 100 pixels
-export type Unit = 'px' | 'vw' | 'vh' | '%';
-export type UnitValue = number | `${number}:${Unit}`;
-export type BrowserCreateRequest = {
-    name: string;
-    url: string;
-    width?: UnitValue;
-    height?: UnitValue;
-    css?: string;
-} & BlendableSource & ScalableSource;
-
-export const BROWSER_CREATE = EndpointType.createJson<BrowserCreateRequest, CreateResponse>(PLUGIN_ID, {
-    name: 'browser_create',
-});
-
-export const BROWSER_ADD = EndpointType.createJson<BrowserCreateRequest, CreateResponse>(PLUGIN_ID, {
-    name: 'browser_add',
-});
-
 export type RemoveByNameRequest = {
     name: string;
 };
@@ -193,13 +171,19 @@ export type RemoveByUuidRequest = {
 
 export type RemoveResponse = unknown;
 
-export const SOURCE_REMOVE_BY_NAME = EndpointType.createJson<RemoveByNameRequest, RemoveResponse>(PLUGIN_ID, {
-    name: 'source_remove_by_name',
-});
+export const SOURCE_REMOVE_BY_NAME = EndpointType.createJson<RemoveByNameRequest, RemoveResponse>(
+    PLUGIN_ID,
+    {
+        name: 'source_remove_by_name',
+    },
+);
 
-export const SOURCE_REMOVE_BY_UUID = EndpointType.createJson<RemoveByUuidRequest, RemoveResponse>(PLUGIN_ID, {
-    name: 'source_remove_by_uuid',
-});
+export const SOURCE_REMOVE_BY_UUID = EndpointType.createJson<RemoveByUuidRequest, RemoveResponse>(
+    PLUGIN_ID,
+    {
+        name: 'source_remove_by_uuid',
+    },
+);
 
 export type UpdateResponse = {
     source: SourceType<string, unknown>;
@@ -214,18 +198,24 @@ export type SourceGetByNameRequest = {
     name: string;
 };
 
-export const SOURCE_GET_BY_NAME = EndpointType.createJson<SourceGetByNameRequest, SourceJson>(PLUGIN_ID, {
-    name: 'source_get_by_name',
-});
+export const SOURCE_GET_BY_NAME = EndpointType.createJson<SourceGetByNameRequest, SourceJson>(
+    PLUGIN_ID,
+    {
+        name: 'source_get_by_name',
+    },
+);
 
 export type SourceGetByUuidRequest = {
     scene?: string;
     uuid: string;
 };
 
-export const SOURCE_GET_BY_UUID = EndpointType.createJson<SourceGetByUuidRequest, SourceJson>(PLUGIN_ID, {
-    name: 'source_get_by_uuid',
-});
+export const SOURCE_GET_BY_UUID = EndpointType.createJson<SourceGetByUuidRequest, SourceJson>(
+    PLUGIN_ID,
+    {
+        name: 'source_get_by_uuid',
+    },
+);
 
 export type SourceListRequest = {
     scene?: string;
@@ -253,20 +243,29 @@ export type SceneGetByUuidRequest = {
     uuid: string;
 };
 
-export const SCENE_GET_BY_NAME = EndpointType.createJson<SceneGetByNameRequest, SceneJson>(PLUGIN_ID, {
-    name: 'scene_get_by_name',
-});
+export const SCENE_GET_BY_NAME = EndpointType.createJson<SceneGetByNameRequest, SceneJson>(
+    PLUGIN_ID,
+    {
+        name: 'scene_get_by_name',
+    },
+);
 
-export const SCENE_GET_BY_UUID = EndpointType.createJson<SceneGetByUuidRequest, SceneJson>(PLUGIN_ID, {
-    name: 'scene_get_by_uuid',
-});
+export const SCENE_GET_BY_UUID = EndpointType.createJson<SceneGetByUuidRequest, SceneJson>(
+    PLUGIN_ID,
+    {
+        name: 'scene_get_by_uuid',
+    },
+);
 
 export type SceneGetCurrentRequest = unknown;
 
-export const SCENE_GET_CURRENT = EndpointType.createJson<SceneGetCurrentRequest, SceneJson | null>(PLUGIN_ID, {
-    name: 'scene_get_current',
-    permissionId: OBS_SCENE_READ_PERMISSION_ID,
-});
+export const SCENE_GET_CURRENT = EndpointType.createJson<SceneGetCurrentRequest, SceneJson | null>(
+    PLUGIN_ID,
+    {
+        name: 'scene_get_current',
+        permissionId: OBS_SCENE_READ_PERMISSION_ID,
+    },
+);
 
 export type SceneSetCurrentByNameRequest = {
     name: string;

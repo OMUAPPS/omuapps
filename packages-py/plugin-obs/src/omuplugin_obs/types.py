@@ -209,27 +209,6 @@ SOURCE_ADD = EndpointType[SourceJson, CreateResponse].create_json(
 )
 
 
-class CreateBrowserRequest(BlendableSource, ScalableSource, TypedDict):
-    name: str
-    url: str
-    width: NotRequired[int | str]
-    height: NotRequired[int | str]
-    css: NotRequired[str]
-
-
-BROWSER_CREATE = EndpointType[CreateBrowserRequest, CreateResponse].create_json(
-    PLUGIN_ID,
-    name="browser_create",
-    permission_id=OBS_SOURCE_CREATE_PERMISSION_ID,
-)
-
-BROWSER_ADD = EndpointType[CreateBrowserRequest, CreateResponse].create_json(
-    PLUGIN_ID,
-    name="browser_add",
-    permission_id=OBS_SOURCE_CREATE_PERMISSION_ID,
-)
-
-
 class RemoveByNameRequest(TypedDict):
     name: str
 
@@ -356,13 +335,17 @@ class SceneSetCurrentByUuidRequest(TypedDict):
 class SceneSetCurrentResponse(TypedDict): ...
 
 
-SCENE_SET_CURRENT_BY_NAME = EndpointType[SceneSetCurrentByNameRequest, SceneSetCurrentResponse].create_json(
+SCENE_SET_CURRENT_BY_NAME = EndpointType[
+    SceneSetCurrentByNameRequest, SceneSetCurrentResponse
+].create_json(
     PLUGIN_ID,
     name="scene_set_current_by_name",
     permission_id=OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 )
 
-SCENE_SET_CURRENT_BY_UUID = EndpointType[SceneSetCurrentByUuidRequest, SceneSetCurrentResponse].create_json(
+SCENE_SET_CURRENT_BY_UUID = EndpointType[
+    SceneSetCurrentByUuidRequest, SceneSetCurrentResponse
+].create_json(
     PLUGIN_ID,
     name="scene_set_current_by_uuid",
     permission_id=OBS_SCENE_SET_CURRENT_PERMISSION_ID,

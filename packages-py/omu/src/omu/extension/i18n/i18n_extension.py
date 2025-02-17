@@ -4,7 +4,9 @@ from omu.extension.registry import RegistryType
 from omu.extension.registry.packets import RegistryPermissions
 from omu.localization import Locale, LocalizedText
 
-I18N_EXTENSION_TYPE = ExtensionType("i18n", lambda client: I18nExtension(client), lambda: [])
+I18N_EXTENSION_TYPE = ExtensionType(
+    "i18n", lambda client: I18nExtension(client), lambda: []
+)
 I18N_SET_LOCALES_PERMISSION_ID = I18N_EXTENSION_TYPE / "locales" / "set"
 I18N_GET_LOCALES_PERMISSION_ID = I18N_EXTENSION_TYPE / "locales" / "get"
 I18N_LOCALES_REGISTRY_TYPE = RegistryType[list[Locale]].create_json(

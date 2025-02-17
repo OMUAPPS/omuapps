@@ -1,43 +1,56 @@
 <script lang="ts">
-    import { applyUpdate, checkUpdate } from '$lib/tauri.js';
+    import { omu } from '$lib/client.js';
     import { Spinner, Tooltip } from '@omujs/ui';
-    import type { Update } from '@tauri-apps/plugin-updater';
+    import { relaunch } from '@tauri-apps/api/process';
+    import type { UpdateManifest } from '@tauri-apps/api/updater';
     import { onMount } from 'svelte';
 
-    let update: Update | null = null;
+    let newVersion: UpdateManifest | null = null;
     let updating = false;
 
     async function checkNewVersion() {
-        update = await checkUpdate();
+        const { checkUpdate } = await import('@tauri-apps/api/updater');
+        const update = await checkUpdate();
+        const { manifest, shouldUpdate } = update;
+
+        if (shouldUpdate && manifest) {
+            newVersion = manifest;
+        }
     }
 
-    async function doUpdate() {
-        if (!update) {
+    async function update() {
+        if (!newVersion) {
             throw new Error('newVersion is null');
         }
         if (updating) {
             throw new Error('Already updating');
         }
-        await applyUpdate(update, () => {});
+        updating = true;
+        const { installUpdate } = await import('@tauri-apps/api/updater');
+        try {
+            await omu.server.shutdown();
+        } catch (e) {
+            console.error(e);
+        }
+        await installUpdate();
+        await relaunch();
     }
-
+    
     onMount(() => checkNewVersion());
 </script>
 
-{#if update}
-    {@const date = update.date && new Date(update.date)}
+{#if newVersion}
+    {@const date = new Date(newVersion.date)}
     <div class="new-version">
         <small>
             新しいバージョンがあります。起動しない場合は最新バージョンにアップデートしてください。
         </small>
-        <button on:click={doUpdate} class="update" disabled={updating}>
+        <button on:click={update} class="update" disabled={updating}>
             <Tooltip>
-                <p><b>{update.version}</b> にアップデート</p>
+                <p><b>{newVersion.version}</b> にアップデート</p>
                 <small>
-                    {#if date}
-                        ({date.toLocaleDateString()})
-                    {/if}
-                    {update.body}
+                    ({date.toLocaleDateString()})
+                    {newVersion.body}
                 </small>
             </Tooltip>
             {#if updating}

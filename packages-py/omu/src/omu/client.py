@@ -49,7 +49,9 @@ class Client(abc.ABC):
     def loop(self) -> asyncio.AbstractEventLoop: ...
 
     @abc.abstractmethod
-    def set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop: ...
+    def set_loop(
+        self, loop: asyncio.AbstractEventLoop
+    ) -> asyncio.AbstractEventLoop: ...
 
     @property
     @abc.abstractmethod

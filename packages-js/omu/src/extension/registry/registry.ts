@@ -92,7 +92,6 @@ export interface Registry<T> {
     readonly value: T;
     get(): Promise<T>;
     set(value: T): Promise<void>;
-    update(fn: (value: T) => PromiseLike<T> | T): Promise<T>;
-    modify(fn: (value: T) => PromiseLike<T> | T): Promise<T>;
+    update(fn: (value: T) => T): Promise<void>;
     listen(fn: (value: T) => void): Unlisten;
 }

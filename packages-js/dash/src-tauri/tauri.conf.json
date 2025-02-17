@@ -1,95 +1,112 @@
 {
-    "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+    "$schema": "../node_modules/@tauri-apps/cli/schema.json",
     "build": {
         "beforeBuildCommand": "pnpm run ui:build",
-        "frontendDist": "../build",
-        "devUrl": "http://localhost:26420/"
+        "beforeDevCommand": "pnpm run ui:dev",
+        "devPath": "http://localhost:26420/",
+        "distDir": "../build"
     },
-    "bundle": {
-        "active": true,
-        "category": "DeveloperTool",
-        "copyright": "",
-        "targets": "all",
-        "externalBin": [],
-        "icon": [
-            "icons/32x32.png",
-            "icons/128x128.png",
-            "icons/128x128@2x.png",
-            "icons/icon.icns",
-            "icons/icon.ico"
-        ],
-        "windows": {
-            "certificateThumbprint": null,
-            "digestAlgorithm": "sha256",
-            "timestampUrl": "",
-            "nsis": {
-                "installerIcon": "icons/icon.ico",
-                "languages": [
-                    "Arabic",
-                    "Bulgarian",
-                    "Dutch",
-                    "English",
-                    "French",
-                    "German",
-                    "Japanese",
-                    "Korean",
-                    "PortugueseBR",
-                    "SimpChinese",
-                    "Spanish",
-                    "SpanishInternational",
-                    "Swedish",
-                    "TradChinese",
-                    "Turkish"
-                ]
-            }
-        },
-        "longDescription": "",
-        "macOS": {
-            "entitlements": null,
-            "exceptionDomain": "",
-            "frameworks": [],
-            "providerShortName": null,
-            "signingIdentity": null
-        },
-        "resources": [],
-        "shortDescription": "",
-        "linux": {
-            "deb": {
-                "depends": []
-            }
-        },
-        "createUpdaterArtifacts": "v1Compatible"
+    "package": {
+        "productName": "OMUAPPS",
+        "version": "0.8.2"
     },
-    "productName": "OMUAPPS",
-    "mainBinaryName": "OMUAPPS",
-    "version": "0.9.10",
-    "identifier": "com.omuapps.app",
-    "plugins": {
+    "tauri": {
         "cli": {
-            "description": "OMUAPPS CLI commands",
             "args": [
                 {
                     "name": "background",
-                    "short": "b"
+                    "short": "b",
+                    "multipleOccurrences": true
                 }
             ]
         },
+        "allowlist": {
+            "all": false,
+            "window": {
+                "all": false,
+                "close": true,
+                "hide": true,
+                "show": true,
+                "maximize": true,
+                "minimize": true,
+                "unmaximize": true,
+                "unminimize": true,
+                "startDragging": true,
+                "setAlwaysOnTop": true,
+                "create": true,
+                "setFocus": true,
+                "setSize": true
+            },
+            "process": {
+                "relaunch": true
+            }
+        },
+        "bundle": {
+            "active": true,
+            "category": "DeveloperTool",
+            "copyright": "",
+            "deb": {
+                "depends": []
+            },
+            "externalBin": [],
+            "icon": [
+                "icons/32x32.png",
+                "icons/128x128.png",
+                "icons/128x128@2x.png",
+                "icons/icon.icns",
+                "icons/icon.ico"
+            ],
+            "identifier": "com.omuapps.app",
+            "longDescription": "",
+            "macOS": {
+                "entitlements": null,
+                "exceptionDomain": "",
+                "frameworks": [],
+                "providerShortName": null,
+                "signingIdentity": null
+            },
+            "resources": [],
+            "shortDescription": "",
+            "targets": "all",
+            "windows": {
+                "certificateThumbprint": null,
+                "digestAlgorithm": "sha256",
+                "timestampUrl": "",
+                "nsis": {
+                    "installerIcon": "icons/icon.ico",
+                    "languages": [
+                        "Arabic",
+                        "Bulgarian",
+                        "Dutch",
+                        "English",
+                        "French",
+                        "German",
+                        "Japanese",
+                        "Korean",
+                        "PortugueseBR",
+                        "SimpChinese",
+                        "Spanish",
+                        "SpanishInternational",
+                        "Swedish",
+                        "TradChinese",
+                        "Turkish"
+                    ]
+                }
+            }
+        },
+        "security": {
+            "csp": null
+        },
         "updater": {
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI1NTg0NTQyNkYyRTE3OTUKUldTVkZ5NXZRa1ZZdGRKVEJ2YnFiZ3V1NWx3S0J4QlAvYXFoOHpiMkYvL3IySjdwNVJqL2EyTVgK",
+            "active": true,
             "endpoints": [
-                "https://obj.omuapps.com/app/latest.json",
                 "https://github.com/OMUAPPS/omuapps/releases/latest/download/latest.json"
             ],
+            "dialog": false,
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI1NTg0NTQyNkYyRTE3OTUKUldTVkZ5NXZRa1ZZdGRKVEJ2YnFiZ3V1NWx3S0J4QlAvYXFoOHpiMkYvL3IySjdwNVJqL2EyTVgK",
             "windows": {
                 "installMode": "passive"
             }
-        }
-    },
-    "app": {
-        "trayIcon": {
-            "iconPath": "icons/icon.png",
-            "iconAsTemplate": true,
-            "id": "omuapps"
         },
         "windows": [
             {
@@ -101,12 +118,12 @@
                 "minHeight": 600,
                 "resizable": true,
                 "decorations": false,
-                "title": "OMUAPPS",
-                "useHttpsScheme": true
+                "title": "OMUAPPS"
             }
         ],
-        "security": {
-            "csp": null
+        "systemTray": {
+            "iconPath": "icons/icon.png",
+            "iconAsTemplate": true
         }
     }
 }

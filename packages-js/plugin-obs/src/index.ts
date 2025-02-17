@@ -2,10 +2,8 @@ import type { Omu } from '@omujs/omu';
 
 import { SERVER_SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/extension/server/server-extension.js';
 import { PLUGIN_ID } from './const.js';
-import type { BrowserCreateRequest, CreateResponse, SceneJson, SceneListResponse, SourceJson } from './types.js';
+import type { CreateResponse, SceneJson, SceneListResponse, SourceJson } from './types.js';
 import {
-    BROWSER_ADD,
-    BROWSER_CREATE,
     SCENE_GET_BY_NAME,
     SCENE_GET_BY_UUID,
     SCENE_GET_CURRENT,
@@ -37,7 +35,7 @@ export class OBSPlugin {
     
     private constructor(private readonly omu: Omu) {
         omu.plugins.require({
-            omuplugin_obs: `>=${VERSION}`,
+            omuplugin_obs: `==${VERSION}`,
         });
         omu.permissions.require(SERVER_SESSIONS_READ_PERMISSION_ID);
         omu.server.observeSession(PLUGIN_ID, {
@@ -99,20 +97,6 @@ export class OBSPlugin {
             throw new Error('Not connected to OBS');
         }
         return await this.omu.endpoints.call(SOURCE_ADD, source);
-    }
-
-    async browserCreate(options: BrowserCreateRequest): Promise<CreateResponse> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
-        return await this.omu.endpoints.call(BROWSER_CREATE, options);
-    }
-
-    async browserAdd(options: BrowserCreateRequest): Promise<CreateResponse> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
-        return await this.omu.endpoints.call(BROWSER_ADD, options);
     }
 
     async sourceUpdate(source: SourceJson): Promise<void> {

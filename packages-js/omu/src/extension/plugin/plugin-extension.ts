@@ -1,8 +1,6 @@
 import type { Client } from '../../client.js';
 import { PacketType } from '../../network/packet/packet.js';
-import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
-import { Table, TableType } from '../table/table.js';
 
 export const PLUGIN_EXTENSION_TYPE = new ExtensionType(
     'plugin',
@@ -16,14 +14,6 @@ export class PluginExtension {
     constructor(private readonly client: Client) {
         client.network.registerPacket(PLUGIN_REQUIRE_PACKET);
         client.network.addTask(() => this.onTask());
-    }
-
-    public getAllowedPackages(): Table<PluginPackageInfo> {
-        return this.client.tables.get(PLUGIN_ALLOWED_PACKAGE_TABLE);
-    }
-
-    public reload(options: ReloadOptions): void {
-        this.client.endpoints.call(PLUGIN_RELOAD_ENDPOINT_TYPE, options);
     }
 
     private async onTask(): Promise<void> {
@@ -46,42 +36,3 @@ const PLUGIN_REQUIRE_PACKET = PacketType.createJson<Record<string, string | null
         name: 'require',
     },
 );
-export class PluginPackageInfo {
-    public package: string;
-    public version: string;
-
-    constructor(_package: string, version: string) {
-        this.package = _package;
-        this.version = version;
-    }
-
-    public static fromJson(json: { package: string, version: string }): PluginPackageInfo {
-        return new PluginPackageInfo(json.package, json.version);
-    }
-
-    public toJson(): { package: string, version: string } {
-        return { package: this.package, version: this.version };
-    }
-
-    public key(): string {
-        return this.package;
-    }
-}
-
-export const PLUGIN_READ_PACKAGE_PERMISSION_ID = PLUGIN_EXTENSION_TYPE.join('package', 'read')
-export const PLUGIN_MANAGE_PACKAGE_PERMISSION_ID = PLUGIN_EXTENSION_TYPE.join('package', 'manage')
-
-const PLUGIN_ALLOWED_PACKAGE_TABLE = TableType.createModel(PLUGIN_EXTENSION_TYPE, {
-    name: 'allowed_package',
-    model: PluginPackageInfo,
-});
-type ReloadOptions = {
-    packages: string[] | null,
-};
-type ReloadResult = {
-    packages: Record<string, string>,
-};
-const PLUGIN_RELOAD_ENDPOINT_TYPE = EndpointType.createJson<ReloadOptions, ReloadResult>(PLUGIN_EXTENSION_TYPE, {
-    name: 'reload',
-    permissionId: PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
-});

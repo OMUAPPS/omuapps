@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { getGame, type Order } from '../omucafe-app.js';
+    import { game, type Order } from '../omucafe-app.js';
 
-    const { orders } = getGame();
+    const { orders } = game;
     
     export let entry: Order;
     export let selected: boolean = false;

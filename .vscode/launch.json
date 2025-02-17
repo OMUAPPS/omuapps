@@ -53,6 +53,8 @@
                     "--no-default-features"
                 ]
             },
+            // task for the `beforeDevCommand` if used, must be configured in `.vscode/tasks.json`
+            "preLaunchTask": "dev"
         },
     ],
     "compounds": [

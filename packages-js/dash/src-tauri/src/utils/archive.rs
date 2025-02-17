@@ -1,5 +1,5 @@
 // https://github.com/astral-sh/rye/blob/ab8d5b433d5c4342c2bb125583c6bff4d29f5fbc/rye/src/utils/mod.rs#L290-L352 - MIT License
-use std::io::{Cursor, Read, Write};
+use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
 use std::{fmt, fs};
 
@@ -142,14 +142,26 @@ where
     Ok(())
 }
 
-pub fn pack_archive(source: &PathBuf, dest: &Path) -> Result<(), Error> {
-    // compress the source directory into a .tar.gz file
-    let mut tarball = tar::Builder::new(Vec::new());
-    tarball.append_dir_all("", source)?;
-    let tarball = tarball.into_inner()?;
-    let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
-    encoder.write_all(&tarball.as_slice())?;
-    let tarball = encoder.finish()?;
-    fs::write(dest, tarball)?;
+pub fn pack_archive(sources: &Vec<PathBuf>, dest: &Path) -> Result<(), Error> {
+    let mut archive = tar::Builder::new(Vec::new());
+    for source in sources {
+        let source = source
+            .canonicalize()
+            .path_context(source, "failed to canonicalize path")?;
+        let source = source.as_path();
+        if source.is_dir() {
+            archive
+                .append_dir_all(source.file_name().unwrap(), source)
+                .path_context(source, "failed to append directory")?;
+        } else {
+            archive
+                .append_path_with_name(source, source.file_name().unwrap())
+                .path_context(source, "failed to append file")?;
+        }
+    }
+    let archive = archive
+        .into_inner()
+        .path_context(dest, "failed to create archive")?;
+    fs::write(dest, archive).path_context(dest, "failed to write archive")?;
     Ok(())
 }

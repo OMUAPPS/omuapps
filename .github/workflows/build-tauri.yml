@@ -30,15 +30,12 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9.12.2
+            - run: corepack enable
 
             - name: Setup Node.js
               uses: actions/setup-node@v4.0.3
               with:
                 cache: 'pnpm'
-                node-version: '20.18.2'
 
             - name: install dependencies (ubuntu only)
               if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
@@ -67,11 +64,11 @@ jobs:
               with:
                   workspaces: './packages-js/dash/src-tauri -> target'
 
-            - uses: tauri-apps/tauri-action@v0.5.19
+            - uses: tauri-apps/tauri-action@v0.5.9
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-                  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+                  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+                  TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
               with:
                   tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
                   projectPath: ./packages-js/dash

@@ -54,7 +54,6 @@ from omu.extension.table import (
 from omu.helper import Coro, asyncio_error_logger
 from omu.network import Network
 from omu.network.packet import Packet, PacketType
-from omu.network.packet.packet_types import PACKET_TYPES
 from omu.network.websocket_connection import WebsocketsConnection
 from omu.token import JsonTokenProvider, TokenProvider
 
@@ -84,7 +83,6 @@ class Omu(Client):
             token or JsonTokenProvider(),
             connection or WebsocketsConnection(self, self.address),
         )
-        self._network.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
         self._extensions = extension_registry or ExtensionRegistry(self)
 
         self._endpoints = self.extensions.register(ENDPOINT_EXTENSION_TYPE)
@@ -98,10 +96,6 @@ class Omu(Client):
         self._dashboard = self.extensions.register(DASHBOARD_EXTENSION_TYPE)
         self._i18n = self.extensions.register(I18N_EXTENSION_TYPE)
         self._logger = self.extensions.register(LOGGER_EXTENSION_TYPE)
-
-    async def _handle_ready(self, detail: None) -> None:
-        self._ready = True
-        await self._event.ready()
 
     def set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
         loop.set_exception_handler(asyncio_error_logger)

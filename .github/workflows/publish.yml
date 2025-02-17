@@ -18,11 +18,6 @@ on:
                 required: true
                 default: true
                 type: boolean
-            upload:
-                description: 'Upload to Cloudflare R2'
-                required: true
-                default: true
-                type: boolean
 
 permissions:
     contents: write # for checkout and tag
@@ -41,15 +36,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9.12.2
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
-              with:
-                cache: 'pnpm'
-                node-version: '20.18.2'
+            - run: corepack enable
 
             - name: Setup Node.js
               uses: actions/setup-node@v4.0.3
@@ -182,15 +169,12 @@ jobs:
               with:
                   ref: ${{ needs.publish-pypi.outputs.VERSION }}
 
-            - uses: pnpm/action-setup@v4
-              with:
-                version: 9.12.2
+            - run: corepack enable
 
             - name: Setup Node.js
               uses: actions/setup-node@v4.0.3
               with:
                 cache: 'pnpm'
-                node-version: '20.18.2'
 
             - name: Install dependencies
               run: pnpm i --frozen-lockfile
@@ -219,52 +203,41 @@ jobs:
               with:
                   workspaces: './packages-js/dash/src-tauri -> target'
 
-            - uses: tauri-apps/tauri-action@v0.5.19
+            - uses: tauri-apps/tauri-action@v0.5.9
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-                  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+                  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+                  TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
               with:
                   tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
                   projectPath: ./packages-js/dash
                   releaseName: 'App v__VERSION__'
                   releaseBody: 'See the assets to download this version and install.'
-                  releaseDraft: false
-                  prerelease: true
+                  releaseDraft: true
+                  prerelease: false
                   updaterJsonPreferNsis: true
                   args: ${{ matrix.args }}
-            
-    upload-to-r2:
-        if: ${{ github.event.inputs.upload == 'true' }}
-        needs: [publish-npm, publish-pypi, publish-tauri]
-        runs-on: ubuntu-latest
 
-        steps:
-        - uses: actions/checkout@v4
+            - uses: actions/upload-artifact@v4.4.0
+              if: matrix.platform == 'ubuntu-22.04'
+              with:
+                  name: omuapps-appimage-linux
+                  path: ./packages-js/dash/src-tauri/target/release/bundle/appimage/omuapps_**.AppImage.*
 
+            - uses: actions/upload-artifact@v4.4.0
+              if: matrix.platform == 'ubuntu-22.04'
+              with:
+                  name: omuapps-deb-linux
+                  path: ./packages-js/dash/src-tauri/target/release/bundle/deb/omuapps_**.deb
 
-        - uses: pnpm/action-setup@v4
-          with:
-            version: 9.12.2
+            - uses: actions/upload-artifact@v4.4.0
+              if: matrix.platform == 'windows-latest'
+              with:
+                  name: omuapps-windows
+                  path: ./packages-js/dash/src-tauri/target/release/bundle/nsis/omuapps_**-setup.exe
 
-        - name: Setup Node.js
-          uses: actions/setup-node@v4.0.3
-          with:
-            cache: 'pnpm'
-            node-version: '20.18.2'
-
-        - name: Setup Node.js
-          uses: actions/setup-node@v4.0.3
-          with:
-            cache: 'pnpm'
-
-        - name: Install dependencies
-          run: pnpm i --frozen-lockfile
-
-        - name: Upload to Cloudflare R2
-          env:
-            CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: |
-            pnpm wrangler whoami
-            node ./scripts/js-upload-to-r2.mjs --version ${{ needs.publish-npm.outputs.VERSION }} --beta true
+            - uses: actions/upload-artifact@v4.4.0
+              if: matrix.platform == 'macos-latest'
+              with:
+                  name: omuapps-macos
+                  path: ./packages-js/dash/src-tauri/target/release/bundle/macos/omuapps_**.app.tar.*

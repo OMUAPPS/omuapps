@@ -1,11 +1,11 @@
 import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { buildMetadata, getUrl, NAMESPACE } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 
 export const APP_ID = new Identifier(NAMESPACE, 'break-timer');
 export const APP = new App(APP_ID, {
     url: getUrl('/app/break-timer'),
-    metadata: buildMetadata({
+    metadata: {
         locale: 'en',
         name: {
             ja: '休憩タイマー',
@@ -17,5 +17,5 @@ export const APP = new App(APP_ID, {
         },
         icon: 'ti-clock-pause',
         tags: ['underdevelopment', 'tool', 'asset'] as TagKey[],
-    }),
+    },
 });

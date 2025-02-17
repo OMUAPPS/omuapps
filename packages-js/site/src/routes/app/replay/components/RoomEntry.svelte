@@ -15,7 +15,7 @@
     }
 </script>
 
-<button class="entry" class:selected on:click={() => play()}>
+<button class="room-entry" class:selected on:click={() => play()}>
     <div class="thumbnail-container">
         <Tooltip>
             <p class="tooltip">
@@ -43,7 +43,7 @@
 </button>
 
 <style lang="scss">
-    .entry {
+    .room-entry {
         display: flex;
         gap: 0.5rem;
         align-items: center;
@@ -57,12 +57,11 @@
         color: var(--color-1);
     }
 
-    .entry.selected,
-    .entry:hover {
+    .room-entry.selected,
+    .room-entry:hover {
         background: var(--color-bg-1);
         outline: 1px solid var(--color-1);
         outline-offset: -2px;
-        border-bottom: 2px solid var(--color-outline);
     }
 
     .thumbnail-container {
@@ -105,7 +104,6 @@
     }
 
     .description {
-        color: var(--color-text);
         font-size: 0.65rem;
         font-weight: 500;
         overflow: hidden;

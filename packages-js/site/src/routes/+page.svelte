@@ -21,7 +21,7 @@
     <header class="content-width">
         <div class="left">
             <img src={title} class="title" alt="title" />
-            <p class="info">配信者と視聴者をつなぐアプリ管理ツール。</p>
+            <p class="info">配信者と視聴者をつなぐAPI。</p>
             <img src={indev} class="in-dev" alt="in-dev" />
             
             <div class="download">

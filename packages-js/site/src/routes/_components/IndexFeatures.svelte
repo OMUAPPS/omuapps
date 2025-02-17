@@ -5,6 +5,7 @@
 
     function onScroll() {
         scroll = window.scrollY;
+        console.log(scroll);
     }
 
     function isVisible(element: HTMLElement | undefined, _scroll: number) {
@@ -30,14 +31,14 @@
     <i class="ti ti-lock"></i>
     <div class="info">
         <h3>安全な権限管理</h3>
-        <p>アプリは権限がなければPC内の情報にアクセスできません。</p>
+        <p>アプリは権限がなければファイルを保存することすら出来ません。</p>
     </div>
 </div>
 <div class="card" bind:this={card2} class:visible={isVisible(card2, scroll)}>
     <i class="ti ti-package"></i>
     <div class="info">
         <h3>使いやすさ</h3>
-        <p>難しいことを可能な限り排除することを第一に考えています。</p>
+        <p>アプリの管理は一つのウィンドウの中で完結します。</p>
     </div>
 </div>
 

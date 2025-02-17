@@ -75,21 +75,23 @@
 
 <AssetPage>
     <main>
-        <Player
-            videoId={$replayData?.videoId}
-            bind:player
-            options={{
-                events: {
-                    onReady,
-                    onStateChange,
-                },
-            }}
-            hide
-            heightToWidthRatio={shorts ? 9 / 16 : 16 / 9}
-        />
-        <div class="thumbnail-overlay" class:show={ended}>
-            <img src="https://i.ytimg.com/vi/{$replayData?.videoId}/maxresdefault.jpg" alt="" />
-        </div>
+        {#if $config.active}
+            <Player
+                videoId={$replayData?.videoId}
+                bind:player
+                options={{
+                    events: {
+                        onReady,
+                        onStateChange,
+                    },
+                }}
+                hide
+                heightToWidthRatio={shorts ? 9 / 16 : 16 / 9}
+            />
+            <div class="thumbnail-overlay" class:show={ended}>
+                <img src="https://i.ytimg.com/vi/{$replayData?.videoId}/maxresdefault.jpg" alt="" />
+            </div>
+        {/if}
     </main>
 </AssetPage>
 

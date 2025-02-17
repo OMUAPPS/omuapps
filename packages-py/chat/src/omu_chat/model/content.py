@@ -131,7 +131,9 @@ class Root(Component[Literal["root"], RootData], Parent):
         self.children.append(component)
 
     def text(self) -> str:
-        return "".join(component.text for component in self.iter() if isinstance(component, Text))
+        return "".join(
+            component.text for component in self.iter() if isinstance(component, Text)
+        )
 
     __str__ = text
 

@@ -1,15 +1,17 @@
 <script lang="ts">
     import BackButton from '../components/BackButton.svelte';
+    import Kitchen from '../components/Kitchen.svelte';
     import OrderList from '../components/OrderList.svelte';
-    import { getGame, type SceneContext } from '../omucafe-app.js';
+    import { game, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneCooking', context);
 
-    const { scene } = getGame();
+    const { scene } = game;
 </script>
 
 <main>
+    <Kitchen />
     <OrderList />
 </main>
 <BackButton />

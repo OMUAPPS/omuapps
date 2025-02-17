@@ -3,22 +3,51 @@ import { Chat, events } from '@omujs/chat';
 import type { Message } from '@omujs/chat/models/message.js';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { OBSPlugin, permissions } from '@omujs/obs';
-import { App, Omu } from '@omujs/omu';
+import { Omu } from '@omujs/omu';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
 import { RegistryType } from '@omujs/omu/extension/registry/index.js';
 import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
 import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import type { Writable } from 'svelte/store';
-import { APP_ID } from './app.js';
-import type { Ingredient } from './game/ingredient.js';
-import type { KitchenItem } from './game/kitchen-item.js';
-import type { Kitchen } from './game/kitchen.js';
-import type { Product } from './game/product.js';
+import { APP, APP_ID } from './app.js';
+
+export type Asset = {
+    type: 'url',
+    url: string,
+} | {
+    type: 'asset',
+    id: string,
+};
+
+export type Ingredient = {
+    id: string,
+    name: string,
+    image?: Asset,
+};
+
+export type Recipe = {
+    ingredients: Record<string, {
+        amount: number,
+    }>,
+    steps: {
+        image: Asset,
+        text: string,
+    }[],
+};
+
+export type Product = {
+    id: string,
+    name: string,
+    description?: string,
+    image?: Asset,
+    recipe: Recipe,
+};
 
 export const DEFAULT_CONFIG = {
     version: 1,
-    filter: {},
+    filter: {
+    },
     products: {} as Record<string, Product>,
     ingredients: {} as Record<string, Ingredient>,
 };
@@ -83,12 +112,56 @@ const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
     key: (order) => order.id.toString(),
 });
 
+export type Transform = {
+    x: number,
+    y: number,
+    scale: {
+        x: number,
+        y: number,
+    }
+    rotation: number,
+};
+
+export type Behaviors = Partial<{
+    plate?: {
+        placed: boolean,
+        image: Asset,
+    },
+    cuttable?: {
+        cut: boolean,
+        image: Asset,
+    },
+    fryable?: {
+        fried: boolean,
+        image: Asset,
+    },
+    mixable?: {
+        mixed: boolean,
+        image: Asset,
+    },
+    boilable?: {
+        boiled: boolean,
+        image: Asset,
+    },
+    stackable?: {
+        items: KitchenItem[],
+    },
+}>
+
+export type KitchenItem = {
+    type: 'ingredient',
+    id: string,
+    ingredient: Ingredient,
+    behaviors: Behaviors,
+    transform: Transform,
+};
+
 export const DEFAULT_STATES = {
     kitchen: {
         items: {} as Record<string, KitchenItem>,
         held: null as string | null,
         hovering: null as string | null,
-    } as Kitchen,
+    },
 };
 
 export type States = typeof DEFAULT_STATES;
@@ -102,14 +175,14 @@ function processMessage(message: Message) {
     
 }
 
-export function createGame(app: App){
-    const omu = new Omu(app);
+function createGame(): Game {
+    const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
     const config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
     const states = makeRegistryWritable(omu.registries.get(STATES_REGISTRY_TYPE));
     const scene = makeRegistryWritable(omu.registries.get(SCENE_REGISTRY_TYPE));
-    const orders = omu.tables.get(ORDER_TABLE_TYPE);
+    const orders = omu.tables.create(ORDER_TABLE_TYPE);
     setClient(omu);
     setChat(chat);
 
@@ -127,7 +200,7 @@ export function createGame(app: App){
         omu.start();
     }
 
-    game = {
+    return {
         omu,
         obs,
         chat,
@@ -148,11 +221,17 @@ export type Game = {
     scene: Writable<Scene>,
 };
 
-let game: Game | null = null;
+export const game: Game = createGame();
 
-export function getGame(): Game {
-    if (!game) {
-        throw new Error('Game not created');
+export async function uploadAsset(file: File): Promise<Asset> {
+    const buffer = new Uint8Array(await file.arrayBuffer());
+    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const id = APP_ID.join('asset', hash);
+    const result = await game.omu.assets.upload(id, buffer);
+    return {
+        type: 'asset',
+        id: result.key(),
     }
-    return game;
 }

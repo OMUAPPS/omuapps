@@ -17,7 +17,6 @@
     },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "^5.0.19",
-        "@tabler/icons-webfont": "^3.19.0",
         "@fontsource/rocknroll-one": "^5.0.14",
         "@omujs/chat": "workspace:*",
         "@omujs/eslint-config": "workspace:*",
@@ -29,7 +28,6 @@
         "@sveltejs/kit": "2.5.20",
         "@sveltejs/vite-plugin-svelte": "^3.1.1",
         "@types/dom-speech-recognition": "^0.0.4",
-        "@types/dom-webcodecs": "^0.1.13",
         "@types/pako": "^2.0.3",
         "@types/seedrandom": "^3.0.8",
         "@types/youtube": "^0.0.50",
@@ -42,7 +40,6 @@
         "seedrandom": "^3.0.5",
         "svelte": "^4.2.18",
         "svelte-check": "^3.8.5",
-        "svelte-highlight": "^7.8.2",
         "svelte-markdown": "^0.4.1",
         "tslib": "^2.6.3",
         "vite": "^5.4.0",

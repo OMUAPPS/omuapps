@@ -1,12 +1,6 @@
-from __future__ import annotations
-
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from omuplugin_obs.script.config import Config
 
 
 def get_config_path() -> Path:
@@ -16,25 +10,9 @@ def get_config_path() -> Path:
     return config
 
 
-def get_config() -> Config:
-    path = get_config_path()
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        print(f"Config file not found at {path}")
-    except json.JSONDecodeError:
-        print(f"Config file at {path} is not valid JSON")
-    return {}
-
-
-def get_python_path() -> Path | None:
-    config = get_config()
-    python_path = config.get("python_path")
-    if not python_path or not Path(python_path).exists():
-        return None
-    return Path(python_path)
+def get_python_path() -> Path:
+    config_path = get_config_path()
+    return Path(json.loads(config_path.read_text(encoding="utf-8"))["python_path"])
 
 
 def find_venv() -> Path | None:
@@ -48,9 +26,8 @@ def find_venv() -> Path | None:
 
 def try_load():
     python_path = get_python_path()
+    load_site_packages(python_path / "Lib" / "site-packages")
     venv_path = find_venv()
-    if python_path:
-        load_site_packages(python_path / "Lib" / "site-packages")
     if venv_path:
         load_site_packages(venv_path / "Lib" / "site-packages")
 

@@ -1,89 +1,96 @@
 <script lang="ts">
-    import { Tooltip } from '@omujs/ui';
-    import Highlight, { LineNumbers } from 'svelte-highlight';
-    import bash from 'svelte-highlight/languages/bash';
-    import typescript from 'svelte-highlight/languages/typescript';
+    import { ButtonMini, Tooltip } from '@omujs/ui';
 
     export let lang: string;
+    // export let raw: string;
     export let text: string;
 
-    let language = {
-        typescript,
-        bash,
-    }[lang] || typescript;
+    $: lines = text.split('\n');
+
+    let selectedLine: number | null = null;
+    let isHovered = false;
 </script>
 
-<div class="code">
-    <Highlight
-        {language}
-        code={text}
-        let:highlighted
-    >
-        <LineNumbers {highlighted} />
-    </Highlight>
-    <button on:click={() => {
-        navigator.clipboard.writeText(text);
-    }} class="copy">
-        <Tooltip>コピー</Tooltip>
-        <i class="ti ti-clipboard"></i>
-    </button>
-</div>
+<code on:mouseenter={() => (isHovered = true)} on:mouseleave={() => (isHovered = false)}>
+    <span class="header">
+        <small>{lang}</small>
+        {#if isHovered}
+            <ButtonMini
+                on:click={() => {
+                    navigator.clipboard.writeText(text);
+                }}
+            >
+                <Tooltip>Copy</Tooltip>
+                <i class="ti ti-copy"></i>
+            </ButtonMini>
+        {/if}
+    </span>
+    {#each lines as line, i}
+        <span
+            on:mouseenter={() => (selectedLine = i)}
+            on:mouseleave={() => (selectedLine = null)}
+            role="button"
+            tabindex="0"
+            class="line"
+            class:selected={selectedLine === i}
+        >
+            <span class="line-number">{i + 1}</span>
+            {line}
+            {#if i < lines.length - 1}
+                <br />
+            {/if}
+        </span>
+    {/each}
+</code>
 
 <style lang="scss">
-    .code {
-        position: relative;
+    code {
         display: flex;
         flex-direction: column;
-        align-items: start;
-        width: 100%;
-        background: var(--langtag-background);
-        outline: 1px solid var(--color-outline);
-        border-radius: 3px;
-        user-select: text;
-        margin: 1rem 0;
-        overflow-x: auto;
-    }
-
-    .copy {
-        position: absolute;
-        top: 0;
-        right: 0;
-        padding: 0.25rem 0.5rem;
-        background: var(--color-bg-1);
+        background-color: var(--color-bg-1);
         color: var(--color-1);
-        border: none;
-        border-radius: 2px;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.8rem;
         padding: 0.5rem 1rem;
-        margin: 0.5rem;
-
-        &:hover {
-            background: var(--color-1);
-            color: var(--color-bg-1);
-        }
-
-        &:active {
-            animation: hop 0.0621s;
-        }
+        margin: 1rem 0;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        font-family: var(--font-mono);
+        width: 100%;
     }
 
-    @keyframes hop {
-        0% {
-            margin-right: 1rem;
-        }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-        25% {
-            margin-right: calc(1rem + 2px);
-        }
+    small {
+        display: block;
+        background-color: var(--color-bg-2);
+        padding: 0.2rem 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--color-2);
+        height: 1.5rem;
+        width: fit-content;
+    }
 
-        75% {
-            margin-right: calc(1rem - 2px);
-        }
+    .line-number {
+        color: var(--color-2);
+        margin: 0 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 400;
+        user-select: none;
+    }
 
-        100% {
-            margin-right: 1rem;
-        }
+    .line {
+        display: flex;
+        align-items: baseline;
+        height: 1.5rem;
+        user-select: text;
+    }
+
+    .selected {
+        width: 100%;
+        background-color: var(--color-bg-2);
     }
 </style>

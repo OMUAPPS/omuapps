@@ -13,7 +13,6 @@
         const { accepted } = await omu.dashboard.installApp(app);
         if (!accepted) return;
         await omu.dashboard.openApp(app);
-        console.log(`App ${app.id.key()} added`);
         alreadyAdded = true;
     }
 
@@ -55,7 +54,7 @@
                             {#if BROWSER && app.metadata.icon}
                                 {@const icon = omu.i18n.translate(app.metadata.icon)}
                                 {#if icon.startsWith('ti-')}
-                                    <i class="ti {icon}"></i>
+                                    <i class="ti {icon}" />
                                 {:else}
                                     <img src={icon} alt="" />
                                 {/if}
@@ -74,10 +73,10 @@
                     </FlexRowWrapper>
                 {/if}
                 <small class="tag-list">
-                    {#each tags || [] as { id, data } (id)}
+                    {#each tags || [] as { id, data }, i (id)}
                         <span class="tag" class:dev={id === 'underdevelopment'}>
                             {#if data}
-                                <i class="ti ti-{data.icon}"></i>
+                                <i class="ti ti-{data.icon}" />
                                 <p><Localized text={data.name} /></p>
                                 <Tooltip>
                                     <Localized text={data.description} />
@@ -96,7 +95,7 @@
                         {alreadyAdded ? 'このアプリを起動する' : '管理画面に追加する'}
                     </Tooltip>
                     {alreadyAdded ? '開く' : '追加'}
-                    <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'}></i>
+                    <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'} />
                 </button>
             </FlexRowWrapper>
         </FlexRowWrapper>
@@ -181,7 +180,6 @@
         font-size: 0.65rem;
         color: var(--color-text);
         display: -webkit-box;
-        line-clamp: 2;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;

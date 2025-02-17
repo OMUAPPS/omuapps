@@ -15,16 +15,7 @@ export type PageItem<T> = {
 };
 
 export const pageMap = writable<Record<string, PageItem<unknown>>>({});
-export const pages = writable<Record<string, {
-    type: 'waiting',
-} | {
-    type: 'unloaded',
-} | {
-    type: 'loading',
-} | {
-    type: 'loaded',
-    page: Page<unknown>,
-}>>({}); 
+export const loadedIds = writable<string[]>([]);
 
 export function registerPage<Props, T extends PageItem<Props>>(page: T): T {
     if (get(pageMap)[page.id]) {
@@ -39,10 +30,6 @@ export function registerPage<Props, T extends PageItem<Props>>(page: T): T {
 
 export function unregisterPage(id: string) {
     pageMap.update((map) => {
-        delete map[id];
-        return map;
-    });
-    pages.update((map) => {
         delete map[id];
         return map;
     });

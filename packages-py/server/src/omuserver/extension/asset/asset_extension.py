@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import abc
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from omu.extension.asset.asset_extension import (
     ASSET_DOWNLOAD_ENDPOINT,
@@ -13,6 +13,7 @@ from omu.extension.asset.asset_extension import (
 from omu.identifier import Identifier
 
 from omuserver.helper import safe_path_join
+from omuserver.server import Server
 from omuserver.session import Session
 
 from .permissions import (
@@ -20,11 +21,16 @@ from .permissions import (
     ASSET_UPLOAD_PERMISSION,
 )
 
-if TYPE_CHECKING:
-    from omuserver.server import Server
+
+class AssetStorage(abc.ABC):
+    @abc.abstractmethod
+    async def store(self, file: File) -> Identifier: ...
+
+    @abc.abstractmethod
+    async def retrieve(self, identifier: Identifier) -> File: ...
 
 
-class FileStorage:
+class FileStorage(AssetStorage):
     def __init__(self, path: Path) -> None:
         self._path = path
 
@@ -45,29 +51,48 @@ class AssetExtension:
     def __init__(self, server: Server) -> None:
         self._server = server
         self.storage = FileStorage(server.directories.assets)
-        server.security.register(ASSET_UPLOAD_PERMISSION, ASSET_DOWNLOAD_PERMISSION)
-        server.endpoints.bind(ASSET_UPLOAD_ENDPOINT, self.handle_upload)
-        server.endpoints.bind(ASSET_UPLOAD_MANY_ENDPOINT, self.handle_upload_many)
-        server.endpoints.bind(ASSET_DOWNLOAD_ENDPOINT, self.handle_download)
-        server.endpoints.bind(ASSET_DOWNLOAD_MANY_ENDPOINT, self.handle_download_many)
+        server.permission_manager.register(
+            ASSET_UPLOAD_PERMISSION,
+            ASSET_DOWNLOAD_PERMISSION,
+        )
+        server.endpoints.bind_endpoint(
+            ASSET_UPLOAD_ENDPOINT,
+            self.handle_upload,
+        )
+        server.endpoints.bind_endpoint(
+            ASSET_UPLOAD_MANY_ENDPOINT,
+            self.handle_upload_many,
+        )
+        server.endpoints.bind_endpoint(
+            ASSET_DOWNLOAD_ENDPOINT,
+            self.handle_download,
+        )
+        server.endpoints.bind_endpoint(
+            ASSET_DOWNLOAD_MANY_ENDPOINT,
+            self.handle_download_many,
+        )
 
     async def handle_upload(self, session: Session, file: File) -> Identifier:
         identifier = await self.storage.store(file)
         return identifier
 
-    async def handle_upload_many(self, session: Session, files: list[File]) -> list[Identifier]:
-        asset_ids: list[Identifier] = []
+    async def handle_upload_many(
+        self, session: Session, files: list[File]
+    ) -> list[Identifier]:
+        identifiers: list[Identifier] = []
         for file in files:
-            id = await self.storage.store(file)
-            asset_ids.append(id)
-        return asset_ids
+            identifier = await self.storage.store(file)
+            identifiers.append(identifier)
+        return identifiers
 
-    async def handle_download(self, session: Session, id: Identifier) -> File:
-        return await self.storage.retrieve(id)
+    async def handle_download(self, session: Session, identifier: Identifier) -> File:
+        return await self.storage.retrieve(identifier)
 
-    async def handle_download_many(self, session: Session, identifiers: list[Identifier]) -> list[File]:
-        added_files: list[File] = []
-        for id in identifiers:
-            file = await self.storage.retrieve(id)
-            added_files.append(file)
-        return added_files
+    async def handle_download_many(
+        self, session: Session, identifiers: list[Identifier]
+    ) -> list[File]:
+        files: list[File] = []
+        for identifier in identifiers:
+            file = await self.storage.retrieve(identifier)
+            files.append(file)
+        return files

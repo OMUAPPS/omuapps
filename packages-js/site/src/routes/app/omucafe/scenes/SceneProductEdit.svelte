@@ -2,13 +2,12 @@
     import { FileDrop } from '@omujs/ui';
     import AssetImage from '../components/AssetImage.svelte';
     import BackButton from '../components/BackButton.svelte';
-    import { uploadAsset } from '../game/asset.js';
-    import { getGame, type SceneContext } from '../omucafe-app.js';
+    import { game, uploadAsset, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneProductEdit', context);
 
-    const { scene, config } = getGame();
+    const { scene, config } = game;
 </script>
 
 <main>

@@ -78,15 +78,13 @@
             </div>
         {/if}
         <div class="buttons">
-            {#if entry.connected}
-                <small class="online-state">
-                    <Tooltip>
-                        {$t('status.connected')}
-                    </Tooltip>
-                    <i class="ti ti-bolt-filled"></i>
-                    {$t('status.connected')}
-                </small>
-            {/if}
+            <small class="online-state" class:connected={entry.connected}>
+                <Tooltip>
+                    {entry.connected ? $t('status.connected') : $t('status.disconnected')}
+                </Tooltip>
+                <i class={`ti ti-bolt${entry.connected ? '-filled' : ''}`}></i>
+                {entry.connected ? $t('status.connected') : ''}
+            </small>
             {#if entry.metadata}
                 <button on:click={copyViewers}>
                     <Tooltip>{$t('panels.rooms.viewers')}</Tooltip>
@@ -216,10 +214,12 @@
         align-items: center;
         gap: 0.25rem;
         font-size: 0.75rem;
+        color: var(--color-text);
         margin-right: 0.5rem;
-        color: var(--color-1);
-        border-bottom: 2px solid var(--color-1);
-        padding-bottom: 0.25rem;
+
+        &.connected {
+            color: var(--color-1);
+        }
     }
 
     .title {

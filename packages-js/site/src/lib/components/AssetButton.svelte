@@ -1,13 +1,12 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import type { OBSPlugin } from '@omujs/obs';
-    import type { BrowserCreateRequest } from '@omujs/obs/types.js';
     import type { Omu } from '@omujs/omu';
     import { DragLink, Spinner, Tooltip } from '@omujs/ui';
 
     export let omu: Omu | null = null;
     export let obs: OBSPlugin | null = null;
-    export let dimensions: { width: BrowserCreateRequest['width'], height: BrowserCreateRequest['height'] } | undefined = undefined;
+    export let dimensions: { width: number; height: number } | undefined = undefined;
 
     async function create() {
         if (!obs) {
@@ -15,14 +14,17 @@
         }
         const name = omu?.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
         const url = generateUrl().toString();
-        await obs.browserAdd({
+        await obs.sourceAdd({
+            type: 'browser_source',
             name: name,
-            url: url,
+            data: {
+                url,
+                ...dimensions,
+            },
             blend_properties: {
                 blending_method: 'SRGB_OFF',
                 blending_mode: 'NORMAL',
             },
-            ...dimensions,
         });
         await new Promise((resolve) => setTimeout(resolve, 500));
         creating = null;
@@ -59,10 +61,10 @@
         </button>
         <DragLink href={generateUrl}>
             <h3 slot="preview" class="preview">
-                <i class="ti ti-download"></i>
                 これをOBSにドロップ
+                <i class="ti ti-download"></i>
             </h3>
-            <div class="drag obs">
+            <div class="drag">
                 <Tooltip>ドラッグ&ドロップで追加</Tooltip>
                 <i class="ti ti-drag-drop"></i>
             </div>
@@ -71,31 +73,26 @@
 {:else}
     <DragLink href={generateUrl}>
         <h3 slot="preview" class="preview">
+            これをOBSにドロップ
             <i class="ti ti-download"></i>
-            これを配信ソフトに追加
         </h3>
         <div class="drag">
             <i class="ti ti-drag-drop"></i>
-            ここをドラッグ&ドロップ
+            ここをOBSにドラッグ&ドロップ
         </div>
     </DragLink>
 {/if}
 
 <style lang="scss">
     .preview {
-        background: var(--color-1);
-        color: var(--color-bg-2);
-        outline: 2px solid var(--color-bg-2);
-        outline-offset: -1px;
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-        border-radius: 2px;
+        padding: 10px 20px;
+        background: var(--color-bg-2);
     }
 
     .container {
         position: relative;
         display: flex;
-        gap: 0.5rem;
+        gap: 10px;
     }
 
     button {
@@ -108,8 +105,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.25rem;
+        gap: 5px;
+        padding: 0.75rem 1rem;
         background: var(--color-bg-2);
         color: var(--color-1);
         font-weight: bold;
@@ -123,11 +120,9 @@
         &:focus-visible,
         &:hover {
             outline: none;
-            // background: var(--color-bg-1);
+            background: var(--color-bg-1);
             color: var(--color-1);
             transition: 0.0621s;
-            box-shadow: 0 0.25rem 0 0px var(--color-2);
-            transform: translateY(-1px);
         }
 
         &:disabled {
@@ -139,7 +134,6 @@
             transform: translateY(2px);
             background: var(--color-1);
             color: var(--color-bg-2);
-            box-shadow: none;
             transition: 0s;
         }
     }
@@ -156,7 +150,7 @@
         outline: 2px solid var(--color-1);
         outline-offset: -2px;
         font-weight: bold;
-        padding: 0.75rem 2rem;
+        padding: 0.75rem;
         gap: 5px;
         cursor: grab;
 
@@ -164,14 +158,10 @@
             font-size: 20px;
         }
 
-        &.obs {
-            padding: 0.75rem 1rem;
-        }
-
         &:hover {
-            transform: translate(2px, 0);
+            transform: translate(4px, 0);
             outline: 2px solid var(--color-1);
-            box-shadow: -2px 3px 0 0px var(--color-2);
+            box-shadow: -4px 4px 0 0px var(--color-2);
             transition: 0.0621s;
         }
     }

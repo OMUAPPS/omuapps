@@ -57,7 +57,7 @@
 
 <style>
     img {
-        max-height: 1.5rem;
+        max-height: 30px;
         vertical-align: middle;
         object-fit: contain;
     }

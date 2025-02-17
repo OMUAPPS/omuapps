@@ -64,7 +64,9 @@ class Message(Keyable, Model[MessageJson]):
             author_id=map_optional(self.author_id, Identifier.key),
             content=map_optional(self.content, content.serialize),
             paid=map_optional(self.paid, Paid.to_json),
-            gifts=map_optional(self.gifts, lambda gifts: [gift.to_json() for gift in gifts]),
+            gifts=map_optional(
+                self.gifts, lambda gifts: [gift.to_json() for gift in gifts]
+            ),
             created_at=map_optional(self.created_at, lambda x: x.isoformat()),
             deleted=self.deleted,
         )

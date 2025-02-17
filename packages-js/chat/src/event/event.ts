@@ -55,15 +55,9 @@ export class TableEvent<T> extends ListenerEvent<[Map<string, T>]> {
         let batchWrapper: EventHandler<[Map<string, T>]> | null = null;
 
         const subscribe = (emit: EventHandler<[T]>, chat: Chat): Unlisten => {
-            const table = this.getTable(chat);
-            const listener = getListener(table);
+            const listener = getListener(this.getTable(chat));
             batchWrapper = TableEvent.createBatchWrapper((item) => emit(item));
-            const stopListen = table.listen();
-            const clearEvent = listener.listen(batchWrapper);
-            return () => {
-                stopListen();
-                clearEvent();
-            }
+            return listener.listen(batchWrapper);
         };
 
         return {

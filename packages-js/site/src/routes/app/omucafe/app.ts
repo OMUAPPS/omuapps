@@ -1,12 +1,12 @@
 import { App, Identifier } from '@omujs/omu';
 import type { TagKey } from '../category.js';
-import { buildMetadata, getUrl, NAMESPACE } from '../origin.js';
+import { getUrl, NAMESPACE } from '../origin.js';
 
 export const APP_ID = new Identifier(NAMESPACE, 'omucafe');
 
 export const APP = new App(APP_ID, {
     url: getUrl('/app/omucafe'),
-    metadata: buildMetadata({
+    metadata: {
         locale: 'en',
         name: {
             ja: 'おむカフェ',
@@ -18,5 +18,5 @@ export const APP = new App(APP_ID, {
         },
         icon: 'ti-coffee',
         tags: ['underdevelopment', 'game'] as TagKey[],
-    }),
+    },
 });

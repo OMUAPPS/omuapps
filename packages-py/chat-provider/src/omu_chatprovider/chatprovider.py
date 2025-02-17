@@ -40,7 +40,6 @@ async def update_channel(channel: Channel, service: ProviderService):
                 if chat_service.room.channel_id == channel.id:
                     await chat_service.stop()
                     del chat_services[key]
-                    logger.info(f"Stopped chat for {chat_service.room.key()}")
             return
         fetched_rooms = await service.fetch_rooms(channel)
         for item in fetched_rooms:
@@ -51,8 +50,6 @@ async def update_channel(channel: Channel, service: ProviderService):
             asyncio.create_task(chat.start())
             logger.info(f"Started chat for {item.room.key()}")
     except ProviderError as e:
-        logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
-    except Exception as e:
         logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
 
 
@@ -67,7 +64,6 @@ async def on_channel_create(channel: Channel):
 async def on_channel_remove(channel: Channel):
     provider = get_provider(channel)
     if provider is not None:
-        channel.active = False
         await update_channel(channel, provider)
 
 
@@ -127,7 +123,9 @@ async def should_remove(room: Room, provider_service: ProviderService):
     try:
         return not await provider_service.is_online(room)
     except Exception as e:
-        logger.opt(exception=e).error(f"Error checking if room {room.key()} should be removed")
+        logger.opt(exception=e).error(
+            f"Error checking if room {room.key()} should be removed"
+        )
         return True
 
 

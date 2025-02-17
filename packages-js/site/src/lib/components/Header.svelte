@@ -6,8 +6,6 @@
     import { onMount } from 'svelte';
     import Content from './Content.svelte';
 
-    export let always = false;
-    
     let onTop = BROWSER && window.scrollY < 1;
 
     function onScroll() {
@@ -21,11 +19,9 @@
             window.removeEventListener('scroll', onScroll);
         };
     });
-
-    $: path = $page.url.pathname;
 </script>
 
-<header class:ontop={!always && onTop}>
+<header class:ontop={onTop}>
     <Content>
         <nav>
             <a href="/" class="title">
@@ -34,7 +30,7 @@
             <ul>
                 <a href="/download">
                     <li
-                        aria-current={path.startsWith('/download')
+                        aria-current={$page.url.pathname.startsWith('/download')
                             ? 'page'
                             : undefined}
                     >
@@ -43,18 +39,16 @@
                         ダウンロード
                     </li>
                 </a>
-                <a href="/docs/1-guide-0-index">
-                    <li aria-current={path.startsWith('/docs/1-guide') ? 'page' : undefined}>
-                        <Tooltip>アプリの導入から使い方を知る</Tooltip>
-                        <i class="ti ti-book"></i>
-                        導入ガイド
+                <a href="/app">
+                    <li aria-current={$page.url.pathname.startsWith('/app') ? 'page' : undefined}>
+                        <Tooltip>何か使いたいアプリがあるかも</Tooltip>
+                        <i class="ti ti-search"></i>
+                        アプリを探す
                     </li>
                 </a>
-                <a href="/docs/0-index">
+                <a href="/create/index">
                     <li
-                        aria-current={path.startsWith('/docs') && !path.startsWith('/docs/1-guide')
-                            ? 'page'
-                            : undefined}
+                        aria-current={$page.url.pathname.startsWith('/create') ? 'page' : undefined}
                     >
                         <Tooltip>あったらいいなが作れるかも</Tooltip>
                         <i class="ti ti-pencil"></i>
@@ -68,7 +62,7 @@
 
 <style lang="scss">
     header {
-        position: fixed;
+        position: sticky;
         top: 0;
         right: 0;
         left: 0;

@@ -1,5 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { VERSION } from '$lib/version.js';
+import { version } from '$lib/version.json';
 import { type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import type { Writable } from 'svelte/store';
@@ -23,7 +23,7 @@ export class ClockApp {
 
     constructor(public readonly omu: Omu) {
         omu.plugins.require({
-            omuplugin_discordrpc: `>=${VERSION}`,
+            omuplugin_discordrpc: `>=${version}`,
         })
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
         this.calendar = DEFAULT_EVENT_CALENDAR;

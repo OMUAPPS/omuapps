@@ -8,4 +8,7 @@ class Address:
     secure: bool = False
 
     def to_url(self) -> str:
-        return f"{'https' if self.secure else 'http'}://" f"{self.host or 'localhost'}:{self.port}"
+        return (
+            f"{'https' if self.secure else 'http'}://"
+            f"{self.host or 'localhost'}:{self.port}"
+        )

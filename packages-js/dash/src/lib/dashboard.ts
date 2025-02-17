@@ -1,7 +1,7 @@
 import { currentPage } from '$lib/main/settings.js';
 import PermissionRequestScreen from '$lib/screen/PermissionRequestScreen.svelte';
 import PluginRequestScreen from '$lib/screen/PluginRequestScreen.svelte';
-import { appWindow } from '$lib/tauri.js';
+import { tauriWindow } from '$lib/tauri.js';
 import { App, Omu } from '@omujs/omu';
 import type { DashboardHandler } from '@omujs/omu/extension/dashboard/dashboard.js';
 import type {
@@ -29,12 +29,12 @@ export class Dashboard implements DashboardHandler {
             omu.i18n.setLocale(window.navigator.languages as Locale[]);
         });
         this.apps.event.add.listen(() => {
-            appWindow.setFocus();
+            tauriWindow.appWindow.setFocus();
         });
     }
 
     async handlePermissionRequest(request: PermissionRequestPacket): Promise<boolean> {
-        await appWindow.setFocus();
+        await tauriWindow.appWindow.setFocus();
         return new Promise<boolean>((resolve) => {
             screenContext.push(PermissionRequestScreen, {
                 request,
@@ -44,7 +44,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async handlePluginRequest(request: PluginRequestPacket): Promise<boolean> {
-        await appWindow.setFocus();
+        await tauriWindow.appWindow.setFocus();
         return new Promise<boolean>((resolve) => {
             screenContext.push(PluginRequestScreen, {
                 request,
@@ -54,7 +54,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async handleInstallApp(request: AppInstallRequest): Promise<boolean> {
-        await appWindow.setFocus();
+        await tauriWindow.appWindow.setFocus();
         return new Promise<boolean>((resolve) => {
             screenContext.push(AppInstallRequestScreen, {
                 request,
@@ -64,7 +64,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async handleUpdateApp(request: AppUpdateRequest): Promise<boolean> {
-        await appWindow.setFocus();
+        await tauriWindow.appWindow.setFocus();
         return new Promise<boolean>((resolve) => {
             screenContext.push(AppUpdateRequestScreen, {
                 request,
@@ -74,7 +74,6 @@ export class Dashboard implements DashboardHandler {
     }
 
     async handleOpenApp(app: App): Promise<void> {
-        console.log('Open app', app);
-        currentPage.update(() => `app-${app.id.key()}`);
+        currentPage.set(`app-${app.id.key()}`);
     }
 }

@@ -13,7 +13,9 @@ from omu.identifier import Identifier
 from omu.network.packet import PacketType
 from omu.serializer import Serializer
 
-SERVER_EXTENSION_TYPE = ExtensionType("server", lambda client: ServerExtension(client), lambda: [])
+SERVER_EXTENSION_TYPE = ExtensionType(
+    "server", lambda client: ServerExtension(client), lambda: []
+)
 
 SERVER_APPS_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE / "apps" / "read"
 SERVER_APP_TABLE_TYPE = TableType.create_model(
@@ -90,8 +92,12 @@ class ServerExtension(Extension):
             SESSION_CONNECT_PACKET_TYPE,
             SESSION_DISCONNECT_PACKET_TYPE,
         )
-        client.network.add_packet_handler(SESSION_CONNECT_PACKET_TYPE, self.handle_session_connect)
-        client.network.add_packet_handler(SESSION_DISCONNECT_PACKET_TYPE, self.handle_session_disconnect)
+        client.network.add_packet_handler(
+            SESSION_CONNECT_PACKET_TYPE, self.handle_session_connect
+        )
+        client.network.add_packet_handler(
+            SESSION_DISCONNECT_PACKET_TYPE, self.handle_session_disconnect
+        )
         client.network.add_task(self.on_task)
         client.on_ready(self.on_ready)
 
@@ -101,7 +107,9 @@ class ServerExtension(Extension):
 
     async def on_ready(self) -> None:
         if self.session_observers:
-            await self._client.send(SESSION_OBSERVE_PACKET_TYPE, [*self.session_observers])
+            await self._client.send(
+                SESSION_OBSERVE_PACKET_TYPE, [*self.session_observers]
+            )
 
     async def shutdown(self, restart: bool = False) -> bool:
         return await self._client.endpoints.call(SHUTDOWN_ENDPOINT_TYPE, restart)

@@ -22,13 +22,10 @@
     let viewport_height = 0;
     let visible: { index: number; data: [string, T] }[];
     let mounted: boolean;
-    let reached_end = false;
-    let reached_start = true;
 
     let top = 0;
     let bottom = 0;
     export let average_height: number = 0;
-    export let min_height: number = 20;
     let first = true;
 
     // whenever `items` changes, invalidate the current heightmap
@@ -54,10 +51,9 @@
             await tick();
             let average_height = 0;
             for (let i = 0; i < end; i += 1) {
-                average_height += height_map[i] = itemHeight || rows[i]?.offsetHeight || min_height;
+                average_height += height_map[i] = itemHeight || rows[i].offsetHeight;
             }
             average_height /= end;
-            average_height = Math.max(average_height, min_height);
             height_map = new Array(items.length).fill(average_height);
         }
         const { scrollTop } = viewport;
@@ -77,7 +73,7 @@
             }
 
             const row_height = row
-                ? (height_map[i] = itemHeight || height_map[i] || row?.offsetHeight || min_height)
+                ? (height_map[i] = itemHeight || height_map[i] || row.offsetHeight)
                 : content_height / i;
             content_height += row_height;
             i += 1;
@@ -87,7 +83,6 @@
 
         const remaining = items.length - end;
         average_height = (top + content_height) / end;
-        average_height = Math.max(average_height, min_height);
 
         bottom = remaining * average_height;
         height_map.length = items.length;
@@ -95,10 +90,7 @@
 
     function isHidden() {
         if (!viewport) throw new Error('VirtualList: missing viewport');
-        if (viewport.offsetParent === null) return true;
-        if (!viewport.offsetHeight) return true;
-        var style = window.getComputedStyle(viewport);
-        return (style.display === 'none')
+        return viewport.offsetParent === null;
     }
 
     async function handleUpdate() {
@@ -108,7 +100,7 @@
         const { scrollTop } = viewport;
 
         for (let v = 0; v < rows.length; v += 1) {
-            height_map[start + v] = itemHeight || rows[v]?.offsetHeight || min_height;
+            height_map[start + v] = itemHeight || rows[v].offsetHeight;
         }
 
         let i = 0;
@@ -138,13 +130,9 @@
 
         const remaining = items.length - end;
         average_height = y / end;
-        average_height = Math.max(average_height, min_height);
 
         while (i < items.length) height_map[i++] = average_height;
         bottom = remaining * average_height;
-
-        reached_start = scrollTop < 1;
-        reached_end = scrollTop + viewport_height >= contents.offsetHeight;
     }
 
     // trigger initial refresh
@@ -159,8 +147,6 @@
     bind:this={viewport}
     on:scroll={handleUpdate}
     style:height
-    class:reached-start={reached_start}
-    class:reached-end={reached_end}
 >
     <div
         class="contents"
@@ -209,14 +195,10 @@
             }
         }
 
-        box-shadow: inset 0 2px 0 0 #f9f9f9, inset 0 -2px 0 0 #f9f9f9;
-
-        &.reached-start {
-            box-shadow: inset 0 -2px 0 0 #f9f9f9;
-        }
-
-        &.reached-end {
-            box-shadow: inset 0 2px 0 0 #f9f9f9;
+        @supports not selector(::-webkit-scrollbar) {
+            & {
+                scrollbar-color: var(--color-1) var(--color-bg-2);
+            }
         }
     }
 

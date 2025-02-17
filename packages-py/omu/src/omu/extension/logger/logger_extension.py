@@ -10,7 +10,9 @@ from omu.serializer import Serializer
 
 from .packets import LogMessage, LogPacket
 
-LOGGER_EXTENSION_TYPE = ExtensionType("logger", lambda client: LoggerExtension(client), lambda: [])
+LOGGER_EXTENSION_TYPE = ExtensionType(
+    "logger", lambda client: LoggerExtension(client), lambda: []
+)
 LOGGER_LOG_PERMISSION_ID = LOGGER_EXTENSION_TYPE / "log"
 
 LOGGER_LOG_PACKET = PacketType[LogPacket].create_serialized(
@@ -60,7 +62,9 @@ class LoggerExtension(Extension):
     async def debug(self, text: str) -> None:
         await self.log(LogMessage.debug(text))
 
-    async def listen(self, id: Identifier, listener: AsyncCallback[[LogMessage]]) -> Unlisten:
+    async def listen(
+        self, id: Identifier, listener: AsyncCallback[[LogMessage]]
+    ) -> Unlisten:
         if id not in self.listeners:
 
             async def on_ready():

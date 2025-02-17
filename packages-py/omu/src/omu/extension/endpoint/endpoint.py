@@ -23,8 +23,12 @@ class EndpointType[Req, Res]:
         response_serializer: Serializable[Res, Any] | None = None,
         permission_id: Identifier | None = None,
     ):
-        request_serializer = Serializer.of(request_serializer or Serializer.noop()).to_json()
-        response_serializer = Serializer.of(response_serializer or Serializer.noop()).to_json()
+        request_serializer = Serializer.of(
+            request_serializer or Serializer.noop()
+        ).to_json()
+        response_serializer = Serializer.of(
+            response_serializer or Serializer.noop()
+        ).to_json()
         return cls(
             id=identifier / name,
             request_serializer=request_serializer,

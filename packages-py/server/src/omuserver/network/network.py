@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import socket
-from typing import TYPE_CHECKING
 
 from aiohttp import web
 from loguru import logger
@@ -14,15 +13,15 @@ from omu.network.packet.packet_types import DisconnectType
 
 from omuserver.helper import find_processes_by_port
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
+from omuserver.server import Server
 from omuserver.session import Session
 from omuserver.session.aiohttp_connection import WebsocketsConnection
 
-if TYPE_CHECKING:
-    from omuserver.server import Server
-
 
 class Network:
-    def __init__(self, server: Server, packet_dispatcher: ServerPacketDispatcher) -> None:
+    def __init__(
+        self, server: Server, packet_dispatcher: ServerPacketDispatcher
+    ) -> None:
         self._server = server
         self._packet_dispatcher = packet_dispatcher
         self._event = NetworkEvents()
@@ -30,16 +29,17 @@ class Network:
         self._app = web.Application()
         self._runner: web.AppRunner | None = None
         self.add_websocket_route("/ws")
-        self.register_packet(PACKET_TYPES.CONNECT, PACKET_TYPES.READY, PACKET_TYPES.DISCONNECT)
+        self.register_packet(PACKET_TYPES.CONNECT, PACKET_TYPES.READY)
         self.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
-        self.add_packet_handler(PACKET_TYPES.DISCONNECT, self._handle_disconnection)
         self.event.connected += self._packet_dispatcher.process_connection
+        server.event.stop += self._handle_stop
 
-    async def stop(self) -> None:
+    async def _handle_stop(self) -> None:
         if self._runner is None:
             raise ValueError("Server not started")
         await self._app.shutdown()
         await self._app.cleanup()
+        await self._runner.cleanup()
 
     async def _handle_ready(self, session: Session, packet: None) -> None:
         await session.process_ready_tasks()
@@ -49,10 +49,7 @@ class Network:
         parts = [session.app.key()]
         if session.app.version is not None:
             parts.append(f"v{session.app.version}")
-        logger.info(f"Ready: {' '.join(parts)}")
-
-    async def _handle_disconnection(self, session: Session, packet: DisconnectType) -> None:
-        await session.disconnect(packet, "Disconnect packet received")
+        logger.info(f"Ready: {parts}")
 
     def register_packet(self, *packet_types: PacketType) -> None:
         self._packet_dispatcher.register(*packet_types)
@@ -62,9 +59,11 @@ class Network:
         packet_type: PacketType[T],
         coro: Coro[[Session, T], None],
     ) -> None:
-        self._packet_dispatcher.bind(packet_type, coro)
+        self._packet_dispatcher.add_packet_handler(packet_type, coro)
 
-    def add_http_route(self, path: str, handle: Coro[[web.Request], web.StreamResponse]) -> None:
+    def add_http_route(
+        self, path: str, handle: Coro[[web.Request], web.StreamResponse]
+    ) -> None:
         self._app.router.add_get(path, handle)
 
     async def _verify_origin(self, request: web.Request, session: Session) -> None:
@@ -145,13 +144,22 @@ class Network:
         if not self.is_port_free():
             found_processes = set(find_processes_by_port(self._server.address.port))
             if len(found_processes) == 0:
-                raise OSError(f"Port {self._server.address.port} already in use by unknown process")
-            is_system_idle_reserved = any(p.pid == 0 and p.name() == "System Idle Process" for p in found_processes)
+                raise OSError(
+                    f"Port {self._server.address.port} already in use by unknown process"
+                )
+            is_system_idle_reserved = any(
+                p.pid == 0 and p.name() == "System Idle Process"
+                for p in found_processes
+            )
             if is_system_idle_reserved:
-                raise OSError(f"Port {self._server.address.port} already in use by System Idle Process")
+                raise OSError(
+                    f"Port {self._server.address.port} already in use by System Idle Process"
+                )
             if len(found_processes) > 1:
                 processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
-                raise OSError(f"Port {self._server.address.port} already in use by multiple processes: {processes}")
+                raise OSError(
+                    f"Port {self._server.address.port} already in use by multiple processes: {processes}"
+                )
             process = found_processes.pop()
             port = self._server.address.port
             name = process.name()

@@ -21,7 +21,9 @@ class PermissionRequestPacket:
         writer = ByteWriter()
         writer.write_string(item.request_id)
         writer.write_string(json.dumps(item.app.to_json()))
-        writer.write_string(json.dumps(tuple(map(PermissionType.to_json, item.permissions))))
+        writer.write_string(
+            json.dumps(tuple(map(PermissionType.to_json, item.permissions)))
+        )
         return writer.finish()
 
     @classmethod
@@ -29,7 +31,9 @@ class PermissionRequestPacket:
         with ByteReader(item) as reader:
             request_id = reader.read_string()
             app = App.from_json(json.loads(reader.read_string()))
-            permissions = map(PermissionType.from_json, json.loads(reader.read_string()))
+            permissions = map(
+                PermissionType.from_json, json.loads(reader.read_string())
+            )
             return cls(request_id, app, list(permissions))
 
 

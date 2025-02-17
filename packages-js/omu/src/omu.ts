@@ -22,7 +22,6 @@ import { SIGNAL_EXTENSION_TYPE, type SignalExtension } from './extension/signal/
 import { TABLE_EXTENSION_TYPE, type TableExtension } from './extension/table/index.js';
 import type { Address, Connection } from './network/index.js';
 import { Network } from './network/index.js';
-import { PACKET_TYPES } from './network/packet/packet-types.js';
 import type { PacketType } from './network/packet/packet.js';
 import { WebsocketConnection } from './network/websocket-connection.js';
 import { BrowserTokenProvider, type TokenProvider } from './token.js';
@@ -73,16 +72,6 @@ export class Omu implements Client {
             this.token,
             options?.connection ?? new WebsocketConnection(this.address),
         );
-        this.network.event.disconnected.listen(() => {
-            this.ready = false;
-        });
-        this.network.addPacketHandler(PACKET_TYPES.READY, () => {
-            if (this.ready) {
-                throw new Error('Received READY packet when already ready');
-            }
-            this.ready = true;
-            this.event.ready.emit();
-        });
         this.extensions = new ExtensionRegistry(this);
 
         this.endpoints = this.extensions.register(ENDPOINT_EXTENSION_TYPE);
@@ -96,6 +85,12 @@ export class Omu implements Client {
         this.i18n = this.extensions.register(I18N_EXTENSION_TYPE);
         this.server = this.extensions.register(SERVER_EXTENSION_TYPE);
         this.logger = this.extensions.register(LOGGER_EXTENSION_TYPE);
+        this.event.ready.listen(() => {
+            this.ready = true;
+        });
+        this.network.event.disconnected.listen(() => {
+            this.ready = false;
+        });
     }
 
     public send<T>(packetType: PacketType<T>, data: T): void {

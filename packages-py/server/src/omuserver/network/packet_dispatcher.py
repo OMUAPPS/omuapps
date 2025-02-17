@@ -36,7 +36,7 @@ class ServerPacketDispatcher:
                 raise ValueError(f"Packet id {type.id} already registered")
             self._packet_listeners[type.id] = PacketHandler(type)
 
-    def bind[T](
+    def add_packet_handler[T](
         self,
         packet_type: PacketType[T],
         handler: Coro[[Session, T], None] | None = None,

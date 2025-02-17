@@ -27,6 +27,8 @@ class Tasks:
                 raise Exception(f"Task {name} failed") from e
             finally:
                 self.times[name] = time.time() - start_time
-                self.times_max[name] = max(self.times_max.get(name, 0), self.times[name])
+                self.times_max[name] = max(
+                    self.times_max.get(name, 0), self.times[name]
+                )
 
         self.tasks.append(asyncio.create_task(wrapper()))

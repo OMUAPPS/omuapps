@@ -44,8 +44,8 @@
             if (canvas.width !== width || canvas.height !== height) {
                 continue;
             }
-            await render(glContext);
             context.clearRect(0, 0, width, height);
+            await render(glContext);
             context.drawImage(offscreen, 0, 0);
             await render2D(context);
             const currentTime = performance.now();
@@ -96,7 +96,7 @@
     });
 </script>
 
-<canvas bind:this={canvas} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight}></canvas>
+<canvas bind:this={canvas} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight} />
 
 <style lang="scss">
     canvas {

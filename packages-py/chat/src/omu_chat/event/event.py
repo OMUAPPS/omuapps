@@ -69,7 +69,9 @@ class TableEvent[T](ListenerEvent[Mapping[str, T]]):
 
         return wrapper
 
-    def _create_batch_subscriber(self, get_listener: Callable[[Table[T]], EventEmitter[Mapping[str, T]]]):
+    def _create_batch_subscriber(
+        self, get_listener: Callable[[Table[T]], EventEmitter[Mapping[str, T]]]
+    ):
         batch_wrapper: EventHandler[Mapping[str, T]] | None = None
 
         def subscribe(emit: EventHandler[T], chat: Chat):
@@ -92,7 +94,9 @@ class EventRegistry:
         self.chat = chat
         self.events: dict[int, Entry] = {}
 
-    def register[**P](self, event: EventSource[P], listener: EventHandler[P]) -> Unlisten:
+    def register[**P](
+        self, event: EventSource[P], listener: EventHandler[P]
+    ) -> Unlisten:
         event_id = id(event)
         if event_id not in self.events:
             entry = Entry[P](event, EventEmitter[P]())

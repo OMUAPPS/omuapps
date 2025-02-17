@@ -4,17 +4,15 @@ use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use log::{info, warn};
+use log::info;
 use rand::Rng;
 use tauri::utils::platform::current_exe;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Manager};
 
 use crate::version::VERSION;
 use crate::Progress;
 use crate::{python::Python, uv::Uv};
-
 const LATEST_PIP: &str = "pip==23.3.2";
-const RESTART_CODE: i32 = 100;
 
 #[derive(Debug, Clone)]
 pub struct ServerOption {
@@ -23,7 +21,7 @@ pub struct ServerOption {
 }
 
 pub struct ServerProcess {
-    pub handle: Arc<Mutex<std::process::Child>>,
+    pub handle: std::process::Child,
     pub stdout: std::thread::JoinHandle<()>,
     pub stderr: std::thread::JoinHandle<()>,
 }
@@ -32,8 +30,8 @@ pub struct Server {
     option: ServerOption,
     python: Python,
     uv: Uv,
-    process: Arc<Mutex<Option<ServerProcess>>>,
     app_handle: Arc<Mutex<Option<AppHandle>>>,
+    process: Arc<Mutex<Option<ServerProcess>>>,
     pub token: String,
     pub already_started: bool,
 }
@@ -61,12 +59,10 @@ impl Server {
                     VERSION
                 ),
             });
-            match Self::stop_server(&python, &option) {
-                Ok(_) => {}
-                Err(err) => {
-                    on_progress(Progress::ServerStopFailed { msg: err });
-                }
-            }
+            Self::stop_server(&python, &option).map_err(|err| {
+                on_progress(Progress::ServerStopFailed { msg: err.clone() });
+                err
+            })?;
             already_started = false;
         }
 
@@ -89,8 +85,8 @@ impl Server {
             option,
             python,
             uv,
-            process: Arc::new(Mutex::new(None)),
             app_handle,
+            process: Arc::new(Mutex::new(None)),
             token,
             already_started,
         };
@@ -242,52 +238,27 @@ impl Server {
             });
         });
         let process = ServerProcess {
-            handle: Arc::new(Mutex::new(child)),
+            handle: child,
             stdout,
             stderr,
         };
-        {
-            *self.process.lock().unwrap() = Some(process);
-        }
-        let process = self.process.clone();
-        let app_handle = self.app_handle.clone();
-        std::thread::spawn(move || {
-            let handle = {
-                let process = process.lock().unwrap();
-                process.as_ref().unwrap().handle.clone()
-            };
-            let exit = handle.lock().unwrap().wait();
-            {
-                *process.lock().unwrap() = None;
-            }
+        *self.process.lock().unwrap() = Some(process);
+        Ok(())
+    }
 
-            match exit {
-                Ok(status) => {
-                    let code = status.code().unwrap_or(0);
-                    if code == RESTART_CODE {
-                        info!("Restarting server: {}", code);
-                        return;
-                    } else if code == 0 {
-                        info!("Server exited normally: {}", code);
-                        return;
-                    }
-                    let app_handle = app_handle.lock().unwrap();
-                    if let Some(app_handle) = &*app_handle {
-                        app_handle
-                            .emit(
-                                "server_state",
-                                Progress::ServerStopped {
-                                    msg: format!("Server exited with code {}", code),
-                                },
-                            )
-                            .unwrap();
-                    }
-                }
-                Err(err) => {
-                    warn!("Server process exited with error: {}", err);
-                }
-            }
-        });
+    pub fn stop(&self, on_progress: &(impl Fn(Progress) + Send + 'static)) -> Result<(), String> {
+        let process = self.process.lock().unwrap().take();
+        if process.is_none() {
+            return Err("Server is not running".to_string());
+        }
+        let mut process = process.unwrap();
+        process.handle.kill().map_err(|err| {
+            let msg = format!("Failed to stop server: {}", err);
+            on_progress(Progress::ServerStopFailed { msg: msg.clone() });
+            msg
+        })?;
+        process.stdout.join().unwrap();
+        process.stderr.join().unwrap();
         Ok(())
     }
 

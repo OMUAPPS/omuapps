@@ -40,7 +40,7 @@ class PermissionExtension(Extension):
         for permission in permission_types:
             if permission.id in self.registered_permissions:
                 raise ValueError(f"Permission {permission.id} already registered")
-            if not permission.id.is_namepath_equal(base_identifier, max_depth=1):
+            if not permission.id.is_namepath_equal(base_identifier, path_length=1):
                 msg = f"Permission identifier {permission.id} is not a subpath of {base_identifier}"
                 raise ValueError(msg)
             self.registered_permissions[permission.id] = permission
@@ -53,7 +53,9 @@ class PermissionExtension(Extension):
             *self.required_permission_ids,
             *permissions_ids,
         }
-        await self.client.endpoints.call(PERMISSION_REQUEST_ENDPOINT, [*self.required_permission_ids])
+        await self.client.endpoints.call(
+            PERMISSION_REQUEST_ENDPOINT, [*self.required_permission_ids]
+        )
 
     def has(self, permission_identifier: Identifier):
         return permission_identifier in self.permissions
@@ -70,19 +72,27 @@ class PermissionExtension(Extension):
                 [*self.registered_permissions.values()],
             )
 
-    async def handle_grant(self, permission_types: list[PermissionType]):
-        self.permissions = permission_types
+    async def handle_grant(self, permissions: list[PermissionType]):
+        self.permissions = permissions
 
 
 PERMISSION_REGISTER_PACKET = PacketType[list[PermissionType]].create_json(
-    PERMISSION_EXTENSION_TYPE, "register", Serializer.model(PermissionType).to_array()
+    PERMISSION_EXTENSION_TYPE,
+    "register",
+    Serializer.model(PermissionType).to_array(),
 )
 PERMISSION_REQUIRE_PACKET = PacketType[list[Identifier]].create_json(
-    PERMISSION_EXTENSION_TYPE, "require", serializer=Serializer.model(Identifier).to_array()
+    PERMISSION_EXTENSION_TYPE,
+    "require",
+    serializer=Serializer.model(Identifier).to_array(),
 )
 PERMISSION_REQUEST_ENDPOINT = EndpointType[list[Identifier], None].create_json(
-    PERMISSION_EXTENSION_TYPE, "request", request_serializer=Serializer.model(Identifier).to_array()
+    PERMISSION_EXTENSION_TYPE,
+    "request",
+    request_serializer=Serializer.model(Identifier).to_array(),
 )
-PERMISSION_GRANT_PACKET = PacketType[list[PermissionType]].create_json(
-    PERMISSION_EXTENSION_TYPE, "grant", Serializer.model(PermissionType).to_array()
+PERMISSION_GRANT_PACKET = PacketType.create_json(
+    PERMISSION_EXTENSION_TYPE,
+    "grant",
+    Serializer.model(PermissionType).to_array(),
 )

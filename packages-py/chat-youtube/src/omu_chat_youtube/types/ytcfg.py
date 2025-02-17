@@ -931,7 +931,9 @@ class InnertubeContext(TypedDict):
     clickTracking: ClickTrackingParams
 
 
-LatestEcatcherServiceTrackingParams = TypedDict("LatestEcatcherServiceTrackingParams", {"client.name": "str"})
+LatestEcatcherServiceTrackingParams = TypedDict(
+    "LatestEcatcherServiceTrackingParams", {"client.name": "str"}
+)
 
 
 class Scheduler(TypedDict):

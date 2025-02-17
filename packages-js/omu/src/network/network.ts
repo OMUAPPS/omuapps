@@ -3,7 +3,6 @@ import type { Client } from '../client.js';
 import type { OmuError } from '../errors.js';
 import {
     AnotherConnection,
-    InternalError,
     InvalidOrigin,
     InvalidPacket,
     InvalidToken,
@@ -30,11 +29,7 @@ type StatusType<T> = {
     type: T,
 };
 
-export type NetworkStatus = StatusType<'connecting'> | StatusType<'connected'> | StatusType<'ready'> | {
-    type: 'disconnected',
-    attempt?: number,
-    reason?: DisconnectPacket | null,
-} | {
+export type NetworkStatus = StatusType<'disconnected'> | StatusType<'connecting'> | StatusType<'connected'> | StatusType<'ready'> | {
     type: 'error',
     error: OmuError,
 } | {
@@ -77,7 +72,6 @@ export class Network {
             if (reason.type === DisconnectType.SHUTDOWN
                 ||reason.type === DisconnectType.CLOSE
                 ||reason.type === DisconnectType.SERVER_RESTART) {
-                this.setStatus({type: 'disconnected', reason});
                 return;
             }
             const ERROR_MAP: Record<DisconnectType, typeof OmuError | undefined> = {
@@ -86,7 +80,6 @@ export class Network {
                 [DisconnectType.INVALID_TOKEN]: InvalidToken,
                 [DisconnectType.INVALID_ORIGIN]: InvalidOrigin,
                 [DisconnectType.INVALID_VERSION]: InvalidVersion,
-                [DisconnectType.INTERNAL_ERROR]: InternalError,
                 [DisconnectType.INVALID_PACKET]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_TYPE]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_DATA]: InvalidPacket,
@@ -105,6 +98,7 @@ export class Network {
                 throw new Error('Received READY packet when already ready');
             }
             this.setStatus({type: 'ready'});
+            this.client.event.ready.emit();
         });
     }
 
@@ -197,11 +191,7 @@ export class Network {
                     throw this.status.error;
                 }
             } finally {
-                if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting' && this.status.type !== 'error') {
-                    this.setStatus({type: 'disconnected', attempt});
-                }
-                this.event.disconnected.emit(null);
-                this.connection.close();
+                this.disconnect();
             }
             if (!recconect) {
                 break;
@@ -214,6 +204,15 @@ export class Network {
 
     private isState(state: NetworkStatus['type']): boolean {
         return this.status.type === state;
+    }
+
+    public disconnect(): void {
+        if (this.status.type === 'disconnected') {
+            return;
+        }
+        this.setStatus({type: 'disconnected'});
+        this.connection.close();
+        this.event.disconnected.emit(null);
     }
 
     public send(packet: Packet): void {
