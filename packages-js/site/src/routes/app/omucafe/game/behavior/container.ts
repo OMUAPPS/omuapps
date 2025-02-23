@@ -30,7 +30,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
     ) {
         const { renderItem, getTextureByAsset } = context;
         const { item, behavior } = action;
-        const { gl, matrices, draw } = args;
+        const { matrices, draw } = args;
         for (const child of behavior.items
             .map((id): ItemState | undefined => context.items[id])
             .filter((entry): entry is ItemState => !!entry)

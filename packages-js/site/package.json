@@ -16,8 +16,8 @@
         "fix": "eslint . --fix"
     },
     "devDependencies": {
+        "@2ji-han/kuromoji.js": "^0.1.7",
         "@fontsource/noto-sans-jp": "^5.0.19",
-        "@tabler/icons-webfont": "^3.19.0",
         "@fontsource/rocknroll-one": "^5.0.14",
         "@omujs/chat": "workspace:*",
         "@omujs/eslint-config": "workspace:*",
@@ -28,6 +28,7 @@
         "@sveltejs/adapter-cloudflare": "4.7.0",
         "@sveltejs/kit": "2.5.20",
         "@sveltejs/vite-plugin-svelte": "^3.1.1",
+        "@tabler/icons-webfont": "^3.19.0",
         "@types/dom-speech-recognition": "^0.0.4",
         "@types/dom-webcodecs": "^0.1.13",
         "@types/pako": "^2.0.3",

@@ -1,16 +1,20 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import type { TypedComponent } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import { onMount } from 'svelte';
     import { APP } from './app.js';
     import KitchenRenderer from './components/KitchenRenderer.svelte';
     import { createGame, DEFAULT_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
+    import SceneEffectEdit from './scenes/SceneEffectEdit.svelte';
     import SceneItemEdit from './scenes/SceneItemEdit.svelte';
     import SceneLoading from './scenes/SceneLoading.svelte';
     import SceneMainMenu from './scenes/SceneMainMenu.svelte';
     import ScenePhotoMode from './scenes/ScenePhotoMode.svelte';
     import SceneProductEdit from './scenes/SceneProductEdit.svelte';
     import SceneProductList from './scenes/SceneProductList.svelte';
+    import { getWorker } from './worker/game-worker.js';
 
     createGame(APP);
     const { scene, config, states, orders } = getGame();
@@ -25,6 +29,15 @@
         'product_list': SceneProductList,
         'product_edit': SceneProductEdit,
         'item_edit': SceneItemEdit,
+        'effect_edit': SceneEffectEdit,
+    }
+
+    if (BROWSER) {
+        onMount(async () => {
+            const worker = await getWorker();
+            const tokens = await worker.call('tokenize', 'すもももももももものうち');
+            console.log(tokens);
+        });
     }
 </script>
 

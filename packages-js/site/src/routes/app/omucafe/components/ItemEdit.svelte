@@ -3,10 +3,12 @@
     import { getAssetImage, uploadAsset } from '../game/asset.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createFixed } from '../game/behavior/fixed.js';
+    import { createSpawner } from '../game/behavior/spawner.js';
     import type { Item } from '../game/item.js';
     import AssetImage from './AssetImage.svelte';
     import ContainerEdit from './behavior/ContainerEdit.svelte';
     import FixedEdit from './behavior/FixedEdit.svelte';
+    import SpawnerEdit from './behavior/SpawnerEdit.svelte';
     import TransformEdit from './TransformEdit.svelte';
 
     export let item: Item;
@@ -48,34 +50,70 @@
         </code>
     </div>
     <div class="behavior-info">
-        {#if item.behaviors.container}
-            <ContainerEdit bind:container={item.behaviors.container} />createContainer
-            <button on:click={() => {
-                item.behaviors.container = undefined;
-            }}>
-                容器を削除
-            </button>
-        {:else}
-            <button on:click={() => {
-                item.behaviors.container = createContainer();
-            }}>
-                容器を設定
-            </button>
-        {/if}
-        {#if item.behaviors.fixed}
-            <FixedEdit bind:fixed={item.behaviors.fixed} />
-            <button on:click={() => {
-                item.behaviors.fixed = undefined;
-            }}>
-                固定を削除
-            </button>
-        {:else}
-            <button on:click={() => {
-                item.behaviors.fixed = createFixed({});
-            }}>
-                固定を設定
-            </button>
-        {/if}
+        <div class="behavior">
+            {#if item.behaviors.container}
+                <h3>
+                    容器
+                    <button on:click={() => {
+                        item.behaviors.container = undefined;
+                    }} aria-label="削除">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </h3>
+                <ContainerEdit bind:container={item.behaviors.container} />createContainer
+                <button on:click={() => {
+                    item.behaviors.container = undefined;
+                }}>
+                    容器を削除
+                </button>
+            {:else}
+                <button on:click={() => {
+                    item.behaviors.container = createContainer();
+                }}>
+                    容器を設定
+                </button>
+            {/if}
+        </div>
+        <div class="behavior">
+            {#if item.behaviors.fixed}
+                <h3>
+                    固定
+                    <button on:click={() => {
+                        item.behaviors.fixed = undefined;
+                    }} aria-label="削除">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </h3>
+                <FixedEdit bind:fixed={item.behaviors.fixed} />
+            {:else}
+                <button on:click={() => {
+                    item.behaviors.fixed = createFixed();
+                }}>
+                    固定を設定
+                </button>
+            {/if}
+        </div>
+        <div class="behavior">
+            {#if item.behaviors.spawner}
+                <h3>
+                    生成
+                    <button on:click={() => {
+                        item.behaviors.spawner = undefined;
+                    }} aria-label="削除">
+                        <i class="ti ti-trash"></i>
+                    </button>
+                </h3>
+                <SpawnerEdit bind:spawner={item.behaviors.spawner} />
+            {:else}
+                <button on:click={() => {
+                    item.behaviors.spawner = createSpawner({
+                        spawnItemId: item.id,
+                    });
+                }}>
+                    生成を設定
+                </button>
+            {/if}
+        </div>
     </div>
 </main>
 
@@ -85,7 +123,6 @@
         inset: 0;
         color: var(--color-1);
         display: flex;
-        justify-content: space-between;
         gap: 1rem;
     }
 
@@ -137,15 +174,34 @@
     }
 
     .behavior-info {
-        outline: 1px solid var(--color-outline);
-        background: var(--color-bg-2);
-        box-shadow: -2px 0px 1px rgba($color: #000000, $alpha: 0.0621);
         display: flex;
         flex-direction: column;
         gap: 1rem;
         padding: 1rem;
         width: 20rem;
         overflow-y: auto;
+    }
+
+    .behavior {
+        outline: 1px solid var(--color-outline);
+        background: var(--color-bg-2);
+        box-shadow: -2px 0px 1px rgba($color: #000000, $alpha: 0.0621);
+        padding: 1rem;
+
+        > h3 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            > button {
+                background: none;
+                border: none;
+                color: var(--color-1);
+                cursor: pointer;
+                font-size: 1rem;
+                padding: 0.25rem 0.5rem;
+            }
+        }
     }
 
     code {

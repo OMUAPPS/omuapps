@@ -1,5 +1,6 @@
 import type { Asset } from './asset.js';
 import type { Behaviors } from './behavior.js';
+import { uniqueId } from './helper.js';
 import { createTransform, type Bounds, type Transform } from './transform.js';
 
 export type Item = {
@@ -12,7 +13,7 @@ export type Item = {
 };
 
 export function createItem(options: {
-    id: string,
+    id?: string,
     name: string,
     image?: Asset,
     transform?: Transform,
@@ -21,7 +22,7 @@ export function createItem(options: {
 }): Item {
     const { id, name, image, transform, behaviors, bounds } = options;
     return {
-        id,
+        id: id ?? uniqueId(),
         name,
         image,
         transform: transform || createTransform(),

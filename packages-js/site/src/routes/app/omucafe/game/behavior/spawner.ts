@@ -1,24 +1,38 @@
 import type { BehaviorFunction, BehaviorHandler } from '../behavior.js';
-import { createItemState } from '../item-state.js';
-import type { Item } from '../item.js';
+import { copy } from '../helper.js';
+import { createItemState, type ItemState } from '../item-state.js';
 
 export type Spawner = {
-    spawnItem: Item,
+    spawnItemId: string,
 }
 
-export function createSpaner(options: { spawnItem: Item }): Spawner {
-    const { spawnItem } = options;
+export function createSpawner(options: { spawnItemId: string }): Spawner {
+    const { spawnItemId } = options;
     return {
-        spawnItem,
+        spawnItemId: spawnItemId,
     };
 }
 
 export class SpawnerHandler implements BehaviorHandler<'spawner'> {
     handleClick: BehaviorFunction<'spawner', { x: number; y: number; }> = (context, action, args) => {
         const { item, behavior } = action;
+        const config = context.getConfig();
         const newItem = createItemState(context, {
-            item: behavior.spawnItem,
+            item: copy(config.items[behavior.spawnItemId]),
         });
+        newItem.transform.offset = copy(item.transform.offset);
         context.held = newItem.id;
     };
+
+    canItemBeHeld: BehaviorFunction<'spawner', { canBeHeld: boolean; }> = (context, action, args) => {
+        args.canBeHeld = false;
+    };
+
+    handleDropChild: BehaviorFunction<'spawner', { child: ItemState; }> = (context, action, args) => {
+        const { child } = args;
+        const { spawnItemId } = action.behavior;
+        if (child.item.id === spawnItemId) {
+            delete context.items[args.child.id];
+        }
+    }
 };

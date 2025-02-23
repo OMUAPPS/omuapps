@@ -1,16 +1,10 @@
 import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
-import { copy } from '../helper.js';
 import type { KitchenContext } from '../kitchen.js';
-import { createTransform, type Transform } from '../transform.js';
 
-export type Fixed = {
-    transform: Transform,
-}
+export type Fixed = object;
 
-export function createFixed(options: {transform?: Transform}): Fixed {
-    const { transform } = options;
+export function createFixed(): Fixed {
     return {
-        transform: copy(transform || createTransform()),
     };
 }
 

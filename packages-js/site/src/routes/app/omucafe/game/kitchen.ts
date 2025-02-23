@@ -1,4 +1,5 @@
 import type { GlTexture } from '$lib/components/canvas/glcontext.js';
+import type { Config } from '../omucafe-app.js';
 import type { Asset } from './asset.js';
 import type { ItemState } from './item-state.js';
 
@@ -17,4 +18,6 @@ export type KitchenContext = {
     side: 'client' | 'background' | 'overlay',
     renderItem: (item: ItemState, options: { parent?: ItemState }) => Promise<void>,
     getTextureByAsset: (asset: Asset) => Promise<{ tex: GlTexture, width: number, height: number }>,
+    getConfig(): Config,
+    setConfig(config: Config): void,
 };

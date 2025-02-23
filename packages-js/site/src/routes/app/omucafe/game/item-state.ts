@@ -1,6 +1,7 @@
 import { Mat4 } from '$lib/math/mat4.js';
 import { type BehaviorFunction, type BehaviorHandler, type BehaviorHandlers, type Behaviors } from './behavior.js';
-import { copy } from './helper.js';
+import type { Effect } from './effect.js';
+import { copy, uniqueId } from './helper.js';
 import type { Item } from './item.js';
 import type { KitchenContext } from './kitchen.js';
 import { transformToMatrix, type Bounds, type Transform } from './transform.js';
@@ -9,11 +10,11 @@ export type ItemState = {
     id: string,
     item: Item,
     behaviors: Partial<Behaviors>,
+    effects: Record<string, Effect>,
     transform: Transform,
     children: string[],
     parent?: string,
     bounds: Bounds,
-    zIndex: number,
 };
 
 export function createItemState(context: KitchenContext, options: {
@@ -23,18 +24,17 @@ export function createItemState(context: KitchenContext, options: {
     children?: string[],
     behaviors?: Partial<Behaviors>,
     bounds?: Bounds,
-    zIndex?: number,
 }): ItemState {
     const { items } = context;
-    const { id, item, transform, children, behaviors, bounds, zIndex } = options;
+    const { id, item, transform, children, behaviors, bounds } = options;
     const itemState = {
-        id: id ?? Date.now().toString(36),
+        id: id ?? uniqueId(),
         item: copy(item),
-        transform: transform ?? copy(item.behaviors.fixed?.transform || item.transform),
+        transform: transform ?? copy(item.transform),
         children: children ?? [],
         behaviors: behaviors ?? copy(item.behaviors),
+        effects: {},
         bounds: bounds ?? copy(item.bounds),
-        zIndex: zIndex ?? 0,
     } satisfies ItemState;
     items[itemState.id] = itemState;
     return itemState;
@@ -47,7 +47,7 @@ export async function loadBehaviorHandlers() {
     behaviorHandlers = getBehaviorHandlers();
 }
 
-export async function callBehaviorHandler<T extends keyof Behaviors, U>(
+export async function invokeBehaviors<T extends keyof Behaviors, U>(
     context: KitchenContext,
     item: ItemState,
     getMethod: (handler: BehaviorHandler<T>) => BehaviorFunction<T, U> | undefined,
@@ -83,7 +83,9 @@ export function detachChildren(item: ItemState, ...children: ItemState[]) {
     });
 }
 
-export function getItemStateTransform(context: KitchenContext,item: ItemState, options: {
+const previousTransforms = new Map<string, Mat4>();
+
+export function getItemStateTransform(context: KitchenContext, item: ItemState, options: {
     parent?: ItemState,
 } = {}): Mat4 {
     const matrices: Mat4[] = [transformToMatrix(item.transform)];
@@ -117,15 +119,21 @@ export function getItemStateTransform(context: KitchenContext,item: ItemState, o
                 matrix.m30, -matrix.m31 - item.bounds.max.y + 330, matrix.m32, matrix.m33,
             );
         } else {
+            const z = Math.max(Math.min(matrix.m31 - item.bounds.max.y / 2 + 400, 2000), 1);
             matrices[0] = new Mat4(
-                matrix.m00, matrix.m01, matrix.m02, matrix.m03,
-                matrix.m10, matrix.m11 * 0.8, matrix.m12, matrix.m13,
+                matrix.m00 * 0.8, matrix.m01, matrix.m02, matrix.m03,
+                matrix.m10, matrix.m11 * 0.7, matrix.m12, matrix.m13,
                 matrix.m20, matrix.m21, matrix.m22, matrix.m23,
-                matrix.m30, (matrix.m31 - item.bounds.max.y / 2) * -0.3 + 100, matrix.m32, matrix.m33,
+                matrix.m30, 4000 / z * 10 + 100, matrix.m32, matrix.m33,
             );
         }
     }
 
-    const transform = matrices.reduce((acc, matrix) => acc.multiply(matrix), Mat4.IDENTITY);
+    let transform = matrices.reduce((acc, matrix) => acc.multiply(matrix), Mat4.IDENTITY);
+    if (context.side === 'overlay') {
+        const previous = previousTransforms.get(item.id) ?? transform;
+        transform = previous.lerp(transform, 0.8);
+        previousTransforms.set(item.id, transform);
+    }
     return transform;
 }

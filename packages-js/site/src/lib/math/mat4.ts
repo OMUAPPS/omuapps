@@ -85,6 +85,15 @@ export class Mat4 {
         );
     }
 
+    public lerp(right: Mat4, t: number): Mat4 {
+        return new Mat4(
+            this.m00 + (right.m00 - this.m00) * t, this.m01 + (right.m01 - this.m01) * t, this.m02 + (right.m02 - this.m02) * t, this.m03 + (right.m03 - this.m03) * t,
+            this.m10 + (right.m10 - this.m10) * t, this.m11 + (right.m11 - this.m11) * t, this.m12 + (right.m12 - this.m12) * t, this.m13 + (right.m13 - this.m13) * t,
+            this.m20 + (right.m20 - this.m20) * t, this.m21 + (right.m21 - this.m21) * t, this.m22 + (right.m22 - this.m22) * t, this.m23 + (right.m23 - this.m23) * t,
+            this.m30 + (right.m30 - this.m30) * t, this.m31 + (right.m31 - this.m31) * t, this.m32 + (right.m32 - this.m32) * t, this.m33 + (right.m33 - this.m33) * t,
+        );
+    }
+
     public scale(x: number, y: number, z: number): Mat4 {
         return new Mat4(
             this.m00 * x, this.m01 * y, this.m02 * z, this.m03,

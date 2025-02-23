@@ -216,6 +216,9 @@ importers:
 
   packages-js/site:
     devDependencies:
+      '@2ji-han/kuromoji.js':
+        specifier: ^0.1.7
+        version: 0.1.7(typescript@5.7.3)
       '@fontsource/noto-sans-jp':
         specifier: ^5.0.19
         version: 5.1.1
@@ -405,6 +408,11 @@ importers:
         version: 2.1.9(@types/node@22.13.1)(sass@1.84.0)(sugarss@4.0.1(postcss@8.5.1))
 
 packages:
+
+  '@2ji-han/kuromoji.js@0.1.7':
+    resolution: {integrity: sha512-fwLWKPT23vyVAUXtllMp3TlM17V/3gmPSuKGgE7Hd5kP/DZ7ruMSjnmXd2GG710+FpA8CsWBJjegpkrTov64BQ==}
+    peerDependencies:
+      typescript: ^5.7.2
 
   '@actions/github@6.0.0':
     resolution: {integrity: sha512-alScpSVnYmjNEXboZjarjukQEzgCRmjMv6Xj47fsdnqGS73bjJNDpiiXmp8jr0UZLdUB6d9jW63IcmddUP+l0g==}
@@ -5735,6 +5743,10 @@ packages:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
 snapshots:
+
+  '@2ji-han/kuromoji.js@0.1.7(typescript@5.7.3)':
+    dependencies:
+      typescript: 5.7.3
 
   '@actions/github@6.0.0':
     dependencies:

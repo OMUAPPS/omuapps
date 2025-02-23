@@ -11,16 +11,20 @@ import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
+import type { Effect } from './game/effect.js';
 import type { ItemState } from './game/item-state.js';
 import type { Item } from './game/item.js';
 import type { Kitchen } from './game/kitchen.js';
 import type { Product } from './game/product.js';
+import type { Script } from './game/script.js';
 
 export const DEFAULT_CONFIG = {
     version: 1,
     filter: {},
     products: {} as Record<string, Product>,
     items: {} as Record<string, Item>,
+    effects: {} as Record<string, Effect>,
+    scripts: {} as Record<string, Script>,
 };
 
 export type Config = typeof DEFAULT_CONFIG;
@@ -45,6 +49,9 @@ export type Scene = {
     id: string,
 } | {
     type: 'item_edit',
+    id: string,
+} | {
+    type: 'effect_edit',
     id: string,
 };
 

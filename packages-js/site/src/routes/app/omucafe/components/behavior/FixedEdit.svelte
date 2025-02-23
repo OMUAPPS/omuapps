@@ -1,13 +1,11 @@
 <script lang="ts">
     import type { Fixed } from '../../game/behavior/fixed.js';
-    import TransformEdit from '../TransformEdit.svelte';
-
+    
     export let fixed: Fixed;
 </script>
 
 <div class="behavior">
-    <h3>固定</h3>
-    <TransformEdit bind:transform={fixed.transform} />
+    {fixed}
 </div>
 
 <style lang="scss">

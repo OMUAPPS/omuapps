@@ -9,7 +9,6 @@
 </script>
 
 <div class="behavior">
-    <h3>容器</h3>
     <div class="image">
         {#if container.overlay}
             {@const asset = container.overlay}

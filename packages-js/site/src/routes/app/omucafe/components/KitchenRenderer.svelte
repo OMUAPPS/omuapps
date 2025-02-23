@@ -9,7 +9,7 @@
     import { getAssetImage, type Asset } from '../game/asset.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createFixed } from '../game/behavior/fixed.js';
-    import { callBehaviorHandler, createItemState, getItemStateTransform, loadBehaviorHandlers, type ItemState } from '../game/item-state.js';
+    import { createItemState, getItemStateTransform, invokeBehaviors, loadBehaviorHandlers, type ItemState } from '../game/item-state.js';
     import { createItem } from '../game/item.js';
     import type { KitchenContext } from '../game/kitchen.js';
     import { transformToMatrix } from '../game/transform.js';
@@ -36,6 +36,8 @@
         side,
         renderItem: (itemState, options) => renderItem(itemState, options),
         getTextureByAsset: (asset) => getTextureByAsset(asset),
+        getConfig: () => $config,
+        setConfig: (value) => $config = value,
     }
     let lastUpdate = performance.now();
     let changed = false;
@@ -144,15 +146,14 @@
                     max: new Vec2(counterTex.width, counterTex.height),
                 },
                 behaviors: {
-                    fixed: createFixed({
-                        transform: {
-                            right: Vec2.RIGHT,
-                            up: Vec2.UP,
-                            offset: new Vec2(0, -COUNTER_HEIGHT),
-                        },
-                    }),
+                    fixed: createFixed(),
                     container: existCounter?.behaviors.container ?? createContainer(),
                 },
+                transform: {
+                    right: Vec2.RIGHT,
+                    up: Vec2.UP,
+                    offset: new Vec2(0, -COUNTER_HEIGHT),
+                }
             });
             createItemState(context, {
                 id: 'counter',
@@ -230,7 +231,7 @@
             width, height,
             tex,
         );
-        await callBehaviorHandler(context, itemState, it => it.render, {
+        await invokeBehaviors(context, itemState, it => it.render, {
             gl: glContext,
             draw,
             matrices,
@@ -335,10 +336,14 @@
         if (!item.image) {
             return;
         }
-        const canBeHeld = (await callBehaviorHandler(context, itemState, it => it.canItemBeHeld, {
+        const { canBeHeld } = await invokeBehaviors(context, itemState, it => it.canItemBeHeld, {
             canBeHeld: true,
-        })).canBeHeld;
-        if (!canBeHeld) return;
+        });
+        if (!context.held && !canBeHeld) {
+            return;
+        }
+        const alpha = context.held ? 1 : 0.5;
+        const color = new Vec4(0, 0, 0, alpha);
         const texture = await getTextureByAsset(item.image);
         let { tex, width, height } = texture;
         const transform = getItemStateTransform(context, itemState);
@@ -351,7 +356,7 @@
             0, 0,
             width, height,
             tex,
-            new Vec4(0, 0, 0, 0.5),
+            color,
             8,
         );
         draw.textureOutline(
@@ -362,6 +367,10 @@
             4,
         );
         matrices.model.pop();
+        await invokeBehaviors(context, itemState, it => it.renderItemHoverTooltip, {
+            x: glMouse.x,
+            y: glMouse.y,
+        });
     }
 
     async function renderHeldItem() {
@@ -378,7 +387,7 @@
     }
 
     async function processDrop(hoveringItem: ItemState, heldItem: ItemState) {
-        await callBehaviorHandler(context, hoveringItem, it => it.handleDropChild, {
+        await invokeBehaviors(context, hoveringItem, it => it.handleDropChild, {
             child: heldItem,
         });
     }
@@ -386,11 +395,15 @@
     async function processClick(hoveringItem: ItemState) {
         const parent = hoveringItem.parent ? context.items[hoveringItem.parent] : undefined;
         if (parent) {
-            await callBehaviorHandler(context, parent, it => it.handleClickChild, {
+            await invokeBehaviors(context, parent, it => it.handleClickChild, {
                 child: hoveringItem,
             });
         }
-        const canBeHeld = (await callBehaviorHandler(context, hoveringItem, it => it.canItemBeHeld, {
+        await invokeBehaviors(context, hoveringItem, it => it.handleClick, {
+            x: 0,
+            y: 0,
+        });
+        const canBeHeld = (await invokeBehaviors(context, hoveringItem, it => it.canItemBeHeld, {
             canBeHeld: true,
         })).canBeHeld;
         if (!canBeHeld) return;
@@ -493,7 +506,7 @@
             const maxB = b.bounds.max;
             return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
         })) {
-            // if (id === context.held) continue;
+            if (id === context.held) continue;
             if (item.parent) continue;
             if (item.id === 'counter') continue;
             await renderItem(item);
@@ -668,9 +681,6 @@
             if (context.items['counter']) {
                 await renderItem(context.items['counter']);
             }
-            if (side === 'client') {
-                await renderHoveringItem();
-            }
         }
         
         setupHUDProjection();
@@ -681,11 +691,13 @@
                 await renderItem(context.items['counter']);
             }
             if (side === 'client') {
-                await renderHeldItem();
+                await renderHoveringItem();
             }
+            await renderHeldItem();
             setupHUDProjection();
             await renderOverlay2();
         }
+
         await renderScreen();
         await renderCursor();
         if (side === 'client') {
@@ -700,6 +712,8 @@
                 renderItem: (itemState, options) => renderItem(itemState, options),
                 getTextureByAsset: (asset) => getTextureByAsset(asset),
                 side,
+                getConfig: () => $config,
+                setConfig: (value) => $config = value,
             }
         }
     }
@@ -739,9 +753,12 @@
         <div class="ui">
             {#each Object.entries($config.items) as [id, item] (id)}
                 <button on:click={() => {
-                    createItemState(context, {
+                    const itemState = createItemState(context, {
                         item,
                     });
+                    if (!item.behaviors.fixed) {
+                        itemState.transform.offset = new Vec2(COUNTER_WIDTH / 3, 200);
+                    }
                     markChanged();
                 }}>
                     {item.name}
@@ -783,5 +800,12 @@
         padding: 0.5rem;
         background: rgba(255, 255, 255, 0.5);
         z-index: 1;
+    }
+
+    button {
+        padding: 0.5rem;
+        background: white;
+        border: 1px solid black;
+        cursor: pointer;
     }
 </style>
