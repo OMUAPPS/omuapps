@@ -10,12 +10,12 @@ export const ASSET_EXTENSION_TYPE = new ExtensionType(
     (client: Client) => new AssetExtension(client),
 );
 
-type File = {
+type Asset = {
     identifier: Identifier;
     buffer: Uint8Array;
 };
 
-const FILE_SERIALIZER = new Serializer<File, Uint8Array>(
+const FILE_SERIALIZER = new Serializer<Asset, Uint8Array>(
     (file) => {
         const writer = new ByteWriter();
         writer.writeString(file.identifier.key());
@@ -30,7 +30,7 @@ const FILE_SERIALIZER = new Serializer<File, Uint8Array>(
         return { identifier, buffer };
     },
 );
-const FILE_ARRAY_SERIALIZER = new Serializer<File[], Uint8Array>(
+const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
     (files) => {
         const writer = new ByteWriter();
         writer.writeInt(files.length);
@@ -43,7 +43,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<File[], Uint8Array>(
     (data) => {
         const reader = new ByteReader(data);
         const count = reader.readInt();
-        const files: File[] = [];
+        const files: Asset[] = [];
         for (let i = 0; i < count; i++) {
             const identifier = Identifier.fromKey(reader.readString());
             const buffer = reader.readByteArray();
@@ -55,7 +55,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<File[], Uint8Array>(
 );
 
 export const ASSET_UPLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('upload');
-const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<File, Identifier>(
+const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<Asset, Identifier>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'upload',
@@ -64,7 +64,7 @@ const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<File, Identifier>(
         permissionId: ASSET_UPLOAD_PERMISSION_ID,
     },
 );
-const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<File[], Identifier[]>(
+const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Asset[], Identifier[]>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'upload_many',
@@ -74,7 +74,7 @@ const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<File[], Identif
     },
 );
 export const ASSET_DOWNLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('download');
-const ASSET_DOWNLOAD_ENDPOINT = EndpointType.createSerialized<Identifier, File>(
+const ASSET_DOWNLOAD_ENDPOINT = EndpointType.createSerialized<Identifier, Asset>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'download',
@@ -83,7 +83,7 @@ const ASSET_DOWNLOAD_ENDPOINT = EndpointType.createSerialized<Identifier, File>(
         permissionId: ASSET_DOWNLOAD_PERMISSION_ID,
     },
 );
-const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[], File[]>(
+const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[], Asset[]>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'download_many',
@@ -106,17 +106,17 @@ export class AssetExtension {
         return assetIdentifier;
     }
 
-    public async uploadMany(...files: File[]): Promise<Identifier[]> {
+    public async uploadMany(...files: Asset[]): Promise<Identifier[]> {
         const uploaded = await this.client.endpoints.call(ASSET_UPLOAD_MANY_ENDPOINT, files);
         return uploaded;
     }
 
-    public async download(identifier: Identifier): Promise<File> {
+    public async download(identifier: Identifier): Promise<Asset> {
         const downloaded = await this.client.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, identifier);
         return downloaded;
     }
 
-    public async downloadMany(...identifiers: Identifier[]): Promise<File[]> {
+    public async downloadMany(...identifiers: Identifier[]): Promise<Asset[]> {
         const downloaded = await this.client.endpoints.call(
             ASSET_DOWNLOAD_MANY_ENDPOINT,
             identifiers,
@@ -125,19 +125,15 @@ export class AssetExtension {
     }
 
     public url(
-        identifier: Identifier,
-        {
-            noCache,
-        }: {
-            noCache?: boolean;
-        } = {},
+        id: Identifier,
+        options?: { cache?: 'no-cache'; },
     ): string {
         const address = this.client.network.address;
         const protocol = address.secure ? 'https' : 'http';
-        if (noCache) {
-            return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(identifier.key())}&t=${Date.now()}`;
+        if (options?.cache === 'no-cache') {
+            return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(id.key())}&t=${Date.now()}`;
         }
-        return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(identifier.key())}`;
+        return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(id.key())}`;
     }
 
     public proxy(url: string): string {

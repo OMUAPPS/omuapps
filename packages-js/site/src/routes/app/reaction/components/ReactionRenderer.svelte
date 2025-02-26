@@ -45,7 +45,7 @@
                     return [key, null];
                 }
                 const assetIdentifier = Identifier.fromKey(assetId);
-                const assetUrl = omu.assets.url(assetIdentifier, { noCache: true });
+                const assetUrl = omu.assets.url(assetIdentifier, { cache: 'no-cache' });
                 const img = new Image();
                 img.src = assetUrl;
                 return [key, img];
@@ -216,7 +216,7 @@
 </div>
 
 <svelte:window on:resize={resize} />
-<canvas bind:this={canvas} />
+<canvas bind:this={canvas}></canvas>
 
 <style lang="scss">
     canvas {

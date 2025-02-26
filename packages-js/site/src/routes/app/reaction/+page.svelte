@@ -135,7 +135,7 @@
                                 <i class="ti ti-chevron-right"></i>
                                 <img
                                     src={omu.assets.url(Identifier.fromKey(assetId), {
-                                        noCache: true,
+                                        cache: 'no-cache',
                                     })}
                                     alt={key}
                                     class="replace-image"
