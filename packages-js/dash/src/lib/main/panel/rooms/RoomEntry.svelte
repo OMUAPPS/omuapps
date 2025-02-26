@@ -193,7 +193,7 @@
 
         > button {
             display: flex;
-            align-items: center;
+            align-items: baseline;
             justify-content: center;
             padding: 0.25rem 0.5rem;
             border: none;
