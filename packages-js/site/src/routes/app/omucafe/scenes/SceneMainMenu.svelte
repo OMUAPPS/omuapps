@@ -12,13 +12,13 @@
     function testScript() {
         const { e, c, v, ctx } = builder;
         const expression = e.of('main', [
-            c.store(v.string('x'), v.number(42)),
-            c.store(v.string('y'), v.string('hello')),
-            c.call(v.variable('debug'), v.variable('y')),
+            c.assign(v.string('x'), v.number(42)),
+            c.assign(v.string('y'), v.string('hello')),
+            c.invoke(v.variable('debug'), v.variable('y')),
             c.return(v.variable('x')),
         ]);
 
-        const context = ctx.empty();
+        const context = ctx.init();
         context.variables.debug = v.bind((args: Value[]) => {
             console.log(args);
             return v.void();

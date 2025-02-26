@@ -1,4 +1,5 @@
 import type { Asset } from '../game/asset.js';
+import { builder } from '../game/script.js';
 import { DEFAULT_CONFIG, type Config } from '../omucafe-app.js';
 import fries from './fries.png';
 import fry from './fry.mp3';
@@ -16,6 +17,8 @@ function asset(url: string): Asset {
     }
 }
 
+const { e, c, v } = builder;
+
 export const EXAMPLE: Config = {
     ...DEFAULT_CONFIG,
     items: {
@@ -23,16 +26,7 @@ export const EXAMPLE: Config = {
             id: 'fries',
             name: 'Fries',
             image: asset(fries),
-            behaviors: {
-                action: {
-                    on: {
-                        click: {
-                            type: 'fry',
-                            body: 'fries',
-                        },
-                    },
-                },
-            },
+            behaviors: {},
             bounds: {
                 min: { x: 0, y: 0 },
                 max: { x: 565, y: 664 },
@@ -82,12 +76,12 @@ export const EXAMPLE: Config = {
                         offset: { x: 0, y: 0 },
                     },
                 },
-                fixed: {
-                    transform: {
-                        right: { x: 0.7, y: 0 },
-                        up: { x: 0, y: 0.7 },
-                        offset: { x: 1300, y: 200 },
-                    }
+                fixed: {},
+                action: {
+                    on: {
+                        dropChild: 'fryer_drop',
+                        clickChild: 'fryer_click',
+                    },
                 },
             },
             bounds: {
@@ -95,10 +89,10 @@ export const EXAMPLE: Config = {
                 max: { x: 831, y: 635 },
             },
             transform: {
-                right: { x: 1, y: 0 },
-                up: { x: 0, y: 1 },
-                offset: { x: 0, y: 0 },
-            },
+                right: { x: 0.7, y: 0 },
+                up: { x: 0, y: 0.7 },
+                offset: { x: 1300, y: 200 },
+            }
         },
         tray: {
             id: 'tray',
@@ -134,9 +128,25 @@ export const EXAMPLE: Config = {
                 audio: {
                     type: 'audio',
                     asset: asset(fry),
-                    volume: 1.0,
+                    volume: 0.3,
                 },
             }
+        },
+    },
+    scripts: {
+        fryer_drop: {
+            name: 'Fryer Drop',
+            expression: e.of('fryer_drop', [
+                // effect = create_effect(held, 'fry')
+                c.assign(
+                    v.string('effect'),
+                    c.invoke(
+                        v.variable('create_effect'),
+                        v.variable('held'),
+                        v.string('fry')
+                    )
+                ),
+            ]),
         },
     }
 };

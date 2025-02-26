@@ -23,20 +23,42 @@ export async function uploadAsset(file: File): Promise<Asset> {
     }
 }
 
-export async function getAssetImage(asset: Asset): Promise<HTMLImageElement> {
+export async function getAsset(asset: Asset): Promise<string | URL> {
     if (asset.type === 'url') {
-        const image = new Image();
-        image.src = asset.url;
-        await image.decode();
-        return image;
+        return asset.url;
     }
     if (asset.type === 'asset') {
         const result = await getGame().omu.assets.download(Identifier.fromKey(asset.id));
-        const image = new Image();
-        image.src = URL.createObjectURL(new Blob([result.buffer]));
-        await image.decode();
-        URL.revokeObjectURL(image.src);
-        return image;
+        return URL.createObjectURL(new Blob([result.buffer]));
     }
     throw new Error(`Invalid asset type: ${asset}`);
+}
+
+const images = new Map<string, Promise<HTMLImageElement>>();
+const audios = new Map<string, Promise<HTMLAudioElement>>();
+
+export async function fetchImage(url: string | URL): Promise<HTMLImageElement> {
+    const src = url.toString();
+    if (!images.has(src)) {
+        images.set(src, new Promise((resolve, reject) => {
+            const image = new Image();
+            image.src = src;
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+        }));
+    }
+    return await images.get(src)!;
+}
+
+export async function fetchAudio(url: string | URL): Promise<HTMLAudioElement> {
+    const src = url.toString();
+    if (!audios.has(src)) {
+        audios.set(src, new Promise((resolve, reject) => {
+            const audio = new Audio();
+            audio.src = src;
+            audio.oncanplaythrough = () => resolve(audio);
+            audio.onerror = reject;
+        }));
+    }
+    return await audios.get(src)!;
 }

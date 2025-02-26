@@ -7,8 +7,15 @@ export type Value = {
     type: 'variable',
     name: string,
 } | {
+    type: 'attribute',
+    value: Value,
+    name: Value,
+} | {
     type: 'function',
     value: Function,
+} | {
+    type: 'object',
+    value: Record<string, Value>,
 } | {
     type: 'number',
     value: number,
@@ -18,7 +25,7 @@ export type Value = {
 } | {
     type: 'timer',
     value: Timer,
-};
+} | Invoke;
 
 export const value = {
     void: (): Value => ({
@@ -32,6 +39,11 @@ export const value = {
         type: 'variable',
         name,
     }),
+    attribute: (value: Value, name: Value): Value => ({
+        type: 'attribute',
+        value,
+        name,
+    }),
     function: (value: Function): Value => ({
         type: 'function',
         value,
@@ -39,6 +51,10 @@ export const value = {
     bind: (invoke: Function['invoke']): Value => ({
         type: 'function',
         value: { invoke },
+    }),
+    object: (value: Record<string, Value>): Value => ({
+        type: 'object',
+        value,
     }),
     number: (value: number): Value => ({
         type: 'number',
@@ -62,34 +78,41 @@ export type Timer = {
     start: number,
 }
 
+export type Invoke = {
+    type: 'invoke',
+    function: Value,
+    args: Value[],
+}
+
 export type Command = {
     type: 'return',
     value: Value,
 } | {
-    type: 'store',
+    type: 'assign',
     variable: Value,
     value: Value,
 } | {
-    type: 'call',
-    function: Value,
-    args: Value[],
+    type: 'assign-attribute',
+    object: Value,
+    name: string,
+    value: Value,
 } | {
     type: 'throw',
     value: Value,
-};
+} | Invoke;
 
 export const command = {
     return: (value: Value): Command => ({
         type: 'return',
         value,
     }),
-    store: (variable: Value, value: Value): Command => ({
-        type: 'store',
+    assign: (variable: Value, value: Value): Command => ({
+        type: 'assign',
         variable,
         value,
     }),
-    call: (func: Value, ...args: Value[]): Command => ({
-        type: 'call',
+    invoke: (func: Value, ...args: Value[]): Invoke => ({
+        type: 'invoke',
         function: func,
         args,
     }),
@@ -118,7 +141,7 @@ type Context = {
 }
 
 const context = {
-    empty: (): Context => ({
+    init: (): Context => ({
         variables: {},
         callstack: [],
         index: 0,
@@ -129,8 +152,32 @@ export function evaluateValue(context: Context, value: Value): Value {
     switch (value.type) {
         case 'expression':
             return executeExpression(context, value.value);
-        case 'variable':
-            return context.variables[value.name];
+        case 'invoke': {
+            const func = evaluateValue(context, value.function);
+            assertValue(context, func, 'function')
+            const args = value.args.map((arg) => evaluateValue(context, arg));
+            return func.value.invoke(args);
+        }
+        case 'variable': {
+            const variable = context.variables[value.name];
+            if (variable === undefined) {
+                throw new ScriptError(`Variable not found: ${value.name}`, { callstack: context.callstack, index: context.index });
+            }
+            return variable;
+        }
+        case 'attribute': {
+            const object = evaluateValue(context, value.value);
+            assertValue(context, object, 'object');
+            const name = evaluateValue(context, value.name);
+            assertValue(context, name, 'string');
+            const attribute = object.value[name.value];
+            if (attribute === undefined) {
+                throw new ScriptError(`Attribute not found: ${name.value}`, { callstack: context.callstack, index: context.index });
+            }
+            return attribute;
+        }
+        case 'function':
+        case 'object':
         case 'void':
         case 'number':
         case 'string':
@@ -162,13 +209,19 @@ export function executeExpression(context: Context, expression: Expression): Val
             case 'return': {
                 return evaluateValue(context, command.value);
             }
-            case 'store': {
+            case 'assign': {
                 const name = evaluateValue(context, command.variable);
                 assertValue(context, name, 'string')
                 context.variables[name.value] = evaluateValue(context, command.value);
                 break;
             }
-            case 'call': {
+            case 'assign-attribute': {
+                const object = evaluateValue(context, command.object);
+                assertValue(context, object, 'object')
+                object.value[command.name] = evaluateValue(context, command.value);
+                break;
+            }
+            case 'invoke': {
                 const func = evaluateValue(context, command.function);
                 assertValue(context, func, 'function')
                 const args = command.args.map((arg) => evaluateValue(context, arg));

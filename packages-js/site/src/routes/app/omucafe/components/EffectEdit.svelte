@@ -19,9 +19,9 @@
         <div>
             <h2>
                 音
-                {#if effect.audio}
+                {#if effect.attributes.audio}
                     <button on:click={() => {
-                        effect.audio = undefined;
+                        effect.attributes.audio = undefined;
                     }} aria-label="削除">
                         <i class="ti ti-trash"></i>
                     </button>
@@ -32,14 +32,14 @@
                     </button>
                 {/if}
             </h2>
-            {#if effect.audio}
-                {effect.audio}
+            {#if effect.attributes.audio}
+                {effect.attributes.audio}
             {/if}
         </div>
         <div>
             <h2>粒子</h2>
-            {#if effect.particle}
-                {effect.particle}
+            {#if effect.attributes.particle}
+                {effect.attributes.particle}
             {/if}
         </div>
     </div>

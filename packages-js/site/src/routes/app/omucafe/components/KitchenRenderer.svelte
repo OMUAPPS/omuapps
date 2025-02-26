@@ -6,9 +6,10 @@
     import { Mat4 } from '$lib/math/mat4.js';
     import { Vec2 } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
-    import { getAssetImage, type Asset } from '../game/asset.js';
+    import { fetchAudio, fetchImage, getAsset, type Asset } from '../game/asset.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createFixed } from '../game/behavior/fixed.js';
+    import type { Effect } from '../game/effect.js';
     import { createItemState, getItemStateTransform, invokeBehaviors, loadBehaviorHandlers, type ItemState } from '../game/item-state.js';
     import { createItem } from '../game/item.js';
     import type { KitchenContext } from '../game/kitchen.js';
@@ -123,7 +124,7 @@
         if (existing) {
             return existing;
         }
-        const image = await getAssetImage(asset);
+        const image = await getAsset(asset).then(fetchImage);
         return getTexture(key, image);
     }
 
@@ -476,6 +477,31 @@
         }
     }
 
+    async function updateEffects() {
+        const effects: Effect[] = [];
+        for (const item of Object.values(context.items)) {
+            effects.push(...Object.values(item.effects));
+        }
+        for (const effect of effects) {
+            const { audio, particle } = effect.attributes;
+            if (audio) {
+                const { asset, volume } = audio;
+                const audioResource = await getAsset(asset).then(fetchAudio);
+                audioResource.volume = volume;
+                audioResource.play();
+            }
+        }
+    }
+
+    async function updateAudio() {
+    }
+
+    async function update() {
+        await updateMouse();
+        await updateEffects();
+        await updateAudio();
+    }
+
     async function handleMouseDown() {
         if (side !== 'client') return;
         if (context.hovering) {
@@ -675,7 +701,7 @@
         
         if (side !== 'background') {
             setupCounterProjection();
-            await updateMouse();
+            await update();
             await renderCounter();
             await renderItems();
             if (context.items['counter']) {
@@ -717,6 +743,9 @@
             }
         }
     }
+
+    let showDebug = false;
+    let openItems: string[] = [];
 </script>
 
 <svelte:window
@@ -750,6 +779,26 @@
         <Canvas bind:canvas bind:glContext {init} {render} />
     </div>
     {#if side === 'client'}
+        <div class="debug" class:show-debug={showDebug}>
+            <h2>
+                {JSON.stringify(context).length}
+                <button on:click={() => showDebug = !showDebug}>
+                    {showDebug ? 'hide' : 'show'}
+                </button>
+            </h2>
+            {#each Object.values(context.items) as item (item.id)}
+                <div>
+                    <button on:click={() => {
+                        openItems = openItems.includes(item.id) ? openItems.filter(id => id !== item.id) : [...openItems, item.id];
+                    }}>
+                        {item.item.id}
+                    </button>
+                    {#if openItems.includes(item.id)}
+                        <pre>{JSON.stringify(item, null, 2)}</pre>
+                    {/if}
+                </div>
+            {/each}
+        </div>
         <div class="ui">
             {#each Object.entries($config.items) as [id, item] (id)}
                 <button on:click={() => {
@@ -788,6 +837,21 @@
         position: absolute;
         inset: 0;
         cursor: none;
+    }
+
+    .debug {
+        position: absolute;
+        left: 0;
+        top: 10rem;
+        padding: 1rem;
+        overflow-y: auto;
+        z-index: 1;
+        background: var(--color-bg-2);
+        height: 4rem;
+
+        &.show-debug {
+            height: 70%;
+        }
     }
 
     .ui {

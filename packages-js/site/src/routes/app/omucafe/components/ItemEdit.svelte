@@ -1,6 +1,6 @@
 <script lang="ts">
     import { FileDrop } from '@omujs/ui';
-    import { getAssetImage, uploadAsset } from '../game/asset.js';
+    import { fetchImage, getAsset, uploadAsset } from '../game/asset.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createFixed } from '../game/behavior/fixed.js';
     import { createSpawner } from '../game/behavior/spawner.js';
@@ -28,7 +28,7 @@
                 throw new Error('FileDrop must receive only one file');
             }
             item.image = await uploadAsset(fileList[0]);
-            const image = await getAssetImage(item.image);
+            const image = await getAsset(item.image).then(fetchImage);
             item.bounds = {
                 min: { x: 0, y: 0 },
                 max: { x: image.width, y: image.height },
