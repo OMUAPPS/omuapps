@@ -3,7 +3,7 @@ import { BROWSER } from 'esm-env';
 import type { GameCommands } from './game-worker.js';
 import { WorkerPipe } from './worker.js';
 
-if (BROWSER) {
+async function init() {
     const tokenizer = await kuromoji.fromURL('https://coco-ly.com/kuromoji.js/dict/')
     const worker = WorkerPipe.self<GameCommands>();
     
@@ -14,4 +14,8 @@ if (BROWSER) {
     });
 
     worker.call('ready', undefined);
+}
+
+if (BROWSER) {
+    init();
 }
