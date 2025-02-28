@@ -14,7 +14,7 @@
     $: description = metadata?.description
         ? omu.i18n.translate(metadata?.description)
         : 'No description';
-    $: icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : 'No icon';
+    $: icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : null;
     $: image = metadata?.image ? omu.i18n.translate(metadata?.image) : null;
 
     const appPage = registerPage({
@@ -71,7 +71,9 @@
         {#if $menuOpen}
             <div class="info" class:open={$menuOpen}>
                 <span class="icon">
-                    {#if icon.startsWith('ti-')}
+                    {#if icon === null}
+                        <i class="ti ti-box"></i>
+                    {:else if icon.startsWith('ti-')}
                         <i class="ti {icon}"></i>
                     {:else}
                         <img src={icon} alt={name} />
@@ -87,7 +89,9 @@
         {:else}
             <div class="info">
                 <span class="icon">
-                    {#if icon.startsWith('ti-')}
+                    {#if icon === null}
+                        <i class="ti ti-box"></i>
+                    {:else if icon.startsWith('ti-')}
                         <i class="ti {icon}"></i>
                     {:else}
                         <img src={icon} alt={name} />
