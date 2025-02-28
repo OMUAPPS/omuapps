@@ -49,9 +49,11 @@
 {:else}
     <p>id is not provided</p>
 {/if}
-<p>{$page.url.searchParams.get('token')}</p>
-<p>{$page.url.searchParams.get('lan')}</p>
-<p>{$page.url.searchParams.get('secure')}</p>
+{#if BROWSER}
+    <p>{$page.url.searchParams.get('token')}</p>
+    <p>{$page.url.searchParams.get('lan')}</p>
+    <p>{$page.url.searchParams.get('secure')}</p>
+{/if}
 {lines.join('\n')}
 
 <style>
