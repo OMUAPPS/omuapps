@@ -148,5 +148,16 @@ export const EXAMPLE: Config = {
                 ),
             ]),
         },
+        fryer_click: {
+            name: 'Fryer Click',
+            expression: e.of('fryer_click', [
+                // remove_effect(held, 'fry')
+                c.invoke(
+                    v.variable('remove_effect'),
+                    v.variable('child'),
+                    v.string('fry')
+                ),
+            ]),
+        },
     }
 };

@@ -9,7 +9,6 @@
     import { fetchAudio, fetchImage, getAsset, type Asset } from '../game/asset.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createFixed } from '../game/behavior/fixed.js';
-    import type { Effect } from '../game/effect.js';
     import { createItemState, getItemStateTransform, invokeBehaviors, loadBehaviorHandlers, type ItemState } from '../game/item-state.js';
     import { createItem } from '../game/item.js';
     import type { KitchenContext } from '../game/kitchen.js';
@@ -477,18 +476,34 @@
         }
     }
 
+    const audioCache: Map<string, HTMLAudioElement> = new Map();
+
     async function updateEffects() {
-        const effects: Effect[] = [];
+        const newAudios: Map<string, HTMLAudioElement> = new Map();
         for (const item of Object.values(context.items)) {
-            effects.push(...Object.values(item.effects));
+            for (const effect of Object.values(item.effects)) {
+                const { audio } = effect.attributes;
+                if (audio) {
+                    const { asset, volume } = audio;
+                    const audioResource = await getAsset(asset).then(fetchAudio);
+                    audioResource.volume = volume;
+                    newAudios.set(item.id, audioResource);
+                }
+            }
         }
-        for (const effect of effects) {
-            const { audio, particle } = effect.attributes;
-            if (audio) {
-                const { asset, volume } = audio;
-                const audioResource = await getAsset(asset).then(fetchAudio);
-                audioResource.volume = volume;
-                audioResource.play();
+        for (const [id, audio] of audioCache) {
+            if (!newAudios.has(id)) {
+                audio.pause();
+                audioCache.delete(id);
+                console.log('pause', id);
+            }
+        }
+        for (const [id, audio] of newAudios) {
+            if (!audioCache.has(id)) {
+                audio.currentTime = 0;
+                audio.play();
+                audioCache.set(id, audio);
+                console.log('play', id);
             }
         }
     }

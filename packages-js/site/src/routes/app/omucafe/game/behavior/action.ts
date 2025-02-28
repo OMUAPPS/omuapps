@@ -42,6 +42,15 @@ function execute(kitchen: KitchenContext, script: Script, args: Record<string, s
             const effect = config.effects[effectId.value];
             item.effects[effect.id] = copy(effect);
             return v.void();
+        },
+        remove_effect(args: Value[]): Value {
+            if (args.length !== 2) throw new ScriptError(`Expected 2 arguments but got ${args.length}`, { callstack: context.callstack, index: context.index });
+            const [itemId, effectId] = args;
+            assertValue(context, itemId, 'string');
+            assertValue(context, effectId, 'string');
+            const item = kitchen.items[itemId.value];
+            delete item.effects[effectId.value];
+            return v.void();
         }
     };
     for (const key in functions) {
@@ -51,29 +60,37 @@ function execute(kitchen: KitchenContext, script: Script, args: Record<string, s
 }
 
 export class ActionHandler implements BehaviorHandler<'action'> {
-    private execute(type: keyof Action['on'], context: KitchenContext, action: BehaviorAction<'action'>) {
+    private execute(type: keyof Action['on'], context: KitchenContext, action: BehaviorAction<'action'>, args: Record<string, string | null>) {
         const { item, behavior: { on } } = action;
         if (!on[type]) return;
         const config = context.getConfig();
         const script = config.scripts[on[type]];
-        if (!script) return;
+        if (!script) {
+            console.error(`Script not found: ${on[type]}`);
+            return;
+        }
         execute(context, script, {
             type,
             item: item.id,
             held: context.held,
             hovering: context.hovering,
+            ...args,
         });
     }
     
     handleClick: BehaviorFunction<'action', { x: number; y: number; }> = (context, action, args) => {
-        this.execute('click', context, action);
+        this.execute('click', context, action, {});
     };
 
     handleClickChild: BehaviorFunction<'action', { child: ItemState; }> = (context, action, args) => {
-        this.execute('clickChild', context, action);
+        this.execute('clickChild', context, action, {
+            child: args.child.id,
+        });
     };
 
     handleDropChild: BehaviorFunction<'action', { child: ItemState; }> = (context, action, args) => {
-        this.execute('dropChild', context, action);
+        this.execute('dropChild', context, action, {
+            child: args.child.id,
+        });
     };
 };
