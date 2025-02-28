@@ -16,7 +16,8 @@
         promise = onclick();
         try {
             await promise;
-        } catch {
+        } catch (error) {
+            console.error(error);
             setTimeout(() => {
                 promise = undefined;
             }, 3000);
