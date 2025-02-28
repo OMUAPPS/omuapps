@@ -285,6 +285,9 @@ importers:
       postcss-html:
         specifier: ^1.7.0
         version: 1.8.0
+      qrious:
+        specifier: ^4.0.2
+        version: 4.0.2
       sass:
         specifier: ^1.77.8
         version: 1.84.0
@@ -4626,6 +4629,9 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  qrious@4.0.2:
+    resolution: {integrity: sha512-xWPJIrK1zu5Ypn898fBp8RHkT/9ibquV2Kv24S/JY9VYEhMBMKur1gHVsOiNUh7PHP9uCgejjpZUHUIXXKoU/g==}
 
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -10457,6 +10463,8 @@ snapshots:
       sade: 1.8.1
 
   punycode@2.3.1: {}
+
+  qrious@4.0.2: {}
 
   queue-microtask@1.2.3: {}
 
