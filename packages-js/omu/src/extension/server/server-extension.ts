@@ -1,6 +1,8 @@
 import { App } from '../../app.js';
 import type { Client } from '../../client.js';
 import { Identifier, IdentifierMap, IdentifierSet } from '../../identifier.js';
+import { Locale } from '../../localization/locale.js';
+import { LocalizedText } from '../../localization/localization.js';
 import { PacketType } from '../../network/packet/packet.js';
 import { Serializer } from '../../serializer.js';
 import { EndpointType } from '../endpoint/endpoint.js';
@@ -64,6 +66,32 @@ const SESSION_CONNECT_PACKET_TYPE = PacketType.createJson<App>(SERVER_EXTENSION_
 const SESSION_DISCONNECT_PACKET_TYPE = PacketType.createJson<App>(SERVER_EXTENSION_TYPE, {
     name: 'session_disconnect',
     serializer: Serializer.model(App),
+});
+type RemoteAppRequestPayload = {
+    id: string;
+    url: string;
+    metadata: {
+        locale: Locale;
+        name?: LocalizedText;
+        icon?: LocalizedText;
+        description?: LocalizedText;
+    },
+    permissions: string[];
+}
+
+export type RequestRemoteAppResponse = {
+    type: 'success';
+    token: string;
+    lan_ip: string;
+} | {
+    type: 'error';
+    message: string;
+}
+
+export const REMOTE_APP_REQUEST_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('remote_app', 'request');
+const REMOTE_APP_REQUEST_ENDPOINT_TYPE = EndpointType.createJson<RemoteAppRequestPayload, RequestRemoteAppResponse>(SERVER_EXTENSION_TYPE, {
+    name: 'remote_app_request',
+    permissionId: REMOTE_APP_REQUEST_PERMISSION_ID,
 });
 
 export class ServerExtension implements Extension {
@@ -161,6 +189,30 @@ export class ServerExtension implements Extension {
         for (const appId of appIds) {
             this.requiredApps.add(appId);
         }
+    }
+
+    public async requestRemoteApp(payload: {
+        app: App;
+        permissions: (string | Identifier)[];
+    }): Promise<RequestRemoteAppResponse> {
+        const { app } = payload;
+        if (!app.url) {
+            throw new Error('App must have a URL to request it remotely');
+        }
+        if (app.type !== 'remote') {
+            throw new Error('App must be a remote app to request it remotely');
+        }
+        if (!app.metadata) {
+            throw new Error('App must have metadata to request it remotely');
+        }
+        return this.client.endpoints.call(REMOTE_APP_REQUEST_ENDPOINT_TYPE, {
+            id: app.id.key(),
+            url: app.url,
+            metadata: app.metadata,
+            permissions: payload.permissions.map((permission) => {
+                return typeof permission === 'string' ? permission : permission.key();
+            }),
+        });
     }
 }
 

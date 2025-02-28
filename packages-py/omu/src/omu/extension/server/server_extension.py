@@ -13,6 +13,8 @@ from omu.identifier import Identifier
 from omu.network.packet import PacketType
 from omu.serializer import Serializer
 
+from .types import RemoteAppRequestPayload, RequestRemoteAppResponse
+
 SERVER_EXTENSION_TYPE = ExtensionType("server", lambda client: ServerExtension(client), lambda: [])
 
 SERVER_APPS_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE / "apps" / "read"
@@ -70,6 +72,12 @@ SESSION_DISCONNECT_PACKET_TYPE = PacketType[App].create_json(
     "session_disconnect",
     serializer=Serializer.model(App),
 )
+REMOTE_APP_REQUEST_PERMISSION_ID = SERVER_EXTENSION_TYPE / "remote_app" / "request"
+REMOTE_APP_REQUEST_ENDPOINT_TYPE = EndpointType[RemoteAppRequestPayload, RequestRemoteAppResponse].create_json(
+    SERVER_EXTENSION_TYPE,
+    "remote_app_request",
+    permission_id=REMOTE_APP_REQUEST_PERMISSION_ID,
+)
 
 
 class ServerExtension(Extension):
@@ -78,12 +86,6 @@ class ServerExtension(Extension):
         return SERVER_EXTENSION_TYPE
 
     def __init__(self, client: Client) -> None:
-        self._client = client
-        self.apps = client.tables.get(SERVER_APP_TABLE_TYPE)
-        self.sessions = client.tables.get(SERVER_APP_TABLE_TYPE)
-        self.required_apps: set[Identifier] = set()
-        self.trusted_origins = client.registries.get(TRUSTED_ORIGINS_REGISTRY_TYPE)
-        self.session_observers: dict[Identifier, SessionObserver] = {}
         client.network.register_packet(
             REQUIRE_APPS_PACKET_TYPE,
             SESSION_OBSERVE_PACKET_TYPE,
@@ -94,6 +96,12 @@ class ServerExtension(Extension):
         client.network.add_packet_handler(SESSION_DISCONNECT_PACKET_TYPE, self.handle_session_disconnect)
         client.network.add_task(self.on_task)
         client.on_ready(self.on_ready)
+        self._client = client
+        self.apps = client.tables.get(SERVER_APP_TABLE_TYPE)
+        self.sessions = client.tables.get(SERVER_APP_TABLE_TYPE)
+        self.required_apps: set[Identifier] = set()
+        self.trusted_origins = client.registries.get(TRUSTED_ORIGINS_REGISTRY_TYPE)
+        self.session_observers: dict[Identifier, SessionObserver] = {}
 
     async def on_task(self) -> None:
         if self.required_apps:

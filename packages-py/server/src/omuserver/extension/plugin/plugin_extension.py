@@ -16,6 +16,7 @@ from omu.extension.plugin.plugin_extension import (
     ReloadResult,
 )
 from omu.network.packet.packet_types import DisconnectType
+from packaging.specifiers import SpecifierSet
 
 from omuserver.session import Session
 
@@ -78,6 +79,14 @@ class PluginExtension:
 
     async def handle_require(self, session: Session, requirements: dict[str, str | None]) -> None:
         if not requirements:
+            return
+        satisfied = self.dependency_resolver.is_requirements_satisfied(
+            {k: SpecifierSet(v) if v else None for k, v in requirements.items()}
+        )
+        if satisfied:
+            return
+        if session.kind == AppType.REMOTE:
+            await session.disconnect(DisconnectType.PERMISSION_DENIED, "Remote apps cannot require plugins")
             return
 
         async def task():

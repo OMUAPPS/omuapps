@@ -55,13 +55,21 @@ export class Omu implements Client {
         public readonly app: App,
         options?: {
             address?: Address;
-            token?: TokenProvider;
+            token?: TokenProvider | string;
             connection?: Connection;
         },
     ) {
         this.ready = false;
         this.running = false;
-        this.token = options?.token ?? new BrowserTokenProvider('omu-token');
+        if (typeof options?.token === 'string') {
+            const token = options?.token;
+            this.token = {
+                get: () => Promise.resolve(token),
+                set: () => Promise.resolve(),
+            };
+        } else {
+            this.token = options?.token ?? new BrowserTokenProvider('omu-token');
+        }
         this.address = options?.address ?? {
             host: '127.0.0.1',
             port: 26423,

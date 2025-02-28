@@ -55,6 +55,9 @@ export class PermissionExtension {
     }
 
     private onTask(): void {
+        if (this.client.app.type === 'remote') {
+            return;
+        }
         if (this.registeredPermissions.size > 0) {
             this.client.send(
                 PERMISSION_REGISTER_PACKET,

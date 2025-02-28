@@ -263,7 +263,7 @@ class DashboardExtension:
     async def handle_dashboard_app_install(self, session: Session, app: App) -> AppInstallResponse:
         if not session.permissions.has(DASHBOARD_APP_INSTALL_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to install apps")
-        request_id = self._get_next_request_id()
+        request_id = self.get_next_request_id()
         future = Future[bool]()
         self.app_install_requests[request_id] = future
         await self.notify_dashboard_app_install(AppInstallRequestPacket(request_id=request_id, app=app))
@@ -302,11 +302,11 @@ class DashboardExtension:
         accepted = await self.update_app(app)
         return AppUpdateResponse(accepted=accepted)
 
-    async def update_app(self, app):
+    async def update_app(self, app: App) -> bool:
         old_app = await self.apps.get(app.id.key())
         if old_app is None:
             raise ValueError(f"App with id {app.id} does not exist")
-        request_id = self._get_next_request_id()
+        request_id = self.get_next_request_id()
         future = Future[bool]()
         self.app_update_requests[request_id] = future
         await self.notify_dashboard_app_update(
@@ -329,6 +329,6 @@ class DashboardExtension:
                 request,
             )
 
-    def _get_next_request_id(self) -> str:
+    def get_next_request_id(self) -> str:
         self.request_id += 1
         return f"{self.request_id}-{time.time_ns()}"

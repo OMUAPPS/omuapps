@@ -59,6 +59,19 @@ class PermissionManager:
                 identifier TEXT,
                 created_at INTEGER,
                 last_used_at INTEGER
+                used_count INTEGER
+            )
+            """
+        )
+        self._token_db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS remote_tokens (
+                token TEXT PRIMARY KEY,
+                identifier TEXT,
+                app BLOB,
+                created_at INTEGER,
+                last_used_at INTEGER
+                used_count INTEGER
             )
             """
         )
@@ -137,7 +150,7 @@ class PermissionManager:
         self._token_db.commit()
         return token
 
-    async def validate_app_token(self, app: App, token: Token) -> bool:
+    def validate_app_token(self, app: App, token: Token) -> bool:
         if self._server.config.dashboard_token == token:
             return True
         cursor = self._token_db.execute(
@@ -154,11 +167,12 @@ class PermissionManager:
         self._token_db.execute(
             """
             UPDATE tokens
-            SET last_used_at = ?
+            SET last_used_at = ?, used_count = used_count + 1
             WHERE token = ?
             """,
             (datetime.datetime.now(), token),
         )
+        self._token_db.commit()
         return True
 
     async def verify_app_token(
@@ -176,12 +190,19 @@ class PermissionManager:
             if self.is_plugin_token(token):
                 return Ok((AppType.PLUGIN, PluginPermissionHandle(), token))
             return Err("Invalid plugin token provided")
+        elif app.type == AppType.REMOTE:
+            if token is None:
+                return Err("Remote app token required, but none provided")
+            result = self.validate_remote_token(app, token)
+            if isinstance(result, Ok):
+                return Ok((AppType.REMOTE, SessionPermissionHandle(self, token), token))
+            return result
         elif app.type is None or app.type == AppType.APP:
             if token is None:
                 token = await self.generate_app_token(app)
                 return Ok((AppType.APP, SessionPermissionHandle(self, token), token))
-            verified = await self.validate_app_token(app, token)
-            if not verified:
+            result = self.validate_app_token(app, token)
+            if not result:
                 logger.warning(f"Generating new token for app {app} due to invalid token")
                 token = await self.generate_app_token(app)
             return Ok((AppType.APP, SessionPermissionHandle(self, token), token))
@@ -193,6 +214,63 @@ class PermissionManager:
         if dashboard_token is None:
             return False
         return dashboard_token == token
+
+    def generate_remote_token(self, app: App) -> Token:
+        token = self._token_generator.generate(32)
+        self._token_db.execute(
+            """
+            INSERT INTO remote_tokens (token, identifier, app, created_at, last_used_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                token,
+                app.id.key(),
+                json.dumps(app.to_json()),
+                datetime.datetime.now(),
+                datetime.datetime.now(),
+            ),
+        )
+        self._token_db.commit()
+        return token
+
+    def validate_remote_token(self, app: App, token: Token) -> Result[Token, str]:
+        cursor = self._token_db.execute(
+            """
+            SELECT app
+            FROM remote_tokens
+            WHERE token = ? AND identifier = ?
+            """,
+            (token, app.id.key()),
+        )
+        result = cursor.fetchone()
+        if result is None:
+            return Err("Token not found")
+        remote_app = App.from_json(json.loads(result[0]))
+        if remote_app.url != app.url:
+            return Err("URL mismatch")
+        if remote_app.metadata is None or app.metadata is None:
+            return Err("Metadata mismatch")
+        if [
+            remote_app.metadata.get("locale"),
+            remote_app.metadata.get("name"),
+            remote_app.metadata.get("icon"),
+            remote_app.metadata.get("description"),
+        ] != [
+            app.metadata.get("locale"),
+            app.metadata.get("name"),
+            app.metadata.get("icon"),
+            app.metadata.get("description"),
+        ]:
+            return Err("Metadata mismatch")
+        self._token_db.execute(
+            """
+            UPDATE remote_tokens
+            SET last_used_at = ?, used_count = used_count + 1
+            WHERE token = ?
+            """,
+            (datetime.datetime.now(), token),
+        )
+        return Ok(token)
 
     def generate_plugin_token(self) -> Token:
         token = self._token_generator.generate(32)

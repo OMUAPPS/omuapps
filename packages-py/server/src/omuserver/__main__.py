@@ -54,7 +54,7 @@ def stop_server_processes(
 @click.option("--token", type=str, default=None)
 @click.option("--token-file", type=click.Path(), default=None)
 @click.option("--dashboard-path", type=click.Path(), default=None)
-@click.option("--port", type=int, default=26423)
+@click.option("--port", type=int, default=None)
 @click.option("--extra-trusted-origin", type=str, multiple=True)
 def main(
     debug: bool,
@@ -62,19 +62,20 @@ def main(
     token: str | None,
     token_file: str | None,
     dashboard_path: str | None,
-    port: int,
+    port: int | None,
     extra_trusted_origin: list[str],
 ):
-    if stop:
-        stop_server_processes(port)
-        os._exit(0)
-
     config = Config()
     config.address = Address(
-        host=None,
-        port=int(port),
-        secure=False,
+        host=config.address.host,
+        port=port or config.address.port,
+        secure=config.address.secure,
     )
+
+    if stop:
+        stop_server_processes(config.address.port)
+        os._exit(0)
+
     if dashboard_path:
         config.directories.dashboard = Path(dashboard_path).resolve()
 

@@ -93,12 +93,20 @@ class DependencyResolver:
             return
         logger.info(f"Ran uv command: {(stdout or stderr).decode()}")
 
-    def is_package_satisfied(self, package: str, specifier: SpecifierSet) -> bool:
+    def is_package_satisfied(self, package: str, specifier: SpecifierSet | None) -> bool:
         package_info = self._packages_distributions.get(package)
         if package_info is None:
             return False
+        if specifier is None:
+            return True
         installed_version = Version(package_info.version)
         return installed_version in specifier
+
+    def is_requirements_satisfied(self, requirements: dict[str, SpecifierSet | None]) -> bool:
+        for package, specifier in requirements.items():
+            if not self.is_package_satisfied(package, specifier):
+                return False
+        return True
 
     def _get_minimum_version(self, specifier: SpecifierSet) -> Version:
         minimum_version = Version("0")

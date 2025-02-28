@@ -17,7 +17,7 @@ export type AppMetadata = {
     tags?: string[];
 }
 
-export type AppType = 'app' | 'plugin' | 'dashboard';
+export type AppType = 'app' | 'remote' | 'plugin' | 'dashboard';
 
 export type AppJson = {
     id: string;

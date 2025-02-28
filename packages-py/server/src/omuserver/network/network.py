@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from aiohttp import web
 from loguru import logger
 from omu import App, Identifier
+from omu.address import get_lan_ip
 from omu.app import AppType
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
@@ -21,19 +22,27 @@ if TYPE_CHECKING:
     from omuserver.server import Server
 
 
+@web.middleware
+async def cors_middleware(request, handler):
+    response = await handler(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+
 class Network:
     def __init__(self, server: Server, packet_dispatcher: ServerPacketDispatcher) -> None:
         self._server = server
         self._packet_dispatcher = packet_dispatcher
         self._event = NetworkEvents()
         self._sessions: dict[Identifier, Session] = {}
-        self._app = web.Application()
+        self._app = web.Application(middlewares=[cors_middleware])
         self._runner: web.AppRunner | None = None
-        self.add_websocket_route("/ws")
+        self._app.router.add_get("/ws", self.websocket_handler)
         self.register_packet(PACKET_TYPES.CONNECT, PACKET_TYPES.READY, PACKET_TYPES.DISCONNECT)
         self.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
         self.add_packet_handler(PACKET_TYPES.DISCONNECT, self._handle_disconnection)
         self.event.connected += self._packet_dispatcher.process_connection
+        self.self_ip = get_lan_ip()
 
     async def stop(self) -> None:
         if self._runner is None:
@@ -68,6 +77,8 @@ class Network:
         self._app.router.add_get(path, handle)
 
     async def _verify_origin(self, request: web.Request, session: Session) -> None:
+        if session.kind == AppType.REMOTE:
+            return
         origin = request.headers.get("Origin")
         if origin is None:
             return
@@ -87,24 +98,26 @@ class Network:
         )
         raise ValueError(f"Invalid origin: {origin_namespace} != {namespace}")
 
-    def add_websocket_route(self, path: str) -> None:
-        async def websocket_handler(request: web.Request) -> web.Response:
-            if request.remote != "127.0.0.1":
-                return web.Response(status=403)
-            ws = web.WebSocketResponse()
-            await ws.prepare(request)
-            connection = WebsocketsConnection(ws)
-            session = await Session.from_connection(
-                self._server,
-                self._packet_dispatcher.packet_mapper,
-                connection,
-            )
-            if session.kind == AppType.APP:
-                await self._verify_origin(request, session)
-            await self.process_session(session)
-            return web.Response(status=101, headers={"Upgrade": "websocket"})
+    async def websocket_handler(self, request: web.Request) -> web.Response:
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+        connection = WebsocketsConnection(ws)
+        session = await Session.from_connection(
+            self._server,
+            self._packet_dispatcher.packet_mapper,
+            connection,
+        )
 
-        self._app.router.add_get(path, websocket_handler)
+        if request.remote not in {self.self_ip, "127.0.0.1"}:
+            if session.kind != AppType.REMOTE:
+                await session.disconnect(DisconnectType.INVALID_ORIGIN, "Not a remote app")
+                logger.warning(f"Invalid remote app {session.app} from {request.remote}")
+                return web.Response(status=403)
+
+        if session.kind not in {AppType.DASHBOARD, AppType.PLUGIN}:
+            await self._verify_origin(request, session)
+        await self.process_session(session)
+        return web.Response(status=101, headers={"Upgrade": "websocket"})
 
     async def process_session(self, session: Session) -> None:
         if self.is_connected(session.app):
@@ -131,12 +144,7 @@ class Network:
     def is_port_free(self) -> bool:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(
-                    (
-                        self._server.address.host or "127.0.0.1",
-                        self._server.address.port,
-                    )
-                )
+                s.bind((self._server.address.host, self._server.address.port))
                 return True
         except OSError:
             return False
@@ -169,7 +177,7 @@ class Network:
         await runner.setup()
         site = web.TCPSite(
             runner,
-            host=self._server.address.host or "127.0.0.1",
+            host="0.0.0.0",
             port=self._server.address.port,
         )
         await site.start()

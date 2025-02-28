@@ -47,6 +47,8 @@ class PermissionExtension:
             )
             await session.send(PERMISSION_GRANT_PACKET, list(permissions))
             return
+        if session.kind == AppType.REMOTE:
+            raise PermissionDenied("Remote apps cannot request permissions")
         if session.kind in {AppType.PLUGIN, AppType.DASHBOARD}:
             return
 
