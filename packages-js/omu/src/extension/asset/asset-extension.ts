@@ -125,15 +125,16 @@ export class AssetExtension {
     }
 
     public url(
-        id: Identifier,
+        id: Identifier | string,
         options?: { cache?: 'no-cache'; },
     ): string {
+        const key = typeof id === 'string' ? id : id.key();
         const address = this.client.network.address;
         const protocol = address.secure ? 'https' : 'http';
         if (options?.cache === 'no-cache') {
-            return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(id.key())}&t=${Date.now()}`;
+            return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(key)}&t=${Date.now()}`;
         }
-        return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(id.key())}`;
+        return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(key)}`;
     }
 
     public proxy(url: string): string {

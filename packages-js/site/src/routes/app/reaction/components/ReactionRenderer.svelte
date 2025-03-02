@@ -2,7 +2,6 @@
     import { lerp } from '$lib/math/math.js';
     import { Timer } from '$lib/timer.js';
     import type { Omu } from '@omujs/omu';
-    import { Identifier } from '@omujs/omu/identifier.js';
     import { BROWSER } from 'esm-env';
     import { onDestroy } from 'svelte';
     import type { ReactionApp } from '../reaction-app.js';
@@ -44,8 +43,7 @@
                 if (!assetId) {
                     return [key, null];
                 }
-                const assetIdentifier = Identifier.fromKey(assetId);
-                const assetUrl = omu.assets.url(assetIdentifier, { cache: 'no-cache' });
+                const assetUrl = omu.assets.url(assetId, { cache: 'no-cache' });
                 const img = new Image();
                 img.src = assetUrl;
                 return [key, img];

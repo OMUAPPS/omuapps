@@ -7,7 +7,6 @@
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-    import { Identifier } from '@omujs/omu/identifier.js';
     import {
         AppHeader,
         Button,
@@ -134,7 +133,7 @@
                             {#if assetId}
                                 <i class="ti ti-chevron-right"></i>
                                 <img
-                                    src={omu.assets.url(Identifier.fromKey(assetId), {
+                                    src={omu.assets.url(assetId, {
                                         cache: 'no-cache',
                                     })}
                                     alt={key}
