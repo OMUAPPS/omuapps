@@ -18,7 +18,7 @@ export const APP = new App(APP_ID, {
 });
 
 export const REMOTE_APP_ID = new Identifier(NAMESPACE, 'remote', 'session');
-export const REMOTE_APP = new App(APP_ID, {
+export const REMOTE_APP = new App(REMOTE_APP_ID, {
     url: getUrl('/app/remote/session'),
     type: 'remote',
     metadata: buildMetadata({

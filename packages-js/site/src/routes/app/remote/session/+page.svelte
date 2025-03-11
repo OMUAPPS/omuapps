@@ -2,7 +2,7 @@
     import { page } from '$app/stores';
     import AssetPage from '$lib/components/AssetPage.svelte';
     import { Omu } from '@omujs/omu';
-    import { setClient } from '@omujs/ui';
+    import { FileDrop, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import { REMOTE_APP } from '../app.js';
@@ -40,11 +40,20 @@
     omu.network.event.status.listen(value => {
         lines.push(JSON.stringify(value));
     });
+
+    
 </script>
 
 {#if token}
     <AssetPage>
-        {ready}
+        {#if ready}
+            <FileDrop handle={(files) => {
+                const file = files[0];
+                remote.upload(file);
+            }}>
+                <p>Drop file here</p>
+            </FileDrop>
+        {/if}
     </AssetPage>
 {:else}
     <p>id is not provided</p>
@@ -60,4 +69,4 @@
     :global(body) {
         background: transparent !important;
     }
-</style>
+    </style>

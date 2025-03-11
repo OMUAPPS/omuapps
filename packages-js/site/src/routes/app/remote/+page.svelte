@@ -2,6 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
+    import { ASSET_DELETE_PERMISSION_ID, ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
     import { REMOTE_APP_REQUEST_PERMISSION_ID } from '@omujs/omu/extension/server/server-extension.js';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -12,7 +13,7 @@
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
-    const app = new RemoteApp(omu);
+    const remote = new RemoteApp(omu);
     setClient(omu);
 
     if (BROWSER) {
@@ -20,6 +21,9 @@
             omu.permissions.require(
                 permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
                 REMOTE_APP_REQUEST_PERMISSION_ID,
+                ASSET_UPLOAD_PERMISSION_ID,
+                ASSET_DOWNLOAD_PERMISSION_ID,
+                ASSET_DELETE_PERMISSION_ID,
             );
             omu.start();
         });
@@ -39,7 +43,7 @@
     {#await promise}
         <p>loading...</p>
     {:then}
-        <App {omu} />
+        <App {omu} {obs} {remote} />
     {/await}
 </AppPage>
 
