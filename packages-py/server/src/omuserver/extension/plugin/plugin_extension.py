@@ -95,7 +95,7 @@ class PluginExtension:
 
             self.dependency_resolver.find_packages_distributions()
             try:
-                changed = self.dependency_resolver.add_dependencies(requirements)
+                changed = await self.dependency_resolver.add_dependencies(requirements)
             except RequiredVersionTooOld as e:
                 await session.disconnect(DisconnectType.INVALID_VERSION, str(e))
                 return

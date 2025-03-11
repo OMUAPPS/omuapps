@@ -40,13 +40,18 @@ class DependencyResolver:
     def __init__(self) -> None:
         self._dependencies: dict[str, SpecifierSet] = {}
         self._packages_distributions: Mapping[str, importlib.metadata.Distribution] = {}
+        self._package_info_cache: dict[str, PackageInfo] = {}
         self._distributions_change_marked = True
         self.find_packages_distributions()
 
     async def fetch_package_info(self, package: str) -> PackageInfo:
+        if package in self._package_info_cache:
+            return self._package_info_cache[package]
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://pypi.org/pypi/{package}/json") as response:
-                return await response.json()
+                package_info = PackageInfo(await response.json())
+                self._package_info_cache[package] = package_info
+                return package_info
 
     async def get_installed_package_info(self, package: str) -> PluginPackageInfo | None:
         try:
@@ -125,7 +130,15 @@ class DependencyResolver:
         minimum_version = self._get_minimum_version(specifier)
         return minimum_version < exist_version
 
-    def add_dependencies(self, dependencies: Mapping[str, str | None]) -> bool:
+    async def find_best_compatible_version(self, package: str, specifier: SpecifierSet) -> Version:
+        package_info = await self.fetch_package_info(package)
+        versions: list[Version] = sorted(map(Version, package_info["releases"].keys()))  # [0.1.0, 0.1.1, 0.2.0, 2.0.0]
+        for version in versions:
+            if version in specifier:
+                return version
+        raise ValueError(f"No compatible version found for {package} with specifier {specifier}")
+
+    async def add_dependencies(self, dependencies: Mapping[str, str | None]) -> bool:
         changed = False
         new_dependencies: dict[str, SpecifierSet] = {}
         for package, specifier in dependencies.items():
@@ -141,7 +154,8 @@ class DependencyResolver:
             too_old = self.is_package_version_too_old(package, specifier)
             if too_old:
                 raise RequiredVersionTooOld(f"Package {package} is too old: {package_info.version}")
-            new_dependencies[package] = specifier or SpecifierSet()
+            best_version = await self.find_best_compatible_version(package, specifier)
+            new_dependencies[package] = SpecifierSet(f"=={best_version}")
             changed = True
         self._dependencies.update(new_dependencies)
         return changed
