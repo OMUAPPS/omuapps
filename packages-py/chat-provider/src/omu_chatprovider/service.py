@@ -8,6 +8,7 @@ from loguru import logger
 from omu import Omu
 from omu.helper import Coro
 from omu_chat import Channel, Chat, Provider, Room
+from typing_extensions import deprecated
 
 type ChatServiceFactory = Coro[[], ChatService]
 
@@ -18,19 +19,36 @@ class FetchedRoom:
     create: ChatServiceFactory
 
 
+class ProviderContext: ...  # For future compatibility's sake
+
+
 class ProviderService(abc.ABC):
     @abc.abstractmethod
     def __init__(self, omu: Omu, chat: Chat): ...
+
+    @classmethod
+    async def create(cls, omu: Omu, chat: Chat) -> ProviderService:
+        return cls(omu, chat)
 
     @property
     @abc.abstractmethod
     def provider(self) -> Provider: ...
 
-    @abc.abstractmethod
-    async def fetch_rooms(self, channel: Channel) -> list[FetchedRoom]: ...
+    @deprecated("Use add_room, remove_room, and update_room instead")
+    async def fetch_rooms(self, channel: Channel) -> list[FetchedRoom]:
+        return []
 
-    @abc.abstractmethod
-    async def is_online(self, room: Room) -> bool: ...
+    async def add_room(self, ctx: ProviderContext, room: Room):
+        return
+
+    async def remove_room(self, ctx: ProviderContext, room: Room):
+        return
+
+    async def update_room(self, ctx: ProviderContext, room: Room):
+        return
+
+    async def is_online(self, room: Room) -> bool:
+        return False
 
 
 class ChatService(abc.ABC):

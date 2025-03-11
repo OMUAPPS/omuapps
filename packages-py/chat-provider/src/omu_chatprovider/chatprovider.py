@@ -28,7 +28,7 @@ chat_services: dict[Identifier, ChatService] = {}
 async def register_services():
     services.clear()
     for service_class in retrieve_services():
-        service = service_class(omu, chat)
+        service = await service_class.create(omu, chat)
         services[service.provider.id] = service
         await chat.providers.add(service.provider)
 
