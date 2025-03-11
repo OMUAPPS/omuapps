@@ -164,7 +164,7 @@ class EndpointExtension:
         self._endpoints[type.id] = endpoint
 
     def verify_permission(self, endpoint: Endpoint, session: Session):
-        if endpoint.id.is_namepath_equal(session.app.id, max_depth=1):
+        if session.is_app_id(endpoint.id):
             return
         if endpoint.permission and session.permissions.has(endpoint.permission):
             return

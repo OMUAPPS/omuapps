@@ -51,7 +51,7 @@ class SignalExtension:
         session: Session,
         get_scopes: Callable[[SignalPermissions], list[Identifier | None]],
     ) -> None:
-        if signal.id.is_namepath_equal(session.app.id, max_depth=1):
+        if session.is_app_id(signal.id):
             return
         for permission in get_scopes(signal.permissions):
             if permission is None:

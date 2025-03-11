@@ -11,6 +11,7 @@ from omu.app import AppType
 from omu.errors import DisconnectReason
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
+from omu.identifier import Identifier
 from omu.network.packet import PACKET_TYPES, Packet, PacketType
 from omu.network.packet.packet_types import ConnectPacket, DisconnectPacket, DisconnectType
 from omu.network.packet_mapper import PacketMapper
@@ -170,6 +171,9 @@ class Session:
         for waiter in self.ready_waiters:
             waiter.set_result(None)
         await self.event.ready.emit(self)
+
+    def is_app_id(self, id: Identifier) -> bool:
+        return self.app.id.is_namepath_equal(id, max_depth=1)
 
     def __repr__(self) -> str:
         return f"Session({self.app.key()}, kind={self.kind}, ready={self.ready})"

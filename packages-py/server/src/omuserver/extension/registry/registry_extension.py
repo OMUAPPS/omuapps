@@ -105,7 +105,7 @@ class RegistryExtension:
         session: Session,
         get_scopes: Callable[[RegistryPermissions], list[Identifier | None]],
     ) -> None:
-        if registry.id.is_namepath_equal(session.app.id, max_depth=1):
+        if session.is_app_id(registry.id):
             return
         require_permissions = get_scopes(registry.permissions)
         if not session.permissions.has_any(filter(None, require_permissions)):
