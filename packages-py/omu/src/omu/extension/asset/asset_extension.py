@@ -88,6 +88,14 @@ ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[list[Identifier], list[Asset]].creat
     response_serializer=FileArraySerializer,
     permission_id=ASSET_DOWNLOAD_PERMISSION_ID,
 )
+ASSET_DELETE_PERMISSION_ID = ASSET_EXTENSION_TYPE / "delete"
+ASSET_DELETE_ENDPOINT = EndpointType[Identifier, None].create_serialized(
+    ASSET_EXTENSION_TYPE,
+    "delete",
+    request_serializer=Serializer.model(Identifier).to_json(),
+    response_serializer=Serializer.json(),
+    permission_id=ASSET_DELETE_PERMISSION_ID,
+)
 
 
 class AssetExtension(Extension):
@@ -109,6 +117,9 @@ class AssetExtension(Extension):
 
     async def download_many(self, identifiers: list[Identifier]) -> list[Asset]:
         return await self.client.endpoints.call(ASSET_DOWNLOAD_MANY_ENDPOINT, identifiers)
+
+    async def delete(self, identifier: Identifier) -> None:
+        await self.client.endpoints.call(ASSET_DELETE_ENDPOINT, identifier)
 
     def url(self, identifier: Identifier) -> str:
         address = self.client.network.address

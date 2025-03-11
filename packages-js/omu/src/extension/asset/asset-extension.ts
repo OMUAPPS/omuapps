@@ -92,6 +92,16 @@ const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[],
         permissionId: ASSET_DOWNLOAD_PERMISSION_ID,
     },
 );
+export const ASSET_DELETE_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('delete');
+const ASSET_DELETE_ENDPOINT = EndpointType.createSerialized<Identifier, void>(
+    ASSET_EXTENSION_TYPE,
+    {
+        name: 'delete',
+        requestSerializer: Serializer.model(Identifier).pipe(Serializer.json()),
+        responseSerializer: Serializer.json(),
+        permissionId: ASSET_DELETE_PERMISSION_ID,
+    },
+);
 
 export class AssetExtension {
     public readonly type = ASSET_EXTENSION_TYPE;
@@ -122,6 +132,11 @@ export class AssetExtension {
             identifiers,
         );
         return downloaded;
+    }
+
+    public async delete(identifier: Identifier | string): Promise<void> {
+        const id = typeof identifier === 'string' ? Identifier.fromKey(identifier) : identifier;
+        await this.client.endpoints.call(ASSET_DELETE_ENDPOINT, id);
     }
 
     public url(
