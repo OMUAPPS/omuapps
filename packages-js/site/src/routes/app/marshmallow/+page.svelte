@@ -15,7 +15,7 @@
     setClient(omu);
 
     omu.plugins.require({
-        omuplugin_marshmallow: `==${VERSION}`,
+        omuplugin_marshmallow: `>=${VERSION}`,
     });
     omu.server.require(PLUGIN_ID);
 

@@ -13,7 +13,7 @@ export const config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TY
 
 if (BROWSER) {
     omu.plugins.require({
-        omuplugin_translator: `==${VERSION}`,
+        omuplugin_translator: `>=${VERSION}`,
     });
     omu.start();
 }
