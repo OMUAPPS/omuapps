@@ -27,7 +27,7 @@ const APP = new App('com.example:my_app', {
     metadata: {
         locale: 'ja',
         name: 'クソコメ警察',
-        description: '【2021年最新版】クソコメを投稿した人を自動で検出して収集するアプリ',
+        description: '【2025年最新版】草を生やした人を自動で検出して収集するアプリ',
     },
 });
 
