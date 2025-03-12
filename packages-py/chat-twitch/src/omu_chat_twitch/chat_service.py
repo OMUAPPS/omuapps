@@ -250,7 +250,6 @@ class TwitchChatService(ProviderService):
         self.update_room_metadata(room, message)
         await self.chat.messages.add(message)
         display_name = params["display-name"]
-        logger.info(f"[{display_name}] {root.to_json()}")
 
     def update_room_metadata(self, room: Room, message: Message):
         if room.metadata.get("first_message_id") is None:
