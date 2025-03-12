@@ -34,23 +34,24 @@ class ProviderService(abc.ABC):
     @abc.abstractmethod
     def provider(self) -> Provider: ...
 
-    @deprecated("Use add_room, remove_room, and update_room instead")
+    @deprecated("Legacy method, Left for future compatibility")
     async def fetch_rooms(self, channel: Channel) -> list[FetchedRoom]:
         return []
 
-    async def add_room(self, ctx: ProviderContext, room: Room):
+    async def add_channel(self, ctx: ProviderContext, channel: Channel):
         return
 
-    async def remove_room(self, ctx: ProviderContext, room: Room):
+    async def remove_channel(self, ctx: ProviderContext, channel: Channel):
         return
 
-    async def update_room(self, ctx: ProviderContext, room: Room):
+    async def update_channel(self, ctx: ProviderContext, channel: Channel):
         return
 
     async def is_online(self, room: Room) -> bool:
-        return False
+        return True
 
 
+@deprecated("Legacy type, Left for future compatibility")
 class ChatService(abc.ABC):
     @property
     @abc.abstractmethod
@@ -71,8 +72,12 @@ class ChatService(abc.ABC):
         finally:
             await self.stop()
 
-    @abc.abstractmethod
-    async def stop(self): ...
+    async def close(self):
+        return
+
+    @deprecated("Use `close` instead")
+    async def stop(self):
+        await self.close()
 
 
 def retrieve_services():

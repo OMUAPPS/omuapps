@@ -7,7 +7,7 @@ from omu.app import AppType
 from omu_chat import Channel, Chat, Message, Room, events
 
 from .errors import ProviderError
-from .service import ChatService, ProviderService, retrieve_services
+from .service import ChatService, ProviderContext, ProviderService, retrieve_services
 from .version import VERSION
 
 BASE_PROVIDER_IDENTIFIER = Identifier("com.omuapps", "chatprovider")
@@ -21,16 +21,23 @@ APP = App(
 omu = Omu(APP)
 chat = Chat(omu)
 
-services: dict[Identifier, ProviderService] = {}
+provider_services: dict[Identifier, ProviderService] = {}
 chat_services: dict[Identifier, ChatService] = {}
+ctx = ProviderContext()
 
 
 async def register_services():
-    services.clear()
+    provider_services.clear()
     for service_class in retrieve_services():
         service = await service_class.create(omu, chat)
-        services[service.provider.id] = service
+        provider_services[service.provider.id] = service
         await chat.providers.add(service.provider)
+
+
+def get_provider(channel: Channel | Room) -> ProviderService | None:
+    if channel.provider_id not in provider_services:
+        return None
+    return provider_services[channel.provider_id]
 
 
 async def update_channel(channel: Channel, service: ProviderService):
@@ -60,6 +67,7 @@ async def update_channel(channel: Channel, service: ProviderService):
 async def on_channel_create(channel: Channel):
     provider = get_provider(channel)
     if provider is not None:
+        await provider.add_channel(ctx, channel)
         await update_channel(channel, provider)
 
 
@@ -68,6 +76,7 @@ async def on_channel_remove(channel: Channel):
     provider = get_provider(channel)
     if provider is not None:
         channel.active = False
+        await provider.remove_channel(ctx, channel)
         await update_channel(channel, provider)
 
 
@@ -75,47 +84,26 @@ async def on_channel_remove(channel: Channel):
 async def on_channel_update(channel: Channel):
     provider = get_provider(channel)
     if provider is not None:
+        await provider.update_channel(ctx, channel)
         await update_channel(channel, provider)
 
 
-def get_provider(channel: Channel | Room) -> ProviderService | None:
-    if channel.provider_id not in services:
-        return None
-    return services[channel.provider_id]
-
-
-async def delay():
-    await asyncio.sleep(15 - time.time() % 15)
-
-
-async def recheck_task():
-    while True:
-        await recheck_channels()
-        await recheck_rooms()
-        await delay()
-
-
-async def recheck_rooms():
-    for service in tuple(chat_services.values()):
-        if service.closed:
-            del chat_services[service.room.id]
-    rooms = await chat.rooms.fetch_all()
-    for room in filter(lambda r: r.connected, rooms.values()):
-        if room.provider_id not in services:
+async def add_channels():
+    all_channels = await chat.channels.fetch_all()
+    for channel in all_channels.values():
+        provider = get_provider(channel)
+        if provider is None:
             continue
-        if not await should_remove(room, services[room.provider_id]):
+        await provider.add_channel(ctx, channel)
+
+
+async def check_channels():
+    all_channels = await chat.channels.fetch_all()
+    for channel in all_channels.values():
+        provider = get_provider(channel)
+        if provider is None:
             continue
-        await stop_room(room)
-
-
-async def stop_room(room: Room):
-    room.status = "offline"
-    room.connected = False
-    await chat.rooms.update(room)
-    for key, service in tuple(chat_services.items()):
-        if service.room.key() == room.key():
-            await service.stop()
-            del chat_services[key]
+        await update_channel(channel, provider)
 
 
 async def should_remove(room: Room, provider_service: ProviderService):
@@ -131,13 +119,38 @@ async def should_remove(room: Room, provider_service: ProviderService):
         return True
 
 
-async def recheck_channels():
-    all_channels = await chat.channels.fetch_all()
-    for channel in all_channels.values():
-        provider = get_provider(channel)
-        if provider is None:
+async def stop_room(room: Room):
+    room.status = "offline"
+    room.connected = False
+    await chat.rooms.update(room)
+    for key, service in tuple(chat_services.items()):
+        if service.room.key() == room.key():
+            await service.stop()
+            del chat_services[key]
+
+
+async def check_rooms():
+    for service in tuple(chat_services.values()):
+        if service.closed:
+            del chat_services[service.room.id]
+    rooms = await chat.rooms.fetch_all()
+    for room in filter(lambda r: r.connected, rooms.values()):
+        if room.provider_id not in provider_services:
             continue
-        await update_channel(channel, provider)
+        if not await should_remove(room, provider_services[room.provider_id]):
+            continue
+        await stop_room(room)
+
+
+async def delay():
+    await asyncio.sleep(15 - time.time() % 15)
+
+
+async def recheck_task():
+    while True:
+        await check_channels()
+        await check_rooms()
+        await delay()
 
 
 @chat.on(events.message.add)
@@ -150,6 +163,7 @@ async def on_message_create(message: Message):
 @omu.event.ready.listen
 async def on_ready():
     await register_services()
-    await recheck_channels()
+    await add_channels()
+    await check_channels()
     asyncio.create_task(recheck_task())
     logger.info("Chat provider is ready")
