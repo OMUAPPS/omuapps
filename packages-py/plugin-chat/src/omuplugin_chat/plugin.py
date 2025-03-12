@@ -145,9 +145,10 @@ async def create_channel_tree(url: str) -> list[Channel]:
         for provider in services.values():
             if re.search(provider.regex, result.url) is None:
                 continue
-            found_channels[result.id] = Channel(
+            id = provider.id / result.id
+            found_channels[id.key()] = Channel(
                 provider_id=provider.id,
-                id=provider.id / result.id,
+                id=id,
                 name=result.name or result.id or result.service.name,
                 description=result.description or "",
                 icon_url=result.profile_picture or "",
