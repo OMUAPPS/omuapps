@@ -7,7 +7,7 @@ from omu_chatprovider.service import FetchedRoom, ProviderService
 from .chat import YoutubeChat
 from .const import (
     PROVIDER,
-    YOUTUBE_IDENTIFIER,
+    YOUTUBE_ID,
 )
 from .youtubeapi import YoutubeAPI
 
@@ -28,8 +28,8 @@ class YoutubeChatService(ProviderService):
         rooms: list[FetchedRoom] = []
         for video_id in videos:
             room = Room(
-                provider_id=YOUTUBE_IDENTIFIER,
-                id=YOUTUBE_IDENTIFIER / video_id,
+                provider_id=YOUTUBE_ID,
+                id=YOUTUBE_ID / video_id,
                 connected=False,
                 status="offline",
                 channel_id=channel.id,
