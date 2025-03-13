@@ -16,7 +16,7 @@
     import SceneProductList from './scenes/SceneProductList.svelte';
     import { getWorker } from './worker/game-worker.js';
 
-    createGame(APP);
+    const promise = createGame(APP);
     const { scene, config, states, orders } = getGame();
 
     const SCENES: Record<Scene['type'], TypedComponent<{
@@ -43,12 +43,14 @@
 
 <AppPage />
 <main>
-    <KitchenRenderer />
-    <div class="scene">
-        <svelte:component this={SCENES[$scene.type]} context={{
-            time: performance.now(),
-        }} />
-    </div>
+    {#await promise then }
+        <KitchenRenderer />
+        <div class="scene">
+            <svelte:component this={SCENES[$scene.type]} context={{
+                time: performance.now(),
+            }} />
+        </div>
+    {/await}
 </main>
 <div class="debug">
     <button on:click={async () => {
