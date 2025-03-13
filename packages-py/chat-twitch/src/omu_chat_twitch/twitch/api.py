@@ -12,6 +12,7 @@ import bs4
 from aiohttp import ClientSession
 
 from .gql import GQLResponse
+from .types.channelroot_aboutpanel import ChannelRoot_AboutPanel, ChannelRoot_AboutPanelResponse
 from .types.models import PlaybackAccessTokenValue, StreamMetadataUser
 from .types.playback_access_token_template import PlaybackAccessTokenTemplate
 from .types.stream_metadata import StreamMetadata
@@ -121,6 +122,17 @@ class TwitchAPI:
                 "badgeSourceChannelLogin": channel_login,
             },
         )
+
+    async def fetch_channelroot_aboutpanel(self, channel_login: str) -> ChannelRoot_AboutPanelResponse:
+        res = await ChannelRoot_AboutPanel.query(
+            self,
+            {
+                "channelLogin": channel_login,
+                "includeIsDJ": True,
+                "skipSchedule": False,
+            },
+        )
+        return res
 
     async def fetch_playback_access_token(self, login: str) -> PlaybackAccessTokenValue:
         # Hardcoded query

@@ -7,6 +7,7 @@ from typing import Literal
 
 from loguru import logger
 from omu import Omu
+from omu.identifier import Identifier
 from omu_chat import Chat
 from omu_chat.model import Provider
 from omu_chat.model.author import Author
@@ -79,7 +80,7 @@ class ChannelTopics:
         channel_id = await twitch.api.fetch_channel_id(channel_login)
         update = await PubSubTopics.broadcast_settings_update.create(twitch.pubsub, channel_id)
         playback = await PubSubTopics.video_playback_by_id.create(twitch.pubsub, channel_id)
-        room = await cls.fetch_room(twitch, channel_login) or cls.create_default_room(channel_login)
+        room = await cls.fetch_room(twitch, channel) or cls.create_default_room(channel_login)
         topics = ChannelTopics(
             twitch=twitch,
             channel=channel,
@@ -100,23 +101,27 @@ class ChannelTopics:
         self.stream.update(data)
 
     @classmethod
-    async def fetch_room(cls, twitch: TwitchChatService, channel_login: str) -> Room | None:
+    async def fetch_room(cls, twitch: TwitchChatService, channel: Channel) -> Room | None:
+        channel_login = channel.id.path[-1]
         info = await twitch.api.fetch_stream_metadata(channel_login)
         if info is None:
             logger.warning(f"No stream metadata found for {channel_login}")
             return
         last_broadcast = info["lastBroadcast"]
         stream = info["stream"]
+        if stream is None or last_broadcast is None:
+            return
         room = Room(
             status="online",
             provider_id=PROVIDER.id,
+            channel_id=channel.id,
             id=PROVIDER.id.join(info["channel"]["id"], last_broadcast["id"]),
             connected=True,
             metadata=RoomMetadata(
-                url=f"https://www.twitch.tv/videos/{last_broadcast['id']}",
+                url=f"https://www.twitch.tv/{channel_login}",
                 thumbnail=f"https://static-cdn.jtvnw.net/previews-ttv/live_user_{channel_login}-440x248.jpg",
                 created_at=datetime.fromisoformat(stream["createdAt"]).isoformat(),
-                title=last_broadcast["title"],
+                title=last_broadcast.get("title", ""),
                 description=stream["game"]["name"],
             ),
         )
@@ -124,24 +129,10 @@ class ChannelTopics:
 
     async def handle_playback(self, topic: ChannelTopicHandle, data: VideoPlaybackById):
         if data["type"] == "stream-up":
-            info = await self.twitch.api.fetch_stream_metadata(self.channel_login)
-            if info is None:
-                logger.warning(f"No stream metadata found for {self.channel_login}")
+            room = await self.fetch_room(self.twitch, self.channel)
+            if room is None:
+                logger.warning(f"No room found for {self.channel_login}")
                 return
-            last_broadcast = info["lastBroadcast"]
-            room = Room(
-                status="online",
-                provider_id=PROVIDER.id,
-                id=PROVIDER.id.join(info["channel"]["id"], last_broadcast["id"]),
-                connected=True,
-                metadata=RoomMetadata(
-                    url=f"https://www.twitch.tv/videos/{last_broadcast['id']}",
-                    thumbnail=f"https://static-cdn.jtvnw.net/previews-ttv/live_user_{self.channel_login}-440x248.jpg",
-                    created_at=datetime.fromtimestamp(data["server_time"]).isoformat(),
-                    title=self.stream["status"],
-                    description=self.stream["game"],
-                ),
-            )
             self.room = room
             await self.twitch.chat.rooms.add(room)
         elif data["type"] == "stream-down":
@@ -151,6 +142,13 @@ class ChannelTopics:
                 self.room.metadata["thumbnail"] = (
                     f"https://static-cdn.jtvnw.net/previews-ttv/live_user_{self.channel_login}-1280x720.jpg"
                 )
+                about_panel = await self.twitch.api.fetch_channelroot_aboutpanel(self.channel_login)
+                # video_id = about_panel["user"]["videos"]["edges"][0]["node"]["id"]
+                video_id = (
+                    about_panel.get("user", {}).get("videos", {}).get("edges", [{}])[0].get("node", {}).get("id", None)
+                )
+                if video_id:
+                    self.room.metadata["url"] = f"https://www.twitch.tv/videos/{video_id}"
                 await self.twitch.chat.rooms.update(self.room)
                 self.room = self.create_default_room(self.channel_login)
             else:
@@ -202,6 +200,7 @@ class TwitchChatService(ProviderService):
             "PRIVMSG": service.on_privmsg,
             "CAP": service.on_cap,
             "JOIN": service.on_join,
+            "PART": service.on_part,
             "ROOMSTATE": service.on_roomstate,
             "PING": service.on_ping,
             "USERNOTICE": service.on_usernotice,
@@ -213,8 +212,8 @@ class TwitchChatService(ProviderService):
     def provider(self) -> Provider:
         return PROVIDER
 
-    async def fetch_channel_id(self, channel: Channel) -> int:
-        login = channel.id.path[-1]
+    async def fetch_channel_id(self, id: Identifier) -> int:
+        login = id.path[-1]
         if login in self.channel_ids:
             return self.channel_ids[login]
         channel_id = await self.api.fetch_channel_id(login)
@@ -235,7 +234,6 @@ class TwitchChatService(ProviderService):
             logger.warning(f"No room for topics: {params['room-id']}")
             return
         room = topics.room
-        await self.chat.rooms.update(room)
         sender_login = packet.sender.split("!")[0]
         author = await self.fetch_author(params["user-id"], topics, sender_login)
 
@@ -248,8 +246,8 @@ class TwitchChatService(ProviderService):
             created_at=created_at,
         )
         self.update_room_metadata(room, message)
+        await self.chat.rooms.update(room)
         await self.chat.messages.add(message)
-        display_name = params["display-name"]
 
     def update_room_metadata(self, room: Room, message: Message):
         if room.metadata.get("first_message_id") is None:
@@ -327,6 +325,9 @@ class TwitchChatService(ProviderService):
     async def on_join(self, chat: TwitchChat, packet: TwitchCommand):
         logger.info(f"Joined as {packet.sender}")
 
+    async def on_part(self, chat: TwitchChat, packet: TwitchCommand):
+        logger.info(f"Parted as {packet.sender}")
+
     async def on_roomstate(self, chat: TwitchChat, packet: TwitchCommand):
         params = RoomStateParams(**packet.params)
         logger.info(f"Joined room: {params}")
@@ -368,22 +369,35 @@ class TwitchChatService(ProviderService):
 
         logger.info(f"User notice: {packet}")
 
-    async def add_channel(self, ctx: ProviderContext, channel: Channel):
-        channel_id = await self.fetch_channel_id(channel)
+    async def start_channel(self, ctx: ProviderContext, channel: Channel):
+        channel_id = await self.fetch_channel_id(channel.id)
         if channel_id in self.topics:
-            await self.remove_channel(ctx, channel)
+            await self.stop_channel(ctx, channel)
         topics = await ChannelTopics.create(self, channel)
         await self.twitch_chat.join(topics.channel_login)
         self.topics[channel_id] = topics
 
-    async def remove_channel(self, ctx: ProviderContext, channel: Channel):
-        channel_id = await self.fetch_channel_id(channel)
+    async def stop_channel(self, ctx: ProviderContext, channel: Channel):
+        channel_id = await self.fetch_channel_id(channel.id)
         if channel_id not in self.topics:
             return
         topics = self.topics.pop(channel_id)
+        topics.room.connected = False
+        topics.room.status = "offline"
+        await self.chat.rooms.update(topics.room)
         await topics.unsubscribe()
         await self.twitch_chat.part(topics.channel_login)
 
-    async def update_channel(self, ctx: ProviderContext, channel: Channel):
-        await self.remove_channel(ctx, channel)
-        await self.add_channel(ctx, channel)
+    async def is_online(self, room: Room) -> bool:
+        if not room.channel_id:
+            return False
+        channel_id = await self.fetch_channel_id(room.channel_id)
+        topics = self.topics.get(channel_id)
+        if topics is None:
+            return False
+        existing_room = topics.room
+        if existing_room is None:
+            return False
+        if existing_room.id != room.id:
+            return False
+        return True

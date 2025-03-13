@@ -43,12 +43,14 @@ def get_provider(channel: Channel | Room) -> ProviderService | None:
 async def update_channel(channel: Channel, service: ProviderService):
     try:
         if not channel.active:
+            await service.stop_channel(ctx, channel)
             for key, chat_service in tuple(chat_services.items()):
                 if chat_service.room.channel_id == channel.id:
                     await chat_service.stop()
                     del chat_services[key]
                     logger.info(f"Stopped chat for {chat_service.room.key()}")
             return
+        await service.start_channel(ctx, channel)
         fetched_rooms = await service.fetch_rooms(channel)
         for item in fetched_rooms:
             if item.room.id in chat_services:
@@ -67,7 +69,7 @@ async def update_channel(channel: Channel, service: ProviderService):
 async def on_channel_create(channel: Channel):
     provider = get_provider(channel)
     if provider is not None:
-        await provider.add_channel(ctx, channel)
+        await provider.start_channel(ctx, channel)
         await update_channel(channel, provider)
 
 
@@ -76,7 +78,7 @@ async def on_channel_remove(channel: Channel):
     provider = get_provider(channel)
     if provider is not None:
         channel.active = False
-        await provider.remove_channel(ctx, channel)
+        await provider.stop_channel(ctx, channel)
         await update_channel(channel, provider)
 
 
@@ -84,17 +86,18 @@ async def on_channel_remove(channel: Channel):
 async def on_channel_update(channel: Channel):
     provider = get_provider(channel)
     if provider is not None:
-        await provider.update_channel(ctx, channel)
         await update_channel(channel, provider)
 
 
 async def add_channels():
     all_channels = await chat.channels.fetch_all()
     for channel in all_channels.values():
+        if not channel.active:
+            continue
         provider = get_provider(channel)
         if provider is None:
             continue
-        await provider.add_channel(ctx, channel)
+        await provider.start_channel(ctx, channel)
 
 
 async def check_channels():
@@ -135,9 +138,10 @@ async def check_rooms():
             del chat_services[service.room.id]
     rooms = await chat.rooms.fetch_all()
     for room in filter(lambda r: r.connected, rooms.values()):
-        if room.provider_id not in provider_services:
+        provider = provider_services.get(room.provider_id)
+        if provider is None:
             continue
-        if not await should_remove(room, provider_services[room.provider_id]):
+        if not await should_remove(room, provider):
             continue
         await stop_room(room)
 

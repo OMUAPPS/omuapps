@@ -16,6 +16,8 @@ class UserRoles(TwitchType[Literal["UserRoles"]]):
     #     "__typename": "UserRoles"
     # }
     isPartner: bool
+    isAffiliate: NotRequired[bool]
+    isStaff: None
     isParticipatingDJ: bool
 
 
@@ -39,6 +41,18 @@ class ChannelModerationSettings(TwitchType[Literal["ChannelModerationSettings"]]
     canAccessViewerCardModLogs: TODO
 
 
+class SocialMedia(TwitchType[Literal["SocialMedia"]]):
+    id: str
+    name: str
+    title: str
+    url: str
+
+
+class Schedule(TwitchType[Literal["Schedule"]]):
+    id: str
+    nextSegment: None
+
+
 class Channel(TwitchType[Literal["Channel"]]):
     # "channel": {
     #     "id": "194196775",
@@ -51,6 +65,8 @@ class Channel(TwitchType[Literal["Channel"]]):
     # }
     id: str
     moderationSettings: NotRequired[ChannelModerationSettings]
+    socialMedias: NotRequired[list[SocialMedia]]
+    schedule: NotRequired[Schedule]
 
 
 class Broadcast(TwitchType[Literal["Broadcast"]]):
@@ -60,7 +76,8 @@ class Broadcast(TwitchType[Literal["Broadcast"]]):
     #     "__typename": "Broadcast"
     # }
     id: str
-    title: str
+    title: NotRequired[str]
+    game: NotRequired[Game]
 
 
 class Game(TwitchType[Literal["Game"]]):
@@ -110,8 +127,43 @@ class StreamMetadataUser(User):
     profileImageURL: str
     primaryTeam: Team
     channel: Channel
+    lastBroadcast: Broadcast | None
+    stream: Stream | None
+
+
+class FollowerConnection(TwitchType[Literal["FollowerConnection"]]):
+    # {
+    #     "totalCount": 0,
+    #     "__typename": "FollowerConnection",
+    # }
+    totalCount: int
+
+
+class Video(TwitchType[Literal["Video"]]):
+    id: str
+    game: Game
+    status: Literal["RECORDED", "RECORDED_HIGHLIGHT", "RECORDED_UPLOAD"]
+
+
+class VideoEdge(TwitchType[Literal["VideoEdge"]]):
+    node: Video
+
+
+class VideoConnection(TwitchType[Literal["VideoConnection"]]):
+    edges: list[VideoEdge]
+
+
+class ChannelAboutUser(User):
+    description: str
+    displayName: str
+    primaryColorHex: str
+    profileImageURL: str
+    followers: FollowerConnection
+    roles: UserRoles
+    channel: Channel
     lastBroadcast: Broadcast
-    stream: Stream
+    primaryTeam: None
+    videos: VideoConnection
 
 
 class ChannelUser(User):

@@ -38,13 +38,10 @@ class ProviderService(abc.ABC):
     async def fetch_rooms(self, channel: Channel) -> list[FetchedRoom]:
         return []
 
-    async def add_channel(self, ctx: ProviderContext, channel: Channel):
+    async def start_channel(self, ctx: ProviderContext, channel: Channel):
         return
 
-    async def remove_channel(self, ctx: ProviderContext, channel: Channel):
-        return
-
-    async def update_channel(self, ctx: ProviderContext, channel: Channel):
+    async def stop_channel(self, ctx: ProviderContext, channel: Channel):
         return
 
     async def is_online(self, room: Room) -> bool:
