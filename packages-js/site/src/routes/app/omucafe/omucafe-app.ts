@@ -109,7 +109,7 @@ function processMessage(message: Message) {
     
 }
 
-export function createGame(app: App){
+export function createGame(app: App): Promise<void> {
     const omu = new Omu(app);
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
@@ -143,6 +143,12 @@ export function createGame(app: App){
         orders,
         scene,
     }
+
+    return new Promise<void>((resolve) => {
+        omu.onReady(() => {
+            resolve();
+        });
+    });
 }
 
 export type Game = {
