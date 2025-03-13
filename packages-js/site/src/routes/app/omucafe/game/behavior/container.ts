@@ -1,5 +1,4 @@
 import type { Matrices } from '$lib/components/canvas/matrices.js';
-import { Vec2 } from '$lib/math/vec2.js';
 import { getTextureByAsset, type Asset } from '../asset.js';
 import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
 import { draw, matrices } from '../game.js';
@@ -75,9 +74,9 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         const inverse = containerTransform.inverse();
         const newMatrix = inverse.multiply(childTransform);
         child.transform = {
-            right: new Vec2(newMatrix.m00, newMatrix.m01),
-            up: new Vec2(newMatrix.m10, newMatrix.m11),
-            offset: new Vec2(newMatrix.m30, newMatrix.m31),
+            right: { x: newMatrix.m00, y: newMatrix.m01 },
+            up: { x: newMatrix.m10, y: newMatrix.m11 },
+            offset: { x: newMatrix.m30, y: newMatrix.m31 },
         };
     }
 

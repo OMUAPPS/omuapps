@@ -394,7 +394,7 @@ export class PNGTuber implements Avatar {
                 context.bounceTick += 1;
             }
             context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
-            context.origin.position = context.origin.position.add(new Vec2(0, -context.bounceVelocity * 0.0166)).min(Vec2.ZERO);
+            context.origin.position = context.origin.position.add({x: 0, y: -context.bounceVelocity * 0.0166}).min(Vec2.ZERO);
             if (!action.talking && context.origin.position.y >= -1) {
                 context.bounceVelocity = 0;
             }
@@ -535,14 +535,14 @@ export class PNGTuber implements Avatar {
             const halfWidth = width / 2;
             const halfHeight = height / 2;
             const corners = [
-                new Vec2(-halfWidth, -halfHeight),
-                new Vec2(-halfWidth, halfHeight),
-                new Vec2(halfWidth, -halfHeight),
-                new Vec2(halfWidth, halfHeight),
+                { x: -halfWidth, y: -halfHeight },
+                { x: -halfWidth, y: halfHeight },
+                { x: halfWidth, y: -halfHeight },
+                { x: halfWidth, y: halfHeight },
             ];
             const offset = new Vec2(sprite.layerData.offset.x, sprite.layerData.offset.y);
             for (const corner of corners) {
-                points.push(transform.xform(corner.add(offset)));
+                points.push(transform.xform(offset.add(corner)));
             }
         }
         return AABB2.fromPoints(points);

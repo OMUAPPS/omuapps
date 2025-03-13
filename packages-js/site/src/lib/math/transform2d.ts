@@ -1,28 +1,28 @@
 import { Mat3 } from './mat3.js';
 import { Mat4 } from './mat4.js';
-import { Vec2 } from './vec2.js';
+import { Vec2, type PossibleVec2 } from './vec2.js';
 
 export class Transform2D {
     constructor(
         public columns: readonly [Vec2, Vec2, Vec2],
     ) { }
 
-    public tdotx(p_v: Vec2): number {
+    public tdotx(p_v: PossibleVec2): number {
         return this.columns[0].x * p_v.x + this.columns[1].x * p_v.y;
     }
 
-    public tdoty(p_v: Vec2): number {
+    public tdoty(p_v: PossibleVec2): number {
         return this.columns[0].y * p_v.x + this.columns[1].y * p_v.y;
     }
 
-    public basisXForm(point: Vec2): Vec2 {
+    public basisXForm(point: PossibleVec2): Vec2 {
         return new Vec2(
             this.tdotx(point),
             this.tdoty(point)
         );
     }
 
-    public xform(point: Vec2): Vec2 {
+    public xform(point: PossibleVec2): Vec2 {
         return new Vec2(
             this.tdotx(point),
             this.tdoty(point)

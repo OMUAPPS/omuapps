@@ -147,8 +147,8 @@ export async function getItemStateRenderBounds(item: ItemState): Promise<Bounds>
     const transform = getItemStateTransform(item);
     const bounds = item.bounds;
     const renderBounds = new AABB2(
-        transform.xform2(new Vec2(bounds.min.x, bounds.min.y)),
-        transform.xform2(new Vec2(bounds.max.x, bounds.max.y)),
+        transform.transform2(bounds.min),
+        transform.transform2(bounds.max),
     )
     return renderBounds;
 }
@@ -216,7 +216,7 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     const { min, max } = bounds;
     const matrix = getItemStateTransform(item);
     const inverse = matrix.inverse();
-    const inversedMouse = inverse.xform2(mouse.position);
+    const inversedMouse = inverse.transform2(mouse.position);
     
     const aabbTest = (
         inversedMouse.x >= min.x &&
@@ -228,8 +228,8 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
 
     const texture = await getTextureByAsset(item.item.image);
     const uv = inversedMouse.remap(
-        new Vec2(min.x, min.y),
-        new Vec2(max.x, max.y),
+        min,
+        max,
         Vec2.ZERO,
         Vec2.ONE,
     );

@@ -2,7 +2,7 @@
     import { BetterMath } from '$lib/math.js';
     import { AABB2 } from '$lib/math/aabb2.js';
     import type { Mat4 } from '$lib/math/mat4.js';
-    import { Vec2 } from '$lib/math/vec2.js';
+    import { Vec2, type PossibleVec2 } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import { createUserConfig, type Config, type DiscordOverlayApp, type VoiceStateItem } from '../discord-overlay-app.js';
@@ -30,13 +30,13 @@
     const hideAreaMargin = 10;
     const OFFSET = 150;
 
-    function isInHideArea(position: Vec2): boolean {
-        const leftTop = screenToWorld(dimentions.width - hideAreaWidth, hideAreaMargin);
-        const rightBottom = screenToWorld(dimentions.width, dimentions.height - hideAreaMargin);
-        const bounds = new AABB2(
-            new Vec2(leftTop.x, rightBottom.y),
-            new Vec2(rightBottom.x, leftTop.y)
-        );
+    function isInHideArea(position: PossibleVec2): boolean {
+        const leftTop = screenToWorld(dimentions.width - hideAreaWidth, dimentions.height - hideAreaMargin);
+        const rightBottom = screenToWorld(dimentions.width, hideAreaMargin);
+        const bounds = AABB2.from({
+            min: leftTop,
+            max: rightBottom,
+        });
         return bounds.contains(position);
     }
 
@@ -52,7 +52,7 @@
         const a = worldToScreen(position[0], position[1] + OFFSET + rect.height / 2);
         $dragPosition = new Vec2(e.clientX, e.clientY);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
-        user.show = !isInHideArea(new Vec2(position[0], position[1]));
+        user.show = !isInHideArea({ x: position[0], y: position[1]});
 
         const now = performance.now();
         if (now - lastUpdate > 1000 / 60) {
@@ -124,9 +124,9 @@
             const position = user.position || [0, 0];
             const screen = worldToScreen(position[0] + offset[0], position[1] + offset[1]);
             const clamped = screen
-                .add(new Vec2(-rect.width / 2, -rect.height))
-                .max(new Vec2(margin, margin))
-                .min(new Vec2(dimentions.width - rect.width - margin, dimentions.height - rect.height - margin));
+                .add({x: -rect.width / 2, y: -rect.height})
+                .max({x: margin, y: margin})
+                .min({x: dimentions.width - rect.width - margin, y: dimentions.height - rect.height - margin});
             return [clamped.x, clamped.y];
         }
         const invisible = Object.entries($config.users)
@@ -152,17 +152,16 @@
     }
 
     function worldToScreen(x: number, y: number) {
-        const world = new Vec2(x, y);
-        const screen = view.xform2(world);
-        const zeroToOne = screen.scale(0.5).add(new Vec2(0.5, 0.5));
-        const screenSpace = zeroToOne.mul(new Vec2(dimentions.width, dimentions.height));
+        const screen = view.transform2({x, y});
+        const zeroToOne = screen.scale(0.5).add({x: 0.5, y: 0.5});
+        const screenSpace = zeroToOne.mul({x: dimentions.width, y: dimentions.height});
         return screenSpace;
     }
 
     function screenToWorld(x: number, y: number) {
-        const zeroToOne = new Vec2(x, y).mul(new Vec2(1 / dimentions.width, 1 / dimentions.height));
-        const screen = zeroToOne.sub(new Vec2(0.5, 0.5)).scale(2);
-        const world = view.inverse().xform2(screen);
+        const zeroToOne = new Vec2(x, y).mul({x: 1 / dimentions.width, y: 1 / dimentions.height});
+        const screen = zeroToOne.sub({x: 0.5, y: 0.5}).scale(2);
+        const world = view.inverse().transform2(screen);
         return world;
     }
 
@@ -218,38 +217,38 @@
     {#if !lastMouse}
         <Tooltip>
             <p class="action-hint">
-                <i class="ti ti-pointer"/>
+                <i class="ti ti-pointer"></i>
                 <small>
                     クリックで
                 </small>
                 <b>
                     設定
-                    <i class="ti ti-settings"/>
+                    <i class="ti ti-settings"></i>
                 </b>
             </p>
             <p class="action-hint">
-                <i class="ti ti-hand-stop"/>
+                <i class="ti ti-hand-stop"></i>
                 <small>
                     つかんで
                 </small>
                 <b>
                     {$config.align.auto ? '並び替え' : '移動'}
-                    <i class="ti ti-drag-drop"/>
+                    <i class="ti ti-drag-drop"></i>
                 </b>
             </p>
             <p class="action-hint">
-                <i class="ti ti-mouse"/>
+                <i class="ti ti-mouse"></i>
                 <small>
                     スクロールで
                 </small>
                 <b>
                     拡大縮小
-                    <i class="ti ti-zoom-in"/>
+                    <i class="ti ti-zoom-in"></i>
                 </b>
             </p>
         </Tooltip>
     {/if}
-    <i class="grip ti ti-grip-vertical"/>
+    <i class="grip ti ti-grip-vertical"></i>
     <span class="nick">{state.nick}</span>
 </button>
 

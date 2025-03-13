@@ -1,5 +1,4 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
-import { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import type { AvatarAction, Effect } from '../pngtuber/avatar.js';
 
@@ -82,7 +81,7 @@ export async function createShadowEffect(context: GlContext, getOptions: () => t
 
     function render(action: AvatarAction, texture: GlTexture, dest: GlFramebuffer) {
         dest.use(() => {
-            const resolution = [texture.width, texture.height];
+            const resolution = { x: texture.width, y: texture.height };
             const options = getOptions();
             program.use(() => {
                 const position = program.getAttribute('a_position');
@@ -93,7 +92,7 @@ export async function createShadowEffect(context: GlContext, getOptions: () => t
 
                 position.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 texcoord.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
-                resolutionUniform.set(new Vec2(resolution[0], resolution[1]));
+                resolutionUniform.set(resolution);
                 textureUniform.set(texture);
                 const { r, g, b, a } = options.color;
                 colorUniform.set(new Vec4(r, g, b, a));

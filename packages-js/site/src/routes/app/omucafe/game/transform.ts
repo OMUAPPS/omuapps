@@ -1,14 +1,10 @@
 import { Mat4 } from '$lib/math/mat4.js';
-
-export type Vec2 = {
-    x: number,
-    y: number,
-};
+import type { PossibleVec2 } from '$lib/math/vec2.js';
 
 export type Transform = {
-    right: Vec2,
-    up: Vec2,
-    offset: Vec2,
+    right: PossibleVec2,
+    up: PossibleVec2,
+    offset: PossibleVec2,
 }
 
 export function createTransform(): Transform {
@@ -20,8 +16,8 @@ export function createTransform(): Transform {
 }
 
 export type Bounds = {
-    min: Vec2,
-    max: Vec2,
+    min: PossibleVec2,
+    max: PossibleVec2,
 };
 
 export function transformToMatrix(transform: Transform): Mat4 {

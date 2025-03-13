@@ -273,7 +273,7 @@
 
     function setupAvatarTransform(matrices: MatrixStack, flipDirection: Vec2, avatarConfig: AvatarConfig | null) {
         if (avatarConfig) {
-            const position = Vec2.from(avatarConfig.offset);
+            const position = Vec2.fromArray(avatarConfig.offset);
             matrices.translate(position.x, flipDirection.y * position.y, 0);
             matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
             if (avatarConfig.type === 'pngtuber') {
@@ -295,9 +295,9 @@
     }
 
     function worldToScreen(view: Mat4, point: Vec2, width: number, height: number) {
-        const screen = view.xform2(point);
-        const zeroToOne = screen.mul(new Vec2(0.5, -0.5)).add(new Vec2(0.5, 0.5));
-        const screenSpace = zeroToOne.mul(new Vec2(width, height));
+        const screen = view.transform2(point);
+        const zeroToOne = screen.mul({x: 0.5, y: -0.5}).add({x: 0.5, y: 0.5});
+        const screenSpace = zeroToOne.mul({x: width, y: height});
         return screenSpace;
     }
 
@@ -340,23 +340,23 @@
         const matrices = new MatrixStack();
         setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
         const view = matrices.get();
-        const worldBounds = new AABB2(
-            new Vec2(-dimensions.width / 2, -dimensions.height / 2),
-            new Vec2(dimensions.width / 2, dimensions.height / 2),
-        );
-        const screenBounds = new AABB2(
-            worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
-            worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
-        );
-        const visibleBounds = new AABB2(
-            new Vec2(60, dimensions.margin.top),
-            new Vec2(context.canvas.width - dimensions.margin.right, context.canvas.height - dimensions.margin.bottom),
-        );
+        const worldBounds = AABB2.from({
+            min: {x: -dimensions.width / 2, y: -dimensions.height / 2},
+            max: {x: dimensions.width / 2, y: dimensions.height / 2},
+        });
+        const screenBounds = AABB2.from({
+            min: worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
+            max: worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
+        });
+        const visibleBounds = AABB2.from({
+            min: {x: 60, y: dimensions.margin.top},
+            max: {x: context.canvas.width - dimensions.margin.right, y: context.canvas.height - dimensions.margin.bottom},
+        });
         const a = 20;
         const c = 100;
         const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
         const color = PALETTE_HEX.OUTLINE_2;
-        const directions = [
+        const directions: {origin: Vec2, direction: Vec2, name: string}[] = [
             {origin: bounds.min, direction: new Vec2(-1, -1), name: '左上'},
             {origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1), name: '左下'},
             {origin: bounds.max, direction: new Vec2(1, 1), name: '右下'},
@@ -417,18 +417,18 @@
         const matrices = new MatrixStack();
         setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
         const view = matrices.get();
-        const worldBounds = new AABB2(
-            new Vec2(-dimensions.width / 2, -dimensions.height / 2),
-            new Vec2(dimensions.width / 2, dimensions.height / 2),
-        );
-        const screenBounds = new AABB2(
-            worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
-            worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
-        );
-        const visibleBounds = new AABB2(
-            new Vec2(60, dimensions.margin.top),
-            new Vec2(context.canvas.width - dimensions.margin.right, context.canvas.height - dimensions.margin.bottom),
-        );
+        const worldBounds = AABB2.from({
+            min: { x: -dimensions.width / 2, y: -dimensions.height / 2 },
+            max: { x: dimensions.width / 2, y: dimensions.height / 2 },
+        });
+        const screenBounds = AABB2.from({
+            min: worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
+            max: worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
+        });
+        const visibleBounds = AABB2.from({
+            min: {x: 60, y: dimensions.margin.top},
+            max: {x: context.canvas.width - dimensions.margin.right, y: context.canvas.height - dimensions.margin.bottom},
+        });
         const a = 20;
         const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
         const center = bounds.center();
@@ -513,7 +513,7 @@
                 continue;
             }
             const position = lastPositions.get(id) || new Vec2(0, 0);
-            const renderPosition = view.xform2(position);
+            const renderPosition = view.transform2(position);
             const fontSize = 28 * scaleFactor;
             const offset = $config.align.vertical === 'start' ? -44 : 74 * scaleFactor;
             context.font = `bold ${fontSize}px "Noto Sans JP"`;
@@ -610,10 +610,10 @@
             return user.position;
         }
         const { align: {horizontal, vertical, padding, spacing, scaling, direction} } = config;
-        const bounds = new AABB2(
-            new Vec2(-dimensions.width / 2, -dimensions.height / 2).add(new Vec2(padding.left, padding.top)),
-            new Vec2(dimensions.width / 2, dimensions.height / 2).add(new Vec2(-padding.right, -padding.bottom)),
-        );
+        const bounds = AABB2.from({
+            min: new Vec2(-dimensions.width / 2, -dimensions.height / 2).add({x: padding.left, y: padding.top}),
+            max: new Vec2(dimensions.width / 2, dimensions.height / 2).add({x: -padding.right, y:-padding.bottom}),
+        });
         const ALIGN = {
             start: 0,
             middle: 0.5,
@@ -628,18 +628,18 @@
         const offsetDirection = new Vec2(
             direction === 'horizontal' ? 1 : 0,
             direction === 'vertical' ? 1 : 0,
-        ).mul(center ? Vec2.ONE : new Vec2(
-            {
+        ).mul(center ? Vec2.ONE : {
+            x: {
                 start: 1,
                 middle: 1,
                 end: -1,
             }[horizontal],
-            {
+            y: {
                 start: 1,
                 middle: 1,
                 end: -1,
             }[vertical],
-        ));
+        });
         const scale = scaling ? Math.min(1, 4 / length) : 1;
         const offset = offsetDirection.scale(spacing * scale);
         const position = start

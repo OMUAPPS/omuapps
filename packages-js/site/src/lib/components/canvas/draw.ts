@@ -1,4 +1,3 @@
-import { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlShader, GlTexture } from './glcontext.js';
 import type { Matrices } from './matrices.js';
@@ -247,10 +246,10 @@ export class Draw {
 
         const width = right - left;
         const height = bottom - top;
-        const uvMargin = new Vec2(
-            outlineWidth / width,
-            outlineWidth / height,
-        );
+        const uvMargin = {
+            x: outlineWidth / width,
+            y: outlineWidth / height,
+        };
         
         this.setMesh(new Float32Array([
             left - outlineWidth, top - outlineWidth, 0,
@@ -274,7 +273,7 @@ export class Draw {
             this.textureOutlineProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
             this.textureOutlineProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.textureOutlineProgram.getUniform('u_outlineColor').asVec4().set(color);
-            this.textureOutlineProgram.getUniform('u_resolution').asVec2().set(new Vec2(right - left, bottom - top));
+            this.textureOutlineProgram.getUniform('u_resolution').asVec2().set({x: right - left, y: bottom - top});
             const mvp = this.matrices.get();
             this.textureOutlineProgram.getUniform('u_outlineWidth').asFloat().set(outlineWidth / mvp.m00 / gl.canvas.width);
             

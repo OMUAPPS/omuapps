@@ -160,7 +160,7 @@ export async function init(ctx: GlContext) {
             },
             bounds: {
                 min: Vec2.ZERO,
-                max: new Vec2(counterTex.width, counterTex.height),
+                max: { x: counterTex.width, y: counterTex.height },
             },
             behaviors: {
                 fixed: createFixed(),
@@ -169,7 +169,7 @@ export async function init(ctx: GlContext) {
             transform: {
                 right: Vec2.RIGHT,
                 up: Vec2.UP,
-                offset: new Vec2(0, -COUNTER_HEIGHT),
+                offset: { x: 0, y: -COUNTER_HEIGHT },
             }
         });
         createItemState(context, {
@@ -233,9 +233,9 @@ async function updateMouse() {
     const scene = context.getScene();
     const glMouse = mouse.client.remap(
         Vec2.ZERO,
-        new Vec2(gl.canvas.width, gl.canvas.height),
-        new Vec2(-1, 1),
-        new Vec2(1, -1),
+        {x: gl.canvas.width, y: gl.canvas.height},
+        {x: -1, y: 1},
+        {x: 1, y: -1},
     );
     mouse.deltaGl = glMouse.sub(mouse.gl);
     mouse.gl = glMouse;
@@ -285,14 +285,14 @@ async function updateEffects() {
                 const transform = getItemStateTransform(item);
                 const bounds = item.bounds;
                 const renderBounds = new AABB2(
-                    transform.xform2(new Vec2(bounds.min.x, bounds.min.y)),
-                    transform.xform2(new Vec2(bounds.max.x, bounds.max.y)),
+                    transform.transform2(bounds.min),
+                    transform.transform2(bounds.max),
                 )
                 
                 const count = Math.min(remaining, elapsed / life * maxCount / 100);
                 for (let i = 0; i < Math.floor(count); i++) {
                     effect.lastSpawn = performance.now();
-                    const pos = renderBounds.at(new Vec2(Math.random(), Math.random()));
+                    const pos = renderBounds.at({x: Math.random(), y: Math.random()});
                     effect.particles.push({
                         x: pos.x,
                         y: pos.y,
@@ -349,10 +349,10 @@ async function renderScreen() {
         const offset = new Vec2(
             (min.x + max.x) / 2,
             (min.y + max.y) / 2,
-        ).mul(new Vec2(
-            transform.m00,
-            transform.m11,
-        ));
+        ).mul({
+            x: transform.m00,
+            y: transform.m11,
+        });
         matrices.view.translate(-offset.x, -offset.y, 0);
         await renderItemState(createItemState(context, {
             id: 'preview',

@@ -1,6 +1,6 @@
 import { invLerp, lerp } from './math.js';
 
-type PossibleVec2 = Vec2 | [number, number] | { x: number, y: number };
+export type PossibleVec2 = Vec2 | { x: number, y: number };
 
 export class Vec2 {
     public static ZERO = new Vec2(0, 0);
@@ -15,11 +15,11 @@ export class Vec2 {
         public readonly y: number,
     ) {}
 
-    public lerp(other: Vec2, t: number): Vec2 {
+    public lerp(other: PossibleVec2, t: number): Vec2 {
         return new Vec2(lerp(this.x, other.x, t), lerp(this.y, other.y, t));
     }
 
-    public remap(minIn: Vec2, maxIn: Vec2, minOut: Vec2, maxOut: Vec2): Vec2 {
+    public remap(minIn: PossibleVec2, maxIn: PossibleVec2, minOut: PossibleVec2, maxOut: PossibleVec2): Vec2 {
         return new Vec2(
             lerp(minOut.x, maxOut.x, invLerp(minIn.x, maxIn.x, this.x)),
             lerp(minOut.y, maxOut.y, invLerp(minIn.y, maxIn.y, this.y)),
@@ -30,23 +30,23 @@ export class Vec2 {
         return new Vec2(this.x * scalar, this.y * scalar);
     }
 
-    public mul(other: Vec2): Vec2 {
+    public mul(other: PossibleVec2): Vec2 {
         return new Vec2(this.x * other.x, this.y * other.y);
     }
 
-    public div(other: Vec2): Vec2 {
+    public div(other: PossibleVec2): Vec2 {
         return new Vec2(this.x / other.x, this.y / other.y);
     }
 
-    public dot(other: Vec2): number {
+    public dot(other: PossibleVec2): number {
         return this.x * other.x + this.y * other.y;
     }
 
-    public add(other: Vec2): Vec2 {
+    public add(other: PossibleVec2): Vec2 {
         return new Vec2(this.x + other.x, this.y + other.y);
     }
 
-    public sub(other: Vec2): Vec2 {
+    public sub(other: PossibleVec2): Vec2 {
         return new Vec2(this.x - other.x, this.y - other.y);
     }
 
@@ -54,15 +54,15 @@ export class Vec2 {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
-    public max(other: Vec2): Vec2 {
+    public max(other: PossibleVec2): Vec2 {
         return new Vec2(Math.max(this.x, other.x), Math.max(this.y, other.y));
     }
 
-    public min(other: Vec2): Vec2 {
+    public min(other: PossibleVec2): Vec2 {
         return new Vec2(Math.min(this.x, other.x), Math.min(this.y, other.y));
     }
 
-    public distance(other: Vec2): number {
+    public distance(other: PossibleVec2): number {
         return this.sub(other).length();
     }
 
@@ -87,6 +87,10 @@ export class Vec2 {
 
     public toArray(): [number, number] {
         return [this.x, this.y];
+    }
+
+    public static fromArray(arr: [number, number]): Vec2 {
+        return new Vec2(arr[0], arr[1]);
     }
 
     public static from(obj: PossibleVec2): Vec2 {

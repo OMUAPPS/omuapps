@@ -1,5 +1,5 @@
 import type { Quaternion } from './quaternion.js';
-import { Vec2 } from './vec2.js';
+import { Vec2, type PossibleVec2 } from './vec2.js';
 import { Vec3 } from './vec3.js';
 
 export class Mat4 {
@@ -230,14 +230,14 @@ export class Mat4 {
         );
     }
 
-    public xform3(point: Vec3): Vec3 {
+    public transform3(point: Vec3): Vec3 {
         const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30;
         const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31;
         const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32;
         return new Vec3(x, y, z);
     }
 
-    public xform2(point: Vec2): Vec2 {
+    public transform2(point: PossibleVec2): Vec2 {
         const x = this.m00 * point.x + this.m10 * point.y + this.m30;
         const y = this.m01 * point.x + this.m11 * point.y + this.m31;
         return new Vec2(x, y);

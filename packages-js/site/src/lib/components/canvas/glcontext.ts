@@ -1,7 +1,7 @@
 import type { Mat2 } from '$lib/math/mat2.js';
 import type { Mat3 } from '$lib/math/mat3.js';
 import type { Mat4 } from '$lib/math/mat4.js';
-import type { Vec2 } from '$lib/math/vec2.js';
+import type { PossibleVec2 } from '$lib/math/vec2.js';
 import type { Vec3 } from '$lib/math/vec3.js';
 import type { Vec4 } from '$lib/math/vec4.js';
 
@@ -166,7 +166,7 @@ export class ProgramUniform {
         });
     }
 
-    public asVec2(): Uniform<Vec2> {
+    public asVec2(): Uniform<PossibleVec2> {
         return this.as('vec2', (value) => {
             this.gl.uniform2f(this.location, value.x, value.y);
         });
