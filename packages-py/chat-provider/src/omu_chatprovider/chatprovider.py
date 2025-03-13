@@ -22,6 +22,7 @@ omu = Omu(APP)
 chat = Chat(omu)
 
 provider_services: dict[Identifier, ProviderService] = {}
+provider_channels: dict[Identifier, list[Identifier]] = {}
 chat_services: dict[Identifier, ChatService] = {}
 ctx = ProviderContext()
 
@@ -31,6 +32,7 @@ async def register_services():
     for service_class in retrieve_services():
         service = await service_class.create(omu, chat)
         provider_services[service.provider.id] = service
+        provider_channels[service.provider.id] = []
         await chat.providers.add(service.provider)
 
 
@@ -43,14 +45,14 @@ def get_provider(channel: Channel | Room) -> ProviderService | None:
 async def update_channel(channel: Channel, service: ProviderService):
     try:
         if not channel.active:
-            await service.stop_channel(ctx, channel)
+            await stop_channel(channel, service)
             for key, chat_service in tuple(chat_services.items()):
                 if chat_service.room.channel_id == channel.id:
                     await chat_service.stop()
                     del chat_services[key]
                     logger.info(f"Stopped chat for {chat_service.room.key()}")
             return
-        await service.start_channel(ctx, channel)
+        await start_channel(channel, service)
         fetched_rooms = await service.fetch_rooms(channel)
         for item in fetched_rooms:
             if item.room.id in chat_services:
@@ -63,6 +65,20 @@ async def update_channel(channel: Channel, service: ProviderService):
         logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
     except Exception as e:
         logger.opt(exception=e).error(f"Error updating channel {channel.key()}")
+
+
+async def start_channel(channel: Channel, service: ProviderService):
+    if channel.id in provider_channels[channel.provider_id]:
+        return
+    await service.start_channel(ctx, channel)
+    provider_channels[channel.provider_id].append(channel.id)
+
+
+async def stop_channel(channel: Channel, service: ProviderService):
+    if channel.id not in provider_channels[channel.provider_id]:
+        return
+    await service.stop_channel(ctx, channel)
+    provider_channels[channel.provider_id].remove(channel.id)
 
 
 @chat.on(events.channel.add)
@@ -97,7 +113,7 @@ async def add_channels():
         provider = get_provider(channel)
         if provider is None:
             continue
-        await provider.start_channel(ctx, channel)
+        await start_channel(channel, provider)
 
 
 async def check_channels():
@@ -116,7 +132,8 @@ async def should_remove(room: Room, provider_service: ProviderService):
     if channel and not channel.active:
         return True
     try:
-        return not await provider_service.is_online(room)
+        online = await provider_service.is_online(room)
+        return not online
     except Exception as e:
         logger.opt(exception=e).error(f"Error checking if room {room.key()} should be removed")
         return True
