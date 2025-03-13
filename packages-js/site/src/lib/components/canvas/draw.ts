@@ -41,13 +41,14 @@ const TEXTURE_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 
 uniform sampler2D u_texture;
+uniform vec4 u_color;
 
 in vec2 v_texcoord;
 
 out vec4 outColor;
 
 void main() {
-    outColor = texture(u_texture, v_texcoord);
+    outColor = texture(u_texture, v_texcoord) * u_color;
 }
 `;
 
@@ -173,7 +174,7 @@ export class Draw {
         });
     }
 
-    public texture(left: number, top: number, right: number, bottom: number, texture: GlTexture): void {
+    public texture(left: number, top: number, right: number, bottom: number, texture: GlTexture, color = Vec4.ONE): void {
         const { gl } = this.glContext;
         
         this.setMesh(new Float32Array([
@@ -197,7 +198,8 @@ export class Draw {
             this.textureProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
             this.textureProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
             this.textureProgram.getUniform('u_texture').asSampler2D().set(texture);
-            
+            this.textureProgram.getUniform('u_color').asVec4().set(color);
+
             const position = this.textureProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
             const texcoord = this.textureProgram.getAttribute('a_texcoord');

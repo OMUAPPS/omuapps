@@ -1,5 +1,3 @@
-import type { Draw } from '$lib/components/canvas/draw.js';
-import type { GlContext } from '$lib/components/canvas/glcontext.js';
 import type { Matrices } from '$lib/components/canvas/matrices.js';
 import { ActionHandler, type Action } from './behavior/action.js';
 import { ContainerHandler, type Container } from './behavior/container.js';
@@ -34,10 +32,10 @@ export type BehaviorAction<T extends keyof Behaviors> = {
 export type BehaviorFunction<T extends keyof Behaviors, U> = (context: KitchenContext, action: BehaviorAction<T>, args: U) => Promise<void> | void;
 
 export type BehaviorHandler<T extends keyof Behaviors> = Partial<{
-    render: BehaviorFunction<T, { gl: GlContext, matrices: Matrices, draw: Draw }>,
+    render: BehaviorFunction<T, { matrices: Matrices }>,
     handleDropChild: BehaviorFunction<T, { child: ItemState }>,
     handleClickChild: BehaviorFunction<T, { child: ItemState }>,
     handleClick: BehaviorFunction<T, { x: number, y: number }>,
     canItemBeHeld: BehaviorFunction<T, { canBeHeld: boolean }>,
-    renderItemHoverTooltip: BehaviorFunction<T, { x: number, y: number }>,
+    renderItemHoverTooltip: BehaviorFunction<T, { matrices: Matrices }>,
 }>;

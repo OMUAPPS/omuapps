@@ -1,10 +1,9 @@
-import type { Draw } from '$lib/components/canvas/draw.js';
-import type { GlContext } from '$lib/components/canvas/glcontext.js';
 import type { Matrices } from '$lib/components/canvas/matrices.js';
 import { Vec2 } from '$lib/math/vec2.js';
-import type { Asset } from '../asset.js';
+import { getTextureByAsset, type Asset } from '../asset.js';
 import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
-import { attachChildren, detachChildren, getItemStateTransform, type ItemState } from '../item-state.js';
+import { draw, matrices } from '../game.js';
+import { attachChildren, detachChildren, getItemStateTransform, renderItemState, type ItemState } from '../item-state.js';
 import type { KitchenContext } from '../kitchen.js';
 import { createTransform, transformToMatrix, type Transform } from '../transform.js';
 
@@ -26,11 +25,9 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
     async render(
         context: KitchenContext,
         action: BehaviorAction<'container'>,
-        args: { gl: GlContext, matrices: Matrices, draw: Draw },
+        args: { matrices: Matrices },
     ) {
-        const { renderItem, getTextureByAsset } = context;
         const { item, behavior } = action;
-        const { matrices, draw } = args;
         for (const child of behavior.items
             .map((id): ItemState | undefined => context.items[id])
             .filter((entry): entry is ItemState => !!entry)
@@ -39,7 +36,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 const maxB = b.bounds.max;
                 return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
             })) {
-            await renderItem(child, {
+            await renderItemState(child, {
                 parent: item,
             });
         }
@@ -73,7 +70,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             child.id,
         ];
         attachChildren(item, child);
-        const containerTransform = getItemStateTransform(context, item);
+        const containerTransform = getItemStateTransform(item);
         const childTransform = transformToMatrix(child.transform);
         const inverse = containerTransform.inverse();
         const newMatrix = inverse.multiply(childTransform);
@@ -93,7 +90,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         const { child } = args;
         behavior.items = behavior.items.filter((id) => id !== child.id);
         detachChildren(item, child);
-        const containerTransform = getItemStateTransform(context, item);
+        const containerTransform = getItemStateTransform(item);
         const heldTransform = transformToMatrix(child.transform);
         const newMatrix = containerTransform.multiply(heldTransform);
         child.transform = {

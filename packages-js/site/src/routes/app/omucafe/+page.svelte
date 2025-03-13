@@ -44,7 +44,7 @@
 <AppPage />
 <main>
     {#await promise then }
-        <KitchenRenderer />
+        <KitchenRenderer side="client" />
         <div class="scene">
             <svelte:component this={SCENES[$scene.type]} context={{
                 time: performance.now(),

@@ -1,6 +1,8 @@
+import type { GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Identifier } from '@omujs/omu';
 import { APP_ID } from '../app.js';
 import { getGame } from '../omucafe-app.js';
+import { glContext } from './game.js';
 
 export type Asset = {
     type: 'url',
@@ -61,4 +63,79 @@ export async function fetchAudio(url: string | URL): Promise<HTMLAudioElement> {
         }));
     }
     return await audios.get(src)!;
+}
+
+export type Texture = {
+    tex: GlTexture,
+    width: number,
+    height: number,
+    image: HTMLImageElement,
+    pixels: Uint8Array,
+};
+
+export const textures: Map<string, Texture> = new Map();
+
+async function getTexture(key: string, image: HTMLImageElement): Promise<Texture> {
+    const existing = textures.get(key);
+    if (existing) {
+        return existing;
+    }
+    const tex = glContext.createTexture();
+    tex.use(() => {
+        tex.setImage(image, {
+            width: image.width,
+            height: image.height,
+            internalFormat: 'rgba',
+            format: 'rgba',
+        });
+        tex.setParams({
+            minFilter: 'nearest',
+            magFilter: 'nearest',
+            wrapS: 'clamp-to-edge',
+            wrapT: 'clamp-to-edge',
+        });
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const context = canvas.getContext('2d');
+    if (!context) {
+        throw new Error('Failed to get 2d context');
+    }
+    context.drawImage(image, 0, 0);
+    const pixels = new Uint8Array(image.width * image.height * 4);
+    context.getImageData(0, 0, image.width, image.height).data.forEach((value, index) => {
+        pixels[index] = value;
+    });
+
+    const texture: Texture = {
+        tex: tex,
+        width: image.width,
+        height: image.height,
+        image,
+        pixels,
+    };
+    textures.set(key, texture);
+    return texture;
+}
+
+export async function getTextureByUri(uri: string): Promise<Texture> {
+    const existing = textures.get(uri);
+    if (existing) {
+        return existing;
+    }
+    const image = new Image();
+    image.src = uri;
+    await image.decode();
+    return getTexture(uri, image);
+}
+
+export async function getTextureByAsset(asset: Asset): Promise<Texture> {
+    const key = asset.type === 'url' ? asset.url : asset.id;
+    const existing = textures.get(key);
+    if (existing) {
+        return existing;
+    }
+    const image = await getAsset(asset).then(fetchImage);
+    return getTexture(key, image);
 }

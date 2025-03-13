@@ -1,6 +1,7 @@
 import type { Asset } from '../game/asset.js';
 import { builder } from '../game/script.js';
 import { DEFAULT_CONFIG, type Config } from '../omucafe-app.js';
+import bubble from './bubble.png';
 import fries from './fries.png';
 import fry from './fry.mp3';
 import fryer from './fryer.png';
@@ -128,8 +129,12 @@ export const EXAMPLE: Config = {
                 audio: {
                     type: 'audio',
                     asset: asset(fry),
-                    volume: 0.3,
+                    volume: 0.1,
                 },
+                particle: {
+                    type: 'particle',
+                    asset: asset(bubble),
+                }
             }
         },
     },
