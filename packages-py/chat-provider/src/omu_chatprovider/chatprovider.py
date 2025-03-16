@@ -70,14 +70,20 @@ async def update_channel(channel: Channel, service: ProviderService):
 async def start_channel(channel: Channel, service: ProviderService):
     if channel.id in provider_channels[channel.provider_id]:
         return
-    await service.start_channel(ctx, channel)
+    try:
+        await service.start_channel(ctx, channel)
+    except Exception as e:
+        logger.opt(exception=e).error(f"Error starting channel {channel.key()}")
     provider_channels[channel.provider_id].append(channel.id)
 
 
 async def stop_channel(channel: Channel, service: ProviderService):
     if channel.id not in provider_channels[channel.provider_id]:
         return
-    await service.stop_channel(ctx, channel)
+    try:
+        await service.stop_channel(ctx, channel)
+    except Exception as e:
+        logger.opt(exception=e).error(f"Error stopping channel {channel.key()}")
     provider_channels[channel.provider_id].remove(channel.id)
 
 
