@@ -144,7 +144,7 @@
                 -dimensions.height / 2,
                 dimensions.width / 2,
                 dimensions.height / 2,
-                PALETTE_RGB.BACKGROUND_3);
+                PALETTE_RGB.OUTLINE_1);
         }
 
         const effects: Effect[] = [

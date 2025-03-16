@@ -267,10 +267,11 @@
     .settings {
         position: absolute;
         background: var(--color-bg-2);
-        filter: drop-shadow(3px 5px 0 rgba(0, 0, 0, 0.0621)) drop-shadow(-3px -5px 10px rgba(0, 0, 0, 0.1621));
+        filter: drop-shadow(3px 5px 0 rgba(0, 0, 0, 0.0621)) drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.0621));
         outline: 1px solid var(--color-outline);
         border-radius: 0.25rem;
         z-index: 2;
+        padding: 2rem 3.5rem;
 
         &.side-right {
             animation: slide-in-right 0.0621s forwards;
@@ -283,7 +284,6 @@
                 transform: translate(50%, -50%);
                 border: 0.5rem solid transparent;
                 border-left-color: var(--color-outline);
-                text-shadow: 0 0 0.25rem rgba(0, 0, 0, 0.1621);
             }
             
             &::after {
