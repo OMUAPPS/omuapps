@@ -157,7 +157,7 @@
                 </button>
                 <button class:active={tab === 'visual'} on:click={() => (tab = tab === 'visual' ? null : 'visual')}>
                     <i class="ti ti-eye-check"></i>
-                    見た目を調整
+                    見た目の調整
                     <i class="ti ti-chevron-{tab === 'visual' ? 'up' : 'down'}"></i>
                 </button>
             </div>
