@@ -12,13 +12,13 @@
         Button,
         ButtonMini,
         FileDrop,
+        Slider,
         Tooltip,
         setClient,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, APP_ID } from './app.js';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
-    import Slider from './components/Slider.svelte';
     import { ReactionApp } from './reaction-app.js';
 
     const omu = new Omu(APP);

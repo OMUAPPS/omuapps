@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Slider } from '@omujs/ui';
     import type { DiscordOverlayApp } from '../discord-overlay-app.js';
     import EffectControls from './EffectControls.svelte';
 
@@ -47,39 +48,24 @@
 </h2>
 <section>
     <span>
-        <label>
-            左
-            <hr>
-            <input type="range" bind:value={$config.align.padding.left} min="0" step="1" max="300" /><p>{$config.align.padding.left}</p>
-        </label>
+        左
+        <Slider bind:value={$config.align.padding.left} min={0} max={500} step={1} />
     </span>
     <span>
-        <label>
-            上
-            <hr>
-            <input type="range" bind:value={$config.align.padding.top} min="0" step="1" max="300" /><p>{$config.align.padding.top}</p>
-        </label>
+        上
+        <Slider bind:value={$config.align.padding.top} min={0} max={500} step={1} />
     </span>
     <span>
-        <label>
-            右
-            <hr>
-            <input type="range" bind:value={$config.align.padding.right} min="0" step="1" max="300" /><p>{$config.align.padding.right}</p>
-        </label>
+        右
+        <Slider bind:value={$config.align.padding.right} min={0} max={500} step={1} />
     </span>
     <span>
-        <label>
-            下
-            <hr>
-            <input type="range" bind:value={$config.align.padding.bottom} min="0" step="1" max="300" /><p>{$config.align.padding.bottom}</p>
-        </label>
+        下
+        <Slider bind:value={$config.align.padding.bottom} min={0} max={500} step={1} />
     </span>
     <span>
-        <label>
-            間隔
-            <hr>
-            <input type="range" bind:value={$config.align.spacing} min="0" step="1" max="500" /><p>{$config.align.spacing}</p>
-        </label>
+        間隔
+        <Slider bind:value={$config.align.spacing} min={0} max={500} step={1} />
     </span>
 </section>
 
@@ -146,9 +132,5 @@
         &:hover {
             accent-color: var(--color-1);
         }
-    }
-
-    input[type='range'] {
-        width: 50%;
     }
 </style>

@@ -1,15 +1,23 @@
 <script lang="ts">
-    import { invLerp, lerp } from '$lib/math/math.js';
-
     export let value: number;
     export let min: number;
     export let max: number;
     export let step: number;
     export let type: 'normal' | 'percent' = 'normal';
+
+    function lerp(min: number, max: number, t: number): number {
+        return min + (max - min) * t;
+    }
+
+    function invLerp(min: number, max: number, value: number): number {
+        return (value - min) / (max - min);
+    }
+    
     $: percentValue = Math.round(invLerp(min, max, value) * 100);
 </script>
 
 <div class="setting">
+    <input type="range" id="scale" bind:value {min} {max} {step} />
     <span class="label">
         <label for="scale"><slot /></label>
         {#if type === 'normal'}
@@ -27,14 +35,12 @@
             <span>%</span>
         {/if}
     </span>
-    <input type="range" id="scale" bind:value {min} {max} {step} />
 </div>
 
 <style lang="scss">
     .setting {
         display: flex;
         flex-direction: column;
-        gap: 4px;
         align-items: center;
         justify-content: space-between;
         width: 10rem;
@@ -43,6 +49,7 @@
             width: 100%;
             display: flex;
             gap: 0.1rem;
+            font-size: 0.721rem;
             align-items: baseline;
 
             > label {
@@ -58,7 +65,7 @@
         input[type='number'] {
             position: relative;
             appearance: none;
-            height: 1.5rem;
+            height: 1rem;
             background: none;
             border: none;
             text-align: end;
@@ -69,6 +76,11 @@
                 margin: 0;
             }
 
+
+            &:hover {
+                border-bottom: 1px solid var(--color-1);
+            }
+            
             &:focus {
                 outline: none;
                 border-bottom: 2px solid var(--color-1);
