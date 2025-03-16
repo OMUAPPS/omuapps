@@ -3440,7 +3440,7 @@
         "query": "query SubscribedContext($id: ID, $login: String) {\n  user(id: $id, login: $login) {\n    id\n    self {\n      subscriptionBenefit {\n        id\n      }\n    }\n  }\n}\n"
     },
     "ChannelRoot_AboutPanel": {
-        "hash": "6d64f7d7d34ee71c31f90cbe9597610eb27b2cb45394c2f888418c0fe241da37",
+        "hash": "0df42c4d26990ec1216d0b815c92cc4a4a806e25b352b66ac1dd91d5a1d59b80",
         "query": "query ChannelRoot_AboutPanel($channelLogin: String!, $skipSchedule: Boolean!, $includeIsDJ: Boolean!) {\n  currentUser {\n    id\n    login\n  }\n  user(login: $channelLogin) {\n    id\n    description\n    displayName\n    primaryColorHex\n    profileImageURL(width: 300)\n    followers {\n      totalCount\n    }\n    roles {\n      isPartner\n      isAffiliate\n      isStaff\n      isParticipatingDJ @include(if: $includeIsDJ)\n    }\n    channel {\n      id\n      socialMedias {\n        ...SocialMedia\n      }\n      schedule @skip(if: $skipSchedule) {\n        id\n        nextSegment {\n          id\n          startAt\n          hasReminder\n        }\n      }\n    }\n    lastBroadcast {\n      id\n      game {\n        id\n        displayName\n      }\n    }\n    primaryTeam {\n      id\n      name\n      displayName\n    }\n    videos(first: 30, sort: TIME, type: ARCHIVE) {\n      edges {\n        ...userBioVideo\n      }\n    }\n  }\n}\n\nfragment userBioVideo on VideoEdge {\n  node {\n    id\n    game {\n      id\n      displayName\n    }\n    status\n  }\n}\n\nfragment SocialMedia on SocialMedia {\n  id\n  name\n  title\n  url\n}\n"
     },
     "Settings_ProfilePage_AccountInfoSettings": {
@@ -3792,7 +3792,7 @@
         "query": "query ChannelSupportButtons($channelLogin: String!) {\n  user(login: $channelLogin) {\n    id\n    displayName\n    self {\n      follower {\n        disableNotifications\n      }\n    }\n  }\n}\n"
     },
     "StreamMetadata": {
-        "hash": "8253940f3783078009bc3feab8a8d71917b7554bc2632308c421b812e409b253",
+        "hash": "b57f9b910f8cd1a4659d894fe7550ccc81ec9052c01e438b290fd66a040b9b93",
         "query": "query StreamMetadata($channelLogin: String!, $includeIsDJ: Boolean!) {\n  user(login: $channelLogin) {\n    id\n    primaryColorHex\n    roles {\n      isPartner\n      isParticipatingDJ @include(if: $includeIsDJ)\n    }\n    profileImageURL(width: 70)\n    primaryTeam {\n      id\n      name\n      displayName\n    }\n    channel {\n      id\n    }\n    lastBroadcast {\n      id\n      title\n    }\n    stream {\n      id\n      type\n      createdAt\n      game {\n        id\n        slug\n        name\n      }\n    }\n  }\n}\n"
     },
     "StreamCategoryLinkCategorySlugByID": {
