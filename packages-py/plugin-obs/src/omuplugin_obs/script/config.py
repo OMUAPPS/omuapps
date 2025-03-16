@@ -4,6 +4,7 @@ from typing import NotRequired, TypedDict
 
 from loguru import logger
 from omuplugin_obs.const import PLUGIN_ID
+from omuserver.helper import start_compressing_logs
 
 
 class LaunchCommand(TypedDict):
@@ -49,6 +50,7 @@ def get_log_path() -> Path:
         return Path(log_path)
     log_path = Path.home() / ".omuapps" / "logs"
     log_path.mkdir(exist_ok=True, parents=True)
+    start_compressing_logs(log_path)
     return log_path
 
 

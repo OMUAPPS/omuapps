@@ -1,7 +1,9 @@
 import datetime
 import io
 import sys
+import threading
 import time
+import zipfile
 from collections.abc import Generator
 from pathlib import Path
 
@@ -36,7 +38,12 @@ def _get_log_path(name: str, base_dir=LOG_DIRECTORY) -> Path:
     return path
 
 
-def _cleanup_logs(base_dir: Path) -> None:
+def cleanup_logs(base_dir: Path) -> None:
+    _cleanup_old_logs(base_dir)
+    _remove_empty_folders(base_dir)
+
+
+def _cleanup_old_logs(base_dir: Path) -> None:
     SEVEN_DAYS_IN_SECONDS = 60 * 60 * 24 * 7
     for file in base_dir.glob("**/*"):
         try:
@@ -52,6 +59,9 @@ def _cleanup_logs(base_dir: Path) -> None:
             logger.warning(f"Permission denied to delete log file {file}")
         except Exception as e:
             logger.opt(exception=e).error(f"Error deleting log file {file}")
+
+
+def _remove_empty_folders(base_dir: Path) -> None:
     for file in base_dir.glob("**/*"):
         try:
             if not file.is_dir():
@@ -66,7 +76,53 @@ def _cleanup_logs(base_dir: Path) -> None:
             logger.opt(exception=e).error(f"Error deleting log file {file}")
 
 
-def setup_logger(name: str | App | Identifier, base_dir=LOG_DIRECTORY) -> None:
+COMPRESSING_THREAD: threading.Thread | None = None
+
+
+def start_compressing_logs(base_dir: Path) -> None:
+    global COMPRESSING_THREAD
+    if COMPRESSING_THREAD and COMPRESSING_THREAD.is_alive():
+        COMPRESSING_THREAD.join()
+    thread = threading.Thread(target=compress_old_logs, args=(base_dir,))
+    thread.daemon = True
+    thread.start()
+    COMPRESSING_THREAD = thread
+
+
+def compress_old_logs(base_dir: Path) -> None:
+    now = datetime.datetime.now()
+    for folder in base_dir.glob("*"):
+        try:
+            if not folder.is_dir():
+                continue
+            date = datetime.datetime.strptime(folder.name, "%Y-%m-%d")
+            elapsed = now - date
+            if elapsed.days < 2:
+                continue
+            logs = list(folder.glob("*.log"))
+            if not logs:
+                continue
+            dest_archive = folder.with_suffix(".zip")
+            if dest_archive.exists():
+                logger.warning(f"Log archive {dest_archive} already exists")
+            with zipfile.ZipFile(dest_archive, mode="w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as f_out:
+                for log_file in logs:
+                    relative_path = log_file.relative_to(folder)
+                    f_out.write(log_file, arcname=relative_path)
+            for log_file in logs:
+                log_file.unlink()
+            folder.rmdir()
+        except ValueError:
+            pass
+        except (FileNotFoundError, IsADirectoryError):
+            pass
+        except PermissionError:
+            logger.warning(f"Permission denied to delete log file {folder}")
+        except Exception as e:
+            logger.opt(exception=e).error(f"Error deleting log file {folder}")
+
+
+def setup_logger(name: str | App | Identifier, base_dir=LOG_DIRECTORY) -> Path:
     if isinstance(sys.stdout, io.TextIOWrapper):
         sys.stdout.reconfigure(encoding="utf-8")
     if isinstance(sys.stderr, io.TextIOWrapper):
@@ -83,10 +139,10 @@ def setup_logger(name: str | App | Identifier, base_dir=LOG_DIRECTORY) -> None:
         colorize=False,
         format=("{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | " "{name}:{function}:{line} - {message}"),
         retention="7 days",
-        compression="zip",
     )
     logger.info(f"Logging to {log_file_path}")
-    _cleanup_logs(base_dir)
+    cleanup_logs(base_dir)
+    return log_file_path
 
 
 def safe_path(root_path: Path, input_path: Path) -> Path:

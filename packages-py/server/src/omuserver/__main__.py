@@ -10,7 +10,12 @@ from loguru import logger
 from omu.address import Address
 
 from omuserver.config import Config
-from omuserver.helper import find_processes_by_executable, find_processes_by_port, setup_logger
+from omuserver.helper import (
+    find_processes_by_executable,
+    find_processes_by_port,
+    setup_logger,
+    start_compressing_logs,
+)
 from omuserver.migration import migrate
 from omuserver.server.server import Server
 from omuserver.version import VERSION
@@ -103,7 +108,8 @@ def main(
 
 
 if __name__ == "__main__":
-    setup_logger("omuserver")
+    log_dir = setup_logger("omuserver")
+    start_compressing_logs(log_dir)
     try:
         main()
     except Exception as e:
