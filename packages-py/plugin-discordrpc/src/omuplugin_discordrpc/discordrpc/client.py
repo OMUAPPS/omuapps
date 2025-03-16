@@ -81,6 +81,9 @@ class DiscordRPC:
         msg = await self.ws.receive()
         if msg.type == WSMsgType.TEXT:
             return json.loads(msg.data)
+        elif msg.type == WSMsgType.CLOSE:
+            logger.warning(f"Connection closed: {msg}")
+            return None
         elif msg.type == WSMsgType.CLOSED:
             return None
         elif msg.type == WSMsgType.CLOSING:
