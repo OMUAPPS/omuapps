@@ -189,6 +189,14 @@ class SpriteGroup {
         this.parentSprite = parent;
     }
 
+    public initialize() {
+        this.dragger.globalPosition = this.dragger.globalPosition.lerp(this.wob.globalPosition, 1);
+        this.dragOrigin.globalPosition = this.dragger.globalPosition;
+        const rotation = BetterMath.clamp(0, this.layerData.rLimitMin, this.layerData.rLimitMax);
+        this.sprite.rotation = BetterMath.toRadians(rotation);
+        this.sprite.scale = Vec2.ONE;
+    }
+
     public process() {
         this.tick += 1;
 
@@ -267,6 +275,9 @@ export class PNGTuber implements Avatar {
                 }
                 spriteGroups.get(layer.identification)?.setParent(parent);
             }
+        }
+        for (const sprite of spriteGroups.values()) {
+            sprite.initialize();
         }
         const context = {
             timer: new Timer(),
