@@ -41,12 +41,9 @@ class YoutubePage:
             "Could not find ytcfg data",
         )
 
-    def get_ytinitialdata(self) -> types.ytinitialdata:
+    def get_ytinitialdata(self) -> types.ytinitialdata | None:
         initial_data = self.extract_script('window["ytInitialData"]')
-        return assert_none(
-            initial_data,
-            "Could not find initial data",
-        )
+        return initial_data
 
     def get_ytinitialplayerresponse(self) -> types.ytInitialPlayerResponse:
         initial_player_response = self.extract_script("var ytInitialPlayerResponse")
@@ -229,6 +226,8 @@ class YoutubeAPI:
             return False
         response = await YoutubePage.from_response(live_chat_response)
         initial_data = response.get_ytinitialdata()
+        if initial_data is None:
+            return False
         continuation = (
             initial_data.get("contents", {})
             .get("liveChatRenderer", {})
