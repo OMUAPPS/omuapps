@@ -205,8 +205,8 @@
     .actions {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
+        gap: 1rem;
+        margin-bottom: 0.25rem;
     }
 
     .states {
