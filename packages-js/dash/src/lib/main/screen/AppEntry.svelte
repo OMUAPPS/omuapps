@@ -5,13 +5,13 @@
     import { Tooltip } from '@omujs/ui';
 
     export let entry: App;
-    const name = entry.metadata?.name
+    $: name = entry.metadata?.name
         ? omu.i18n.translate(entry.metadata?.name)
         : ''
-    const description = entry.metadata?.description
+    $: description = entry.metadata?.description
         ? omu.i18n.translate(entry.metadata?.description)
         : ''
-    const icon = entry.metadata?.icon
+    $: icon = entry.metadata?.icon
         ? omu.i18n.translate(entry.metadata?.icon)
         : ''
 </script>
@@ -20,7 +20,7 @@
     <div class="icon">
         {#if icon}
             {#if icon.startsWith('ti')}
-                <i class="ti {icon}" />
+                <i class="ti {icon}" ></i>
             {:else}
                 <img src={icon} alt="" />
             {/if}
@@ -33,7 +33,7 @@
             {name}
         </p>
         <p class="description">
-            {description}
+            {description || $t('general.no_description')}
         </p>
     </div>
     <span class="id">

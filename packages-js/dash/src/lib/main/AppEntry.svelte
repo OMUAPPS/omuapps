@@ -1,5 +1,6 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
+    import { t } from '$lib/i18n/i18n-context.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
     import { pages, registerPage, type Page } from './page.js';
@@ -11,9 +12,7 @@
 
     $: metadata = entry.metadata;
     $: name = metadata?.name ? omu.i18n.translate(metadata?.name) : entry.id.key();
-    $: description = metadata?.description
-        ? omu.i18n.translate(metadata?.description)
-        : 'No description';
+    $: description = metadata?.description && omu.i18n.translate(metadata?.description) || $t('general.no_description');
     $: icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : null;
     $: image = metadata?.image ? omu.i18n.translate(metadata?.image) : null;
 
