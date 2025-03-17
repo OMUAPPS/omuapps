@@ -20,7 +20,7 @@
     </FileDrop>
 </div>
 <ul>
-    {#each Object.entries($resources.resources).filter((it) => it[1].filename?.includes(search)) as [id, resource] (id)}
+    {#each Object.entries($resources.resources).toReversed().filter((it) => it[1].filename?.includes(search)) as [id, resource] (id)}
         {@const active = $config.show?.asset === resource.asset}
         <li>
             <span class="info">
