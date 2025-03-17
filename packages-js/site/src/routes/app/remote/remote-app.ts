@@ -1,6 +1,7 @@
 import { makeRegistryWritable, md5 } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import type { AlignType } from '@omujs/ui';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 
@@ -20,11 +21,21 @@ const RESOURCES_REGISTRY = RegistryType.createJson<Resources>(APP_ID, {
     defaultValue: DEFAULT_RESOURCES,
 });
 
-const DEFAULT_CONFIG = {
+export const DEFAULT_CONFIG = {
     show: null as {
         type: 'image',
         asset: string,
     } | null,
+    asset: {
+        align: {
+            x: 'middle' as AlignType,
+            y: 'middle' as AlignType,
+        },
+        scaling: 'contain' as 'contain' | 'cover',
+    },
+    resource: {
+        
+    }
 }
 
 type Config = typeof DEFAULT_CONFIG;
@@ -42,17 +53,30 @@ export class RemoteApp {
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
     }
 
-    public async upload(file: File) {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        const hash = md5(bytes);
-        const hashHex = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
-        const id = APP_ID.join('resource', hashHex);
-        const result = await this.omu.assets.upload(id, bytes);
+    public async upload(...files: File[]) {
+        const buffers = await Promise.all(files.map(async (file) => {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const hash = md5(bytes);
+            const hashHex = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
+            const id = APP_ID.join('resource', hashHex);
+            return { identifier: id, buffer: bytes, file };
+        }));
+        const results = await this.omu.assets.uploadMany(...buffers);
         this.resources.update((resources) => {
-            resources.resources[result.key()] = {
-                type: 'image',
-                asset: result.key(),
-                filename: file.name,
+            resources.resources = {
+                ...resources.resources,
+                ...results.reduce((acc, id) => {
+                    const entry = buffers.find((buffer) => buffer.identifier.isEqual(id));
+                    if (!entry) {
+                        return acc;
+                    }
+                    acc[id.key()] = {
+                        type: 'image',
+                        asset: id.key(),
+                        filename: entry.file.name,
+                    };
+                    return acc;
+                }, {} as Resources['resources']),
             };
             return resources;
         });

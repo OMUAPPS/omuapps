@@ -6,6 +6,7 @@
     import { BROWSER } from 'esm-env';
     import { APP_ID } from '../app.js';
     import { RemoteApp } from '../remote-app.js';
+    import AssetApp from './AssetApp.svelte';
 
     let assetId = BROWSER && $page.url.searchParams.get('assetId');
     const id = assetId || Date.now().toString();
@@ -13,40 +14,25 @@
         version: '0.1.0',
     });
     const omu = new Omu(ASSET_APP);
-    const { config } = new RemoteApp(omu);
+    const remote = new RemoteApp(omu);
     setClient(omu);
 
 
     if (BROWSER) {
         omu.start();
     }
+
+    const promise = new Promise<void>((resolve) => omu.onReady(resolve));
 </script>
 
 <AssetPage>
-    <main>
-        {#if $config.show}
-            {@const { show } = $config}
-            <img src={omu.assets.url(show.asset)} alt="">
-        {/if}
-    </main>
+    {#await promise then}
+        <AssetApp {omu} {remote} />
+    {/await}
 </AssetPage>
 
 <style lang="scss">
-    main {
-        position: fixed;
-        inset: 0;
-    }
-
     :global(body) {
         background: transparent !important;
-    }
-
-    img {
-        position: absolute;
-        inset: 0;
-        margin: auto;
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
     }
 </style>

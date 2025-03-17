@@ -1,6 +1,5 @@
 <script lang="ts">
     import { page } from '$app/stores';
-    import AssetPage from '$lib/components/AssetPage.svelte';
     import { Omu } from '@omujs/omu';
     import { FileDrop, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -27,9 +26,19 @@
     if (BROWSER) {
         onMount(async () => {
             try {
+                const res = await fetch('http://192.168.0.12:26423/version', {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                lines = [...lines, `response: ${await res.json()}`];
+                lines = [...lines, `connecting to ${omu.address.host}:${omu.address.port}`];
                 omu.start();
+                lines = [...lines, 'started'];
             } catch (e) {
-                lines.push(JSON.stringify(e));
+                lines = [...lines, `error: ${e}`];
             }
         });
     }
@@ -38,30 +47,27 @@
         ready = true;
     });
     omu.network.event.status.listen(value => {
-        lines.push(JSON.stringify(value));
+        lines = [...lines, JSON.stringify(value)];
     });
-
-    
 </script>
 
 {#if token}
-    <AssetPage>
-        {#if ready}
-            <FileDrop handle={(files) => {
-                const file = files[0];
-                remote.upload(file);
-            }}>
-                <p>Drop file here</p>
-            </FileDrop>
-        {/if}
-    </AssetPage>
+    {#if ready}
+        <FileDrop handle={(files) => {
+            const file = files[0];
+            remote.upload(file);
+        }}>
+            <p>Drop file here</p>
+        </FileDrop>
+    {/if}
 {:else}
     <p>id is not provided</p>
 {/if}
 {#if BROWSER}
-    <p>{$page.url.searchParams.get('token')}</p>
-    <p>{$page.url.searchParams.get('lan')}</p>
-    <p>{$page.url.searchParams.get('secure')}</p>
+    <p>{token}</p>
+    <p>{lan}</p>
+    <p>{secure}</p>
+    <p>{ready}</p>
 {/if}
 {lines.join('\n')}
 
@@ -69,4 +75,4 @@
     :global(body) {
         background: transparent !important;
     }
-    </style>
+</style>
