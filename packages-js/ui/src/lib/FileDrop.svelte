@@ -36,7 +36,7 @@
         padding: 0.5rem 1rem;
         color: var(--color-1);
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         border-radius: 2px;
 
         &:hover {

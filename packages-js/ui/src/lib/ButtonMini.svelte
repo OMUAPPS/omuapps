@@ -1,9 +1,9 @@
 <script lang="ts">
-    export let outline = false;
+    export let primary = false;
     export let disabled = false;
 </script>
 
-<button type="button" on:click class:outline {disabled}>
+<button type="button" on:click class:primary {disabled}>
     <slot />
 </button>
 
@@ -20,18 +20,19 @@
         color: var(--color-1);
         background: transparent;
         border: none;
-        border-radius: 5px;
+        border-radius: 2px;
         outline: none;
+        outline-offset: -1px;
 
         &:active,
         &:hover {
             color: var(--color-bg-2);
             background: var(--color-1);
-            outline: 2px solid #fff;
+            outline: 1px solid var(--color-1);
         }
 
         &:focus {
-            outline: 2px solid var(--color-1);
+            outline: 1px solid var(--color-1);
         }
 
         &:disabled {
@@ -39,8 +40,16 @@
             opacity: 0.5;
         }
     }
+    
+    .primary {
+        background: var(--color-1);
+        color: var(--color-bg-1);
 
-    .outline {
-        border: 1px solid var(--color-1);
+        &:active,
+        &:hover {
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            outline: 1px solid var(--color-1);
+        }
     }
 </style>

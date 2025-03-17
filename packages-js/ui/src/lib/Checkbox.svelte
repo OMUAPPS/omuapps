@@ -10,7 +10,7 @@
 <label class="toggle">
     <input type="checkbox" bind:checked={value} {disabled} on:click={toggle} />
     {#if value}
-        <i class="toggle-icon ti ti-check" />
+        <i class="toggle-icon ti ti-check"></i>
     {/if}
 </label>
 
@@ -30,8 +30,9 @@
             appearance: none;
             background: var(--color-bg-2);
             border: none;
-            border-radius: 5px;
+            border-radius: 3px;
             outline: 1px solid var(--color-1);
+            outline-offset: -1px;
 
             &:checked {
                 background: var(--color-1);
