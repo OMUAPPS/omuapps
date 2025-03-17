@@ -23,9 +23,20 @@ if TYPE_CHECKING:
 
 
 @web.middleware
-async def cors_middleware(request, handler):
+async def cors_middleware(request: web.Request, handler) -> web.Response:
+    if request.method == "OPTIONS":
+        return web.Response(
+            status=200,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Methods": "*",
+            },
+        )
     response = await handler(request)
-    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", "*")
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
     return response
 
 
