@@ -38,6 +38,7 @@
         font-weight: 600;
         font-size: 0.8rem;
         border-radius: 2px;
+        white-space: nowrap;
 
         &:hover {
             background: var(--color-1);
