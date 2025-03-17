@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Omu } from '@omujs/omu';
-    import { ButtonMini, FileDrop } from '@omujs/ui';
+    import { ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
     import type { RemoteApp } from '../remote-app.js';
 
     export let omu: Omu;
@@ -32,12 +32,18 @@
                 </ButtonMini>
             </span>
             <button class="asset" class:active on:click={() => {
-                console.log('show', resource);
+                if (active) {
+                    $config.show = null;
+                    return;
+                }
                 $config.show = {
                     type: 'image',
                     asset: resource.asset,
                 }
             }}>
+                <Tooltip>
+                    {active ? 'クリックで解除' : 'クリックで選択'}
+                </Tooltip>
                 <div class="status">
                     <i class="ti ti-check"></i>
                 </div>
