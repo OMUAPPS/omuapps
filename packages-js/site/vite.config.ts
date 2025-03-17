@@ -34,6 +34,7 @@ export default defineConfig({
         include: ['src/**/*.{test,spec}.{js,ts}'],
     },
     server: {
+        host: '0.0.0.0',
         port: 5173,
         strictPort: true,
         fs: {
