@@ -12,7 +12,10 @@ export const APP = new App(APP_ID, {
             en: 'Remote',
         },
         description: {
+            ja: 'スマホや外部のデバイスから操作することができます',
+            en: 'You can control it from your smartphone or external device',
         },
+        icon: 'ti-access-point',
         tags: ['tool', 'asset'] as TagKey[],
     }),
 });
@@ -24,10 +27,13 @@ export const REMOTE_APP = new App(REMOTE_APP_ID, {
     metadata: buildMetadata({
         locale: 'en',
         name: {
-            ja: 'リモート',
-            en: 'Remote',
+            ja: 'リモート操作',
+            en: 'Remote Control',
         },
         description: {
+            ja: '外部から操作するためのセッションを開始します',
+            en: 'Start a session to control from the outside',
         },
+        icon: 'ti-access-point',
     }),
 });
