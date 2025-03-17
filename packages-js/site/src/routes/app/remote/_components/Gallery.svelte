@@ -24,7 +24,9 @@
         {@const active = $config.show?.asset === resource.asset}
         <li>
             <span class="info">
-                <input type="text" bind:value={resource.filename} />
+                <input type="text" value={resource.filename} on:input={(e) => {
+                    $resources.resources[id].filename = e.currentTarget.value;
+                }} />
                 <ButtonMini on:click={() => {
                     remote.deleteResource(id);
                 }}>
