@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Slider } from '@omujs/ui';
+    import { Checkbox, Slider } from '@omujs/ui';
     import type { DiscordOverlayApp } from '../discord-overlay-app.js';
     import EffectControls from './EffectControls.svelte';
 
@@ -13,18 +13,10 @@
 </h2>
 <section class="align">
     <span>
-        <label>
-            面に応じて反転
-            <hr>
-            <input type="checkbox" bind:checked={$config.align.flip} />
-        </label>
+        <Checkbox bind:value={$config.align.flip} label="面に応じて反転" />
     </span>
     <span>
-        <label>
-            人数に応じて大きさを調節
-            <hr>
-            <input type="checkbox" bind:checked={$config.align.scaling} />
-        </label>
+        <Checkbox bind:value={$config.align.scaling} label="人数に応じて大きさを調節" />
     </span>
 </section>
 

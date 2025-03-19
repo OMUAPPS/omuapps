@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Tooltip } from '@omujs/ui';
+    import { Slider, Tooltip } from '@omujs/ui';
     import type { Config } from '../discord-overlay-app.js';
 
     export let effects: Config['effects'];
@@ -35,21 +35,21 @@
 </span>
 {#if selectedEffectType === 'speech'}
     <div class="options">
+        <small>喋ってる時の明るさ</small>
         <span>
-            <label for="shadow-color">喋ってる時の明るさ</label>
-            <input type="range" id="shadow-color" min="0" max="1" step="0.01" bind:value={effects.speech.intensity.speaking}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.speaking}/>
         </span>
+        <small>喋ってない時の明るさ</small>
         <span>
-            <label for="shadow-color">喋ってない時の明るさ</label>
-            <input type="range" id="shadow-color" min="0" max="1" step="0.01" bind:value={effects.speech.intensity.inactive}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.inactive}/>
         </span>
+        <small>ミュート時の明るさ</small>
         <span>
-            <label for="shadow-color">ミュート時の明るさ</label>
-            <input type="range" id="shadow-color" min="0" max="1" step="0.01" bind:value={effects.speech.intensity.muted}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.muted}/>
         </span>
+        <small>聞こえない時の明るさ</small>
         <span>
-            <label for="shadow-color">聞こえない時の明るさ</label>
-            <input type="range" id="shadow-color" min="0" max="1" step="0.01" bind:value={effects.speech.intensity.deafened}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.deafened}/>
         </span>
     </div>
 {/if}
@@ -93,9 +93,9 @@
                 };
             }}/>
         </span>
+        <small>不透明度</small>
         <span>
-            <label for="shadow-opacity">不透明度</label>
-            <input type="range" id="shadow-opacity" min="0" max="1" step="0.01" bind:value={effects.shadow.color.a}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.shadow.color.a}/>
         </span>
     </div>
 {/if}
