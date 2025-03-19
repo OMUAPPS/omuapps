@@ -48,6 +48,32 @@ export const DEFAULT_CONFIG = {
             width: Scaler,
             height: Scaler,
         },
+        animation: {
+            type: 'none',
+        } as {
+            type: 'none',
+        } | {
+            type: 'fade',
+            duration: number,
+        } | {
+            type: 'slide',
+            duration: number,
+            direction: 'left' | 'right' | 'up' | 'down',
+        } | {
+            type: 'flip',
+            duration: number,
+        },
+        easing: {
+            type: 'linear',
+        } as {
+            type: 'linear',
+        } | {
+            type: 'ease',
+        } | {
+            type: 'bounce',
+        } | {
+            type: 'elastic',
+        },
     },
     resource: {
         
@@ -65,7 +91,7 @@ export class RemoteApp {
     public readonly config: Writable<Config>;
     public readonly connected: Writable<boolean>;
     
-    constructor(private readonly omu: Omu, side: 'app' | 'remote') {
+    constructor(private readonly omu: Omu, side: 'app' | 'remote' | 'asset') {
         this.resources = makeRegistryWritable(omu.registries.get(RESOURCES_REGISTRY));
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
         this.connected = writable(false);

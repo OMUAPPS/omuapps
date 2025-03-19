@@ -42,6 +42,10 @@ export class AABB2 {
         return new AABB2(this.min.sub(amount), this.max.add(amount));
     }
 
+    public multiply(amount: PossibleVec2): AABB2 {
+        return new AABB2(this.min.mul(amount), this.max.mul(amount));
+    }
+
     public union(other: AABB2): AABB2 {
         return new AABB2(this.min.min(other.min), this.max.max(other.max));
     }
@@ -56,10 +60,21 @@ export class AABB2 {
             this.min.y + (this.max.y - this.min.y) * position.y,
         );
     }
+
+    public setAt(at: PossibleVec2, target: PossibleVec2): AABB2 {
+        const offset = this.at(at).sub(target);
+        return new AABB2(this.min.sub(offset), this.max.sub(offset));
+    }
     
     public center(): Vec2 {
         return this.min.add(this.max).scale(0.5);
     }
+
+    public centered(center: PossibleVec2): AABB2 {
+        const centerOffset = this.center().sub(center);
+        return new AABB2(this.min.sub(centerOffset), this.max.sub(centerOffset));
+    }
+
 
     public dimensions(): Vec2 {
         return this.max.sub(this.min);
