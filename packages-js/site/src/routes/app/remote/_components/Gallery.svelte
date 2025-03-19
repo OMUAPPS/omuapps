@@ -7,6 +7,7 @@
     export let remote: RemoteApp;
     const { resources, config } = remote;
     
+    let selectedId: string | null = null;
     let search = '';
     type Sort = {
         order: 'asc' | 'desc',
@@ -30,9 +31,19 @@
             return aVal < bVal ? 1 : -1;
         };
     }
+
+    function formatBytes(bytes: number, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
 </script>
 
 <div class="header">
+    <input type="text" placeholder="検索..." bind:value={search} />
     <Combobox options={{
         addedAt: {
             label: '追加日',
@@ -57,7 +68,6 @@
             value: 'desc',
         },
     }} bind:value={sort.order} />
-    <input type="text" placeholder="検索..." bind:value={search} />
     <FileDrop primary handle={async (files) => {
         remote.upload(...files);
     }} multiple>
@@ -65,13 +75,26 @@
         <i class="ti ti-upload"></i>
     </FileDrop>
 </div>
-<ul>
+<div class="gallery">
     {#each Object.entries($resources.resources)
         .toReversed()
         .filter((it) => it[1].filename?.includes(search))
         .toSorted(compare(sort)) as [id, resource] (id)}
         {@const active = $config.show?.asset === resource.asset}
-        <li>
+        {@const selected = selectedId === id}
+        <div
+            on:focus={() => {
+                selectedId = id;
+            }}
+            on:mouseover={() => {
+                selectedId = id;
+            }}
+            on:mouseleave={() => {
+                selectedId = null;
+            }}
+            role="button"
+            tabindex="0"
+        >
             <span class="info">
                 <Tooltip>
                     <div class="tooltip">
@@ -96,7 +119,7 @@
                                 <small>
                                     サイズ
                                 </small>
-                                {resource.size}
+                                {formatBytes(resource.size)}
                             </p>
                         {/if}
                     </div>
@@ -104,11 +127,13 @@
                 <input type="text" value={resource.filename} on:blur={(e) => {
                     $resources.resources[id].filename = e.currentTarget.value;
                 }} />
-                <ButtonMini on:click={() => {
-                    remote.deleteResource(id);
-                }}>
-                    <i class="ti ti-trash"></i>
-                </ButtonMini>
+                {#if selected}
+                    <ButtonMini on:click={() => {
+                        remote.deleteResource(id);
+                    }}>
+                        <i class="ti ti-trash"></i>
+                    </ButtonMini>
+                {/if}
             </span>
             <button class="asset" class:active on:click={() => {
                 if (active) {
@@ -128,9 +153,9 @@
                 </div>
                 <img src={omu.assets.url(resource.asset)} alt="">
             </button>
-        </li>
+        </div>
     {/each}
-</ul>
+</div>
 
 <style lang="scss">
     .header {
@@ -162,6 +187,15 @@
                 transition: padding 0.01621s;
             }
         }
+    }
+
+    .gallery {
+        list-style: none;
+        padding: 1rem 2rem;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+        gap: 1rem;
     }
 
     .asset {
@@ -234,6 +268,7 @@
         justify-content: space-between;
         align-items: baseline;
         padding: 0 2px;
+        height: 2rem;
         gap: 0.5rem;
 
         > input {
@@ -261,14 +296,5 @@
             font-weight: 600;
             margin-right: 0.25rem;
         }
-    }
-
-    ul {
-        list-style: none;
-        padding: 1rem 2rem;
-        margin: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-        gap: 1rem;
     }
 </style>
