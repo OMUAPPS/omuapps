@@ -153,7 +153,7 @@ export class ServerExtension implements Extension {
         onDisconnect(app: App): void;
     }): SessionObserver {
         if (this.client.running) {
-            throw new Error('Cannot observe sessions after the client has started');
+            this.client.send(SESSION_OBSERVE_PACKET_TYPE, [appId]);
         }
         const observer = this.sessionObservers.get(appId) ?? new SessionObserver([], []);
         observer.onConnect(onConnect);
