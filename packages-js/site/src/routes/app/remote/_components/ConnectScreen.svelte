@@ -11,6 +11,7 @@
 
     export let omu: Omu;
     export let cancel: () => void;
+    export let connected: boolean;
 
     let state: {
         type: 'idle',
@@ -21,6 +22,8 @@
     } | {
         type: 'generated',
         qr: InstanceType<typeof QrCode>,
+    } | {
+        type: 'connected',
     } = {
         type: 'idle',
     };
@@ -59,11 +62,28 @@
         };
     }
 
+    $: if (connected) {
+        state = {
+            type: 'connected',
+        };
+        setTimeout(() => {
+            cancel();
+        }, 3000);
+    }
+
     generateToken();
 </script>
 
 <div class="screen">
-    {#if state.type === 'generated'}
+    {#if state.type === 'requesting'}
+        <h2>
+            通信中
+            <i class="ti ti-loader"></i>
+        </h2>
+        <small>
+            デバイスとの接続をリクエストしています
+        </small>
+    {:else if state.type === 'generated'}
         <h2>
             QRコードをスキャンしてください
             <i class="ti ti-scan"></i>
@@ -72,6 +92,20 @@
             接続したいデバイスでQRコードを読み取ってください
         </small>
         <img src={state.qr.toDataURL()} alt="QR Code" />
+        <div class="actions">
+            <Button primary onclick={cancel}>
+                完了
+                <i class="ti ti-check"></i>
+            </Button>
+        </div>
+    {:else if state.type === 'connected'}
+        <h2>
+            接続されました
+            <i class="ti ti-check"></i>
+        </h2>
+        <small>
+            デバイスとの接続が完了しました
+        </small>
         <div class="actions">
             <Button primary onclick={cancel}>
                 完了

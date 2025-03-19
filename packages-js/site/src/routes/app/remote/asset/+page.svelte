@@ -14,7 +14,7 @@
         version: '0.1.0',
     });
     const omu = new Omu(ASSET_APP);
-    const remote = new RemoteApp(omu);
+    const remote = new RemoteApp(omu, 'remote');
     setClient(omu);
 
 

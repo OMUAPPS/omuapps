@@ -1,16 +1,62 @@
 <script lang="ts">
     import type { Omu } from '@omujs/omu';
-    import { ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
-    import type { RemoteApp } from '../remote-app.js';
+    import { ButtonMini, Combobox, FileDrop, Tooltip } from '@omujs/ui';
+    import type { RemoteApp, Resource } from '../remote-app.js';
 
     export let omu: Omu;
     export let remote: RemoteApp;
     const { resources, config } = remote;
     
     let search = '';
+    type Sort = {
+        order: 'asc' | 'desc',
+        key: 'addedAt' | 'filename' | 'size',
+    };
+    let sort: Sort = {
+        order: 'desc',
+        key: 'addedAt',
+    };
+
+    function compare(sort: Sort) {
+        return ([_a , a]: [string, Resource], [_b ,b]: [string, Resource]) => {
+            const aVal = a[sort.key] || 0;
+            const bVal = b[sort.key] || 0;
+            if (aVal === bVal) {
+                return 0;
+            }
+            if (sort.order === 'asc') {
+                return aVal > bVal ? 1 : -1;
+            }
+            return aVal < bVal ? 1 : -1;
+        };
+    }
 </script>
 
 <div class="header">
+    <Combobox options={{
+        addedAt: {
+            label: '追加日',
+            value: 'addedAt',
+        },
+        filename: {
+            label: 'ファイル名',
+            value: 'filename',
+        },
+        size: {
+            label: 'サイズ',
+            value: 'size',
+        },
+    }} bind:value={sort.key} />
+    <Combobox options={{
+        asc: {
+            label: '昇順',
+            value: 'asc',
+        },
+        desc: {
+            label: '降順',
+            value: 'desc',
+        },
+    }} bind:value={sort.order} />
     <input type="text" placeholder="検索..." bind:value={search} />
     <FileDrop primary handle={async (files) => {
         remote.upload(...files);
@@ -20,11 +66,42 @@
     </FileDrop>
 </div>
 <ul>
-    {#each Object.entries($resources.resources).toReversed().filter((it) => it[1].filename?.includes(search)) as [id, resource] (id)}
+    {#each Object.entries($resources.resources)
+        .toReversed()
+        .filter((it) => it[1].filename?.includes(search))
+        .toSorted(compare(sort)) as [id, resource] (id)}
         {@const active = $config.show?.asset === resource.asset}
         <li>
             <span class="info">
-                <input type="text" value={resource.filename} on:input={(e) => {
+                <Tooltip>
+                    <div class="tooltip">
+                        {#if resource.filename}
+                            <p>
+                                <small>
+                                    ファイル名
+                                </small>
+                                {resource.filename}
+                            </p>
+                        {/if}
+                        {#if resource.addedAt}
+                            <p>
+                                <small>
+                                    追加日
+                                </small>
+                                {new Date(resource.addedAt).toLocaleString()}
+                            </p>
+                        {/if}
+                        {#if resource.size}
+                            <p>
+                                <small>
+                                    サイズ
+                                </small>
+                                {resource.size}
+                            </p>
+                        {/if}
+                    </div>
+                </Tooltip>
+                <input type="text" value={resource.filename} on:blur={(e) => {
                     $resources.resources[id].filename = e.currentTarget.value;
                 }} />
                 <ButtonMini on:click={() => {
@@ -57,14 +134,17 @@
 
 <style lang="scss">
     .header {
+        position: sticky;
+        top: 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid var(--color-1);
-        padding: 1rem 0;
-        margin: 0 2rem;
+        border-bottom: 1px solid var(--color-outline);
+        padding: 1rem 2rem;
         height: 4rem;
         gap: 1rem;
+        z-index: 1;
+        background: var(--color-bg-1);
 
         > input {
             background: transparent;
@@ -94,27 +174,32 @@
         font-size: 0.8rem;
         padding: 0.75rem;
         border: none;
+        outline: 0px solid var(--color-1);
+        outline-offset: -1px;
         overflow: visible;
 
         &:hover {
             cursor: pointer;
-            transform: translateY(-2px);
-            transition: transform 0.04621s ease;
+            outline-width: 2px;
+            outline-offset: -2px;
+            outline-color: var(--color-outline);
+            transition: outline-offset 0.01621s;
         }
 
-        > img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
+        &:active {
+            outline-offset: -4px;
+            transition: outline-offset 0.02621s;
+            outline-color: var(--color-1);
 
-        > .status {
-            display: none;
+            &.active {
+                outline-offset: -4px;
+            }
         }
 
         &.active {
-            outline: 1px solid var(--color-1);
-            outline-offset: -5px;
+            outline-width: 2px;
+            outline-offset: -3px;
+            outline-color: var(--color-1);
 
             > .status {
                 display: block;
@@ -131,6 +216,16 @@
                 transform: translate(-30%, -30%);
                 border-radius: 50%;
             }
+        }
+
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        > .status {
+            display: none;
         }
     }
 
@@ -156,6 +251,15 @@
                 border-bottom: 1px solid var(--color-1);
                 transition: padding 0.01621s;
             }
+        }
+    }
+
+    .tooltip {
+        > p > small {
+            color: #ddd;
+            font-size: 0.621rem;
+            font-weight: 600;
+            margin-right: 0.25rem;
         }
     }
 

@@ -1,20 +1,31 @@
 <script lang="ts">
     export let value: boolean;
     export let disabled: boolean = false;
+    export let label: string | undefined = undefined;
 
     function toggle() {
         value = !value;
     }
 </script>
 
-<label class="toggle">
-    <input type="checkbox" bind:checked={value} {disabled} on:click={toggle} />
-    {#if value}
-        <i class="toggle-icon ti ti-check"></i>
+<label>
+    {#if label}
+        <span>{label}</span>
     {/if}
+    <span class="toggle">
+        <input type="checkbox" bind:checked={value} {disabled} on:click={toggle} />
+        {#if value}
+            <i class="ti ti-check"></i>
+        {/if}
+    </span>
 </label>
 
 <style lang="scss">
+    label {
+        display: flex;
+        align-items: baseline;
+    }
+
     .toggle {
         position: relative;
         display: flex;
@@ -46,9 +57,9 @@
             }
         }
 
-        .toggle-icon {
+        i {
             position: absolute;
-            right: 10px;
+            left: 10px;
             display: flex;
             align-items: center;
             justify-content: center;

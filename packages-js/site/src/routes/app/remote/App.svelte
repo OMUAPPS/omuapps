@@ -11,11 +11,12 @@
     export let remote: RemoteApp;
     export let omu: Omu;
     export let obs: OBSPlugin;
-    const { resources, config } = remote;
 
     let screen: 'connect' | null = null;
 
-    let showDebugMenu = false;
+    const { connected } = remote;
+
+    let showSettings = false;
 </script>
 
 <main>
@@ -25,37 +26,40 @@
             <i class="ti ti-qrcode"></i>
         </h2>
         <section>
-            <Button onclick={() => {screen = 'connect'}} primary>
-                接続する
-                <i class="ti ti-login-2"></i>
-            </Button>
+            <span>
+                <Button onclick={() => {screen = 'connect'}} primary>
+                    接続する
+                    <i class="ti ti-login-2"></i>
+                </Button>
+                {#if $connected}
+                    <small>
+                        接続済み
+                        <i class="ti ti-wifi"></i>
+                    </small>
+                {:else}
+                    <small>
+                        接続されていません
+                        <i class="ti ti-wifi-off"></i>
+                    </small>
+                {/if}
+            </span>
         </section>
         <h2>
-            見た目の設定
+            <button class="tab" on:click={() => {showSettings = !showSettings}}>
+                表示の設定
+                <i class="ti ti-settings"></i>
+                {#if showSettings}
+                    <i class="ti ti-chevron-up"></i>
+                {:else}
+                    <i class="ti ti-chevron-down"></i>
+                {/if}
+            </button>
         </h2>
-        <section>
-            <VisualSettings {remote} />
-        </section>
-
-        <h2>
-            デバッグ
-            <i class="ti ti-settings"></i>
-        </h2>
-        <section>
-            <Button onclick={() => {
-                showDebugMenu = !showDebugMenu;
-            }}>
-                Toggle Debug Menu
-            </Button>
-            {#if showDebugMenu}
-                <pre>
-            {JSON.stringify($resources, null, 2)}
-                </pre>
-                <pre>
-            {JSON.stringify($config, null, 2)}
-                </pre>
-            {/if}
-        </section>
+        {#if showSettings}
+            <section>
+                <VisualSettings {remote} />
+            </section>
+        {/if}
         <h2 class="asset-button">
             配信に追加
             <i class="ti ti-arrow-bar-to-down"></i>
@@ -67,7 +71,7 @@
     </div>
     {#if screen === 'connect'}
         <div class="screen">
-            <ConnectScreen {omu} cancel={() => {screen = null}} />
+            <ConnectScreen {omu} cancel={() => {screen = null}} connected={$connected} />
         </div>
     {/if}
 </main>
@@ -83,9 +87,39 @@
     .menu {
         padding: 1rem;
         width: 24rem;
+        white-space: nowrap;
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        overflow-x: hidden;
+    }
+
+    .tab {
+        width: 100%;
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+        background: none;
+        border: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        color: var(--color-1);
+
+        > .ti-chevron-down,
+        > .ti-chevron-up {
+            margin-left: auto;
+        }
+
+        &:hover {
+            margin-left: 1px;
+            transition: margin 0.0621s;
+        }
+
+        &:active {
+            margin-left: -1px;
+            transition: margin 0.0621s;
+        }
     }
 
     .screen {
@@ -101,6 +135,16 @@
         margin-top: 0.5rem;
     }
 
+    span {
+        display: flex;
+        align-items: baseline;
+        gap: 1rem;
+    }
+
+    small {
+        color: var(--color-text);
+    }
+
     section {
         display: flex;
         align-items: flex-start;
@@ -112,16 +156,10 @@
 
     .gallery {
         flex: 1;
+        border-left: 1px solid var(--color-outline);
     }
 
     .asset-button {
         margin-top: auto;
-    }
-
-    pre {
-        background: var(--color-bg-2);
-        padding: 1rem;
-        white-space: pre-wrap;
-        overflow: auto;
     }
 </style>

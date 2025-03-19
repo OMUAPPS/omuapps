@@ -13,7 +13,7 @@
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
-    const remote = new RemoteApp(omu);
+    const remote = new RemoteApp(omu, 'app');
     setClient(omu);
 
     if (BROWSER) {
