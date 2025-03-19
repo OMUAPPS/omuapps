@@ -18,7 +18,7 @@
             secure,
         } || undefined,
     });
-    const remote = new RemoteApp(omu);
+    const remote = new RemoteApp(omu, 'remote');
     setClient(omu);
 
     let lines: string[] = [];
@@ -54,9 +54,8 @@
 {#if token}
     {#if ready}
         <FileDrop handle={(files) => {
-            const file = files[0];
-            remote.upload(file);
-        }}>
+            remote.upload(...files);
+        }} multiple>
             <p>Drop file here</p>
         </FileDrop>
     {/if}
