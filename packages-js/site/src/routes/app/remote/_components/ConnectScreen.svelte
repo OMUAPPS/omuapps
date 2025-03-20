@@ -5,6 +5,7 @@
     import { REGISTRY_PERMISSION_ID } from '@omujs/omu/extension/registry/registry-extension.js';
     import { type RequestRemoteAppResponse } from '@omujs/omu/extension/server/server-extension.js';
     import { Button } from '@omujs/ui';
+    import { DEV } from 'esm-env';
     import QrCode from 'qrious';
     import { ORIGIN } from '../../origin.js';
     import { REMOTE_APP } from '../app.js';
@@ -51,10 +52,12 @@
         }
         const { token, lan_ip } = result;
         console.log(token, lan_ip);
+        const url = `http://${lan_ip}:26423/frame?url=${encodeURIComponent(`${DEV ? `http://${lan_ip}:5173` : ORIGIN}/app/remote/session/?token=${token}&lan=${lan_ip}`)}`;
+        console.log(url);
         state = {
             type: 'generated',
             qr: new QrCode({
-                value: `${ORIGIN}/app/remote/session/?token=${token}&lan=${lan_ip}`,
+                value: url,
                 size: 256,
                 backgroundAlpha: 0,
                 foreground: '#000',

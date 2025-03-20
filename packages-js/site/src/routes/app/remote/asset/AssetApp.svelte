@@ -7,11 +7,11 @@
     import { Vec2 } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
     import type { Omu } from '@omujs/omu';
-    import type { RemoteApp } from '../remote-app.js';
+    import type { RemoteApp, Resource } from '../remote-app.js';
 
     export let omu: Omu;
     export let remote: RemoteApp;
-    const { config } = remote;
+    const { config, resources } = remote;
 
 
     const matrices = new Matrices();
@@ -28,54 +28,72 @@
         matrices.projection.orthographic(0, canvas.width, canvas.height, 0, -1, 1);
     }
 
-    
-    class Texture {
-        private static CACHE = new Map<string, Texture>();
-        constructor(public tex: GlTexture, public width: number, public height: number) {}
+    const IMAGE_CACHE = new Map<string, GlTexture>();
 
-        public static async load(src: string) {
-            const exist = Texture.CACHE.get(src);
-            if (exist) return exist;
-            const img = new Image();
-            const res = await fetch(omu.assets.url(src)).then(res => res.blob());
-            img.src = URL.createObjectURL(res);
-            await img.decode();
-            const tex = glcontext.createTexture();
-            tex.use(() => {
-                tex.setImage(img, {
-                    width: img.width,
-                    height: img.height,
-                    internalFormat: 'rgba',
-                    format: 'rgba',
-                });
-                tex.setParams({
-                    magFilter: 'linear',
-                    minFilter: 'linear',
-                    wrapS: 'clamp-to-edge',
-                    wrapT: 'clamp-to-edge',
-                })
+    async function loadImage(src: string): Promise<GlTexture> {
+        const exist = IMAGE_CACHE.get(src);
+        if (exist) return exist;
+        const img = new Image();
+        const res = await fetch(omu.assets.url(src)).then(res => res.blob());
+        img.src = URL.createObjectURL(res);
+        await img.decode();
+        const tex = glcontext.createTexture();
+        tex.use(() => {
+            tex.setImage(img, {
+                width: img.width,
+                height: img.height,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+            tex.setParams({
+                magFilter: 'linear',
+                minFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
             })
-            const texture = new Texture(tex, img.width, img.height);
-            Texture.CACHE.set(src, texture);
-            return texture;
+        })
+        IMAGE_CACHE.set(src, tex);
+        return tex;
+    }
+
+    const ASSET_CACHE = new Map<string, AssetRender>();
+
+    interface AssetRender {
+        render(color?: Vec4): void;
+    }
+    
+    class AssetRenderImage implements AssetRender {
+        constructor(
+            public texture: GlTexture,
+        ) {}
+
+        public render(color: Vec4 = Vec4.ONE) {
+            const bounds = this.calculateBounds();
+            draw.texture(
+                bounds.min.x, bounds.min.y,
+                bounds.max.x, bounds.max.y,
+                this.texture,
+                color,
+            )
         }
 
-        public calculateBounds(): AABB2 {
+        public calculateBounds() {
             const { align, scaling } = $config.asset;
+            const texture = this.texture;
             const canvas = glcontext.gl.canvas;
             const screen = Vec2.from({ x: canvas.width, y: canvas.height });
             let bounds = AABB2.from({
                 min: { x: 0, y: 0 },
-                max: { x: this.width, y: this.height },
+                max: { x: texture.width, y: texture.height },
             });
             switch (scaling.type) {
                 case 'contain': {
-                    const scale = Math.min(canvas.width / this.width, canvas.height / this.height);
+                    const scale = Math.min(canvas.width / texture.width, canvas.height / texture.height);
                     bounds = bounds.multiply({ x: scale, y: scale });
                     break;
                 }
                 case 'cover': {
-                    const scale = Math.max(canvas.width / this.width, canvas.height / this.height);
+                    const scale = Math.max(canvas.width / texture.width, canvas.height / texture.height);
                     bounds = bounds.multiply({ x: scale, y: scale });
                     break;
                 }
@@ -84,7 +102,7 @@
                         x: (scaling.width.type === 'percent') ? canvas.width * scaling.width.value / 100 : scaling.width.value,
                         y: (scaling.height.type === 'percent') ? canvas.height * scaling.height.value / 100 : scaling.height.value,
                     });
-                    bounds = bounds.multiply(scale.div({ x: this.width, y: this.height }));
+                    bounds = bounds.multiply(scale.div({ x: texture.width, y: texture.height }));
                     break;
                 }
             }
@@ -105,12 +123,53 @@
         }
     }
 
+    class AssetRenderAlbum implements AssetRender {
+        constructor(
+            public assets: AssetRender[],
+        ) {}
+        
+        public render(color: Vec4 = Vec4.ONE) {
+            const { animation } = $config.asset;
+            const resource = $config.show && $resources.resources[$config.show.id];
+            if (animation.type === 'none') {
+                this.assets[0].render(color);
+            } else {
+                const duration = resource?.type === 'album' && resource.duration || 10;
+                const transition = animation.duration * 1000;
+                const time = performance.now() / 1000;
+                const index = Math.floor(time / duration) % this.assets.length;
+                const t = Math.min(1, (time % duration) / transition);
+                const assetA = this.assets[index];
+                const assetB = this.assets[(index + 1) % this.assets.length];
+                renderTransition(assetA, assetB, t);
+            }
+        }
+    }
+
+    async function loadAsset(id: string, resource: Resource): Promise<AssetRender> {
+        const exist = ASSET_CACHE.get(id);
+        if (exist) return exist;
+        if (resource.type === 'image') {
+            const tex = await loadImage(resource.asset);
+            const render = new AssetRenderImage(tex);
+            ASSET_CACHE.set(id, render);
+            return render;
+        } else if (resource.type === 'album') {
+            const textures = await Promise.all(resource.assets.map(loadImage));
+            const render = new AssetRenderAlbum(textures.map(tex => new AssetRenderImage(tex)));
+            ASSET_CACHE.set(id, render);
+            return render;
+        } else {
+            throw new Error(`Unsupported resource type: ${resource}`);
+        }
+    }
+
     let last: {
-        texture: Texture,
+        texture: AssetRender,
         time: number,
     } | null = null;
     let prev: {
-        texture: Texture,
+        texture: AssetRender,
         time: number,
     } | null = null;
 
@@ -136,6 +195,43 @@
         }
     }
 
+    async function renderTransition(a: AssetRender, b: AssetRender, t: number) {
+        const { animation } = $config.asset;
+        const { gl } = glcontext;
+        const screen = Vec2.from({ x: gl.canvas.width, y: gl.canvas.height });
+        const half = screen.scale(0.5);
+        if (animation.type === 'fade') {
+            a.render(new Vec4(1, 1, 1, 1 - t));
+            b.render(new Vec4(1, 1, 1, t));
+        }
+        else if (animation.type === 'flip') {
+            matrices.model.translate(half.x, half.y, 0);
+            matrices.model.scale(Math.abs(Math.cos(t * Math.PI)), 1, 1);
+            matrices.model.translate(-half.x, -half.y, 0);
+            if (t < 0.5) {
+                a.render();
+            } else {
+                b.render();
+            }
+        }
+        else if (animation.type === 'slide') {
+            const direction = {
+                left: new Vec2(-1, 0),
+                right: new Vec2(1, 0),
+                up: new Vec2(0, -1),
+                down: new Vec2(0, 1),
+            }[animation.direction];
+            const lastOffset = screen.mul(direction).scale(t);
+            matrices.model.identity();
+            matrices.model.translate(lastOffset.x, lastOffset.y, 0);
+            a.render();
+            const offset = screen.mul(direction).scale((t - 1));
+            matrices.model.identity();
+            matrices.model.translate(offset.x, offset.y, 0);
+            b.render();
+        }
+    }
+
     async function render(ctx: GlContext) {
         const { gl } = ctx;
         gl.clearColor(0, 0, 0, 0);
@@ -143,15 +239,17 @@
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.enable(gl.BLEND);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        if (!$config.show) return;
-        const { asset } = $config.show;
+        const id = $config.show?.id;
+        if (!id) {
+            prev = null;
+            last = null;
+            return;
+        }
+        const resource = $resources.resources[id];
         const { animation, easing } = $config.asset;
         matrices.model.identity();
-        const screen = Vec2.from({ x: gl.canvas.width, y: gl.canvas.height });
-        const half = screen.scale(0.5);
-        const texture = await Texture.load(asset);
-        const bounds = texture.calculateBounds();
-        if (!prev || prev.texture !== texture) {
+        const asset = await loadAsset(id, resource);
+        if (!prev || prev.texture !== asset) {
             if (prev) {
                 last = {
                     texture: prev.texture,
@@ -159,76 +257,21 @@
                 }
             }
             prev = {
-                texture,
+                texture: asset,
                 time: performance.now(),
             }
         }
         if (last === null || animation.type === 'none') {
-            draw.texture(
-                bounds.min.x, bounds.min.y,
-                bounds.max.x, bounds.max.y,
-                texture.tex,
-            )
+            asset.render();
         } else {
             const duration = animation.duration * 1000;
             const { texture: lastTexture, time } = last;
             const elapsed = performance.now() - time;
-            const lastBounds = texture.calculateBounds();
             if (elapsed > duration) {
                 last = null;
-            }
-            const t = Math.min(1.0, Math.max(0.0, ease(elapsed / duration, easing.type)));
-            if (animation.type === 'fade') {
-                draw.texture(
-                    lastBounds.min.x, lastBounds.min.y,
-                    lastBounds.max.x, lastBounds.max.y,
-                    lastTexture.tex,
-                    new Vec4(1, 1, 1, 1 - t),
-                )
-                draw.texture(
-                    bounds.min.x, bounds.min.y,
-                    bounds.max.x, bounds.max.y,
-                    texture.tex,
-                    new Vec4(1, 1, 1, t),
-                )
-            }
-            else if (animation.type === 'flip') {
-                matrices.model.translate(half.x, half.y, 0);
-                matrices.model.scale(Math.abs(Math.cos(t * Math.PI)), 1, 1);
-                matrices.model.translate(-half.x, -half.y, 0);
-                if (t < 0.5) {
-                    draw.texture(
-                        lastBounds.min.x, lastBounds.min.y,
-                        lastBounds.max.x, lastBounds.max.y,
-                        lastTexture.tex,
-                    )
-                } else {
-                    draw.texture(
-                        bounds.min.x, bounds.min.y,
-                        bounds.max.x, bounds.max.y,
-                        texture.tex,
-                    )
-                }
-            }
-            else if (animation.type === 'slide') {
-                const direction = {
-                    left: new Vec2(-1, 0),
-                    right: new Vec2(1, 0),
-                    up: new Vec2(0, -1),
-                    down: new Vec2(0, 1),
-                }[animation.direction];
-                const lastOffset = screen.mul(direction).scale(t);
-                draw.texture(
-                    lastBounds.min.x + lastOffset.x, lastBounds.min.y + lastOffset.y,
-                    lastBounds.max.x + lastOffset.x, lastBounds.max.y + lastOffset.y,
-                    lastTexture.tex,
-                )
-                const offset = screen.mul(direction).scale((t - 1));
-                draw.texture(
-                    bounds.min.x + offset.x, bounds.min.y + offset.y,
-                    bounds.max.x + offset.x, bounds.max.y + offset.y,
-                    texture.tex,
-                )
+            } else {
+                const t = ease(elapsed / duration, easing.type);
+                renderTransition(lastTexture, asset, t);
             }
         }
     }

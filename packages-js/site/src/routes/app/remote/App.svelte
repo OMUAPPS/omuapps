@@ -5,6 +5,7 @@
     import { Button } from '@omujs/ui';
     import ConnectScreen from './_components/ConnectScreen.svelte';
     import Gallery from './_components/Gallery.svelte';
+    import ResourceEdit from './_components/ResourceEdit.svelte';
     import VisualSettings from './_components/VisualSettings.svelte';
     import type { RemoteApp } from './remote-app.js';
 
@@ -14,9 +15,13 @@
 
     let screen: 'connect' | null = null;
 
-    const { connected } = remote;
+    const { connected, config, resources } = remote;
 
     let showSettings = false;
+
+    
+
+    $: selected = $config.show?.id;
 </script>
 
 <main>
@@ -44,6 +49,15 @@
                 {/if}
             </span>
         </section>
+        {#if selected && $resources.resources[selected]}
+            <h2>
+                選択中
+                <i class="ti ti-check"></i>
+            </h2>
+            <section>
+                <ResourceEdit bind:resource={$resources.resources[selected]} resources={$resources.resources}/>
+            </section>
+        {/if}
         <h2>
             <button class="tab" on:click={() => {showSettings = !showSettings}}>
                 表示の設定
@@ -91,6 +105,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        background: var(--color-bg-2);
         overflow-x: hidden;
     }
 
@@ -103,6 +118,7 @@
         border: 0;
         font-size: 1rem;
         font-weight: 600;
+        height: 100%;
         cursor: pointer;
         color: var(--color-1);
 
@@ -133,6 +149,7 @@
 
     h2 {
         margin-top: 0.5rem;
+        height: 2rem;
     }
 
     span {
@@ -151,7 +168,16 @@
         flex-direction: column;
         gap: 1rem;
         background: var(--color-bg-2);
+        outline: 2px solid var(--color-bg-1);
+        border-radius: 2px;
         padding: 1rem;
+        margin-bottom: 1rem;
+
+        &:hover {
+            outline-color: var(--color-1);
+            outline-width: 1px;
+            box-shadow: 0 2px 0 2px var(--color-bg-1);
+        }
     }
 
     .gallery {

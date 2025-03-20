@@ -70,6 +70,8 @@
     </span>
 {/if}
 
+<hr>
+
 <span class="setting">
     <p>アニメーション</p>
     <Combobox options={{
@@ -89,13 +91,13 @@
             label: 'スライド',
             value: {type: 'slide', duration: 0.1, direction: 'left'},
         },
-    }} bind:value={$config.asset.animation} />
+    }} bind:value={$config.asset.animation} key={$config.asset.animation.type} />
 </span>
 
 {#if $config.asset.animation.type !== 'none'}
     <span class="setting">
-        <p>表示時間</p>
-        <Slider min={0} max={10} step={0.1} bind:value={$config.asset.animation.duration} />
+        <p>遷移時間</p>
+        <Slider min={0} max={3} step={0.1} bind:value={$config.asset.animation.duration} />
     </span>
 {/if}
 {#if $config.asset.animation.type === 'slide'}
@@ -122,27 +124,29 @@
     </span>
 {/if}
 
-<span class="setting">
-    <p>イージング</p>
-    <Combobox options={{
-        linear: {
-            label: 'リニア',
-            value: {type: 'linear'},
-        },
-        ease: {
-            label: 'イーズ',
-            value: {type: 'ease'},
-        },
-        bounce: {
-            label: 'バウンス',
-            value: {type: 'bounce'},
-        },
-        elastic: {
-            label: 'エラスティック',
-            value: {type: 'elastic'},
-        },
-    }} bind:value={$config.asset.easing} />
-</span>
+{#if $config.asset.animation.type !== 'none'}
+    <span class="setting">
+        <p>イージング</p>
+        <Combobox options={{
+            linear: {
+                label: 'リニア',
+                value: {type: 'linear'},
+            },
+            ease: {
+                label: 'イーズ',
+                value: {type: 'ease'},
+            },
+            bounce: {
+                label: 'バウンス',
+                value: {type: 'bounce'},
+            },
+            elastic: {
+                label: 'エラスティック',
+                value: {type: 'elastic'},
+            },
+        }} bind:value={$config.asset.easing} />
+    </span>
+{/if}
 
 <style lang="scss">
     .setting {

@@ -5,13 +5,23 @@ import type { AlignType } from '@omujs/ui';
 import { writable, type Writable } from 'svelte/store';
 import { APP_ID, REMOTE_APP_ID } from './app.js';
 
-export type Resource = {
+export type ImageResource = {
     type: 'image',
     asset: string,
     filename?: string,
     addedAt?: number,
     size?: number,
-}
+};
+export type AlbumResource = {
+    type: 'album',
+    assets: string[],
+    filename?: string,
+    addedAt?: number,
+    size?: number,
+    duration: number,
+};
+
+export type Resource = ImageResource | AlbumResource;
 
 const DEFAULT_RESOURCES = {
     resources: {} as Record<string, Resource>,
@@ -33,8 +43,8 @@ export type Scaler = {
 
 export const DEFAULT_CONFIG = {
     show: null as {
-        type: 'image',
-        asset: string,
+        type: 'resource',
+        id: string,
     } | null,
     asset: {
         align: {
@@ -141,10 +151,31 @@ export class RemoteApp {
         });
     }
 
-    public async deleteResource(key: string) {
-        await this.omu.assets.delete(key);
+    public async deleteResource(...keys: string[]) {
+        keys.forEach(async (key) => {
+            await this.omu.assets.delete(key);
+        });
         this.resources.update((resources) => {
-            delete resources.resources[key];
+            for (const key of keys) {
+                delete resources.resources[key];
+            }
+            return resources;
+        });
+    }
+
+    public async createAlbum(assets: string[], filename?: string) {
+        const now = Date.now();
+        const hashBytes = md5(new TextEncoder().encode([now, ...assets].join('')));
+        const hash = Array.from(new Uint8Array(hashBytes)).map((b) => b.toString(16).padStart(2, '0')).join('');
+        const id = APP_ID.join('album', hash);
+        this.resources.update((resources) => {
+            resources.resources[id.key()] = {
+                type: 'album',
+                assets,
+                filename,
+                addedAt: now,
+                duration: 10,
+            };
             return resources;
         });
     }
