@@ -129,19 +129,19 @@
         ) {}
         
         public render(color: Vec4 = Vec4.ONE) {
-            const { animation } = $config.asset;
+            const { animation, easing } = $config.asset;
             const resource = $config.show && $resources.resources[$config.show.id];
             if (animation.type === 'none') {
                 this.assets[0].render(color);
             } else {
                 const duration = resource?.type === 'album' && resource.duration || 10;
-                const transition = animation.duration * 1000;
+                const transition = animation.duration;
                 const time = performance.now() / 1000;
                 const index = Math.floor(time / duration) % this.assets.length;
                 const t = Math.min(1, (time % duration) / transition);
                 const assetA = this.assets[index];
                 const assetB = this.assets[(index + 1) % this.assets.length];
-                renderTransition(assetA, assetB, t);
+                renderTransition(assetA, assetB, ease(t, easing.type));
             }
         }
     }

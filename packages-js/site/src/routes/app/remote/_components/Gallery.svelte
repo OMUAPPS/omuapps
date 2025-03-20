@@ -118,11 +118,6 @@
     </div>
 {/if}
 <div class="gallery">
-    <!-- {#each Object.entries($resources.resources)
-        .toReversed()
-        .filter((it) => it[1].filename?.includes(search))
-        .filter(album ? (it) => album?.assets.includes(it[0]) : () => true)
-        .toSorted(compare(sort)) as [id, resource] (id)} -->
     {#each [
         ...Object.entries($resources.resources).filter((it) => it[1].type === 'album')
             .filter((it) => it[1].filename?.includes(search))

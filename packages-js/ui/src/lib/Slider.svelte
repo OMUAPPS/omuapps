@@ -3,7 +3,17 @@
     export let min: number;
     export let max: number;
     export let step: number;
+    export let clamp: boolean = false;
     export let type: 'normal' | 'percent' = 'normal';
+    export let unit: string = '';
+    export let handleChange: (value: number) => void = () => {};
+
+    $: {
+        if (clamp) {
+            value = Math.max(min, Math.min(max, value));
+        }
+        handleChange(value);
+    }
 
     function lerp(min: number, max: number, t: number): number {
         return min + (max - min) * t;
@@ -22,6 +32,7 @@
         <label for="scale"><slot /></label>
         {#if type === 'normal'}
             <input type="number" id="scale" bind:value {min} {max} {step} />
+            <span>{unit}</span>
         {:else if type === 'percent'}
             <input
                 type="number"

@@ -3,12 +3,14 @@
     import { Slider, Tooltip } from '@omujs/ui';
     import type { Resource } from '../remote-app.js';
 
-    export let resources: Record<string, Resource>;
     export let resource: Resource;
 </script>
 
 
-<h2>{resource.filename}</h2>
+<span class="setting">
+    <p>名前</p>
+    <span>{resource.filename}</span>
+</span>
 {#if resource.addedAt}
     <span class="setting">
         <p>追加日時</p>

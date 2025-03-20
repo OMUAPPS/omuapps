@@ -55,7 +55,7 @@
                 <i class="ti ti-check"></i>
             </h2>
             <section>
-                <ResourceEdit bind:resource={$resources.resources[selected]} resources={$resources.resources}/>
+                <ResourceEdit bind:resource={$resources.resources[selected]} />
             </section>
         {/if}
         <h2>

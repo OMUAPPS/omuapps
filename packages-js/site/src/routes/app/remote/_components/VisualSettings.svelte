@@ -97,7 +97,12 @@
 {#if $config.asset.animation.type !== 'none'}
     <span class="setting">
         <p>遷移時間</p>
-        <Slider min={0} max={3} step={0.1} bind:value={$config.asset.animation.duration} />
+        <Slider
+            min={0}
+            max={1}
+            step={0.05}
+            bind:value={$config.asset.animation.duration}
+        />
     </span>
 {/if}
 {#if $config.asset.animation.type === 'slide'}
