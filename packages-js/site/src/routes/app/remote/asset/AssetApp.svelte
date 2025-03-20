@@ -269,6 +269,7 @@
             const elapsed = performance.now() - time;
             if (elapsed > duration) {
                 last = null;
+                asset.render();
             } else {
                 const t = ease(elapsed / duration, easing.type);
                 renderTransition(lastTexture, asset, t);
