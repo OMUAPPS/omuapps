@@ -101,6 +101,7 @@
     .menu {
         padding: 1rem;
         width: 24rem;
+        margin: 1rem;
         white-space: nowrap;
         display: flex;
         flex-direction: column;
@@ -148,7 +149,6 @@
     }
 
     h2 {
-        margin-top: 0.5rem;
         height: 2rem;
     }
 
@@ -182,7 +182,6 @@
 
     .gallery {
         flex: 1;
-        border-left: 1px solid var(--color-outline);
     }
 
     .asset-button {

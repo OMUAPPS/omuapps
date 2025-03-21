@@ -2,7 +2,7 @@
     import { formatBytes } from '$lib/helper.js';
     import type { Omu } from '@omujs/omu';
     import { Button, ButtonMini, Combobox, FileDrop, Tooltip } from '@omujs/ui';
-    import type { AlbumResource, RemoteApp, Resource } from '../remote-app.js';
+    import type { AlbumResource, ImageResource, RemoteApp, Resource } from '../remote-app.js';
 
     export let omu: Omu;
     export let remote: RemoteApp;
@@ -14,6 +14,7 @@
     let activeClicked = false;
     let lastClickedTime = 0;
     let album: AlbumResource | null = null;
+    let selected: ImageResource | null = null;
 
     function select(event: MouseEvent, id: string, type: 'click' | 'drag') {
         const active = id === $config.show?.id;
@@ -29,9 +30,15 @@
         } else if (type === 'click') {
             const elapsed = performance.now() - lastClickedTime;
             const sameResource = multipleSelectedIds.length === 1 && multipleSelectedIds[0] === id;
-            if (elapsed < 1000 && sameResource && resource.type === 'album') {
-                album = resource;
-                return;
+            if (elapsed < 1000 / 5 && sameResource) {
+                if (resource.type === 'album') {
+                    album = resource;
+                    return;
+                } else if (resource.type === 'image') {
+                    selected = resource;
+                } else {
+                    throw new Error(`Unknown resource type: ${resource}`);
+                }
             }
             lastClickedTime = performance.now();
             multipleSelectedIds = [id];
@@ -234,6 +241,42 @@
         </Button>
     </div>
 {/if}
+<svelte:window on:keydown={(event) => {
+    if (event.key === 'Escape') {
+        selected = null;
+    }
+}} />
+{#if selected}
+    <button
+        class="preview"
+        on:click={() => {
+            selected = null;
+        }}
+    >
+        <div class="image">
+            <img src={omu.assets.url(selected.asset)} alt="">
+        </div>
+        <div class="info">
+            {#if selected.filename}
+                <p>
+                    {selected.filename}
+                </p>
+            {/if}
+            <small>
+                {#if selected.addedAt}
+                    <span>
+                        {new Date(selected.addedAt).toLocaleString()}
+                    </span>
+                {/if}
+                {#if selected.size}
+                    <span>
+                        {formatBytes(selected.size)}
+                    </span>
+                {/if}
+            </small>
+        </div>
+    </button>
+{/if}
 
 <style lang="scss">
     .header {
@@ -279,6 +322,53 @@
         gap: 1rem;
         z-index: 1;
         background: var(--color-bg-1);
+    }
+
+    .preview {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: var(--color-bg-1);
+        z-index: 2;
+        border: 0;
+        outline: 0;
+        cursor: pointer;
+
+        > .info {
+            margin-bottom: 2rem;
+            color: var(--color-1);
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+
+            > small {
+                color: var(--color-text);
+                font-size: 0.621rem;
+                font-weight: 600;
+            }
+        }
+
+        > .image {
+            position: relative;
+            width: 100%;
+            flex: 1;
+
+            > img {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                padding: 1rem 0;
+                cursor: initial;
+            }
+        }
     }
 
     .gallery {
@@ -333,8 +423,8 @@
                 display: block;
                 background: var(--color-1);
                 position: absolute;
-                top: 1.25rem;
-                left: -0.15rem;
+                top: -0.25rem;
+                right: -1rem;
                 width: 1.5rem;
                 height: 1.5rem;
                 display: flex;
