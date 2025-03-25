@@ -121,8 +121,9 @@ export class AssetExtension {
         return uploaded;
     }
 
-    public async download(identifier: Identifier): Promise<Asset> {
-        const downloaded = await this.client.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, identifier);
+    public async download(identifier: Identifier | string): Promise<Asset> {
+        const id = typeof identifier === 'string' ? Identifier.fromKey(identifier) : identifier;
+        const downloaded = await this.client.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, id);
         return downloaded;
     }
 

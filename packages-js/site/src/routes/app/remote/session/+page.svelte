@@ -1,11 +1,12 @@
 <script lang="ts">
     import { Omu } from '@omujs/omu';
     import { FrameConnection } from '@omujs/omu/network/frame-connection.js';
-    import { FileDrop, setClient } from '@omujs/ui';
+    import { setClient, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import { REMOTE_APP } from '../app.js';
     import { RemoteApp } from '../remote-app.js';
+    import SessionApp from './SessionApp.svelte';
 
     const params = BROWSER && new URLSearchParams(window.location.search) || new URLSearchParams('');
     let token = params.get('token') || undefined;
@@ -23,49 +24,106 @@
     const remote = new RemoteApp(omu, 'remote');
     setClient(omu);
 
-    let lines: string[] = [];
-
     if (BROWSER) {
         onMount(async () => {
-            try {
-                lines = [...lines, `connecting to ${omu.address.host}:${omu.address.port}`];
-                omu.start();
-                lines = [...lines, 'started'];
-            } catch (e) {
-                lines = [...lines, `error: ${e}`];
-            }
+            omu.start();
         });
     }
-    let ready = false;
+
+    let state: {
+        type: 'connecting';
+    } | {
+        type: 'connected';
+    } | {
+        type: 'ready';
+    } | {
+        type: 'disconnected';
+        reason?: string;
+    } = { type: 'connecting' };
     omu.onReady(() => {
-        ready = true;
+        state = { type: 'ready' };
     });
-    omu.network.event.status.listen(value => {
-        lines = [...lines, JSON.stringify(value)];
+    omu.network.event.status.listen((status) => {
+        if (status.type === 'connected') {
+            state = { type: 'connected' };
+        } else if (status.type === 'disconnected') {
+            state = { type: 'disconnected', reason: status.reason?.message || undefined };
+        } else if (status.type === 'error') {
+            state = { type: 'disconnected', reason: status.error.message || undefined };
+        }
     });
 </script>
 
-{#if token}
-    {#if ready}
-        <FileDrop handle={(files) => {
-            remote.upload(...files);
-        }} multiple>
-            <p>Drop file here</p>
-        </FileDrop>
+<main>
+    {#if state.type === 'connecting'}
+        <div class="loading">
+            <span>
+                <Spinner />
+                <div>接続中</div>
+            </span>
+        </div>
+    {:else if state.type === 'connected'}
+        <div class="loading">
+            <span>
+                <Spinner />
+                <div>接続中</div>
+            </span>
+        </div>
+    {:else if state.type === 'ready'}
+        <SessionApp {omu} {remote} />
+    {:else if state.type === 'disconnected'}
+        <div class="loading">
+            <span>
+                <Spinner />
+                <div>接続が切断されました</div>
+            </span>
+            {#if state.reason}
+                <small>
+                    {state.reason}
+                </small>
+            {/if}
+        </div>
     {/if}
-{:else}
-    <p>id is not provided</p>
-{/if}
-{#if BROWSER}
-    <p>{token}</p>
-    <p>{lan}</p>
-    <p>{secure}</p>
-    <p>{ready}</p>
-{/if}
-{lines.join('\n')}
+</main>
 
-<style>
+<style lang="scss">
     :global(body) {
         background: transparent !important;
+    }
+
+    main {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: var(--color-bg-1);
+        color: var(--color-1);
+        // scale up
+        $scale: 2;
+        // transform: scale($scale);
+        scale: $scale;
+        transform-origin: 0 0;
+        width: calc(100% / $scale);
+        height: calc(100% / $scale);
+    }
+
+    .loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        font-size: 1.5rem;
+
+        > span {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+    }
+
+    small {
+        color: var(--color-text);
+        font-size: 0.8rem;
     }
 </style>

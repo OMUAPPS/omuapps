@@ -101,7 +101,10 @@ export class RemoteApp {
     public readonly config: Writable<Config>;
     public readonly connected: Writable<boolean>;
     
-    constructor(private readonly omu: Omu, side: 'app' | 'remote' | 'asset') {
+    constructor(
+        private readonly omu: Omu,
+        private readonly side: 'app' | 'remote' | 'asset'
+    ) {
         this.resources = makeRegistryWritable(omu.registries.get(RESOURCES_REGISTRY));
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
         this.connected = writable(false);
@@ -179,4 +182,47 @@ export class RemoteApp {
             return resources;
         });
     }
+
+    private readonly cache = new Map<string, Promise<string>>();
+
+    public async assetUri(asset: string) {
+        if (this.cache.has(asset)) {
+            return this.cache.get(asset)!;
+        }
+        const promise = new Promise<string>((resolve) => {
+            this.omu.assets.download(asset).then(async ({buffer}) => {
+                const blob = new Blob([buffer]);
+                const uri = URL.createObjectURL(blob);
+                const resized = await resizeImage(uri, 256, 256);
+                resolve(resized);
+            });
+        });
+        this.cache.set(asset, promise);
+        return promise;
+    }
+}
+
+async function resizeImage(image: string, width: number, height: number): Promise<string> {
+    const img = new Image();
+    img.src = image;
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d')!;
+    const aspect = img.width / img.height;
+    const targetAspect = width / height;
+    // contain
+    let scale = 1;
+    if (aspect > targetAspect) {
+        scale = width / img.width;
+    } else {
+        scale = height / img.height;
+    }
+    const scaledWidth = img.width * scale;
+    const scaledHeight = img.height * scale;
+    const offsetX = (width - scaledWidth) / 2;
+    const offsetY = (height - scaledHeight) / 2;
+    ctx.drawImage(img, offsetX, offsetY, scaledWidth, scaledHeight);
+    return canvas.toDataURL();
 }

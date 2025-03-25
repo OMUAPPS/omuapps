@@ -1,7 +1,7 @@
 <script lang="ts">
     import { formatBytes } from '$lib/helper.js';
     import type { Omu } from '@omujs/omu';
-    import { Button, ButtonMini, Combobox, FileDrop, Tooltip } from '@omujs/ui';
+    import { Button, ButtonMini, Combobox, FileDrop, Spinner, Tooltip } from '@omujs/ui';
     import type { AlbumResource, ImageResource, RemoteApp, Resource } from '../remote-app.js';
 
     export let omu: Omu;
@@ -15,6 +15,7 @@
     let lastClickedTime = 0;
     let album: AlbumResource | null = null;
     let selected: ImageResource | null = null;
+    let images: Record<string, string> = {};
 
     function select(event: MouseEvent, id: string, type: 'click' | 'drag') {
         const active = id === $config.show?.id;
@@ -75,6 +76,13 @@
             }
             return aVal < bVal ? 1 : -1;
         };
+    }
+
+    function fetchImage(asset: string): string | undefined {
+        if (images[asset]) return images[asset];
+        remote.assetUri(asset).then((url) => {
+            images[asset] = url;
+        });
     }
 </script>
 
@@ -211,11 +219,18 @@
                     <i class="ti ti-check"></i>
                 </div>
                 {#if resource.type === 'image'}
-                    <img src={omu.assets.url(resource.asset)} alt="">
+                    {#if images[id]}
+                        <img src={images[id]} alt="">
+                    {/if}
                 {:else}
                     <div class="album">
+                        {#each resource.assets.toReversed() as asset}
+                            {fetchImage(asset), ''}
+                        {/each}
                         {#each resource.assets as asset}
-                            <img src={omu.assets.url(asset)} alt="">
+                            {#if images[asset]}
+                                <img src={images[asset]} alt="">
+                            {/if}
                         {/each}
                         <i class="ti ti-library-photo"></i>
                     </div>
@@ -234,7 +249,8 @@
         </Button>
         <Button onclick={() => {
             const images = multipleSelectedIds.filter((id) => $resources.resources[id].type === 'image');
-            remote.createAlbum(images, '新しいアルバム');
+            const date = new Date();
+            remote.createAlbum(images, `${date.toLocaleDateString()}のアルバム`);
             multipleSelectedIds = [];
         }} primary>
             アルバムを作成
@@ -254,7 +270,15 @@
         }}
     >
         <div class="image">
-            <img src={omu.assets.url(selected.asset)} alt="">
+            {#await omu.assets.download(selected.asset).then(async ({buffer}) => {
+                const blob = new Blob([buffer]);
+                const uri = URL.createObjectURL(blob);
+                return uri;
+            })}
+                <Spinner />
+            {:then image}
+                <img src={image} alt="">
+            {/await}
         </div>
         <div class="info">
             {#if selected.filename}
@@ -356,8 +380,12 @@
 
         > .image {
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
             flex: 1;
+            color: var(--color-1);
 
             > img {
                 position: absolute;
@@ -447,6 +475,7 @@
             height: 100%;
             object-fit: contain;
             pointer-events: none;
+            animation: fade-in 0.1621s;
         }
 
         .album {
@@ -463,6 +492,7 @@
                 height: 100%;
                 object-fit: contain;
                 user-select: none;
+                animation: fade-in 0.1621s;
             }
 
             > i {
@@ -484,6 +514,15 @@
 
         > .status {
             display: none;
+        }
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
         }
     }
 
