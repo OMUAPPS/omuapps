@@ -17,6 +17,7 @@ import uv
 from loguru import logger
 from omu.extension.plugin import PackageInfo, PluginPackageInfo
 from omu.plugin import InstallContext, Plugin
+from omu.result import Err, Ok, Result, is_err
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
@@ -72,9 +73,9 @@ class DependencyResolver:
                 args.append(dependency)
         return args
 
-    async def update_requirements(self, requirements: dict[str, SpecifierSet]) -> None:
+    async def install_requirements(self, requirements: dict[str, SpecifierSet]) -> Result[None, str]:
         if len(requirements) == 0:
-            return
+            return Ok(None)
         with tempfile.NamedTemporaryFile(mode="wb", delete=True) as req_file:
             dependency_lines = self.format_dependencies(requirements)
             req_file.write("\n".join(dependency_lines).encode("utf-8"))
@@ -93,10 +94,9 @@ class DependencyResolver:
             )
             stdout, stderr = await process.communicate()
         if process.returncode != 0:
-            logger.error(f"Failed to install dependencies: {stdout.decode()}")
-            logger.error(f"Failed to install dependencies: {stderr.decode()}")
-            return
+            return Err(f"Failed to install dependencies: stdout={stdout.decode()} stderr={stderr.decode()}")
         logger.info(f"Ran uv command: {(stdout or stderr).decode()}")
+        return Ok(None)
 
     def is_package_satisfied(self, package: str, specifier: SpecifierSet | None) -> bool:
         package_info = self._packages_distributions.get(package)
@@ -171,7 +171,7 @@ class DependencyResolver:
         self._distributions_change_marked = False
         return self._packages_distributions
 
-    async def resolve(self) -> ResolveResult:
+    async def resolve(self) -> Result[ResolveResult, str]:
         packages_distributions = self.find_packages_distributions()
         requirements: dict[str, SpecifierSet] = {}
         update_distributions: dict[str, importlib.metadata.Distribution] = {}
@@ -191,19 +191,15 @@ class DependencyResolver:
             requirements[dependency] = specifier_set
             update_distributions[dependency] = exist_package
         if len(requirements) == 0:
-            return ResolveResult(
-                new_packages=new_distributions,
-                updated_packages=update_distributions,
-            )
+            return Ok(ResolveResult(new_packages=new_distributions, updated_packages=update_distributions))
 
-        await self.update_requirements(requirements)
+        result = await self.install_requirements(requirements)
+        if is_err(result):
+            return Err(result.err)
         self._distributions_change_marked = True
         logger.info(f"New packages: {new_distributions}")
         logger.info(f"Updated packages: {update_distributions}")
-        return ResolveResult(
-            new_packages=new_distributions,
-            updated_packages=update_distributions,
-        )
+        return Ok(ResolveResult(new_packages=new_distributions, updated_packages=update_distributions))
 
 
 @dataclass(frozen=True, slots=True)

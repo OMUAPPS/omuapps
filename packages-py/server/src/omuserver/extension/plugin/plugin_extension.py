@@ -105,10 +105,13 @@ class PluginExtension:
 
             async with self.lock:
                 resolve_result = await self.dependency_resolver.resolve()
+                if resolve_result.is_err is True:
+                    await session.disconnect(DisconnectType.INVALID_VERSION, resolve_result.err)
+                    return
                 if RESTART:
                     await self.server.restart()
                 else:
-                    await self.loader.update_plugins(resolve_result)
+                    await self.loader.update_plugins(resolve_result.value)
 
         session.add_ready_task(task)
 
