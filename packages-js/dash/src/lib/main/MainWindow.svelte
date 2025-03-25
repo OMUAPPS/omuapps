@@ -257,7 +257,7 @@
         display: flex;
         flex-direction: row;
         align-items: baseline;
-        padding: 0.5rem 0rem;
+        padding: 0.5rem 0;
         background: var(--color-bg-2);
         color: var(--color-1);
         border-bottom: 1px solid var(--color-outline);
@@ -273,24 +273,6 @@
 
         > .buttons {
             margin-left: auto;
-
-            > button {
-                background: none;
-                border: none;
-                color: var(--color-1);
-                font-size: 1rem;
-                font-weight: 600;
-                width: 2rem;
-                height: 2rem;
-
-                &:focus-visible,
-                &:hover {
-                    outline: none;
-                    background: var(--color-1);
-                    color: var(--color-bg-1);
-                    border-radius: 4px;
-                }
-            }
         }
     }
 

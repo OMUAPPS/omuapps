@@ -11,7 +11,7 @@
     on:click
 >
     <Tooltip>{tooltip}</Tooltip>
-    <i class="ti {icon}" />
+    <i class="ti {icon}"></i>
 </button>
 
 <style lang="scss">
@@ -19,12 +19,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        min-width: 40px;
-        min-height: 40px;
-        max-height: 100%;
-        padding-right: 10px;
-        padding-left: 10px;
-        font-size: 16px;
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1rem;
         color: var(--color-1);
         background: transparent;
         border: none;

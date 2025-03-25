@@ -90,12 +90,12 @@
 
         &:not(.windowed) {
             position: absolute;
-            top: 40px;
+            top: 2.5rem;
             width: 100%;
-            height: calc(100% - 40px);
+            height: calc(100% - 2.5rem);
 
             &:not(.no-decorated) {
-                top: 40px;
+                top: 2.5rem;
             }
         }
     }

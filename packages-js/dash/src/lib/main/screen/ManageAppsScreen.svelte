@@ -38,7 +38,6 @@
         padding-bottom: 0;
         display: flex;
         flex-direction: column;
-        gap: 0rem;
         text-align: start;
     }
 

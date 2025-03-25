@@ -234,7 +234,7 @@
             }
 
             &:hover {
-                box-shadow: 0 0.25rem 0rem 0px color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%);
+                box-shadow: 0 0.25rem 0 0px color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%);
                 background: var(--color-bg-2);
                 outline: 1px solid var(--color-1);
                 outline-offset: -1px;

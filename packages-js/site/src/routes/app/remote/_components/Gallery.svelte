@@ -64,7 +64,7 @@
     };
 
     function compare(sort: Sort) {
-        return ([_a , a]: [string, Resource], [_b ,b]: [string, Resource]) => {
+        return ([, a]: [string, Resource], [, b]: [string, Resource]) => {
             const aVal = a[sort.key] || 0;
             const bVal = b[sort.key] || 0;
             if (aVal === bVal) {
@@ -220,7 +220,7 @@
                     {/await}
                 {:else}
                     <div class="album">
-                        {#each resource.assets as asset}
+                        {#each resource.assets as asset (asset)}
                             {#await remote.assetUri(asset)}
                                 <Spinner />
                             {:then src}
