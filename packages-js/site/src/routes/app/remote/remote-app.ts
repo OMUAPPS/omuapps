@@ -187,15 +187,15 @@ export class RemoteApp {
 
     public async assetUri(asset: string) {
         if (this.cache.has(asset)) {
-            return this.cache.get(asset)!;
+            return await this.cache.get(asset)!;
         }
-        const promise = new Promise<string>((resolve) => {
+        const promise = new Promise<string>((resolve, reject) => {
             this.omu.assets.download(asset).then(async ({buffer}) => {
                 const blob = new Blob([buffer]);
                 const uri = URL.createObjectURL(blob);
                 const resized = await resizeImage(uri, 256, 256);
                 resolve(resized);
-            });
+            }).catch(reject);
         });
         this.cache.set(asset, promise);
         return promise;
@@ -205,7 +205,9 @@ export class RemoteApp {
 async function resizeImage(image: string, width: number, height: number): Promise<string> {
     const img = new Image();
     img.src = image;
-    await img.decode();
+    await new Promise((resolve) => {
+        img.onload = resolve;
+    });
     const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;

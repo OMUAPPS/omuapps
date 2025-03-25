@@ -15,7 +15,6 @@
     let lastClickedTime = 0;
     let album: AlbumResource | null = null;
     let selected: ImageResource | null = null;
-    let images: Record<string, string> = {};
 
     function select(event: MouseEvent, id: string, type: 'click' | 'drag') {
         const active = id === $config.show?.id;
@@ -77,13 +76,6 @@
             return aVal < bVal ? 1 : -1;
         };
     }
-
-    function fetchImage(asset: string): string | undefined {
-        if (images[asset]) return images[asset];
-        remote.assetUri(asset).then((url) => {
-            images[asset] = url;
-        });
-    }
 </script>
 
 <div class="header">
@@ -114,7 +106,7 @@
     }} bind:value={sort.order} />
     <FileDrop primary handle={async (files) => {
         remote.upload(...files);
-    }} multiple>
+    }} multiple accept="image/*">
         画像を追加
         <i class="ti ti-upload"></i>
     </FileDrop>
@@ -219,18 +211,21 @@
                     <i class="ti ti-check"></i>
                 </div>
                 {#if resource.type === 'image'}
-                    {#if images[id]}
-                        <img src={images[id]} alt="">
-                    {/if}
+                    {#await remote.assetUri(id)}
+                        <Spinner />
+                    {:then src}
+                        <img src={src} alt="">
+                    {:catch}
+                        <i class="ti ti-alert"></i>
+                    {/await}
                 {:else}
                     <div class="album">
-                        {#each resource.assets.toReversed() as asset}
-                            {fetchImage(asset), ''}
-                        {/each}
                         {#each resource.assets as asset}
-                            {#if images[asset]}
-                                <img src={images[asset]} alt="">
-                            {/if}
+                            {#await remote.assetUri(asset)}
+                                <Spinner />
+                            {:then src}
+                                <img src={src} alt="">
+                            {/await}
                         {/each}
                         <i class="ti ti-library-photo"></i>
                     </div>

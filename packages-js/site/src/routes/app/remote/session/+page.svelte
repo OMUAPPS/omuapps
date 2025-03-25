@@ -40,9 +40,6 @@
         type: 'disconnected';
         reason?: string;
     } = { type: 'connecting' };
-    omu.onReady(() => {
-        state = { type: 'ready' };
-    });
     omu.network.event.status.listen((status) => {
         if (status.type === 'connected') {
             state = { type: 'connected' };
@@ -50,6 +47,8 @@
             state = { type: 'disconnected', reason: status.reason?.message || undefined };
         } else if (status.type === 'error') {
             state = { type: 'disconnected', reason: status.error.message || undefined };
+        } else if (status.type === 'ready') {
+            state = { type: 'ready' };
         }
     });
 </script>
@@ -89,6 +88,11 @@
 <style lang="scss">
     :global(body) {
         background: transparent !important;
+        font-size: 40px;
+    }
+    
+    :global(html) {
+        font-size: calc(100vw * 18 / 480);
     }
 
     main {
@@ -99,13 +103,6 @@
         align-items: center;
         background: var(--color-bg-1);
         color: var(--color-1);
-        // scale up
-        $scale: 2;
-        // transform: scale($scale);
-        scale: $scale;
-        transform-origin: 0 0;
-        width: calc(100% / $scale);
-        height: calc(100% / $scale);
     }
 
     .loading {
