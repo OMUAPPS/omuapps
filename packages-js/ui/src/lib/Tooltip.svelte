@@ -233,7 +233,7 @@
             style:top="{(direction === 'down'
                 ? targetRect.y + targetRect.height
                 : targetRect.y - 10) - offset.y}px"
-        />
+        ></div>
     {/if}
 </span>
 
@@ -241,7 +241,7 @@
     .tooltip {
         position: fixed;
         z-index: 200;
-        font-size: 12px;
+        font-size: 0.75rem;
         font-weight: 600;
         color: #fff;
         white-space: nowrap;
@@ -249,7 +249,7 @@
         user-select: none;
 
         &.background {
-            padding: 5px 10px;
+            padding: 0.3rem 0.6rem;
             background: #000;
         }
     }
@@ -260,9 +260,9 @@
         pointer-events: none;
         content: "";
         user-select: none;
-        border: 6px solid transparent;
+        border: 0.4rem solid transparent;
         border-bottom-color: #000;
-        transform: translateX(-50%);
+        transform: translate(-50%, -15%);
 
         &.top {
             transform: translateX(-50%) scaleY(-1);

@@ -23,7 +23,7 @@
 <style lang="scss">
     label {
         display: flex;
-        align-items: baseline;
+        align-items: center;
     }
 
     .toggle {
@@ -31,13 +31,13 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px;
+        padding: 0.5rem;
         cursor: pointer;
         user-select: none;
 
         input {
-            width: 20px;
-            height: 20px;
+            width: 1.5rem;
+            height: 1.5rem;
             appearance: none;
             background: var(--color-bg-2);
             border: none;
@@ -59,12 +59,12 @@
 
         i {
             position: absolute;
-            left: 10px;
+            left: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 20px;
-            height: 20px;
+            width: 1rem;
+            height: 1rem;
             color: var(--color-bg-2);
         }
     }

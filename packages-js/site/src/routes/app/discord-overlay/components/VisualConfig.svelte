@@ -26,11 +26,7 @@
 </h2>
 <section>
     <span>
-        <label>
-            名前を表示
-            <hr>
-            <input type="checkbox" bind:checked={$config.show_name_tags} />
-        </label>
+        <Checkbox bind:value={$config.show_name_tags} label="名前を表示"/>
     </span>
 </section>
 
@@ -83,27 +79,12 @@
         padding-bottom: 0.5rem;
     }
 
-    label {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        gap: 0.5rem;
-    }
-
-    hr {
-        flex: 1;
-        height: 1px;
-        border: none;
-        margin: 0.5rem 0.5rem;
-    }
-
     span {
         display: flex;
         justify-content: space-between;
         width: 100%;
         gap: 0.5rem;
-        font-size: 0.9rem;
+        font-size: 0.8621rem;
         margin-bottom: 0.75rem;
     }
 
@@ -114,15 +95,5 @@
         padding-left: 0.5rem;
         margin-top: 0.5rem;
         margin-bottom: 1rem;
-    }
-
-    input {
-        width: 1.25rem;
-        height: 1.25rem;
-        accent-color: var(--color-1);
-
-        &:hover {
-            accent-color: var(--color-1);
-        }
     }
 </style>
