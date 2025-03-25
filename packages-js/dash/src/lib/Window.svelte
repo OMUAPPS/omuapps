@@ -62,7 +62,7 @@
     <div class="titlebar">
         <div data-tauri-drag-region class:margin={!maximized}></div>
         <div class="title">
-            <img src={Title} alt="title" width="64" height="10" />
+            <img src={Title} alt="title" />
             <span class="version">
                 {VERSION}
                 {(DEV && ' (dev)') || ($isBetaEnabled && ' (beta)') || ''}
@@ -165,6 +165,10 @@
         justify-content: center;
         margin-left: 1rem;
         pointer-events: none;
+
+        > img {
+            height: 0.621rem;
+        }
     }
 
     .window {

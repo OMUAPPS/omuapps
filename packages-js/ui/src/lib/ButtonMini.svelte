@@ -12,11 +12,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        min-width: 30px;
-        height: 30px;
-        padding-right: 6px;
-        padding-left: 6px;
-        font-size: 16px;
+        height: 2rem;
+        width: 2rem;
+        font-size: 1rem;
         color: var(--color-1);
         background: transparent;
         border: none;

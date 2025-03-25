@@ -68,6 +68,7 @@
 
         .body {
             padding-left: 1rem;
+            font-size: 1rem;
         }
 
         &.selected,

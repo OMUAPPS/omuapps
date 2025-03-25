@@ -273,6 +273,7 @@
 
         > .buttons {
             margin-left: auto;
+            font-size: 0.9rem;
         }
     }
 
