@@ -1,15 +1,16 @@
 <script lang="ts">
-    import { page } from '$app/stores';
     import { Omu } from '@omujs/omu';
+    import { FrameConnection } from '@omujs/omu/network/frame-connection.js';
     import { FileDrop, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import { REMOTE_APP } from '../app.js';
     import { RemoteApp } from '../remote-app.js';
 
-    let token = BROWSER && $page.url.searchParams.get('token') || undefined;
-    let lan = BROWSER && $page.url.searchParams.get('lan') || undefined;
-    let secure = BROWSER && $page.url.searchParams.get('secure') === 'true' || false;
+    const params = BROWSER && new URLSearchParams(window.location.search) || new URLSearchParams('');
+    let token = params.get('token') || undefined;
+    let lan = params.get('lan') || undefined;
+    let secure = params.get('secure') === 'true' || false;
     const omu = new Omu(REMOTE_APP, {
         token: token,
         address: BROWSER && {
@@ -17,6 +18,7 @@
             port: 26423,
             secure,
         } || undefined,
+        connection: BROWSER && new FrameConnection() || undefined,
     });
     const remote = new RemoteApp(omu, 'remote');
     setClient(omu);
@@ -26,14 +28,6 @@
     if (BROWSER) {
         onMount(async () => {
             try {
-                const res = await fetch('http://192.168.0.12:26423/version', {
-                    method: 'GET',
-                    mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                lines = [...lines, `response: ${await res.json()}`];
                 lines = [...lines, `connecting to ${omu.address.host}:${omu.address.port}`];
                 omu.start();
                 lines = [...lines, 'started'];

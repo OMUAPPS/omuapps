@@ -137,7 +137,7 @@ pydantic==2.9.2
     # via marshmallowqa-py
 pydantic-core==2.23.4
     # via pydantic
-pyright==1.1.382.post0
+pyright==1.1.397
 pytest==8.3.3
     # via pytest-asyncio
     # via pytest-cov
@@ -147,9 +147,6 @@ pywin32==306 ; sys_platform == 'win32'
     # via omuplugin-obs
 requests==2.32.3
     # via yt-dlp
-result==0.17.0
-    # via omu
-    # via omuserver
 rookiepy==0.5.3
     # via marshmallowqa-py
     # via omuplugin-marshmallow

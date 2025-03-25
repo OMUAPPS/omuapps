@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script type="application/json" id="config">
+        %CONFIG%
+    </script>
+    <script>
+        /*
+        {
+            frame_token: string;
+            url: string;
+            ws_url: string;
+            type_key: string;
+        }
+        */
+        const config = {};
+
+        const setConfig = () => {
+            const data = JSON.parse(document.getElementById('config').textContent);
+            Object.assign(config, data);
+        };
+
+        let frame;
+        let connected = false;
+        let url;
+        let origin;
+        let ws = null;
+
+        const init = async () => {
+            frame = document.querySelector('iframe');
+            setConfig();
+
+            url = new URL(window.location.href).searchParams.get('url');
+            origin = new URL(url).origin;
+            frame.src = url;
+
+            frame.onload = async () => {
+                while (!connected) {
+                    postMessageToFrame({ type: 'syn', payload: { origin: window.location.origin } });
+                    await delay(100);
+                }
+            };
+
+            window.addEventListener('message', handleMessage);
+        };
+
+        const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+        const handleMessage = (event) => {
+            const { data } = event;
+
+            if (!isValidMessage(data)) return;
+
+            const { type, payload } = data;
+
+            switch (type) {
+                case 'syn':
+                    connected = true;
+                    break;
+                case 'connect':
+                    connectToWebSocket(payload.host, payload.port);
+                    break;
+                case 'disconnect':
+                    disconnectWebSocket();
+                    break;
+                case 'send':
+                    sendWebSocketMessage(payload);
+                    break;
+                default:
+                    postMessageToFrame({ type: 'error', payload: `Unknown message type: ${type}` });
+                    break;
+            }
+        };
+
+        const isValidMessage = (data) => {
+            return data.type_key === config.type_key &&
+                data.type !== undefined &&
+                data.payload !== undefined;
+        };
+
+        const postMessageToFrame = (command) => {
+            command.type_key = config.type_key;
+            frame.contentWindow.postMessage(command, origin);
+        };
+
+        const connectToWebSocket = () => {
+            ws = new WebSocket(config.ws_url);
+
+            ws.onopen = () => postMessageToFrame({ type: 'connect', payload: {} });
+
+            ws.onmessage = (event) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    postMessageToFrame({ type: 'receive', payload: new Uint8Array(reader.result) });
+                };
+                reader.readAsArrayBuffer(event.data);
+            };
+
+            ws.onclose = () => postMessageToFrame({ type: 'disconnect' });
+
+            ws.onerror = (event) => postMessageToFrame({ type: 'error', payload: event.message });
+        };
+
+        const disconnectWebSocket = () => {
+            if (ws) ws.close();
+        };
+
+        const sendWebSocketMessage = (payload) => {
+            if (ws) ws.send(payload);
+        };
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</head>
+
+<body>
+    <iframe frameborder="0"></iframe>
+</body>
+
+</html>

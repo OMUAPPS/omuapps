@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+from urllib.parse import urlencode
 
 import aiohttp
 from aiohttp import web
@@ -12,6 +13,7 @@ from loguru import logger
 from omu import Identifier
 from omu.event_emitter import EventEmitter
 from omu.helper import asyncio_error_logger
+from yarl import URL
 
 from omuserver.config import Config
 from omuserver.extension.asset import AssetExtension
@@ -28,11 +30,12 @@ from omuserver.extension.table import TableExtension
 from omuserver.helper import safe_path_join
 from omuserver.network import Network
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
-from omuserver.security.security import PermissionManager
+from omuserver.security import PermissionManager
 from omuserver.version import VERSION
 
 USER_AGENT_HEADERS = {"User-Agent": json.dumps(["omu", {"name": "omuserver", "version": VERSION}])}
 RESTART_EXIT_CODE = 100
+FRAME_TYPE_KEY = "omuapps-frame"
 
 
 class Server:
@@ -52,6 +55,7 @@ class Server:
         self.network.event.start += self._handle_network_start
         self.network.add_http_route("/", self._handle_index)
         self.network.add_http_route("/version", self._handle_version)
+        self.network.add_http_route("/frame", self._handle_frame)
         self.network.add_http_route("/proxy", self._handle_proxy)
         self.network.add_http_route("/asset", self._handle_assets)
         self.security = PermissionManager(self)
@@ -83,6 +87,28 @@ class Server:
 
     async def _handle_version(self, request: web.Request) -> web.Response:
         return web.json_response({"version": VERSION})
+
+    async def _handle_frame(self, request: web.Request) -> web.StreamResponse:
+        url = request.query.get("url")
+        if not url:
+            return web.Response(status=400)
+        url = URL(url).human_repr()
+        content = self.directories.frame.read_text(encoding="utf-8")
+        frame_token = self.security.generate_frame_token(url)
+        config = {
+            "frame_token": frame_token,
+            "url": url,
+            "ws_url": URL.build(
+                scheme="ws",
+                host=self.address.host,
+                port=self.address.port,
+                path="/ws",
+                query_string=urlencode({"frame_token": frame_token, "url": url}),
+            ).human_repr(),
+            "type_key": FRAME_TYPE_KEY,
+        }
+        content = content.replace("%CONFIG%", json.dumps(config))
+        return web.Response(text=content, content_type="text/html")
 
     async def _handle_proxy(self, request: web.Request) -> web.StreamResponse:
         url = request.query.get("url")

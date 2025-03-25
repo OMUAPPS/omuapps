@@ -13,13 +13,27 @@ from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.network.packet import PACKET_TYPES, Packet, PacketType
-from omu.network.packet.packet_types import ConnectPacket, DisconnectPacket, DisconnectType
+from omu.network.packet.packet_types import DisconnectPacket, DisconnectType
 from omu.network.packet_mapper import PacketMapper
-from result import Err, Ok
+from omu.result import Err, Ok, Result
+
+from omuserver.error import ServerError
 
 if TYPE_CHECKING:
     from omuserver.security import PermissionHandle
     from omuserver.server import Server
+
+
+class ConnectionClosed(ServerError): ...
+
+
+class ErrorReceiving(ServerError): ...
+
+
+class InvalidPacket(ServerError): ...
+
+
+type ReceiveError = ConnectionClosed | ErrorReceiving | InvalidPacket
 
 
 class SessionConnection(abc.ABC):
@@ -27,7 +41,16 @@ class SessionConnection(abc.ABC):
     async def send(self, packet: Packet, packet_mapper: PacketMapper) -> None: ...
 
     @abc.abstractmethod
-    async def receive(self, packet_mapper: PacketMapper) -> Packet | None: ...
+    async def receive(self, packet_mapper: PacketMapper) -> Result[Packet, ReceiveError]: ...
+
+    async def receive_as[T](self, packet_mapper: PacketMapper, packet_type: PacketType[T]) -> Result[T, ReceiveError]:
+        packet = await self.receive(packet_mapper)
+        if packet.is_err is True:
+            return Err(packet.err)
+        packet = packet.value
+        if packet.type != packet_type:
+            return Err(InvalidPacket(f"Expected {packet_type.id} but got {packet.type}"))
+        return Ok(packet.data)
 
     @abc.abstractmethod
     async def close(self) -> None: ...
@@ -77,43 +100,36 @@ class Session:
         packet_mapper: PacketMapper,
         connection: SessionConnection,
     ) -> Session:
-        packet = await connection.receive(packet_mapper)
-        if packet is None:
-            await connection.close()
-            raise RuntimeError("Connection closed")
-        if packet.type != PACKET_TYPES.CONNECT or not isinstance(packet.data, ConnectPacket):
+        received = await connection.receive_as(packet_mapper, PACKET_TYPES.CONNECT)
+        if received.is_err is True:
             await connection.send(
-                Packet(
-                    PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_PACKET_TYPE, "Expected connect")
-                ),
+                Packet(PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_PACKET, received.err.message)),
                 packet_mapper,
             )
             await connection.close()
-            raise RuntimeError(f"Expected {PACKET_TYPES.CONNECT.id} but got {packet.type}")
-        connect_packet = packet.data
-        app = connect_packet.app
-        token = connect_packet.token
+            raise RuntimeError(f"Invalid packet received while connecting: {received.err}")
+        else:
+            packet = received.value
 
-        verify_result = await server.security.verify_app_token(app, token)
-        match verify_result:
-            case Ok((kind, permission_handle, new_token)):
-                session = Session(
-                    packet_mapper=packet_mapper,
-                    app=app,
-                    permission_handle=permission_handle,
-                    kind=kind,
-                    connection=connection,
-                )
-                if session.kind != AppType.PLUGIN:
-                    await session.send(PACKET_TYPES.TOKEN, new_token)
-                return session
-            case Err(error):
-                await connection.send(
-                    Packet(PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_TOKEN, error)),
-                    packet_mapper,
-                )
-                await connection.close()
-                raise RuntimeError(f"Invalid token for {app}: {error}")
+        verify_result = await server.security.verify_token(packet.app, packet.token)
+        if verify_result.is_err is True:
+            await connection.send(
+                Packet(PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_TOKEN, verify_result.err)),
+                packet_mapper,
+            )
+            await connection.close()
+            raise RuntimeError(f"Invalid token for {packet.app}: {verify_result.err}")
+        permission_handle, new_token = verify_result.value
+        session = Session(
+            packet_mapper=packet_mapper,
+            app=packet.app,
+            permission_handle=permission_handle,
+            kind=packet.app.type or AppType.APP,
+            connection=connection,
+        )
+        if session.kind != AppType.PLUGIN:
+            await session.send(PACKET_TYPES.TOKEN, new_token)
+        return session
 
     @property
     def closed(self) -> bool:
@@ -127,11 +143,11 @@ class Session:
 
     async def listen(self) -> None:
         while not self.connection.closed:
-            packet = await self.connection.receive(self.packet_mapper)
-            if packet is None:
-                await self.disconnect(DisconnectType.CLOSE)
+            received = await self.connection.receive(self.packet_mapper)
+            if received.is_err is True:
+                await self.disconnect(DisconnectType.INVALID_PACKET, received.err.message)
                 return
-            asyncio.create_task(self.dispatch_packet(packet))
+            asyncio.create_task(self.dispatch_packet(received.value))
 
     async def dispatch_packet(self, packet: Packet) -> None:
         try:

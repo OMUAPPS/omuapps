@@ -3,8 +3,9 @@ from __future__ import annotations
 from loguru import logger
 from omu.network import Packet
 from omu.network.packet_mapper import PacketMapper
+from omu.result import Ok, Result
 
-from omuserver.session import SessionConnection
+from omuserver.session import ReceiveError, SessionConnection
 
 from .plugin_connection import PluginConnection
 
@@ -17,8 +18,8 @@ class PluginSessionConnection(SessionConnection):
     def closed(self) -> bool:
         return self.connection.closed
 
-    async def receive(self, packet_mapper: PacketMapper) -> Packet:
-        return await self.connection.dequeue_to_server_packet()
+    async def receive(self, packet_mapper: PacketMapper) -> Result[Packet, ReceiveError]:
+        return Ok(await self.connection.dequeue_to_server_packet())
 
     async def close(self) -> None:
         try:

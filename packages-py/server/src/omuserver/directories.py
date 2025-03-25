@@ -8,6 +8,7 @@ class Directories:
     data: pathlib.Path
     assets: pathlib.Path
     index: pathlib.Path
+    frame: pathlib.Path
     version: pathlib.Path
     dashboard: pathlib.Path | None = None
 
@@ -18,6 +19,7 @@ class Directories:
             data=cwd / "data",
             assets=cwd / "assets",
             index=pathlib.Path(__file__).parent / "index.html",
+            frame=pathlib.Path(__file__).parent / "frame.html",
             version=cwd / "VERSION",
         )
 

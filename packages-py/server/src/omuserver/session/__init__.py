@@ -1,6 +1,7 @@
-from .session import Session, SessionConnection
+from .session import ReceiveError, Session, SessionConnection
 
 __all__ = [
+    "ReceiveError",
     "Session",
     "SessionConnection",
 ]

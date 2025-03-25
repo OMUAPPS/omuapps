@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import socket
+import urllib.parse
 from typing import TYPE_CHECKING
 
 from aiohttp import web
 from loguru import logger
-from omu import App, Identifier
+from omu import Identifier
 from omu.address import get_lan_ip
 from omu.app import AppType
+from omu.errors import DisconnectReason, InvalidOrigin
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.network.packet import PACKET_TYPES, PacketType
-from omu.network.packet.packet_types import DisconnectType
+from omu.network.packet.packet_types import DisconnectPacket, DisconnectType
+from omu.result import Err, Ok, Result, is_err
 
 from omuserver.helper import find_processes_by_port
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
@@ -53,7 +56,7 @@ class Network:
         self.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
         self.add_packet_handler(PACKET_TYPES.DISCONNECT, self._handle_disconnection)
         self.event.connected += self._packet_dispatcher.process_connection
-        self.self_ip = get_lan_ip()
+        self.local_ip = get_lan_ip()
 
     async def stop(self) -> None:
         if self._runner is None:
@@ -71,8 +74,8 @@ class Network:
             parts.append(f"v{session.app.version}")
         logger.info(f"Ready: {' '.join(parts)}")
 
-    async def _handle_disconnection(self, session: Session, packet: DisconnectType) -> None:
-        await session.disconnect(packet, "Disconnect packet received")
+    async def _handle_disconnection(self, session: Session, packet: DisconnectPacket) -> None:
+        await session.disconnect(DisconnectType.CLOSE, packet.message)
 
     def register_packet(self, *packet_types: PacketType) -> None:
         self._packet_dispatcher.register(*packet_types)
@@ -87,29 +90,54 @@ class Network:
     def add_http_route(self, path: str, handle: Coro[[web.Request], web.StreamResponse]) -> None:
         self._app.router.add_get(path, handle)
 
-    async def _verify_origin(self, request: web.Request, session: Session) -> None:
-        if session.kind == AppType.REMOTE:
-            return
+    def _verify_remote_ip(self, request: web.Request, session: Session) -> Result[None, DisconnectReason]:
+        if request.remote not in {self.local_ip, "127.0.0.1"}:
+            logger.warning(f"Invalid remote ip {request.remote} for {session.app}")
+            return Err(InvalidOrigin("Invalid remote ip (see logs)"))
+        return Ok(None)
+
+    async def _verify_origin(self, request: web.Request, session: Session) -> Result[None, DisconnectReason]:
         origin = request.headers.get("Origin")
         if origin is None:
-            return
-        namespace = session.app.id.namespace
+            return Ok(None)
         origin_namespace = Identifier.namespace_from_url(origin)
-        if origin_namespace == namespace:
-            return
+        session_namespace = session.app.id.namespace
+        if origin_namespace == session_namespace:
+            return Ok(None)
         if origin_namespace in self._server.config.extra_trusted_origins:
-            return
+            return Ok(None)
         trusted_origins = await self._server.server.trusted_origins.get()
         if origin_namespace in trusted_origins:
-            return
+            return Ok(None)
+        return Err(InvalidOrigin(f"Invalid origin: {origin_namespace} != {session_namespace}"))
 
-        await session.disconnect(
-            DisconnectType.INVALID_ORIGIN,
-            f"Invalid origin: {origin_namespace} != {namespace}",
-        )
-        raise ValueError(f"Invalid origin: {origin_namespace} != {namespace}")
+    def _verify_frame_token(self, request: web.Request, session: Session) -> Result[None, DisconnectReason]:
+        query = request.query
+        if "frame_token" not in query:
+            return Err(InvalidOrigin("Missing frame token"))
+        frame_token = query["frame_token"]
+        origin = request.headers.get("Origin")
+        if origin is None:
+            return Err(InvalidOrigin("Missing origin"))
+        url = query.get("url")
+        if url is None:
+            return Err(InvalidOrigin("Missing url"))
+        parsed_url = urllib.parse.unquote(url)
+        verified = self._server.security.verify_frame_token(frame_token, parsed_url)
+        if not verified:
+            return Err(InvalidOrigin("Invalid frame token"))
+        return Ok(None)
 
-    async def websocket_handler(self, request: web.Request) -> web.Response:
+    async def _verify(self, session: Session, request: web.Request) -> Result[None, DisconnectReason]:
+        if session.kind == AppType.REMOTE:
+            return self._verify_frame_token(request, session)
+        ip_verified = self._verify_remote_ip(request, session)
+        if session.kind in {AppType.DASHBOARD, AppType.PLUGIN}:
+            return ip_verified
+        origin_verified = await self._verify_origin(request, session)
+        return ip_verified and origin_verified
+
+    async def websocket_handler(self, request: web.Request):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
         connection = WebsocketsConnection(ws)
@@ -119,22 +147,20 @@ class Network:
             connection,
         )
 
-        if request.remote not in {self.self_ip, "127.0.0.1"}:
-            if session.kind != AppType.REMOTE:
-                await session.disconnect(DisconnectType.INVALID_ORIGIN, "Not a remote app")
-                logger.warning(f"Invalid remote app {session.app} from {request.remote}")
-                return web.Response(status=403)
+        verify_result = await self._verify(session, request)
+        if is_err(verify_result):
+            logger.warning(f"Verification failed for {session.app}: {verify_result.err}")
+            await session.disconnect(verify_result.err.type, verify_result.err.message)
+            return web.Response(status=403)
 
-        if session.kind not in {AppType.DASHBOARD, AppType.PLUGIN}:
-            await self._verify_origin(request, session)
         await self.process_session(session)
-        return web.Response(status=101, headers={"Upgrade": "websocket"})
+        return ws
 
     async def process_session(self, session: Session) -> None:
-        if self.is_connected(session.app):
+        exist_session = self._sessions.get(session.app.id)
+        if exist_session:
             logger.warning(f"Session {session.app} already connected")
-            old_session = self._sessions[session.app.id]
-            await old_session.disconnect(
+            await exist_session.disconnect(
                 DisconnectType.ANOTHER_CONNECTION,
                 f"Another connection from {session.app}",
             )
@@ -142,9 +168,6 @@ class Network:
         session.event.disconnected += self.handle_disconnection
         await self._event.connected.emit(session)
         await session.listen()
-
-    def is_connected(self, app: App) -> bool:
-        return app.id in self._sessions
 
     async def handle_disconnection(self, session: Session) -> None:
         if session.app.id not in self._sessions:
@@ -155,29 +178,34 @@ class Network:
     def is_port_free(self) -> bool:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(("0.0.0.0", self._server.address.port))
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(("127.0.0.1", self._server.address.port))
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind((self._server.address.host, self._server.address.port))
-                return True
+            return True
         except OSError:
             return False
 
     def ensure_port_availability(self):
-        if not self.is_port_free():
-            found_processes = set(find_processes_by_port(self._server.address.port))
-            if len(found_processes) == 0:
-                raise OSError(f"Port {self._server.address.port} already in use by unknown process")
-            is_system_idle_reserved = any(p.pid == 0 and p.name() == "System Idle Process" for p in found_processes)
-            if is_system_idle_reserved:
-                raise OSError(f"Port {self._server.address.port} already in use by System Idle Process")
-            if len(found_processes) > 1:
-                processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
-                raise OSError(f"Port {self._server.address.port} already in use by multiple processes: {processes}")
-            process = found_processes.pop()
-            port = self._server.address.port
-            name = process.name()
-            pid = process.pid
-            parents = process.parents()
-            msg = f"Port {port} already in use by {' -> '.join(f'{p.name()}({p.pid})' for p in parents)} -> {name} ({pid=})"
-            raise OSError(msg)
+        if self.is_port_free():
+            return
+        found_processes = set(find_processes_by_port(self._server.address.port))
+        if len(found_processes) == 0:
+            raise OSError(f"Port {self._server.address.port} already in use by unknown process")
+        is_system_idle_reserved = any(p.pid == 0 and p.name() == "System Idle Process" for p in found_processes)
+        if is_system_idle_reserved:
+            raise OSError(f"Port {self._server.address.port} already in use by System Idle Process")
+        if len(found_processes) > 1:
+            processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
+            raise OSError(f"Port {self._server.address.port} already in use by multiple processes: {processes}")
+        process = found_processes.pop()
+        port = self._server.address.port
+        name = process.name()
+        pid = process.pid
+        parents = process.parents()
+        msg = f"Port {port} already in use by {' -> '.join(f'{p.name()}({p.pid})' for p in parents)} -> {name} ({pid=})"
+        raise OSError(msg)
 
     async def start(self) -> None:
         if self._runner is not None:

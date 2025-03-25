@@ -131,9 +131,6 @@ pywin32==306 ; sys_platform == 'win32'
     # via omuplugin-obs
 requests==2.32.3
     # via yt-dlp
-result==0.17.0
-    # via omu
-    # via omuserver
 rookiepy==0.5.3
     # via marshmallowqa-py
     # via omuplugin-marshmallow

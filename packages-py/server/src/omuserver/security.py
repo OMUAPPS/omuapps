@@ -8,13 +8,14 @@ import sqlite3
 import string
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
+from venv import logger
 
-from loguru import logger
 from omu import App
 from omu.app import AppType
 from omu.extension.permission.permission import PermissionType
 from omu.identifier import Identifier
-from result import Err, Ok, Result
+from omu.result import Err, Ok, Result, is_err
+from yarl import URL
 
 if TYPE_CHECKING:
     from omuserver.server import Server
@@ -87,6 +88,7 @@ class PermissionManager:
             )
             """
         )
+        self.frame_tokens: dict[str, Token] = {}
         self.permission_db.commit()
         self.load_permissions()
 
@@ -133,7 +135,7 @@ class PermissionManager:
             return False
         return permission_id in permissions
 
-    async def generate_app_token(self, app: App) -> Token:
+    def generate_app_token(self, app: App) -> Token:
         token = self._token_generator.generate(32)
         self._token_db.execute(
             """
@@ -150,9 +152,9 @@ class PermissionManager:
         self._token_db.commit()
         return token
 
-    def validate_app_token(self, app: App, token: Token) -> bool:
+    def verify_app_token(self, app: App, token: Token) -> Result[tuple[PermissionHandle, Token], str]:
         if self._server.config.dashboard_token == token:
-            return True
+            return Ok((DashboardPermissionHandle(), token))
         cursor = self._token_db.execute(
             """
             SELECT token
@@ -163,7 +165,7 @@ class PermissionManager:
         )
         result = cursor.fetchone()
         if result is None:
-            return False
+            return Err("Token not found")
         self._token_db.execute(
             """
             UPDATE tokens
@@ -173,47 +175,49 @@ class PermissionManager:
             (datetime.datetime.now(), token),
         )
         self._token_db.commit()
-        return True
+        return Ok((SessionPermissionHandle(self, token), token))
 
-    async def verify_app_token(
-        self, app: App, token: str | None
-    ) -> Result[tuple[AppType, PermissionHandle, Token], str]:
-        if app.type == AppType.DASHBOARD:
+    def create_app_token(self, app: App) -> Result[tuple[PermissionHandle, Token], str]:
+        token = self.generate_app_token(app)
+        return Ok((SessionPermissionHandle(self, token), token))
+
+    async def verify_token(self, app: App, token: str | None) -> Result[tuple[PermissionHandle, Token], str]:
+        if app.type not in {
+            AppType.DASHBOARD,
+            AppType.PLUGIN,
+            AppType.REMOTE,
+        }:
+            valid_type = app.type is None or app.type == AppType.APP
+            if not valid_type:
+                raise ValueError(f"Invalid app type: {app.type}")
             if token is None:
-                return Err("Dashboard token required, but none provided")
-            if self.is_dashboard_token(token):
-                return Ok((AppType.DASHBOARD, DashboardPermissionHandle(), token))
-            return Err("Invalid dashboard token provided")
-        elif app.type == AppType.PLUGIN:
-            if token is None:
-                return Err("Plugin token required, but none provided")
-            if self.is_plugin_token(token):
-                return Ok((AppType.PLUGIN, PluginPermissionHandle(), token))
-            return Err("Invalid plugin token provided")
-        elif app.type == AppType.REMOTE:
-            if token is None:
-                return Err("Remote app token required, but none provided")
-            result = self.validate_remote_token(app, token)
-            if isinstance(result, Ok):
-                return Ok((AppType.REMOTE, SessionPermissionHandle(self, token), token))
+                return self.create_app_token(app)
+
+            result = self.verify_app_token(app, token)
+            if is_err(result):
+                logger.warning(f"Generating new token for app {app} due to invalid token: {result.err}")
+                return self.create_app_token(app)
             return result
-        elif app.type is None or app.type == AppType.APP:
-            if token is None:
-                token = await self.generate_app_token(app)
-                return Ok((AppType.APP, SessionPermissionHandle(self, token), token))
-            result = self.validate_app_token(app, token)
-            if not result:
-                logger.warning(f"Generating new token for app {app} due to invalid token")
-                token = await self.generate_app_token(app)
-            return Ok((AppType.APP, SessionPermissionHandle(self, token), token))
+
+        if token is None:
+            return Err(f"App type {app.type} requires a token, but none provided")
+
+        if app.type == AppType.DASHBOARD:
+            return self.verify_dashboard_token(token)
+        elif app.type == AppType.PLUGIN:
+            return self.verify_plugin_token(token)
+        elif app.type == AppType.REMOTE:
+            return self.verify_remote_token(app, token)
         else:
             raise ValueError(f"Invalid app type: {app.type}")
 
-    def is_dashboard_token(self, token: Token) -> bool:
+    def verify_dashboard_token(self, token: Token) -> Result[tuple[PermissionHandle, Token], str]:
         dashboard_token = self._server.config.dashboard_token
         if dashboard_token is None:
-            return False
-        return dashboard_token == token
+            return Err("Dashboard token not set")
+        if dashboard_token != token:
+            return Err("Invalid dashboard token")
+        return Ok((DashboardPermissionHandle(), token))
 
     def generate_remote_token(self, app: App) -> Token:
         token = self._token_generator.generate(32)
@@ -233,7 +237,7 @@ class PermissionManager:
         self._token_db.commit()
         return token
 
-    def validate_remote_token(self, app: App, token: Token) -> Result[Token, str]:
+    def verify_remote_token(self, app: App, token: Token) -> Result[tuple[PermissionHandle, Token], str]:
         cursor = self._token_db.execute(
             """
             SELECT app
@@ -270,15 +274,31 @@ class PermissionManager:
             """,
             (datetime.datetime.now(), token),
         )
-        return Ok(token)
+        return Ok((SessionPermissionHandle(self, token), token))
 
     def generate_plugin_token(self) -> Token:
         token = self._token_generator.generate(32)
         self._plugin_tokens.add(token)
         return token
 
-    def is_plugin_token(self, token: Token) -> bool:
-        return token in self._plugin_tokens
+    def verify_plugin_token(self, token: Token) -> Result[tuple[PermissionHandle, Token], str]:
+        if token not in self._plugin_tokens:
+            return Err("Invalid plugin token")
+        return Ok((PluginPermissionHandle(), token))
+
+    def generate_frame_token(self, url: str) -> Token:
+        token = self._token_generator.generate(32)
+        self.frame_tokens[token] = url
+        return token
+
+    def verify_frame_token(self, token: Token, url: str) -> bool:
+        frame_url = self.frame_tokens.get(token)
+        if frame_url is None:
+            return False
+        frame_url = URL(frame_url)
+        parsed_url = URL(url)
+        same_host = frame_url.host == parsed_url.host
+        return same_host
 
 
 class SessionPermissionHandle(PermissionHandle):

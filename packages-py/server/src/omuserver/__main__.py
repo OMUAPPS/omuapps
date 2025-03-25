@@ -17,7 +17,7 @@ from omuserver.helper import (
     start_compressing_logs,
 )
 from omuserver.migration import migrate
-from omuserver.server.server import Server
+from omuserver.server import Server
 from omuserver.version import VERSION
 
 
