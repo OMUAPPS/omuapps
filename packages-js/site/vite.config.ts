@@ -30,6 +30,13 @@ const reloadPlugin = (): PluginOption => ({
 
 export default defineConfig({
     plugins: [sveltekit(), reloadPlugin()],
+    css: {
+        preprocessorOptions: {
+            scss: {
+                api: 'modern-compiler'
+            }
+        }
+    },
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}'],
     },

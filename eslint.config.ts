@@ -60,7 +60,7 @@ export default [
                     'indent': 4,
                     'ignoredNodes': [],
                     'switchCase': 0,
-                    'alignAttributesVertically': false
+                    'alignAttributesVertically': false,
                 }
             ],
             'quotes': ['error', 'single'],
