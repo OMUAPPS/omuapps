@@ -1,9 +1,10 @@
-import { CF_PAGES_URL, IS_BETA } from '$lib/consts.js';
+import { IS_BETA } from '$lib/consts.js';
 import { Identifier } from '@omujs/omu';
 import type { AppMetadata } from '@omujs/omu/app.js';
 import type { LocalizedText } from '@omujs/omu/localization/localization.js';
 import { DEV } from 'esm-env';
 
+const CF_PAGES_URL = IS_BETA ? 'https://beta.omuapps.com' : 'https://omuapps.com';
 export const ORIGIN = DEV ? 'http://localhost:5173' : new URL(CF_PAGES_URL).origin;
 export const CHANNEL = IS_BETA ? ' (開発版)' : '';
 
