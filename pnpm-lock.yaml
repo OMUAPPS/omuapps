@@ -122,9 +122,6 @@ importers:
       license-checker:
         specifier: 25.0.1
         version: 25.0.1
-      sass-embedded:
-        specifier: ^1.86.0
-        version: 1.86.0
       sugarss:
         specifier: 4.0.1
         version: 4.0.1(postcss@8.5.1)
@@ -237,9 +234,6 @@ importers:
       qrious:
         specifier: ^4.0.2
         version: 4.0.2
-      sass-embedded:
-        specifier: ^1.86.0
-        version: 1.86.0
       seedrandom:
         specifier: ^3.0.5
         version: 3.0.5
@@ -337,9 +331,6 @@ importers:
       react-dom:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
-      sass-embedded:
-        specifier: ^1.86.0
-        version: 1.86.0
       storybook:
         specifier: ^8.2.8
         version: 8.5.3(bufferutil@4.0.8)(prettier@3.3.3)(utf-8-validate@6.0.4)
@@ -6010,7 +6001,8 @@ snapshots:
       '@babel/helper-validator-identifier': 7.25.9
     optional: true
 
-  '@bufbuild/protobuf@2.2.5': {}
+  '@bufbuild/protobuf@2.2.5':
+    optional: true
 
   '@chromatic-com/storybook@1.6.1(react@18.3.1)':
     dependencies:
@@ -7937,7 +7929,8 @@ snapshots:
       update-browserslist-db: 1.1.2(browserslist@4.24.4)
     optional: true
 
-  buffer-builder@0.2.0: {}
+  buffer-builder@0.2.0:
+    optional: true
 
   buffer-crc32@1.0.0: {}
 
@@ -8139,7 +8132,8 @@ snapshots:
       color-string: 1.9.1
     optional: true
 
-  colorjs.io@0.5.2: {}
+  colorjs.io@0.5.2:
+    optional: true
 
   columnify@1.6.0:
     dependencies:
@@ -9228,7 +9222,8 @@ snapshots:
 
   ignore@5.3.2: {}
 
-  immutable@5.0.3: {}
+  immutable@5.0.3:
+    optional: true
 
   import-fresh@3.3.0:
     dependencies:
@@ -10816,6 +10811,7 @@ snapshots:
       sass-embedded-win32-arm64: 1.86.0
       sass-embedded-win32-ia32: 1.86.0
       sass-embedded-win32-x64: 1.86.0
+    optional: true
 
   sass@1.84.0:
     dependencies:
@@ -11089,6 +11085,7 @@ snapshots:
   supports-color@8.1.1:
     dependencies:
       has-flag: 4.0.0
+    optional: true
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
@@ -11269,8 +11266,10 @@ snapshots:
   sync-child-process@1.0.2:
     dependencies:
       sync-message-port: 1.1.3
+    optional: true
 
-  sync-message-port@1.1.3: {}
+  sync-message-port@1.1.3:
+    optional: true
 
   tar-stream@2.2.0:
     dependencies:
@@ -11512,7 +11511,8 @@ snapshots:
 
   validate-npm-package-name@5.0.1: {}
 
-  varint@6.0.0: {}
+  varint@6.0.0:
+    optional: true
 
   vite-node@2.0.5(@types/node@22.13.1)(sass-embedded@1.86.0)(sass@1.84.0)(sugarss@4.0.1(postcss@8.5.1)):
     dependencies:
