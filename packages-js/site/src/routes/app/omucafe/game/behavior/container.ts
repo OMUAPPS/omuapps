@@ -1,4 +1,3 @@
-import type { Matrices } from '$lib/components/canvas/matrices.js';
 import { getTextureByAsset, type Asset } from '../asset.js';
 import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
 import { draw, matrices } from '../game.js';
@@ -24,7 +23,6 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
     async render(
         context: KitchenContext,
         action: BehaviorAction<'container'>,
-        args: { matrices: Matrices },
     ) {
         const { item, behavior } = action;
         for (const child of behavior.items

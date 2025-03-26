@@ -12,7 +12,7 @@ export async function renderBackground() {
     const tex = side === 'background' ? await getTextureByUri(background2) : await getTextureByUri(background);
     // Background
     // fit to screen
-    const { width, height } = glContext.gl.canvas;
+    const { height } = glContext.gl.canvas;
     const scale = height / tex.height;
     draw.texture(
         0, 0,
@@ -29,7 +29,6 @@ export async function renderEffect() {
     // Background
     // fit to screen
     const { width, height } = glContext.gl.canvas;
-    const aspect = effectTex.width / effectTex.height;
     const scale = Math.max(width / effectTex.width, height / effectTex.height);
     const scaledWidth = effectTex.width * scale;
     const scaledHeight = effectTex.height * scale;
@@ -67,7 +66,7 @@ export async function renderOverlay2() {
     const gl = glContext.gl;
     if (side === 'overlay') {
         const tex = await getTextureByUri(overlay3);
-        const { width, height } = gl.canvas;
+        const { height } = gl.canvas;
         const scale = Math.min(height / tex.height, 1.5);
         draw.texture(
             0, height - tex.height * scale,

@@ -47,7 +47,6 @@
         };
     }
 
-    const promise = new Promise<void>((resolve) => omu.onReady(resolve));
     let search: string = '';
 
     if (BROWSER) {

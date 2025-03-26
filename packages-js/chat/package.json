@@ -18,18 +18,14 @@
         "ts": "pnpm run ts-esm && pnpm run ts-dts",
         "ts-dts": "tsc --outDir dist/dts --declaration true --emitDeclarationOnly true --declarationMap true",
         "ts-esm": "tsc --outDir dist/esm",
-        "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/chat\"",
-        "lint": "eslint .",
-        "fix": "eslint . --fix"
+        "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/chat\""
     },
     "repository": {
         "type": "git",
         "url": "https://github.com/OMUAPPS/omuapps"
     },
     "devDependencies": {
-        "@omujs/eslint-config": "workspace:*",
         "@omujs/omu": "workspace:*",
-        "eslint": "^9.9.1",
         "nodemon": "^3.1.4"
     },
     "dependencies": {

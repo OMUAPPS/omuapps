@@ -78,7 +78,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
         });
     }
     
-    handleClick: BehaviorFunction<'action', { x: number; y: number; }> = (context, action, args) => {
+    handleClick: BehaviorFunction<'action', { x: number; y: number; }> = (context, action) => {
         this.execute('click', context, action, {});
     };
 

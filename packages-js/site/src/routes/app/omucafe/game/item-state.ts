@@ -306,7 +306,7 @@ export function getAllItemStates(order: (a: ItemState, b: ItemState) => number =
         }
         items.push(item);
     }
-    for (const [id, item] of Object.entries(context.items).sort(([, a], [, b]) => {
+    for (const item of Object.values(context.items).sort((a, b) => {
         const maxA = a.bounds.max;
         const maxB = b.bounds.max;
         return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);

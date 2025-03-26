@@ -116,7 +116,7 @@
     }
 
     function updateReaction(reaction: Reaction) {
-        const [vx, vy] = reaction.velocity;
+        const [vx] = reaction.velocity;
         const [x, y] = reaction.position;
 
         let newVx = vx + Math.sin(reaction.age / 15) / 3;

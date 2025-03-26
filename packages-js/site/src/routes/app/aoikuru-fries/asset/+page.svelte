@@ -60,7 +60,7 @@
         processQueue();
     });
 
-    friesApp.testSignal.listen((v) => {
+    friesApp.testSignal.listen(() => {
         queue.push({
             thrower: `test${Date.now() % 1000}`,
         });

@@ -19,21 +19,27 @@
         "build-tauri": "node ./scripts/js-build.mjs --build dash",
         "clean": "node ./scripts/js-clean.mjs",
         "dev": "node ./scripts/js-dev.mjs",
-        "fix": "pnpm -r fix",
-        "lint": "pnpm -r lint"
+        "eslint": "eslint",
+        "fix": "eslint fix",
+        "lint": "eslint lint"
     },
     "devDependencies": {
         "@actions/github": "^6.0.0",
+        "@types/eslint": "^9.6.0",
         "@types/node": "^22.1.0",
         "ajv": "^8.17.1",
         "axios": "^1.7.3",
         "depcheck": "^1.4.7",
         "eslint": "^9.9.1",
+        "eslint-plugin-svelte": "3.3.3",
         "execa": "^9.3.0",
         "glob": "^11.0.0",
+        "globals": "16.0.0",
+        "jiti": "^2.4.2",
         "lerna": "^8.1.8",
         "typescript": "^5.5.4",
-        "wrangler": "^3.103.2"
+        "typescript-eslint": "8.28.0",
+        "wrangler": "4.4.0"
     },
     "pnpm": {
         "overrides": {

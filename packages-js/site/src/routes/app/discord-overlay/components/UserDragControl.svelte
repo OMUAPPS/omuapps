@@ -49,7 +49,6 @@
         const screen = worldToScreen(position[0], position[1]);
         const world = screenToWorld(screen.x + dx, screen.y - dy);
         user.position = position = [world.x, world.y];
-        const a = worldToScreen(position[0], position[1] + OFFSET + rect.height / 2);
         $dragPosition = new Vec2(e.clientX, e.clientY);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         user.show = !isInHideArea({ x: position[0], y: position[1]});

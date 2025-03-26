@@ -106,7 +106,7 @@ const STATES_REGISTRY_TYPE = RegistryType.createJson<States>(APP_ID, {
 });
 
 function processMessage(message: Message) {
-    
+    console.log('[msg]', message.text);
 }
 
 export function createGame(app: App): Promise<void> {

@@ -20,10 +20,10 @@ type ParticleEffect = {
 export const particleCache: Map<string, ParticleEffect> = new Map();
 
 export async function renderParticles() {
-    for (const [id, effect] of particleCache) {
+    for (const [, effect] of particleCache) {
         const { particles, tex: image } = effect;
         for (const particle of particles) {
-            const { x, y, vx, vy, life, maxLife } = particle;
+            const { x, y, life, maxLife } = particle;
             const alpha = life / maxLife;
             const color = new Vec4(1, 1, 1, alpha);
             matrices.model.push();

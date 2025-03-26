@@ -87,24 +87,24 @@
                 max: { x: texture.width, y: texture.height },
             });
             switch (scaling.type) {
-                case 'contain': {
-                    const scale = Math.min(canvas.width / texture.width, canvas.height / texture.height);
-                    bounds = bounds.multiply({ x: scale, y: scale });
-                    break;
-                }
-                case 'cover': {
-                    const scale = Math.max(canvas.width / texture.width, canvas.height / texture.height);
-                    bounds = bounds.multiply({ x: scale, y: scale });
-                    break;
-                }
-                case 'stretch': {
-                    const scale = Vec2.from({
-                        x: (scaling.width.type === 'percent') ? canvas.width * scaling.width.value / 100 : scaling.width.value,
-                        y: (scaling.height.type === 'percent') ? canvas.height * scaling.height.value / 100 : scaling.height.value,
-                    });
-                    bounds = bounds.multiply(scale.div({ x: texture.width, y: texture.height }));
-                    break;
-                }
+            case 'contain': {
+                const scale = Math.min(canvas.width / texture.width, canvas.height / texture.height);
+                bounds = bounds.multiply({ x: scale, y: scale });
+                break;
+            }
+            case 'cover': {
+                const scale = Math.max(canvas.width / texture.width, canvas.height / texture.height);
+                bounds = bounds.multiply({ x: scale, y: scale });
+                break;
+            }
+            case 'stretch': {
+                const scale = Vec2.from({
+                    x: (scaling.width.type === 'percent') ? canvas.width * scaling.width.value / 100 : scaling.width.value,
+                    y: (scaling.height.type === 'percent') ? canvas.height * scaling.height.value / 100 : scaling.height.value,
+                });
+                bounds = bounds.multiply(scale.div({ x: texture.width, y: texture.height }));
+                break;
+            }
             }
             const side = {
                 x: {
@@ -175,23 +175,23 @@
 
     function ease(t: number, type: typeof $config.asset.easing.type) {
         switch (type) {
-            case 'linear': return t;
-            case 'ease': return 0.5 - 0.5 * Math.cos(t * Math.PI);
-            case 'bounce': {
-                if (t < 1 / 2.75) {
-                    return 7.5625 * t * t;
-                } else if (t < 2 / 2.75) {
-                    return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
-                } else if (t < 2.5 / 2.75) {
-                    return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
-                } else {
-                    return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
-                }
+        case 'linear': return t;
+        case 'ease': return 0.5 - 0.5 * Math.cos(t * Math.PI);
+        case 'bounce': {
+            if (t < 1 / 2.75) {
+                return 7.5625 * t * t;
+            } else if (t < 2 / 2.75) {
+                return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+            } else if (t < 2.5 / 2.75) {
+                return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+            } else {
+                return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
             }
-            case 'elastic': {
-                const p = 0.3;
-                return Math.pow(2, -10 * t) * Math.sin((t - p / 4) * (2 * Math.PI) / p) + 1;
-            }
+        }
+        case 'elastic': {
+            const p = 0.3;
+            return Math.pow(2, -10 * t) * Math.sin((t - p / 4) * (2 * Math.PI) / p) + 1;
+        }
         }
     }
 

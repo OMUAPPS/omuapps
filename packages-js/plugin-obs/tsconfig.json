@@ -1,6 +1,6 @@
 {
     "$schema": "http://json.schemastore.org/tsconfig",
-    "extends": "../eslint-config/tsconfig.json",
+    "extends": "../../tsconfig.json",
     "compilerOptions": {},
     "compileOnSave": true,
     "include": [

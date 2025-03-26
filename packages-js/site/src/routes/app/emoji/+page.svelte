@@ -14,7 +14,7 @@
     const omu = new Omu(APP);
     const chat = Chat.create(omu);
     $emojiApp = new EmojiApp(omu, chat);
-    const { emojis, config, selectedEmoji } = $emojiApp;
+    const { emojis, selectedEmoji } = $emojiApp;
     setClient(omu);
 
     omu.plugins.require({
@@ -80,12 +80,6 @@
         omu.start();
     }
 
-    function toggle() {
-        $config = {
-            ...$config,
-            active: !$config.active,
-        };
-    }
 </script>
 
 <input
