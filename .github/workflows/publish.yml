@@ -118,7 +118,7 @@ jobs:
             - name: Install dependencies
               run: |
                   rye config --set-bool behavior.use-uv=true
-                  rye sync
+                  rye sync --no-lock
 
             - name: Git Identity
               run: |

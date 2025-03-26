@@ -33,7 +33,7 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           rye config --set-bool behavior.use-uv=true
-          rye sync
+          rye sync --no-lock
 
       - name: Run tests
         run: |
