@@ -34,6 +34,7 @@
         "buffer": "^6.0.3",
         "esm-env": "^1.0.0",
         "pako": "^2.1.0",
+        "sass": "^1.86.0",
         "postcss-html": "^1.7.0",
         "qrious": "^4.0.2",
         "seedrandom": "^3.0.5",
