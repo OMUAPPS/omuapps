@@ -251,7 +251,7 @@ class PermissionManager:
             return Err("Token not found")
         remote_app = App.from_json(json.loads(result[0]))
         if remote_app.url != app.url:
-            return Err("URL mismatch")
+            return Err(f"URL mismatch: {remote_app.url} != {app.url}")
         if remote_app.metadata is None or app.metadata is None:
             return Err("Metadata mismatch")
         if [
