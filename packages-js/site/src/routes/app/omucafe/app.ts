@@ -9,8 +9,8 @@ export const APP = new App(APP_ID, {
     metadata: buildMetadata({
         locale: 'en',
         name: {
-            ja: 'おむカフェ',
-            en: 'OMU Café',
+            ja: '配信喫茶',
+            en: 'Café',
         },
         description: {
             ja: '自分だけのカフェを作ってみよう',
