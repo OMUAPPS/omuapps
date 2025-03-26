@@ -1,7 +1,7 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { Vec2 } from '$lib/math/vec2.js';
-    import { context, COUNTER_WIDTH, init, markChanged, render, setContext } from '../game/game.js';
+    import { context, COUNTER_WIDTH, init, markChanged, render as renderGame, setContext } from '../game/game.js';
     import { createItemState } from '../game/item-state.js';
     import { getGame } from '../omucafe-app.js';
 
@@ -36,7 +36,7 @@
 
 <div class="kitchen">
     <div class="canvas">
-        <Canvas {init} {render} />
+        <Canvas {init} render={renderGame}/>
     </div>
     {#if side === 'client'}
         <div class="debug" class:show-debug={showDebug}>

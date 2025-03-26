@@ -363,7 +363,7 @@ async function renderScreen() {
     }
 }
 
-export async function render(gl: GlContext) {
+export async function render(gl: GlContext): Promise<void> {
     const { gl: glInternal } = gl;
     glInternal.viewport(0, 0, glInternal.canvas.width, glInternal.canvas.height);
     glInternal.clearColor(0, 0, 0, 0);

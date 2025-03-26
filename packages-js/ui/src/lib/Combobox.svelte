@@ -8,7 +8,7 @@
         };
     };
     export let value: T;
-    export let key: string = Object.keys(options)[0];
+    export let key: string | null | undefined = Object.keys(options)[0];
 
     $: {
         const found = Object.keys(options).find((key) => options[key].value === value);
