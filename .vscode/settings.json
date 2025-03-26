@@ -37,7 +37,7 @@
     "explorer.fileNesting.expand": false,
     "explorer.fileNesting.patterns": {
         ".gitignore": ".gitattributes, .gitmodules",
-        "README.md": "LICENSE, CHANGELOG.md, CONTRIBUTING.md, CONTRIBUTORS.md",
+        "README.md": "LICENSE, *.md",
         "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, .npmignore",
         "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
     },

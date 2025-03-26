@@ -1,1 +1,3 @@
-![graph](../../assets/graph-dash.png)
+# dash
+
+管理画面を提供するパッケージです。

@@ -22,34 +22,34 @@
 </p>
 <br/>
 
-## OMUAPPSについて
+## About OMUAPPS
 
-OMUAPPSは、アプリ間の連携やブラウザだけでは実現できない機能を厳格に制限された権限のもと提供をするAPIアプリケーションおよびそのAPIを利用するアプリケーションを提供するプラットフォームです。
+OMUAPPS is a platform that provides API applications and applications that use the API that strictly limit the functions that cannot be realized between applications and cannot be realized with a browser under restricted permissions.
 
-## 開発
+## Development
 
-OMUAPPSの開発環境を構築する方法です。
+How to set up the development environment for OMUAPPS.
 
-この手順はvscodeを使用することを前提としています。
+This procedure assumes the use of vscode.
 
-### 必要なもの
+### Requirements
 
-必要なものをインストールしてください。
+Please install the following.
 
 - Install [Rust](https://www.rust-lang.org/ja)
 - Install [Nodejs](https://nodejs.org/)
 - Install [pnpm](https://pnpm.io/ja/installation)
 - Install [rye](https://rye.astral.sh/)
 
-### セットアップ
+### Setup
 
-`rye sync` `pnpm i`を実行してください。
+Run `rye sync` `pnpm i`.
 
 ```bash
 rye sync
 pnpm i
 ```
 
-### 起動
+### Start
 
-vscodeでは、起動構成から [ Server/Client ] を選択して起動してください。
+In vscode, select [ Server/Client ] from the startup configuration and start.
