@@ -21,10 +21,10 @@ class AuthorMetadata(TypedDict):
 class AuthorJson(TypedDict):
     provider_id: str
     id: str
+    metadata: AuthorMetadata
     name: NotRequired[str] | None
     avatar_url: NotRequired[str] | None
     roles: NotRequired[list[RoleJson]] | None
-    metadata: NotRequired[AuthorMetadata] | None
 
 
 class Author(Keyable, Model[AuthorJson]):
@@ -33,17 +33,17 @@ class Author(Keyable, Model[AuthorJson]):
         *,
         provider_id: Identifier,
         id: Identifier,
+        metadata: AuthorMetadata | None = None,
         name: str | None = None,
         avatar_url: str | None = None,
         roles: list[Role] | None = None,
-        metadata: AuthorMetadata | None = None,
     ) -> None:
         self.provider_id = provider_id
         self.id = id
+        self.metadata = metadata or {}
         self.name = name
         self.avatar_url = avatar_url
         self.roles = roles or []
-        self.metadata = metadata
 
     def to_json(self) -> AuthorJson:
         return {
@@ -67,7 +67,7 @@ class Author(Keyable, Model[AuthorJson]):
                 lambda roles: list(map(Role.from_json, roles)),
                 [],
             ),
-            metadata=json.get("metadata"),
+            metadata=json.get("metadata", {}),
         )
 
     def key(self) -> str:
