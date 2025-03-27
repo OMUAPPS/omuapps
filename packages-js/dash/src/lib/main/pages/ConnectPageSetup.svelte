@@ -67,7 +67,7 @@
         {:else}
             <p>{$t('page.connect.select_channel')}</p>
             <div class="channels">
-                {#each result as {channel, checked}}
+                {#each result as {channel, checked} (channel.id)}
                     <button class="channel" class:checked={checked} on:click={() => {
                         checked = !checked;
                     }}>

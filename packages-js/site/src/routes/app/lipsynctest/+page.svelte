@@ -137,7 +137,7 @@
 
 <main>
     <Canvas init={(ctx) => init(ctx)} render={(ctx) => render(ctx)} />
-    {#each vowels.keys() as key}
+    {#each vowels.keys() as key (key)}
         <div class="vowel">
             <div>
                 {key}: {vowelScores.find((v) => v.key === key)?.value.toFixed(2)}

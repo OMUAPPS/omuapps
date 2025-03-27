@@ -37,11 +37,11 @@
             <input
                 type="number"
                 id="scale"
-                bind:value={percentValue}
+                value={percentValue}
                 min="0"
                 max="100"
                 step={step * 100}
-                on:input={() => (value = lerp(min, max, percentValue / 100))}
+                on:input={(e) => (value = lerp(min, max, e.currentTarget.valueAsNumber / 100))}
             />
             <span>%</span>
         {/if}

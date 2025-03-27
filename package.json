@@ -19,9 +19,7 @@
         "build-tauri": "node ./scripts/js-build.mjs --build dash",
         "clean": "node ./scripts/js-clean.mjs",
         "dev": "node ./scripts/js-dev.mjs",
-        "eslint": "eslint",
-        "fix": "eslint fix",
-        "lint": "eslint lint"
+        "eslint": "eslint"
     },
     "devDependencies": {
         "@actions/github": "^6.0.0",

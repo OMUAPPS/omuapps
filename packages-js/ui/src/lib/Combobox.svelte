@@ -39,7 +39,7 @@
         on:focus={() => dispatch('open')}
         on:blur={() => dispatch('close')}
     >
-        {#each Object.entries(options) as [key, option]}
+        {#each Object.entries(options) as [key, option] (key)}
             <option value={key}>{option.label}</option>
         {/each}
     </select>

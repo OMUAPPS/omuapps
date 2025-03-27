@@ -27,7 +27,7 @@
             </section>
             <h3>翻訳言語</h3>
             <section>
-                {#each $config.languages as language, i}
+                {#each $config.languages as language, i (i)}
                     <div class="lang">
                         <Combobox options={LANGUAGE_OPTIONS} bind:value={language} />
                         <ButtonMini

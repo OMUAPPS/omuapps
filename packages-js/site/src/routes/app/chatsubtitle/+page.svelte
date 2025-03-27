@@ -11,7 +11,7 @@
     import { createSubtitle } from './stores.js';
     import { AlignType, JustifyType, SubtitleWriter } from './subtitle.js';
 
-    export const omu = new Omu(APP);
+    const omu = new Omu(APP);
     const chatSubtitleApp = new ChatSubtitleApp(omu);
     const { config } = chatSubtitleApp;
     const chat = Chat.create(omu);

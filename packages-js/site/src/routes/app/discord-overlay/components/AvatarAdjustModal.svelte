@@ -2,10 +2,12 @@
     import { Button, FileDrop, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import { APP_ID } from '../app.js';
-    import type { DiscordOverlayApp, Source } from '../discord-overlay-app.js';
+    import type { AvatarConfig, DiscordOverlayApp, Source } from '../discord-overlay-app.js';
     import { scaleFactor, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
+    export let avatarConfig: AvatarConfig;
+    
     const { config, voiceState, speakingState } = overlayApp;
 
     let lastMouse: {x: number, y: number} | null = null;
@@ -65,7 +67,6 @@
         return URL.createObjectURL(new Blob([buffer]));
     }
 
-    $: avatarConfig = $selectedAvatar && $config.avatars[$selectedAvatar];
 </script>
 
 {#if $selectedAvatar && avatarConfig}

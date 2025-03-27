@@ -13,6 +13,9 @@ build
 # vite
 vite.config.ts.*.mjs
 
+# eslint
+.eslintcache
+
 # tauri
 src-tauri/target
 

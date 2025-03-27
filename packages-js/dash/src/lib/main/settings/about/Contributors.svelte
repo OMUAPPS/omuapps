@@ -41,7 +41,7 @@
         <i class="ti ti-code"></i>
         {$t('settings.about.contributors')}
     </h2>
-    {#each contributors as contributor}
+    {#each contributors as contributor (contributor.id)}
         <ExternalLink href={contributor.html_url}>
             <h4>
                 {$t('settings.about.contributor', {

@@ -176,7 +176,7 @@
         </button>
         {#if configOpen}
             <div class="pngtuber-config">
-                {#each Array.from({ length: 10 }) as _, i}
+                {#each Array.from({ length: 10 }) as _, i (i)}
                     <button
                         on:click={()=>{
                             $config.users[id].config.pngtuber.layer = i;
