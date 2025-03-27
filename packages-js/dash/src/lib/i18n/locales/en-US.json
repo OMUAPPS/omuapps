@@ -30,7 +30,9 @@
         "settings": "Settings",
         "dragdrop": "You can add by dragging and dropping",
         "second": "Second",
-        "no_description": "No Description"
+        "no_description": "No Description",
+        "reload": "Reload",
+        "current": "Current"
     },
     "permission_level": {
         "low": "Impact Level: Low",

@@ -30,7 +30,9 @@
         "settings": "設定",
         "dragdrop": "ドラッグアンドドロップして追加できます",
         "second": "秒",
-        "no_description": "説明がありません"
+        "no_description": "説明がありません",
+        "reload": "再読み込み",
+        "current": "現在"
     },
     "permission_level": {
         "low": "影響レベル: 低",
