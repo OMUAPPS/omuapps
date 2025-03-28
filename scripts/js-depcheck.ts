@@ -1,13 +1,13 @@
-import { execa } from "execa"
+import { execa } from 'execa'
 
 const paths = [
-    "packages-js/chat",
-    "packages-js/dash",
-    "packages-js/i18n",
-    "packages-js/omu",
-    "packages-js/plugin-obs",
-    "packages-js/site",
-    "packages-js/ui"
+    'packages-js/chat',
+    'packages-js/dash',
+    'packages-js/i18n',
+    'packages-js/omu',
+    'packages-js/plugin-obs',
+    'packages-js/site',
+    'packages-js/ui'
 ]
 
 for await (const path of paths) {

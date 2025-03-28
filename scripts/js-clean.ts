@@ -1,11 +1,11 @@
-import fs from "node:fs/promises";
-import { parseArgs } from "node:util";
+import fs from 'node:fs/promises';
+import { parseArgs } from 'node:util';
 
 const { values } = parseArgs({
     args: Bun.argv,
     options: {
         onlyBuilt: {
-            type: "boolean",
+            type: 'boolean',
             default: false,
         },
     },
