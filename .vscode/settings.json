@@ -38,7 +38,7 @@
     "explorer.fileNesting.patterns": {
         ".gitignore": ".gitattributes, .gitmodules",
         "README.md": "LICENSE, *.md",
-        "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, .npmignore",
+        "package.json": "bun.lock, .npmrc, .npmignore",
         "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
     },
     "files.insertFinalNewline": true,
@@ -54,4 +54,5 @@
     "[jsonc]": {
         "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
     },
+    "npm.packageManager": "bun",
 }
