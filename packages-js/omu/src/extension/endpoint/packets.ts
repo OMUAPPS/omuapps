@@ -17,7 +17,7 @@ export class EndpointRegisterPacket {
     }
 
     public static deserialize(item: Uint8Array): EndpointRegisterPacket {
-        const reader = new ByteReader(item);
+        const reader = ByteReader.fromUint8Array(item);
         const count = reader.readInt();
         const endpoints = new IdentifierMap<Identifier | undefined>();
         for (let i = 0; i < count; i++) {
@@ -45,7 +45,7 @@ export class EndpointDataPacket {
     }
 
     public static deserialize(item: Uint8Array): EndpointDataPacket {
-        const reader = new ByteReader(item);
+        const reader = ByteReader.fromUint8Array(item);
         const id = Identifier.fromKey(reader.readString());
         const key = reader.readInt();
         const data = reader.readByteArray();
@@ -69,7 +69,7 @@ export class EndpointErrorPacket {
     }
 
     public static deserialize(item: Uint8Array): EndpointErrorPacket {
-        const reader = new ByteReader(item);
+        const reader = ByteReader.fromUint8Array(item);
         const id = Identifier.fromKey(reader.readString());
         const key = reader.readInt();
         const error = reader.readString();

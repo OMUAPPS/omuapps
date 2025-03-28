@@ -148,13 +148,29 @@ export class ByteReader {
     private offset: number;
     private finished: boolean;
 
-    constructor(buffer: Uint8Array) {
+    private constructor(data: DataView) {
+        this.dataArray = data;
+        this.offset = 0;
+        this.finished = false;
+    }
+
+    public static fromUint8Array(buffer: Uint8Array): ByteReader {
         const arrayBuffer = new ArrayBuffer(buffer.byteLength);
         const uint8Array = new Uint8Array(arrayBuffer);
         uint8Array.set(new Uint8Array(buffer));
-        this.dataArray = new DataView(arrayBuffer);
-        this.offset = 0;
-        this.finished = false;
+        const dataView = new DataView(arrayBuffer);
+        return new ByteReader(dataView);
+    }
+
+    public static fromArrayBuffer(buffer: ArrayBuffer): ByteReader {
+        const dataView = new DataView(buffer);
+        return new ByteReader(dataView);
+    }
+
+    public  static async fromBlob(blob: Blob): Promise<ByteReader> {
+        const arrayBuffer = await blob.arrayBuffer();
+        const dataView = new DataView(arrayBuffer);
+        return new ByteReader(dataView);
     }
 
     public read(size: number): Uint8Array {

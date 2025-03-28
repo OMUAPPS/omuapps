@@ -23,7 +23,7 @@ const FILE_SERIALIZER = new Serializer<Asset, Uint8Array>(
         return writer.finish();
     },
     (data) => {
-        const reader = new ByteReader(data);
+        const reader = ByteReader.fromUint8Array(data);
         const identifier = Identifier.fromKey(reader.readString());
         const buffer = reader.readByteArray();
         reader.finish();
@@ -41,7 +41,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
         return writer.finish();
     },
     (data) => {
-        const reader = new ByteReader(data);
+        const reader = ByteReader.fromUint8Array(data);
         const count = reader.readInt();
         const files: Asset[] = [];
         for (let i = 0; i < count; i++) {
