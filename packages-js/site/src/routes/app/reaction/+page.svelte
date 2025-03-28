@@ -124,7 +124,7 @@
                 <i class="ti ti-mood-wink-2"></i>
             </h2>
             <section>
-                {#each Object.entries($config.replaces) as [key, assetId]}
+                {#each Object.entries($config.replaces) as [key, assetId] (key)}
                     <div class="replace-entry">
                         <div class="preview">
                             <h1>

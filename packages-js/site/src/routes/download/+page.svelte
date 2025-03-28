@@ -24,12 +24,6 @@
     $: version = manifest ? getVersion(manifest) : undefined;
     $: daysAgo = manifest && Math.floor((Date.now() - new Date(manifest.pub_date).getTime()) / (1000 * 60 * 60 * 24));
 
-    $: if (downloading) {
-        setTimeout(() => {
-            downloading = false;
-        }, 1000);
-    }
-
     onMount(async () => {
         try {
             const res = await fetch(
@@ -108,7 +102,12 @@
                 <br />
                 {@const date = new Date(manifest.pub_date)}
                 <div>
-                    <a href={version.url} class="download" on:click={() => (downloading = true)}>
+                    <a href={version.url} class="download" on:click={() => {
+                        downloading = true;
+                        setTimeout(() => {
+                            downloading = false;
+                        }, 1000);
+                    }}>
                         <Tooltip>
                             {version.platform} 用のインストーラーをダウンロードします
                         </Tooltip>

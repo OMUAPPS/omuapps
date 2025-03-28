@@ -68,7 +68,7 @@
             <div class="author-info">
                 <div class="author">
                     <span>{author.name}</span>
-                    {#each author.roles || [] as role}
+                    {#each author.roles || [] as role (role.id)}
                         <Role {role} />
                     {/each}
                     <small>{author.metadata?.screen_id || author.id.path.at(-1)}</small>
@@ -121,7 +121,7 @@
                                 </p>
                             </div>
                         {/if}
-                        {#each gifts as gift}
+                        {#each gifts as gift, i (i)}
                             <Gift {gift} />
                         {/each}
                     </div>

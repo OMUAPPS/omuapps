@@ -48,19 +48,19 @@
         <ul>
             {#if permissions.some(({permission}) => permission.metadata.level === 'high')}
                 <li><span class="level">{$t('permission_level.high')}<small>{$t('permission_level.high_hint')}</small></span></li>
-                {#each permissions.filter(({permission}) => permission.metadata.level === 'high') as entry}
+                {#each permissions.filter(({permission}) => permission.metadata.level === 'high') as entry, i (i)}
                     <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
                 {/each}
             {/if}
             {#if permissions.some(({permission}) => permission.metadata.level === 'medium')}
                 <li><span class="level">{$t('permission_level.medium')}<small>{$t('permission_level.medium_hint')}</small></span></li>
-                {#each permissions.filter(({permission}) => permission.metadata.level === 'medium') as entry}
+                {#each permissions.filter(({permission}) => permission.metadata.level === 'medium') as entry, i (i)}
                     <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
                 {/each}
             {/if}
             {#if permissions.some(({permission}) => permission.metadata.level === 'low')}
                 <li><span class="level">{$t('permission_level.low')}<small>{$t('permission_level.low_hint')}</small></span></li>
-                {#each permissions.filter(({permission}) => permission.metadata.level === 'low') as entry}
+                {#each permissions.filter(({permission}) => permission.metadata.level === 'low') as entry, i (i)}
                     <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
                 {/each}
             {/if}

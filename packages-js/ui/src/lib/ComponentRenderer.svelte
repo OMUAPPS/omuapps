@@ -37,18 +37,18 @@
         <Tooltip>
             {component.url}
         </Tooltip>
-        {#each component.children || [] as sibling}
+        {#each component.children || [] as sibling, i (i)}
             <svelte:self component={sibling} />
         {/each}
     </a>
 {:else if component instanceof content.System}
     <code>
-        {#each component.children || [] as sibling}
+        {#each component.children || [] as sibling, i (i)}
             <svelte:self component={sibling} />
         {/each}
     </code>
 {:else if component.isParent()}
-    {#each component.children as sibling}
+    {#each component.children as sibling, i (i)}
         <svelte:self component={sibling} />
     {/each}
 {/if}

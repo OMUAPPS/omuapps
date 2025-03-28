@@ -70,7 +70,7 @@
         </div>
         <div class="patterns">
             <small>パターン</small>
-            {#each emoji.patterns as pattern}
+            {#each emoji.patterns as pattern, i (i)}
                 <div class="pattern">
                     <div class="flex width between baseline">
                         {#if pattern.type === 'text'}

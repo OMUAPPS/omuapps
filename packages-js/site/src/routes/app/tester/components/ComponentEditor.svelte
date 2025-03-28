@@ -36,7 +36,7 @@
     {/if}
     {#if component.isParent()}
         <div>
-            {#each component.children as child}
+            {#each component.children as child, i (i)}
                 <svelte:self bind:component={child} remove={() => removeChild(child)} />
             {/each}
             <AddComponent bind:component />

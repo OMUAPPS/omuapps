@@ -5,7 +5,7 @@
     import { Vec2, type PossibleVec2 } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
-    import { createUserConfig, type Config, type DiscordOverlayApp, type VoiceStateItem } from '../discord-overlay-app.js';
+    import { type Config, type DiscordOverlayApp, type UserConfig, type VoiceStateItem } from '../discord-overlay-app.js';
     import { dragPosition, dragUser, heldUser, isDraggingFinished } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
@@ -14,17 +14,15 @@
     export let overlayApp: DiscordOverlayApp;
     export let id: string;
     export let state: VoiceStateItem;
+    export let user: UserConfig;
     
     const { config } = overlayApp;
-
-    $: user = $config.users[id] || createUserConfig();
 
     let lastMouse: [number, number] | null = null;
     let clickTime = 0;
     let clickDistance = 0;
     let lastUpdate = performance.now();
     let rect = { width: 0, height: 0 };
-    $: position = user.position || [0, 0];
     
     const hideAreaWidth = 240;
     const hideAreaMargin = 10;
@@ -46,12 +44,12 @@
         const dx = (e.clientX - lastMouse[0]);
         const dy = (e.clientY - lastMouse[1]);
         lastMouse = [e.clientX, e.clientY];
-        const screen = worldToScreen(position[0], position[1]);
+        const screen = worldToScreen(user.position[0], user.position[1]);
         const world = screenToWorld(screen.x + dx, screen.y - dy);
-        user.position = position = [world.x, world.y];
+        user.position = [world.x, world.y];
         $dragPosition = new Vec2(e.clientX, e.clientY);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
-        user.show = !isInHideArea({ x: position[0], y: position[1]});
+        user.show = !isInHideArea({ x: user.position[0], y: user.position[1]});
 
         const now = performance.now();
         if (now - lastUpdate > 1000 / 60) {
@@ -72,7 +70,6 @@
             const hideAreaPosition = getHideAreaPosition(index);
             user.position = screenToWorld(hideAreaPosition[0] + rect.width / 2, hideAreaPosition[1] + OFFSET - rect.height / 2).toArray();
         }
-        position = user.position;
         $config = { ...$config };
         lastMouse = null;
         $dragUser = null;
@@ -172,7 +169,7 @@
             ArrowRight: [1, 0],
         }
         if (e.key === 'r') {
-            user.position = position = [0, 0];
+            user.position = [0, 0];
             $config = { ...$config };
         }
         const found = Object.entries(KEY_MAP).find(([key]) => key === e.key);
@@ -180,7 +177,7 @@
             e.preventDefault();
             const [dx, dy] = found[1];
             let factor = e.ctrlKey ? 1 : e.shiftKey ? 100 : 10;
-            user.position = position = [position[0] + dx * factor, position[1] + dy * factor];
+            user.position = [user.position[0] + dx * factor, user.position[1] + dy * factor];
             $config = { ...$config };
             return;
         }
@@ -256,7 +253,7 @@
         class="settings"
         style={getStyle(rect, $config, view, dimentions, [0, 100])}
         style:opacity={$heldUser && $heldUser != id ? 0.2 : 1}
-        class:side-right={position[0] > 0}
+        class:side-right={user.position[0] > 0}
     >
         <UserSettings {overlayApp} {state} {id} />
     </div>

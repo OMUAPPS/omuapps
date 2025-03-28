@@ -34,7 +34,7 @@
 <h3>Trusted Origins</h3>
 <section>
     {JSON.stringify($trustedOrigins)}
-    {#each $trustedOrigins as origin}
+    {#each $trustedOrigins as origin, i (i)}
         <div class="origin">
             <input type="text" bind:value={origin} />
             <button

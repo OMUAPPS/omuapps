@@ -1,5 +1,4 @@
 import globals from 'globals';
-// import tseslint from 'typescript-eslint';
 
 import js from '@eslint/js';
 import svelte from 'eslint-plugin-svelte';
@@ -11,7 +10,7 @@ import type { ConfigArray } from 'typescript-eslint';
 export default [
     js.configs.recommended,
     ...ts.configs.recommended,
-    ...svelte.configs.base,
+    ...svelte.configs.recommended,
     {
         languageOptions: {
             parser: svelteParser,

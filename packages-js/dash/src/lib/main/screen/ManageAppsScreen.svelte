@@ -3,6 +3,7 @@
     import Screen from '$lib/screen/Screen.svelte';
     import type { ScreenHandle } from '$lib/screen/screen.js';
     import { TableList } from '@omujs/ui';
+    import { currentPage } from '../settings.js';
     import AppEntry from './AppEntry.svelte';
 
     export let screen: {
@@ -24,7 +25,15 @@
             </small>
         </h3>
         <ul class="apps">
-            <TableList table={dashboard.apps} component={AppEntry} />
+            <TableList
+                table={dashboard.apps}
+                component={AppEntry}
+                sort={(a, b) => {
+                    if (`app-${a.id.key()}` === $currentPage) return -1;
+                    if (`app-${b.id.key()}` === $currentPage) return 1;
+                    return 0;
+                }}
+            />
         </ul>
     </div>
 </Screen>

@@ -23,7 +23,7 @@
     }
 </script>
 
-{#each $config.style.fonts as font}
+{#each $config.style.fonts as font, i (i)}
     <link href={font.url} rel="stylesheet" />
 {/each}
 {#if text}
