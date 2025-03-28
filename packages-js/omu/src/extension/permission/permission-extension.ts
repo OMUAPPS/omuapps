@@ -7,7 +7,7 @@ import { ExtensionType } from '../extension.js';
 
 import { PermissionType } from './permission.js';
 
-export const PERMISSION_EXTENSION_TYPE = new ExtensionType(
+export const PERMISSION_EXTENSION_TYPE: ExtensionType<PermissionExtension> = new ExtensionType(
     'permission',
     (client) => new PermissionExtension(client),
 );
@@ -35,7 +35,7 @@ const PERMISSION_GRANT_PACKET = PacketType.createJson<PermissionType[]>(PERMISSI
 });
 
 export class PermissionExtension {
-    public readonly type = PERMISSION_EXTENSION_TYPE;
+    public readonly type: ExtensionType<PermissionExtension> = PERMISSION_EXTENSION_TYPE;
     private permissions = new IdentifierMap<PermissionType>();
     private readonly registeredPermissions = new IdentifierMap<PermissionType>();
     private readonly requiredPermissions = new IdentifierSet();

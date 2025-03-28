@@ -11,14 +11,14 @@
         }
     },
     "scripts": {
-        "build": "pnpm run package",
+        "build": "bun run package",
         "build-storybook": "storybook build",
         "check": "svelte-check --tsconfig ./tsconfig.json",
         "chromatic": "chromatic",
         "dev": "vite dev --port 5174",
         "package": "svelte-package && publint",
         "prepare": "svelte-kit sync",
-        "prepublishOnly": "pnpm run package",
+        "prepublishOnly": "bun run package",
         "preview": "vite preview",
         "storybook": "storybook dev -p 6006",
         "test": "vitest",

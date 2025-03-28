@@ -6,7 +6,6 @@ const paths = [
     "packages-js/i18n",
     "packages-js/omu",
     "packages-js/plugin-obs",
-    "packages-js/shared",
     "packages-js/site",
     "packages-js/ui"
 ]

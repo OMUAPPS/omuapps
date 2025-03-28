@@ -83,7 +83,7 @@ export class FrameConnection implements Connection {
             this.connected = false;
             break;
         case 'receive': {
-            const reader = new ByteReader(payload);
+            const reader = new ByteReader(payload.buffer);
             this.packetQueue.push({
                 type: reader.readString(),
                 data: reader.readByteArray(),

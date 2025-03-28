@@ -7,7 +7,7 @@ import { ExtensionType } from '../extension.js';
 import { EndpointType } from './endpoint.js';
 import { EndpointDataPacket, EndpointErrorPacket, EndpointRegisterPacket } from './packets.js';
 
-export const ENDPOINT_EXTENSION_TYPE = new ExtensionType(
+export const ENDPOINT_EXTENSION_TYPE: ExtensionType<EndpointExtension> = new ExtensionType(
     'endpoint',
     (client: Client) => new EndpointExtension(client),
 );
@@ -23,7 +23,7 @@ type EndpointHandler = {
 };
 
 export class EndpointExtension {
-    public readonly type = ENDPOINT_EXTENSION_TYPE;
+    public readonly type: ExtensionType<EndpointExtension> = ENDPOINT_EXTENSION_TYPE;
     private readonly registeredEndpoints = new IdentifierMap<EndpointHandler>();
     private readonly promiseMap: Map<number, CallPromise> = new Map();
     private callId: number;

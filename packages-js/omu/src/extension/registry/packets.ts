@@ -20,7 +20,7 @@ export class RegistryPacket {
     }
 
     public static deserialize(data: Uint8Array): RegistryPacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const existing = reader.readBoolean();
         const value = existing ? reader.readByteArray() : null;
@@ -42,7 +42,7 @@ export class RegistryRegisterPacket {
     }
 
     public static deserialize(data: Uint8Array): RegistryRegisterPacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const permissions = RegistryPermissions.deserialize(reader);
         return new RegistryRegisterPacket(id, permissions);

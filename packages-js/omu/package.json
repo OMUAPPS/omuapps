@@ -13,12 +13,9 @@
         }
     },
     "scripts": {
-        "build": "pnpm run ts",
-        "dev": "pnpm run watch",
-        "ts": "pnpm run ts-esm && pnpm run ts-dts",
-        "ts-dts": "tsc --outDir dist/dts --declaration true --emitDeclarationOnly true --declarationMap true",
-        "ts-esm": "tsc --outDir dist/esm",
-        "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/omu\""
+        "build": "bun ../../scripts/omubuilder.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",
+        "dev": "bun run watch",
+        "watch": "bun ../../scripts/omubuilder.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\" --watch"
     },
     "repository": {
         "type": "git",

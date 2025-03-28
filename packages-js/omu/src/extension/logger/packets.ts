@@ -28,7 +28,7 @@ export class LogPacket {
     }
 
     public static deserialize(item: Uint8Array): LogPacket {
-        const reader = new ByteReader(item);
+        const reader = new ByteReader(item.buffer);
         const id = reader.readString();
         const type = reader.readString() as LogType;
         const text = reader.readString();

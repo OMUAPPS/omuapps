@@ -9,7 +9,7 @@ import { SignalPacket, SignalRegisterPacket } from './packets.js';
 import type { Signal } from './signal.js';
 import { SignalType } from './signal.js';
 
-export const SIGNAL_EXTENSION_TYPE = new ExtensionType(
+export const SIGNAL_EXTENSION_TYPE: ExtensionType<SignalExtension> = new ExtensionType(
     'signal',
     (client: Client) => new SignalExtension(client),
 );
@@ -31,7 +31,7 @@ const SIGNAL_NOTIFY_PACKET = PacketType.createSerialized<SignalPacket>(SIGNAL_EX
 });
 
 export class SignalExtension implements Extension {
-    public readonly type = SIGNAL_EXTENSION_TYPE;
+    public readonly type: ExtensionType<SignalExtension> = SIGNAL_EXTENSION_TYPE;
     private readonly signals = new IdentifierMap<SignalType<unknown>>();
 
     constructor(private readonly client: Client) {

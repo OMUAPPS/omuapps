@@ -19,7 +19,7 @@ export const SERVER_EXTENSION_TYPE: ExtensionType<ServerExtension> = new Extensi
     () => [TABLE_EXTENSION_TYPE],
 );
 
-export const SERVER_APPS_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('apps', 'read');
+export const SERVER_APPS_READ_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('apps', 'read');
 const APP_TABLE_TYPE = TableType.createModel(SERVER_EXTENSION_TYPE, {
     name: 'apps',
     model: App,
@@ -28,7 +28,7 @@ const APP_TABLE_TYPE = TableType.createModel(SERVER_EXTENSION_TYPE, {
     },
 });
 
-export const SERVER_SESSIONS_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('sessions', 'read');
+export const SERVER_SESSIONS_READ_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('sessions', 'read');
 const SESSION_TABLE_TYPE = TableType.createModel(SERVER_EXTENSION_TYPE, {
     name: 'sessions',
     model: App,
@@ -36,7 +36,7 @@ const SESSION_TABLE_TYPE = TableType.createModel(SERVER_EXTENSION_TYPE, {
         read: SERVER_APPS_READ_PERMISSION_ID,
     },
 });
-export const SERVER_SHUTDOWN_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('shutdown');
+export const SERVER_SHUTDOWN_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('shutdown');
 const SHUTDOWN_ENDPOINT_TYPE = EndpointType.createJson<boolean, boolean>(SERVER_EXTENSION_TYPE, {
     name: 'shutdown',
     permissionId: SERVER_SHUTDOWN_PERMISSION_ID,
@@ -45,8 +45,8 @@ const REQUIRE_APPS_PACKET_TYPE = PacketType.createJson<Identifier[]>(SERVER_EXTE
     name: 'require_apps',
     serializer: Serializer.model(Identifier).toArray(),
 });
-export const TRUSTED_ORIGINS_GET_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('trusted_origins', 'get');
-export const TRUSTED_ORIGINS_SET_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('trusted_origins', 'set');
+export const TRUSTED_ORIGINS_GET_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('trusted_origins', 'get');
+export const TRUSTED_ORIGINS_SET_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('trusted_origins', 'set');
 const TRUSTED_ORIGINS_REGISTRY_TYPE = RegistryType.createJson<string[]>(SERVER_EXTENSION_TYPE, {
     name: 'trusted_origins',
     defaultValue: [],
@@ -88,14 +88,14 @@ export type RequestRemoteAppResponse = {
     message: string;
 }
 
-export const REMOTE_APP_REQUEST_PERMISSION_ID = SERVER_EXTENSION_TYPE.join('remote_app', 'request');
+export const REMOTE_APP_REQUEST_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('remote_app', 'request');
 const REMOTE_APP_REQUEST_ENDPOINT_TYPE = EndpointType.createJson<RemoteAppRequestPayload, RequestRemoteAppResponse>(SERVER_EXTENSION_TYPE, {
     name: 'remote_app_request',
     permissionId: REMOTE_APP_REQUEST_PERMISSION_ID,
 });
 
 export class ServerExtension implements Extension {
-    public readonly type = SERVER_EXTENSION_TYPE;
+    public readonly type: ExtensionType<ServerExtension> = SERVER_EXTENSION_TYPE;
     public readonly apps: Table<App>;
     public readonly sessions: Table<App>;
     public readonly trustedOrigins: Registry<string[]>;

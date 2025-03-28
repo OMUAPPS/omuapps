@@ -103,7 +103,12 @@ export class DisconnectPacket implements Model<DisconnectPacketJson> {
     }
 }
 
-export const PACKET_TYPES = {
+export const PACKET_TYPES: {
+    CONNECT: PacketType<ConnectPacket>;
+    DISCONNECT: PacketType<DisconnectPacket>;
+    TOKEN: PacketType<string>;
+    READY: PacketType<undefined>;
+} = {
     CONNECT: PacketType.createJson<ConnectPacket>(IDENTIFIER, {
         name: 'connect',
         serializer: Serializer.model(ConnectPacket),

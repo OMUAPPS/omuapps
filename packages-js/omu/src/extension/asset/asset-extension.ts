@@ -5,7 +5,7 @@ import { Serializer } from '../../serializer.js';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
 
-export const ASSET_EXTENSION_TYPE = new ExtensionType(
+export const ASSET_EXTENSION_TYPE: ExtensionType<AssetExtension> = new ExtensionType(
     'asset',
     (client: Client) => new AssetExtension(client),
 );
@@ -23,7 +23,7 @@ const FILE_SERIALIZER = new Serializer<Asset, Uint8Array>(
         return writer.finish();
     },
     (data) => {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const identifier = Identifier.fromKey(reader.readString());
         const buffer = reader.readByteArray();
         reader.finish();
@@ -41,7 +41,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
         return writer.finish();
     },
     (data) => {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const count = reader.readInt();
         const files: Asset[] = [];
         for (let i = 0; i < count; i++) {
@@ -54,7 +54,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
     },
 );
 
-export const ASSET_UPLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('upload');
+export const ASSET_UPLOAD_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE.join('upload');
 const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<Asset, Identifier>(
     ASSET_EXTENSION_TYPE,
     {
@@ -73,7 +73,7 @@ const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Asset[], Identi
         permissionId: ASSET_UPLOAD_PERMISSION_ID,
     },
 );
-export const ASSET_DOWNLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('download');
+export const ASSET_DOWNLOAD_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE.join('download');
 const ASSET_DOWNLOAD_ENDPOINT = EndpointType.createSerialized<Identifier, Asset>(
     ASSET_EXTENSION_TYPE,
     {
@@ -92,7 +92,7 @@ const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[],
         permissionId: ASSET_DOWNLOAD_PERMISSION_ID,
     },
 );
-export const ASSET_DELETE_PERMISSION_ID = ASSET_EXTENSION_TYPE.join('delete');
+export const ASSET_DELETE_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE.join('delete');
 const ASSET_DELETE_ENDPOINT = EndpointType.createSerialized<Identifier, void>(
     ASSET_EXTENSION_TYPE,
     {
@@ -104,7 +104,7 @@ const ASSET_DELETE_ENDPOINT = EndpointType.createSerialized<Identifier, void>(
 );
 
 export class AssetExtension {
-    public readonly type = ASSET_EXTENSION_TYPE;
+    public readonly type: ExtensionType<AssetExtension> = ASSET_EXTENSION_TYPE;
 
     constructor(private readonly client: Client) {}
 

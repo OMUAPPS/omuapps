@@ -148,7 +148,7 @@ export class ByteReader {
     private offset = 0;
     private finished = false;
 
-    constructor(buffer: ArrayBuffer) {
+    constructor(buffer: ArrayBufferLike) {
         this.dataArray = new DataView(new Uint8Array(buffer).buffer);
     }
 

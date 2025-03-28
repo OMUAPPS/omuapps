@@ -13,7 +13,7 @@ export class TablePacket {
     }
 
     public static deserialize(data: Uint8Array): TablePacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         return new TablePacket(id);
     }
@@ -37,7 +37,7 @@ export class TableItemsPacket {
     }
 
     public static deserialize(data: Uint8Array): TableItemsPacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const count = reader.readInt();
         const items: Record<string, Uint8Array> = {};
@@ -67,7 +67,7 @@ export class TableKeysPacket {
     }
 
     public static deserialize(data: Uint8Array): TableKeysPacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const count = reader.readInt();
         const keys: string[] = [];
@@ -98,7 +98,7 @@ export class TableProxyPacket {
     }
 
     public static deserialize(data: Uint8Array): TableProxyPacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const key = reader.readInt();
         const count = reader.readInt();
@@ -134,7 +134,7 @@ export class TableFetchPacket {
     }
 
     public static deserialize(data: Uint8Array): TableFetchPacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const limit = reader.readInt();
         const flags = reader.readFlags(2);
@@ -160,7 +160,7 @@ export class TableFetchRangePacket {
     }
 
     public static deserialize(data: Uint8Array): TableFetchRangePacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const start = reader.readString();
         const end = reader.readString();
@@ -182,7 +182,7 @@ export class SetConfigPacket {
     }
 
     public static deserialize(data: Uint8Array): SetConfigPacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const config = JSON.parse(reader.readString());
         return new SetConfigPacket(id, config);
@@ -238,7 +238,7 @@ export class SetPermissionPacket {
     }
 
     public static deserialize(data: Uint8Array): SetPermissionPacket {
-        const reader = new ByteReader(data);
+        const reader = new ByteReader(data.buffer);
         const id = Identifier.fromKey(reader.readString());
         const flags = reader.readByte();
         const all = flags & 0b1 ? Identifier.fromKey(reader.readString()) : null;

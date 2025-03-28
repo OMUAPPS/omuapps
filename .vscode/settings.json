@@ -43,12 +43,15 @@
     },
     "files.insertFinalNewline": true,
     "[typescript]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
     },
     "rust-analyzer.linkedProjects": [
         "./packages-js/dash/src-tauri/Cargo.toml"
     ],
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
     },
 }
