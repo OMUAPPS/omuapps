@@ -27,6 +27,7 @@
     "search.exclude": {
         "**/node_modules": true,
         "**/dist": true,
+        "**/bun.lock": true,
     },
     "editor.codeActionsOnSave": {
         "source.fixAll": "always",
