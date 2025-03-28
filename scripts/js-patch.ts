@@ -1,5 +1,5 @@
-import * as fs from 'fs/promises';
-import { glob } from 'glob';
+import { Glob } from 'bun';
+import fs from 'fs/promises';
 
 const original = `/** @param {string} path */
 export function rimraf(path) {
@@ -14,12 +14,8 @@ export function rimraf(path) {
     }
 }`.replace(/\r\n/g, '\n');
 
-const found = await glob('node_modules/.pnpm/@sveltejs+package@*/**/node_modules/@sveltejs/package/src/filesystem.js');
-if (!found.length) {
-    throw new Error('File not found');
-}
-
-for (const path of found) {
+const glob = new Glob('node_modules/**/package/src/filesystem.js');
+for await (const path of glob.scan('.')) {
     let content = (await fs.readFile(path, 'utf-8')).replace(/\r\n/g, '\n');
     const alreadyPatched = content.includes(patch);
     if (alreadyPatched) {
@@ -30,6 +26,7 @@ for (const path of found) {
         } else {
             content = content.replace(original, patch);
             await fs.writeFile(path, content, 'utf-8');
+            console.log('Patched', path);
         }
     }
 }

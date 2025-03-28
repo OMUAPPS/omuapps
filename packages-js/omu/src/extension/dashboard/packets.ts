@@ -19,7 +19,7 @@ export class PermissionRequestPacket {
     }
 
     public static deserialize(data: Uint8Array): PermissionRequestPacket {
-        const reader = new ByteReader(data);
+        const reader = ByteReader.fromUint8Array(data);
         const requestId = reader.readString();
         const app = App.fromJson(JSON.parse(reader.readString()));
         const permissions = JSON.parse(reader.readString()).map(PermissionType.fromJson);
@@ -43,7 +43,7 @@ export class PluginRequestPacket {
     }
 
     public static deserialize(data: Uint8Array): PluginRequestPacket {
-        const reader = new ByteReader(data);
+        const reader = ByteReader.fromUint8Array(data);
         const requestId = reader.readString();
         const app = App.fromJson(JSON.parse(reader.readString()));
         const packages = JSON.parse(reader.readString());
@@ -62,7 +62,7 @@ export class AppInstallRequest {
     }
 
     public static deserialize(data: Uint8Array): AppInstallRequest {
-        const reader = new ByteReader(data);
+        const reader = ByteReader.fromUint8Array(data);
         const requestId = reader.readString();
         const app = App.fromJson(JSON.parse(reader.readString()));
         return new AppInstallRequest(requestId, app);
@@ -81,7 +81,7 @@ export class AppUpdateRequest {
     }
 
     public static deserialize(data: Uint8Array): AppUpdateRequest {
-        const reader = new ByteReader(data);
+        const reader = ByteReader.fromUint8Array(data);
         const requestId = reader.readString();
         const oldApp = App.fromJson(JSON.parse(reader.readString()));
         const newApp = App.fromJson(JSON.parse(reader.readString()));

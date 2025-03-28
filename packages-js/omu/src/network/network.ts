@@ -47,7 +47,7 @@ export type NetworkStatus = StatusType<'connecting'> | StatusType<'connected'> |
 
 export class Network {
     public status: NetworkStatus = {type: 'disconnected'};
-    public readonly event = {
+    public readonly event: { connected: EventEmitter<[]>; disconnected: EventEmitter<[DisconnectPacket | null]>; packet: EventEmitter<[Packet<unknown>]>; status: EventEmitter<[NetworkStatus]>; } = {
         connected: new EventEmitter<[]>(),
         disconnected: new EventEmitter<[DisconnectPacket | null]>(),
         packet: new EventEmitter<[Packet]>(),

@@ -28,7 +28,7 @@ export const TABLE_EXTENSION_TYPE: ExtensionType<TableExtension> = new Extension
     'table',
     (client) => new TableExtension(client),
 );
-export const TABLE_PERMISSION_ID = TABLE_EXTENSION_TYPE.join('permission');
+export const TABLE_PERMISSION_ID: Identifier = TABLE_EXTENSION_TYPE.join('permission');
 
 const TABLE_SET_PERMISSION_PACKET = PacketType.createSerialized<SetPermissionPacket>(
     TABLE_EXTENSION_TYPE,
@@ -149,7 +149,7 @@ const TABLE_ITEM_CLEAR_PACKET = PacketType.createSerialized<TablePacket>(TABLE_E
 });
 
 export class TableExtension implements Extension {
-    public readonly type = TABLE_EXTENSION_TYPE;
+    public readonly type: ExtensionType<TableExtension> = TABLE_EXTENSION_TYPE;
     private readonly tableMap = new IdentifierMap<Table<unknown>>();
 
     constructor(private readonly client: Client) {

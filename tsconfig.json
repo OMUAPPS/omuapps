@@ -15,7 +15,10 @@
         "removeComments": false,
         "noLib": false,
         "strict": true,
-        "newLine": "LF"
+        "newLine": "LF",
+        "skipLibCheck": true,
+        "isolatedDeclarations": true,
+        "composite": true
     },
     "compileOnSave": false,
     "include": [

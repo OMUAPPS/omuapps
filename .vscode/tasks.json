@@ -6,12 +6,13 @@
             "type": "shell",
             "command": "rye run prelaunch",
             "isBackground": false,
+            "problemMatcher": "$vite",
         },
         {
             "label": "dev",
             "type": "shell",
             "isBackground": true,
-            "command": "pnpm dev",
+            "command": "bun dev",
         },
     ]
 }

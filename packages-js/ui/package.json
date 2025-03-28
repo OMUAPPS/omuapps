@@ -11,18 +11,18 @@
         }
     },
     "scripts": {
-        "build": "pnpm run package",
+        "build": "bun run package",
         "build-storybook": "storybook build",
-        "check": "svelte-check --tsconfig ./tsconfig.json",
+        "check": "bunx --bun svelte-check --tsconfig ./tsconfig.json",
         "chromatic": "chromatic",
-        "dev": "vite dev --port 5174",
-        "package": "svelte-package && publint",
-        "prepare": "svelte-kit sync",
-        "prepublishOnly": "pnpm run package",
-        "preview": "vite preview",
+        "dev": "bunx --bun vite dev --port 5174",
+        "package": "bunx --bun svelte-package && bunx --bun publint",
+        "prepare": "bunx --bun svelte-kit sync",
+        "prepublishOnly": "bun run package",
+        "preview": "bunx --bun vite preview",
         "storybook": "storybook dev -p 6006",
         "test": "vitest",
-        "watch": "svelte-package --watch"
+        "watch": "bunx --bun svelte-package --watch"
     },
     "repository": {
         "type": "git",
@@ -44,7 +44,6 @@
         "@tabler/icons-webfont": "^3.30.0",
         "chromatic": "^11.7.0",
         "esm-env": "^1.0.0",
-        "nodemon": "^3.1.4",
         "publint": "^0.2.9",
         "react": "18.3.1",
         "react-dom": "18.3.1",
