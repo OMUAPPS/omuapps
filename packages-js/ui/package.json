@@ -15,11 +15,11 @@
         "build-storybook": "storybook build",
         "check": "svelte-check --tsconfig ./tsconfig.json",
         "chromatic": "chromatic",
-        "dev": "vite dev --port 5174",
+        "dev": "bunx --bun vite dev --port 5174",
         "package": "svelte-package && publint",
         "prepare": "svelte-kit sync",
         "prepublishOnly": "bun run package",
-        "preview": "vite preview",
+        "preview": "bunx --bun vite preview",
         "storybook": "storybook dev -p 6006",
         "test": "vitest",
         "watch": "svelte-package --watch"

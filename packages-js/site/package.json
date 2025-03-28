@@ -4,13 +4,13 @@
     "name": "site",
     "version": "0.0.1",
     "scripts": {
-        "build": "pnpm run build-pre && vite build",
-        "build-pre": "node ./scripts/build-pre.mjs",
+        "build": "bun run build-pre && bunx --bun vite build",
+        "build-pre": "bun ./scripts/build-pre.ts",
         "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
         "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-        "dev": "pnpm build-pre && vite dev",
+        "dev": "bun build-pre && bunx --bun vite dev",
         "prepare": "svelte-kit sync",
-        "preview": "vite preview",
+        "preview": "bunx --bun vite preview",
         "test": "vitest"
     },
     "devDependencies": {

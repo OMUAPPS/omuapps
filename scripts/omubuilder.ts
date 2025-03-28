@@ -38,6 +38,10 @@ const { values } = parseArgs({
         root: {
             type: 'string',
             default: '.',
+        },
+        debug: {
+            type: 'boolean',
+            default: false,
         }
     },
     strict: true,
@@ -61,6 +65,10 @@ const getEntrypointsFromGlob = (entrypoint: string[]): string[] => {
 };
 
 const build = async (_entrypoints: string[]) => {
+    if (values.debug) {
+        console.log('building', _entrypoints);
+        console.time('build');
+    }
     for (const _entrypoint of _entrypoints) {
         try {
             const option: BuildConfig = {
@@ -68,7 +76,7 @@ const build = async (_entrypoints: string[]) => {
                 outdir: values.outdir,
                 target: 'bun',
                 format: 'esm',
-                sourcemap: 'external',
+                sourcemap: 'inline',
                 naming: '[dir]/[name].[ext]',
                 minify: values.minify,
                 root: values.root,
@@ -89,6 +97,9 @@ const build = async (_entrypoints: string[]) => {
         } catch (error) {
             console.error(`Error building ${_entrypoint}:`, error);
         }
+    }
+    if (values.debug) {
+        console.timeEnd('build');
     }
 }
 

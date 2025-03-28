@@ -4,17 +4,17 @@
     "name": "dash",
     "version": "0.0.0",
     "scripts": {
-        "build": "pnpm run build-pre && tauri build",
-        "build-pre": "node ./scripts/build-pre.mjs",
+        "build": "bun run build-pre && tauri build",
+        "build-pre": "bun ./scripts/build-pre.ts",
         "dev": "tauri dev",
         "dev-release": "tauri dev --release --no-dev-server",
-        "prepare": "svelte-kit sync",
+        "prepare": "bunx --bun svelte-kit sync",
         "tauri": "tauri",
-        "ui:build": "vite build",
-        "ui:check": "svelte-check --tsconfig ./tsconfig.json",
-        "ui:check-watch": "pnpm run ui:check --watch",
-        "ui:dev": "vite --host 0.0.0.0",
-        "ui:preview": "vite preview"
+        "ui:build": "bunx --bun vite build",
+        "ui:check": "bunx --bun svelte-check --tsconfig ./tsconfig.json",
+        "ui:check-watch": "bun run ui:check --watch",
+        "ui:dev": "bunx --bun vite --host 0.0.0.0",
+        "ui:preview": "bunx --bun vite preview"
     },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "5.0.19",
@@ -31,6 +31,7 @@
         "@tauri-apps/plugin-process": "^2.2.0",
         "@tauri-apps/plugin-updater": "^2.5.0",
         "@tsconfig/svelte": "5.0.4",
+        "@types/license-checker": "25.0.6",
         "esm-env": "1.0.0",
         "sass": "^1.86.0",
         "license-checker": "25.0.1",
