@@ -1,10 +1,10 @@
 import { context, getOctokit } from '@actions/github';
-import { execa } from 'execa';
+import { $ } from 'bun';
 import fs from 'fs/promises';
 
 const options = (() => {
     const args = process.argv.slice(2);
-    const options = {};
+    const options: { [key: string]: string | undefined } = {};
     for (let i = 0; i < args.length; i++) {
         const arg = args[i];
         if (arg.startsWith('--')) {
@@ -20,6 +20,9 @@ console.log(options);
 const VERSION = options.version;
 const TAG = `app-v${VERSION}`;
 
+if (!process.env.GITHUB_TOKEN) {
+    throw new Error('GITHUB_TOKEN is not defined in the environment variables.');
+}
 const github = getOctokit(process.env.GITHUB_TOKEN);
 const { owner, repo } = context.repo;
 
@@ -38,7 +41,7 @@ async function downloadRelease() {
     const { data: assets } = await github.rest.repos.listReleaseAssets({
         owner,
         repo,
-        release_id: release.id,
+        release_id: release!.id,
     });
 
     // download assets to ./release-assets
@@ -46,10 +49,7 @@ async function downloadRelease() {
     for (const asset of assets) {
         const url = asset.browser_download_url;
         const name = asset.name;
-        await execa('bash', [
-            '-c',
-            `curl -L -o ./release-assets/${name} ${url}`
-        ], { stderr: process.stderr, stdout: process.stdout });
+        await $`bash -c curl -L -o ./release-assets/${name} ${url}`;
     }
 }
 
@@ -61,12 +61,9 @@ async function uploadToR2(file, path) {
     try {
         await fs.access(file);
     } catch (e) {
-        throw new Error(`File not found: ${file}`);
+        throw new Error(`File not found: ${file}\n\nError: ${e}`);
     }
-    await execa('bash', [
-        '-c',
-        `cat ${file} | pnpm wrangler r2 object put ${BUCKET}/${path} --pipe`
-    ], { stderr: process.stderr, stdout: process.stdout });
+    await $`bash -c cat ${file} | pnpm wrangler r2 object put ${BUCKET}/${path} --pipe`
     return `${BASE_URL}/${path}`;
 }
 
@@ -113,7 +110,7 @@ async function uploadVersion() {
     const urls = {};
     for (const file of files) {
         const path = `${PATH}/${file}`;
-        if (options["no-upload"]) {
+        if (options['no-upload']) {
             urls[file] = `${BASE_URL}/${path}`;
         } else {
             const url = await uploadToR2(`./release-assets/${file}`, path);
@@ -128,15 +125,15 @@ async function uploadBeta() {
 
     const releaseData = {
         version: VERSION,
-        notes: release.body,
-        pub_date: new Date(release.published_at).toISOString(),
+        notes: release?.body || '',
+        pub_date: release && release.published_at ? new Date(release.published_at).toISOString() : '',
         platforms: Object.fromEntries(
             await Promise.all(PLATFORMS.map(async platform => {
                 const { type, filename } = platform;
                 const name = filename
                     .replace('{NAME_UPPER}', 'OMUAPPS')
                     .replace('{NAME_LOWER}', 'omuapps')
-                    .replace('{VERSION}', VERSION);
+                    .replace('{VERSION}', VERSION || '');
                 const url = urls[name];
                 if (!url) {
                     throw new Error(`URL not found: ${name}`);
@@ -164,7 +161,7 @@ async function uploadBeta() {
             const name = filename
                 .replace('{NAME_UPPER}', 'OMUAPPS')
                 .replace('{NAME_LOWER}', 'omuapps')
-                .replace('{VERSION}', VERSION);
+                .replace('{VERSION}', VERSION || '');
             const url = urls[name];
             if (!url) {
                 throw new Error(`URL not found: ${name}`);
@@ -187,15 +184,15 @@ async function graduateBeta() {
 
     const releaseData = {
         version: VERSION,
-        notes: release.body,
-        pub_date: new Date(release.published_at).toISOString(),
+        notes: release!.body,
+        pub_date: release && release.published_at ? new Date(release.published_at).toISOString() : '',
         platforms: Object.fromEntries(
             await Promise.all(PLATFORMS.map(async platform => {
                 const { type, filename } = platform;
                 const name = filename
                     .replace('{NAME_UPPER}', 'OMUAPPS')
                     .replace('{NAME_LOWER}', 'omuapps')
-                    .replace('{VERSION}', VERSION);
+                    .replace('{VERSION}', VERSION|| '');
                 const url = urls[name];
                 if (!url) {
                     throw new Error(`URL not found: ${name}`);
@@ -223,7 +220,7 @@ async function graduateBeta() {
             const name = filename
                 .replace('{NAME_UPPER}', 'OMUAPPS')
                 .replace('{NAME_LOWER}', 'omuapps')
-                .replace('{VERSION}', VERSION);
+                .replace('{VERSION}', VERSION || '');
             const url = urls[name];
             if (!url) {
                 throw new Error(`URL not found: ${name}`);

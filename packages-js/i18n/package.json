@@ -21,8 +21,5 @@
         "type": "git",
         "url": "https://github.com/OMUAPPS/omuapps"
     },
-    "devDependencies": {
-        "nodemon": "^3.1.4"
-    },
     "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"
 }

@@ -21,9 +21,6 @@
         "type": "git",
         "url": "https://github.com/OMUAPPS/omuapps"
     },
-    "devDependencies": {
-        "nodemon": "^3.1.4"
-    },
     "dependencies": {
         "@omujs/omu": "workspace:*"
     },
