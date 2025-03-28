@@ -38,13 +38,21 @@ export class EndpointExtension {
         );
         client.network.addPacketHandler(ENDPOINT_RECEIVE_PACKET, (event) => {
             const promise = this.promiseMap.get(event.key);
-            if (!promise) return;
+            if (!promise) {
+                throw new Error(
+                    `Received response for unknown key ${event.key} (${event.id})`,
+                );
+            }
             this.promiseMap.delete(event.key);
             promise.resolve(event.data);
         });
         client.network.addPacketHandler(ENDPOINT_ERROR_PACKET, (event) => {
             const promise = this.promiseMap.get(event.key);
-            if (!promise) return;
+            if (!promise) {
+                throw new Error(
+                    `Received error for unknown key ${event.key} (${event.id})`,
+                );
+            }
             this.promiseMap.delete(event.key);
             promise.reject(new Error(event.error));
         });
