@@ -1,4 +1,4 @@
-import { execa } from 'execa'
+import { $ } from 'bun';
 
 const paths = [
     'packages-js/chat',
@@ -12,6 +12,5 @@ const paths = [
 
 for await (const path of paths) {
     console.log(`\n=== ${path} ===`)
-    await execa('pnpm depcheck', [`${path}`], { stderr: process.stderr, stdout: process.stdout })
-        .catch(() => { })
+    await $`bun depcheck ${path}`
 }
