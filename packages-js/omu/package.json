@@ -15,7 +15,7 @@
     "scripts": {
         "build": "bun ../../scripts/omubuilder.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",
         "dev": "bun run watch",
-        "watch": "bun ../../scripts/omubuilder.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\" --watch --debug"
+        "watch": "bun ../../scripts/omubuilder.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\" --watch"
     },
     "repository": {
         "type": "git",
