@@ -2,7 +2,7 @@ import { $ } from 'bun';
 import { promises as fs } from 'fs';
 import Path from 'path';
 
-async function buildPackage(target) {
+async function buildPackage(target: string) {
     await $`bun run --cwd ${target} build`;
 }
 

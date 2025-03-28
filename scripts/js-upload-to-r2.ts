@@ -63,7 +63,7 @@ async function uploadToR2(file, path) {
     } catch (e) {
         throw new Error(`File not found: ${file}\n\nError: ${e}`);
     }
-    await $`bash -c cat ${file} | pnpm wrangler r2 object put ${BUCKET}/${path} --pipe`
+    await $`bash -c cat ${file} | bun wrangler r2 object put ${BUCKET}/${path} --pipe`
     return `${BASE_URL}/${path}`;
 }
 
