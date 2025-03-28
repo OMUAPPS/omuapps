@@ -2,7 +2,8 @@
     "recommendations": [
         "charliermarsh.ruff",
         "svelte.svelte-vscode",
-        "Swellaby.rust-pack"
+        "Swellaby.rust-pack",
+        "dbaeumer.vscode-eslint",
     ],
     "unwantedRecommendations": [
         "ms-python.pylint",
