@@ -15,27 +15,23 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - uses: pnpm/action-setup@v4
+            - name: Cache Bun dependencies
+              uses: actions/cache@v4
               with:
-                version: 9.12.2
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
-              with:
-                cache: 'pnpm'
-                node-version: '20.18.2'
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
-              with:
-                cache: 'pnpm'
-
-            - name: Install dependencies
-              run: pnpm i --frozen-lockfile
+                path: ~/.bun/install/cache
+                key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
+                restore-keys: |
+                  bun-${{ runner.os }}-
+    
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+    
+            - name: Install Dependencies
+              run: bun install --no-frozen-lockfile
 
             - name: Build storybook
               run: |
-                  pnpm build
-                  pnpm --filter ui build-storybook
+                  bun build
+                  bun --filter ui build-storybook
             - name: Upload Storybook
-              run: pnpm --filter ui chromatic -d storybook-static --project-token=${{secrets.CHROMATIC_PROJECT_TOKEN}}
+              run: bun --filter ui chromatic -d storybook-static --project-token=${{secrets.CHROMATIC_PROJECT_TOKEN}}
