@@ -46,7 +46,7 @@ export class WebsocketConnection implements Connection {
         if (typeof event.data === 'string') {
             throw new Error('Received string data');
         }
-        const reader = new ByteReader(await event.data.arrayBuffer());
+        const reader = new ByteReader(await event.data.bytes());
         this.packetQueue.push({
             type: reader.readString(),
             data: reader.readByteArray(),

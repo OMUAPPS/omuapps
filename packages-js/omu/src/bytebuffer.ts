@@ -145,11 +145,16 @@ export class ByteWriter {
 
 export class ByteReader {
     private dataArray: DataView;
-    private offset = 0;
-    private finished = false;
+    private offset: number;
+    private finished: boolean;
 
-    constructor(buffer: ArrayBufferLike) {
-        this.dataArray = new DataView(new Uint8Array(buffer).buffer);
+    constructor(buffer: Uint8Array) {
+        const arrayBuffer = new ArrayBuffer(buffer.byteLength);
+        const uint8Array = new Uint8Array(arrayBuffer);
+        uint8Array.set(new Uint8Array(buffer));
+        this.dataArray = new DataView(arrayBuffer);
+        this.offset = 0;
+        this.finished = false;
     }
 
     public read(size: number): Uint8Array {

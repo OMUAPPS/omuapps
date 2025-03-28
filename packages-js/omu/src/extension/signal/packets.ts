@@ -17,7 +17,7 @@ export class SignalPacket {
     }
 
     public static deserialize(data: Uint8Array): SignalPacket {
-        const reader = new ByteReader(data.buffer);
+        const reader = new ByteReader(data);
         const id = Identifier.fromKey(reader.readString());
         const body = reader.readByteArray();
         return new SignalPacket(id, body);
@@ -38,7 +38,7 @@ export class SignalRegisterPacket {
     }
 
     public static deserialize(data: Uint8Array): SignalRegisterPacket {
-        const reader = new ByteReader(data.buffer);
+        const reader = new ByteReader(data);
         const id = Identifier.fromKey(reader.readString());
         const permissions = SignalPermissions.deserialize(reader);
         return new SignalRegisterPacket(id, permissions);
