@@ -38,16 +38,16 @@ Please install the following.
 
 - Install [Rust](https://www.rust-lang.org/ja)
 - Install [Nodejs](https://nodejs.org/)
-- Install [pnpm](https://pnpm.io/ja/installation)
+- Install [bun](https://bun.sh/)
 - Install [rye](https://rye.astral.sh/)
 
 ### Setup
 
-Run `rye sync` `pnpm i`.
+Run `rye sync` `bun i`.
 
 ```bash
 rye sync
-pnpm i
+bun i
 ```
 
 ### Start
