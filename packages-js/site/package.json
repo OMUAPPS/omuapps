@@ -6,10 +6,10 @@
     "scripts": {
         "build": "bun run build-pre && bunx --bun vite build",
         "build-pre": "bun ./scripts/build-pre.ts",
-        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+        "check": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json",
+        "check:watch": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json --watch",
         "dev": "bun build-pre && bunx --bun vite dev",
-        "prepare": "svelte-kit sync",
+        "prepare": "bunx --bun svelte-kit sync",
         "preview": "bunx --bun vite preview",
         "test": "vitest"
     },
