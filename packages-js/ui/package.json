@@ -30,7 +30,7 @@
     },
     "devDependencies": {
         "@chromatic-com/storybook": "1.6.1",
-        "@fontsource/noto-sans-jp": "5.2.5",
+        "@fontsource/noto-sans-jp": "^5.0.19",
         "@storybook/addon-essentials": "^8.2.8",
         "@storybook/addon-interactions": "^8.2.8",
         "@storybook/addon-links": "^8.2.8",
@@ -38,10 +38,10 @@
         "@storybook/svelte": "^8.2.8",
         "@storybook/sveltekit": "^8.2.8",
         "@storybook/test": "^8.2.8",
-        "@sveltejs/adapter-auto": "5.0.0",
+        "@sveltejs/adapter-auto": "^3.2.2",
         "@sveltejs/package": "^2.3.2",
-        "@sveltejs/vite-plugin-svelte": "5.0.3",
-        "@tabler/icons-webfont": "3.31.0",
+        "@sveltejs/vite-plugin-svelte": "^3.1.1",
+        "@tabler/icons-webfont": "^3.30.0",
         "chromatic": "^11.7.0",
         "esm-env": "^1.0.0",
         "publint": "^0.2.9",
@@ -50,16 +50,16 @@
         "sass": "^1.86.0",
         "storybook": "^8.2.8",
         "svelte": "^4.2.18",
-        "svelte-check": "4.1.5",
+        "svelte-check": "^3.8.5",
         "tslib": "^2.6.3",
-        "vite": "6.2.3",
-        "vitest": "3.0.9"
+        "vite": "^5.4.0",
+        "vitest": "^2.0.5"
     },
     "peerDependencies": {
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
         "@omujs/omu": "workspace:*",
-        "@sveltejs/kit": "2.20.2",
+        "@sveltejs/kit": "^2.5.4",
         "svelte": "^4.0.0"
     },
     "files": [

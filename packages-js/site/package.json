@@ -15,17 +15,17 @@
     },
     "devDependencies": {
         "@2ji-han/kuromoji.js": "^0.1.7",
-        "@fontsource/noto-sans-jp": "5.2.5",
+        "@fontsource/noto-sans-jp": "^5.0.19",
         "@fontsource/rocknroll-one": "^5.0.14",
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
         "@omujs/obs": "workspace:*",
         "@omujs/omu": "workspace:*",
         "@omujs/ui": "workspace:*",
-        "@sveltejs/adapter-cloudflare": "6.0.1",
-        "@sveltejs/kit": "2.20.2",
-        "@sveltejs/vite-plugin-svelte": "5.0.3",
-        "@tabler/icons-webfont": "3.31.0",
+        "@sveltejs/adapter-cloudflare": "4.7.0",
+        "@sveltejs/kit": "2.5.20",
+        "@sveltejs/vite-plugin-svelte": "^3.1.1",
+        "@tabler/icons-webfont": "^3.19.0",
         "@types/dom-speech-recognition": "^0.0.4",
         "@types/dom-webcodecs": "^0.1.13",
         "@types/pako": "^2.0.3",
@@ -39,11 +39,11 @@
         "qrious": "^4.0.2",
         "seedrandom": "^3.0.5",
         "svelte": "^4.2.18",
-        "svelte-check": "4.1.5",
+        "svelte-check": "^3.8.5",
         "svelte-highlight": "^7.8.2",
         "svelte-markdown": "^0.4.1",
         "tslib": "^2.6.3",
-        "vite": "6.2.3",
-        "vitest": "3.0.9"
+        "vite": "^5.4.0",
+        "vitest": "^2.0.5"
     }
 }
