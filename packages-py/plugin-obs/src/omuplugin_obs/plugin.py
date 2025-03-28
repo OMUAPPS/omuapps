@@ -246,7 +246,7 @@ def update_config(server: Server):
     save_config(config)
 
 
-async def install(server: Server):
+def install(server: Server):
     update_config(server)
 
     try:
