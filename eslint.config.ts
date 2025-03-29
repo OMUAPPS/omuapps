@@ -45,6 +45,7 @@ export default [
                 ...globals.browser,
                 ...globals.node,
                 YT: 'readonly',
+                webkitSpeechRecognition: 'readonly',
                 SpeechRecognition: 'readonly',
             },
         }

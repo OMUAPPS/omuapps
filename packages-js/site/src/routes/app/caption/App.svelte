@@ -18,7 +18,7 @@
     const { config } = captionApp;
     console.log(omu.ready, $config);
 
-    let recognition = BROWSER && new SpeechRecognition() || null;
+    let recognition = BROWSER && new (webkitSpeechRecognition || SpeechRecognition)() || null;
 
     function setup(lang: string) {
         if (!recognition) {
