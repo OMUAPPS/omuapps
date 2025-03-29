@@ -9,6 +9,7 @@ if __name__ == "omuapps_plugin":
 
 
 import subprocess
+from pathlib import Path
 
 from loguru import logger
 from omuplugin_obs.script import obsplugin
@@ -29,8 +30,23 @@ def launch_server():
     startup_info = subprocess.STARTUPINFO()
     startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
+    args = launch_command["args"]
+    if not args:
+        logger.error("No arguments provided in launch command")
+        return
+    executable = args.pop(0)
+    if not Path(executable).exists():
+        logger.error(f"Executable {executable} does not exist")
+        return
+    if not Path(executable).is_file():
+        logger.error(f"Executable {executable} is not a file")
+        return
+    if not Path(executable).is_absolute():
+        logger.warning(f"Executable {executable} is not an absolute path")
+
     process = subprocess.Popen(
-        **launch_command,
+        [executable, *args],
+        cwd=launch_command.get("cwd"),
         startupinfo=startup_info,
         creationflags=subprocess.CREATE_NO_WINDOW,
     )
