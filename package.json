@@ -14,7 +14,6 @@
         "prepare": "bun ./scripts/js-patch.ts",
         "wrangler": "wrangler",
         "build": "bun ./scripts/js-build.ts",
-        "build-i18n": "bun scripts/js-i18n.ts",
         "build-site": "bun run --cwd packages-js/site build",
         "build-tauri": "bun run --cwd packages-js/dash build",
         "publish": "bun ./scripts/js-publish.ts",
