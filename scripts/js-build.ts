@@ -3,7 +3,9 @@ import { promises as fs } from 'fs';
 import Path from 'path';
 
 async function buildPackage(target: string) {
+    console.log(`Building ${target}`);
     await $`bun run --cwd ${target} build`;
+    console.log(`Building ${target} finished`);
 }
 
 await Promise.all([
