@@ -41,6 +41,10 @@
     function handleMouseMove(e: MouseEvent) {
         e.preventDefault();
         if (!lastMouse) return;
+        const now = performance.now();
+        if (now - lastUpdate < 1000 / 60) {
+            return;
+        }
         const dx = (e.clientX - lastMouse[0]);
         const dy = (e.clientY - lastMouse[1]);
         lastMouse = [e.clientX, e.clientY];
@@ -50,12 +54,8 @@
         $dragPosition = new Vec2(e.clientX, e.clientY);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         user.show = !isInHideArea({ x: user.position[0], y: user.position[1]});
-
-        const now = performance.now();
-        if (now - lastUpdate > 1000 / 60) {
-            $config = { ...$config };
-            lastUpdate = now;
-        }
+        $config = { ...$config };
+        lastUpdate = now;
     }
 
     function handleMouseUp() {
