@@ -12,6 +12,7 @@ from typing import Any, TypedDict
 
 import psutil
 from loguru import logger
+from omu.result import Err, Ok, Result
 from omuserver.helper import LOG_DIRECTORY
 from omuserver.server import Server
 
@@ -52,10 +53,10 @@ def shutdown_obs(process: psutil.Process):
         raise Exception(f"Unsupported platform: {sys.platform}")
 
 
-def ensure_obs_stop() -> bool:
+def ensure_obs_stopped() -> Result[None, str]:
     process = find_process({"obs64.exe", "obs32.exe"})
     if not process:
-        return False
+        return Ok(None)
 
     obs.launch_command = process.cmdline()
     obs.cwd = Path(process.cwd())
@@ -80,11 +81,11 @@ def ensure_obs_stop() -> bool:
         type=messagebox.YESNO,
     ).show()
     if not res:
-        return False
+        return Err("User cancelled OBS shutdown")
     elif res == messagebox.YES:
         shutdown_obs(process)
     elif res == messagebox.NO:
-        return True
+        return Err("User cancelled OBS shutdown")
 
     while process.is_running():
         res = messagebox.Message(
@@ -95,15 +96,15 @@ def ensure_obs_stop() -> bool:
             type=messagebox.RETRYCANCEL,
         ).show()
         if not res:
-            return False
+            return Err("User cancelled OBS shutdown while waiting for process to end")
         elif res == messagebox.CANCEL:
-            return True
+            return Err("User cancelled OBS shutdown while waiting for process to end")
         elif res == messagebox.RETRY:
             pass
         else:
             raise Exception(f"Unknown response: {res}")
 
-    return False
+    return Ok(None)
 
 
 def get_obs_path():
@@ -147,10 +148,10 @@ class SceneJson(TypedDict):
     modules: ModulesJson
 
 
-def is_installed():
+def check_installed() -> Result[bool, str]:
     config_path = get_config_path()
     if not config_path.exists():
-        return False
+        return Err(f"Config file not found: {config_path}")
 
     obs_path = get_obs_path()
 
@@ -168,11 +169,11 @@ def is_installed():
             if not path.exists():
                 continue
             if path.name == launcher_path.name and not path.samefile(launcher_path):
-                return False
+                return Err(f"Script path is not the same as launcher path: {path} != {launcher_path}")
             if path.samefile(launcher_path):
                 found = True
         if not found:
-            return False
+            return Err(f"Script not found in scene: {scene}")
 
     python_path = get_python_directory()
     path = obs_path / "global.ini"
@@ -180,9 +181,9 @@ def is_installed():
     python = config.get("Python", {})
     is_python_set = python.get("Path32bit") == python.get("Path64bit") == python_path
     if not is_python_set:
-        return False
+        return Err(f"Python path is not set correctly in global.ini: {python_path} != {python}")
 
-    return True
+    return Ok(True)
 
 
 def setup_python_path():
@@ -250,12 +251,17 @@ def install(server: Server):
     update_config(server)
 
     try:
-        if is_installed():
+        installed = check_installed()
+        if installed.is_ok is True:
             logger.info("OBS plugin is already installed")
             return
-        if ensure_obs_stop():
-            logger.info("OBS installation cancelled")
-            return
+        logger.warning(f"OBS plugin is not installed: {installed.err}")
+        match ensure_obs_stopped():
+            case Ok(_):
+                logger.info("OBS stopped successfully")
+            case Err(err):
+                logger.error(f"Failed to stop OBS: {err}")
+                return
 
         setup_python_path()
         install_all_scene()
