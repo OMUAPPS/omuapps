@@ -17,9 +17,11 @@
 
     let context: CanvasRenderingContext2D | null = null;
     let offscreen: OffscreenCanvas | null = null;
+    let resized = false;
 
     function handleResize() {
         if (!canvas || !offscreen || !glContext) return;
+        if (width === canvas.clientWidth && height === canvas.clientHeight) return;
         width = canvas.clientWidth;
         height = canvas.clientHeight;
         canvas.width = width;
@@ -41,8 +43,9 @@
             if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
                 continue;
             }
-            if (canvas.width !== width || canvas.height !== height) {
-                continue;
+            if (resized) {
+                handleResize();
+                resized = false;
             }
             await render(glContext);
             context.clearRect(0, 0, width, height);
@@ -64,9 +67,6 @@
         if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
             return;
         }
-        if (canvas.width !== width || canvas.height !== height) {
-            return;
-        }
         resolveFrameBlock();
     }
 
@@ -75,6 +75,7 @@
         offscreen = new OffscreenCanvas(width, height);
         context = canvas.getContext('2d');
         glContext = GlContext.create(offscreen);
+        resized = true;
         handleResize();
         init(glContext).then(() => {
             renderInternal();
@@ -84,7 +85,7 @@
             if (!canvas) return;
             width = canvas.clientWidth;
             height = canvas.clientHeight;
-            handleResize();
+            resized = true;
         });
         resizeObserver.observe(canvas);
         return () => resizeObserver.disconnect();
