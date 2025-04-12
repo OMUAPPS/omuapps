@@ -28,7 +28,19 @@
         },
     });
 
+    let lastClickTime = 0;
+
     function handleClick() {
+        const now = Date.now();
+        const doubleClick = now - lastClickTime < 300;
+        lastClickTime = now;
+        if (doubleClick) {
+            const id = `app-${entry.id.key()}`;
+            delete $pages[id];
+            $currentPage = 'explore';
+            $currentPage = id;
+            return;
+        }
         $currentPage = appPage.id;
     }
 
