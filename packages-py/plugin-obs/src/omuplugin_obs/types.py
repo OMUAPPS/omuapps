@@ -6,6 +6,7 @@ from omu.extension.signal.signal import SignalType
 from omuplugin_obs.const import PLUGIN_ID
 
 from .permissions import (
+    OBS_SCENE_CREATE_PERMISSION_ID,
     OBS_SCENE_READ_PERMISSION_ID,
     OBS_SCENE_SET_CURRENT_PERMISSION_ID,
     OBS_SOURCE_CREATE_PERMISSION_ID,
@@ -193,7 +194,7 @@ class SceneJson(TypedDict):
 
 
 class CreateResponse(TypedDict):
-    source: SourceType
+    source: SourceJson
 
 
 SOURCE_CREATE = EndpointType[SourceJson, CreateResponse].create_json(
@@ -211,6 +212,7 @@ SOURCE_ADD = EndpointType[SourceJson, CreateResponse].create_json(
 
 class CreateBrowserRequest(BlendableSource, ScalableSource, TypedDict):
     name: str
+    scene: NotRequired[str]
     url: str
     width: NotRequired[int | str]
     height: NotRequired[int | str]
@@ -255,7 +257,7 @@ SOURCE_REMOVE_BY_UUID = EndpointType[RemoveByUuidRequest, RemoveResponse].create
 
 
 class UpdateResponse(TypedDict):
-    source: SourceType
+    source: SourceJson
 
 
 SOURCE_UPDATE = EndpointType[SourceJson, UpdateResponse].create_json(
@@ -367,6 +369,22 @@ SCENE_SET_CURRENT_BY_UUID = EndpointType[SceneSetCurrentByUuidRequest, SceneSetC
     name="scene_set_current_by_uuid",
     permission_id=OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 )
+
+
+class SceneCreateRequest(TypedDict):
+    name: str
+
+
+class SceneCreateResponse(TypedDict):
+    scene: SceneJson
+
+
+SCENE_CREATE = EndpointType[SceneCreateRequest, SceneCreateResponse].create_json(
+    PLUGIN_ID,
+    name="scene_create",
+    permission_id=OBS_SCENE_CREATE_PERMISSION_ID,
+)
+
 
 EVENT_SIGNAL = SignalType[OBSFrontendEvent].create_json(
     PLUGIN_ID,

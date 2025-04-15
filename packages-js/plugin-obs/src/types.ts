@@ -150,7 +150,7 @@ export type SceneJson = {
 };
 
 export type CreateResponse = {
-    source: SourceType<string, unknown>;
+    source: SourceJson;
 };
 
 export const SOURCE_CREATE: EndpointType<SourceJson, CreateResponse> = EndpointType.createJson<SourceJson, CreateResponse>(PLUGIN_ID, {
@@ -167,19 +167,20 @@ export const SOURCE_ADD: EndpointType<SourceJson, CreateResponse> = EndpointType
 // 100:px = 100 pixels
 export type Unit = 'px' | 'vw' | 'vh' | '%';
 export type UnitValue = number | `${number}:${Unit}`;
-export type BrowserCreateRequest = {
+export type CreateBrowserRequest = {
     name: string;
+    scene?: string;
     url: string;
     width?: UnitValue;
     height?: UnitValue;
     css?: string;
 } & BlendableSource & ScalableSource;
 
-export const BROWSER_CREATE: EndpointType<BrowserCreateRequest, CreateResponse> = EndpointType.createJson<BrowserCreateRequest, CreateResponse>(PLUGIN_ID, {
+export const BROWSER_CREATE: EndpointType<CreateBrowserRequest, CreateResponse> = EndpointType.createJson<CreateBrowserRequest, CreateResponse>(PLUGIN_ID, {
     name: 'browser_create',
 });
 
-export const BROWSER_ADD: EndpointType<BrowserCreateRequest, CreateResponse> = EndpointType.createJson<BrowserCreateRequest, CreateResponse>(PLUGIN_ID, {
+export const BROWSER_ADD: EndpointType<CreateBrowserRequest, CreateResponse> = EndpointType.createJson<CreateBrowserRequest, CreateResponse>(PLUGIN_ID, {
     name: 'browser_add',
 });
 
@@ -202,7 +203,7 @@ export const SOURCE_REMOVE_BY_UUID: EndpointType<RemoveByUuidRequest> = Endpoint
 });
 
 export type UpdateResponse = {
-    source: SourceType<string, unknown>;
+    source: SourceJson;
 };
 
 export const SOURCE_UPDATE: EndpointType<SourceJson, UpdateResponse> = EndpointType.createJson<SourceJson, UpdateResponse>(PLUGIN_ID, {
@@ -292,6 +293,18 @@ export const SCENE_SET_CURRENT_BY_UUID: EndpointType<SceneSetCurrentByUuidReques
 >(PLUGIN_ID, {
     name: 'scene_set_current_by_uuid',
     permissionId: OBS_SCENE_SET_CURRENT_PERMISSION_ID,
+});
+
+export type SceneCreateRequest = {
+    name: string;
+}
+
+export type SceneCreateResponse = {
+    scene: SceneJson;
+}
+
+export const SCENE_CREATE: EndpointType<SceneCreateRequest, SceneCreateResponse> = EndpointType.createJson<SceneCreateRequest, SceneCreateResponse>(PLUGIN_ID, {
+    name: 'scene_create',
 });
 
 export const EVENT_SIGNAL: SignalType<OBSFrontendEvent> = SignalType.createJson<OBSFrontendEvent>(PLUGIN_ID, {

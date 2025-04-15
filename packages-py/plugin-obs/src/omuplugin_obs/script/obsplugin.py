@@ -19,6 +19,7 @@ from ..types import (
     BROWSER_ADD,
     BROWSER_CREATE,
     EVENT_SIGNAL,
+    SCENE_CREATE,
     SCENE_GET_BY_NAME,
     SCENE_GET_BY_UUID,
     SCENE_GET_CURRENT,
@@ -41,6 +42,8 @@ from ..types import (
     RemoveByUuidRequest,
     RemoveResponse,
     ScaleProperties,
+    SceneCreateRequest,
+    SceneCreateResponse,
     SceneGetByNameRequest,
     SceneGetByUuidRequest,
     SceneGetCurrentRequest,
@@ -125,7 +128,7 @@ def get_unique_name(name: str) -> str:
         existing_source.release()
         if removed:
             return name
-    i = 1
+    i = 2
     while True:
         new_name = f"{name} ({i})"
         existing_source = OBSSource.get_source_by_name(new_name)
@@ -139,12 +142,16 @@ def create_obs_source(scene: OBSScene, source_json: SourceJson) -> OBSSceneItem:
     if "uuid" in source_json:
         raise NotImplementedError("uuid is not supported yet")
     settings = map_optional(dict(source_json.get("data")), OBSData.from_json)
+    if source_json["type"] not in {
+        "browser_source",
+        "text_gdiplus",
+    }:
+        raise ValueError(f"Source with type {source_json['type']} is not allowed")
     obs_source = OBSSource.create(
         source_json["type"],
         source_json["name"],
         settings,
     )
-    print(f"width: {scene.source.base_width}, height: {scene.source.base_height}")
     scene_item = scene.add(obs_source)
     if settings is not None:
         settings.release()
@@ -544,6 +551,24 @@ async def scene_set_current_by_uuid(
     return {}
 
 
+@omu.endpoints.bind(endpoint_type=SCENE_CREATE)
+async def scene_create(request: SceneCreateRequest) -> SceneCreateResponse:
+    scene = OBSScene.get_scene_by_name(request["name"])
+    if scene is not None:
+        scene.release()
+        raise ValueError(f"Scene with name {request['name']} already exists")
+    scene = OBSScene.create(request["name"])
+    response: SceneCreateResponse = {
+        "scene": {
+            "name": scene.source.name,
+            "uuid": scene.source.uuid,
+            "sources": [],
+        }
+    }
+    scene.release()
+    return response
+
+
 event_signal = omu.signals.get(EVENT_SIGNAL)
 
 
@@ -560,6 +585,7 @@ async def on_connected():
 @omu.on_ready
 async def on_ready():
     logger.info(f"OBS Plugin {VERSION} is ready!")
+    print(f"OBS Plugin {VERSION} is ready!")
 
 
 _LOOP: asyncio.AbstractEventLoop | None = None
