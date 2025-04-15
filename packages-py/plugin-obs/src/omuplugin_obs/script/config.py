@@ -55,6 +55,26 @@ def get_log_path() -> Path:
 
 
 def setup_logger() -> None:
+    import os
+    import sys
+
+    import obspython
+
+    class stdout_logger:
+        def write(self, message):
+            obspython.script_log_no_endl(obspython.LOG_INFO, message)
+
+        def flush(self): ...
+
+    class stderr_logger:
+        def write(self, message):
+            obspython.script_log_no_endl(obspython.LOG_INFO, message)
+
+        def flush(self): ...
+
+    os.environ["PYTHONUNBUFFERED"] = "1"
+    sys.stdout = stdout_logger()
+    sys.stderr = stderr_logger()
     from omuserver.helper import setup_logger
 
     logger.remove()
