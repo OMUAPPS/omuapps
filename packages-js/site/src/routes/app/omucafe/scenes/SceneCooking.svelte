@@ -1,18 +1,17 @@
 <script lang="ts">
     import BackButton from '../components/BackButton.svelte';
-    import { type SceneContext } from '../omucafe-app.js';
+    import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneCooking', context);
+    
+    const { scene } = getGame();
 </script>
 
-<main>
-</main>
-<BackButton />
-
-<style lang="scss">
-    main {
-        position: absolute;
-        inset: 0;
+<svelte:window on:keydown={(event) => {
+    if (!context.current) return;
+    if (event.key === 'Escape') {
+        $scene = { type: 'main_menu' };
     }
-</style>
+}} />
+<BackButton />

@@ -7,10 +7,12 @@
     
     const { omu, scene } = getGame();
 
-    onMount(() => {
-        return omu.onReady(() => {
-            $scene = { type: 'main_menu' };
-        });
+    onMount(async () => {
+        await omu.waitForReady();
+        if ($scene.type !== 'loading') {
+            return;
+        }
+        $scene = { type: 'main_menu' };
     });
 </script>
 

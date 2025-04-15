@@ -1,31 +1,47 @@
-export type Value = {
-    type: 'void',
-} | {
-    type: 'expression',
-    value: Expression,
-} | {
-    type: 'variable',
-    name: string,
-} | {
-    type: 'attribute',
-    value: Value,
-    name: Value,
-} | {
-    type: 'function',
-    value: Function,
-} | {
-    type: 'object',
-    value: Record<string, Value>,
-} | {
-    type: 'number',
-    value: number,
-} | {
+export type VString = {
     type: 'string',
     value: string,
-} | {
+}
+export type VTimer = {
     type: 'timer',
     value: Timer,
-} | Invoke;
+};
+type VNumber = {
+    type: 'number';
+    value: number;
+};
+
+type VObject = {
+    type: 'object';
+    value: Record<string, Value>;
+};
+
+type VFunction = {
+    type: 'function';
+    value: TypedFunction;
+};
+
+type VAttribute = {
+    type: 'attribute';
+    value: Value;
+    name: Value;
+};
+
+type VVariable = {
+    type: 'variable';
+    name: string;
+};
+
+type VExpression = {
+    type: 'expression';
+    value: Expression;
+};
+
+type VVoid = {
+    type: 'void';
+};
+
+export type Value = VVoid | VExpression | VVariable | VAttribute | VFunction | VObject | VNumber | VString | VTimer | VInvoke;
 
 export const value = {
     void: (): Value => ({
@@ -44,13 +60,9 @@ export const value = {
         value,
         name,
     }),
-    function: (value: Function): Value => ({
+    function: (value: TypedFunction): Value => ({
         type: 'function',
         value,
-    }),
-    bind: (invoke: Function['invoke']): Value => ({
-        type: 'function',
-        value: { invoke },
     }),
     object: (value: Record<string, Value>): Value => ({
         type: 'object',
@@ -70,15 +82,28 @@ export const value = {
     }),
 }
 
-export type Function = {
-    invoke: (args: Value[]) => Value,
+
+export type Argument<ValueType extends Value = Value> = {
+    name: string,
+    type: ValueType['type'],
+    optional?: boolean,
+}
+
+export type ArgumentList<Args extends Value[]> = {
+    [K in keyof Args]: Args[K] extends Value ? Argument<Args[K]> : never
+}[number][] | never[];
+
+export type TypedFunction<Args extends Value[] = Value[]> = {
+    name: string,
+    args: ArgumentList<Args>,
+    invoke: (ctx: ScriptContext, args: Args) => Value,
 }
 
 export type Timer = {
     start: number,
 }
 
-export type Invoke = {
+export type VInvoke = {
     type: 'invoke',
     function: Value,
     args: Value[],
@@ -99,7 +124,7 @@ export type Command = {
 } | {
     type: 'throw',
     value: Value,
-} | Invoke;
+} | VInvoke;
 
 export const command = {
     return: (value: Value): Command => ({
@@ -111,7 +136,7 @@ export const command = {
         variable,
         value,
     }),
-    invoke: (func: Value, ...args: Value[]): Invoke => ({
+    invoke: (func: Value, ...args: Value[]): VInvoke => ({
         type: 'invoke',
         function: func,
         args,
@@ -134,45 +159,54 @@ export const expr = {
     }),
 }
 
-type Context = {
+export type ScriptContext = {
     variables: Record<string, Value>,
     callstack: Expression[],
     index: number,
+    copy: () => ScriptContext,
 }
 
 const context = {
-    init: (): Context => ({
+    init: (): ScriptContext => ({
         variables: {},
         callstack: [],
         index: 0,
+        copy: function () {
+            return {
+                variables: { ...this.variables },
+                callstack: [...this.callstack],
+                index: this.index,
+                copy: this.copy,
+            }
+        },
     }),
 }
 
-export function evaluateValue(context: Context, value: Value): Value {
+export function evaluateValue(ctx: ScriptContext, value: Value): Value {
     switch (value.type) {
         case 'expression':
-            return executeExpression(context, value.value);
+            return executeExpression(ctx, value.value);
         case 'invoke': {
-            const func = evaluateValue(context, value.function);
-            assertValue(context, func, 'function')
-            const args = value.args.map((arg) => evaluateValue(context, arg));
-            return func.value.invoke(args);
+            const func = evaluateValue(ctx, value.function);
+            assertValue(ctx, func, 'function')
+            const args = value.args.map((arg) => evaluateValue(ctx, arg));
+            return func.value.invoke(ctx, args);
         }
         case 'variable': {
-            const variable = context.variables[value.name];
+            const variable = ctx.variables[value.name];
             if (variable === undefined) {
-                throw new ScriptError(`Variable not found: ${value.name}`, { callstack: context.callstack, index: context.index });
+                throw new ScriptError(`Variable not found: ${value.name}`, { callstack: ctx.callstack, index: ctx.index });
             }
             return variable;
         }
         case 'attribute': {
-            const object = evaluateValue(context, value.value);
-            assertValue(context, object, 'object');
-            const name = evaluateValue(context, value.name);
-            assertValue(context, name, 'string');
+            const object = evaluateValue(ctx, value.value);
+            assertValue(ctx, object, 'object');
+            const name = evaluateValue(ctx, value.name);
+            assertValue(ctx, name, 'string');
             const attribute = object.value[name.value];
             if (attribute === undefined) {
-                throw new ScriptError(`Attribute not found: ${name.value}`, { callstack: context.callstack, index: context.index });
+                throw new ScriptError(`Attribute not found: ${name.value}`, { callstack: ctx.callstack, index: ctx.index });
             }
             return attribute;
         }
@@ -194,52 +228,65 @@ export class ScriptError extends Error {
     }
 }
 
-export function assertValue<T extends Value['type']>(context: Context, value: Value, type: T): asserts value is Extract<Value, { type: T }> {
+export function assertValue<T extends Value['type']>(context: ScriptContext, value: Value, type: T): asserts value is Extract<Value, { type: T }> {
     if (value.type !== type) {
         const { callstack, index } = context;
         throw new ScriptError(`Expected ${type} but got ${value.type}`, { callstack, index });
     }
 }
 
-export function executeExpression(context: Context, expression: Expression): Value {
-    context.callstack.push(expression);
+export function executeExpression(ctx: ScriptContext, expression: Expression): Value {
+    ctx.callstack.push(expression);
     for (const [index, command] of expression.commands.entries()) {
-        context.index = index;
+        ctx.index = index;
         switch (command.type) {
             case 'return': {
-                return evaluateValue(context, command.value);
+                return evaluateValue(ctx, command.value);
             }
             case 'assign': {
-                const name = evaluateValue(context, command.variable);
-                assertValue(context, name, 'string')
-                context.variables[name.value] = evaluateValue(context, command.value);
+                const name = evaluateValue(ctx, command.variable);
+                assertValue(ctx, name, 'string')
+                ctx.variables[name.value] = evaluateValue(ctx, command.value);
                 break;
             }
             case 'assign-attribute': {
-                const object = evaluateValue(context, command.object);
-                assertValue(context, object, 'object')
-                object.value[command.name] = evaluateValue(context, command.value);
+                const object = evaluateValue(ctx, command.object);
+                assertValue(ctx, object, 'object')
+                object.value[command.name] = evaluateValue(ctx, command.value);
                 break;
             }
             case 'invoke': {
-                const func = evaluateValue(context, command.function);
-                assertValue(context, func, 'function')
-                const args = command.args.map((arg) => evaluateValue(context, arg));
-                func.value.invoke(args);
+                const func = evaluateValue(ctx, command.function);
+                assertValue(ctx, func, 'function')
+                const args = command.args.map((arg) => evaluateValue(ctx, arg));
+                if (func.value.args.length !== args.length) {
+                    throw new ScriptError(`Expected ${func.value.args.length} arguments but got ${args.length}`, { callstack: ctx.callstack, index });
+                }
+                for (let i = 0; i < func.value.args.length; i++) {
+                    const arg = func.value.args[i];
+                    const argValue = args[i];
+                    if (arg.optional && argValue.type === 'void') {
+                        continue;
+                    }
+                    if (argValue.type !== arg.type) {
+                        throw new ScriptError(`Expected argument ${i} to be ${arg.type} but got ${argValue.type}`, { callstack: ctx.callstack, index });
+                    }
+                }
+                func.value.invoke(ctx, args);
                 break;
             }
             case 'throw': {
-                const value = evaluateValue(context, command.value);
-                throw new ScriptError(`Thrown value: ${JSON.stringify(value)}`, { callstack: context.callstack, index });
+                const value = evaluateValue(ctx, command.value);
+                throw new ScriptError(`Thrown value: ${JSON.stringify(value)}`, { callstack: ctx.callstack, index });
             }
             default: {
-                const { callstack, index } = context;
+                const { callstack, index } = ctx;
                 const command = expression.commands[index];
                 throw new ScriptError(`Unexpected command type: ${command.type}`, { callstack, index });
             }
         }
     }
-    context.callstack.pop();
+    ctx.callstack.pop();
     return value.void();
 }
 
@@ -253,4 +300,27 @@ export const builder = {
 export type Script = {
     name: string,
     expression: Expression,
+}
+
+export class Globals {
+    private readonly functions: Record<string, TypedFunction<any>> = {};
+    
+    public registerFunction<Args extends Value[]>(name: string, args: ArgumentList<Args>, invoke: (ctx: ScriptContext, args: Args) => Value): TypedFunction<Args> {
+        const func: TypedFunction<Args> =  {
+            name,
+            args,
+            invoke,
+        };
+        this.functions[name] = func;
+        return func;
+    }
+
+    public newContext(): ScriptContext {
+        const ctx = context.init();
+        for (const key in this.functions) {
+            const func = this.functions[key];
+            ctx.variables[func.name] = value.function(func);
+        }
+        return ctx;
+    }
 }

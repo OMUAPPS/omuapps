@@ -23,7 +23,7 @@
         position: fixed;
         top: 0;
         left: 0;
-        transform: translate(-100%, -100%);
+        transform: translate(-1000%, -1000%);
     }
 
     .container {

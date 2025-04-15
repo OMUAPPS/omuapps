@@ -1,8 +1,9 @@
+import { getGame } from '../../omucafe-app.js';
 import type { BehaviorAction, BehaviorFunction, BehaviorHandler } from '../behavior.js';
 import { copy } from '../helper.js';
 import type { ItemState } from '../item-state.js';
 import type { KitchenContext } from '../kitchen.js';
-import { assertValue, builder, executeExpression, ScriptError, type Script, type Value } from '../script.js';
+import { builder, executeExpression, type Script } from '../script.js';
 
 export type Action = {
     on: Partial<{
@@ -21,7 +22,7 @@ export function createAction(options: { on: Action['on'] }): Action {
 
 function execute(kitchen: KitchenContext, script: Script, args: Record<string, string | null>) {
     const { ctx, v } = builder;
-    const context = ctx.init();
+    const context = getGame().globals.newContext();
     const { variables } = context;
     for (const key in args) {
         const value = args[key];
@@ -30,31 +31,6 @@ function execute(kitchen: KitchenContext, script: Script, args: Record<string, s
         } else {
             variables[key] = v.string(value);
         }
-    }
-    const functions: Record<string, (args: Value[]) => Value> = {
-        create_effect(args: Value[]): Value {
-            if (args.length !== 2) throw new ScriptError(`Expected 2 arguments but got ${args.length}`, { callstack: context.callstack, index: context.index });
-            const [itemId, effectId] = args;
-            assertValue(context, itemId, 'string');
-            assertValue(context, effectId, 'string');
-            const config = kitchen.getConfig();
-            const item = kitchen.items[itemId.value];
-            const effect = config.effects[effectId.value];
-            item.effects[effect.id] = copy(effect);
-            return v.void();
-        },
-        remove_effect(args: Value[]): Value {
-            if (args.length !== 2) throw new ScriptError(`Expected 2 arguments but got ${args.length}`, { callstack: context.callstack, index: context.index });
-            const [itemId, effectId] = args;
-            assertValue(context, itemId, 'string');
-            assertValue(context, effectId, 'string');
-            const item = kitchen.items[itemId.value];
-            delete item.effects[effectId.value];
-            return v.void();
-        }
-    };
-    for (const key in functions) {
-        context.variables[key] = v.bind(functions[key]);
     }
     executeExpression(context, script.expression);
 }

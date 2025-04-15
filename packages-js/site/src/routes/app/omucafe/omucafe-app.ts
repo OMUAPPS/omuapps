@@ -9,17 +9,24 @@ import { RegistryType } from '@omujs/omu/extension/registry/index.js';
 import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
 import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
-import type { Writable } from 'svelte/store';
-import { APP_ID } from './app.js';
+import { get, writable, type Writable } from 'svelte/store';
+import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
 import type { Effect } from './game/effect.js';
+import { context } from './game/game.js';
+import { copy } from './game/helper.js';
 import type { ItemState } from './game/item-state.js';
 import type { Item } from './game/item.js';
 import type { Kitchen } from './game/kitchen.js';
 import type { Product } from './game/product.js';
-import type { Script } from './game/script.js';
+import { assertValue, builder, Globals, ScriptError, type Script, type ScriptContext, type Value } from './game/script.js';
 
 export const DEFAULT_CONFIG = {
     version: 1,
+    obs: {
+        scene_uuid: null as string | null,
+        background_uuid: null as string | null,
+        overlay_uuid: null as string | null,
+    },
     filter: {},
     products: {} as Record<string, Product>,
     items: {} as Record<string, Item>,
@@ -36,6 +43,8 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
 
 export type Scene = {
     type: 'loading',
+} | {
+    type: 'install',
 } | {
     type: 'main_menu',
 } | {
@@ -64,6 +73,7 @@ const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {
 
 export type SceneContext = {
     time: number,
+    current: boolean,
 }
 
 type User = {
@@ -109,7 +119,59 @@ function processMessage(message: Message) {
     console.log('[msg]', message.text);
 }
 
-export function createGame(app: App): Promise<void> {
+export const sessions = writable({
+    overlay: false,
+    background: false,
+});
+
+async function startCheckInstalled(): Promise<void> {
+    if (!game) throw new Error('Game not created');
+    const { omu } = game;
+    omu.server.observeSession(OVERLAY_ID, {
+        onConnect: () => sessions.update((s) => ({ ...s, overlay: true })),
+        onDisconnect: () => sessions.update((s) => ({ ...s, overlay: false })),
+    });
+    omu.server.observeSession(BACKGROUND_ID, {
+        onConnect: () => sessions.update((s) => ({ ...s, background: true })),
+        onDisconnect: () => sessions.update((s) => ({ ...s, background: false })),
+    });
+    sessions.set({
+        overlay: await omu.server.sessions.has(OVERLAY_ID.key()),
+        background: await omu.server.sessions.has(BACKGROUND_ID.key()),
+    });
+}
+
+function isInstalled(): boolean {
+    const state = get(sessions);
+    return state.overlay && state.background;
+}
+
+const functions = {
+    create_effect(ctx: ScriptContext, args: Value[]): Value {
+        if (args.length !== 2) throw new ScriptError(`Expected 2 arguments but got ${args.length}`, { callstack: ctx.callstack, index: ctx.index });
+        const [itemId, effectId] = args;
+        assertValue(ctx, itemId, 'string');
+        assertValue(ctx, effectId, 'string');
+        const { v } = builder;
+        const config = context.getConfig();
+        const item = context.items[itemId.value];
+        const effect = config.effects[effectId.value];
+        item.effects[effect.id] = copy(effect);
+        return v.void();
+    },
+    remove_effect(ctx: ScriptContext, args: Value[]): Value {
+        if (args.length !== 2) throw new ScriptError(`Expected 2 arguments but got ${args.length}`, { callstack: ctx.callstack, index: ctx.index });
+        const [itemId, effectId] = args;
+        assertValue(ctx, itemId, 'string');
+        assertValue(ctx, effectId, 'string');
+        const item = context.items[itemId.value];
+        delete item.effects[effectId.value];
+        const { v } = builder;
+        return v.void();
+    },
+}
+export async function createGame(app: App): Promise<void> {
+    const client = app.id.isEqual(APP_ID);
     const omu = new Omu(app);
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
@@ -117,22 +179,21 @@ export function createGame(app: App): Promise<void> {
     const states = makeRegistryWritable(omu.registries.get(STATES_REGISTRY_TYPE));
     const scene = makeRegistryWritable(omu.registries.get(SCENE_REGISTRY_TYPE));
     const orders = omu.tables.get(ORDER_TABLE_TYPE);
+    const globals = new Globals();
+    globals.registerFunction('create_effect', [
+        {name: 'itemId', type: 'string'},
+        {name: 'effectId', type: 'string'},
+    ], functions.create_effect);
+    globals.registerFunction('remove_effect', [
+        {name: 'itemId', type: 'string'},
+        {name: 'effectId', type: 'string'},
+    ], functions.remove_effect);
     setClient(omu);
     setChat(chat);
 
     chat.on(events.message.add, (message) => {
         processMessage(message);
     });
-
-    if (BROWSER) {
-        omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-            ASSET_UPLOAD_PERMISSION_ID,
-            ASSET_DOWNLOAD_PERMISSION_ID,
-            CHAT_REACTION_PERMISSION_ID,
-        );
-        omu.start();
-    }
 
     game = {
         omu,
@@ -142,13 +203,34 @@ export function createGame(app: App): Promise<void> {
         states,
         orders,
         scene,
+        globals,
     }
 
-    return new Promise<void>((resolve) => {
-        omu.onReady(() => {
-            resolve();
-        });
-    });
+    if (BROWSER) {
+        omu.permissions.require(
+            ASSET_DOWNLOAD_PERMISSION_ID,
+        );
+        if (client) {
+            omu.permissions.require(
+                permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+                permissions.OBS_SOURCE_UPDATE_PERMISSION_ID,
+                permissions.OBS_SOURCE_READ_PERMISSION_ID,
+                permissions.OBS_SCENE_READ_PERMISSION_ID,
+                permissions.OBS_SCENE_CREATE_PERMISSION_ID,
+                ASSET_UPLOAD_PERMISSION_ID,
+                CHAT_REACTION_PERMISSION_ID,
+            );
+        }
+        omu.start();
+
+        await omu.waitForReady();
+        await startCheckInstalled();
+        if (!isInstalled()) {
+            scene.set({
+                type: 'install',
+            });
+        }
+    }
 }
 
 export type Game = {
@@ -159,6 +241,7 @@ export type Game = {
     states: Writable<States>,
     orders: Table<Order>,
     scene: Writable<Scene>,
+    globals: Globals,
 };
 
 let game: Game | null = null;
