@@ -21,7 +21,6 @@
 
     function handleResize() {
         if (!canvas || !offscreen || !glContext) return;
-        if (width === canvas.clientWidth && height === canvas.clientHeight) return;
         width = canvas.clientWidth;
         height = canvas.clientHeight;
         canvas.width = width;
@@ -40,12 +39,12 @@
             await new Promise<void>((r) => {
                 resolveFrameBlock = r;
             });
-            if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
-                continue;
-            }
             if (resized) {
                 handleResize();
                 resized = false;
+                continue;
+            } else if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
+                continue;
             }
             await render(glContext);
             context.clearRect(0, 0, width, height);
