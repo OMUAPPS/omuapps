@@ -48,7 +48,7 @@ const { values } = parseArgs({
     allowPositionals: true,
 });
 
-const getEntrypointsFromGlob = (entrypoint: string[]): string[] => {
+function getEntrypointsFromGlob(entrypoint: string[]): string[] {
     const entrypoints: string[] = [];
     for (const entry of entrypoint) {
         const files = new Glob(entry);
@@ -64,15 +64,15 @@ const getEntrypointsFromGlob = (entrypoint: string[]): string[] => {
     return entrypoints
 };
 
-const build = async (_entrypoints: string[]) => {
+async function build(entrypoints: string[]) {
     if (values.debug) {
-        console.log('building', _entrypoints);
+        console.log('building', entrypoints);
         console.time('build');
     }
-    for (const _entrypoint of _entrypoints) {
+    for (const entrypoint of entrypoints) {
         try {
             const option: BuildConfig = {
-                entrypoints: [_entrypoint],
+                entrypoints: [entrypoint],
                 outdir: values.outdir,
                 target: 'bun',
                 format: 'esm',
@@ -89,13 +89,13 @@ const build = async (_entrypoints: string[]) => {
             };
             const result = await Bun.build(option);
             if (!result.success) {
-                console.error(`Build failed for ${_entrypoint}:`);
+                console.error(`Build failed for ${entrypoint}:`);
                 for (const message of result.logs) {
                     console.error(message);
                 }
             }
         } catch (error) {
-            console.error(`Error building ${_entrypoint}:`, error);
+            console.error(`Error building ${entrypoint}:`, error);
         }
     }
     if (values.debug) {
@@ -107,18 +107,19 @@ const entrypoints = values.glob
     ? getEntrypointsFromGlob(values.entrypoint)
     : values.entrypoint;
 
-build(entrypoints);
+async function rebuild() {
+    try {
+        await build(entrypoints);
+    } catch (error) {
+        console.error('Error while rebuilding:', error);
+    }
+};
+
+await build(entrypoints);
 
 if (values.watch) {
     console.log('start watching');
     let debounceTimeout: Timer | null = null;
-    const rebuild = async () => {
-        try {
-            await build(entrypoints);
-        } catch (error) {
-            console.error('Watch mode build error:', error);
-        }
-    };
 
     const watcher = watch(values.watchDir, () => {
         if (debounceTimeout) clearTimeout(debounceTimeout);
