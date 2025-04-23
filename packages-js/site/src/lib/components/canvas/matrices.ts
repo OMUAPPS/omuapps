@@ -3,6 +3,8 @@ import { MatrixStack } from '$lib/math/matrix-stack.js';
 import type { PossibleVec2, Vec2 } from '$lib/math/vec2.js';
 
 export class Matrices {
+    public width: number = 0;
+    public height: number = 0;
     public readonly projection: MatrixStack = new MatrixStack();
     public readonly model: MatrixStack = new MatrixStack();
     public readonly view: MatrixStack = new MatrixStack();

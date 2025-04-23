@@ -8,7 +8,7 @@
 
     export let context: SceneContext;
     $: console.log('SceneProductList', context);
-    const { config, scene } = getGame();
+    const { gameConfig: config, scene } = getGame();
 </script>
 
 <main>

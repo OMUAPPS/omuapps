@@ -39,7 +39,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
     private execute(type: keyof Action['on'], context: KitchenContext, action: BehaviorAction<'action'>, args: Record<string, string | null>) {
         const { item, behavior: { on } } = action;
         if (!on[type]) return;
-        const config = context.getConfig();
+        const config = context.config;
         const script = config.scripts[on[type]];
         if (!script) {
             console.error(`Script not found: ${on[type]}`);

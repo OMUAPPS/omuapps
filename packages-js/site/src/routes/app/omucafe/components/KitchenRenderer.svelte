@@ -1,37 +1,14 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
-    import { Vec2 } from '$lib/math/vec2.js';
-    import { context, COUNTER_WIDTH, init, markChanged, render as renderGame, setContext } from '../game/game.js';
+    import { getContext, init, markChanged, render as renderGame } from '../game/game.js';
     import { createItemState } from '../game/item-state.js';
     import { getGame } from '../omucafe-app.js';
+    import ItemDebugInfo from './debug/ItemDebugInfo.svelte';
+    import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
 
-    const { scene, states, config } = getGame();
+    const { gameConfig: config } = getGame();
     export let side: 'client' | 'overlay' | 'background';
-
-    setContext({
-        ...$states.kitchen,
-        side: side,
-        getConfig: () => $config,
-        setConfig: (value) => $config = value,
-        getScene: () => $scene,
-        setScene: (value) => $scene = value,
-        getStates: () => $states,
-        setStates: (value) => $states = value,
-    })
-    $: {
-        if (side !== 'client') {
-            setContext({
-                ...context,
-                ...$states.kitchen,
-                side,
-                getConfig: () => $config,
-                setConfig: (value) => $config = value,
-            })
-        }
-    }
-
     let showDebug = false;
-    let openItems: string[] = [];
 </script>
 
 <div class="kitchen">
@@ -41,42 +18,32 @@
     {#if side === 'client'}
         <div class="debug" class:show-debug={showDebug}>
             <h2>
-                {JSON.stringify(context).length}
+                {JSON.stringify(getContext().states).length}
                 <button on:click={() => showDebug = !showDebug}>
                     {showDebug ? 'hide' : 'show'}
                 </button>
             </h2>
-            {#each Object.values(context.items) as item (item.id)}
-                <div>
-                    <button on:click={() => {
-                        openItems = openItems.includes(item.id) ? openItems.filter(id => id !== item.id) : [...openItems, item.id];
-                    }}>
-                        {item.item.id}
-                    </button>
-                    {#if openItems.includes(item.id)}
-                        <pre>{JSON.stringify(item, null, 2)}</pre>
-                    {/if}
-                </div>
+            <JsonDebugInfo value={getContext()} />
+            {#each Object.values(getContext().items) as item (item.id)}
+                <ItemDebugInfo {item} />
             {/each}
         </div>
         <div class="ui">
             {#each Object.entries($config.items) as [id, item] (id)}
                 <button on:click={() => {
-                    const itemState = createItemState(context, {
+                    createItemState(getContext(), {
                         item,
                     });
-                    if (!item.behaviors.fixed) {
-                        itemState.transform.offset = new Vec2(COUNTER_WIDTH / 3, 200);
-                    }
                     markChanged();
                 }}>
                     {item.name}
                 </button>
             {/each}
             <button on:click={() => {
-                for (const id in context.items) {
+                for (const id in getContext().items) {
                     if (id === 'counter') continue;
-                    delete context.items[id];
+                    if (id === 'bell') continue;
+                    delete getContext().items[id];
                 }
                 markChanged();
             }}>
@@ -101,8 +68,8 @@
 
     .debug {
         position: absolute;
-        left: 0;
-        top: 10rem;
+        right: 1rem;
+        top: 1rem;
         padding: 1rem;
         overflow-y: auto;
         z-index: 1;

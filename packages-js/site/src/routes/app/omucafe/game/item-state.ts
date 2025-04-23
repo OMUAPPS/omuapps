@@ -5,17 +5,27 @@ import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByAsset } from './asset.js';
 import { type BehaviorFunction, type BehaviorHandler, type BehaviorHandlers, type Behaviors } from './behavior.js';
 import type { Effect } from './effect.js';
-import { applyDragEffect, context, draw, matrices, mouse } from './game.js';
+import { applyDragEffect, draw, getContext, matrices, mouse } from './game.js';
 import { copy, uniqueId } from './helper.js';
 import type { Item } from './item.js';
 import type { KitchenContext } from './kitchen.js';
 import { transformToMatrix, type Bounds, type Transform } from './transform.js';
+
+
+export const ITEM_LAYERS = {
+    KITCHEN_ITEMS: 'kitchen_items',
+    BELL: 'bell',
+    COUNTER: 'counter',
+} as const;
+export type ItemLayer = typeof ITEM_LAYERS[keyof typeof ITEM_LAYERS];
+export const ITEM_LAYERS_LIST: ItemLayer[] = Object.values(ITEM_LAYERS);
 
 export type ItemState = {
     id: string,
     item: Item,
     behaviors: Partial<Behaviors>,
     effects: Record<string, Effect>,
+    layer: ItemLayer,
     transform: Transform,
     children: string[],
     parent?: string,
@@ -25,16 +35,18 @@ export type ItemState = {
 export function createItemState(context: KitchenContext, options: {
     id?: string,
     item: Item,
+    layer?: ItemLayer,
     transform?: Transform,
     children?: string[],
     behaviors?: Partial<Behaviors>,
     bounds?: Bounds,
 }): ItemState {
     const { items } = context;
-    const { id, item, transform, children, behaviors, bounds } = options;
+    const { id, item, layer, transform, children, behaviors, bounds } = options;
     const itemState = {
         id: id ?? uniqueId(),
         item: copy(item),
+        layer: layer ?? ITEM_LAYERS.KITCHEN_ITEMS,
         transform: transform ?? copy(item.transform),
         children: children ?? [],
         behaviors: behaviors ?? copy(item.behaviors),
@@ -43,6 +55,33 @@ export function createItemState(context: KitchenContext, options: {
     } satisfies ItemState;
     items[itemState.id] = itemState;
     return itemState;
+}
+
+export function getParents(item: ItemState): ItemState[] {
+    const parents: ItemState[] = [];
+    let parent: string | undefined = item.parent;
+    while (parent) {
+        const parentItem = getContext().items[parent];
+        if (!parentItem) break;
+        if (parents.includes(parentItem)) {
+            throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${parent}`);
+        }
+        parents.push(parentItem);
+        parent = parentItem.parent;
+    }
+    return parents;
+}
+
+export function attachChild(item: ItemState, child: ItemState) {
+    if (child.parent) {
+        detachChildren(getContext().items[child.parent], child);
+    }
+    const parents = getParents(item);
+    if (parents.includes(child)) {
+        throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${child.id}`);
+    }
+    item.children.push(child.id);
+    child.parent = item.id;
 }
 
 let behaviorHandlers: BehaviorHandlers | undefined = undefined;
@@ -75,8 +114,15 @@ export async function invokeBehaviors<T extends keyof Behaviors, U>(
 }
 
 export function attachChildren(item: ItemState, ...children: ItemState[]) {
-    item.children.push(...children.map(child => child.id));
     children.forEach(child => {
+        if (child.parent) {
+            detachChildren(getContext().items[child.parent], child);
+        }
+        const parents = getParents(item);
+        if (parents.includes(child)) {
+            throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${child.id}`);
+        }
+        item.children.push(child.id);
         child.parent = item.id;
     });
 }
@@ -102,7 +148,7 @@ export function getItemStateTransform(item: ItemState, options: {
             throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${parent}`);
         }
         passed.push(parent);
-        const item = context.items[parent];
+        const item = getContext().items[parent];
         parents.push([item, parent]);
         if (!item) break;
         matrices.push(transformToMatrix(item.transform));
@@ -110,11 +156,8 @@ export function getItemStateTransform(item: ItemState, options: {
     }
     matrices.reverse();
     
-    const flipY = context.side === 'overlay' && !options.parent;
+    const flipY = getContext().side === 'overlay' && !options.parent;
     if (flipY) {
-        // const offsetY = matrices[0].m31;
-        // const scale = 1 + BetterMath.clamp(0, 1, offsetY / 1500);
-        // matrices[0] = matrices[0].scale(scale, scale, scale);
         const matrix = matrices[0];
         if (item.id === 'counter') {
             matrices[0] = new Mat4(
@@ -124,7 +167,7 @@ export function getItemStateTransform(item: ItemState, options: {
                 matrix.m30, -matrix.m31 - item.bounds.max.y + 330, matrix.m32, matrix.m33,
             );
         } else {
-            const z = Math.max(Math.min(matrix.m31 - item.bounds.max.y / 2 + 400, 2000), 1);
+            const z = Math.max(Math.min(matrix.m31 - item.bounds.max.y / 2 + 620, 2000), 1);
             matrices[0] = new Mat4(
                 matrix.m00 * 0.8, matrix.m01, matrix.m02, matrix.m03,
                 matrix.m10, matrix.m11 * 0.7, matrix.m12, matrix.m13,
@@ -135,7 +178,7 @@ export function getItemStateTransform(item: ItemState, options: {
     }
 
     let transform = matrices.reduce((acc, matrix) => acc.multiply(matrix), Mat4.IDENTITY);
-    if (context.side === 'overlay') {
+    if (getContext().side === 'overlay') {
         const previous = previousTransforms.get(item.id) ?? transform;
         transform = previous.lerp(transform, 0.8);
         previousTransforms.set(item.id, transform);
@@ -165,7 +208,7 @@ export async function renderItemState(itemState: ItemState, options: {
     const transform = options.parent ? transformToMatrix(itemState.transform) : getItemStateTransform(itemState, options);
     matrices.model.push();
     matrices.model.multiply(transform);
-    if (context.held === item.id) {
+    if (getContext().held === item.id) {
         applyDragEffect();
     }
     draw.textureColor(
@@ -179,29 +222,25 @@ export async function renderItemState(itemState: ItemState, options: {
         width, height,
         tex,
     );
-    await invokeBehaviors(context, itemState, it => it.render, {
+    await invokeBehaviors(getContext(), itemState, it => it.render, {
         matrices,
     });
     matrices.model.pop();
 }
 
-export async function renderItems() {
-    for (const [id, item] of Object.entries(context.items).sort(([, a], [, b]) => {
-        const maxA = a.bounds.max;
-        const maxB = b.bounds.max;
-        return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
-    })) {
-        if (id === context.held) continue;
+export async function renderItems(layer: ItemLayer) {
+    const itemsInOrder = getAllItemStates(layer);
+    for (const item of itemsInOrder.toReversed()) {
+        if (item.id === getContext().held) continue;
         if (item.parent) continue;
-        if (item.id === 'counter') continue;
         await renderItemState(item);
     }
 }
 
 export async function renderHeldItem() {
-    const { held } = context;
+    const { held } = getContext();
     if (!held) return;
-    const item = context.items[held];
+    const item = getContext().items[held];
     if (!item) return;
     item.transform.offset = {
         x: item.transform.offset.x + mouse.delta.x,
@@ -242,28 +281,28 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
 }
 
 export async function renderHoveringItem() {
-    const { hovering } = context;
+    const { hovering } = getContext();
     if (!hovering) return;
-    const itemState = context.items[hovering];
+    const itemState = getContext().items[hovering];
     if (!itemState) return;
     const { item } = itemState;
     if (!item.image) {
         return;
     }
-    const { canBeHeld } = await invokeBehaviors(context, itemState, it => it.canItemBeHeld, {
-        canBeHeld: true,
+    const { canBeHeld } = await invokeBehaviors(getContext(), itemState, it => it.canItemBeHeld, {
+        canBeHeld: false,
     });
-    if (!context.held && !canBeHeld) {
+    if (!getContext().held && !canBeHeld && !itemState.behaviors.action?.on.click) {
         return;
     }
-    const alpha = context.held ? 1 : 0.5;
+    const alpha = getContext().held ? 1 : 0.5;
     const color = new Vec4(0, 0, 0, alpha);
     const texture = await getTextureByAsset(item.image);
     const { tex, width, height } = texture;
     const transform = getItemStateTransform(itemState);
     matrices.model.push();
     matrices.model.multiply(transform);
-    if (context.held === itemState.id) {
+    if (getContext().held === itemState.id) {
         applyDragEffect();
     }
     draw.textureOutline(
@@ -281,12 +320,12 @@ export async function renderHoveringItem() {
         4,
     );
     matrices.model.pop();
-    await invokeBehaviors(context, itemState, it => it.renderItemHoverTooltip, {
+    await invokeBehaviors(getContext(), itemState, it => it.renderItemHoverTooltip, {
         matrices,
     });
 }
 
-export function getAllItemStates(order: (a: ItemState, b: ItemState) => number = (a, b) => {
+export function getAllItemStates(layer?: ItemLayer, order: (a: ItemState, b: ItemState) => number = (a, b) => {
     const maxA = a.bounds.max;
     const maxB = b.bounds.max;
     return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
@@ -294,9 +333,14 @@ export function getAllItemStates(order: (a: ItemState, b: ItemState) => number =
     const items: ItemState[] = [];
     function collectItems(item: ItemState, passed: string[]) {
         const children = item.children
-            .map((id) => context.items[id])
+            .map((id) => getContext().items[id])
             .filter((entry): entry is ItemState => !!entry)
-            .sort(order);
+            .sort(order)
+            .sort(({layer}, {layer: layerB}) => {
+                const indexA = ITEM_LAYERS_LIST.indexOf(layer);
+                const indexB = ITEM_LAYERS_LIST.indexOf(layerB);
+                return indexA - indexB;
+            });
         for (const child of children) {
             collectItems(child, [...passed, item.id]);
         }
@@ -306,14 +350,18 @@ export function getAllItemStates(order: (a: ItemState, b: ItemState) => number =
         }
         items.push(item);
     }
-    for (const item of Object.values(context.items).sort((a, b) => {
+    for (const item of Object.values(getContext().items).sort((a, b) => {
         const maxA = a.bounds.max;
         const maxB = b.bounds.max;
         return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
+    }).sort(order).sort(({layer}, {layer: layerB}) => {
+        const indexA = ITEM_LAYERS_LIST.indexOf(layer);
+        const indexB = ITEM_LAYERS_LIST.indexOf(layerB);
+        return indexA - indexB;
     })) {
-        if (!item.parent) {
-            collectItems(item, []);
-        }
+        if (layer && item.layer !== layer) continue;
+        if (item.parent) continue;
+        collectItems(item, []);
     }
     return items;
 }
@@ -321,20 +369,26 @@ export function getAllItemStates(order: (a: ItemState, b: ItemState) => number =
 export async function updateHoveringItem() {
     let hit = false;
     const itemsInOrder = getAllItemStates();
+    const held = getContext().held;
+    const heldItem = held ? getContext().items[held] : null;
+    const ignoreItems = heldItem ? getParents(heldItem).map(item => item.id) : [];
     for (const item of itemsInOrder) {
-        if (item.id === context.held) continue;
+        if (item.id === getContext().held) continue;
+        if (ignoreItems.includes(item.id)) {
+            continue;
+        }
         const hovered = await isItemHovering(item);
         if (hovered) {
-            if (context.hovering === item.id) {
+            if (getContext().hovering === item.id) {
                 hit = true;
                 break;
             }
-            context.hovering = item.id;
+            getContext().hovering = item.id;
             hit = true;
             break;
         }
     }
-    if (!hit && context.hovering) {
-        context.hovering = null;
+    if (!hit && getContext().hovering) {
+        getContext().hovering = null;
     }
 }

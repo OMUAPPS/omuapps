@@ -404,7 +404,7 @@ export type TextureParams = {
     magFilter?: 'nearest' | 'linear';
 };
 
-export type ColorFormat = 'rgba' | 'rgb' | 'rgba16f' | 'rgb16f';
+export type ColorFormat = 'rgba' | 'rgb' | 'rgba16f' | 'rgb16f' | 'srgb' | 'srgb8' | 'srgb8alpha8';
 
 export class GlTexture {
     constructor(
@@ -460,8 +460,21 @@ export class GlTexture {
             rgb: this.gl.RGB,
             rgba16f: this.gl.RGBA16F,
             rgb16f: this.gl.RGB16F,
+            srgb: this.gl.SRGB,
+            srgb8: this.gl.SRGB8,
+            srgb8alpha8: this.gl.SRGB8_ALPHA8,
         };
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, COLOR_FORMATS[internalFormat], width, height, 0, COLOR_FORMATS[params.format ?? internalFormat], this.gl.UNSIGNED_BYTE, image);
+        this.gl.texImage2D(
+            this.gl.TEXTURE_2D,
+            0,
+            COLOR_FORMATS[internalFormat],
+            width,
+            height,
+            0,
+            COLOR_FORMATS[params.format ?? internalFormat],
+            this.gl.UNSIGNED_BYTE,
+            image
+        );
     }
 
     public setParams(params: TextureParams): void {

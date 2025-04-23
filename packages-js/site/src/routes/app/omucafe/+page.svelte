@@ -2,10 +2,11 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import type { TypedComponent } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { onMount } from 'svelte';
     import { APP } from './app.js';
     import KitchenRenderer from './components/KitchenRenderer.svelte';
-    import { createGame, DEFAULT_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
+    import { markChanged } from './game/game.js';
+    import { Time } from './game/time.js';
+    import { createGame, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
     import SceneEffectEdit from './scenes/SceneEffectEdit.svelte';
     import SceneInstall from './scenes/SceneInstall.svelte';
@@ -15,10 +16,9 @@
     import ScenePhotoMode from './scenes/ScenePhotoMode.svelte';
     import SceneProductEdit from './scenes/SceneProductEdit.svelte';
     import SceneProductList from './scenes/SceneProductList.svelte';
-    import { getWorker } from './worker/game-worker.js';
 
-    const promise = createGame(APP);
-    const { scene, config, states, orders } = getGame();
+    const promise = createGame(APP, 'client');
+    const { scene, gameConfig: config, states, orders } = getGame();
 
     const SCENES: Record<Scene['type'], TypedComponent<{
         context: SceneContext;
@@ -47,11 +47,11 @@
     }
 
     if (BROWSER) {
-        onMount(async () => {
-            const worker = await getWorker();
-            const tokens = await worker.call('tokenize', 'すもももももももものうち');
-            console.log(tokens);
-        });
+    // onMount(async () => {
+        //     const worker = await getWorker();
+        //     const tokens = await worker.call('tokenize', 'すもももももももものうち');
+        //     console.log(tokens);
+        // });
     }
 </script>
 
@@ -63,7 +63,7 @@
             {#key lastScene}
                 <div class="scene last">
                     <svelte:component this={lastScene} context={{
-                        time: performance.now(),
+                        time: Time.get(),
                         current: false,
                     }} />
                 </div>
@@ -72,7 +72,7 @@
         {#key lastScene}
             <div class="scene current">
                 <svelte:component this={SCENES[$scene.type]} context={{
-                    time: performance.now(),
+                    time: Time.get(),
                     current: true,
                 }} />
             </div>
@@ -102,8 +102,9 @@
     </button>
     <button on:click={() => {
         $scene = { type: 'loading' };
-        $config = DEFAULT_CONFIG;
+        $config = DEFAULT_GAME_CONFIG;
         $states = DEFAULT_STATES;
+        markChanged();
     }}>
         reset
     </button>

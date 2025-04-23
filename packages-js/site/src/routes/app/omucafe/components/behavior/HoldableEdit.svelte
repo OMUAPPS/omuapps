@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { Fixed } from '../../game/behavior/fixed.js';
+    import type { Holdable } from '../../game/behavior/holdable.js';
     
-    export let fixed: Fixed;
+    export let holdable: Holdable;
 </script>
 
 <div class="behavior">
-    {fixed}
+    {holdable}
 </div>
 
 <style lang="scss">

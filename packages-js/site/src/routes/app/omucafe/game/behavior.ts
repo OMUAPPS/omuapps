@@ -1,21 +1,21 @@
 import type { Matrices } from '$lib/components/canvas/matrices.js';
 import { ActionHandler, type Action } from './behavior/action.js';
 import { ContainerHandler, type Container } from './behavior/container.js';
-import { FixedHandler, type Fixed } from './behavior/fixed.js';
+import { HoldableHandler, type Holdable } from './behavior/holdable.js';
 import { SpawnerHandler, type Spawner } from './behavior/spawner.js';
 import type { ItemState } from './item-state.js';
 import type { KitchenContext } from './kitchen.js';
 
 export type Behaviors = {
     container: Container;
-    fixed: Fixed;
+    holdable: Holdable;
     spawner: Spawner;
     action: Action;
 };
 
 export const getBehaviorHandlers = () => ({
     container: new ContainerHandler(),
-    fixed: new FixedHandler(),
+    holdable: new HoldableHandler(),
     spawner: new SpawnerHandler(),
     action: new ActionHandler(),
 }) as BehaviorHandlers;

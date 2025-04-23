@@ -1,21 +1,60 @@
 
+import { BetterMath } from '$lib/math.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import cursor_grab from '../../images/cursor_grab.png';
 import cursor_point from '../../images/cursor_point.png';
 import { getTextureByUri } from '../asset.js';
-import { context, draw, matrices, mouse } from '../game.js';
+import { draw, getContext, matrices, mouse } from '../game.js';
+import { Time } from '../time.js';
 
 export async function renderCursor() {
-    if (!mouse.over) return;
+    const ctx = getContext();
+    if (ctx.side === 'client' && !mouse.over) return;
+    const { mouse: { x, y } } = ctx;
     matrices.model.push();
     matrices.view.push();
-    matrices.model.multiply(new Mat4(
+    let model = ctx.side === 'client' ? new Mat4(
         1, -mouse.delta.y / 100, 0, 0,
         -mouse.delta.x / 100, 1, 0, 0,
         0, 0, 1, 0,
         mouse.client.x, mouse.client.y, 0, 1,
-    ));
+    ) : new Mat4(
+        1, -mouse.delta.y / 100, 0, 0,
+        -mouse.delta.x / 100, 1, 0, 0,
+        0, 0, 1, 0,
+        BetterMath.remap(
+            x,
+            -1,
+            1,
+            0,
+            matrices.width,
+        ),
+        BetterMath.remap(
+            y,
+            -1,
+            1,
+            matrices.height,
+            0,
+        ),
+        0, 1,
+    );
+    if (ctx.side === 'overlay') {
+        matrices.view.translate(
+            0,
+            matrices.height / 2,
+            0.
+        )
+        const z = Math.max(Math.min(model.m31 + 620, 2000), 1);
+        model = new Mat4(
+            model.m00 * 0.8 * 2, model.m01, model.m02, model.m03,
+            model.m10, model.m11 * -0.7 * 2, model.m12, model.m13,
+            model.m20, model.m21, model.m22, model.m23,
+            model.m30, 4000 / z * 20 - 20, model.m32, model.m33,
+        );
+    }
+
+    matrices.model.multiply(model);
     const CURSORS = {
         grab: {
             image: await getTextureByUri(cursor_grab),
@@ -32,8 +71,8 @@ export async function renderCursor() {
             y: -4,
         },
     }
-    const cursor = context.held ? CURSORS.point : CURSORS.grab;
-    const time = performance.now();
+    const cursor = getContext().held ? CURSORS.point : CURSORS.grab;
+    const time = Time.get();
     const duration = time - (mouse.down ? mouse.downTime : mouse.upTime);
     const a = Math.sin(duration / 40) / (Math.pow(duration / 7, 1.5) / 2 + 1) * (mouse.down ? -1 : 1);
     const scale = 1 + a;

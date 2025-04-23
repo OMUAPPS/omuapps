@@ -8,14 +8,12 @@ import { createTransform, transformToMatrix, type Transform } from '../transform
 export type Container = {
     overlay: Asset | null,
     overlayTransform: Transform,
-    items: string[],
 }
 
 export function createContainer(): Container {
     return {
         overlay: null,
         overlayTransform: createTransform(),
-        items: [],
     };
 }
 
@@ -25,7 +23,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         action: BehaviorAction<'container'>,
     ) {
         const { item, behavior } = action;
-        for (const child of behavior.items
+        for (const child of item.children
             .map((id): ItemState | undefined => context.items[id])
             .filter((entry): entry is ItemState => !!entry)
             .sort((a, b) => {
@@ -59,13 +57,6 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
     ) {
         const { item, behavior } = action;
         const { child } = args;
-        if (behavior.items.includes(item.id)) {
-            return;
-        }
-        behavior.items = [
-            ...behavior.items,
-            child.id,
-        ];
         attachChildren(item, child);
         const containerTransform = getItemStateTransform(item);
         const childTransform = transformToMatrix(child.transform);
@@ -85,7 +76,6 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
     ) {
         const { item, behavior } = action;
         const { child } = args;
-        behavior.items = behavior.items.filter((id) => id !== child.id);
         detachChildren(item, child);
         const containerTransform = getItemStateTransform(item);
         const heldTransform = transformToMatrix(child.transform);

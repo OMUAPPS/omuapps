@@ -1,7 +1,9 @@
 import type { Registry } from '@omujs/omu/extension/registry/index.js';
 import { type Writable } from 'svelte/store';
 
-export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
+export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> & {
+    wait: () => Promise<void>;
+}{
     let ready = false;
     let value: T = registry.value;
     const listeners = new Set<(value: T) => void>();
@@ -31,6 +33,17 @@ export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
                 throw new Error(`Registry ${registry.type.id.key()} is not ready`);
             }
             registry.update(fn);
+        },
+        wait: () => {
+            return new Promise<void>((resolve) => {
+                if (ready) {
+                    resolve();
+                } else {
+                    listeners.add(() => {
+                        resolve();
+                    });
+                }
+            });
         },
     };
 }
@@ -129,4 +142,14 @@ export function formatBytes(bytes: number, decimals = 2) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+export function once(fn: (resolve: () => void) => (PromiseLike<() => unknown>) | (() => unknown)): Promise<void> {
+    return new Promise((_resolve) => {
+        const promise = fn(async () => {
+            _resolve();
+            const unlisten = await promise;
+            unlisten();
+        });
+    });
 }

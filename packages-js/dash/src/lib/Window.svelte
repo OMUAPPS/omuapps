@@ -151,7 +151,6 @@
         color: var(--color-1);
         font-size: 0.6rem;
         font-weight: 600;
-        // upper alignment
         position: relative;
         top: -2px;
     }

@@ -24,7 +24,10 @@ export function setClient<T extends Client>(newClient: T): T {
     };
     client.update((oldClient) => {
         if (oldClient) {
-            throw new Error('Client already set');
+            // throw new Error('Client already set');
+            console.warn('HMR detected. reloading...');
+            window.location.reload();
+            return oldClient;
         }
         return newClient;
     });

@@ -1,21 +1,19 @@
 import type { Asset } from './asset.js';
+import type { ADSRClip } from './audioclip.js';
 import { uniqueId } from './helper.js';
 
 type EffectAudio = {
     type: 'audio',
-    asset: Asset,
-    volume: number,
+    clip: ADSRClip,
 };
 
 export function createEffectAudio(options: {
-    asset: Asset,
-    volume: number,
+    clip: ADSRClip,
 }): EffectAudio {
-    const { asset, volume } = options;
+    const { clip } = options;
     return {
         type: 'audio',
-        asset,
-        volume,
+        clip,
     };
 }
 

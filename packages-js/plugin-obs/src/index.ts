@@ -50,11 +50,17 @@ export class OBSPlugin {
         });
     }
 
-    public on<K extends keyof Events>(event: K, handler: Events[K]): void {
+    public on<K extends keyof Events>(event: K, handler: Events[K]): () => void {
         if (!this.events[event]) {
             this.events[event] = [];
         }
         this.events[event]?.push(handler);
+        return () => {
+            const index = this.events[event]?.indexOf(handler);
+            if (index !== undefined && index > -1) {
+                this.events[event]?.splice(index, 1);
+            }
+        };
     }
 
     public static create(omu: Omu): OBSPlugin {

@@ -1,31 +1,12 @@
 <script lang="ts">
     import { EXAMPLE } from '../example/example.js';
-    import { builder, executeExpression, type Value } from '../game/script.js';
     import button_line from '../images/button_line.png';
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneMainMenu', context);
 
-    const { scene, config, obs, omu } = getGame();
-
-    function testScript() {
-        const { e, c, v, ctx } = builder;
-        const expression = e.of('main', [
-            c.assign(v.string('x'), v.number(42)),
-            c.assign(v.string('y'), v.string('hello')),
-            c.invoke(v.variable('debug'), v.variable('y')),
-            c.return(v.variable('x')),
-        ]);
-
-        const context = ctx.init();
-        context.variables.debug = v.bind((args: Value[]) => {
-            console.log(args);
-            return v.void();
-        });
-        const result = executeExpression(context, expression); // hello
-        console.log('result', result); // result 42
-    }
+    const { scene, gameConfig: config } = getGame();
 </script>
 
 <svelte:window on:keydown={(event) => {
@@ -55,6 +36,7 @@
         <button on:click={() => {
             // $config = DEFAULT_CONFIG;
             $config = EXAMPLE;
+            console.log($config);
         }}>
             <img src={button_line} alt="">
             <span>設定をリセット</span>
@@ -67,7 +49,7 @@
 <style lang="scss">
     .container {
         position: absolute;
-        background: linear-gradient(90deg,rgba(246, 242, 235, 0.95) 30%, rgba(246, 242, 235, 0) 100%);
+        background: linear-gradient(in oklab to right,rgba(246, 242, 235, 0.95) 30%, rgba(246, 242, 235, 0) 100%);
         inset: 0;
         display: flex;
         flex-direction: column;

@@ -93,6 +93,7 @@ export class LayerData {
             });
             texture.setImage(image, {
                 internalFormat: 'rgba',
+                format: 'rgba',
                 width: image.width,
                 height: image.height,
             });

@@ -1,9 +1,9 @@
 import type { Asset } from '../game/asset.js';
+import { createHoldable } from '../game/behavior/holdable.js';
 import { builder } from '../game/script.js';
-import { DEFAULT_CONFIG, type Config } from '../omucafe-app.js';
+import { DEFAULT_GAME_CONFIG, type GameConfig } from '../omucafe-app.js';
 import bubble from './bubble.png';
 import fries from './fries.png';
-import fry from './fry.mp3';
 import fryer from './fryer.png';
 import fryer_top from './fryer_top.png';
 import pack from './pack.png';
@@ -20,14 +20,16 @@ function asset(url: string): Asset {
 
 const { e, c, v } = builder;
 
-export const EXAMPLE: Config = {
-    ...DEFAULT_CONFIG,
+export const EXAMPLE: GameConfig = {
+    ...DEFAULT_GAME_CONFIG,
     items: {
         fries: {
             id: 'fries',
             name: 'Fries',
             image: asset(fries),
-            behaviors: {},
+            behaviors: {
+                holdable: createHoldable(),
+            },
             bounds: {
                 min: { x: 0, y: 0 },
                 max: { x: 565, y: 664 },
@@ -43,6 +45,7 @@ export const EXAMPLE: Config = {
             name: 'Pack',
             image: asset(pack),
             behaviors: {
+                holdable: createHoldable(),
                 container: {
                     items: [],
                     overlay: asset(pack_top),
@@ -77,7 +80,6 @@ export const EXAMPLE: Config = {
                         offset: { x: 0, y: 0 },
                     },
                 },
-                fixed: {},
                 action: {
                     on: {
                         dropChild: 'fryer_drop',
@@ -100,6 +102,7 @@ export const EXAMPLE: Config = {
             name: 'Tray',
             image: asset(tray),
             behaviors: {
+                holdable: createHoldable(),
                 container: {
                     items: [],
                     overlay: asset(tray_top),
@@ -126,11 +129,6 @@ export const EXAMPLE: Config = {
             id: 'fry',
             name: 'Fry',
             attributes: {
-                audio: {
-                    type: 'audio',
-                    asset: asset(fry),
-                    volume: 0.1,
-                },
                 particle: {
                     type: 'particle',
                     asset: asset(bubble),
@@ -164,5 +162,18 @@ export const EXAMPLE: Config = {
                 ),
             ]),
         },
+        bell_click: {
+            name: 'Bell Click',
+            expression: e.of('bell_click', [
+                c.invoke(
+                    v.variable('log'),
+                    v.string('Bell Clicked!'),
+                ),
+                c.invoke(
+                    v.variable('complete'),
+                    v.string('counter'),
+                ),
+            ]),
+        }
     }
 };

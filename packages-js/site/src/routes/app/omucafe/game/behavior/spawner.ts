@@ -16,7 +16,7 @@ export function createSpawner(options: { spawnItemId: string }): Spawner {
 export class SpawnerHandler implements BehaviorHandler<'spawner'> {
     handleClick: BehaviorFunction<'spawner', { x: number; y: number; }> = (context, action) => {
         const { item, behavior } = action;
-        const config = context.getConfig();
+        const config = context.config;
         const newItem = createItemState(context, {
             item: copy(config.items[behavior.spawnItemId]),
         });

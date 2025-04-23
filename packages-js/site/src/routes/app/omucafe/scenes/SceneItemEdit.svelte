@@ -6,7 +6,7 @@
     export let context: SceneContext;
     $: console.log('SceneItemEdit', context);
     
-    const { scene, config } = getGame();
+    const { scene, gameConfig: config } = getGame();
 </script>
 
 {#if $scene.type === 'item_edit'}

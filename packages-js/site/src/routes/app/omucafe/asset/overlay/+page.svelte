@@ -4,12 +4,14 @@
     import KitchenRenderer from '../../components/KitchenRenderer.svelte';
     import { createGame } from '../../omucafe-app.js';
 
-    createGame(new App(OVERLAY_ID, {
+    const promise = createGame(new App(OVERLAY_ID, {
         version: '0.0.1',
-    }));
+    }), 'overlay');
 </script>
 
-<KitchenRenderer side='overlay' />
+{#await promise then }
+    <KitchenRenderer side='overlay' />
+{/await}
 
 <style lang="scss">
     :global(body) {

@@ -25,13 +25,27 @@ export async function uploadAsset(file: File): Promise<Asset> {
     }
 }
 
+const assetCache = new Map<string, Promise<string | URL>>();
+
 export async function getAsset(asset: Asset): Promise<string | URL> {
     if (asset.type === 'url') {
         return asset.url;
     }
     if (asset.type === 'asset') {
-        const result = await getGame().omu.assets.download(Identifier.fromKey(asset.id));
-        return URL.createObjectURL(new Blob([result.buffer]));
+        const existing = assetCache.get(asset.id);
+        if (existing) {
+            return existing;
+        }
+        const promise = new Promise<string | URL>( (resolve) => {
+            getGame().omu.assets.download(Identifier.fromKey(asset.id)).then((result) => {
+                const url = URL.createObjectURL(new Blob([result.buffer]));
+                resolve(url);
+            }).catch((error) => {
+                resolve(`Error downloading asset ${asset.id}: ${error}`);
+            });
+        });
+        assetCache.set(asset.id, promise);
+        return promise;
     }
     throw new Error(`Invalid asset type: ${asset}`);
 }
@@ -52,19 +66,6 @@ export async function fetchImage(url: string | URL): Promise<HTMLImageElement> {
     return await images.get(src)!;
 }
 
-export async function fetchAudio(url: string | URL): Promise<HTMLAudioElement> {
-    const src = url.toString();
-    if (!audios.has(src)) {
-        audios.set(src, new Promise((resolve, reject) => {
-            const audio = new Audio();
-            audio.src = src;
-            audio.oncanplaythrough = () => resolve(audio);
-            audio.onerror = reject;
-        }));
-    }
-    return await audios.get(src)!;
-}
-
 export type Texture = {
     tex: GlTexture,
     width: number,
@@ -73,50 +74,53 @@ export type Texture = {
     pixels: Uint8Array,
 };
 
-export const textures: Map<string, Texture> = new Map();
+export const textures: Map<string, Promise<Texture>> = new Map();
 
 async function getTexture(key: string, image: HTMLImageElement): Promise<Texture> {
     const existing = textures.get(key);
     if (existing) {
         return existing;
     }
-    const tex = glContext.createTexture();
-    tex.use(() => {
-        tex.setImage(image, {
+    const promise = new Promise<Texture>((resolve) => {
+        const tex = glContext.createTexture();
+        tex.use(() => {
+            tex.setImage(image, {
+                width: image.width,
+                height: image.height,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+            tex.setParams({
+                minFilter: 'nearest',
+                magFilter: 'nearest',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        });
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to get 2d context');
+        }
+        context.drawImage(image, 0, 0);
+        const pixels = new Uint8Array(image.width * image.height * 4);
+        context.getImageData(0, 0, image.width, image.height).data.forEach((value, index) => {
+            pixels[index] = value;
+        });
+
+        const texture: Texture = {
+            tex: tex,
             width: image.width,
             height: image.height,
-            internalFormat: 'rgba',
-            format: 'rgba',
-        });
-        tex.setParams({
-            minFilter: 'nearest',
-            magFilter: 'nearest',
-            wrapS: 'clamp-to-edge',
-            wrapT: 'clamp-to-edge',
-        });
+            image,
+            pixels,
+        };
+        resolve(texture);
     });
-    const canvas = document.createElement('canvas');
-    canvas.width = image.width;
-    canvas.height = image.height;
-    const context = canvas.getContext('2d');
-    if (!context) {
-        throw new Error('Failed to get 2d context');
-    }
-    context.drawImage(image, 0, 0);
-    const pixels = new Uint8Array(image.width * image.height * 4);
-    context.getImageData(0, 0, image.width, image.height).data.forEach((value, index) => {
-        pixels[index] = value;
-    });
-
-    const texture: Texture = {
-        tex: tex,
-        width: image.width,
-        height: image.height,
-        image,
-        pixels,
-    };
-    textures.set(key, texture);
-    return texture;
+    textures.set(key, promise);
+    return promise;
 }
 
 export async function getTextureByUri(uri: string): Promise<Texture> {
@@ -131,11 +135,34 @@ export async function getTextureByUri(uri: string): Promise<Texture> {
 }
 
 export async function getTextureByAsset(asset: Asset): Promise<Texture> {
-    const key = asset.type === 'url' ? asset.url : asset.id;
-    const existing = textures.get(key);
+    const url = await getAsset(asset);
+    const image = await fetchImage(url);
+    const texture = await getTexture(url.toString(), image);
+    return texture;
+}
+
+export async function getAudioByUri(uri: string): Promise<HTMLAudioElement> {
+    const existing = audios.get(uri);
     if (existing) {
         return existing;
     }
-    const image = await getAsset(asset).then(fetchImage);
-    return getTexture(key, image);
+    const promise = new Promise<HTMLAudioElement>((resolve) => {
+        const audio = new Audio(uri);
+        audio.addEventListener('canplaythrough', () => {
+            resolve(audio);
+        });
+        audio.addEventListener('error', (event) => {
+            console.error('Error loading audio:', event);
+            resolve(audio);
+        });
+        audio.load();
+    });
+    audios.set(uri, promise);
+    return promise;
+}
+
+export async function getAudioByAsset(asset: Asset): Promise<HTMLAudioElement> {
+    const url = await getAsset(asset);
+    const audio = await getAudioByUri(url.toString());
+    return audio;
 }

@@ -25,9 +25,9 @@ export function createItem(options: {
         id: id ?? uniqueId(),
         name,
         image,
-        transform: transform || createTransform(),
-        behaviors: behaviors || {},
-        bounds: bounds || {
+        transform: transform ?? createTransform(),
+        behaviors: behaviors ?? {},
+        bounds: bounds ?? {
             min: { x: 0, y: 0 },
             max: { x: 1, y: 1 },
         },

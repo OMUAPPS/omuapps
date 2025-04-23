@@ -4,7 +4,7 @@
     
     export let spawner: Spawner;
 
-    const { config } = getGame();
+    const { gameConfig: config } = getGame();
 </script>
 
 <div class="behavior">

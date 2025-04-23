@@ -19,6 +19,11 @@ export class BetterMath {
         return (value - a) / (b - a);
     }
 
+    public static remap(value: number, a: number, b: number, c: number, d: number): number {
+        const t = BetterMath.inverseLerp(a, b, value);
+        return BetterMath.lerp(c, d, t);
+    }
+
     public static clamp(value: number, min: number, max: number): number {
         return Math.min(Math.max(value, min), max);
     }

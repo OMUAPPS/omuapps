@@ -1,10 +1,11 @@
 <script lang="ts">
     import { page } from '$app/stores';
+    import { once } from '$lib/helper.js';
     import { tryCatch } from '$lib/result.js';
     import { Button, Spinner } from '@omujs/ui';
     import { onMount } from 'svelte';
     import avatar_setup from '../images/avatar_setup.png';
-    import { getGame, type SceneContext } from '../omucafe-app.js';
+    import { getGame, isInstalled, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
     $: console.log('SceneCooking', context);
@@ -26,9 +27,7 @@
     onMount(async () => {
         const connected = await obs.isConnected();
         if (!connected) {
-            await new Promise<void>((resolve) => {
-                obs.on('connected', () => resolve());
-            })
+            await once((resolve) => obs.on('connected', resolve));
         }
         state = { type: 'prompt' };
     })
@@ -46,6 +45,10 @@
     }
 
     async function install() {
+        if (isInstalled()) {
+            $scene = { type: 'main_menu' };
+            return;
+        }
         const sceneRes = $config.obs.scene_uuid && (await tryCatch(obs.sceneGetByUuid($config.obs.scene_uuid))).data || (await tryCatch(obs.sceneGetByName(NAMES.SCENE))).data || null;
         const scene = sceneRes ?? (await obs.sceneCreate({
             name: NAMES.SCENE,
@@ -114,14 +117,21 @@
 <main>
     {#if state.type === 'waiting'}
         <div class="left">
-            <h1>OBSを待機しています</h1>
+            <h1>
+                OBSを待機しています
+                <Spinner />
+            </h1>
             <p>起動しても反応しない場合</p>
             <ul>
-                <li>OBSが起動しているか確認する</li>
                 <li>OBSのバージョンが最新か確認する</li>
-                <li>一度OBSを再起動してみる</li>
+                <li>OBSを再起動してみる</li>
                 <li>それでも反応しない場合は<a href="https://discord.gg/MZKvbPpsuK" target="_blank">Discord</a>でお知らせください</li>
             </ul>
+            <Button onclick={() => {
+                $scene = { type: 'main_menu' };
+            }}>
+                <i class="ti ti-chevron-right"></i>
+            </Button>
         </div>
     {:else if state.type === 'prompt'}
         <div class="left">

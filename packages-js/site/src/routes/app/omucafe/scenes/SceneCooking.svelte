@@ -1,5 +1,4 @@
 <script lang="ts">
-    import BackButton from '../components/BackButton.svelte';
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
@@ -14,4 +13,3 @@
         $scene = { type: 'main_menu' };
     }
 }} />
-<BackButton />

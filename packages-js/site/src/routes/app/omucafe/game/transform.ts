@@ -15,6 +15,20 @@ export function createTransform(): Transform {
     };
 }
 
+export function createTransform2(
+    scale: PossibleVec2,
+    rotation: number,
+    offset: PossibleVec2,
+): Transform {
+    const cos = Math.cos(rotation);
+    const sin = Math.sin(rotation);
+    return {
+        right: { x: scale.x * cos, y: scale.x * sin },
+        up: { x: scale.y * -sin, y: scale.y * cos },
+        offset: { x: offset.x, y: offset.y },
+    };
+}
+
 export type Bounds = {
     min: PossibleVec2,
     max: PossibleVec2,

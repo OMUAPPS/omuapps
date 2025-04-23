@@ -6,7 +6,7 @@
 
     createGame(new App(BACKGROUND_ID, {
         version: '0.0.1',
-    }));
+    }), 'background');
 </script>
 
 <KitchenRenderer side='background' />

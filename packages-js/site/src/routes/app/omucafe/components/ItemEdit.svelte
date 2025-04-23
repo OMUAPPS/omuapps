@@ -2,12 +2,12 @@
     import { FileDrop } from '@omujs/ui';
     import { fetchImage, getAsset, uploadAsset } from '../game/asset.js';
     import { createContainer } from '../game/behavior/container.js';
-    import { createFixed } from '../game/behavior/fixed.js';
+    import { createHoldable } from '../game/behavior/holdable.js';
     import { createSpawner } from '../game/behavior/spawner.js';
     import type { Item } from '../game/item.js';
     import AssetImage from './AssetImage.svelte';
     import ContainerEdit from './behavior/ContainerEdit.svelte';
-    import FixedEdit from './behavior/FixedEdit.svelte';
+    import HoldableEdit from './behavior/HoldableEdit.svelte';
     import SpawnerEdit from './behavior/SpawnerEdit.svelte';
     import TransformEdit from './TransformEdit.svelte';
 
@@ -75,21 +75,26 @@
             {/if}
         </div>
         <div class="behavior">
-            {#if item.behaviors.fixed}
+            {#if item.behaviors.holdable}
                 <h3>
-                    固定
+                    持てる
                     <button on:click={() => {
-                        item.behaviors.fixed = undefined;
+                        item.behaviors.holdable = undefined;
                     }} aria-label="削除">
                         <i class="ti ti-trash"></i>
                     </button>
                 </h3>
-                <FixedEdit bind:fixed={item.behaviors.fixed} />
+                <HoldableEdit bind:holdable={item.behaviors.holdable} />
+                <button on:click={() => {
+                    item.behaviors.holdable = undefined;
+                }}>
+                    持てるを削除
+                </button>
             {:else}
                 <button on:click={() => {
-                    item.behaviors.fixed = createFixed();
+                    item.behaviors.holdable = createHoldable();
                 }}>
-                    固定を設定
+                    持てるを設定
                 </button>
             {/if}
         </div>

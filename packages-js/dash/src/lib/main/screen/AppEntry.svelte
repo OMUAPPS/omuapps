@@ -86,12 +86,6 @@
         }
     }
 
-    button {
-        background: none;
-        border: none;
-        cursor: pointer;
-    }
-
     .current {
         position: absolute;
         top: 1rem;

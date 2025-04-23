@@ -1,7 +1,9 @@
-import type { Config, Scene, States } from '../omucafe-app.js';
+import type { GameConfig, Scene, States } from '../omucafe-app.js';
+import type { PlayingAudioClip } from './audioclip.js';
 import type { ItemState } from './item-state.js';
 
 export type Kitchen = {
+    audios: Record<string, PlayingAudioClip>,
     items: Record<string, ItemState>,
     held: string | null,
     hovering: string | null,
@@ -9,15 +11,13 @@ export type Kitchen = {
 };
 
 export type KitchenContext = {
+    audios: Record<string, PlayingAudioClip>,
     items: Record<string, ItemState>,
     held: string | null,
     hovering: string | null,
     mouse: { x: number, y: number },
     side: 'client' | 'background' | 'overlay',
-    getConfig(): Config,
-    setConfig(config: Config): void,
-    getScene(): Scene,
-    setScene(scene: Scene): void,
-    getStates(): States,
-    setStates(states: States): void,
+    config: GameConfig,
+    scene: Scene,
+    states: States,
 };

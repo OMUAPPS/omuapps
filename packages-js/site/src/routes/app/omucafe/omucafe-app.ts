@@ -11,14 +11,16 @@ import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { get, writable, type Writable } from 'svelte/store';
 import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
+import type { PlayingAudioClip } from './game/audioclip.js';
 import type { Effect } from './game/effect.js';
-import { context } from './game/game.js';
+import { getContext, setContext } from './game/game.js';
 import { copy } from './game/helper.js';
 import type { ItemState } from './game/item-state.js';
 import type { Item } from './game/item.js';
 import type { Kitchen } from './game/kitchen.js';
 import type { Product } from './game/product.js';
 import { assertValue, builder, Globals, ScriptError, type Script, type ScriptContext, type Value } from './game/script.js';
+import { Time } from './game/time.js';
 
 export const DEFAULT_CONFIG = {
     version: 1,
@@ -27,6 +29,16 @@ export const DEFAULT_CONFIG = {
         background_uuid: null as string | null,
         overlay_uuid: null as string | null,
     },
+};
+
+export type Config = typeof DEFAULT_CONFIG;
+
+const APP_CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
+    name: 'config',
+    defaultValue: DEFAULT_CONFIG,
+});
+
+export const DEFAULT_GAME_CONFIG = {
     filter: {},
     products: {} as Record<string, Product>,
     items: {} as Record<string, Item>,
@@ -34,11 +46,11 @@ export const DEFAULT_CONFIG = {
     scripts: {} as Record<string, Script>,
 };
 
-export type Config = typeof DEFAULT_CONFIG;
+export type GameConfig = typeof DEFAULT_GAME_CONFIG;
 
-const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
-    name: 'config',
-    defaultValue: DEFAULT_CONFIG,
+const CONFIG_REGISTRY_TYPE = RegistryType.createJson<GameConfig>(APP_ID, {
+    name: 'game_config',
+    defaultValue: DEFAULT_GAME_CONFIG,
 });
 
 export type Scene = {
@@ -49,6 +61,8 @@ export type Scene = {
     type: 'main_menu',
 } | {
     type: 'photo_mode',
+    time: number,
+    items: string[],
 } | {
     type: 'cooking',
 } | {
@@ -102,6 +116,7 @@ const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
 
 export const DEFAULT_STATES = {
     kitchen: {
+        audios: {} as Record<string, PlayingAudioClip>,
         items: {} as Record<string, ItemState>,
         held: null as string | null,
         hovering: null as string | null,
@@ -141,20 +156,28 @@ async function startCheckInstalled(): Promise<void> {
     });
 }
 
-function isInstalled(): boolean {
+export function isInstalled(): boolean {
     const state = get(sessions);
     return state.overlay && state.background;
 }
 
 const functions = {
+    log(ctx: ScriptContext, args: Value[]): Value {
+        if (args.length !== 1) throw new ScriptError(`Expected 1 arguments but got ${args.length}`, { callstack: ctx.callstack, index: ctx.index });
+        const [message] = args;
+        assertValue(ctx, message, 'string');
+        console.log('[log]', message.value);
+        const { v } = builder;
+        return v.void();
+    },
     create_effect(ctx: ScriptContext, args: Value[]): Value {
         if (args.length !== 2) throw new ScriptError(`Expected 2 arguments but got ${args.length}`, { callstack: ctx.callstack, index: ctx.index });
         const [itemId, effectId] = args;
         assertValue(ctx, itemId, 'string');
         assertValue(ctx, effectId, 'string');
         const { v } = builder;
-        const config = context.getConfig();
-        const item = context.items[itemId.value];
+        const config = getContext().config;
+        const item = getContext().items[itemId.value];
         const effect = config.effects[effectId.value];
         item.effects[effect.id] = copy(effect);
         return v.void();
@@ -164,22 +187,42 @@ const functions = {
         const [itemId, effectId] = args;
         assertValue(ctx, itemId, 'string');
         assertValue(ctx, effectId, 'string');
-        const item = context.items[itemId.value];
+        const item = getContext().items[itemId.value];
         delete item.effects[effectId.value];
         const { v } = builder;
         return v.void();
     },
+    complete(ctx: ScriptContext, args: Value[]): Value {
+        const [itemId] = args;
+        assertValue(ctx, itemId, 'string');
+        const counter = getContext().items[itemId.value];
+        game?.scene.set({
+            type: 'photo_mode',
+            time: Time.get(),
+            items: [...counter.children],
+        });
+        const { v } = builder;
+        return v.void();
+    },
 }
-export async function createGame(app: App): Promise<void> {
+export async function createGame(app: App, side: 'client' | 'background' | 'overlay'): Promise<void> {
     const client = app.id.isEqual(APP_ID);
     const omu = new Omu(app);
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
-    const config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
-    const states = makeRegistryWritable(omu.registries.get(STATES_REGISTRY_TYPE));
-    const scene = makeRegistryWritable(omu.registries.get(SCENE_REGISTRY_TYPE));
+    const gameConfigRegistry = omu.registries.get(CONFIG_REGISTRY_TYPE);
+    const gameConfig = makeRegistryWritable(gameConfigRegistry);
+    const configRegistry = omu.registries.get(APP_CONFIG_REGISTRY_TYPE);
+    const config = makeRegistryWritable(configRegistry);
+    const statesRegistry = omu.registries.get(STATES_REGISTRY_TYPE);
+    const states = makeRegistryWritable(statesRegistry);
+    const sceneRegistry = omu.registries.get(SCENE_REGISTRY_TYPE);
+    const scene = makeRegistryWritable(sceneRegistry);
     const orders = omu.tables.get(ORDER_TABLE_TYPE);
     const globals = new Globals();
+    globals.registerFunction('log', [
+        {name: 'message', type: 'string'},
+    ], functions.log);
     globals.registerFunction('create_effect', [
         {name: 'itemId', type: 'string'},
         {name: 'effectId', type: 'string'},
@@ -188,6 +231,9 @@ export async function createGame(app: App): Promise<void> {
         {name: 'itemId', type: 'string'},
         {name: 'effectId', type: 'string'},
     ], functions.remove_effect);
+    globals.registerFunction('complete', [
+        {name: 'itemId', type: 'string'},
+    ], functions.complete);
     setClient(omu);
     setChat(chat);
 
@@ -199,13 +245,13 @@ export async function createGame(app: App): Promise<void> {
         omu,
         obs,
         chat,
+        gameConfig,
         config,
         states,
         orders,
         scene,
         globals,
     }
-
     if (BROWSER) {
         omu.permissions.require(
             ASSET_DOWNLOAD_PERMISSION_ID,
@@ -224,6 +270,36 @@ export async function createGame(app: App): Promise<void> {
         omu.start();
 
         await omu.waitForReady();
+        await gameConfig.wait();
+        await scene.wait();
+        await states.wait();
+        setContext({
+            ...(await statesRegistry.get()).kitchen,
+            side,
+            config: await gameConfigRegistry.get(),
+            scene: await sceneRegistry.get(),
+            states: await statesRegistry.get(),
+        })
+        gameConfig.subscribe((value) => {
+            setContext({
+                ...getContext(),
+                config: value,
+            })
+        });
+        states.subscribe((value) => {
+            setContext({
+                ...getContext(),
+                ...value.kitchen,
+                states: value,
+            })
+        });
+        scene.subscribe((value) => {
+            setContext({
+                ...getContext(),
+                scene: value,
+            })
+        });
+
         await startCheckInstalled();
         if (!isInstalled()) {
             scene.set({
@@ -237,6 +313,7 @@ export type Game = {
     omu: Omu,
     obs: OBSPlugin,
     chat: Chat,
+    gameConfig: Writable<GameConfig>,
     config: Writable<Config>,
     states: Writable<States>,
     orders: Table<Order>,
