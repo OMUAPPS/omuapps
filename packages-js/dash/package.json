@@ -8,13 +8,13 @@
         "build-pre": "bun ./scripts/build-pre.ts",
         "dev": "tauri dev",
         "dev-release": "tauri dev --release --no-dev-server",
-        "prepare": "bunx --bun svelte-kit sync",
+        "prepare": "bun x --bun svelte-kit sync",
         "tauri": "tauri",
-        "ui:build": "bunx --bun vite build",
-        "ui:check": "bunx --bun svelte-check --tsconfig ./tsconfig.json",
+        "ui:build": "bun x --bun vite build",
+        "ui:check": "bun x --bun svelte-check --tsconfig ./tsconfig.json",
         "ui:check-watch": "bun run ui:check --watch",
-        "ui:dev": "bunx --bun vite --host 0.0.0.0",
-        "ui:preview": "bunx --bun vite preview"
+        "ui:dev": "bun x --bun vite --host 0.0.0.0",
+        "ui:preview": "bun x --bun vite preview"
     },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "5.0.19",

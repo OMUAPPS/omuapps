@@ -13,16 +13,16 @@
     "scripts": {
         "build": "bun run package",
         "build-storybook": "storybook build",
-        "check": "bunx --bun svelte-check --tsconfig ./tsconfig.json",
+        "check": "bun x --bun svelte-check --tsconfig ./tsconfig.json",
         "chromatic": "chromatic",
-        "dev": "bunx --bun vite dev --port 5174",
-        "package": "bunx --bun svelte-package && bunx --bun publint",
-        "prepare": "bunx --bun svelte-kit sync",
+        "dev": "bun x --bun vite dev --port 5174",
+        "package": "bun x --bun svelte-package && bun x --bun publint",
+        "prepare": "bun x --bun svelte-kit sync",
         "prepublishOnly": "bun run package",
-        "preview": "bunx --bun vite preview",
+        "preview": "bun x --bun vite preview",
         "storybook": "storybook dev -p 6006",
         "test": "vitest",
-        "watch": "bunx --bun svelte-package --watch"
+        "watch": "bun x --bun svelte-package --watch"
     },
     "repository": {
         "type": "git",

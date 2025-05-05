@@ -4,13 +4,13 @@
     "name": "site",
     "version": "0.0.1",
     "scripts": {
-        "build": "bun run build-pre && bunx --bun vite build",
+        "build": "bun run build-pre && bun x --bun vite build",
         "build-pre": "bun ./scripts/build-pre.ts",
-        "check": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json",
-        "check:watch": "bunx --bun svelte-kit sync && bunx --bun svelte-check --tsconfig ./tsconfig.json --watch",
-        "dev": "bun build-pre && bunx --bun vite dev",
-        "prepare": "bunx --bun svelte-kit sync",
-        "preview": "bunx --bun vite preview",
+        "check": "bun x --bun svelte-kit sync && bun x --bun svelte-check --tsconfig ./tsconfig.json",
+        "check:watch": "bun x --bun svelte-kit sync && bun x --bun svelte-check --tsconfig ./tsconfig.json --watch",
+        "dev": "bun build-pre && bun x --bun vite dev",
+        "prepare": "bun x --bun svelte-kit sync",
+        "preview": "bun x --bun vite preview",
         "test": "vitest"
     },
     "devDependencies": {
