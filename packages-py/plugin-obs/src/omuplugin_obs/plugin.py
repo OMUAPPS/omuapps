@@ -80,9 +80,7 @@ def ensure_obs_stopped() -> Result[None, str]:
         icon=messagebox.WARNING,
         type=messagebox.YESNO,
     ).show()
-    if not res:
-        return Err("User cancelled OBS shutdown")
-    elif res == messagebox.YES:
+    if not res or res == messagebox.YES:
         shutdown_obs(process)
     elif res == messagebox.NO:
         return Err("User cancelled OBS shutdown")
@@ -95,12 +93,10 @@ def ensure_obs_stopped() -> Result[None, str]:
             icon=messagebox.WARNING,
             type=messagebox.RETRYCANCEL,
         ).show()
-        if not res:
-            return Err("User cancelled OBS shutdown while waiting for process to end")
-        elif res == messagebox.CANCEL:
-            return Err("User cancelled OBS shutdown while waiting for process to end")
-        elif res == messagebox.RETRY:
+        if not res or res == messagebox.RETRY:
             pass
+        elif res == messagebox.CANCEL:
+            return Err("User cancelled OBS shutdown while waiting for process to end (cancel)")
         else:
             raise Exception(f"Unknown response: {res}")
 
@@ -176,18 +172,18 @@ def check_installed() -> Result[bool, str]:
             return Err(f"Script not found in scene: {scene}")
 
     python_path = get_python_directory()
-    path = obs_path / "global.ini"
+    path = obs_path / "user.ini"
     config = obsconfig.load_configuration(path)
     python = config.get("Python", {})
     is_python_set = python.get("Path32bit") == python.get("Path64bit") == python_path
     if not is_python_set:
-        return Err(f"Python path is not set correctly in global.ini: {python_path} != {python}")
+        return Err(f"Python path is not set correctly in user.ini: {python_path} != {python}")
 
     return Ok(True)
 
 
 def setup_python_path():
-    path = get_obs_path() / "global.ini"
+    path = get_obs_path() / "user.ini"
     python_path = get_python_directory()
 
     config = obsconfig.load_configuration(path)
