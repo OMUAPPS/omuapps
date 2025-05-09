@@ -24,4 +24,7 @@
     "include": [
         "./**/*.ts",
     ],
+    "exclude": [
+        "./**/vite.config.ts",
+    ]
 }
