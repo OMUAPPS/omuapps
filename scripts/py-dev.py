@@ -87,8 +87,18 @@ async def start_process(command: str):
         await asyncio.sleep(5)
 
 
+async def build_packages():
+    process = await asyncio.create_subprocess_shell(
+        "bun run build",
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+    )
+    await process.wait()
+
+
 async def main():
     check_ports()
+    await build_packages()
     loop = asyncio.get_event_loop()
     commands = [
         "bun run --cwd packages-js/dash ui:dev",
