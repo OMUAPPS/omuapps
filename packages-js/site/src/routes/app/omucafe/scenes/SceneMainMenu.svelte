@@ -1,6 +1,7 @@
 <script lang="ts">
     import { EXAMPLE } from '../example/example.js';
     import button_line from '../images/button_line.png';
+    import title from '../images/title.svg';
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
@@ -17,6 +18,7 @@
 }} />
 <div class="container">
     <div class="actions">
+        <img src={title} alt="OMU CAFE" class="title" />
         <button on:click={() => {
             $scene = { type: 'cooking' };
         }}>
@@ -47,16 +49,21 @@
 </div>
 
 <style lang="scss">
+    .title {
+        width: 30rem;
+        margin-bottom: 4rem;
+        transform: translateX(-2rem);
+    }
+    
     .container {
         position: absolute;
         background: linear-gradient(in oklab to right,rgba(246, 242, 235, 0.95) 30%, rgba(246, 242, 235, 0) 100%);
         inset: 0;
         display: flex;
         flex-direction: column;
-        justify-content: flex-end;
+        justify-content: center;
         align-items: flex-start;
         padding: 0% 10%;
-        padding-bottom: 17%;
     }
 
     .actions {
