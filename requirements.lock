@@ -73,7 +73,7 @@ chompjs==1.3.0
 click==8.1.7
     # via iwashi
     # via omuserver
-colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
+colorama==0.4.6 ; sys_platform == 'win32'
     # via click
     # via loguru
 edgetrans==0.2.3
