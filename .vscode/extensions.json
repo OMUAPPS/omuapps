@@ -8,5 +8,6 @@
     "unwantedRecommendations": [
         "ms-python.pylint",
         "esbenp.prettier-vscode",
+        "ms-python.isort",
     ]
 }
