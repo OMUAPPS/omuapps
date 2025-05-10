@@ -265,7 +265,8 @@ export async function renderItemState(itemState: ItemState, options: {
     const transform = options.parent ? transformToMatrix(itemState.transform) : getItemStateTransform(itemState, options);
     matrices.model.push();
     matrices.model.multiply(transform);
-    if (getContext().held === item.id) {
+    const ctx = getContext();
+    if (ctx.held === item.id) {
         applyDragEffect();
     }
     draw.textureColor(
@@ -279,7 +280,7 @@ export async function renderItemState(itemState: ItemState, options: {
         width, height,
         tex,
     );
-    await invokeBehaviors(getContext(), itemState, it => it.render, {
+    await invokeBehaviors(ctx, itemState, it => it.render, {
         matrices,
     });
     matrices.model.pop();

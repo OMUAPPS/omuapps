@@ -63,6 +63,14 @@ export class BetterMath {
         return degrees;
     }
 
+    public static atan2(y: number, x: number): number {
+        // atan2 is in radians
+        // convert to degrees
+        const radians = Math.atan2(y, x);
+        const degrees = BetterMath.toDegrees(radians);
+        // wrap degrees to -180 to 180
+        return BetterMath.wrapDegrees(degrees);
+    }
 
     public static angleDifference(a: number, b: number): number {
         const difference = (b - a) % this.TAU;

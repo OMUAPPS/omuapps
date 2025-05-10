@@ -59,4 +59,21 @@ export class Matrices {
         const invView = view.inverse();
         return invModel.transform2(invView.transform2(invProjection.transform2(vec)));
     }
+
+    public projectBasis(point: PossibleVec2): Vec2 {
+        const projection = this.projection.get();
+        const model = this.model.get();
+        const view = this.view.get();
+        return projection.basisTransform2(view.basisTransform2(model.basisTransform2(point)));
+    }
+
+    public unprojectBasis(point: PossibleVec2): Vec2 {
+        const projection = this.projection.get();
+        const model = this.model.get();
+        const view = this.view.get();
+        const invProjection = projection.inverse();
+        const invModel = model.inverse();
+        const invView = view.inverse();
+        return invModel.basisTransform2(invView.basisTransform2(invProjection.basisTransform2(point)));
+    }
 }

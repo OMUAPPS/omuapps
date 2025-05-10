@@ -1,5 +1,11 @@
 import { lerp } from './math.js';
 
+export type Vec4Like = {
+    x: number;
+    y: number;
+    z: number;
+    w: number;
+};
 export class Vec4 {
     public static ZERO = new Vec4(0, 0, 0, 0);
     public static ONE = new Vec4(1, 1, 1, 1);

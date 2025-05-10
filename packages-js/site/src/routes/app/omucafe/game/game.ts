@@ -37,6 +37,8 @@ export let scaleFactor = 1;
 export let draw: Draw;
 let frameBuffer: GlFramebuffer;
 let frameBufferTexture: GlTexture;
+let drawFrameBuffer: GlFramebuffer;
+let drawFrameBufferTexture: GlTexture;
 
 export let side: 'client' | 'background' | 'overlay' = 'client';
 let context: KitchenContext;
@@ -190,14 +192,27 @@ export async function init(ctx: GlContext) {
     frameBufferTexture = ctx.createTexture();
     frameBufferTexture.use(() => {
         frameBufferTexture.setParams({
-            minFilter: 'nearest',
-            magFilter: 'nearest',
+            minFilter: 'linear',
+            magFilter: 'linear',
             wrapS: 'clamp-to-edge',
             wrapT: 'clamp-to-edge',
         });
     });
     frameBuffer.use(() => {
         frameBuffer.attachTexture(frameBufferTexture);
+    });
+    drawFrameBuffer = ctx.createFramebuffer();
+    drawFrameBufferTexture = ctx.createTexture();
+    drawFrameBufferTexture.use(() => {
+        drawFrameBufferTexture.setParams({
+            minFilter: 'linear',
+            magFilter: 'linear',
+            wrapS: 'clamp-to-edge',
+            wrapT: 'clamp-to-edge',
+        });
+    });
+    drawFrameBuffer.use(() => {
+        drawFrameBuffer.attachTexture(drawFrameBufferTexture);
     });
     await loadBehaviorHandlers();
     if (side === 'client') {
@@ -339,6 +354,7 @@ async function update() {
 }
 
 import { Axis } from '$lib/math/axis.js';
+import { Bezier } from '$lib/math/bezier.js';
 import { getGame } from '../omucafe-app.js';
 import { updateAudioClips } from './audioclip.js';
 import { createAction } from './behavior/action.js';
@@ -373,34 +389,135 @@ async function renderScreen() {
         delete context.items['preview'];
         matrices.view.pop();
     } else if (scene.type === 'photo_mode') {
-        const { tex, width, height } = await getTextureByUri(photo_frame);
         const elapsed = Time.get() - scene.time;
         const t = 1 / Math.pow(elapsed / 250 + 1, 3);
+        const photoMode = context.config.photo_mode;
+        const client = side === 'client';
+        const screenScale = client ? scaleFactor * 0.7 : scaleFactor;
+        const offsetY = client ? matrices.height / 2 - matrices.height * 0.05 - 50 : matrices.height / 2;
         await matrices.view.scopeAsync(async () => {
-            matrices.view.translate(matrices.width / 2, matrices.height / 2, 0);
-            matrices.view.scale(scaleFactor, scaleFactor, 1);
+            matrices.view.translate(matrices.width / 2, offsetY, 0);
+            matrices.view.scale(screenScale, screenScale, 1);
             matrices.view.translate(100 * t, 1000 * t, 0);
             matrices.view.rotate(Axis.Z_POS.rotateDeg(4.74 / 7 - 10 * t));
-            const scale = Math.pow(1.24, context.config.photo_mode.scale * 0.5);
+            const scale = Math.pow(1.24, photoMode.scale * 0.5);
             matrices.view.scale(scale, scale, 1);
-            await updateHoveringItem([ITEM_LAYERS.PHOTO_MODE]);
+            if (photoMode.tool.type === 'move') {
+                await updateHoveringItem([ITEM_LAYERS.PHOTO_MODE]);
+            } else {
+                context.hovering = null;
+                context.held = null;
+            }
             await renderItems([ITEM_LAYERS.PHOTO_MODE]);
             await renderHoveringItem();
             await renderHeldItem();
         });
-        await matrices.view.scopeAsync(async () => {
-            matrices.view.translate(matrices.width / 2, matrices.height / 2, 0);
-            matrices.view.scale(scaleFactor, scaleFactor, 1);
-            matrices.view.rotate(Axis.Z_POS.rotateDeg(-4.74 - 30 * t));
-            matrices.view.translate(300 * t, -1000 * t, 0);
-            draw.texture(
-                -width / 2, -height / 2,
-                width / 2, height / 2,
-                tex,
-            )
+        matrices.view.push();
+        matrices.view.translate(matrices.width / 2, offsetY, 0);
+        matrices.view.scale(screenScale, screenScale, 1);
+        matrices.view.rotate(Axis.Z_POS.rotateDeg(-4.74 - 30 * t));
+        matrices.view.translate(300 * t, -1000 * t, 0);
+        const { tex, width, height } = await getTextureByUri(photo_frame);
+        draw.texture(
+            -width / 2, -height / 2,
+            width / 2, height / 2,
+            tex,
+        )
+        draw.texture(
+            -width / 2, -height / 2,
+            width / 2, height / 2,
+            drawFrameBufferTexture,
+        )
+        const mousePos = matrices.unprojectPoint(mouse.gl).mul({
+            x: 1,
+            y: -1,
+        }).add({
+            x: width / 2,
+            y: height / 2,
         });
+        const lastPos = matrices.unprojectPoint(Vec2.from(mouse.gl).sub(mouse.deltaGl)).mul({
+            x: 1,
+            y: -1,
+        }).add({
+            x: width / 2,
+            y: height / 2,
+        });
+        matrices.view.pop();
+        drawFrameBufferTexture.use(() => {
+            drawFrameBufferTexture.ensureSize(width, height);
+        });
+        const tool = photoMode.tool;
+        const eraser = tool.type === 'eraser';
+        const radius = tool.type === 'pen' ? photoMode.pen.width : photoMode.eraser.width;
+        if (client && tool.type !== 'move') {
+            const cursor = matrices.unprojectPoint(mouse.gl);
+            draw.circle(
+                cursor.x,
+                cursor.y,
+                radius * 0.25 + 2,
+                radius * 0.25 + 8,
+                new Vec4(1, 1, 1, 1),
+            );
+            draw.circle(
+                cursor.x,
+                cursor.y,
+                radius * 0.25 + 0,
+                radius * 0.25 + 2,
+                new Vec4(0, 0, 0, 1),
+            );
+        }
+        if (tool.type === 'move' || !mouse.down) {
+            penTrail = null;
+            return;
+        }
+        if (eraser) {
+            gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
+        }
+        matrices.scope(() => {
+            matrices.view.identity();
+            matrices.projection.identity();
+            matrices.projection.orthographic(0, width, height, 0, -1, 1);
+            drawFrameBuffer.use(() => {
+                gl.viewport(0, 0, width, height);
+                let a = { x: 0, y: 0 };
+                let b = { x: 0, y: 0 };
+                let c = { x: 0, y: 0 };
+                if (penTrail) {
+                    a = penTrail.last;
+                    b = penTrail.last.add(penTrail.dir.scale(0.25));
+                    c = mousePos;
+                } else {
+                    a = lastPos;
+                    b = lastPos.lerp(mousePos, 0.5);
+                    c = mousePos;
+                }
+                if (penTrail) {
+                    draw.bezierCurve(
+                        a,
+                        b,
+                        c,
+                        eraser ? Vec4.ONE : new Vec4(0, 0, 0, 1),
+                        penTrail ? radius : 0,
+                        radius,
+                    )
+                }
+                penTrail = {
+                    last: mousePos,
+                    dir: Bezier.quadraticDerivative2(a, b, c, 0.5),
+                    time: penTrail?.time ?? Time.get(),
+                };
+            });
+        });
+        gl.viewport(0, 0, matrices.width, matrices.height);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     }
 }
+
+let penTrail: {
+    last: Vec2,
+    dir: Vec2,
+    time: number,
+} | null = null;
 
 export async function renderBackgroundSide() {
     if (side !== 'background') return;

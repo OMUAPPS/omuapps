@@ -13,10 +13,10 @@ export async function renderCursor() {
     matrices.model.push();
     matrices.view.push();
     const position = ctx.side === 'client' ? mouse.client : matrices.unprojectPoint(ctx.mouse.position);
-    const delta = ctx.side === 'client' ? mouse.delta : ctx.mouse.delta;
+    const delta = ctx.side === 'client' ? mouse.delta : matrices.unprojectBasis(ctx.mouse.delta);
     let model = new Mat4(
-        1, -mouse.delta.y / 100, 0, 0,
-        -mouse.delta.x / 100, 1, 0, 0,
+        1, -delta.y / 100, 0, 0,
+        -delta.x / 100, 1, 0, 0,
         0, 0, 1, 0,
         position.x, position.y, 0, 1,
     )
@@ -33,6 +33,10 @@ export async function renderCursor() {
             model.m20, model.m21, model.m22, model.m23,
             model.m30, 4000 / z * 20 - 20, model.m32, model.m33,
         );
+    }
+
+    if (ctx.scene.type === 'photo_mode' && ctx.config.photo_mode.tool.type !== 'move') {
+        return;
     }
 
     matrices.model.multiply(model);

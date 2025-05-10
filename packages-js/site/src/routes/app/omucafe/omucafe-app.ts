@@ -1,5 +1,6 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import { Vec2, type PossibleVec2 } from '$lib/math/vec2.js';
+import { type Vec4Like } from '$lib/math/vec4.js';
 import { Chat, events } from '@omujs/chat';
 import type { Message } from '@omujs/chat/models/message.js';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
@@ -49,6 +50,27 @@ export const DEFAULT_GAME_CONFIG = {
     photo_mode: {
         scale: 0,
         offset: Vec2.ZERO as PossibleVec2,
+        tool: {
+            type: 'move',
+        } as {
+            type: 'move',
+        } | {
+            type: 'pen',
+        } | {
+            type: 'eraser',
+        },
+        pen: {
+            color: {
+                x: 0,
+                y: 0,
+                z: 0,
+                w: 1,
+            } as Vec4Like,
+            width: 10,
+        },
+        eraser: {
+            width: 40,
+        }
     },
 };
 
