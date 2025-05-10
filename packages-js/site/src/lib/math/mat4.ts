@@ -243,6 +243,12 @@ export class Mat4 {
         return new Vec2(x, y);
     }
 
+    public basisTransform2(point: PossibleVec2): Vec2 {
+        const x = this.m00 * point.x + this.m10 * point.y;
+        const y = this.m01 * point.x + this.m11 * point.y;
+        return new Vec2(x, y);
+    }
+
     public equals(other: Mat4): boolean {
         return (
             this.m00 === other.m00 && this.m01 === other.m01 && this.m02 === other.m02 && this.m03 === other.m03 &&

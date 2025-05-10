@@ -13,6 +13,7 @@ import { transformToMatrix, type Bounds, type Transform } from './transform.js';
 
 
 export const ITEM_LAYERS = {
+    PHOTO_MODE: 'photo_mode',
     KITCHEN_ITEMS: 'kitchen_items',
     BELL: 'bell',
     COUNTER: 'counter',
@@ -39,10 +40,11 @@ export function createItemState(context: KitchenContext, options: {
     transform?: Transform,
     children?: string[],
     behaviors?: Partial<Behaviors>,
+    effects?: Record<string, Effect>,
     bounds?: Bounds,
 }): ItemState {
     const { items } = context;
-    const { id, item, layer, transform, children, behaviors, bounds } = options;
+    const { id, item, layer, transform, children, behaviors, effects, bounds } = options;
     const itemState = {
         id: id ?? uniqueId(),
         item: copy(item),
@@ -50,11 +52,52 @@ export function createItemState(context: KitchenContext, options: {
         transform: transform ?? copy(item.transform),
         children: children ?? [],
         behaviors: behaviors ?? copy(item.behaviors),
-        effects: {},
+        effects: effects ?? {},
         bounds: bounds ?? copy(item.bounds),
     } satisfies ItemState;
     items[itemState.id] = itemState;
     return itemState;
+}
+
+export function cloneItemState(itemState: ItemState, options: {
+    layer?: ItemLayer,
+    transform?: Transform,
+} = {}): ItemState {
+    const { items } = getContext();
+    const item = createItemState(getContext(), {
+        id: uniqueId(),
+        item: itemState.item,
+        layer: options.layer ?? itemState.layer,
+        transform: options.transform ?? itemState.transform,
+        children: [],
+        behaviors: copy(itemState.behaviors),
+        effects: copy(itemState.effects),
+        bounds: copy(itemState.bounds),
+    });
+    items[item.id] = item;
+    for (const childId of itemState.children) {
+        const child = getContext().items[childId];
+        if (!child) continue;
+        const childClone = cloneItemState(child, {
+            layer: item.layer,
+        });
+        childClone.parent = item.id;
+        item.children.push(childClone.id);
+    }
+    return item;
+}
+
+export function removeItemState(itemState: ItemState) {
+    const { items } = getContext();
+    if (itemState.parent) {
+        detachChildren(items[itemState.parent], itemState);
+    }
+    for (const childId of itemState.children) {
+        const child = items[childId];
+        if (!child) continue;
+        removeItemState(child);
+    }
+    delete items[itemState.id];
 }
 
 export function getParents(item: ItemState): ItemState[] {
@@ -70,6 +113,20 @@ export function getParents(item: ItemState): ItemState[] {
         parent = parentItem.parent;
     }
     return parents;
+}
+
+export function retrieveAllChildItems(item: ItemState, children?: ItemState[]): ItemState[] {
+    if (!children) {
+        children = [];
+    }
+    const items = getContext().items;
+    for (const childId of item.children) {
+        const child = items[childId];
+        if (!child) continue;
+        children.push(child);
+        retrieveAllChildItems(child, children);
+    }
+    return children;
 }
 
 export function attachChild(item: ItemState, child: ItemState) {
@@ -156,7 +213,7 @@ export function getItemStateTransform(item: ItemState, options: {
     }
     matrices.reverse();
     
-    const flipY = getContext().side === 'overlay' && !options.parent;
+    const flipY = item.layer !== ITEM_LAYERS.PHOTO_MODE && getContext().side === 'overlay' && !options.parent;
     if (flipY) {
         const matrix = matrices[0];
         if (item.id === 'counter') {
@@ -228,8 +285,8 @@ export async function renderItemState(itemState: ItemState, options: {
     matrices.model.pop();
 }
 
-export async function renderItems(layer: ItemLayer) {
-    const itemsInOrder = getAllItemStates(layer);
+export async function renderItems(layers: ItemLayer[]) {
+    const itemsInOrder = getAllItemStates(layers);
     for (const item of itemsInOrder.toReversed()) {
         if (item.id === getContext().held) continue;
         if (item.parent) continue;
@@ -242,9 +299,12 @@ export async function renderHeldItem() {
     if (!held) return;
     const item = getContext().items[held];
     if (!item) return;
+    // delta2 = current - (current + delta)
+    const view = matrices.view.get().inverse();
+    const delta = view.basisTransform2(mouse.delta);
     item.transform.offset = {
-        x: item.transform.offset.x + mouse.delta.x,
-        y: item.transform.offset.y + mouse.delta.y,
+        x: item.transform.offset.x + delta.x,
+        y: item.transform.offset.y + delta.y,
     }
     await renderItemState(item);
 }
@@ -255,7 +315,8 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     const { min, max } = bounds;
     const matrix = getItemStateTransform(item);
     const inverse = matrix.inverse();
-    const inversedMouse = inverse.transform2(mouse.position);
+    const inverseMVP = matrices.view.get().inverse();
+    const inversedMouse = inverse.transform2(inverseMVP.transform2(mouse.position));
     
     const aabbTest = (
         inversedMouse.x >= min.x &&
@@ -325,7 +386,7 @@ export async function renderHoveringItem() {
     });
 }
 
-export function getAllItemStates(layer?: ItemLayer, order: (a: ItemState, b: ItemState) => number = (a, b) => {
+export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: ItemState) => number = (a, b) => {
     const maxA = a.bounds.max;
     const maxB = b.bounds.max;
     return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
@@ -359,19 +420,19 @@ export function getAllItemStates(layer?: ItemLayer, order: (a: ItemState, b: Ite
         const indexB = ITEM_LAYERS_LIST.indexOf(layerB);
         return indexA - indexB;
     })) {
-        if (layer && item.layer !== layer) continue;
+        if (!layers.includes(item.layer)) continue;
         if (item.parent) continue;
         collectItems(item, []);
     }
     return items;
 }
 
-export async function updateHoveringItem() {
+export async function updateHoveringItem(layers: ItemLayer[]) {
     let hit = false;
-    const itemsInOrder = getAllItemStates();
+    const itemsInOrder = getAllItemStates(layers);
     const held = getContext().held;
     const heldItem = held ? getContext().items[held] : null;
-    const ignoreItems = heldItem ? getParents(heldItem).map(item => item.id) : [];
+    const ignoreItems = heldItem ? [...getParents(heldItem), ...retrieveAllChildItems(heldItem)].map(item => item.id) : [];
     for (const item of itemsInOrder) {
         if (item.id === getContext().held) continue;
         if (ignoreItems.includes(item.id)) {

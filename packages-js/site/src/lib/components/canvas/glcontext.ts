@@ -50,6 +50,15 @@ export class GLStateManager {
         this.frameBuffer = null;
     }
 
+    public async bindFramebufferAsync(framebuffer: GlFramebuffer, callback: () => Promise<void>): Promise<void> {
+        if (this.frameBuffer != null) {
+            throw new Error('Framebuffer already bound');
+        }
+        this.frameBuffer = framebuffer;
+        await callback();
+        this.frameBuffer = null;
+    }
+
     public isFramebufferBound(framebuffer: GlFramebuffer): boolean {
         return this.frameBuffer === framebuffer;
     }
@@ -545,6 +554,13 @@ export class GlFramebuffer {
         });
     }
 
+    public async useAsync(callback: () => Promise<void>): Promise<void> {
+        await this.stateManager.bindFramebufferAsync(this, async () => {
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
+            await callback();
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        });
+    }
     public attachTexture(texture: GlTexture): void {
         if (!this.stateManager.isFramebufferBound(this)) {
             throw new Error('Framebuffer not bound');

@@ -1,0 +1,25 @@
+<svg width="1633" height="1022" viewBox="0 0 1633 1022" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="mask0_74_93" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="1633" height="1022">
+<rect x="50.9561" y="50.228" width="1531.34" height="921.58" stroke="#313131" stroke-width="100"/>
+</mask>
+<g mask="url(#mask0_74_93)">
+</g>
+<mask id="mask1_74_93" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="1633" height="1022">
+<rect x="50.9561" y="50.228" width="1531.34" height="921.58" stroke="#313131" stroke-width="100"/>
+</mask>
+<g mask="url(#mask1_74_93)">
+<rect x="2.45605" y="1.72803" width="1628.34" height="1018.58" fill="white" stroke="#313131" stroke-width="3"/>
+</g>
+<rect x="101.078" y="99.9834" width="1428.69" height="823.758" fill="url(#paint0_radial_74_93)" fill-opacity="0.37"/>
+<rect x="101.587" y="101.927" width="1429.97" height="820.072" stroke="#313131" stroke-width="3"/>
+<defs>
+<radialGradient id="paint0_radial_74_93" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(-1183.98 603.395) rotate(2.38369) scale(2677.17 3505.82)">
+<stop stop-color="#C7D8FF" stop-opacity="0.25"/>
+<stop offset="0.137821" stop-color="#D9B5AD" stop-opacity="0.185577"/>
+<stop offset="0.548159" stop-color="#C8D6F9" stop-opacity="0.245009"/>
+<stop offset="0.639732" stop-color="#EB925C" stop-opacity="0.121897"/>
+<stop offset="0.645922" stop-color="white" stop-opacity="0.5"/>
+<stop offset="1" stop-color="#FF6A00" stop-opacity="0.05"/>
+</radialGradient>
+</defs>
+</svg>

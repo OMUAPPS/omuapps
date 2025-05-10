@@ -1,5 +1,5 @@
 import { Draw } from '$lib/components/canvas/draw.js';
-import type { GlContext } from '$lib/components/canvas/glcontext.js';
+import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Matrices } from '$lib/components/canvas/matrices.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2 } from '$lib/math/vec2.js';
@@ -7,6 +7,7 @@ import { Vec4 } from '$lib/math/vec4.js';
 import bell from '../images/bell.png';
 import counter from '../images/counter.png';
 import kitchen from '../images/kitchen.png';
+import photo_frame from '../images/photo_frame.svg';
 import { getTextureByUri } from './asset.js';
 import { createContainer } from './behavior/container.js';
 import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from './item-state.js';
@@ -34,6 +35,8 @@ export const mouse = {
 }
 export let scaleFactor = 1;
 export let draw: Draw;
+let frameBuffer: GlFramebuffer;
+let frameBufferTexture: GlTexture;
 
 export let side: 'client' | 'background' | 'overlay' = 'client';
 let context: KitchenContext;
@@ -105,7 +108,7 @@ function syncData() {
         return;
     }
     lastUpdate = time;
-    const { states, scene, gameConfig } = getGame();
+    const { states } = getGame();
     states.set({
         ...context.states,
         kitchen: {
@@ -113,7 +116,10 @@ function syncData() {
             items: context.items,
             held: context.held,
             hovering: context.hovering,
-            mouse: mouse.gl,
+            mouse: {
+                position: mouse.gl,
+                delta: mouse.deltaGl,
+            },
         }
     });
 }
@@ -130,38 +136,46 @@ export function acquireRenderLock() {
     }
 }
 
+const inputQueue: (() => Promise<void>)[] = [];
+
 function registerMouseEvents() {
     window.addEventListener('mousemove', async (e) => {
-        await acquireRenderLock();
-        mouse.client = new Vec2(e.clientX, e.clientY);
-        mouse.over = true;
-        markChanged();
+        inputQueue.push(async () => {
+            mouse.client = new Vec2(e.clientX, e.clientY);
+            mouse.over = true;
+            markChanged();
+        });
     });
     window.addEventListener('mousedown', async () => {
-        await acquireRenderLock();
-        mouse.down = true;
-        mouse.downTime = Time.get();
-        handleMouseDown();
-        markChanged();
+        inputQueue.push(async () => {
+            mouse.down = true;
+            mouse.downTime = Time.get();
+            handleMouseDown();
+            markChanged();
+        });
     });
     window.addEventListener('mouseup', async () => {
-        await acquireRenderLock();
-        mouse.down = false;
-        mouse.upTime = Time.get();
-        handleMouseUp();
-        markChanged();
+        inputQueue.push(async () => {
+            mouse.down = false;
+            mouse.upTime = Time.get();
+            handleMouseUp();
+            markChanged();
+        });
     });
     window.addEventListener('mouseout', async () => {
-        await acquireRenderLock();
-        mouse.over = false;
+        inputQueue.push(async () => {
+            mouse.over = false;
+        });
     });
     window.addEventListener('mouseenter', async () => {
-        await acquireRenderLock();
-        mouse.over = true;
+        inputQueue.push(async () => {
+            mouse.over = true;
+        });
     });
     window.addEventListener('mouseleave', async () => {
-        await acquireRenderLock();
-        mouse.over = false;
+        inputQueue.push(async () => {
+            mouse.over = false;
+        });
     });
 }
 
@@ -172,6 +186,19 @@ export async function init(ctx: GlContext) {
     matrices.width = ctx.gl.canvas.width;
     matrices.height = ctx.gl.canvas.height;
     draw = new Draw(matrices, ctx);
+    frameBuffer = ctx.createFramebuffer();
+    frameBufferTexture = ctx.createTexture();
+    frameBufferTexture.use(() => {
+        frameBufferTexture.setParams({
+            minFilter: 'nearest',
+            magFilter: 'nearest',
+            wrapS: 'clamp-to-edge',
+            wrapT: 'clamp-to-edge',
+        });
+    });
+    frameBuffer.use(() => {
+        frameBuffer.attachTexture(frameBufferTexture);
+    });
     await loadBehaviorHandlers();
     if (side === 'client') {
         const counterTex = await getTextureByUri(counter);
@@ -287,7 +314,6 @@ import { createTransform2, transformToMatrix } from './transform.js';
 async function updateMouse() {
     if (side !== 'client') return;
     const { gl } = glContext;
-    const scene = context.scene;
     const glMouse = mouse.client.remap(
         Vec2.ZERO,
         {x: gl.canvas.width, y: gl.canvas.height},
@@ -300,21 +326,19 @@ async function updateMouse() {
     mouse.delta = position.sub(mouse.position);
     mouse.position = position;
 
-    if (scene.type !== 'cooking') {
-        context.held = null;
-        context.hovering = null;
-        return;
+    for (const event of inputQueue) {
+        await event();
     }
-    await updateHoveringItem();
+    inputQueue.length = 0;
 }
 
 async function update() {
-    await updateMouse();
     if (side === 'client') {
         await updateAudioClips(Time.get());
     }
 }
 
+import { Axis } from '$lib/math/axis.js';
 import { getGame } from '../omucafe-app.js';
 import { updateAudioClips } from './audioclip.js';
 import { createAction } from './behavior/action.js';
@@ -348,6 +372,33 @@ async function renderScreen() {
         }));
         delete context.items['preview'];
         matrices.view.pop();
+    } else if (scene.type === 'photo_mode') {
+        const { tex, width, height } = await getTextureByUri(photo_frame);
+        const elapsed = Time.get() - scene.time;
+        const t = 1 / Math.pow(elapsed / 250 + 1, 3);
+        await matrices.view.scopeAsync(async () => {
+            matrices.view.translate(matrices.width / 2, matrices.height / 2, 0);
+            matrices.view.scale(scaleFactor, scaleFactor, 1);
+            matrices.view.translate(100 * t, 1000 * t, 0);
+            matrices.view.rotate(Axis.Z_POS.rotateDeg(4.74 / 7 - 10 * t));
+            const scale = Math.pow(1.24, context.config.photo_mode.scale * 0.5);
+            matrices.view.scale(scale, scale, 1);
+            await updateHoveringItem([ITEM_LAYERS.PHOTO_MODE]);
+            await renderItems([ITEM_LAYERS.PHOTO_MODE]);
+            await renderHoveringItem();
+            await renderHeldItem();
+        });
+        await matrices.view.scopeAsync(async () => {
+            matrices.view.translate(matrices.width / 2, matrices.height / 2, 0);
+            matrices.view.scale(scaleFactor, scaleFactor, 1);
+            matrices.view.rotate(Axis.Z_POS.rotateDeg(-4.74 - 30 * t));
+            matrices.view.translate(300 * t, -1000 * t, 0);
+            draw.texture(
+                -width / 2, -height / 2,
+                width / 2, height / 2,
+                tex,
+            )
+        });
     }
 }
 
@@ -356,34 +407,60 @@ export async function renderBackgroundSide() {
 
     setupBackgroundProjection();
     await renderBackground();
-    
-    setupHUDProjection();
-
-    await renderScreen();
-    await renderCursor();
 }
 
 export async function renderClientSide() {
     if (side !== 'client') return;
+    const { scene } = context;
 
+    setupHUDProjection();
+    await updateMouse();
     setupBackgroundProjection();
     await renderBackground();
 
-    setupCounterProjection();
-    await update();
-    await renderCounter();
-    await renderItems(ITEM_LAYERS.COUNTER);
-    await renderItems(ITEM_LAYERS.KITCHEN_ITEMS);
-    await renderItems(ITEM_LAYERS.BELL);
-    
+    frameBufferTexture.use(() => {
+        frameBufferTexture.ensureSize(matrices.width, matrices.height);
+    });
+    await frameBuffer.useAsync(async () => {
+        glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
+        glContext.gl.clearColor(0, 0, 0, 0);
+        setupCounterProjection();
+        await update();
+        await renderCounter();
+        await updateHoveringItem([ITEM_LAYERS.COUNTER, ITEM_LAYERS.KITCHEN_ITEMS, ITEM_LAYERS.BELL]);
+        await renderItems([ITEM_LAYERS.COUNTER, ITEM_LAYERS.KITCHEN_ITEMS, ITEM_LAYERS.BELL]);
+        if (scene.type !== 'photo_mode') {
+            await renderHoveringItem();
+            await renderHeldItem();
+        }
+        
+        setupHUDProjection();
+        await renderOverlay();
+        setupCounterProjection();
+        await renderParticles();
+        await renderOverlay2();
+    });
+
     setupHUDProjection();
-    await renderOverlay();
-    setupCounterProjection();
-    await renderHoveringItem();
-    await renderHeldItem();
-    await renderParticles();
-    setupHUDProjection();
-    await renderOverlay2();
+    if (scene.type === 'photo_mode') {
+        const elapsed = Time.get() - scene.time;
+        const t = 1 / Math.pow(elapsed / 200 + 1, 3);
+        matrices.view.scope(() => {
+            matrices.view.translate(0, 50 * (1 - t), 0);
+            draw.texture(
+                0, matrices.height,
+                matrices.width, 0,
+                frameBufferTexture,
+                new Vec4(1, 1, 1, t),
+            );
+        });
+    } else {
+        draw.texture(
+            0, matrices.height,
+            matrices.width, 0,
+            frameBufferTexture,
+        );
+    }
 
     await renderScreen();
     await renderCursor();
@@ -392,51 +469,55 @@ export async function renderClientSide() {
 
 export async function renderOverlaySide() {
     if (side !== 'overlay') return;
+    const scene = context.scene;
 
     setupBackgroundProjection();
     await renderEffect();
     
     setupCounterProjection();
-    const scene = context.scene;
+
+    frameBufferTexture.use(() => {
+        frameBufferTexture.ensureSize(matrices.width, matrices.height);
+    });
+    await frameBuffer.useAsync(async () => {
+        glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
+        glContext.gl.clearColor(0, 0, 0, 0);
+        await update();
+        await renderCounter();
+        await renderItems([ITEM_LAYERS.KITCHEN_ITEMS]);
+        setupHUDProjection();
+        await renderOverlay();
+        setupCounterProjection();
+        await renderHeldItem();
+        await renderParticles();
+        await renderItems([ITEM_LAYERS.COUNTER, ITEM_LAYERS.BELL]);
+        setupHUDProjection();
+        await renderOverlay2();
+    });
+
+    setupHUDProjection();
     if (scene.type === 'photo_mode') {
-        const { time } = scene;
-        const elapsed = Time.get() - time;
-        console.log('elapsed', elapsed);
-        matrices.view.push();
-        matrices.view.translate(0, 1000 - 1000 / (elapsed / 1000 + 1), 0);
-        await update();
-        await renderCounter();
-        await renderItems(ITEM_LAYERS.KITCHEN_ITEMS);
-        matrices.view.pop();
-        setupHUDProjection();
-        await renderOverlay();
-        setupCounterProjection();
-        await renderHeldItem();
-        await renderParticles();
-        await renderItems(ITEM_LAYERS.COUNTER);
-        await renderItems(ITEM_LAYERS.BELL);
-        setupHUDProjection();
-        await renderOverlay2();
-    
-        await renderScreen();
-        await renderCursor();
+        const elapsed = Time.get() - scene.time;
+        const t = 1 / Math.pow(elapsed / 200 + 1, 3);
+        matrices.view.scope(() => {
+            matrices.view.translate(0, 50 * (1 - t), 0);
+            draw.texture(
+                0, matrices.height,
+                matrices.width, 0,
+                frameBufferTexture,
+                new Vec4(1, 1, 1, t),
+            );
+        });
     } else {
-        await update();
-        await renderCounter();
-        await renderItems(ITEM_LAYERS.KITCHEN_ITEMS);
-        setupHUDProjection();
-        await renderOverlay();
-        setupCounterProjection();
-        await renderHeldItem();
-        await renderParticles();
-        await renderItems(ITEM_LAYERS.COUNTER);
-        await renderItems(ITEM_LAYERS.BELL);
-        setupHUDProjection();
-        await renderOverlay2();
-    
-        await renderScreen();
-        await renderCursor();
+        draw.texture(
+            0, matrices.height,
+            matrices.width, 0,
+            frameBufferTexture,
+        );
     }
+
+    await renderScreen();
+    await renderCursor();
 }
 
 export async function render(gl: GlContext): Promise<void> {

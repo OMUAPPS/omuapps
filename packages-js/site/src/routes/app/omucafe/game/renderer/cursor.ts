@@ -1,5 +1,4 @@
 
-import { BetterMath } from '$lib/math.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import cursor_grab from '../../images/cursor_grab.png';
@@ -11,35 +10,17 @@ import { Time } from '../time.js';
 export async function renderCursor() {
     const ctx = getContext();
     if (ctx.side === 'client' && !mouse.over) return;
-    const { mouse: { x, y } } = ctx;
     matrices.model.push();
     matrices.view.push();
-    let model = ctx.side === 'client' ? new Mat4(
+    const position = ctx.side === 'client' ? mouse.client : matrices.unprojectPoint(ctx.mouse.position);
+    const delta = ctx.side === 'client' ? mouse.delta : ctx.mouse.delta;
+    let model = new Mat4(
         1, -mouse.delta.y / 100, 0, 0,
         -mouse.delta.x / 100, 1, 0, 0,
         0, 0, 1, 0,
-        mouse.client.x, mouse.client.y, 0, 1,
-    ) : new Mat4(
-        1, -mouse.delta.y / 100, 0, 0,
-        -mouse.delta.x / 100, 1, 0, 0,
-        0, 0, 1, 0,
-        BetterMath.remap(
-            x,
-            -1,
-            1,
-            0,
-            matrices.width,
-        ),
-        BetterMath.remap(
-            y,
-            -1,
-            1,
-            matrices.height,
-            0,
-        ),
-        0, 1,
-    );
-    if (ctx.side === 'overlay') {
+        position.x, position.y, 0, 1,
+    )
+    if (ctx.side === 'overlay' && ctx.scene.type !== 'photo_mode') {
         matrices.view.translate(
             0,
             matrices.height / 2,

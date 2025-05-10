@@ -25,7 +25,7 @@
     setClient(omu);
 
     if (BROWSER) {
-        onMount(async () => {
+        onMount(() => {
             omu.start();
         });
     }
@@ -41,50 +41,73 @@
         reason?: string;
     } = { type: 'connecting' };
     omu.network.event.status.listen((status) => {
-        if (status.type === 'connected') {
+        if (status.type === 'connecting') {
+            state = { type: 'connecting' };
+            logs.push(`[connecting] connecting to ${omu.address.host}:${omu.address.port}`);
+        } else if (status.type === 'connected') {
             state = { type: 'connected' };
+            logs.push(`[connected] connected to ${omu.address.host}:${omu.address.port}`);
+        } else if (status.type === 'reconnecting') {
+            state = { type: 'connected' };
+            logs.push(`[reconnecting] reconnecting to ${omu.address.host}:${omu.address.port}`);
         } else if (status.type === 'disconnected') {
             state = { type: 'disconnected', reason: status.reason?.message || undefined };
+            logs.push(`[disconnected] disconnected from ${omu.address.host}:${omu.address.port}`);
         } else if (status.type === 'error') {
             state = { type: 'disconnected', reason: status.error.message || undefined };
+            logs.push(`[error] ${status.error.message}`);
+        } else if (status.type === 'closed') {
+            state = { type: 'disconnected', reason: 'closed' };
+            logs.push(`[closed] closed connection to ${omu.address.host}:${omu.address.port}`);
         } else if (status.type === 'ready') {
             state = { type: 'ready' };
+            logs.length = 0;
         }
     });
+
+    let logs: string[] = [];
 </script>
 
 <svelte:head>
     <meta name="viewport" content="width=device-width, user-scalable=no">
 </svelte:head>
+
 <main>
-    {#if state.type === 'connecting'}
-        <div class="loading">
-            <span>
-                <Spinner />
-                <div>接続中</div>
-            </span>
-        </div>
-    {:else if state.type === 'connected'}
-        <div class="loading">
-            <span>
-                <Spinner />
-                <div>接続中</div>
-            </span>
-        </div>
-    {:else if state.type === 'ready'}
+    {#if state.type === 'ready'}
         <SessionApp {omu} {remote} />
-    {:else if state.type === 'disconnected'}
-        <div class="loading">
-            <span>
-                <Spinner />
-                <div>接続が切断されました</div>
-            </span>
-            {#if state.reason}
-                <small>
-                    {state.reason}
-                </small>
-            {/if}
-        </div>
+    {:else}
+        {#if state.type === 'connecting'}
+            <div class="loading">
+                <span>
+                    <Spinner />
+                    <div>接続中</div>
+                </span>
+            </div>
+        {:else if state.type === 'connected'}
+            <div class="loading">
+                <span>
+                    <Spinner />
+                    <div>接続中</div>
+                </span>
+            </div>
+        {:else if state.type === 'disconnected'}
+            <div class="loading">
+                <span>
+                    <Spinner />
+                    <div>接続が切断されました</div>
+                </span>
+                {#if state.reason}
+                    <small>
+                        {state.reason}
+                    </small>
+                {/if}
+            </div>
+        {/if}
+        <ul>
+            {#each logs as log, i (i)}
+                <li>{log}</li>
+            {/each}
+        </ul>
     {/if}
 </main>
 

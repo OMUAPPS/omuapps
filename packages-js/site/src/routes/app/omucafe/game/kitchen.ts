@@ -1,3 +1,4 @@
+import type { PossibleVec2 } from '$lib/math/vec2.js';
 import type { GameConfig, Scene, States } from '../omucafe-app.js';
 import type { PlayingAudioClip } from './audioclip.js';
 import type { ItemState } from './item-state.js';
@@ -7,7 +8,10 @@ export type Kitchen = {
     items: Record<string, ItemState>,
     held: string | null,
     hovering: string | null,
-    mouse: { x: number, y: number },
+    mouse: {
+        position: PossibleVec2,
+        delta: PossibleVec2,
+    },
 };
 
 export type KitchenContext = {
@@ -15,7 +19,10 @@ export type KitchenContext = {
     items: Record<string, ItemState>,
     held: string | null,
     hovering: string | null,
-    mouse: { x: number, y: number },
+    mouse: {
+        position: PossibleVec2,
+        delta: PossibleVec2,
+    },
     side: 'client' | 'background' | 'overlay',
     config: GameConfig,
     scene: Scene,

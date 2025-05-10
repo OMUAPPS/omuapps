@@ -47,7 +47,6 @@ export const EXAMPLE: GameConfig = {
             behaviors: {
                 holdable: createHoldable(),
                 container: {
-                    items: [],
                     overlay: asset(pack_top),
                     overlayTransform: {
                         right: { x: 1, y: 0 },
@@ -72,7 +71,6 @@ export const EXAMPLE: GameConfig = {
             image: asset(fryer),
             behaviors: {
                 container: {
-                    items: [],
                     overlay: asset(fryer_top),
                     overlayTransform: {
                         right: { x: 1, y: 0 },
@@ -104,7 +102,6 @@ export const EXAMPLE: GameConfig = {
             behaviors: {
                 holdable: createHoldable(),
                 container: {
-                    items: [],
                     overlay: asset(tray_top),
                     overlayTransform: {
                         right: { x: 1, y: 0 },

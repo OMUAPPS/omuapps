@@ -160,6 +160,7 @@ export async function updateAudioClips(
                 exist.pause()
                 exist.currentTime = 0
                 playingElements.delete(id)
+                delete audios[id]
             }
             continue;
         }

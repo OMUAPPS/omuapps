@@ -1,4 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
+import { Vec2, type PossibleVec2 } from '$lib/math/vec2.js';
 import { Chat, events } from '@omujs/chat';
 import type { Message } from '@omujs/chat/models/message.js';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
@@ -15,12 +16,13 @@ import type { PlayingAudioClip } from './game/audioclip.js';
 import type { Effect } from './game/effect.js';
 import { getContext, setContext } from './game/game.js';
 import { copy } from './game/helper.js';
-import type { ItemState } from './game/item-state.js';
+import { cloneItemState, ITEM_LAYERS, removeItemState, type ItemState } from './game/item-state.js';
 import type { Item } from './game/item.js';
 import type { Kitchen } from './game/kitchen.js';
 import type { Product } from './game/product.js';
 import { assertValue, builder, Globals, ScriptError, type Script, type ScriptContext, type Value } from './game/script.js';
 import { Time } from './game/time.js';
+import { transformToMatrix } from './game/transform.js';
 
 export const DEFAULT_CONFIG = {
     version: 1,
@@ -44,6 +46,10 @@ export const DEFAULT_GAME_CONFIG = {
     items: {} as Record<string, Item>,
     effects: {} as Record<string, Effect>,
     scripts: {} as Record<string, Script>,
+    photo_mode: {
+        scale: 0,
+        offset: Vec2.ZERO as PossibleVec2,
+    },
 };
 
 export type GameConfig = typeof DEFAULT_GAME_CONFIG;
@@ -119,8 +125,12 @@ export const DEFAULT_STATES = {
         audios: {} as Record<string, PlayingAudioClip>,
         items: {} as Record<string, ItemState>,
         held: null as string | null,
+        mouse: {
+            position: Vec2.ZERO as PossibleVec2,
+            delta: Vec2.ZERO as PossibleVec2,
+        },
         hovering: null as string | null,
-    } as Kitchen,
+    } satisfies Kitchen,
 };
 
 export type States = typeof DEFAULT_STATES;
@@ -195,7 +205,36 @@ const functions = {
     complete(ctx: ScriptContext, args: Value[]): Value {
         const [itemId] = args;
         assertValue(ctx, itemId, 'string');
-        const counter = getContext().items[itemId.value];
+        const { items } = getContext();
+        const counter = items[itemId.value];
+        for (const item of Object.values(items)) {
+            if (item.parent) continue;
+            if (item.layer !== ITEM_LAYERS.PHOTO_MODE) continue;
+            removeItemState(item);
+        }
+        for (const id of counter.children) {
+            const item = items[id];
+            const transform = transformToMatrix(item.transform);
+            const { min, max } = item.bounds;
+            const offset = new Vec2(
+                (min.x + max.x) / 2,
+                (min.y + max.y) / 2,
+            ).mul({
+                x: transform.m00,
+                y: transform.m11,
+            });
+            cloneItemState(item, {
+                layer: ITEM_LAYERS.PHOTO_MODE,
+                transform: {
+                    right: item.transform.right,
+                    up: item.transform.up,
+                    offset: {
+                        x: -offset.x,
+                        y: -offset.y,
+                    },
+                }
+            })
+        }
         game?.scene.set({
             type: 'photo_mode',
             time: Time.get(),
@@ -276,6 +315,10 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
         setContext({
             ...(await statesRegistry.get()).kitchen,
             side,
+            mouse: {
+                position: Vec2.ZERO as PossibleVec2,
+                delta: Vec2.ZERO as PossibleVec2,
+            },
             config: await gameConfigRegistry.get(),
             scene: await sceneRegistry.get(),
             states: await statesRegistry.get(),

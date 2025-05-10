@@ -1,11 +1,12 @@
 <script lang="ts">
+    import { VERSION } from '$lib/version.js';
     import { App } from '@omujs/omu';
     import { OVERLAY_ID } from '../../app.js';
     import KitchenRenderer from '../../components/KitchenRenderer.svelte';
     import { createGame } from '../../omucafe-app.js';
 
     const promise = createGame(new App(OVERLAY_ID, {
-        version: '0.0.1',
+        version: VERSION,
     }), 'overlay');
 </script>
 

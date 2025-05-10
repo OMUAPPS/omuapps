@@ -1,7 +1,6 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import type { TypedComponent } from '@omujs/ui';
-    import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import KitchenRenderer from './components/KitchenRenderer.svelte';
     import { markChanged } from './game/game.js';
@@ -44,14 +43,6 @@
             lastScene = currentScene;
             currentScene = SCENES[$scene.type];
         }
-    }
-
-    if (BROWSER) {
-    // onMount(async () => {
-        //     const worker = await getWorker();
-        //     const tokens = await worker.call('tokenize', 'すもももももももものうち');
-        //     console.log(tokens);
-        // });
     }
 </script>
 

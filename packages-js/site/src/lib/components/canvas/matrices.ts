@@ -9,6 +9,36 @@ export class Matrices {
     public readonly model: MatrixStack = new MatrixStack();
     public readonly view: MatrixStack = new MatrixStack();
 
+    constructor() {
+        this.projection.push();
+        this.model.push();
+        this.view.push();
+    }
+
+    public push(): void {
+        this.projection.push();
+        this.model.push();
+        this.view.push();
+    }
+
+    public pop(): void {
+        this.projection.pop();
+        this.model.pop();
+        this.view.pop();
+    }
+
+    public scope(callback: () => void): void {
+        this.push();
+        callback();
+        this.pop();
+    }
+
+    public async scopeAsync(callback: () => Promise<void>): Promise<void> {
+        this.push();
+        await callback();
+        this.pop();
+    }
+
     public get(): Mat4 {
         return this.projection.get().multiply(this.view.get().multiply(this.model.get()));
     }
