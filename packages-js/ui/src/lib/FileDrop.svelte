@@ -21,7 +21,10 @@
 
 <input type="file" bind:this={fileDrop} bind:files on:change={handleChange} {multiple} {accept} hidden />
 <slot {open} name="button">
-    <button class:primary on:click={open}>
+    <button
+        class:primary
+        on:click={open}
+    >
         <slot />
     </button>
 </slot>
@@ -39,6 +42,7 @@
         font-size: 0.8rem;
         border-radius: 2px;
         white-space: nowrap;
+        touch-action: manipulation;
 
         &:hover {
             background: var(--color-1);

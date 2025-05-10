@@ -16,10 +16,9 @@
     let album: AlbumResource | null = null;
     let selected: ImageResource | null = null;
 
-    function select(event: MouseEvent, id: string, type: 'click' | 'drag') {
+    function select(shiftKey: boolean, id: string, type: 'click' | 'drag') {
         const active = id === $config.show?.id;
         const resource = $resources.resources[id];
-        const { shiftKey } = event;
         const multiple = shiftKey;
         if (multiple) {
             if (activeClicked) {
@@ -76,6 +75,22 @@
             return aVal < bVal ? 1 : -1;
         };
     }
+
+    $: visibleItems = [
+        ...Object.entries($resources.resources).filter((it) => it[1].type === 'album')
+            .filter((it) => it[1].filename?.includes(search))
+            .filter(album ? (it) => album?.assets.includes(it[0]) : () => true)
+            .toSorted(compare(sort)),
+        ...Object.entries($resources.resources).filter((it) => it[1].type !== 'album')
+            .filter((it) => it[1].filename?.includes(search))
+            .filter(album ? (it) => album?.assets.includes(it[0]) : () => true)
+            .toSorted(compare(sort)),
+    ];
+    $: {
+        for (const item of visibleItems) {
+            remote.assetUri(item[0]);
+        }
+    }
 </script>
 
 <div class="header">
@@ -125,16 +140,7 @@
     </div>
 {/if}
 <div class="gallery">
-    {#each [
-        ...Object.entries($resources.resources).filter((it) => it[1].type === 'album')
-            .filter((it) => it[1].filename?.includes(search))
-            .filter(album ? (it) => album?.assets.includes(it[0]) : () => true)
-            .toSorted(compare(sort)),
-        ...Object.entries($resources.resources).filter((it) => it[1].type !== 'album')
-            .filter((it) => it[1].filename?.includes(search))
-            .filter(album ? (it) => album?.assets.includes(it[0]) : () => true)
-            .toSorted(compare(sort)),
-    ] as [id, resource] (id)}
+    {#each visibleItems as [id, resource] (id)}
         {@const active = $config.show?.id === id || (multiple && multipleSelectedIds.includes(id))}
         {@const selected = selectedId === id}
         <div
@@ -196,12 +202,16 @@
                 {/if}
             </span>
             <button class="asset" class:active class:album={resource.type === 'album'}
+                on:touchend={(event) => {
+                    event.preventDefault();
+                    select(false, id, 'click');
+                }}
                 on:click={(event) => {
-                    select(event, id, 'click');
+                    select(event.shiftKey, id, 'click');
                 }}
                 on:mousemove={(event) => {
                     if (event.buttons !== 1) return;
-                    select(event, id, 'drag');
+                    select(event.shiftKey, id, 'drag');
                 }}
                 on:mousedown={() => {
                     activeClicked = multipleSelectedIds.includes(id);

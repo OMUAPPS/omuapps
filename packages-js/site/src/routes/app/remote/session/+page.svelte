@@ -53,6 +53,9 @@
     });
 </script>
 
+<svelte:head>
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+</svelte:head>
 <main>
     {#if state.type === 'connecting'}
         <div class="loading">
