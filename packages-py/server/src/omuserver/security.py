@@ -139,8 +139,8 @@ class PermissionManager:
         token = self._token_generator.generate(32)
         self._token_db.execute(
             """
-            INSERT INTO tokens (token, identifier, created_at, last_used_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO tokens (token, identifier, created_at, last_used_at, used_count)
+            VALUES (?, ?, ?, ?, 0)
             """,
             (
                 token,
@@ -223,8 +223,8 @@ class PermissionManager:
         token = self._token_generator.generate(32)
         self._token_db.execute(
             """
-            INSERT INTO remote_tokens (token, identifier, app, created_at, last_used_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO remote_tokens (token, identifier, app, created_at, last_used_at, used_count)
+            VALUES (?, ?, ?, ?, ?, 0)
             """,
             (
                 token,

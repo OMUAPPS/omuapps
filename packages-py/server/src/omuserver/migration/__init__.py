@@ -16,7 +16,13 @@ def migrate(server: Server):
         columns = cursor.fetchall()
         if not any(column[1] == "used_count" for column in columns):
             cursor.execute("ALTER TABLE tokens ADD COLUMN used_count INTEGER")
-        cursor.execute("UPDATE tokens SET used_count = 0")
+            cursor.execute("UPDATE tokens SET used_count = 0")
+
+        cursor.execute("PRAGMA table_info(remote_tokens)")
+        columns = cursor.fetchall()
+        if not any(column[1] == "used_count" for column in columns):
+            cursor.execute("ALTER TABLE remote_tokens ADD COLUMN used_count INTEGER")
+            cursor.execute("UPDATE remote_tokens SET used_count = 0")
         server.security._token_db.commit()
 
     version_path.write_text(VERSION)
