@@ -202,4 +202,6 @@ class ServerExtension:
         await self.sessions.remove(session.app)
 
         for observer in self._session_observers.get(session.app.id, []):
+            if session.closed:
+                continue
             await observer.send(SESSION_DISCONNECT_PACKET_TYPE, session.app)
