@@ -289,7 +289,7 @@ float closestBezierPoint(
 vec4 getColor(float dir, float dist, float t) {
     float radius = mix(u_widthIn, u_widthOut, t);
     float alpha = smoothstep(radius - 1.0, radius - 2.0, dist);
-    return u_color * alpha;
+    return vec4(u_color.rgb, u_color.a * alpha);
 }
 
 void main() {
@@ -297,7 +297,7 @@ void main() {
     float closest = closestBezierPoint(p1, p2, p3, fragCoord);
     vec2 point = quadraticBezier2(p1, p2, p3, closest) - fragCoord;
     vec2 normal = quadraticBezierDerivative2(p1, p2, p3, closest);
-    float dist = dot(point, point);
+    float dist = length(point);
     float dir = closest < 0.0001 || closest > 0.9999 ? dot(normalize(point), normalize(normal)) : 0.0;
     fragColor = getColor(dir, dist, closest);
 }

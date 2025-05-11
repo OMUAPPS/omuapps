@@ -23,6 +23,13 @@
     let clickDistance = 0;
     let lastUpdate = performance.now();
     let rect = { width: 0, height: 0 };
+    let element: HTMLElement | null = null;
+
+    $: {
+        if (element) {
+            rect = element.getBoundingClientRect();
+        }
+    }
     
     const hideAreaWidth = 240;
     const hideAreaMargin = 10;
@@ -194,8 +201,7 @@
 <button
     class="control"
     class:dragging={lastMouse || ($dragUser && $dragUser == id)}
-    bind:clientWidth={rect.width}
-    bind:clientHeight={rect.height}
+    bind:this={element}
     style={getStyle(rect, $config, view, dimentions)}
     on:mousedown={handleMouseDown}
     on:click={() => {

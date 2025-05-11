@@ -410,7 +410,7 @@ export type TextureParams = {
     wrapS?: 'clamp-to-edge' | 'repeat' | 'mirrored-repeat';
     wrapT?: 'clamp-to-edge' | 'repeat' | 'mirrored-repeat';
     minFilter?: 'nearest' | 'linear' | 'nearest-mipmap-nearest' | 'linear-mipmap-nearest' | 'nearest-mipmap-linear' | 'linear-mipmap-linear';
-    magFilter?: 'nearest' | 'linear';
+    magFilter?: 'nearest' | 'linear' | 'nearest-mipmap-nearest' | 'linear-mipmap-nearest' | 'nearest-mipmap-linear' | 'linear-mipmap-linear';
 };
 
 export type ColorFormat = 'rgba' | 'rgb' | 'rgba16f' | 'rgb16f' | 'srgb' | 'srgb8' | 'srgb8alpha8';

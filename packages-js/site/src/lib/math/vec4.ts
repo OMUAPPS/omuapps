@@ -17,6 +17,10 @@ export class Vec4 {
         public readonly w: number,
     ) {}
 
+    public static from(vec: Vec4Like): Vec4 {
+        return new Vec4(vec.x, vec.y, vec.z, vec.w);
+    }
+
     lerp(other: Vec4, t: number): Vec4 {
         return new Vec4(
             lerp(this.x, other.x, t),
