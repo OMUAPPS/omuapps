@@ -56,4 +56,7 @@
         "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
     },
     "npm.packageManager": "bun",
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    },
 }
