@@ -3,7 +3,7 @@
     import type { TypedComponent } from '@omujs/ui';
     import { APP } from './app.js';
     import KitchenRenderer from './components/KitchenRenderer.svelte';
-    import { markChanged } from './game/game.js';
+    import { markChanged, mouse } from './game/game.js';
     import { Time } from './game/time.js';
     import { createGame, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
@@ -44,6 +44,26 @@
             currentScene = SCENES[$scene.type];
         }
     }
+
+    let sceneElement: HTMLElement;
+
+    $: {
+        mouse.ui = false;
+        if (sceneElement) {
+            const children = sceneElement.children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child instanceof HTMLElement) {
+                    child.addEventListener('mouseenter', () => {
+                        mouse.ui = true;
+                    });
+                    child.addEventListener('mouseleave', () => {
+                        mouse.ui = false;
+                    });
+                }
+            }
+        }
+    }
 </script>
 
 <AppPage />
@@ -61,7 +81,7 @@
             {/key}
         {/if}
         {#key lastScene}
-            <div class="scene current">
+            <div class="scene current" bind:this={sceneElement}>
                 <svelte:component this={SCENES[$scene.type]} context={{
                     time: Time.get(),
                     current: true,
@@ -138,13 +158,11 @@
         align-items: center;
 
         &.current {
-            pointer-events: auto;
             animation: fadeIn 0.0621s ease-in;
             animation-fill-mode: forwards;
         }
 
         &.last {
-            pointer-events: none;
             animation: fadeOut 0.1621s ease-out;
             animation-fill-mode: forwards;
         }

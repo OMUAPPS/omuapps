@@ -21,6 +21,15 @@ export class Vec4 {
         return new Vec4(vec.x, vec.y, vec.z, vec.w);
     }
 
+    scale(scalar: number): Vec4 {
+        return new Vec4(
+            this.x * scalar,
+            this.y * scalar,
+            this.z * scalar,
+            this.w * scalar,
+        );
+    }
+
     lerp(other: Vec4, t: number): Vec4 {
         return new Vec4(
             lerp(this.x, other.x, t),

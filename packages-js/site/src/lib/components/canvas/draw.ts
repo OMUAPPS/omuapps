@@ -1,6 +1,6 @@
 import { Bezier } from '$lib/math/bezier.js';
 import { Vec2, type PossibleVec2 } from '$lib/math/vec2.js';
-import { Vec4 } from '$lib/math/vec4.js';
+import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlShader, GlTexture } from './glcontext.js';
 import type { Matrices } from './matrices.js';
 
@@ -525,7 +525,7 @@ export class Draw {
         a: PossibleVec2,
         b: PossibleVec2,
         c: PossibleVec2,
-        color: Vec4,
+        color: Vec4Like,
         widthIn: number,
         widthOut: number
     ): void {

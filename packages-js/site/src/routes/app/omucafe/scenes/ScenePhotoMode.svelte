@@ -5,88 +5,156 @@
     export let context: SceneContext;
     const { scene, gameConfig } = getGame();
     $: console.log('ScenePhotoMode', context);
+
+    const COLORS = [
+        {x: 0x00, y: 0x00, z: 0x00},
+        {x: 0xEB, y: 0x6F, z: 0x9A},
+        {x: 0xF1, y: 0x73, z: 0x61},
+        {x: 0xE4, y: 0x83, z: 0x16},
+        {x: 0xC5, y: 0x98, z: 0x00},
+        {x: 0x92, y: 0xAC, z: 0x1C},
+        {x: 0x44, y: 0xB9, z: 0x67},
+        {x: 0xFF, y: 0xFF, z: 0xFF},
+        {x: 0x00, y: 0xBB, z: 0xA2},
+        {x: 0x00, y: 0xB5, z: 0xCE},
+        {x: 0x0B, y: 0xA9, z: 0xF6},
+        {x: 0x79, y: 0x97, z: 0xFF},
+        {x: 0xAE, y: 0x85, z: 0xF1},
+        {x: 0xD4, y: 0x76, z: 0xCD},
+    ];
 </script>
 
-<svelte:window on:wheel={(event) => {
-    let scale = $gameConfig.photo_mode.scale;
-    scale += event.deltaY * -0.01;
-    $gameConfig.photo_mode.scale = Math.min(Math.max(-10, scale), 10);
-}} />
+<svelte:window
+    on:wheel={(event) => {
+        let scale = $gameConfig.photo_mode.scale;
+        const logFactor = 2.621;
+        const wheelFactor = 0.002621;
+        if ($gameConfig.photo_mode.tool.type === 'move') {
+            scale += event.deltaY * -0.01;
+            $gameConfig.photo_mode.scale = Math.min(Math.max(-10, scale), 10);
+        } else if ($gameConfig.photo_mode.tool.type === 'pen') {
+            const level = Math.pow($gameConfig.photo_mode.pen.width, 1 / logFactor);
+            const newLevel = level + event.deltaY * wheelFactor;
+            const newWidth = Math.pow(newLevel, logFactor);
+            $gameConfig.photo_mode.pen.width = Math.min(Math.max(1, newWidth), 400);
+        } else if ($gameConfig.photo_mode.tool.type === 'eraser') {
+            const level = Math.pow($gameConfig.photo_mode.eraser.width, 1 / logFactor);
+            const newLevel = level + event.deltaY * wheelFactor;
+            const newWidth = Math.pow(newLevel, logFactor);
+            $gameConfig.photo_mode.eraser.width = Math.min(Math.max(1, newWidth), 400);
+        }
+    }}
+    on:keydown={(event) => {
+        if (!context.current) return;
+        if (event.key === 'e') {
+            $gameConfig.photo_mode.tool = {
+                type: 'eraser',
+            };
+        } else if (['p', 'b'].includes(event.key)) {
+            $gameConfig.photo_mode.tool = {
+                type: 'pen',
+            };
+        } else if (event.key === 'm') {
+            $gameConfig.photo_mode.tool = {
+                type: 'move',
+            };
+        }
+    }}
+/>
 
 <div class="screen">
-    <div class="color">
-        <div class="tools">
-            <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'move'} on:click={() => {
-                $gameConfig.photo_mode.tool = {
-                    type: 'move',
-                }
-            }}>
-                <Tooltip>
-                    <span>とっておきの映える配置に！</span>
-                </Tooltip>
-                <i class="ti ti-arrows-move"></i>
-                <span>アイテム移動</span>
-            </button>
-            <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'pen'} on:click={() => {
-                $gameConfig.photo_mode.tool = {
-                    type: 'pen',
-                }
-            }}>
-                <Tooltip>
-                    <span>ちょっと勇気を出して絵でも描いてみよう</span>
-                </Tooltip>
-                <i class="ti ti-pencil"></i>
-                <span>ペン</span>
-            </button>
-            <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'eraser'} on:click={() => {
-                $gameConfig.photo_mode.tool = {
-                    type: 'eraser',
-                }
-            }}>
-                <Tooltip>
-                    <span>まだやり直せる…！</span>
-                </Tooltip>
-                <i class="ti ti-eraser"></i>
-                <span>消しゴム</span>
-            </button>
-        </div>
-        <div class="config">
-            {#if $gameConfig.photo_mode.tool.type === 'pen'}
-                <p>ペンの太さ</p>
-                <Slider
-                    min={0}
-                    max={400}
-                    step={1}
-                    bind:value={$gameConfig.photo_mode.pen.width}
-                />
-            {:else if $gameConfig.photo_mode.tool.type === 'eraser'}
-                <p>消しゴムの太さ</p>
-                <Slider
-                    min={0}
-                    max={400}
-                    step={1}
-                    bind:value={$gameConfig.photo_mode.eraser.width}
-                />
-            {:else if $gameConfig.photo_mode.tool.type === 'move'}
-                <p>アイテムの大きさ</p>
-                <Slider
-                    min={-10}
-                    max={10}
-                    step={0.1}
-                    bind:value={$gameConfig.photo_mode.scale}
-                />
-            {/if}
-        </div>
+    <div class="config">
+        {#if $gameConfig.photo_mode.tool.type === 'pen'}
+            {@const current = $gameConfig.photo_mode.pen.color}
+            <p>ペンの太さ</p>
+            <Slider
+                min={0}
+                max={400}
+                step={1}
+                clamp={true}
+                bind:value={$gameConfig.photo_mode.pen.width}
+            />
+            <div class="color-picker">
+                {#each COLORS as color, i (i)}
+                    <button
+                        class="color"
+                        class:active={current.x === color.x && current.y === color.y && current.z === color.z}
+                        style="background: rgb({color.x}, {color.y}, {color.z})"
+                        on:click={() => {
+                            $gameConfig.photo_mode.pen.color = {
+                                x: color.x,
+                                y: color.y,
+                                z: color.z,
+                                w: 255,
+                            }
+                        }}
+                    ></button>
+                {/each}
+            </div>
+        {:else if $gameConfig.photo_mode.tool.type === 'eraser'}
+            <p>消しゴムの太さ</p>
+            <Slider
+                min={0}
+                max={400}
+                step={1}
+                clamp={true}
+                bind:value={$gameConfig.photo_mode.eraser.width}
+            />
+        {:else if $gameConfig.photo_mode.tool.type === 'move'}
+            <p>アイテムの大きさ</p>
+            <Slider
+                min={-10}
+                max={10}
+                step={0.1}
+                clamp={true}
+                bind:value={$gameConfig.photo_mode.scale}
+            />
+        {/if}
     </div>
-    <div class="exit">
-        <button on:click={() => {
-            $scene = {
-                type: 'cooking',
-            };
+    <div class="tools">
+        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'move'} on:click={() => {
+            $gameConfig.photo_mode.tool = {
+                type: 'move',
+            }
         }}>
-            終わる
-            <i class="ti ti-x"></i>
+            <Tooltip>
+                <p>Mキーで移動モードに切り替え</p>
+            </Tooltip>
+            <i class="ti ti-arrows-move"></i>
+            <span>アイテム移動</span>
         </button>
+        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'pen'} on:click={() => {
+            $gameConfig.photo_mode.tool = {
+                type: 'pen',
+            }
+        }}>
+            <Tooltip>
+                <p>PまたはBキーでペンモードに切り替え</p>
+            </Tooltip>
+            <i class="ti ti-pencil"></i>
+            <span>ペン</span>
+        </button>
+        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'eraser'} on:click={() => {
+            $gameConfig.photo_mode.tool = {
+                type: 'eraser',
+            }
+        }}>
+            <Tooltip>
+                <p>Eキーで消しゴムモードに切り替え</p>
+            </Tooltip>
+            <i class="ti ti-eraser"></i>
+            <span>消しゴム</span>
+        </button>
+        <div class="exit">
+            <button on:click={() => {
+                $scene = {
+                    type: 'cooking',
+                };
+            }}>
+                終わる
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
     </div>
 </div>
 
@@ -97,12 +165,14 @@
         left: 0;
         right: 0;
         display: flex;
-        align-items: flex-end;
+        flex-direction: column;
+        align-items: center;
         justify-content: center;
         font-size: 1.6rem;
-        gap: 4rem;
+        gap: 1rem;
         animation: fadeIn 0.1621s ease-in;
-        padding: 4rem;
+        padding: 1rem 4rem;
+        padding-bottom: 2rem;
         background: linear-gradient(to top, var(--color-bg-2), color-mix(in srgb, var(--color-bg-2) 50%, transparent 0%));
         outline: 1px solid var(--color-bg-2);
     }
@@ -111,6 +181,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        gap: 1rem;
     }
 
     .config {
@@ -119,13 +190,64 @@
         gap: 1rem;
         font-size: 1.6rem;
         font-weight: 600;
-        margin-top: 1rem;
 
         > p {
             font-size: 1rem;
             font-weight: 600;
             width: 10rem;
             color: var(--color-1);
+        }
+    }
+
+    .color-picker {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.5rem;
+        margin-left: 1rem;
+
+        .color {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            touch-action: manipulation;
+            outline: 3px solid var(--color-bg-2);
+            outline-offset: -1px;
+
+            &::after {
+                content: '';
+                position: absolute;
+                width: 2rem;
+                height: 2rem;
+                transform: translate(-50%, -50%);
+                border-radius: 50%;
+                outline: 2px solid var(--color-outline);
+            }
+
+            &.active {
+                outline-offset: -1px;
+
+                &::before {
+                    content: '';
+                    position: absolute;
+                    width: 2rem;
+                    height: 2rem;
+                    transform: translate(-50%, -50%);
+                    border-radius: 50%;
+                    outline: 4px solid var(--color-bg-2);
+                }
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    width: 2rem;
+                    height: 2rem;
+                    transform: translate(-50%, -50%);
+                    border-radius: 50%;
+                    outline: 4px solid var(--color-1);
+                }
+            }
         }
     }
 
@@ -139,15 +261,8 @@
             font-size: 1.2rem;
         }
     }
-
-    .active {
-        background: var(--color-1);
-        color: var(--color-bg-1);
-        outline: 1px solid var(--color-1);
-        outline-offset: -1px;
-    }
     
-    button {
+    .tool, .exit button {
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -159,7 +274,7 @@
         border: none;
         padding: 0.5rem 1.5rem;
         font-weight: 600;
-        font-size: 1.2rem;
+        font-size: 1rem;
         white-space: nowrap;
         cursor: pointer;
         touch-action: manipulation;
@@ -168,6 +283,21 @@
             outline: 1px solid var(--color-1);
             outline-offset: -1px;
         }
+
+        > i {
+            font-size: 1.2rem;
+        }
+    }
+
+    .exit {
+        margin-left: 5rem;
+    }
+
+    .active {
+        background: var(--color-1);
+        color: var(--color-bg-2);
+        outline: 1px solid var(--color-1);
+        outline-offset: -1px;
     }
 
     @keyframes fadeIn {

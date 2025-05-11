@@ -429,28 +429,33 @@ export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: I
 }
 
 export async function updateHoveringItem(layers: ItemLayer[]) {
+    const ctx = getContext();
+    if (!mouse.over || mouse.ui) {
+        ctx.hovering = null;
+        return;
+    }
     let hit = false;
     const itemsInOrder = getAllItemStates(layers);
-    const held = getContext().held;
-    const heldItem = held ? getContext().items[held] : null;
+    const held = ctx.held;
+    const heldItem = held ? ctx.items[held] : null;
     const ignoreItems = heldItem ? [...getParents(heldItem), ...retrieveAllChildItems(heldItem)].map(item => item.id) : [];
     for (const item of itemsInOrder) {
-        if (item.id === getContext().held) continue;
+        if (item.id === ctx.held) continue;
         if (ignoreItems.includes(item.id)) {
             continue;
         }
         const hovered = await isItemHovering(item);
         if (hovered) {
-            if (getContext().hovering === item.id) {
+            if (ctx.hovering === item.id) {
                 hit = true;
                 break;
             }
-            getContext().hovering = item.id;
+            ctx.hovering = item.id;
             hit = true;
             break;
         }
     }
-    if (!hit && getContext().hovering) {
-        getContext().hovering = null;
+    if (!hit && ctx.hovering) {
+        ctx.hovering = null;
     }
 }

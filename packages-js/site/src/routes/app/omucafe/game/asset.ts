@@ -91,8 +91,8 @@ async function getTexture(key: string, image: HTMLImageElement): Promise<Texture
                 format: 'rgba',
             });
             tex.setParams({
-                minFilter: 'nearest',
-                magFilter: 'nearest',
+                minFilter: 'linear',
+                magFilter: 'linear',
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });

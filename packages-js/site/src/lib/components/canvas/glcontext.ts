@@ -3,7 +3,7 @@ import type { Mat3 } from '$lib/math/mat3.js';
 import type { Mat4 } from '$lib/math/mat4.js';
 import type { PossibleVec2 } from '$lib/math/vec2.js';
 import type { Vec3 } from '$lib/math/vec3.js';
-import type { Vec4 } from '$lib/math/vec4.js';
+import type { Vec4Like } from '$lib/math/vec4.js';
 
 export class GLStateManager {
     public static readonly TEXTURE_UNITS = 32;
@@ -187,7 +187,7 @@ export class ProgramUniform {
         });
     }
 
-    public asVec4(): Uniform<Vec4> {
+    public asVec4(): Uniform<Vec4Like> {
         return this.as('vec4', (value) => {
             this.gl.uniform4f(this.location, value.x, value.y, value.z, value.w);
         });

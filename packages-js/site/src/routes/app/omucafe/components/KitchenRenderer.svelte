@@ -1,7 +1,7 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
-    import { getContext, init, markChanged, render as renderGame } from '../game/game.js';
-    import { createItemState } from '../game/item-state.js';
+    import { getContext, init, markChanged, mouse, render as renderGame } from '../game/game.js';
+    import { createItemState, removeItemState } from '../game/item-state.js';
     import { getGame } from '../omucafe-app.js';
     import ItemDebugInfo from './debug/ItemDebugInfo.svelte';
     import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
@@ -13,7 +13,16 @@
 
 <div class="kitchen">
     <div class="canvas">
-        <Canvas {init} render={renderGame}/>
+        <Canvas
+            {init}
+            render={renderGame}
+            enter={() => {
+                mouse.over = true;
+            }}
+            leave={() => {
+                mouse.over = false;
+            }}
+        />
     </div>
     {#if side === 'client'}
         <div class="debug" class:show-debug={showDebug}>
@@ -43,7 +52,9 @@
                 for (const id in getContext().items) {
                     if (id === 'counter') continue;
                     if (id === 'bell') continue;
-                    delete getContext().items[id];
+                    const item = getContext().items[id];
+                    if (!item) continue;
+                    removeItemState(item);
                 }
                 markChanged();
             }}>

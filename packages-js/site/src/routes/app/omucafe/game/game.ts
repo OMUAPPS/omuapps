@@ -24,6 +24,7 @@ export let matrices: Matrices;
 export let canvas: HTMLCanvasElement;
 export const mouse = {
     over: false,
+    ui: false,
     client: Vec2.ZERO,
     position: Vec2.ZERO,
     delta: Vec2.ZERO,
@@ -164,7 +165,39 @@ function registerMouseEvents() {
             markChanged();
         });
     });
+    window.addEventListener('touchstart', async (e) => {
+        e.preventDefault();
+        inputQueue.push(async () => {
+            mouse.down = true;
+            mouse.downTime = Time.get();
+            mouse.client = new Vec2(e.touches[0].clientX, e.touches[0].clientY);
+            mouse.over = true;
+            markChanged();
+            handleMouseDown();
+        });
+    });
+    window.addEventListener('touchend', async () => {
+        inputQueue.push(async () => {
+            mouse.down = false;
+            mouse.upTime = Time.get();
+            handleMouseUp();
+            markChanged();
+        });
+    });
+    window.addEventListener('touchmove', async (e) => {
+        e.preventDefault();
+        inputQueue.push(async () => {
+            mouse.client = new Vec2(e.touches[0].clientX, e.touches[0].clientY);
+            mouse.over = true;
+            markChanged();
+        });
+    });
     window.addEventListener('mouseout', async () => {
+        inputQueue.push(async () => {
+            mouse.over = false;
+        });
+    });
+    window.addEventListener('mouseleave', async () => {
         inputQueue.push(async () => {
             mouse.over = false;
         });
@@ -174,14 +207,10 @@ function registerMouseEvents() {
             mouse.over = true;
         });
     });
-    window.addEventListener('mouseleave', async () => {
-        inputQueue.push(async () => {
-            mouse.over = false;
-        });
-    });
 }
 
 export async function init(ctx: GlContext) {
+    const { paintSignal } = getGame();
     glContext = ctx;
     registerMouseEvents();
     matrices = new Matrices();
@@ -214,6 +243,13 @@ export async function init(ctx: GlContext) {
     drawFrameBuffer.use(() => {
         drawFrameBuffer.attachTexture(drawFrameBufferTexture);
     });
+    await getTextureByUri(photo_frame);
+    if (side !== 'client') {
+        paintSignal.listen((events) => {
+            paintQueue.push(...events);
+        });
+    }
+        
     await loadBehaviorHandlers();
     if (side === 'client') {
         const counterTex = await getTextureByUri(counter);
@@ -326,8 +362,10 @@ async function renderCounter() {
 
 import { createTransform2, transformToMatrix } from './transform.js';
 
-async function updateMouse() {
-    if (side !== 'client') return;
+async function updateMouseClient() {
+    if (side !== 'client') {
+        throw new Error('Mouse is not in client side');
+    }
     const { gl } = glContext;
     const glMouse = mouse.client.remap(
         Vec2.ZERO,
@@ -347,6 +385,18 @@ async function updateMouse() {
     inputQueue.length = 0;
 }
 
+function updateMouseAsset() {
+    if (side === 'client') {
+        throw new Error('Mouse is not in asset side');
+    }
+    const ctx = getContext();
+    mouse.gl = Vec2.from(ctx.mouse.position);
+    mouse.deltaGl = mouse.gl.sub(mouse.position);
+    const position = matrices.unprojectPoint(ctx.mouse.position);
+    mouse.delta = position.sub(mouse.position);
+    mouse.position = position;
+}
+
 async function update() {
     if (side === 'client') {
         await updateAudioClips(Time.get());
@@ -355,7 +405,7 @@ async function update() {
 
 import { Axis } from '$lib/math/axis.js';
 import { Bezier } from '$lib/math/bezier.js';
-import { getGame } from '../omucafe-app.js';
+import { getGame, type DrawPath, type PaintEvent } from '../omucafe-app.js';
 import { updateAudioClips } from './audioclip.js';
 import { createAction } from './behavior/action.js';
 import { renderBackground, renderEffect, renderOverlay, renderOverlay2 } from './renderer/background.js';
@@ -363,9 +413,16 @@ import { renderCursor } from './renderer/cursor.js';
 import { renderParticles } from './renderer/particle.js';
 import { Time } from './time.js';
 
+function getScreenTime(time: number) {
+    const elapsed = Time.get() - time;
+    const t = 1 / Math.pow(elapsed / 250 + 1, 3);
+    return t;;
+}
+
 async function renderScreen() {
     const { gl } = glContext;
     const { width, height } = gl.canvas;
+    const { paintSignal } = getGame();
     const scene = context.scene;
     if (scene.type === 'item_edit') {
         draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(1, 1, 1, 0.5));
@@ -389,12 +446,11 @@ async function renderScreen() {
         delete context.items['preview'];
         matrices.view.pop();
     } else if (scene.type === 'photo_mode') {
-        const elapsed = Time.get() - scene.time;
-        const t = 1 / Math.pow(elapsed / 250 + 1, 3);
+        const t = getScreenTime(scene.time);
         const photoMode = context.config.photo_mode;
         const client = side === 'client';
         const screenScale = client ? scaleFactor * 0.7 : scaleFactor;
-        const offsetY = client ? matrices.height / 2 - matrices.height * 0.05 - 50 : matrices.height / 2;
+        const offsetY = client ? matrices.height / 2 - matrices.height * 0.07 - 50 : matrices.height / 2;
         await matrices.view.scopeAsync(async () => {
             matrices.view.translate(matrices.width / 2, offsetY, 0);
             matrices.view.scale(screenScale, screenScale, 1);
@@ -423,6 +479,7 @@ async function renderScreen() {
             width / 2, height / 2,
             tex,
         )
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         draw.texture(
             -width / 2, -height / 2,
             width / 2, height / 2,
@@ -447,70 +504,123 @@ async function renderScreen() {
             drawFrameBufferTexture.ensureSize(width, height);
         });
         const tool = photoMode.tool;
-        const eraser = tool.type === 'eraser';
-        const radius = tool.type === 'pen' ? photoMode.pen.width : photoMode.eraser.width;
-        if (client && tool.type !== 'move') {
+        if (tool.type !== 'move' && mouse.over && !mouse.ui) {
+            const radius = tool.type === 'pen' ? photoMode.pen.width : photoMode.eraser.width;
             const cursor = matrices.unprojectPoint(mouse.gl);
+            const penRadius = radius / 0.7 * scaleFactor;
             draw.circle(
                 cursor.x,
                 cursor.y,
-                radius * 0.25 + 2,
-                radius * 0.25 + 8,
+                penRadius + 2,
+                penRadius + 8,
                 new Vec4(1, 1, 1, 1),
             );
             draw.circle(
                 cursor.x,
                 cursor.y,
-                radius * 0.25 + 0,
-                radius * 0.25 + 2,
+                penRadius + 0,
+                penRadius + 2,
                 new Vec4(0, 0, 0, 1),
             );
         }
-        if (tool.type === 'move' || !mouse.down) {
+        if (client && tool.type !== 'move' && mouse.down && mouse.over && !mouse.ui) {
+            let a = { x: 0, y: 0 };
+            let b = { x: 0, y: 0 };
+            let c = { x: 0, y: 0 };
+            if (penTrail) {
+                a = penTrail.last;
+                b = penTrail.last.add(penTrail.dir.scale(0.25));
+                c = mousePos;
+            } else {
+                a = lastPos;
+                b = lastPos.lerp(mousePos, 0.5);
+                c = mousePos;
+            }
+            penTrail = {
+                last: mousePos,
+                dir: Bezier.quadraticDerivative2(a, b, c, 0.5),
+                time: penTrail?.time ?? Time.get(),
+            };
+            const newQueue: PaintEvent[] = [];
+            if (tool.type === 'eraser') {
+                const path: DrawPath = {
+                    type: 'quadratic-bezier',
+                    in: penTrail ? photoMode.eraser.width : 0,
+                    out: photoMode.eraser.width,
+                    a, b, c,
+                }
+                newQueue.push({
+                    type: 'erase',
+                    eraser: photoMode.eraser,
+                    path,
+                });
+            } else {
+                const path: DrawPath = {
+                    type: 'quadratic-bezier',
+                    in: penTrail ? photoMode.pen.width : 0,
+                    out: photoMode.pen.width,
+                    a, b, c,
+                }
+                newQueue.push({
+                    type: 'paint',
+                    path,
+                    pen: photoMode.pen,
+                });
+            }
+            if (side === 'client') {
+                paintQueue.push(...newQueue);
+                paintSignal.notify(newQueue);
+            }
+        } else {
             penTrail = null;
-            return;
         }
-        if (eraser) {
-            gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
-        }
-        matrices.scope(() => {
-            matrices.view.identity();
-            matrices.projection.identity();
-            matrices.projection.orthographic(0, width, height, 0, -1, 1);
-            drawFrameBuffer.use(() => {
-                gl.viewport(0, 0, width, height);
-                let a = { x: 0, y: 0 };
-                let b = { x: 0, y: 0 };
-                let c = { x: 0, y: 0 };
-                if (penTrail) {
-                    a = penTrail.last;
-                    b = penTrail.last.add(penTrail.dir.scale(0.25));
-                    c = mousePos;
-                } else {
-                    a = lastPos;
-                    b = lastPos.lerp(mousePos, 0.5);
-                    c = mousePos;
-                }
-                if (penTrail) {
-                    draw.bezierCurve(
-                        a,
-                        b,
-                        c,
-                        eraser ? Vec4.ONE : new Vec4(0, 0, 0, 1),
-                        penTrail ? radius : 0,
-                        radius,
-                    )
-                }
-                penTrail = {
-                    last: mousePos,
-                    dir: Bezier.quadraticDerivative2(a, b, c, 0.5),
-                    time: penTrail?.time ?? Time.get(),
-                };
-            });
-        });
-        gl.viewport(0, 0, matrices.width, matrices.height);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        processPaintQueue(width, height);
     }
+}
+
+const paintQueue: PaintEvent[] = [];
+
+function processPaintQueue(width: number, height: number) {
+    if (paintQueue.length === 0) return;
+    const { gl } = glContext;
+    matrices.scope(() => {
+        matrices.view.identity();
+        matrices.projection.identity();
+        matrices.projection.orthographic(0, width, height, 0, -1, 1);
+        drawFrameBuffer.use(() => {
+            gl.viewport(0, 0, width, height);
+            for (const event of paintQueue) {
+                if (event.type === 'paint') {
+                    const { path, pen } = event;
+                    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                    draw.bezierCurve(
+                        path.a,
+                        path.b,
+                        path.c,
+                        Vec4.from(pen.color).scale(1 / 255),
+                        path.in,
+                        path.out,
+                    );
+                } else if (event.type === 'erase') {
+                    const { path } = event;
+                    gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
+                    draw.bezierCurve(
+                        path.a,
+                        path.b,
+                        path.c,
+                        new Vec4(0, 0, 0, 1),
+                        path.in,
+                        path.out,
+                    );
+                    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                } else if (event.type === 'clear') {
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                }
+            }
+            paintQueue.length = 0;
+        });
+    });
+    gl.viewport(0, 0, matrices.width, matrices.height);
 }
 
 let penTrail: {
@@ -531,7 +641,7 @@ export async function renderClientSide() {
     const { scene } = context;
 
     setupHUDProjection();
-    await updateMouse();
+    await updateMouseClient();
     setupBackgroundProjection();
     await renderBackground();
 
@@ -560,8 +670,7 @@ export async function renderClientSide() {
 
     setupHUDProjection();
     if (scene.type === 'photo_mode') {
-        const elapsed = Time.get() - scene.time;
-        const t = 1 / Math.pow(elapsed / 200 + 1, 3);
+        const t = getScreenTime(scene.time);
         matrices.view.scope(() => {
             matrices.view.translate(0, 50 * (1 - t), 0);
             draw.texture(
@@ -585,9 +694,13 @@ export async function renderClientSide() {
 }
 
 export async function renderOverlaySide() {
-    if (side !== 'overlay') return;
+    if (side !== 'overlay') {
+        throw new Error('Overlay is not in overlay side');
+    }
     const scene = context.scene;
 
+    setupHUDProjection();
+    updateMouseAsset();
     setupBackgroundProjection();
     await renderEffect();
     
@@ -614,8 +727,7 @@ export async function renderOverlaySide() {
 
     setupHUDProjection();
     if (scene.type === 'photo_mode') {
-        const elapsed = Time.get() - scene.time;
-        const t = 1 / Math.pow(elapsed / 200 + 1, 3);
+        const t = getScreenTime(scene.time);
         matrices.view.scope(() => {
             matrices.view.translate(0, 50 * (1 - t), 0);
             draw.texture(

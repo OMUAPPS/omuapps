@@ -10,9 +10,12 @@
     export let height: number = 0;
     export let fps: number = 60;
     export let requestId: number | null = null;
+    export let contextMenu: boolean = false;
     export let render: (gl: GlContext) => Promise<void> | void = () => {};
     export let render2D: (context: CanvasRenderingContext2D) => Promise<void> | void = () => {};
     export let init: (gl: GlContext) => Promise<void> = async () => {};
+    export let enter: (gl: GlContext) => Promise<void> | void = () => {};
+    export let leave: (gl: GlContext) => Promise<void> | void = () => {};
     export let resize: (gl: GlContext) => void = () => {};
 
     let context: CanvasRenderingContext2D | null = null;
@@ -96,7 +99,34 @@
     });
 </script>
 
-<canvas bind:this={canvas} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight}></canvas>
+<svelte:window
+    on:contextmenu={(event) => {
+        if (event.target !== canvas) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        contextMenu = true;
+        return false;
+    }}
+/>
+<canvas
+    bind:this={canvas}
+    bind:clientWidth={canvasWidth}
+    bind:clientHeight={canvasHeight}
+    on:contextmenu={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        contextMenu = true;
+        return false;
+    }}
+    on:mouseenter={() => {
+        if (glContext) enter(glContext);
+    }}
+    on:mouseleave={() => {
+        if (glContext) leave(glContext);
+    }}
+></canvas>
 
 <style lang="scss">
     canvas {

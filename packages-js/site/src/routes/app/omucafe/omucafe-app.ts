@@ -8,6 +8,7 @@ import { OBSPlugin, permissions } from '@omujs/obs';
 import { App, Omu } from '@omujs/omu';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
 import { RegistryType } from '@omujs/omu/extension/registry/index.js';
+import { SignalType, type Signal } from '@omujs/omu/extension/signal/signal.js';
 import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
 import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
@@ -41,6 +42,38 @@ const APP_CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     defaultValue: DEFAULT_CONFIG,
 });
 
+export const DEFAULT_PEN = {
+    color: {
+        x: 0,
+        y: 0,
+        z: 0,
+        w: 1,
+    } as Vec4Like,
+    opacity: 1,
+    width: 10,
+}
+
+export type Pen = typeof DEFAULT_PEN;
+
+export const DEFAULT_ERASER = {
+    width: 40,
+    opacity: 1,
+}
+
+export type Eraser = typeof DEFAULT_ERASER;
+
+export const DEFAULT_TOOL = {
+    type: 'move',
+} as {
+    type: 'move',
+} | {
+    type: 'pen',
+} | {
+    type: 'eraser',
+}
+
+export type Tool = typeof DEFAULT_TOOL;
+
 export const DEFAULT_GAME_CONFIG = {
     filter: {},
     products: {} as Record<string, Product>,
@@ -50,27 +83,9 @@ export const DEFAULT_GAME_CONFIG = {
     photo_mode: {
         scale: 0,
         offset: Vec2.ZERO as PossibleVec2,
-        tool: {
-            type: 'move',
-        } as {
-            type: 'move',
-        } | {
-            type: 'pen',
-        } | {
-            type: 'eraser',
-        },
-        pen: {
-            color: {
-                x: 0,
-                y: 0,
-                z: 0,
-                w: 1,
-            } as Vec4Like,
-            width: 10,
-        },
-        eraser: {
-            width: 40,
-        }
+        tool: DEFAULT_TOOL,
+        pen: DEFAULT_PEN,
+        eraser: DEFAULT_ERASER,
     },
 };
 
@@ -160,6 +175,31 @@ export type States = typeof DEFAULT_STATES;
 const STATES_REGISTRY_TYPE = RegistryType.createJson<States>(APP_ID, {
     name: 'states',
     defaultValue: DEFAULT_STATES,
+});
+
+export type DrawPath = {
+    type: 'quadratic-bezier',
+    in: number,
+    out: number,
+    a: PossibleVec2,
+    b: PossibleVec2,
+    c: PossibleVec2,
+}
+
+export type PaintEvent = {
+    type: 'paint',
+    pen: Pen,
+    path: DrawPath,
+} | {
+    type: 'erase',
+    eraser: Eraser,
+    path: DrawPath,
+} | {
+    type: 'clear',
+}
+
+const PAINT_SIGNAL_TYPE = SignalType.createJson<PaintEvent[]>(APP_ID, {
+    name: 'paint_event',
 });
 
 function processMessage(message: Message) {
@@ -280,6 +320,7 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
     const sceneRegistry = omu.registries.get(SCENE_REGISTRY_TYPE);
     const scene = makeRegistryWritable(sceneRegistry);
     const orders = omu.tables.get(ORDER_TABLE_TYPE);
+    const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
     const globals = new Globals();
     globals.registerFunction('log', [
         {name: 'message', type: 'string'},
@@ -310,6 +351,7 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
         config,
         states,
         orders,
+        paintSignal,
         scene,
         globals,
     }
@@ -382,6 +424,7 @@ export type Game = {
     config: Writable<Config>,
     states: Writable<States>,
     orders: Table<Order>,
+    paintSignal: Signal<PaintEvent[]>,
     scene: Writable<Scene>,
     globals: Globals,
 };
