@@ -44,9 +44,6 @@ def check_ports():
         if used.is_ok is True:
             continue
         print(f"Port {port} ({name}) is used by: {", ".join([f"{p.name()} ({p.pid})" for p in used.err])}")
-        yes_no = input(f"Do you want to kill the process using port {port}? (y/n): ")
-        if yes_no not in {"y", "Y", "yes", "YES"}:
-            continue
         for process in used.err:
             kill_process(process).unwrap()
 
@@ -83,8 +80,6 @@ async def start_process(command: str):
                     process.terminate()
                 except ProcessLookupError:
                     pass
-        print(f"Restarting process {command} in 5 seconds...")
-        await asyncio.sleep(5)
 
 
 async def build_packages():
