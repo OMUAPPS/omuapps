@@ -81,6 +81,8 @@ class SignalImpl[T](Signal):
             SIGNAL_NOTIFY_PACKET,
             SignalPacket(id=self.type.id, body=data),
         )
+        for listener in self.listeners:
+            await listener(body)
 
     def listen(self, listener: Coro[[T], None]) -> Unlisten:
         if not self.listening:

@@ -81,6 +81,9 @@ class SignalImpl<T> implements Signal<T> {
             id: this.type.id,
             body: data,
         });
+        for (const listener of this.listeners) {
+            listener(body);
+        }
     }
 
     public listen(handler: (value: T) => void): Unlisten {
