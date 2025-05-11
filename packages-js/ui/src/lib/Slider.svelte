@@ -9,10 +9,17 @@
     export let handleChange: (value: number) => void = () => {};
 
     $: {
+        if (step > 0) {
+            value = round(value, step);
+        }
         if (clamp) {
             value = Math.max(min, Math.min(max, value));
         }
         handleChange(value);
+    }
+
+    function round(value: number, precision: number): number {
+        return Math.round(value / precision) * precision;
     }
 
     function lerp(min: number, max: number, t: number): number {
