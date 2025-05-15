@@ -2,9 +2,8 @@
     import { BetterMath } from '$lib/math.js';
     import { AABB2 } from '$lib/math/aabb2.js';
     import type { Mat4 } from '$lib/math/mat4.js';
-    import { Vec2, type PossibleVec2 } from '$lib/math/vec2.js';
+    import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
-    import { onDestroy } from 'svelte';
     import { type Config, type DiscordOverlayApp, type UserConfig, type VoiceStateItem } from '../discord-overlay-app.js';
     import { dragPosition, dragUser, heldUser, isDraggingFinished } from '../states.js';
     import UserSettings from './UserSettings.svelte';
@@ -35,7 +34,7 @@
     const hideAreaMargin = 10;
     const OFFSET = 150;
 
-    function isInHideArea(position: PossibleVec2): boolean {
+    function isInHideArea(position: Vec2Like): boolean {
         const leftTop = screenToWorld(dimentions.width - hideAreaWidth, dimentions.height - hideAreaMargin);
         const rightBottom = screenToWorld(dimentions.width, hideAreaMargin);
         const bounds = AABB2.from({
@@ -45,20 +44,19 @@
         return bounds.contains(position);
     }
 
-    function handleMouseMove(e: MouseEvent) {
-        e.preventDefault();
+    function handleMouseMove(x: number, y: number) {
         if (!lastMouse) return;
         const now = performance.now();
         if (now - lastUpdate < 1000 / 60) {
             return;
         }
-        const dx = (e.clientX - lastMouse[0]);
-        const dy = (e.clientY - lastMouse[1]);
-        lastMouse = [e.clientX, e.clientY];
+        const dx = (x - lastMouse[0]);
+        const dy = (y - lastMouse[1]);
+        lastMouse = [x, y];
         const screen = worldToScreen(user.position[0], user.position[1]);
         const world = screenToWorld(screen.x + dx, screen.y - dy);
         user.position = [world.x, world.y];
-        $dragPosition = new Vec2(e.clientX, e.clientY);
+        $dragPosition = new Vec2(x, y);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         user.show = !isInHideArea({ x: user.position[0], y: user.position[1]});
         $config = { ...$config };
@@ -86,7 +84,7 @@
         }
     }
 
-    function handleMouseDown(e: MouseEvent) {
+    function handleMouseDown(x: number, y: number) {
         if (!user.show) {
             const invisible = Object.entries($config.users)
                 .filter(([,user]) => !user.show)
@@ -96,18 +94,11 @@
             const hideAreaPosition = getHideAreaPosition(index);
             user.position = screenToWorld(hideAreaPosition[0] + rect.width / 2, hideAreaPosition[1] + OFFSET - rect.height / 2).toArray();
         }
-        lastMouse = [e.clientX, e.clientY];
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
+        lastMouse = [x, y];
         $dragUser = id;
         clickTime = performance.now();
         clickDistance = 0;
     }
-
-    onDestroy(() => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-    });
 
     function getHideAreaPosition(index: number): [number, number] {
         const invisible = Object.entries($config.users)
@@ -198,12 +189,43 @@
     }
 </script>
 
+<svelte:window
+    on:mousemove={(event) => {
+        if (lastMouse) {
+            const x = event.clientX;
+            const y = event.clientY;
+            handleMouseMove(x, y);
+        }
+    }}
+    on:mouseup={() => {
+        if (lastMouse) {
+            handleMouseUp();
+        }
+    }}
+    on:touchmove={(event) => {
+        if (lastMouse) {
+            const touch = event.touches[0];
+            handleMouseMove(touch.clientX, touch.clientY);
+        }
+    }}
+    on:touchend={() => {
+        if (lastMouse) {
+            handleMouseUp();
+        }
+    }}
+/>
+
 <button
     class="control"
     class:dragging={lastMouse || ($dragUser && $dragUser == id)}
     bind:this={element}
     style={getStyle(rect, $config, view, dimentions)}
-    on:mousedown={handleMouseDown}
+    on:mousedown={(event) => handleMouseDown(event.clientX, event.clientY)}
+    on:touchstart={(event) => {
+        event.preventDefault();
+        const touch = event.touches[0];
+        handleMouseDown(touch.clientX, touch.clientY);
+    }}
     on:click={() => {
         const elapsed = performance.now() - clickTime;
         if (elapsed > 200 || clickDistance > 2) {
