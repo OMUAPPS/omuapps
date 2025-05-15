@@ -64,8 +64,6 @@
     }
 
     function handleMouseUp() {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
         if (!user.show) {
             const invisible = Object.entries($config.users)
                 .filter(([,user]) => !user.show)
