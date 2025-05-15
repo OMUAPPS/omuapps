@@ -1,6 +1,6 @@
 import type { Mat4 } from '$lib/math/mat4.js';
 import { MatrixStack } from '$lib/math/matrix-stack.js';
-import type { PossibleVec2, Vec2 } from '$lib/math/vec2.js';
+import type { Vec2, Vec2Like } from '$lib/math/vec2.js';
 
 export class Matrices {
     public width: number = 0;
@@ -43,14 +43,14 @@ export class Matrices {
         return this.projection.get().multiply(this.view.get().multiply(this.model.get()));
     }
 
-    public projectPoint(vec: PossibleVec2): Vec2 {
+    public projectPoint(vec: Vec2Like): Vec2 {
         const projection = this.projection.get();
         const model = this.model.get();
         const view = this.view.get();
         return projection.transform2(view.transform2(model.transform2(vec)));
     }
 
-    public unprojectPoint(vec: PossibleVec2): Vec2 {
+    public unprojectPoint(vec: Vec2Like): Vec2 {
         const projection = this.projection.get();
         const model = this.model.get();
         const view = this.view.get();
@@ -60,14 +60,14 @@ export class Matrices {
         return invModel.transform2(invView.transform2(invProjection.transform2(vec)));
     }
 
-    public projectBasis(point: PossibleVec2): Vec2 {
+    public projectBasis(point: Vec2Like): Vec2 {
         const projection = this.projection.get();
         const model = this.model.get();
         const view = this.view.get();
         return projection.basisTransform2(view.basisTransform2(model.basisTransform2(point)));
     }
 
-    public unprojectBasis(point: PossibleVec2): Vec2 {
+    public unprojectBasis(point: Vec2Like): Vec2 {
         const projection = this.projection.get();
         const model = this.model.get();
         const view = this.view.get();

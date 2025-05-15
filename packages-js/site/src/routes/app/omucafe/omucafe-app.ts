@@ -1,5 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { Vec2, type PossibleVec2 } from '$lib/math/vec2.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { type Vec4Like } from '$lib/math/vec4.js';
 import { Chat, events } from '@omujs/chat';
 import type { Message } from '@omujs/chat/models/message.js';
@@ -16,11 +16,11 @@ import { get, writable, type Writable } from 'svelte/store';
 import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
 import type { PlayingAudioClip } from './game/audioclip.js';
 import type { Effect } from './game/effect.js';
-import { getContext, setContext } from './game/game.js';
+import { getContext, mouse, setContext } from './game/game.js';
 import { copy } from './game/helper.js';
 import { cloneItemState, ITEM_LAYERS, removeItemState, type ItemState } from './game/item-state.js';
 import type { Item } from './game/item.js';
-import type { Kitchen } from './game/kitchen.js';
+import type { Kitchen, MouseState } from './game/kitchen.js';
 import type { Product } from './game/product.js';
 import { assertValue, builder, Globals, ScriptError, type Script, type ScriptContext, type Value } from './game/script.js';
 import { Time } from './game/time.js';
@@ -82,7 +82,7 @@ export const DEFAULT_GAME_CONFIG = {
     scripts: {} as Record<string, Script>,
     photo_mode: {
         scale: 0,
-        offset: Vec2.ZERO as PossibleVec2,
+        offset: Vec2.ZERO as Vec2Like,
         tool: DEFAULT_TOOL,
         pen: DEFAULT_PEN,
         eraser: DEFAULT_ERASER,
@@ -163,9 +163,11 @@ export const DEFAULT_STATES = {
         items: {} as Record<string, ItemState>,
         held: null as string | null,
         mouse: {
-            position: Vec2.ZERO as PossibleVec2,
-            delta: Vec2.ZERO as PossibleVec2,
-        },
+            position: Vec2.ZERO as Vec2Like,
+            delta: Vec2.ZERO as Vec2Like,
+            over: false as boolean,
+            ui: false as boolean,
+        } satisfies MouseState,
         hovering: null as string | null,
     } satisfies Kitchen,
 };
@@ -181,9 +183,9 @@ export type DrawPath = {
     type: 'quadratic-bezier',
     in: number,
     out: number,
-    a: PossibleVec2,
-    b: PossibleVec2,
-    c: PossibleVec2,
+    a: Vec2Like,
+    b: Vec2Like,
+    c: Vec2Like,
 }
 
 export type PaintEvent = {
@@ -200,6 +202,11 @@ export type PaintEvent = {
 
 const PAINT_SIGNAL_TYPE = SignalType.createJson<PaintEvent[]>(APP_ID, {
     name: 'paint_event',
+});
+
+const PAINT_EVENTS_REGISTRY_TYPE = RegistryType.createJson<PaintEvent[]>(APP_ID, {
+    name: 'paint_events',
+    defaultValue: [],
 });
 
 function processMessage(message: Message) {
@@ -321,6 +328,7 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
     const scene = makeRegistryWritable(sceneRegistry);
     const orders = omu.tables.get(ORDER_TABLE_TYPE);
     const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
+    const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
     const globals = new Globals();
     globals.registerFunction('log', [
         {name: 'message', type: 'string'},
@@ -352,6 +360,7 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
         states,
         orders,
         paintSignal,
+        paintEvents,
         scene,
         globals,
     }
@@ -380,8 +389,10 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
             ...(await statesRegistry.get()).kitchen,
             side,
             mouse: {
-                position: Vec2.ZERO as PossibleVec2,
-                delta: Vec2.ZERO as PossibleVec2,
+                position: Vec2.ZERO as Vec2Like,
+                delta: Vec2.ZERO as Vec2Like,
+                over: mouse.over,
+                ui: mouse.ui,
             },
             config: await gameConfigRegistry.get(),
             scene: await sceneRegistry.get(),
@@ -425,6 +436,7 @@ export type Game = {
     states: Writable<States>,
     orders: Table<Order>,
     paintSignal: Signal<PaintEvent[]>,
+    paintEvents: Writable<PaintEvent[]>,
     scene: Writable<Scene>,
     globals: Globals,
 };

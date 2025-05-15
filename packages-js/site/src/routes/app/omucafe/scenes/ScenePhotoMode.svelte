@@ -1,5 +1,7 @@
 <script lang="ts">
     import { Slider, Tooltip } from '@omujs/ui';
+    import { fly } from 'svelte/transition';
+    import { paintQueue } from '../game/game.js';
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
@@ -7,14 +9,14 @@
     $: console.log('ScenePhotoMode', context);
 
     const COLORS = [
-        {x: 0x00, y: 0x00, z: 0x00},
+        {x: 0x30, y: 0x30, z: 0x30},
         {x: 0xEB, y: 0x6F, z: 0x9A},
         {x: 0xF1, y: 0x73, z: 0x61},
         {x: 0xE4, y: 0x83, z: 0x16},
         {x: 0xC5, y: 0x98, z: 0x00},
         {x: 0x92, y: 0xAC, z: 0x1C},
         {x: 0x44, y: 0xB9, z: 0x67},
-        {x: 0xFF, y: 0xFF, z: 0xFF},
+        {x: 0xff, y: 0xff, z: 0xff},
         {x: 0x00, y: 0xBB, z: 0xA2},
         {x: 0x00, y: 0xB5, z: 0xCE},
         {x: 0x0B, y: 0xA9, z: 0xF6},
@@ -63,11 +65,12 @@
 />
 
 <div class="screen">
-    <div class="config">
-        {#if $gameConfig.photo_mode.tool.type === 'pen'}
-            {@const current = $gameConfig.photo_mode.pen.color}
+    {#if $gameConfig.photo_mode.tool.type === 'pen'}
+        {@const current = $gameConfig.photo_mode.pen.color}
+        <div class="config" transition:fly={{ y: 10, duration: 1000 / 60 * 3 }}>
             <p>ペンの太さ</p>
             <Slider
+                unit="px"
                 min={0}
                 max={400}
                 step={1}
@@ -91,26 +94,32 @@
                     ></button>
                 {/each}
             </div>
-        {:else if $gameConfig.photo_mode.tool.type === 'eraser'}
+        </div>
+    {:else if $gameConfig.photo_mode.tool.type === 'eraser'}
+        <div class="config" transition:fly={{ y: 10, duration: 1000 / 60 * 3 }}>
             <p>消しゴムの太さ</p>
             <Slider
+                unit="px"
                 min={0}
                 max={400}
                 step={1}
                 clamp={true}
                 bind:value={$gameConfig.photo_mode.eraser.width}
             />
-        {:else if $gameConfig.photo_mode.tool.type === 'move'}
+        </div>
+    {:else if $gameConfig.photo_mode.tool.type === 'move'}
+        <div class="config" transition:fly={{ y: 10, duration: 1000 / 60 * 3 }}>
             <p>アイテムの大きさ</p>
             <Slider
+                unit="x"
                 min={-10}
                 max={10}
                 step={0.1}
                 clamp={true}
                 bind:value={$gameConfig.photo_mode.scale}
             />
-        {/if}
-    </div>
+        </div>
+    {/if}
     <div class="tools">
         <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'move'} on:click={() => {
             $gameConfig.photo_mode.tool = {
@@ -150,6 +159,9 @@
                 $scene = {
                     type: 'cooking',
                 };
+                paintQueue.push({
+                    type: 'clear',
+                });
             }}>
                 終わる
                 <i class="ti ti-x"></i>
@@ -164,10 +176,11 @@
         bottom: 0;
         left: 0;
         right: 0;
+        height: 12rem;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-end;
         font-size: 1.6rem;
         gap: 1rem;
         animation: fadeIn 0.1621s ease-in;
@@ -185,8 +198,13 @@
     }
 
     .config {
-        display: flex;
+        position: absolute;
+        left: 0;
+        right: 0;
         align-items: baseline;
+        justify-content: center;
+        display: flex;
+        bottom: 6rem;
         gap: 1rem;
         font-size: 1.6rem;
         font-weight: 600;
@@ -212,7 +230,7 @@
             border: none;
             cursor: pointer;
             touch-action: manipulation;
-            outline: 3px solid var(--color-bg-2);
+            outline: 4px solid var(--color-bg-2);
             outline-offset: -1px;
 
             &::after {
@@ -236,6 +254,7 @@
                     transform: translate(-50%, -50%);
                     border-radius: 50%;
                     outline: 4px solid var(--color-bg-2);
+                    transition: all 0.02621s ease-in-out;
                 }
 
                 &::after {
@@ -246,6 +265,7 @@
                     transform: translate(-50%, -50%);
                     border-radius: 50%;
                     outline: 4px solid var(--color-1);
+                    transition: all 0.02621s ease-in-out;
                 }
             }
         }

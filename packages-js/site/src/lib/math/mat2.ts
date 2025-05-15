@@ -1,4 +1,4 @@
-import { Vec2, type PossibleVec2 } from './vec2.js';
+import { Vec2, type Vec2Like } from './vec2.js';
 
 export class Mat2 {
     public static readonly IDENTITY = new Mat2(1, 0, 0, 1);
@@ -69,7 +69,7 @@ export class Mat2 {
         );
     }
 
-    public transform(v: PossibleVec2): Vec2 {
+    public transform(v: Vec2Like): Vec2 {
         return new Vec2(
             this.m00 * v.x + this.m01 * v.y,
             this.m10 * v.x + this.m11 * v.y

@@ -1,10 +1,10 @@
 import { Mat4 } from '$lib/math/mat4.js';
-import type { PossibleVec2 } from '$lib/math/vec2.js';
+import type { Vec2Like } from '$lib/math/vec2.js';
 
 export type Transform = {
-    right: PossibleVec2,
-    up: PossibleVec2,
-    offset: PossibleVec2,
+    right: Vec2Like,
+    up: Vec2Like,
+    offset: Vec2Like,
 }
 
 export function createTransform(): Transform {
@@ -16,9 +16,9 @@ export function createTransform(): Transform {
 }
 
 export function createTransform2(
-    scale: PossibleVec2,
+    scale: Vec2Like,
     rotation: number,
-    offset: PossibleVec2,
+    offset: Vec2Like,
 ): Transform {
     const cos = Math.cos(rotation);
     const sin = Math.sin(rotation);
@@ -30,8 +30,8 @@ export function createTransform2(
 }
 
 export type Bounds = {
-    min: PossibleVec2,
-    max: PossibleVec2,
+    min: Vec2Like,
+    max: Vec2Like,
 };
 
 export function transformToMatrix(transform: Transform): Mat4 {

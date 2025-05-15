@@ -122,6 +122,8 @@ function syncData() {
             mouse: {
                 position: mouse.gl,
                 delta: mouse.deltaGl,
+                over: mouse.over,
+                ui: mouse.ui,
             },
         }
     });
@@ -210,7 +212,7 @@ function registerMouseEvents() {
 }
 
 export async function init(ctx: GlContext) {
-    const { paintSignal } = getGame();
+    const { paintSignal, paintEvents } = getGame();
     glContext = ctx;
     registerMouseEvents();
     matrices = new Matrices();
@@ -249,6 +251,10 @@ export async function init(ctx: GlContext) {
             paintQueue.push(...events);
         });
     }
+    await once((resolve) => paintEvents.subscribe((events) => {
+        paintQueue.push(...events);
+        resolve();
+    }));
         
     await loadBehaviorHandlers();
     if (side === 'client') {
@@ -395,6 +401,8 @@ function updateMouseAsset() {
     const position = matrices.unprojectPoint(ctx.mouse.position);
     mouse.delta = position.sub(mouse.position);
     mouse.position = position;
+    mouse.over = ctx.mouse.over;
+    mouse.ui = ctx.mouse.ui;
 }
 
 async function update() {
@@ -403,6 +411,7 @@ async function update() {
     }
 }
 
+import { once } from '$lib/helper.js';
 import { Axis } from '$lib/math/axis.js';
 import { Bezier } from '$lib/math/bezier.js';
 import { getGame, type DrawPath, type PaintEvent } from '../omucafe-app.js';
@@ -415,14 +424,14 @@ import { Time } from './time.js';
 
 function getScreenTime(time: number) {
     const elapsed = Time.get() - time;
-    const t = 1 / Math.pow(elapsed / 250 + 1, 3);
-    return t;;
+    const t = 1 / Math.pow(elapsed / 250 + 1, 3) * (1 - (4000 / elapsed + 1) * 0.1);
+    return t;
 }
 
 async function renderScreen() {
     const { gl } = glContext;
     const { width, height } = gl.canvas;
-    const { paintSignal } = getGame();
+    const { paintSignal, paintEvents } = getGame();
     const scene = context.scene;
     if (scene.type === 'item_edit') {
         draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(1, 1, 1, 0.5));
@@ -569,7 +578,6 @@ async function renderScreen() {
             }
             if (side === 'client') {
                 paintQueue.push(...newQueue);
-                paintSignal.notify(newQueue);
             }
         } else {
             penTrail = null;
@@ -578,10 +586,18 @@ async function renderScreen() {
     }
 }
 
-const paintQueue: PaintEvent[] = [];
+export const paintQueue: PaintEvent[] = [];
 
 function processPaintQueue(width: number, height: number) {
     if (paintQueue.length === 0) return;
+    const { paintSignal, paintEvents } = getGame();
+    if (side === 'client') {
+        paintEvents.update((events) => {
+            events.push(...paintQueue);
+            return events;
+        });
+        paintSignal.notify(paintQueue);
+    }
     const { gl } = glContext;
     matrices.scope(() => {
         matrices.view.identity();

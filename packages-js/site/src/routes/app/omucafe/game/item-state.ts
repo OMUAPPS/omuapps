@@ -296,16 +296,18 @@ export async function renderItems(layers: ItemLayer[]) {
 }
 
 export async function renderHeldItem() {
-    const { held } = getContext();
+    const { side, held } = getContext();
     if (!held) return;
     const item = getContext().items[held];
     if (!item) return;
-    // delta2 = current - (current + delta)
-    const view = matrices.view.get().inverse();
-    const delta = view.basisTransform2(mouse.delta);
-    item.transform.offset = {
-        x: item.transform.offset.x + delta.x,
-        y: item.transform.offset.y + delta.y,
+    if (side == 'client') {
+        // delta2 = current - (current + delta)
+        const view = matrices.view.get().inverse();
+        const delta = view.basisTransform2(mouse.delta);
+        item.transform.offset = {
+            x: item.transform.offset.x + delta.x,
+            y: item.transform.offset.y + delta.y,
+        }
     }
     await renderItemState(item);
 }

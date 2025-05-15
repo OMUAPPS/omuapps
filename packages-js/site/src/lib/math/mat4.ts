@@ -1,5 +1,5 @@
 import type { Quaternion } from './quaternion.js';
-import { Vec2, type PossibleVec2 } from './vec2.js';
+import { Vec2, type Vec2Like } from './vec2.js';
 import { Vec3 } from './vec3.js';
 
 export class Mat4 {
@@ -237,13 +237,13 @@ export class Mat4 {
         return new Vec3(x, y, z);
     }
 
-    public transform2(point: PossibleVec2): Vec2 {
+    public transform2(point: Vec2Like): Vec2 {
         const x = this.m00 * point.x + this.m10 * point.y + this.m30;
         const y = this.m01 * point.x + this.m11 * point.y + this.m31;
         return new Vec2(x, y);
     }
 
-    public basisTransform2(point: PossibleVec2): Vec2 {
+    public basisTransform2(point: Vec2Like): Vec2 {
         const x = this.m00 * point.x + this.m10 * point.y;
         const y = this.m01 * point.x + this.m11 * point.y;
         return new Vec2(x, y);

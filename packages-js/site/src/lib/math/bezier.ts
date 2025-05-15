@@ -1,5 +1,5 @@
 import { AABB2 } from './aabb2.js';
-import { Vec2, type PossibleVec2 } from './vec2.js';
+import { Vec2, type Vec2Like } from './vec2.js';
 
 export class Bezier {
     public static quadratic(
@@ -15,9 +15,9 @@ export class Bezier {
     }
 
     public static quadratic2(
-        a: PossibleVec2,
-        b: PossibleVec2,
-        c: PossibleVec2,
+        a: Vec2Like,
+        b: Vec2Like,
+        c: Vec2Like,
         t: number
     ): Vec2 {
         return new Vec2(
@@ -38,9 +38,9 @@ export class Bezier {
     }
 
     public static quadraticDerivative2(
-        a: PossibleVec2,
-        b: PossibleVec2,
-        c: PossibleVec2,
+        a: Vec2Like,
+        b: Vec2Like,
+        c: Vec2Like,
         t: number,
     ): Vec2 {
         return new Vec2(
@@ -73,9 +73,9 @@ export class Bezier {
     }
 
     public static quadraticBounds2(
-        a: PossibleVec2,
-        b: PossibleVec2,
-        c: PossibleVec2
+        a: Vec2Like,
+        b: Vec2Like,
+        c: Vec2Like
     ): AABB2 {
         const [minX, maxX] = this.quadraticBounds(a.x, b.x, c.x);
         const [minY, maxY] = this.quadraticBounds(a.y, b.y, c.y);

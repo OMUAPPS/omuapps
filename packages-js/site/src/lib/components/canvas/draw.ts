@@ -1,5 +1,5 @@
 import { Bezier } from '$lib/math/bezier.js';
-import { Vec2, type PossibleVec2 } from '$lib/math/vec2.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlShader, GlTexture } from './glcontext.js';
 import type { Matrices } from './matrices.js';
@@ -522,9 +522,9 @@ export class Draw {
     }
 
     public bezierCurve(
-        a: PossibleVec2,
-        b: PossibleVec2,
-        c: PossibleVec2,
+        a: Vec2Like,
+        b: Vec2Like,
+        c: Vec2Like,
         color: Vec4Like,
         widthIn: number,
         widthOut: number
