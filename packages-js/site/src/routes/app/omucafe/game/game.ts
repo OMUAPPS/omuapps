@@ -590,13 +590,25 @@ export const paintQueue: PaintEvent[] = [];
 
 function processPaintQueue(width: number, height: number) {
     if (paintQueue.length === 0) return;
+    const queue = paintQueue.slice();
     const { paintSignal, paintEvents } = getGame();
+    let start = 0;
+    let clear = false;
+    for (const [i, event] of queue.entries()) {
+        if (event.type === 'clear') {
+            start = i;
+            clear = true;
+        }
+    }
     if (side === 'client') {
         paintEvents.update((events) => {
-            events.push(...paintQueue);
+            if (clear) {
+                events.length = 0;
+            }
+            events.push(...queue);
             return events;
         });
-        paintSignal.notify(paintQueue);
+        paintSignal.notify(queue);
     }
     const { gl } = glContext;
     matrices.scope(() => {
@@ -605,7 +617,8 @@ function processPaintQueue(width: number, height: number) {
         matrices.projection.orthographic(0, width, height, 0, -1, 1);
         drawFrameBuffer.use(() => {
             gl.viewport(0, 0, width, height);
-            for (const event of paintQueue) {
+            for (let i = start; i < queue.length; i++) {
+                const event = queue[i];
                 if (event.type === 'paint') {
                     const { path, pen } = event;
                     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);

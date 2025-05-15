@@ -148,8 +148,12 @@ export function once(fn: (resolve: () => void) => (PromiseLike<() => unknown>) |
     return new Promise((_resolve) => {
         const promise = fn(async () => {
             _resolve();
+        });
+        (async () => {
             const unlisten = await promise;
             unlisten();
+        })().catch((e) => {
+            console.error('Error in once:', e);
         });
     });
 }
