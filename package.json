@@ -18,7 +18,6 @@
         "build-tauri": "bun run --cwd packages-js/dash build",
         "publish": "bun ./scripts/js-publish.ts",
         "clean": "bun ./scripts/js-clean.ts",
-        "dev": "python ./scripts/py-dev.py",
         "eslint": "eslint"
     },
     "devDependencies": {

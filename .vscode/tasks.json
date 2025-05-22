@@ -12,7 +12,7 @@
             "label": "dev",
             "type": "shell",
             "isBackground": true,
-            "command": "bun dev",
+            "command": "python ./scripts/py-dev.py",
         },
     ]
 }
