@@ -145,6 +145,7 @@ export function stopAudioClip(
 }
 
 const playingElements: Map<string, HTMLAudioElement> = new Map()
+const MAX_AUDIO_DURATION = 60 * 1000 * 5; // 5 minutes
 
 export async function updateAudioClips(
     time: number,
@@ -154,6 +155,11 @@ export async function updateAudioClips(
     const { audios } = context
     for (const id in audios) {
         const audio = audios[id]
+        const elapsed = time - audio.startTime;
+        if (elapsed > MAX_AUDIO_DURATION) {
+            delete audios[id]
+            continue;
+        }
         const exist = playingElements.get(id)
         if (exist) {
             if (audio.stopTime) {
@@ -163,13 +169,15 @@ export async function updateAudioClips(
                 delete audios[id]
             }
             continue;
+        } else if (audio.stopTime) {
+            delete audios[id]
+            continue;
         }
         if (audio.clip.type !== 'clip') {
             throw new Error(`Unsupported audio clip type: ${audio.clip.type}`)
         }
         const element = playingElements.get(id) || await getAudioByAsset(audio.clip.asset);
         playingElements.set(id, element)
-        const elapsed = time - audio.startTime;
         element.currentTime = audio.clip.start + elapsed;
         element.play();
         element.loop = false;

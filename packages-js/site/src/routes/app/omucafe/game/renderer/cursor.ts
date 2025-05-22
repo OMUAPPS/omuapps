@@ -10,6 +10,7 @@ import { Time } from '../time.js';
 export async function renderCursor() {
     const ctx = getContext();
     if (ctx.side === 'client' && !mouse.over) return;
+    if (ctx.mouse.ui) return;
     matrices.model.push();
     matrices.view.push();
     const position = ctx.side === 'client' ? mouse.client : matrices.unprojectPoint(ctx.mouse.position);

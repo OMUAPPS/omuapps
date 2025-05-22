@@ -3,10 +3,9 @@
     import { getContext, init, markChanged, mouse, render as renderGame } from '../game/game.js';
     import { createItemState, removeItemState } from '../game/item-state.js';
     import { getGame } from '../omucafe-app.js';
-    import ItemDebugInfo from './debug/ItemDebugInfo.svelte';
     import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
 
-    const { gameConfig: config } = getGame();
+    const { gameConfig: config, states, paintEvents } = getGame();
     export let side: 'client' | 'overlay' | 'background';
     let showDebug = false;
 </script>
@@ -27,15 +26,16 @@
     {#if side === 'client'}
         <div class="debug" class:show-debug={showDebug}>
             <h2>
-                {JSON.stringify(getContext().states).length}
+                states: {JSON.stringify($states).length}
                 <button on:click={() => showDebug = !showDebug}>
                     {showDebug ? 'hide' : 'show'}
                 </button>
             </h2>
-            <JsonDebugInfo value={getContext()} />
-            {#each Object.values(getContext().items) as item (item.id)}
-                <ItemDebugInfo {item} />
-            {/each}
+            <JsonDebugInfo value={$states} />
+            <h2>
+                paintEvents: {JSON.stringify($paintEvents).length}
+            </h2>
+            <JsonDebugInfo value={$paintEvents} />
         </div>
         <div class="ui">
             {#each Object.entries($config.items) as [id, item] (id)}

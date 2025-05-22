@@ -432,6 +432,7 @@ export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: I
 
 export async function updateHoveringItem(layers: ItemLayer[]) {
     const ctx = getContext();
+    if (ctx.side !== 'client') return;
     if (!mouse.over || mouse.ui) {
         ctx.hovering = null;
         return;

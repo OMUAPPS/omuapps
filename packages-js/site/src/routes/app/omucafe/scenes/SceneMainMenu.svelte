@@ -11,7 +11,7 @@
 </script>
 
 <svelte:window on:keydown={(event) => {
-    if (!context.current) return;
+    if (!context.active) return;
     if (event.key === 'Escape') {
         $scene = { type: 'cooking' };
     }

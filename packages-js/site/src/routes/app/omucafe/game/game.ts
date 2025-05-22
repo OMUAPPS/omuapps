@@ -129,7 +129,8 @@ function syncData() {
     });
 }
 
-export function markChanged() {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function markChanged(...args: unknown[]) {
     changed = true;
 }
 
@@ -212,7 +213,7 @@ function registerMouseEvents() {
 }
 
 export async function init(ctx: GlContext) {
-    const { paintSignal, paintEvents } = getGame();
+    const { paintSignal, paintEvents, gameConfig } = getGame();
     glContext = ctx;
     registerMouseEvents();
     matrices = new Matrices();
@@ -251,8 +252,13 @@ export async function init(ctx: GlContext) {
             paintQueue.push(...events);
         });
     }
-    await once((resolve) => paintEvents.subscribe((events) => {
-        paintQueue.push(...events);
+    await once((resolve) => paintEvents.subscribe((buffer) => {
+        paintQueue.push(...buffer.read());
+        resolve();
+    }));
+    await once((resolve) => gameConfig.subscribe((gameConfig) => {
+        paintTools.pen = gameConfig.photo_mode.pen;
+        paintTools.eraser = gameConfig.photo_mode.eraser;
         resolve();
     }));
         
@@ -414,9 +420,10 @@ async function update() {
 import { once } from '$lib/helper.js';
 import { Axis } from '$lib/math/axis.js';
 import { Bezier } from '$lib/math/bezier.js';
-import { getGame, type DrawPath, type PaintEvent } from '../omucafe-app.js';
+import { DEFAULT_ERASER, DEFAULT_PEN, getGame, PAINT_EVENT_TYPE, PaintBuffer, type Eraser, type PaintEvent, type Pen } from '../omucafe-app.js';
 import { updateAudioClips } from './audioclip.js';
 import { createAction } from './behavior/action.js';
+import { copy } from './helper.js';
 import { renderBackground, renderEffect, renderOverlay, renderOverlay2 } from './renderer/background.js';
 import { renderCursor } from './renderer/cursor.js';
 import { renderParticles } from './renderer/particle.js';
@@ -431,7 +438,6 @@ function getScreenTime(time: number) {
 async function renderScreen() {
     const { gl } = glContext;
     const { width, height } = gl.canvas;
-    const { paintSignal, paintEvents } = getGame();
     const scene = context.scene;
     if (scene.type === 'item_edit') {
         draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(1, 1, 1, 0.5));
@@ -533,9 +539,10 @@ async function renderScreen() {
             );
         }
         if (client && tool.type !== 'move' && mouse.down && mouse.over && !mouse.ui) {
-            let a = { x: 0, y: 0 };
-            let b = { x: 0, y: 0 };
-            let c = { x: 0, y: 0 };
+            let a: Vec2 = Vec2.ZERO;
+            let b: Vec2 = Vec2.ZERO;
+            let c: Vec2 = Vec2.ZERO;
+            const distance = mousePos.sub(penTrail?.last ?? Vec2.ZERO).length();
             if (penTrail) {
                 a = penTrail.last;
                 b = penTrail.last.add(penTrail.dir.scale(0.25));
@@ -551,34 +558,30 @@ async function renderScreen() {
                 time: penTrail?.time ?? Time.get(),
             };
             const newQueue: PaintEvent[] = [];
-            if (tool.type === 'eraser') {
-                const path: DrawPath = {
-                    type: 'quadratic-bezier',
-                    in: penTrail ? photoMode.eraser.width : 0,
-                    out: photoMode.eraser.width,
-                    a, b, c,
+            if (distance > 0.5) {
+                if (tool.type === 'eraser') {
+                    newQueue.push({
+                        t: PAINT_EVENT_TYPE.ERASER,
+                        path: {
+                            t: 'qb',
+                            in: penTrail ? photoMode.eraser.width : 0,
+                            out: photoMode.eraser.width,
+                            a, b, c,
+                        }
+                    });
+                } else {
+                    newQueue.push({
+                        t: PAINT_EVENT_TYPE.PEN,
+                        path: {
+                            t: 'qb',
+                            in: penTrail ? photoMode.pen.width : 0,
+                            out: photoMode.pen.width,
+                            a, b, c,
+                        }
+                    });
                 }
-                newQueue.push({
-                    type: 'erase',
-                    eraser: photoMode.eraser,
-                    path,
-                });
-            } else {
-                const path: DrawPath = {
-                    type: 'quadratic-bezier',
-                    in: penTrail ? photoMode.pen.width : 0,
-                    out: photoMode.pen.width,
-                    a, b, c,
-                }
-                newQueue.push({
-                    type: 'paint',
-                    path,
-                    pen: photoMode.pen,
-                });
             }
-            if (side === 'client') {
-                paintQueue.push(...newQueue);
-            }
+            paintQueue.push(...newQueue);
         } else {
             penTrail = null;
         }
@@ -587,26 +590,68 @@ async function renderScreen() {
 }
 
 export const paintQueue: PaintEvent[] = [];
+export const paintTools = {
+    pen: DEFAULT_PEN satisfies Pen,
+    eraser: DEFAULT_ERASER satisfies Eraser,
+}
 
 function processPaintQueue(width: number, height: number) {
     if (paintQueue.length === 0) return;
-    const queue = paintQueue.slice();
+    const queue: PaintEvent[] = [];
     const { paintSignal, paintEvents } = getGame();
-    let start = 0;
     let clear = false;
-    for (const [i, event] of queue.entries()) {
-        if (event.type === 'clear') {
-            start = i;
+    const { pen: newPen, eraser: newEraser } = context.config.photo_mode;
+    if (newPen.width !== paintTools.pen.width || newPen.opacity !== paintTools.pen.opacity || !Vec4.from(newPen.color).equal(paintTools.pen.color)) {
+        paintTools.pen = copy(newPen);
+        paintQueue.push({
+            t: 'cp',
+            pen: newPen,
+        });
+    }
+    if (newEraser.width !== paintTools.eraser.width || newEraser.opacity !== paintTools.eraser.opacity) {
+        paintTools.eraser = copy(newEraser);
+        paintQueue.push({
+            t: 'ce',
+            eraser: newEraser,
+        });
+    }
+    let last: PaintEvent | null = null;
+    for (const event of paintQueue) {
+        if (last && last.t === PAINT_EVENT_TYPE.CHANGE_PEN && event.t === PAINT_EVENT_TYPE.CHANGE_PEN) {
+            queue.pop();
+            queue.push({
+                t: PAINT_EVENT_TYPE.CHANGE_PEN,
+                pen: event.pen,
+            });
+        } else if (last && last.t === PAINT_EVENT_TYPE.CHANGE_ERASER && event.t === PAINT_EVENT_TYPE.CHANGE_ERASER) {
+            queue.pop();
+            queue.push({
+                t: PAINT_EVENT_TYPE.CHANGE_ERASER,
+                eraser: event.eraser,
+            });
+        } else if (event.t === PAINT_EVENT_TYPE.CLEAR) {
             clear = true;
+            queue.length = 0;
+            queue.push(event);
+            queue.push({
+                t: PAINT_EVENT_TYPE.CHANGE_PEN,
+                pen: paintTools.pen,
+            });
+            queue.push({
+                t: PAINT_EVENT_TYPE.CHANGE_ERASER,
+                eraser: paintTools.eraser,
+            });
+        } else if (event.t === PAINT_EVENT_TYPE.PEN || event.t === PAINT_EVENT_TYPE.ERASER) {
+            queue.push(event);
         }
+        last = event;
     }
     if (side === 'client') {
-        paintEvents.update((events) => {
+        paintEvents.update((buffer) => {
             if (clear) {
-                events.length = 0;
+                buffer = PaintBuffer.NONE;
             }
-            events.push(...queue);
-            return events;
+            return buffer.push(...queue);
         });
         paintSignal.notify(queue);
     }
@@ -617,10 +662,14 @@ function processPaintQueue(width: number, height: number) {
         matrices.projection.orthographic(0, width, height, 0, -1, 1);
         drawFrameBuffer.use(() => {
             gl.viewport(0, 0, width, height);
-            for (let i = start; i < queue.length; i++) {
-                const event = queue[i];
-                if (event.type === 'paint') {
-                    const { path, pen } = event;
+            for (const event of queue) {
+                if (event.t === PAINT_EVENT_TYPE.CHANGE_PEN) {
+                    paintTools.pen = event.pen;
+                } else if (event.t === PAINT_EVENT_TYPE.CHANGE_ERASER) {
+                    paintTools.eraser = event.eraser;
+                } else if (event.t === PAINT_EVENT_TYPE.PEN) {
+                    const { path } = event;
+                    const pen = paintTools.pen;
                     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
                     draw.bezierCurve(
                         path.a,
@@ -630,7 +679,7 @@ function processPaintQueue(width: number, height: number) {
                         path.in,
                         path.out,
                     );
-                } else if (event.type === 'erase') {
+                } else if (event.t === PAINT_EVENT_TYPE.ERASER) {
                     const { path } = event;
                     gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
                     draw.bezierCurve(
@@ -642,7 +691,7 @@ function processPaintQueue(width: number, height: number) {
                         path.out,
                     );
                     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-                } else if (event.type === 'clear') {
+                } else if (event.t === PAINT_EVENT_TYPE.CLEAR) {
                     gl.clear(gl.COLOR_BUFFER_BIT);
                 }
             }

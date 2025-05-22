@@ -15,4 +15,4 @@
 {/if}
 <BackButton to={{
     type: 'product_list',
-}} />
+}} active={context.active}/>

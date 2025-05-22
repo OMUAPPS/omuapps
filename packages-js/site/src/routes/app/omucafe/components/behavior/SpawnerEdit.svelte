@@ -2,13 +2,13 @@
     import type { Spawner } from '../../game/behavior/spawner.js';
     import { getGame } from '../../omucafe-app.js';
     
-    export let spawner: Spawner;
+    export let behavior: Spawner;
 
     const { gameConfig: config } = getGame();
 </script>
 
 <div class="behavior">
-    <select bind:value={spawner.spawnItemId}>
+    <select bind:value={behavior.spawnItemId}>
         {#each Object.entries($config.items) as [id, item] (id)}
             <option value={id}>{item.name}</option>
         {/each}

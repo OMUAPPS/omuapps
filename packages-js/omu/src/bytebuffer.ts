@@ -55,9 +55,17 @@ export class ByteWriter {
     private offset = 0;
     private finished = false;
 
-    constructor(init?: ArrayBuffer) {
+    constructor(init?: ArrayBuffer, offset?: number) {
+        this.offset = offset ?? 0;
         this.buffer = init ?? new ArrayBuffer(1024);
         this.dataArray = new DataView(this.buffer);
+    }
+
+    public static fromUint8Array(buffer: Uint8Array): ByteWriter {
+        const arrayBuffer = new ArrayBuffer(buffer.byteLength);
+        const uint8Array = new Uint8Array(arrayBuffer);
+        uint8Array.set(new Uint8Array(buffer));
+        return new ByteWriter(arrayBuffer, buffer.byteLength);
     }
 
     private allocate(length: number): void {
@@ -97,6 +105,13 @@ export class ByteWriter {
     public writeInt(value: number): ByteWriter {
         this.allocate(4);
         this.dataArray.setInt32(this.offset, value);
+        this.offset += 4;
+        return this;
+    }
+
+    public writeFloat(value: number): ByteWriter {
+        this.allocate(4);
+        this.dataArray.setFloat32(this.offset, value);
         this.offset += 4;
         return this;
     }
@@ -202,6 +217,12 @@ export class ByteReader {
 
     public readInt(): number {
         const value = this.dataArray.getInt32(this.offset);
+        this.offset += 4;
+        return value;
+    }
+
+    public readFloat(): number {
+        const value = this.dataArray.getFloat32(this.offset);
         this.offset += 4;
         return value;
     }

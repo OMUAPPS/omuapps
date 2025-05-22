@@ -1,6 +1,6 @@
 <script lang="ts">
     import { type Effect } from '../game/effect.js';
-
+    
     export let effect: Effect;
 </script>
 

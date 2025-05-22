@@ -4,7 +4,6 @@
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
-    $: console.log('effect_edit', context);
     
     const { scene, gameConfig: config } = getGame();
 </script>
@@ -15,4 +14,4 @@
 {/if}
 <BackButton to={{
     type: 'product_list',
-}} />
+}} active={context.active}/>

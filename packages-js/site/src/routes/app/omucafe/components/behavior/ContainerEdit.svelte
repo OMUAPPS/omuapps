@@ -5,13 +5,13 @@
     import AssetImage from '../AssetImage.svelte';
     import TransformEdit from '../TransformEdit.svelte';
 
-    export let container: Container;
+    export let behavior: Container;
 </script>
 
 <div class="behavior">
     <div class="image">
-        {#if container.overlay}
-            {@const asset = container.overlay}
+        {#if behavior.overlay}
+            {@const asset = behavior.overlay}
             <AssetImage asset={asset} />
         {/if}
     </div>
@@ -19,16 +19,16 @@
         if (fileList.length !== 1) {
             throw new Error('FileDrop must receive only one file');
         }
-        container.overlay = await uploadAsset(fileList[0]);
+        behavior.overlay = await uploadAsset(fileList[0]);
     }} accept="image/*">
-        {#if container.overlay}
+        {#if behavior.overlay}
             <p>画像を変更</p>
         {:else}
             <p>画像を追加</p>
         {/if}
     </FileDrop>
     <!-- container.overlayTransform -->
-    <TransformEdit bind:transform={container.overlayTransform} />
+    <TransformEdit bind:transform={behavior.overlayTransform} />
 </div>
 
 <style lang="scss">

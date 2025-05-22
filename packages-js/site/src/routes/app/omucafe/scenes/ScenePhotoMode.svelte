@@ -1,7 +1,6 @@
 <script lang="ts">
     import { Slider, Tooltip } from '@omujs/ui';
     import { fly } from 'svelte/transition';
-    import { paintQueue } from '../game/game.js';
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
@@ -47,7 +46,7 @@
         }
     }}
     on:keydown={(event) => {
-        if (!context.current) return;
+        if (!context.active) return;
         if (event.key === 'e') {
             $gameConfig.photo_mode.tool = {
                 type: 'eraser',
@@ -155,13 +154,10 @@
             <span>消しゴム</span>
         </button>
         <div class="exit">
-            <button on:click={() => {
+            <button on:click={async () => {
                 $scene = {
                     type: 'cooking',
                 };
-                paintQueue.push({
-                    type: 'clear',
-                });
             }}>
                 終わる
                 <i class="ti ti-x"></i>
@@ -188,13 +184,6 @@
         padding-bottom: 2rem;
         background: linear-gradient(to top, var(--color-bg-2), color-mix(in srgb, var(--color-bg-2) 50%, transparent 0%));
         outline: 1px solid var(--color-bg-2);
-    }
-
-    .col {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        gap: 1rem;
     }
 
     .config {

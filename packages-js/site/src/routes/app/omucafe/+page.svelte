@@ -5,7 +5,7 @@
     import KitchenRenderer from './components/KitchenRenderer.svelte';
     import { markChanged, mouse } from './game/game.js';
     import { Time } from './game/time.js';
-    import { createGame, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
+    import { createGame, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, PaintBuffer, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
     import SceneEffectEdit from './scenes/SceneEffectEdit.svelte';
     import SceneInstall from './scenes/SceneInstall.svelte';
@@ -17,7 +17,7 @@
     import SceneProductList from './scenes/SceneProductList.svelte';
 
     const promise = createGame(APP, 'client');
-    const { scene, gameConfig: config, states, orders } = getGame();
+    const { scene, gameConfig: config, states, orders, paintEvents } = getGame();
 
     const SCENES: Record<Scene['type'], TypedComponent<{
         context: SceneContext;
@@ -75,7 +75,7 @@
                 <div class="scene last">
                     <svelte:component this={lastScene} context={{
                         time: Time.get(),
-                        current: false,
+                        active: false,
                     }} />
                 </div>
             {/key}
@@ -84,7 +84,7 @@
             <div class="scene current" bind:this={sceneElement}>
                 <svelte:component this={SCENES[$scene.type]} context={{
                     time: Time.get(),
-                    current: true,
+                    active: true,
                 }} />
             </div>
         {/key}
@@ -115,6 +115,7 @@
         $scene = { type: 'loading' };
         $config = DEFAULT_GAME_CONFIG;
         $states = DEFAULT_STATES;
+        $paintEvents = PaintBuffer.NONE;
         markChanged();
     }}>
         reset
@@ -171,11 +172,11 @@
     @keyframes fadeIn {
         0% {
             opacity: 0.8;
-            transform: translateX(1rem);
+            transform: translateX(-1rem);
         }
         50% {
             opacity: 1;
-            transform: translateX(-0.1rem);
+            transform: translateX(0.1rem);
         }
         100% {
             opacity: 1;
@@ -189,11 +190,11 @@
         }
         20% {
             opacity: 0.1;
-            transform: translateX(-0.8rem);
+            transform: translateX(0.8rem);
         }
         100% {
             opacity: 0;
-            transform: translateX(-1rem);
+            transform: translateX(1rem);
         }
     }
 </style>

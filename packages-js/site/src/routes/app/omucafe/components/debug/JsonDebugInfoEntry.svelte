@@ -13,6 +13,8 @@
     <span class="number">{value}</span>
 {:else if typeof value === 'boolean'}
     <span class="boolean">{value ? 'true' : 'false'}</span>
+{:else if value instanceof Uint8Array}
+    <strong>Uint8Array({value.length})</strong>
 {:else if Array.isArray(value)}
     <strong>[</strong>
     <button on:click={() => open = !open}>
@@ -78,5 +80,9 @@
     .number,
     .boolean {
         color: var(--color-1);
+        white-space: wrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 10rem;
     }
 </style>

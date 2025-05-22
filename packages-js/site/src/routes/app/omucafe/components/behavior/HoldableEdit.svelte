@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { Holdable } from '../../game/behavior/holdable.js';
     
-    export let holdable: Holdable;
+    export let behavior: Holdable;
 </script>
 
 <div class="behavior">
-    {holdable}
+    {behavior}
 </div>
 
 <style lang="scss">

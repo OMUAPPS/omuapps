@@ -72,7 +72,7 @@
         </div>
     {/if}
 </main>
-<BackButton />
+<BackButton to={{type: 'product_list'}} active={context.active}/>
 
 <style lang="scss">
     main {
