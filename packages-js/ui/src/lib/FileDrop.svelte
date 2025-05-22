@@ -5,16 +5,26 @@
     export let accept: string | null = null;
     export let handle: (files: FileList) => void = () => {};
     export let fileDrop: HTMLInputElement | null = null;
-    export const open = (): void => {
+    
+    export const open = (): Promise<FileList> => {
         if (!fileDrop) return;
         fileDrop.click();
+        return new Promise<FileList>((resolve) => {
+            resolveOpen = resolve;
+        });
     };
+
+    let resolveOpen: (files: FileList) => void | null = null;
 
     function handleChange(event: Event): void {
         files = (event.target as HTMLInputElement).files;
 
         if (files) {
             handle(files);
+            if (resolveOpen) {
+                resolveOpen(files);
+                resolveOpen = null;
+            }
         }
     }
 </script>

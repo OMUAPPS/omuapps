@@ -3,7 +3,7 @@
     export let min: number;
     export let max: number;
     export let step: number;
-    export let clamp: boolean = false;
+    export let clamp: boolean = true;
     export let type: 'normal' | 'percent' = 'normal';
     export let unit: string = '';
     export let handleChange: (value: number) => void = () => {};
@@ -18,6 +18,24 @@
         handleChange(value);
     }
 
+    function isValidNumber(value: number): boolean {
+        return !isNaN(value) && isFinite(value);
+    }
+
+    function setValue(newValue: number) {
+        if (!isValidNumber(newValue)) {
+            return;
+        }
+        if (step > 0) {
+            newValue = round(newValue, step);
+        }
+        if (clamp) {
+            newValue = Math.max(min, Math.min(max, newValue));
+        }
+        value = newValue;
+        handleChange(value);
+    }
+
     function round(value: number, precision: number): number {
         return Math.round(value / precision) * precision;
     }
@@ -29,17 +47,55 @@
     function invLerp(min: number, max: number, value: number): number {
         return (value - min) / (max - min);
     }
+
+    function toString(value: number): string {
+        // wrap floating point number error
+        // to avoid showing too many decimal places
+        if (value === 0) {
+            return '0';
+        }
+        const str = value.toString();
+        const decimalIndex = str.indexOf('.');
+        if (decimalIndex === -1) {
+            return str;
+        }
+        const decimalPart = str.slice(decimalIndex + 1);
+        if (decimalPart.length > 2) {
+            return str.slice(0, decimalIndex + 3);
+        }
+        return str;
+    }
     
     $: percentValue = Math.round(invLerp(min, max, value) * 100);
 </script>
 
 <div class="setting">
-    <input type="range" id="scale" bind:value {min} {max} {step} />
+    <input type="range" id="scale" {value} {min} {max} {step} 
+        on:input={(e) => setValue(e.currentTarget.valueAsNumber)}
+        on:change={(e) => setValue(e.currentTarget.valueAsNumber)}
+        on:keydown={(e) => {
+            if (e.key === 'ArrowUp') {
+                setValue(value + step);
+            } else if (e.key === 'ArrowDown') {
+                setValue(value - step);
+            }
+        }} />
     <span class="label">
         <label for="scale"><slot /></label>
         {#if type === 'normal'}
-            <input type="number" id="scale" bind:value {min} {max} {step} />
-            <span>{unit}</span>
+            <input type="number" id="scale" value={toString(value)} {min} {max} {step} 
+                on:input={(e) => setValue(e.currentTarget.valueAsNumber)}
+                on:change={(e) => setValue(e.currentTarget.valueAsNumber)}
+                on:keydown={(e) => {
+                    if (e.key === 'ArrowUp') {
+                        setValue(value + step);
+                    } else if (e.key === 'ArrowDown') {
+                        setValue(value - step);
+                    }
+                }} />
+            {#if unit}
+                <span>{unit}</span>
+            {/if}
         {:else if type === 'percent'}
             <input
                 type="number"

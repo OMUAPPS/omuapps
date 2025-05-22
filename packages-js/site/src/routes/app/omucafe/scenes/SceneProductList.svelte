@@ -7,7 +7,7 @@
     $: console.log('SceneProductList', context);
 </script>
 
-<main>
+<main class="omu-scroll">
     <ProductList type="product" />
     <ProductList type="item" />
     <ProductList type="effect" />

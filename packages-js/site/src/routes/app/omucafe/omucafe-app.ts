@@ -117,6 +117,7 @@ export type Scene = {
 } | {
     type: 'item_edit',
     id: string,
+    created?: boolean,
 } | {
     type: 'effect_edit',
     id: string,

@@ -11,7 +11,7 @@
 
 {#if $scene.type === 'item_edit'}
     {@const id = $scene.id}
-    <ItemEdit bind:item={$config.items[id]} />
+    <ItemEdit bind:item={$config.items[id]} created={$scene.created} />
 {/if}
 <BackButton to={{
     type: 'product_list',

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { FileDrop, Textbox, Tooltip, type TypedComponent } from '@omujs/ui';
+    import { onMount } from 'svelte';
     import { fetchImage, getAsset, uploadAsset } from '../game/asset.js';
     import type { Behaviors } from '../game/behavior.js';
     import { createContainer } from '../game/behavior/container.js';
@@ -13,6 +14,7 @@
     import TransformEdit from './TransformEdit.svelte';
 
     export let item: Item;
+    export let created = false;
 
     type DefaultBehavior<T extends keyof Behaviors = keyof Behaviors> = {
         [key in T]?: {
@@ -47,6 +49,17 @@
             edit: SpawnerEdit,
         },
     } satisfies DefaultBehavior;
+
+    let open: () => Promise<FileList>;
+
+    onMount(() => {
+        if (created && open) {
+            open().then((fileList) => {
+                const file = fileList[0];
+                item.name = file.name;
+            });
+        }
+    })
 </script>
 
 <main>
@@ -57,7 +70,7 @@
         </div>
         <div class="name">
             <Textbox bind:value={item.name} />
-            <FileDrop handle={async (fileList) => {
+            <FileDrop bind:open handle={async (fileList) => {
                 if (fileList.length !== 1) {
                     throw new Error('FileDrop must receive only one file');
                 }

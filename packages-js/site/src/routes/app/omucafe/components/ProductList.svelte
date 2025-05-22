@@ -52,7 +52,7 @@
                 </div>
             </button>
         {:else}
-            <small>アイテムがありません</small>
+            <small>レシピがありません</small>
         {/each}
     </div>
 {:else if type === 'item'}
@@ -66,7 +66,7 @@
                 name: '新商品',
             });
             $config.items[item.id] = item;
-            $scene = { type: 'item_edit', id: item.id };
+            $scene = { type: 'item_edit', id: item.id, created: true };
         }}>
             材料を追加
             <i class="ti ti-plus"></i>

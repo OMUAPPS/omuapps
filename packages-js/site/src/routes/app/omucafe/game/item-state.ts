@@ -341,7 +341,7 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     const y = Math.floor(uv.y * height);
     const index = (x + y * width) * 4;
     const alpha = texture.pixels[index + 3];
-    return alpha > 128;
+    return alpha > 16;
 }
 
 export async function renderHoveringItem() {
