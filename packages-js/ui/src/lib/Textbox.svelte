@@ -6,7 +6,7 @@
     export let disabled: boolean = false;
     export let readonly: boolean = false;
     export let lazy: boolean = false;
-    let inputValue: string = value;
+    $: inputValue = value;
     let timer: number | undefined;
 
     const eventDispatcher = createEventDispatcher<{
@@ -14,18 +14,18 @@
     }>();
 
     function handleChange(event: Event) {
-        inputValue = (event.target as HTMLInputElement).value;
+        const newValue = (event.target as HTMLInputElement).value;
         if (!lazy) {
-            value = inputValue;
-            eventDispatcher('input', inputValue);
+            value = newValue;
+            eventDispatcher('input', newValue);
             return;
         }
         if (timer) {
             clearTimeout(timer);
         }
         timer = window.setTimeout(() => {
-            value = inputValue;
-            eventDispatcher('input', inputValue);
+            value = newValue;
+            eventDispatcher('input', newValue);
         }, 300);
     }
 
