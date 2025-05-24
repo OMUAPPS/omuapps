@@ -53,6 +53,23 @@ void main() {
 }
 `;
 
+const TEXTURE_MASK_FRAGMENT_SHADER = `#version 300 es
+
+precision highp float;
+
+uniform sampler2D u_texture;
+uniform sampler2D u_mask;
+uniform vec4 u_color;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+void main() {
+    fragColor = texture(u_texture, v_texcoord) * u_color * texture(u_mask, v_texcoord);
+}
+`;
+
 const TEXTURE_COLOR_FRAGMENT_SHADER = `#version 300 es
 
 precision highp float;
@@ -328,6 +345,7 @@ export class Draw {
     private readonly vertexShader: GlShader;
     private readonly colorProgram: GlProgram;
     private readonly textureProgram: GlProgram;
+    private readonly textureMaskProgram: GlProgram;
     private readonly textureColorProgram: GlProgram;
     private readonly textureOutlineProgram: GlProgram;
     private readonly bezierProgram: GlProgram;
@@ -344,6 +362,7 @@ export class Draw {
         this.vertexShader = glContext.createShader({type: 'vertex', source: VERTEX_SHADER});
         this.colorProgram = this.createProgram(COLOR_FRAGMENT_SHADER);
         this.textureProgram = this.createProgram(TEXTURE_FRAGMENT_SHADER);
+        this.textureMaskProgram = this.createProgram(TEXTURE_MASK_FRAGMENT_SHADER);
         this.textureColorProgram = this.createProgram(TEXTURE_COLOR_FRAGMENT_SHADER);
         this.textureOutlineProgram = this.createProgram(TEXTURE_OUTLINE_FRAGMENT_SHADER);
         this.bezierProgram = this.createProgram(QUADRATIC_BEZIER_FRAGMENT_SHADER);
@@ -476,6 +495,41 @@ export class Draw {
             this.textureProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
             this.textureProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
             this.textureProgram.getUniform('u_texture').asSampler2D().set(texture);
+            this.textureProgram.getUniform('u_color').asVec4().set(color);
+
+            const position = this.textureProgram.getAttribute('a_position');
+            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            const texcoord = this.textureProgram.getAttribute('a_texcoord');
+            texcoord.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public textureMask(left: number, top: number, right: number, bottom: number, texture: GlTexture, mask: GlTexture, color = Vec4.ONE): void {
+        const { gl } = this.glContext;
+        
+        this.setMesh(new Float32Array([
+            left, top, 0,
+            right, top, 0,
+            right, bottom, 0,
+            left, top, 0,
+            right, bottom, 0,
+            left, bottom, 0,
+        ]), new Float32Array([
+            0, 0,
+            1, 0,
+            1, 1,
+            0, 0,
+            1, 1,
+            0, 1,
+        ]));
+
+        this.textureProgram.use(() => {
+            this.textureProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
+            this.textureProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
+            this.textureProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.textureProgram.getUniform('u_texture').asSampler2D().set(texture);
+            this.textureProgram.getUniform('u_mask').asSampler2D().set(mask);
             this.textureProgram.getUniform('u_color').asVec4().set(color);
 
             const position = this.textureProgram.getAttribute('a_position');

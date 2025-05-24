@@ -1,7 +1,7 @@
 import type { Mat2 } from '$lib/math/mat2.js';
 import type { Mat3 } from '$lib/math/mat3.js';
 import type { Mat4 } from '$lib/math/mat4.js';
-import type { Vec2Like } from '$lib/math/vec2.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import type { Vec3 } from '$lib/math/vec3.js';
 import type { Vec4Like } from '$lib/math/vec4.js';
 
@@ -9,11 +9,34 @@ export class GLStateManager {
     public static readonly TEXTURE_UNITS = 32;
     private program: GlProgram | null = null;
     private buffer: GlBuffer | null = null;
-    private frameBuffer: GlFramebuffer | null = null;
+    private frameBufferStack: GlFramebuffer[] = [];
     private textures: Array<GlTexture | null> = [];
+    private viewportStack: Vec2Like[] = [Vec2.ZERO];
     private activeTexture = -1;
 
     constructor(public readonly gl: WebGL2RenderingContext) {}
+
+    public setViewport(dimentions: Vec2Like) {
+        this.viewportStack[this.viewportStack.length - 1] = dimentions;
+        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+    }
+
+    public pushViewport(dimentions: Vec2Like) {
+        if (this.viewportStack.length >= 100) {
+            console.warn('Viewport stack overflow (>=100)')
+        }
+        this.viewportStack.push(dimentions);
+        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+    }
+    
+    public popViewport() {
+        this.viewportStack.pop();
+        if (this.viewportStack.length <= 0) {
+            console.warn('Viewport stack underflow (<=0)');
+        }
+        const dimentions = this.viewportStack[this.viewportStack.length - 1];
+        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+    }
 
     public useProgram(program: GlProgram, callback: () => void): void {
         if (this.program != null) {
@@ -42,25 +65,31 @@ export class GLStateManager {
     }
 
     public bindFramebuffer(framebuffer: GlFramebuffer, callback: () => void): void {
-        if (this.frameBuffer != null) {
+        const index = this.frameBufferStack.findIndex((it) => it === framebuffer);
+        if (index !== -1) {
             throw new Error('Framebuffer already bound');
         }
-        this.frameBuffer = framebuffer;
+        this.frameBufferStack.push(framebuffer);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer.framebuffer);
         callback();
-        this.frameBuffer = null;
+        this.frameBufferStack.pop();
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBufferStack[this.frameBufferStack.length - 1]?.framebuffer ?? null);
     }
 
     public async bindFramebufferAsync(framebuffer: GlFramebuffer, callback: () => Promise<void>): Promise<void> {
-        if (this.frameBuffer != null) {
+        const index = this.frameBufferStack.findIndex((it) => it === framebuffer);
+        if (index !== -1) {
             throw new Error('Framebuffer already bound');
         }
-        this.frameBuffer = framebuffer;
+        this.frameBufferStack.push(framebuffer);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer.framebuffer);
         await callback();
-        this.frameBuffer = null;
+        this.frameBufferStack.pop();
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBufferStack[this.frameBufferStack.length - 1]?.framebuffer ?? null);
     }
 
     public isFramebufferBound(framebuffer: GlFramebuffer): boolean {
-        return this.frameBuffer === framebuffer;
+        return this.frameBufferStack.includes(framebuffer);
     }
 
     public useTexture(
@@ -548,29 +577,30 @@ export class GlFramebuffer {
 
     public use(callback: () => void): void {
         this.stateManager.bindFramebuffer(this, () => {
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
             callback();
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         });
     }
 
     public async useAsync(callback: () => Promise<void>): Promise<void> {
         await this.stateManager.bindFramebufferAsync(this, async () => {
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
             await callback();
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         });
     }
-    public attachTexture(texture: GlTexture): void {
+    
+    public attachTexture(texture: GlTexture | null): void {
         if (!this.stateManager.isFramebufferBound(this)) {
             throw new Error('Framebuffer not bound');
         }
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, texture.texture, 0);
+        if (texture) {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, texture.texture, 0);
+        } else {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, null, 0);
+        }
     }
 }
 
 export class GlContext {
-    private readonly stateManager: GLStateManager;
+    public readonly stateManager: GLStateManager;
 
     constructor(public readonly gl: WebGL2RenderingContext) {
         this.stateManager = new GLStateManager(gl);

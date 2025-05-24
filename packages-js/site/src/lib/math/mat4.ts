@@ -256,6 +256,20 @@ export class Mat4 {
             this.transform2(rightBottom),
         ])
     }
+
+    public basisTransformAABB2(aabb: AABB2Like): AABB2 {
+        const { min, max } = aabb;
+        const leftTop: Vec2Like = min;
+        const leftBottom: Vec2Like = { x: min.x, y: max.y };
+        const rightTop: Vec2Like = { x: max.x, y: min.y };
+        const rightBottom: Vec2Like = max;
+        return AABB2.fromPoints([
+            this.basisTransform2(leftTop),
+            this.basisTransform2(leftBottom),
+            this.basisTransform2(rightTop),
+            this.basisTransform2(rightBottom),
+        ])
+    }
     
     public transform3(point: Vec3): Vec3 {
         const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30;

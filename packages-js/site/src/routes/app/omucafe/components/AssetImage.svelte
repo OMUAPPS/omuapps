@@ -22,5 +22,18 @@
     img {
         max-width: 100%;
         max-height: 100%;
+        animation: fadeIn 0.1621s forwards;
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0.06;
+        }
+        80.1% {
+            opacity: 0.98;
+        }
+        100% {
+            opacity: 1;
+        }
     }
 </style>

@@ -1,9 +1,10 @@
 import type { Matrices } from '$lib/components/canvas/matrices.js';
+import type { AABB2 } from '$lib/math/aabb2.js';
 import { ActionHandler, type Action } from './behavior/action.js';
 import { ContainerHandler, type Container } from './behavior/container.js';
 import { HoldableHandler, type Holdable } from './behavior/holdable.js';
 import { SpawnerHandler, type Spawner } from './behavior/spawner.js';
-import type { ItemState } from './item-state.js';
+import type { ItemRender, ItemState } from './item-state.js';
 import type { KitchenContext } from './kitchen.js';
 
 export type Behaviors = {
@@ -13,7 +14,7 @@ export type Behaviors = {
     action: Action;
 };
 
-export const getBehaviorHandlers = () => ({
+export const getBehaviorHandlers = async () => ({
     container: new ContainerHandler(),
     holdable: new HoldableHandler(),
     spawner: new SpawnerHandler(),
@@ -32,7 +33,8 @@ export type BehaviorAction<T extends keyof Behaviors> = {
 export type BehaviorFunction<T extends keyof Behaviors, U> = (context: KitchenContext, action: BehaviorAction<T>, args: U) => Promise<void> | void;
 
 export type BehaviorHandler<T extends keyof Behaviors> = Partial<{
-    render: BehaviorFunction<T, { matrices: Matrices }>,
+    initialize?(): Promise<void>,
+    render: BehaviorFunction<T, { matrices: Matrices, bufferBounds: AABB2, childRenders: Record<string, ItemRender> }>,
     handleDropChild: BehaviorFunction<T, { child: ItemState }>,
     handleClickChild: BehaviorFunction<T, { child: ItemState }>,
     handleClick: BehaviorFunction<T, { x: number, y: number }>,

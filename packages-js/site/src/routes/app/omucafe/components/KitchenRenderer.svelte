@@ -5,7 +5,7 @@
     import { getGame } from '../omucafe-app.js';
     import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
 
-    const { gameConfig: config, states, paintEvents } = getGame();
+    const { config, gameConfig, states, scene, paintEvents } = getGame();
     export let side: 'client' | 'overlay' | 'background';
     let showDebug = false;
 </script>
@@ -36,9 +36,21 @@
                 paintEvents: {JSON.stringify($paintEvents).length}
             </h2>
             <JsonDebugInfo value={$paintEvents} />
+            <h2>
+                scene: {JSON.stringify($scene).length}
+            </h2>
+            <JsonDebugInfo value={$scene} />
+            <h2>
+                gameConfig: {JSON.stringify($gameConfig).length}
+            </h2>
+            <JsonDebugInfo value={$gameConfig} />
+            <h2>
+                config: {JSON.stringify($config).length}
+            </h2>
+            <JsonDebugInfo value={$config} />
         </div>
         <div class="ui">
-            {#each Object.entries($config.items) as [id, item] (id)}
+            {#each Object.entries($gameConfig.items) as [id, item] (id)}
                 <button on:click={() => {
                     createItemState(getContext(), {
                         item,

@@ -1,4 +1,5 @@
 import type { Asset } from '../game/asset.js';
+import { createContainer } from '../game/behavior/container.js';
 import { createHoldable } from '../game/behavior/holdable.js';
 import { builder } from '../game/script.js';
 import { DEFAULT_GAME_CONFIG, type GameConfig } from '../omucafe-app.js';
@@ -46,14 +47,16 @@ export const EXAMPLE: GameConfig = {
             image: asset(pack),
             behaviors: {
                 holdable: createHoldable(),
-                container: {
-                    overlay: asset(pack_top),
-                    overlayTransform: {
-                        right: { x: 1, y: 0 },
-                        up: { x: 0, y: 1 },
-                        offset: { x: 0, y: 90 },
+                container: createContainer({
+                    overlay: {
+                        asset: asset(pack_top),
+                        transform: {
+                            right: { x: 1, y: 0 },
+                            up: { x: 0, y: 1 },
+                            offset: { x: 0, y: 90 },
+                        }
                     },
-                }
+                })
             },
             bounds: {
                 min: { x: 0, y: 0 },
@@ -70,14 +73,16 @@ export const EXAMPLE: GameConfig = {
             name: 'Fryer',
             image: asset(fryer),
             behaviors: {
-                container: {
-                    overlay: asset(fryer_top),
-                    overlayTransform: {
-                        right: { x: 1, y: 0 },
-                        up: { x: 0, y: 1 },
-                        offset: { x: 0, y: 0 },
+                container: createContainer({
+                    overlay: {
+                        asset: asset(fryer_top),
+                        transform: {
+                            right: { x: 1, y: 0 },
+                            up: { x: 0, y: 1 },
+                            offset: { x: 0, y: 0 },
+                        },
                     },
-                },
+                }),
                 action: {
                     on: {
                         dropChild: 'fryer_drop',
@@ -101,14 +106,16 @@ export const EXAMPLE: GameConfig = {
             image: asset(tray),
             behaviors: {
                 holdable: createHoldable(),
-                container: {
-                    overlay: asset(tray_top),
-                    overlayTransform: {
-                        right: { x: 1, y: 0 },
-                        up: { x: 0, y: 1 },
-                        offset: { x: 0, y: 250 },
-                    },
-                }
+                container: createContainer({
+                    overlay: {
+                        asset: asset(tray_top),
+                        transform: {
+                            right: { x: 1, y: 0 },
+                            up: { x: 0, y: 1 },
+                            offset: { x: 0, y: 250 },
+                        },
+                    }
+                }),
             },
             bounds: {
                 min: { x: 0, y: 0 },

@@ -10,7 +10,7 @@ import kitchen from '../images/kitchen.png';
 import photo_frame from '../images/photo_frame.svg';
 import { getTextureByUri } from './asset.js';
 import { createContainer } from './behavior/container.js';
-import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from './item-state.js';
+import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from './item-state.js';
 import { createItem } from './item.js';
 import type { KitchenContext } from './kitchen.js';
 
@@ -454,10 +454,12 @@ async function renderScreen() {
             y: transform.m11,
         });
         matrices.view.translate(-offset.x, -offset.y, 0);
-        await renderItemState(createItemState(context, {
+        const previewItemState = createItemState(context, {
             id: 'preview',
             item: ingredient,
-        }), {
+        });
+        markItemStateChanged(previewItemState);
+        await renderItemState(previewItemState, {
             showRenderBounds: true,
         });
         delete context.items['preview'];
@@ -663,7 +665,7 @@ function processPaintQueue(width: number, height: number) {
         matrices.projection.identity();
         matrices.projection.orthographic(0, width, height, 0, -1, 1);
         drawFrameBuffer.use(() => {
-            gl.viewport(0, 0, width, height);
+            glContext.stateManager.pushViewport({ x: width, y: height });
             for (const event of queue) {
                 if (event.t === PAINT_EVENT_TYPE.CHANGE_PEN) {
                     paintTools.pen = event.pen;
@@ -700,7 +702,7 @@ function processPaintQueue(width: number, height: number) {
             paintQueue.length = 0;
         });
     });
-    gl.viewport(0, 0, matrices.width, matrices.height);
+    glContext.stateManager.popViewport();
 }
 
 let penTrail: {
@@ -837,7 +839,7 @@ export async function render(gl: GlContext): Promise<void> {
         resolved = resolve;
     });
     const { gl: glInternal } = gl;
-    glInternal.viewport(0, 0, glInternal.canvas.width, glInternal.canvas.height);
+    glContext.stateManager.setViewport({ x: glInternal.canvas.width, y: glInternal.canvas.height });
     glInternal.clearColor(0, 0, 0, 0);
     glInternal.clear(glInternal.COLOR_BUFFER_BIT);
     glInternal.enable(glInternal.BLEND);

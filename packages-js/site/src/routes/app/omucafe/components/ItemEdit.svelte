@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FileDrop, Textbox, Tooltip, type TypedComponent } from '@omujs/ui';
+    import { Button, FileDrop, Textbox, Tooltip, type TypedComponent } from '@omujs/ui';
     import { onMount } from 'svelte';
     import { fetchImage, getAsset, uploadAsset } from '../game/asset.js';
     import type { Behaviors } from '../game/behavior.js';
@@ -7,6 +7,7 @@
     import { createHoldable } from '../game/behavior/holdable.js';
     import { createSpawner } from '../game/behavior/spawner.js';
     import type { Item } from '../game/item.js';
+    import { getGame } from '../omucafe-app.js';
     import AssetImage from './AssetImage.svelte';
     import ContainerEdit from './behavior/ContainerEdit.svelte';
     import HoldableEdit from './behavior/HoldableEdit.svelte';
@@ -15,17 +16,9 @@
 
     export let item: Item;
     export let created = false;
+    let state: {type: 'opening_file'} | null = null;
 
-    type DefaultBehavior<T extends keyof Behaviors = keyof Behaviors> = {
-        [key in T]?: {
-            name: string;
-            key: key;
-            default: Behaviors[key];
-            edit: TypedComponent<{
-                behavior: Behaviors[key];
-            }>;
-        }
-    }
+    const { scene, gameConfig } = getGame();
 
     const BEHAVIROS = {
         container: {
@@ -52,14 +45,25 @@
 
     let open: () => Promise<FileList>;
 
-    onMount(() => {
-        if (created && open) {
-            open().then((fileList) => {
-                const file = fileList[0];
-                item.name = file.name;
-            });
-        }
+    onMount(async () => {
+        if (!created || !open) return;
+        state = { type: 'opening_file' };
+        const fileList = await open();
+        const file = fileList[0];
+        item.name = file.name.split('.').at(0) ?? item.name;
+        state = null;
     })
+    
+    type DefaultBehavior<T extends keyof Behaviors = keyof Behaviors> = {
+        [key in T]?: {
+            name: string;
+            key: key;
+            default: Behaviors[key];
+            edit: TypedComponent<{
+                behavior: Behaviors[key];
+            }>;
+        }
+    }
 </script>
 
 <main>
@@ -67,6 +71,15 @@
         <div class="id">
             <small>ID</small>
             <p>{item.id}</p>
+            <div class="actions">
+                <Button onclick={() => {
+                    $scene = { type: 'product_list' };
+                    delete $gameConfig.items[item.id];
+                }}>
+                    削除
+                    <i class="ti ti-trash"></i>
+                </Button>
+            </div>
         </div>
         <div class="name">
             <Textbox bind:value={item.name} />
@@ -99,7 +112,7 @@
             {JSON.stringify(item, null, 2)}
         </code>
     </div>
-    <div class="behaviors"> 
+    <div class="behaviors omu-scroll"> 
         {#each Object.values(BEHAVIROS) as behavior, i (i)}
             <div class="behavior" class:active={item.behaviors[behavior.key]}>
                 <button class="behavior-info" class:active={item.behaviors[behavior.key]} on:click={() => {
@@ -133,6 +146,11 @@
             </div>
         {/each}
     </div>
+    {#if state?.type === 'opening_file'}
+        <div class="overlay">
+            ファイルを選択中…
+        </div>
+    {/if}
 </main>
 
 <style lang="scss">
@@ -144,10 +162,24 @@
         gap: 1rem;
     }
 
+    .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24rem;
+        background: var(--color-bg-1);
+        outline: 1px solid var(--color-1);
+        outline-offset: -0.5rem;
+        opacity: 0.95;
+    }
+
     .id {
         display: flex;
         align-items: baseline;
         gap: 0.5rem;
+        width: 100%;
 
         > small {
             font-size: 0.75rem;
@@ -157,6 +189,10 @@
         > p {
             color: var(--color-1);
         }
+    }
+
+    .actions {
+        margin-left: auto;
     }
 
     .info {
@@ -178,7 +214,7 @@
         display: flex;
         align-items: baseline;
         justify-content: space-between;
-        width: 20rem;
+        width: 21rem;
         gap: 1rem;
         border-bottom: 1px solid var(--color-outline);
         margin-bottom: 0.5rem;

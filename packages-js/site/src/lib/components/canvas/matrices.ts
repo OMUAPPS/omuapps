@@ -27,6 +27,12 @@ export class Matrices {
         this.view.pop();
     }
 
+    public identity() {
+        this.projection.identity();
+        this.model.identity();
+        this.view.identity();
+    }
+
     public scope(callback: () => void): void {
         this.push();
         callback();

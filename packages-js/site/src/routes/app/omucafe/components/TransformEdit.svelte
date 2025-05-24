@@ -89,14 +89,21 @@
                 setScale({ x: scaleX, y: value });
             }}
         />
-        <label>
-            offsetX
-            <input type="number" step="0.01" bind:value={transform.offset.x} />
-        </label>
-        <label>
-            offsetY
-            <input type="number" step="0.01" bind:value={transform.offset.y} />
-        </label>
+        offsetX
+        <Slider
+            min={-400}
+            max={400}
+            step={1}
+            clamp={false}
+            bind:value={transform.offset.x}
+        />
+        offsetY
+        <Slider
+            min={-400}
+            max={400}
+            step={1}
+            bind:value={transform.offset.y}
+        />
     {/if}
 </div>
 

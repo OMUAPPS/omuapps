@@ -6,6 +6,8 @@ export type AABB2Like = AABB2 | {
 }
 
 export class AABB2 {
+    public static readonly ZERO = new AABB2(Vec2.ZERO, Vec2.ZERO);
+    
     constructor(
         public readonly min: Vec2,
         public readonly max: Vec2,
@@ -59,6 +61,13 @@ export class AABB2 {
         return new AABB2(this.min.max(other.min), this.max.min(other.max));
     }
 
+    public offset(position: Vec2Like) {
+        return new AABB2(
+            this.min.add(position),
+            this.max.add(position),
+        );
+    }
+
     public at(position: Vec2Like): Vec2 {
         return new Vec2(
             this.min.x + (this.max.x - this.min.x) * position.x,
@@ -79,7 +88,6 @@ export class AABB2 {
         const centerOffset = this.center().sub(center);
         return new AABB2(this.min.sub(centerOffset), this.max.sub(centerOffset));
     }
-
 
     public dimensions(): Vec2 {
         return this.max.sub(this.min);

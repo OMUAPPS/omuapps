@@ -1,3 +1,4 @@
+import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2 } from '$lib/math/vec2.js';
@@ -5,7 +6,7 @@ import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByAsset } from './asset.js';
 import { type BehaviorFunction, type BehaviorHandler, type BehaviorHandlers, type Behaviors } from './behavior.js';
 import type { Effect } from './effect.js';
-import { applyDragEffect, draw, getContext, matrices, mouse } from './game.js';
+import { applyDragEffect, draw, getContext, glContext, matrices, mouse } from './game.js';
 import { copy, uniqueId } from './helper.js';
 import type { Item } from './item.js';
 import type { KitchenContext } from './kitchen.js';
@@ -145,7 +146,7 @@ let behaviorHandlers: BehaviorHandlers | undefined = undefined;
 
 export async function loadBehaviorHandlers() {
     const { getBehaviorHandlers } = await import('./behavior.js');
-    behaviorHandlers = getBehaviorHandlers();
+    behaviorHandlers = await getBehaviorHandlers();
 }
 
 export async function invokeBehaviors<T extends keyof Behaviors, U>(
@@ -161,7 +162,7 @@ export async function invokeBehaviors<T extends keyof Behaviors, U>(
         const behavior = item.behaviors[key as keyof Behaviors] as Behaviors[T];
         const handler = behaviorHandlers![key as keyof Behaviors] as BehaviorHandlers[T];
         if (behavior && handler) {
-            const method = getMethod(handler);
+            const method = getMethod(handler)?.bind(handler);
             if (method) {
                 await method(context, { item, behavior }, args);
             }
@@ -243,62 +244,126 @@ export function getItemStateTransform(item: ItemState, options: {
     return transform;
 }
 
-export async function getItemStateRenderBounds(item: ItemState): Promise<Bounds> {
-    const transform = getItemStateTransform(item);
-    const bounds = item.bounds;
-    const renderBounds = new AABB2(
-        transform.transform2(bounds.min),
-        transform.transform2(bounds.max),
-    )
-    return renderBounds;
+export type ItemRender = {
+    bounds: AABB2,
+    texture: GlTexture,
+    changed: boolean,
+}
+const itemRenderMap: Map<string, ItemRender> = new Map();
+let itemRenderBuffer: GlFramebuffer | null = null;
+
+function getItemRenderBuffer() {
+    if (itemRenderBuffer === null) {
+        itemRenderBuffer = glContext.createFramebuffer();
+    }
+    return itemRenderBuffer;
+}
+
+function createItemRenderTexture(itemState: ItemState): ItemRender {
+    if (itemRenderMap.has(itemState.id)) {
+        throw new Error(`ItemRender ${itemState.item.name}(${itemState.id}) already existing`);
+    }
+    // const bounds = AABB2.from(itemState.bounds);
+    const bounds = retrieveItemStateBounds(itemState);
+    const texture = glContext.createTexture();
+    const render: ItemRender = {
+        bounds,
+        texture,
+        changed: true,
+    };
+    itemRenderMap.set(itemState.id, render);
+    return render
+}
+
+function retrieveItemStateBounds(itemState: ItemState) {
+    const ctx = getContext();
+    let bounds = AABB2.from(itemState.bounds);
+    for (const id of itemState.children) {
+        const { bounds: childBounds, transform } = ctx.items[id];
+        const matrix = transformToMatrix(transform);
+        bounds = bounds.union(matrix.transformAABB2(childBounds));
+    }
+    return bounds;
+}
+
+export function markItemStateChanged(itemState: ItemState) {
+    const existing = itemRenderMap.get(itemState.id);
+    if (!existing) return;
+    existing.changed = true;
+}
+
+export async function getItemStateRender(itemState: ItemState): Promise<ItemRender> {
+    const { item, bounds } = itemState;
+    const ctx = getContext();
+    const buffer = getItemRenderBuffer();
+    const render = itemRenderMap.get(itemState.id) ?? createItemRenderTexture(itemState);
+    // if (!render.changed) return render;
+    const childRenders: Record<string, ItemRender> = {};
+    let bufferBounds = AABB2.from(bounds);
+    for (const id of itemState.children) {
+        const child = ctx.items[id];
+        const childRender = await getItemStateRender(child);
+        childRenders[id] = childRender;
+        const matrix = transformToMatrix(child.transform);
+        bufferBounds = bufferBounds.union(matrix.transformAABB2(childRender.bounds));
+    }
+    const dimentions = bufferBounds.dimensions();
+    render.texture.use(() => {
+        render.texture.setParams({
+            minFilter: 'linear',
+            magFilter: 'linear',
+            wrapS: 'clamp-to-edge',
+            wrapT: 'clamp-to-edge',
+        });
+        render.texture.ensureSize(dimentions.x, dimentions.y);
+    });
+    await buffer.useAsync(async () => {
+        buffer.attachTexture(render.texture);
+        glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
+        glContext.gl.clearColor(0, 0, 0, 0);
+        glContext.stateManager.pushViewport(dimentions);
+        matrices.push();
+        matrices.identity();
+        matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.x, bufferBounds.min.y, bufferBounds.max.y, -1, 1);
+        if (item.image) {
+            const texture = await getTextureByAsset(item.image);
+            const { tex, width, height } = texture;
+            draw.texture(
+                0, 0,
+                width, height,
+                tex,
+            );
+        }
+        await invokeBehaviors(ctx, itemState, it => it.render, {
+            matrices,
+            bufferBounds,
+            childRenders,
+        });
+        matrices.pop();
+        glContext.stateManager.popViewport();
+    });
+    render.changed = false;
+    return {
+        bounds: bufferBounds,
+        texture: render.texture,
+        changed: false,
+    };
 }
 
 export async function renderItemState(itemState: ItemState, options: {
     parent?: ItemState,
     showRenderBounds?: boolean,
 } = {}) {
-    const { item, bounds } = itemState;
-    if (!item.image) {
-        return;
-    }
-    const texture = await getTextureByAsset(item.image);
-    const { tex, width, height } = texture;
-    const transform = options.parent ? transformToMatrix(itemState.transform) : getItemStateTransform(itemState, options);
+    const render = await getItemStateRender(itemState);
+    const { bounds, texture } = render;
+    const transform = transformToMatrix(itemState.transform);
     if (options.showRenderBounds) {
         const renderBounds = transform.transformAABB2(bounds);
-        draw.rectangleStroke(
-            renderBounds.min.x, renderBounds.min.y,
-            renderBounds.max.x, renderBounds.max.y,
-            new Vec4(1, 1, 1, 1),
-            2,
-        );
-        draw.rectangleStroke(
-            renderBounds.min.x, renderBounds.min.y,
-            renderBounds.max.x, renderBounds.max.y,
-            new Vec4(0, 0, 0, 1),
-            1,
-        );
+        draw.rectangleStroke(renderBounds.min.x, renderBounds.min.y, renderBounds.max.x, renderBounds.max.y, Vec4.ONE, 2);
     }
     matrices.model.push();
     matrices.model.multiply(transform);
-    const ctx = getContext();
-    if (ctx.held === item.id) {
-        applyDragEffect();
-    }
-    draw.textureColor(
-        10, 40,
-        width + 10, height + 40,
-        tex,
-        new Vec4(0, 0, 0, 0.1),
-    );
-    draw.texture(
-        0, 0,
-        width, height,
-        tex,
-    );
-    await invokeBehaviors(ctx, itemState, it => it.render, {
-        matrices,
-    });
+    draw.texture(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, texture);
     matrices.model.pop();
 }
 
@@ -404,6 +469,22 @@ export async function renderHoveringItem() {
         matrices,
     });
 }
+
+// export function collectChildren(itemState: ItemState): ItemState[] {
+//     const ctx = getContext();
+//     const items: ItemState[] = [];
+//     const queue: ItemState[] = [itemState];
+//     while (queue.length > 0) {
+//         const item = queue.pop();
+//         if (!item) break;
+//         for (const id of item.children) {
+//             const child = ctx.items[id];
+//             items.push(child);
+//             queue.push(child);
+//         }
+//     }
+//     return items;
+// }
 
 export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: ItemState) => number = (a, b) => {
     const maxA = a.bounds.max;
