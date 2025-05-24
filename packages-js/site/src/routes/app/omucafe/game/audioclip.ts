@@ -162,7 +162,8 @@ export async function updateAudioClips(
         }
         const exist = playingElements.get(id)
         if (exist) {
-            if (audio.stopTime) {
+            const stopTime = audio.startTime + exist.duration * 1000;
+            if (stopTime < time) {
                 exist.pause()
                 exist.currentTime = 0
                 playingElements.delete(id)
@@ -178,7 +179,7 @@ export async function updateAudioClips(
         }
         const element = playingElements.get(id) || await getAudioByAsset(audio.clip.asset);
         playingElements.set(id, element)
-        element.currentTime = audio.clip.start + elapsed;
+        element.currentTime = (audio.clip.start + elapsed) / 1000;
         element.play();
         element.loop = false;
     }
