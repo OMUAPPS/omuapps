@@ -5,7 +5,7 @@
     import KitchenRenderer from './components/KitchenRenderer.svelte';
     import { markChanged, mouse } from './game/game.js';
     import { Time } from './game/time.js';
-    import { createGame, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, PaintBuffer, type Scene, type SceneContext } from './omucafe-app.js';
+    import { createGame, DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, PaintBuffer, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
     import SceneEffectEdit from './scenes/SceneEffectEdit.svelte';
     import SceneInstall from './scenes/SceneInstall.svelte';
@@ -17,7 +17,7 @@
     import SceneProductList from './scenes/SceneProductList.svelte';
 
     const promise = createGame(APP, 'client');
-    const { scene, gameConfig: config, states, orders, paintEvents } = getGame();
+    const { scene, config, gameConfig, states, orders, paintEvents } = getGame();
 
     const SCENES: Record<Scene['type'], TypedComponent<{
         context: SceneContext;
@@ -32,16 +32,19 @@
         'item_edit': SceneItemEdit,
         'effect_edit': SceneEffectEdit,
     }
-    let lastScene: TypedComponent<{
+    let lastScene: {type: string, comp: TypedComponent<{
         context: SceneContext;
-    }> = SCENES[$scene.type];
-    let currentScene: TypedComponent<{
+    }>} = {type: $scene.type, comp: SCENES[$scene.type]};
+    let currentScene: {type: string, comp: TypedComponent<{
         context: SceneContext;
-    }> = SCENES[$scene.type];
+    }>} = { type: $scene.type, comp: SCENES[$scene.type] };
     $: {
-        if ($scene.type !== currentScene.name) {
+        if ($scene.type !== currentScene.type) {
             lastScene = currentScene;
-            currentScene = SCENES[$scene.type];
+            currentScene = {
+                type: $scene.type,
+                comp: SCENES[$scene.type]
+            };
         }
     }
 
@@ -71,16 +74,16 @@
     {#await promise then }
         <KitchenRenderer side="client" />
         {#if lastScene !== currentScene}
-            {#key lastScene}
+            {#key lastScene.type}
                 <div class="scene last">
-                    <svelte:component this={lastScene} context={{
+                    <svelte:component this={lastScene.comp} context={{
                         time: Time.get(),
                         active: false,
                     }} />
                 </div>
             {/key}
         {/if}
-        {#key lastScene}
+        {#key lastScene.type}
             <div class="scene current" bind:this={sceneElement}>
                 <svelte:component this={SCENES[$scene.type]} context={{
                     time: Time.get(),
@@ -113,7 +116,8 @@
     </button>
     <button on:click={() => {
         $scene = { type: 'loading' };
-        $config = DEFAULT_GAME_CONFIG;
+        $config = DEFAULT_CONFIG;
+        $gameConfig = DEFAULT_GAME_CONFIG;
         $states = DEFAULT_STATES;
         $paintEvents = PaintBuffer.NONE;
         markChanged();
