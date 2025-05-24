@@ -457,7 +457,9 @@ async function renderScreen() {
         await renderItemState(createItemState(context, {
             id: 'preview',
             item: ingredient,
-        }));
+        }), {
+            showRenderBounds: true,
+        });
         delete context.items['preview'];
         matrices.view.pop();
     } else if (scene.type === 'photo_mode') {

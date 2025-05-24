@@ -255,14 +255,30 @@ export async function getItemStateRenderBounds(item: ItemState): Promise<Bounds>
 
 export async function renderItemState(itemState: ItemState, options: {
     parent?: ItemState,
+    showRenderBounds?: boolean,
 } = {}) {
-    const { item } = itemState;
+    const { item, bounds } = itemState;
     if (!item.image) {
         return;
     }
     const texture = await getTextureByAsset(item.image);
     const { tex, width, height } = texture;
     const transform = options.parent ? transformToMatrix(itemState.transform) : getItemStateTransform(itemState, options);
+    if (options.showRenderBounds) {
+        const renderBounds = transform.transformAABB2(bounds);
+        draw.rectangleStroke(
+            renderBounds.min.x, renderBounds.min.y,
+            renderBounds.max.x, renderBounds.max.y,
+            new Vec4(1, 1, 1, 1),
+            2,
+        );
+        draw.rectangleStroke(
+            renderBounds.min.x, renderBounds.min.y,
+            renderBounds.max.x, renderBounds.max.y,
+            new Vec4(0, 0, 0, 1),
+            1,
+        );
+    }
     matrices.model.push();
     matrices.model.multiply(transform);
     const ctx = getContext();

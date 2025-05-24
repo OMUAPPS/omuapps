@@ -1,5 +1,10 @@
 import { Vec2, type Vec2Like } from './vec2.js';
 
+export type AABB2Like = AABB2 | {
+    min: Vec2Like,
+    max: Vec2Like,
+}
+
 export class AABB2 {
     constructor(
         public readonly min: Vec2,
@@ -29,7 +34,7 @@ export class AABB2 {
             && point.y >= this.min.y && point.y <= this.max.y;
     }
 
-    public intersects(other: AABB2): boolean {
+    public intersects(other: AABB2Like): boolean {
         return this.min.x <= other.max.x && this.max.x >= other.min.x
             && this.min.y <= other.max.y && this.max.y >= other.min.y;
     }
@@ -46,11 +51,11 @@ export class AABB2 {
         return new AABB2(this.min.mul(amount), this.max.mul(amount));
     }
 
-    public union(other: AABB2): AABB2 {
+    public union(other: AABB2Like): AABB2 {
         return new AABB2(this.min.min(other.min), this.max.max(other.max));
     }
 
-    public overlap(other: AABB2): AABB2 {
+    public overlap(other: AABB2Like): AABB2 {
         return new AABB2(this.min.max(other.min), this.max.min(other.max));
     }
 

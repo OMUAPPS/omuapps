@@ -369,13 +369,17 @@ export class Draw {
         return this.glContext.createProgram([this.vertexShader, fragmentShader]);
     }
 
-    public setMesh(vertices: Float32Array, texcoords: Float32Array): void {
-        this.vertexBuffer.bind(() => {
-            this.vertexBuffer.setData(vertices, 'static');
-        });
-        this.texcoordBuffer.bind(() => {
-            this.texcoordBuffer.setData(texcoords, 'static');
-        });
+    public setMesh(vertices?: Float32Array, texcoords?: Float32Array): void {
+        if (vertices) {
+            this.vertexBuffer.bind(() => {
+                this.vertexBuffer.setData(vertices, 'static');
+            });
+        }
+        if (texcoords) {
+            this.texcoordBuffer.bind(() => {
+                this.texcoordBuffer.setData(texcoords, 'static');
+            });
+        }
     }
 
     public rectangle(left: number, top: number, right: number, bottom: number, color: Vec4): void {
@@ -388,13 +392,6 @@ export class Draw {
             left, top, 0,
             right, bottom, 0,
             left, bottom, 0,
-        ]), new Float32Array([
-            0, 0,
-            1, 0,
-            1, 1,
-            0, 0,
-            1, 1,
-            0, 1,
         ]));
 
         this.colorProgram.use(() => {
@@ -405,7 +402,53 @@ export class Draw {
             
             const position = this.colorProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            gl.drawArrays(gl.TRIANGLES, 0, gl.TRIANGLE_FAN);
+        });
+    }
+
+    public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4, width: number): void {
+        const { gl } = this.glContext;
+        
+        this.setMesh(new Float32Array([
+            // top
+            left - width, top - width, 0,
+            right + width, top - width, 0,
+            right + width, top + width, 0,
+            left - width, top - width, 0,
+            right + width, top + width, 0,
+            left - width, top + width, 0,
+            // right
+            right - width, top - width, 0,
+            right + width, top - width, 0,
+            right + width, bottom + width, 0,
+            right - width, top - width, 0,
+            right + width, bottom + width, 0,
+            right - width, bottom + width, 0,
+            // bottom
+            left - width, bottom - width, 0,
+            right + width, bottom - width, 0,
+            right + width, bottom + width, 0,
+            left - width, bottom - width, 0,
+            right + width, bottom + width, 0,
+            left - width, bottom + width, 0,
+            // left
+            left - width, top - width, 0,
+            left + width, top - width, 0,
+            left + width, bottom + width, 0,
+            left - width, top - width, 0,
+            left + width, bottom + width, 0,
+            left - width, bottom + width, 0,
+        ]));
+
+        this.colorProgram.use(() => {
+            this.colorProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
+            this.colorProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
+            this.colorProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.colorProgram.getUniform('u_color').asVec4().set(color);
+            
+            const position = this.colorProgram.getAttribute('a_position');
+            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, 24);
         });
     }
 

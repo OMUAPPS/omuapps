@@ -1,3 +1,4 @@
+import { AABB2, type AABB2Like } from './aabb2.js';
 import type { Quaternion } from './quaternion.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 import { Vec3 } from './vec3.js';
@@ -229,14 +230,7 @@ export class Mat4 {
             nm30, nm31, nm32, nm33,
         );
     }
-
-    public transform3(point: Vec3): Vec3 {
-        const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30;
-        const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31;
-        const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32;
-        return new Vec3(x, y, z);
-    }
-
+    
     public transform2(point: Vec2Like): Vec2 {
         const x = this.m00 * point.x + this.m10 * point.y + this.m30;
         const y = this.m01 * point.x + this.m11 * point.y + this.m31;
@@ -247,6 +241,27 @@ export class Mat4 {
         const x = this.m00 * point.x + this.m10 * point.y;
         const y = this.m01 * point.x + this.m11 * point.y;
         return new Vec2(x, y);
+    }
+
+    public transformAABB2(aabb: AABB2Like): AABB2 {
+        const { min, max } = aabb;
+        const leftTop: Vec2Like = min;
+        const leftBottom: Vec2Like = { x: min.x, y: max.y };
+        const rightTop: Vec2Like = { x: max.x, y: min.y };
+        const rightBottom: Vec2Like = max;
+        return AABB2.fromPoints([
+            this.transform2(leftTop),
+            this.transform2(leftBottom),
+            this.transform2(rightTop),
+            this.transform2(rightBottom),
+        ])
+    }
+    
+    public transform3(point: Vec3): Vec3 {
+        const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30;
+        const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31;
+        const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32;
+        return new Vec3(x, y, z);
     }
 
     public equals(other: Mat4): boolean {
