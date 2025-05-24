@@ -34,6 +34,11 @@ export const DEFAULT_CONFIG = {
         background_uuid: null as string | null,
         overlay_uuid: null as string | null,
     },
+    scenes: {
+        product_list: {
+            scroll: 0,
+        }
+    }
 };
 
 export type Config = typeof DEFAULT_CONFIG;

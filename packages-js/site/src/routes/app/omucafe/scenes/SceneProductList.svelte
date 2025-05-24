@@ -1,16 +1,30 @@
 <script lang="ts">
+    import { Textbox } from '@omujs/ui';
     import BackButton from '../components/BackButton.svelte';
     import ProductList from '../components/ProductList.svelte';
-    import { type SceneContext } from '../omucafe-app.js';
+    import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
-    $: console.log('SceneProductList', context);
+
+    const { scene, config } = getGame();
+
+    let container: HTMLElement;
+
+    $: if (container) {
+        container.scrollTo({top: $config.scenes.product_list.scroll});
+    }
+
+    let search: string = '';
 </script>
 
-<main class="omu-scroll">
-    <ProductList type="product" />
-    <ProductList type="item" />
-    <ProductList type="effect" />
+<main class="omu-scroll" bind:this={container} on:scroll={() => {
+    if ($scene.type !== 'product_list') return;
+    $config.scenes.product_list.scroll = container.scrollTop;
+}}>
+    <Textbox bind:value={search} focused />
+    <ProductList type="product" {search}/>
+    <ProductList type="item" {search}/>
+    <ProductList type="effect" {search}/>
 </main>
 <BackButton active={context.active} />
 

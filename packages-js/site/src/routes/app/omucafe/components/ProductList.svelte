@@ -1,14 +1,22 @@
 <script lang="ts">
     import { Button } from '@omujs/ui';
     import AssetImage from '../components/AssetImage.svelte';
+    import { createHoldable } from '../game/behavior/holdable.js';
     import { createEffect } from '../game/effect.js';
     import { uniqueId } from '../game/helper.js';
     import { createItem } from '../game/item.js';
     import { getGame } from '../omucafe-app.js';
 
     export let type: 'product' | 'item' | 'effect' | undefined = undefined;
+    export let search: string = '';
 
     const { gameConfig: config, scene } = getGame();
+
+    function compareSearch(item: { name: string }, search: string): boolean {
+        const formattedName = item.name.toLocaleLowerCase();
+        const formattedSearch = search.toLocaleLowerCase();
+        return formattedName.includes(formattedSearch);
+    }
 </script>
 
 {#if type === 'product'}
@@ -37,7 +45,7 @@
         </Button>
     </div>
     <div class="list">
-        {#each Object.entries($config.products) as [id, product] (id)}
+        {#each Object.entries($config.products).filter(([,item]) => compareSearch(item, search)) as [id, product] (id)}
             <button on:click={() => {
                 $scene = { type: 'product_edit', id };
             }}>
@@ -63,7 +71,8 @@
         </span>
         <Button primary onclick={() => {
             const item = createItem({
-                name: '新商品',
+                name: '新アイテム',
+                behaviors: { holdable: createHoldable() },
             });
             $config.items[item.id] = item;
             $scene = { type: 'item_edit', id: item.id, created: true };
@@ -73,7 +82,7 @@
         </Button>
     </div>
     <div class="list">
-        {#each Object.entries($config.items) as [id, item] (id)}
+        {#each Object.entries($config.items).filter(([,item]) => compareSearch(item, search)) as [id, item] (id)}
             <button on:click={() => {
                 $scene = { type: 'item_edit', id };
             }}>
@@ -109,7 +118,7 @@
         </Button>
     </div>
     <div class="list">
-        {#each Object.entries($config.effects) as [id, effect] (id)}
+        {#each Object.entries($config.effects).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
             <button on:click={() => {
                 $scene = { type: 'effect_edit', id };
             }}>

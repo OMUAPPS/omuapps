@@ -6,8 +6,16 @@
     export let disabled: boolean = false;
     export let readonly: boolean = false;
     export let lazy: boolean = false;
+    export let focused: boolean = false;
     $: inputValue = value;
     let timer: number | undefined;
+    let input: HTMLInputElement;
+
+    $: {
+        if (input && focused) {
+            input.focus();
+        }
+    }
 
     const eventDispatcher = createEventDispatcher<{
         input: string;
@@ -30,6 +38,7 @@
     }
 
     function exit() {
+        focused = false;
         if (timer) {
             window.clearTimeout(timer);
         }
@@ -50,7 +59,9 @@
     value={inputValue}
     {disabled}
     {readonly}
+    bind:this={input}
     on:input={handleChange}
+    on:focus={() => focused = true}
     on:blur={exit}
 />
 
