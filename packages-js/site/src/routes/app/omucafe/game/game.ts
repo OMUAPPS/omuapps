@@ -732,7 +732,7 @@ export async function renderClientSide() {
     });
     await frameBuffer.useAsync(async () => {
         glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
-        glContext.gl.clearColor(0, 0, 0, 0);
+        glContext.gl.clearColor(1, 1, 1, 0);
         setupCounterProjection();
         await update();
         await renderCounter();
@@ -793,7 +793,7 @@ export async function renderOverlaySide() {
     });
     await frameBuffer.useAsync(async () => {
         glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
-        glContext.gl.clearColor(0, 0, 0, 0);
+        glContext.gl.clearColor(1, 1, 1, 0);
         await update();
         await renderCounter();
         await renderItems([ITEM_LAYERS.KITCHEN_ITEMS]);
@@ -840,7 +840,7 @@ export async function render(gl: GlContext): Promise<void> {
     });
     const { gl: glInternal } = gl;
     glContext.stateManager.setViewport({ x: glInternal.canvas.width, y: glInternal.canvas.height });
-    glInternal.clearColor(0, 0, 0, 0);
+    glInternal.clearColor(1, 1, 1, 0);
     glInternal.clear(glInternal.COLOR_BUFFER_BIT);
     glInternal.enable(glInternal.BLEND);
     glInternal.blendFuncSeparate(glInternal.SRC_ALPHA, glInternal.ONE_MINUS_SRC_ALPHA, glInternal.ONE, glInternal.ONE_MINUS_SRC_ALPHA);

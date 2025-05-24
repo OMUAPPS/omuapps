@@ -317,10 +317,12 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
         });
         render.texture.ensureSize(dimentions.x, dimentions.y);
     });
+    const { gl } = glContext;
     await buffer.useAsync(async () => {
         buffer.attachTexture(render.texture);
         glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
-        glContext.gl.clearColor(0, 0, 0, 0);
+        glContext.gl.clearColor(1, 1, 1, 0);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
         glContext.stateManager.pushViewport(dimentions);
         matrices.push();
         matrices.identity();

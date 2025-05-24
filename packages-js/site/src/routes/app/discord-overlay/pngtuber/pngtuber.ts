@@ -428,7 +428,7 @@ export class PNGTuber implements Avatar {
         passes.sort((a, b) => a - b);
 
         this.frameBuffer.use(() => {
-            gl.clearColor(0, 0, 0, 0);
+            gl.clearColor(1, 1, 1, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
             passes.forEach(pass => {
                 [...context.spriteGroups.values()].filter(sprite => sprite.layerData.parentId === null).forEach(sprite => {
@@ -441,12 +441,12 @@ export class PNGTuber implements Avatar {
 
         options.effects.forEach(effect => {
             this.effectTargetFrameBuffer.use(() => {
-                gl.clearColor(0, 0, 0, 0);
+                gl.clearColor(1, 1, 1, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
             });
             effect.render(action, this.frameBufferTexture, this.effectTargetFrameBuffer);
             this.frameBuffer.use(() => {
-                gl.clearColor(0, 0, 0, 0);
+                gl.clearColor(1, 1, 1, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 this.bufferProgram.use(() => {
                     const textureUniform = this.bufferProgram.getUniform('u_texture').asSampler2D();

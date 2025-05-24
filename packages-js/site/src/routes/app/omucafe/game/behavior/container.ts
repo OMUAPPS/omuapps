@@ -71,9 +71,11 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         this.maskTexture.use(() => {
             this.maskTexture.ensureSize(dimentions.x, dimentions.y);
         });
+        const { gl } = glContext;
         await this.maskBuffer.useAsync(async () => {
-            glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
-            glContext.gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.clearColor(1, 1, 1, 0);
+            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
             glContext.stateManager.pushViewport(dimentions);
             matrices.push();
             matrices.identity();
