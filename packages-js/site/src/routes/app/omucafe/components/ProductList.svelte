@@ -137,7 +137,6 @@
         display: flex;
         align-items: baseline;
         justify-content: space-between;
-        width: 20rem;
         gap: 1rem;
         border-bottom: 1px solid var(--color-outline);
         margin-bottom: 0.5rem;
@@ -189,7 +188,6 @@
         outline: 1px solid var(--color-outline);
         border-radius: 2px;
         padding: 0.6rem 1rem;
-        width: 20rem;
         margin-bottom: 0.75rem;
 
         > .image {

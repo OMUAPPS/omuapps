@@ -37,6 +37,7 @@ export const DEFAULT_CONFIG = {
     scenes: {
         product_list: {
             scroll: 0,
+            search: '',
         }
     }
 };
