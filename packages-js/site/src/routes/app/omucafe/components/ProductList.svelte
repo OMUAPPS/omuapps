@@ -156,7 +156,7 @@
         display: flex;
         align-items: flex-start;
         flex-direction: column;
-        margin-bottom: 4rem;
+        margin-bottom: 1rem;
 
         > button {
             width: 100%;

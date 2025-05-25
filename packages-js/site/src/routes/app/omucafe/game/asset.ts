@@ -18,16 +18,32 @@ export async function uploadAsset(file: File): Promise<Asset> {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const id = APP_ID.join('asset', hash);
-    const result = await getGame().omu.assets.upload(id, buffer);
-    return {
+    const { omu, resourcesRegistry } = getGame();
+    const result = await omu.assets.upload(id, buffer);
+    const asset: Asset = {
         type: 'asset',
         id: result.key(),
+    };
+    resourcesRegistry.modify((value) => {
+        value.assets[result.key()] = asset;
+        return value
+    })
+    return asset;
+}
+
+const assetCache = new Map<string, Promise<string>>();
+
+export function getAssetKey(asset: Asset) {
+    if (asset.type === 'url') {
+        return asset.url;
+    } else if (asset.type === 'asset') {
+        return asset.id;
+    } else {
+        throw new Error(`Unknown asset type ${asset}`);
     }
 }
 
-const assetCache = new Map<string, Promise<string | URL>>();
-
-export async function getAsset(asset: Asset): Promise<string | URL> {
+export async function getAsset(asset: Asset): Promise<string> {
     if (asset.type === 'url') {
         return asset.url;
     }
@@ -36,12 +52,12 @@ export async function getAsset(asset: Asset): Promise<string | URL> {
         if (existing) {
             return existing;
         }
-        const promise = new Promise<string | URL>( (resolve) => {
+        const promise = new Promise<string>((resolve, reject) => {
             getGame().omu.assets.download(Identifier.fromKey(asset.id)).then((result) => {
                 const url = URL.createObjectURL(new Blob([result.buffer]));
                 resolve(url);
             }).catch((error) => {
-                resolve(`Error downloading asset ${asset.id}: ${error}`);
+                reject(`Error downloading asset ${asset.id}: ${error}`);
             });
         });
         assetCache.set(asset.id, promise);

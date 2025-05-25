@@ -105,6 +105,7 @@
         </code>
     </div>
     <div class="behaviors omu-scroll"> 
+        <h1>機能</h1>
         {#each Object.values(BEHAVIROS) as behavior, i (i)}
             <div class="behavior" class:active={item.behaviors[behavior.key]}>
                 <button class="behavior-info" class:active={item.behaviors[behavior.key]} on:click={() => {
@@ -237,9 +238,13 @@
         display: flex;
         flex-direction: column;
         gap: 2rem;
-        padding: 4rem 3rem;
+        padding: 3rem 3rem;
         width: 24rem;
         overflow-y: auto;
+    }
+
+    h1 {
+        margin-bottom: 1rem;
     }
 
     .behavior {

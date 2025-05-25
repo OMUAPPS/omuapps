@@ -15,6 +15,7 @@ import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { get, writable, type Writable } from 'svelte/store';
 import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
+import type { Asset } from './game/asset.js';
 import type { PlayingAudioClip } from './game/audioclip.js';
 import type { Effect } from './game/effect.js';
 import { getContext, mouse, paintQueue, setContext } from './game/game.js';
@@ -26,6 +27,17 @@ import type { Product } from './game/product.js';
 import { assertValue, builder, Globals, ScriptError, type Script, type ScriptContext, type Value } from './game/script.js';
 import { Time } from './game/time.js';
 import { transformToMatrix } from './game/transform.js';
+
+export const DEFAULT_RESOURCE_REGISTRY = {
+    assets: {} as Record<string, Asset>,
+}
+
+type ResourceRegistry = typeof DEFAULT_RESOURCE_REGISTRY;
+
+const RESOURCE_REGISTRY_TYPE = RegistryType.createJson<ResourceRegistry>(APP_ID, {
+    name: 'resources',
+    defaultValue: DEFAULT_RESOURCE_REGISTRY,
+});
 
 export const DEFAULT_CONFIG = {
     version: 1,
@@ -494,6 +506,8 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
     const gameConfig = makeRegistryWritable(gameConfigRegistry);
     const configRegistry = omu.registries.get(APP_CONFIG_REGISTRY_TYPE);
     const config = makeRegistryWritable(configRegistry);
+    const resourcesRegistry = omu.registries.get(RESOURCE_REGISTRY_TYPE);
+    const resources = makeRegistryWritable(resourcesRegistry);
     const statesRegistry = omu.registries.get(STATES_REGISTRY_TYPE);
     const states = makeRegistryWritable(statesRegistry);
     const sceneRegistry = omu.registries.get(SCENE_REGISTRY_TYPE);
@@ -529,6 +543,8 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
         chat,
         gameConfigRegistry,
         configRegistry,
+        resourcesRegistry,
+        resources,
         statesRegistry,
         sceneRegistry,
         gameConfig,
@@ -608,16 +624,18 @@ export type Game = {
     obs: OBSPlugin,
     chat: Chat,
     gameConfigRegistry: Registry<GameConfig>,
-    configRegistry: Registry<Config>,
-    statesRegistry: Registry<States>,
-    sceneRegistry: Registry<Scene>,
     gameConfig: Writable<GameConfig>,
+    configRegistry: Registry<Config>,
     config: Writable<Config>,
+    resourcesRegistry: Registry<ResourceRegistry>,
+    resources: Writable<ResourceRegistry>,
+    statesRegistry: Registry<States>,
     states: Writable<States>,
+    sceneRegistry: Registry<Scene>,
+    scene: Writable<Scene>,
     orders: Table<Order>,
     paintSignal: Signal<PaintEvent[]>,
     paintEvents: Writable<PaintBuffer>,
-    scene: Writable<Scene>,
     globals: Globals,
 };
 
