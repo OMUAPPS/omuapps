@@ -524,17 +524,17 @@ export class Draw {
             0, 1,
         ]));
 
-        this.textureProgram.use(() => {
-            this.textureProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.textureProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.textureProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
-            this.textureProgram.getUniform('u_texture').asSampler2D().set(texture);
-            this.textureProgram.getUniform('u_mask').asSampler2D().set(mask);
-            this.textureProgram.getUniform('u_color').asVec4().set(color);
+        this.textureMaskProgram.use(() => {
+            this.textureMaskProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
+            this.textureMaskProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
+            this.textureMaskProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.textureMaskProgram.getUniform('u_texture').asSampler2D().set(texture);
+            this.textureMaskProgram.getUniform('u_mask').asSampler2D().set(mask);
+            this.textureMaskProgram.getUniform('u_color').asVec4().set(color);
 
-            const position = this.textureProgram.getAttribute('a_position');
+            const position = this.textureMaskProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const texcoord = this.textureProgram.getAttribute('a_texcoord');
+            const texcoord = this.textureMaskProgram.getAttribute('a_texcoord');
             texcoord.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });

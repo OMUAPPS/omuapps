@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { Button, FileDrop, Textbox, Tooltip, type TypedComponent } from '@omujs/ui';
+    import { Button, FileDrop, Textbox, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import { fetchImage, getAsset, uploadAsset } from '../game/asset.js';
-    import type { Behaviors } from '../game/behavior.js';
+    import type { DefaultBehaviors } from '../game/behavior.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createHoldable } from '../game/behavior/holdable.js';
     import { createSpawner } from '../game/behavior/spawner.js';
@@ -12,6 +12,7 @@
     import ContainerEdit from './behavior/ContainerEdit.svelte';
     import HoldableEdit from './behavior/HoldableEdit.svelte';
     import SpawnerEdit from './behavior/SpawnerEdit.svelte';
+    import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
     import TransformEdit from './TransformEdit.svelte';
 
     export let item: Item;
@@ -41,7 +42,7 @@
             }),
             edit: SpawnerEdit,
         },
-    } satisfies DefaultBehavior;
+    } satisfies DefaultBehaviors;
 
     let open: () => Promise<FileList>;
 
@@ -54,20 +55,10 @@
         state = null;
     })
     
-    type DefaultBehavior<T extends keyof Behaviors = keyof Behaviors> = {
-        [key in T]?: {
-            name: string;
-            key: key;
-            default: Behaviors[key];
-            edit: TypedComponent<{
-                behavior: Behaviors[key];
-            }>;
-        }
-    }
 </script>
 
 <main>
-    <div class="info">
+    <div class="info omu-scroll">
         <div class="id">
             <small>ID</small>
             <p>{item.id}</p>
@@ -109,7 +100,8 @@
         </div>
         <TransformEdit bind:transform={item.transform} />
         <code>
-            {JSON.stringify(item, null, 2)}
+            <!-- <JsonEdit bind:value={item.behaviors} /> -->
+            <JsonDebugInfo value={item.behaviors} />
         </code>
     </div>
     <div class="behaviors omu-scroll"> 
@@ -205,6 +197,7 @@
         padding-left: 2rem;
         width: 24rem;
         gap: 1rem;
+        overflow-x: hidden;
         background: var(--color-bg-1);
         border-right: 1px solid var(--color-1);
         outline: 2px solid var(--color-bg-1);
@@ -227,6 +220,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 12rem;
+        padding: 1rem;
+        width: 100%;
+        background: var(--color-bg-1);
         
         &.no-image {
             border: 2px dashed var(--color-outline);
@@ -293,7 +293,8 @@
     code {
         white-space: pre-wrap;
         word-break: break-all;
-        height: 18rem;
+        max-height: 18rem;
+        width: 100%;
         overflow: auto;
         background: var(--color-bg-2);
         padding: 0.75rem;

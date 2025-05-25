@@ -358,7 +358,7 @@ export async function renderItemState(itemState: ItemState, options: {
 } = {}) {
     const render = await getItemStateRender(itemState);
     const { bounds, texture } = render;
-    const transform = transformToMatrix(itemState.transform);
+    const transform = options.parent ? getItemStateTransform(itemState, options) : transformToMatrix(itemState.transform);
     if (options.showRenderBounds) {
         const renderBounds = transform.transformAABB2(bounds);
         draw.rectangleStroke(renderBounds.min.x, renderBounds.min.y, renderBounds.max.x, renderBounds.max.y, Vec4.ONE, 2);

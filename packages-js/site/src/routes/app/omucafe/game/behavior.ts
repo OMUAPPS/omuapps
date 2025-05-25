@@ -41,3 +41,14 @@ export type BehaviorHandler<T extends keyof Behaviors> = Partial<{
     canItemBeHeld: BehaviorFunction<T, { canBeHeld: boolean }>,
     renderItemHoverTooltip: BehaviorFunction<T, { matrices: Matrices }>,
 }>;
+
+export type DefaultBehaviors<T extends keyof Behaviors = keyof Behaviors> = {
+    [key in T]?: {
+        name: string;
+        key: key;
+        default: Behaviors[key];
+        edit: TypedComponent<{
+            behavior: Behaviors[key];
+        }>;
+    }
+}

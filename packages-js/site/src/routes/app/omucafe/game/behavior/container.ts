@@ -10,9 +10,15 @@ import type { KitchenContext } from '../kitchen.js';
 import { transformToMatrix, type Transform } from '../transform.js';
 
 export type Container = {
-    limitToBounds?: boolean,
+    bounded?: {
+        left: boolean,
+        top: boolean,
+        right: boolean,
+        bottom: boolean,
+    },
     mask?: {
-        asset?: Asset,
+        asset: Asset,
+        transform: Transform,
     },
     overlay?: {
         asset: Asset,
@@ -20,33 +26,36 @@ export type Container = {
     }
 }
 
-export function createContainer(options: {
-    limitToBounds?: boolean,
-    mask?: {
-        asset?: Asset,
-    }
-    overlay?: {
-        asset: Asset,
-        transform: Transform,
-    }
-} = {}): Container {
-    const { limitToBounds, mask, overlay } = options;
-    return {
-        limitToBounds,
-        mask,
-        overlay,
-    };
+export function createContainer(): Container {
+    return {};
 }
 
 export class ContainerHandler implements BehaviorHandler<'container'> {
+    private readonly childrenBuffer: GlFramebuffer;
+    private readonly childrenBufferTexture: GlTexture;
     private readonly maskBuffer: GlFramebuffer;
-    private readonly maskTexture: GlTexture;
+    private readonly maskBufferTexture: GlTexture;
     
     constructor() {
+        const childrenBuffer = glContext.createFramebuffer();
+        const childrenBufferTexture = glContext.createTexture();
+        childrenBufferTexture.use(() => {
+            childrenBufferTexture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        })
+        childrenBuffer.use(() => {
+            childrenBuffer.attachTexture(childrenBufferTexture);
+        });
+        this.childrenBuffer = childrenBuffer;
+        this.childrenBufferTexture = childrenBufferTexture;
         const maskBuffer = glContext.createFramebuffer();
-        const maskTexture = glContext.createTexture();
-        maskTexture.use(() => {
-            maskTexture.setParams({
+        const maskBufferTexture = glContext.createTexture();
+        maskBufferTexture.use(() => {
+            maskBufferTexture.setParams({
                 minFilter: 'linear',
                 magFilter: 'linear',
                 wrapS: 'clamp-to-edge',
@@ -54,10 +63,10 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             });
         })
         maskBuffer.use(() => {
-            maskBuffer.attachTexture(maskTexture);
+            maskBuffer.attachTexture(maskBufferTexture);
         });
         this.maskBuffer = maskBuffer;
-        this.maskTexture = maskTexture;
+        this.maskBufferTexture = maskBufferTexture;
     }
     
     async render(
@@ -68,14 +77,13 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         const { item, behavior } = action;
         const { bufferBounds, childRenders } = args;
         const dimentions = bufferBounds.dimensions();
-        this.maskTexture.use(() => {
-            this.maskTexture.ensureSize(dimentions.x, dimentions.y);
+        this.childrenBufferTexture.use(() => {
+            this.childrenBufferTexture.ensureSize(dimentions.x, dimentions.y);
         });
         const { gl } = glContext;
-        await this.maskBuffer.useAsync(async () => {
+        await this.childrenBuffer.useAsync(async () => {
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.clearColor(1, 1, 1, 0);
-            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
             glContext.stateManager.pushViewport(dimentions);
             matrices.push();
             matrices.identity();
@@ -98,7 +106,29 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             matrices.pop();
             glContext.stateManager.popViewport();
         });
-        draw.texture(bufferBounds.min.x, bufferBounds.min.y, bufferBounds.max.x, bufferBounds.max.y, this.maskTexture);
+        if (behavior.mask) {
+            const { asset } = behavior.mask;
+            const transform = transformToMatrix(behavior.mask.transform);
+            const { tex, width, height } = await getTextureByAsset(asset);
+            this.maskBufferTexture.use(() => {
+                this.maskBufferTexture.ensureSize(dimentions.x, dimentions.y);
+            });
+            this.maskBuffer.use(() => {
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.clearColor(1, 1, 1, 0);
+                glContext.stateManager.pushViewport(dimentions);
+                matrices.push();
+                matrices.identity();
+                matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.x, bufferBounds.min.y, bufferBounds.max.y, -1, 1);
+                matrices.model.multiply(transform);
+                draw.texture(0, 0, width, height, tex);
+                matrices.pop();
+                glContext.stateManager.popViewport();
+            });
+            draw.textureMask(bufferBounds.min.x, bufferBounds.min.y, bufferBounds.max.x, bufferBounds.max.y, this.childrenBufferTexture, this.maskBufferTexture);
+        } else {
+            draw.texture(bufferBounds.min.x, bufferBounds.min.y, bufferBounds.max.x, bufferBounds.max.y, this.childrenBufferTexture);
+        }
         if (behavior.overlay) {
             matrices.model.push();
             const transform = transformToMatrix(behavior.overlay.transform);
@@ -131,12 +161,14 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             up: { x: newMatrix.m10, y: newMatrix.m11 },
             offset: { x: newMatrix.m30, y: newMatrix.m31 },
         };
-        if (behavior.limitToBounds) {
-            this.restrictBounds(item, newMatrix, child);
+        if (behavior.bounded) {
+            this.restrictBounds(behavior, item, newMatrix, child);
         }
     }
 
-    private restrictBounds(item: ItemState, newMatrix: Mat4, child: ItemState) {
+    private restrictBounds(container: Container, item: ItemState, newMatrix: Mat4, child: ItemState) {
+        const { bounded } = container;
+        if (!bounded) return;
         const containerBounds = AABB2.from(item.bounds);
         const containerDimentions = containerBounds.dimensions();
         const childBounds = newMatrix.transformAABB2(child.bounds);
@@ -148,18 +180,18 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         const exceedBottom = childBounds.max.y - containerBounds.max.y;
         let offsetX = child.transform.offset.x;
         let offsetY = child.transform.offset.y;
-        if (childDimentions.x > containerDimentions.x) {
+        if (bounded.left && bounded.right && childDimentions.x > containerDimentions.x) {
             offsetX = containerDimentions.x / 2 - childDimentions.x / 2;
-        } else if (exceedLeft > 0) {
+        } else if (bounded.left && exceedLeft > 0) {
             offsetX += exceedLeft;
-        } else if (exceedRight > 0) {
+        } else if (bounded.right && exceedRight > 0) {
             offsetX -= exceedRight;
         }
-        if (childDimentions.y > containerDimentions.y) {
+        if (bounded.top && bounded.bottom && childDimentions.y > containerDimentions.y) {
             offsetY = containerDimentions.y / 2 - childDimentions.y / 2;
-        } else if (exceedTop > 0) {
+        } else if (bounded.top && exceedTop > 0) {
             offsetY += exceedTop;
-        } else if (exceedBottom > 0) {
+        } else if (bounded.bottom && exceedBottom > 0) {
             offsetY -= exceedBottom;
         }
         child.transform = {

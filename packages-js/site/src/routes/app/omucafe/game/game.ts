@@ -431,7 +431,7 @@ import { Time } from './time.js';
 
 function getScreenTime(time: number) {
     const elapsed = Time.get() - time;
-    const t = 1 / Math.pow(elapsed / 250 + 1, 3) * (1 - (4000 / elapsed + 1) * 0.1);
+    const t = 1 / Math.pow(elapsed / 250 + 1, 3);
     return t;
 }
 
@@ -843,7 +843,10 @@ export async function render(gl: GlContext): Promise<void> {
     glInternal.clearColor(1, 1, 1, 0);
     glInternal.clear(glInternal.COLOR_BUFFER_BIT);
     glInternal.enable(glInternal.BLEND);
-    glInternal.blendFuncSeparate(glInternal.SRC_ALPHA, glInternal.ONE_MINUS_SRC_ALPHA, glInternal.ONE, glInternal.ONE_MINUS_SRC_ALPHA);
+    // glInternal.blendFuncSeparate(glInternal.SRC_ALPHA, glInternal.ONE_MINUS_SRC_ALPHA, glInternal.ONE, glInternal.ONE_MINUS_SRC_ALPHA);
+    glInternal.clear(glInternal.COLOR_BUFFER_BIT);
+    glInternal.clearColor(1, 1, 1, 0);
+    glInternal.blendFuncSeparate(glInternal.SRC_ALPHA, glInternal.ONE_MINUS_SRC_ALPHA, glInternal.ONE, glInternal.ONE);
     
     const rect = {
         width: glInternal.canvas.width,
