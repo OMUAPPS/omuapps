@@ -23,16 +23,16 @@
             $scene = { type: 'cooking' };
         }}>
             <img src={button_line} alt="">
-            <span>お店を開く</span>
             <i class="ti ti-tools-kitchen-3"></i>
+            <span>お店を開く</span>
             <i class="ti ti-chevron-right"></i>
         </button>
         <button on:click={() => {
             $scene = { type: 'product_list' };
         }}>
             <img src={button_line} alt="">
-            <span>メニュー</span>
             <i class="ti ti-receipt"></i>
+            <span>メニュー</span>
             <i class="ti ti-chevron-right"></i>
         </button>
         <button on:click={() => {
@@ -41,8 +41,8 @@
             console.log($config);
         }}>
             <img src={button_line} alt="">
-            <span>設定をリセット</span>
             <i class="ti ti-settings-x"></i>
+            <span>設定をリセット</span>
             <i class="ti ti-chevron-right"></i>
         </button>
     </div>
@@ -111,7 +111,7 @@
 
         > i {
             font-size: 1.2rem;
-            margin-left: 0.75rem;
+            margin-right: 0.75rem;
         }
 
         > img {
