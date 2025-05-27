@@ -157,3 +157,16 @@ export function once(fn: (resolve: () => void) => (PromiseLike<() => unknown>) |
         });
     });
 }
+
+export function downloadFile(options: {filename: string, content: Uint8Array, type: string}) {
+    const { filename, content, type } = options;
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}

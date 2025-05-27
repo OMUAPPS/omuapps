@@ -2,7 +2,7 @@
     import { FileDrop } from '@omujs/ui';
     import AssetImage from '../components/AssetImage.svelte';
     import BackButton from '../components/BackButton.svelte';
-    import { uploadAsset } from '../game/asset.js';
+    import { uploadAssetByFile } from '../game/asset.js';
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
@@ -25,7 +25,7 @@
                         if (fileList.length !== 1) {
                             throw new Error('FileDrop must receive only one file');
                         }
-                        $config.products[id].image = await uploadAsset(fileList[0]);
+                        $config.products[id].image = await uploadAssetByFile(fileList[0]);
                     }} accept="image/*">
                         <p>商品画像を追加</p>
                     </FileDrop>
@@ -62,7 +62,7 @@
                 $config.products[id].recipe.steps = [
                     ...$config.products[id].recipe.steps,
                     {
-                        image: await uploadAsset(fileList[0]),
+                        image: await uploadAssetByFile(fileList[0]),
                         text: '',
                     },
                 ];

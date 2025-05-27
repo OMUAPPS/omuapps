@@ -32,7 +32,7 @@ export const DEFAULT_RESOURCE_REGISTRY = {
     assets: {} as Record<string, Asset>,
 }
 
-type ResourceRegistry = typeof DEFAULT_RESOURCE_REGISTRY;
+export type ResourceRegistry = typeof DEFAULT_RESOURCE_REGISTRY;
 
 const RESOURCE_REGISTRY_TYPE = RegistryType.createJson<ResourceRegistry>(APP_ID, {
     name: 'resources',

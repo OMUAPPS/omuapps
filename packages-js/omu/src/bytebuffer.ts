@@ -238,7 +238,7 @@ export class ByteReader {
         return new ByteReader(dataView);
     }
 
-    public  static async fromBlob(blob: Blob): Promise<ByteReader> {
+    public static async fromBlob(blob: Blob): Promise<ByteReader> {
         const arrayBuffer = await blob.arrayBuffer();
         const dataView = new DataView(arrayBuffer);
         return new ByteReader(dataView);

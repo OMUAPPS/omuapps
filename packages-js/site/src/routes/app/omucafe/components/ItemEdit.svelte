@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Button, FileDrop, Textbox, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
-    import { fetchImage, getAsset, uploadAsset } from '../game/asset.js';
+    import { fetchImage, getAsset, uploadAssetByFile } from '../game/asset.js';
     import type { DefaultBehaviors } from '../game/behavior.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createHoldable } from '../game/behavior/holdable.js';
@@ -78,7 +78,7 @@
                 if (fileList.length !== 1) {
                     throw new Error('FileDrop must receive only one file');
                 }
-                item.image = await uploadAsset(fileList[0]);
+                item.image = await uploadAssetByFile(fileList[0]);
                 const image = await getAsset(item.image).then(fetchImage);
                 item.bounds = {
                     min: { x: 0, y: 0 },

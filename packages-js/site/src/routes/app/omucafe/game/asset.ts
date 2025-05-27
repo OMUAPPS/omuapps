@@ -12,7 +12,21 @@ export type Asset = {
     id: string,
 };
 
-export async function uploadAsset(file: File): Promise<Asset> {
+export async function uploadAsset(id: Identifier, buffer: Uint8Array): Promise<Asset> {
+    const { omu, resourcesRegistry } = getGame();
+    const result = await omu.assets.upload(id, buffer);
+    const asset: Asset = {
+        type: 'asset',
+        id: result.key(),
+    };
+    resourcesRegistry.modify((value) => {
+        value.assets[id.key()] = asset;
+        return value;
+    });
+    return asset;
+}
+
+export async function uploadAssetByFile(file: File): Promise<Asset> {
     const buffer = new Uint8Array(await file.arrayBuffer());
     const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -52,8 +66,9 @@ export async function getAsset(asset: Asset): Promise<string> {
         if (existing) {
             return existing;
         }
+        const { omu } = getGame();
         const promise = new Promise<string>((resolve, reject) => {
-            getGame().omu.assets.download(Identifier.fromKey(asset.id)).then((result) => {
+            omu.assets.download(Identifier.fromKey(asset.id)).then((result) => {
                 const url = URL.createObjectURL(new Blob([result.buffer]));
                 resolve(url);
             }).catch((error) => {
@@ -64,6 +79,21 @@ export async function getAsset(asset: Asset): Promise<string> {
         return promise;
     }
     throw new Error(`Invalid asset type: ${asset}`);
+}
+
+export async function getAssetBuffer(asset: Asset): Promise<Uint8Array> {
+    if (asset.type === 'url') {
+        const response = await fetch(asset.url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch asset from URL: ${asset.url}`);
+        }
+        return new Uint8Array(await response.arrayBuffer());
+    } else if (asset.type === 'asset') {
+        const result = await getGame().omu.assets.download(Identifier.fromKey(asset.id));
+        return result.buffer;
+    } else {
+        throw new Error(`Unknown asset type ${asset}`);
+    }
 }
 
 const images = new Map<string, Promise<HTMLImageElement>>();
