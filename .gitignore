@@ -6,6 +6,9 @@
 .coverage
 coverage.xml
 
+# typescript
+**/tsconfig.tsbuildinfo
+
 # sveltekit
 .svelte-kit
 build

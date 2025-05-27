@@ -1,4 +1,4 @@
-import { type BuildConfig, Glob } from 'bun';
+import { $, type BuildConfig, Glob } from 'bun';
 import { watch } from 'node:fs';
 import { parseArgs } from 'node:util';
 import isolatedDecl from './bun-plugin-isolated-decl.js';
@@ -69,6 +69,12 @@ async function build(entrypoints: string[]) {
         console.log('building', entrypoints);
         console.time('build');
     }
+
+    const checkResult = await $`bun run tsc --noEmit --skipLibCheck --strict`.nothrow();
+    if (checkResult.exitCode !== 0) {
+        console.error('TypeScript type checking failed. Please fix the errors before building.');
+    }
+    
     for (const entrypoint of entrypoints) {
         try {
             const option: BuildConfig = {
