@@ -6,7 +6,7 @@ export class EndpointType<Req = unknown, Res = unknown> {
         public readonly id: Identifier,
         public readonly requestSerializer: Serializable<Req, Uint8Array>,
         public readonly responseSerializer: Serializable<Res, Uint8Array>,
-        public readonly permissionId?: Identifier,
+        public readonly permissionId?: Identifier | undefined,
     ) { }
 
     static createJson<Req, Res>(

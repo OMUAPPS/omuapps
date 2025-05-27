@@ -19,13 +19,13 @@ const FILE_SERIALIZER = new Serializer<Asset, Uint8Array>(
     (file) => {
         const writer = new ByteWriter();
         writer.writeString(file.identifier.key());
-        writer.writeByteArray(file.buffer);
+        writer.writeUint8Array(file.buffer);
         return writer.finish();
     },
     (data) => {
         const reader = ByteReader.fromUint8Array(data);
         const identifier = Identifier.fromKey(reader.readString());
-        const buffer = reader.readByteArray();
+        const buffer = reader.readUint8Array();
         reader.finish();
         return { identifier, buffer };
     },
@@ -33,20 +33,20 @@ const FILE_SERIALIZER = new Serializer<Asset, Uint8Array>(
 const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
     (files) => {
         const writer = new ByteWriter();
-        writer.writeInt(files.length);
+        writer.writeULEB128(files.length);
         for (const file of files) {
             writer.writeString(file.identifier.key());
-            writer.writeByteArray(file.buffer);
+            writer.writeUint8Array(file.buffer);
         }
         return writer.finish();
     },
     (data) => {
         const reader = ByteReader.fromUint8Array(data);
-        const count = reader.readInt();
+        const length = reader.readULEB128();
         const files: Asset[] = [];
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < length; i++) {
             const identifier = Identifier.fromKey(reader.readString());
-            const buffer = reader.readByteArray();
+            const buffer = reader.readUint8Array();
             files.push({ identifier, buffer });
         }
         reader.finish();

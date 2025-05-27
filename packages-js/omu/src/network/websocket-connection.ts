@@ -49,7 +49,7 @@ export class WebsocketConnection implements Connection {
         const reader = await ByteReader.fromBlob(event.data);
         this.packetQueue.push({
             type: reader.readString(),
-            data: reader.readByteArray(),
+            data: reader.readUint8Array(),
         });
         reader.finish();
         if (this.receiveWaiter) {
@@ -103,7 +103,7 @@ export class WebsocketConnection implements Connection {
         const packetData = serializer.serialize(packet);
         const writer = new ByteWriter();
         writer.writeString(packetData.type);
-        writer.writeByteArray(packetData.data);
+        writer.writeUint8Array(packetData.data);
         this.socket.send(writer.finish());
     }
 }

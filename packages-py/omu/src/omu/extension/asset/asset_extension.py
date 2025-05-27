@@ -25,14 +25,14 @@ class FileSerializer:
     def serialize(cls, item: Asset) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        writer.write_byte_array(item.buffer)
+        writer.write_uint8_array(item.buffer)
         return writer.finish()
 
     @classmethod
     def deserialize(cls, item: bytes) -> Asset:
         with ByteReader(item) as reader:
             identifier = Identifier.from_key(reader.read_string())
-            value = reader.read_byte_array()
+            value = reader.read_uint8_array()
         return Asset(identifier, value)
 
 
@@ -40,20 +40,20 @@ class FileArraySerializer:
     @classmethod
     def serialize(cls, item: list[Asset]) -> bytes:
         writer = ByteWriter()
-        writer.write_int(len(item))
+        writer.write_uleb128(len(item))
         for file in item:
             writer.write_string(file.id.key())
-            writer.write_byte_array(file.buffer)
+            writer.write_uint8_array(file.buffer)
         return writer.finish()
 
     @classmethod
     def deserialize(cls, item: bytes) -> list[Asset]:
         with ByteReader(item) as reader:
-            count = reader.read_int()
+            count = reader.read_uleb128()
             files: list[Asset] = []
             for _ in range(count):
                 identifier = Identifier.from_key(reader.read_string())
-                value = reader.read_byte_array()
+                value = reader.read_uint8_array()
                 files.append(Asset(identifier, value))
         return files
 

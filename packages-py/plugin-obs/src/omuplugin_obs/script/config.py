@@ -58,7 +58,7 @@ def setup_logger() -> None:
     import os
     import sys
 
-    import obspython
+    import obspython  # type: ignore
 
     class stdout_logger:
         def write(self, message):

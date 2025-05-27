@@ -251,46 +251,46 @@ export class PaintBuffer {
 
     public static serialize(data: PaintBuffer): Uint8Array {
         const writer = new ByteWriter();
-        writer.writeInt(data.size);
-        writer.writeByteArray(data.buffer);
+        writer.writeULEB128(data.size);
+        writer.writeUint8Array(data.buffer);
         return writer.finish();
     }
 
     public static deserialize(data: Uint8Array): PaintBuffer {
         const reader = ByteReader.fromUint8Array(data);
-        const size = reader.readInt();
-        const buffer = reader.readByteArray();
+        const size = reader.readULEB128();
+        const buffer = reader.readUint8Array();
         reader.finish();
         return new PaintBuffer(size, buffer);
     }
 
     private writeVector2(writer: ByteWriter, vec: Vec2Like): void {
-        writer.writeFloat(vec.x);
-        writer.writeFloat(vec.y);
+        writer.writeFloat32(vec.x);
+        writer.writeFloat32(vec.y);
     }
 
     private readVector2(reader: ByteReader): Vec2Like {
-        const x = reader.readFloat();
-        const y = reader.readFloat();
+        const x = reader.readFloat32();
+        const y = reader.readFloat32();
         return new Vec2(x, y);
     }
 
     private writePath(writer: ByteWriter, path: DrawPath): void {
-        writer.writeByte(0);
-        writer.writeFloat(path.in);
-        writer.writeFloat(path.out);
+        writer.writeUint8(0);
+        writer.writeFloat32(path.in);
+        writer.writeFloat32(path.out);
         this.writeVector2(writer, path.a);
         this.writeVector2(writer, path.b);
         this.writeVector2(writer, path.c);
     }
 
     private readPath(reader: ByteReader): DrawPath {
-        const type = reader.readByte();
+        const type = reader.readUint8();
         if (type !== 0) {
             throw new Error(`Unexpected path type: ${type}`);
         }
-        const inValue = reader.readFloat();
-        const outValue = reader.readFloat();
+        const inValue = reader.readFloat32();
+        const outValue = reader.readFloat32();
         const a = this.readVector2(reader);
         const b = this.readVector2(reader);
         const c = this.readVector2(reader);
@@ -317,7 +317,7 @@ export class PaintBuffer {
         for (const event of events) {
             const { t } = event;
             const type = TYPES[t];
-            writer.writeByte(type);
+            writer.writeUint8(type);
             switch (t) {
                 case PAINT_EVENT_TYPE.PEN:
                 case PAINT_EVENT_TYPE.ERASER: {
@@ -344,7 +344,7 @@ export class PaintBuffer {
         const reader = ByteReader.fromUint8Array(this.buffer);
         const events: PaintEvent[] = [];
         for (let i = 0; i < this.size; i++) {
-            const type = reader.readByte();
+            const type = reader.readUint8();
             switch (type) {
                 case 0: {
                     const path = this.readPath(reader);

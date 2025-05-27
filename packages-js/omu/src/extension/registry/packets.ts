@@ -14,7 +14,7 @@ export class RegistryPacket {
         writer.writeString(packet.id.key());
         writer.writeBoolean(packet.value !== null);
         if (packet.value !== null) {
-            writer.writeByteArray(packet.value);
+            writer.writeUint8Array(packet.value);
         }
         return writer.finish();
     }
@@ -23,7 +23,7 @@ export class RegistryPacket {
         const reader = ByteReader.fromUint8Array(data);
         const id = Identifier.fromKey(reader.readString());
         const existing = reader.readBoolean();
-        const value = existing ? reader.readByteArray() : null;
+        const value = existing ? reader.readUint8Array() : null;
         return new RegistryPacket(id, value);
     }
 }

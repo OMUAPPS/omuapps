@@ -40,7 +40,7 @@ class WebsocketsConnection(Connection):
         packet_data = packet_mapper.serialize(packet)
         writer = ByteWriter()
         writer.write_string(packet_data.type)
-        writer.write_byte_array(packet_data.data)
+        writer.write_uint8_array(packet_data.data)
         await self._socket.send_bytes(writer.finish())
 
     async def receive(self, packet_mapper: Serializable[Packet, PacketData]) -> Packet:
@@ -61,7 +61,7 @@ class WebsocketsConnection(Connection):
         elif msg.type == web.WSMsgType.BINARY:
             with ByteReader(msg.data) as reader:
                 event_type = reader.read_string()
-                event_data = reader.read_byte_array()
+                event_data = reader.read_uint8_array()
             packet_data = PacketData(event_type, event_data)
             return packet_mapper.deserialize(packet_data)
         else:

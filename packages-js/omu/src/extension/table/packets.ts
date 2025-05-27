@@ -28,10 +28,10 @@ export class TableItemsPacket {
     public static serialize(packet: TableItemsPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.id.key());
-        writer.writeInt(Object.keys(packet.items).length);
+        writer.writeULEB128(Object.keys(packet.items).length);
         for (const [key, value] of Object.entries(packet.items)) {
             writer.writeString(key);
-            writer.writeByteArray(value);
+            writer.writeUint8Array(value);
         }
         return writer.finish();
     }
@@ -39,11 +39,11 @@ export class TableItemsPacket {
     public static deserialize(data: Uint8Array): TableItemsPacket {
         const reader = ByteReader.fromUint8Array(data);
         const id = Identifier.fromKey(reader.readString());
-        const count = reader.readInt();
+        const count = reader.readULEB128();
         const items: Record<string, Uint8Array> = {};
         for (let i = 0; i < count; i++) {
             const key = reader.readString();
-            const value = reader.readByteArray();
+            const value = reader.readUint8Array();
             items[key] = value;
         }
         return new TableItemsPacket(id, items);
@@ -59,7 +59,7 @@ export class TableKeysPacket {
     public static serialize(packet: TableKeysPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.id.key());
-        writer.writeInt(packet.keys.length);
+        writer.writeULEB128(packet.keys.length);
         for (const key of packet.keys) {
             writer.writeString(key);
         }
@@ -69,7 +69,7 @@ export class TableKeysPacket {
     public static deserialize(data: Uint8Array): TableKeysPacket {
         const reader = ByteReader.fromUint8Array(data);
         const id = Identifier.fromKey(reader.readString());
-        const count = reader.readInt();
+        const count = reader.readULEB128();
         const keys: string[] = [];
         for (let i = 0; i < count; i++) {
             keys.push(reader.readString());
@@ -88,11 +88,11 @@ export class TableProxyPacket {
     public static serialize(packet: TableProxyPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.id.key());
-        writer.writeInt(packet.key);
-        writer.writeInt(Object.keys(packet.items).length);
+        writer.writeULEB128(packet.key);
+        writer.writeULEB128(Object.keys(packet.items).length);
         for (const [key, value] of Object.entries(packet.items)) {
             writer.writeString(key);
-            writer.writeByteArray(value);
+            writer.writeUint8Array(value);
         }
         return writer.finish();
     }
@@ -100,12 +100,12 @@ export class TableProxyPacket {
     public static deserialize(data: Uint8Array): TableProxyPacket {
         const reader = ByteReader.fromUint8Array(data);
         const id = Identifier.fromKey(reader.readString());
-        const key = reader.readInt();
-        const count = reader.readInt();
+        const key = reader.readULEB128();
+        const count = reader.readULEB128();
         const items: Record<string, Uint8Array> = {};
         for (let i = 0; i < count; i++) {
             const key = reader.readString();
-            const value = reader.readByteArray();
+            const value = reader.readUint8Array();
             items[key] = value;
         }
         return new TableProxyPacket(id, items, key);
@@ -122,7 +122,7 @@ export class TableFetchPacket {
     public static serialize(packet: TableFetchPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.id.key());
-        writer.writeInt(packet.limit);
+        writer.writeULEB128(packet.limit);
         const flags = new Flags({length: 2});
         flags.set(0, packet.backward);
         flags.set(1, packet.cursor !== null);
@@ -136,7 +136,7 @@ export class TableFetchPacket {
     public static deserialize(data: Uint8Array): TableFetchPacket {
         const reader = ByteReader.fromUint8Array(data);
         const id = Identifier.fromKey(reader.readString());
-        const limit = reader.readInt();
+        const limit = reader.readULEB128();
         const flags = reader.readFlags(2);
         const backward = flags.get(0);
         const cursor = flags.ifSet(1, () => reader.readString());
@@ -218,7 +218,7 @@ export class SetPermissionPacket {
         if (packet.proxy !== null) {
             flags |= 0b10000;
         }
-        writer.writeByte(flags);
+        writer.writeUint8(flags);
         if (packet.all) {
             writer.writeString(packet.all.key());
         }
@@ -240,7 +240,7 @@ export class SetPermissionPacket {
     public static deserialize(data: Uint8Array): SetPermissionPacket {
         const reader = ByteReader.fromUint8Array(data);
         const id = Identifier.fromKey(reader.readString());
-        const flags = reader.readByte();
+        const flags = reader.readUint8();
         const all = flags & 0b1 ? Identifier.fromKey(reader.readString()) : null;
         const read = flags & 0b10 ? Identifier.fromKey(reader.readString()) : null;
         const write = flags & 0b100 ? Identifier.fromKey(reader.readString()) : null;
@@ -249,3 +249,4 @@ export class SetPermissionPacket {
         return new SetPermissionPacket(id, all, read, write, remove, proxy);
     }
 }
+

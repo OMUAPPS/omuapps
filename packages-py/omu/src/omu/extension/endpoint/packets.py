@@ -13,7 +13,7 @@ class EndpointRegisterPacket:
     @classmethod
     def serialize(cls, item: EndpointRegisterPacket) -> bytes:
         writer = ByteWriter()
-        writer.write_int(len(item.endpoints))
+        writer.write_uleb128(len(item.endpoints))
         for key, value in item.endpoints.items():
             writer.write_string(key.key())
             writer.write_string(value.key() if value else "")
@@ -22,7 +22,7 @@ class EndpointRegisterPacket:
     @classmethod
     def deserialize(cls, item: bytes) -> EndpointRegisterPacket:
         with ByteReader(item) as reader:
-            count = reader.read_int()
+            count = reader.read_uleb128()
             endpoints = {}
             for _ in range(count):
                 key = reader.read_string()
@@ -41,16 +41,16 @@ class EndpointDataPacket:
     def serialize(cls, item: EndpointDataPacket) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        writer.write_int(item.key)
-        writer.write_byte_array(item.data)
+        writer.write_uleb128(item.key)
+        writer.write_uint8_array(item.data)
         return writer.finish()
 
     @classmethod
     def deserialize(cls, item: bytes) -> EndpointDataPacket:
         with ByteReader(item) as reader:
             id = reader.read_string()
-            key = reader.read_int()
-            data = reader.read_byte_array()
+            key = reader.read_uleb128()
+            data = reader.read_uint8_array()
         return EndpointDataPacket(id=Identifier.from_key(id), key=key, data=data)
 
 
@@ -64,7 +64,7 @@ class EndpointErrorPacket:
     def serialize(cls, item: EndpointErrorPacket) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        writer.write_int(item.key)
+        writer.write_uleb128(item.key)
         writer.write_string(item.error)
         return writer.finish()
 
@@ -72,7 +72,7 @@ class EndpointErrorPacket:
     def deserialize(cls, item: bytes) -> EndpointErrorPacket:
         with ByteReader(item) as reader:
             id = reader.read_string()
-            key = reader.read_int()
+            key = reader.read_uleb128()
             error = reader.read_string()
         return EndpointErrorPacket(
             id=Identifier.from_key(id),

@@ -86,7 +86,7 @@ export class FrameConnection implements Connection {
             const reader = ByteReader.fromUint8Array(payload);
             this.packetQueue.push({
                 type: reader.readString(),
-                data: reader.readByteArray(),
+                data: reader.readUint8Array(),
             });
             reader.finish();
             if (this.receiveWaiter) {
@@ -174,7 +174,7 @@ export class FrameConnection implements Connection {
         const packetData = serializer.serialize(packet);
         const writer = new ByteWriter();
         writer.writeString(packetData.type);
-        writer.writeByteArray(packetData.data);
+        writer.writeUint8Array(packetData.data);
         this.postCommand({
             type: 'send',
             payload: writer.finish(),
