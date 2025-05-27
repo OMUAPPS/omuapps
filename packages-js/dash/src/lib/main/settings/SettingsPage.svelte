@@ -152,8 +152,7 @@
                     {/if}
                 {:catch error}
                     <span class="update">
-                        <p>{$t('settings.setting.checkUpdateError')}</p>
-                        <small>{error}</small>
+                        <p>{$t('settings.setting.checkUpdateError', { error })}</p>
                     </span>
                 {/await}
                 <span class="setting">

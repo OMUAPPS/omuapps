@@ -261,6 +261,7 @@
             "serverRestartError": "サーバーの再起動に失敗しました: {error}",
             "latestVersion": "最新バージョン",
             "newVersionAvailable": "新しいバージョンがあります",
+            "checkUpdateError": "アップデートの確認に失敗しました: {error}",
             "update": "アップデート"
         },
         "about": {
