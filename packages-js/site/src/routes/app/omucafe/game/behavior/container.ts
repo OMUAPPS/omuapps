@@ -26,8 +26,8 @@ export type Container = {
     }
 }
 
-export function createContainer(): Container {
-    return {};
+export function createContainer(options?: Container): Container {
+    return options ?? {};
 }
 
 export class ContainerHandler implements BehaviorHandler<'container'> {

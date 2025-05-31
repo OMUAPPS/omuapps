@@ -66,7 +66,7 @@ export const DEFAULT_PEN = {
         x: 0,
         y: 0,
         z: 0,
-        w: 1,
+        w: 255,
     } as Vec4Like,
     opacity: 1,
     width: 10,
@@ -166,10 +166,16 @@ type OrderStatus = {
     type: 'done',
 };
 
+export type OrderItem = {
+    product_id: string,
+    notes: string,
+};
+
 export type Order = {
     id: number,
     user: User,
     status: OrderStatus,
+    items: OrderItem[],
 }
 
 const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
@@ -189,6 +195,7 @@ export const DEFAULT_STATES = {
             ui: false as boolean,
         } satisfies MouseState,
         hovering: null as string | null,
+        order: null as Order | null,
     } satisfies Kitchen,
 };
 
@@ -242,26 +249,37 @@ export type PaintEvents = {
 };
 
 export class PaintBuffer {
-    public static NONE = new PaintBuffer(0, new Uint8Array(0));
+    private static VERSION = 0;
+    public static NONE = new PaintBuffer(PaintBuffer.VERSION, 0, new Uint8Array(0));
     
     constructor(
+        public readonly version: number,
         public readonly size: number,
         public readonly buffer: Uint8Array,
     ) {}
 
     public static serialize(data: PaintBuffer): Uint8Array {
         const writer = new ByteWriter();
+        writer.writeULEB128(data.version);
         writer.writeULEB128(data.size);
         writer.writeUint8Array(data.buffer);
         return writer.finish();
     }
 
     public static deserialize(data: Uint8Array): PaintBuffer {
-        const reader = ByteReader.fromUint8Array(data);
-        const size = reader.readULEB128();
-        const buffer = reader.readUint8Array();
-        reader.finish();
-        return new PaintBuffer(size, buffer);
+        try {
+            const reader = ByteReader.fromUint8Array(data);
+            const version = reader.readULEB128();
+            if (version < PaintBuffer.VERSION) {
+                return PaintBuffer.NONE;
+            }
+            const size = reader.readULEB128();
+            const buffer = reader.readUint8Array();
+            reader.finish();
+            return new PaintBuffer(version, size, buffer);
+        } catch {
+            return PaintBuffer.NONE;
+        }
     }
 
     private writeVector2(writer: ByteWriter, vec: Vec2Like): void {
@@ -335,9 +353,7 @@ export class PaintBuffer {
                     break;
             }
         }
-        // this.size += events.length;
-        // this.buffer = writer.finish();
-        return new PaintBuffer(this.size + events.length, writer.finish());
+        return new PaintBuffer(this.version, this.size + events.length, writer.finish());
     }
 
     public read(): PaintEvent[] {
@@ -462,6 +478,7 @@ const functions = {
             if (item.layer !== ITEM_LAYERS.PHOTO_MODE) continue;
             removeItemState(item);
         }
+        let i = 0;
         for (const id of counter.children) {
             const item = items[id];
             const transform = transformToMatrix(item.transform);
@@ -479,11 +496,12 @@ const functions = {
                     right: item.transform.right,
                     up: item.transform.up,
                     offset: {
-                        x: -offset.x,
-                        y: -offset.y,
+                        x: -offset.x + (i / (counter.children.length) - 0.5) * 1000,
+                        y: -offset.y + 150,
                     },
                 }
-            })
+            });
+            i ++;
         }
         game?.scene.set({
             type: 'photo_mode',

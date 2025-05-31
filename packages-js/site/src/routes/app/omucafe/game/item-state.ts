@@ -218,19 +218,23 @@ export function getItemStateTransform(item: ItemState, options: {
     if (flipY) {
         const matrix = matrices[0];
         if (item.id === 'counter') {
+            const z = matrix.m31 + item.bounds.max.y + 1080;
             matrices[0] = new Mat4(
                 matrix.m00, matrix.m01, matrix.m02, matrix.m03,
                 matrix.m10, matrix.m11, matrix.m12, matrix.m13,
                 matrix.m20, matrix.m21, matrix.m22, matrix.m23,
-                matrix.m30, -matrix.m31 - item.bounds.max.y + 330, matrix.m32, matrix.m33,
+                matrix.m30, 5000 / z * 260 - 420, matrix.m32, matrix.m33,
             );
         } else {
-            const z = Math.max(Math.min(matrix.m31 - item.bounds.max.y / 2 + 620, 2000), 1);
+            const z = matrix.m31 + (item.bounds.max.y + item.bounds.min.y) + 1080;
+            if (z < 0) {
+                return Mat4.ZERO;
+            }
             matrices[0] = new Mat4(
                 matrix.m00 * 0.8, matrix.m01, matrix.m02, matrix.m03,
                 matrix.m10, matrix.m11 * 0.7, matrix.m12, matrix.m13,
                 matrix.m20, matrix.m21, matrix.m22, matrix.m23,
-                matrix.m30, 4000 / z * 10 + 100, matrix.m32, matrix.m33,
+                matrix.m30, 5000 / z * 260 - 500, matrix.m32, matrix.m33,
             );
         }
     }
@@ -358,7 +362,7 @@ export async function renderItemState(itemState: ItemState, options: {
 } = {}) {
     const render = await getItemStateRender(itemState);
     const { bounds, texture } = render;
-    const transform = options.parent ? getItemStateTransform(itemState, options) : transformToMatrix(itemState.transform);
+    const transform = options.parent ? transformToMatrix(itemState.transform) : getItemStateTransform(itemState, options);
     if (options.showRenderBounds) {
         const renderBounds = transform.transformAABB2(bounds);
         draw.rectangleStroke(renderBounds.min.x, renderBounds.min.y, renderBounds.max.x, renderBounds.max.y, Vec4.ONE, 2);

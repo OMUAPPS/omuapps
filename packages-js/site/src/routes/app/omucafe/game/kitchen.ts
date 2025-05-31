@@ -1,5 +1,5 @@
 import type { Vec2Like } from '$lib/math/vec2.js';
-import type { GameConfig, Scene, States } from '../omucafe-app.js';
+import type { GameConfig, Order, Scene, States } from '../omucafe-app.js';
 import type { PlayingAudioClip } from './audioclip.js';
 import type { ItemState } from './item-state.js';
 
@@ -16,11 +16,13 @@ export type Kitchen = {
     held: string | null,
     hovering: string | null,
     mouse: MouseState,
+    order: Order | null,
 };
 
 export type KitchenContext = {
     audios: Record<string, PlayingAudioClip>,
     items: Record<string, ItemState>,
+    order: Order | null,
     held: string | null,
     hovering: string | null,
     mouse: MouseState,

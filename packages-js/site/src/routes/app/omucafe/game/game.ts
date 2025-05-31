@@ -5,8 +5,9 @@ import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import bell from '../images/bell.png';
-import counter from '../images/counter.png';
-import kitchen from '../images/kitchen.png';
+import counter_client from '../images/counter_client.png';
+import kitchen_asset from '../images/kitchen_asset.png';
+import kitchen_client from '../images/kitchen_client.png';
 import photo_frame from '../images/photo_frame.svg';
 import { getTextureByUri } from './asset.js';
 import { createContainer } from './behavior/container.js';
@@ -14,7 +15,7 @@ import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, ma
 import { createItem } from './item.js';
 import type { KitchenContext } from './kitchen.js';
 
-export const COUNTER_WIDTH = 1920;
+export const COUNTER_WIDTH = 1920 * 2;
 export const COUNTER_HEIGHT = 500;
 export const UPDATE_RATE = 60;
 export let lastUpdate = Time.get();
@@ -119,6 +120,7 @@ function syncData() {
             items: context.items,
             held: context.held,
             hovering: context.hovering,
+            order: context.order,
             mouse: {
                 position: mouse.gl,
                 delta: mouse.deltaGl,
@@ -264,14 +266,14 @@ export async function init(ctx: GlContext) {
         
     await loadBehaviorHandlers();
     if (side === 'client') {
-        const counterTex = await getTextureByUri(counter);
+        const counterTex = await getTextureByUri(counter_client);
         const existCounter = context.items['counter'];
         const counterItem = createItem({
             id: 'counter',
             name: 'カウンター',
             image: {
                 type: 'url',
-                url: counter,
+                url: counter_client,
             },
             bounds: {
                 min: Vec2.ZERO,
@@ -283,8 +285,8 @@ export async function init(ctx: GlContext) {
             transform: {
                 right: Vec2.RIGHT,
                 up: Vec2.UP,
-                offset: { x: 0, y: -COUNTER_HEIGHT },
-            }
+                offset: { x: 0, y: 0 },
+            },
         });
         createItemState(context, {
             id: 'counter',
@@ -315,7 +317,7 @@ export async function init(ctx: GlContext) {
             transform: createTransform2(
                 Vec2.ONE,
                 0,
-                { x: 0, y: 0 },
+                { x: 50, y: -100 },
             )
         });
         createItemState(context, {
@@ -359,7 +361,7 @@ export function applyDragEffect() {
 }
 
 async function renderCounter() {
-    const kitchenTex = await getTextureByUri(kitchen);
+    const kitchenTex = await getTextureByUri(side === 'client' ? kitchen_client : kitchen_asset);
     matrices.model.push();
     matrices.model.translate(0, 150, 0);
     // Kitchen
@@ -443,6 +445,7 @@ async function renderScreen() {
         draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(1, 1, 1, 0.5));
         matrices.view.push();
         matrices.view.translate(width / 2, height / 2, 0);
+        matrices.view.scale(scaleFactor, scaleFactor, 1);
         const ingredient = context.config.items[scene.id];
         const transform = transformToMatrix(ingredient.transform);
         const { min, max } = ingredient.bounds;
@@ -468,7 +471,7 @@ async function renderScreen() {
         const t = getScreenTime(scene.time);
         const photoMode = context.config.photo_mode;
         const client = side === 'client';
-        const screenScale = client ? scaleFactor * 0.7 : scaleFactor;
+        const screenScale = client ? scaleFactor * 0.7 * 2 : scaleFactor * 2;
         const offsetY = client ? matrices.height / 2 - matrices.height * 0.07 - 50 : matrices.height / 2;
         await matrices.view.scopeAsync(async () => {
             matrices.view.translate(matrices.width / 2, offsetY, 0);

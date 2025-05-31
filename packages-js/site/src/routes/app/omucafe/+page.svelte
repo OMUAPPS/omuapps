@@ -110,6 +110,7 @@
             status: {
                 type: 'waiting',
             },
+            items: [],
         });
     }}>
         オーダーを追加

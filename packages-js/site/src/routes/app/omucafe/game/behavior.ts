@@ -1,5 +1,6 @@
 import type { Matrices } from '$lib/components/canvas/matrices.js';
 import type { AABB2 } from '$lib/math/aabb2.js';
+import type { TypedComponent } from '@omujs/ui';
 import { ActionHandler, type Action } from './behavior/action.js';
 import { ContainerHandler, type Container } from './behavior/container.js';
 import { HoldableHandler, type Holdable } from './behavior/holdable.js';

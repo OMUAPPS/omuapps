@@ -1,11 +1,11 @@
 import background from '../../images/background.png';
 import background2 from '../../images/background2.png';
 import effect from '../../images/effect.png';
-import overlay from '../../images/overlay.png';
-import overlay2 from '../../images/overlay2.png';
-import overlay3 from '../../images/overlay3.png';
+// import overlay from '../../images/overlay.png';
+// import overlay2 from '../../images/overlay2.png';
+import kitchen_asset_overlay from '../../images/kitchen_asset_overlay.png';
 import { getTextureByUri } from '../asset.js';
-import { draw, glContext, side } from '../game.js';
+import { draw, glContext, matrices, side } from '../game.js';
 
 
 export async function renderBackground() {
@@ -45,33 +45,34 @@ export async function renderEffect() {
 
 export async function renderOverlay() {
     const gl = glContext.gl;
-    if (side === 'client') {
-        const tex = await getTextureByUri(overlay2);
+    // if (side === 'client') {
+    //     const tex = await getTextureByUri(overlay2);
+    //     draw.texture(
+    //         0, 0,
+    //         gl.canvas.width, gl.canvas.height,
+    //         tex.tex,
+    //     );
+    // }
+    if (side === 'overlay') {
+        const { tex, width, height } = await getTextureByUri(kitchen_asset_overlay);
         draw.texture(
-            0, 0,
-            gl.canvas.width, gl.canvas.height,
-            tex.tex,
-        );
-    } else {
-        const tex = await getTextureByUri(overlay);
-        draw.texture(
-            0, 0,
-            gl.canvas.width, gl.canvas.height,
-            tex.tex,
+            matrices.width - width, matrices.height - height,
+            matrices.width, matrices.height,
+            tex,
         );
     }
 }
 
 export async function renderOverlay2() {
-    const gl = glContext.gl;
-    if (side === 'overlay') {
-        const tex = await getTextureByUri(overlay3);
-        const { height } = gl.canvas;
-        const scale = Math.min(height / tex.height, 1.5);
-        draw.texture(
-            0, height - tex.height * scale,
-            tex.width * scale, height,
-            tex.tex,
-        );
-    }
+    // const gl = glContext.gl;
+    // if (side === 'overlay') {
+    //     const tex = await getTextureByUri(overlay3);
+    //     const { height } = gl.canvas;
+    //     const scale = Math.min(height / tex.height, 1.5);
+    //     draw.texture(
+    //         0, height - tex.height * scale,
+    //         tex.width * scale, height,
+    //         tex.tex,
+    //     );
+    // }
 }
