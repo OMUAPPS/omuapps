@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import socket
+import tkinter
 import urllib.parse
+from tkinter import messagebox
 from typing import TYPE_CHECKING
 
+import psutil
 from aiohttp import web
 from loguru import logger
 from omu import Identifier
@@ -15,6 +18,7 @@ from omu.helper import Coro
 from omu.network.packet import PACKET_TYPES, PacketType
 from omu.network.packet.packet_types import DisconnectPacket, DisconnectType
 from omu.result import Err, Ok, Result, is_err
+from psutil import Process
 
 from omuserver.helper import find_processes_by_port
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
@@ -187,30 +191,82 @@ class Network:
         except OSError:
             return False
 
-    def ensure_port_availability(self):
+    def ensure_port_availability(self) -> Result[None, tuple[str, list[Process]]]:
         if self.is_port_free():
-            return
+            return Ok(None)
         found_processes = set(find_processes_by_port(self._server.address.port))
         if len(found_processes) == 0:
-            raise OSError(f"Port {self._server.address.port} already in use by unknown process")
-        is_system_idle_reserved = any(p.pid == 0 and p.name() == "System Idle Process" for p in found_processes)
-        if is_system_idle_reserved:
-            raise OSError(f"Port {self._server.address.port} already in use by System Idle Process")
+            return Err((f"Port {self._server.address.port} already in use by unknown process", []))
         if len(found_processes) > 1:
             processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
-            raise OSError(f"Port {self._server.address.port} already in use by multiple processes: {processes}")
+            return Err(
+                (
+                    f"Port {self._server.address.port} already in use by multiple processes: {processes}",
+                    list(found_processes),
+                )
+            )
         process = found_processes.pop()
         port = self._server.address.port
         name = process.name()
         pid = process.pid
         parents = process.parents()
         msg = f"Port {port} already in use by {' -> '.join(f'{p.name()}({p.pid})' for p in parents)} -> {name} ({pid=})"
-        raise OSError(msg)
+        return Err((msg, list(found_processes)))
+
+    def terminate_process_due_to_port(self, processes: list[Process]):
+        root = tkinter.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+
+        def wait_for_process_to_end():
+            if any(process.is_running() for process in processes):
+                root.after(200, wait_for_process_to_end)
+            else:
+                root.destroy()
+
+        root.after(200, wait_for_process_to_end)
+
+        process_names = ", ".join(process.name() for process in processes)
+        message = f"OMUAPPSの使用するためには以下のアプリを閉じる必要があります\n{process_names}"
+        res = messagebox.Message(
+            root,
+            title="OMUAPPS API",
+            message=message,
+            icon=messagebox.WARNING,
+            type=messagebox.YESNO,
+        ).show()
+        if not res or res == messagebox.YES:
+            for process in processes:
+                try:
+                    process.terminate()
+                except psutil.AccessDenied:
+                    logger.warning(f"Failed to terminate {process.name()}")
+                    pass
+        elif res == messagebox.NO:
+            return Err("User cancelled shutdown")
+
+    def notify_system_idle_process_conflict(self):
+        root = tkinter.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        messagebox.Message(
+            root,
+            title="OMUAPPS API",
+            message="起動に失敗しました再度お試しください。これにはPCの再起動が必要な場合があります",
+            icon=messagebox.WARNING,
+            type=messagebox.OK,
+        ).show()
 
     async def start(self) -> None:
         if self._runner is not None:
             raise ValueError("Server already started")
-        self.ensure_port_availability()
+        match self.ensure_port_availability():
+            case Err((msg, processes)):
+                logger.error(msg)
+                if len(processes) == 0:
+                    self.notify_system_idle_process_conflict()
+                self.terminate_process_due_to_port(processes)
+
         runner = web.AppRunner(self._app)
         self._runner = runner
         await runner.setup()
