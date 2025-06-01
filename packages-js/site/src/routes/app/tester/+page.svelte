@@ -1,22 +1,28 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import { type Component } from '@omujs/chat/models/content.js';
-    import { Author, Message, Provider, Room, content } from '@omujs/chat/models/index.js';
+    import { Author, Message, Provider, Room } from '@omujs/chat/models/index.js';
     import { AppHeader, MessageRenderer } from '@omujs/ui';
     import { APP } from './app.js';
     import { chat, omu } from './client.js';
     import ComponentEditor from './components/ComponentEditor.svelte';
 
-    let component: Component = new content.Root([
-        new content.Text('Hello, World!'),
-        new content.Text('This is a test.'),
-    ]);
+    let component: Component = {
+        type: 'root',
+        data: [
+            { type: 'text', data: 'Hello, World!'},
+            { type: 'text', data: 'This is a test.'},
+        ],
+    };
 
     function reset() {
-        component = new content.Root([
-            new content.Text('Hello, World!'),
-            new content.Text('This is a test.'),
-        ]);
+        component = {
+            type: 'root',
+            data: [
+                { type: 'text', data: 'Hello, World!'},
+                { type: 'text', data: 'This is a test.'},
+            ],
+        };
     }
 
     const TEST_PROVIDER = new Provider({
@@ -98,7 +104,7 @@
                 </div>
                 <div class="flex col width height">
                     <small>JSON</small>
-                    <pre>{JSON.stringify(content.serialize(component), null, 4)}</pre>
+                    <pre>{JSON.stringify(component, null, 4)}</pre>
                 </div>
             </div>
         </section>

@@ -15,28 +15,28 @@
     $: icon = component && icons[component.type as 'text' | 'image'];
 
     function removeChild(child: content.Component) {
-        if (!component.isParent()) {
-            throw new Error('Component is not a parent');
-        }
-        component.children = component.children.filter((c) => c !== child);
+        const children = content.children(component);
+        const index = children.findIndex((it) => it === child);
+        children.splice(index);
     }
 </script>
 
 {#if component}
+    {@const children = content.children(component)}
     {#if icon}
         <button on:click={remove}>
             <Tooltip>コンポーネントを削除</Tooltip>
             <i class={icon}></i>
         </button>
     {/if}
-    {#if component instanceof content.Text}
+    {#if component.type === 'text'}
         <TextEdit bind:component />
-    {:else if component instanceof content.Image}
+    {:else if component.type === 'image'}
         <ImageEdit bind:component />
     {/if}
-    {#if component.isParent()}
+    {#if children.length > 0}
         <div>
-            {#each component.children as child, i (i)}
+            {#each children as child, i (i)}
                 <svelte:self bind:component={child} remove={() => removeChild(child)} />
             {/each}
             <AddComponent bind:component />

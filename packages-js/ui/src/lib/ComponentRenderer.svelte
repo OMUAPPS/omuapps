@@ -7,50 +7,57 @@
     export let component: content.Component;
 </script>
 
-{#if component instanceof content.Text}
-    <LinkableText text={component.text || ''} />
-{:else if component instanceof content.Image}
+{#if component.type === 'text'}
+    <LinkableText text={component.data || ''} />
+{:else if component.type === 'image'}
+    {@const { id, url, name } = component.data}
     <span>
         <Tooltip>
             <div class="flex row gap">
                 <div class="flex col">
-                    {#if component.name}
-                        {component.name}
+                    {#if name}
+                        {name}
                     {/if}
-                    {#if component.id && component.id !== component.name}
+                    {#if id && id !== name}
                         <small>
-                            {component.id}
+                            {id}
                         </small>
                     {/if}
                 </div>
-                <img src={component.url} alt={component.id} class="preview" />
+                <img src={url} alt={id} class="preview" />
             </div>
         </Tooltip>
-        <img src={component.url} alt={component.id} />
+        <img src={url} alt={id} />
     </span>
-{:else if component instanceof content.Asset}
+{:else if component.type === 'asset'}
+    {@const { id } = component.data}
     <span>
-        <img src={$client.assets.url(component.id)} alt={component.id.key()} />
+        <img src={$client.assets.url(id)} alt={id} />
     </span>
-{:else if component instanceof content.Link}
-    <a href={component.url} target="_blank" rel="noopener noreferrer">
+{:else if component.type === 'link'}
+    {@const { children, url } = component.data}
+    <a href={url} target="_blank" rel="noopener noreferrer">
         <Tooltip>
-            {component.url}
+            {url}
         </Tooltip>
-        {#each component.children || [] as sibling, i (i)}
+        {#each children || [] as sibling, i (i)}
             <svelte:self component={sibling} />
         {/each}
     </a>
-{:else if component instanceof content.System}
+{:else if component.type === 'root'}
+    {@const children = component.data}
+    {#each children || [] as sibling, i (i)}
+        <svelte:self component={sibling} />
+    {/each}
+{:else if component.type === 'system'}
+    {@const children = component.data}
     <code>
-        {#each component.children || [] as sibling, i (i)}
+        {#each children || [] as sibling, i (i)}
             <svelte:self component={sibling} />
         {/each}
     </code>
-{:else if component.isParent()}
-    {#each component.children as sibling, i (i)}
-        <svelte:self component={sibling} />
-    {/each}
+{:else}
+    /* Unknown component {typeof component} {JSON.stringify(component)} */
 {/if}
 
 <style>

@@ -40,14 +40,12 @@
 
     function isMessageGreasy(message: Message): boolean {
         if (!message.content) return false;
-        return [...message.content.iter()].some((part) => {
-            if (part instanceof content.Image) {
-                if (part.id === '🍟') {
-                    return true;
-                }
-            }
-            return false;
-        });
+        for (const component of content.walk(message.content)) {
+            if (component.type !== 'image') continue;
+            const { id } = component.data;
+            if (id === '🍟') return true;
+        }
+        return false;
     }
 
     chat.on(events.message.add, async (message) => {

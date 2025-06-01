@@ -1,6 +1,5 @@
 <script lang="ts">
     import { Author } from '@omujs/chat/models/author.js';
-    import { content } from '@omujs/chat/models/index.js';
     import {
         Button,
         Combobox,
@@ -127,19 +126,22 @@
 <div class="preview">
     <MessageRenderer
         author={TEST_AUTHOR}
-        content={new content.Root([new content.Asset(emoji.asset)])}
+        content={{ type: 'root', data: [{ type: 'asset', data: { id: emoji.asset.key()} }]}}
     />
     <MessageRenderer
         author={TEST_AUTHOR}
-        content={new content.Root([new content.Text(emoji.id), new content.Asset(emoji.asset)])}
+        content={{ type: 'root', data: [{type: 'text', data: emoji.id}, { type: 'asset', data: { id: emoji.asset.key()} }]}}
     />
     <MessageRenderer
         author={TEST_AUTHOR}
-        content={new content.Root([
-            new content.Asset(emoji.asset),
-            new content.Asset(emoji.asset),
-            new content.Asset(emoji.asset),
-        ])}
+        content={{
+            type: 'root',
+            data: [
+                { type: 'asset', data: { id: emoji.asset.key() } },
+                { type: 'asset', data: { id: emoji.asset.key() } },
+                { type: 'asset', data: { id: emoji.asset.key() } },
+            ],
+        }}
     />
 </div>
 
