@@ -277,13 +277,13 @@ class TwitchChatService(ProviderService):
         author = Author(
             provider_id=PROVIDER.id,
             id=author_id,
-            name=sender_login,
+            name=target_user["displayName"],
             avatar_url=target_user["profileImageURL"],
             roles=roles,
             metadata={
                 "avatar_url": target_user["profileImageURL"],
-                "screen_id": target_user["displayName"],
-                "url": f"https://www.twitch.tv/{target_user['displayName']}",
+                "screen_id": sender_login,
+                "url": f"https://www.twitch.tv/{sender_login}",
             },
         )
         await self.chat.authors.add(author)
