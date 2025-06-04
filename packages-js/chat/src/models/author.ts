@@ -58,7 +58,7 @@ export class Author implements Keyable, Model<AuthorJson> {
     }
 
     key(): string {
-        return `${this.providerId}:${this.id}`;
+        return this.id.key();
     }
 
     toJson(): AuthorJson {
