@@ -1,13 +1,13 @@
 <script lang="ts">
     import { TableList } from '@omujs/ui';
     import { getGame } from '../omucafe-app.js';
-    import OrderListItem from './OrderListItem.svelte';
+    import OrderListEntry from './OrderListEntry.svelte';
     
     const { orders } = getGame();
 </script>
 
 <div class="order-list">
-    <TableList table={orders} component={OrderListItem}/>
+    <TableList table={orders} component={OrderListEntry}/>
 </div>
 
 <style lang="scss">

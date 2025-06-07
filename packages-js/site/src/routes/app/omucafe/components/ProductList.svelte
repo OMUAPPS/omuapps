@@ -50,12 +50,11 @@
                 $scene = { type: 'product_edit', id };
             }}>
                 <div class="item">
-                    {#if product.image}
-                        <AssetImage asset={product.image} />
-                    {/if}
                     <h2>{product.name}</h2>
-                    {#if product.description}
-                        <p>{product.description}</p>
+                    {#if product.image}
+                        <div class="image">
+                            <AssetImage asset={product.image} />
+                        </div>
                     {/if}
                 </div>
             </button>

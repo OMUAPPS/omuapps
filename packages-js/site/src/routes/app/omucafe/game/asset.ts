@@ -180,6 +180,19 @@ export async function getTextureByUri(uri: string): Promise<Texture> {
     return getTexture(uri, image);
 }
 
+export async function getTextureByUriCORS(uri: string) {
+    const existing = textures.get(uri);
+    if (existing) {
+        return existing;
+    }
+    const { omu } = getGame();
+    const resp = await fetch(omu.assets.proxy(uri));
+    const image = new Image();
+    image.src = URL.createObjectURL(await resp.blob());
+    await image.decode();
+    return getTexture(uri, image);
+}
+
 export async function getTextureByAsset(asset: Asset): Promise<Texture> {
     const url = await getAsset(asset);
     const image = await fetchImage(url);

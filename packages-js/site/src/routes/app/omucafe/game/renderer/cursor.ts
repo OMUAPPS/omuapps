@@ -27,12 +27,12 @@ export async function renderCursor() {
             matrices.height / 2,
             0.
         )
-        const z = Math.max(Math.min(model.m31 + 620, 2000), 1);
+        const z = model.m31 + 1080;
         model = new Mat4(
             model.m00 * 0.8 * 2, model.m01, model.m02, model.m03,
             model.m10, model.m11 * -0.7 * 2, model.m12, model.m13,
             model.m20, model.m21, model.m22, model.m23,
-            model.m30, 4000 / z * 20 - 20, model.m32, model.m33,
+            model.m30, 5000 / z * 260 - 500 - 100, model.m32, model.m33,
         );
     }
 

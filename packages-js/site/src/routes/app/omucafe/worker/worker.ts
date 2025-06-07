@@ -31,6 +31,13 @@ export class WorkerPipe<Commands extends CommandRegistry> {
         });
     }
 
+    public static dummy<Commands extends CommandRegistry>(): WorkerPipe<Commands> {
+        return new WorkerPipe<Commands>(
+            () => {},
+            () => {},
+        );
+    }
+
     public static create<Commands extends CommandRegistry>(worker: Worker): WorkerPipe<Commands> {
         return new WorkerPipe<Commands>(
             (fn) => worker.onmessage = fn,

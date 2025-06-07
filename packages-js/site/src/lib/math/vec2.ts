@@ -19,6 +19,13 @@ export class Vec2 {
         return new Vec2(lerp(this.x, other.x, t), lerp(this.y, other.y, t));
     }
 
+    public lerp2(other: Vec2Like, tp: Vec2Like): Vec2 {
+        return new Vec2(
+            lerp(this.x, other.x, tp.x),
+            lerp(this.y, other.y, tp.y),
+        );
+    }
+
     public remap(minIn: Vec2Like, maxIn: Vec2Like, minOut: Vec2Like, maxOut: Vec2Like): Vec2 {
         return new Vec2(
             lerp(minOut.x, maxOut.x, invLerp(minIn.x, maxIn.x, this.x)),

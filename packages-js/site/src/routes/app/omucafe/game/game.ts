@@ -2,14 +2,14 @@ import { Draw } from '$lib/components/canvas/draw.js';
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Matrices } from '$lib/components/canvas/matrices.js';
 import { Mat4 } from '$lib/math/mat4.js';
-import { Vec2 } from '$lib/math/vec2.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import bell from '../images/bell.png';
 import counter_client from '../images/counter_client.png';
 import kitchen_asset from '../images/kitchen_asset.png';
 import kitchen_client from '../images/kitchen_client.png';
 import photo_frame from '../images/photo_frame.svg';
-import { getTextureByUri } from './asset.js';
+import { getTextureByUri, getTextureByUriCORS } from './asset.js';
 import { createContainer } from './behavior/container.js';
 import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from './item-state.js';
 import { createItem } from './item.js';
@@ -351,6 +351,14 @@ function setupHUDProjection() {
     matrices.view.identity();
 }
 
+function setupCustomerProjection() {
+    const { gl } = glContext;
+
+    matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+    matrices.view.identity();
+    matrices.view.scale(scaleFactor, scaleFactor, 1);
+}
+
 export function applyDragEffect() {
     matrices.model.multiply(new Mat4(
         1, -mouse.delta.y / 1000, 0, 0,
@@ -420,9 +428,10 @@ async function update() {
 }
 
 import { once } from '$lib/helper.js';
+import { AABB2 } from '$lib/math/aabb2.js';
 import { Axis } from '$lib/math/axis.js';
 import { Bezier } from '$lib/math/bezier.js';
-import { DEFAULT_ERASER, DEFAULT_PEN, getGame, PAINT_EVENT_TYPE, PaintBuffer, type Eraser, type PaintEvent, type Pen } from '../omucafe-app.js';
+import { DEFAULT_ERASER, DEFAULT_PEN, getGame, PAINT_EVENT_TYPE, PaintBuffer, type Eraser, type PaintEvent, type Pen, type User } from '../omucafe-app.js';
 import { updateAudioClips } from './audioclip.js';
 import { createAction } from './behavior/action.js';
 import { copy } from './helper.js';
@@ -507,6 +516,11 @@ async function renderScreen() {
             width / 2, height / 2,
             drawFrameBufferTexture,
         )
+        draw.setFont('26px "Note Sans JP"');
+        const dateText = new Date(scene.time).toLocaleString();
+        const dateMetrics = draw.measureTextActual(dateText);
+        const dateDimentions = dateMetrics.dimensions();
+        draw.text(width / 2 - dateDimentions.x - 140, height / 2 - dateDimentions.y - 120, dateText, new Vec4(0, 0, 0, 0.5));
         const mousePos = matrices.unprojectPoint(mouse.gl).mul({
             x: 1,
             y: -1,
@@ -721,6 +735,59 @@ export async function renderBackgroundSide() {
     await renderBackground();
 }
 
+import dummy_back from '../images/dummy_back.png';
+import dummy_front from '../images/dummy_front.png';
+
+async function renderNametag(user: User, bounds: AABB2) {
+    const dimentions = bounds.dimensions();
+    draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, new Vec4(0.99, 0.99, 0.99, 1));
+    const strokeOffset = 2;
+    const size = dimentions.x / 6;
+    draw.rectangleStroke(bounds.min.x + strokeOffset, bounds.min.y + strokeOffset, bounds.max.x - strokeOffset, bounds.max.y - strokeOffset, new Vec4(0, 0, 0, 0.5), 3);
+    if (user.avatar) {
+        const { tex } = await getTextureByUriCORS(user.avatar);
+        const x = bounds.min.x + size / 2 + strokeOffset;
+        const y = bounds.min.y + dimentions.y / 2 - size / 2;
+        draw.texture(x, y, x + size, y + size, tex);
+    }
+    draw.setFont(`${size / 1.5}px 'Noto Sans JP', sans-serif`);
+    const textAnchor: Vec2Like = { x: bounds.min.x + size * 2 + strokeOffset, y: bounds.min.y + dimentions.y / 2 }
+    draw.textAlign(textAnchor, user.name, Vec2.UP, new Vec4(0, 0, 0, 1));
+    if (user.screen_id) {
+        draw.setFont(`${size / 2}px 'Noto Sans JP', sans-serif`);
+        draw.textAlign(textAnchor, user.screen_id, Vec2.ZERO, new Vec4(0, 0, 0, 0.5));
+    }
+}
+
+async function renderCustomersClient(position: Vec2) {
+    const { order } = context;
+    if (order) {
+        const { user } = order;
+        const { tex, width, height } = await getTextureByUri(side === 'client' ? dummy_front : dummy_back);
+        draw.texture(position.x, position.y, position.x + width / 1.2, position.y + height / 1.2, tex);
+        const nametagBounds = AABB2.from({
+            min: {x: -340, y: -200},
+            max: {x: 340, y: 200},
+        })
+            .scale(side === 'client' ? 0.6 : 0.7)
+            .offset({ x: width / 1.2 / 2, y: height / 1.2 / 2 })
+            .offset(position);
+        await renderNametag(user, nametagBounds);
+    }
+}
+
+async function renderCustomersAsset(position: Vec2) {
+    const { order } = context;
+    if (order) {
+        const { user } = order;
+        const { tex, width, height } = await getTextureByUri(side === 'client' ? dummy_front : dummy_back);
+        draw.texture(position.x, position.y, position.x + width / 1.2, position.y + height / 1.2, tex);
+        const center = position.add({x: width / 1.2 / 2, y: height / 1.2 / 2});
+        draw.setFont('40px \'Noto Sans JP\', sans-serif');
+        draw.textAlign(center, user.name, {x: 0.5, y: 0}, new Vec4(0, 0, 0, 0.5));
+    }
+}
+
 export async function renderClientSide() {
     if (side !== 'client') return;
     const { scene } = context;
@@ -736,6 +803,9 @@ export async function renderClientSide() {
     await frameBuffer.useAsync(async () => {
         glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
         glContext.gl.clearColor(1, 1, 1, 0);
+        setupCustomerProjection();
+        await renderCustomersClient(new Vec2(1920 * 2 - 1200, 80));
+
         setupCounterProjection();
         await update();
         await renderCounter();
@@ -745,7 +815,6 @@ export async function renderClientSide() {
             await renderHoveringItem();
             await renderHeldItem();
         }
-        
         setupHUDProjection();
         await renderOverlay();
         setupCounterProjection();
@@ -788,7 +857,6 @@ export async function renderOverlaySide() {
     updateMouseAsset();
     setupBackgroundProjection();
     await renderEffect();
-    
     setupCounterProjection();
 
     frameBufferTexture.use(() => {
@@ -806,6 +874,9 @@ export async function renderOverlaySide() {
         await renderHeldItem();
         await renderParticles();
         await renderItems([ITEM_LAYERS.COUNTER, ITEM_LAYERS.BELL]);
+    
+        setupCustomerProjection();
+        await renderCustomersAsset(new Vec2(1920 * 2 - 1200, 1200));
         setupHUDProjection();
         await renderOverlay2();
     });

@@ -1,3 +1,4 @@
+import { AABB2 } from '$lib/math/aabb2.js';
 import { Bezier } from '$lib/math/bezier.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
@@ -354,6 +355,10 @@ export class Draw {
     private readonly texcoordBuffer: GlBuffer;
     private readonly frameBuffer: GlFramebuffer;
     private readonly frameBufferTexture: GlTexture;
+    private readonly textCanvas: OffscreenCanvas;
+    private readonly textContext: OffscreenCanvasRenderingContext2D;
+    private readonly textTexture: GlTexture;
+    private font: string = '10px sans-serif';
 
     constructor(
         private readonly matrices: Matrices,
@@ -371,6 +376,21 @@ export class Draw {
         this.texcoordBuffer = glContext.createBuffer();
         this.frameBuffer = glContext.createFramebuffer();
         this.frameBufferTexture = glContext.createTexture();
+        this.textCanvas = new OffscreenCanvas(0, 0);
+        const textContext = this.textCanvas.getContext('2d');
+        if (textContext === null) {
+            throw new Error('Failed to get 2d rendering context from text offscreen canvas');
+        }
+        this.textContext = textContext;
+        this.textTexture = glContext.createTexture();
+        this.textTexture.use(() => {
+            this.textTexture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            })
+        })
     }
 
     private ensureFrameBuffer(width: number, height: number): void {
@@ -386,6 +406,72 @@ export class Draw {
     private createProgram(fragmentSource: string): GlProgram {
         const fragmentShader = this.glContext.createShader({type: 'fragment', source: fragmentSource});
         return this.glContext.createProgram([this.vertexShader, fragmentShader]);
+    }
+
+    public measureText(text: string): TextMetrics {
+        this.textContext.font = this.font;
+        return this.textContext.measureText(text);
+    }
+
+    public setFont(font: string) {
+        this.textContext.font = font;
+        this.font = font;
+    }
+
+    public measureTextActual(text: string) {
+        this.textContext.font = this.font;
+        const metrics = this.textContext.measureText(text);
+        return new AABB2(
+            new Vec2(metrics.actualBoundingBoxLeft, metrics.actualBoundingBoxAscent),
+            new Vec2(metrics.actualBoundingBoxRight, metrics.actualBoundingBoxDescent),
+        );
+    }
+
+    public text(left: number, top: number, text: string, color: Vec4) {
+        this.textContext.font = this.font;
+        const bounds = this.measureTextActual(text);
+        const dimentions = bounds.dimensions().max(Vec2.ZERO);
+        this.textCanvas.width = dimentions.x;
+        this.textCanvas.height = dimentions.y;
+        this.textContext.clearRect(0, 0, dimentions.x, dimentions.y);
+        this.textContext.textAlign = 'start';
+        this.textContext.textBaseline = 'top';
+        this.textContext.fillStyle = '#fff';
+        this.textContext.font = this.font;
+        this.textContext.fillText(text, bounds.min.x, bounds.min.y);
+        this.textTexture.use(() => {
+            this.textTexture.setImage(this.textCanvas, {
+                width: dimentions.x,
+                height: dimentions.y,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+        });
+        this.texture(left, top, left + dimentions.x, top + dimentions.y, this.textTexture, color);
+    }
+
+    public textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color: Vec4) {
+        this.textContext.font = this.font;
+        const bounds = this.measureTextActual(text);
+        const dimentions = bounds.dimensions().max(Vec2.ZERO);
+        this.textCanvas.width = dimentions.x;
+        this.textCanvas.height = dimentions.y;
+        this.textContext.clearRect(0, 0, dimentions.x, dimentions.y);
+        this.textContext.textAlign = 'start';
+        this.textContext.textBaseline = 'top';
+        this.textContext.fillStyle = '#fff';
+        this.textContext.font = this.font;
+        this.textContext.fillText(text, bounds.min.x, bounds.min.y);
+        this.textTexture.use(() => {
+            this.textTexture.setImage(this.textCanvas, {
+                width: dimentions.x,
+                height: dimentions.y,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+        });
+        const pos = Vec2.from(anchor).sub(dimentions.mul(align));
+        this.texture(pos.x, pos.y, pos.x + dimentions.x, pos.y + dimentions.y, this.textTexture, color);
     }
 
     public setMesh(vertices?: Float32Array, texcoords?: Float32Array): void {
@@ -427,34 +513,34 @@ export class Draw {
 
     public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4, width: number): void {
         const { gl } = this.glContext;
-        
+        width /= 2;
         this.setMesh(new Float32Array([
             // top
             left - width, top - width, 0,
-            right + width, top - width, 0,
-            right + width, top + width, 0,
+            right - width, top - width, 0,
+            right - width, top + width, 0,
             left - width, top - width, 0,
-            right + width, top + width, 0,
+            right - width, top + width, 0,
             left - width, top + width, 0,
             // right
             right - width, top - width, 0,
             right + width, top - width, 0,
-            right + width, bottom + width, 0,
+            right + width, bottom - width, 0,
             right - width, top - width, 0,
-            right + width, bottom + width, 0,
-            right - width, bottom + width, 0,
+            right + width, bottom - width, 0,
+            right - width, bottom - width, 0,
             // bottom
-            left - width, bottom - width, 0,
+            left + width, bottom - width, 0,
             right + width, bottom - width, 0,
             right + width, bottom + width, 0,
-            left - width, bottom - width, 0,
+            left + width, bottom - width, 0,
             right + width, bottom + width, 0,
-            left - width, bottom + width, 0,
-            // left
-            left - width, top - width, 0,
-            left + width, top - width, 0,
             left + width, bottom + width, 0,
-            left - width, top - width, 0,
+            // left
+            left - width, top + width, 0,
+            left + width, top + width, 0,
+            left + width, bottom + width, 0,
+            left - width, top + width, 0,
             left + width, bottom + width, 0,
             left - width, bottom + width, 0,
         ]));
@@ -638,12 +724,6 @@ export class Draw {
         };
 
         this.setMesh(new Float32Array([
-            // left - maxWidth, top - maxWidth, 0,
-            // left + width + maxWidth, top - maxWidth, 0,
-            // left + width + maxWidth, bottom + maxWidth, 0,
-            // left - maxWidth, top - maxWidth, 0,
-            // left + width + maxWidth, bottom + maxWidth, 0,
-            // left - maxWidth, bottom + maxWidth, 0,
             bounds.min.x - maxWidth, bounds.min.y - maxWidth, 0,
             bounds.max.x + maxWidth, bounds.min.y - maxWidth, 0,
             bounds.max.x + maxWidth, bounds.max.y + maxWidth, 0,

@@ -86,9 +86,11 @@
         align-items: baseline;
         width: 20rem;
 
+        &:focus,
         &:hover {
             animation: hover 0.1621s ease-in-out;
             animation-fill-mode: forwards;
+            outline: none;
             color: var(--color-1);
 
             > img {

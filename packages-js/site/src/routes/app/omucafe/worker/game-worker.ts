@@ -1,4 +1,5 @@
 import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
+import { BROWSER } from 'esm-env';
 import TestWorker from './game-worker.worker?worker';
 import { WorkerPipe } from './worker.js';
 
@@ -13,7 +14,8 @@ export type GameCommands = {
     },
 }
 
-export async function getWorker() {
+export async function getWorker(): Promise<WorkerPipe<GameCommands>> {
+    if (!BROWSER) return WorkerPipe.dummy<GameCommands>();
     const worker = WorkerPipe.create<GameCommands>(new TestWorker());
     await new Promise<void>((resolve) => {
         worker.bind('ready', () => {

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import OrderList from '../components/OrderList.svelte';
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
@@ -13,3 +14,4 @@
         $scene = { type: 'main_menu' };
     }
 }} />
+<OrderList />

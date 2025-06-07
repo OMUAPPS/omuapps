@@ -92,4 +92,11 @@ export class AABB2 {
     public dimensions(): Vec2 {
         return this.max.sub(this.min);
     }
+
+    public scale(scaler: number): AABB2 {
+        return new AABB2(
+            this.min.scale(scaler),
+            this.max.scale(scaler),
+        )
+    }
 }

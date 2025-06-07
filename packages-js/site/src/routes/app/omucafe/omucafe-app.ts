@@ -1,8 +1,7 @@
-import { makeRegistryWritable } from '$lib/helper.js';
+import { makeRegistryWritable, once } from '$lib/helper.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { type Vec4Like } from '$lib/math/vec4.js';
 import { Chat, events } from '@omujs/chat';
-import type { Message } from '@omujs/chat/models/message.js';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { OBSPlugin, permissions } from '@omujs/obs';
 import { App, Omu } from '@omujs/omu';
@@ -23,10 +22,13 @@ import { copy } from './game/helper.js';
 import { cloneItemState, ITEM_LAYERS, removeItemState, type ItemState } from './game/item-state.js';
 import type { Item } from './game/item.js';
 import type { Kitchen, MouseState } from './game/kitchen.js';
+import { processMessage } from './game/order.js';
 import type { Product } from './game/product.js';
 import { assertValue, builder, Globals, ScriptError, type Script, type ScriptContext, type Value } from './game/script.js';
 import { Time } from './game/time.js';
 import { transformToMatrix } from './game/transform.js';
+import { getWorker, type GameCommands } from './worker/game-worker.js';
+import type { WorkerPipe } from './worker/worker.js';
 
 export const DEFAULT_RESOURCE_REGISTRY = {
     assets: {} as Record<string, Asset>,
@@ -153,8 +155,9 @@ export type SceneContext = {
     active: boolean,
 }
 
-type User = {
+export type User = {
     id: string,
+    screen_id?: string;
     name: string,
     avatar?: string,
 };
@@ -172,7 +175,7 @@ export type OrderItem = {
 };
 
 export type Order = {
-    id: number,
+    id: string,
     user: User,
     status: OrderStatus,
     items: OrderItem[],
@@ -403,10 +406,6 @@ const PAINT_EVENTS_REGISTRY_TYPE = RegistryType.createSerialized<PaintBuffer>(AP
     serializer: PaintBuffer,
 });
 
-function processMessage(message: Message) {
-    console.log('[msg]', message.text);
-}
-
 export const sessions = writable({
     overlay: false,
     background: false,
@@ -554,7 +553,7 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
     chat.on(events.message.add, (message) => {
         processMessage(message);
     });
-
+    
     game = {
         omu,
         obs,
@@ -573,6 +572,7 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
         paintEvents,
         scene,
         globals,
+        worker: client ? await getWorker() : undefined,
     }
     if (BROWSER) {
         omu.permissions.require(
@@ -630,6 +630,16 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
 
         await startCheckInstalled();
         if (!isInstalled()) {
+            once((resolve) => {
+                return sessions.subscribe((value) => {
+                    if (value.background && value.overlay) {
+                        scene.set({
+                            type: 'main_menu',
+                        })
+                        resolve();
+                    }
+                })
+            })
             scene.set({
                 type: 'install',
             });
@@ -655,6 +665,7 @@ export type Game = {
     paintSignal: Signal<PaintEvent[]>,
     paintEvents: Writable<PaintBuffer>,
     globals: Globals,
+    worker?: WorkerPipe<GameCommands>,
 };
 
 let game: Game | null = null;
