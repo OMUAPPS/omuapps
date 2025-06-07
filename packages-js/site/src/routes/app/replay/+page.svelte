@@ -55,6 +55,24 @@
         );
         omu.start();
     }
+
+    function matchVideoID(url: URL): string | undefined {
+        if (url.hostname === 'youtu.be') {
+            return url.pathname.slice(1);
+        } else if (url.hostname.endsWith('youtube.com')) {
+            const path = url.pathname.split('/');
+            switch (path[1]) {
+            case 'watch':
+                return url.searchParams.get('v') || undefined;
+            case 'embed':
+            case 'shorts':
+            case 'live':
+                return path[2] || undefined;
+            default:
+                return undefined;
+            }
+        }
+    }
 </script>
 
 <svelte:head>
@@ -133,16 +151,9 @@
                         placeholder="https://youtu.be/..."
                         on:input={(event) => {
                             const url = new URL(event.detail);
-                            if (url.hostname === 'youtu.be') {
-                                const videoId = url.pathname.slice(1);
-                                $playVideo(videoId);
-                            } else if (url.hostname.endsWith('youtube.com')) {
-                                const videoId = url.searchParams.get('v');
-                                if (!videoId) return;
-                                $playVideo(videoId);
-                            } else {
-                                console.log('unsupported url', url);
-                            }
+                            const videoId = matchVideoID(url);
+                            if (!videoId) return;
+                            $playVideo(videoId);
                         }}
                         lazy
                     />
