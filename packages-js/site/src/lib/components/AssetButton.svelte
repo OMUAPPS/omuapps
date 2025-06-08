@@ -32,7 +32,7 @@
     if (obs) {
         obs.on('connected', () => (obsConnected = true));
         obs.on('disconnected', () => (obsConnected = false));
-        obs.isConnected().then((connected) => (obsConnected = connected));
+        obsConnected = obs.isConnected();
     }
 
     function getURL() {

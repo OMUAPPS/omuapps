@@ -26,6 +26,8 @@ from ..types import (
     SCENE_LIST,
     SCENE_SET_CURRENT_BY_NAME,
     SCENE_SET_CURRENT_BY_UUID,
+    SCREENSHOT_CREATE,
+    SCREENSHOT_GET_LAST_BINARY,
     SOURCE_ADD,
     SOURCE_CREATE,
     SOURCE_GET_BY_NAME,
@@ -53,6 +55,10 @@ from ..types import (
     SceneSetCurrentByNameRequest,
     SceneSetCurrentByUuidRequest,
     SceneSetCurrentResponse,
+    ScreenshotCreateRequest,
+    ScreenshotCreateResponse,
+    ScreenshotGetLastBinaryRequest,
+    ScreenshotGetLastBinaryResponse,
     SourceGetByNameRequest,
     SourceGetByUuidRequest,
     SourceJson,
@@ -569,6 +575,24 @@ async def scene_create(request: SceneCreateRequest) -> SceneCreateResponse:
     return response
 
 
+@omu.endpoints.bind(endpoint_type=SCREENSHOT_CREATE)
+async def screenshot_create(request: ScreenshotCreateRequest) -> ScreenshotCreateResponse:
+    OBS.frontend_take_screenshot()
+    return {}
+
+
+@omu.endpoints.bind(endpoint_type=SCREENSHOT_GET_LAST_BINARY)
+async def screenshot_get_last_binary(request: ScreenshotGetLastBinaryRequest) -> ScreenshotGetLastBinaryResponse:
+    screenshot_path = OBS.frontend_get_last_screenshot()
+    if screenshot_path is None:
+        return ScreenshotGetLastBinaryResponse(None)
+    try:
+        return ScreenshotGetLastBinaryResponse(screenshot_path.read_bytes())
+    except Exception as e:
+        logger.error(f"Failed to read screenshot: {e}")
+        return ScreenshotGetLastBinaryResponse(None)
+
+
 event_signal = omu.signals.get(EVENT_SIGNAL)
 
 
@@ -580,12 +604,13 @@ def on_event(event: OBSFrontendEvent):
 @omu.network.event.connected.listen
 async def on_connected():
     logger.info(f"Coneected to {omu.network.address.host}:{omu.network.address.port}")
+    print(f"[OMUAPPS] Connected to {omu.network.address.host}:{omu.network.address.port}")
 
 
 @omu.on_ready
 async def on_ready():
     logger.info(f"OBS Plugin {VERSION} is ready!")
-    print(f"OBS Plugin {VERSION} is ready!")
+    print(f"[OMUAPPS] OBS Plugin {VERSION} is ready!")
 
 
 _LOOP: asyncio.AbstractEventLoop | None = None

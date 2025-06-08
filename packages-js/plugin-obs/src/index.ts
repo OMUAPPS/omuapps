@@ -2,7 +2,7 @@ import type { Omu } from '@omujs/omu';
 
 import { SERVER_SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/extension/server/server-extension.js';
 import { PLUGIN_ID } from './const.js';
-import type { CreateBrowserRequest, CreateResponse, SceneCreateRequest, SceneCreateResponse, SceneJson, SceneListResponse, SourceGetByNameRequest, SourceGetByUuidRequest, SourceJson, SourceListRequest } from './types.js';
+import type { CreateBrowserRequest, CreateResponse, SceneCreateRequest, SceneCreateResponse, SceneJson, SceneListResponse, ScreenshotCreateRequest, ScreenshotCreateResponse, ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse, SourceGetByNameRequest, SourceGetByUuidRequest, SourceJson, SourceListRequest } from './types.js';
 import {
     BROWSER_ADD,
     BROWSER_CREATE,
@@ -13,6 +13,8 @@ import {
     SCENE_LIST,
     SCENE_SET_CURRENT_BY_NAME,
     SCENE_SET_CURRENT_BY_UUID,
+    SCREENSHOT_CREATE,
+    SCREENSHOT_GET_LAST_BINARY,
     SOURCE_ADD,
     SOURCE_CREATE,
     SOURCE_GET_BY_NAME,
@@ -74,7 +76,7 @@ export class OBSPlugin {
         return VERSION;
     }
 
-    public async isConnected(): Promise<boolean> {
+    public isConnected(): boolean {
         return this.connected;
     }
 
@@ -94,122 +96,104 @@ export class OBSPlugin {
         this.omu.server.require(PLUGIN_ID);
     }
 
-    async sourceCreate(source: SourceJson): Promise<CreateResponse> {
-        if (!(await this.isConnected())) {
+    public assetConnected(): void {
+        if (!this.isConnected()) {
             throw new Error('Not connected to OBS');
         }
+    }
+
+    async sourceCreate(source: SourceJson): Promise<CreateResponse> {
+        this.assetConnected();
         return await this.omu.endpoints.call(SOURCE_CREATE, source);
     }
 
     async sourceAdd(source: SourceJson): Promise<CreateResponse> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SOURCE_ADD, source);
     }
 
     async browserCreate(options: CreateBrowserRequest): Promise<CreateResponse> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(BROWSER_CREATE, options);
     }
 
     async browserAdd(options: CreateBrowserRequest): Promise<CreateResponse> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(BROWSER_ADD, options);
     }
 
     async sourceUpdate(source: SourceJson): Promise<void> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         await this.omu.endpoints.call(SOURCE_UPDATE, source);
     }
 
     async sourceRemoveByName(name: string): Promise<void> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         await this.omu.endpoints.call(SOURCE_REMOVE_BY_NAME, { name });
     }
 
     async sourceRemoveByUuid(uuid: string): Promise<void> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         await this.omu.endpoints.call(SOURCE_REMOVE_BY_UUID, { uuid });
     }
 
     async sourceGetByName(request: SourceGetByNameRequest): Promise<SourceJson> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SOURCE_GET_BY_NAME, request);
     }
 
     async sourceGetByUuid(request: SourceGetByUuidRequest): Promise<SourceJson> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SOURCE_GET_BY_UUID, request);
     }
 
     async sourceList(request: SourceListRequest): Promise<SourceJson[]> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SOURCE_LIST, request);
     }
 
     async sceneList(): Promise<SceneListResponse> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SCENE_LIST, {});
     }
 
     async sceneGetByName(name: string): Promise<SceneJson> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SCENE_GET_BY_NAME, { name });
     }
 
     async sceneGetByUuid(uuid: string): Promise<SceneJson> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SCENE_GET_BY_UUID, { uuid });
     }
 
     async sceneGetCurrent(): Promise<SceneJson | null> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SCENE_GET_CURRENT, {});
     }
 
     async sceneSetCurrentByName(name: string): Promise<void> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         await this.omu.endpoints.call(SCENE_SET_CURRENT_BY_NAME, { name });
     }
 
     async sceneSetCurrentByUuid(uuid: string): Promise<void> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         await this.omu.endpoints.call(SCENE_SET_CURRENT_BY_UUID, { uuid });
     }
 
     async sceneCreate(request: SceneCreateRequest): Promise<SceneCreateResponse> {
-        if (!(await this.isConnected())) {
-            throw new Error('Not connected to OBS');
-        }
+        this.assetConnected();
         return await this.omu.endpoints.call(SCENE_CREATE, request);
+    }
+
+    async screenshotCreate(request: ScreenshotCreateRequest): Promise<ScreenshotCreateResponse> {
+        this.assetConnected();
+        return await this.omu.endpoints.call(SCREENSHOT_CREATE, request);
+    }
+
+    async screenshotGetLastBinary(request: ScreenshotGetLastBinaryRequest): Promise<ScreenshotGetLastBinaryResponse> {
+        this.assetConnected();
+        return await this.omu.endpoints.call(SCREENSHOT_GET_LAST_BINARY, request);
     }
 }

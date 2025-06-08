@@ -1,6 +1,8 @@
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { SignalType } from '@omujs/omu/extension/signal/signal.js';
 
+import { Serializer } from '@omujs/omu';
+import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
 import { PLUGIN_ID } from './const.js';
 import {
     OBS_SCENE_READ_PERMISSION_ID,
@@ -305,6 +307,56 @@ export type SceneCreateResponse = {
 
 export const SCENE_CREATE: EndpointType<SceneCreateRequest, SceneCreateResponse> = EndpointType.createJson<SceneCreateRequest, SceneCreateResponse>(PLUGIN_ID, {
     name: 'scene_create',
+});
+
+export type ScreenshotCreateRequest = object;
+export type ScreenshotCreateResponse = object;
+
+export const SCREENSHOT_CREATE: EndpointType<ScreenshotCreateRequest, ScreenshotCreateResponse> = EndpointType.createJson<ScreenshotCreateRequest, ScreenshotCreateResponse>(PLUGIN_ID, {
+    name: 'screenshot_create',
+});
+
+export type ScreenshotGetLastBinaryRequest = object;
+
+export class ScreenshotGetLastBinaryResponse {
+    version: number;
+    data: Uint8Array | null;
+
+    constructor(version: number, data: Uint8Array | null) {
+        this.version = version;
+        this.data = data;
+    }
+
+    public static serialize(response: ScreenshotGetLastBinaryResponse): Uint8Array {
+        const writer = new ByteWriter();
+        writer.writeULEB128(response.version);
+        const flags = response.data ? 0x01 : 0x00;
+        writer.writeULEB128(flags);
+        if (response.data) {
+            writer.writeUint8Array(response.data);
+        }
+        return writer.finish();
+    }
+
+    public static deserialize(data: Uint8Array): ScreenshotGetLastBinaryResponse {
+        const reader = ByteReader.fromUint8Array(data);
+        const version = reader.readULEB128();
+        const flags = reader.readULEB128();
+        if (flags & 0x01) {
+            const screenshotData = reader.readUint8Array();
+            return new ScreenshotGetLastBinaryResponse(version, screenshotData);
+        }
+        return new ScreenshotGetLastBinaryResponse(version, null);
+    }
+}
+
+export const SCREENSHOT_GET_LAST_BINARY: EndpointType<ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse> = EndpointType.createSerialized<
+    ScreenshotGetLastBinaryRequest,
+    ScreenshotGetLastBinaryResponse
+>(PLUGIN_ID, {
+    name: 'screenshot_get_last_binary',
+    requestSerializer: Serializer.json(),
+    responseSerializer: ScreenshotGetLastBinaryResponse,
 });
 
 export const EVENT_SIGNAL: SignalType<OBSFrontendEvent> = SignalType.createJson<OBSFrontendEvent>(PLUGIN_ID, {
