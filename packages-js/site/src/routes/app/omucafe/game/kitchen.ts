@@ -1,7 +1,8 @@
 import type { Vec2Like } from '$lib/math/vec2.js';
-import type { GameConfig, Order, Scene, States } from '../omucafe-app.js';
+import type { GameConfig, Scene, States } from '../omucafe-app.js';
 import type { PlayingAudioClip } from './audioclip.js';
 import type { ItemState } from './item-state.js';
+import type { Order } from './order.js';
 
 export type MouseState = {
     position: Vec2Like,

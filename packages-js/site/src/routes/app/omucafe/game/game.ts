@@ -6,9 +6,6 @@ import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import bell from '../images/bell.png';
 import counter_client from '../images/counter_client.png';
-import kitchen_asset from '../images/kitchen_asset.png';
-import kitchen_client from '../images/kitchen_client.png';
-import photo_frame from '../images/photo_frame.svg';
 import { getTextureByUri, getTextureByUriCORS } from './asset.js';
 import { createContainer } from './behavior/container.js';
 import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from './item-state.js';
@@ -39,8 +36,6 @@ export let scaleFactor = 1;
 export let draw: Draw;
 let frameBuffer: GlFramebuffer;
 let frameBufferTexture: GlTexture;
-let drawFrameBuffer: GlFramebuffer;
-let drawFrameBufferTexture: GlTexture;
 
 export let side: 'client' | 'background' | 'overlay' = 'client';
 let context: KitchenContext;
@@ -214,6 +209,9 @@ function registerMouseEvents() {
     });
 }
 
+export let paint: Paint;
+export let resources: Resources;
+
 export async function init(ctx: GlContext) {
     const { paintSignal, paintEvents, gameConfig } = getGame();
     glContext = ctx;
@@ -235,32 +233,25 @@ export async function init(ctx: GlContext) {
     frameBuffer.use(() => {
         frameBuffer.attachTexture(frameBufferTexture);
     });
-    drawFrameBuffer = ctx.createFramebuffer();
-    drawFrameBufferTexture = ctx.createTexture();
-    drawFrameBufferTexture.use(() => {
-        drawFrameBufferTexture.setParams({
-            minFilter: 'linear',
-            magFilter: 'linear',
-            wrapS: 'clamp-to-edge',
-            wrapT: 'clamp-to-edge',
-        });
-    });
-    drawFrameBuffer.use(() => {
-        drawFrameBuffer.attachTexture(drawFrameBufferTexture);
-    });
-    await getTextureByUri(photo_frame);
+    resources = await getResources();
+    paint = new Paint(ctx, resources.photo_frame);
     if (side !== 'client') {
         paintSignal.listen((events) => {
-            paintQueue.push(...events);
+            paint.emit(...events);
         });
     }
     await once((resolve) => paintEvents.subscribe((buffer) => {
-        paintQueue.push(...buffer.read());
+        paint.emit(...buffer.read());
         resolve();
     }));
     await once((resolve) => gameConfig.subscribe((gameConfig) => {
-        paintTools.pen = gameConfig.photo_mode.pen;
-        paintTools.eraser = gameConfig.photo_mode.eraser;
+        paint.emit({
+            t: PAINT_EVENT_TYPE.CHANGE_PEN,
+            pen: gameConfig.photo_mode.pen,
+        }, {
+            t: PAINT_EVENT_TYPE.CHANGE_ERASER,
+            eraser: gameConfig.photo_mode.eraser,
+        });
         resolve();
     }));
         
@@ -369,7 +360,7 @@ export function applyDragEffect() {
 }
 
 async function renderCounter() {
-    const kitchenTex = await getTextureByUri(side === 'client' ? kitchen_client : kitchen_asset);
+    const kitchenTex = side === 'client' ? resources.kitchen_client : resources.kitchen_asset;
     matrices.model.push();
     matrices.model.translate(0, 150, 0);
     // Kitchen
@@ -431,10 +422,8 @@ import { once } from '$lib/helper.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Axis } from '$lib/math/axis.js';
 import { Bezier } from '$lib/math/bezier.js';
-import { DEFAULT_ERASER, DEFAULT_PEN, getGame, PAINT_EVENT_TYPE, PaintBuffer, type Eraser, type PaintEvent, type Pen, type User } from '../omucafe-app.js';
 import { updateAudioClips } from './audioclip.js';
 import { createAction } from './behavior/action.js';
-import { copy } from './helper.js';
 import { renderBackground, renderEffect, renderOverlay, renderOverlay2 } from './renderer/background.js';
 import { renderCursor } from './renderer/cursor.js';
 import { renderParticles } from './renderer/particle.js';
@@ -504,7 +493,7 @@ async function renderScreen() {
         matrices.view.scale(screenScale, screenScale, 1);
         matrices.view.rotate(Axis.Z_POS.rotateDeg(-4.74 - 30 * t));
         matrices.view.translate(300 * t, -1000 * t, 0);
-        const { tex, width, height } = await getTextureByUri(photo_frame);
+        const { tex, width, height } = resources.photo_frame;
         draw.texture(
             -width / 2, -height / 2,
             width / 2, height / 2,
@@ -514,7 +503,7 @@ async function renderScreen() {
         draw.texture(
             -width / 2, -height / 2,
             width / 2, height / 2,
-            drawFrameBufferTexture,
+            paint.texture,
         )
         draw.setFont('26px "Note Sans JP"');
         const dateText = new Date(scene.time).toLocaleString();
@@ -536,9 +525,6 @@ async function renderScreen() {
             y: height / 2,
         });
         matrices.view.pop();
-        drawFrameBufferTexture.use(() => {
-            drawFrameBufferTexture.ensureSize(width, height);
-        });
         const tool = photoMode.tool;
         if (tool.type !== 'move' && mouse.over && !mouse.ui) {
             const radius = tool.type === 'pen' ? photoMode.pen.width : photoMode.eraser.width;
@@ -602,124 +588,12 @@ async function renderScreen() {
                     });
                 }
             }
-            paintQueue.push(...newQueue);
+            paint.emit(...newQueue);
         } else {
             penTrail = null;
         }
-        processPaintQueue(width, height);
+        paint.update(width, height);
     }
-}
-
-export const paintQueue: PaintEvent[] = [];
-export const paintTools = {
-    pen: DEFAULT_PEN satisfies Pen,
-    eraser: DEFAULT_ERASER satisfies Eraser,
-}
-
-function processPaintQueue(width: number, height: number) {
-    if (paintQueue.length === 0) return;
-    const queue: PaintEvent[] = [];
-    const { paintSignal, paintEvents } = getGame();
-    let clear = false;
-    const { pen: newPen, eraser: newEraser } = context.config.photo_mode;
-    if (newPen.width !== paintTools.pen.width || newPen.opacity !== paintTools.pen.opacity || !Vec4.from(newPen.color).equal(paintTools.pen.color)) {
-        paintTools.pen = copy(newPen);
-        paintQueue.push({
-            t: 'cp',
-            pen: newPen,
-        });
-    }
-    if (newEraser.width !== paintTools.eraser.width || newEraser.opacity !== paintTools.eraser.opacity) {
-        paintTools.eraser = copy(newEraser);
-        paintQueue.push({
-            t: 'ce',
-            eraser: newEraser,
-        });
-    }
-    let last: PaintEvent | null = null;
-    for (const event of paintQueue) {
-        if (last && last.t === PAINT_EVENT_TYPE.CHANGE_PEN && event.t === PAINT_EVENT_TYPE.CHANGE_PEN) {
-            queue.pop();
-            queue.push({
-                t: PAINT_EVENT_TYPE.CHANGE_PEN,
-                pen: event.pen,
-            });
-        } else if (last && last.t === PAINT_EVENT_TYPE.CHANGE_ERASER && event.t === PAINT_EVENT_TYPE.CHANGE_ERASER) {
-            queue.pop();
-            queue.push({
-                t: PAINT_EVENT_TYPE.CHANGE_ERASER,
-                eraser: event.eraser,
-            });
-        } else if (event.t === PAINT_EVENT_TYPE.CLEAR) {
-            clear = true;
-            queue.length = 0;
-            queue.push(event);
-            queue.push({
-                t: PAINT_EVENT_TYPE.CHANGE_PEN,
-                pen: paintTools.pen,
-            });
-            queue.push({
-                t: PAINT_EVENT_TYPE.CHANGE_ERASER,
-                eraser: paintTools.eraser,
-            });
-        } else if (event.t === PAINT_EVENT_TYPE.PEN || event.t === PAINT_EVENT_TYPE.ERASER) {
-            queue.push(event);
-        }
-        last = event;
-    }
-    if (side === 'client') {
-        paintEvents.update((buffer) => {
-            if (clear) {
-                buffer = PaintBuffer.NONE;
-            }
-            return buffer.push(...queue);
-        });
-        paintSignal.notify(queue);
-    }
-    const { gl } = glContext;
-    matrices.scope(() => {
-        matrices.view.identity();
-        matrices.projection.identity();
-        matrices.projection.orthographic(0, width, height, 0, -1, 1);
-        drawFrameBuffer.use(() => {
-            glContext.stateManager.pushViewport({ x: width, y: height });
-            for (const event of queue) {
-                if (event.t === PAINT_EVENT_TYPE.CHANGE_PEN) {
-                    paintTools.pen = event.pen;
-                } else if (event.t === PAINT_EVENT_TYPE.CHANGE_ERASER) {
-                    paintTools.eraser = event.eraser;
-                } else if (event.t === PAINT_EVENT_TYPE.PEN) {
-                    const { path } = event;
-                    const pen = paintTools.pen;
-                    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-                    draw.bezierCurve(
-                        path.a,
-                        path.b,
-                        path.c,
-                        Vec4.from(pen.color).scale(1 / 255),
-                        path.in,
-                        path.out,
-                    );
-                } else if (event.t === PAINT_EVENT_TYPE.ERASER) {
-                    const { path } = event;
-                    gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
-                    draw.bezierCurve(
-                        path.a,
-                        path.b,
-                        path.c,
-                        new Vec4(0, 0, 0, 1),
-                        path.in,
-                        path.out,
-                    );
-                    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-                } else if (event.t === PAINT_EVENT_TYPE.CLEAR) {
-                    gl.clear(gl.COLOR_BUFFER_BIT);
-                }
-            }
-            paintQueue.length = 0;
-        });
-    });
-    glContext.stateManager.popViewport();
 }
 
 let penTrail: {
@@ -737,6 +611,9 @@ export async function renderBackgroundSide() {
 
 import dummy_back from '../images/dummy_back.png';
 import dummy_front from '../images/dummy_front.png';
+import { getGame, type User } from '../omucafe-app.js';
+import { Paint, PAINT_EVENT_TYPE, type PaintEvent } from './paint.js';
+import { getResources, type Resources } from './resources.js';
 
 async function renderNametag(user: User, bounds: AABB2) {
     const dimentions = bounds.dimensions();
@@ -908,12 +785,12 @@ export async function renderOverlaySide() {
 export async function render(gl: GlContext): Promise<void> {
     matrices.width = gl.gl.canvas.width;
     matrices.height = gl.gl.canvas.height;
-    let resolved = () => {};
+    let resolveLock = () => {};
     renderLock = new Promise<void>(resolve => {
-        resolved = resolve;
+        resolveLock = resolve;
     });
     const { gl: glInternal } = gl;
-    glContext.stateManager.setViewport({ x: glInternal.canvas.width, y: glInternal.canvas.height });
+    glContext.stateManager.setViewport({ x: matrices.width, y: matrices.height });
     glInternal.clearColor(1, 1, 1, 0);
     glInternal.clear(glInternal.COLOR_BUFFER_BIT);
     glInternal.enable(glInternal.BLEND);
@@ -923,8 +800,8 @@ export async function render(gl: GlContext): Promise<void> {
     glInternal.blendFuncSeparate(glInternal.SRC_ALPHA, glInternal.ONE_MINUS_SRC_ALPHA, glInternal.ONE, glInternal.ONE);
     
     const rect = {
-        width: glInternal.canvas.width,
-        height: glInternal.canvas.height,
+        width: matrices.width,
+        height: matrices.height,
     }
     scaleFactor = rect.width / COUNTER_WIDTH;
 
@@ -936,5 +813,5 @@ export async function render(gl: GlContext): Promise<void> {
     } else if (side === 'overlay') {
         await renderOverlaySide();
     }
-    resolved();
+    resolveLock();
 }

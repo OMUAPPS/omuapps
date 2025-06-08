@@ -2,8 +2,9 @@
     import type { TypedComponent } from '@omujs/ui';
     import KitchenRenderer from './components/KitchenRenderer.svelte';
     import { getContext, markChanged, mouse } from './game/game.js';
+    import { PaintBuffer } from './game/paint.js';
     import { Time } from './game/time.js';
-    import { DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, PaintBuffer, type Scene, type SceneContext } from './omucafe-app.js';
+    import { DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
     import SceneEffectEdit from './scenes/SceneEffectEdit.svelte';
     import SceneInstall from './scenes/SceneInstall.svelte';
@@ -62,6 +63,7 @@
                     });
                 }
             }
+            sceneElement.focus({ preventScroll: true });
         }
     }
 </script>
@@ -93,7 +95,7 @@
         $config = DEFAULT_CONFIG;
         $gameConfig = DEFAULT_GAME_CONFIG;
         $states = DEFAULT_STATES;
-        $paintEvents = PaintBuffer.NONE;
+        $paintEvents = PaintBuffer.EMPTY;
         markChanged();
     }}>
         reset
@@ -105,18 +107,7 @@
     </button>
     <button on:click={() => {
         const ctx = getContext();
-        ctx.order = {
-            id: '0',
-            items: [],
-            status: {
-                type: 'waiting',
-            },
-            user: {
-                id: 'testid',
-                name: 'testsan',
-                avatar: 'https://pbs.twimg.com/profile_images/1907814203936878593/IoIESuNu_400x400.jpg',
-            }
-        }
+        ctx.order = null;
     }}>
         set order
     </button>

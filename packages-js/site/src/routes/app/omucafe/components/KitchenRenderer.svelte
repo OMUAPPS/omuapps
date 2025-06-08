@@ -24,30 +24,32 @@
         />
     </div>
     {#if side === 'client'}
-        <div class="debug" class:show-debug={showDebug}>
+        <div class="debug">
             <h2>
-                states: {JSON.stringify($states).length}
                 <button on:click={() => showDebug = !showDebug}>
                     {showDebug ? 'hide' : 'show'}
                 </button>
             </h2>
-            <JsonDebugInfo value={$states} />
-            <h2>
-                paintEvents: {JSON.stringify($paintEvents).length}
-            </h2>
-            <JsonDebugInfo value={$paintEvents} />
-            <h2>
-                scene: {JSON.stringify($scene).length}
-            </h2>
-            <JsonDebugInfo value={$scene} />
-            <h2>
-                gameConfig: {JSON.stringify($gameConfig).length}
-            </h2>
-            <JsonDebugInfo value={$gameConfig} />
-            <h2>
-                config: {JSON.stringify($config).length}
-            </h2>
-            <JsonDebugInfo value={$config} />
+            {#if showDebug}
+                states: {JSON.stringify($states).length}
+                <JsonDebugInfo value={$states} />
+                <h2>
+                    paintEvents: {JSON.stringify($paintEvents).length}
+                </h2>
+                <JsonDebugInfo value={$paintEvents} />
+                <h2>
+                    scene: {JSON.stringify($scene).length}
+                </h2>
+                <JsonDebugInfo value={$scene} />
+                <h2>
+                    gameConfig: {JSON.stringify($gameConfig).length}
+                </h2>
+                <JsonDebugInfo value={$gameConfig} />
+                <h2>
+                    config: {JSON.stringify($config).length}
+                </h2>
+                <JsonDebugInfo value={$config} />
+            {/if}
         </div>
         <div class="ui">
             {#each Object.entries($gameConfig.items) as [id, item] (id)}
@@ -97,7 +99,7 @@
         overflow-y: auto;
         z-index: 1;
         background: var(--color-bg-2);
-        height: 4rem;
+        max-height: 40rem;
 
         &.show-debug {
             height: 70%;

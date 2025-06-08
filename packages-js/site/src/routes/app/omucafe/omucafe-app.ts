@@ -1,11 +1,9 @@
 import { makeRegistryWritable, once } from '$lib/helper.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
-import { type Vec4Like } from '$lib/math/vec4.js';
 import { Chat, events } from '@omujs/chat';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { OBSPlugin, permissions } from '@omujs/obs';
 import { App, Omu } from '@omujs/omu';
-import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
 import { RegistryType, type Registry } from '@omujs/omu/extension/registry/index.js';
 import { SignalType, type Signal } from '@omujs/omu/extension/signal/signal.js';
@@ -17,12 +15,13 @@ import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
 import type { Asset } from './game/asset.js';
 import type { PlayingAudioClip } from './game/audioclip.js';
 import type { Effect } from './game/effect.js';
-import { getContext, mouse, paintQueue, setContext } from './game/game.js';
+import { getContext, mouse, paint, setContext } from './game/game.js';
 import { copy } from './game/helper.js';
 import { cloneItemState, ITEM_LAYERS, removeItemState, type ItemState } from './game/item-state.js';
 import type { Item } from './game/item.js';
 import type { Kitchen, MouseState } from './game/kitchen.js';
-import { processMessage } from './game/order.js';
+import { processMessage, type Order } from './game/order.js';
+import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
 import type { Product } from './game/product.js';
 import { assertValue, builder, Globals, ScriptError, type Script, type ScriptContext, type Value } from './game/script.js';
 import { Time } from './game/time.js';
@@ -63,37 +62,9 @@ const APP_CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     defaultValue: DEFAULT_CONFIG,
 });
 
-export const DEFAULT_PEN = {
-    color: {
-        x: 0,
-        y: 0,
-        z: 0,
-        w: 255,
-    } as Vec4Like,
-    opacity: 1,
-    width: 10,
-}
-
-export type Pen = typeof DEFAULT_PEN;
-
-export const DEFAULT_ERASER = {
-    width: 40,
-    opacity: 1,
-}
-
-export type Eraser = typeof DEFAULT_ERASER;
-
-export const DEFAULT_TOOL = {
-    type: 'move',
-} as {
-    type: 'move',
-} | {
-    type: 'pen',
-} | {
-    type: 'eraser',
-}
-
-export type Tool = typeof DEFAULT_TOOL;
+const PAINT_SIGNAL_TYPE = SignalType.createJson<PaintEvent[]>(APP_ID, {
+    name: 'paint_event',
+});
 
 export const DEFAULT_GAME_CONFIG = {
     filter: {},
@@ -161,25 +132,6 @@ export type User = {
     name: string,
     avatar?: string,
 };
-type OrderStatus = {
-    type: 'waiting',
-} | {
-    type: 'cooking',
-} | {
-    type: 'done',
-};
-
-export type OrderItem = {
-    product_id: string,
-    notes: string,
-};
-
-export type Order = {
-    id: string,
-    user: User,
-    status: OrderStatus,
-    items: OrderItem[],
-}
 
 const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
     name: 'orders',
@@ -209,200 +161,9 @@ const STATES_REGISTRY_TYPE = RegistryType.createJson<States>(APP_ID, {
     defaultValue: DEFAULT_STATES,
 });
 
-export type DrawPath = {
-    t: 'qb',
-    in: number,
-    out: number,
-    a: Vec2Like,
-    b: Vec2Like,
-    c: Vec2Like,
-}
-
-export const PAINT_EVENT_TYPE = {
-    PEN: 'dr',
-    CHANGE_PEN: 'cp',
-    ERASER: 'er',
-    CHANGE_ERASER: 'ce',
-    CLEAR: 'cl',
-} as const;
-
-export type PaintEvent = {
-    // t: 'p',
-    t: typeof PAINT_EVENT_TYPE.PEN,
-    path: DrawPath,
-} | {
-    t: typeof PAINT_EVENT_TYPE.CHANGE_PEN,
-    pen: Pen,
-} | {
-    t: typeof PAINT_EVENT_TYPE.ERASER,
-    path: DrawPath,
-} | {
-    t: typeof PAINT_EVENT_TYPE.CHANGE_ERASER,
-    eraser: Eraser,
-} | {
-    t: typeof PAINT_EVENT_TYPE.CLEAR,
-}
-
-const PAINT_SIGNAL_TYPE = SignalType.createJson<PaintEvent[]>(APP_ID, {
-    name: 'paint_event',
-});
-
-export type PaintEvents = {
-    data: string,
-};
-
-export class PaintBuffer {
-    private static VERSION = 0;
-    public static NONE = new PaintBuffer(PaintBuffer.VERSION, 0, new Uint8Array(0));
-    
-    constructor(
-        public readonly version: number,
-        public readonly size: number,
-        public readonly buffer: Uint8Array,
-    ) {}
-
-    public static serialize(data: PaintBuffer): Uint8Array {
-        const writer = new ByteWriter();
-        writer.writeULEB128(data.version);
-        writer.writeULEB128(data.size);
-        writer.writeUint8Array(data.buffer);
-        return writer.finish();
-    }
-
-    public static deserialize(data: Uint8Array): PaintBuffer {
-        try {
-            const reader = ByteReader.fromUint8Array(data);
-            const version = reader.readULEB128();
-            if (version < PaintBuffer.VERSION) {
-                return PaintBuffer.NONE;
-            }
-            const size = reader.readULEB128();
-            const buffer = reader.readUint8Array();
-            reader.finish();
-            return new PaintBuffer(version, size, buffer);
-        } catch {
-            return PaintBuffer.NONE;
-        }
-    }
-
-    private writeVector2(writer: ByteWriter, vec: Vec2Like): void {
-        writer.writeFloat32(vec.x);
-        writer.writeFloat32(vec.y);
-    }
-
-    private readVector2(reader: ByteReader): Vec2Like {
-        const x = reader.readFloat32();
-        const y = reader.readFloat32();
-        return new Vec2(x, y);
-    }
-
-    private writePath(writer: ByteWriter, path: DrawPath): void {
-        writer.writeUint8(0);
-        writer.writeFloat32(path.in);
-        writer.writeFloat32(path.out);
-        this.writeVector2(writer, path.a);
-        this.writeVector2(writer, path.b);
-        this.writeVector2(writer, path.c);
-    }
-
-    private readPath(reader: ByteReader): DrawPath {
-        const type = reader.readUint8();
-        if (type !== 0) {
-            throw new Error(`Unexpected path type: ${type}`);
-        }
-        const inValue = reader.readFloat32();
-        const outValue = reader.readFloat32();
-        const a = this.readVector2(reader);
-        const b = this.readVector2(reader);
-        const c = this.readVector2(reader);
-        return {
-            t: 'qb',
-            in: inValue,
-            out: outValue,
-            a,
-            b,
-            c,
-        };
-    }
-
-    public push(...events: PaintEvent[]): PaintBuffer {
-        const writer = ByteWriter.fromUint8Array(this.buffer);
-        const TYPES = {
-            [PAINT_EVENT_TYPE.PEN]: 0,
-            [PAINT_EVENT_TYPE.CHANGE_PEN]: 1,
-            [PAINT_EVENT_TYPE.ERASER]: 2,
-            [PAINT_EVENT_TYPE.CHANGE_ERASER]: 3,
-            [PAINT_EVENT_TYPE.CLEAR]: 4,
-        };
-        
-        for (const event of events) {
-            const { t } = event;
-            const type = TYPES[t];
-            writer.writeUint8(type);
-            switch (t) {
-                case PAINT_EVENT_TYPE.PEN:
-                case PAINT_EVENT_TYPE.ERASER: {
-                    const { path } = event;
-                    this.writePath(writer, path);
-                    break;
-                }
-                case PAINT_EVENT_TYPE.CHANGE_PEN:
-                    writer.writeString(JSON.stringify(event));
-                    break;
-                case PAINT_EVENT_TYPE.CHANGE_ERASER:
-                    writer.writeString(JSON.stringify(event));
-                    break;
-                case PAINT_EVENT_TYPE.CLEAR:
-                    break;
-            }
-        }
-        return new PaintBuffer(this.version, this.size + events.length, writer.finish());
-    }
-
-    public read(): PaintEvent[] {
-        const reader = ByteReader.fromUint8Array(this.buffer);
-        const events: PaintEvent[] = [];
-        for (let i = 0; i < this.size; i++) {
-            const type = reader.readUint8();
-            switch (type) {
-                case 0: {
-                    const path = this.readPath(reader);
-                    events.push({
-                        t: PAINT_EVENT_TYPE.PEN,
-                        path,
-                    });
-                    break;
-                }
-                case 1: {
-                    events.push(JSON.parse(reader.readString()));
-                    break;
-                }
-                case 2: {
-                    const path = this.readPath(reader);
-                    events.push({
-                        t: PAINT_EVENT_TYPE.ERASER,
-                        path,
-                    });
-                    break;
-                }
-                case 3: {
-                    events.push(JSON.parse(reader.readString()));
-                    break;
-                }
-                case 4:
-                    events.push({
-                        t: PAINT_EVENT_TYPE.CLEAR,
-                    });
-                    break;
-            }
-        }
-        return events;
-    }
-}
-
 const PAINT_EVENTS_REGISTRY_TYPE = RegistryType.createSerialized<PaintBuffer>(APP_ID, {
     name: 'paint_events',
-    defaultValue: PaintBuffer.NONE,
+    defaultValue: PaintBuffer.EMPTY,
     serializer: PaintBuffer,
 });
 
@@ -466,7 +227,7 @@ const functions = {
     },
     complete(ctx: ScriptContext, args: Value[]): Value {
         const [itemId] = args;
-        paintQueue.push({
+        paint.emit({
             t: PAINT_EVENT_TYPE.CLEAR,
         });
         assertValue(ctx, itemId, 'string');
@@ -514,7 +275,9 @@ const functions = {
 
 export const lastSceneChange = writable<number>(0);
 
-export async function createGame(app: App, side: 'client' | 'background' | 'overlay'): Promise<void> {
+export type GameSide = 'client' | 'background' | 'overlay';
+
+export async function createGame(app: App, side: GameSide): Promise<void> {
     const client = app.id.isEqual(APP_ID);
     const omu = new Omu(app);
     const obs = OBSPlugin.create(omu);
@@ -555,6 +318,7 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
     });
     
     game = {
+        side,
         omu,
         obs,
         chat,
@@ -648,6 +412,7 @@ export async function createGame(app: App, side: 'client' | 'background' | 'over
 }
 
 export type Game = {
+    side: GameSide,
     omu: Omu,
     obs: OBSPlugin,
     chat: Chat,

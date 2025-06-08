@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { getGame, type Order } from '../omucafe-app.js';
+    import { updateOrder, type Order } from '../game/order.js';
+    import { getGame } from '../omucafe-app.js';
 
-    const { orders, gameConfig, states } = getGame();
+    const { gameConfig, states } = getGame();
     
     export let entry: Order;
     export let selected: boolean = false;
@@ -10,8 +11,6 @@
 </script>
 
 <div class="order" class:selected class:current={$states.kitchen.order?.id === entry.id}>
-    {$states.kitchen.order?.id}
-    {entry.id}
     <div class="user">
         {#if user.avatar}
             <img src={user.avatar} class="avatar" alt=""/>
@@ -27,29 +26,27 @@
         {@const product = $gameConfig.products[item.product_id]}
         <ol>
             <li>
-                {product.name} - {item.notes}
+                {product.name}
+                {#if item.notes}
+                    {`(${item.notes})`}
+                {/if}
             </li>
         </ol>
     {/each}
     {#if entry.status.type === 'waiting'}
-        <button on:click={() => {
+        <button on:click={async () => {
             entry.status.type = 'cooking';
+            await updateOrder(entry);
         }}>
             料理開始
         </button>
     {/if}
     {#if entry.status.type === 'cooking'}
-        <button on:click={() => {
+        <button on:click={async () => {
             entry.status.type = 'done';
+            await updateOrder(entry);
         }}>
             完了
-        </button>
-    {/if}
-    {#if entry.status.type === 'done'}
-        <button on:click={async () => {
-            await orders.remove(entry);
-        }}>
-            削除
         </button>
     {/if}
 </div>
@@ -67,8 +64,8 @@
     }
 
     .current {
-        background: #234;
-        color: #eee;
+        background: #f0f8ff;
+        color: #234;
     }
 
     .user {

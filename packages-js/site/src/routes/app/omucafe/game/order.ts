@@ -1,8 +1,28 @@
 import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
 import type { Message } from '@omujs/chat/models/message.js';
-import { getGame } from '../omucafe-app.js';
+import { getGame, type User } from '../omucafe-app.js';
 import { acquireRenderLock, getContext, markChanged } from './game.js';
 import type { Product } from './product.js';
+
+type OrderStatus = {
+    type: 'waiting',
+} | {
+    type: 'cooking',
+} | {
+    type: 'done',
+};
+
+export type OrderItem = {
+    product_id: string,
+    notes: string,
+};
+
+export type Order = {
+    id: string,
+    user: User,
+    status: OrderStatus,
+    items: OrderItem[],
+}
 
 type ProductTokens = {
     product: Product;
@@ -137,8 +157,35 @@ async function pollOrder() {
     });
     if (lastItems.size === 0) return;
     const [last, ...rest] = lastItems.values();
+    await setOrder(last);
+}
+
+export async function updateOrder(order: Order) {
+    await acquireRenderLock();
+    const { orders } = getGame();
     const ctx = getContext();
-    ctx.order = last;
+    if (order.status.type === 'done') {
+        await orders.remove(order);
+        if (order.id === ctx.order?.id) {
+            ctx.order = null;
+            await pollOrder();
+        }
+    } else {
+        await orders.update(order);
+        if (order.id === ctx.order?.id) {
+            ctx.order = order;
+        }
+    }
+}
+
+async function setOrder(order: Order) {
+    const { orders } = getGame();
+    const ctx = getContext();
+    ctx.order = order;
+    order.status = {
+        type: 'cooking',
+    };
+    await updateOrder(order);
 }
 
 async function updateOrders() {
