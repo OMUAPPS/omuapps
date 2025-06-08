@@ -4,7 +4,7 @@
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
-    const { scene, gameConfig } = getGame();
+    const { scene, obs, gameConfig } = getGame();
     $: console.log('ScenePhotoMode', context);
 
     const COLORS = [
@@ -23,6 +23,13 @@
         {x: 0xAE, y: 0x85, z: 0xF1},
         {x: 0xD4, y: 0x76, z: 0xCD},
     ];
+
+    let screenshot: {
+        type: 'taking',
+    } | {
+        type: 'taken',
+        url: string,
+    } | null = null;
 </script>
 
 <svelte:window
@@ -63,62 +70,8 @@
     }}
 />
 
+<div class="background"></div>
 <div class="screen">
-    {#if $gameConfig.photo_mode.tool.type === 'pen'}
-        {@const current = $gameConfig.photo_mode.pen.color}
-        <div class="config" transition:fly={{ y: 10, duration: 1000 / 60 * 3 }}>
-            <p>ペンの太さ</p>
-            <Slider
-                unit="px"
-                min={0}
-                max={400}
-                step={1}
-                clamp={true}
-                bind:value={$gameConfig.photo_mode.pen.width}
-            />
-            <div class="color-picker">
-                {#each COLORS as color, i (i)}
-                    <button
-                        class="color"
-                        class:active={current.x === color.x && current.y === color.y && current.z === color.z}
-                        style="background: rgb({color.x}, {color.y}, {color.z})"
-                        on:click={() => {
-                            $gameConfig.photo_mode.pen.color = {
-                                x: color.x,
-                                y: color.y,
-                                z: color.z,
-                                w: 255,
-                            }
-                        }}
-                    ></button>
-                {/each}
-            </div>
-        </div>
-    {:else if $gameConfig.photo_mode.tool.type === 'eraser'}
-        <div class="config" transition:fly={{ y: 10, duration: 1000 / 60 * 3 }}>
-            <p>消しゴムの太さ</p>
-            <Slider
-                unit="px"
-                min={0}
-                max={400}
-                step={1}
-                clamp={true}
-                bind:value={$gameConfig.photo_mode.eraser.width}
-            />
-        </div>
-    {:else if $gameConfig.photo_mode.tool.type === 'move'}
-        <div class="config" transition:fly={{ y: 10, duration: 1000 / 60 * 3 }}>
-            <p>アイテムの大きさ</p>
-            <Slider
-                unit="x"
-                min={-10}
-                max={10}
-                step={0.1}
-                clamp={true}
-                bind:value={$gameConfig.photo_mode.scale}
-            />
-        </div>
-    {/if}
     <div class="tools">
         <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'move'} on:click={() => {
             $gameConfig.photo_mode.tool = {
@@ -153,46 +106,132 @@
             <i class="ti ti-eraser"></i>
             <span>消しゴム</span>
         </button>
-        <div class="exit">
-            <button on:click={async () => {
-                $scene = {
-                    type: 'cooking',
-                };
-            }}>
-                終わる
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
     </div>
+    {#if $gameConfig.photo_mode.tool.type === 'pen'}
+        {@const current = $gameConfig.photo_mode.pen.color}
+        <div class="config" transition:fly={{ x: 10, duration: 1000 / 60 * 3 }}>
+            <p>ペンの太さ</p>
+            <Slider
+                unit="px"
+                min={0}
+                max={400}
+                step={1}
+                clamp={true}
+                bind:value={$gameConfig.photo_mode.pen.width}
+            />
+            <div class="color-picker">
+                {#each COLORS as color, i (i)}
+                    <button
+                        class="color"
+                        class:active={current.x === color.x && current.y === color.y && current.z === color.z}
+                        style="background: rgb({color.x}, {color.y}, {color.z})"
+                        on:click={() => {
+                            $gameConfig.photo_mode.pen.color = {
+                                x: color.x,
+                                y: color.y,
+                                z: color.z,
+                                w: 255,
+                            }
+                        }}
+                    ></button>
+                {/each}
+            </div>
+        </div>
+    {:else if $gameConfig.photo_mode.tool.type === 'eraser'}
+        <div class="config" transition:fly={{ x: 10, duration: 1000 / 60 * 3 }}>
+            <p>消しゴムの太さ</p>
+            <Slider
+                unit="px"
+                min={0}
+                max={400}
+                step={1}
+                clamp={true}
+                bind:value={$gameConfig.photo_mode.eraser.width}
+            />
+        </div>
+    {:else if $gameConfig.photo_mode.tool.type === 'move'}
+        <div class="config" transition:fly={{ x: 10, duration: 1000 / 60 * 3 }}>
+            <p>アイテムの大きさ</p>
+            <Slider
+                unit="x"
+                min={-10}
+                max={10}
+                step={0.1}
+                clamp={true}
+                bind:value={$gameConfig.photo_mode.scale}
+            />
+        </div>
+    {/if}
+</div>
+<div class="exit">
+    {#if screenshot}
+        <div class="screenshot">
+            {#if screenshot.type === 'taken'}
+                <img src={screenshot.url} alt="Screenshot"/>
+            {/if}
+        </div>
+    {/if}
+    <button on:click={async () => {
+        $scene = {
+            type: 'cooking',
+        };
+    }}>
+        キッチンに戻って調整
+        <i class="ti ti-arrow-back-up"></i>
+    </button>
+    <button on:click={async () => {
+        screenshot = {
+            type: 'taking',
+        };
+        await obs.screenshotCreate({});
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const { data } = await obs.screenshotGetLastBinary({});
+        if (!data) {
+            console.error('No screenshot data received');
+            return;
+        }
+        const blob = new Blob([data], { type: 'image/png' });
+        screenshot = {
+            type: 'taken',
+            url: URL.createObjectURL(blob),
+        };
+    }} class="primary">
+        写真を撮る
+        <i class="ti ti-camera"></i>
+    </button>
 </div>
 
 <style lang="scss">
-    .screen {
+    .background {
         position: absolute;
+        height: 18rem;
         bottom: 0;
         left: 0;
         right: 0;
-        height: 12rem;
+        background: linear-gradient(
+            to bottom,
+            transparent 0%,
+            var(--color-bg-1) 100%
+        );
+    }
+    
+    .screen {
+        position: absolute;
+        left: 4rem;
+        bottom: 4rem;
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-end;
+        align-items: flex-end;
+        justify-content: flex-start;
         font-size: 1.6rem;
-        gap: 1rem;
+        gap: 4rem;
         animation: fadeIn 0.1621s ease-in;
-        padding: 1rem 4rem;
-        padding-bottom: 2rem;
-        background: linear-gradient(to top, var(--color-bg-2), color-mix(in srgb, var(--color-bg-2) 50%, transparent 0%));
-        outline: 1px solid var(--color-bg-2);
     }
 
     .config {
-        position: absolute;
-        left: 0;
-        right: 0;
         align-items: baseline;
         justify-content: center;
         display: flex;
+        flex-direction: column;
         bottom: 6rem;
         gap: 1rem;
         font-size: 1.6rem;
@@ -203,6 +242,20 @@
             font-weight: 600;
             width: 10rem;
             color: var(--color-1);
+        }
+    }
+
+    .screenshot {
+        height: 18rem;
+        width: 32rem;
+        padding: 0.5rem;
+        background: var(--color-bg-2);
+        outline: 1px solid var(--color-outline);
+
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
     }
 
@@ -262,6 +315,7 @@
 
     .tools {
         display: flex;
+        flex-direction: column;
         gap: 0.5rem;
         font-size: 1.6rem;
         font-weight: 600;
@@ -275,10 +329,8 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        background: var(--color-bg-1);
+        background: none;
         color: var(--color-1);
-        outline: 1px solid var(--color-bg-2);
-        outline-offset: -1px;
         border-radius: 2px;
         border: none;
         padding: 0.5rem 1.5rem;
@@ -287,6 +339,7 @@
         white-space: nowrap;
         cursor: pointer;
         touch-action: manipulation;
+        border-radius: 3px;
 
         &:focus {
             outline: 1px solid var(--color-1);
@@ -299,7 +352,22 @@
     }
 
     .exit {
-        margin-left: 5rem;
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+        right: 8rem;
+        bottom: 4rem;
+
+        > button {
+            background: var(--color-bg-2);
+        }
+        
+        > .primary {
+            background: var(--color-1);
+            color: var(--color-bg-2);
+        }
     }
 
     .active {

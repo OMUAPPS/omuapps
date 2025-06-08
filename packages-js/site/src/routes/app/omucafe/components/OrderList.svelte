@@ -7,15 +7,16 @@
 </script>
 
 <div class="order-list">
-    <TableList table={orders} component={OrderListEntry}/>
+    <TableList table={orders} component={OrderListEntry} backward sort={(a, b) => {
+        return a.timestamp - b.timestamp;
+    }} />
 </div>
 
 <style lang="scss">
     .order-list {
         position: absolute;
-        right: 10%;
-        padding: 0.5%;
-        padding-top: 2%;
+        left: 4rem;
+        top: 0;
         display: flex;
         flex-direction: column-reverse;
         background: #234;

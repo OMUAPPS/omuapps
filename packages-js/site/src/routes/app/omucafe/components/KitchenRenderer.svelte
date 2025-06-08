@@ -1,7 +1,6 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
-    import { getContext, init, markChanged, mouse, render as renderGame } from '../game/game.js';
-    import { createItemState, removeItemState } from '../game/item-state.js';
+    import { init, mouse, render as renderGame } from '../game/game.js';
     import { getGame } from '../omucafe-app.js';
     import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
 
@@ -51,30 +50,6 @@
                 <JsonDebugInfo value={$config} />
             {/if}
         </div>
-        <div class="ui">
-            {#each Object.entries($gameConfig.items) as [id, item] (id)}
-                <button on:click={() => {
-                    createItemState(getContext(), {
-                        item,
-                    });
-                    markChanged();
-                }}>
-                    {item.name}
-                </button>
-            {/each}
-            <button on:click={() => {
-                for (const id in getContext().items) {
-                    if (id === 'counter') continue;
-                    if (id === 'bell') continue;
-                    const item = getContext().items[id];
-                    if (!item) continue;
-                    removeItemState(item);
-                }
-                markChanged();
-            }}>
-                全部消す
-            </button>
-        </div>
     {/if}
 </div>
 
@@ -104,18 +79,6 @@
         &.show-debug {
             height: 70%;
         }
-    }
-
-    .ui {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        background: rgba(255, 255, 255, 0.5);
-        z-index: 1;
     }
 
     button {

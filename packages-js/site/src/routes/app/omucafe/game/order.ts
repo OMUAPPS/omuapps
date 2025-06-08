@@ -25,6 +25,7 @@ export type OrderMessage = {
 
 export type Order = {
     id: string,
+    timestamp: number,
     user: User,
     message?: OrderMessage,
     status: OrderStatus,
@@ -209,7 +210,7 @@ export function isNounLike(token: TOKEN): boolean {
     return token.pos === '名詞' || token.pos === '接頭詞' || token.pos === '接尾詞';
 }
 
-function mergeSamePosTokens(tokens: TOKEN[]): TOKEN[] {
+function mergeNounTokens(tokens: TOKEN[]): TOKEN[] {
     const merged: TOKEN[] = [];
     let lastToken: TOKEN | null = null;
     for (const token of tokens) {
@@ -248,7 +249,7 @@ export async function processMessage(message: Message) {
     if (ctx.order && ctx.order.user.id === author.key()) {
         ctx.order.message = {
             timestamp: Time.now(),
-            tokens: mergeSamePosTokens(tokens),
+            tokens: mergeNounTokens(tokens),
         }
     }
     console.log('[msg]', JSON.stringify(tokens));
@@ -262,6 +263,7 @@ export async function processMessage(message: Message) {
     if (!orderAnalysis.detected) return;
     await game.orders.add({
         id: message.id.key(),
+        timestamp: Time.now(),
         items: orderAnalysis.products.map((product) => {
             return {
                 notes: '',
