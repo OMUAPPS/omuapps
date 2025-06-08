@@ -3,6 +3,7 @@ import type { Message } from '@omujs/chat/models/message.js';
 import { getGame, type User } from '../omucafe-app.js';
 import { acquireRenderLock, getContext, markChanged } from './game.js';
 import type { Product } from './product.js';
+import { Time } from './time.js';
 
 type OrderStatus = {
     type: 'waiting',
@@ -17,12 +18,18 @@ export type OrderItem = {
     notes: string,
 };
 
+export type OrderMessage = {
+    tokens: TOKEN[],
+    timestamp: number,
+};
+
 export type Order = {
     id: string,
     user: User,
+    message?: OrderMessage,
     status: OrderStatus,
     items: OrderItem[],
-}
+};
 
 type ProductTokens = {
     product: Product;
@@ -86,7 +93,7 @@ type OrderDetectResult = {
     tokens: OrderDetectToken[];
 }
 
-function detectOrder(tokens: TOKEN[], productTokens: ProductTokens[]): OrderDetectResult {
+function analyzeOrderRequest(tokens: TOKEN[], productTokens: ProductTokens[]): OrderDetectResult {
     // const products: ProductTokens[] = [
     //     "食べくらべポテナゲ大",
     //     "アリ専用パフェ",
@@ -198,6 +205,36 @@ async function updateOrders() {
     }
 }
 
+export function isNounLike(token: TOKEN): boolean {
+    return token.pos === '名詞' || token.pos === '接頭詞' || token.pos === '接尾詞';
+}
+
+function mergeSamePosTokens(tokens: TOKEN[]): TOKEN[] {
+    const merged: TOKEN[] = [];
+    let lastToken: TOKEN | null = null;
+    for (const token of tokens) {
+        const isNoun = isNounLike(token);
+        const lastNoun = lastToken && isNounLike(lastToken);
+        if (lastToken && isNoun === lastNoun) {
+            lastToken.surface_form += token.surface_form;
+            lastToken.basic_form += token.basic_form;
+            if (token.pronunciation) {
+                lastToken.pronunciation = (lastToken.pronunciation || '') + token.pronunciation;
+            }
+        }
+        else {
+            if (lastToken) {
+                merged.push(lastToken);
+            }
+            lastToken = { ...token };
+        }
+    }
+    if (lastToken) {
+        merged.push(lastToken);
+    }
+    return merged;
+}
+
 export async function processMessage(message: Message) {
     await acquireRenderLock();
     const ctx = getContext();
@@ -208,6 +245,12 @@ export async function processMessage(message: Message) {
     if (!author || !author.name) return;
     const { config } = ctx;
     const tokens = await game.worker.call('tokenize', message.text);
+    if (ctx.order && ctx.order.user.id === author.key()) {
+        ctx.order.message = {
+            timestamp: Time.now(),
+            tokens: mergeSamePosTokens(tokens),
+        }
+    }
     console.log('[msg]', JSON.stringify(tokens));
     const productTokens: ProductTokens[] = await Promise.all(Object.values(config.products).map(async (product) => {
         return {
@@ -215,11 +258,11 @@ export async function processMessage(message: Message) {
             tokens: await parseToken(product.name)
         }
     }));
-    const order = detectOrder(tokens, productTokens);
-    if (!order.detected) return;
+    const orderAnalysis = analyzeOrderRequest(tokens, productTokens);
+    if (!orderAnalysis.detected) return;
     await game.orders.add({
         id: message.id.key(),
-        items: order.products.map((product) => {
+        items: orderAnalysis.products.map((product) => {
             return {
                 notes: '',
                 product_id: product.id,

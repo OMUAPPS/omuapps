@@ -15,7 +15,7 @@ import type { KitchenContext } from './kitchen.js';
 export const COUNTER_WIDTH = 1920 * 2;
 export const COUNTER_HEIGHT = 500;
 export const UPDATE_RATE = 60;
-export let lastUpdate = Time.get();
+export let lastUpdate = Time.now();
 export let changed = false;
 export let glContext: GlContext;
 export let matrices: Matrices;
@@ -101,7 +101,7 @@ async function handleMouseUp() {
 function syncData() {
     if (!changed) return;
     changed = false;
-    const time = Time.get();
+    const time = Time.now();
     const delta = time - lastUpdate;
     if (delta < 1000 / UPDATE_RATE) {
         return;
@@ -152,7 +152,7 @@ function registerMouseEvents() {
     window.addEventListener('mousedown', async () => {
         inputQueue.push(async () => {
             mouse.down = true;
-            mouse.downTime = Time.get();
+            mouse.downTime = Time.now();
             handleMouseDown();
             markChanged();
         });
@@ -160,7 +160,7 @@ function registerMouseEvents() {
     window.addEventListener('mouseup', async () => {
         inputQueue.push(async () => {
             mouse.down = false;
-            mouse.upTime = Time.get();
+            mouse.upTime = Time.now();
             handleMouseUp();
             markChanged();
         });
@@ -169,7 +169,7 @@ function registerMouseEvents() {
         e.preventDefault();
         inputQueue.push(async () => {
             mouse.down = true;
-            mouse.downTime = Time.get();
+            mouse.downTime = Time.now();
             mouse.client = new Vec2(e.touches[0].clientX, e.touches[0].clientY);
             mouse.over = true;
             markChanged();
@@ -179,7 +179,7 @@ function registerMouseEvents() {
     window.addEventListener('touchend', async () => {
         inputQueue.push(async () => {
             mouse.down = false;
-            mouse.upTime = Time.get();
+            mouse.upTime = Time.now();
             handleMouseUp();
             markChanged();
         });
@@ -414,7 +414,7 @@ function updateMouseAsset() {
 
 async function update() {
     if (side === 'client') {
-        await updateAudioClips(Time.get());
+        await updateAudioClips(Time.now());
     }
 }
 
@@ -430,7 +430,7 @@ import { renderParticles } from './renderer/particle.js';
 import { Time } from './time.js';
 
 function getScreenTime(time: number) {
-    const elapsed = Time.get() - time;
+    const elapsed = Time.now() - time;
     const t = 1 / Math.pow(elapsed / 250 + 1, 3);
     return t;
 }
@@ -505,11 +505,12 @@ async function renderScreen() {
             width / 2, height / 2,
             paint.texture,
         )
-        draw.setFont('26px "Note Sans JP"');
+        draw.fontFamily = 'Note Sans JP';
+        draw.fontSize = 26;
         const dateText = new Date(scene.time).toLocaleString();
         const dateMetrics = draw.measureTextActual(dateText);
         const dateDimentions = dateMetrics.dimensions();
-        draw.text(width / 2 - dateDimentions.x - 140, height / 2 - dateDimentions.y - 120, dateText, new Vec4(0, 0, 0, 0.5));
+        await draw.text(width / 2 - dateDimentions.x - 140, height / 2 - dateDimentions.y - 120, dateText, new Vec4(0, 0, 0, 0.5));
         const mousePos = matrices.unprojectPoint(mouse.gl).mul({
             x: 1,
             y: -1,
@@ -525,6 +526,7 @@ async function renderScreen() {
             y: height / 2,
         });
         matrices.view.pop();
+        
         const tool = photoMode.tool;
         if (tool.type !== 'move' && mouse.over && !mouse.ui) {
             const radius = tool.type === 'pen' ? photoMode.pen.width : photoMode.eraser.width;
@@ -562,7 +564,7 @@ async function renderScreen() {
             penTrail = {
                 last: mousePos,
                 dir: Bezier.quadraticDerivative2(a, b, c, 0.5),
-                time: penTrail?.time ?? Time.get(),
+                time: penTrail?.time ?? Time.now(),
             };
             const newQueue: PaintEvent[] = [];
             if (distance > 0.5) {
@@ -593,6 +595,15 @@ async function renderScreen() {
             penTrail = null;
         }
         paint.update(width, height);
+
+        // await renderCustomersClient(new Vec2(1920 * 2 - 1200, 80));
+        const { order } = context;
+        if (order && order.message) {
+            matrices.view.push();
+            matrices.view.scale(scaleFactor, scaleFactor, 1);
+            await renderMessage(order.message, new Vec2(3600, 1400), 0);
+            matrices.view.pop();
+        }
     }
 }
 
@@ -612,34 +623,36 @@ export async function renderBackgroundSide() {
 import dummy_back from '../images/dummy_back.png';
 import dummy_front from '../images/dummy_front.png';
 import { getGame, type User } from '../omucafe-app.js';
+import { isNounLike, type OrderMessage } from './order.js';
 import { Paint, PAINT_EVENT_TYPE, type PaintEvent } from './paint.js';
 import { getResources, type Resources } from './resources.js';
 
 async function renderNametag(user: User, bounds: AABB2) {
     const dimentions = bounds.dimensions();
-    draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, new Vec4(0.99, 0.99, 0.99, 1));
+    // draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, new Vec4(0.99, 0.99, 0.99, 1));
     const strokeOffset = 2;
     const size = dimentions.x / 6;
-    draw.rectangleStroke(bounds.min.x + strokeOffset, bounds.min.y + strokeOffset, bounds.max.x - strokeOffset, bounds.max.y - strokeOffset, new Vec4(0, 0, 0, 0.5), 3);
+    // draw.rectangleStroke(bounds.min.x + strokeOffset, bounds.min.y + strokeOffset, bounds.max.x - strokeOffset, bounds.max.y - strokeOffset, new Vec4(0, 0, 0, 0.5), 3);
     if (user.avatar) {
         const { tex } = await getTextureByUriCORS(user.avatar);
         const x = bounds.min.x + size / 2 + strokeOffset;
         const y = bounds.min.y + dimentions.y / 2 - size / 2;
         draw.texture(x, y, x + size, y + size, tex);
     }
-    draw.setFont(`${size / 1.5}px 'Noto Sans JP', sans-serif`);
+    draw.fontFamily = '\'Noto Sans JP\', sans-serif';
+    draw.fontSize = size / 1.5;
     const textAnchor: Vec2Like = { x: bounds.min.x + size * 2 + strokeOffset, y: bounds.min.y + dimentions.y / 2 }
-    draw.textAlign(textAnchor, user.name, Vec2.UP, new Vec4(0, 0, 0, 1));
+    await draw.textAlign(textAnchor, user.name, Vec2.UP, new Vec4(0, 0, 0, 1));
     if (user.screen_id) {
-        draw.setFont(`${size / 2}px 'Noto Sans JP', sans-serif`);
-        draw.textAlign(textAnchor, user.screen_id, Vec2.ZERO, new Vec4(0, 0, 0, 0.5));
+        draw.fontSize = size / 2;
+        await draw.textAlign(textAnchor, user.screen_id, Vec2.ZERO, new Vec4(0, 0, 0, 0.5));
     }
 }
 
 async function renderCustomersClient(position: Vec2) {
     const { order } = context;
     if (order) {
-        const { user } = order;
+        const { user, message } = order;
         const { tex, width, height } = await getTextureByUri(side === 'client' ? dummy_front : dummy_back);
         draw.texture(position.x, position.y, position.x + width / 1.2, position.y + height / 1.2, tex);
         const nametagBounds = AABB2.from({
@@ -650,6 +663,46 @@ async function renderCustomersClient(position: Vec2) {
             .offset({ x: width / 1.2 / 2, y: height / 1.2 / 2 })
             .offset(position);
         await renderNametag(user, nametagBounds);
+        if (message) {
+            await renderMessage(message, position, 600);
+        }
+    }
+}
+
+async function renderMessage(message: OrderMessage, anchor: Vec2, maxWidth: number) {
+    const { tokens, timestamp } = message;
+    const elapsed = (Time.now() - timestamp) / 100;
+    const t = Math.cos(elapsed * Math.sqrt(elapsed)) / (10 * elapsed * elapsed + 1);
+    anchor = anchor.add({
+        x: maxWidth / 1.2 / 2,
+        y: 100 + 60 * (t),
+    });
+    const height = 60;
+    draw.fontFamily = 'Noto Sans JP';
+    draw.fontSize = 30;
+    const hasNoun = tokens.some(token => isNounLike(token));
+    const textWidth = tokens.reduce((sum, token) => {
+        const isNounToken = !hasNoun || isNounLike(token);
+        draw.fontSize = isNounToken ? 50 : 40;
+        const metrics = draw.measureText(token.surface_form);
+        return sum + (metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft) + (isNounToken ? 10 : 0);
+    }, 0);
+    anchor = anchor.add({ x: -textWidth + Math.min(maxWidth, textWidth / 2), y: 0 });
+    const padding = 20;
+    draw.rectangle(
+        anchor.x - padding, anchor.y - padding,
+        anchor.x + textWidth + padding, anchor.y + height + padding,
+        new Vec4(1, 1, 1, 1)
+    );
+    let x = 0;
+    for (const token of tokens) {
+        const isNounToken = !hasNoun || isNounLike(token);
+        draw.fontSize = isNounToken ? 50 : 40;
+        const text = token.surface_form;
+        const metrics = draw.measureText(text);
+        const baseline = height - metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent;
+        await draw.text(anchor.x + x + (isNounToken ? 5 : 0), anchor.y + baseline, text, new Vec4(0, 0, 0, isNounToken ? 1 : 0.5));
+        x += (metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft) + (isNounToken ? 10 : 0);
     }
 }
 
@@ -660,8 +713,9 @@ async function renderCustomersAsset(position: Vec2) {
         const { tex, width, height } = await getTextureByUri(side === 'client' ? dummy_front : dummy_back);
         draw.texture(position.x, position.y, position.x + width / 1.2, position.y + height / 1.2, tex);
         const center = position.add({x: width / 1.2 / 2, y: height / 1.2 / 2});
-        draw.setFont('40px \'Noto Sans JP\', sans-serif');
-        draw.textAlign(center, user.name, {x: 0.5, y: 0}, new Vec4(0, 0, 0, 0.5));
+        draw.fontFamily = 'Noto Sans JP, sans-serif';
+        draw.fontSize = 40;
+        await draw.textAlign(center, user.name, {x: 0.5, y: 0}, new Vec4(0, 0, 0, 0.5));
     }
 }
 

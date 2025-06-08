@@ -58,7 +58,7 @@ export async function renderCursor() {
         },
     }
     const cursor = getContext().held ? CURSORS.point : CURSORS.grab;
-    const time = Time.get();
+    const time = Time.now();
     const duration = time - (mouse.down ? mouse.downTime : mouse.upTime);
     const a = Math.sin(duration / 40) / (Math.pow(duration / 7, 1.5) / 2 + 1) * (mouse.down ? -1 : 1);
     const scale = 1 + a;

@@ -46,7 +46,19 @@
                 handleResize();
                 resized = false;
                 continue;
-            } else if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
+            } else if (!canvas || !glContext || !context || !offscreen) {
+                continue;
+            }
+            if (context.isContextLost()) {
+                console.warn('Canvas context lost, reinitializing...');
+                offscreen = new OffscreenCanvas(width, height);
+                context = canvas.getContext('2d');
+                glContext = GlContext.create(offscreen);
+                resized = true;
+                handleResize();
+                continue;
+            }
+            if (offscreen.width === 0 || offscreen.height === 0) {
                 continue;
             }
             await render(glContext);

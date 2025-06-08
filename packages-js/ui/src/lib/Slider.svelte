@@ -181,6 +181,7 @@
                 border: 2px solid var(--color-1);
                 outline-width: 0px;
 
+                &:focus-visible,
                 &:active {
                     background: var(--color-1);
                     outline: 2px solid var(--color-bg-2);
@@ -199,7 +200,7 @@
             }
 
             &:hover,
-            &:focus {
+            &:focus-visible {
                 outline: none;
 
                 &::-webkit-slider-thumb {

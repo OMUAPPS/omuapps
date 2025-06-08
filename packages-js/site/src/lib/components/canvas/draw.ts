@@ -342,6 +342,15 @@ void main() {
 }
 `;
 
+type TextTexture = {
+    texture: GlTexture;
+    width: number;
+    height: number;
+    font: string;
+};
+
+const textEncoder = new TextEncoder();
+
 export class Draw {
     private readonly vertexShader: GlShader;
     private readonly colorProgram: GlProgram;
@@ -357,8 +366,10 @@ export class Draw {
     private readonly frameBufferTexture: GlTexture;
     private readonly textCanvas: OffscreenCanvas;
     private readonly textContext: OffscreenCanvasRenderingContext2D;
-    private readonly textTexture: GlTexture;
-    private font: string = '10px sans-serif';
+    private readonly textRenderPool: Map<string, TextTexture> = new Map();
+    private readonly loadedCharacters: Set<string> = new Set();
+    public fontFamily: string = 'sans-serif';
+    public fontSize: number = 10;
 
     constructor(
         private readonly matrices: Matrices,
@@ -382,15 +393,6 @@ export class Draw {
             throw new Error('Failed to get 2d rendering context from text offscreen canvas');
         }
         this.textContext = textContext;
-        this.textTexture = glContext.createTexture();
-        this.textTexture.use(() => {
-            this.textTexture.setParams({
-                minFilter: 'linear',
-                magFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            })
-        })
     }
 
     private ensureFrameBuffer(width: number, height: number): void {
@@ -408,14 +410,13 @@ export class Draw {
         return this.glContext.createProgram([this.vertexShader, fragmentShader]);
     }
 
+    private get font(): string {
+        return `${this.fontSize}px ${this.fontFamily}`;
+    }
+
     public measureText(text: string): TextMetrics {
         this.textContext.font = this.font;
         return this.textContext.measureText(text);
-    }
-
-    public setFont(font: string) {
-        this.textContext.font = font;
-        this.font = font;
     }
 
     public measureTextActual(text: string) {
@@ -427,51 +428,72 @@ export class Draw {
         );
     }
 
-    public text(left: number, top: number, text: string, color: Vec4) {
+    private async generateTextTexture(text: string): Promise<TextTexture | null> {
+        const key = JSON.stringify({ font: this.fontFamily, text });
+        const existing = this.textRenderPool.get(key);
+        if (existing) {
+            return existing;
+        }
         this.textContext.font = this.font;
         const bounds = this.measureTextActual(text);
-        const dimentions = bounds.dimensions().max(Vec2.ZERO);
-        this.textCanvas.width = dimentions.x;
-        this.textCanvas.height = dimentions.y;
-        this.textContext.clearRect(0, 0, dimentions.x, dimentions.y);
+        const dimensions = bounds.dimensions().max(Vec2.ZERO);
+        this.textCanvas.width = dimensions.x;
+        this.textCanvas.height = dimensions.y;
+        this.textContext.clearRect(0, 0, dimensions.x, dimensions.y);
         this.textContext.textAlign = 'start';
         this.textContext.textBaseline = 'top';
         this.textContext.fillStyle = '#fff';
         this.textContext.font = this.font;
         this.textContext.fillText(text, bounds.min.x, bounds.min.y);
-        this.textTexture.use(() => {
-            this.textTexture.setImage(this.textCanvas, {
-                width: dimentions.x,
-                height: dimentions.y,
+        if (dimensions.x === 0 || dimensions.y === 0) {
+            return null;
+        }
+        const texture = this.glContext.createTexture();
+        texture.use(() => {
+            texture.setImage(this.textCanvas, {
+                width: dimensions.x,
+                height: dimensions.y,
                 internalFormat: 'rgba',
                 format: 'rgba',
             });
+            texture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
         });
-        this.texture(left, top, left + dimentions.x, top + dimentions.y, this.textTexture, color);
+        const textTexture: TextTexture = {
+            texture,
+            width: dimensions.x,
+            height: dimensions.y,
+            font: this.fontFamily,
+        };
+        this.textRenderPool.set(key, textTexture);
+        return textTexture;
     }
 
-    public textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color: Vec4) {
+    public async text(left: number, top: number, text: string, color: Vec4): Promise<boolean> {
         this.textContext.font = this.font;
-        const bounds = this.measureTextActual(text);
-        const dimentions = bounds.dimensions().max(Vec2.ZERO);
-        this.textCanvas.width = dimentions.x;
-        this.textCanvas.height = dimentions.y;
-        this.textContext.clearRect(0, 0, dimentions.x, dimentions.y);
-        this.textContext.textAlign = 'start';
-        this.textContext.textBaseline = 'top';
-        this.textContext.fillStyle = '#fff';
+        const textTexture = await this.generateTextTexture(text);
+        if (!textTexture) {
+            return false;
+        }
+        const { width, height, texture } = textTexture;
+        this.texture(left, top, left + width, top + height, texture, color);
+        return true;
+    }
+
+    public async textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color: Vec4): Promise<boolean> {
         this.textContext.font = this.font;
-        this.textContext.fillText(text, bounds.min.x, bounds.min.y);
-        this.textTexture.use(() => {
-            this.textTexture.setImage(this.textCanvas, {
-                width: dimentions.x,
-                height: dimentions.y,
-                internalFormat: 'rgba',
-                format: 'rgba',
-            });
-        });
-        const pos = Vec2.from(anchor).sub(dimentions.mul(align));
-        this.texture(pos.x, pos.y, pos.x + dimentions.x, pos.y + dimentions.y, this.textTexture, color);
+        const textTexture = await this.generateTextTexture(text);
+        if (!textTexture) {
+            return false;
+        }
+        const { width, height, texture } = textTexture;
+        const pos = Vec2.from(anchor).sub({ x: width * align.x, y: height * align.y });
+        this.texture(pos.x, pos.y, pos.x + width, pos.y + height, texture, color);
+        return true;
     }
 
     public setMesh(vertices?: Float32Array, texcoords?: Float32Array): void {

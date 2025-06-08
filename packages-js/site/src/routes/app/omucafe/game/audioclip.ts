@@ -124,8 +124,8 @@ let counter = 0;
 export function playAudioClip(
     clip: AudioClip,
 ): PlayingAudioClip {
-    const time = Time.get()
-    const id = (Time.get() * 1000 + counter++).toString(16)
+    const time = Time.now()
+    const id = (Time.now() * 1000 + counter++).toString(16)
     const audio: PlayingAudioClip = {
         id,
         clip,
@@ -139,7 +139,7 @@ export function playAudioClip(
 export function stopAudioClip(
     audio: PlayingAudioClip,
 ): void {
-    audio.stopTime = Time.get()
+    audio.stopTime = Time.now()
     console.log('stopAudioClip', audio)
     getContext().audios[audio.id] = audio
 }

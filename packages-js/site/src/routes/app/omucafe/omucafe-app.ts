@@ -265,7 +265,7 @@ const functions = {
         }
         game?.scene.set({
             type: 'photo_mode',
-            time: Time.get(),
+            time: Time.now(),
             items: [...counter.children],
         });
         const { v } = builder;

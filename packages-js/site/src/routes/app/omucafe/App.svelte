@@ -74,7 +74,7 @@
         {#key lastScene.type}
             <div class="scene last" tabindex="-1">
                 <svelte:component this={lastScene.comp} context={{
-                    time: Time.get(),
+                    time: Time.now(),
                     active: false,
                 }} />
             </div>
@@ -83,7 +83,7 @@
     {#key lastScene.type}
         <div class="scene current" bind:this={sceneElement}>
             <svelte:component this={SCENES[$scene.type]} context={{
-                time: Time.get(),
+                time: Time.now(),
                 active: true,
             }} />
         </div>
