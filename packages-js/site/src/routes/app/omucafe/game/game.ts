@@ -528,10 +528,10 @@ async function renderScreen() {
         matrices.view.pop();
         
         const tool = photoMode.tool;
-        if (tool.type !== 'move' && mouse.over && !mouse.ui) {
+        if (client && tool.type !== 'move' && mouse.over && !mouse.ui) {
             const radius = tool.type === 'pen' ? photoMode.pen.width : photoMode.eraser.width;
             const cursor = matrices.unprojectPoint(mouse.gl);
-            const penRadius = radius / 0.7 * scaleFactor;
+            const penRadius = radius / 0.7 * scaleFactor * 2;
             draw.circle(
                 cursor.x,
                 cursor.y,

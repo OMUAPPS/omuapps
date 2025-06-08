@@ -213,6 +213,7 @@
             transparent 0%,
             var(--color-bg-1) 100%
         );
+        pointer-events: none;
     }
     
     .screen {
