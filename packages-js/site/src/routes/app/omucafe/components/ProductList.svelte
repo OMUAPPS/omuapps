@@ -59,7 +59,11 @@
                 </div>
             </button>
         {:else}
-            <small>レシピがありません</small>
+            {#if search && Object.keys($config.products).length > 0}
+                <small>レシピが見つかりません</small>
+            {:else}
+                <small>レシピがありません</small>
+            {/if}
         {/each}
     </div>
 {:else if type === 'item'}
@@ -95,7 +99,11 @@
                 </div>
             </button>
         {:else}
-            <small>アイテムがありません</small>
+            {#if search && Object.keys($config.items).length > 0}
+                <small>アイテムが見つかりません</small>
+            {:else}
+                <small>アイテムがありません</small>
+            {/if}
         {/each}
     </div>
 {:else if type === 'effect'}
@@ -126,7 +134,11 @@
                 </div>
             </button>
         {:else}
-            <small>エフェクトがありません</small>
+            {#if search && Object.keys($config.effects).length > 0}
+                <small>エフェクトが見つかりません</small>
+            {:else}
+                <small>エフェクトがありません</small>
+            {/if}
         {/each}
     </div>
 {/if}
