@@ -1,6 +1,7 @@
 from omu.extension.dashboard import (
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
     DASHBOARD_APP_UPDATE_PERMISSION_ID,
+    DASHBOARD_DRAG_DROP_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHBOARD_SET_PERMISSION_ID,
     DASHOBARD_APP_EDIT_PERMISSION_ID,
@@ -89,6 +90,16 @@ DASHBOARD_APP_UPDATE_PERMISSION = PermissionType(
         "note": {
             "ja": "アプリの情報を更新するために使われます",
             "en": "Used to update an app",
+        },
+    },
+)
+DASHBOARD_DRAG_DROP_PERMISSION = PermissionType(
+    DASHBOARD_DRAG_DROP_PERMISSION_ID,
+    {
+        "level": "low",
+        "name": {
+            "ja": "ファイルのドラッグドロップ",
+            "en": "Get File Drag Drop Information",
         },
     },
 )

@@ -1,4 +1,4 @@
-import { App } from '../../app.js';
+import { App, AppJson } from '../../app.js';
 import { ByteReader, ByteWriter } from '../../bytebuffer.js';
 import { PermissionType } from '../permission/permission.js';
 import type { PackageInfo } from '../plugin/package-info.js';
@@ -95,4 +95,114 @@ export type AppInstallResponse = {
 
 export type AppUpdateResponse = {
     accepted: boolean;
+}
+
+export type DragDropFile = {
+    type: 'file' | 'directory';
+    size: number;
+    name: string;
+}
+
+export type DragDropPosition = {
+    x: number;
+    y: number;
+}
+
+export type DragEnter = {
+    type: 'enter';
+    drag_id: string;
+    files: DragDropFile[];
+    position: DragDropPosition;
+}
+
+export type DragOver = {
+    type: 'over';
+    drag_id: string;
+    position: DragDropPosition;
+}
+
+export type DragDrop = {
+    type: 'drop';
+    drag_id: string;
+    position: DragDropPosition;
+    files: DragDropFile[];
+}
+
+export type DragLeave = {
+    type: 'leave';
+    drag_id: string;
+}
+
+export type DragState = DragEnter | DragOver | DragDrop | DragLeave
+
+export type FileDragPacket = {
+    drag_id: string;
+    app: AppJson;
+    state: DragState;
+}
+
+export type DragDropReadRequest = {
+    drag_id: string;
+}
+
+export type DragDropReadRequestDashboard = {
+    request_id: string;
+    drag_id: string;
+}
+
+export type DragDropReadMeta = {
+    request_id: string;
+    drag_id: string;
+    files: readonly DragDropFile[];
+}
+
+export class DragDropReadResponse {
+    constructor(
+        public readonly meta: DragDropReadMeta,
+        public readonly files: readonly Uint8Array[],
+        public readonly version: number = 1,
+    ) {}
+
+    public static serialize(data: DragDropReadResponse): Uint8Array {
+        const writer = new ByteWriter();
+        writer.writeULEB128(data.version);
+        writer.writeString(JSON.stringify(data.meta));
+        writer.writeULEB128(data.files.length);
+        
+        for (const file of data.files) {
+            writer.writeUint8Array(file);
+        }
+
+        return writer.finish();
+    }
+
+    public static deserialize(data: Uint8Array): DragDropReadResponse {
+        const reader = ByteReader.fromUint8Array(data);
+        const version = reader.readULEB128();
+        const meta: DragDropReadMeta = JSON.parse(reader.readString());
+        const length = reader.readULEB128();
+
+        const files: Uint8Array[] = [];
+        for (let i = 0; i < length; i++) {
+            files.push(reader.readUint8Array());
+        }
+
+        return new DragDropReadResponse(
+            meta,
+            files,
+            version,
+        );
+    }
+}
+
+export type DragDropRequest = object;
+
+export type DragDropRequestDashboard = {
+    request_id: string;
+    app: AppJson;
+}
+
+export type DragDropRequestResponse = {
+    request_id: string;
+    ok: boolean;
 }

@@ -1,18 +1,22 @@
 import { currentPage } from '$lib/main/settings.js';
 import PermissionRequestScreen from '$lib/screen/PermissionRequestScreen.svelte';
 import PluginRequestScreen from '$lib/screen/PluginRequestScreen.svelte';
-import { appWindow } from '$lib/tauri.js';
+import { appWindow, tauriFs } from '$lib/tauri.js';
 import { App, Omu } from '@omujs/omu';
 import type { DashboardHandler } from '@omujs/omu/extension/dashboard/dashboard.js';
-import type {
-    AppInstallRequest,
-    AppUpdateRequest,
-    PermissionRequestPacket,
-    PluginRequestPacket,
+import {
+    DragDropReadResponse,
+    type AppInstallRequest,
+    type AppUpdateRequest,
+    type DragDropReadRequestDashboard,
+    type DragDropRequestDashboard,
+    type PermissionRequestPacket,
+    type PluginRequestPacket
 } from '@omujs/omu/extension/dashboard/packets.js';
 import type { Table } from '@omujs/omu/extension/table/table.js';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Locale } from '@omujs/omu/localization/locale.js';
+import { dragDropApps, dragDrops } from './dragdrop.js';
 import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
 import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';
 import { screenContext } from './screen/screen.js';
@@ -20,6 +24,7 @@ import { screenContext } from './screen/screen.js';
 export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 
 export class Dashboard implements DashboardHandler {
+    public currentApp: App | null = null;
     readonly apps: Table<App>;
 
     constructor(omu: Omu) {
@@ -76,5 +81,25 @@ export class Dashboard implements DashboardHandler {
     async handleOpenApp(app: App): Promise<void> {
         console.log('Open app', app);
         currentPage.update(() => `app-${app.id.key()}`);
+    }
+
+    async handleDragDropRequest(request: DragDropRequestDashboard): Promise<boolean> {
+        dragDropApps.push(request.app.id);
+        return true;
+    }
+
+    async handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<DragDropReadResponse> {
+        const dragDrop = dragDrops[request.drag_id];
+        const buffers: Uint8Array[] = [];
+        for (const path of dragDrop.paths) {
+            buffers.push(await tauriFs.readFile(path));
+        }
+        return new DragDropReadResponse(
+            {
+                ...request,
+                files: dragDrop.files,
+            },
+            buffers,
+        )
     }
 }

@@ -30,6 +30,17 @@
         "core:webview:default",
         "core:tray:default",
         "cli:default",
-        "updater:default"
+        "updater:default",
+        "fs:allow-stat",
+        "fs:allow-read",
+        "fs:allow-read-file",
+        {
+            "identifier": "fs:scope",
+            "allow": [
+                {
+                    "path": "**/**"
+                }
+            ]
+        }
     ]
 }

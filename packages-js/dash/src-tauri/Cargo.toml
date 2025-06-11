@@ -42,6 +42,7 @@ open = "5.3.0"
 walkdir = "2.5.0"
 tauri-plugin-process = "2.2.1"
 chrono = "0.4.31"
+tauri-plugin-fs = "2.3.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

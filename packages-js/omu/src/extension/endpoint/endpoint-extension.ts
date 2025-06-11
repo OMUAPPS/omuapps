@@ -40,7 +40,7 @@ export class EndpointExtension {
             const promise = this.promiseMap.get(event.key);
             if (!promise) {
                 throw new Error(
-                    `Received response for unknown key ${event.key} (${event.id})`,
+                    `Received response for unknown key ${event.key} (${event.id.key()})`,
                 );
             }
             this.promiseMap.delete(event.key);
@@ -50,7 +50,7 @@ export class EndpointExtension {
             const promise = this.promiseMap.get(event.key);
             if (!promise) {
                 throw new Error(
-                    `Received error for unknown key ${event.key} (${event.id})`,
+                    `Received error for unknown key ${event.key} (${event.id.key()})`,
                 );
             }
             this.promiseMap.delete(event.key);

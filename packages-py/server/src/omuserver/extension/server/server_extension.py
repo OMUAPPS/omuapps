@@ -146,7 +146,7 @@ class ServerExtension:
             },
         )
         permission_request = PermissionRequestPacket(
-            request_id=self._server.dashboard.get_next_request_id(),
+            request_id=self._server.dashboard.gen_next_request_id(),
             app=temp_app,
             permissions=permissions,
         )

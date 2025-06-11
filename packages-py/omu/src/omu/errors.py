@@ -9,8 +9,8 @@ class OmuError(Exception):
 
 
 class DisconnectReason(OmuError):
-    def __init__(self, type: DisconnectType, message: str | None = None, *args, **kwargs):
-        super().__init__(message or type.value, *args, **kwargs)
+    def __init__(self, type: DisconnectType, message: str | None = None):
+        super().__init__(message or type.value)
         self.type = type
         self.message = message
 

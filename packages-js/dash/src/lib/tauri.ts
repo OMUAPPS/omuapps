@@ -73,10 +73,10 @@ type Events = {
     [TauriEvent.WINDOW_THEME_CHANGED]: unknown;
     [TauriEvent.WINDOW_CREATED]: unknown;
     [TauriEvent.WEBVIEW_CREATED]: unknown;
-    [TauriEvent.DRAG_ENTER]: unknown;
-    [TauriEvent.DRAG_OVER]: unknown;
-    [TauriEvent.DRAG_DROP]: unknown;
-    [TauriEvent.DRAG_LEAVE]: unknown;
+    [TauriEvent.DRAG_ENTER]: { position: { x: number, y: number }, paths: string[] };
+    [TauriEvent.DRAG_OVER]: { position: { x: number, y: number } };
+    [TauriEvent.DRAG_DROP]: { position: { x: number, y: number }, paths: string[] };
+    [TauriEvent.DRAG_LEAVE]: null;
 };
 
 type AppEvent<T> = {
@@ -149,7 +149,9 @@ export function assertTauri() {
     }
 }
 
+export const tauriFs = loadLazy(() => import('@tauri-apps/plugin-fs'));
 export const tauriWindow = loadLazy(() => import('@tauri-apps/api/window'));
+export const tauriPath = loadLazy(() => import('@tauri-apps/api/path'));
 export const appWindow = loadLazy(async () => {
     const { getCurrentWindow } = await import('@tauri-apps/api/window');
     return getCurrentWindow();
@@ -264,6 +266,7 @@ import { get } from 'svelte/store';
 import { isBetaEnabled } from './main/settings.js';
 
 waitForTauri().then(async () => {
+
     let visible = false;
     visible = await appWindow.isVisible();
 
