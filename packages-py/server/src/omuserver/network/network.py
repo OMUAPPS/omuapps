@@ -142,7 +142,7 @@ class Network:
         return ip_verified and origin_verified
 
     async def websocket_handler(self, request: web.Request):
-        ws = web.WebSocketResponse()
+        ws = web.WebSocketResponse(max_msg_size=0)
         await ws.prepare(request)
         connection = WebsocketsConnection(ws)
         session = await Session.from_connection(
