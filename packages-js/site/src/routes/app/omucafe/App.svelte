@@ -1,7 +1,9 @@
 <script lang="ts">
-    import type { TypedComponent } from '@omujs/ui';
+    import type { DragDropFile } from '@omujs/omu/extension/dashboard/packets.js';
+    import { Spinner, type TypedComponent } from '@omujs/ui';
     import KitchenRenderer from './components/KitchenRenderer.svelte';
     import { getContext, markChanged, mouse } from './game/game.js';
+    import { GameData } from './game/gamedata.js';
     import { PaintBuffer } from './game/paint.js';
     import { Time } from './game/time.js';
     import { DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
@@ -15,7 +17,7 @@
     import SceneProductEdit from './scenes/SceneProductEdit.svelte';
     import SceneProductList from './scenes/SceneProductList.svelte';
 
-    const { scene, config, gameConfig, states, paintEvents } = getGame();
+    const { omu, scene, config, gameConfig, states, paintEvents } = getGame();
 
     const SCENES: Record<Scene['type'], TypedComponent<{
         context: SceneContext;
@@ -66,6 +68,62 @@
             sceneElement.focus({ preventScroll: true });
         }
     }
+
+    let importState: {
+        type: 'drag-enter',
+        drag_id: string,
+        files: DragDropFile[],
+    } | {
+        type: 'loading',
+    } | {
+        type: 'failed',
+        kind: 'invalid-format',
+    } | {
+        type: 'loaded',
+    }| null = null;
+    
+    omu.dashboard.requireDragDrop().then((handler) => {
+        handler.onEnter(async ({ drag_id, files }) => {
+            if (!files.some((it) => it.name.endsWith('.omucafe'))) return;
+            importState = {
+                type: 'drag-enter',
+                drag_id,
+                files,
+            };
+            console.log('enter', drag_id);
+        });
+        handler.onLeave(({ drag_id }) => {
+            console.log('leave', drag_id);
+            importState = null;
+        });
+        handler.onDrop(async ({ drag_id }) => {
+            console.log('drop', drag_id);
+            importState = {
+                type: 'loading',
+            };
+            try {
+                const resp = await handler.read(drag_id);
+                const datas: GameData[] = [];
+                for (const { file, buffer } of Object.values(resp.files)) {
+                    if (!file.name.endsWith('.omucafe')) continue;
+                    const gameData = GameData.deserialize(buffer);
+                    datas.push(gameData);
+                    await gameData.load();
+                }
+                importState = {
+                    type: 'loaded',
+                }
+            } catch {
+                importState = {
+                    type: 'failed',
+                    kind: 'invalid-format',
+                };
+            }
+            setTimeout(() => {
+                importState = null;
+            }, 1000);
+        });
+    });
 </script>
 
 <main class:hide-cursor={!$states.kitchen.mouse.ui}>
@@ -113,6 +171,33 @@
     </button>
 </div>
 
+<div class="overlay" class:active={importState}>
+    {#if !importState}
+        ...
+    {:else if importState.type === 'drag-enter'}
+        <span>
+            <i class="ti ti-download"></i>
+            ここに落として読み込み
+        </span>
+    {:else if importState.type === 'loading'}
+        <span>
+            <Spinner />
+            読み込み中…
+        </span>
+    {:else if importState.type === 'failed'}
+        <span>
+            <i class="ti ti-alert-hexagon"></i>
+            読み込みに失敗しました
+        </span>
+        {({'invalid-format': '無効なゲームファイル'})[importState.kind]}
+    {:else if importState.type === 'loaded'}
+        <span>
+            <i class="ti ti-check"></i>
+            読み込み完了
+        </span>
+    {/if}
+</div>
+
 <style lang="scss">
     main {
         position: absolute;
@@ -138,6 +223,70 @@
         > button {
             width: fit-content;
             pointer-events: auto;
+        }
+    }
+    
+    .overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        visibility: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: var(--color-1);
+        outline: 1px solid var(--color-1);
+        outline-offset: -3rem;
+
+        &.active {
+            visibility: visible;
+            animation: forwards overlayIn 0.2s;
+        }
+
+        > span {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 1rem;
+            font-size: 2rem;
+            animation: forwards overlayContentIn 0.2s;
+        }
+    }
+
+    @keyframes overlayIn {
+        0% {
+            background: color-mix(in srgb, var(--color-1) 20%, transparent 0%);
+            outline-offset: -2rem;
+        }
+
+        32% {
+            background: color-mix(in srgb, var(--color-bg-2) 100%, transparent 0%);
+            outline-offset: -3.25rem;
+        }
+
+        100% {
+            background: color-mix(in srgb, var(--color-bg-1) 90%, transparent 0%);
+        }
+    }
+
+    @keyframes overlayContentIn {
+        0% {
+            transform: translateY(-1rem);
+            color: var(--color-bg-2);
+            opacity: 0;
+        }
+        
+        32% {
+            transform: translateY(0.2621rem);
+            opacity: 0.8;
+            color: var(--color-1);
+        }
+
+        100% {
+            color: var(--color-1);
+            transform: translateY(0rem);
         }
     }
 

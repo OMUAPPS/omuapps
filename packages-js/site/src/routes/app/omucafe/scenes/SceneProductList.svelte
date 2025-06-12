@@ -1,14 +1,10 @@
 <script lang="ts">
-    import { downloadFile } from '$lib/helper.js';
-    import { Identifier } from '@omujs/omu';
-    import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
-    import { Button, FileDrop } from '@omujs/ui';
+    import { Button } from '@omujs/ui';
     import { onMount } from 'svelte';
     import BackButton from '../components/BackButton.svelte';
     import ProductList from '../components/ProductList.svelte';
-    import { getAssetBuffer, uploadAsset, type Asset } from '../game/asset.js';
-    import { getContext } from '../game/game.js';
-    import { getGame, type GameConfig, type ResourceRegistry, type SceneContext, type States } from '../omucafe-app.js';
+    import { GameData } from '../game/gamedata.js';
+    import { getGame, type SceneContext } from '../omucafe-app.js';
 
     export let context: SceneContext;
 
@@ -25,72 +21,11 @@
     onMount(() => {
         if (!searchElement) return;
         searchElement.focus();
-    })
-
-    type GameData = {
-        version: number;
-        resources: ResourceRegistry;
-        gameConfig: GameConfig;
-        states: States;
-    };
+    });
 
     async function handleExport() {
-        const { gameConfigRegistry, resourcesRegistry, statesRegistry } = getGame();
-        const gameConfig = await gameConfigRegistry.get();
-        const resources = await resourcesRegistry.get();
-        const states = await statesRegistry.get();
-        const assets: Record<string, Asset> = {};
-        const data: GameData = {
-            version: 0,
-            resources: {
-                assets: assets,
-            },
-            gameConfig,
-            states: states,
-        }
-        const dataStr = JSON.stringify(data);
-        for (const [key, value] of Object.entries(resources.assets)) {
-            if (!dataStr.includes(key)) continue;
-            assets[key] = value;
-        }
-        const output = new ByteWriter();
-        output.writeString(JSON.stringify(data));
-        output.writeUint32(Object.keys(assets).length);
-        for (const [key, asset] of Object.entries(assets)) {
-            output.writeString(key);
-            const buffer = await getAssetBuffer(asset);
-            output.writeUint8Array(buffer);
-        }
-        downloadFile({
-            filename: 'omu-cafe-export.omucafe',
-            content: output.finish(),
-            type: 'application/octet-stream',
-        });
-    }
-
-    async function handleImport(files: FileList) {
-        if (files.length !== 1) {
-            throw new Error('FileDrop must receive only one file');
-        }
-        const file = files[0];
-        if (!file.name.endsWith('.omucafe')) {
-            throw new Error('Invalid file type. Please upload a .omucafe file.');
-        }
-        const reader = ByteReader.fromArrayBuffer(await file.arrayBuffer());
-        const dataStr = reader.readString();
-        const data: GameData = JSON.parse(dataStr);
-        const assetCount = reader.readUint32();
-        for (let i = 0; i < assetCount; i++) {
-            const key = Identifier.fromKey(reader.readString());
-            const buffer = reader.readUint8Array();
-            await uploadAsset(key, buffer);
-        }
-        const { gameConfigRegistry, resourcesRegistry, statesRegistry } = getGame();
-        await gameConfigRegistry.set(data.gameConfig);
-        await resourcesRegistry.set(data.resources);
-        await statesRegistry.set(data.states);
-        const kitchenContext = getContext();
-        kitchenContext.items = data.states.kitchen.items;
+        const gameData = await GameData.create();
+        gameData.download();
     }
 </script>
 
@@ -110,10 +45,6 @@
             export
             <i class="ti ti-file-arrow-right"></i>
         </Button>
-        <FileDrop handle={handleImport} accept=".omucafe">
-            import
-            <i class="ti ti-file-arrow-left"></i>
-        </FileDrop>
     </div>
     <ProductList type="product" search={$config.scenes.product_list.search}/>
     <ProductList type="item" search={$config.scenes.product_list.search}/>

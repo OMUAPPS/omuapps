@@ -39,6 +39,7 @@
             delete $pages[id];
             $currentPage = 'explore';
             $currentPage = id;
+            dashboard.currentApp = entry;
             return;
         }
         $currentPage = appPage.id;

@@ -1,7 +1,7 @@
 import { currentPage } from '$lib/main/settings.js';
 import PermissionRequestScreen from '$lib/screen/PermissionRequestScreen.svelte';
 import PluginRequestScreen from '$lib/screen/PluginRequestScreen.svelte';
-import { appWindow, tauriFs } from '$lib/tauri.js';
+import { appWindow, tauriFs, tauriPath } from '$lib/tauri.js';
 import { App, Omu } from '@omujs/omu';
 import type { DashboardHandler } from '@omujs/omu/extension/dashboard/dashboard.js';
 import {
@@ -10,6 +10,7 @@ import {
     type AppUpdateRequest,
     type DragDropReadRequestDashboard,
     type DragDropRequestDashboard,
+    type FileData,
     type PermissionRequestPacket,
     type PluginRequestPacket
 } from '@omujs/omu/extension/dashboard/packets.js';
@@ -90,16 +91,23 @@ export class Dashboard implements DashboardHandler {
 
     async handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<DragDropReadResponse> {
         const dragDrop = dragDrops[request.drag_id];
-        const buffers: Uint8Array[] = [];
-        for (const path of dragDrop.paths) {
-            buffers.push(await tauriFs.readFile(path));
+        if (!dragDrop) {
+            return new DragDropReadResponse({ drag_id: request.drag_id, request_id: request.request_id, files: [] }, {});
+        }
+        const files: Record<string, FileData> = {};
+        for (const [index, path] of dragDrop.paths.entries()) {
+            const name = await tauriPath.basename(path);
+            files[name] = {
+                file: dragDrop.files[index],
+                buffer: await tauriFs.readFile(path),
+            }
         }
         return new DragDropReadResponse(
             {
                 ...request,
                 files: dragDrop.files,
             },
-            buffers,
+            files,
         )
     }
 }

@@ -25,7 +25,7 @@
     };
 
     onMount(async () => {
-        const connected = await obs.isConnected();
+        const connected = obs.isConnected();
         if (!connected) {
             await once((resolve) => obs.on('connected', resolve));
         }

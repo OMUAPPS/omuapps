@@ -8,7 +8,7 @@
 </script>
 
 <AppPage />
-{#await promise then }
+{#await promise then}
     <App />
 {/await}
 

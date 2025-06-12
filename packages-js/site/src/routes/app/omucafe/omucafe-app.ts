@@ -5,6 +5,7 @@ import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { OBSPlugin, permissions } from '@omujs/obs';
 import { App, Omu } from '@omujs/omu';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
+import { DAShBOARD_DRAG_DROP_PERMISSION_ID } from '@omujs/omu/extension/dashboard/dashboard-extension.js';
 import { RegistryType, type Registry } from '@omujs/omu/extension/registry/index.js';
 import { SignalType, type Signal } from '@omujs/omu/extension/signal/signal.js';
 import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
@@ -349,6 +350,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
                 permissions.OBS_SOURCE_READ_PERMISSION_ID,
                 permissions.OBS_SCENE_READ_PERMISSION_ID,
                 permissions.OBS_SCENE_CREATE_PERMISSION_ID,
+                DAShBOARD_DRAG_DROP_PERMISSION_ID,
                 ASSET_UPLOAD_PERMISSION_ID,
                 CHAT_REACTION_PERMISSION_ID,
             );
