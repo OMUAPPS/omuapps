@@ -10,6 +10,7 @@ import { applyDragEffect, draw, getContext, glContext, matrices, mouse } from '.
 import { copy, uniqueId } from './helper.js';
 import type { Item } from './item.js';
 import type { KitchenContext } from './kitchen.js';
+import { Time } from './time.js';
 import { transformToMatrix, type Bounds, type Transform } from './transform.js';
 
 
@@ -102,10 +103,11 @@ export function removeItemState(itemState: ItemState) {
 }
 
 export function getParents(item: ItemState): ItemState[] {
+    const ctx = getContext();
     const parents: ItemState[] = [];
     let parent: string | undefined = item.parent;
     while (parent) {
-        const parentItem = getContext().items[parent];
+        const parentItem = ctx.items[parent];
         if (!parentItem) break;
         if (parents.includes(parentItem)) {
             throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${parent}`);
@@ -183,6 +185,7 @@ export function attachChildren(item: ItemState, ...children: ItemState[]) {
         item.children.push(child.id);
         child.parent = item.id;
     });
+    markItemStateChanged(item);
 }
 
 export function detachChildren(item: ItemState, ...children: ItemState[]) {
@@ -190,6 +193,7 @@ export function detachChildren(item: ItemState, ...children: ItemState[]) {
     children.forEach(child => {
         child.parent = undefined;
     });
+    markItemStateChanged(item);
 }
 
 const previousTransforms = new Map<string, Mat4>();
@@ -252,6 +256,7 @@ export type ItemRender = {
     bounds: AABB2,
     texture: GlTexture,
     changed: boolean,
+    time: number,
 }
 const itemRenderMap: Map<string, ItemRender> = new Map();
 let itemRenderBuffer: GlFramebuffer | null = null;
@@ -273,6 +278,7 @@ function createItemRenderTexture(itemState: ItemState): ItemRender {
         bounds,
         texture,
         changed: true,
+        time: Time.now(),
     };
     itemRenderMap.set(itemState.id, render);
     return render
@@ -295,6 +301,17 @@ function retrieveItemStateBounds(itemState: ItemState) {
 }
 
 export function markItemStateChanged(itemState: ItemState) {
+    const parents = getParents(itemState);
+    parents.forEach(parent => {
+        const existing = itemRenderMap.get(parent.id);
+        if (!existing) return;
+        existing.changed = true;
+    });
+    itemState.children.forEach(id => {
+        const existing = itemRenderMap.get(id);
+        if (!existing) return;
+        existing.changed = true;
+    });
     const existing = itemRenderMap.get(itemState.id);
     if (!existing) return;
     existing.changed = true;
@@ -305,7 +322,7 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
     const ctx = getContext();
     const buffer = getItemRenderBuffer();
     const render = itemRenderMap.get(itemState.id) ?? createItemRenderTexture(itemState);
-    // if (!render.changed) return render;
+    if (!render.changed) return render;
     const childRenders: Record<string, ItemRender> = {};
     let bufferBounds = AABB2.from(bounds);
     for (const id of itemState.children) {
@@ -315,6 +332,7 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
         const matrix = transformToMatrix(child.transform);
         bufferBounds = bufferBounds.union(matrix.transformAABB2(childRender.bounds));
     }
+    render.bounds = bufferBounds;
     const dimentions = bufferBounds.dimensions();
     render.texture.use(() => {
         render.texture.setParams({
@@ -353,11 +371,8 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
         glContext.stateManager.popViewport();
     });
     render.changed = false;
-    return {
-        bounds: bufferBounds,
-        texture: render.texture,
-        changed: false,
-    };
+    render.time = Time.now();
+    return render;
 }
 
 export async function renderItemState(itemState: ItemState, options: {
