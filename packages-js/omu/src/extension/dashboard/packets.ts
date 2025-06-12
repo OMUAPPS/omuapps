@@ -156,10 +156,15 @@ export type DragDropReadMeta = {
     files: readonly DragDropFile[];
 }
 
+export type FileData = {
+    file: DragDropFile;
+    buffer: Uint8Array;
+}
+
 export class DragDropReadResponse {
     constructor(
         public readonly meta: DragDropReadMeta,
-        public readonly files: readonly Uint8Array[],
+        public readonly files: Record<string, FileData>,
         public readonly version: number = 1,
     ) {}
 
@@ -167,10 +172,12 @@ export class DragDropReadResponse {
         const writer = new ByteWriter();
         writer.writeULEB128(data.version);
         writer.writeString(JSON.stringify(data.meta));
-        writer.writeULEB128(data.files.length);
+        writer.writeULEB128(Object.keys(data.files).length);
         
-        for (const file of data.files) {
-            writer.writeUint8Array(file);
+        for (const [key, { file, buffer }] of Object.entries(data.files)) {
+            writer.writeString(key);
+            writer.writeString(JSON.stringify(file));
+            writer.writeUint8Array(buffer);
         }
 
         return writer.finish();
@@ -182,9 +189,12 @@ export class DragDropReadResponse {
         const meta: DragDropReadMeta = JSON.parse(reader.readString());
         const length = reader.readULEB128();
 
-        const files: Uint8Array[] = [];
+        const files: Record<string, FileData> = {};
         for (let i = 0; i < length; i++) {
-            files.push(reader.readUint8Array());
+            const key = reader.readString();
+            const file: DragDropFile = JSON.parse(reader.readString());
+            const buffer = reader.readUint8Array();
+            files[key] = { file, buffer };
         }
 
         return new DragDropReadResponse(

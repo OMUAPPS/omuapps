@@ -202,10 +202,15 @@ class DragDropReadMeta(TypedDict):
     files: list[DragDropFile]
 
 
+class FileData(TypedDict):
+    file: DragDropFile
+    buffer: bytes
+
+
 @dataclass
 class DragDropReadResponse:
     meta: DragDropReadMeta
-    files: list[bytes]
+    files: dict[str, FileData]
     version: int = 1
 
     @staticmethod
@@ -215,8 +220,10 @@ class DragDropReadResponse:
         writer.write_string(json.dumps(item.meta))
         writer.write_uleb128(len(item.files))
 
-        for data in item.files:
-            writer.write_uint8_array(data)
+        for key, data in item.files.items():
+            writer.write_string(key)
+            writer.write_string(json.dumps(data["file"]))
+            writer.write_uint8_array(data["buffer"])
 
         return writer.finish()
 
@@ -227,9 +234,15 @@ class DragDropReadResponse:
             meta: DragDropReadMeta = json.loads(reader.read_string())
             length = reader.read_uleb128()
 
-            files: list[bytes] = []
+            files: dict[str, FileData] = {}
             for _ in range(length):
-                files.append(reader.read_uint8_array())
+                key = reader.read_string()
+                file: DragDropFile = json.loads(reader.read_string())
+                buffer = reader.read_uint8_array()
+                files[key] = {
+                    "file": file,
+                    "buffer": buffer,
+                }
 
         return DragDropReadResponse(
             version=version,
