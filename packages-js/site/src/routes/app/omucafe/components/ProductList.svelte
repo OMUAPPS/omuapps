@@ -50,12 +50,12 @@
                 $scene = { type: 'product_edit', id };
             }}>
                 <div class="item">
-                    <h2>{product.name}</h2>
                     {#if product.image}
                         <div class="image">
                             <AssetImage asset={product.image} />
                         </div>
                     {/if}
+                    <span>{product.name}</span>
                 </div>
             </button>
         {:else}
@@ -90,12 +90,12 @@
                 $scene = { type: 'item_edit', id };
             }}>
                 <div class="item">
-                    <h2>{item.name}</h2>
                     {#if item.image}
                         <div class="image">
                             <AssetImage asset={item.image} />
                         </div>
                     {/if}
+                    <span>{item.name}</span>
                 </div>
             </button>
         {:else}
@@ -130,7 +130,7 @@
                 $scene = { type: 'effect_edit', id };
             }}>
                 <div class="item">
-                    <h2>{effect.name}</h2>
+                    <span>{effect.name}</span>
                 </div>
             </button>
         {:else}
@@ -164,18 +164,57 @@
     }
 
     .list {
-        display: flex;
-        align-items: flex-start;
-        flex-direction: column;
+        display: grid;
+        // two rows, auto-fill columns
+        grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+        gap: 0.75rem;
         margin-bottom: 1rem;
 
         > button {
-            width: 100%;
-            text-align: left;
             background: none;
             border: none;
             padding: 0;
             margin: 0;
+
+            &:hover > .item {
+                transform: translateY(2px);
+                box-shadow: 0 0 0.5rem var(--color-bg-1);
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+                transition: all 0.02621s ease-in;
+            }
+        }
+    }
+
+    .item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        background: var(--color-bg-2);
+        color: var(--color-text);
+        outline: 1px solid var(--color-outline);
+        border-radius: 2px;
+        padding: 1rem 1rem;
+        height: 9rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+
+        > h2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        > .image {
+            width: 5rem;
+            height: 5rem;
+            display: flex;
+            align-content: center;
+            justify-content: center;
         }
     }
 
@@ -187,32 +226,5 @@
         width: 20rem;
         border-radius: 4px;
         filter: drop-shadow(0 0 0.5rem var(--color-outline));
-    }
-
-    .item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        background: var(--color-bg-2);
-        color: var(--color-text);
-        outline: 1px solid var(--color-outline);
-        border-radius: 2px;
-        padding: 0.6rem 1rem;
-        margin-bottom: 0.75rem;
-
-        > .image {
-            width: 2rem;
-            height: 2rem;
-        }
-
-        &:hover {
-            transform: translateX(2px);
-            box-shadow: 0 0 0.5rem var(--color-bg-1);
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
-            font-weight: 600;
-            transition: all 0.02621s ease-in;
-        }
     }
 </style>
