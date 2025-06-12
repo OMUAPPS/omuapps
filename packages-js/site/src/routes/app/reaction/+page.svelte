@@ -106,6 +106,7 @@
                     max={2.5}
                     step={0.05}
                     type="percent"
+                    clamp={false}
                 >
                     大きさ
                 </Slider>
