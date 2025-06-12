@@ -29,7 +29,7 @@ class PacketMapper(Serializable[Packet, PacketData]):
         try:
             data = packet_type.serializer.deserialize(item.data)
         except Exception as e:
-            raise InvalidPacket("Failed to deserialize packet data") from e
+            raise InvalidPacket(f"Failed to deserialize {packet_type.id} packet") from e
         return Packet(
             type=packet_type,
             data=data,
