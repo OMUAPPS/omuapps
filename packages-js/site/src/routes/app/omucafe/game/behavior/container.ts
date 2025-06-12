@@ -5,7 +5,7 @@ import type { Mat4 } from '$lib/math/mat4.js';
 import { getTextureByAsset, type Asset } from '../asset.js';
 import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
 import { draw, glContext, matrices } from '../game.js';
-import { attachChildren, detachChildren, getItemStateTransform, type ItemRender, type ItemState } from '../item-state.js';
+import { attachChildren, detachChildren, getItemStateTransform, getRenderBounds, type ItemRender, type ItemState } from '../item-state.js';
 import type { KitchenContext } from '../kitchen.js';
 import { transformToMatrix, type Transform } from '../transform.js';
 
@@ -23,7 +23,8 @@ export type Container = {
     overlay?: {
         asset: Asset,
         transform: Transform,
-    }
+    },
+    order?: 'up' | 'down',
 }
 
 export function createContainer(options?: Container): Container {
@@ -92,9 +93,9 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 .map((id): ItemState | undefined => context.items[id])
                 .filter((entry): entry is ItemState => !!entry)
                 .sort((a, b) => {
-                    const maxA = a.bounds.max;
-                    const maxB = b.bounds.max;
-                    return (a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y);
+                    const maxA = getRenderBounds(a).max;
+                    const maxB = getRenderBounds(b).max;
+                    return ((a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y)) * (behavior.order === 'down' ? -1 : 1);
                 })) {
                 const { bounds, texture } = childRenders[child.id];
                 const transform = transformToMatrix(child.transform);
@@ -219,5 +220,31 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             up: {x: newMatrix.m10, y: newMatrix.m11},
             offset: {x: newMatrix.m30, y: newMatrix.m31},
         };
+    }
+
+    handleChildrenOrder(
+        context: KitchenContext,
+        action: BehaviorAction<'container'>,
+        args: { timing: 'hover'; children: ItemState[]; },
+    ) {
+        const { behavior } = action;
+        const { timing, children } = args;
+        if (timing !== 'hover') return;
+        args.children = children.toSorted((a, b) => {
+            const maxA = getRenderBounds(a).max;
+            const maxB = getRenderBounds(b).max;
+            return ((b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y)) * (behavior.order === 'down' ? -1 : 1);
+        })
+    }
+
+    handleChildrenHovered(
+        context: KitchenContext,
+        action: BehaviorAction<'container'>,
+        args: { target: ItemState | null }
+    ) {
+        if (context.held) {
+            if (args.target?.behaviors.container) return;
+            args.target = action.item;
+        }
     }
 };

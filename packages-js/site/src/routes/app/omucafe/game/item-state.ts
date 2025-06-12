@@ -267,7 +267,6 @@ function createItemRenderTexture(itemState: ItemState): ItemRender {
     if (itemRenderMap.has(itemState.id)) {
         throw new Error(`ItemRender ${itemState.item.name}(${itemState.id}) already existing`);
     }
-    // const bounds = AABB2.from(itemState.bounds);
     const bounds = retrieveItemStateBounds(itemState);
     const texture = glContext.createTexture();
     const render: ItemRender = {
@@ -277,6 +276,11 @@ function createItemRenderTexture(itemState: ItemState): ItemRender {
     };
     itemRenderMap.set(itemState.id, render);
     return render
+}
+
+export function getRenderBounds(itemState: ItemState): AABB2 {
+    const matrix = transformToMatrix(itemState.transform);
+    return matrix.transformAABB2(itemState.bounds);
 }
 
 function retrieveItemStateBounds(itemState: ItemState) {
@@ -540,28 +544,55 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
         ctx.hovering = null;
         return;
     }
-    let hit = false;
-    const itemsInOrder = getAllItemStates(layers);
     const held = ctx.held;
     const heldItem = held ? ctx.items[held] : null;
     const ignoreItems = heldItem ? [...getParents(heldItem), ...retrieveAllChildItems(heldItem)].map(item => item.id) : [];
-    for (const item of itemsInOrder) {
-        if (item.id === ctx.held) continue;
-        if (ignoreItems.includes(item.id)) {
-            continue;
+    const items = ctx.items;
+    function sort(items: ItemState[]) {
+        return items.sort((a: ItemState, b: ItemState) => {
+            const maxA = a.bounds.max;
+            const maxB = b.bounds.max;
+            return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
+        }).sort(({layer}, {layer: layerB}) => {
+            const indexA = ITEM_LAYERS_LIST.indexOf(layer);
+            const indexB = ITEM_LAYERS_LIST.indexOf(layerB);
+            return indexA - indexB;
+        });
+    }
+    const args = { target: null as ItemState | null };
+    async function check(item: ItemState) {
+        if (item.id === ctx.held) return false;
+        if (ignoreItems.includes(item.id)) return false;
+        if (!layers.includes(item.layer)) return false;
+        const { children } = await invokeBehaviors(ctx, item, (behavior) => behavior.handleChildrenOrder, {
+            timing: 'hover',
+            children: sort(item.children.map(id => items[id])),
+        });
+        let childHovered = false;
+        for (const child of children) {
+            if (await check(child)) {
+                await invokeBehaviors(ctx, item, (behavior) => behavior.handleChildrenHovered, args);
+                childHovered = !!args.target;
+            }
+            if (childHovered) break
         }
+        if (childHovered) return true;
         const hovered = await isItemHovering(item);
         if (hovered) {
-            if (ctx.hovering === item.id) {
-                hit = true;
-                break;
-            }
-            ctx.hovering = item.id;
-            hit = true;
+            args.target = item;
+        }
+        return hovered;
+    }
+    for (const item of sort(Object.values(items))) {
+        if (item.parent) continue;
+        if (!layers.includes(item.layer)) continue;
+        if (await check(item)) {
             break;
         }
     }
-    if (!hit && ctx.hovering) {
+    if (args.target) {
+        ctx.hovering = args.target.id;
+    } else if (ctx.hovering) {
         ctx.hovering = null;
     }
 }

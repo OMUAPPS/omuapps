@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, FileDrop } from '@omujs/ui';
+    import { Button, Combobox, FileDrop } from '@omujs/ui';
     import { uploadAssetByFile } from '../../game/asset.js';
     import type { Container } from '../../game/behavior/container.js';
     import { createTransform } from '../../game/transform.js';
@@ -108,6 +108,20 @@
     {#if behavior.overlay}
         <TransformEdit bind:transform={behavior.overlay.transform} />
     {/if}
+    <Combobox options={{
+        none: {
+            value: null,
+            label: '未設定',
+        },
+        up: {
+            value: 'up',
+            label: '上に重ねる',
+        },
+        down: {
+            value: 'down',
+            label: '下に重ねる',
+        },
+    }} bind:value={behavior.order} />
 </div>
 
 <style lang="scss">

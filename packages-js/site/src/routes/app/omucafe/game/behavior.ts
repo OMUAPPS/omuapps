@@ -41,6 +41,8 @@ export type BehaviorHandler<T extends keyof Behaviors> = Partial<{
     handleClick: BehaviorFunction<T, { x: number, y: number }>,
     canItemBeHeld: BehaviorFunction<T, { canBeHeld: boolean }>,
     renderItemHoverTooltip: BehaviorFunction<T, { matrices: Matrices }>,
+    handleChildrenOrder: BehaviorFunction<T, { timing: 'hover', children: ItemState[] }>,
+    handleChildrenHovered: BehaviorFunction<T, { target: ItemState | null }>,
 }>;
 
 export type DefaultBehaviors<T extends keyof Behaviors = keyof Behaviors> = {
