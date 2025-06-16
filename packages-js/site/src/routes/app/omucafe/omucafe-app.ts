@@ -113,6 +113,9 @@ export type Scene = {
 } | {
     type: 'effect_edit',
     id: string,
+} | {
+    type: 'script_edit',
+    id: string,
 };
 
 const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {

@@ -5,9 +5,10 @@
     import { createEffect } from '../game/effect.js';
     import { uniqueId } from '../game/helper.js';
     import { createItem } from '../game/item.js';
+    import { createScript } from '../game/script.js';
     import { getGame } from '../omucafe-app.js';
 
-    export let type: 'product' | 'item' | 'effect' | undefined = undefined;
+    export let type: 'product' | 'item' | 'effect' | 'script' | undefined = undefined;
     export let search: string = '';
 
     const { gameConfig: config, scene } = getGame();
@@ -130,11 +131,48 @@
                 $scene = { type: 'effect_edit', id };
             }}>
                 <div class="item">
+                    <div class="image">
+                        <i class="ti ti-wand"></i>
+                    </div>
                     <span>{effect.name}</span>
                 </div>
             </button>
         {:else}
             {#if search && Object.keys($config.effects).length > 0}
+                <small>エフェクトが見つかりません</small>
+            {:else}
+                <small>エフェクトがありません</small>
+            {/if}
+        {/each}
+    </div>
+{:else if type === 'script'}
+    <div class="category">
+        <span>
+            <i class="ti ti-sparkles"></i>
+            エフェクト
+        </span>
+        <Button primary onclick={() => {
+            const script = createScript({});
+            $config.scripts[script.id] = script;
+        }}>
+            スクリプトを追加
+            <i class="ti ti-plus"></i>
+        </Button>
+    </div>
+    <div class="list">
+        {#each Object.entries($config.scripts).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
+            <button on:click={() => {
+                $scene = { type: 'script_edit', id };
+            }}>
+                <div class="item">
+                    <div class="image">
+                        <i class="ti ti-code"></i>
+                    </div>
+                    <span>{effect.name}</span>
+                </div>
+            </button>
+        {:else}
+            {#if search && Object.keys($config.scripts).length > 0}
                 <small>エフェクトが見つかりません</small>
             {:else}
                 <small>エフェクトがありません</small>
@@ -203,7 +241,7 @@
 
         > h2 {
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;

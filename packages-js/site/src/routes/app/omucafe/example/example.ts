@@ -1,7 +1,7 @@
 import type { Asset } from '../game/asset.js';
 import { createContainer } from '../game/behavior/container.js';
 import { createHoldable } from '../game/behavior/holdable.js';
-import { builder } from '../game/script.js';
+import { builder, createScript } from '../game/script.js';
 import { DEFAULT_GAME_CONFIG, type GameConfig } from '../omucafe-app.js';
 import bubble from './bubble.png';
 import fries from './fries.png';
@@ -136,39 +136,39 @@ export const EXAMPLE: GameConfig = {
                 particle: {
                     type: 'particle',
                     asset: asset(bubble),
-                }
-            }
+                },
+            },
         },
     },
     scripts: {
-        fryer_drop: {
+        fryer_drop: createScript({
             name: 'Fryer Drop',
-            expression: e.of('fryer_drop', [
+            expression: e.of([
                 // effect = create_effect(held, 'fry')
                 c.assign(
-                    v.string('effect'),
+                    v.variable('effect'),
                     c.invoke(
                         v.variable('create_effect'),
                         v.variable('held'),
-                        v.string('fry')
-                    )
+                        v.string('fry'),
+                    ),
                 ),
             ]),
-        },
-        fryer_click: {
+        }),
+        fryer_click: createScript({
             name: 'Fryer Click',
-            expression: e.of('fryer_click', [
+            expression: e.of([
                 // remove_effect(held, 'fry')
                 c.invoke(
                     v.variable('remove_effect'),
                     v.variable('child'),
-                    v.string('fry')
+                    v.string('fry'),
                 ),
             ]),
-        },
-        bell_click: {
+        }),
+        bell_click: createScript({
             name: 'Bell Click',
-            expression: e.of('bell_click', [
+            expression: e.of([
                 c.invoke(
                     v.variable('log'),
                     v.string('Bell Clicked!'),
@@ -178,6 +178,6 @@ export const EXAMPLE: GameConfig = {
                     v.string('counter'),
                 ),
             ]),
-        }
+        }),
     }
 };

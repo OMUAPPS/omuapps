@@ -16,8 +16,9 @@
     import ScenePhotoMode from './scenes/ScenePhotoMode.svelte';
     import SceneProductEdit from './scenes/SceneProductEdit.svelte';
     import SceneProductList from './scenes/SceneProductList.svelte';
+    import SceneScriptEdit from './scenes/SceneScriptEdit.svelte';
 
-    const { omu, scene, config, gameConfig, states, paintEvents } = getGame();
+    const { omu, scene, config, gameConfig, orders, states, paintEvents } = getGame();
 
     const SCENES: Record<Scene['type'], TypedComponent<{
         context: SceneContext;
@@ -31,6 +32,7 @@
         'product_edit': SceneProductEdit,
         'item_edit': SceneItemEdit,
         'effect_edit': SceneEffectEdit,
+        'script_edit': SceneScriptEdit,
     }
     let lastScene: {type: string, comp: TypedComponent<{
         context: SceneContext;
@@ -154,6 +156,7 @@
         $gameConfig = DEFAULT_GAME_CONFIG;
         $states = DEFAULT_STATES;
         $paintEvents = PaintBuffer.EMPTY;
+        orders.clear();
         markChanged();
     }}>
         reset

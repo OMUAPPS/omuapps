@@ -49,6 +49,7 @@
     <ProductList type="product" search={$config.scenes.product_list.search}/>
     <ProductList type="item" search={$config.scenes.product_list.search}/>
     <ProductList type="effect" search={$config.scenes.product_list.search}/>
+    <ProductList type="script" search={$config.scenes.product_list.search}/>
 </main>
 <BackButton active={context.active} />
 

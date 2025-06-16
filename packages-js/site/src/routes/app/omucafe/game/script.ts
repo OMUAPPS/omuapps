@@ -1,43 +1,47 @@
+import { uniqueId } from './helper.js';
+
 export type VString = {
     type: 'string',
     value: string,
 }
+
 export type VTimer = {
     type: 'timer',
     value: Timer,
 };
-type VNumber = {
+
+export type VNumber = {
     type: 'number';
     value: number;
 };
 
-type VObject = {
+export type VObject = {
     type: 'object';
     value: Record<string, Value>;
 };
 
-type VFunction = {
+export type VFunction = {
     type: 'function';
     value: TypedFunction;
 };
 
-type VAttribute = {
+export type VAttribute = {
     type: 'attribute';
     value: Value;
     name: Value;
 };
 
-type VVariable = {
+export type VVariable = {
     type: 'variable';
     name: string;
 };
 
-type VExpression = {
+export type VExpression = {
     type: 'expression';
     value: Expression;
 };
 
-type VVoid = {
+export type VVoid = {
     type: 'void';
 };
 
@@ -80,6 +84,11 @@ export const value = {
         type: 'timer',
         value,
     }),
+    invoke: (func: Value, args: Value[]): Value => ({
+        type: 'invoke',
+        function: func,
+        args,
+    })
 }
 
 
@@ -148,13 +157,11 @@ export const command = {
 }
 
 export type Expression = {
-    name: string,
     commands: Command[],
 }
 
 export const expr = {
-    of: (name: string, commands: Command[]): Expression => ({
-        name,
+    of: (commands: Command[]): Expression => ({
         commands,
     }),
 }
@@ -244,9 +251,9 @@ export function executeExpression(ctx: ScriptContext, expression: Expression): V
                 return evaluateValue(ctx, command.value);
             }
             case 'assign': {
-                const name = evaluateValue(ctx, command.variable);
-                assertValue(ctx, name, 'string')
-                ctx.variables[name.value] = evaluateValue(ctx, command.value);
+                const variable = evaluateValue(ctx, command.variable);
+                assertValue(ctx, variable, 'variable')
+                ctx.variables[variable.name] = evaluateValue(ctx, command.value);
                 break;
             }
             case 'assign-attribute': {
@@ -298,8 +305,18 @@ export const builder = {
 }
 
 export type Script = {
+    id: string,
     name: string,
     expression: Expression,
+}
+
+export function createScript(options: Partial<Script>): Script {
+    const { id, name, expression } = options;
+    return {
+        id: id ?? uniqueId(),
+        name: name ?? 'New Script',
+        expression: expression ?? expr.of([]),
+    }
 }
 
 export class Globals {
