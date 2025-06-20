@@ -23,6 +23,7 @@
         max-width: 100%;
         max-height: 100%;
         animation: fadeIn 0.1621s forwards;
+        object-fit: contain;
     }
 
     @keyframes fadeIn {
