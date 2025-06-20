@@ -3,12 +3,14 @@
     import { onMount } from 'svelte';
     import { fetchImage, getAsset, uploadAssetByFile } from '../game/asset.js';
     import type { DefaultBehaviors } from '../game/behavior.js';
+    import { createAction } from '../game/behavior/action.js';
     import { createContainer } from '../game/behavior/container.js';
     import { createHoldable } from '../game/behavior/holdable.js';
     import { createSpawner } from '../game/behavior/spawner.js';
     import type { Item } from '../game/item.js';
     import { getGame } from '../omucafe-app.js';
     import AssetImage from './AssetImage.svelte';
+    import ActionEdit from './behavior/ActionEdit.svelte';
     import ContainerEdit from './behavior/ContainerEdit.svelte';
     import HoldableEdit from './behavior/HoldableEdit.svelte';
     import SpawnerEdit from './behavior/SpawnerEdit.svelte';
@@ -22,17 +24,17 @@
     const { scene, gameConfig } = getGame();
 
     const BEHAVIROS = {
-        container: {
-            key: 'container',
-            name: '容器',
-            default: createContainer(),
-            edit: ContainerEdit,
-        },
         holdable: {
             key: 'holdable',
             name: '持てる',
             default: createHoldable(),
             edit: HoldableEdit,
+        },
+        container: {
+            key: 'container',
+            name: '容器',
+            default: createContainer(),
+            edit: ContainerEdit,
         },
         spawner: {
             key: 'spawner',
@@ -41,6 +43,14 @@
                 spawnItemId: item.id,
             }),
             edit: SpawnerEdit,
+        },
+        action: {
+            key: 'action',
+            name: '特殊挙動',
+            default: createAction({
+                on: {},
+            }),
+            edit: ActionEdit,
         },
     } satisfies DefaultBehaviors;
 

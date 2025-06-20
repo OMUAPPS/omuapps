@@ -479,7 +479,6 @@ export class GlTexture {
             },
         };
     }
-        
 
     public setImage(image: TexImageSource, params: {
         internalFormat: ColorFormat;
@@ -555,6 +554,10 @@ export class GlTexture {
             this.width = width;
             this.height = height;
         }
+    }
+
+    public delete() {
+        this.gl.deleteTexture(this.texture);
     }
 }
 

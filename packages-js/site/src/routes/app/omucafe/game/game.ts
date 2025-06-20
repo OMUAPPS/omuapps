@@ -20,18 +20,6 @@ export let changed = false;
 export let glContext: GlContext;
 export let matrices: Matrices;
 export let canvas: HTMLCanvasElement;
-export const mouse = {
-    over: false,
-    ui: false,
-    client: Vec2.ZERO,
-    position: Vec2.ZERO,
-    delta: Vec2.ZERO,
-    gl: Vec2.ZERO,
-    deltaGl: Vec2.ZERO,
-    down: false,
-    downTime: 0,
-    upTime: 0,
-}
 export let scaleFactor = 1;
 export let draw: Draw;
 let frameBuffer: GlFramebuffer;
@@ -72,6 +60,7 @@ async function processClick(hoveringItem: ItemState) {
     })).canBeHeld;
     if (!canBeHeld) return;
     context.held = hoveringItem.id;
+    context.hovering = null;
 }
 
 async function handleMouseDown() {
@@ -139,75 +128,7 @@ export function acquireRenderLock() {
     }
 }
 
-const inputQueue: (() => Promise<void>)[] = [];
-
-function registerMouseEvents() {
-    window.addEventListener('mousemove', async (e) => {
-        inputQueue.push(async () => {
-            mouse.client = new Vec2(e.clientX, e.clientY);
-            mouse.over = true;
-            markChanged();
-        });
-    });
-    window.addEventListener('mousedown', async () => {
-        inputQueue.push(async () => {
-            mouse.down = true;
-            mouse.downTime = Time.now();
-            handleMouseDown();
-            markChanged();
-        });
-    });
-    window.addEventListener('mouseup', async () => {
-        inputQueue.push(async () => {
-            mouse.down = false;
-            mouse.upTime = Time.now();
-            handleMouseUp();
-            markChanged();
-        });
-    });
-    window.addEventListener('touchstart', async (e) => {
-        e.preventDefault();
-        inputQueue.push(async () => {
-            mouse.down = true;
-            mouse.downTime = Time.now();
-            mouse.client = new Vec2(e.touches[0].clientX, e.touches[0].clientY);
-            mouse.over = true;
-            markChanged();
-            handleMouseDown();
-        });
-    });
-    window.addEventListener('touchend', async () => {
-        inputQueue.push(async () => {
-            mouse.down = false;
-            mouse.upTime = Time.now();
-            handleMouseUp();
-            markChanged();
-        });
-    });
-    window.addEventListener('touchmove', async (e) => {
-        e.preventDefault();
-        inputQueue.push(async () => {
-            mouse.client = new Vec2(e.touches[0].clientX, e.touches[0].clientY);
-            mouse.over = true;
-            markChanged();
-        });
-    });
-    window.addEventListener('mouseout', async () => {
-        inputQueue.push(async () => {
-            mouse.over = false;
-        });
-    });
-    window.addEventListener('mouseleave', async () => {
-        inputQueue.push(async () => {
-            mouse.over = false;
-        });
-    });
-    window.addEventListener('mouseenter', async () => {
-        inputQueue.push(async () => {
-            mouse.over = true;
-        });
-    });
-}
+export const mouse: Mouse = Mouse.create();
 
 export let paint: Paint;
 export let resources: Resources;
@@ -215,7 +136,6 @@ export let resources: Resources;
 export async function init(ctx: GlContext) {
     const { paintSignal, paintEvents, gameConfig } = getGame();
     glContext = ctx;
-    registerMouseEvents();
     matrices = new Matrices();
     matrices.width = ctx.gl.canvas.width;
     matrices.height = ctx.gl.canvas.height;
@@ -271,7 +191,12 @@ export async function init(ctx: GlContext) {
                 max: { x: counterTex.width, y: counterTex.height },
             },
             behaviors: {
-                container: existCounter?.behaviors.container ?? createContainer(),
+                container: createContainer({bounded: {
+                    left: true,
+                    right: true,
+                    bottom: true,
+                    top: false,
+                }}),
             },
             transform: {
                 right: Vec2.RIGHT,
@@ -379,6 +304,14 @@ async function updateMouseClient() {
     if (side !== 'client') {
         throw new Error('Mouse is not in client side');
     }
+    for (const event of mouse.iterate()) {
+        if (event.type === 'down') {
+            await handleMouseDown();
+        }
+        else if (event.type === 'up') {
+            await handleMouseUp();
+        }
+    }
     const { gl } = glContext;
     const glMouse = mouse.client.remap(
         Vec2.ZERO,
@@ -391,11 +324,6 @@ async function updateMouseClient() {
     const position = matrices.unprojectPoint(mouse.gl);
     mouse.delta = position.sub(mouse.position);
     mouse.position = position;
-
-    for (const event of inputQueue) {
-        await event();
-    }
-    inputQueue.length = 0;
 }
 
 function updateMouseAsset() {
@@ -623,6 +551,7 @@ export async function renderBackgroundSide() {
 import dummy_back from '../images/dummy_back.png';
 import dummy_front from '../images/dummy_front.png';
 import { getGame, type User } from '../omucafe-app.js';
+import { Mouse } from './mouse.js';
 import { isNounLike, type OrderMessage } from './order.js';
 import { Paint, PAINT_EVENT_TYPE, type PaintEvent } from './paint.js';
 import { getResources, type Resources } from './resources.js';
@@ -671,11 +600,11 @@ async function renderCustomersClient(position: Vec2) {
 
 async function renderMessage(message: OrderMessage, anchor: Vec2, maxWidth: number) {
     const { tokens, timestamp } = message;
-    const elapsed = (Time.now() - timestamp) / 100;
+    const elapsed = (Time.now() - timestamp) / 200;
     const t = Math.cos(elapsed * Math.sqrt(elapsed)) / (10 * elapsed * elapsed + 1);
     anchor = anchor.add({
         x: maxWidth / 1.2 / 2,
-        y: 100 + 60 * (t),
+        y: 100 + 80 * (t),
     });
     const height = 60;
     draw.fontFamily = 'Noto Sans JP';

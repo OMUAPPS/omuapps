@@ -1,6 +1,8 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
-    import { init, mouse, render as renderGame } from '../game/game.js';
+    import { Button } from '@omujs/ui';
+    import { getContext, init, mouse, render as renderGame } from '../game/game.js';
+    import { createItemState } from '../game/item-state.js';
     import { getGame } from '../omucafe-app.js';
     import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
 
@@ -30,6 +32,16 @@
                 </button>
             </h2>
             {#if showDebug}
+                {#each Object.entries($gameConfig.items) as [key, item] (key)}
+                    <Button onclick={() => {
+                        const ctx = getContext();
+                        createItemState(ctx, {
+                            item,
+                        })
+                    }}>
+                        {item.name}
+                    </Button>
+                {/each}
                 states: {JSON.stringify($states).length}
                 <JsonDebugInfo value={$states} />
                 <h2>
@@ -75,6 +87,7 @@
         z-index: 1;
         background: var(--color-bg-2);
         max-height: 40rem;
+        cursor: initial;
 
         &.show-debug {
             height: 70%;

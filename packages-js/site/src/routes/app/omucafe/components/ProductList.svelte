@@ -253,6 +253,8 @@
             display: flex;
             align-content: center;
             justify-content: center;
+            font-size: 3.5rem;
+            color: var(--color-outline);
         }
     }
 

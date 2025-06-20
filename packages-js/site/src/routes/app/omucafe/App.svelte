@@ -11,6 +11,7 @@
     import SceneEffectEdit from './scenes/SceneEffectEdit.svelte';
     import SceneInstall from './scenes/SceneInstall.svelte';
     import SceneItemEdit from './scenes/SceneItemEdit.svelte';
+    import SceneKitchenEdit from './scenes/SceneKitchenEdit.svelte';
     import SceneLoading from './scenes/SceneLoading.svelte';
     import SceneMainMenu from './scenes/SceneMainMenu.svelte';
     import ScenePhotoMode from './scenes/ScenePhotoMode.svelte';
@@ -23,16 +24,17 @@
     const SCENES: Record<Scene['type'], TypedComponent<{
         context: SceneContext;
     }>> = {
-        'loading': SceneLoading,
-        'install': SceneInstall,
-        'main_menu': SceneMainMenu,
-        'photo_mode': ScenePhotoMode,
-        'cooking': SceneCooking,
-        'product_list': SceneProductList,
-        'product_edit': SceneProductEdit,
-        'item_edit': SceneItemEdit,
-        'effect_edit': SceneEffectEdit,
-        'script_edit': SceneScriptEdit,
+        loading: SceneLoading,
+        install: SceneInstall,
+        main_menu: SceneMainMenu,
+        photo_mode: ScenePhotoMode,
+        cooking: SceneCooking,
+        kitchen_edit: SceneKitchenEdit,
+        product_list: SceneProductList,
+        product_edit: SceneProductEdit,
+        item_edit: SceneItemEdit,
+        effect_edit: SceneEffectEdit,
+        script_edit: SceneScriptEdit,
     }
     let lastScene: {type: string, comp: TypedComponent<{
         context: SceneContext;

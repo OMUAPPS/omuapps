@@ -19,6 +19,7 @@ export const ITEM_LAYERS = {
     KITCHEN_ITEMS: 'kitchen_items',
     BELL: 'bell',
     COUNTER: 'counter',
+    EDIT_PREVIEW: 'edit_preview',
 } as const;
 export type ItemLayer = typeof ITEM_LAYERS[keyof typeof ITEM_LAYERS];
 export const ITEM_LAYERS_LIST: ItemLayer[] = Object.values(ITEM_LAYERS);
@@ -33,6 +34,7 @@ export type ItemState = {
     children: string[],
     parent?: string,
     bounds: Bounds,
+    update: number,
 };
 
 export function createItemState(context: KitchenContext, options: {
@@ -56,6 +58,7 @@ export function createItemState(context: KitchenContext, options: {
         behaviors: behaviors ?? copy(item.behaviors),
         effects: effects ?? {},
         bounds: bounds ?? copy(item.bounds),
+        update: 0,
     } satisfies ItemState;
     items[itemState.id] = itemState;
     return itemState;
@@ -100,6 +103,10 @@ export function removeItemState(itemState: ItemState) {
         removeItemState(child);
     }
     delete items[itemState.id];
+    const existRender = itemRenderMap.get(itemState.id);
+    if (!existRender) return;
+    existRender.texture.delete();
+    itemRenderMap.delete(itemState.id);
 }
 
 export function getParents(item: ItemState): ItemState[] {
@@ -133,6 +140,9 @@ export function retrieveAllChildItems(item: ItemState, children?: ItemState[]): 
 }
 
 export function attachChild(item: ItemState, child: ItemState) {
+    if (item.id === child.id) {
+        throw new Error('Cannot attach an item to itself');
+    }
     if (child.parent) {
         detachChildren(getContext().items[child.parent], child);
     }
@@ -255,7 +265,7 @@ export function getItemStateTransform(item: ItemState, options: {
 export type ItemRender = {
     bounds: AABB2,
     texture: GlTexture,
-    changed: boolean,
+    update: number,
     time: number,
 }
 const itemRenderMap: Map<string, ItemRender> = new Map();
@@ -277,7 +287,7 @@ function createItemRenderTexture(itemState: ItemState): ItemRender {
     const render: ItemRender = {
         bounds,
         texture,
-        changed: true,
+        update: -1,
         time: Time.now(),
     };
     itemRenderMap.set(itemState.id, render);
@@ -301,20 +311,15 @@ function retrieveItemStateBounds(itemState: ItemState) {
 }
 
 export function markItemStateChanged(itemState: ItemState) {
+    const { items } = getContext();
     const parents = getParents(itemState);
     parents.forEach(parent => {
-        const existing = itemRenderMap.get(parent.id);
-        if (!existing) return;
-        existing.changed = true;
+        parent.update ++;
     });
     itemState.children.forEach(id => {
-        const existing = itemRenderMap.get(id);
-        if (!existing) return;
-        existing.changed = true;
+        items[id].update ++;
     });
-    const existing = itemRenderMap.get(itemState.id);
-    if (!existing) return;
-    existing.changed = true;
+    itemState.update ++;
 }
 
 export async function getItemStateRender(itemState: ItemState): Promise<ItemRender> {
@@ -322,7 +327,7 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
     const ctx = getContext();
     const buffer = getItemRenderBuffer();
     const render = itemRenderMap.get(itemState.id) ?? createItemRenderTexture(itemState);
-    if (!render.changed) return render;
+    if (render.update === itemState.update) return render;
     const childRenders: Record<string, ItemRender> = {};
     let bufferBounds = AABB2.from(bounds);
     for (const id of itemState.children) {
@@ -370,7 +375,7 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
         matrices.pop();
         glContext.stateManager.popViewport();
     });
-    render.changed = false;
+    render.update = itemState.update;
     render.time = Time.now();
     return render;
 }

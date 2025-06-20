@@ -24,7 +24,7 @@ import type { Kitchen, MouseState } from './game/kitchen.js';
 import { processMessage, type Order } from './game/order.js';
 import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
 import type { Product } from './game/product.js';
-import { assertValue, builder, Globals, ScriptError, type Script, type ScriptContext, type Value } from './game/script.js';
+import { assertValue, builder, Globals, type Script, type ScriptContext, type Value } from './game/script.js';
 import { Time } from './game/time.js';
 import { transformToMatrix } from './game/transform.js';
 import { getWorker, type GameCommands } from './worker/game-worker.js';
@@ -101,6 +101,8 @@ export type Scene = {
     items: string[],
 } | {
     type: 'cooking',
+} | {
+    type: 'kitchen_edit',
 } | {
     type: 'product_list',
 } | {
@@ -198,17 +200,58 @@ export function isInstalled(): boolean {
     return state.overlay && state.background;
 }
 
+class Debug {
+    private constructor(
+        public readonly count: Writable<number>,
+        public readonly logs: Value[],
+    ) {}
+
+    public static init() {
+        return new Debug(
+            writable(0),
+            [],
+        )
+    }
+
+    private update() {
+        this.count.update((val) => val + 1);
+    }
+
+    public log(message: Value) {
+        this.logs.push(message);
+        this.update();
+    }
+}
+
 const functions = {
     log(ctx: ScriptContext, args: Value[]): Value {
-        if (args.length !== 1) throw new ScriptError(`Expected 1 arguments but got ${args.length}`, { callstack: ctx.callstack, index: ctx.index });
         const [message] = args;
-        assertValue(ctx, message, 'string');
-        console.log('[log]', message.value);
+        console.log('[log]', message);
+        game?.debug.log(message);
         const { v } = builder;
         return v.void();
     },
+    get_items(ctx: ScriptContext, args: Value[]): Value {
+        const kitchen = getContext();        
+        const { v } = builder;
+        return v.array(...Object.keys(kitchen.items).map(v.string));
+    },
+    get_children(ctx: ScriptContext, args: Value[]): Value {
+        const [itemId] = args;
+        assertValue(ctx, itemId, 'string');
+        const { v } = builder;
+        const item = getContext().items[itemId.value];
+        return v.array(...item.children.map(v.string));
+    },
+    remove_item(ctx: ScriptContext, args: Value[]): Value {
+        const { v } = builder;
+        const [itemId] = args;
+        assertValue(ctx, itemId, 'string');
+        const item = getContext().items[itemId.value];
+        removeItemState(item);
+        return v.void();
+    },
     create_effect(ctx: ScriptContext, args: Value[]): Value {
-        if (args.length !== 2) throw new ScriptError(`Expected 2 arguments but got ${args.length}`, { callstack: ctx.callstack, index: ctx.index });
         const [itemId, effectId] = args;
         assertValue(ctx, itemId, 'string');
         assertValue(ctx, effectId, 'string');
@@ -220,7 +263,6 @@ const functions = {
         return v.void();
     },
     remove_effect(ctx: ScriptContext, args: Value[]): Value {
-        if (args.length !== 2) throw new ScriptError(`Expected 2 arguments but got ${args.length}`, { callstack: ctx.callstack, index: ctx.index });
         const [itemId, effectId] = args;
         assertValue(ctx, itemId, 'string');
         assertValue(ctx, effectId, 'string');
@@ -230,21 +272,29 @@ const functions = {
         return v.void();
     },
     complete(ctx: ScriptContext, args: Value[]): Value {
-        const [itemId] = args;
+        const { v } = builder;
+        const [itemsValue] = args;
         paint.emit({
             t: PAINT_EVENT_TYPE.CLEAR,
         });
-        assertValue(ctx, itemId, 'string');
+        assertValue(ctx, itemsValue, 'array');
         const { items } = getContext();
-        const counter = items[itemId.value];
+        const itemIds = itemsValue.items.map((id) => {
+            assertValue(ctx, id, 'string');
+            return id.value;
+        })
         for (const item of Object.values(items)) {
             if (item.parent) continue;
             if (item.layer !== ITEM_LAYERS.PHOTO_MODE) continue;
             removeItemState(item);
         }
         let i = 0;
-        for (const id of counter.children) {
-            const item = items[id];
+        for (const itemId of itemIds) {
+            const item = items[itemId];
+            if (!item) {
+                game?.debug.log(v.string(`Item with id ${itemId} not found`));
+                continue;
+            }
             const transform = transformToMatrix(item.transform);
             const { min, max } = item.bounds;
             const offset = new Vec2(
@@ -260,7 +310,7 @@ const functions = {
                     right: item.transform.right,
                     up: item.transform.up,
                     offset: {
-                        x: -offset.x + (i / (counter.children.length) - 0.5) * 1000,
+                        x: -offset.x + (i / (itemIds.length) - 0.5) * 1000,
                         y: -offset.y + 150,
                     },
                 }
@@ -270,9 +320,8 @@ const functions = {
         game?.scene.set({
             type: 'photo_mode',
             time: Time.now(),
-            items: [...counter.children],
+            items: [...itemIds],
         });
-        const { v } = builder;
         return v.void();
     },
 }
@@ -300,9 +349,18 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
     const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
     const globals = new Globals();
+    const debug = Debug.init();
     globals.registerFunction('log', [
-        {name: 'message', type: 'string'},
+        {name: 'message'},
     ], functions.log);
+    globals.registerFunction('get_items', [
+    ], functions.get_items);
+    globals.registerFunction('get_children', [
+        {name: 'itemId', type: 'string'},
+    ], functions.get_children);
+    globals.registerFunction('remove_item', [
+        {name: 'itemId', type: 'string'},
+    ], functions.remove_item);
     globals.registerFunction('create_effect', [
         {name: 'itemId', type: 'string'},
         {name: 'effectId', type: 'string'},
@@ -312,7 +370,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
         {name: 'effectId', type: 'string'},
     ], functions.remove_effect);
     globals.registerFunction('complete', [
-        {name: 'itemId', type: 'string'},
+        {name: 'items', type: 'array'},
     ], functions.complete);
     setClient(omu);
     setChat(chat);
@@ -340,6 +398,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
         paintEvents,
         scene,
         globals,
+        debug,
         worker: client ? await getWorker() : undefined,
     }
     if (BROWSER) {
@@ -435,6 +494,7 @@ export type Game = {
     paintSignal: Signal<PaintEvent[]>,
     paintEvents: Writable<PaintBuffer>,
     globals: Globals,
+    debug: Debug,
     worker?: WorkerPipe<GameCommands>,
 };
 

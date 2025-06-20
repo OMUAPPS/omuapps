@@ -251,6 +251,7 @@ export async function processMessage(message: Message) {
             timestamp: Time.now(),
             tokens: mergeNounTokens(tokens),
         }
+        markChanged();
     }
     console.log('[msg]', JSON.stringify(tokens));
     const productTokens: ProductTokens[] = await Promise.all(Object.values(config.products).map(async (product) => {

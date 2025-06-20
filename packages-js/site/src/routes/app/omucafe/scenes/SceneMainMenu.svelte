@@ -28,6 +28,14 @@
             <i class="ti ti-chevron-right"></i>
         </button>
         <button on:click={() => {
+            $scene = { type: 'kitchen_edit' };
+        }}>
+            <img src={button_line} alt="">
+            <i class="ti ti-hammer"></i>
+            <span>キッチンの整理</span>
+            <i class="ti ti-chevron-right"></i>
+        </button>
+        <button on:click={() => {
             $scene = { type: 'product_list' };
         }}>
             <img src={button_line} alt="">

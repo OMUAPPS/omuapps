@@ -5,7 +5,7 @@ import type { Mat4 } from '$lib/math/mat4.js';
 import { getTextureByAsset, type Asset } from '../asset.js';
 import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
 import { draw, glContext, matrices } from '../game.js';
-import { attachChildren, detachChildren, getItemStateTransform, getRenderBounds, type ItemRender, type ItemState } from '../item-state.js';
+import { attachChildren, detachChildren, getItemStateTransform, getRenderBounds, ITEM_LAYERS, type ItemRender, type ItemState } from '../item-state.js';
 import type { KitchenContext } from '../kitchen.js';
 import { transformToMatrix, type Transform } from '../transform.js';
 
@@ -142,6 +142,15 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 tex,
             );
             matrices.model.pop();
+        }
+        if (behavior.mask && item.layer === ITEM_LAYERS.EDIT_PREVIEW) {
+            const { asset } = behavior.mask;
+            const transform = transformToMatrix(behavior.mask.transform);
+            const { tex, width, height } = await getTextureByAsset(asset);
+            matrices.push();
+            matrices.model.multiply(transform);
+            draw.texture(0, 0, width, height, tex);
+            matrices.pop();
         }
     }
 

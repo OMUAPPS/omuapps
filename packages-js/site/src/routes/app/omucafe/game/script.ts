@@ -20,6 +20,11 @@ export type VObject = {
     value: Record<string, Value>;
 };
 
+export type VArray = {
+    type: 'array';
+    items: Value[];
+}
+
 export type VFunction = {
     type: 'function';
     value: TypedFunction;
@@ -45,7 +50,7 @@ export type VVoid = {
     type: 'void';
 };
 
-export type Value = VVoid | VExpression | VVariable | VAttribute | VFunction | VObject | VNumber | VString | VTimer | VInvoke;
+export type Value = VVoid | VExpression | VVariable | VAttribute | VFunction | VObject | VArray | VNumber | VString | VTimer | VInvoke;
 
 export const value = {
     void: (): Value => ({
@@ -72,6 +77,10 @@ export const value = {
         type: 'object',
         value,
     }),
+    array: (...values: Value[]): Value => ({
+        type: 'array',
+        items: values,
+    }),
     number: (value: number): Value => ({
         type: 'number',
         value,
@@ -94,7 +103,7 @@ export const value = {
 
 export type Argument<ValueType extends Value = Value> = {
     name: string,
-    type: ValueType['type'],
+    type?: ValueType['type'],
     optional?: boolean,
 }
 
@@ -251,9 +260,8 @@ export function executeExpression(ctx: ScriptContext, expression: Expression): V
                 return evaluateValue(ctx, command.value);
             }
             case 'assign': {
-                const variable = evaluateValue(ctx, command.variable);
-                assertValue(ctx, variable, 'variable')
-                ctx.variables[variable.name] = evaluateValue(ctx, command.value);
+                assertValue(ctx, command.variable, 'variable')
+                ctx.variables[command.variable.name] = evaluateValue(ctx, command.value);
                 break;
             }
             case 'assign-attribute': {
@@ -275,7 +283,7 @@ export function executeExpression(ctx: ScriptContext, expression: Expression): V
                     if (arg.optional && argValue.type === 'void') {
                         continue;
                     }
-                    if (argValue.type !== arg.type) {
+                    if (arg.type && argValue.type !== arg.type) {
                         throw new ScriptError(`Expected argument ${i} to be ${arg.type} but got ${argValue.type}`, { callstack: ctx.callstack, index });
                     }
                 }
@@ -320,7 +328,7 @@ export function createScript(options: Partial<Script>): Script {
 }
 
 export class Globals {
-    private readonly functions: Record<string, TypedFunction<any>> = {};
+    public readonly functions: Record<string, TypedFunction<any>> = {};
     
     public registerFunction<Args extends Value[]>(name: string, args: ArgumentList<Args>, invoke: (ctx: ScriptContext, args: Args) => Value): TypedFunction<Args> {
         const func: TypedFunction<Args> =  {

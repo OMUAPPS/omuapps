@@ -1,11 +1,16 @@
 <script lang="ts">
+    import { Button } from '@omujs/ui';
     import { setContext } from 'svelte';
-    import { value, type Script } from '../../game/script.js';
+    import { executeExpression, value, type Script } from '../../game/script.js';
+    import { getGame } from '../../omucafe-app.js';
+    import DebugLogs from '../debug/DebugLogs.svelte';
     import EditExpression from './EditExpression.svelte';
     import EditValue from './EditValue.svelte';
+    import FitInput from './FitInput.svelte';
     import { SCRIPT_EDITOR_CONTEXT, type ScriptEditorContext, type ValueEdit } from './scripteditor.js';
 
     export let script: Script;
+    const { globals } = getGame();
 
     let edit: ValueEdit | null = null;
 
@@ -25,7 +30,20 @@
 
 <div class="editor">
     <div class="tab">
-        {script.name} {script.id}
+        <div class="info">
+            <h1>
+                <FitInput bind:value={script.name} />
+                <Button primary onclick={() => {
+                    const ctx = globals.newContext();
+                    executeExpression(ctx, script.expression);
+                }}>
+                    <i class="ti ti-caret-right-filled"></i>
+                </Button>
+            </h1>
+            <small>
+                {script.id}
+            </small>
+        </div>
         {#if edit}
             <div class="edit">
                 <div class="types">
@@ -74,7 +92,10 @@
                         <ul class="args">
                             {#each edit.value.args as arg, index (index)}
                                 <li>
-                                    <button>
+                                    <button on:click={() => {
+                                        if (!edit || edit.value.type !== 'invoke') return;
+                                        edit.value.args = edit.value.args.filter((_,idx) => idx !== index);
+                                    }}>
                                         <i class="ti ti-x"></i>
                                     </button>
                                     <EditValue bind:value={arg} />
@@ -93,11 +114,19 @@
                             </li>
                         </ul>
                     </div>
+                    <div class="property">
+                        {#each Object.entries(globals.functions) as [key, func] (key)}
+                            {key}
+                        {/each}
+                    </div>
                 {:else}
                     {edit.value.type}
                 {/if}
             </div>
         {/if}
+        <div class="logs">
+            <DebugLogs />
+        </div>
     </div>
     <div class="code">
         <EditExpression bind:expression={script.expression} />
@@ -113,7 +142,7 @@
 
     .tab {
         display: flex;
-        align-items: flex-start;
+        align-items: stretch;
         justify-content: flex-start;
         flex-direction: column;
         padding: 1rem;
@@ -127,6 +156,18 @@
         outline: 2px solid var(--color-bg-1);
     }
 
+    .info {
+        border-bottom: 1px solid var(--color-1);
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+    }
+
+    h1 {
+        display: flex;
+        justify-content: space-between;
+        color: var(--color-1);
+    }
+
     .edit {
         display: flex;
         flex-direction: column;
@@ -138,7 +179,6 @@
         align-items: baseline;
         padding: 1rem;
         background: var(--color-bg-2);
-        width: 100%;
 
         > span {
             margin-right: auto;
@@ -171,7 +211,12 @@
             background: var(--color-1);
             font-weight: 600;
             font-size: 0.9rem;
+            border-radius: 2px;
         }
+    }
+
+    .logs {
+        margin-top: auto;
     }
 
     .code {

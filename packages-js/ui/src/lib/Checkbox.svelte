@@ -1,10 +1,15 @@
-<script lang="ts">
-    export let value: boolean;
+<script lang="ts" generics="T">
+    type BooleanLike = true | false | T;
+    export let value: BooleanLike;
     export let disabled: boolean = false;
     export let label: string | undefined = undefined;
 
     function toggle() {
-        value = !value;
+        if (value) {
+            value = false;
+        } else {
+            value = true;
+        }
     }
 </script>
 
@@ -13,7 +18,7 @@
         <span>{label}</span>
     {/if}
     <span class="toggle">
-        <input type="checkbox" bind:checked={value} {disabled} on:click={toggle} />
+        <input type="checkbox" checked={!!value} {disabled} on:click={toggle} />
         {#if value}
             <i class="ti ti-check"></i>
         {/if}

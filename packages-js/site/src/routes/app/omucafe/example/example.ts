@@ -175,7 +175,7 @@ export const EXAMPLE: GameConfig = {
                 ),
                 c.invoke(
                     v.variable('complete'),
-                    v.string('counter'),
+                    c.invoke(v.variable('get_children'), v.string('counter')),
                 ),
             ]),
         }),

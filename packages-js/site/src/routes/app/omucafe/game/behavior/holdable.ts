@@ -1,9 +1,10 @@
 import { createClip, playAudioClip, type AudioClip } from '../audioclip.js';
-import type { BehaviorAction, BehaviorFunction, BehaviorHandler } from '../behavior.js';
+import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
 import type { KitchenContext } from '../kitchen.js';
 
 export type Holdable = {
     clip?: AudioClip,
+    editOnly?: boolean,
 };
 
 export function createHoldable(): Holdable {
@@ -23,17 +24,29 @@ const DEFAULT_AUDIO_CLIP = createClip({
 })
 
 export class HoldableHandler implements BehaviorHandler<'holdable'> {
+    #canBeHeld(context: KitchenContext, behavior: Holdable) {
+        if (behavior.editOnly) {
+            return context.scene.type === 'kitchen_edit';
+        }
+        return true;
+    }
+
     canItemBeHeld(
         context: KitchenContext,
         action: BehaviorAction<'holdable'>,
         args: { canBeHeld: boolean },
     ) {
-        args.canBeHeld = true;
+        const { behavior } = action;
+        args.canBeHeld ||= this.#canBeHeld(context, behavior);
     }
 
-    handleClick?: BehaviorFunction<'holdable', { x: number; y: number; }> = (context, action) => {
-        const { item, behavior } = action;
-        const config = context.config;
+    handleClick(
+        context: KitchenContext,
+        action: BehaviorAction<'holdable'>,
+        args: { x: number; y: number; },
+    ) {
+        const { behavior } = action;
+        if (!this.#canBeHeld(context, behavior)) return;
         const clip = behavior.clip || DEFAULT_AUDIO_CLIP;
         playAudioClip(clip);
     }

@@ -30,6 +30,24 @@
         type: 'taken',
         url: string,
     } | null = null;
+
+    async function takePhoto() {
+        screenshot = {
+            type: 'taking',
+        };
+        await obs.screenshotCreate({});
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const { data } = await obs.screenshotGetLastBinary({});
+        if (!data) {
+            console.error('No screenshot data received');
+            return;
+        }
+        const blob = new Blob([data], { type: 'image/png' });
+        screenshot = {
+            type: 'taken',
+            url: URL.createObjectURL(blob),
+        };
+    }
 </script>
 
 <svelte:window
@@ -179,23 +197,7 @@
         キッチンに戻って調整
         <i class="ti ti-arrow-back-up"></i>
     </button>
-    <button on:click={async () => {
-        screenshot = {
-            type: 'taking',
-        };
-        await obs.screenshotCreate({});
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const { data } = await obs.screenshotGetLastBinary({});
-        if (!data) {
-            console.error('No screenshot data received');
-            return;
-        }
-        const blob = new Blob([data], { type: 'image/png' });
-        screenshot = {
-            type: 'taken',
-            url: URL.createObjectURL(blob),
-        };
-    }} class="primary">
+    <button on:click={takePhoto} class="primary">
         写真を撮る
         <i class="ti ti-camera"></i>
     </button>
@@ -252,6 +254,7 @@
         padding: 0.5rem;
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
+        margin-bottom: 3rem;
 
         > img {
             width: 100%;
