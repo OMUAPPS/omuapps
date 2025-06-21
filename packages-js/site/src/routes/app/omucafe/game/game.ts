@@ -801,10 +801,6 @@ export async function render(ctx: GlContext): Promise<void> {
     const { gl } = ctx;
     glContext.stateManager.setViewport({ x: matrices.width, y: matrices.height });
     gl.enable(gl.BLEND);
-    // gl.clearColor(1, 1, 1, 0);
-    // gl.clear(gl.COLOR_BUFFER_BIT);
-    // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
     gl.clearColor(1, 1, 1, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { AABB2Like } from '$lib/math/aabb2.js';
+    import { Tooltip } from '@omujs/ui';
 
     export let bounds: AABB2Like;
 </script>
@@ -8,6 +9,9 @@
     <span class="min">
         <i class="ti ti-arrow-up-left"></i>
         <label>
+            <Tooltip>
+                最小値X
+            </Tooltip>
             <input type="number" value={bounds.min.x} on:change={({currentTarget: {valueAsNumber}}) => {
                 bounds = {
                     ...bounds,
@@ -19,6 +23,9 @@
             }}/>
         </label>
         <label>
+            <Tooltip>
+                最小値Y
+            </Tooltip>
             <input type="number" value={bounds.min.y} on:change={({currentTarget: {valueAsNumber}}) => {
                 bounds = {
                     ...bounds,
@@ -31,7 +38,11 @@
         </label>
     </span>
     <span class="max">
+        <i class="ti ti-arrow-down-right"></i>
         <label>
+            <Tooltip>
+                最大値X
+            </Tooltip>
             <input type="number" value={bounds.max.x} on:change={({currentTarget: {valueAsNumber}}) => {
                 bounds = {
                     ...bounds,
@@ -43,6 +54,9 @@
             }}/>
         </label>
         <label>
+            <Tooltip>
+                最大値Y
+            </Tooltip>
             <input type="number" value={bounds.max.y} on:change={({currentTarget: {valueAsNumber}}) => {
                 bounds = {
                     ...bounds,
@@ -53,7 +67,6 @@
                 }
             }}/>
         </label>
-        <i class="ti ti-arrow-down-right"></i>
     </span>
 </div>
 

@@ -1,4 +1,5 @@
 import { AABB2 } from '$lib/math/aabb2.js';
+import { lerp } from '$lib/math/math.js';
 import type { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByAsset } from '../asset.js';
@@ -28,6 +29,7 @@ function alphaFunc(t: number) {
 
 export async function renderParticles(particle: EffectParticle, args: ParticleArguments) {
     const { emitter, source } = particle;
+    if (source.assets.length === 0) return;
     const random = ARC4.fromString(args.seed);
     const interval = emitter.duration / emitter.count;
     for (let i = 0; i < emitter.count; i ++) {
@@ -40,6 +42,11 @@ export async function renderParticles(particle: EffectParticle, args: ParticleAr
         const velocity = AABB2.from(emitter.velocity).at({ x: rnd.next(), y: rnd.next() });
         const acceleration = AABB2.from(emitter.acceleration).at({ x: rnd.next(), y: rnd.next() });
         const scale = AABB2.from(emitter.scale).at({ x: rnd.next(), y: rnd.next() });
+        const opacity = emitter.opacity && lerp(
+            emitter.opacity.x,
+            emitter.opacity.y,
+            rnd.next(),
+        ) || 1;
         const particleTime = (elapsed % emitter.duration) / 1000;
         const pos = physicsEquation(
             position,
@@ -56,7 +63,7 @@ export async function renderParticles(particle: EffectParticle, args: ParticleAr
             pos.x + width / 2 * scale.x,
             pos.y + height / 2 * scale.y,
             tex,
-            new Vec4(1, 1, 1, alphaFunc(t)),
+            new Vec4(1, 1, 1, alphaFunc(t) * opacity),
         );
     }
 }

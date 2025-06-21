@@ -51,11 +51,14 @@ export class ARC4 {
         return r / 0x100000000;
     }
 
-    public next() {
+    public next(): number {
         return this.get(4);
     }
 
-    public choice<T>(array: T[]) {
+    public choice<T>(array: T[]): T {
+        if (array.length === 0) {
+            throw new Error('Cannot choose from an empty array');
+        }
         const index = Math.floor((this.next() * array.length) % array.length);
         return array[index];
     }

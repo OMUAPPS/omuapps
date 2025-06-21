@@ -11,11 +11,11 @@
 <h2>動き</h2>
 <div class="property">
     個数
-    <Slider min={0} max={16} step={1} bind:value={particle.emitter.count}/>
+    <Slider min={0} max={16} step={1} clamp={false} bind:value={particle.emitter.count}/>
 </div>
 <div class="property">
     時間
-    <Slider min={0} max={4000} step={1} unit="ms" bind:value={particle.emitter.duration}/>
+    <Slider min={0} max={4000} step={1} clamp={false} unit="ms" bind:value={particle.emitter.duration}/>
 </div>
 <div class="property">
     速度
@@ -28,6 +28,15 @@
 <div class="property">
     大きさ
     <Aabb2Edit bind:bounds={particle.emitter.scale} />
+</div>
+<h2>不透明度</h2>
+<div class="property">
+    最低
+    <Slider min={0} max={1} step={0.01} type="percent" clamp={false} bind:value={particle.emitter.opacity.x}/>
+</div>
+<div class="property">
+    最高
+    <Slider min={0} max={1} step={0.01} type="percent" clamp={false} bind:value={particle.emitter.opacity.y}/>
 </div>
 <h2>
     画像

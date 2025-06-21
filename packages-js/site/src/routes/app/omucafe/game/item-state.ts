@@ -209,57 +209,51 @@ export function detachChildren(item: ItemState, ...children: ItemState[]) {
 
 const previousTransforms = new Map<string, Mat4>();
 
-export function getItemStateTransform(item: ItemState, options: {
+export function getItemStateTransform(itemState: ItemState, options: {
     parent?: ItemState,
 } = {}): Mat4 {
     const ctx = getContext();
-    const matrices: Mat4[] = [transformToMatrix(item.transform)];
-    const parents: [ItemState, string][] = [];
-    const passed: string[] = [];
-    let parent: string | undefined = item.parent;
-    while (parent) {
-        if (passed.includes(parent)) {
-            throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${parent}`);
-        }
-        passed.push(parent);
-        const item = ctx.items[parent];
-        parents.push([item, parent]);
-        if (!item) break;
-        matrices.push(transformToMatrix(item.transform));
-        parent = item.parent;
-    }
-    matrices.reverse();
+    const parents = getParents(itemState);
+    const rootItem = parents[parents.length - 1] || itemState;
+    parents.reverse();
     
-    const flipY = item.layer !== ITEM_LAYERS.PHOTO_MODE && ctx.side === 'overlay' && !options.parent;
+    let transform = Mat4.IDENTITY;
+    for (const item of [...parents, itemState]) {
+        const flipY = item.layer !== ITEM_LAYERS.PHOTO_MODE && ctx.side === 'overlay' && !item.parent;
+        const matrix = transformToMatrix(item.transform);
+        if (flipY) {
+            if (item.id === 'counter') {
+                const z = matrix.m31 + item.bounds.max.y + 1080;
+                transform = new Mat4(
+                    matrix.m00, matrix.m01, matrix.m02, matrix.m03,
+                    matrix.m10, matrix.m11, matrix.m12, matrix.m13,
+                    matrix.m20, matrix.m21, matrix.m22, matrix.m23,
+                    matrix.m30, 5000 / z * 260 - 420, matrix.m32, matrix.m33,
+                );
+            }
+        }
+        transform = transform.multiply(matrix);
+    }
+    const flipY = rootItem.layer !== ITEM_LAYERS.PHOTO_MODE && ctx.side === 'overlay' && !rootItem.parent;
     if (flipY) {
-        const matrix = matrices[0];
-        if (item.id === 'counter' || ctx.held === item.id) {
-            const z = matrix.m31 + item.bounds.max.y + 1080;
-            matrices[0] = new Mat4(
-                matrix.m00, matrix.m01, matrix.m02, matrix.m03,
-                matrix.m10, matrix.m11, matrix.m12, matrix.m13,
-                matrix.m20, matrix.m21, matrix.m22, matrix.m23,
-                matrix.m30, 5000 / z * 260 - 420, matrix.m32, matrix.m33,
-            );
-        } else {
-            const z = matrix.m31 + (item.bounds.max.y + item.bounds.min.y) + 1080;
+        if (rootItem.id !== 'counter') {
+            const z = transform.m31 + (rootItem.bounds.max.y + rootItem.bounds.min.y) + 1080;
             if (z < 0) {
                 return Mat4.ZERO;
             }
-            matrices[0] = new Mat4(
-                matrix.m00 * 0.8, matrix.m01, matrix.m02, matrix.m03,
-                matrix.m10, matrix.m11 * 0.7, matrix.m12, matrix.m13,
-                matrix.m20, matrix.m21, matrix.m22, matrix.m23,
-                matrix.m30, 5000 / z * 260 - 500, matrix.m32, matrix.m33,
+            transform = new Mat4(
+                transform.m00 * 0.8, transform.m01, transform.m02, transform.m03,
+                transform.m10, transform.m11 * 0.7, transform.m12, transform.m13,
+                transform.m20, transform.m21, transform.m22, transform.m23,
+                transform.m30, 5000 / z * 260 - 500, transform.m32, transform.m33,
             );
         }
     }
 
-    let transform = matrices.reduce((acc, matrix) => acc.multiply(matrix), Mat4.IDENTITY);
     if (ctx.side === 'overlay') {
-        const previous = previousTransforms.get(item.id) ?? transform;
+        const previous = previousTransforms.get(itemState.id) ?? transform;
         transform = previous.lerp(transform, 0.8);
-        previousTransforms.set(item.id, transform);
+        previousTransforms.set(itemState.id, transform);
     }
     return transform;
 }
@@ -395,6 +389,9 @@ export async function renderItemState(itemState: ItemState, options: {
     }
     matrices.model.push();
     matrices.model.multiply(transform);
+    if (getContext().held === itemState.id) {
+        applyDragEffect();
+    }
     draw.texture(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, texture);
     matrices.model.pop();
 }
@@ -434,7 +431,6 @@ export async function renderHeldItem() {
     const item = getContext().items[held];
     if (!item) return;
     if (side == 'client') {
-        // delta2 = current - (current + delta)
         const view = matrices.view.get().inverse();
         const delta = view.basisTransform2(mouse.delta);
         item.transform.offset = {

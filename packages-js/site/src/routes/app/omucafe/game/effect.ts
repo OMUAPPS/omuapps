@@ -1,4 +1,5 @@
 import { AABB2, type AABB2Like } from '$lib/math/aabb2.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import type { Asset } from './asset.js';
 import type { ADSRClip } from './audioclip.js';
 import { uniqueId } from './helper.js';
@@ -23,6 +24,7 @@ type ParticleEmitter = {
     type: 'physics',
     count: number,
     duration: number,
+    opacity: Vec2Like
     velocity: AABB2Like,
     acceleration: AABB2Like,
     scale: AABB2Like,
@@ -33,9 +35,10 @@ export function createParticleEmitter(options: Partial<ParticleEmitter>): Partic
         type: 'physics',
         count: options.count ?? 1,
         duration: options.duration ?? 1000,
+        opacity: options.opacity ?? Vec2.ONE,
         velocity: options.velocity ?? AABB2.ZEROZERO,
         acceleration: options.acceleration ?? AABB2.ZEROZERO,
-        scale: options.scale ?? AABB2.ZEROZERO,
+        scale: options.scale ?? AABB2.ONEONE,
     }
 }
 

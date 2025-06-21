@@ -11,7 +11,7 @@
 </script>
 
 <main>
-    <div class="info">
+    <div class="info omu-scroll">
         <div class="name">
             <h1>
                 <Tooltip>
@@ -43,7 +43,10 @@
                     粒子
                 </h2>
                 {#if effect.attributes.particle}
-                    <Button primary>
+                    <Button primary onclick={async () => {
+                        effect.attributes.particle = undefined;
+                    }}>
+                        粒子を削除
                         <i class="ti ti-trash"></i>
                     </Button>
                 {:else}
