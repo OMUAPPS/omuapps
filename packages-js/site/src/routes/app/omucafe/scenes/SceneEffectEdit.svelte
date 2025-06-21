@@ -10,7 +10,14 @@
 
 {#if $scene.type === 'effect_edit'}
     {@const id = $scene.id}
-    <EffectEdit bind:effect={$config.effects[id]} />
+    {#if $config.effects[id]}
+        <EffectEdit bind:effect={$config.effects[id]} />
+    {:else}
+        <div class="error">
+            <h2>アイテムが見つかりません</h2>
+            <p>アイテムID: {id}</p>
+        </div>
+    {/if}
 {/if}
 <BackButton to={{
     type: 'product_list',

@@ -11,7 +11,14 @@
 
 {#if $scene.type === 'script_edit'}
     {@const id = $scene.id}
-    <ScriptEdit bind:script={$config.scripts[id]} />
+    {#if $config.scripts[id]}
+        <ScriptEdit bind:script={$config.scripts[id]} />
+    {:else}
+        <div class="error">
+            <h2>アイテムが見つかりません</h2>
+            <p>アイテムID: {id}</p>
+        </div>
+    {/if}
 {/if}
 <BackButton to={{
     type: 'product_list',
