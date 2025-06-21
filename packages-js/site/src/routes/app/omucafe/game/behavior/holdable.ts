@@ -7,9 +7,10 @@ export type Holdable = {
     editOnly?: boolean,
 };
 
-export function createHoldable(): Holdable {
+export function createHoldable(options?: Holdable): Holdable {
     return {
-        clip: undefined,
+        clip: options?.clip,
+        editOnly: options?.editOnly,
     };
 }
 

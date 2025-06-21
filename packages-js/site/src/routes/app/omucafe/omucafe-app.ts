@@ -259,6 +259,7 @@ const functions = {
         const config = getContext().config;
         const item = getContext().items[itemId.value];
         const effect = config.effects[effectId.value];
+        effect.startTime = Time.now();
         item.effects[effect.id] = copy(effect);
         return v.void();
     },

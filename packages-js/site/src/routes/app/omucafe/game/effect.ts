@@ -1,6 +1,8 @@
+import { AABB2, type AABB2Like } from '$lib/math/aabb2.js';
 import type { Asset } from './asset.js';
 import type { ADSRClip } from './audioclip.js';
 import { uniqueId } from './helper.js';
+import { Time } from './time.js';
 
 type EffectAudio = {
     type: 'audio',
@@ -17,10 +19,41 @@ export function createEffectAudio(options: {
     };
 }
 
+type ParticleEmitter = {
+    type: 'physics',
+    count: number,
+    duration: number,
+    velocity: AABB2Like,
+    acceleration: AABB2Like,
+    scale: AABB2Like,
+}
+
+export function createParticleEmitter(options: Partial<ParticleEmitter>): ParticleEmitter {
+    return {
+        type: 'physics',
+        count: options.count ?? 1,
+        duration: options.duration ?? 1000,
+        velocity: options.velocity ?? AABB2.ZEROZERO,
+        acceleration: options.acceleration ?? AABB2.ZEROZERO,
+        scale: options.scale ?? AABB2.ZEROZERO,
+    }
+}
+
 type EffectParticle = {
     type: 'particle',
+    emitter: ParticleEmitter,
     asset: Asset,
 };
+
+export function createParticle(options: Partial<EffectParticle> & {
+    asset: Asset,
+}): EffectParticle {
+    return {
+        type: 'particle',
+        asset: options.asset,
+        emitter: options.emitter ?? createParticleEmitter({}),
+    }
+}
 
 type EffectAttributes = {
     audio: EffectAudio,
@@ -31,6 +64,7 @@ export type Effect = {
     id: string,
     name: string,
     attributes: Partial<EffectAttributes>,
+    startTime: number,
 };
 
 export function createEffect(options: {
@@ -43,5 +77,6 @@ export function createEffect(options: {
         id: id ?? uniqueId(),
         name,
         attributes,
+        startTime: Time.now(),
     };
 }

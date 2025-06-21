@@ -10,6 +10,7 @@ import { applyDragEffect, draw, getContext, glContext, matrices, mouse } from '.
 import { copy, uniqueId } from './helper.js';
 import type { Item } from './item.js';
 import type { KitchenContext } from './kitchen.js';
+import { ARC4 } from './random.js';
 import { Time } from './time.js';
 import { transformToMatrix, type Bounds, type Transform } from './transform.js';
 
@@ -211,6 +212,7 @@ const previousTransforms = new Map<string, Mat4>();
 export function getItemStateTransform(item: ItemState, options: {
     parent?: ItemState,
 } = {}): Mat4 {
+    const ctx = getContext();
     const matrices: Mat4[] = [transformToMatrix(item.transform)];
     const parents: [ItemState, string][] = [];
     const passed: string[] = [];
@@ -220,7 +222,7 @@ export function getItemStateTransform(item: ItemState, options: {
             throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${parent}`);
         }
         passed.push(parent);
-        const item = getContext().items[parent];
+        const item = ctx.items[parent];
         parents.push([item, parent]);
         if (!item) break;
         matrices.push(transformToMatrix(item.transform));
@@ -228,10 +230,10 @@ export function getItemStateTransform(item: ItemState, options: {
     }
     matrices.reverse();
     
-    const flipY = item.layer !== ITEM_LAYERS.PHOTO_MODE && getContext().side === 'overlay' && !options.parent;
+    const flipY = item.layer !== ITEM_LAYERS.PHOTO_MODE && ctx.side === 'overlay' && !options.parent;
     if (flipY) {
         const matrix = matrices[0];
-        if (item.id === 'counter') {
+        if (item.id === 'counter' || ctx.held === item.id) {
             const z = matrix.m31 + item.bounds.max.y + 1080;
             matrices[0] = new Mat4(
                 matrix.m00, matrix.m01, matrix.m02, matrix.m03,
@@ -254,7 +256,7 @@ export function getItemStateTransform(item: ItemState, options: {
     }
 
     let transform = matrices.reduce((acc, matrix) => acc.multiply(matrix), Mat4.IDENTITY);
-    if (getContext().side === 'overlay') {
+    if (ctx.side === 'overlay') {
         const previous = previousTransforms.get(item.id) ?? transform;
         transform = previous.lerp(transform, 0.8);
         previousTransforms.set(item.id, transform);
@@ -404,6 +406,61 @@ export async function renderItems(layers: ItemLayer[]) {
         if (item.parent) continue;
         await renderItemState(item);
     }
+    for (const item of itemsInOrder) {
+        await renderEffects(item);
+    }
+}
+
+function physicsEquation(
+    position: Vec2,
+    velocity: Vec2,
+    acceleration: Vec2,
+    time: number,
+): Vec2 {
+    // x=x0+v0t+1/2at^2
+    return position.add(velocity.scale(time)).add(acceleration.scale(time * time / 2));
+}
+
+async function renderEffects(itemState: ItemState) {
+    const transform = getItemStateTransform(itemState);
+    const renderBounds = transform.transformAABB2(itemState.bounds);
+    for (const effect of Object.values(itemState.effects)) {
+        const { startTime: start } = effect;
+        const effectTime = Time.now() - start;
+        if (effect.attributes.particle) {
+            const { emitter, asset } = effect.attributes.particle;
+            const { tex, width, height } = await getTextureByAsset(asset);
+            const random = ARC4.fromString(effect.id);
+            const interval = emitter.duration / emitter.count;
+            for (let i = 0; i < emitter.count; i ++) {
+                const offset = interval * i;
+                const elapsed = effectTime - offset;
+                if (elapsed < 0) continue;
+                const index = Math.floor(elapsed / emitter.duration);
+                const rnd = ARC4.fromNumber(random.next() + index);
+                const position = renderBounds.at({ x: rnd.next(), y: rnd.next() });
+                const velocity = AABB2.from(emitter.velocity).at({ x: rnd.next(), y: rnd.next() });
+                const acceleration = AABB2.from(emitter.acceleration).at({ x: rnd.next(), y: rnd.next() });
+                const scale = AABB2.from(emitter.scale).at({ x: rnd.next(), y: rnd.next() });
+                const particleTime = (elapsed % emitter.duration) / 1000;
+                const pos = physicsEquation(
+                    position,
+                    velocity,
+                    acceleration,
+                    particleTime,
+                );
+                const t = (elapsed % emitter.duration) / emitter.duration;
+                draw.texture(
+                    pos.x - width / 2 * scale.x,
+                    pos.y - height / 2 * scale.y,
+                    pos.x + width / 2 * scale.x,
+                    pos.y + height / 2 * scale.y,
+                    tex,
+                    new Vec4(1, 1, 1, 1 - t),
+                );
+            }
+        }
+    }
 }
 
 export async function renderHeldItem() {
@@ -499,22 +556,6 @@ export async function renderHoveringItem() {
         matrices,
     });
 }
-
-// export function collectChildren(itemState: ItemState): ItemState[] {
-//     const ctx = getContext();
-//     const items: ItemState[] = [];
-//     const queue: ItemState[] = [itemState];
-//     while (queue.length > 0) {
-//         const item = queue.pop();
-//         if (!item) break;
-//         for (const id of item.children) {
-//             const child = ctx.items[id];
-//             items.push(child);
-//             queue.push(child);
-//         }
-//     }
-//     return items;
-// }
 
 export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: ItemState) => number = (a, b) => {
     const maxA = a.bounds.max;

@@ -1,6 +1,7 @@
 import type { Asset } from '../game/asset.js';
 import { createContainer } from '../game/behavior/container.js';
 import { createHoldable } from '../game/behavior/holdable.js';
+import { createParticle, createParticleEmitter } from '../game/effect.js';
 import { builder, createScript } from '../game/script.js';
 import { DEFAULT_GAME_CONFIG, type GameConfig } from '../omucafe-app.js';
 import bubble from './bubble.png';
@@ -73,6 +74,9 @@ export const EXAMPLE: GameConfig = {
             name: 'Fryer',
             image: asset(fryer),
             behaviors: {
+                holdable: createHoldable({
+                    editOnly: true,
+                }),
                 container: createContainer({
                     overlay: {
                         asset: asset(fryer_top),
@@ -133,10 +137,26 @@ export const EXAMPLE: GameConfig = {
             id: 'fry',
             name: 'Fry',
             attributes: {
-                particle: {
+                particle: createParticle({
                     type: 'particle',
                     asset: asset(bubble),
-                },
+                    emitter: createParticleEmitter({
+                        count: 10,
+                        duration: 480,
+                        velocity: {
+                            min: { x: -0.2, y: -50 },
+                            max: { x: 0.2, y: -50 },
+                        },
+                        acceleration: {
+                            min: { x: 0, y: 500 },
+                            max: { x: 0, y: 500 },
+                        },
+                        scale: {
+                            min: { x: 0.5, y: 0.5 },
+                            max: { x: 1, y: 1 },
+                        }
+                    })
+                }),
             },
         },
     },
