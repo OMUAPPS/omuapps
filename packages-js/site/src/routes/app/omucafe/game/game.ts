@@ -311,6 +311,7 @@ async function updateMouseClient() {
         else if (event.type === 'up') {
             await handleMouseUp();
         }
+        markChanged();
     }
     const { gl } = glContext;
     const glMouse = mouse.client.remap(
@@ -354,7 +355,6 @@ import { updateAudioClips } from './audioclip.js';
 import { createAction } from './behavior/action.js';
 import { renderBackground, renderEffect, renderOverlay, renderOverlay2 } from './renderer/background.js';
 import { renderCursor } from './renderer/cursor.js';
-import { renderParticles } from './renderer/particle.js';
 import { Time } from './time.js';
 
 function getScreenTime(time: number) {
@@ -678,7 +678,6 @@ export async function renderClientSide() {
         setupHUDProjection();
         await renderOverlay();
         setupCounterProjection();
-        await renderParticles();
         await renderOverlay2();
     });
 
@@ -731,9 +730,8 @@ export async function renderOverlaySide() {
         setupHUDProjection();
         await renderOverlay();
         setupCounterProjection();
-        await renderHeldItem();
-        await renderParticles();
         await renderItems([ITEM_LAYERS.COUNTER, ITEM_LAYERS.BELL]);
+        await renderHeldItem();
     
         setupCustomerProjection();
         await renderCustomersAsset(new Vec2(1920 * 2 - 1200, 1200));

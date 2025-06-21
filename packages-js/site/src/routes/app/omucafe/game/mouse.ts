@@ -83,13 +83,13 @@ export class Mouse {
                 timestamp: Time.origin + timeStamp,
             });
         });
-        window.addEventListener('mousedown', async ({ clientX: x, clientY: y, timeStamp }) => {
+        window.addEventListener('mousedown', async ({ timeStamp }) => {
             events.push({
                 type: 'down',
                 timestamp: Time.origin + timeStamp,
             });
         });
-        window.addEventListener('mouseup', async ({ clientX: x, clientY: y, timeStamp }) => {
+        window.addEventListener('mouseup', async ({ timeStamp }) => {
             events.push({
                 type: 'up',
                 timestamp: Time.origin + timeStamp,
