@@ -1,6 +1,7 @@
 <script lang="ts">
     export let value: string;
 
+    let bounds: HTMLElement;
     let element: HTMLElement;
     let width = 0;
 
@@ -15,7 +16,12 @@
 </script>
 
 <span bind:this={element}>{value}</span>
-<input type="text" style:width="{width}px" bind:value={value}>
+<label>
+    <input type="text" style:width="{width}px" bind:value={value}>
+    {#if !value}
+        <i class="ti ti-pencil"></i>
+    {/if}
+</label>
 
 <style lang="scss">
     span {
@@ -30,6 +36,9 @@
         font-family: inherit;
         font-weight: inherit;
         color: inherit;
-        min-width: 8rem;
+    }
+
+    input:focus {
+        min-width: 4rem;
     }
 </style>

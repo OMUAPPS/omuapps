@@ -115,6 +115,7 @@ export type Scene = {
 } | {
     type: 'effect_edit',
     id: string,
+    time: number,
 } | {
     type: 'script_edit',
     id: string,

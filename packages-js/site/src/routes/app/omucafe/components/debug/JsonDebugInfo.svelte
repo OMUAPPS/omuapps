@@ -10,7 +10,7 @@
 
 <style>
     pre {
-        background-color: #f0f0f0;
+        background: var(--color-bg-2);
         padding: 0.5rem 0;
         overflow-x: auto;
         width: 20rem;

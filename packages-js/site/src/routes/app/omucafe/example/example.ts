@@ -32,6 +32,7 @@ export const EXAMPLE: GameConfig = {
             behaviors: {
                 holdable: createHoldable(),
             },
+            effects: {},
             bounds: {
                 min: { x: 0, y: 0 },
                 max: { x: 565, y: 664 },
@@ -59,6 +60,7 @@ export const EXAMPLE: GameConfig = {
                     },
                 })
             },
+            effects: {},
             bounds: {
                 min: { x: 0, y: 0 },
                 max: { x: 562, y: 588 },
@@ -94,6 +96,7 @@ export const EXAMPLE: GameConfig = {
                     },
                 },
             },
+            effects: {},
             bounds: {
                 min: { x: 0, y: 0 },
                 max: { x: 831, y: 635 },
@@ -121,6 +124,7 @@ export const EXAMPLE: GameConfig = {
                     }
                 }),
             },
+            effects: {},
             bounds: {
                 min: { x: 0, y: 0 },
                 max: { x: 621, y: 275 },
@@ -139,7 +143,10 @@ export const EXAMPLE: GameConfig = {
             attributes: {
                 particle: createParticle({
                     type: 'particle',
-                    asset: asset(bubble),
+                    source: {
+                        type: 'random',
+                        assets: [asset(bubble)],
+                    },
                     emitter: createParticleEmitter({
                         count: 10,
                         duration: 480,

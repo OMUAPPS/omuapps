@@ -88,10 +88,6 @@
         background: var(--color-bg-2);
         max-height: 40rem;
         cursor: initial;
-
-        &.show-debug {
-            height: 70%;
-        }
     }
 
     button {

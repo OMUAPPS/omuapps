@@ -39,18 +39,28 @@ export function createParticleEmitter(options: Partial<ParticleEmitter>): Partic
     }
 }
 
+export type ParticleSource = {
+    type: 'random',
+    assets: Asset[],
+}
+
+export function createParticleSource(options: Partial<ParticleSource>): ParticleSource {
+    return {
+        type: 'random',
+        assets: options.assets ?? [],
+    }
+}
+
 export type EffectParticle = {
     type: 'particle',
+    source: ParticleSource,
     emitter: ParticleEmitter,
-    asset: Asset,
 };
 
-export function createParticle(options: Partial<EffectParticle> & {
-    asset: Asset,
-}): EffectParticle {
+export function createParticle(options: Partial<EffectParticle>): EffectParticle {
     return {
         type: 'particle',
-        asset: options.asset,
+        source: options.source ?? createParticleSource({}),
         emitter: options.emitter ?? createParticleEmitter({}),
     }
 }

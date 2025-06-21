@@ -1,45 +1,62 @@
 <script lang="ts">
-    import { type Effect } from '../game/effect.js';
+    import { Button, ButtonMini, Tooltip } from '@omujs/ui';
+    import { createParticle, type Effect } from '../game/effect.js';
+    import { getGame } from '../omucafe-app.js';
+    import EffectParticleEdit from './EffectParticleEdit.svelte';
+    import FitInput from './scriptedit/FitInput.svelte';
     
     export let effect: Effect;
+    
+    const { scene, gameConfig } = getGame();
 </script>
 
 <main>
     <div class="info">
-        <h3>エフェクト</h3>
-        <label>
-            エフェクト名
-            <input type="text" bind:value={effect.name} />
-        </label>
-        <code>
-            {JSON.stringify(effect, null, 2)}
-        </code>
-    </div>
-    <div>
-        <div>
-            <h2>
-                音
-                {#if effect.attributes.audio}
-                    <button on:click={() => {
-                        effect.attributes.audio = undefined;
-                    }} aria-label="削除">
-                        <i class="ti ti-trash"></i>
-                    </button>
-                {:else}
-                    <button on:click={() => {
-                    }}>
-                        音を設定
-                    </button>
-                {/if}
-            </h2>
-            {#if effect.attributes.audio}
-                {effect.attributes.audio}
-            {/if}
+        <div class="name">
+            <h1>
+                <Tooltip>
+                    {effect.id}
+                </Tooltip>
+                <FitInput bind:value={effect.name} />
+            </h1>
+            <ButtonMini on:click={async () => {
+                await navigator.clipboard.writeText(effect.id);
+            }} primary>
+                <Tooltip>
+                    IDをコピー
+                </Tooltip>
+                <i class="ti ti-copy"></i>
+            </ButtonMini>
+            <ButtonMini on:click={() => {
+                $scene = { type: 'product_list' };
+                delete $gameConfig.effects[effect.id];
+            }} primary>
+                <Tooltip>
+                    削除
+                </Tooltip>
+                <i class="ti ti-trash"></i>
+            </ButtonMini>
         </div>
-        <div>
-            <h2>粒子</h2>
+        <div class="attribute">
+            <div class="head">
+                <h2>
+                    粒子
+                </h2>
+                {#if effect.attributes.particle}
+                    <Button primary>
+                        <i class="ti ti-trash"></i>
+                    </Button>
+                {:else}
+                    <Button onclick={async () => {
+                        effect.attributes.particle = createParticle({});
+                    }} primary>
+                        粒子を追加
+                        <i class="ti ti-plus"></i>
+                    </Button>
+                {/if}
+            </div>
             {#if effect.attributes.particle}
-                {effect.attributes.particle}
+                <EffectParticleEdit bind:particle={effect.attributes.particle} />
             {/if}
         </div>
     </div>
@@ -54,47 +71,40 @@
         gap: 1rem;
     }
 
+    .name {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        width: 21rem;
+        border-bottom: 1px solid var(--color-1);
+        margin-bottom: 0.5rem;
+        padding-bottom: 1rem;
+
+        > h1 {
+            margin-right: auto;
+        }
+    }
+
     .info {
         display: flex;
+        align-items: stretch;
+        justify-content: flex-start;
         flex-direction: column;
-        gap: 1rem;
-        width: 20rem;
-        height: 100%;
         padding: 1rem;
-        outline: 1px solid var(--color-outline);
-        background: var(--color-bg-2);
-        box-shadow: 2px 0px 1px rgba($color: #000000, $alpha: 0.0621);
-        overflow-y: auto;
-
-        > label {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-    }
-
-    h3 {
-        border-bottom: 1px solid var(--color-1);
-        padding-bottom: 0.25rem;
-        margin-bottom: 1rem;
-    }
-
-    input {
-        padding: 0.5rem;
-        border: 1px solid var(--color-outline);
-
-        &:focus {
-            outline: none;
-            border-color: var(--color-1);
-        }
-    }
-
-    code {
-        white-space: pre-wrap;
-        word-break: break-all;
-        height: 18rem;
-        overflow: auto;
+        padding-top: 8rem;
+        padding-left: 2rem;
+        width: 24rem;
+        gap: 1rem;
+        overflow-x: hidden;
         background: var(--color-bg-1);
-        padding: 0.75rem;
+        border-right: 1px solid var(--color-1);
+        outline: 2px solid var(--color-bg-1);
+    }
+
+    .head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
     }
 </style>

@@ -22,9 +22,12 @@ type ParticleArguments = {
     bounds: AABB2,
 }
 
+function alphaFunc(t: number) {
+    return Math.sin(t * Math.PI);
+}
+
 export async function renderParticles(particle: EffectParticle, args: ParticleArguments) {
-    const { emitter, asset } = particle;
-    const { tex, width, height } = await getTextureByAsset(asset);
+    const { emitter, source } = particle;
     const random = ARC4.fromString(args.seed);
     const interval = emitter.duration / emitter.count;
     for (let i = 0; i < emitter.count; i ++) {
@@ -44,14 +47,16 @@ export async function renderParticles(particle: EffectParticle, args: ParticleAr
             acceleration,
             particleTime,
         );
+        const asset = rnd.choice(source.assets);
         const t = (elapsed % emitter.duration) / emitter.duration;
+        const { tex, width, height } = await getTextureByAsset(asset);
         draw.texture(
             pos.x - width / 2 * scale.x,
             pos.y - height / 2 * scale.y,
             pos.x + width / 2 * scale.x,
             pos.y + height / 2 * scale.y,
             tex,
-            new Vec4(1, 1, 1, 1 - t),
+            new Vec4(1, 1, 1, alphaFunc(t)),
         );
     }
 }

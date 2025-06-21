@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, FileDrop, Textbox, Tooltip } from '@omujs/ui';
+    import { ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import { fetchImage, getAsset, uploadAssetByFile } from '../game/asset.js';
     import type { DefaultBehaviors } from '../game/behavior.js';
@@ -15,6 +15,7 @@
     import HoldableEdit from './behavior/HoldableEdit.svelte';
     import SpawnerEdit from './behavior/SpawnerEdit.svelte';
     import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
+    import FitInput from './scriptedit/FitInput.svelte';
     import TransformEdit from './TransformEdit.svelte';
 
     export let item: Item;
@@ -69,38 +70,30 @@
 
 <main>
     <div class="info omu-scroll">
-        <div class="id">
-            <small>ID</small>
-            <p>{item.id}</p>
-            <div class="actions">
-                <Button onclick={() => {
-                    $scene = { type: 'product_list' };
-                    delete $gameConfig.items[item.id];
-                }}>
-                    削除
-                    <i class="ti ti-trash"></i>
-                </Button>
-            </div>
-        </div>
         <div class="name">
-            <Textbox bind:value={item.name} />
-            <FileDrop bind:open handle={async (fileList) => {
-                if (fileList.length !== 1) {
-                    throw new Error('FileDrop must receive only one file');
-                }
-                item.image = await uploadAssetByFile(fileList[0]);
-                const image = await getAsset(item.image).then(fetchImage);
-                item.bounds = {
-                    min: { x: 0, y: 0 },
-                    max: { x: image.width, y: image.height },
-                }
-            }} primary={!item.image} accept="image/*">
-                {#if item.image}
-                    <p>画像を変更</p>
-                {:else}
-                    <p>画像を追加</p>
-                {/if}
-            </FileDrop>
+            <h1>
+                <Tooltip>
+                    {item.id}
+                </Tooltip>
+                <FitInput bind:value={item.name} />
+            </h1>
+            <ButtonMini on:click={() => {
+                $scene = { type: 'product_list' };
+                delete $gameConfig.items[item.id];
+            }} primary>
+                <Tooltip>
+                    削除
+                </Tooltip>
+                <i class="ti ti-trash"></i>
+            </ButtonMini>
+            <ButtonMini on:click={async () => {
+                await navigator.clipboard.writeText(item.id);
+            }} primary>
+                <Tooltip>
+                    IDをコピー
+                </Tooltip>
+                <i class="ti ti-copy"></i>
+            </ButtonMini>
         </div>
         <div class="image" class:no-image={!item.image}>
             {#if item.image}
@@ -108,6 +101,24 @@
                 <AssetImage asset={asset} />
             {/if}
         </div>
+        <FileDrop bind:open handle={async (fileList) => {
+            if (fileList.length !== 1) {
+                throw new Error('FileDrop must receive only one file');
+            }
+            item.image = await uploadAssetByFile(fileList[0]);
+            const image = await getAsset(item.image).then(fetchImage);
+            item.bounds = {
+                min: { x: 0, y: 0 },
+                max: { x: image.width, y: image.height },
+            }
+        }} primary={!item.image} accept="image/*">
+            {#if item.image}
+                <p>画像を変更</p>
+            {:else}
+                <p>画像を追加</p>
+            {/if}
+        </FileDrop>
+        {item.effects}
         <TransformEdit bind:transform={item.transform} />
         <code>
             <!-- <JsonEdit bind:value={item.behaviors} /> -->
@@ -178,19 +189,18 @@
         opacity: 0.95;
     }
 
-    .id {
+    .name {
         display: flex;
         align-items: baseline;
         gap: 0.5rem;
-        width: 100%;
+        flex-wrap: wrap;
+        width: 21rem;
+        border-bottom: 1px solid var(--color-1);
+        margin-bottom: 0.5rem;
+        padding-bottom: 1rem;
 
-        > small {
-            font-size: 0.75rem;
-            color: var(--color-text);
-        }
-        
-        > p {
-            color: var(--color-1);
+        > h1 {
+            margin-right: auto;
         }
     }
 
@@ -214,23 +224,7 @@
         outline: 2px solid var(--color-bg-1);
     }
 
-    .name {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        width: 21rem;
-        gap: 1rem;
-        border-bottom: 1px solid var(--color-outline);
-        margin-bottom: 0.5rem;
-        padding-bottom: 1rem;
-    }
-
     .image {
-        width: 100%;
-        height: 10rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -251,10 +245,6 @@
         padding: 3rem 3rem;
         width: 24rem;
         overflow-y: auto;
-    }
-
-    h1 {
-        margin-bottom: 1rem;
     }
 
     .behavior {
@@ -303,15 +293,5 @@
             outline: 1px solid var(--color-1);
             outline-offset: -1px;
         }
-    }
-
-    code {
-        white-space: pre-wrap;
-        word-break: break-all;
-        max-height: 18rem;
-        width: 100%;
-        overflow: auto;
-        background: var(--color-bg-2);
-        padding: 0.75rem;
     }
 </style>

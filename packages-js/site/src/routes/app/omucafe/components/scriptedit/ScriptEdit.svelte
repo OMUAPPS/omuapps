@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button } from '@omujs/ui';
+    import { ButtonMini, Tooltip } from '@omujs/ui';
     import { setContext } from 'svelte';
     import { executeExpression, value, type Script } from '../../game/script.js';
     import { getGame } from '../../omucafe-app.js';
@@ -10,7 +10,7 @@
     import { SCRIPT_EDITOR_CONTEXT, type ScriptEditorContext, type ValueEdit } from './scripteditor.js';
 
     export let script: Script;
-    const { globals } = getGame();
+    const { scene, gameConfig, globals } = getGame();
 
     let edit: ValueEdit | null = null;
 
@@ -30,19 +30,39 @@
 
 <div class="editor">
     <div class="tab">
-        <div class="info">
+        <div class="name">
             <h1>
+                <Tooltip>
+                    {script.id}
+                </Tooltip>
                 <FitInput bind:value={script.name} />
-                <Button primary onclick={() => {
-                    const ctx = globals.newContext();
-                    executeExpression(ctx, script.expression);
-                }}>
-                    <i class="ti ti-caret-right-filled"></i>
-                </Button>
             </h1>
-            <small>
-                {script.id}
-            </small>
+            <ButtonMini on:click={() => {
+                $scene = { type: 'product_list' };
+                delete $gameConfig.items[script.id];
+            }} primary>
+                <Tooltip>
+                    削除
+                </Tooltip>
+                <i class="ti ti-trash"></i>
+            </ButtonMini>
+            <ButtonMini on:click={async () => {
+                await navigator.clipboard.writeText(script.id);
+            }} primary>
+                <Tooltip>
+                    IDをコピー
+                </Tooltip>
+                <i class="ti ti-copy"></i>
+            </ButtonMini>
+            <ButtonMini on:click={() => {
+                const ctx = globals.newContext();
+                executeExpression(ctx, script.expression);
+            }} primary>
+                <Tooltip>
+                    実行
+                </Tooltip>
+                <i class="ti ti-caret-right-filled"></i>
+            </ButtonMini>
         </div>
         {#if edit}
             <div class="edit">
@@ -154,6 +174,21 @@
         background: var(--color-bg-1);
         border-right: 1px solid var(--color-1);
         outline: 2px solid var(--color-bg-1);
+    }
+
+    .name {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        width: 21rem;
+        border-bottom: 1px solid var(--color-1);
+        margin-bottom: 0.5rem;
+        padding-bottom: 1rem;
+
+        > h1 {
+            margin-right: auto;
+        }
     }
 
     .info {

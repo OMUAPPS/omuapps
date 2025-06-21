@@ -54,4 +54,9 @@ export class ARC4 {
     public next() {
         return this.get(4);
     }
+
+    public choice<T>(array: T[]) {
+        const index = Math.floor((this.next() * array.length) % array.length);
+        return array[index];
+    }
 }

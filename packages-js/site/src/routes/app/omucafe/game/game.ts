@@ -393,6 +393,26 @@ async function renderScreen() {
         });
         delete context.items['preview'];
         matrices.view.pop();
+    } else if (scene.type === 'effect_edit') {
+        draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(1, 1, 1, 0.5));
+        matrices.view.push();
+        matrices.view.translate(width / 2, height / 2, 0);
+        matrices.view.scale(scaleFactor, scaleFactor, 1);
+        const { id, time } = scene;
+        const elapsed = Time.now() - time;
+        const effect = context.config.effects[id];
+        const { particle } = effect.attributes;
+        if (particle) {
+            await renderParticles(particle, {
+                seed: effect.id,
+                bounds: AABB2.from({
+                    min: { x: -100, y: -100 },
+                    max: { x: 100, y: 100 },
+                }),
+                time: elapsed,
+            });
+        }
+        matrices.view.pop();
     } else if (scene.type === 'photo_mode') {
         const t = getScreenTime(scene.time);
         const photoMode = context.config.photo_mode;
@@ -554,6 +574,7 @@ import { getGame, type User } from '../omucafe-app.js';
 import { Mouse } from './mouse.js';
 import { isNounLike, type OrderMessage } from './order.js';
 import { Paint, PAINT_EVENT_TYPE, type PaintEvent } from './paint.js';
+import { renderParticles } from './renderer/particle.js';
 import { getResources, type Resources } from './resources.js';
 
 async function renderNametag(user: User, bounds: AABB2) {

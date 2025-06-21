@@ -6,6 +6,7 @@
     import { uniqueId } from '../game/helper.js';
     import { createItem } from '../game/item.js';
     import { createScript } from '../game/script.js';
+    import { Time } from '../game/time.js';
     import { getGame } from '../omucafe-app.js';
 
     export let type: 'product' | 'item' | 'effect' | 'script' | undefined = undefined;
@@ -119,7 +120,7 @@
                 attributes: {},
             });
             $config.effects[effect.id] = effect;
-            $scene = { type: 'effect_edit', id: effect.id };
+            $scene = { type: 'effect_edit', id: effect.id, time: Time.now() };
         }}>
             エフェクトを追加
             <i class="ti ti-plus"></i>
@@ -128,7 +129,7 @@
     <div class="list">
         {#each Object.entries($config.effects).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
             <button on:click={() => {
-                $scene = { type: 'effect_edit', id };
+                $scene = { type: 'effect_edit', id, time: Time.now() };
             }}>
                 <div class="item">
                     <div class="image">
