@@ -353,9 +353,9 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
     const { gl } = glContext;
     await buffer.useAsync(async () => {
         buffer.attachTexture(render.texture);
-        glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
-        glContext.gl.clearColor(1, 1, 1, 0);
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
+        gl.clearColor(1, 1, 1, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         glContext.stateManager.pushViewport(dimentions);
         matrices.push();
         matrices.identity();

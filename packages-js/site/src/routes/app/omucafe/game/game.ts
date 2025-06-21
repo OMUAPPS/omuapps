@@ -403,12 +403,18 @@ async function renderScreen() {
         const effect = context.config.effects[id];
         const { particle } = effect.attributes;
         if (particle) {
+            const bounds = AABB2.from({
+                min: { x: -100, y: -100 },
+                max: { x: 100, y: 100 },
+            });
+            draw.rectangleStroke(
+                bounds.min.x, bounds.min.y,
+                bounds.max.x, bounds.max.y,
+                new Vec4(0, 0, 0, 0.5), 2,
+            )
             await renderParticles(particle, {
                 seed: effect.id,
-                bounds: AABB2.from({
-                    min: { x: -100, y: -100 },
-                    max: { x: 100, y: 100 },
-                }),
+                bounds,
                 time: elapsed,
             });
         }
@@ -419,6 +425,10 @@ async function renderScreen() {
         const client = side === 'client';
         const screenScale = client ? scaleFactor * 0.7 * 2 : scaleFactor * 2;
         const offsetY = client ? matrices.height / 2 - matrices.height * 0.07 - 50 : matrices.height / 2;
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        if (t < 0.5 && !client) {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        }
         await matrices.view.scopeAsync(async () => {
             matrices.view.translate(matrices.width / 2, offsetY, 0);
             matrices.view.scale(screenScale, screenScale, 1);
@@ -447,7 +457,6 @@ async function renderScreen() {
             width / 2, height / 2,
             tex,
         )
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         draw.texture(
             -width / 2, -height / 2,
             width / 2, height / 2,
@@ -703,18 +712,7 @@ export async function renderClientSide() {
     });
 
     setupHUDProjection();
-    if (scene.type === 'photo_mode') {
-        const t = getScreenTime(scene.time);
-        matrices.view.scope(() => {
-            matrices.view.translate(0, 50 * (1 - t), 0);
-            draw.texture(
-                0, matrices.height,
-                matrices.width, 0,
-                frameBufferTexture,
-                new Vec4(1, 1, 1, t),
-            );
-        });
-    } else {
+    if (scene.type !== 'photo_mode') {
         draw.texture(
             0, matrices.height,
             matrices.width, 0,
@@ -732,6 +730,7 @@ export async function renderOverlaySide() {
         throw new Error('Overlay is not in overlay side');
     }
     const scene = context.scene;
+    const { gl } = glContext;
 
     setupHUDProjection();
     updateMouseAsset();
@@ -743,8 +742,10 @@ export async function renderOverlaySide() {
         frameBufferTexture.ensureSize(matrices.width, matrices.height);
     });
     await frameBuffer.useAsync(async () => {
-        glContext.gl.clear(glContext.gl.COLOR_BUFFER_BIT);
-        glContext.gl.clearColor(1, 1, 1, 0);
+        gl.clearColor(1, 1, 1, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        
         await update();
         await renderCounter();
         await renderItems([ITEM_LAYERS.KITCHEN_ITEMS]);
@@ -763,43 +764,50 @@ export async function renderOverlaySide() {
     setupHUDProjection();
     if (scene.type === 'photo_mode') {
         const t = getScreenTime(scene.time);
-        matrices.view.scope(() => {
-            matrices.view.translate(0, 50 * (1 - t), 0);
-            draw.texture(
-                0, matrices.height,
-                matrices.width, 0,
-                frameBufferTexture,
-                new Vec4(1, 1, 1, t),
-            );
-        });
+        if (t > 0.1) {
+            matrices.view.scope(() => {
+                matrices.view.translate(0, 50 * (1 - t), 0);
+                gl.disable(gl.BLEND);
+                draw.texture(
+                    0, matrices.height,
+                    matrices.width, 0,
+                    frameBufferTexture,
+                    new Vec4(1, 1, 1, t),
+                );
+                gl.enable(gl.BLEND);
+            });
+        }
     } else {
+        gl.disable(gl.BLEND);
         draw.texture(
             0, matrices.height,
             matrices.width, 0,
             frameBufferTexture,
         );
+        gl.enable(gl.BLEND);
     }
 
     await renderScreen();
     await renderCursor();
 }
 
-export async function render(gl: GlContext): Promise<void> {
-    matrices.width = gl.gl.canvas.width;
-    matrices.height = gl.gl.canvas.height;
+export async function render(ctx: GlContext): Promise<void> {
+    matrices.width = ctx.gl.canvas.width;
+    matrices.height = ctx.gl.canvas.height;
     let resolveLock = () => {};
     renderLock = new Promise<void>(resolve => {
         resolveLock = resolve;
     });
-    const { gl: glInternal } = gl;
+    const { gl } = ctx;
     glContext.stateManager.setViewport({ x: matrices.width, y: matrices.height });
-    glInternal.clearColor(1, 1, 1, 0);
-    glInternal.clear(glInternal.COLOR_BUFFER_BIT);
-    glInternal.enable(glInternal.BLEND);
-    // glInternal.blendFuncSeparate(glInternal.SRC_ALPHA, glInternal.ONE_MINUS_SRC_ALPHA, glInternal.ONE, glInternal.ONE_MINUS_SRC_ALPHA);
-    glInternal.clear(glInternal.COLOR_BUFFER_BIT);
-    glInternal.clearColor(1, 1, 1, 0);
-    glInternal.blendFuncSeparate(glInternal.SRC_ALPHA, glInternal.ONE_MINUS_SRC_ALPHA, glInternal.ONE, glInternal.ONE);
+    gl.enable(gl.BLEND);
+    // gl.clearColor(1, 1, 1, 0);
+    // gl.clear(gl.COLOR_BUFFER_BIT);
+    // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    // gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE);
+    gl.clearColor(1, 1, 1, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     
     const rect = {
         width: matrices.width,
