@@ -10,7 +10,7 @@
 </script>
 
 <div class="container">
-    <iframe on:load={() => {loading = false;}} src={props.app.url} title="" frameborder="0" allow="camera; microphone"></iframe>
+    <iframe on:load={() => {loading = false;}} src={props.app.url} title="" frameborder="0" allow="camera; microphone; clipboard-read; clipboard-write"></iframe>
     <div class="window-resize bottom"></div>
     <div class="window-resize right"></div>
     {#if loading}
