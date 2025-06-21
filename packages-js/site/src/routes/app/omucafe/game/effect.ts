@@ -4,7 +4,7 @@ import type { ADSRClip } from './audioclip.js';
 import { uniqueId } from './helper.js';
 import { Time } from './time.js';
 
-type EffectAudio = {
+export type EffectAudio = {
     type: 'audio',
     clip: ADSRClip,
 };
@@ -39,7 +39,7 @@ export function createParticleEmitter(options: Partial<ParticleEmitter>): Partic
     }
 }
 
-type EffectParticle = {
+export type EffectParticle = {
     type: 'particle',
     emitter: ParticleEmitter,
     asset: Asset,
@@ -55,7 +55,7 @@ export function createParticle(options: Partial<EffectParticle> & {
     }
 }
 
-type EffectAttributes = {
+export type EffectAttributes = {
     audio: EffectAudio,
     particle: EffectParticle,
 }

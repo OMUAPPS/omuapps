@@ -10,7 +10,7 @@ import { applyDragEffect, draw, getContext, glContext, matrices, mouse } from '.
 import { copy, uniqueId } from './helper.js';
 import type { Item } from './item.js';
 import type { KitchenContext } from './kitchen.js';
-import { ARC4 } from './random.js';
+import { renderParticles } from './renderer/particle.js';
 import { Time } from './time.js';
 import { transformToMatrix, type Bounds, type Transform } from './transform.js';
 
@@ -411,54 +411,19 @@ export async function renderItems(layers: ItemLayer[]) {
     }
 }
 
-function physicsEquation(
-    position: Vec2,
-    velocity: Vec2,
-    acceleration: Vec2,
-    time: number,
-): Vec2 {
-    // x=x0+v0t+1/2at^2
-    return position.add(velocity.scale(time)).add(acceleration.scale(time * time / 2));
-}
-
 async function renderEffects(itemState: ItemState) {
     const transform = getItemStateTransform(itemState);
     const renderBounds = transform.transformAABB2(itemState.bounds);
     for (const effect of Object.values(itemState.effects)) {
         const { startTime: start } = effect;
         const effectTime = Time.now() - start;
-        if (effect.attributes.particle) {
-            const { emitter, asset } = effect.attributes.particle;
-            const { tex, width, height } = await getTextureByAsset(asset);
-            const random = ARC4.fromString(effect.id);
-            const interval = emitter.duration / emitter.count;
-            for (let i = 0; i < emitter.count; i ++) {
-                const offset = interval * i;
-                const elapsed = effectTime - offset;
-                if (elapsed < 0) continue;
-                const index = Math.floor(elapsed / emitter.duration);
-                const rnd = ARC4.fromNumber(random.next() + index);
-                const position = renderBounds.at({ x: rnd.next(), y: rnd.next() });
-                const velocity = AABB2.from(emitter.velocity).at({ x: rnd.next(), y: rnd.next() });
-                const acceleration = AABB2.from(emitter.acceleration).at({ x: rnd.next(), y: rnd.next() });
-                const scale = AABB2.from(emitter.scale).at({ x: rnd.next(), y: rnd.next() });
-                const particleTime = (elapsed % emitter.duration) / 1000;
-                const pos = physicsEquation(
-                    position,
-                    velocity,
-                    acceleration,
-                    particleTime,
-                );
-                const t = (elapsed % emitter.duration) / emitter.duration;
-                draw.texture(
-                    pos.x - width / 2 * scale.x,
-                    pos.y - height / 2 * scale.y,
-                    pos.x + width / 2 * scale.x,
-                    pos.y + height / 2 * scale.y,
-                    tex,
-                    new Vec4(1, 1, 1, 1 - t),
-                );
-            }
+        const { particle } = effect.attributes;
+        if (particle) {
+            await renderParticles(particle, {
+                seed: effect.id,
+                bounds: renderBounds,
+                time: effectTime,
+            });
         }
     }
 }

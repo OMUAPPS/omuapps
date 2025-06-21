@@ -1,7 +1,7 @@
 import type { Asset } from '../game/asset.js';
 import { createContainer } from '../game/behavior/container.js';
 import { createHoldable } from '../game/behavior/holdable.js';
-import { createParticle, createParticleEmitter } from '../game/effect.js';
+import { createEffect, createParticle, createParticleEmitter } from '../game/effect.js';
 import { builder, createScript } from '../game/script.js';
 import { DEFAULT_GAME_CONFIG, type GameConfig } from '../omucafe-app.js';
 import bubble from './bubble.png';
@@ -133,7 +133,7 @@ export const EXAMPLE: GameConfig = {
         }
     },
     effects: {
-        fry: {
+        fry: createEffect({
             id: 'fry',
             name: 'Fry',
             attributes: {
@@ -154,11 +154,11 @@ export const EXAMPLE: GameConfig = {
                         scale: {
                             min: { x: 0.5, y: 0.5 },
                             max: { x: 1, y: 1 },
-                        }
+                        },
                     })
                 }),
-            },
-        },
+            }
+        }),
     },
     scripts: {
         fryer_drop: createScript({
