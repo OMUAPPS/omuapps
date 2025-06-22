@@ -6,7 +6,7 @@ import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import bell from '../images/bell.png';
 import counter_client from '../images/counter_client.png';
-import { getTextureByUri, getTextureByUriCORS } from './asset.js';
+import { getTextureByAsset, getTextureByUri, getTextureByUriCORS } from './asset.js';
 import { createContainer } from './behavior/container.js';
 import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from './item-state.js';
 import { createItem } from './item.js';
@@ -420,140 +420,48 @@ async function renderScreen() {
         }
         matrices.view.pop();
     } else if (scene.type === 'photo_mode') {
-        const t = getScreenTime(scene.time);
-        const photoMode = context.config.photo_mode;
-        const client = side === 'client';
-        const screenScale = client ? scaleFactor * 0.7 * 2 : scaleFactor * 2;
-        const offsetY = client ? matrices.height / 2 - matrices.height * 0.07 - 50 : matrices.height / 2;
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        if (t < 0.5 && !client) {
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        }
-        await matrices.view.scopeAsync(async () => {
-            matrices.view.translate(matrices.width / 2, offsetY, 0);
-            matrices.view.scale(screenScale, screenScale, 1);
-            matrices.view.translate(100 * t, 1000 * t, 0);
-            matrices.view.rotate(Axis.Z_POS.rotateDeg(4.74 / 7 - 10 * t));
-            const scale = Math.pow(1.24, photoMode.scale * 0.5);
-            matrices.view.scale(scale, scale, 1);
-            if (photoMode.tool.type === 'move') {
-                await updateHoveringItem([ITEM_LAYERS.PHOTO_MODE]);
-            } else {
-                context.hovering = null;
-                context.held = null;
-            }
-            await renderItems([ITEM_LAYERS.PHOTO_MODE]);
-            await renderHoveringItem();
-            await renderHeldItem();
-        });
+        const { photoTake } = scene;
+        await renderPhotoScreen(scene, gl);
         matrices.view.push();
-        matrices.view.translate(matrices.width / 2, offsetY, 0);
-        matrices.view.scale(screenScale, screenScale, 1);
-        matrices.view.rotate(Axis.Z_POS.rotateDeg(-4.74 - 30 * t));
-        matrices.view.translate(300 * t, -1000 * t, 0);
-        const { tex, width, height } = resources.photo_frame;
-        draw.texture(
-            -width / 2, -height / 2,
-            width / 2, height / 2,
-            tex,
-        )
-        draw.texture(
-            -width / 2, -height / 2,
-            width / 2, height / 2,
-            paint.texture,
-        )
+        matrices.view.translate(matrices.width / 2, matrices.height / 2, 0);
+        matrices.view.scale(scaleFactor, scaleFactor, 0);
+        const center = new Vec2(0, 0);
         draw.fontFamily = 'Note Sans JP';
-        draw.fontSize = 26;
-        const dateText = new Date(scene.time).toLocaleString();
-        const dateMetrics = draw.measureTextActual(dateText);
-        const dateDimentions = dateMetrics.dimensions();
-        await draw.text(width / 2 - dateDimentions.x - 140, height / 2 - dateDimentions.y - 120, dateText, new Vec4(0, 0, 0, 0.5));
-        const mousePos = matrices.unprojectPoint(mouse.gl).mul({
-            x: 1,
-            y: -1,
-        }).add({
-            x: width / 2,
-            y: height / 2,
-        });
-        const lastPos = matrices.unprojectPoint(Vec2.from(mouse.gl).sub(mouse.deltaGl)).mul({
-            x: 1,
-            y: -1,
-        }).add({
-            x: width / 2,
-            y: height / 2,
-        });
+        draw.fontSize = 100;
+        const TIME_MARGIN = 100;
+        if (photoTake?.type === 'countdown') {
+            const { startTime, duration } = photoTake;
+            const target = startTime + duration;
+            const opacity = 1 - invLerp(startTime, startTime + duration - TIME_MARGIN, Time.now());
+            const remaining = Math.floor(Math.max(0, target - Time.now()) / 1000) + 1;
+            await draw.textAlign(center, remaining.toString(), Vec2.CENTER, new Vec4(0, 0, 0, opacity));
+        } else if (photoTake?.type === 'taken') {
+            const { time, asset } = photoTake;
+            const offset = 200;
+            const elapsed = Time.now() - time - offset;
+            const { tex, width, height } = await getTextureByAsset(asset);
+            matrices.view.push();
+            matrices.view.identity();
+            matrices.view.translate(matrices.width / 2, matrices.height / 2, 0);
+            matrices.model.push();
+            const t = 1 - 1 / (elapsed / 200 + 1);
+            const scale = lerp(1.1, 1, t);
+            matrices.model.scale(scale, scale, 1);
+            const fitScale = Math.max(matrices.width / width, matrices.height / height);
+            matrices.view.scale(fitScale, fitScale, 1);
+            draw.texture(
+                -width / 2,
+                -height / 2,
+                width / 2,
+                height / 2,
+                tex,
+                new Vec4(1, 1, 1, Math.min(1, t * 2)),
+            );
+            matrices.model.pop();
+            matrices.view.pop();
+        }
         matrices.view.pop();
         
-        const tool = photoMode.tool;
-        if (client && tool.type !== 'move' && mouse.over && !mouse.ui) {
-            const radius = tool.type === 'pen' ? photoMode.pen.width : photoMode.eraser.width;
-            const cursor = matrices.unprojectPoint(mouse.gl);
-            const penRadius = radius / 0.7 * scaleFactor * 2;
-            draw.circle(
-                cursor.x,
-                cursor.y,
-                penRadius + 2,
-                penRadius + 8,
-                new Vec4(1, 1, 1, 1),
-            );
-            draw.circle(
-                cursor.x,
-                cursor.y,
-                penRadius + 0,
-                penRadius + 2,
-                new Vec4(0, 0, 0, 1),
-            );
-        }
-        if (client && tool.type !== 'move' && mouse.down && mouse.over && !mouse.ui) {
-            let a: Vec2 = Vec2.ZERO;
-            let b: Vec2 = Vec2.ZERO;
-            let c: Vec2 = Vec2.ZERO;
-            const distance = mousePos.sub(penTrail?.last ?? Vec2.ZERO).length();
-            if (penTrail) {
-                a = penTrail.last;
-                b = penTrail.last.add(penTrail.dir.scale(0.25));
-                c = mousePos;
-            } else {
-                a = lastPos;
-                b = lastPos.lerp(mousePos, 0.5);
-                c = mousePos;
-            }
-            penTrail = {
-                last: mousePos,
-                dir: Bezier.quadraticDerivative2(a, b, c, 0.5),
-                time: penTrail?.time ?? Time.now(),
-            };
-            const newQueue: PaintEvent[] = [];
-            if (distance > 0.5) {
-                if (tool.type === 'eraser') {
-                    newQueue.push({
-                        t: PAINT_EVENT_TYPE.ERASER,
-                        path: {
-                            t: 'qb',
-                            in: penTrail ? photoMode.eraser.width : 0,
-                            out: photoMode.eraser.width,
-                            a, b, c,
-                        }
-                    });
-                } else {
-                    newQueue.push({
-                        t: PAINT_EVENT_TYPE.PEN,
-                        path: {
-                            t: 'qb',
-                            in: penTrail ? photoMode.pen.width : 0,
-                            out: photoMode.pen.width,
-                            a, b, c,
-                        }
-                    });
-                }
-            }
-            paint.emit(...newQueue);
-        } else {
-            penTrail = null;
-        }
-        paint.update(width, height);
-
-        // await renderCustomersClient(new Vec2(1920 * 2 - 1200, 80));
         const { order } = context;
         if (order && order.message) {
             matrices.view.push();
@@ -570,6 +478,142 @@ let penTrail: {
     time: number,
 } | null = null;
 
+async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2RenderingContext) {
+    const t = getScreenTime(scene.time);
+    const photoMode = context.config.photo_mode;
+    const client = side === 'client';
+    const screenScale = client ? scaleFactor * 0.7 * 2 : scaleFactor * 2;
+    const offsetY = client ? matrices.height / 2 - matrices.height * 0.07 - 50 : matrices.height / 2;
+    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    if (t < 0.5 && !client) {
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    }
+    await matrices.view.scopeAsync(async () => {
+        matrices.view.translate(matrices.width / 2, offsetY, 0);
+        matrices.view.scale(screenScale, screenScale, 1);
+        matrices.view.translate(100 * t, 1000 * t, 0);
+        matrices.view.rotate(Axis.Z_POS.rotateDeg(4.74 / 7 - 10 * t));
+        const scale = Math.pow(1.24, photoMode.scale * 0.5);
+        matrices.view.scale(scale, scale, 1);
+        if (photoMode.tool.type === 'move') {
+            await updateHoveringItem([ITEM_LAYERS.PHOTO_MODE]);
+        } else {
+            context.hovering = null;
+            context.held = null;
+        }
+        await renderItems([ITEM_LAYERS.PHOTO_MODE]);
+        await renderHoveringItem();
+        await renderHeldItem();
+    });
+    matrices.view.push();
+    matrices.view.translate(matrices.width / 2, offsetY, 0);
+    matrices.view.scale(screenScale, screenScale, 1);
+    matrices.view.rotate(Axis.Z_POS.rotateDeg(-4.74 - 30 * t));
+    matrices.view.translate(300 * t, -1000 * t, 0);
+    const { tex, width, height } = resources.photo_frame;
+    draw.texture(
+        -width / 2, -height / 2,
+        width / 2, height / 2,
+        tex
+    );
+    draw.texture(
+        -width / 2, -height / 2,
+        width / 2, height / 2,
+        paint.texture
+    );
+    draw.fontFamily = 'Note Sans JP';
+    draw.fontSize = 26;
+    const dateText = new Date(scene.time).toLocaleString();
+    const dateMetrics = draw.measureTextActual(dateText);
+    const dateDimentions = dateMetrics.dimensions();
+    await draw.text(width / 2 - dateDimentions.x - 140, height / 2 - dateDimentions.y - 120, dateText, new Vec4(0, 0, 0, 0.5));
+    const mousePos = matrices.unprojectPoint(mouse.gl).mul({
+        x: 1,
+        y: -1,
+    }).add({
+        x: width / 2,
+        y: height / 2,
+    });
+    const lastPos = matrices.unprojectPoint(Vec2.from(mouse.gl).sub(mouse.deltaGl)).mul({
+        x: 1,
+        y: -1,
+    }).add({
+        x: width / 2,
+        y: height / 2,
+    });
+    matrices.view.pop();
+    if (scene.photoTake) return;
+
+    const tool = photoMode.tool;
+    if (client && tool.type !== 'move' && mouse.over && !mouse.ui) {
+        const radius = tool.type === 'pen' ? photoMode.pen.width : photoMode.eraser.width;
+        const cursor = matrices.unprojectPoint(mouse.gl);
+        const penRadius = radius / 0.7 * scaleFactor * 2;
+        draw.circle(
+            cursor.x,
+            cursor.y,
+            penRadius + 2,
+            penRadius + 8,
+            new Vec4(1, 1, 1, 1)
+        );
+        draw.circle(
+            cursor.x,
+            cursor.y,
+            penRadius + 0,
+            penRadius + 2,
+            new Vec4(0, 0, 0, 1)
+        );
+    }
+    if (client && tool.type !== 'move' && mouse.down && mouse.over && !mouse.ui) {
+        let a: Vec2 = Vec2.ZERO;
+        let b: Vec2 = Vec2.ZERO;
+        let c: Vec2 = Vec2.ZERO;
+        const distance = mousePos.sub(penTrail?.last ?? Vec2.ZERO).length();
+        if (penTrail) {
+            a = penTrail.last;
+            b = penTrail.last.add(penTrail.dir.scale(0.25));
+            c = mousePos;
+        } else {
+            a = lastPos;
+            b = lastPos.lerp(mousePos, 0.5);
+            c = mousePos;
+        }
+        penTrail = {
+            last: mousePos,
+            dir: Bezier.quadraticDerivative2(a, b, c, 0.5),
+            time: penTrail?.time ?? Time.now(),
+        };
+        const newQueue: PaintEvent[] = [];
+        if (distance > 0.5) {
+            if (tool.type === 'eraser') {
+                newQueue.push({
+                    t: PAINT_EVENT_TYPE.ERASER,
+                    path: {
+                        t: 'qb',
+                        in: penTrail ? photoMode.eraser.width : 0,
+                        out: photoMode.eraser.width,
+                        a, b, c,
+                    }
+                });
+            } else {
+                newQueue.push({
+                    t: PAINT_EVENT_TYPE.PEN,
+                    path: {
+                        t: 'qb',
+                        in: penTrail ? photoMode.pen.width : 0,
+                        out: photoMode.pen.width,
+                        a, b, c,
+                    }
+                });
+            }
+        }
+        paint.emit(...newQueue);
+    } else {
+        penTrail = null;
+    }
+    paint.update(width, height);
+}
+
 export async function renderBackgroundSide() {
     if (side !== 'background') return;
 
@@ -577,9 +621,10 @@ export async function renderBackgroundSide() {
     await renderBackground();
 }
 
+import { invLerp, lerp } from '$lib/math/math.js';
 import dummy_back from '../images/dummy_back.png';
 import dummy_front from '../images/dummy_front.png';
-import { getGame, type User } from '../omucafe-app.js';
+import { getGame, type SceneType, type User } from '../omucafe-app.js';
 import { Mouse } from './mouse.js';
 import { isNounLike, type OrderMessage } from './order.js';
 import { Paint, PAINT_EVENT_TYPE, type PaintEvent } from './paint.js';

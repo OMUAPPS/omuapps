@@ -45,6 +45,25 @@ export async function uploadAssetByFile(file: File): Promise<Asset> {
     return asset;
 }
 
+export async function uploadAssetByBlob(blob: Blob): Promise<Asset> {
+    const buffer = new Uint8Array(await blob.arrayBuffer());
+    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const id = APP_ID.join('asset', hash);
+    const { omu, resourcesRegistry } = getGame();
+    const result = await omu.assets.upload(id, buffer);
+    const asset: Asset = {
+        type: 'asset',
+        id: result.key(),
+    };
+    resourcesRegistry.modify((value) => {
+        value.assets[result.key()] = asset;
+        return value
+    })
+    return asset;
+}
+
 const assetCache = new Map<string, Promise<string>>();
 
 export function getAssetKey(asset: Asset) {

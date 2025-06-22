@@ -9,6 +9,7 @@ export class Vec2 {
     public static DOWN = new Vec2(0, -1);
     public static LEFT = new Vec2(-1, 0);
     public static RIGHT = new Vec2(1, 0);
+    public static CENTER = new Vec2(0.5, 0.5);
 
     constructor(
         public readonly x: number,

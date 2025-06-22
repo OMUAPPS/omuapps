@@ -89,6 +89,20 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<GameConfig>(APP_ID, {
     defaultValue: DEFAULT_GAME_CONFIG,
 });
 
+export type PhotoTakeState = {
+    type: 'countdown',
+    startTime: number,
+    duration: number,
+} | {
+    type: 'taking',
+    startTime: number,
+    duration: number,
+} | {
+    type: 'taken',
+    asset: Asset,
+    time: number,
+}
+
 export type Scene = {
     type: 'loading',
 } | {
@@ -99,6 +113,7 @@ export type Scene = {
     type: 'photo_mode',
     time: number,
     items: string[],
+    photoTake?: PhotoTakeState,
 } | {
     type: 'cooking',
 } | {
@@ -121,12 +136,26 @@ export type Scene = {
     id: string,
 };
 
+export type SceneType<T extends Scene['type'] = Scene['type']> = Extract<Scene, { type: T }>;
+
 const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {
     name: 'scene',
     defaultValue: {
         type: 'loading',
     },
 });
+
+type GalleryItem = {
+    id: string,
+    asset: Asset,
+    timestamp: string,
+    order: Order | null,
+}
+
+const GALLERY_REGISTRY_TYPE = TableType.createJson<GalleryItem>(APP_ID, {
+    name: 'gallery',
+    key: (item) => item.id,
+})
 
 export type SceneContext = {
     time: number,
@@ -348,6 +377,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     const sceneRegistry = omu.registries.get(SCENE_REGISTRY_TYPE);
     const scene = makeRegistryWritable(sceneRegistry);
     const orders = omu.tables.get(ORDER_TABLE_TYPE);
+    const gallery = omu.tables.get(GALLERY_REGISTRY_TYPE);
     const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
     const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
     const globals = new Globals();
@@ -396,6 +426,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
         config,
         states,
         orders,
+        gallery,
         paintSignal,
         paintEvents,
         scene,
@@ -493,6 +524,7 @@ export type Game = {
     sceneRegistry: Registry<Scene>,
     scene: Writable<Scene>,
     orders: Table<Order>,
+    gallery: Table<GalleryItem>,
     paintSignal: Signal<PaintEvent[]>,
     paintEvents: Writable<PaintBuffer>,
     globals: Globals,
