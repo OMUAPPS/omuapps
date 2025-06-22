@@ -39,9 +39,7 @@
         </div>
         <div class="attribute">
             <div class="head">
-                <h2>
-                    粒子
-                </h2>
+                粒子
                 {#if effect.attributes.particle}
                     <Button primary onclick={async () => {
                         effect.attributes.particle = undefined;
@@ -83,7 +81,7 @@
         padding-top: 8rem;
         padding-left: 2rem;
         width: 24rem;
-        gap: 1rem;
+        gap: 2rem;
         overflow-x: hidden;
         background: var(--color-bg-1);
         border-right: 1px solid var(--color-1);
@@ -108,5 +106,9 @@
         display: flex;
         align-items: baseline;
         justify-content: space-between;
+        font-size: 1.5rem;
+        border-bottom: 1px solid var(--color-1);
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
     }
 </style>

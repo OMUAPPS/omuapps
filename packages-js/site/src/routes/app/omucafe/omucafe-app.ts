@@ -116,6 +116,9 @@ export type Scene = {
     photoTake?: PhotoTakeState,
 } | {
     type: 'cooking',
+    transition?: {
+        time: number,
+    }
 } | {
     type: 'kitchen_edit',
 } | {

@@ -18,6 +18,7 @@
             render={renderGame}
             enter={() => {
                 mouse.over = true;
+                mouse.ui = false;
             }}
             leave={() => {
                 mouse.over = false;

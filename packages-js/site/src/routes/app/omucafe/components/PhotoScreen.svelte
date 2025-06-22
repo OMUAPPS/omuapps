@@ -1,8 +1,10 @@
 <script lang="ts">
-    import { Button, Slider, Tooltip } from '@omujs/ui';
+    import { Slider, Tooltip } from '@omujs/ui';
     import { fly } from 'svelte/transition';
     import { uploadAssetByBlob } from '../game/asset.js';
+    import { getContext } from '../game/game.js';
     import { uniqueId } from '../game/helper.js';
+    import { removeItemState } from '../game/item-state.js';
     import { Time } from '../game/time.js';
     import { getGame, type PhotoTakeState, type SceneType } from '../omucafe-app.js';
 
@@ -193,14 +195,29 @@
     {/if}
 </div>
 {#if photoMode.photoTake?.type === 'taken'}
-    <div class="screenshot">
-        <Button onclick={() => {
+    <div class="center">
+        <button on:click={() => {
+            photoMode.photoTake = undefined;
+        }}>
+            撮り直す
+            <i class="ti ti-refresh"></i>
+        </button>
+        <button on:click={() => {
             $scene = {
                 type: 'cooking',
+                transition: {
+                    time: Time.now(),
+                }
             }
-        }}>
+            const { items } = getContext();
+            for (const id of photoMode.items) {
+                const item = items[id];
+                removeItemState(item);
+            }
+        }} class="primary">
             終わる
-        </Button>
+            <i class="ti ti-check"></i>
+        </button>
     </div>
 {/if}
 <div class="actions">
@@ -372,6 +389,52 @@
             background: var(--color-bg-2);
         }
         
+        > .primary {
+            background: var(--color-1);
+            color: var(--color-bg-2);
+        }
+    }
+
+    .center {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 1rem;
+        height: 12rem;
+        padding: 2rem;
+        padding-right: 15%;
+        background: linear-gradient(
+            to bottom,
+            transparent 0%,
+            var(--color-bg-2) 100%
+        );
+
+        > button {
+            width: 12rem;
+            height: 4rem;
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            font-weight: 600;
+            font-size: 1.25rem;
+            border: 0;
+            transform: skew(-2deg);
+
+            > i {
+                margin-left: 0.25rem;
+            }
+
+            &:hover {
+                outline: 1px solid var(--color-1);
+                outline-offset: 0.5rem;
+                transform: skew(-2deg) scale(0.98);
+                transition: all 0.1621s cubic-bezier(0.12, 0.87, 0.26, 0.97);
+            }
+        }
+
         > .primary {
             background: var(--color-1);
             color: var(--color-bg-2);

@@ -89,12 +89,12 @@ async function handleMouseUp() {
 
 function syncData() {
     if (!changed) return;
-    changed = false;
     const time = Time.now();
     const delta = time - lastUpdate;
     if (delta < 1000 / UPDATE_RATE) {
         return;
     }
+    changed = false;
     lastUpdate = time;
     const { states } = getGame();
     states.set({
@@ -325,6 +325,7 @@ async function updateMouseClient() {
     const position = matrices.unprojectPoint(mouse.gl);
     mouse.delta = position.sub(mouse.position);
     mouse.position = position;
+    context.mouse = mouse;
 }
 
 function updateMouseAsset() {
@@ -440,11 +441,16 @@ async function renderScreen() {
             const offset = 200;
             const elapsed = Time.now() - time - offset;
             const { tex, width, height } = await getTextureByAsset(asset);
+            const t = 1 - 1 / (elapsed / 200 + 1);
             matrices.view.push();
             matrices.view.identity();
+            draw.rectangle(
+                0, 0,
+                matrices.width, matrices.height,
+                new Vec4(1, 1, 1, Math.min(0, 1 - t * 2)),
+            );
             matrices.view.translate(matrices.width / 2, matrices.height / 2, 0);
             matrices.model.push();
-            const t = 1 - 1 / (elapsed / 200 + 1);
             const scale = lerp(1.1, 1, t);
             matrices.model.scale(scale, scale, 1);
             const fitScale = Math.max(matrices.width / width, matrices.height / height);
@@ -461,14 +467,6 @@ async function renderScreen() {
             matrices.view.pop();
         }
         matrices.view.pop();
-        
-        const { order } = context;
-        if (order && order.message) {
-            matrices.view.push();
-            matrices.view.scale(scaleFactor, scaleFactor, 1);
-            await renderMessage(order.message, new Vec2(3600, 1400), 0);
-            matrices.view.pop();
-        }
     }
 }
 
@@ -612,6 +610,14 @@ async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2Rende
         penTrail = null;
     }
     paint.update(width, height);
+        
+    const { order } = context;
+    if (order && order.message) {
+        matrices.view.push();
+        matrices.view.scale(scaleFactor, scaleFactor, 1);
+        await renderMessage(order.message, new Vec2(3600, 1400), 0);
+        matrices.view.pop();
+    }
 }
 
 export async function renderBackgroundSide() {
@@ -726,6 +732,7 @@ async function renderCustomersAsset(position: Vec2) {
 export async function renderClientSide() {
     if (side !== 'client') return;
     const { scene } = context;
+    const { gl } = glContext;
 
     setupHUDProjection();
     await updateMouseClient();
@@ -757,7 +764,18 @@ export async function renderClientSide() {
     });
 
     setupHUDProjection();
-    if (scene.type !== 'photo_mode') {
+    if (scene.type === 'cooking' && scene.transition) {
+        const t = 1 - getScreenTime(scene.transition.time);
+        matrices.view.scope(() => {
+            matrices.view.translate(0, 50 * (1 - t), 0);
+            draw.texture(
+                0, matrices.height,
+                matrices.width, 0,
+                frameBufferTexture,
+                new Vec4(1, 1, 1, t),
+            );
+        });
+    } else if (scene.type !== 'photo_mode') {
         draw.texture(
             0, matrices.height,
             matrices.width, 0,
@@ -822,6 +840,19 @@ export async function renderOverlaySide() {
                 gl.enable(gl.BLEND);
             });
         }
+    } else if (scene.type === 'cooking' && scene.transition) {
+        const t = 1 - getScreenTime(scene.transition.time);
+        matrices.view.scope(() => {
+            matrices.view.translate(0, 50 * (1 - t), 0);
+            gl.disable(gl.BLEND);
+            draw.texture(
+                0, matrices.height,
+                matrices.width, 0,
+                frameBufferTexture,
+                new Vec4(1, 1, 1, t),
+            );
+            gl.enable(gl.BLEND);
+        });
     } else {
         gl.disable(gl.BLEND);
         draw.texture(

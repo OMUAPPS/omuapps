@@ -9,9 +9,15 @@ import { Time } from '../time.js';
 
 export async function renderCursor() {
     const ctx = getContext();
-    if (ctx.side === 'client' && !mouse.over) return;
+    if (!ctx.mouse.over) return;
     if (ctx.mouse.ui) return;
-    if (ctx.scene.type === 'photo_mode' && ctx.scene.photoTake) return;
+    if (ctx.scene.type === 'photo_mode') {
+        if (ctx.scene.photoTake) {
+            if (ctx.scene.photoTake?.type !== 'taken') return;
+        } else if (ctx.config.photo_mode.tool.type !== 'move') {
+            return;
+        }
+    }
     matrices.model.push();
     matrices.view.push();
     const position = ctx.side === 'client' ? mouse.client : matrices.unprojectPoint(ctx.mouse.position);
@@ -35,10 +41,6 @@ export async function renderCursor() {
             model.m20, model.m21, model.m22, model.m23,
             model.m30, 5000 / z * 260 - 500 - 100, model.m32, model.m33,
         );
-    }
-
-    if (ctx.scene.type === 'photo_mode' && ctx.config.photo_mode.tool.type !== 'move') {
-        return;
     }
 
     matrices.model.multiply(model);
