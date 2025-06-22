@@ -121,7 +121,6 @@
         {item.effects}
         <TransformEdit bind:transform={item.transform} />
         <code>
-            <!-- <JsonEdit bind:value={item.behaviors} /> -->
             <JsonDebugInfo value={item.behaviors} />
         </code>
     </div>
@@ -189,28 +188,9 @@
         opacity: 0.95;
     }
 
-    .name {
-        display: flex;
-        align-items: baseline;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        width: 21rem;
-        border-bottom: 1px solid var(--color-1);
-        margin-bottom: 0.5rem;
-        padding-bottom: 1rem;
-
-        > h1 {
-            margin-right: auto;
-        }
-    }
-
-    .actions {
-        margin-left: auto;
-    }
-
     .info {
         display: flex;
-        align-items: flex-start;
+        align-items: stretch;
         justify-content: flex-start;
         flex-direction: column;
         padding: 1rem;
@@ -222,6 +202,20 @@
         background: var(--color-bg-1);
         border-right: 1px solid var(--color-1);
         outline: 2px solid var(--color-bg-1);
+    }
+
+    .name {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--color-outline);
+        margin-bottom: 0.5rem;
+        padding-bottom: 1rem;
+
+        > h1 {
+            margin-right: auto;
+        }
     }
 
     .image {

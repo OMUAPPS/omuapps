@@ -39,7 +39,9 @@
     <Slider min={0} max={1} step={0.01} type="percent" clamp={false} bind:value={particle.emitter.opacity.y}/>
 </div>
 <h2>
-    画像
+    <span>
+        画像 <small>- {particle.source.assets.length}個</small>
+    </span>
     <FileDrop handle={async (files) => {
         const assets = await Promise.all([...files].map((file) => uploadAssetByFile(file)));
         particle.source = {
@@ -48,7 +50,7 @@
         }
     }} primary multiple accept="image/*">
         画像を設定
-        <i class="ti ti-plus"></i>
+        <i class="ti ti-upload"></i>
     </FileDrop>
 </h2>
 <div class="property">
@@ -82,9 +84,11 @@
     }
     
     .sources {
+        width: 100%;
         display: flex;
+        justify-content: space-between;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.75rem;
     }
 
     h2 {

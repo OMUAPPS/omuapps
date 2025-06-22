@@ -149,8 +149,8 @@
 {:else if type === 'script'}
     <div class="category">
         <span>
-            <i class="ti ti-sparkles"></i>
-            エフェクト
+            <i class="ti ti-code"></i>
+            スクリプト
         </span>
         <Button primary onclick={() => {
             const script = createScript({});
