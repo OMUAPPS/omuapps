@@ -170,3 +170,49 @@ export function downloadFile(options: {filename: string, content: Uint8Array, ty
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
+
+export class Interval implements Writable<number> {
+    private value: number;
+    private listeners: Set<(value: number) => void>;
+    private timer: ReturnType<typeof setInterval> | null;
+
+    constructor(private interval: number) {
+        this.value = 0;
+        this.listeners = new Set();
+        this.timer = null;
+    }
+
+    start(): Interval {
+        if (this.timer) return this;
+        this.timer = setInterval(() => {
+            this.value++;
+            this.listeners.forEach((run) => run(this.value));
+        }, this.interval);
+        return this;
+    }
+
+    stop(): Interval {
+        if (!this.timer) return this;
+        clearInterval(this.timer);
+        this.timer = null;
+        return this;
+    }
+
+    set(value: number) {
+        this.value = value;
+        this.listeners.forEach((run) => run(this.value));
+    }
+
+    subscribe(run: (value: number) => void): () => void {
+        this.listeners.add(run);
+        run(this.value);
+        return () => {
+            this.listeners.delete(run);
+        };
+    }
+
+    update(fn: (value: number) => number) {
+        this.value = fn(this.value);
+        this.listeners.forEach((run) => run(this.value));
+    }
+}

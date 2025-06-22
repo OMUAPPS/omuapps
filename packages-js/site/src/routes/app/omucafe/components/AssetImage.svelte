@@ -15,7 +15,9 @@
 </script>
 
 {#if src}
-    <img src={src} alt="" />
+    <slot {src}>
+        <img src={src} alt="" />
+    </slot>
 {/if}
 
 <style lang="scss">

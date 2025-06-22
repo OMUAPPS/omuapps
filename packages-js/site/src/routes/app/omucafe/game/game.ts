@@ -428,7 +428,7 @@ async function renderScreen() {
         matrices.view.scale(scaleFactor, scaleFactor, 0);
         const center = new Vec2(0, 0);
         draw.fontFamily = 'Note Sans JP';
-        draw.fontSize = 100;
+        draw.fontSize = 200;
         const TIME_MARGIN = 100;
         if (photoTake?.type === 'countdown') {
             const { startTime, duration } = photoTake;

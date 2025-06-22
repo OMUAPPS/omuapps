@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { Interval } from '$lib/helper.js';
+    import AssetImage from '../components/AssetImage.svelte';
     import { EXAMPLE } from '../example/example.js';
     import button_line from '../images/button_line.png';
     import title from '../images/title.svg';
@@ -7,7 +9,14 @@
     export let context: SceneContext;
     $: console.log('SceneMainMenu', context);
 
-    const { scene, gameConfig: config } = getGame();
+    const { scene, gameConfig: config, gallery } = getGame();
+
+    const latestGalleryItems = gallery.fetchItems({
+        limit: 10,
+        backward: true,
+    });
+
+    const galleryInterval = new Interval(1000 * 10).start();
 </script>
 
 <svelte:window on:keydown={(event) => {
@@ -54,17 +63,36 @@
             <i class="ti ti-chevron-right"></i>
         </button>
     </div>
+    <div class="gallery">
+        {#await latestGalleryItems then items}
+            {#if items.size > 0}
+                {@const index = $galleryInterval % items.size}
+                {@const item = [...items.values()][index]}
+                {#key index}
+                    <AssetImage asset={item.asset} let:src>
+                        <img class="image" {src} alt="" />
+                    </AssetImage>
+                {/key}
+            {:else}
+                <p>ギャラリーはまだありません。</p>
+            {/if}
+        {/await}
+    </div>
 </div>
 
 <style lang="scss">
     .container {
         position: absolute;
-        background: linear-gradient(in oklab to right,rgba(246, 242, 235, 0.95) 30%, rgba(246, 242, 235, 0) 100%);
+        background: linear-gradient(
+            in oklab to right,
+            rgba(246, 242, 235, 1) 0%,
+            rgba(246, 242, 235, 0.8) 70%,
+            rgba(246, 242, 235, 0.4) 100%
+        );
         inset: 0;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: flex-start;
+        justify-content: space-between;
+        align-items: center;
         padding: 0% 10%;
     }
 
@@ -78,6 +106,35 @@
         display: flex;
         flex-direction: column;
         transform: matrix(1, 0, 0.08621, 1, 0, 0);
+    }
+
+    .gallery {
+        position: relative;
+        width: 50%;
+        height: 40%;
+
+        > .image {
+            filter: drop-shadow(1rem 0.5rem 0 color-mix(in srgb, var(--color-outline) 50%, transparent 0%));
+            border: 1rem solid var(--color-bg-2);
+            animation: forwards galleryPhoto 3s ease-out;
+            animation-delay: 0.5s;
+            transform: rotate(3deg);
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            object-fit: contain;
+        }
+    }
+
+    @keyframes galleryPhoto {
+        0% {
+            opacity: 0;
+            transform: translateY(-1rem) rotate(0deg);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) rotate(3deg);
+        }
     }
 
     button {

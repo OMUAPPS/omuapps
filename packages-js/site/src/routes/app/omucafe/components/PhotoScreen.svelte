@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Slider, Tooltip } from '@omujs/ui';
-    import { fly } from 'svelte/transition';
     import { uploadAssetByBlob } from '../game/asset.js';
-    import { getContext } from '../game/game.js';
+    import { acquireRenderLock, getContext } from '../game/game.js';
     import { uniqueId } from '../game/helper.js';
     import { removeItemState } from '../game/item-state.js';
+    import { updateOrder } from '../game/order.js';
     import { Time } from '../game/time.js';
     import { getGame, type PhotoTakeState, type SceneType } from '../omucafe-app.js';
 
@@ -140,7 +140,7 @@
     </div>
     {#if $gameConfig.photo_mode.tool.type === 'pen'}
         {@const current = $gameConfig.photo_mode.pen.color}
-        <div class="config" transition:fly={{ x: 10, duration: 1000 / 60 * 3 }}>
+        <div class="config">
             <p>ペンの太さ</p>
             <Slider
                 unit="px"
@@ -169,7 +169,7 @@
             </div>
         </div>
     {:else if $gameConfig.photo_mode.tool.type === 'eraser'}
-        <div class="config" transition:fly={{ x: 10, duration: 1000 / 60 * 3 }}>
+        <div class="config">
             <p>消しゴムの太さ</p>
             <Slider
                 unit="px"
@@ -181,7 +181,7 @@
             />
         </div>
     {:else if $gameConfig.photo_mode.tool.type === 'move'}
-        <div class="config" transition:fly={{ x: 10, duration: 1000 / 60 * 3 }}>
+        <div class="config">
             <p>アイテムの大きさ</p>
             <Slider
                 unit="x"
@@ -202,18 +202,24 @@
             撮り直す
             <i class="ti ti-refresh"></i>
         </button>
-        <button on:click={() => {
+        <button on:click={async () => {
+            await acquireRenderLock();
             $scene = {
                 type: 'cooking',
                 transition: {
                     time: Time.now(),
                 }
             }
-            const { items } = getContext();
+            const { items, order } = getContext();
             for (const id of photoMode.items) {
                 const item = items[id];
                 removeItemState(item);
             }
+            if (!order) return;
+            order.status = {
+                type: 'done',
+            };
+            await updateOrder(order);
         }} class="primary">
             終わる
             <i class="ti ti-check"></i>
@@ -274,6 +280,7 @@
         gap: 1rem;
         font-size: 1.6rem;
         font-weight: 600;
+        animation: fadeIn1 0.0621s cubic-bezier(0.12, 0.87, 0.26, 0.97);
 
         > p {
             font-size: 1rem;
