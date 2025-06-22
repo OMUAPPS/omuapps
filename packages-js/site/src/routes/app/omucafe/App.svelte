@@ -9,6 +9,7 @@
     import { DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
     import SceneCooking from './scenes/SceneCooking.svelte';
     import SceneEffectEdit from './scenes/SceneEffectEdit.svelte';
+    import SceneGallery from './scenes/SceneGallery.svelte';
     import SceneInstall from './scenes/SceneInstall.svelte';
     import SceneItemEdit from './scenes/SceneItemEdit.svelte';
     import SceneKitchenEdit from './scenes/SceneKitchenEdit.svelte';
@@ -35,6 +36,7 @@
         item_edit: SceneItemEdit,
         effect_edit: SceneEffectEdit,
         script_edit: SceneScriptEdit,
+        gallery: SceneGallery,
     }
     let lastScene: {type: string, comp: TypedComponent<{
         context: SceneContext;

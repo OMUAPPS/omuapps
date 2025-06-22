@@ -63,7 +63,9 @@
             <i class="ti ti-chevron-right"></i>
         </button>
     </div>
-    <div class="gallery">
+    <button class="gallery" on:click={() => {
+        $scene = { type: 'gallery' };
+    }}>
         {#await latestGalleryItems then items}
             {#if items.size > 0}
                 {@const index = $galleryInterval % items.size}
@@ -77,7 +79,11 @@
                 <p>ギャラリーはまだありません。</p>
             {/if}
         {/await}
-    </div>
+        <div class="go-gallery">
+            写真を見返す
+            <i class="ti ti-chevron-right"></i>
+        </div>
+    </button>
 </div>
 
 <style lang="scss">
@@ -110,13 +116,17 @@
 
     .gallery {
         position: relative;
+        display: flex;
+        background: none;
+        border: none;
         width: 50%;
         height: 40%;
+        font-weight: 600;
 
         > .image {
             filter: drop-shadow(1rem 0.5rem 0 color-mix(in srgb, var(--color-outline) 50%, transparent 0%));
             border: 1rem solid var(--color-bg-2);
-            animation: forwards galleryPhoto 3s ease-out;
+            animation: forwards galleryPhoto 1s ease-out;
             animation-delay: 0.5s;
             transform: rotate(3deg);
             opacity: 0;
@@ -124,12 +134,35 @@
             width: 100%;
             object-fit: contain;
         }
+
+        > .go-gallery {
+            position: absolute;
+            display: none;
+            top: 50%;
+            right: 10%;
+            font-size: 2rem;
+            background: var(--color-1);
+            color: var(--color-bg-2);
+            padding: 1rem 2rem;
+            transform: skew(-6deg);
+        }
+
+        &:hover {
+            cursor: pointer;
+
+            > .go-gallery {
+                display: block;
+                animation: forwards galleryHoverTooltip 0.1621s ease-out;
+            }
+
+            animation: forwards galleryHover 0.1621s ease-out;
+        }
     }
 
     @keyframes galleryPhoto {
         0% {
             opacity: 0;
-            transform: translateY(-1rem) rotate(0deg);
+            transform: translateY(-1rem) rotate(3deg);
         }
         100% {
             opacity: 1;
@@ -137,7 +170,36 @@
         }
     }
 
-    button {
+    @keyframes galleryHover {
+        0% {
+            transform: translateY(0);
+        }
+        36.21% {
+            transform: translateY(-1.5rem);
+            opacity: 0.8;
+            filter: contrast(1.2);
+        }
+        100% {
+            transform: translateY(-1rem);
+            filter: contrast(0.8) brightness(1.1);
+        }
+    }
+
+    @keyframes galleryHoverTooltip {
+        0% {
+            transform: translateX(0) rotate(-10deg) skew(-6deg);
+            opacity: 0;
+        }
+        36.21% {
+            transform: translateX(1.5rem) rotate(-8deg) skew(-6deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateX(1rem) rotate(-10deg) skew(-6deg);
+        }
+    }
+
+    .actions > button {
         position: relative;
         padding: 1.25rem 1rem;
         background: transparent;

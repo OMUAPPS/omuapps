@@ -137,6 +137,8 @@ export type Scene = {
 } | {
     type: 'script_edit',
     id: string,
+} | {
+    type: 'gallery',
 };
 
 export type SceneType<T extends Scene['type'] = Scene['type']> = Extract<Scene, { type: T }>;
@@ -148,7 +150,7 @@ const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {
     },
 });
 
-type GalleryItem = {
+export type GalleryItem = {
     id: string,
     asset: Asset,
     timestamp: string,
