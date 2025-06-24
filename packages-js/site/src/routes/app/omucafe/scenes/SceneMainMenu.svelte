@@ -3,6 +3,7 @@
     import AssetImage from '../components/AssetImage.svelte';
     import { EXAMPLE } from '../example/example.js';
     import button_line from '../images/button_line.png';
+    import photo_placeholder from '../images/photo_placeholder.png';
     import title from '../images/title.svg';
     import { getGame, type SceneContext } from '../omucafe-app.js';
 
@@ -12,7 +13,7 @@
     const { scene, gameConfig: config, gallery } = getGame();
 
     const latestGalleryItems = gallery.fetchItems({
-        limit: 10,
+        limit: 30,
         backward: true,
     });
 
@@ -53,7 +54,6 @@
             <i class="ti ti-chevron-right"></i>
         </button>
         <button on:click={() => {
-            // $config = DEFAULT_CONFIG;
             $config = EXAMPLE;
             console.log($config);
         }}>
@@ -63,27 +63,29 @@
             <i class="ti ti-chevron-right"></i>
         </button>
     </div>
-    <button class="gallery" on:click={() => {
-        $scene = { type: 'gallery' };
-    }}>
-        {#await latestGalleryItems then items}
-            {#if items.size > 0}
-                {@const index = $galleryInterval % items.size}
-                {@const item = [...items.values()][index]}
+    {#await latestGalleryItems then items}
+        {#if items.size > 0}
+            {@const index = $galleryInterval % items.size}
+            {@const item = [...items.values()][index]}
+            <button class="gallery" on:click={() => {
+                $scene = { type: 'gallery' };
+            }}>
                 {#key index}
                     <AssetImage asset={item.asset} let:src>
                         <img class="image" {src} alt="" />
                     </AssetImage>
                 {/key}
-            {:else}
-                <p>ギャラリーはまだありません。</p>
-            {/if}
-        {/await}
-        <div class="go-gallery">
-            写真を見返す
-            <i class="ti ti-chevron-right"></i>
-        </div>
-    </button>
+                <div class="go-gallery">
+                    写真を見返す
+                    <i class="ti ti-chevron-right"></i>
+                </div>
+            </button>
+        {:else}
+            <div class="gallery">
+                <img class="image" src={photo_placeholder} alt="No photos" />
+            </div>
+        {/if}
+    {/await}
 </div>
 
 <style lang="scss">
@@ -146,17 +148,17 @@
             padding: 1rem 2rem;
             transform: skew(-6deg);
         }
+    }
 
-        &:hover {
-            cursor: pointer;
+    button.gallery:hover {
+        cursor: pointer;
 
-            > .go-gallery {
-                display: block;
-                animation: forwards galleryHoverTooltip 0.1621s ease-out;
-            }
-
-            animation: forwards galleryHover 0.1621s ease-out;
+        > .go-gallery {
+            display: block;
+            animation: forwards galleryHoverTooltip 0.1621s ease-out;
         }
+
+        animation: forwards galleryHover 0.1621s ease-out;
     }
 
     @keyframes galleryPhoto {
