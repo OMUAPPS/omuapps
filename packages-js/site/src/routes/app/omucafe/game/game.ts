@@ -4,13 +4,13 @@ import { Matrices } from '$lib/components/canvas/matrices.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
+import { getTextureByAsset, getTextureByUri, getTextureByUriCORS } from '../asset/asset.js';
 import bell from '../images/bell.png';
 import counter_client from '../images/counter_client.png';
-import { getTextureByAsset, getTextureByUri, getTextureByUriCORS } from './asset.js';
-import { createContainer } from './behavior/container.js';
-import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from './item-state.js';
-import { createItem } from './item.js';
-import type { KitchenContext } from './kitchen.js';
+import { createContainer } from '../item/behaviors/container.js';
+import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from '../item/item-state.js';
+import { createItem } from '../item/item.js';
+import type { KitchenContext } from '../kitchen/kitchen.js';
 
 export const COUNTER_WIDTH = 1920 * 2;
 export const COUNTER_HEIGHT = 500;
@@ -55,10 +55,10 @@ async function processClick(hoveringItem: ItemState) {
         x: 0,
         y: 0,
     });
-    const canBeHeld = (await invokeBehaviors(context, hoveringItem, it => it.canItemBeHeld, {
+    const result = await invokeBehaviors(context, hoveringItem, it => it.canItemBeHeld, {
         canBeHeld: false,
-    })).canBeHeld;
-    if (!canBeHeld) return;
+    });
+    if (!result.canBeHeld) return;
     context.held = hoveringItem.id;
     context.hovering = null;
 }
@@ -352,8 +352,8 @@ import { once } from '$lib/helper.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Axis } from '$lib/math/axis.js';
 import { Bezier } from '$lib/math/bezier.js';
-import { updateAudioClips } from './audioclip.js';
-import { createAction } from './behavior/action.js';
+import { updateAudioClips } from '../asset/audioclip.js';
+import { createAction } from '../item/behaviors/action.js';
 import { renderBackground, renderEffect, renderOverlay, renderOverlay2 } from './renderer/background.js';
 import { renderCursor } from './renderer/cursor.js';
 import { Time } from './time.js';
@@ -630,9 +630,10 @@ export async function renderBackgroundSide() {
 import { invLerp, lerp } from '$lib/math/math.js';
 import dummy_back from '../images/dummy_back.png';
 import dummy_front from '../images/dummy_front.png';
-import { getGame, type SceneType, type User } from '../omucafe-app.js';
+import { getGame, type User } from '../omucafe-app.js';
+import { isNounLike, type OrderMessage } from '../order/order.js';
+import type { SceneType } from '../scenes/scene.js';
 import { Mouse } from './mouse.js';
-import { isNounLike, type OrderMessage } from './order.js';
 import { Paint, PAINT_EVENT_TYPE, type PaintEvent } from './paint.js';
 import { renderParticles } from './renderer/particle.js';
 import { getResources, type Resources } from './resources.js';
@@ -764,7 +765,7 @@ export async function renderClientSide() {
     });
 
     setupHUDProjection();
-    if (scene.type === 'cooking' && scene.transition) {
+    if (scene.type === 'kitchen' && scene.transition) {
         const t = 1 - getScreenTime(scene.transition.time);
         matrices.view.scope(() => {
             matrices.view.translate(0, 50 * (1 - t), 0);
@@ -840,7 +841,7 @@ export async function renderOverlaySide() {
                 gl.enable(gl.BLEND);
             });
         }
-    } else if (scene.type === 'cooking' && scene.transition) {
+    } else if (scene.type === 'kitchen' && scene.transition) {
         const t = 1 - getScreenTime(scene.transition.time);
         matrices.view.scope(() => {
             matrices.view.translate(0, 50 * (1 - t), 0);

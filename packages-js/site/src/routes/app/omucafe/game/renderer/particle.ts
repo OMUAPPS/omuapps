@@ -2,8 +2,8 @@ import { AABB2 } from '$lib/math/aabb2.js';
 import { lerp } from '$lib/math/math.js';
 import type { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
-import { getTextureByAsset } from '../asset.js';
-import type { EffectParticle } from '../effect.js';
+import { getTextureByAsset } from '../../asset/asset.js';
+import type { EffectParticle } from '../../effect/effect.js';
 import { draw } from '../game.js';
 import { ARC4 } from '../random.js';
 

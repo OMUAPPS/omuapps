@@ -5,7 +5,8 @@
     import { Button, Spinner } from '@omujs/ui';
     import { onMount } from 'svelte';
     import avatar_setup from '../images/avatar_setup.png';
-    import { getGame, isInstalled, type SceneContext } from '../omucafe-app.js';
+    import { getGame, isInstalled, sessions } from '../omucafe-app.js';
+    import type { SceneContext } from './scene.js';
 
     export let context: SceneContext;
     $: console.log('SceneCooking', context);
@@ -30,7 +31,14 @@
             await once((resolve) => obs.on('connected', resolve));
         }
         state = { type: 'prompt' };
-    })
+    });
+
+    sessions.subscribe(({ background, overlay }) => {
+        if (state.type !== 'prompt' && state.type !== 'waiting') return;
+        if (background && overlay) {
+            $scene = { type: 'main_menu' };
+        }
+    });
 
     function getURL(name: string) {
         const url = new URL($page.url);

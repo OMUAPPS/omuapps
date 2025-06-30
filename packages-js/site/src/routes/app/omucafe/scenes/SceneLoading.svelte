@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { getGame, type SceneContext } from '../omucafe-app.js';
+    import { getGame } from '../omucafe-app.js';
+    import type { SceneContext } from './scene.js';
 
     export let context: SceneContext;
     $: console.log('SceneLoading', context);

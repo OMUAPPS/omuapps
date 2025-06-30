@@ -40,7 +40,7 @@ export class ARC4 {
         return ARC4.fromString(key.toString(36));
     }
 
-    public get(count: number): number {
+    private get(count: number): number {
         let t, r = 0,
             i = this.i, j = this.j;
         while (count--) {

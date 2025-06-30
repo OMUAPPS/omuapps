@@ -1,10 +1,10 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { Button } from '@omujs/ui';
+    import JsonDebugInfo from '../debug/JsonDebugInfo.svelte';
     import { getContext, init, mouse, render as renderGame } from '../game/game.js';
-    import { createItemState } from '../game/item-state.js';
+    import { createItemState } from '../item/item-state.js';
     import { getGame } from '../omucafe-app.js';
-    import JsonDebugInfo from './debug/JsonDebugInfo.svelte';
 
     const { config, gameConfig, states, scene, paintEvents } = getGame();
     export let side: 'client' | 'overlay' | 'background';

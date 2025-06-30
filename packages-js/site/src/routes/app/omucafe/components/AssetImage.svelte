@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getAsset, type Asset } from '../game/asset.js';
+    import { getAsset, type Asset } from '../asset/asset.js';
 
     export let asset: Asset | undefined;
 

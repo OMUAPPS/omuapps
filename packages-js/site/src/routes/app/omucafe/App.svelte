@@ -1,35 +1,35 @@
 <script lang="ts">
     import type { DragDropFile } from '@omujs/omu/extension/dashboard/packets.js';
-    import { Spinner, type TypedComponent } from '@omujs/ui';
+    import type { TypedComponent } from '@omujs/ui';
+    import { Spinner } from '@omujs/ui';
     import KitchenRenderer from './components/KitchenRenderer.svelte';
+    import SceneEffectEdit from './effect/SceneEffectEdit.svelte';
+    import SceneGallery from './gallery/SceneGallery.svelte';
     import { getContext, markChanged, mouse } from './game/game.js';
     import { GameData } from './game/gamedata.js';
     import { PaintBuffer } from './game/paint.js';
     import { Time } from './game/time.js';
-    import { DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame, type Scene, type SceneContext } from './omucafe-app.js';
-    import SceneCooking from './scenes/SceneCooking.svelte';
-    import SceneEffectEdit from './scenes/SceneEffectEdit.svelte';
-    import SceneGallery from './scenes/SceneGallery.svelte';
+    import SceneItemEdit from './item/SceneItemEdit.svelte';
+    import SceneKitchen from './kitchen/SceneKitchen.svelte';
+    import SceneKitchenEdit from './kitchen/SceneKitchenEdit.svelte';
+    import { DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame } from './omucafe-app.js';
+    import SceneProductEdit from './product/SceneProductEdit.svelte';
+    import SceneProductList from './product/SceneProductList.svelte';
     import SceneInstall from './scenes/SceneInstall.svelte';
-    import SceneItemEdit from './scenes/SceneItemEdit.svelte';
-    import SceneKitchenEdit from './scenes/SceneKitchenEdit.svelte';
     import SceneLoading from './scenes/SceneLoading.svelte';
     import SceneMainMenu from './scenes/SceneMainMenu.svelte';
     import ScenePhotoMode from './scenes/ScenePhotoMode.svelte';
-    import SceneProductEdit from './scenes/SceneProductEdit.svelte';
-    import SceneProductList from './scenes/SceneProductList.svelte';
-    import SceneScriptEdit from './scenes/SceneScriptEdit.svelte';
+    import { type Scene, type SceneContext } from './scenes/scene.js';
+    import SceneScriptEdit from './script/SceneScriptEdit.svelte';
 
-    const { omu, scene, config, gameConfig, orders, states, paintEvents } = getGame();
-
-    const SCENES: Record<Scene['type'], TypedComponent<{
+    export const SCENES: Record<Scene['type'], TypedComponent<{
         context: SceneContext;
     }>> = {
         loading: SceneLoading,
         install: SceneInstall,
         main_menu: SceneMainMenu,
         photo_mode: ScenePhotoMode,
-        cooking: SceneCooking,
+        kitchen: SceneKitchen,
         kitchen_edit: SceneKitchenEdit,
         product_list: SceneProductList,
         product_edit: SceneProductEdit,
@@ -38,6 +38,9 @@
         script_edit: SceneScriptEdit,
         gallery: SceneGallery,
     }
+
+    const { omu, scene, config, gameConfig, orders, states, paintEvents } = getGame();
+    
     let lastScene: {type: string, comp: TypedComponent<{
         context: SceneContext;
     }>} = {type: $scene.type, comp: SCENES[$scene.type]};
@@ -102,7 +105,8 @@
             console.log('leave', drag_id);
             importState = null;
         });
-        handler.onDrop(async ({ drag_id }) => {
+        handler.onDrop(async ({ drag_id, files }) => {
+            if (!files.some((it) => it.name.endsWith('.omucafe'))) return;
             console.log('drop', drag_id);
             importState = {
                 type: 'loading',

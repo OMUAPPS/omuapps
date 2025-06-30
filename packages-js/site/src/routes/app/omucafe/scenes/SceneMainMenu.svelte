@@ -1,16 +1,16 @@
 <script lang="ts">
     import { Interval } from '$lib/helper.js';
     import AssetImage from '../components/AssetImage.svelte';
-    import { EXAMPLE } from '../example/example.js';
     import button_line from '../images/button_line.png';
     import photo_placeholder from '../images/photo_placeholder.png';
     import title from '../images/title.svg';
-    import { getGame, type SceneContext } from '../omucafe-app.js';
+    import { getGame } from '../omucafe-app.js';
+    import type { SceneContext } from './scene.js';
 
     export let context: SceneContext;
     $: console.log('SceneMainMenu', context);
 
-    const { scene, gameConfig: config, gallery } = getGame();
+    const { scene, gallery } = getGame();
 
     const latestGalleryItems = gallery.fetchItems({
         limit: 30,
@@ -23,14 +23,14 @@
 <svelte:window on:keydown={(event) => {
     if (!context.active) return;
     if (event.key === 'Escape') {
-        $scene = { type: 'cooking' };
+        $scene = { type: 'kitchen' };
     }
 }} />
 <div class="container">
     <div class="actions">
         <img src={title} alt="OMU CAFE" class="title" />
         <button on:click={() => {
-            $scene = { type: 'cooking' };
+            $scene = { type: 'kitchen' };
         }}>
             <img src={button_line} alt="">
             <i class="ti ti-tools-kitchen-3"></i>
@@ -51,15 +51,6 @@
             <img src={button_line} alt="">
             <i class="ti ti-receipt"></i>
             <span>メニュー</span>
-            <i class="ti ti-chevron-right"></i>
-        </button>
-        <button on:click={() => {
-            $config = EXAMPLE;
-            console.log($config);
-        }}>
-            <img src={button_line} alt="">
-            <i class="ti ti-settings-x"></i>
-            <span>設定をリセット</span>
             <i class="ti ti-chevron-right"></i>
         </button>
     </div>

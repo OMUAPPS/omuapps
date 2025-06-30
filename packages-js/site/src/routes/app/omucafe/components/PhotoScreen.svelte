@@ -1,12 +1,13 @@
 <script lang="ts">
     import { Slider, Tooltip } from '@omujs/ui';
-    import { uploadAssetByBlob } from '../game/asset.js';
+    import { uploadAssetByBlob } from '../asset/asset.js';
     import { acquireRenderLock, getContext } from '../game/game.js';
     import { uniqueId } from '../game/helper.js';
-    import { removeItemState } from '../game/item-state.js';
-    import { updateOrder } from '../game/order.js';
     import { Time } from '../game/time.js';
-    import { getGame, type PhotoTakeState, type SceneType } from '../omucafe-app.js';
+    import { removeItemState } from '../item/item-state.js';
+    import { getGame } from '../omucafe-app.js';
+    import { updateOrder } from '../order/order.js';
+    import type { PhotoTakeState, SceneType } from '../scenes/scene.js';
 
     export let photoMode: SceneType<'photo_mode'>;
     
@@ -205,7 +206,7 @@
         <button on:click={async () => {
             await acquireRenderLock();
             $scene = {
-                type: 'cooking',
+                type: 'kitchen',
                 transition: {
                     time: Time.now(),
                 }
@@ -229,7 +230,7 @@
 <div class="actions">
     <button on:click={async () => {
         $scene = {
-            type: 'cooking',
+            type: 'kitchen',
         };
     }} class:hide={photoMode.photoTake}>
         キッチンに戻って調整

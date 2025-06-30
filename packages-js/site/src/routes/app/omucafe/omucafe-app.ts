@@ -13,20 +13,22 @@ import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { get, writable, type Writable } from 'svelte/store';
 import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
-import type { Asset } from './game/asset.js';
-import type { PlayingAudioClip } from './game/audioclip.js';
-import type { Effect } from './game/effect.js';
+import type { Asset } from './asset/asset.js';
+import type { PlayingAudioClip } from './asset/audioclip.js';
+import type { Effect } from './effect/effect.js';
+import { GALLERY_TABLE_TYPE, type GalleryItem } from './gallery/gallery.js';
 import { getContext, mouse, paint, setContext } from './game/game.js';
 import { copy } from './game/helper.js';
-import { cloneItemState, ITEM_LAYERS, removeItemState, type ItemState } from './game/item-state.js';
-import type { Item } from './game/item.js';
 import type { Kitchen, MouseState } from './game/kitchen.js';
-import { processMessage, type Order } from './game/order.js';
 import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
-import type { Product } from './game/product.js';
-import { assertValue, builder, Globals, type Script, type ScriptContext, type Value } from './game/script.js';
 import { Time } from './game/time.js';
 import { transformToMatrix } from './game/transform.js';
+import { cloneItemState, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
+import type { Item } from './item/item.js';
+import { processMessage, type Order } from './order/order.js';
+import type { Product } from './product/product.js';
+import { SCENE_REGISTRY_TYPE, type Scene } from './scenes/scene.js';
+import { assertValue, builder, Globals, type Script, type ScriptContext, type Value } from './script/script.js';
 import { getWorker, type GameCommands } from './worker/game-worker.js';
 import type { WorkerPipe } from './worker/worker.js';
 
@@ -88,84 +90,6 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<GameConfig>(APP_ID, {
     name: 'game_config',
     defaultValue: DEFAULT_GAME_CONFIG,
 });
-
-export type PhotoTakeState = {
-    type: 'countdown',
-    startTime: number,
-    duration: number,
-} | {
-    type: 'taking',
-    startTime: number,
-    duration: number,
-} | {
-    type: 'taken',
-    asset: Asset,
-    time: number,
-}
-
-export type Scene = {
-    type: 'loading',
-} | {
-    type: 'install',
-} | {
-    type: 'main_menu',
-} | {
-    type: 'photo_mode',
-    time: number,
-    items: string[],
-    photoTake?: PhotoTakeState,
-} | {
-    type: 'cooking',
-    transition?: {
-        time: number,
-    }
-} | {
-    type: 'kitchen_edit',
-} | {
-    type: 'product_list',
-} | {
-    type: 'product_edit',
-    id: string,
-} | {
-    type: 'item_edit',
-    id: string,
-    created?: boolean,
-} | {
-    type: 'effect_edit',
-    id: string,
-    time: number,
-} | {
-    type: 'script_edit',
-    id: string,
-} | {
-    type: 'gallery',
-};
-
-export type SceneType<T extends Scene['type'] = Scene['type']> = Extract<Scene, { type: T }>;
-
-const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {
-    name: 'scene',
-    defaultValue: {
-        type: 'loading',
-    },
-});
-
-export type GalleryItem = {
-    id: string,
-    asset: Asset,
-    timestamp: string,
-    order: Order | null,
-}
-
-const GALLERY_REGISTRY_TYPE = TableType.createJson<GalleryItem>(APP_ID, {
-    name: 'gallery',
-    key: (item) => item.id,
-})
-
-export type SceneContext = {
-    time: number,
-    active: boolean,
-}
 
 export type User = {
     id: string,
@@ -382,7 +306,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     const sceneRegistry = omu.registries.get(SCENE_REGISTRY_TYPE);
     const scene = makeRegistryWritable(sceneRegistry);
     const orders = omu.tables.get(ORDER_TABLE_TYPE);
-    const gallery = omu.tables.get(GALLERY_REGISTRY_TYPE);
+    const gallery = omu.tables.get(GALLERY_TABLE_TYPE);
     const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
     const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
     const globals = new Globals();
