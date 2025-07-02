@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { Button, ButtonMini, Tooltip } from '@omujs/ui';
+    import { Button, ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
+    import { uploadAssetByFile } from '../asset/asset.js';
+    import { createClip } from '../asset/audioclip.js';
     import FitInput from '../components/FitInput.svelte';
     import { getGame } from '../omucafe-app.js';
     import EffectParticleEdit from './EditEffectParticle.svelte';
@@ -60,8 +62,14 @@
         <div class="attribute">
             <div class="head">
                 音
-                <Button onclick={async () => {
-                    effect.attributes.sound = effect.attributes.sound ? undefined : createEffectSound({});
+                <FileDrop handle={async (files) => {
+                    const [file] = files;
+                    const asset = await uploadAssetByFile(file);
+                    effect.attributes.sound = effect.attributes.sound ? undefined : createEffectSound({
+                        clip: await createClip({
+                            asset,
+                        })
+                    });
                 }} primary>
                     {#if effect.attributes.sound}
                         粒子を削除
@@ -70,7 +78,7 @@
                         粒子を追加
                         <i class="ti ti-plus"></i>
                     {/if}
-                </Button>
+                </FileDrop>
             </div>
             {#if effect.attributes.sound}
                 <EffectSoundEdit bind:sound={effect.attributes.sound} />

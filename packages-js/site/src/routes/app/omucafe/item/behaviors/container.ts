@@ -4,8 +4,8 @@ import { AABB2 } from '$lib/math/aabb2.js';
 import type { Mat4 } from '$lib/math/mat4.js';
 import { getTextureByAsset, type Asset } from '../../asset/asset.js';
 import { draw, glContext, matrices } from '../../game/game.js';
-import type { KitchenContext } from '../../game/kitchen.js';
 import { transformToMatrix, type Transform } from '../../game/transform.js';
+import type { KitchenContext } from '../../kitchen/kitchen.js';
 import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
 import { attachChildren, detachChildren, getItemStateTransform, getRenderBounds, ITEM_LAYERS, type ItemRender, type ItemState } from '../item-state.js';
 

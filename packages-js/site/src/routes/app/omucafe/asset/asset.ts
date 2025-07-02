@@ -115,6 +115,24 @@ export async function getAssetBuffer(asset: Asset): Promise<Uint8Array> {
     }
 }
 
+export async function getAssetArrayBuffer(asset: Asset): Promise<ArrayBuffer> {
+    if (asset.type === 'url') {
+        const response = await fetch(asset.url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch asset from URL: ${asset.url}`);
+        }
+        return await response.arrayBuffer();
+    } else if (asset.type === 'asset') {
+        const { buffer } = await getGame().omu.assets.download(Identifier.fromKey(asset.id));
+        const arrayBuffer = new ArrayBuffer(buffer.byteLength);
+        const uint8Array = new Uint8Array(arrayBuffer);
+        uint8Array.set(new Uint8Array(buffer));
+        return arrayBuffer;
+    } else {
+        throw new Error(`Unknown asset type ${asset}`);
+    }
+}
+
 const images = new Map<string, Promise<HTMLImageElement>>();
 const audios = new Map<string, Promise<HTMLAudioElement>>();
 

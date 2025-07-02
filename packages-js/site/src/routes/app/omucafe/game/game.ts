@@ -176,6 +176,7 @@ export async function init(ctx: GlContext) {
     }));
         
     await loadBehaviorHandlers();
+    await createAudioContext();
     if (side === 'client') {
         const counterTex = await getTextureByUri(counter_client);
         const existCounter = context.items['counter'];
@@ -352,7 +353,7 @@ import { once } from '$lib/helper.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Axis } from '$lib/math/axis.js';
 import { Bezier } from '$lib/math/bezier.js';
-import { updateAudioClips } from '../asset/audioclip.js';
+import { createAudioContext, updateAudioClips } from '../asset/audioclip.js';
 import { createAction } from '../item/behaviors/action.js';
 import { renderBackground, renderEffect, renderOverlay, renderOverlay2 } from './renderer/background.js';
 import { renderCursor } from './renderer/cursor.js';

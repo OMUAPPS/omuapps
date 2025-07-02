@@ -1,5 +1,5 @@
 import { copy } from '../../game/helper.js';
-import type { KitchenContext } from '../../game/kitchen.js';
+import type { KitchenContext } from '../../kitchen/kitchen.js';
 import { getGame } from '../../omucafe-app.js';
 import { builder, executeExpression, type Script } from '../../script/script.js';
 import type { BehaviorAction, BehaviorFunction, BehaviorHandler } from '../behavior.js';
