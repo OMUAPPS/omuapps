@@ -185,7 +185,7 @@
 <style lang="scss">
     .category {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
         gap: 1rem;
         border-bottom: 1px solid var(--color-outline);

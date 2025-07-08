@@ -2,6 +2,9 @@ import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
 import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
+import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { SignalType } from '@omujs/omu/extension/signal/signal.js';
+import { APP_ID } from '../app.js';
 import { getGame } from '../omucafe-app.js';
 import { draw, getContext, matrices } from './game.js';
 import { copy } from './helper.js';
@@ -366,3 +369,13 @@ export class Paint {
         this.ctx.stateManager.popViewport();
     }
 }
+
+export const PAINT_EVENTS_REGISTRY_TYPE = RegistryType.createSerialized<PaintBuffer>(APP_ID, {
+    name: 'paint_events',
+    defaultValue: PaintBuffer.EMPTY,
+    serializer: PaintBuffer,
+});
+
+export const PAINT_SIGNAL_TYPE = SignalType.createJson<PaintEvent[]>(APP_ID, {
+    name: 'paint_event',
+});

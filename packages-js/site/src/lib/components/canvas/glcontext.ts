@@ -468,6 +468,17 @@ export class GlTexture {
         });
     }
 
+    public async useAsync(callback: (index: number) => Promise<void>): Promise<void> {
+        const { index, unbind } = this.stateManager.bindTexture(this);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+        try {
+            await callback(index);
+        } finally {
+            unbind();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+        }
+    }
+
     public bind(): Disposable & { index: number, unbind: () => void } {
         const { index, unbind } = this.stateManager.bindTexture(this);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
@@ -599,6 +610,57 @@ export class GlFramebuffer {
         } else {
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, null, 0);
         }
+    }
+
+    public readPixels(x: number, y: number, width: number, height: number, format: ColorFormat): Uint8Array {
+        width = Math.ceil(width);
+        height = Math.ceil(height);
+        if (width <= 0 || height <= 0) {
+            throw new Error('Invalid dimensions for reading pixels');
+        }
+        if (!this.stateManager.isFramebufferBound(this)) {
+            throw new Error('Framebuffer not bound');
+        }
+        const COLOR_FORMATS: Record<ColorFormat, number> = {
+            rgba: this.gl.RGBA,
+            rgb: this.gl.RGB,
+            rgba16f: this.gl.RGBA16F,
+            rgb16f: this.gl.RGB16F,
+            srgb: this.gl.SRGB,
+            srgb8: this.gl.SRGB8,
+            srgb8alpha8: this.gl.SRGB8_ALPHA8,
+        };
+        const data = new Uint8Array(width * height * 4);
+        this.gl.readPixels(x, y, width, height, COLOR_FORMATS[format], this.gl.UNSIGNED_BYTE, data);
+        return data;
+    }
+
+    public readAsImageData(x: number, y: number, width: number, height: number, format: ColorFormat): ImageData {
+        width = Math.ceil(width);
+        height = Math.ceil(height);
+        if (width <= 0 || height <= 0) {
+            throw new Error('Invalid dimensions for reading pixels');
+        }
+        const data = this.readPixels(x, y, width, height, format);
+        return new ImageData(new Uint8ClampedArray(data), width, height);
+    }
+
+    public readAs(x: number, y: number, width: number, height: number, type = 'image/png'): Promise<Blob> {
+        width = Math.ceil(width);
+        height = Math.ceil(height);
+        if (width <= 0 || height <= 0) {
+            throw new Error('Invalid dimensions for reading pixels');
+        }
+        const imageData = this.readAsImageData(x, y, width, height, 'rgba');
+        const canvas = new OffscreenCanvas(width, height);
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx == null) {
+            throw new Error('Failed to get canvas context');
+        }
+        ctx.putImageData(imageData, 0, 0);
+        return canvas.convertToBlob({ type });
     }
 }
 

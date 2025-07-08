@@ -1,5 +1,7 @@
 import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
 import type { Message } from '@omujs/chat/models/message.js';
+import { TableType } from '@omujs/omu/extension/table/table.js';
+import { APP_ID } from '../app.js';
 import { acquireRenderLock, getContext, markChanged } from '../game/game.js';
 import { Time } from '../game/time.js';
 import { getGame, type User } from '../omucafe-app.js';
@@ -276,3 +278,8 @@ export async function processMessage(message: Message) {
     await updateOrders();
     markChanged();
 }
+
+export const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
+    name: 'orders',
+    key: (order) => order.id.toString(),
+});

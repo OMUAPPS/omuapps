@@ -4,11 +4,11 @@ import { Matrices } from '$lib/components/canvas/matrices.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
-import { getTextureByAsset, getTextureByUri, getTextureByUriCORS } from '../asset/asset.js';
+import { getTextureByAsset, getTextureByUri, getTextureByUriCORS, uploadAssetByBlob } from '../asset/asset.js';
 import bell from '../images/bell.png';
 import counter_client from '../images/counter_client.png';
 import { createContainer } from '../item/behaviors/container.js';
-import { createItemState, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from '../item/item-state.js';
+import { createItemState, getItemStateRender, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from '../item/item-state.js';
 import { createItem } from '../item/item.js';
 import type { KitchenContext } from '../kitchen/kitchen.js';
 
@@ -73,8 +73,22 @@ async function handleMouseDown() {
 
 async function handleMouseUp() {
     if (side !== 'client') return;
-    if (!context.held) return;
-    const { held, hovering } = context;
+    const { held, hovering, scene, config } = getContext();
+    if (!held) return;
+    if (scene.type === 'product_take_photo' && hovering === 'counter') {
+        const product = config.products[scene.id];
+        const heldItem = context.items[held];
+        const { texture } = await getItemStateRender(heldItem);
+        await readBuffer.useAsync(async () => {
+            readBuffer.attachTexture(texture);
+            const blob = await readBuffer.readAs(0, 0, texture.width, texture.height);
+            product.image = await uploadAssetByBlob(blob);
+        });
+        getGame().scene.set({
+            type: 'product_edit',
+            id: scene.id,
+        });
+    }
     if (held && hovering) {
         const heldItem = context.items[held];
         const hoverItem = context.items[hovering];
@@ -132,6 +146,7 @@ export const mouse: Mouse = Mouse.create();
 
 export let paint: Paint;
 export let resources: Resources;
+let readBuffer: GlFramebuffer;
 
 export async function init(ctx: GlContext) {
     const { paintSignal, paintEvents, gameConfig } = getGame();
@@ -140,7 +155,6 @@ export async function init(ctx: GlContext) {
     matrices.width = ctx.gl.canvas.width;
     matrices.height = ctx.gl.canvas.height;
     draw = new Draw(matrices, ctx);
-    frameBuffer = ctx.createFramebuffer();
     frameBufferTexture = ctx.createTexture();
     frameBufferTexture.use(() => {
         frameBufferTexture.setParams({
@@ -150,9 +164,11 @@ export async function init(ctx: GlContext) {
             wrapT: 'clamp-to-edge',
         });
     });
+    frameBuffer = ctx.createFramebuffer();
     frameBuffer.use(() => {
         frameBuffer.attachTexture(frameBufferTexture);
     });
+    readBuffer = ctx.createFramebuffer();
     resources = await getResources();
     paint = new Paint(ctx, resources.photo_frame);
     if (side !== 'client') {

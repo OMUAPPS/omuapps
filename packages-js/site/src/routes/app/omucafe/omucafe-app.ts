@@ -7,8 +7,8 @@ import { App, Omu } from '@omujs/omu';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
 import { DAShBOARD_DRAG_DROP_PERMISSION_ID } from '@omujs/omu/extension/dashboard/dashboard-extension.js';
 import { RegistryType, type Registry } from '@omujs/omu/extension/registry/index.js';
-import { SignalType, type Signal } from '@omujs/omu/extension/signal/signal.js';
-import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
+import { type Signal } from '@omujs/omu/extension/signal/signal.js';
+import { type Table } from '@omujs/omu/extension/table/table.js';
 import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { get, writable, type Writable } from 'svelte/store';
@@ -19,13 +19,13 @@ import type { Effect } from './effect/effect.js';
 import { GALLERY_TABLE_TYPE, type GalleryItem } from './gallery/gallery.js';
 import { getContext, mouse, paint, setContext } from './game/game.js';
 import { copy } from './game/helper.js';
-import type { Kitchen, MouseState } from './game/kitchen.js';
-import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
+import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PAINT_EVENTS_REGISTRY_TYPE, PAINT_SIGNAL_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
 import { Time } from './game/time.js';
 import { transformToMatrix } from './game/transform.js';
 import { cloneItemState, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
 import type { Item } from './item/item.js';
-import { processMessage, type Order } from './order/order.js';
+import type { Kitchen, MouseState } from './kitchen/kitchen.js';
+import { ORDER_TABLE_TYPE, processMessage, type Order } from './order/order.js';
 import type { Product } from './product/product.js';
 import { SCENE_REGISTRY_TYPE, type Scene } from './scenes/scene.js';
 import { assertValue, builder, Globals, type Script, type ScriptContext, type Value } from './script/script.js';
@@ -65,10 +65,6 @@ const APP_CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     defaultValue: DEFAULT_CONFIG,
 });
 
-const PAINT_SIGNAL_TYPE = SignalType.createJson<PaintEvent[]>(APP_ID, {
-    name: 'paint_event',
-});
-
 export const DEFAULT_GAME_CONFIG = {
     filter: {},
     products: {} as Record<string, Product>,
@@ -98,11 +94,6 @@ export type User = {
     avatar?: string,
 };
 
-const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
-    name: 'orders',
-    key: (order) => order.id.toString(),
-});
-
 export const DEFAULT_STATES = {
     kitchen: {
         audios: {} as Record<string, PlayingAudioClip>,
@@ -124,12 +115,6 @@ export type States = typeof DEFAULT_STATES;
 const STATES_REGISTRY_TYPE = RegistryType.createJson<States>(APP_ID, {
     name: 'states',
     defaultValue: DEFAULT_STATES,
-});
-
-const PAINT_EVENTS_REGISTRY_TYPE = RegistryType.createSerialized<PaintBuffer>(APP_ID, {
-    name: 'paint_events',
-    defaultValue: PaintBuffer.EMPTY,
-    serializer: PaintBuffer,
 });
 
 export const sessions = writable({

@@ -135,4 +135,11 @@
         padding-bottom: 0.5rem;
         margin-bottom: 0.5rem;
     }
+
+    .attribute {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
 </style>

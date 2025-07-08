@@ -15,6 +15,7 @@
     import { DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame } from './omucafe-app.js';
     import SceneProductEdit from './product/SceneProductEdit.svelte';
     import SceneProductList from './product/SceneProductList.svelte';
+    import SceneTakeProductPhoto from './product/SceneTakeProductPhoto.svelte';
     import SceneInstall from './scenes/SceneInstall.svelte';
     import SceneLoading from './scenes/SceneLoading.svelte';
     import SceneMainMenu from './scenes/SceneMainMenu.svelte';
@@ -33,6 +34,7 @@
         kitchen_edit: SceneKitchenEdit,
         product_list: SceneProductList,
         product_edit: SceneProductEdit,
+        product_take_photo: SceneTakeProductPhoto,
         item_edit: SceneItemEdit,
         effect_edit: SceneEffectEdit,
         script_edit: SceneScriptEdit,

@@ -2,6 +2,7 @@ import { getContext } from '../game/game.js'
 import { uniqueId } from '../game/helper.js'
 import { ARC4 } from '../game/random.js'
 import { Time } from '../game/time.js'
+import type { ItemState } from '../item/item-state.js'
 import { getAssetArrayBuffer, type Asset } from './asset.js'
 
 export type Filter = Partial<{
@@ -9,13 +10,15 @@ export type Filter = Partial<{
     playbackRate: number,
     pan: {
         type: 'item',
-        id: string,
+        id?: string,
     } | {
         type: 'const',
         value: number,
     },
     lowpass: number,
     highpass: number,
+    attack: number,
+    release: number,
 }>
 
 export function createFilter(options: {
@@ -32,7 +35,7 @@ export function createFilter(options: {
 export type Clip = {
     readonly type: 'clip',
     readonly id: string,
-    asset: Asset,
+    asset?: Asset,
     start: number,
     duration?: number,
     loop: boolean,
@@ -40,7 +43,7 @@ export type Clip = {
 }
 
 export async function createClip(options: {
-    asset: Asset,
+    asset?: Asset,
     id?: string,
     start?: number,
     duration?: number,
@@ -49,7 +52,7 @@ export async function createClip(options: {
 }): Promise<Clip> {
     const { asset, id, start, loop, filter } = options
     let { duration } = options
-    if (!duration) {
+    if (!duration && asset) {
         const buffer = await getAudioBuffer(asset);
         duration = buffer.length / buffer.sampleRate * 1000;
     }
@@ -67,33 +70,43 @@ export async function createClip(options: {
 export type ADSRClip = {
     readonly type: 'adsr',
     readonly id: string,
-    name: string,
     sources: {
-        attack: Clip,
-        decay: Clip,
-        sustain: Clip,
-        release: Clip,
+        attack?: Clip,
+        decay?: Clip,
+        sustain?: Clip,
+        release?: Clip,
+    },
+    durations: {
+        attack?: number,
+        decay?: number,
+        release?: number,
+    },
+    velocities: {
+        attack?: number,
+        decay?: number,
+        sustain?: number,
+        release?: number,
     },
     filter: Filter,
 }
 
 export function createADSRClip(options: {
-    id: string,
-    name: string,
-    sources: {
-        attack: Clip,
-        decay: Clip,
-        sustain: Clip,
-        release: Clip,
+    id?: string,
+    sources?: {
+        attack?: Clip,
+        decay?: Clip,
+        sustain?: Clip,
+        release?: Clip,
     },
     filter?: Filter,
 }): ADSRClip {
-    const { id, name, sources, filter } = options
+    const { id, sources, filter } = options
     return {
         type: 'adsr',
-        id,
-        name,
-        sources,
+        id: id ?? uniqueId(),
+        sources: sources ?? {},
+        durations: {},
+        velocities: {},
         filter: filter ?? createFilter({}),
     }
 }
@@ -126,12 +139,14 @@ export type AudioClip = Clip | ADSRClip | RandomClip
 export type PlayingAudioClip = {
     readonly id: string,
     clip: AudioClip,
+    item?: string,
     startTime: number,
     stopTime?: number,
 }
 
-async function estimateClipTime(clip: AudioClip, time: number): Promise<number | undefined> {
+async function estimateClipTime(clip: AudioClip, ctx: ClipContext): Promise<number | undefined> {
     if (clip.type === 'clip') {
+        if (!clip.asset) return undefined;
         const buffer = await getAudioBuffer(clip.asset);
         const estimatedTime = clip.duration ?? buffer.length / buffer.sampleRate * 1000;
         if (clip.filter.playbackRate) {
@@ -141,24 +156,30 @@ async function estimateClipTime(clip: AudioClip, time: number): Promise<number |
     }
     if (clip.type === 'random') {
         if (clip.clips.length === 0) return undefined;
-        const random = ARC4.fromNumber(time + clip.seed);
+        const random = ARC4.fromNumber(ctx.startTime + clip.seed);
         const randomClip = random.choice(clip.clips);
-        return estimateClipTime(randomClip, time);
+        return estimateClipTime(randomClip, ctx);
     }
     return undefined;
 }
 
-export async function playAudioClip(
-    clip: AudioClip,
-): Promise<PlayingAudioClip> {
+export async function playAudioClip(clip: AudioClip, options?: {
+    item?: ItemState,
+}): Promise<PlayingAudioClip> {
     const ctx = getContext();
     const time = Time.now();
-    const duration = await estimateClipTime(clip, time);
+    const duration = await estimateClipTime(clip, {
+        startTime: time,
+        time,
+        elapsed: 0,
+        item: options?.item,
+    });
     const audio: PlayingAudioClip = {
         id: uniqueId(),
         clip,
         startTime: time,
         stopTime: duration ? time + duration : undefined,
+        item: options?.item?.id,
     }
     ctx.audios[audio.id] = audio
     return audio
@@ -187,9 +208,19 @@ export async function getAudioBuffer(asset: Asset): Promise<AudioBuffer> {
 const audioInstances: Map<string, AudioInstanceClip> = new Map();
 const MAX_AUDIO_DURATION = 60 * 1000 * 5; // 5 minutes
 
+type ClipContext = {
+    item?: ItemState,
+    elapsed: number,
+    time: number,
+    startTime: number,
+    stopTime?: number,
+};
+
 class AudioFilter {
     constructor(
         public options: Filter,
+        public attack?: GainNode,
+        public release?: GainNode,
         public lowpass?: BiquadFilterNode,
         public highpass?: BiquadFilterNode,
         public panner?: StereoPannerNode,
@@ -202,10 +233,22 @@ class AudioFilter {
         );
     }
 
-    public update(options: Filter, source: AudioNode, target: AudioNode) {
+    public update(options: Filter, ctx: ClipContext, source: AudioNode, target: AudioNode) {
         this.options = options;
-        const { lowpass, highpass, pan, playbackRate, volume } = options;
+        const { lowpass, highpass, pan, playbackRate, volume, attack, release } = options;
         const nodes: AudioNode[] = [];
+        if (attack !== undefined) {
+            nodes.push(this.attack ??= audioCtx.createGain());
+            const delta = ctx.startTime - ctx.time;
+            this.attack.gain.value = 0;
+            this.attack.gain.setTargetAtTime(1, audioCtx.currentTime + delta / 1000, attack / 3);
+        }
+        if (release !== undefined && ctx.stopTime) {
+            nodes.push(this.release ??= audioCtx.createGain());
+            const delta = ctx.stopTime - ctx.time;
+            this.release.gain.value = 1;
+            this.release.gain.setTargetAtTime(0, audioCtx.currentTime + delta / 1000, release / 3);
+        }
         if (lowpass) {
             nodes.push(this.lowpass ??= audioCtx.createBiquadFilter());
             this.lowpass.frequency.value = lowpass;
@@ -219,8 +262,10 @@ class AudioFilter {
             switch (pan.type) {
                 case 'item': {
                     const { items } = getContext();
-                    const item = items[pan.id];
-                    this.panner.pan.value = item.transform.offset.x;
+                    const item = pan.id ? items[pan.id] : ctx.item;
+                    if (item) {
+                        this.panner.pan.value = item.transform.offset.x;
+                    }
                     break;
                 }
                 case 'const': {
@@ -248,13 +293,15 @@ class AudioInstanceClip {
         public playing: boolean,
     ) {}
 
-    public static async from(clip: Clip) {
-        const buffer = await getAudioBuffer(clip.asset);
+    public static async from(clip: Clip, ctx: ClipContext) {
         const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
+        if (clip.asset) {
+            const buffer = await getAudioBuffer(clip.asset);
+            source.buffer = buffer;
+        }
         source.playbackRate.value = clip.filter.playbackRate ?? 1;
         const filter = AudioFilter.from(clip.filter);
-        filter.update(clip.filter, source, audioCtx.destination);
+        filter.update(clip.filter, ctx, source, audioCtx.destination);
         return new AudioInstanceClip(
             source,
             filter,
@@ -267,19 +314,19 @@ class AudioInstanceClip {
         this.filter.dispose();
     }
 
-    public update(clip: Clip, target: AudioNode, elapsed: number) {
+    public update(clip: Clip, ctx: ClipContext, target: AudioNode) {
         if (!this.playing) {
             this.playing = true;
-            this.source.start(audioCtx.currentTime - elapsed / 1000, elapsed / 1000);
+            this.source.start(audioCtx.currentTime - ctx.elapsed / 1000, ctx.elapsed / 1000);
         }
-        this.filter.update(clip.filter, this.source, target);
+        this.filter.update(clip.filter, ctx, this.source, target);
     }
 }
 
 export async function updateAudioClips(
     time: number,
 ): Promise<void> {
-    const context = getContext()
+    const context = getContext();
     if (context.side !== 'client') return;
     const { audios } = context
     for (const id in audios) {
@@ -289,7 +336,7 @@ export async function updateAudioClips(
             delete audios[id]
             continue;
         }
-        const existing = audioInstances.get(id)
+        const existing = audioInstances.get(id);
         if (existing) {
             if (audio.stopTime && audio.stopTime < time) {
                 existing.dispose();
@@ -304,13 +351,27 @@ export async function updateAudioClips(
         if (audio.clip.type !== 'clip') {
             throw new Error(`Unsupported audio clip type: ${audio.clip.type}`)
         }
-        const instance = await AudioInstanceClip.from(audio.clip);
-        instance.update(audio.clip, audioCtx.destination, elapsed);
+        const item = audio.item ? context.items[audio.item] : undefined;
+        const ctx: ClipContext = {
+            elapsed,
+            time,
+            item,
+            startTime: audio.startTime,
+            stopTime: audio.stopTime,
+        }
+        if (!item && !audio.stopTime) {
+            const duration = await estimateClipTime(audio.clip, ctx);
+            if (duration) {
+                audio.stopTime = Time.now() + duration;
+            }
+        }
+        const instance = await AudioInstanceClip.from(audio.clip, ctx);
+        instance.update(audio.clip, ctx, audioCtx.destination);
         audioInstances.set(id, instance);
     }
 }
 
-let audioCtx: AudioContext;
+export let audioCtx: AudioContext;
 
 export async function createAudioContext() {
     audioCtx = new AudioContext();

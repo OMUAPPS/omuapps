@@ -40,6 +40,9 @@ export type Scene = {
     type: 'product_edit',
     id: string,
 } | {
+    type: 'product_take_photo',
+    id: string,
+} | {
     type: 'item_edit',
     id: string,
     created?: boolean,

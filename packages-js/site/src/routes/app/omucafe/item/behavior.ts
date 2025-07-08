@@ -1,7 +1,7 @@
 import type { Matrices } from '$lib/components/canvas/matrices.js';
 import type { AABB2 } from '$lib/math/aabb2.js';
 import type { TypedComponent } from '@omujs/ui';
-import type { KitchenContext } from '../game/kitchen.js';
+import type { KitchenContext } from '../kitchen/kitchen.js';
 import { ActionHandler, type Action } from './behaviors/action.js';
 import { ContainerHandler, type Container } from './behaviors/container.js';
 import { HoldableHandler, type Holdable } from './behaviors/holdable.js';

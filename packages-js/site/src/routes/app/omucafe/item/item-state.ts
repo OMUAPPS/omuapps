@@ -237,7 +237,8 @@ export function getItemStateTransform(itemState: ItemState, options: {
     const flipY = rootItem.layer !== ITEM_LAYERS.PHOTO_MODE && ctx.side === 'overlay' && !rootItem.parent;
     if (flipY) {
         if (rootItem.id !== 'counter') {
-            const z = transform.m31 + (rootItem.bounds.max.y + rootItem.bounds.min.y) + 1080;
+            const bounds = getRenderBounds(itemState);
+            const z = transform.m31 + (bounds.max.y + bounds.min.y) + 1080;
             if (z < 0) {
                 return Mat4.ZERO;
             }
@@ -412,9 +413,9 @@ async function renderEffects(itemState: ItemState) {
     const transform = getItemStateTransform(itemState);
     const renderBounds = transform.transformAABB2(itemState.bounds);
     for (const effect of Object.values(itemState.effects)) {
-        const { startTime: start } = effect;
-        const effectTime = Time.now() - start;
-        const { particle } = effect.attributes;
+        const { startTime } = effect;
+        const effectTime = Time.now() - startTime;
+        const { particle, sound } = effect.attributes;
         if (particle) {
             await renderParticles(particle, {
                 seed: effect.id,
@@ -474,28 +475,29 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
 }
 
 export async function renderHoveringItem() {
-    const { hovering } = getContext();
+    const ctx = getContext();
+    const { hovering } = ctx;
     if (!hovering) return;
-    const itemState = getContext().items[hovering];
+    const itemState = ctx.items[hovering];
     if (!itemState) return;
     const { item } = itemState;
     if (!item.image) {
         return;
     }
-    const { canBeHeld } = await invokeBehaviors(getContext(), itemState, it => it.canItemBeHeld, {
+    const { canBeHeld } = await invokeBehaviors(ctx, itemState, it => it.canItemBeHeld, {
         canBeHeld: false,
     });
-    if (!getContext().held && !canBeHeld && !itemState.behaviors.action?.on.click) {
+    if (!ctx.held && !canBeHeld && !itemState.behaviors.action?.on.click) {
         return;
     }
-    const alpha = getContext().held ? 1 : 0.5;
+    const alpha = ctx.held ? 1 : 0.5;
     const color = new Vec4(0, 0, 0, alpha);
     const texture = await getTextureByAsset(item.image);
     const { tex, width, height } = texture;
     const transform = getItemStateTransform(itemState);
     matrices.model.push();
     matrices.model.multiply(transform);
-    if (getContext().held === itemState.id) {
+    if (ctx.held === itemState.id) {
         applyDragEffect();
     }
     draw.textureOutline(
@@ -513,7 +515,7 @@ export async function renderHoveringItem() {
         4,
     );
     matrices.model.pop();
-    await invokeBehaviors(getContext(), itemState, it => it.renderItemHoverTooltip, {
+    await invokeBehaviors(ctx, itemState, it => it.renderItemHoverTooltip, {
         matrices,
     });
 }

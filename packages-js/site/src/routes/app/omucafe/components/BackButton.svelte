@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Tooltip } from '@omujs/ui';
-    import { getGame, lastSceneChange, type Scene } from '../omucafe-app.js';
+    import { getGame, lastSceneChange } from '../omucafe-app.js';
+    import type { Scene } from '../scenes/scene.js';
 
     export let to: Scene = { type: 'main_menu' };
     export let active = false;

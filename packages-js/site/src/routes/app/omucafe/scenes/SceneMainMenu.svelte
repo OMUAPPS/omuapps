@@ -28,7 +28,7 @@
 }} />
 <div class="container">
     <div class="actions">
-        <img src={title} alt="OMU CAFE" class="title" />
+        <img src={title} width="480" height="134" alt="OMU CAFE" class="title" />
         <button on:click={() => {
             $scene = { type: 'kitchen' };
         }}>
@@ -98,7 +98,7 @@
     .title {
         width: 30rem;
         margin-bottom: 4rem;
-        transform: translateX(-2rem);
+        transform: translateX(-2rem) matrix(1, 0, -0.08621, 1, 0, 0);
     }
 
     .actions {

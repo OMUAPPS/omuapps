@@ -16,7 +16,7 @@ export function createHoldable(options?: Holdable): Holdable {
 
 import pickup from '../../sounds/pickup.wav';
 
-const DEFAULT_AUDIO_CLIP = await createClip({
+const DEFAULT_AUDIO_CLIP = createClip({
     id: 'default:pickup',
     asset: {
         type: 'url',
@@ -46,14 +46,14 @@ export class HoldableHandler implements BehaviorHandler<'holdable'> {
         args.canBeHeld ||= this.#canBeHeld(context, behavior);
     }
 
-    handleClick(
+    async handleClick(
         context: KitchenContext,
         action: BehaviorAction<'holdable'>,
         args: { x: number; y: number; },
     ) {
         const { behavior } = action;
         if (!this.#canBeHeld(context, behavior)) return;
-        const clip = behavior.clip || DEFAULT_AUDIO_CLIP;
+        const clip = behavior.clip || await DEFAULT_AUDIO_CLIP;
         playAudioClip(clip);
     }
 };
