@@ -370,6 +370,7 @@ export class Draw {
     private readonly loadedCharacters: Set<string> = new Set();
     public fontFamily: string = 'sans-serif';
     public fontSize: number = 10;
+    public fontStyle: string = 'normal 600';
 
     constructor(
         private readonly matrices: Matrices,
@@ -411,7 +412,7 @@ export class Draw {
     }
 
     private get font(): string {
-        return `${this.fontSize}px ${this.fontFamily}`;
+        return `${this.fontStyle} ${this.fontSize}px ${this.fontFamily}`;
     }
 
     public measureText(text: string): TextMetrics {
@@ -509,6 +510,27 @@ export class Draw {
         }
     }
 
+    public triangle(p1: Vec2Like, p2: Vec2Like, p3: Vec2Like, color: Vec4): void {
+        const { gl } = this.glContext;
+        
+        this.setMesh(new Float32Array([
+            p1.x, p1.y, 0,
+            p2.x, p2.y, 0,
+            p3.x, p3.y, 0,
+        ]));
+
+        this.colorProgram.use(() => {
+            this.colorProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
+            this.colorProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
+            this.colorProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.colorProgram.getUniform('u_color').asVec4().set(color);
+            
+            const position = this.colorProgram.getAttribute('a_position');
+            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+        });
+    }
+
     public rectangle(left: number, top: number, right: number, bottom: number, color: Vec4): void {
         const { gl } = this.glContext;
         
@@ -529,7 +551,7 @@ export class Draw {
             
             const position = this.colorProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            gl.drawArrays(gl.TRIANGLES, 0, gl.TRIANGLE_FAN);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
 

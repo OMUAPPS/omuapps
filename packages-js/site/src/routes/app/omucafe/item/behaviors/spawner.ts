@@ -1,6 +1,6 @@
 import { copy } from '../../game/helper.js';
-import type { BehaviorFunction, BehaviorHandler } from '../behavior.js';
-import { createItemState, type ItemState } from '../item-state.js';
+import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.js';
+import { createItemState, removeItemState, type ItemState } from '../item-state.js';
 
 export type Spawner = {
     spawnItemId: string,
@@ -14,25 +14,33 @@ export function createSpawner(options: { spawnItemId: string }): Spawner {
 }
 
 export class SpawnerHandler implements BehaviorHandler<'spawner'> {
-    handleClick: BehaviorFunction<'spawner', { x: number; y: number; }> = (context, action) => {
-        const { item, behavior } = action;
-        const config = context.config;
-        const newItem = createItemState(context, {
-            item: copy(config.items[behavior.spawnItemId]),
-        });
-        newItem.transform.offset = copy(item.transform.offset);
-        context.held = newItem.id;
-    };
-
-    canItemBeHeld: BehaviorFunction<'spawner', { canBeHeld: boolean; }> = (context, action, args) => {
-        args.canBeHeld = false;
-    };
-
-    handleDropChild: BehaviorFunction<'spawner', { child: ItemState; }> = (context, action, args) => {
-        const { child } = args;
-        const { spawnItemId } = action.behavior;
-        if (child.item.id === spawnItemId) {
-            delete context.items[args.child.id];
+    async retrieveActionsHovered(action: BehaviorAction<'spawner'>, args: { held: ItemState; hovering: ItemState; actions: ClickAction[]; }): Promise<void> {
+        const { item, behavior, context } = action;
+        const { held, actions } = args;
+        if (args.held) {
+            const { spawnItemId } = action.behavior;
+            if (held.item.id === spawnItemId) {
+                actions.push({
+                    name: 'もとに戻す',
+                    priority: 0,
+                    callback: () => {
+                        removeItemState(held);
+                    }
+                });
+            }
+        } else {
+            actions.push({
+                name: '持つ',
+                priority: 0,
+                callback: () => {
+                    const config = context.config;
+                    const newItem = createItemState(context, {
+                        item: copy(config.items[behavior.spawnItemId]),
+                    });
+                    newItem.transform.offset = copy(item.transform.offset);
+                    context.held = newItem.id;
+                },
+            });
         }
     }
 };

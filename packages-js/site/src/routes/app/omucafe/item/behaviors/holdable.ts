@@ -1,6 +1,6 @@
 import { createClip, playAudioClip, type AudioClip } from '../../asset/audioclip.js';
 import type { KitchenContext } from '../../kitchen/kitchen.js';
-import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
+import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.js';
 
 export type Holdable = {
     clip?: AudioClip,
@@ -15,6 +15,7 @@ export function createHoldable(options?: Holdable): Holdable {
 }
 
 import pickup from '../../sounds/pickup.wav';
+import type { ItemState } from '../item-state.js';
 
 const DEFAULT_AUDIO_CLIP = createClip({
     id: 'default:pickup',
@@ -37,23 +38,32 @@ export class HoldableHandler implements BehaviorHandler<'holdable'> {
         return true;
     }
 
-    canItemBeHeld(
-        context: KitchenContext,
-        action: BehaviorAction<'holdable'>,
-        args: { canBeHeld: boolean },
-    ) {
-        const { behavior } = action;
-        args.canBeHeld ||= this.#canBeHeld(context, behavior);
+    retrieveActionsHeld(action: BehaviorAction<'holdable'>, args: { hovering: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+        const { item, behavior, context } = action;
+        const { actions } = args;
+        actions.push({
+            name: '置く',
+            priority: 0,
+            item,
+            callback: async () => {
+                context.held = null;
+                playAudioClip(behavior.clip || await DEFAULT_AUDIO_CLIP);
+            }
+        });
     }
 
-    async handleClick(
-        context: KitchenContext,
-        action: BehaviorAction<'holdable'>,
-        args: { x: number; y: number; },
-    ) {
-        const { behavior } = action;
+    retrieveActionsHovered(action: BehaviorAction<'holdable'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+        const { item, behavior, context } = action;
+        const { actions } = args;
         if (!this.#canBeHeld(context, behavior)) return;
-        const clip = behavior.clip || await DEFAULT_AUDIO_CLIP;
-        playAudioClip(clip);
+        actions.push({
+            name: '持つ',
+            priority: 0,
+            item,
+            callback: async () => {
+                context.held = item.id;
+                playAudioClip(behavior.clip || await DEFAULT_AUDIO_CLIP);
+            },
+        });
     }
 };

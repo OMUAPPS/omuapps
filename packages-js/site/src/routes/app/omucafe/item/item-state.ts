@@ -11,7 +11,7 @@ import { renderParticles } from '../game/renderer/particle.js';
 import { Time } from '../game/time.js';
 import { transformToMatrix, type Bounds, type Transform } from '../game/transform.js';
 import type { KitchenContext } from '../kitchen/kitchen.js';
-import { type BehaviorFunction, type BehaviorHandler, type BehaviorHandlers, type Behaviors } from './behavior.js';
+import { type BehaviorFunction, type BehaviorHandler, type BehaviorHandlers, type Behaviors, type ClickAction } from './behavior.js';
 import type { Item } from './item.js';
 
 
@@ -177,7 +177,7 @@ export async function invokeBehaviors<T extends keyof Behaviors, U>(
         if (behavior && handler) {
             const method = getMethod(handler)?.bind(handler);
             if (method) {
-                await method(context, { item, behavior }, args);
+                await method({ item, behavior, context }, args);
             }
         }
     }
@@ -189,6 +189,15 @@ export function attachChildren(item: ItemState, ...children: ItemState[]) {
         if (child.parent) {
             detachChildren(getContext().items[child.parent], child);
         }
+        const containerTransform = getItemStateTransform(item);
+        const childTransform = transformToMatrix(child.transform);
+        const inverse = containerTransform.inverse();
+        const newMatrix = inverse.multiply(childTransform);
+        child.transform = {
+            right: { x: newMatrix.m00, y: newMatrix.m01 },
+            up: { x: newMatrix.m10, y: newMatrix.m11 },
+            offset: { x: newMatrix.m30, y: newMatrix.m31 },
+        };
         const parents = getParents(item);
         if (parents.includes(child)) {
             throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${child.id}`);
@@ -202,6 +211,16 @@ export function attachChildren(item: ItemState, ...children: ItemState[]) {
 export function detachChildren(item: ItemState, ...children: ItemState[]) {
     item.children = item.children.filter(childId => !children.some(child => child.id === childId));
     children.forEach(child => {
+        if (child.parent) {
+            const containerTransform = getItemStateTransform(item);
+            const heldTransform = transformToMatrix(child.transform);
+            const newMatrix = containerTransform.multiply(heldTransform);
+            child.transform = {
+                right: {x: newMatrix.m00, y: newMatrix.m01},
+                up: {x: newMatrix.m10, y: newMatrix.m11},
+                offset: {x: newMatrix.m30, y: newMatrix.m31},
+            };
+        }
         child.parent = undefined;
     });
     markItemStateChanged(item);
@@ -474,30 +493,53 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     return alpha > 16;
 }
 
+export async function retrieveClickActions(): Promise<ClickAction | null> {
+    const context = getContext();
+    const { items, hovering, held } = context;
+    const actions: ClickAction[] = [];
+    const hoveringItem = hovering ? items[hovering] : null;
+    const heldItem = held ? items[held] : null;
+    if (heldItem) {
+        await invokeBehaviors(context, heldItem, it => it.retrieveActionsHeld, {
+            hovering: hoveringItem,
+            actions,
+        });
+    }
+    if (hoveringItem) {
+        await invokeBehaviors(context, hoveringItem, it => it.retrieveActionsHovered, {
+            held: heldItem,
+            actions,
+        });
+        const parentItem = hoveringItem.parent ? items[hoveringItem.parent] : null;
+        if (parentItem) {
+            await invokeBehaviors(context, parentItem, it => it.retrieveActionsParent, {
+                child: hoveringItem,
+                held: heldItem,
+                actions,
+            });
+        }
+    }
+    if (actions.length === 0) return null;
+    const bestAction = actions.sort((a, b) => b.priority - a.priority)[0];
+    return bestAction;
+}
+
 export async function renderHoveringItem() {
     const ctx = getContext();
-    const { hovering } = ctx;
-    if (!hovering) return;
-    const itemState = ctx.items[hovering];
-    if (!itemState) return;
-    const { item } = itemState;
-    if (!item.image) {
-        return;
-    }
-    const { canBeHeld } = await invokeBehaviors(ctx, itemState, it => it.canItemBeHeld, {
-        canBeHeld: false,
-    });
-    if (!ctx.held && !canBeHeld && !itemState.behaviors.action?.on.click) {
+    const action = await retrieveClickActions();
+    if (!action) return;
+    const { item: target } = action;
+    if (!target.item.image) {
         return;
     }
     const alpha = ctx.held ? 1 : 0.5;
     const color = new Vec4(0, 0, 0, alpha);
-    const texture = await getTextureByAsset(item.image);
+    const texture = await getTextureByAsset(target.item.image);
     const { tex, width, height } = texture;
-    const transform = getItemStateTransform(itemState);
+    const transform = getItemStateTransform(target);
     matrices.model.push();
     matrices.model.multiply(transform);
-    if (ctx.held === itemState.id) {
+    if (ctx.held === target.id) {
         applyDragEffect();
     }
     draw.textureOutline(
@@ -515,9 +557,28 @@ export async function renderHoveringItem() {
         4,
     );
     matrices.model.pop();
-    await invokeBehaviors(ctx, itemState, it => it.renderItemHoverTooltip, {
-        matrices,
-    });
+    if (ctx.side === 'client') {
+        const action = await retrieveClickActions();
+        if (action) {
+            draw.fontFamily = 'Noto Sans JP';
+            draw.fontSize = 16;
+            const metrics = draw.measureTextActual(action.name).expand({ x: 10, y: 8 });
+            const screenPos = matrices.projectPoint({
+                x: transform.m30 + width / 2,
+                y: transform.m31 + height,
+            });
+            matrices.push();
+            matrices.identity();
+            matrices.projection.orthographic(0, matrices.width, matrices.height, 0, -1, 1);
+            const pos = matrices.unprojectPoint(screenPos);
+            matrices.model.translate(pos.x - (metrics.min.x + metrics.max.x) / 2, pos.y + 20, 0);
+            const center = metrics.min.add({ x: (metrics.min.x + metrics.max.x) / 2 + 10, y: 0});
+            draw.triangle(center.add({x: -6, y: 0}), center.add({x: 0, y: -6}), center.add({x: 6, y: 0}), new Vec4(0, 0, 0, 1));
+            draw.rectangle(metrics.min.x, metrics.min.y, metrics.max.x, metrics.max.y, new Vec4(0, 0, 0, 1));
+            await draw.textAlign(Vec2.ZERO, action.name, Vec2.ZERO, Vec4.ONE);
+            matrices.pop();
+        }
+    }
 }
 
 export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: ItemState) => number = (a, b) => {

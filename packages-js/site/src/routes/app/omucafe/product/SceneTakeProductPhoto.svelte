@@ -6,16 +6,16 @@
     export let context: SceneContext;
     $: console.log('SceneProductEdit', context);
 
-    const { scene, gameConfig: config } = getGame();
+    const { scene } = getGame();
 </script>
 
-<main>
-    {#if $scene.type === 'product_take_photo'}
-        {@const id = $scene.id}
+{#if $scene.type === 'product_take_photo'}
+    {@const id = $scene.id}
+    <main>
         <h1>カウンターにアイテムを置いて写真を取ります</h1>
-    {/if}
-</main>
-<BackButton to={{type: 'product_list'}} active={context.active}/>
+    </main>
+    <BackButton to={{type: 'product_edit', id }} active={context.active}/>
+{/if}
 
 <style lang="scss">
     main {

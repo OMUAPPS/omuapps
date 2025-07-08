@@ -13,7 +13,7 @@
 {#if $scene.type === 'gallery'}
     <main>
         <div class="items">
-            <TableList table={gallery} component={GalleryEntry} />
+            <TableList table={gallery} component={GalleryEntry} reverse/>
         </div>
     </main>
 {/if}

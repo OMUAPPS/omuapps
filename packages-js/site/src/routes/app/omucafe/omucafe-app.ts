@@ -22,7 +22,7 @@ import { copy } from './game/helper.js';
 import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PAINT_EVENTS_REGISTRY_TYPE, PAINT_SIGNAL_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
 import { Time } from './game/time.js';
 import { transformToMatrix } from './game/transform.js';
-import { cloneItemState, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
+import { cloneItemState, detachChildren, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
 import type { Item } from './item/item.js';
 import type { Kitchen, MouseState } from './kitchen/kitchen.js';
 import { ORDER_TABLE_TYPE, processMessage, type Order } from './order/order.js';
@@ -195,6 +195,22 @@ const functions = {
         removeItemState(item);
         return v.void();
     },
+    set_held_item(ctx: ScriptContext, args: Value[]): Value {
+        const { v } = builder;
+        const [itemId] = args;
+        const context = getContext();
+        if (itemId.type === 'string') {
+            const item = context.items[itemId.value];
+            const parent = item.parent ? context.items[item.parent] : null;
+            if (parent) {
+                detachChildren(parent, item);
+            }
+            context.held = itemId.value;
+        } else {
+            context.held = null;
+        }
+        return v.void();
+    },
     create_effect(ctx: ScriptContext, args: Value[]): Value {
         const [itemId, effectId] = args;
         assertValue(ctx, itemId, 'string');
@@ -307,6 +323,9 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     globals.registerFunction('remove_item', [
         {name: 'itemId', type: 'string'},
     ], functions.remove_item);
+    globals.registerFunction('set_held_item', [
+        {name: 'itemId'}
+    ], functions.set_held_item);
     globals.registerFunction('create_effect', [
         {name: 'itemId', type: 'string'},
         {name: 'effectId', type: 'string'},

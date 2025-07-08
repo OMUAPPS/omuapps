@@ -5,9 +5,18 @@ import type { Mat4 } from '$lib/math/mat4.js';
 import { getTextureByAsset, type Asset } from '../../asset/asset.js';
 import { draw, glContext, matrices } from '../../game/game.js';
 import { transformToMatrix, type Transform } from '../../game/transform.js';
-import type { KitchenContext } from '../../kitchen/kitchen.js';
-import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
+import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.js';
 import { attachChildren, detachChildren, getItemStateTransform, getRenderBounds, ITEM_LAYERS, type ItemRender, type ItemState } from '../item-state.js';
+
+export type LiquidLayer = {
+    side: Asset,
+    top: Asset,
+    volume: number,
+};
+
+export type Liquid = {
+    layers: LiquidLayer[];
+}
 
 export type Container = {
     bounded?: {
@@ -25,6 +34,7 @@ export type Container = {
         transform: Transform,
     },
     order?: 'up' | 'down',
+    liquid?: Liquid,
 }
 
 export function createContainer(options?: Container): Container {
@@ -71,11 +81,10 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
     }
     
     async render(
-        context: KitchenContext,
         action: BehaviorAction<'container'>,
         args: { matrices: Matrices, bufferBounds: AABB2, childRenders: Record<string, ItemRender> },
     ) {
-        const { item, behavior } = action;
+        const { item, behavior, context } = action;
         const { bufferBounds, childRenders } = args;
         const dimentions = bufferBounds.dimensions();
         this.childrenBufferTexture.use(() => {
@@ -154,29 +163,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         }
     }
 
-    handleDropChild(
-        context: KitchenContext,
-        action: BehaviorAction<'container'>,
-        args: { child: ItemState },
-    ) {
-        const { item, behavior } = action;
-        const { child } = args;
-        attachChildren(item, child);
-        const containerTransform = getItemStateTransform(item);
-        const childTransform = transformToMatrix(child.transform);
-        const inverse = containerTransform.inverse();
-        const newMatrix = inverse.multiply(childTransform);
-        child.transform = {
-            right: { x: newMatrix.m00, y: newMatrix.m01 },
-            up: { x: newMatrix.m10, y: newMatrix.m11 },
-            offset: { x: newMatrix.m30, y: newMatrix.m31 },
-        };
-        if (behavior.bounded) {
-            this.restrictBounds(behavior, item, newMatrix, child);
-        }
-    }
-
-    private restrictBounds(container: Container, item: ItemState, newMatrix: Mat4, child: ItemState) {
+    #restrictBounds(container: Container, item: ItemState, newMatrix: Mat4, child: ItemState) {
         const { bounded } = container;
         if (!bounded) return;
         const containerBounds = AABB2.from(item.bounds);
@@ -213,29 +200,46 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         };
     }
 
-    handleClickChild(
-        context: KitchenContext,
-        action: BehaviorAction<'container'>,
-        args: { child: ItemState },
-    ) {
-        const { item } = action;
-        const { child } = args;
-        detachChildren(item, child);
-        const containerTransform = getItemStateTransform(item);
-        const heldTransform = transformToMatrix(child.transform);
-        const newMatrix = containerTransform.multiply(heldTransform);
-        child.transform = {
-            right: {x: newMatrix.m00, y: newMatrix.m01},
-            up: {x: newMatrix.m10, y: newMatrix.m11},
-            offset: {x: newMatrix.m30, y: newMatrix.m31},
-        };
+    retrieveActionsHovered(action: BehaviorAction<'container'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+        const { item, behavior, context } = action;
+        const { held, actions } = args;
+        if (!held) return;
+        actions.push({
+            name: `${held.item.name}を置く`,
+            priority: 20,
+            item,
+            callback: async () => {
+                context.held = null;
+                const containerTransform = getItemStateTransform(item);
+                const childTransform = transformToMatrix(held.transform);
+                const inverse = containerTransform.inverse();
+                const newMatrix = inverse.multiply(childTransform);
+                attachChildren(item, held);
+                if (behavior.bounded) {
+                    this.#restrictBounds(behavior, item, newMatrix, held);
+                }
+            },
+        });
     }
 
-    handleChildrenOrder(
-        context: KitchenContext,
-        action: BehaviorAction<'container'>,
-        args: { timing: 'hover'; children: ItemState[]; },
-    ) {
+    retrieveActionsParent(action: BehaviorAction<'container'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+        const { item, context } = action;
+        const { child, actions } = args;
+        if (item.children.includes(child.id)) {
+            actions.push({
+                name: `${child.item.name}を取り出す`,
+                priority: 10,
+                item: child,
+                callback: async () => {
+                    const { item } = action;
+                    context.held = child.id;
+                    detachChildren(item, child);
+                }
+            });
+        }
+    }
+
+    handleChildrenOrder(action: BehaviorAction<'container'>, args: { timing: 'hover'; children: ItemState[]; }): Promise<void> | void {
         const { behavior } = action;
         const { timing, children } = args;
         if (timing !== 'hover') return;
@@ -246,11 +250,8 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         })
     }
 
-    handleChildrenHovered(
-        context: KitchenContext,
-        action: BehaviorAction<'container'>,
-        args: { target: ItemState | null }
-    ) {
+    handleChildrenHovered(action: BehaviorAction<'container'>, args: { target: ItemState | null; }): Promise<void> | void {
+        const { context } = action;
         if (context.held) {
             if (args.target?.behaviors.container) return;
             args.target = action.item;

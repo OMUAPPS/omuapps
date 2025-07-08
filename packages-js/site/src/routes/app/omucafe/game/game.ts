@@ -8,7 +8,7 @@ import { getTextureByAsset, getTextureByUri, getTextureByUriCORS, uploadAssetByB
 import bell from '../images/bell.png';
 import counter_client from '../images/counter_client.png';
 import { createContainer } from '../item/behaviors/container.js';
-import { createItemState, getItemStateRender, invokeBehaviors, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, updateHoveringItem, type ItemState } from '../item/item-state.js';
+import { createItemState, getItemStateRender, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, retrieveClickActions, updateHoveringItem } from '../item/item-state.js';
 import { createItem } from '../item/item.js';
 import type { KitchenContext } from '../kitchen/kitchen.js';
 
@@ -38,67 +38,35 @@ export function getContext(): KitchenContext {
     return context;
 }
 
-async function processDrop(hoveringItem: ItemState, heldItem: ItemState) {
-    await invokeBehaviors(context, hoveringItem, it => it.handleDropChild, {
-        child: heldItem,
-    });
-}
-
-async function processClick(hoveringItem: ItemState) {
-    const parent = hoveringItem.parent ? context.items[hoveringItem.parent] : undefined;
-    if (parent) {
-        await invokeBehaviors(context, parent, it => it.handleClickChild, {
-            child: hoveringItem,
-        });
-    }
-    await invokeBehaviors(context, hoveringItem, it => it.handleClick, {
-        x: 0,
-        y: 0,
-    });
-    const result = await invokeBehaviors(context, hoveringItem, it => it.canItemBeHeld, {
-        canBeHeld: false,
-    });
-    if (!result.canBeHeld) return;
-    context.held = hoveringItem.id;
-    context.hovering = null;
+async function processClick() {
+    const action = await retrieveClickActions();
+    if (!action) return;
+    await action.callback();
 }
 
 async function handleMouseDown() {
-    if (side !== 'client') return;
-    if (context?.hovering) {
-        const hoveringItem = context.items[context.hovering];
-        await processClick(hoveringItem);
+    const { hovering, scene, config } = context;
+    if (context.held) {
+        if (scene.type === 'product_take_photo' && hovering === 'counter') {
+            const product = config.products[scene.id];
+            const heldItem = context.items[context.held];
+            const { texture } = await getItemStateRender(heldItem);
+            await readBuffer.useAsync(async () => {
+                readBuffer.attachTexture(texture);
+                const blob = await readBuffer.readAs(0, 0, texture.width, texture.height);
+                product.image = await uploadAssetByBlob(blob);
+            });
+            getGame().scene.set({
+                type: 'product_edit',
+                id: scene.id,
+            });
+            context.held = null;
+        }
     }
+    await processClick();
 }
 
 async function handleMouseUp() {
-    if (side !== 'client') return;
-    const { held, hovering, scene, config } = getContext();
-    if (!held) return;
-    if (scene.type === 'product_take_photo' && hovering === 'counter') {
-        const product = config.products[scene.id];
-        const heldItem = context.items[held];
-        const { texture } = await getItemStateRender(heldItem);
-        await readBuffer.useAsync(async () => {
-            readBuffer.attachTexture(texture);
-            const blob = await readBuffer.readAs(0, 0, texture.width, texture.height);
-            product.image = await uploadAssetByBlob(blob);
-        });
-        getGame().scene.set({
-            type: 'product_edit',
-            id: scene.id,
-        });
-    }
-    if (held && hovering) {
-        const heldItem = context.items[held];
-        const hoverItem = context.items[hovering];
-        if (heldItem.parent) {
-            await processDrop(hoverItem, heldItem);
-        } else {
-            await processDrop(hoverItem, heldItem);
-        }
-    }
-    context.held = null;
 }
 
 function syncData() {
@@ -753,7 +721,7 @@ async function renderCustomersAsset(position: Vec2) {
 
 export async function renderClientSide() {
     if (side !== 'client') return;
-    const { scene } = context;
+    const { scene, items } = context;
     const { gl } = glContext;
 
     setupHUDProjection();

@@ -11,6 +11,7 @@ export async function renderCursor() {
     const ctx = getContext();
     if (!ctx.mouse.over) return;
     if (ctx.mouse.ui) return;
+    const client = ctx.side === 'client';
     if (ctx.scene.type === 'photo_mode') {
         if (ctx.scene.photoTake) {
             if (ctx.scene.photoTake?.type !== 'taken') return;
@@ -20,8 +21,8 @@ export async function renderCursor() {
     }
     matrices.model.push();
     matrices.view.push();
-    const position = ctx.side === 'client' ? mouse.client : matrices.unprojectPoint(ctx.mouse.position);
-    const delta = ctx.side === 'client' ? mouse.delta : matrices.unprojectBasis(ctx.mouse.delta);
+    const position = client ? mouse.client : matrices.unprojectPoint(ctx.mouse.position);
+    const delta = client ? mouse.delta : matrices.unprojectBasis(ctx.mouse.delta);
     let model = new Mat4(
         1, -delta.y / 100, 0, 0,
         -delta.x / 100, 1, 0, 0,
