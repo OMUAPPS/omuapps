@@ -370,7 +370,8 @@ export class Draw {
     private readonly loadedCharacters: Set<string> = new Set();
     public fontFamily: string = 'sans-serif';
     public fontSize: number = 10;
-    public fontStyle: string = 'normal 600';
+    public fontWeight: string = '600';
+    public fontStyle: string = 'normal';
 
     constructor(
         private readonly matrices: Matrices,
@@ -412,7 +413,7 @@ export class Draw {
     }
 
     private get font(): string {
-        return `${this.fontStyle} ${this.fontSize}px ${this.fontFamily}`;
+        return `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px ${this.fontFamily}`;
     }
 
     public measureText(text: string): TextMetrics {

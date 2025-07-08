@@ -151,8 +151,18 @@ export function attachChild(item: ItemState, child: ItemState) {
     if (parents.includes(child)) {
         throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${child.id}`);
     }
+    const containerTransform = getItemStateTransform(item);
+    const childTransform = transformToMatrix(child.transform);
+    const inverse = containerTransform.inverse();
+    const newMatrix = inverse.multiply(childTransform);
+    child.transform = {
+        right: { x: newMatrix.m00, y: newMatrix.m01 },
+        up: { x: newMatrix.m10, y: newMatrix.m11 },
+        offset: { x: newMatrix.m30, y: newMatrix.m31 },
+    };
     item.children.push(child.id);
     child.parent = item.id;
+    markItemStateChanged(item);
 }
 
 let behaviorHandlers: BehaviorHandlers | undefined = undefined;

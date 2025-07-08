@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Combobox } from '@omujs/ui';
     import EditValue from './EditValue.svelte';
-    import { command, value, type Expression } from './script.js';
+    import { builder, command, value, type Expression } from './script.js';
 
     export let expression: Expression;
 </script>
@@ -22,6 +22,14 @@
                     {#each command.args as arg, index (index)}
                         <EditValue bind:value={arg} />
                     {/each}
+                    <button on:click={() => {
+                        command.args = [
+                            ...command.args,
+                            builder.v.void(),
+                        ]
+                    }}>
+                        <i class="ti ti-plus"></i>
+                    </button>
                     <i class="ti ti-brackets-contain-end"></i>
                 </div>
             {:else if command.type === 'assign'}

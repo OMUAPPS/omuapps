@@ -41,7 +41,7 @@ export type ClickAction = {
     callback: () => Promise<void> | void;
 }
 
-export type BehaviorHandler<T extends keyof Behaviors> = Partial<{
+export interface BehaviorHandler<T extends keyof Behaviors> {
     initialize?(): Promise<void>,
     render?(action: BehaviorAction<T>, args: { matrices: Matrices, bufferBounds: AABB2, childRenders: Record<string, ItemRender> }): Promise<void> | void,
     retrieveActionsParent?(action: BehaviorAction<T>, args: { child: ItemState, held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
@@ -49,7 +49,7 @@ export type BehaviorHandler<T extends keyof Behaviors> = Partial<{
     retrieveActionsHovered?(action: BehaviorAction<T>, args: { held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
     handleChildrenOrder?(action: BehaviorAction<T>, args: { timing: 'hover', children: ItemState[] }): Promise<void> | void,
     handleChildrenHovered?(action: BehaviorAction<T>, args: { target: ItemState | null }): Promise<void> | void,
-}>;
+};
 
 export type DefaultBehaviors<T extends keyof Behaviors = keyof Behaviors> = {
     [key in T]?: {

@@ -22,7 +22,7 @@ import { copy } from './game/helper.js';
 import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PAINT_EVENTS_REGISTRY_TYPE, PAINT_SIGNAL_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
 import { Time } from './game/time.js';
 import { transformToMatrix } from './game/transform.js';
-import { cloneItemState, detachChildren, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
+import { attachChild, cloneItemState, detachChildren, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
 import type { Item } from './item/item.js';
 import type { Kitchen, MouseState } from './kitchen/kitchen.js';
 import { ORDER_TABLE_TYPE, processMessage, type Order } from './order/order.js';
@@ -211,6 +211,20 @@ const functions = {
         }
         return v.void();
     },
+    set_item_parent(ctx: ScriptContext, args: Value[]): Value {
+        const { v } = builder;
+        const [itemId, parentId] = args;
+        assertValue(ctx, itemId, 'string');
+        assertValue(ctx, parentId, 'string');
+        const context = getContext();
+        const item = context.items[itemId.value];
+        const parent = context.items[parentId.value];
+        attachChild(parent, item);
+        if (context.held === itemId.value) {
+            context.held = null;
+        }
+        return v.void();
+    },
     create_effect(ctx: ScriptContext, args: Value[]): Value {
         const [itemId, effectId] = args;
         assertValue(ctx, itemId, 'string');
@@ -326,6 +340,10 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     globals.registerFunction('set_held_item', [
         {name: 'itemId'}
     ], functions.set_held_item);
+    globals.registerFunction('set_item_parent', [
+        {name: 'itemId', type: 'string'},
+        {name: 'parentId', type: 'string'},
+    ], functions.set_item_parent);
     globals.registerFunction('create_effect', [
         {name: 'itemId', type: 'string'},
         {name: 'effectId', type: 'string'},

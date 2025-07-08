@@ -53,7 +53,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
         args.actions.push({
             name: script.name,
             item,
-            priority: 20,
+            priority: 30,
             callback: () => {
                 execute(context, script, {
                     type,
