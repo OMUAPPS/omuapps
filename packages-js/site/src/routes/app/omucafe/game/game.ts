@@ -299,6 +299,9 @@ export function applyDragEffect() {
         0, 0, 1, 0,
         0, 0, 0, 1,
     ));
+    const elapsed = (Time.now() - Math.max(mouse.downTime, mouse.upTime)) / 1000;
+    const scale = 1 + Math.sin(elapsed * BetterMath.TAU * 3) / (elapsed * elapsed * 200 + 1) * 0.05;
+    matrices.model.scale(scale, scale, 1);
 }
 
 async function renderCounter() {
@@ -644,6 +647,7 @@ export async function renderBackgroundSide() {
     await renderBackground();
 }
 
+import { BetterMath } from '$lib/math.js';
 import { invLerp, lerp } from '$lib/math/math.js';
 import dummy_back from '../images/dummy_back.png';
 import dummy_front from '../images/dummy_front.png';
