@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FileDrop } from '@omujs/ui';
+    import { Checkbox, FileDrop } from '@omujs/ui';
     import { uploadAssetByFile } from '../asset/asset.js';
     import { createClip, type Clip } from '../asset/audioclip.js';
     import EditAudioAsset from './EditAudioAsset.svelte';
@@ -20,11 +20,13 @@
         <FileDrop handle={handleChange}>
             音を変更
         </FileDrop>
+        loop
+        <Checkbox bind:value={clip.loop} />
     {:else}
         <FileDrop primary handle={handleChange}>
             音を追加
         </FileDrop>
-    {/if}    
+    {/if}
 </div>
 
 <style>

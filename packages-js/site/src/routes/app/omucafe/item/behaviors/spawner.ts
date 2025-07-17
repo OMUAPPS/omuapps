@@ -23,6 +23,7 @@ export class SpawnerHandler implements BehaviorHandler<'spawner'> {
                 actions.push({
                     name: 'もとに戻す',
                     priority: 0,
+                    item,
                     callback: () => {
                         removeItemState(held);
                     }
@@ -32,6 +33,7 @@ export class SpawnerHandler implements BehaviorHandler<'spawner'> {
             actions.push({
                 name: '持つ',
                 priority: 0,
+                item,
                 callback: () => {
                     const config = context.config;
                     const newItem = createItemState(context, {

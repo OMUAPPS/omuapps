@@ -332,7 +332,7 @@ function updateMouseAsset() {
 
 async function update() {
     if (side === 'client') {
-        await updateAudioClips(Time.now());
+        await updateAudioClips();
     }
 }
 

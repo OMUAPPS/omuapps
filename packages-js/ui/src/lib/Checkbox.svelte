@@ -3,6 +3,7 @@
     export let value: BooleanLike;
     export let disabled: boolean = false;
     export let label: string | undefined = undefined;
+    export let handle: (value: boolean) => unknown = () => {};
 
     function toggle() {
         if (value) {
@@ -10,6 +11,7 @@
         } else {
             value = true;
         }
+        handle(value);
     }
 </script>
 

@@ -24,10 +24,7 @@ const DEFAULT_AUDIO_CLIP = createClip({
         url: pickup,
     },
     duration: 1000,
-    filter: {
-        playbackRate: 1.5,
-        highpass: 2000,
-    }
+    playbackRate: 1.5,
 });
 
 export class HoldableHandler implements BehaviorHandler<'holdable'> {

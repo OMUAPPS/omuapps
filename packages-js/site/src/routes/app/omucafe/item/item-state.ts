@@ -4,6 +4,7 @@ import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByAsset } from '../asset/asset.js';
+import { playAudioClip } from '../asset/audioclip.js';
 import type { Effect } from '../effect/effect.js';
 import { applyDragEffect, draw, getContext, glContext, matrices, mouse } from '../game/game.js';
 import { copy, uniqueId } from '../game/helper.js';
@@ -441,7 +442,7 @@ export async function renderItems(layers: ItemLayer[]) {
 async function renderEffects(itemState: ItemState) {
     const transform = getItemStateTransform(itemState);
     const renderBounds = transform.transformAABB2(itemState.bounds);
-    for (const effect of Object.values(itemState.effects)) {
+    for (const [effectId, effect] of Object.entries(itemState.effects)) {
         const { startTime } = effect;
         const effectTime = Time.now() - startTime;
         const { particle, sound } = effect.attributes;
@@ -451,6 +452,13 @@ async function renderEffects(itemState: ItemState) {
                 bounds: renderBounds,
                 time: effectTime,
             });
+        }
+        if (sound) {
+            await playAudioClip(sound.clip, {
+                type: 'effect',
+                item: itemState.id,
+                effect: effectId,
+            })
         }
     }
 }
