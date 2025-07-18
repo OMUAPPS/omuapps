@@ -434,12 +434,52 @@ export async function renderItemState(itemState: ItemState, options: {
     matrices.model.pop();
 }
 
+function restrictPositionToDisplayBounds(itemState: ItemState) {
+    if (itemState.layer === ITEM_LAYERS.COUNTER) return;
+    const containerBounds = AABB2.from({
+        min: { x: 0, y: 0 },
+        max: { x: 1920 * 2, y: 1080 },
+    }).shrink({ x: 100, y: 100 });
+    const containerDimentions = containerBounds.dimensions();
+    const itemStateBounds = getRenderBounds(itemState);
+    const itemStateDimentions = itemStateBounds.dimensions();
+    console.log(containerBounds.intersects(itemStateBounds));
+    const exceedLeft = containerBounds.min.x - itemStateBounds.max.x;
+    const exceedTop = containerBounds.min.y - itemStateBounds.max.y;
+    const exceedRight = itemStateBounds.min.x - containerBounds.max.x;
+    const exceedBottom = itemStateBounds.min.y - containerBounds.max.y;
+    let offsetX = itemState.transform.offset.x;
+    let offsetY = itemState.transform.offset.y;
+    if (itemStateDimentions.x > containerDimentions.x) {
+        offsetX = containerDimentions.x / 2 - itemStateDimentions.x / 2;
+    } else if (exceedLeft > 0) {
+        offsetX += exceedLeft;
+    } else if (exceedRight > 0) {
+        offsetX -= exceedRight;
+    }
+    if (itemStateDimentions.y > containerDimentions.y) {
+        offsetY = containerDimentions.y / 2 - itemStateDimentions.y / 2;
+    } else if (exceedTop > 0) {
+        offsetY += exceedTop;
+    } else if (exceedBottom > 0) {
+        offsetY -= exceedBottom;
+    }
+    itemState.transform = {
+        ...itemState.transform,
+        offset: {
+            x: offsetX,
+            y: offsetY,
+        }
+    };
+}
+
 export async function renderItems(layers: ItemLayer[]) {
     const itemsInOrder = getAllItemStates(layers);
     const held = getContext().held;
     for (const item of itemsInOrder.toReversed()) {
         if (item.id === held) continue;
         if (item.parent) continue;
+        restrictPositionToDisplayBounds(item);
         await renderItemState(item);
     }
     for (const item of itemsInOrder.toReversed()) {
