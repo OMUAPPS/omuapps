@@ -8,7 +8,7 @@ import { getTextureByAsset, getTextureByUri, getTextureByUriCORS, uploadAssetByB
 import bell from '../images/bell.png';
 import counter_client from '../images/counter_client.png';
 import { createContainer } from '../item/behaviors/container.js';
-import { createItemState, getItemStateRender, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveringItem, renderItems, renderItemState, retrieveClickActions, updateHoveringItem } from '../item/item-state.js';
+import { collectClickActions, createItemState, getItemStateRender, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveredItem, renderItems, renderItemState, updateHoveringItem } from '../item/item-state.js';
 import { createItem } from '../item/item.js';
 import type { KitchenContext } from '../kitchen/kitchen.js';
 
@@ -39,7 +39,7 @@ export function getContext(): KitchenContext {
 }
 
 async function processClick() {
-    const action = await retrieveClickActions();
+    const action = await collectClickActions();
     if (!action) return;
     await action.callback();
 }
@@ -488,7 +488,7 @@ async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2Rende
             context.held = null;
         }
         await renderItems([ITEM_LAYERS.PHOTO_MODE]);
-        await renderHoveringItem();
+        await renderHoveredItem();
         await renderHeldItem();
     });
     matrices.view.push();
@@ -744,7 +744,7 @@ export async function renderClientSide() {
         await updateHoveringItem([ITEM_LAYERS.COUNTER, ITEM_LAYERS.KITCHEN_ITEMS, ITEM_LAYERS.BELL]);
         await renderItems([ITEM_LAYERS.COUNTER, ITEM_LAYERS.KITCHEN_ITEMS, ITEM_LAYERS.BELL]);
         if (scene.type !== 'photo_mode') {
-            await renderHoveringItem();
+            await renderHoveredItem();
             await renderHeldItem();
         }
         setupHUDProjection();

@@ -1,3 +1,4 @@
+import { lerp } from './math.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 
 export type AABB2Like = AABB2 | {
@@ -23,13 +24,20 @@ export class AABB2 {
             throw new Error('Cannot create AABB from empty list of points');
         }
         const [first, ...rest] = points;
-        let min = new Vec2(first.x, first.y);
-        let max = new Vec2(first.x, first.y);
+        let minX = first.x;
+        let minY = first.y;
+        let maxX = first.x;
+        let maxY = first.y;
         for (const point of rest) {
-            min = min.min(point);
-            max = max.max(point);
+            minX = Math.min(minX, point.x);
+            minY = Math.min(minY, point.y);
+            maxX = Math.max(maxX, point.x);
+            maxY = Math.max(maxY, point.y);
         }
-        return new AABB2(min, max);
+        return new AABB2(
+            new Vec2(minX, minY),
+            new Vec2(maxX, maxY),
+        );
     }
 
     public contains(point: Vec2Like): boolean {
@@ -71,8 +79,8 @@ export class AABB2 {
 
     public at(position: Vec2Like): Vec2 {
         return new Vec2(
-            this.min.x + (this.max.x - this.min.x) * position.x,
-            this.min.y + (this.max.y - this.min.y) * position.y,
+            lerp(this.min.x, this.max.x, position.x),
+            lerp(this.min.y, this.max.y, position.y),
         );
     }
 

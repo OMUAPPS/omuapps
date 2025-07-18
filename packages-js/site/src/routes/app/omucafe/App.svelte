@@ -311,7 +311,7 @@
         align-items: center;
 
         &.current {
-            animation: fadeIn 0.0621s ease-in;
+            animation: fadeIn 0.08621s ease-in;
             animation-fill-mode: forwards;
         }
 
@@ -326,7 +326,7 @@
             opacity: 0.8;
             transform: translateX(-1rem);
         }
-        50% {
+        20% {
             opacity: 1;
             transform: translateX(0.1rem);
         }

@@ -14,7 +14,7 @@ export function createSpawner(options: { spawnItemId: string }): Spawner {
 }
 
 export class SpawnerHandler implements BehaviorHandler<'spawner'> {
-    async retrieveActionsHovered(action: BehaviorAction<'spawner'>, args: { held: ItemState; hovering: ItemState; actions: ClickAction[]; }): Promise<void> {
+    async collectActionsHovered(action: BehaviorAction<'spawner'>, args: { held: ItemState; hovering: ItemState; actions: ClickAction[]; }): Promise<void> {
         const { item, behavior, context } = action;
         const { held, actions } = args;
         if (args.held) {

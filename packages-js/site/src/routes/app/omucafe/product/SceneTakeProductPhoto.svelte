@@ -24,12 +24,13 @@
         left: 0;
         right: 0;
         padding-top: 4rem;
-        padding-bottom: 6rem;
+        padding-bottom: 8rem;
         color: var(--color-1);
         display: flex;
         justify-content: center;
         gap: 1rem;
         background: linear-gradient(to top, transparent 0%, var(--color-bg-2) 100%);
+        pointer-events: none;
     }
 
     h1 {

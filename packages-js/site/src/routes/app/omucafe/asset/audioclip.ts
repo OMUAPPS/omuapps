@@ -209,9 +209,6 @@ export async function getAudioBuffer(asset: Asset): Promise<AudioBuffer> {
     return audioBuffer;
 }
 
-const audioInstances: Map<string, AudioInstance> = new Map();
-const MAX_AUDIO_DURATION = 60 * 1000 * 5; // 5 minutes
-
 class ClipContext {
     constructor(
         public clip: AudioClip,
@@ -258,6 +255,8 @@ class ClipContext {
     }
 };
 
+const audioInstances: Map<string, AudioInstance> = new Map();
+
 interface AudioInstance<T = unknown> {
     update(clip: T, ctx: ClipContext): AudioNode;
     dispose(): void;
@@ -285,10 +284,15 @@ class AudioInstanceFilter implements AudioInstance<Filter> {
         const nodes: AudioNode[] = [];
         let changed = false;
         if (attack !== undefined) {
-            nodes.push(this.attack ??= (changed = true, audioCtx.createGain()));
+            if (!this.attack) {
+                changed = true;
+                this.attack = audioCtx.createGain();
+                this.attack.gain.value = 1;
+            }
+            nodes.push(this.attack);
             const remaining = ctx.startTime - ctx.time;
-            this.attack.gain.value = 0;
-            this.attack.gain.setTargetAtTime(1, audioCtx.currentTime + remaining / 1000, attack / 3);
+            const targetTime = Math.max(0, audioCtx.currentTime + remaining / 1000);
+            this.attack.gain.setTargetAtTime(1, targetTime, attack / 3000);
         }
         if (release !== undefined && ctx.stopTime) {
             if (!this.release) {
@@ -298,7 +302,8 @@ class AudioInstanceFilter implements AudioInstance<Filter> {
             }
             nodes.push(this.release);
             const remaining = ctx.stopTime - ctx.time;
-            this.release.gain.setTargetAtTime(0, audioCtx.currentTime + remaining / 1000, release / 3000);
+            const targetTime = Math.max(0, audioCtx.currentTime + remaining / 1000);
+            this.release.gain.setTargetAtTime(0, targetTime, release / 3000);
         }
         if (lowpass) {
             nodes.push(this.lowpass ??= (changed = true, audioCtx.createBiquadFilter()));
@@ -427,6 +432,8 @@ class AudioInstanceEnvelope implements AudioInstance<EnvelopeClip> {
         return this.dest;
     }
 }
+
+const MAX_AUDIO_DURATION = 1000 * 60 * 5; // 5 minutes
 
 export async function updateAudioClips(): Promise<void> {
     const time = Time.now();

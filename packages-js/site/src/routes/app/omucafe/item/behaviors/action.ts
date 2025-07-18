@@ -39,7 +39,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
     async initialize?(): Promise<void> {
     }
 
-    retrieveActionsHovered(action: BehaviorAction<'action'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHovered(action: BehaviorAction<'action'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
         const { item, context, behavior: { on } } = action;
         const type = args.held ? 'dropChild' : 'click';
         const scriptId = on[type];
@@ -65,7 +65,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
         });
     }
 
-    retrieveActionsParent(action: BehaviorAction<'action'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsParent(action: BehaviorAction<'action'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
         const { item, context, behavior: { on } } = action;
         const type = 'clickChild';
         const scriptId = on[type];

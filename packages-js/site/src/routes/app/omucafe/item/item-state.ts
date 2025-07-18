@@ -152,7 +152,7 @@ export function attachChild(item: ItemState, child: ItemState) {
     if (parents.includes(child)) {
         throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${child.id}`);
     }
-    const containerTransform = getItemStateTransform(item);
+    const containerTransform = calculateItemStateTransform(item);
     const childTransform = transformToMatrix(child.transform);
     const inverse = containerTransform.inverse();
     const newMatrix = inverse.multiply(childTransform);
@@ -200,7 +200,7 @@ export function attachChildren(item: ItemState, ...children: ItemState[]) {
         if (child.parent) {
             detachChildren(getContext().items[child.parent], child);
         }
-        const containerTransform = getItemStateTransform(item);
+        const containerTransform = calculateItemStateTransform(item);
         const childTransform = transformToMatrix(child.transform);
         const inverse = containerTransform.inverse();
         const newMatrix = inverse.multiply(childTransform);
@@ -223,7 +223,7 @@ export function detachChildren(item: ItemState, ...children: ItemState[]) {
     item.children = item.children.filter(childId => !children.some(child => child.id === childId));
     children.forEach(child => {
         if (child.parent) {
-            const containerTransform = getItemStateTransform(item);
+            const containerTransform = calculateItemStateTransform(item);
             const heldTransform = transformToMatrix(child.transform);
             const newMatrix = containerTransform.multiply(heldTransform);
             child.transform = {
@@ -239,7 +239,7 @@ export function detachChildren(item: ItemState, ...children: ItemState[]) {
 
 const previousTransforms = new Map<string, Mat4>();
 
-export function getItemStateTransform(itemState: ItemState, options: {
+export function calculateItemStateTransform(itemState: ItemState, options: {
     parent?: ItemState,
 } = {}): Mat4 {
     const ctx = getContext();
@@ -289,6 +289,17 @@ export function getItemStateTransform(itemState: ItemState, options: {
     return transform;
 }
 
+function calculateItemStateBounds(itemState: ItemState): AABB2 {
+    const transform = calculateItemStateTransform(itemState);
+    return transform.transformAABB2(itemState.bounds);
+}
+
+function calculateItemStateRenderBounds(itemState: ItemState): AABB2 {
+    const view = matrices.view.get();
+    const bounds = calculateItemStateBounds(itemState);
+    return view.transformAABB2(bounds);
+}
+
 export type ItemRender = {
     bounds: AABB2,
     texture: GlTexture,
@@ -309,7 +320,7 @@ function createItemRenderTexture(itemState: ItemState): ItemRender {
     if (itemRenderMap.has(itemState.id)) {
         throw new Error(`ItemRender ${itemState.item.name}(${itemState.id}) already existing`);
     }
-    const bounds = retrieveItemStateBounds(itemState);
+    const bounds = calculateItemStateMaxBounds(itemState);
     const texture = glContext.createTexture();
     const render: ItemRender = {
         bounds,
@@ -326,7 +337,7 @@ export function getRenderBounds(itemState: ItemState): AABB2 {
     return matrix.transformAABB2(itemState.bounds);
 }
 
-function retrieveItemStateBounds(itemState: ItemState) {
+function calculateItemStateMaxBounds(itemState: ItemState) {
     const ctx = getContext();
     let bounds = AABB2.from(itemState.bounds);
     for (const id of itemState.children) {
@@ -413,7 +424,7 @@ export async function renderItemState(itemState: ItemState, options: {
 } = {}) {
     const render = await getItemStateRender(itemState);
     const { bounds, texture } = render;
-    const transform = options.parent ? transformToMatrix(itemState.transform) : getItemStateTransform(itemState, options);
+    const transform = options.parent ? transformToMatrix(itemState.transform) : calculateItemStateTransform(itemState, options);
     if (options.showRenderBounds) {
         const renderBounds = transform.transformAABB2(bounds);
         draw.rectangleStroke(renderBounds.min.x, renderBounds.min.y, renderBounds.max.x, renderBounds.max.y, Vec4.ONE, 2);
@@ -440,7 +451,7 @@ export async function renderItems(layers: ItemLayer[]) {
 }
 
 async function renderEffects(itemState: ItemState) {
-    const transform = getItemStateTransform(itemState);
+    const transform = calculateItemStateTransform(itemState);
     const renderBounds = transform.transformAABB2(itemState.bounds);
     for (const [effectId, effect] of Object.entries(itemState.effects)) {
         const { startTime } = effect;
@@ -483,7 +494,7 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     if (!item.item.image) return false;
     const { bounds } = item;
     const { min, max } = bounds;
-    const matrix = getItemStateTransform(item);
+    const matrix = calculateItemStateTransform(item);
     const inverse = matrix.inverse();
     const inverseMVP = matrices.view.get().inverse();
     const inversedMouse = inverse.transform2(inverseMVP.transform2(mouse.position));
@@ -511,26 +522,26 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     return alpha > 16;
 }
 
-export async function retrieveClickActions(): Promise<ClickAction | null> {
+export async function collectClickActions(): Promise<ClickAction | null> {
     const context = getContext();
     const { items, hovering, held } = context;
     const actions: ClickAction[] = [];
     const hoveringItem = hovering ? items[hovering] : null;
     const heldItem = held ? items[held] : null;
     if (heldItem) {
-        await invokeBehaviors(context, heldItem, it => it.retrieveActionsHeld, {
+        await invokeBehaviors(context, heldItem, it => it.collectActionsHeld, {
             hovering: hoveringItem,
             actions,
         });
     }
     if (hoveringItem) {
-        await invokeBehaviors(context, hoveringItem, it => it.retrieveActionsHovered, {
+        await invokeBehaviors(context, hoveringItem, it => it.collectActionsHovered, {
             held: heldItem,
             actions,
         });
         const parentItem = hoveringItem.parent ? items[hoveringItem.parent] : null;
         if (parentItem) {
-            await invokeBehaviors(context, parentItem, it => it.retrieveActionsParent, {
+            await invokeBehaviors(context, parentItem, it => it.collectActionsParent, {
                 child: hoveringItem,
                 held: heldItem,
                 actions,
@@ -542,9 +553,9 @@ export async function retrieveClickActions(): Promise<ClickAction | null> {
     return bestAction;
 }
 
-export async function renderHoveringItem() {
+export async function renderHoveredItem() {
     const ctx = getContext();
-    const action = await retrieveClickActions();
+    const action = await collectClickActions();
     if (!action) return;
     const { item: target } = action;
     if (!target.item.image) {
@@ -554,7 +565,7 @@ export async function renderHoveringItem() {
     const color = new Vec4(0, 0, 0, alpha);
     const texture = await getTextureByAsset(target.item.image);
     const { tex, width, height } = texture;
-    const transform = getItemStateTransform(target);
+    const transform = calculateItemStateTransform(target);
     matrices.model.push();
     matrices.model.multiply(transform);
     if (ctx.held === target.id) {
@@ -575,27 +586,22 @@ export async function renderHoveringItem() {
         4,
     );
     matrices.model.pop();
-    if (ctx.side === 'client') {
-        const action = await retrieveClickActions();
-        if (action) {
-            draw.fontFamily = 'Noto Sans JP';
-            draw.fontSize = 16;
-            const metrics = draw.measureTextActual(action.name).expand({ x: 10, y: 8 });
-            const screenPos = matrices.projectPoint({
-                x: transform.m30 + width / 2,
-                y: transform.m31 + height,
-            });
-            matrices.push();
-            matrices.identity();
-            matrices.projection.orthographic(0, matrices.width, matrices.height, 0, -1, 1);
-            const pos = matrices.unprojectPoint(screenPos);
-            matrices.model.translate(pos.x - (metrics.min.x + metrics.max.x) / 2, pos.y + 20, 0);
-            const center = metrics.min.add({ x: (metrics.min.x + metrics.max.x) / 2 + 10, y: 0});
-            draw.triangle(center.add({x: -6, y: 0}), center.add({x: 0, y: -6}), center.add({x: 6, y: 0}), new Vec4(0, 0, 0, 1));
-            draw.rectangle(metrics.min.x, metrics.min.y, metrics.max.x, metrics.max.y, new Vec4(0, 0, 0, 1));
-            await draw.textAlign(Vec2.ZERO, action.name, Vec2.ZERO, Vec4.ONE);
-            matrices.pop();
-        }
+    if (ctx.side === 'client' && action) {
+        draw.fontFamily = 'Noto Sans JP';
+        draw.fontSize = 16;
+        const bounds = calculateItemStateRenderBounds(target);
+        const screenPos = matrices.projectPoint(bounds.at({ x: 0.5, y: 1 }))
+        const pos = matrices.unprojectPoint(screenPos);
+        matrices.push();
+        matrices.identity();
+        matrices.projection.orthographic(0, matrices.width, matrices.height, 0, -1, 1);
+        const metrics = draw.measureTextActual(action.name).expand({ x: 10, y: 8 });
+        matrices.model.translate(pos.x - (metrics.min.x + metrics.max.x) / 2, pos.y + 20, 0);
+        const center = metrics.min.add({ x: (metrics.min.x + metrics.max.x) / 2 + 10, y: 0});
+        draw.triangle(center.add({x: -6, y: 0}), center.add({x: 0, y: -6}), center.add({x: 6, y: 0}), new Vec4(0, 0, 0, 1));
+        draw.rectangle(metrics.min.x, metrics.min.y, metrics.max.x, metrics.max.y, new Vec4(0, 0, 0, 1));
+        await draw.textAlign(Vec2.ZERO, action.name, Vec2.ZERO, Vec4.ONE);
+        matrices.pop();
     }
 }
 

@@ -6,7 +6,7 @@ import { getTextureByAsset, type Asset } from '../../asset/asset.js';
 import { draw, glContext, matrices } from '../../game/game.js';
 import { transformToMatrix, type Transform } from '../../game/transform.js';
 import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.js';
-import { attachChildren, detachChildren, getItemStateTransform, getRenderBounds, ITEM_LAYERS, type ItemRender, type ItemState } from '../item-state.js';
+import { attachChildren, calculateItemStateTransform, detachChildren, getRenderBounds, ITEM_LAYERS, type ItemRender, type ItemState } from '../item-state.js';
 
 export type LiquidLayer = {
     side: Asset,
@@ -200,7 +200,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         };
     }
 
-    retrieveActionsHovered(action: BehaviorAction<'container'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHovered(action: BehaviorAction<'container'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
         const { item, behavior, context } = action;
         const { held, actions } = args;
         if (!held) return;
@@ -210,7 +210,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             item,
             callback: async () => {
                 context.held = null;
-                const containerTransform = getItemStateTransform(item);
+                const containerTransform = calculateItemStateTransform(item);
                 const childTransform = transformToMatrix(held.transform);
                 const inverse = containerTransform.inverse();
                 const newMatrix = inverse.multiply(childTransform);
@@ -222,7 +222,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         });
     }
 
-    retrieveActionsParent(action: BehaviorAction<'container'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsParent(action: BehaviorAction<'container'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
         const { item, context } = action;
         const { child, actions } = args;
         if (item.children.includes(child.id)) {

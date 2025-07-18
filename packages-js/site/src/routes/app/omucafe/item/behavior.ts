@@ -44,9 +44,10 @@ export type ClickAction = {
 export interface BehaviorHandler<T extends keyof Behaviors> {
     initialize?(): Promise<void>,
     render?(action: BehaviorAction<T>, args: { matrices: Matrices, bufferBounds: AABB2, childRenders: Record<string, ItemRender> }): Promise<void> | void,
-    retrieveActionsParent?(action: BehaviorAction<T>, args: { child: ItemState, held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
-    retrieveActionsHeld?(action: BehaviorAction<T>, args: { hovering: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
-    retrieveActionsHovered?(action: BehaviorAction<T>, args: { held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
+    renderOverlay?(action: BehaviorAction<T>, args: { matrices: Matrices, bufferBounds: AABB2, childRenders: Record<string, ItemRender> }): Promise<void> | void,
+    collectActionsParent?(action: BehaviorAction<T>, args: { child: ItemState, held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
+    collectActionsHeld?(action: BehaviorAction<T>, args: { hovering: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
+    collectActionsHovered?(action: BehaviorAction<T>, args: { held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
     handleChildrenOrder?(action: BehaviorAction<T>, args: { timing: 'hover', children: ItemState[] }): Promise<void> | void,
     handleChildrenHovered?(action: BehaviorAction<T>, args: { target: ItemState | null }): Promise<void> | void,
 };

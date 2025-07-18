@@ -35,7 +35,7 @@ export class HoldableHandler implements BehaviorHandler<'holdable'> {
         return true;
     }
 
-    retrieveActionsHeld(action: BehaviorAction<'holdable'>, args: { hovering: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHeld(action: BehaviorAction<'holdable'>, args: { hovering: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
         const { item, behavior, context } = action;
         const { actions } = args;
         actions.push({
@@ -49,7 +49,7 @@ export class HoldableHandler implements BehaviorHandler<'holdable'> {
         });
     }
 
-    retrieveActionsHovered(action: BehaviorAction<'holdable'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHovered(action: BehaviorAction<'holdable'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
         const { item, behavior, context } = action;
         const { actions } = args;
         if (!this.#canBeHeld(context, behavior)) return;
