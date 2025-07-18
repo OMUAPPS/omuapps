@@ -451,6 +451,7 @@ export class GlTexture {
         public readonly texture: WebGLTexture,
         public width: number = 0,
         public height: number = 0,
+        private params?: TextureParams,
     ) {}
 
     public static create(stateManager: GLStateManager, gl: WebGL2RenderingContext): GlTexture {
@@ -542,18 +543,19 @@ export class GlTexture {
             repeat: this.gl.REPEAT,
             'mirrored-repeat': this.gl.MIRRORED_REPEAT,
         };
-        if (params.wrapS != null) {
+        if (params.wrapS && this.params?.wrapS !== params.wrapS) {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, WRAPS[params.wrapS]);
         }
-        if (params.wrapT != null) {
+        if (params.wrapT && this.params?.wrapT !== params.wrapT) {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, WRAPS[params.wrapT]);
         }
-        if (params.minFilter != null) {
+        if (params.minFilter && this.params?.minFilter !== params.minFilter) {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, FILTERS[params.minFilter]);
         }
-        if (params.magFilter != null) {
+        if (params.magFilter && this.params?.magFilter !== params.magFilter) {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, FILTERS[params.magFilter]);
         }
+        this.params = params;
     }
 
     public ensureSize(width: number, height: number): void {

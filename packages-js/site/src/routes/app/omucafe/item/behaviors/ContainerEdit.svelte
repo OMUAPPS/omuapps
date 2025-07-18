@@ -1,15 +1,23 @@
 <script lang="ts">
-    import { Button, Combobox, FileDrop } from '@omujs/ui';
-    import { uploadAssetByFile } from '../../asset/asset.js';
-    import AssetImage from '../../components/AssetImage.svelte';
+    import { Combobox } from '@omujs/ui';
+    import EditImage from '../../components/EditImage.svelte';
     import TransformEdit from '../../components/TransformEdit.svelte';
     import { createTransform } from '../../game/transform.js';
-    import type { Container } from './container.js';
+    import { showMask, type Container } from './container.js';
 
     export let behavior: Container;
 </script>
 
-<div class="behavior">
+<div
+    class="behavior"
+    on:mouseenter={() => {
+        $showMask = true;
+    }}
+    on:mouseleave={() => {
+        $showMask = false;
+    }}
+    role="img"
+>
     <label class="setting">
         内容物を範囲内に収める
         <input type="checkbox" value={!!behavior.bounded} on:change={({currentTarget}) => {
@@ -39,72 +47,30 @@
         </label>
     {/if}
     <h2>Mask</h2>
-    <div class="image">
-        {#if behavior.mask}
-            {@const asset = behavior.mask.asset}
-            <AssetImage asset={asset} />
-        {/if}
-    </div>
-    <div class="actions">
-        <FileDrop handle={async (fileList) => {
-            if (fileList.length !== 1) {
-                throw new Error('FileDrop must receive only one file');
-            }
-            behavior.mask = {
-                asset: await uploadAssetByFile(fileList[0]),
-                transform: createTransform(),
-            }
-        }} accept="image/*">
-            {#if behavior.mask}
-                <p>画像を変更</p>
-            {:else}
-                <p>画像を追加</p>
-            {/if}
-        </FileDrop>
-        {#if behavior.mask}
-            <Button primary onclick={() => {
-                behavior.mask = undefined;
-            }}>
-                削除
-                <i class="ti ti-trash"></i>
-            </Button>
-        {/if}
-    </div>
+    <EditImage image={behavior.mask?.asset} handle={(asset) => {
+        if (!asset) {
+            delete behavior.mask;
+            return;
+        }
+        behavior.mask = {
+            asset,
+            transform: createTransform(),
+        }
+    }} />
     {#if behavior.mask}
         <TransformEdit bind:transform={behavior.mask.transform} />
     {/if}
     <h2>Overlay</h2>
-    <div class="image">
-        {#if behavior.overlay}
-            {@const asset = behavior.overlay}
-            <AssetImage asset={asset.asset} />
-        {/if}
-    </div>
-    <div class="actions">
-        <FileDrop handle={async (fileList) => {
-            if (fileList.length !== 1) {
-                throw new Error('FileDrop must receive only one file');
-            }
-            behavior.overlay = {
-                asset: await uploadAssetByFile(fileList[0]),
-                transform: createTransform(),
-            }
-        }} accept="image/*">
-            {#if behavior.overlay}
-                <p>画像を変更</p>
-            {:else}
-                <p>画像を追加</p>
-            {/if}
-        </FileDrop>
-        {#if behavior.overlay}
-            <Button primary onclick={() => {
-                behavior.overlay = undefined;
-            }}>
-                削除
-                <i class="ti ti-trash"></i>
-            </Button>
-        {/if}
-    </div>
+    <EditImage image={behavior.overlay?.asset} handle={(asset) => {
+        if (!asset) {
+            delete behavior.overlay;
+            return;
+        }
+        behavior.overlay = {
+            asset,
+            transform: createTransform(),
+        }
+    }} />
     {#if behavior.overlay}
         <TransformEdit bind:transform={behavior.overlay.transform} />
     {/if}

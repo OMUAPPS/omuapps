@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
+    import { ButtonMini, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
-    import { fetchImage, getAsset, uploadAssetByFile } from '../asset/asset.js';
+    import { fetchImage, getAsset } from '../asset/asset.js';
     import FitInput from '../components//FitInput.svelte';
-    import AssetImage from '../components/AssetImage.svelte';
+    import EditImage from '../components/EditImage.svelte';
     import TransformEdit from '../components/TransformEdit.svelte';
     import JsonDebugInfo from '../debug/JsonDebugInfo.svelte';
     import type { Item } from '../item/item.js';
@@ -15,6 +15,8 @@
     import ContainerEdit from './behaviors/ContainerEdit.svelte';
     import { createHoldable } from './behaviors/holdable.js';
     import HoldableEdit from './behaviors/HoldableEdit.svelte';
+    import { createLiquid } from './behaviors/liquid.js';
+    import LiquidEdit from './behaviors/LiquidEdit.svelte';
     import { createSpawner } from './behaviors/spawner.js';
     import SpawnerEdit from './behaviors/SpawnerEdit.svelte';
 
@@ -53,6 +55,12 @@
             }),
             edit: ActionEdit,
         },
+        liquid: {
+            key: 'liquid',
+            name: '液体',
+            default: createLiquid(),
+            edit: LiquidEdit,
+        }
     } satisfies DefaultBehaviors;
 
     let open: () => Promise<FileList>;
@@ -96,28 +104,16 @@
             </ButtonMini>
         </div>
         <div class="image" class:no-image={!item.image}>
-            {#if item.image}
-                {@const asset = item.image}
-                <AssetImage asset={asset} />
-            {/if}
+            <EditImage required image={item.image} handle={async (asset) => {
+                if (!asset) return;
+                item.image = asset;
+                const image = await getAsset(item.image).then(fetchImage);
+                item.bounds = {
+                    min: { x: 0, y: 0 },
+                    max: { x: image.width, y: image.height },
+                }
+            }} />
         </div>
-        <FileDrop bind:open handle={async (fileList) => {
-            if (fileList.length !== 1) {
-                throw new Error('FileDrop must receive only one file');
-            }
-            item.image = await uploadAssetByFile(fileList[0]);
-            const image = await getAsset(item.image).then(fetchImage);
-            item.bounds = {
-                min: { x: 0, y: 0 },
-                max: { x: image.width, y: image.height },
-            }
-        }} primary={!item.image} accept="image/*">
-            {#if item.image}
-                <p>画像を変更</p>
-            {:else}
-                <p>画像を追加</p>
-            {/if}
-        </FileDrop>
         <TransformEdit bind:transform={item.transform} />
         <code>
             <JsonDebugInfo value={item.behaviors} />
@@ -219,10 +215,12 @@
 
     .image {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
         justify-content: center;
+        gap: 1rem;
         height: 12rem;
-        padding: 1rem;
+        padding: 1rem 0;
         width: 100%;
         background: var(--color-bg-1);
         
@@ -243,6 +241,8 @@
     .behavior {
         position: relative;
         display: flex;
+        flex-direction: column;
+        align-items: stretch;
         gap: 1rem;
         margin-bottom: 2rem;
         width: 100%;

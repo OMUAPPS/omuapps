@@ -8,7 +8,7 @@ import { getTextureByAsset, getTextureByUri, getTextureByUriCORS, uploadAssetByB
 import bell from '../images/bell.png';
 import counter_client from '../images/counter_client.png';
 import { createContainer } from '../item/behaviors/container.js';
-import { collectClickActions, createItemState, getItemStateRender, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, renderHeldItem, renderHoveredItem, renderItems, renderItemState, updateHoveringItem } from '../item/item-state.js';
+import { collectClickActions, createItemState, getItemStateRender, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, removeItemState, renderHeldItem, renderHoveredItem, renderItems, renderItemState, updateHoveringItem } from '../item/item-state.js';
 import { createItem } from '../item/item.js';
 import type { KitchenContext } from '../kitchen/kitchen.js';
 
@@ -352,6 +352,8 @@ function getScreenTime(time: number) {
     return t;
 }
 
+const lastPreviewItem: [string, string] = ['', ''];
+
 async function renderScreen() {
     const { gl } = glContext;
     const { width, height } = gl.canvas;
@@ -361,9 +363,9 @@ async function renderScreen() {
         matrices.view.push();
         matrices.view.translate(width / 2, height / 2, 0);
         matrices.view.scale(scaleFactor, scaleFactor, 1);
-        const ingredient = context.config.items[scene.id];
-        const transform = transformToMatrix(ingredient.transform);
-        const { min, max } = ingredient.bounds;
+        const item = context.config.items[scene.id];
+        const transform = transformToMatrix(item.transform);
+        const { min, max } = item.bounds;
         const offset = new Vec2(
             (min.x + max.x) / 2,
             (min.y + max.y) / 2,
@@ -372,15 +374,25 @@ async function renderScreen() {
             y: transform.m11,
         });
         matrices.view.translate(-offset.x, -offset.y, 0);
-        const previewItemState = createItemState(context, {
-            id: 'preview',
-            item: ingredient,
-        });
+        const key = JSON.stringify(item);
+        if (lastPreviewItem[0] != scene.id || lastPreviewItem[1] !== key) {
+            lastPreviewItem[0] = scene.id;
+            lastPreviewItem[1] = key;
+            const existing = context.items['preview'];
+            if (existing) {
+                removeItemState(existing);
+            }
+            createItemState(context, {
+                id: 'preview',
+                item,
+                layer: ITEM_LAYERS.EDIT_PREVIEW,
+            });
+        }
+        const previewItemState = context.items['preview'];
         markItemStateChanged(previewItemState);
         await renderItemState(previewItemState, {
             showRenderBounds: true,
         });
-        delete context.items['preview'];
         matrices.view.pop();
     } else if (scene.type === 'effect_edit') {
         draw.rectangle(0, 0, gl.canvas.width, gl.canvas.height, new Vec4(1, 1, 1, 0.5));

@@ -6,6 +6,7 @@ import { ActionHandler, type Action } from './behaviors/action.js';
 import { ContainerHandler, type Container } from './behaviors/container.js';
 import { EffectHandler, type Effect } from './behaviors/effect.js';
 import { HoldableHandler, type Holdable } from './behaviors/holdable.js';
+import { LiquidHandler, type Liquid } from './behaviors/liquid.js';
 import { SpawnerHandler, type Spawner } from './behaviors/spawner.js';
 import type { ItemRender, ItemState } from './item-state.js';
 
@@ -15,6 +16,7 @@ export type Behaviors = {
     spawner: Spawner;
     action: Action;
     effect: Effect;
+    liquid: Liquid,
 };
 
 export const getBehaviorHandlers = async () => ({
@@ -23,6 +25,7 @@ export const getBehaviorHandlers = async () => ({
     spawner: new SpawnerHandler(),
     action: new ActionHandler(),
     effect: new EffectHandler(),
+    liquid: new LiquidHandler(),
 }) satisfies BehaviorHandlers;
 
 export type BehaviorHandlers<T extends keyof Behaviors = keyof Behaviors> = {
@@ -46,7 +49,8 @@ export type ClickAction = {
 
 export interface BehaviorHandler<T extends keyof Behaviors> {
     initialize?(): Promise<void>,
-    render?(action: BehaviorAction<T>, args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> }): Promise<void> | void,
+    renderPre?(action: BehaviorAction<T>, args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> }): Promise<void> | void,
+    renderPost?(action: BehaviorAction<T>, args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> }): Promise<void> | void,
     renderOverlay?(action: BehaviorAction<T>, args: { matrices: Matrices }): Promise<void> | void,
     collectActionsParent?(action: BehaviorAction<T>, args: { child: ItemState, held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
     collectActionsHeld?(action: BehaviorAction<T>, args: { hovering: ItemState | null, actions: ClickAction[] }): Promise<void> | void,

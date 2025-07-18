@@ -398,7 +398,11 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
                 tex,
             );
         }
-        await invokeBehaviors(itemState, it => it.render, {
+        await invokeBehaviors(itemState, it => it.renderPre, {
+            bufferBounds,
+            childRenders,
+        });
+        await invokeBehaviors(itemState, it => it.renderPost, {
             bufferBounds,
             childRenders,
         });

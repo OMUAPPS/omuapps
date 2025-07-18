@@ -1,6 +1,7 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import type { Mat4 } from '$lib/math/mat4.js';
+import { get, writable } from 'svelte/store';
 import { getTextureByAsset, type Asset } from '../../asset/asset.js';
 import { draw, glContext, matrices } from '../../game/game.js';
 import { transformToMatrix, type Transform } from '../../game/transform.js';
@@ -12,10 +13,6 @@ export type LiquidLayer = {
     top: Asset,
     volume: number,
 };
-
-export type Liquid = {
-    layers: LiquidLayer[];
-}
 
 export type Container = {
     bounded?: {
@@ -33,12 +30,13 @@ export type Container = {
         transform: Transform,
     },
     order?: 'up' | 'down',
-    liquid?: Liquid,
 }
 
 export function createContainer(options?: Container): Container {
     return options ?? {};
 }
+
+export const showMask = writable(false);
 
 export class ContainerHandler implements BehaviorHandler<'container'> {
     private readonly childrenBuffer: GlFramebuffer;
@@ -79,7 +77,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         this.maskBufferTexture = maskBufferTexture;
     }
     
-    async render(
+    async renderPre(
         action: BehaviorAction<'container'>,
         args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> },
     ) {
@@ -138,6 +136,18 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         } else {
             draw.texture(bufferBounds.min.x, bufferBounds.min.y, bufferBounds.max.x, bufferBounds.max.y, this.childrenBufferTexture);
         }
+    }
+    
+    async renderPost(
+        action: BehaviorAction<'container'>,
+        args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> },
+    ) {
+        const { item, behavior } = action;
+        const { bufferBounds } = args;
+        const dimentions = bufferBounds.dimensions();
+        this.childrenBufferTexture.use(() => {
+            this.childrenBufferTexture.ensureSize(dimentions.x, dimentions.y);
+        });
         if (behavior.overlay) {
             matrices.model.push();
             const transform = transformToMatrix(behavior.overlay.transform);
@@ -151,7 +161,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             );
             matrices.model.pop();
         }
-        if (behavior.mask && item.layer === ITEM_LAYERS.EDIT_PREVIEW) {
+        if (get(showMask) && behavior.mask && item.layer === ITEM_LAYERS.EDIT_PREVIEW) {
             const { asset } = behavior.mask;
             const transform = transformToMatrix(behavior.mask.transform);
             const { tex, width, height } = await getTextureByAsset(asset);
