@@ -166,7 +166,7 @@ function sourceExists(source: PlayingSource): boolean {
         }
         case 'effect': {
             const item = ctx.items[source.item];
-            return item && !!item.effects[source.effect];
+            return item && !!item.behaviors.effect?.effects[source.effect];
         }
     }
 }

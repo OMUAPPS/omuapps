@@ -118,7 +118,6 @@
                 <p>画像を追加</p>
             {/if}
         </FileDrop>
-        {item.effects}
         <TransformEdit bind:transform={item.transform} />
         <code>
             <JsonDebugInfo value={item.behaviors} />

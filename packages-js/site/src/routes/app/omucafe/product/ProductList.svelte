@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Button } from '@omujs/ui';
     import AssetImage from '../components/AssetImage.svelte';
-    import { createEffect } from '../effect/effect.js';
+    import { createEffectState } from '../effect/effect-state.js';
     import { uniqueId } from '../game/helper.js';
     import { Time } from '../game/time.js';
     import { createHoldable } from '../item/behaviors/holdable.js';
@@ -115,7 +115,7 @@
             エフェクト
         </span>
         <Button primary onclick={() => {
-            const effect = createEffect({
+            const effect = createEffectState({
                 name: '新エフェクト',
                 attributes: {},
             });

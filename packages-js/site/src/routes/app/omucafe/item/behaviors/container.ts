@@ -1,5 +1,4 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
-import type { Matrices } from '$lib/components/canvas/matrices.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import type { Mat4 } from '$lib/math/mat4.js';
 import { getTextureByAsset, type Asset } from '../../asset/asset.js';
@@ -82,7 +81,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
     
     async render(
         action: BehaviorAction<'container'>,
-        args: { matrices: Matrices, bufferBounds: AABB2, childRenders: Record<string, ItemRender> },
+        args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> },
     ) {
         const { item, behavior, context } = action;
         const { bufferBounds, childRenders } = args;

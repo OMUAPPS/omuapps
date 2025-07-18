@@ -6,9 +6,9 @@
     import { getGame } from '../omucafe-app.js';
     import EffectParticleEdit from './EditEffectParticle.svelte';
     import EffectSoundEdit from './EditEffectSound.svelte';
-    import { createEffectSound, createParticle, type Effect } from './effect.js';
+    import { createEffectSound, createParticle, type EffectState } from './effect-state.js';
     
-    export let effect: Effect;
+    export let effect: EffectState;
     
     const { scene, gameConfig } = getGame();
 </script>

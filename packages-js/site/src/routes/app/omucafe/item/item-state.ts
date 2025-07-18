@@ -4,11 +4,8 @@ import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByAsset } from '../asset/asset.js';
-import { playAudioClip } from '../asset/audioclip.js';
-import type { Effect } from '../effect/effect.js';
 import { applyDragEffect, draw, getContext, glContext, matrices, mouse } from '../game/game.js';
 import { copy, uniqueId } from '../game/helper.js';
-import { renderParticles } from '../game/renderer/particle.js';
 import { Time } from '../game/time.js';
 import { transformToMatrix, type Bounds, type Transform } from '../game/transform.js';
 import type { KitchenContext } from '../kitchen/kitchen.js';
@@ -30,7 +27,6 @@ export type ItemState = {
     id: string,
     item: Item,
     behaviors: Partial<Behaviors>,
-    effects: Record<string, Effect>,
     layer: ItemLayer,
     transform: Transform,
     children: string[],
@@ -46,11 +42,10 @@ export function createItemState(context: KitchenContext, options: {
     transform?: Transform,
     children?: string[],
     behaviors?: Partial<Behaviors>,
-    effects?: Record<string, Effect>,
     bounds?: Bounds,
 }): ItemState {
     const { items } = context;
-    const { id, item, layer, transform, children, behaviors, effects, bounds } = options;
+    const { id, item, layer, transform, children, behaviors, bounds } = options;
     const itemState = {
         id: id ?? uniqueId(),
         item: copy(item),
@@ -58,7 +53,6 @@ export function createItemState(context: KitchenContext, options: {
         transform: transform ?? copy(item.transform),
         children: children ?? [],
         behaviors: behaviors ?? copy(item.behaviors),
-        effects: effects ?? {},
         bounds: bounds ?? copy(item.bounds),
         update: 0,
     } satisfies ItemState;
@@ -78,7 +72,6 @@ export function cloneItemState(itemState: ItemState, options: {
         transform: options.transform ?? itemState.transform,
         children: [],
         behaviors: copy(itemState.behaviors),
-        effects: copy(itemState.effects),
         bounds: copy(itemState.bounds),
     });
     items[item.id] = item;
@@ -174,11 +167,11 @@ export async function loadBehaviorHandlers() {
 }
 
 export async function invokeBehaviors<T extends keyof Behaviors, U>(
-    context: KitchenContext,
     item: ItemState,
     getMethod: (handler: BehaviorHandler<T>) => BehaviorFunction<T, U> | undefined,
     args: U,
 ): Promise<U> {
+    const context = getContext();
     if (!behaviorHandlers) {
         throw new Error('Behavior handlers not loaded');
     }
@@ -405,8 +398,7 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
                 tex,
             );
         }
-        await invokeBehaviors(ctx, itemState, it => it.render, {
-            matrices,
+        await invokeBehaviors(itemState, it => it.render, {
             bufferBounds,
             childRenders,
         });
@@ -440,44 +432,24 @@ export async function renderItemState(itemState: ItemState, options: {
 
 export async function renderItems(layers: ItemLayer[]) {
     const itemsInOrder = getAllItemStates(layers);
+    const held = getContext().held;
     for (const item of itemsInOrder.toReversed()) {
-        if (item.id === getContext().held) continue;
+        if (item.id === held) continue;
         if (item.parent) continue;
         await renderItemState(item);
     }
-    for (const item of itemsInOrder) {
-        await renderEffects(item);
-    }
-}
-
-async function renderEffects(itemState: ItemState) {
-    const transform = calculateItemStateTransform(itemState);
-    const renderBounds = transform.transformAABB2(itemState.bounds);
-    for (const [effectId, effect] of Object.entries(itemState.effects)) {
-        const { startTime } = effect;
-        const effectTime = Time.now() - startTime;
-        const { particle, sound } = effect.attributes;
-        if (particle) {
-            await renderParticles(particle, {
-                seed: effect.id,
-                bounds: renderBounds,
-                time: effectTime,
-            });
-        }
-        if (sound) {
-            await playAudioClip(sound.clip, {
-                type: 'effect',
-                item: itemState.id,
-                effect: effectId,
-            })
-        }
+    for (const item of itemsInOrder.toReversed()) {
+        if (item.id === held) continue;
+        await invokeBehaviors(item, it => it.renderOverlay, {
+            matrices,
+        });
     }
 }
 
 export async function renderHeldItem() {
-    const { side, held } = getContext();
+    const { side, held, items } = getContext();
     if (!held) return;
-    const item = getContext().items[held];
+    const item = items[held];
     if (!item) return;
     if (side == 'client') {
         const view = matrices.view.get().inverse();
@@ -488,6 +460,9 @@ export async function renderHeldItem() {
         }
     }
     await renderItemState(item);
+    await invokeBehaviors(item, it => it.renderOverlay, {
+        matrices,
+    });
 }
 
 export async function isItemHovering(item: ItemState): Promise<boolean> {
@@ -529,19 +504,19 @@ export async function collectClickActions(): Promise<ClickAction | null> {
     const hoveringItem = hovering ? items[hovering] : null;
     const heldItem = held ? items[held] : null;
     if (heldItem) {
-        await invokeBehaviors(context, heldItem, it => it.collectActionsHeld, {
+        await invokeBehaviors(heldItem, it => it.collectActionsHeld, {
             hovering: hoveringItem,
             actions,
         });
     }
     if (hoveringItem) {
-        await invokeBehaviors(context, hoveringItem, it => it.collectActionsHovered, {
+        await invokeBehaviors(hoveringItem, it => it.collectActionsHovered, {
             held: heldItem,
             actions,
         });
         const parentItem = hoveringItem.parent ? items[hoveringItem.parent] : null;
         if (parentItem) {
-            await invokeBehaviors(context, parentItem, it => it.collectActionsParent, {
+            await invokeBehaviors(parentItem, it => it.collectActionsParent, {
                 child: hoveringItem,
                 held: heldItem,
                 actions,
@@ -673,14 +648,14 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
         if (item.id === ctx.held) return false;
         if (ignoreItems.includes(item.id)) return false;
         if (!layers.includes(item.layer)) return false;
-        const { children } = await invokeBehaviors(ctx, item, (behavior) => behavior.handleChildrenOrder, {
+        const { children } = await invokeBehaviors(item, (behavior) => behavior.handleChildrenOrder, {
             timing: 'hover',
             children: sort(item.children.map(id => items[id])),
         });
         let childHovered = false;
         for (const child of children) {
             if (await check(child)) {
-                await invokeBehaviors(ctx, item, (behavior) => behavior.handleChildrenHovered, args);
+                await invokeBehaviors(item, (behavior) => behavior.handleChildrenHovered, args);
                 childHovered = !!args.target;
             }
             if (childHovered) break

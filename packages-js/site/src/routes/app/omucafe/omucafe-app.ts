@@ -15,13 +15,14 @@ import { get, writable, type Writable } from 'svelte/store';
 import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
 import type { Asset } from './asset/asset.js';
 import type { PlayingAudioClip } from './asset/audioclip.js';
-import type { Effect } from './effect/effect.js';
+import type { EffectState } from './effect/effect-state.js';
 import { GALLERY_TABLE_TYPE, type GalleryItem } from './gallery/gallery.js';
 import { getContext, mouse, paint, setContext } from './game/game.js';
 import { copy } from './game/helper.js';
 import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PAINT_EVENTS_REGISTRY_TYPE, PAINT_SIGNAL_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
 import { Time } from './game/time.js';
 import { transformToMatrix } from './game/transform.js';
+import { createEffect } from './item/behaviors/effect.js';
 import { attachChild, cloneItemState, detachChildren, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
 import type { Item } from './item/item.js';
 import type { Kitchen, MouseState } from './kitchen/kitchen.js';
@@ -69,7 +70,7 @@ export const DEFAULT_GAME_CONFIG = {
     filter: {},
     products: {} as Record<string, Product>,
     items: {} as Record<string, Item>,
-    effects: {} as Record<string, Effect>,
+    effects: {} as Record<string, EffectState>,
     scripts: {} as Record<string, Script>,
     photo_mode: {
         scale: 0,
@@ -234,7 +235,8 @@ const functions = {
         const item = getContext().items[itemId.value];
         const effect = config.effects[effectId.value];
         effect.startTime = Time.now();
-        item.effects[effect.id] = copy(effect);
+        item.behaviors.effect ??= createEffect();
+        item.behaviors.effect.effects[effect.id] = copy(effect);
         return v.void();
     },
     remove_effect(ctx: ScriptContext, args: Value[]): Value {
@@ -242,7 +244,8 @@ const functions = {
         assertValue(ctx, itemId, 'string');
         assertValue(ctx, effectId, 'string');
         const item = getContext().items[itemId.value];
-        delete item.effects[effectId.value];
+        item.behaviors.effect ??= createEffect();
+        delete item.behaviors.effect.effects[effectId.value];
         const { v } = builder;
         return v.void();
     },

@@ -3,7 +3,7 @@ import { lerp } from '$lib/math/math.js';
 import type { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByAsset } from '../../asset/asset.js';
-import type { EffectParticle } from '../../effect/effect.js';
+import type { EffectParticle } from '../../effect/effect-state.js';
 import { draw } from '../game.js';
 import { ARC4 } from '../random.js';
 
@@ -17,7 +17,7 @@ function physicsEquation(
     return position.add(velocity.scale(time)).add(acceleration.scale(time * time / 2));
 }
 
-type ParticleArguments = {
+type ParticleOptions = {
     seed: string,
     time: number,
     bounds: AABB2,
@@ -27,7 +27,7 @@ function alphaFunc(t: number) {
     return Math.sin(t * Math.PI);
 }
 
-export async function renderParticles(particle: EffectParticle, args: ParticleArguments) {
+export async function renderParticles(particle: EffectParticle, args: ParticleOptions) {
     const { emitter, source } = particle;
     if (source.assets.length === 0) return;
     const random = ARC4.fromString(args.seed);

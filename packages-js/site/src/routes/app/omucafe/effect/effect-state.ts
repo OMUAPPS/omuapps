@@ -73,18 +73,18 @@ export type EffectAttributes = {
     particle: EffectParticle,
 }
 
-export type Effect = {
+export type EffectState = {
     id: string,
     name: string,
     attributes: Partial<EffectAttributes>,
     startTime: number,
 };
 
-export function createEffect(options: {
+export function createEffectState(options: {
     id?: string,
     name: string,
     attributes: Partial<EffectAttributes>,
-}): Effect {
+}): EffectState {
     const { id, name, attributes } = options;
     return {
         id: id ?? uniqueId(),

@@ -3,7 +3,7 @@
     import { uploadAssetByFile } from '../asset/asset.js';
     import Aabb2Edit from '../components/AABB2Edit.svelte';
     import AssetImage from '../components/AssetImage.svelte';
-    import type { EffectParticle } from '../effect/effect.js';
+    import type { EffectParticle } from './effect-state.js';
 
     export let particle: EffectParticle;
 </script>
