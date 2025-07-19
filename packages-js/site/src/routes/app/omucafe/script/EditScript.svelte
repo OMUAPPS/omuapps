@@ -6,7 +6,7 @@
     import { getGame } from '../omucafe-app.js';
     import EditExpression from './EditExpression.svelte';
     import EditValue from './EditValue.svelte';
-    import { executeExpression, value, type Script } from './script.js';
+    import { executeExpression, validateScript, value, type Script } from './script.js';
     import { SCRIPT_EDITOR_CONTEXT, type ScriptEditorContext, type ValueEdit } from './scripteditor.js';
 
     export let script: Script;
@@ -144,6 +144,28 @@
                 {/if}
             </div>
         {/if}
+        <div class="actions">
+            JSONとして管理
+            <ButtonMini primary on:click={() => {
+                navigator.clipboard.writeText(JSON.stringify(script, null, 2));
+            }}>
+                <Tooltip>
+                    コピー
+                </Tooltip>
+                <i class="ti ti-copy"></i>
+            </ButtonMini>
+        </div>
+        <textarea value={JSON.stringify(script, null, 2)} on:input={(event) => {
+            const { value } = event.currentTarget;
+            try {
+                const obj = JSON.parse(value);
+                const result = validateScript(obj);
+                if (result) return;
+                script = obj;
+            } catch {
+                return;
+            }
+        }} cols="10" rows="40"></textarea>
         <div class="logs">
             <DebugLogs />
         </div>
@@ -172,6 +194,14 @@
         > h1 {
             margin-right: auto;
         }
+    }
+
+    .actions {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        color: var(--color-1);
     }
 
     .tab {

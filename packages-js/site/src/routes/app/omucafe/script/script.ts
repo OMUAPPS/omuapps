@@ -318,6 +318,135 @@ export type Script = {
     expression: Expression,
 }
 
+type ValidateResult = {
+    error: string,
+} | undefined;
+
+function assertType(value: unknown, type: 'string' | 'number' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'object' | 'function'): ValidateResult {
+    if (typeof value !== type) return { error: `value is not a ${type} but ${typeof value}` }
+}
+
+function validateValue(value: Value): ValidateResult {
+    switch (value.type) {
+        case 'string': {
+            const result = assertType(value.value, 'string');
+            if (result) return result;
+            break;
+        }
+        case 'number': {
+            const result = assertType(value.value, 'number');
+            if (result) return result;
+            break;
+        }
+        case 'object': {
+            if (typeof value.value !== 'object') return { error: `Value type is object but value is ${typeof value.value}` }
+            for (const [key, val] of Object.entries(value.value)) {
+                if (typeof key !== 'string') return { error: `Value type is object but key is ${typeof key}` }
+                const result = validateValue(val);
+                if (result) return result;
+                break;
+            }
+            break;
+        }
+        case 'function': {
+            return { error: 'Value type function is not supported for now.' }
+        }
+        case 'void': {
+            break;
+        }
+        case 'expression': {
+            if (typeof value.value !== 'object') return { error: `value is not a object but ${typeof value.value}` }
+            const result = validateExpression(value.value);
+            if (!result) break;
+            return result;
+        }
+        case 'variable': {
+            if (typeof value.name !== 'string') return { error: `value.name is not a string but ${typeof value.name}` }
+            break;
+        }
+        case 'attribute': {
+            if (typeof value.value !== 'object') return { error: `value.value is not a object but ${typeof value.name}` }
+            const result = validateValue(value.value);
+            if (result) return result;
+            if (typeof value.name !== 'string') return { error: `value.name is not a string but ${typeof value.name}` }
+            break;
+        }
+        case 'array': {
+            if (!Array.isArray(value.items)) return { error: `value.item is not a array but ${typeof value.items}` }
+            for (const item of value.items) {
+                const result = validateValue(item);
+                if (result) return result;
+            }
+            break;
+        }
+        case 'timer': {
+            return { error: 'Value type timer is not supported for now.' }
+        }
+        case 'invoke': {
+            if (!Array.isArray(value.args)) return { error: `value.args is not a array but ${typeof value.args}` }
+            const args = value.args.reduce((array, value) => {
+                array.push(validateValue(value));
+                return array;
+            }, [] as ValidateResult[]);
+            if (typeof value.function !== 'object') return { error: `value.function is not a object but ${typeof value.function}` };
+            const func = validateValue(value.function);
+            const result = args.find(val => val) ?? func;
+            if (result) return result;
+            break;
+        }
+        default:
+            return { error: `Unknown value type ${command}` }
+    }
+}
+
+function validateCommand(command: Command): ValidateResult {
+    switch (command.type) {
+        case 'return': {
+            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof value.function}` };
+            return validateValue(command.value);
+        }
+        case 'assign': {
+            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof command.value}` };
+            if (typeof command.variable !== 'object') return { error: `command.variable is not a object but ${typeof command.variable}` };
+            return validateValue(command.value) ?? validateValue(command.variable);
+        }
+        case 'assign-attribute': {
+            if (typeof command.object !== 'object') return { error: `command.object is not a object but ${typeof command.object}` };
+            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof command.value}` };
+            if (typeof command.name !== 'string') return { error: `command.name is not a object but ${typeof command.name}` };
+            return validateValue(command.object) ?? validateValue(command.value);
+        }
+        case 'throw': {
+            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof value.function}` };
+            return validateValue(command.value);
+        }
+        case 'invoke': {
+            if (typeof command.function !== 'object') return { error: `command.function is not a object but ${typeof command.function}` };
+            if (!Array.isArray(command.args)) return { error: `command.args is not a array but ${typeof command.args}` };
+            return command.args.map(value => validateValue(value)).find(result => result);
+        }
+        default:
+            return { error: `Unknown command type ${command}` }
+    }
+}
+
+function validateExpression(expression: Expression): ValidateResult {
+    if (!expression.commands) return { error: 'no expression.commands' };
+    if (!Array.isArray(expression.commands)) return { error: 'expression.commands is not a array' };
+    for (const command of expression.commands) {
+        const result = validateCommand(command);
+        if (result) continue;
+        return result;
+    }
+}
+
+export function validateScript(script: Script): ValidateResult {
+    if (!script.id) return { error: 'no script.id' };
+    if (!script.name) return { error: 'no script.name' };
+    if (!script.expression) return { error: 'no script.expression' };
+    return validateExpression(script.expression);
+}
+
 export function createScript(options: Partial<Script>): Script {
     const { id, name, expression } = options;
     return {
