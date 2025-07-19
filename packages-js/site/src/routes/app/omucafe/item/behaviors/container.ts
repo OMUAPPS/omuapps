@@ -99,9 +99,9 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 .map((id): ItemState | undefined => context.items[id])
                 .filter((entry): entry is ItemState => !!entry)
                 .sort((a, b) => {
-                    const maxA = getRenderBounds(a).max;
-                    const maxB = getRenderBounds(b).max;
-                    return ((a.transform.offset.y + maxA.y) - (b.transform.offset.y + maxB.y)) * (behavior.order === 'down' ? -1 : 1);
+                    const maxA = getRenderBounds(a).max.y;
+                    const maxB = getRenderBounds(b).max.y;
+                    return (maxA - maxB) * (behavior.order === 'down' ? -1 : 1);
                 })) {
                 const { bounds, texture } = childRenders[child.id];
                 const transform = transformToMatrix(child.transform);
