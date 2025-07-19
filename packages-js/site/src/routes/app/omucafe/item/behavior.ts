@@ -20,12 +20,12 @@ export type Behaviors = {
 };
 
 export const getBehaviorHandlers = async () => ({
+    liquid: new LiquidHandler(),
     container: new ContainerHandler(),
     holdable: new HoldableHandler(),
     spawner: new SpawnerHandler(),
     action: new ActionHandler(),
     effect: new EffectHandler(),
-    liquid: new LiquidHandler(),
 }) satisfies BehaviorHandlers;
 
 export type BehaviorHandlers<T extends keyof Behaviors = keyof Behaviors> = {

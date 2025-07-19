@@ -352,7 +352,7 @@ type TextTexture = {
 const textEncoder = new TextEncoder();
 
 export class Draw {
-    private readonly vertexShader: GlShader;
+    public readonly vertexShader: GlShader;
     private readonly colorProgram: GlProgram;
     private readonly textureProgram: GlProgram;
     private readonly textureMaskProgram: GlProgram;
@@ -360,8 +360,8 @@ export class Draw {
     private readonly textureOutlineProgram: GlProgram;
     private readonly bezierProgram: GlProgram;
     private readonly circleProgram: GlProgram;
-    private readonly vertexBuffer: GlBuffer;
-    private readonly texcoordBuffer: GlBuffer;
+    public readonly vertexBuffer: GlBuffer;
+    public readonly texcoordBuffer: GlBuffer;
     private readonly frameBuffer: GlFramebuffer;
     private readonly frameBufferTexture: GlTexture;
     private readonly textCanvas: OffscreenCanvas;
@@ -498,56 +498,58 @@ export class Draw {
         return true;
     }
 
-    public setMesh(vertices?: Float32Array, texcoords?: Float32Array): void {
+    public setMesh(program: GlProgram, vertices?: Float32Array, texcoords?: Float32Array): void {
         if (vertices) {
             this.vertexBuffer.bind(() => {
                 this.vertexBuffer.setData(vertices, 'static');
             });
+            program.getAttribute('a_position').set(this.vertexBuffer, 3, this.glContext.gl.FLOAT, false, 0, 0);
         }
         if (texcoords) {
             this.texcoordBuffer.bind(() => {
                 this.texcoordBuffer.setData(texcoords, 'static');
             });
+            program.getAttribute('a_texcoord').set(this.texcoordBuffer, 2, this.glContext.gl.FLOAT, false, 0, 0);
         }
+    }
+    
+    public setMatrices(program: GlProgram): void {
+        program.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
+        program.getUniform('u_view').asMat4().set(this.matrices.view.get());
+        program.getUniform('u_model').asMat4().set(this.matrices.model.get());
     }
 
     public triangle(p1: Vec2Like, p2: Vec2Like, p3: Vec2Like, color: Vec4): void {
         const { gl } = this.glContext;
-        
-        this.setMesh(new Float32Array([
-            p1.x, p1.y, 0,
-            p2.x, p2.y, 0,
-            p3.x, p3.y, 0,
-        ]));
 
         this.colorProgram.use(() => {
-            this.colorProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.colorProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.colorProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.colorProgram, new Float32Array([
+                p1.x, p1.y, 0,
+                p2.x, p2.y, 0,
+                p3.x, p3.y, 0,
+            ]));
+
+            this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
             
-            const position = this.colorProgram.getAttribute('a_position');
-            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            this.colorProgram.getAttribute('a_position').set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);;
             gl.drawArrays(gl.TRIANGLES, 0, 3);
         });
     }
 
     public rectangle(left: number, top: number, right: number, bottom: number, color: Vec4): void {
         const { gl } = this.glContext;
-        
-        this.setMesh(new Float32Array([
-            left, top, 0,
-            right, top, 0,
-            right, bottom, 0,
-            left, top, 0,
-            right, bottom, 0,
-            left, bottom, 0,
-        ]));
 
         this.colorProgram.use(() => {
-            this.colorProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.colorProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.colorProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.colorProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]));
+            this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
             
             const position = this.colorProgram.getAttribute('a_position');
@@ -559,114 +561,96 @@ export class Draw {
     public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4, width: number): void {
         const { gl } = this.glContext;
         width /= 2;
-        this.setMesh(new Float32Array([
-            // top
-            left - width, top - width, 0,
-            right - width, top - width, 0,
-            right - width, top + width, 0,
-            left - width, top - width, 0,
-            right - width, top + width, 0,
-            left - width, top + width, 0,
-            // right
-            right - width, top - width, 0,
-            right + width, top - width, 0,
-            right + width, bottom - width, 0,
-            right - width, top - width, 0,
-            right + width, bottom - width, 0,
-            right - width, bottom - width, 0,
-            // bottom
-            left + width, bottom - width, 0,
-            right + width, bottom - width, 0,
-            right + width, bottom + width, 0,
-            left + width, bottom - width, 0,
-            right + width, bottom + width, 0,
-            left + width, bottom + width, 0,
-            // left
-            left - width, top + width, 0,
-            left + width, top + width, 0,
-            left + width, bottom + width, 0,
-            left - width, top + width, 0,
-            left + width, bottom + width, 0,
-            left - width, bottom + width, 0,
-        ]));
 
         this.colorProgram.use(() => {
-            this.colorProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.colorProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.colorProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.colorProgram, new Float32Array([
+                // top
+                left - width, top - width, 0,
+                right - width, top - width, 0,
+                right - width, top + width, 0,
+                left - width, top - width, 0,
+                right - width, top + width, 0,
+                left - width, top + width, 0,
+                // right
+                right - width, top - width, 0,
+                right + width, top - width, 0,
+                right + width, bottom - width, 0,
+                right - width, top - width, 0,
+                right + width, bottom - width, 0,
+                right - width, bottom - width, 0,
+                // bottom
+                left + width, bottom - width, 0,
+                right + width, bottom - width, 0,
+                right + width, bottom + width, 0,
+                left + width, bottom - width, 0,
+                right + width, bottom + width, 0,
+                left + width, bottom + width, 0,
+                // left
+                left - width, top + width, 0,
+                left + width, top + width, 0,
+                left + width, bottom + width, 0,
+                left - width, top + width, 0,
+                left + width, bottom + width, 0,
+                left - width, bottom + width, 0,
+            ]));
+            this.setMatrices(this.colorProgram);
+
             this.colorProgram.getUniform('u_color').asVec4().set(color);
-            
-            const position = this.colorProgram.getAttribute('a_position');
-            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 24);
         });
     }
 
     public texture(left: number, top: number, right: number, bottom: number, texture: GlTexture, color = Vec4.ONE): void {
         const { gl } = this.glContext;
-        
-        this.setMesh(new Float32Array([
-            left, top, 0,
-            right, top, 0,
-            right, bottom, 0,
-            left, top, 0,
-            right, bottom, 0,
-            left, bottom, 0,
-        ]), new Float32Array([
-            0, 0,
-            1, 0,
-            1, 1,
-            0, 0,
-            1, 1,
-            0, 1,
-        ]));
 
         this.textureProgram.use(() => {
-            this.textureProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.textureProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.textureProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.textureProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]), new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 0,
+                1, 1,
+                0, 1,
+            ]));
+            this.setMatrices(this.textureProgram);
+
             this.textureProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.textureProgram.getUniform('u_color').asVec4().set(color);
-
-            const position = this.textureProgram.getAttribute('a_position');
-            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const texcoord = this.textureProgram.getAttribute('a_texcoord');
-            texcoord.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
 
     public textureMask(left: number, top: number, right: number, bottom: number, texture: GlTexture, mask: GlTexture, color = Vec4.ONE): void {
         const { gl } = this.glContext;
-        
-        this.setMesh(new Float32Array([
-            left, top, 0,
-            right, top, 0,
-            right, bottom, 0,
-            left, top, 0,
-            right, bottom, 0,
-            left, bottom, 0,
-        ]), new Float32Array([
-            0, 0,
-            1, 0,
-            1, 1,
-            0, 0,
-            1, 1,
-            0, 1,
-        ]));
 
         this.textureMaskProgram.use(() => {
-            this.textureMaskProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.textureMaskProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.textureMaskProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.textureMaskProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]), new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 0,
+                1, 1,
+                0, 1,
+            ]));
+            this.setMatrices(this.textureMaskProgram);
+
             this.textureMaskProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.textureMaskProgram.getUniform('u_mask').asSampler2D().set(mask);
             this.textureMaskProgram.getUniform('u_color').asVec4().set(color);
-
-            const position = this.textureMaskProgram.getAttribute('a_position');
-            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const texcoord = this.textureMaskProgram.getAttribute('a_texcoord');
-            texcoord.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
@@ -674,33 +658,26 @@ export class Draw {
     public textureColor(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4): void {
         const { gl } = this.glContext;
         
-        this.setMesh(new Float32Array([
-            left, top, 0,
-            right, top, 0,
-            right, bottom, 0,
-            left, top, 0,
-            right, bottom, 0,
-            left, bottom, 0,
-        ]), new Float32Array([
-            0, 0,
-            1, 0,
-            1, 1,
-            0, 0,
-            1, 1,
-            0, 1,
-        ]));
-
         this.textureColorProgram.use(() => {
-            this.textureColorProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.textureColorProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.textureColorProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.textureColorProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]), new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 0,
+                1, 1,
+                0, 1,
+            ]));
+            this.setMatrices(this.textureColorProgram);
+
             this.textureColorProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.textureColorProgram.getUniform('u_color').asVec4().set(color);
-            
-            const position = this.textureColorProgram.getAttribute('a_position');
-            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const texcoord = this.textureColorProgram.getAttribute('a_texcoord');
-            texcoord.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
@@ -714,37 +691,30 @@ export class Draw {
             x: outlineWidth / width,
             y: outlineWidth / height,
         };
-        
-        this.setMesh(new Float32Array([
-            left - outlineWidth, top - outlineWidth, 0,
-            left + width + outlineWidth, top - outlineWidth, 0,
-            left + width + outlineWidth, bottom + outlineWidth, 0,
-            left - outlineWidth, top - outlineWidth, 0,
-            left + width + outlineWidth, bottom + outlineWidth, 0,
-            left - outlineWidth, bottom + outlineWidth, 0,
-        ]), new Float32Array([
-            -uvMargin.x, -uvMargin.y,
-            1 + uvMargin.x, -uvMargin.y,
-            1 + uvMargin.x, 1 + uvMargin.y,
-            -uvMargin.x, -uvMargin.y,
-            1 + uvMargin.x, 1 + uvMargin.y,
-            -uvMargin.x, 1 + uvMargin.y,
-        ]));
 
         this.textureOutlineProgram.use(() => {
-            this.textureOutlineProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.textureOutlineProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.textureOutlineProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.textureOutlineProgram, new Float32Array([
+                left - outlineWidth, top - outlineWidth, 0,
+                left + width + outlineWidth, top - outlineWidth, 0,
+                left + width + outlineWidth, bottom + outlineWidth, 0,
+                left - outlineWidth, top - outlineWidth, 0,
+                left + width + outlineWidth, bottom + outlineWidth, 0,
+                left - outlineWidth, bottom + outlineWidth, 0,
+            ]), new Float32Array([
+                -uvMargin.x, -uvMargin.y,
+                1 + uvMargin.x, -uvMargin.y,
+                1 + uvMargin.x, 1 + uvMargin.y,
+                -uvMargin.x, -uvMargin.y,
+                1 + uvMargin.x, 1 + uvMargin.y,
+                -uvMargin.x, 1 + uvMargin.y,
+            ]));
+            this.setMatrices(this.textureOutlineProgram);
+
             this.textureOutlineProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.textureOutlineProgram.getUniform('u_outlineColor').asVec4().set(color);
             this.textureOutlineProgram.getUniform('u_resolution').asVec2().set({x: right - left, y: bottom - top});
             const mvp = this.matrices.get();
             this.textureOutlineProgram.getUniform('u_outlineWidth').asFloat().set(outlineWidth / mvp.m00 / gl.canvas.width);
-            
-            const position = this.textureOutlineProgram.getAttribute('a_position');
-            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const texcoord = this.textureOutlineProgram.getAttribute('a_texcoord');
-            texcoord.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
@@ -768,26 +738,24 @@ export class Draw {
             y: maxWidth / height,
         };
 
-        this.setMesh(new Float32Array([
-            bounds.min.x - maxWidth, bounds.min.y - maxWidth, 0,
-            bounds.max.x + maxWidth, bounds.min.y - maxWidth, 0,
-            bounds.max.x + maxWidth, bounds.max.y + maxWidth, 0,
-            bounds.min.x - maxWidth, bounds.min.y - maxWidth, 0,
-            bounds.max.x + maxWidth, bounds.max.y + maxWidth, 0,
-            bounds.min.x - maxWidth, bounds.max.y + maxWidth, 0,
-        ]), new Float32Array([
-            -uvMargin.x, -uvMargin.y,
-            1 + uvMargin.x, -uvMargin.y,
-            1 + uvMargin.x, 1 + uvMargin.y,
-            -uvMargin.x, -uvMargin.y,
-            1 + uvMargin.x, 1 + uvMargin.y,
-            -uvMargin.x, 1 + uvMargin.y,
-        ]));
-
         this.bezierProgram.use(() => {
-            this.bezierProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.bezierProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.bezierProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.bezierProgram, new Float32Array([
+                bounds.min.x - maxWidth, bounds.min.y - maxWidth, 0,
+                bounds.max.x + maxWidth, bounds.min.y - maxWidth, 0,
+                bounds.max.x + maxWidth, bounds.max.y + maxWidth, 0,
+                bounds.min.x - maxWidth, bounds.min.y - maxWidth, 0,
+                bounds.max.x + maxWidth, bounds.max.y + maxWidth, 0,
+                bounds.min.x - maxWidth, bounds.max.y + maxWidth, 0,
+            ]), new Float32Array([
+                -uvMargin.x, -uvMargin.y,
+                1 + uvMargin.x, -uvMargin.y,
+                1 + uvMargin.x, 1 + uvMargin.y,
+                -uvMargin.x, -uvMargin.y,
+                1 + uvMargin.x, 1 + uvMargin.y,
+                -uvMargin.x, 1 + uvMargin.y,
+            ]));
+            this.setMatrices(this.bezierProgram);
+
             this.bezierProgram.getUniform('u_resolution').asVec2().set({x: width, y: height});
             this.bezierProgram.getUniform('u_color').asVec4().set(color);
             this.bezierProgram.getUniform('u_widthIn').asFloat().set(widthIn);
@@ -795,11 +763,6 @@ export class Draw {
             this.bezierProgram.getUniform('p1').asVec2().set(Vec2.from(a).sub(bounds.min));
             this.bezierProgram.getUniform('p2').asVec2().set(Vec2.from(b).sub(bounds.min));
             this.bezierProgram.getUniform('p3').asVec2().set(Vec2.from(c).sub(bounds.min));
-            
-            const position = this.bezierProgram.getAttribute('a_position');
-            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const texcoord = this.bezierProgram.getAttribute('a_texcoord');
-            texcoord.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
@@ -814,36 +777,29 @@ export class Draw {
     ): void {
         const { gl } = this.glContext;
         
-        this.setMesh(new Float32Array([
-            x - radiusOuter, y - radiusOuter, 0,
-            x + radiusOuter, y - radiusOuter, 0,
-            x + radiusOuter, y + radiusOuter, 0,
-            x - radiusOuter, y - radiusOuter, 0,
-            x + radiusOuter, y + radiusOuter, 0,
-            x - radiusOuter, y + radiusOuter, 0,
-        ]), new Float32Array([
-            -1.0, -1.0,
-            1.0, -1.0,
-            1.0, 1.0,
-            -1.0, -1.0,
-            1.0, 1.0,
-            -1.0, 1.0,
-        ]));
-
         this.circleProgram.use(() => {
-            this.circleProgram.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
-            this.circleProgram.getUniform('u_view').asMat4().set(this.matrices.view.get());
-            this.circleProgram.getUniform('u_model').asMat4().set(this.matrices.model.get());
+            this.setMesh(this.circleProgram, new Float32Array([
+                x - radiusOuter, y - radiusOuter, 0,
+                x + radiusOuter, y - radiusOuter, 0,
+                x + radiusOuter, y + radiusOuter, 0,
+                x - radiusOuter, y - radiusOuter, 0,
+                x + radiusOuter, y + radiusOuter, 0,
+                x - radiusOuter, y + radiusOuter, 0,
+            ]), new Float32Array([
+                -1.0, -1.0,
+                1.0, -1.0,
+                1.0, 1.0,
+                -1.0, -1.0,
+                1.0, 1.0,
+                -1.0, 1.0,
+            ]));
+            this.setMatrices(this.circleProgram);
+
             this.circleProgram.getUniform('u_resolution').asVec2().set({x: radiusOuter * 2, y: radiusOuter * 2});
             this.circleProgram.getUniform('u_color').asVec4().set(color);
             this.circleProgram.getUniform('u_radiusInner').asFloat().set(radiusInner / 2);
             this.circleProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter / 2);
             this.circleProgram.getUniform('u_smoothness').asFloat().set(smoothness);
-            
-            const position = this.circleProgram.getAttribute('a_position');
-            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-            const texcoord = this.circleProgram.getAttribute('a_texcoord');
-            texcoord.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }

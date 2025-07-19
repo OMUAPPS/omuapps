@@ -1,6 +1,5 @@
 <script lang="ts">
     import { ButtonMini, Tooltip } from '@omujs/ui';
-    import { onMount } from 'svelte';
     import { fetchImage, getAsset } from '../asset/asset.js';
     import FitInput from '../components//FitInput.svelte';
     import EditImage from '../components/EditImage.svelte';
@@ -21,8 +20,6 @@
     import SpawnerEdit from './behaviors/SpawnerEdit.svelte';
 
     export let item: Item;
-    export let created = false;
-    let state: {type: 'opening_file'} | null = null;
 
     const { scene, gameConfig } = getGame();
 
@@ -62,18 +59,6 @@
             edit: LiquidEdit,
         }
     } satisfies DefaultBehaviors;
-
-    let open: () => Promise<FileList>;
-
-    onMount(async () => {
-        if (!created || !open) return;
-        state = { type: 'opening_file' };
-        const fileList = await open();
-        const file = fileList[0];
-        item.name = file.name.split('.').at(0) ?? item.name;
-        state = null;
-    })
-    
 </script>
 
 <main>
@@ -154,11 +139,6 @@
             </div>
         {/each}
     </div>
-    {#if state?.type === 'opening_file'}
-        <div class="overlay">
-            ファイルを選択中…
-        </div>
-    {/if}
 </main>
 
 <style lang="scss">
@@ -168,19 +148,6 @@
         color: var(--color-1);
         display: flex;
         gap: 1rem;
-    }
-
-    .overlay {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24rem;
-        background: var(--color-bg-1);
-        outline: 1px solid var(--color-1);
-        outline-offset: -0.5rem;
-        opacity: 0.95;
     }
 
     .info {

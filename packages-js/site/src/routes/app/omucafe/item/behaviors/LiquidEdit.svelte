@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FileDrop, Slider } from '@omujs/ui';
+    import { Button, Checkbox, FileDrop, Slider } from '@omujs/ui';
     import { uploadAssetByFile } from '../../asset/asset.js';
     import EditImage from '../../components/EditImage.svelte';
     import TransformEdit from '../../components/TransformEdit.svelte';
@@ -12,18 +12,36 @@
 <div class="behavior">
     Mask
     <EditImage image={behavior.mask?.asset} handle={(image) => {
-        if (!image) return;
+        if (!image) {
+            delete behavior.mask;
+            return;
+        }
         behavior.mask ??= {
             asset: image,
             transform: createTransform(),
         };
         behavior.mask.asset = image;
-    }} required />
+    }} />
     {#if behavior.mask}
         <TransformEdit bind:transform={behavior.mask.transform} />
     {/if}
     Liquid
     <TransformEdit bind:transform={behavior.transform}/>
+    Curvature
+    <Checkbox value={behavior.curvature !== undefined} handle={(value) => {
+        if (value) {
+            behavior.curvature = {
+                in: 0,
+                out: 0,
+            };
+        } else {
+            delete behavior.curvature;
+        }
+    }} />
+    {#if behavior.curvature !== undefined}
+        <Slider bind:value={behavior.curvature.in} min={0} max={100} step={1} clamp={false} />
+        <Slider bind:value={behavior.curvature.out} min={0} max={100} step={1} clamp={false} />
+    {/if}
     Layers
     <FileDrop primary handle={async (files) => {
         const [file] = files;
@@ -41,6 +59,11 @@
     <div class="layers">
         {#each behavior.layers.toReversed() as layer, i (i)}
             <div class="layer">
+                <Button primary onclick={() => {
+                    behavior.layers = behavior.layers.filter((_, index) => (behavior.layers.length - index - 1) !== i);
+                }}>
+                    この層を削除
+                </Button>
                 <div class="setting">
                     横側
                     <div class="image">
@@ -60,7 +83,7 @@
                 </div>
                 <div class="setting">
                     量
-                    <Slider bind:value={layer.amount} min={0} max={200} step={1} clamp={false} />
+                    <Slider bind:value={layer.amount} min={0} max={500} step={1} clamp={false} />
                 </div>
             </div>
         {/each}
