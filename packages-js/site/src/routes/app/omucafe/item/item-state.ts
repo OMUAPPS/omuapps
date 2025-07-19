@@ -435,7 +435,7 @@ export async function renderItemState(itemState: ItemState, options: {
 }
 
 function restrictPositionToDisplayBounds(itemState: ItemState) {
-    if (itemState.layer === ITEM_LAYERS.COUNTER) return;
+    if (itemState.layer !== ITEM_LAYERS.KITCHEN_ITEMS) return;
     const containerBounds = AABB2.from({
         min: { x: 0, y: 0 },
         max: { x: 1920 * 2, y: 1080 },
@@ -443,7 +443,6 @@ function restrictPositionToDisplayBounds(itemState: ItemState) {
     const containerDimentions = containerBounds.dimensions();
     const itemStateBounds = getRenderBounds(itemState);
     const itemStateDimentions = itemStateBounds.dimensions();
-    console.log(containerBounds.intersects(itemStateBounds));
     const exceedLeft = containerBounds.min.x - itemStateBounds.max.x;
     const exceedTop = containerBounds.min.y - itemStateBounds.max.y;
     const exceedRight = itemStateBounds.min.x - containerBounds.max.x;
