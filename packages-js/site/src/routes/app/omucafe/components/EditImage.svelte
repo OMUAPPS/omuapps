@@ -39,12 +39,6 @@
 </div>
 
 <style lang="scss">
-    .actions {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-    }
-
     .image {
         display: flex;
         align-items: center;
@@ -53,5 +47,12 @@
         width: 100%;
         max-height: 8rem;
         background: var(--color-bg-1);
+    }
+
+    .actions {
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
     }
 </style>
