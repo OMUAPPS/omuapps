@@ -59,8 +59,9 @@ function matchTokens(
     let index = 0;
     let targetIndex = 0;
     while (targetIndex < targetTokens.length) {
-        if (index + offset > tokens.length) return null;
+        if (index + offset >= tokens.length) return null;
         const token = tokens[index + offset];
+        if (index + offset >= targetTokens.length) return null;
         const target = targetTokens[targetIndex];
         if (isEmptyToken(token)) {
             index++;
