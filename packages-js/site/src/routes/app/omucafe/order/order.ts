@@ -2,7 +2,8 @@ import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
 import type { Message } from '@omujs/chat/models/message.js';
 import { TableType } from '@omujs/omu/extension/table/table.js';
 import { APP_ID } from '../app.js';
-import { acquireRenderLock, getContext, markChanged } from '../game/game.js';
+import { playAudioClip } from '../asset/audioclip.js';
+import { acquireRenderLock, getContext, markChanged, resources } from '../game/game.js';
 import { Time } from '../game/time.js';
 import { getGame, type User } from '../omucafe-app.js';
 import type { Product } from '../product/product.js';
@@ -256,6 +257,7 @@ export async function processMessage(message: Message) {
     }));
     const orderAnalysis = analyzeOrderRequest(tokens, productTokens);
     if (!orderAnalysis.detected) return;
+    await playAudioClip(resources.bell_audio_clip);
     await game.orders.add({
         id: message.id.key(),
         timestamp: Time.now(),

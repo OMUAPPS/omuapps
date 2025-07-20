@@ -35,7 +35,6 @@ export function createFilter(options: {
 
 export type Clip = {
     readonly type: 'clip',
-    readonly id: string,
     asset?: Asset,
     start: number,
     duration?: number,
@@ -45,13 +44,12 @@ export type Clip = {
 
 export async function createClip(options: {
     asset?: Asset,
-    id?: string,
     start?: number,
     duration?: number,
     playbackRate?: number,
     loop?: boolean,
 }): Promise<Clip> {
-    const { asset, id, start, playbackRate, loop } = options
+    const { asset, start, playbackRate, loop } = options
     let { duration } = options
     if (!duration && asset) {
         const buffer = await getAudioBuffer(asset);
@@ -59,7 +57,6 @@ export async function createClip(options: {
     }
     return {
         type: 'clip',
-        id: id ?? uniqueId(),
         asset,
         start: start ?? 0,
         duration: duration,
@@ -68,9 +65,20 @@ export async function createClip(options: {
     }
 }
 
+export async function createClipFromAudio(asset: Asset): Promise<Clip> {
+    const buffer = await getAudioBuffer(asset);
+    return {
+        type: 'clip',
+        asset,
+        start: 0,
+        duration: buffer.length / buffer.sampleRate * 1000,
+        playbackRate: 1.0,
+        loop: false,
+    };
+}
+
 export type EnvelopeClip = {
     readonly type: 'envelope',
-    readonly id: string,
     sources: {
         attack?: AudioClip,
         sustain?: AudioClip,
@@ -87,7 +95,6 @@ export type EnvelopeClip = {
 }
 
 export function createEnvelopeClip(options: {
-    id?: string,
     sources?: {
         attack?: Clip,
         decay?: Clip,
@@ -95,10 +102,9 @@ export function createEnvelopeClip(options: {
         release?: Clip,
     },
 }): EnvelopeClip {
-    const { id, sources } = options
+    const { sources } = options
     return {
         type: 'envelope',
-        id: id ?? uniqueId(),
         sources: sources ?? {},
         durations: {},
         velocities: {},
@@ -109,20 +115,17 @@ export type RandomClip = {
     // Randomly select a clip from the list of clips
     // playingClip = Math.floor(random(seed + time) * clips.length) % clips.length
     readonly type: 'random',
-    readonly id: string,
     clips: Clip[],
     seed: number,
 }
 
 export function createRandomClip(options: {
-    id: string,
     clips: Clip[],
     seed?: number,
 }): RandomClip {
-    const { id, clips, seed } = options
+    const { clips, seed } = options
     return {
         type: 'random',
-        id,
         clips,
         seed: seed ?? 0,
     }
@@ -143,7 +146,7 @@ export type PlayingAudioClip = {
     readonly id: string,
     clip: AudioClip,
     source?: PlayingSource,
-    startTime: number,
+    readonly startTime: number,
     stopTime?: number,
 }
 
@@ -213,7 +216,7 @@ class ClipContext {
     constructor(
         public clip: AudioClip,
         public time: number,
-        public startTime: number,
+        public readonly startTime: number,
         public stopTime?: number,
         public source?: PlayingSource,
     ) { }
@@ -258,7 +261,7 @@ class ClipContext {
 const audioInstances: Map<string, AudioInstance> = new Map();
 
 interface AudioInstance<T = unknown> {
-    update(clip: T, ctx: ClipContext): AudioNode;
+    update(clip: T, ctx: ClipContext): AudioNode | undefined;
     dispose(): void;
 }
 
@@ -279,7 +282,7 @@ class AudioInstanceFilter implements AudioInstance<Filter> {
         );
     }
 
-    public update(filter: Filter, ctx: ClipContext): AudioNode {
+    public update(filter: Filter, ctx: ClipContext): AudioNode | undefined {
         const { lowpass, highpass, pan, attack, release } = filter;
         const nodes: AudioNode[] = [];
         let changed = false;
@@ -333,6 +336,7 @@ class AudioInstanceFilter implements AudioInstance<Filter> {
             }
         }
         const sourceNode = this.clip.update(filter.clip, ctx);
+        if (!sourceNode) return;
         if (changed) {
             sourceNode.disconnect();
             nodes.map(node => node.disconnect());
@@ -390,11 +394,39 @@ class AudioInstanceClip implements AudioInstance<Clip> {
     }
 }
 
+class AudioInstanceRandom implements AudioInstance<RandomClip> {
+    constructor(
+        public source?: AudioInstance,
+    ) {}
+
+    public static async from(random: RandomClip, ctx: ClipContext) {
+        if (random.clips.length === 0) {
+            return new AudioInstanceRandom();
+        }
+        const rng = ARC4.fromNumber(ctx.startTime + random.seed);
+        const clip = rng.choice(random.clips);
+        const instance = await createAudioInstance(clip, ctx);
+        return new AudioInstanceRandom(
+            instance,
+        )
+    }
+
+    public dispose() {
+        this.source?.dispose();
+    }
+
+    public update(random: RandomClip, ctx: ClipContext): AudioNode | undefined {
+        if (random.clips.length === 0) return;
+        const rng = ARC4.fromNumber(ctx.startTime + random.seed);
+        const clip = rng.choice(random.clips);
+        return this.source?.update(clip, ctx);
+    }
+}
+
 class AudioInstanceEnvelope implements AudioInstance<EnvelopeClip> {
     constructor(
         public sources: Record<keyof EnvelopeClip['sources'], AudioInstance | undefined>,
         public dest: GainNode,
-        public playing: boolean,
     ) {}
 
     public static async from(clip: EnvelopeClip, ctx: ClipContext) {
@@ -406,7 +438,6 @@ class AudioInstanceEnvelope implements AudioInstance<EnvelopeClip> {
                 release: release && await createAudioInstance(release, ctx),
             },
             audioCtx.createGain(),
-            false,
         )
     }
 
@@ -418,16 +449,16 @@ class AudioInstanceEnvelope implements AudioInstance<EnvelopeClip> {
         this.dest.disconnect();
     }
 
-    public update(clip: EnvelopeClip, ctx: ClipContext): AudioNode {
+    public update(clip: EnvelopeClip, ctx: ClipContext): AudioNode | undefined {
         const { attack, sustain, release } = this.sources;
         if (attack && clip.sources.attack) {
-            attack.update(clip.sources.attack, ctx).connect(this.dest);
+            attack.update(clip.sources.attack, ctx)?.connect(this.dest);
         }
         if (sustain && clip.sources.sustain) {
-            sustain.update(clip.sources.sustain, ctx).connect(this.dest);
+            sustain.update(clip.sources.sustain, ctx)?.connect(this.dest);
         }
         if (release && clip.sources.release) {
-            release.update(clip.sources.release, ctx).connect(this.dest);
+            release.update(clip.sources.release, ctx)?.connect(this.dest);
         }
         return this.dest;
     }
@@ -461,11 +492,11 @@ export async function updateAudioClips(): Promise<void> {
             delete audios[id];
         }
         if (existing) {
-            existing.update(playing.clip, ctx).connect(audioCtx.destination);
+            existing.update(playing.clip, ctx)?.connect(audioCtx.destination);
             continue;
         } else {
             const instance = await createAudioInstance(playing.clip, ctx);
-            instance.update(playing.clip, ctx).connect(audioCtx.destination);;
+            instance.update(playing.clip, ctx)?.connect(audioCtx.destination);;
             audioInstances.set(id, instance);
         }
     }
@@ -483,7 +514,7 @@ async function createAudioInstance(clip: AudioClip, ctx: ClipContext): Promise<A
             return await AudioInstanceFilter.from(clip, ctx);
         }
         case 'random': {
-            throw new Error('TODO');
+            return await AudioInstanceRandom.from(clip, ctx);
         }
     }
 }
@@ -531,6 +562,6 @@ async function estimateClipEndTime(clip: AudioClip, ctx: ClipContext): Promise<n
 
 export let audioCtx: AudioContext;
 
-export async function createAudioContext() {
+export function createAudioContext() {
     audioCtx = new AudioContext();
 }

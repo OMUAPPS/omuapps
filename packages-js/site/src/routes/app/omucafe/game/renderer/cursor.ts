@@ -2,8 +2,8 @@
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByUri } from '../../asset/asset.js';
-import cursor_grab from '../../images/cursor_grab.png';
-import cursor_point from '../../images/cursor_point.png';
+import cursor_grab from '../../asset/images/cursor_grab.png';
+import cursor_point from '../../asset/images/cursor_point.png';
 import { draw, getContext, matrices, mouse } from '../game.js';
 import { Time } from '../time.js';
 

@@ -4,7 +4,7 @@
     import { tryCatch } from '$lib/result.js';
     import { Button, Spinner } from '@omujs/ui';
     import { onMount } from 'svelte';
-    import avatar_setup from '../images/avatar_setup.png';
+    import avatar_setup from '../asset/images/avatar_setup.png';
     import { getGame, isInstalled, sessions } from '../omucafe-app.js';
     import type { SceneContext } from './scene.js';
 

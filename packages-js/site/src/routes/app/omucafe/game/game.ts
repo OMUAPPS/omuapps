@@ -5,8 +5,8 @@ import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByAsset, getTextureByUri, getTextureByUriCORS, uploadAssetByBlob } from '../asset/asset.js';
-import bell from '../images/bell.png';
-import counter_client from '../images/counter_client.png';
+import bell from '../asset/images/bell.png';
+import counter_client from '../asset/images/counter_client.png';
 import { createContainer } from '../item/behaviors/container.js';
 import { collectClickActions, createItemState, getItemStateRender, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, removeItemState, renderHeldItem, renderHoveredItem, renderItems, renderItemState, updateHoveringItem } from '../item/item-state.js';
 import { createItem } from '../item/item.js';
@@ -118,6 +118,7 @@ let readBuffer: GlFramebuffer;
 
 export async function init(ctx: GlContext) {
     const { paintSignal, paintEvents, gameConfig } = getGame();
+    createAudioContext();
     glContext = ctx;
     matrices = new Matrices();
     matrices.width = ctx.gl.canvas.width;
@@ -160,7 +161,6 @@ export async function init(ctx: GlContext) {
     }));
         
     await loadBehaviorHandlers();
-    await createAudioContext();
     if (side === 'client') {
         const counterTex = await getTextureByUri(counter_client);
         const existCounter = context.items['counter'];
@@ -629,15 +629,15 @@ export async function renderBackgroundSide() {
 
 import { BetterMath } from '$lib/math.js';
 import { invLerp, lerp } from '$lib/math/math.js';
-import dummy_back from '../images/dummy_back.png';
-import dummy_front from '../images/dummy_front.png';
+import dummy_back from '../asset/images/dummy_back.png';
+import dummy_front from '../asset/images/dummy_front.png';
+import { getResources, type Resources } from '../asset/resources.js';
 import { getGame, type User } from '../omucafe-app.js';
 import { isNounLike, type OrderMessage } from '../order/order.js';
 import type { SceneType } from '../scenes/scene.js';
 import { Mouse } from './mouse.js';
 import { Paint, PAINT_EVENT_TYPE, type PaintEvent } from './paint.js';
 import { renderParticles } from './renderer/particle.js';
-import { getResources, type Resources } from './resources.js';
 
 async function renderNametag(user: User, bounds: AABB2) {
     const dimentions = bounds.dimensions();

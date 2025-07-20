@@ -1,10 +1,8 @@
-import background from '../../images/background.png';
-import background2 from '../../images/background2.png';
-import effect from '../../images/effect.png';
-// import overlay from '../../images/overlay.png';
-// import overlay2 from '../../images/overlay2.png';
 import { getTextureByUri } from '../../asset/asset.js';
-import kitchen_asset_overlay from '../../images/kitchen_asset_overlay.png';
+import background from '../../asset/images/background.png';
+import background2 from '../../asset/images/background2.png';
+import effect from '../../asset/images/effect.png';
+import kitchen_asset_overlay from '../../asset/images/kitchen_asset_overlay.png';
 import { draw, glContext, matrices, side } from '../game.js';
 
 

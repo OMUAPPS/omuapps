@@ -1,9 +1,9 @@
 <script lang="ts">
     import { Interval } from '$lib/helper.js';
+    import button_line from '../asset/images/button_line.png';
+    import photo_placeholder from '../asset/images/photo_placeholder.png';
+    import title from '../asset/images/title.svg';
     import AssetImage from '../components/AssetImage.svelte';
-    import button_line from '../images/button_line.png';
-    import photo_placeholder from '../images/photo_placeholder.png';
-    import title from '../images/title.svg';
     import { getGame } from '../omucafe-app.js';
     import type { SceneContext } from './scene.js';
 
