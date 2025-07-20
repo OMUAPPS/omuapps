@@ -18,7 +18,6 @@ import pickup from '../../sounds/pickup.wav';
 import type { ItemState } from '../item-state.js';
 
 const DEFAULT_AUDIO_CLIP = createClip({
-    id: 'default:pickup',
     asset: {
         type: 'url',
         url: pickup,

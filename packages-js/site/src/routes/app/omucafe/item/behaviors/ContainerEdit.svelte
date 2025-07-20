@@ -89,34 +89,3 @@
         },
     }} bind:value={behavior.order} />
 </div>
-
-<style lang="scss">
-    .behavior {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        width: 100%;
-    }
-
-    .image {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 8rem;
-        padding: 1rem;
-        width: 100%;
-        background: var(--color-bg-1);
-    }
-
-    .setting {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .actions {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-    }
-</style>
