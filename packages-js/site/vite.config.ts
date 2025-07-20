@@ -49,4 +49,9 @@ export default defineConfig({
         },
         allowedHosts: true,
     },
+    build: {
+        rollupOptions: {
+            external: '@2ji-han/kuromoji.js',
+        }
+    }
 });

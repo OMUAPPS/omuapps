@@ -14,7 +14,7 @@
         "test": "vitest"
     },
     "devDependencies": {
-        "@2ji-han/kuromoji.js": "^0.1.7",
+        "@2ji-han/kuromoji.js": "^0.1.8",
         "@fontsource/noto-sans-jp": "^5.0.19",
         "@fontsource/rocknroll-one": "^5.0.14",
         "@omujs/chat": "workspace:*",

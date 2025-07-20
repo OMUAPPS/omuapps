@@ -79,7 +79,7 @@
       "name": "site",
       "version": "0.0.1",
       "devDependencies": {
-        "@2ji-han/kuromoji.js": "^0.1.7",
+        "@2ji-han/kuromoji.js": "^0.1.8",
         "@fontsource/noto-sans-jp": "^5.0.19",
         "@fontsource/rocknroll-one": "^5.0.14",
         "@omujs/chat": "workspace:*",
@@ -152,7 +152,7 @@
     },
   },
   "packages": {
-    "@2ji-han/kuromoji.js": ["@2ji-han/kuromoji.js@0.1.7", "", { "peerDependencies": { "typescript": "^5.7.2" } }, "sha512-fwLWKPT23vyVAUXtllMp3TlM17V/3gmPSuKGgE7Hd5kP/DZ7ruMSjnmXd2GG710+FpA8CsWBJjegpkrTov64BQ=="],
+    "@2ji-han/kuromoji.js": ["@2ji-han/kuromoji.js@0.1.8", "", { "peerDependencies": { "typescript": "^5.7.2" } }, "sha512-eJTalBfgyLtHm/tAQ71wIoG1gcYeKSQUVxWhZIBF8zBVhaz1OnTM2Rmcvmjax4XoFI1zYxThVT6v3D6nT2ix5Q=="],
 
     "@actions/github": ["@actions/github@6.0.0", "", { "dependencies": { "@actions/http-client": "^2.2.0", "@octokit/core": "^5.0.1", "@octokit/plugin-paginate-rest": "^9.0.0", "@octokit/plugin-rest-endpoint-methods": "^10.0.0" } }, "sha512-alScpSVnYmjNEXboZjarjukQEzgCRmjMv6Xj47fsdnqGS73bjJNDpiiXmp8jr0UZLdUB6d9jW63IcmddUP+l0g=="],
 
