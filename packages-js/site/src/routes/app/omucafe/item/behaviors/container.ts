@@ -1,19 +1,17 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { AABB2 } from '$lib/math/aabb2.js';
-import type { Mat4 } from '$lib/math/mat4.js';
 import { get, writable } from 'svelte/store';
 import { getTextureByAsset, type Asset } from '../../asset/asset.js';
-import { draw, glContext, matrices } from '../../game/game.js';
+import { draw, getContext, glContext, matrices } from '../../game/game.js';
 import { transformToMatrix, type Transform } from '../../game/transform.js';
 import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.js';
-import { attachChildren, calculateItemStateTransform, detachChildren, getRenderBounds, ITEM_LAYERS, type ItemRender, type ItemState } from '../item-state.js';
+import { attachChildren, cloneItemState, detachChildren, getRenderBounds, ITEM_LAYERS, removeItemState, type ItemRender, type ItemState } from '../item-state.js';
 
 export type LiquidLayer = {
     side: Asset,
     top: Asset,
     volume: number,
 };
-
 export type Container = {
     bounded?: {
         left: boolean,
@@ -30,6 +28,7 @@ export type Container = {
         transform: Transform,
     },
     order?: 'up' | 'down',
+    spawn?: object,
 }
 
 export function createContainer(options?: Container): Container {
@@ -172,14 +171,13 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         }
     }
 
-    #restrictBounds(container: Container, item: ItemState, newMatrix: Mat4, child: ItemState) {
+    #restrictBounds(container: Container, item: ItemState, child: ItemState) {
         const { bounded } = container;
         if (!bounded) return;
         const containerBounds = AABB2.from(item.bounds);
         const containerDimentions = containerBounds.dimensions();
-        const childBounds = newMatrix.transformAABB2(child.bounds);
+        const childBounds = getRenderBounds(child);
         const childDimentions = childBounds.dimensions();
-        console.log(containerBounds.intersects(childBounds));
         const exceedLeft = containerBounds.min.x - childBounds.min.x;
         const exceedTop = containerBounds.min.y - childBounds.min.y;
         const exceedRight = childBounds.max.x - containerBounds.max.x;
@@ -209,43 +207,69 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         };
     }
 
+    get #isInEdit() {
+        return getContext().scene.type === 'kitchen_edit';
+    }
+
     collectActionsHovered(action: BehaviorAction<'container'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
         const { item, behavior, context } = action;
         const { held, actions } = args;
         if (!held) return;
+        if (behavior.spawn && !this.#isInEdit) {
+            const ctx = getContext();
+            const sameItemContained = item.children.some((id) => {
+                const child = ctx.items[id];
+                return child.item.id === held.item.id;
+            });
+            if (!sameItemContained) return;
+            actions.push({
+                name: `${held.item.name}をしまう`,
+                priority: 20,
+                item,
+                callback: async () => {
+                    context.held = null;
+                    removeItemState(held);
+                },
+            });
+        }        
         actions.push({
             name: `${held.item.name}を置く`,
             priority: 20,
             item,
             callback: async () => {
                 context.held = null;
-                const containerTransform = calculateItemStateTransform(item);
-                const childTransform = transformToMatrix(held.transform);
-                const inverse = containerTransform.inverse();
-                const newMatrix = inverse.multiply(childTransform);
                 attachChildren(item, held);
-                if (behavior.bounded) {
-                    this.#restrictBounds(behavior, item, newMatrix, held);
-                }
+                this.#restrictBounds(behavior, item, held);
             },
         });
     }
 
     collectActionsParent(action: BehaviorAction<'container'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
-        const { item, context } = action;
-        const { child, actions } = args;
-        if (item.children.includes(child.id)) {
+        const { behavior, context } = action;
+        const { child, actions, held } = args;
+        if (held) return;
+        if (behavior.spawn && !this.#isInEdit) {
             actions.push({
                 name: `${child.item.name}を取り出す`,
                 priority: 10,
                 item: child,
                 callback: async () => {
-                    const { item } = action;
-                    context.held = child.id;
-                    detachChildren(item, child);
+                    const clone = cloneItemState(child);
+                    context.held = clone.id;
                 }
             });
+            return;
         }
+        actions.push({
+            name: `${child.item.name}を取り出す`,
+            priority: 10,
+            item: child,
+            callback: async () => {
+                const { item } = action;
+                context.held = child.id;
+                detachChildren(item, child);
+            }
+        });
     }
 
     handleChildrenOrder(action: BehaviorAction<'container'>, args: { timing: 'hover'; children: ItemState[]; }): Promise<void> | void {

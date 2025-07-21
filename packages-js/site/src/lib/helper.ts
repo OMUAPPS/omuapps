@@ -160,7 +160,7 @@ export function once(fn: (resolve: () => void) => (PromiseLike<() => unknown>) |
 
 export function downloadFile(options: {filename: string, content: Uint8Array, type: string}) {
     const { filename, content, type } = options;
-    const blob = new Blob([content], { type });
+    const blob = new Blob([content as BlobPart], { type });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -214,5 +214,11 @@ export class Interval implements Writable<number> {
     update(fn: (value: number) => number) {
         this.value = fn(this.value);
         this.listeners.forEach((run) => run(this.value));
+    }
+}
+
+export function comparator<T>(func: (value: T) => number): (a: T, b: T) => number {
+    return (a, b) => {
+        return func(a) - func(b);
     }
 }

@@ -1,4 +1,4 @@
-import { createClip, playAudioClip, type AudioClip } from '../../asset/audioclip.js';
+import { createClip, createFilter, playAudioClip, type AudioClip } from '../../asset/audioclip.js';
 import type { KitchenContext } from '../../kitchen/kitchen.js';
 import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.js';
 
@@ -17,14 +17,19 @@ export function createHoldable(options?: Holdable): Holdable {
 import pickup from '../../sounds/pickup.wav';
 import type { ItemState } from '../item-state.js';
 
-const DEFAULT_AUDIO_CLIP = createClip({
-    asset: {
-        type: 'url',
-        url: pickup,
-    },
-    duration: 1000,
-    playbackRate: 1.5,
-});
+const DEFAULT_AUDIO_CLIP = (async () => {
+    return createFilter({
+        clip: await createClip({
+            asset: {
+                type: 'url',
+                url: pickup,
+            },
+            duration: 1000,
+            playbackRate: 1.5,
+        }),
+        highpass: 1000,
+    });
+})();
 
 export class HoldableHandler implements BehaviorHandler<'holdable'> {
     #canBeHeld(context: KitchenContext, behavior: Holdable) {

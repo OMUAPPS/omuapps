@@ -7,13 +7,11 @@ import { ContainerHandler, type Container } from './behaviors/container.js';
 import { EffectHandler, type Effect } from './behaviors/effect.js';
 import { HoldableHandler, type Holdable } from './behaviors/holdable.js';
 import { LiquidHandler, type Liquid } from './behaviors/liquid.js';
-import { SpawnerHandler, type Spawner } from './behaviors/spawner.js';
 import type { ItemRender, ItemState } from './item-state.js';
 
 export type Behaviors = {
     container: Container;
     holdable: Holdable;
-    spawner: Spawner;
     action: Action;
     effect: Effect;
     liquid: Liquid,
@@ -23,7 +21,6 @@ export const getBehaviorHandlers = async () => ({
     liquid: new LiquidHandler(),
     container: new ContainerHandler(),
     holdable: new HoldableHandler(),
-    spawner: new SpawnerHandler(),
     action: new ActionHandler(),
     effect: new EffectHandler(),
 }) satisfies BehaviorHandlers;

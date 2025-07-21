@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Slider } from '@omujs/ui';
+    import { Button, Slider } from '@omujs/ui';
     import type { Transform } from '../game/transform.js';
 
     export let transform: Transform;
@@ -36,6 +36,28 @@
             up: newUp
         };
     }
+
+    function getRotation(): number {
+        const { right, up } = transform;
+        return Math.atan2(right.y, right.x);
+    }
+
+    function setRotation(angle: number) {
+        const { right, up } = transform;
+        const scaleX = Math.sqrt(right.x * right.x + right.y * right.y);
+        const scaleY = Math.sqrt(up.x * up.x + up.y * up.y);
+        transform = {
+            ...transform,
+            right: {
+                x: Math.cos(angle) * scaleX,
+                y: Math.sin(angle) * scaleX
+            },
+            up: {
+                x: -Math.sin(angle) * scaleY,
+                y: Math.cos(angle) * scaleY
+            }
+        };
+    }
 </script>
 
 <div class="transform">
@@ -69,6 +91,16 @@
         </label>
     {:else}
         {@const { scaleX, scaleY } = getScale()}
+        rotation
+        <Slider
+            min={-Math.PI}
+            max={Math.PI}
+            step={0.01}
+            value={getRotation()}
+            handleChange={(value) => {
+                setRotation(value);
+            }}
+        />
         scaleX
         <Slider
             min={0.1}
@@ -102,9 +134,22 @@
             min={-400}
             max={400}
             step={1}
+            clamp={false}
             bind:value={transform.offset.y}
         />
     {/if}
+    <span>
+        <Button onclick={() => {
+            transform = {
+                right: { x: 1, y: 0 },
+                up: { x: 0, y: 1 },
+                offset: { x: 0, y: 0 }
+            }
+        }}>
+            Reset
+            <i class="ti ti-refresh"></i>
+        </Button>
+    </span>
 </div>
 
 <style lang="scss">

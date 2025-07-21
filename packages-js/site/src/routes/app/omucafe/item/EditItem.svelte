@@ -16,8 +16,6 @@
     import HoldableEdit from './behaviors/HoldableEdit.svelte';
     import { createLiquid } from './behaviors/liquid.js';
     import LiquidEdit from './behaviors/LiquidEdit.svelte';
-    import { createSpawner } from './behaviors/spawner.js';
-    import SpawnerEdit from './behaviors/SpawnerEdit.svelte';
 
     export let item: Item;
 
@@ -35,14 +33,6 @@
             name: '容器',
             default: createContainer(),
             edit: ContainerEdit,
-        },
-        spawner: {
-            key: 'spawner',
-            name: '生成',
-            default: createSpawner({
-                spawnItemId: item.id,
-            }),
-            edit: SpawnerEdit,
         },
         action: {
             key: 'action',

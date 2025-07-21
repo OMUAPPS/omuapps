@@ -4,7 +4,7 @@ import type { EffectState } from '../../effect/effect-state.js';
 import { renderParticles } from '../../game/renderer/particle.js';
 import { Time } from '../../game/time.js';
 import type { BehaviorAction, BehaviorHandler } from '../behavior.js';
-import { calculateItemStateTransform } from '../item-state.js';
+import { calculateItemStateRenderTransform } from '../item-state.js';
 
 export type Effect = {
     effects: Record<string, EffectState>,
@@ -20,7 +20,7 @@ export function createEffect(): Effect {
 export class EffectHandler implements BehaviorHandler<'effect'> {
     async renderOverlay(action: BehaviorAction<'effect'>, args: { matrices: Matrices; }): Promise<void> {
         const { item, behavior } = action;
-        const transform = calculateItemStateTransform(item);
+        const transform = calculateItemStateRenderTransform(item);
         const renderBounds = transform.transformAABB2(item.bounds);
         for (const [effectId, effect] of Object.entries(behavior.effects)) {
             const { startTime } = effect;

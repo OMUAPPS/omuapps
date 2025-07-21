@@ -94,6 +94,7 @@
     }
 
     async function startTakePhoto() {
+        if (!obs.isConnected()) return;
         photoMode.photoTake = {
             type: 'countdown',
             startTime: Time.now(),

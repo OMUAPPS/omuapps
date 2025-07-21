@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Combobox } from '@omujs/ui';
+    import { Checkbox, Combobox } from '@omujs/ui';
     import EditImage from '../../components/EditImage.svelte';
     import TransformEdit from '../../components/TransformEdit.svelte';
     import { createTransform } from '../../game/transform.js';
@@ -88,4 +88,12 @@
             label: '下に重ねる',
         },
     }} bind:value={behavior.order} />
+    生成
+    <Checkbox value={!!behavior.spawn} handle={(enabled) => {
+        if (enabled) {
+            behavior.spawn = {};
+        } else {
+            delete behavior.spawn;
+        }
+    }} />
 </div>

@@ -189,7 +189,7 @@ export async function init(ctx: GlContext) {
                 offset: { x: 0, y: 0 },
             },
         });
-        createItemState(context, {
+        createItemState({
             id: 'counter',
             item: counterItem,
             layer: ITEM_LAYERS.COUNTER,
@@ -221,7 +221,7 @@ export async function init(ctx: GlContext) {
                 { x: 50, y: -100 },
             )
         });
-        createItemState(context, {
+        createItemState({
             id: 'bell',
             item: bellItem,
             layer: ITEM_LAYERS.BELL,
@@ -382,7 +382,7 @@ async function renderScreen() {
             if (existing) {
                 removeItemState(existing);
             }
-            createItemState(context, {
+            createItemState({
                 id: 'preview',
                 item,
                 layer: ITEM_LAYERS.EDIT_PREVIEW,

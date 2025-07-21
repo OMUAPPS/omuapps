@@ -1,6 +1,8 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
+import { comparator } from '$lib/helper.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
+import { invLerp, lerp } from '$lib/math/math.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import { getTextureByAsset } from '../asset/asset.js';
@@ -8,7 +10,6 @@ import { applyDragEffect, draw, getContext, glContext, matrices, mouse } from '.
 import { copy, uniqueId } from '../game/helper.js';
 import { Time } from '../game/time.js';
 import { transformToMatrix, type Bounds, type Transform } from '../game/transform.js';
-import type { KitchenContext } from '../kitchen/kitchen.js';
 import { type BehaviorFunction, type BehaviorHandler, type BehaviorHandlers, type Behaviors, type ClickAction } from './behavior.js';
 import type { Item } from './item.js';
 
@@ -35,7 +36,7 @@ export type ItemState = {
     update: number,
 };
 
-export function createItemState(context: KitchenContext, options: {
+export function createItemState(options: {
     id?: string,
     item: Item,
     layer?: ItemLayer,
@@ -44,7 +45,7 @@ export function createItemState(context: KitchenContext, options: {
     behaviors?: Partial<Behaviors>,
     bounds?: Bounds,
 }): ItemState {
-    const { items } = context;
+    const { items } = getContext();
     const { id, item, layer, transform, children, behaviors, bounds } = options;
     const itemState = {
         id: id ?? uniqueId(),
@@ -63,23 +64,38 @@ export function createItemState(context: KitchenContext, options: {
 export function cloneItemState(itemState: ItemState, options: {
     layer?: ItemLayer,
     transform?: Transform,
+    child?: boolean,
 } = {}): ItemState {
     const { items } = getContext();
-    const item = createItemState(getContext(), {
+    
+    let newTransform = itemState.transform;
+    if (itemState.parent && !options.child) {
+        const parent = items[itemState.parent];
+        const parentTransform = calculateItemStateRenderTransform(parent);
+        const itemTransform = transformToMatrix(itemState.transform);
+        const newMatrix = parentTransform.multiply(itemTransform);
+        newTransform = {
+            right: {x: newMatrix.m00, y: newMatrix.m01},
+            up: {x: newMatrix.m10, y: newMatrix.m11},
+            offset: {x: newMatrix.m30, y: newMatrix.m31},
+        };
+    }
+    const item = createItemState({
         id: uniqueId(),
         item: itemState.item,
         layer: options.layer ?? itemState.layer,
-        transform: options.transform ?? itemState.transform,
+        transform: options.transform ?? newTransform,
         children: [],
         behaviors: copy(itemState.behaviors),
         bounds: copy(itemState.bounds),
     });
     items[item.id] = item;
     for (const childId of itemState.children) {
-        const child = getContext().items[childId];
+        const child = items[childId];
         if (!child) continue;
         const childClone = cloneItemState(child, {
             layer: item.layer,
+            child: true,
         });
         childClone.parent = item.id;
         item.children.push(childClone.id);
@@ -124,7 +140,7 @@ export function retrieveAllChildItems(item: ItemState, children?: ItemState[]): 
     if (!children) {
         children = [];
     }
-    const items = getContext().items;
+    const { items } = getContext();
     for (const childId of item.children) {
         const child = items[childId];
         if (!child) continue;
@@ -145,7 +161,7 @@ export function attachChild(item: ItemState, child: ItemState) {
     if (parents.includes(child)) {
         throw new Error(`Circular reference detected: ${parents.join(' -> ')} -> ${child.id}`);
     }
-    const containerTransform = calculateItemStateTransform(item);
+    const containerTransform = calculateItemStateRenderTransform(item);
     const childTransform = transformToMatrix(child.transform);
     const inverse = containerTransform.inverse();
     const newMatrix = inverse.multiply(childTransform);
@@ -193,7 +209,7 @@ export function attachChildren(item: ItemState, ...children: ItemState[]) {
         if (child.parent) {
             detachChildren(getContext().items[child.parent], child);
         }
-        const containerTransform = calculateItemStateTransform(item);
+        const containerTransform = calculateItemStateRenderTransform(item);
         const childTransform = transformToMatrix(child.transform);
         const inverse = containerTransform.inverse();
         const newMatrix = inverse.multiply(childTransform);
@@ -216,7 +232,7 @@ export function detachChildren(item: ItemState, ...children: ItemState[]) {
     item.children = item.children.filter(childId => !children.some(child => child.id === childId));
     children.forEach(child => {
         if (child.parent) {
-            const containerTransform = calculateItemStateTransform(item);
+            const containerTransform = calculateItemStateRenderTransform(item);
             const heldTransform = transformToMatrix(child.transform);
             const newMatrix = containerTransform.multiply(heldTransform);
             child.transform = {
@@ -232,17 +248,16 @@ export function detachChildren(item: ItemState, ...children: ItemState[]) {
 
 const previousTransforms = new Map<string, Mat4>();
 
-export function calculateItemStateTransform(itemState: ItemState, options: {
-    parent?: ItemState,
-} = {}): Mat4 {
+export function calculateItemStateRenderTransform(itemState: ItemState): Mat4 {
     const ctx = getContext();
     const parents = getParents(itemState);
     const rootItem = parents[parents.length - 1] || itemState;
     parents.reverse();
     
     let transform = Mat4.IDENTITY;
+    const isAssetSide = ctx.side === 'overlay';
     for (const item of [...parents, itemState]) {
-        const flipY = item.layer !== ITEM_LAYERS.PHOTO_MODE && ctx.side === 'overlay' && !item.parent;
+        const flipY = item.layer !== ITEM_LAYERS.PHOTO_MODE && isAssetSide && !item.parent;
         const matrix = transformToMatrix(item.transform);
         if (flipY) {
             if (item.id === 'counter') {
@@ -251,30 +266,47 @@ export function calculateItemStateTransform(itemState: ItemState, options: {
                     matrix.m00, matrix.m01, matrix.m02, matrix.m03,
                     matrix.m10, matrix.m11, matrix.m12, matrix.m13,
                     matrix.m20, matrix.m21, matrix.m22, matrix.m23,
-                    matrix.m30, 5000 / z * 260 - 420, matrix.m32, matrix.m33,
+                    matrix.m30, 5000 / z * 260 - 260, matrix.m32, matrix.m33,
                 );
             }
         }
         transform = transform.multiply(matrix);
     }
-    const flipY = rootItem.layer !== ITEM_LAYERS.PHOTO_MODE && ctx.side === 'overlay' && !rootItem.parent;
+    const flipY = rootItem.layer !== ITEM_LAYERS.PHOTO_MODE && isAssetSide && !rootItem.parent;
     if (flipY) {
-        if (rootItem.id !== 'counter') {
+        if (rootItem.id === 'bell') {
+            transform = new Mat4(
+                transform.m00, transform.m01, transform.m02, transform.m03,
+                transform.m10, transform.m11, transform.m12, transform.m13,
+                transform.m20, transform.m21, transform.m22, transform.m23,
+                transform.m30, 1080 - 440, transform.m32, transform.m33,
+            );
+        } else if (rootItem.id !== 'counter') {
             const bounds = getRenderBounds(itemState);
-            const z = transform.m31 + (bounds.max.y + bounds.min.y) + 1080;
-            if (z < 0) {
-                return Mat4.ZERO;
-            }
+            const height = 1080;
+            const scaleY = 0.7;
+            const z = invLerp(120, height, lerp(bounds.min.y, bounds.max.y, 0.5));
+            const weightedZ = z;
             transform = new Mat4(
                 transform.m00 * 0.8, transform.m01, transform.m02, transform.m03,
-                transform.m10, transform.m11 * 0.7, transform.m12, transform.m13,
+                transform.m10, transform.m11 * scaleY, transform.m12, transform.m13,
                 transform.m20, transform.m21, transform.m22, transform.m23,
-                transform.m30, 5000 / z * 260 - 500, transform.m32, transform.m33,
+                transform.m30, lerp(height, 340, weightedZ) - (bounds.max.y - bounds.min.y) * scaleY, transform.m32, transform.m33,
             );
+            // const bounds = getRenderBounds(itemState);
+            // const height = 1080;
+            // const scaleY = 0.7;
+            // const z = invLerp(120, height, lerp(bounds.min.y, bounds.max.y, 1 - scaleY));
+            // transform = new Mat4(
+            //     transform.m00 * 0.8, transform.m01, transform.m02, transform.m03,
+            //     transform.m10, transform.m11 * scaleY, transform.m12, transform.m13,
+            //     transform.m20, transform.m21, transform.m22, transform.m23,
+            //     transform.m30, lerp(120, height, z), transform.m32, transform.m33,
+            // );
         }
     }
 
-    if (ctx.side === 'overlay') {
+    if (isAssetSide) {
         const previous = previousTransforms.get(itemState.id) ?? transform;
         transform = previous.lerp(transform, 0.8);
         previousTransforms.set(itemState.id, transform);
@@ -283,14 +315,19 @@ export function calculateItemStateTransform(itemState: ItemState, options: {
 }
 
 function calculateItemStateBounds(itemState: ItemState): AABB2 {
-    const transform = calculateItemStateTransform(itemState);
+    const transform = calculateItemStateRenderTransform(itemState);
     return transform.transformAABB2(itemState.bounds);
 }
 
-function calculateItemStateRenderBounds(itemState: ItemState): AABB2 {
+function calculateItemStateViewBounds(itemState: ItemState): AABB2 {
     const view = matrices.view.get();
     const bounds = calculateItemStateBounds(itemState);
     return view.transformAABB2(bounds);
+}
+
+function calculateItemStateRenderBounds(itemState: ItemState): AABB2 {
+    const transform = calculateItemStateRenderTransform(itemState);
+    return transform.transformAABB2(itemState.bounds);
 }
 
 export type ItemRender = {
@@ -420,7 +457,7 @@ export async function renderItemState(itemState: ItemState, options: {
 } = {}) {
     const render = await getItemStateRender(itemState);
     const { bounds, texture } = render;
-    const transform = options.parent ? transformToMatrix(itemState.transform) : calculateItemStateTransform(itemState, options);
+    const transform = options.parent ? transformToMatrix(itemState.transform) : calculateItemStateRenderTransform(itemState);
     if (options.showRenderBounds) {
         const renderBounds = transform.transformAABB2(bounds);
         draw.rectangleStroke(renderBounds.min.x, renderBounds.min.y, renderBounds.max.x, renderBounds.max.y, Vec4.ONE, 2);
@@ -473,8 +510,13 @@ function restrictPositionToDisplayBounds(itemState: ItemState) {
 }
 
 export async function renderItems(layers: ItemLayer[]) {
-    const itemsInOrder = getAllItemStates(layers);
-    const held = getContext().held;
+    const { held, side } = getContext();
+    const flip = side === 'overlay' ? -1 : 1;
+    const itemsInOrder = getAllItemStates(layers, (a, b) => {
+        const maxA = calculateItemStateRenderBounds(a).max.y;
+        const maxB = calculateItemStateRenderBounds(b).max.y;
+        return (((b.transform.offset.y + maxB) - (a.transform.offset.y + maxA))) * (a.layer === 'photo_mode' ? 1 : flip);
+    });
     for (const item of itemsInOrder.toReversed()) {
         if (item.id === held) continue;
         if (item.parent) continue;
@@ -512,7 +554,7 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     if (!item.item.image) return false;
     const { bounds } = item;
     const { min, max } = bounds;
-    const matrix = calculateItemStateTransform(item);
+    const matrix = calculateItemStateRenderTransform(item);
     const inverse = matrix.inverse();
     const inverseMVP = matrices.view.get().inverse();
     const inversedMouse = inverse.transform2(inverseMVP.transform2(mouse.position));
@@ -537,7 +579,7 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     const y = Math.floor(uv.y * height);
     const index = (x + y * width) * 4;
     const alpha = texture.pixels[index + 3];
-    return alpha > 16;
+    return alpha > 0;
 }
 
 export async function collectClickActions(): Promise<ClickAction | null> {
@@ -581,25 +623,24 @@ export async function renderHoveredItem() {
     }
     const alpha = ctx.held ? 1 : 0.5;
     const color = new Vec4(0, 0, 0, alpha);
-    const texture = await getTextureByAsset(target.item.image);
-    const { tex, width, height } = texture;
-    const transform = calculateItemStateTransform(target);
+    const { bounds, texture } = await getItemStateRender(target);
+    const transform = calculateItemStateRenderTransform(target);
     matrices.model.push();
     matrices.model.multiply(transform);
     if (ctx.held === target.id) {
         applyDragEffect();
     }
     draw.textureOutline(
-        0, 0,
-        width, height,
-        tex,
+        bounds.min.x, bounds.min.y,
+        bounds.max.x, bounds.max.y,
+        texture,
         color,
         8,
     );
     draw.textureOutline(
-        0, 0,
-        width, height,
-        tex,
+        bounds.min.x, bounds.min.y,
+        bounds.max.x, bounds.max.y,
+        texture,
         new Vec4(1, 1, 1, 1),
         4,
     );
@@ -607,7 +648,7 @@ export async function renderHoveredItem() {
     if (ctx.side === 'client' && action) {
         draw.fontFamily = 'Noto Sans JP';
         draw.fontSize = 16;
-        const bounds = calculateItemStateRenderBounds(target);
+        const bounds = calculateItemStateViewBounds(target);
         const screenPos = matrices.projectPoint(bounds.at({ x: 0.5, y: 1 }))
         const pos = matrices.unprojectPoint(screenPos);
         matrices.push();
@@ -624,9 +665,9 @@ export async function renderHoveredItem() {
 }
 
 export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: ItemState) => number = (a, b) => {
-    const maxA = a.bounds.max;
-    const maxB = b.bounds.max;
-    return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
+    const maxA = getRenderBounds(a).max.y;
+    const maxB = getRenderBounds(b).max.y;
+    return (b.transform.offset.y + maxB) - (a.transform.offset.y + maxA);
 }): ItemState[] {
     const items: ItemState[] = [];
     function collectItems(item: ItemState, passed: string[]) {
@@ -671,10 +712,9 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
         ctx.hovering = null;
         return;
     }
-    const held = ctx.held;
-    const heldItem = held ? ctx.items[held] : null;
+    const { items, held } = ctx;
+    const heldItem = held ? items[held] : null;
     const ignoreItems = heldItem ? [...getParents(heldItem), ...retrieveAllChildItems(heldItem)].map(item => item.id) : [];
-    const items = ctx.items;
     function sort(items: ItemState[]) {
         return items.sort((a: ItemState, b: ItemState) => {
             const maxA = a.bounds.max;
@@ -710,7 +750,20 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
         }
         return hovered;
     }
-    for (const item of sort(Object.values(items))) {
+    const itemsInOrder: ItemState[] = [];
+    if (items['bell']) itemsInOrder.push(items['bell']);
+    itemsInOrder.push(
+        ...Object.values(items)
+        .filter(item => !item.parent)
+        .toSorted(comparator((item) => {
+            return item.transform.offset.y + calculateItemStateRenderBounds(item).max.y;
+        }))
+        .toReversed()
+    );
+    if (items['counter']) itemsInOrder.push(items['counter']);
+    for (
+        const item of itemsInOrder
+    ) {
         if (item.parent) continue;
         if (!layers.includes(item.layer)) continue;
         if (await check(item)) {

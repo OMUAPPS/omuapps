@@ -2,7 +2,7 @@
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { Button } from '@omujs/ui';
     import JsonDebugInfo from '../debug/JsonDebugInfo.svelte';
-    import { getContext, init, mouse, render as renderGame } from '../game/game.js';
+    import { init, mouse, render as renderGame } from '../game/game.js';
     import { createItemState } from '../item/item-state.js';
     import { getGame } from '../omucafe-app.js';
 
@@ -35,8 +35,7 @@
             {#if showDebug}
                 {#each Object.entries($gameConfig.items) as [key, item] (key)}
                     <Button onclick={() => {
-                        const ctx = getContext();
-                        createItemState(ctx, {
+                        createItemState({
                             item,
                         })
                     }}>

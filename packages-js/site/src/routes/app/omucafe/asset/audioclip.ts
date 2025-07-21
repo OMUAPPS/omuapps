@@ -21,15 +21,10 @@ export type Filter = {
     release?: number,
 };
 
-export function createFilter(options: {
-    clip: AudioClip,
-    volume?: number,
-}): Filter {
-    const { clip, volume } = options;
+export function createFilter(options: Omit<Filter, 'type'>): Filter {
     return {
         type: 'filter',
-        clip,
-        volume,
+        ...options,
     }
 }
 

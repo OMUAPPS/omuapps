@@ -46,6 +46,7 @@
         padding: 1rem;
         width: 100%;
         max-height: 8rem;
+        height: 8rem;
         background: var(--color-bg-1);
     }
 
