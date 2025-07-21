@@ -1,6 +1,7 @@
 import type { GlFramebuffer, GlProgram, GlTexture, ShaderSource } from '$lib/components/canvas/glcontext.js';
 import type { AABB2 } from '$lib/math/aabb2.js';
 import { invLerp, lerp } from '$lib/math/math.js';
+import type { Vec2Like } from '$lib/math/vec2.js';
 import { getTextureByAsset, type Asset } from '../../asset/asset.js';
 import { draw, glContext, matrices } from '../../game/game.js';
 import { createTransform, transformToMatrix, type Transform } from '../../game/transform.js';
@@ -15,15 +16,21 @@ export type LiquidLayer = {
 
 export type Liquid = {
     layers: LiquidLayer[],
+    transform: Transform,
+    density?: number,
     mask?: {
         asset: Asset,
         transform: Transform,
     },
-    transform: Transform,
     curvature?: {
         in: number,
         out: number,
     },
+    liquidEscape?: {
+        type: 'dripping',
+        point: Vec2Like,
+    },
+    spawn?: object,
 }
 
 export function createLiquid(): Liquid {
@@ -151,8 +158,8 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
     }
 
     async renderPre(action: BehaviorAction<'liquid'>, args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender>; }): Promise<void> {
-        const { item, behavior, context } = action;
-        const { bufferBounds, childRenders } = args;
+        const { item, behavior } = action;
+        const { bufferBounds } = args;
         if (behavior.layers.length === 0) return;
         const dimentions = bufferBounds.dimensions();
         this.childrenBufferTexture.use(() => {
@@ -172,7 +179,8 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
             const { layers, curvature } = behavior;
             if (!layers.length) return;
             const { bounds } = item;
-            const sumAmount = layers.reduce((sum, layer) => sum + layer.amount, 0);
+            const factor = 1 / (behavior.density || 1);
+            const sumAmount = factor * layers.reduce((sum, layer) => sum + layer.amount, 0);
             const curvatureTop = curvature?.in ?? 0;
             const curvatureBottom = curvature?.out ?? 0;
             const curvatureAt = (y: number) => lerp(curvatureTop, curvatureBottom, invLerp(bounds.min.y, bounds.max.y, y));
@@ -194,9 +202,9 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
                 const { side, amount } = layer;
                 const { tex: sideTex } = await getTextureByAsset(side);
                 const top = liquidTopY + offset;
-                const bottom = top + amount;
+                const bottom = top + amount * factor;
                 this.#renderLayerSide(left, top - curvatureAt(top), right, bottom, sideTex, curvatureAt(top), curvatureAt(bottom));
-                offset += amount;
+                offset += amount * factor;
             }
             matrices.model.pop();
             matrices.pop();

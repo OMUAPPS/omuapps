@@ -707,12 +707,12 @@ export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: I
 
 export async function updateHoveringItem(layers: ItemLayer[]) {
     const ctx = getContext();
-    if (ctx.side !== 'client') return;
+    const { items, held, side } = ctx;
+    if (side !== 'client') return;
     if (!mouse.over || mouse.ui) {
         ctx.hovering = null;
         return;
     }
-    const { items, held } = ctx;
     const heldItem = held ? items[held] : null;
     const ignoreItems = heldItem ? [...getParents(heldItem), ...retrieveAllChildItems(heldItem)].map(item => item.id) : [];
     function sort(items: ItemState[]) {
@@ -728,7 +728,7 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
     }
     const args = { target: null as ItemState | null };
     async function check(item: ItemState) {
-        if (item.id === ctx.held) return false;
+        if (item.id === held) return false;
         if (ignoreItems.includes(item.id)) return false;
         if (!layers.includes(item.layer)) return false;
         const { children } = await invokeBehaviors(item, (behavior) => behavior.handleChildrenOrder, {

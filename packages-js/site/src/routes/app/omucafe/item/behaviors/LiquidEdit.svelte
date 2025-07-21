@@ -42,6 +42,17 @@
         <Slider bind:value={behavior.curvature.in} min={0} max={100} step={1} clamp={false} />
         <Slider bind:value={behavior.curvature.out} min={0} max={100} step={1} clamp={false} />
     {/if}
+    Density
+    <Checkbox value={behavior.density !== undefined} handle={(value) => {
+        if (value) {
+            behavior.density = 1;
+        } else {
+            delete behavior.density;
+        }
+    }} />
+    {#if behavior.density !== undefined}
+        <Slider bind:value={behavior.density} min={0} max={100} step={1} clamp={false} />
+    {/if}
     Layers
     <FileDrop primary handle={async (files) => {
         const [file] = files;
