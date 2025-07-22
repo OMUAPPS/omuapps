@@ -191,7 +191,7 @@ export class RemoteApp {
         }
         const promise = new Promise<string>((resolve, reject) => {
             this.omu.assets.download(asset).then(async ({buffer}) => {
-                const blob = new Blob([buffer]);
+                const blob = new Blob([buffer as BlobPart]);
                 const uri = URL.createObjectURL(blob);
                 const resized = await resizeImage(uri, 256, 256);
                 resolve(resized);
