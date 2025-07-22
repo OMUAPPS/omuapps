@@ -284,11 +284,12 @@ export function calculateItemStateRenderTransform(itemState: ItemState): Mat4 {
         } else if (rootItem.id !== 'counter') {
             const bounds = getRenderBounds(itemState);
             const height = 1080;
+            const scaleX = 0.8;
             const scaleY = 0.7;
             const z = invLerp(120, height, lerp(bounds.min.y, bounds.max.y, 0.5));
             const weightedZ = z;
             transform = new Mat4(
-                transform.m00 * 0.8, transform.m01, transform.m02, transform.m03,
+                transform.m00 * scaleX, transform.m01, transform.m02, transform.m03,
                 transform.m10, transform.m11 * scaleY, transform.m12, transform.m13,
                 transform.m20, transform.m21, transform.m22, transform.m23,
                 transform.m30, lerp(height - 100, 360, weightedZ) - (bounds.max.y - bounds.min.y) * scaleY, transform.m32, transform.m33,
