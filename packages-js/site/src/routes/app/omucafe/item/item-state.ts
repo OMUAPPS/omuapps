@@ -291,7 +291,7 @@ export function calculateItemStateRenderTransform(itemState: ItemState): Mat4 {
                 transform.m00 * 0.8, transform.m01, transform.m02, transform.m03,
                 transform.m10, transform.m11 * scaleY, transform.m12, transform.m13,
                 transform.m20, transform.m21, transform.m22, transform.m23,
-                transform.m30, lerp(height, 340, weightedZ) - (bounds.max.y - bounds.min.y) * scaleY, transform.m32, transform.m33,
+                transform.m30, lerp(height - 100, 360, weightedZ) - (bounds.max.y - bounds.min.y) * scaleY, transform.m32, transform.m33,
             );
             // const bounds = getRenderBounds(itemState);
             // const height = 1080;
@@ -609,7 +609,7 @@ export async function collectClickActions(): Promise<ClickAction | null> {
         }
     }
     if (actions.length === 0) return null;
-    const bestAction = actions.sort((a, b) => b.priority - a.priority)[0];
+    const bestAction = actions.sort(comparator((a) => -a.priority))[0];
     return bestAction;
 }
 
@@ -675,11 +675,7 @@ export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: I
             .map((id) => getContext().items[id])
             .filter((entry): entry is ItemState => !!entry)
             .sort(order)
-            .sort(({layer}, {layer: layerB}) => {
-                const indexA = ITEM_LAYERS_LIST.indexOf(layer);
-                const indexB = ITEM_LAYERS_LIST.indexOf(layerB);
-                return indexA - indexB;
-            });
+            .sort(comparator((item) => ITEM_LAYERS_LIST.indexOf(item.layer)));
         for (const child of children) {
             collectItems(child, [...passed, item.id]);
         }
@@ -689,21 +685,19 @@ export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: I
         }
         items.push(item);
     }
-    for (const item of Object.values(getContext().items).sort((a, b) => {
-        const maxA = a.bounds.max;
-        const maxB = b.bounds.max;
-        return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
-    }).sort(order).sort(({layer}, {layer: layerB}) => {
-        const indexA = ITEM_LAYERS_LIST.indexOf(layer);
-        const indexB = ITEM_LAYERS_LIST.indexOf(layerB);
-        return indexA - indexB;
-    })) {
+    for (const item of Object.values(getContext().items)
+        .sort(comparator((item) => -(item.transform.offset.y + item.bounds.max.y)))
+        .sort(order)
+        .sort(comparator((item) => ITEM_LAYERS_LIST.indexOf(item.layer)))
+    ) {
         if (!layers.includes(item.layer)) continue;
         if (item.parent) continue;
         collectItems(item, []);
     }
     return items;
 }
+
+const SPECIAL_ITEM_IDS = ['bell', 'counter'];
 
 export async function updateHoveringItem(layers: ItemLayer[]) {
     const ctx = getContext();
@@ -716,15 +710,9 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
     const heldItem = held ? items[held] : null;
     const ignoreItems = heldItem ? [...getParents(heldItem), ...retrieveAllChildItems(heldItem)].map(item => item.id) : [];
     function sort(items: ItemState[]) {
-        return items.sort((a: ItemState, b: ItemState) => {
-            const maxA = a.bounds.max;
-            const maxB = b.bounds.max;
-            return (b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y);
-        }).sort(({layer}, {layer: layerB}) => {
-            const indexA = ITEM_LAYERS_LIST.indexOf(layer);
-            const indexB = ITEM_LAYERS_LIST.indexOf(layerB);
-            return indexA - indexB;
-        });
+        return items
+            .sort(comparator(item => -(item.transform.offset.y + item.bounds.max.y)))
+            .sort(comparator(item => ITEM_LAYERS_LIST.indexOf(item.layer)));
     }
     const args = { target: null as ItemState | null };
     async function check(item: ItemState) {
@@ -751,21 +739,16 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
         return hovered;
     }
     const itemsInOrder: ItemState[] = [];
-    if (items['bell']) itemsInOrder.push(items['bell']);
     itemsInOrder.push(
         ...Object.values(items)
         .filter(item => !item.parent)
-        .toSorted(comparator((item) => {
-            return item.transform.offset.y + calculateItemStateRenderBounds(item).max.y;
-        }))
-        .toReversed()
+        .filter(item => layers.includes(item.layer))
+        .filter(item => !SPECIAL_ITEM_IDS.includes(item.id))
+        .toSorted(comparator((item) => -calculateItemStateRenderBounds(item).max.y))
     );
+    if (items['bell']) itemsInOrder.push(items['bell']);
     if (items['counter']) itemsInOrder.push(items['counter']);
-    for (
-        const item of itemsInOrder
-    ) {
-        if (item.parent) continue;
-        if (!layers.includes(item.layer)) continue;
+    for (const item of itemsInOrder) {
         if (await check(item)) {
             break;
         }

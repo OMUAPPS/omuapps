@@ -217,8 +217,11 @@ export class Interval implements Writable<number> {
     }
 }
 
-export function comparator<T>(func: (value: T) => number): (a: T, b: T) => number {
+type Comparator<T> = (a: T, b: T) => number;
+
+export function comparator<T>(func: (value: T) => number): Comparator<T> {
     return (a, b) => {
         return func(a) - func(b);
     }
 }
+

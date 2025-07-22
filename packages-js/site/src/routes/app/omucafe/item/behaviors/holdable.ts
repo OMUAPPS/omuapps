@@ -27,7 +27,7 @@ const DEFAULT_AUDIO_CLIP = (async () => {
             duration: 1000,
             playbackRate: 1.5,
         }),
-        highpass: 1000,
+        highpass: 500,
     });
 })();
 
@@ -41,7 +41,8 @@ export class HoldableHandler implements BehaviorHandler<'holdable'> {
 
     collectActionsHeld(action: BehaviorAction<'holdable'>, args: { hovering: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
         const { item, behavior, context } = action;
-        const { actions } = args;
+        const { actions, hovering } = args;
+        if (hovering?.behaviors.container?.spawn) return;
         actions.push({
             name: '置く',
             priority: 0,

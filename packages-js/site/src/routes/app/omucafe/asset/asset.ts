@@ -12,6 +12,13 @@ export type Asset = {
     id: string,
 };
 
+export function isAssetEqual(a: Asset, b: Asset): boolean {
+    if (a.type !== b.type) return false;
+    if (a.type === 'url' && b.type === 'url') return a.url === b.url;
+    if (a.type === 'asset' && b.type === 'asset') return a.id === b.id;
+    throw new Error(`Unknown asset type comparison: ${a.type} vs ${b.type}`);
+}
+
 export async function uploadAsset(id: Identifier, buffer: Uint8Array): Promise<Asset> {
     const { omu, resourcesRegistry } = getGame();
     const result = await omu.assets.upload(id, buffer);

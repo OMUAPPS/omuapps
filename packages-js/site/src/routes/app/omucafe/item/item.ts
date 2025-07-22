@@ -1,5 +1,5 @@
 import type { Asset } from '../asset/asset.js';
-import { uniqueId } from '../game/helper.js';
+import { copy, uniqueId } from '../game/helper.js';
 import { createTransform, type Bounds, type Transform } from '../game/transform.js';
 import type { Behaviors } from './behavior.js';
 
@@ -21,7 +21,7 @@ export function createItem(options: {
     bounds?: Bounds,
 }): Item {
     const { id, name, image, transform, behaviors, bounds } = options;
-    return {
+    return copy({
         id: id ?? uniqueId(),
         name,
         image,
@@ -31,5 +31,5 @@ export function createItem(options: {
             min: { x: 0, y: 0 },
             max: { x: 1, y: 1 },
         },
-    };
+    });
 }

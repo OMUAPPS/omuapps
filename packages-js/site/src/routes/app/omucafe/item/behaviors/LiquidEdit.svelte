@@ -10,9 +10,10 @@
 </script>
 
 <div class="behavior">
-    Mask
+    マスク
     <EditImage image={behavior.mask?.asset} handle={(image) => {
         if (!image) {
+            behavior.mask = undefined;
             delete behavior.mask;
             return;
         }
@@ -25,9 +26,9 @@
     {#if behavior.mask}
         <TransformEdit bind:transform={behavior.mask.transform} />
     {/if}
-    Liquid
+    液体の変形
     <TransformEdit bind:transform={behavior.transform}/>
-    Curvature
+    曲率
     <Checkbox value={behavior.curvature !== undefined} handle={(value) => {
         if (value) {
             behavior.curvature = {
@@ -35,6 +36,7 @@
                 out: 0,
             };
         } else {
+            behavior.curvature = undefined;
             delete behavior.curvature;
         }
     }} />
@@ -42,18 +44,19 @@
         <Slider bind:value={behavior.curvature.in} min={0} max={100} step={1} clamp={false} />
         <Slider bind:value={behavior.curvature.out} min={0} max={100} step={1} clamp={false} />
     {/if}
-    Density
+    密度
     <Checkbox value={behavior.density !== undefined} handle={(value) => {
         if (value) {
             behavior.density = 1;
         } else {
+            behavior.density = undefined;
             delete behavior.density;
         }
     }} />
     {#if behavior.density !== undefined}
         <Slider bind:value={behavior.density} min={0} max={100} step={1} clamp={false} />
     {/if}
-    Layers
+    層
     <FileDrop primary handle={async (files) => {
         const [file] = files;
         const asset = await uploadAssetByFile(file);
@@ -61,7 +64,7 @@
             ...behavior.layers,
             {
                 side: asset,
-                amount: 0,
+                volume: 0,
             }
         ]
     }}>
@@ -94,11 +97,20 @@
                 </div>
                 <div class="setting">
                     量
-                    <Slider bind:value={layer.amount} min={0} max={500} step={1} clamp={false} />
+                    <Slider bind:value={layer.volume} min={0} max={500} step={1} clamp={false} />
                 </div>
             </div>
         {/each}
     </div>
+    生成
+    <Checkbox value={behavior.spawn !== undefined} handle={(value) => {
+        if (value) {
+            behavior.spawn = {};
+        } else {
+            behavior.spawn = undefined;
+            delete behavior.spawn;
+        }
+    }} />
 </div>
 
 <style lang="scss">

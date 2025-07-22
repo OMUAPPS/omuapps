@@ -5,7 +5,8 @@
     import EditImage from '../components/EditImage.svelte';
     import TransformEdit from '../components/TransformEdit.svelte';
     import JsonDebugInfo from '../debug/JsonDebugInfo.svelte';
-    import type { Item } from '../item/item.js';
+    import { uniqueId } from '../game/helper.js';
+    import { createItem, type Item } from '../item/item.js';
     import { getGame } from '../omucafe-app.js';
     import type { DefaultBehaviors } from './behavior.js';
     import { createAction } from './behaviors/action.js';
@@ -68,6 +69,23 @@
                     削除
                 </Tooltip>
                 <i class="ti ti-trash"></i>
+            </ButtonMini>
+            <ButtonMini on:click={() => {
+                const newId = uniqueId();
+                $gameConfig.items[newId] = createItem({
+                    ...item,
+                    id: newId,
+                    name: `${item.name}の複製`,
+                });
+                $scene = {
+                    type: 'item_edit',
+                    id: newId,
+                };
+            }} primary>
+                <Tooltip>
+                    複製
+                </Tooltip>
+                <i class="ti ti-drag-drop-2"></i>
             </ButtonMini>
             <ButtonMini on:click={async () => {
                 await navigator.clipboard.writeText(item.id);

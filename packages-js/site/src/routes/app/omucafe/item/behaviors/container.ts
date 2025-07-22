@@ -1,4 +1,5 @@
 import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
+import { comparator } from '$lib/helper.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { get, writable } from 'svelte/store';
 import { getTextureByAsset, type Asset } from '../../asset/asset.js';
@@ -276,17 +277,15 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         const { behavior } = action;
         const { timing, children } = args;
         if (timing !== 'hover') return;
-        args.children = children.toSorted((a, b) => {
-            const maxA = getRenderBounds(a).max;
-            const maxB = getRenderBounds(b).max;
-            return ((b.transform.offset.y + maxB.y) - (a.transform.offset.y + maxA.y)) * (behavior.order === 'down' ? -1 : 1);
-        })
+        children.sort(comparator((item) => {
+            return getRenderBounds(item).max.y * (behavior.order === 'down' ? 1 : -1);
+        }));
     }
 
     handleChildrenHovered(action: BehaviorAction<'container'>, args: { target: ItemState | null; }): Promise<void> | void {
-        const { context } = action;
+        const { context, behavior } = action;
         if (context.held) {
-            if (args.target?.behaviors.container) return;
+            if (!behavior.spawn && args.target?.behaviors.container) return;
             args.target = action.item;
         }
     }
