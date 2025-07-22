@@ -98,10 +98,36 @@ type OrderDetectResult = {
     tokens: OrderDetectToken[];
 }
 
-function analyzeOrderRequest(tokens: TOKEN[], productTokens: ProductTokens[]): OrderDetectResult {
-    let index = 0;
+async function analyzeOrderRequest(tokens: TOKEN[], productTokens: ProductTokens[]): Promise<OrderDetectResult> {
     const products: Product[] = [];
     const replacedTokens: OrderDetectToken[] = [];
+    const required: TOKEN[][] = [
+        await parseToken('ください'),
+        await parseToken('御願い'),
+        await parseToken('お願い'),
+        await parseToken('いただけますか'),
+        await parseToken('ちょうだい'),
+        await parseToken('くれる'),
+        await parseToken('頼む'),
+    ];
+    let index = 0;
+    while (tokens.length > index) {
+        let matched = false;
+        for (let i = 0; i < required.length; i++) {
+            const word = required[i];
+            if (tokens.length < word.length) continue;
+            const match = matchTokens(tokens, index, word);
+            if (!match) continue;
+            matched = true;
+            break;
+        }
+        if (matched) {
+            break;
+        } else {
+            index ++;
+        }
+    }
+    index = 0;
     while (tokens.length > index) {
         let matched = false;
         for (let i = 0; i < productTokens.length; i++) {
@@ -256,7 +282,7 @@ export async function processMessage(message: Message) {
             tokens: await parseToken(product.name)
         }
     }));
-    const orderAnalysis = analyzeOrderRequest(tokens, productTokens);
+    const orderAnalysis = await analyzeOrderRequest(tokens, productTokens);
     if (!orderAnalysis.detected) return;
     await playAudioClip(resources.bell_audio_clip);
     await game.orders.add({
