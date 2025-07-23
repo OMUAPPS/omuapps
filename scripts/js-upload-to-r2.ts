@@ -37,6 +37,16 @@ if (!release) {
     throw new Error(`Release not found: ${TAG}`);
 }
 
+async function downloadToFile(url: string, filePath: string) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to download ${url} to ${filePath}: ${response.statusText}`);
+    }
+    const buffer = await response.arrayBuffer();
+    await fs.writeFile(filePath, Buffer.from(buffer));
+    console.log(`Downloaded ${url} to ${filePath}`);
+}
+
 async function downloadRelease() {
     const { data: assets } = await github.rest.repos.listReleaseAssets({
         owner,
@@ -49,8 +59,7 @@ async function downloadRelease() {
     for (const asset of assets) {
         const url = asset.browser_download_url;
         const name = asset.name;
-        console.log(`bash -c curl -L -o ./release-assets/${name} ${url}`);
-        await $`bash -c curl -L -o ./release-assets/${name} ${url}`;
+        await downloadToFile(url, `./release-assets/${name}`);
     }
 }
 
