@@ -75,7 +75,16 @@ async function uploadToR2(file, path) {
     }
     const stats = await fs.stat(file);
     console.log(`Uploading ${file} (${stats.size} bytes) to ${BUCKET}/${path}`);
-    await $`bun wrangler r2 object put ${BUCKET}/${path} --remote --file ${file}`;
+    let retryCount = 0;
+    while (retryCount++ < 5) {
+        const promise = await $`bun wrangler r2 object put ${BUCKET}/${path} --remote --file ${file}`.nothrow();
+        if (promise.exitCode === 0) {
+            break;
+        }
+        console.error(`Failed to upload ${file} to ${BUCKET}/${path}: ${promise.stderr}`);
+        console.log('Retrying in 5 seconds...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+    }
     return `${BASE_URL}/${path}`;
 }
 
