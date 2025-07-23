@@ -58,7 +58,7 @@
     button {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 1rem;
         width: 100%;
         padding: 0.5rem 0;
         text-align: left;
@@ -67,7 +67,8 @@
         border: none;
 
         .body {
-            padding-left: 10px;
+            padding-left: 1rem;
+            font-size: 1rem;
         }
 
         &.selected,
@@ -80,8 +81,8 @@
     }
 
     .content {
-        margin-top: 10px;
-        font-size: 10px;
+        margin-top: 1rem;
+        font-size: 1rem;
         white-space: pre-wrap;
     }
 </style>

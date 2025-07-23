@@ -1,94 +1,114 @@
-import { makeRegistryWritable } from '$lib/helper.js';
+import { makeRegistryWritable, once } from '$lib/helper.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Chat, events } from '@omujs/chat';
-import type { Message } from '@omujs/chat/models/message.js';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { OBSPlugin, permissions } from '@omujs/obs';
 import { App, Omu } from '@omujs/omu';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-import { RegistryType } from '@omujs/omu/extension/registry/index.js';
-import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
+import { DAShBOARD_DRAG_DROP_PERMISSION_ID } from '@omujs/omu/extension/dashboard/dashboard-extension.js';
+import { RegistryType, type Registry } from '@omujs/omu/extension/registry/index.js';
+import { type Signal } from '@omujs/omu/extension/signal/signal.js';
+import { type Table } from '@omujs/omu/extension/table/table.js';
 import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
-import type { Writable } from 'svelte/store';
-import { APP_ID } from './app.js';
-import type { ItemState } from './game/item-state.js';
-import type { Item } from './game/item.js';
-import type { Kitchen } from './game/kitchen.js';
-import type { Product } from './game/product.js';
+import { get, writable, type Writable } from 'svelte/store';
+import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
+import type { Asset } from './asset/asset.js';
+import type { PlayingAudioClip } from './asset/audioclip.js';
+import type { EffectState } from './effect/effect-state.js';
+import { GALLERY_TABLE_TYPE, type GalleryItem } from './gallery/gallery.js';
+import { getContext, mouse, paint, setContext } from './game/game.js';
+import { copy } from './game/helper.js';
+import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PAINT_EVENTS_REGISTRY_TYPE, PAINT_SIGNAL_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
+import { Time } from './game/time.js';
+import { transformToMatrix } from './game/transform.js';
+import { createEffect } from './item/behaviors/effect.js';
+import { attachChild, cloneItemState, detachChildren, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
+import type { Item } from './item/item.js';
+import type { Kitchen, MouseState } from './kitchen/kitchen.js';
+import { ORDER_TABLE_TYPE, processMessage, type Order } from './order/order.js';
+import type { Product } from './product/product.js';
+import { SCENE_REGISTRY_TYPE, type Scene } from './scenes/scene.js';
+import { assertValue, builder, Globals, type Script, type ScriptContext, type Value } from './script/script.js';
+import { getWorker, type GameCommands } from './worker/game-worker.js';
+import type { WorkerPipe } from './worker/worker.js';
+
+export const DEFAULT_RESOURCE_REGISTRY = {
+    assets: {} as Record<string, Asset>,
+}
+
+export type ResourceRegistry = typeof DEFAULT_RESOURCE_REGISTRY;
+
+const RESOURCE_REGISTRY_TYPE = RegistryType.createJson<ResourceRegistry>(APP_ID, {
+    name: 'resources',
+    defaultValue: DEFAULT_RESOURCE_REGISTRY,
+});
 
 export const DEFAULT_CONFIG = {
     version: 1,
-    filter: {},
-    products: {} as Record<string, Product>,
-    items: {} as Record<string, Item>,
+    obs: {
+        scene_uuid: null as string | null,
+        background_uuid: null as string | null,
+        overlay_uuid: null as string | null,
+    },
+    scenes: {
+        product_list: {
+            scroll: 0,
+            search: '',
+        }
+    }
 };
 
 export type Config = typeof DEFAULT_CONFIG;
 
-const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
+const APP_CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: DEFAULT_CONFIG,
 });
 
-export type Scene = {
-    type: 'loading',
-} | {
-    type: 'main_menu',
-} | {
-    type: 'photo_mode',
-} | {
-    type: 'cooking',
-} | {
-    type: 'product_list',
-} | {
-    type: 'product_edit',
-    id: string,
-} | {
-    type: 'item_edit',
-    id: string,
+export const DEFAULT_GAME_CONFIG = {
+    filter: {},
+    products: {} as Record<string, Product>,
+    items: {} as Record<string, Item>,
+    effects: {} as Record<string, EffectState>,
+    scripts: {} as Record<string, Script>,
+    photo_mode: {
+        scale: 0,
+        offset: Vec2.ZERO as Vec2Like,
+        tool: DEFAULT_TOOL,
+        pen: DEFAULT_PEN,
+        eraser: DEFAULT_ERASER,
+    },
 };
 
-const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {
-    name: 'scene',
-    defaultValue: {
-        type: 'loading',
-    },
+export type GameConfig = typeof DEFAULT_GAME_CONFIG;
+
+const CONFIG_REGISTRY_TYPE = RegistryType.createJson<GameConfig>(APP_ID, {
+    name: 'game_config',
+    defaultValue: DEFAULT_GAME_CONFIG,
 });
 
-export type SceneContext = {
-    time: number,
-}
-
-type User = {
+export type User = {
     id: string,
+    screen_id?: string;
     name: string,
     avatar?: string,
 };
-type OrderStatus = {
-    type: 'waiting',
-} | {
-    type: 'cooking',
-} | {
-    type: 'done',
-};
-
-export type Order = {
-    id: number,
-    user: User,
-    status: OrderStatus,
-}
-
-const ORDER_TABLE_TYPE = TableType.createJson<Order>(APP_ID, {
-    name: 'orders',
-    key: (order) => order.id.toString(),
-});
 
 export const DEFAULT_STATES = {
     kitchen: {
+        audios: {} as Record<string, PlayingAudioClip>,
         items: {} as Record<string, ItemState>,
         held: null as string | null,
+        mouse: {
+            position: Vec2.ZERO as Vec2Like,
+            delta: Vec2.ZERO as Vec2Like,
+            over: false as boolean,
+            ui: false as boolean,
+        } satisfies MouseState,
         hovering: null as string | null,
-    } as Kitchen,
+        order: null as Order | null,
+    } satisfies Kitchen,
 };
 
 export type States = typeof DEFAULT_STATES;
@@ -98,54 +118,372 @@ const STATES_REGISTRY_TYPE = RegistryType.createJson<States>(APP_ID, {
     defaultValue: DEFAULT_STATES,
 });
 
-function processMessage(message: Message) {
-    
+export const sessions = writable({
+    overlay: false,
+    background: false,
+});
+
+async function startCheckInstalled(): Promise<void> {
+    if (!game) throw new Error('Game not created');
+    const { omu } = game;
+    omu.server.observeSession(OVERLAY_ID, {
+        onConnect: () => sessions.update((s) => ({ ...s, overlay: true })),
+        onDisconnect: () => sessions.update((s) => ({ ...s, overlay: false })),
+    });
+    omu.server.observeSession(BACKGROUND_ID, {
+        onConnect: () => sessions.update((s) => ({ ...s, background: true })),
+        onDisconnect: () => sessions.update((s) => ({ ...s, background: false })),
+    });
+    sessions.set({
+        overlay: await omu.server.sessions.has(OVERLAY_ID.key()),
+        background: await omu.server.sessions.has(BACKGROUND_ID.key()),
+    });
 }
 
-export function createGame(app: App){
+export function isInstalled(): boolean {
+    const state = get(sessions);
+    return state.overlay && state.background;
+}
+
+class Debug {
+    private constructor(
+        public readonly count: Writable<number>,
+        public readonly logs: Value[],
+    ) {}
+
+    public static init() {
+        return new Debug(
+            writable(0),
+            [],
+        )
+    }
+
+    private update() {
+        this.count.update((val) => val + 1);
+    }
+
+    public log(message: Value) {
+        this.logs.push(message);
+        this.update();
+    }
+}
+
+const functions = {
+    log(ctx: ScriptContext, args: Value[]): Value {
+        const [message] = args;
+        console.log('[log]', message);
+        game?.debug.log(message);
+        const { v } = builder;
+        return v.void();
+    },
+    get_items(ctx: ScriptContext, args: Value[]): Value {
+        const kitchen = getContext();        
+        const { v } = builder;
+        return v.array(...Object.keys(kitchen.items).map(v.string));
+    },
+    get_children(ctx: ScriptContext, args: Value[]): Value {
+        const [itemId] = args;
+        assertValue(ctx, itemId, 'string');
+        const { v } = builder;
+        const item = getContext().items[itemId.value];
+        return v.array(...item.children.map(v.string));
+    },
+    remove_item(ctx: ScriptContext, args: Value[]): Value {
+        const { v } = builder;
+        const [itemId] = args;
+        assertValue(ctx, itemId, 'string');
+        const item = getContext().items[itemId.value];
+        removeItemState(item);
+        return v.void();
+    },
+    set_held_item(ctx: ScriptContext, args: Value[]): Value {
+        const { v } = builder;
+        const [itemId] = args;
+        const context = getContext();
+        if (itemId.type === 'string') {
+            const item = context.items[itemId.value];
+            const parent = item.parent ? context.items[item.parent] : null;
+            if (parent) {
+                detachChildren(parent, item);
+            }
+            context.held = itemId.value;
+        } else {
+            context.held = null;
+        }
+        return v.void();
+    },
+    set_item_parent(ctx: ScriptContext, args: Value[]): Value {
+        const { v } = builder;
+        const [itemId, parentId] = args;
+        assertValue(ctx, itemId, 'string');
+        assertValue(ctx, parentId, 'string');
+        const context = getContext();
+        const item = context.items[itemId.value];
+        const parent = context.items[parentId.value];
+        attachChild(parent, item);
+        if (context.held === itemId.value) {
+            context.held = null;
+        }
+        return v.void();
+    },
+    create_effect(ctx: ScriptContext, args: Value[]): Value {
+        const [itemId, effectId] = args;
+        assertValue(ctx, itemId, 'string');
+        assertValue(ctx, effectId, 'string');
+        const { v } = builder;
+        const config = getContext().config;
+        const item = getContext().items[itemId.value];
+        const effect = config.effects[effectId.value];
+        effect.startTime = Time.now();
+        item.behaviors.effect ??= createEffect();
+        item.behaviors.effect.effects[effect.id] = copy(effect);
+        return v.void();
+    },
+    remove_effect(ctx: ScriptContext, args: Value[]): Value {
+        const [itemId, effectId] = args;
+        assertValue(ctx, itemId, 'string');
+        assertValue(ctx, effectId, 'string');
+        const item = getContext().items[itemId.value];
+        item.behaviors.effect ??= createEffect();
+        delete item.behaviors.effect.effects[effectId.value];
+        const { v } = builder;
+        return v.void();
+    },
+    complete(ctx: ScriptContext, args: Value[]): Value {
+        const { v } = builder;
+        const [itemsValue] = args;
+        paint.emit({
+            t: PAINT_EVENT_TYPE.CLEAR,
+        });
+        assertValue(ctx, itemsValue, 'array');
+        const { items } = getContext();
+        const itemIds = itemsValue.items.map((id) => {
+            assertValue(ctx, id, 'string');
+            return id.value;
+        })
+        for (const item of Object.values(items)) {
+            if (item.parent) continue;
+            if (item.layer !== ITEM_LAYERS.PHOTO_MODE) continue;
+            removeItemState(item);
+        }
+        let i = 0;
+        for (const itemId of itemIds) {
+            const item = items[itemId];
+            if (!item) {
+                game?.debug.log(v.string(`Item with id ${itemId} not found`));
+                continue;
+            }
+            const transform = transformToMatrix(item.transform);
+            const { min, max } = item.bounds;
+            const offset = new Vec2(
+                (min.x + max.x) / 2,
+                (min.y + max.y) / 2,
+            ).mul({
+                x: transform.m00,
+                y: transform.m11,
+            });
+            cloneItemState(item, {
+                layer: ITEM_LAYERS.PHOTO_MODE,
+                transform: {
+                    right: item.transform.right,
+                    up: item.transform.up,
+                    offset: {
+                        x: -offset.x + (i / (itemIds.length) - 0.5) * 1000,
+                        y: -offset.y + 150,
+                    },
+                }
+            });
+            i ++;
+        }
+        game?.scene.set({
+            type: 'photo_mode',
+            time: Time.now(),
+            items: [...itemIds],
+        });
+        return v.void();
+    },
+}
+
+export const lastSceneChange = writable<number>(0);
+
+export type GameSide = 'client' | 'background' | 'overlay';
+
+export async function createGame(app: App, side: GameSide): Promise<void> {
+    const client = app.id.isEqual(APP_ID);
     const omu = new Omu(app);
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
-    const config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
-    const states = makeRegistryWritable(omu.registries.get(STATES_REGISTRY_TYPE));
-    const scene = makeRegistryWritable(omu.registries.get(SCENE_REGISTRY_TYPE));
+    const gameConfigRegistry = omu.registries.get(CONFIG_REGISTRY_TYPE);
+    const gameConfig = makeRegistryWritable(gameConfigRegistry);
+    const configRegistry = omu.registries.get(APP_CONFIG_REGISTRY_TYPE);
+    const config = makeRegistryWritable(configRegistry);
+    const resourcesRegistry = omu.registries.get(RESOURCE_REGISTRY_TYPE);
+    const resources = makeRegistryWritable(resourcesRegistry);
+    const statesRegistry = omu.registries.get(STATES_REGISTRY_TYPE);
+    const states = makeRegistryWritable(statesRegistry);
+    const sceneRegistry = omu.registries.get(SCENE_REGISTRY_TYPE);
+    const scene = makeRegistryWritable(sceneRegistry);
     const orders = omu.tables.get(ORDER_TABLE_TYPE);
+    const gallery = omu.tables.get(GALLERY_TABLE_TYPE);
+    const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
+    const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
+    const globals = new Globals();
+    const debug = Debug.init();
+    globals.registerFunction('log', [
+        {name: 'message'},
+    ], functions.log);
+    globals.registerFunction('get_items', [
+    ], functions.get_items);
+    globals.registerFunction('get_children', [
+        {name: 'itemId', type: 'string'},
+    ], functions.get_children);
+    globals.registerFunction('remove_item', [
+        {name: 'itemId', type: 'string'},
+    ], functions.remove_item);
+    globals.registerFunction('set_held_item', [
+        {name: 'itemId'}
+    ], functions.set_held_item);
+    globals.registerFunction('set_item_parent', [
+        {name: 'itemId', type: 'string'},
+        {name: 'parentId', type: 'string'},
+    ], functions.set_item_parent);
+    globals.registerFunction('create_effect', [
+        {name: 'itemId', type: 'string'},
+        {name: 'effectId', type: 'string'},
+    ], functions.create_effect);
+    globals.registerFunction('remove_effect', [
+        {name: 'itemId', type: 'string'},
+        {name: 'effectId', type: 'string'},
+    ], functions.remove_effect);
+    globals.registerFunction('complete', [
+        {name: 'items', type: 'array'},
+    ], functions.complete);
     setClient(omu);
     setChat(chat);
 
     chat.on(events.message.add, (message) => {
         processMessage(message);
     });
-
-    if (BROWSER) {
-        omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-            ASSET_UPLOAD_PERMISSION_ID,
-            ASSET_DOWNLOAD_PERMISSION_ID,
-            CHAT_REACTION_PERMISSION_ID,
-        );
-        omu.start();
-    }
-
+    
     game = {
+        side,
         omu,
         obs,
         chat,
+        gameConfigRegistry,
+        configRegistry,
+        resourcesRegistry,
+        resources,
+        statesRegistry,
+        sceneRegistry,
+        gameConfig,
         config,
         states,
         orders,
+        gallery,
+        paintSignal,
+        paintEvents,
         scene,
+        globals,
+        debug,
+        worker: client ? await getWorker() : undefined,
+    }
+    if (BROWSER) {
+        omu.permissions.require(
+            ASSET_DOWNLOAD_PERMISSION_ID,
+        );
+        if (client) {
+            omu.permissions.require(
+                permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+                permissions.OBS_SOURCE_UPDATE_PERMISSION_ID,
+                permissions.OBS_SOURCE_READ_PERMISSION_ID,
+                permissions.OBS_SCENE_READ_PERMISSION_ID,
+                permissions.OBS_SCENE_CREATE_PERMISSION_ID,
+                DAShBOARD_DRAG_DROP_PERMISSION_ID,
+                ASSET_UPLOAD_PERMISSION_ID,
+                CHAT_REACTION_PERMISSION_ID,
+            );
+        }
+        omu.start();
+
+        await omu.waitForReady();
+        await gameConfig.wait();
+        await scene.wait();
+        await states.wait();
+        setContext({
+            ...(await statesRegistry.get()).kitchen,
+            side,
+            mouse: {
+                position: Vec2.ZERO as Vec2Like,
+                delta: Vec2.ZERO as Vec2Like,
+                over: mouse.over,
+                ui: mouse.ui,
+            },
+            config: await gameConfigRegistry.get(),
+            scene: await sceneRegistry.get(),
+            states: await statesRegistry.get(),
+        })
+        gameConfig.subscribe((value) => {
+            setContext({
+                ...getContext(),
+                config: value,
+            })
+        });
+        states.subscribe((value) => {
+            setContext({
+                ...getContext(),
+                ...value.kitchen,
+                states: value,
+            })
+        });
+        scene.subscribe((value) => {
+            setContext({
+                ...getContext(),
+                scene: value,
+            })
+        });
+
+        await startCheckInstalled();
+        if (!isInstalled()) {
+            once((resolve) => {
+                return sessions.subscribe((value) => {
+                    if (value.background && value.overlay) {
+                        scene.set({
+                            type: 'main_menu',
+                        })
+                        resolve();
+                    }
+                })
+            })
+            scene.set({
+                type: 'install',
+            });
+        }
     }
 }
 
 export type Game = {
+    side: GameSide,
     omu: Omu,
     obs: OBSPlugin,
     chat: Chat,
+    gameConfigRegistry: Registry<GameConfig>,
+    gameConfig: Writable<GameConfig>,
+    configRegistry: Registry<Config>,
     config: Writable<Config>,
+    resourcesRegistry: Registry<ResourceRegistry>,
+    resources: Writable<ResourceRegistry>,
+    statesRegistry: Registry<States>,
     states: Writable<States>,
-    orders: Table<Order>,
+    sceneRegistry: Registry<Scene>,
     scene: Writable<Scene>,
+    orders: Table<Order>,
+    gallery: Table<GalleryItem>,
+    paintSignal: Signal<PaintEvent[]>,
+    paintEvents: Writable<PaintBuffer>,
+    globals: Globals,
+    debug: Debug,
+    worker?: WorkerPipe<GameCommands>,
 };
 
 let game: Game | null = null;

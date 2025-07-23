@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/omu",
-    "version": "0.9.10",
+    "version": "0.9.13",
     "exports": {
         ".": {
             "import": "./dist/esm/index.js",
@@ -13,23 +13,13 @@
         }
     },
     "scripts": {
-        "build": "pnpm run ts",
-        "dev": "pnpm run watch",
-        "ts": "pnpm run ts-esm && pnpm run ts-dts",
-        "ts-dts": "tsc --outDir dist/dts --declaration true --emitDeclarationOnly true --declarationMap true",
-        "ts-esm": "tsc --outDir dist/esm",
-        "watch": "nodemon -w src -e ts,json --exec \"pnpm --workspace-root build --only @omujs/omu\"",
-        "lint": "eslint .",
-        "fix": "eslint . --fix"
+        "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",
+        "dev": "bun run watch",
+        "watch": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\" --watch"
     },
     "repository": {
         "type": "git",
         "url": "https://github.com/OMUAPPS/omuapps"
-    },
-    "devDependencies": {
-        "@omujs/eslint-config": "workspace:*",
-        "eslint": "^9.9.1",
-        "nodemon": "^3.1.4"
     },
     "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"
 }

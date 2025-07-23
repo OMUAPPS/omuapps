@@ -1,11 +1,17 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
 from typing import Literal, LiteralString, NotRequired, TypedDict
 
+from omu.bytebuffer import ByteReader, ByteWriter
 from omu.extension.endpoint import EndpointType
 from omu.extension.signal.signal import SignalType
+from omu.serializer import Serializer
 
 from omuplugin_obs.const import PLUGIN_ID
 
 from .permissions import (
+    OBS_SCENE_CREATE_PERMISSION_ID,
     OBS_SCENE_READ_PERMISSION_ID,
     OBS_SCENE_SET_CURRENT_PERMISSION_ID,
     OBS_SOURCE_CREATE_PERMISSION_ID,
@@ -193,7 +199,7 @@ class SceneJson(TypedDict):
 
 
 class CreateResponse(TypedDict):
-    source: SourceType
+    source: SourceJson
 
 
 SOURCE_CREATE = EndpointType[SourceJson, CreateResponse].create_json(
@@ -211,6 +217,7 @@ SOURCE_ADD = EndpointType[SourceJson, CreateResponse].create_json(
 
 class CreateBrowserRequest(BlendableSource, ScalableSource, TypedDict):
     name: str
+    scene: NotRequired[str]
     url: str
     width: NotRequired[int | str]
     height: NotRequired[int | str]
@@ -255,7 +262,7 @@ SOURCE_REMOVE_BY_UUID = EndpointType[RemoveByUuidRequest, RemoveResponse].create
 
 
 class UpdateResponse(TypedDict):
-    source: SourceType
+    source: SourceJson
 
 
 SOURCE_UPDATE = EndpointType[SourceJson, UpdateResponse].create_json(
@@ -367,6 +374,75 @@ SCENE_SET_CURRENT_BY_UUID = EndpointType[SceneSetCurrentByUuidRequest, SceneSetC
     name="scene_set_current_by_uuid",
     permission_id=OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 )
+
+
+class SceneCreateRequest(TypedDict):
+    name: str
+
+
+class SceneCreateResponse(TypedDict):
+    scene: SceneJson
+
+
+SCENE_CREATE = EndpointType[SceneCreateRequest, SceneCreateResponse].create_json(
+    PLUGIN_ID,
+    name="scene_create",
+    permission_id=OBS_SCENE_CREATE_PERMISSION_ID,
+)
+
+
+class ScreenshotCreateRequest(TypedDict): ...
+
+
+class ScreenshotCreateResponse(TypedDict): ...
+
+
+SCREENSHOT_CREATE = EndpointType[ScreenshotCreateRequest, ScreenshotCreateResponse].create_json(
+    PLUGIN_ID,
+    name="screenshot_create",
+    permission_id=OBS_SOURCE_READ_PERMISSION_ID,
+)
+
+
+class ScreenshotGetLastBinaryRequest(TypedDict): ...
+
+
+@dataclass
+class ScreenshotGetLastBinaryResponse:
+    data: bytes | None
+    version: int = 1
+
+    @staticmethod
+    def serialize(item: ScreenshotGetLastBinaryResponse) -> bytes:
+        writer = ByteWriter()
+        writer.write_uleb128(item.version)
+        flags = 1 if item.data is not None else 0
+        writer.write_uleb128(flags)
+        if item.data is not None:
+            writer.write_uint8_array(item.data or b"")
+        return writer.finish()
+
+    @staticmethod
+    def deserialize(item: bytes) -> ScreenshotGetLastBinaryResponse:
+        reader = ByteReader(item)
+        version = reader.read_uleb128()
+        flags = reader.read_uleb128()
+        data: bytes | None = None
+        if flags & 1:
+            data = reader.read_uint8_array()
+        return ScreenshotGetLastBinaryResponse(data=data, version=version)
+
+
+SCREENSHOT_GET_LAST_BINARY = EndpointType[
+    ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse
+].create_serialized(
+    PLUGIN_ID,
+    name="screenshot_get_last_binary",
+    permission_id=OBS_SOURCE_READ_PERMISSION_ID,
+    request_serializer=Serializer.json(),
+    response_serializer=ScreenshotGetLastBinaryResponse,
+)
+
 
 EVENT_SIGNAL = SignalType[OBSFrontendEvent].create_json(
     PLUGIN_ID,

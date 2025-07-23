@@ -23,23 +23,24 @@ jobs:
         steps:
         - uses: actions/checkout@v4
 
-        - uses: pnpm/action-setup@v4
+        - name: Cache Bun dependencies
+          uses: actions/cache@v4
           with:
-            version: 9.12.2
+            path: ~/.bun/install/cache
+            key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
+            restore-keys: |
+              bun-${{ runner.os }}-
 
-        - name: Setup Node.js
-          uses: actions/setup-node@v4.0.3
-          with:
-            cache: 'pnpm'
-            node-version: '20.18.2'
+        - name: Setup Bun
+          uses: oven-sh/setup-bun@v2
 
-        - name: Install dependencies
-          run: pnpm i --frozen-lockfile
+        - name: Install Dependencies
+          run: bun install --frozen-lockfile
 
         - name: Upload to Cloudflare R2
           env:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
-            pnpm wrangler whoami
-            node ./scripts/js-upload-to-r2.mjs --version ${{ github.event.inputs.version }} --graduate true ${{ github.event.inputs.no-upload && '--no-upload true' || '' }}
+            bun wrangler whoami
+            bun ./scripts/js-upload-to-r2.ts --version ${{ github.event.inputs.version }} --graduate true ${{ github.event.inputs.no-upload && '--no-upload true' || '' }}

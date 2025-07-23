@@ -90,7 +90,7 @@ class Network:
         }
         error = ERROR_MAP.get(reason.type)
         if error:
-            raise error(reason.message)
+            raise error(reason.message or reason.type.value)
 
     @property
     def address(self) -> Address:

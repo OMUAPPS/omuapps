@@ -131,7 +131,7 @@ export async function createBloomEffect(context: GlContext): Promise<Effect> {
                 position.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 texcoord.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 texsizeUniform.set(texelSize);
-                directionUniform.set(new Vec2(0, 1));
+                directionUniform.set({ x: 0, y: 1 });
                 radiusUniform.set(16.0);
                 weightsUniform.set(WEIGHTS);
                 weightsSizeUniform.set(WEIGHTS_SIZE);
@@ -157,7 +157,7 @@ export async function createBloomEffect(context: GlContext): Promise<Effect> {
                 position.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
                 texcoord.set(texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 texsizeUniform.set(texelSize);
-                directionUniform.set(new Vec2(1, 0));
+                directionUniform.set({ x: 1, y: 0 });
                 radiusUniform.set(16.0);
                 weightsUniform.set(WEIGHTS);
                 weightsSizeUniform.set(WEIGHTS_SIZE);

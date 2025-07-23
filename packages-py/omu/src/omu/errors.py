@@ -3,12 +3,14 @@ from omu.network.packet.packet_types import DisconnectType
 
 
 class OmuError(Exception):
-    pass
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
 
 
 class DisconnectReason(OmuError):
-    def __init__(self, type: DisconnectType, message: str | None = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, type: DisconnectType, message: str | None = None):
+        super().__init__(message or type.value)
         self.type = type
         self.message = message
 

@@ -1,6 +1,8 @@
 import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
 import { SignalType } from '@omujs/omu/extension/signal/signal.js';
 
+import { Serializer } from '@omujs/omu';
+import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
 import { PLUGIN_ID } from './const.js';
 import {
     OBS_SCENE_READ_PERMISSION_ID,
@@ -150,14 +152,14 @@ export type SceneJson = {
 };
 
 export type CreateResponse = {
-    source: SourceType<string, unknown>;
+    source: SourceJson;
 };
 
-export const SOURCE_CREATE = EndpointType.createJson<SourceJson, CreateResponse>(PLUGIN_ID, {
+export const SOURCE_CREATE: EndpointType<SourceJson, CreateResponse> = EndpointType.createJson<SourceJson, CreateResponse>(PLUGIN_ID, {
     name: 'source_create',
 });
 
-export const SOURCE_ADD = EndpointType.createJson<SourceJson, CreateResponse>(PLUGIN_ID, {
+export const SOURCE_ADD: EndpointType<SourceJson, CreateResponse> = EndpointType.createJson<SourceJson, CreateResponse>(PLUGIN_ID, {
     name: 'source_add',
 });
 
@@ -167,19 +169,20 @@ export const SOURCE_ADD = EndpointType.createJson<SourceJson, CreateResponse>(PL
 // 100:px = 100 pixels
 export type Unit = 'px' | 'vw' | 'vh' | '%';
 export type UnitValue = number | `${number}:${Unit}`;
-export type BrowserCreateRequest = {
+export type CreateBrowserRequest = {
     name: string;
+    scene?: string;
     url: string;
     width?: UnitValue;
     height?: UnitValue;
     css?: string;
 } & BlendableSource & ScalableSource;
 
-export const BROWSER_CREATE = EndpointType.createJson<BrowserCreateRequest, CreateResponse>(PLUGIN_ID, {
+export const BROWSER_CREATE: EndpointType<CreateBrowserRequest, CreateResponse> = EndpointType.createJson<CreateBrowserRequest, CreateResponse>(PLUGIN_ID, {
     name: 'browser_create',
 });
 
-export const BROWSER_ADD = EndpointType.createJson<BrowserCreateRequest, CreateResponse>(PLUGIN_ID, {
+export const BROWSER_ADD: EndpointType<CreateBrowserRequest, CreateResponse> = EndpointType.createJson<CreateBrowserRequest, CreateResponse>(PLUGIN_ID, {
     name: 'browser_add',
 });
 
@@ -193,19 +196,19 @@ export type RemoveByUuidRequest = {
 
 export type RemoveResponse = unknown;
 
-export const SOURCE_REMOVE_BY_NAME = EndpointType.createJson<RemoveByNameRequest, RemoveResponse>(PLUGIN_ID, {
+export const SOURCE_REMOVE_BY_NAME: EndpointType<RemoveByNameRequest> = EndpointType.createJson<RemoveByNameRequest, RemoveResponse>(PLUGIN_ID, {
     name: 'source_remove_by_name',
 });
 
-export const SOURCE_REMOVE_BY_UUID = EndpointType.createJson<RemoveByUuidRequest, RemoveResponse>(PLUGIN_ID, {
+export const SOURCE_REMOVE_BY_UUID: EndpointType<RemoveByUuidRequest> = EndpointType.createJson<RemoveByUuidRequest, RemoveResponse>(PLUGIN_ID, {
     name: 'source_remove_by_uuid',
 });
 
 export type UpdateResponse = {
-    source: SourceType<string, unknown>;
+    source: SourceJson;
 };
 
-export const SOURCE_UPDATE = EndpointType.createJson<SourceJson, UpdateResponse>(PLUGIN_ID, {
+export const SOURCE_UPDATE: EndpointType<SourceJson, UpdateResponse> = EndpointType.createJson<SourceJson, UpdateResponse>(PLUGIN_ID, {
     name: 'source_update',
 });
 
@@ -214,7 +217,7 @@ export type SourceGetByNameRequest = {
     name: string;
 };
 
-export const SOURCE_GET_BY_NAME = EndpointType.createJson<SourceGetByNameRequest, SourceJson>(PLUGIN_ID, {
+export const SOURCE_GET_BY_NAME: EndpointType<SourceGetByNameRequest, SourceJson> = EndpointType.createJson<SourceGetByNameRequest, SourceJson>(PLUGIN_ID, {
     name: 'source_get_by_name',
 });
 
@@ -223,7 +226,7 @@ export type SourceGetByUuidRequest = {
     uuid: string;
 };
 
-export const SOURCE_GET_BY_UUID = EndpointType.createJson<SourceGetByUuidRequest, SourceJson>(PLUGIN_ID, {
+export const SOURCE_GET_BY_UUID: EndpointType<SourceGetByUuidRequest, SourceJson> = EndpointType.createJson<SourceGetByUuidRequest, SourceJson>(PLUGIN_ID, {
     name: 'source_get_by_uuid',
 });
 
@@ -231,7 +234,7 @@ export type SourceListRequest = {
     scene?: string;
 };
 
-export const SOURCE_LIST = EndpointType.createJson<SourceListRequest, SourceJson[]>(PLUGIN_ID, {
+export const SOURCE_LIST: EndpointType<SourceListRequest, SourceJson[]> = EndpointType.createJson<SourceListRequest, SourceJson[]>(PLUGIN_ID, {
     name: 'source_list',
 });
 
@@ -241,7 +244,7 @@ export type SceneListResponse = {
     scenes: SceneJson[];
 };
 
-export const SCENE_LIST = EndpointType.createJson<SceneListRequest, SceneListResponse>(PLUGIN_ID, {
+export const SCENE_LIST: EndpointType<unknown, SceneListResponse> = EndpointType.createJson<SceneListRequest, SceneListResponse>(PLUGIN_ID, {
     name: 'scene_list',
 });
 
@@ -253,17 +256,17 @@ export type SceneGetByUuidRequest = {
     uuid: string;
 };
 
-export const SCENE_GET_BY_NAME = EndpointType.createJson<SceneGetByNameRequest, SceneJson>(PLUGIN_ID, {
+export const SCENE_GET_BY_NAME: EndpointType<SceneGetByNameRequest, SceneJson> = EndpointType.createJson<SceneGetByNameRequest, SceneJson>(PLUGIN_ID, {
     name: 'scene_get_by_name',
 });
 
-export const SCENE_GET_BY_UUID = EndpointType.createJson<SceneGetByUuidRequest, SceneJson>(PLUGIN_ID, {
+export const SCENE_GET_BY_UUID: EndpointType<SceneGetByUuidRequest, SceneJson> = EndpointType.createJson<SceneGetByUuidRequest, SceneJson>(PLUGIN_ID, {
     name: 'scene_get_by_uuid',
 });
 
 export type SceneGetCurrentRequest = unknown;
 
-export const SCENE_GET_CURRENT = EndpointType.createJson<SceneGetCurrentRequest, SceneJson | null>(PLUGIN_ID, {
+export const SCENE_GET_CURRENT: EndpointType<unknown, SceneJson | null> = EndpointType.createJson<SceneGetCurrentRequest, SceneJson | null>(PLUGIN_ID, {
     name: 'scene_get_current',
     permissionId: OBS_SCENE_READ_PERMISSION_ID,
 });
@@ -278,7 +281,7 @@ export type SceneSetCurrentByUuidRequest = {
 
 export type SceneSetCurrentResponse = unknown;
 
-export const SCENE_SET_CURRENT_BY_NAME = EndpointType.createJson<
+export const SCENE_SET_CURRENT_BY_NAME: EndpointType<SceneSetCurrentByNameRequest> = EndpointType.createJson<
     SceneSetCurrentByNameRequest,
     SceneSetCurrentResponse
 >(PLUGIN_ID, {
@@ -286,7 +289,7 @@ export const SCENE_SET_CURRENT_BY_NAME = EndpointType.createJson<
     permissionId: OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 });
 
-export const SCENE_SET_CURRENT_BY_UUID = EndpointType.createJson<
+export const SCENE_SET_CURRENT_BY_UUID: EndpointType<SceneSetCurrentByUuidRequest> = EndpointType.createJson<
     SceneSetCurrentByUuidRequest,
     SceneSetCurrentResponse
 >(PLUGIN_ID, {
@@ -294,6 +297,68 @@ export const SCENE_SET_CURRENT_BY_UUID = EndpointType.createJson<
     permissionId: OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 });
 
-export const EVENT_SIGNAL = SignalType.createJson<OBSFrontendEvent>(PLUGIN_ID, {
+export type SceneCreateRequest = {
+    name: string;
+}
+
+export type SceneCreateResponse = {
+    scene: SceneJson;
+}
+
+export const SCENE_CREATE: EndpointType<SceneCreateRequest, SceneCreateResponse> = EndpointType.createJson<SceneCreateRequest, SceneCreateResponse>(PLUGIN_ID, {
+    name: 'scene_create',
+});
+
+export type ScreenshotCreateRequest = object;
+export type ScreenshotCreateResponse = object;
+
+export const SCREENSHOT_CREATE: EndpointType<ScreenshotCreateRequest, ScreenshotCreateResponse> = EndpointType.createJson<ScreenshotCreateRequest, ScreenshotCreateResponse>(PLUGIN_ID, {
+    name: 'screenshot_create',
+});
+
+export type ScreenshotGetLastBinaryRequest = object;
+
+export class ScreenshotGetLastBinaryResponse {
+    version: number;
+    data: Uint8Array | null;
+
+    constructor(version: number, data: Uint8Array | null) {
+        this.version = version;
+        this.data = data;
+    }
+
+    public static serialize(response: ScreenshotGetLastBinaryResponse): Uint8Array {
+        const writer = new ByteWriter();
+        writer.writeULEB128(response.version);
+        const flags = response.data ? 0x01 : 0x00;
+        writer.writeULEB128(flags);
+        if (response.data) {
+            writer.writeUint8Array(response.data);
+        }
+        return writer.finish();
+    }
+
+    public static deserialize(data: Uint8Array): ScreenshotGetLastBinaryResponse {
+        const reader = ByteReader.fromUint8Array(data);
+        const version = reader.readULEB128();
+        const flags = reader.readULEB128();
+        if (flags & 0x01) {
+            const screenshotData = reader.readUint8Array();
+            return new ScreenshotGetLastBinaryResponse(version, screenshotData);
+        }
+        return new ScreenshotGetLastBinaryResponse(version, null);
+    }
+}
+
+export const SCREENSHOT_GET_LAST_BINARY: EndpointType<ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse> = EndpointType.createSerialized<
+    ScreenshotGetLastBinaryRequest,
+    ScreenshotGetLastBinaryResponse
+>(PLUGIN_ID, {
+    name: 'screenshot_get_last_binary',
+    requestSerializer: Serializer.json(),
+    responseSerializer: ScreenshotGetLastBinaryResponse,
+});
+
+export const EVENT_SIGNAL: SignalType<OBSFrontendEvent> = SignalType.createJson<OBSFrontendEvent>(PLUGIN_ID, {
     name: 'event_signal',
 });

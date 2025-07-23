@@ -159,8 +159,7 @@ class YoutubeChatAPI:
             self.chat_continuation = None
         else:
             continuation = continuations[0]
-            continuation_data = continuation["invalidationContinuationData"]
-            self.chat_continuation = continuation_data["continuation"]
+            self.chat_continuation = continuation.get("invalidationContinuationData", {}).get("continuation", None)
         chat_actions = live_chat_continuation.get("actions", [])
         mutations = (
             traverse(data)

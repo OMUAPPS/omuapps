@@ -8,7 +8,7 @@ export class EndpointRegisterPacket {
 
     public static serialize(item: EndpointRegisterPacket): Uint8Array {
         const writer = new ByteWriter();
-        writer.writeInt(item.endpoints.size);
+        writer.writeULEB128(item.endpoints.size);
         for (const [key, value] of item.endpoints) {
             writer.writeString(key.key());
             writer.writeString(value?.key() ?? '');
@@ -17,8 +17,8 @@ export class EndpointRegisterPacket {
     }
 
     public static deserialize(item: Uint8Array): EndpointRegisterPacket {
-        const reader = new ByteReader(item);
-        const count = reader.readInt();
+        const reader = ByteReader.fromUint8Array(item);
+        const count = reader.readULEB128();
         const endpoints = new IdentifierMap<Identifier | undefined>();
         for (let i = 0; i < count; i++) {
             const key = Identifier.fromKey(reader.readString());
@@ -39,16 +39,16 @@ export class EndpointDataPacket {
     public static serialize(item: EndpointDataPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(item.id.key());
-        writer.writeInt(item.key);
-        writer.writeByteArray(item.data);
+        writer.writeULEB128(item.key);
+        writer.writeUint8Array(item.data);
         return writer.finish();
     }
 
     public static deserialize(item: Uint8Array): EndpointDataPacket {
-        const reader = new ByteReader(item);
+        const reader = ByteReader.fromUint8Array(item);
         const id = Identifier.fromKey(reader.readString());
-        const key = reader.readInt();
-        const data = reader.readByteArray();
+        const key = reader.readULEB128();
+        const data = reader.readUint8Array();
         return new EndpointDataPacket(id, key, data);
     }
 }
@@ -63,15 +63,15 @@ export class EndpointErrorPacket {
     public static serialize(item: EndpointErrorPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(item.id.key());
-        writer.writeInt(item.key);
+        writer.writeULEB128(item.key);
         writer.writeString(item.error);
         return writer.finish();
     }
 
     public static deserialize(item: Uint8Array): EndpointErrorPacket {
-        const reader = new ByteReader(item);
+        const reader = ByteReader.fromUint8Array(item);
         const id = Identifier.fromKey(reader.readString());
-        const key = reader.readInt();
+        const key = reader.readULEB128();
         const error = reader.readString();
         return new EndpointErrorPacket(id, key, error);
     }

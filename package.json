@@ -11,35 +11,30 @@
     ],
     "private": true,
     "scripts": {
-        "prepare": "node ./scripts/js-patch.mjs",
+        "prepare": "bun ./scripts/js-patch.ts",
         "wrangler": "wrangler",
-        "build": "node ./scripts/js-build.mjs",
-        "build-i18n": "node scripts/js-i18n.mjs",
-        "build-site": "node ./scripts/js-build.mjs --build site",
-        "build-tauri": "node ./scripts/js-build.mjs --build dash",
-        "clean": "node ./scripts/js-clean.mjs",
-        "dev": "node ./scripts/js-dev.mjs",
-        "fix": "pnpm -r fix",
-        "lint": "pnpm -r lint"
+        "build": "bun ./scripts/js-build.ts",
+        "build-site": "bun run --cwd packages-js/site build",
+        "build-tauri": "bun run --cwd packages-js/dash build",
+        "publish": "bun ./scripts/js-publish.ts",
+        "clean": "bun ./scripts/js-clean.ts",
+        "eslint": "eslint"
     },
     "devDependencies": {
         "@actions/github": "^6.0.0",
-        "@types/node": "^22.1.0",
-        "ajv": "^8.17.1",
-        "axios": "^1.7.3",
-        "depcheck": "^1.4.7",
+        "@types/bun": "^1.2.6",
+        "@types/eslint": "^9.6.0",
+        "@sveltejs/package": "2.3.10",
+        "bun-plugin-isolated-decl": "^0.1.10",
         "eslint": "^9.9.1",
-        "execa": "^9.3.0",
+        "eslint-plugin-svelte": "3.3.3",
         "glob": "^11.0.0",
+        "globals": "16.0.0",
+        "jiti": "^2.4.2",
         "lerna": "^8.1.8",
+        "oxc-transform": "^0.61.2",
         "typescript": "^5.5.4",
-        "wrangler": "^3.103.2"
-    },
-    "pnpm": {
-        "overrides": {
-            "string-width": "4",
-            "strip-ansi": "6",
-            "wrap-ansi": "7"
-        }
+        "typescript-eslint": "8.28.0",
+        "wrangler": "4.4.0"
     }
 }

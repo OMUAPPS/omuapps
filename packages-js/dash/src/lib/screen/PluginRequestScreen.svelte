@@ -61,8 +61,8 @@
         justify-content: start;
         width: 100%;
         padding: 2rem 1.5rem;
-        padding-bottom: 0rem;
-        font-size: 14px;
+        padding-bottom: 0;
+        font-size: 0.8rem;
         font-weight: 600;
         color: var(--color-1);
         border-bottom: 1px solid var(--color-outline);

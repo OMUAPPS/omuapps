@@ -100,13 +100,13 @@
     {#if ready}
         <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
             <AvatarRenderer overlayApp={overlayApp} bind:message bind:view showGrid />
-            {#if $selectedAvatar}
-                <AvatarAdjustModal overlayApp={overlayApp} />
+            {#if $selectedAvatar && $config.avatars[$selectedAvatar]}
+                <AvatarAdjustModal overlayApp={overlayApp} bind:avatarConfig={$config.avatars[$selectedAvatar]} />
             {:else}
                 {#if dimentions && view}
                     {#each Object.entries($voiceState)
                         .sort(([a,], [b,]) => $config.users[a].position[0] - $config.users[b].position[0]) as [id, state] (id)}
-                        <UserDragControl {view} {dimentions} {overlayApp} {id} {state}/>
+                        <UserDragControl {view} {dimentions} {overlayApp} {id} {state} bind:user={$config.users[id]}/>
                     {/each}
                 {/if}
             {/if}
@@ -157,7 +157,7 @@
                 </button>
                 <button class:active={tab === 'visual'} on:click={() => (tab = tab === 'visual' ? null : 'visual')}>
                     <i class="ti ti-eye-check"></i>
-                    見た目を調整
+                    見た目の調整
                     <i class="ti ti-chevron-{tab === 'visual' ? 'up' : 'down'}"></i>
                 </button>
             </div>

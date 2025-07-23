@@ -5,7 +5,7 @@
 </script>
 
 <div class="header">
-    <i class={$t(`screen.${title}.icon`)} />
+    <i class={$t(`screen.${title}.icon`)}></i>
     <div class="title">{$t(`screen.${title}.name`)}</div>
 </div>
 
@@ -13,10 +13,10 @@
     .header {
         display: flex;
         flex-direction: row;
-        gap: 10px;
+        gap: 0.5rem;
         align-items: baseline;
-        height: 32px;
-        font-size: 18px;
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
         font-style: normal;
         font-weight: 600;
         line-height: 0;

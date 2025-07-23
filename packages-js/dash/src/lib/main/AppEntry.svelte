@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { omu } from '$lib/client.js';
+    import { dashboard, omu } from '$lib/client.js';
+    import { t } from '$lib/i18n/i18n-context.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
     import { pages, registerPage, type Page } from './page.js';
@@ -11,10 +12,8 @@
 
     $: metadata = entry.metadata;
     $: name = metadata?.name ? omu.i18n.translate(metadata?.name) : entry.id.key();
-    $: description = metadata?.description
-        ? omu.i18n.translate(metadata?.description)
-        : 'No description';
-    $: icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : 'No icon';
+    $: description = metadata?.description && omu.i18n.translate(metadata?.description) || $t('general.no_description');
+    $: icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : null;
     $: image = metadata?.image ? omu.i18n.translate(metadata?.image) : null;
 
     const appPage = registerPage({
@@ -29,12 +28,28 @@
         },
     });
 
+    let lastClickTime = 0;
+
     function handleClick() {
+        const now = Date.now();
+        const doubleClick = now - lastClickTime < 300;
+        lastClickTime = now;
+        if (doubleClick) {
+            const id = `app-${entry.id.key()}`;
+            delete $pages[id];
+            $currentPage = 'explore';
+            $currentPage = id;
+            dashboard.currentApp = entry;
+            return;
+        }
         $currentPage = appPage.id;
     }
 
     $: loaded = $pages[appPage.id];
     $: active = $currentPage === appPage.id;
+    $: if (active) {
+        dashboard.currentApp = entry;
+    };
 </script>
 
 <button on:click={handleClick}>
@@ -71,7 +86,9 @@
         {#if $menuOpen}
             <div class="info" class:open={$menuOpen}>
                 <span class="icon">
-                    {#if icon.startsWith('ti-')}
+                    {#if icon === null}
+                        <i class="ti ti-box"></i>
+                    {:else if icon.startsWith('ti-')}
                         <i class="ti {icon}"></i>
                     {:else}
                         <img src={icon} alt={name} />
@@ -87,7 +104,9 @@
         {:else}
             <div class="info">
                 <span class="icon">
-                    {#if icon.startsWith('ti-')}
+                    {#if icon === null}
+                        <i class="ti ti-box"></i>
+                    {:else if icon.startsWith('ti-')}
                         <i class="ti {icon}"></i>
                     {:else}
                         <img src={icon} alt={name} />
@@ -164,7 +183,7 @@
 
             > .info > .open {
                 visibility: visible;
-                margin-right: 0rem;
+                margin-right: 0;
                 transition: margin 0.0621s;
             }
         }

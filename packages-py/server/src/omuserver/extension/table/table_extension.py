@@ -226,7 +226,7 @@ class TableExtension:
         table: ServerTable,
         get_scopes: Callable[[TablePermissions], list[Identifier | None]],
     ):
-        if table.id.is_namepath_equal(session.app.id, max_depth=1):
+        if session.is_app_id(table.id):
             return
         if table.permissions is None:
             raise PermissionDenied(f"Table {table.id} does not have a permission set")

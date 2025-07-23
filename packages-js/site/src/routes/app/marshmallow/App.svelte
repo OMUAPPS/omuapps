@@ -170,7 +170,7 @@
                 {/if}
                 <div class="message-list">
                     {#if tab === 'new'}
-                        {#each messages.filter((entry) => entry.content.toLocaleLowerCase().includes(search.toLocaleLowerCase())) as entry}
+                        {#each messages.filter((entry) => entry.content.toLocaleLowerCase().includes(search.toLocaleLowerCase())) as entry (entry.message_id)}
                             <MessageEntry {entry} />
                         {:else}
                             <small class="no-messages">

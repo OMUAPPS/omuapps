@@ -22,7 +22,7 @@ class SignalPermissions:
         flags.set(0, self.all is not None)
         flags.set(1, self.listen is not None)
         flags.set(2, self.notify is not None)
-        writer.write_byte(flags.value)
+        writer.write_uint8(flags.value)
         if self.all is not None:
             writer.write_string(self.all.key())
         if self.listen is not None:
@@ -32,7 +32,7 @@ class SignalPermissions:
 
     @classmethod
     def deserialize(cls, reader: ByteReader) -> SignalPermissions:
-        flags = Flags(reader.read_byte())
+        flags = Flags(reader.read_uint8())
         all = flags.if_set(0, lambda: Identifier.from_key(reader.read_string()))
         listen = flags.if_set(1, lambda: Identifier.from_key(reader.read_string()))
         send = flags.if_set(2, lambda: Identifier.from_key(reader.read_string()))

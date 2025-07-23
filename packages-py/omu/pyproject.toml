@@ -1,11 +1,11 @@
 [project]
 name = "omu"
-version = "0.9.10"
-description = "Add your description here"
+version = "0.9.13"
+description = "OMUAPPS Python Implementation"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "aiohttp>=3.10.6", "result>=0.16.1"]
+dependencies = ["loguru>=0.7.2", "aiohttp>=3.10.6"]
 readme = "README.md"
 requires-python = ">= 3.12"
 

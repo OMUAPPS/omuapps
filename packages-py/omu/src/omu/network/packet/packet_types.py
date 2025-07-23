@@ -91,12 +91,12 @@ IDENTIFIER = Identifier("core", "packet")
 
 
 class PACKET_TYPES:
-    CONNECT = PacketType.create_json(
+    CONNECT = PacketType[ConnectPacket].create_json(
         IDENTIFIER,
         "connect",
         Serializer.model(ConnectPacket),
     )
-    DISCONNECT = PacketType.create_json(
+    DISCONNECT = PacketType[DisconnectPacket].create_json(
         IDENTIFIER,
         "disconnect",
         Serializer.model(DisconnectPacket),

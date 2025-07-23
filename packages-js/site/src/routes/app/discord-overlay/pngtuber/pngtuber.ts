@@ -93,6 +93,7 @@ export class LayerData {
             });
             texture.setImage(image, {
                 internalFormat: 'rgba',
+                format: 'rgba',
                 width: image.width,
                 height: image.height,
             });
@@ -189,6 +190,14 @@ class SpriteGroup {
         this.parentSprite = parent;
     }
 
+    public initialize() {
+        this.dragger.globalPosition = this.dragger.globalPosition.lerp(this.wob.globalPosition, 1);
+        this.dragOrigin.globalPosition = this.dragger.globalPosition;
+        const rotation = BetterMath.clamp(0, this.layerData.rLimitMin, this.layerData.rLimitMax);
+        this.sprite.rotation = BetterMath.toRadians(rotation);
+        this.sprite.scale = Vec2.ONE;
+    }
+
     public process() {
         this.tick += 1;
 
@@ -267,6 +276,9 @@ export class PNGTuber implements Avatar {
                 }
                 spriteGroups.get(layer.identification)?.setParent(parent);
             }
+        }
+        for (const sprite of spriteGroups.values()) {
+            sprite.initialize();
         }
         const context = {
             timer: new Timer(),
@@ -394,7 +406,7 @@ export class PNGTuber implements Avatar {
                 context.bounceTick += 1;
             }
             context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
-            context.origin.position = context.origin.position.add(new Vec2(0, -context.bounceVelocity * 0.0166)).min(Vec2.ZERO);
+            context.origin.position = context.origin.position.add({x: 0, y: -context.bounceVelocity * 0.0166}).min(Vec2.ZERO);
             if (!action.talking && context.origin.position.y >= -1) {
                 context.bounceVelocity = 0;
             }
@@ -416,7 +428,7 @@ export class PNGTuber implements Avatar {
         passes.sort((a, b) => a - b);
 
         this.frameBuffer.use(() => {
-            gl.clearColor(0, 0, 0, 0);
+            gl.clearColor(1, 1, 1, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
             passes.forEach(pass => {
                 [...context.spriteGroups.values()].filter(sprite => sprite.layerData.parentId === null).forEach(sprite => {
@@ -429,12 +441,12 @@ export class PNGTuber implements Avatar {
 
         options.effects.forEach(effect => {
             this.effectTargetFrameBuffer.use(() => {
-                gl.clearColor(0, 0, 0, 0);
+                gl.clearColor(1, 1, 1, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
             });
             effect.render(action, this.frameBufferTexture, this.effectTargetFrameBuffer);
             this.frameBuffer.use(() => {
-                gl.clearColor(0, 0, 0, 0);
+                gl.clearColor(1, 1, 1, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 this.bufferProgram.use(() => {
                     const textureUniform = this.bufferProgram.getUniform('u_texture').asSampler2D();
@@ -535,14 +547,14 @@ export class PNGTuber implements Avatar {
             const halfWidth = width / 2;
             const halfHeight = height / 2;
             const corners = [
-                new Vec2(-halfWidth, -halfHeight),
-                new Vec2(-halfWidth, halfHeight),
-                new Vec2(halfWidth, -halfHeight),
-                new Vec2(halfWidth, halfHeight),
+                { x: -halfWidth, y: -halfHeight },
+                { x: -halfWidth, y: halfHeight },
+                { x: halfWidth, y: -halfHeight },
+                { x: halfWidth, y: halfHeight },
             ];
             const offset = new Vec2(sprite.layerData.offset.x, sprite.layerData.offset.y);
             for (const corner of corners) {
-                points.push(transform.xform(corner.add(offset)));
+                points.push(transform.xform(offset.add(corner)));
             }
         }
         return AABB2.fromPoints(points);

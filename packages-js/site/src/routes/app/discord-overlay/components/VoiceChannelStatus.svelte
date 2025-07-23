@@ -4,7 +4,7 @@
 
     export let overlayApp: DiscordOverlayApp;
     export let state: 'wait-for-ready' | 'connecting-vc' | null;
-    const { config, selectedVoiceChannel } = overlayApp;
+    const { selectedVoiceChannel } = overlayApp;
 
     const CHANNEL_TYPE = {
         GUILD_TEXT: 0,

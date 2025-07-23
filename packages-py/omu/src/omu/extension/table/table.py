@@ -72,7 +72,7 @@ class Table[T](abc.ABC):
     async def fetch_all(self) -> dict[str, T]: ...
 
     @abc.abstractmethod
-    async def iterate(
+    def iterate(
         self,
         backward: bool = False,
         cursor: str | None = None,

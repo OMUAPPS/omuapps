@@ -1,5 +1,6 @@
+import { AABB2, type AABB2Like } from './aabb2.js';
 import type { Quaternion } from './quaternion.js';
-import { Vec2 } from './vec2.js';
+import { Vec2, type Vec2Like } from './vec2.js';
 import { Vec3 } from './vec3.js';
 
 export class Mat4 {
@@ -37,7 +38,7 @@ export class Mat4 {
             2 / (right - left), 0, 0, 0,
             0, 2 / (top - bottom), 0, 0,
             0, 0, -2 / (far - near), 0,
-            -(right + left) / (right - left), -(top + bottom) / (top - bottom), -(far + near) / (far - near), 1,
+            (right + left) / (left - right), (top + bottom) / (bottom - top), (far + near) / (near - far), 1,
         );
     }
 
@@ -82,6 +83,15 @@ export class Mat4 {
             nm10, nm11, nm12, nm13,
             nm20, nm21, nm22, nm23,
             nm30, nm31, nm32, nm33,
+        );
+    }
+
+    public lerp(right: Mat4, t: number): Mat4 {
+        return new Mat4(
+            this.m00 + (right.m00 - this.m00) * t, this.m01 + (right.m01 - this.m01) * t, this.m02 + (right.m02 - this.m02) * t, this.m03 + (right.m03 - this.m03) * t,
+            this.m10 + (right.m10 - this.m10) * t, this.m11 + (right.m11 - this.m11) * t, this.m12 + (right.m12 - this.m12) * t, this.m13 + (right.m13 - this.m13) * t,
+            this.m20 + (right.m20 - this.m20) * t, this.m21 + (right.m21 - this.m21) * t, this.m22 + (right.m22 - this.m22) * t, this.m23 + (right.m23 - this.m23) * t,
+            this.m30 + (right.m30 - this.m30) * t, this.m31 + (right.m31 - this.m31) * t, this.m32 + (right.m32 - this.m32) * t, this.m33 + (right.m33 - this.m33) * t,
         );
     }
 
@@ -220,18 +230,52 @@ export class Mat4 {
             nm30, nm31, nm32, nm33,
         );
     }
+    
+    public transform2(point: Vec2Like): Vec2 {
+        const x = this.m00 * point.x + this.m10 * point.y + this.m30;
+        const y = this.m01 * point.x + this.m11 * point.y + this.m31;
+        return new Vec2(x, y);
+    }
 
-    public xform3(point: Vec3): Vec3 {
+    public basisTransform2(point: Vec2Like): Vec2 {
+        const x = this.m00 * point.x + this.m10 * point.y;
+        const y = this.m01 * point.x + this.m11 * point.y;
+        return new Vec2(x, y);
+    }
+
+    public transformAABB2(aabb: AABB2Like): AABB2 {
+        const { min, max } = aabb;
+        const leftTop: Vec2Like = min;
+        const leftBottom: Vec2Like = { x: min.x, y: max.y };
+        const rightTop: Vec2Like = { x: max.x, y: min.y };
+        const rightBottom: Vec2Like = max;
+        return AABB2.fromPoints([
+            this.transform2(leftTop),
+            this.transform2(leftBottom),
+            this.transform2(rightTop),
+            this.transform2(rightBottom),
+        ])
+    }
+
+    public basisTransformAABB2(aabb: AABB2Like): AABB2 {
+        const { min, max } = aabb;
+        const leftTop: Vec2Like = min;
+        const leftBottom: Vec2Like = { x: min.x, y: max.y };
+        const rightTop: Vec2Like = { x: max.x, y: min.y };
+        const rightBottom: Vec2Like = max;
+        return AABB2.fromPoints([
+            this.basisTransform2(leftTop),
+            this.basisTransform2(leftBottom),
+            this.basisTransform2(rightTop),
+            this.basisTransform2(rightBottom),
+        ])
+    }
+    
+    public transform3(point: Vec3): Vec3 {
         const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30;
         const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31;
         const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32;
         return new Vec3(x, y, z);
-    }
-
-    public xform2(point: Vec2): Vec2 {
-        const x = this.m00 * point.x + this.m10 * point.y + this.m30;
-        const y = this.m01 * point.x + this.m11 * point.y + this.m31;
-        return new Vec2(x, y);
     }
 
     public equals(other: Mat4): boolean {

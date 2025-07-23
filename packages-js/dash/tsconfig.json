@@ -23,7 +23,6 @@
     ],
     "exclude": [
         "node_modules",
-        ".eslint.cjs"
     ]
     // Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
     //

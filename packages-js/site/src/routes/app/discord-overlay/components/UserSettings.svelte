@@ -131,23 +131,10 @@
         {#if state.voice_state.self_deaf || state.voice_state.deaf}
             🔊
         {/if}
-        <button class="visibility" on:click={() => $config.users[id].show = !$config.users[id].show}>
-            {#if $config.users[id].show}
-                <Tooltip>
-                    非表示にする
-                </Tooltip>
-                <i class="ti ti-eye-filled"></i>
-            {:else}
-                <Tooltip>
-                    表示する
-                </Tooltip>
-                <i class="ti ti-eye-off"></i>
-            {/if}
-        </button>
     </div>
     <div class="actions">
         <span style="display: flex; gap: 0.5rem;">
-            <FileDrop handle={handleReplace} accept=".save,image/*,.apng,.gif,.webp">
+            <FileDrop primary handle={handleReplace} accept=".save,image/*,.apng,.gif,.webp">
                 <Tooltip>
                     画像もしくはPNGTuber+のアバターが使えます
                 </Tooltip>
@@ -155,18 +142,18 @@
                 <i class="ti ti-upload"></i>
             </FileDrop>
             {#if avatar}
-                <button type="button" on:click={()=>{
+                <Button onclick={()=>{
                     $config.users[id].avatar = '';
                 }}>
                     <Tooltip>
                         アバターを削除
                     </Tooltip>
                     <i class="ti ti-trash"></i>
-                </button>
+                </Button>
             {/if}
         </span>
         {#if avatar}
-            <Button primary onclick={() => {
+            <Button onclick={() => {
                 $selectedAvatar = avatar;
                 $heldUser = null;
             }}>
@@ -176,9 +163,20 @@
         {/if}
     </div>
     {#if avatar && $config.avatars[avatar]?.type === 'pngtuber'}
+        <button on:click={()=>{configOpen = !configOpen;}} class="config-toggle">
+            <Tooltip>
+                レイヤーを変更
+            </Tooltip>
+            PNGTuber+
+            {#if configOpen}
+                <i class="ti ti-chevron-up"></i>
+            {:else}
+                <i class="ti ti-chevron-down"></i>
+            {/if}
+        </button>
         {#if configOpen}
             <div class="pngtuber-config">
-                {#each Array.from({ length: 10 }) as _, i}
+                {#each Array.from({ length: 10 }) as _, i (i)}
                     <button
                         on:click={()=>{
                             $config.users[id].config.pngtuber.layer = i;
@@ -190,17 +188,6 @@
                 {/each}
             </div>
         {/if}
-        <button on:click={()=>{configOpen = !configOpen;}} class="config-toggle">
-            <Tooltip>
-                レイヤーを変更
-            </Tooltip>
-            PNGTuber+
-            {#if configOpen}
-                <i class="ti ti-chevron-down"></i>
-            {:else}
-                <i class="ti ti-chevron-up"></i>
-            {/if}
-        </button>
     {/if}
 </div>
 
@@ -212,44 +199,20 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 1.5rem 4rem;
+        gap: 0.5rem;
     }
 
     .actions {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-
-        button {
-            vertical-align: baseline;
-            gap: 0.5rem;
-            border: none;
-            background: var(--color-1);
-            color: var(--color-bg-1);
-            padding: 0.5rem 1rem;
-            border-radius: 2px;
-            font-weight: 600;
-            font-size: 0.8rem;
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
-            cursor: pointer;
-
-            &:hover {
-                background: var(--color-bg-1);
-                color: var(--color-1);
-            }
-
-            > i {
-                margin-left: 0.5rem;
-            }
-        }
+        gap: 1rem;
+        margin-bottom: 0.25rem;
     }
 
     .states {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 1rem;
         color: var(--color-text);
         margin-bottom: 1rem;
 
@@ -274,15 +237,6 @@
             font-size: 0.9rem;
             font-weight: 600;
         }
-
-        .visibility {
-            margin-left: auto;
-            background: transparent;
-            border: none;
-            color: var(--color-1);
-            font-size: 1.25rem;
-            cursor: pointer;
-        }
     }
 
     .config-toggle {
@@ -292,22 +246,21 @@
         margin-bottom: 0.5rem;
         text-align: start;
         width: 100%;
-        background: var(--color-1);
-        color: var(--color-bg-1);
-        padding: 0.5rem 1rem;
+        background: transparent;
+        color: var(--color-1);
+        border: none;
+        border-bottom: 1px solid var(--color-1);
+        padding: 0.5rem 2px;
         border-radius: 2px;
         font-weight: 600;
         font-size: 0.8rem;
-        outline: 1px solid var(--color-1);
-        outline-offset: -1px;
         cursor: pointer;
-        border: none;
     }
 
     .pngtuber-config {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 0.5rem;
+        gap: 0.25rem;
         justify-content: start;
         width: 100%;
         margin-bottom: 0.5rem;
@@ -316,9 +269,8 @@
             background: var(--color-bg-1);
             border: none;
             color: var(--color-text);
-            outline: 1px solid var(--color-outline);
-            width: 2rem;
-            height: 2rem;
+            width: 100%;
+            height: 2.5rem;
             border-radius: 2px;
             font-weight: 600;
             font-size: 0.8rem;

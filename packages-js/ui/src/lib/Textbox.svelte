@@ -6,30 +6,39 @@
     export let disabled: boolean = false;
     export let readonly: boolean = false;
     export let lazy: boolean = false;
-    let inputValue: string = value;
+    export let focused: boolean = false;
+    $: inputValue = value;
     let timer: number | undefined;
+    let input: HTMLInputElement;
+
+    $: {
+        if (input && focused) {
+            input.focus();
+        }
+    }
 
     const eventDispatcher = createEventDispatcher<{
         input: string;
     }>();
 
     function handleChange(event: Event) {
-        inputValue = (event.target as HTMLInputElement).value;
+        const newValue = (event.target as HTMLInputElement).value;
         if (!lazy) {
-            value = inputValue;
-            eventDispatcher('input', inputValue);
+            value = newValue;
+            eventDispatcher('input', newValue);
             return;
         }
         if (timer) {
             clearTimeout(timer);
         }
         timer = window.setTimeout(() => {
-            value = inputValue;
-            eventDispatcher('input', inputValue);
+            value = newValue;
+            eventDispatcher('input', newValue);
         }, 300);
     }
 
     function exit() {
+        focused = false;
         if (timer) {
             window.clearTimeout(timer);
         }
@@ -50,7 +59,9 @@
     value={inputValue}
     {disabled}
     {readonly}
+    bind:this={input}
     on:input={handleChange}
+    on:focus={() => focused = true}
     on:blur={exit}
 />
 

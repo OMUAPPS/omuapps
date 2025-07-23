@@ -7,19 +7,18 @@
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-    import { Identifier } from '@omujs/omu/identifier.js';
     import {
         AppHeader,
         Button,
         ButtonMini,
         FileDrop,
+        Slider,
         Tooltip,
         setClient,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, APP_ID } from './app.js';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
-    import Slider from './components/Slider.svelte';
     import { ReactionApp } from './reaction-app.js';
 
     const omu = new Omu(APP);
@@ -107,6 +106,7 @@
                     max={2.5}
                     step={0.05}
                     type="percent"
+                    clamp={false}
                 >
                     大きさ
                 </Slider>
@@ -125,7 +125,7 @@
                 <i class="ti ti-mood-wink-2"></i>
             </h2>
             <section>
-                {#each Object.entries($config.replaces) as [key, assetId]}
+                {#each Object.entries($config.replaces) as [key, assetId] (key)}
                     <div class="replace-entry">
                         <div class="preview">
                             <h1>
@@ -134,8 +134,8 @@
                             {#if assetId}
                                 <i class="ti ti-chevron-right"></i>
                                 <img
-                                    src={omu.assets.url(Identifier.fromKey(assetId), {
-                                        noCache: true,
+                                    src={omu.assets.url(assetId, {
+                                        cache: 'no-cache',
                                     })}
                                     alt={key}
                                     class="replace-image"

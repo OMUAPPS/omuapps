@@ -1,5 +1,4 @@
 import { Author } from '@omujs/chat/models/author.js';
-import { Text } from '@omujs/chat/models/content.js';
 import { Gift } from '@omujs/chat/models/gift.js';
 import { Paid } from '@omujs/chat/models/paid.js';
 import type { Meta, StoryObj } from '@storybook/svelte';
@@ -16,7 +15,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Example: Story = {
     args: {
-        content: Text.of('Hello, world!'),
+        content: { type: 'text', data: 'Hello, world!' },
         author: Author.fromJson({
             id: 'test:test/test',
             provider_id: 'test:test/test',
@@ -59,7 +58,7 @@ export const Example: Story = {
 
 export const NoAuthor: Story = {
     args: {
-        content: Text.of('Hello, world!'),
+        content: { type: 'text', data: 'Hello, world!' },
         createdAt: new Date(),
         gifts: [
             Gift.fromJson({

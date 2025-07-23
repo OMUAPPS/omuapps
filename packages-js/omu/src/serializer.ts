@@ -73,6 +73,32 @@ export class Serializer<T, D> {
         );
     }
 
+    public fallback(fallback: T): Serializer<T, D> {
+        return new Serializer<T, D>(
+            (data) => this.serialize(data),
+            (data) => {
+                try {
+                    return this.deserialize(data);
+                } catch {
+                    return fallback
+                }
+            },
+        )
+    }
+
+    public fallbackMap(fallback: (data: D, error: unknown) => T): Serializer<T, D> {
+        return new Serializer<T, D>(
+            (data) => this.serialize(data),
+            (data) => {
+                try {
+                    return this.deserialize(data);
+                } catch (error) {
+                    return fallback(data, error);
+                }
+            },
+        )
+    }
+
     public pipe<E>(serializer: Serializable<D, E>): Serializer<T, E> {
         return new Serializer<T, E>(
             (data) => serializer.serialize(this.serialize(data)),

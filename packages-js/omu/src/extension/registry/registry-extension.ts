@@ -11,7 +11,7 @@ import { RegistryPacket, RegistryRegisterPacket } from './packets.js';
 import { type Registry, RegistryType } from './registry.js';
 
 export class RegistryExtension implements Extension {
-    public readonly type = REGISTRY_EXTENSION_TYPE;
+    public readonly type: ExtensionType<RegistryExtension> = REGISTRY_EXTENSION_TYPE;
     private readonly registries = new IdentifierMap<Registry<unknown>>();
 
     constructor(private readonly client: Client) {
@@ -132,11 +132,11 @@ class RegistryImpl<T> implements Registry<T> {
     }
 }
 
-export const REGISTRY_EXTENSION_TYPE = new ExtensionType(
+export const REGISTRY_EXTENSION_TYPE: ExtensionType<RegistryExtension> = new ExtensionType(
     'registry',
     (client: Client) => new RegistryExtension(client),
 );
-export const REGISTRY_PERMISSION_ID = REGISTRY_EXTENSION_TYPE.join('permission');
+export const REGISTRY_PERMISSION_ID: Identifier = REGISTRY_EXTENSION_TYPE.join('permission');
 const REGISTRY_REGISTER_PACKET = PacketType.createSerialized<RegistryRegisterPacket>(
     REGISTRY_EXTENSION_TYPE,
     {

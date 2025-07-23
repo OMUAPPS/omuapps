@@ -8,25 +8,25 @@ import { ExtensionType } from '../extension.js';
 import type { LogMessage } from './packets.js';
 import { LogPacket, LogType } from './packets.js';
 
-export const LOGGER_EXTENSION_TYPE = new ExtensionType(
+export const LOGGER_EXTENSION_TYPE: ExtensionType<LoggerExtension> = new ExtensionType(
     'logger',
     (client) => new LoggerExtension(client),
 );
 
-export const LOGGER_LOG_PERMISSION_ID = LOGGER_EXTENSION_TYPE.join('log');
+export const LOGGER_LOG_PERMISSION_ID: Identifier = LOGGER_EXTENSION_TYPE.join('log');
 
-export const LOGGER_LOG_PACKET = PacketType.createSerialized<LogPacket>(LOGGER_EXTENSION_TYPE, {
+export const LOGGER_LOG_PACKET: PacketType<LogPacket> = PacketType.createSerialized<LogPacket>(LOGGER_EXTENSION_TYPE, {
     name: 'log',
     serializer: LogPacket,
 });
-export const LOGGER_LISTEN_PACKET = PacketType.createJson<Identifier>(LOGGER_EXTENSION_TYPE, {
+export const LOGGER_LISTEN_PACKET: PacketType<Identifier> = PacketType.createJson<Identifier>(LOGGER_EXTENSION_TYPE, {
     name: 'listen',
     serializer: Serializer.model(Identifier),
 });
 
 type LogListener = (message: LogMessage) => void;
 export class LoggerExtension {
-    public readonly type = LOGGER_EXTENSION_TYPE;
+    public readonly type: ExtensionType<LoggerExtension> = LOGGER_EXTENSION_TYPE;
     private readonly listeners: IdentifierMap<LogListener[]> = new IdentifierMap();
 
     constructor(private readonly client: Client) {

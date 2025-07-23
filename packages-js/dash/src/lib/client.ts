@@ -9,6 +9,7 @@ import { Chat } from '@omujs/chat';
 import { CHAT_CHANNEL_TREE_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { App, Omu } from '@omujs/omu';
 import {
+    DAShBOARD_DRAG_DROP_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHOBARD_APP_EDIT_PERMISSION_ID,
     DASHOBARD_APP_READ_PERMISSION_ID,
@@ -26,7 +27,7 @@ import { TABLE_PERMISSION_ID } from '@omujs/omu/extension/table/index.js';
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Locale } from '@omujs/omu/localization/locale.js';
 import { BrowserTokenProvider } from '@omujs/omu/token.js';
-import { language } from './main/settings.js';
+import { currentPage, language } from './main/settings.js';
 import { VERSION } from './version.js';
 
 const IDENTIFIER = new Identifier('com.omuapps', 'dashboard');
@@ -68,6 +69,7 @@ setChat(chat);
 omu.plugins.require({
     omuplugin_chat: `==${VERSION}`,
     omu_chat_youtube: `==${VERSION}`,
+    omu_chat_twitch: `==${VERSION}`,
     omu_chatprovider: `==${VERSION}`,
 });
 omu.permissions.require(
@@ -75,11 +77,12 @@ omu.permissions.require(
     PLUGIN_READ_PACKAGE_PERMISSION_ID,
     PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
     CHAT_CHANNEL_TREE_PERMISSION_ID,
-    DASHBOARD_OPEN_APP_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
     SERVER_APPS_READ_PERMISSION_ID,
+    DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHOBARD_APP_READ_PERMISSION_ID,
     DASHOBARD_APP_EDIT_PERMISSION_ID,
+    DAShBOARD_DRAG_DROP_PERMISSION_ID,
     I18N_GET_LOCALES_PERMISSION_ID,
     I18N_SET_LOCALES_PERMISSION_ID,
 );
@@ -91,3 +94,7 @@ omu.onReady(() => {
 })
 
 export { chat, dashboard, omu };
+
+currentPage.subscribe(() => {
+    dashboard.currentApp = null;
+})

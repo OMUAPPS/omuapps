@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
     import { Paid } from '@omujs/chat/models/paid.js';
+    import ButtonMini from './ButtonMini.svelte';
     import ComponentRenderer from './ComponentRenderer.svelte';
     import Gift from './Gift.svelte';
     import RelativeDate from './RelativeDate.svelte';
@@ -67,7 +68,7 @@
             <div class="author-info">
                 <div class="author">
                     <span>{author.name}</span>
-                    {#each author.roles || [] as role}
+                    {#each author.roles || [] as role (role.id)}
                         <Role {role} />
                     {/each}
                     <small>{author.metadata?.screen_id || author.id.path.at(-1)}</small>
@@ -120,32 +121,32 @@
                                 </p>
                             </div>
                         {/if}
-                        {#each gifts as gift}
+                        {#each gifts as gift, i (i)}
                             <Gift {gift} />
                         {/each}
                     </div>
                 {/if}
             </div>
-            {#if selected}
-                <div class="actions">
-                    {#if time}
-                        {@const timedLink = `${url}&t=${Math.floor(time.getTime()/1000)+10}s`}
-                        <button on:click={() => window.open(timedLink, '_blank')}>
-                            <Tooltip>
-                                <p>{$translate('panels.messages.see_in_room')}</p>
-                                <p>{formatTime(time)}</p>
-                            </Tooltip>
-                            <i class="ti ti-external-link"></i>
-                        </button>
-                    {/if}
-                    <button on:click={handleCopy}>
-                        <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
-                        <i class="ti ti-files"></i>
-                    </button>
-                </div>
-            {/if}
         </div>
     </div>
+    {#if selected}
+        <div class="actions">
+            {#if time}
+                {@const timedLink = `${url}&t=${Math.floor(time.getTime()/1000)+10}s`}
+                <ButtonMini primary on:click={() => {window.open(timedLink, '_blank')}}>
+                    <Tooltip>
+                        <p>{$translate('panels.messages.see_in_room')}</p>
+                        <p>{formatTime(time)}</p>
+                    </Tooltip>
+                    <i class="ti ti-external-link"></i>
+                </ButtonMini>
+            {/if}
+            <ButtonMini primary on:click={handleCopy}>
+                <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
+                <i class="ti ti-files"></i>
+            </ButtonMini>
+        </div>
+    {/if}
 </article>
 
 <style lang="scss">
@@ -284,32 +285,7 @@
 
     .actions {
         display: flex;
-        align-self: flex-end;
         gap: 2px;
-
-        > button {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            font-size: 1rem;
-            color: var(--color-1);
-            cursor: pointer;
-            background: var(--color-bg-1);
-            border-radius: 2px;
-            border: none;
-            outline: none;
-
-            &:hover {
-                color: var(--color-bg-1);
-                background: var(--color-1);
-            }
-
-            &:focus {
-                outline: 1px solid var(--color-1);
-                outline-offset: -1px;
-            }
-        }
     }
 
     .flex {

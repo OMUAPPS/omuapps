@@ -16,34 +16,34 @@ export type AuthorMetadata = {
 export type AuthorJson = {
     provider_id: string;
     id: string;
+    metadata: AuthorMetadata;
     name?: string;
     avatar_url?: string;
     roles?: RoleJson[];
-    metadata?: AuthorMetadata;
 };
 
 export class Author implements Keyable, Model<AuthorJson> {
     public providerId: Identifier;
     public id: Identifier;
+    public metadata: AuthorMetadata;
     public name?: string;
     public avatarUrl?: string;
     public roles?: Role[];
-    public metadata?: AuthorMetadata;
 
     constructor(options: {
         providerId: Identifier;
         id: Identifier;
+        metadata?: AuthorMetadata;
         name?: string;
         avatarUrl?: string;
         roles?: Role[];
-        metadata?: AuthorMetadata;
     }) {
         this.providerId = options.providerId;
         this.id = options.id;
+        this.metadata = options.metadata || {};
         this.name = options.name;
         this.avatarUrl = options.avatarUrl;
         this.roles = options.roles;
-        this.metadata = options.metadata;
     }
 
     static fromJson(info: AuthorJson): Author {
@@ -58,7 +58,7 @@ export class Author implements Keyable, Model<AuthorJson> {
     }
 
     key(): string {
-        return `${this.providerId}:${this.id}`;
+        return this.id.key();
     }
 
     toJson(): AuthorJson {

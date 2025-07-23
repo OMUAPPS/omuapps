@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from enum import IntEnum
+from pathlib import Path
 
 import obspython  # type: ignore
 
@@ -98,6 +99,15 @@ class OBS:
         for item in items:
             yield OBSSource(item)
         obspython.source_list_release(items)
+
+    @staticmethod
+    def frontend_take_screenshot():
+        obspython.obs_frontend_take_screenshot()
+
+    @staticmethod
+    def frontend_get_last_screenshot() -> Path | None:
+        screenshot_path = obspython.obs_frontend_get_last_screenshot()
+        return screenshot_path and Path(screenshot_path)
 
     @staticmethod
     def frontend_add_event_callback(callback: Callable[[OBSFrontendEvent], None]):

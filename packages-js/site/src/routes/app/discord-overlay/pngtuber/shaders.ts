@@ -54,10 +54,6 @@ void main() {
     vec2 uv = v_texcoord;
     uv.x /= u_frame_count;
     uv.x += u_frame / u_frame_count;
-    vec4 color = texture(u_texture, uv);
-    if (color.a < 0.1) {
-        discard;
-    }
-    outColor = color;
+    outColor = texture(u_texture, uv);
 }
 `;

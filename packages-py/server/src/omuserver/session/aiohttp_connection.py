@@ -5,8 +5,9 @@ from loguru import logger
 from omu.bytebuffer import ByteReader, ByteWriter
 from omu.network.packet import Packet, PacketData
 from omu.network.packet_mapper import PacketMapper
+from omu.result import Err, Ok, Result
 
-from .session import SessionConnection
+from .session import ConnectionClosed, ErrorReceiving, InvalidPacket, ReceiveError, SessionConnection
 
 
 class WebsocketsConnection(SessionConnection):
@@ -17,29 +18,26 @@ class WebsocketsConnection(SessionConnection):
     def closed(self) -> bool:
         return self.socket.closed
 
-    async def receive(self, packet_mapper: PacketMapper) -> Packet | None:
+    async def receive(self, packet_mapper: PacketMapper) -> Result[Packet, ReceiveError]:
         msg = await self.socket.receive()
         if msg.type in {
             web.WSMsgType.CLOSE,
             web.WSMsgType.CLOSING,
             web.WSMsgType.CLOSED,
         }:
-            return None
-        if msg.type != web.WSMsgType.BINARY:
-            raise RuntimeError(f"Unknown message type {msg.type}")
-
+            return Err(ConnectionClosed("Socket is closed"))
+        if msg.type == web.WSMsgType.ERROR:
+            return Err(ErrorReceiving(f"Error receiving message: {msg.data}"))
         if msg.data is None:
-            raise RuntimeError("Received empty message")
-        if msg.type == web.WSMsgType.TEXT:
-            raise RuntimeError("Received text message")
-        elif msg.type == web.WSMsgType.BINARY:
-            with ByteReader(msg.data) as reader:
-                event_type = reader.read_string()
-                event_data = reader.read_byte_array()
-            packet_data = PacketData(event_type, event_data)
-            return packet_mapper.deserialize(packet_data)
-        else:
-            raise RuntimeError(f"Unknown message type {msg.type}")
+            return Err(ErrorReceiving("Received empty message"))
+        if msg.type != web.WSMsgType.BINARY:
+            return Err(InvalidPacket(f"Unknown message type {msg.type}: {msg.data}"))
+
+        with ByteReader(msg.data) as reader:
+            event_type = reader.read_string()
+            event_data = reader.read_uint8_array()
+        packet_data = PacketData(event_type, event_data)
+        return Ok(packet_mapper.deserialize(packet_data))
 
     async def close(self) -> None:
         try:
@@ -54,5 +52,5 @@ class WebsocketsConnection(SessionConnection):
         packet_data = packet_mapper.serialize(packet)
         writer = ByteWriter()
         writer.write_string(packet_data.type)
-        writer.write_byte_array(packet_data.data)
+        writer.write_uint8_array(packet_data.data)
         await self.socket.send_bytes(writer.finish())

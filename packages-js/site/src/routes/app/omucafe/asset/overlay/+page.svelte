@@ -1,15 +1,18 @@
 <script lang="ts">
+    import { VERSION } from '$lib/version.js';
     import { App } from '@omujs/omu';
-    import { APP_ID } from '../../app.js';
+    import { OVERLAY_ID } from '../../app.js';
     import KitchenRenderer from '../../components/KitchenRenderer.svelte';
     import { createGame } from '../../omucafe-app.js';
 
-    createGame(new App(APP_ID.join('assets', 'overlay'), {
-        version: '0.0.1',
-    }));
+    const promise = createGame(new App(OVERLAY_ID, {
+        version: VERSION,
+    }), 'overlay');
 </script>
 
-<KitchenRenderer side='overlay' />
+{#await promise then }
+    <KitchenRenderer side='overlay' />
+{/await}
 
 <style lang="scss">
     :global(body) {

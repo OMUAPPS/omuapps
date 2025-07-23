@@ -7,9 +7,9 @@ import { Serializer } from '../../serializer.js';
 
 export class SignalPermissions {
     constructor(
-        public readonly all?: Identifier,
-        public readonly listen?: Identifier,
-        public readonly send?: Identifier,
+        public readonly all?: Identifier | undefined,
+        public readonly listen?: Identifier | undefined,
+        public readonly send?: Identifier | undefined,
     ) {}
 
     public serialize(writer: ByteWriter): void {

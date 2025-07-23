@@ -2,7 +2,6 @@
     import { lerp } from '$lib/math/math.js';
     import { Timer } from '$lib/timer.js';
     import type { Omu } from '@omujs/omu';
-    import { Identifier } from '@omujs/omu/identifier.js';
     import { BROWSER } from 'esm-env';
     import { onDestroy } from 'svelte';
     import type { ReactionApp } from '../reaction-app.js';
@@ -44,8 +43,7 @@
                 if (!assetId) {
                     return [key, null];
                 }
-                const assetIdentifier = Identifier.fromKey(assetId);
-                const assetUrl = omu.assets.url(assetIdentifier, { noCache: true });
+                const assetUrl = omu.assets.url(assetId, { cache: 'no-cache' });
                 const img = new Image();
                 img.src = assetUrl;
                 return [key, img];
@@ -118,7 +116,7 @@
     }
 
     function updateReaction(reaction: Reaction) {
-        const [vx, vy] = reaction.velocity;
+        const [vx] = reaction.velocity;
         const [x, y] = reaction.position;
 
         let newVx = vx + Math.sin(reaction.age / 15) / 3;
@@ -216,7 +214,7 @@
 </div>
 
 <svelte:window on:resize={resize} />
-<canvas bind:this={canvas} />
+<canvas bind:this={canvas}></canvas>
 
 <style lang="scss">
     canvas {

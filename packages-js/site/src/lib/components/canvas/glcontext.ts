@@ -1,19 +1,42 @@
 import type { Mat2 } from '$lib/math/mat2.js';
 import type { Mat3 } from '$lib/math/mat3.js';
 import type { Mat4 } from '$lib/math/mat4.js';
-import type { Vec2 } from '$lib/math/vec2.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import type { Vec3 } from '$lib/math/vec3.js';
-import type { Vec4 } from '$lib/math/vec4.js';
+import type { Vec4Like } from '$lib/math/vec4.js';
 
 export class GLStateManager {
     public static readonly TEXTURE_UNITS = 32;
     private program: GlProgram | null = null;
     private buffer: GlBuffer | null = null;
-    private frameBuffer: GlFramebuffer | null = null;
+    private frameBufferStack: GlFramebuffer[] = [];
     private textures: Array<GlTexture | null> = [];
+    private viewportStack: Vec2Like[] = [Vec2.ZERO];
     private activeTexture = -1;
 
     constructor(public readonly gl: WebGL2RenderingContext) {}
+
+    public setViewport(dimentions: Vec2Like) {
+        this.viewportStack[this.viewportStack.length - 1] = dimentions;
+        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+    }
+
+    public pushViewport(dimentions: Vec2Like) {
+        if (this.viewportStack.length >= 100) {
+            console.warn('Viewport stack overflow (>=100)')
+        }
+        this.viewportStack.push(dimentions);
+        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+    }
+    
+    public popViewport() {
+        this.viewportStack.pop();
+        if (this.viewportStack.length <= 0) {
+            console.warn('Viewport stack underflow (<=0)');
+        }
+        const dimentions = this.viewportStack[this.viewportStack.length - 1];
+        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+    }
 
     public useProgram(program: GlProgram, callback: () => void): void {
         if (this.program != null) {
@@ -42,16 +65,31 @@ export class GLStateManager {
     }
 
     public bindFramebuffer(framebuffer: GlFramebuffer, callback: () => void): void {
-        if (this.frameBuffer != null) {
+        const index = this.frameBufferStack.findIndex((it) => it === framebuffer);
+        if (index !== -1) {
             throw new Error('Framebuffer already bound');
         }
-        this.frameBuffer = framebuffer;
+        this.frameBufferStack.push(framebuffer);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer.framebuffer);
         callback();
-        this.frameBuffer = null;
+        this.frameBufferStack.pop();
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBufferStack[this.frameBufferStack.length - 1]?.framebuffer ?? null);
+    }
+
+    public async bindFramebufferAsync(framebuffer: GlFramebuffer, callback: () => Promise<void>): Promise<void> {
+        const index = this.frameBufferStack.findIndex((it) => it === framebuffer);
+        if (index !== -1) {
+            throw new Error('Framebuffer already bound');
+        }
+        this.frameBufferStack.push(framebuffer);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer.framebuffer);
+        await callback();
+        this.frameBufferStack.pop();
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.frameBufferStack[this.frameBufferStack.length - 1]?.framebuffer ?? null);
     }
 
     public isFramebufferBound(framebuffer: GlFramebuffer): boolean {
-        return this.frameBuffer === framebuffer;
+        return this.frameBufferStack.includes(framebuffer);
     }
 
     public useTexture(
@@ -166,7 +204,7 @@ export class ProgramUniform {
         });
     }
 
-    public asVec2(): Uniform<Vec2> {
+    public asVec2(): Uniform<Vec2Like> {
         return this.as('vec2', (value) => {
             this.gl.uniform2f(this.location, value.x, value.y);
         });
@@ -178,7 +216,7 @@ export class ProgramUniform {
         });
     }
 
-    public asVec4(): Uniform<Vec4> {
+    public asVec4(): Uniform<Vec4Like> {
         return this.as('vec4', (value) => {
             this.gl.uniform4f(this.location, value.x, value.y, value.z, value.w);
         });
@@ -401,10 +439,10 @@ export type TextureParams = {
     wrapS?: 'clamp-to-edge' | 'repeat' | 'mirrored-repeat';
     wrapT?: 'clamp-to-edge' | 'repeat' | 'mirrored-repeat';
     minFilter?: 'nearest' | 'linear' | 'nearest-mipmap-nearest' | 'linear-mipmap-nearest' | 'nearest-mipmap-linear' | 'linear-mipmap-linear';
-    magFilter?: 'nearest' | 'linear';
+    magFilter?: 'nearest' | 'linear' | 'nearest-mipmap-nearest' | 'linear-mipmap-nearest' | 'nearest-mipmap-linear' | 'linear-mipmap-linear';
 };
 
-export type ColorFormat = 'rgba' | 'rgb' | 'rgba16f' | 'rgb16f';
+export type ColorFormat = 'rgba' | 'rgb' | 'rgba16f' | 'rgb16f' | 'srgb' | 'srgb8' | 'srgb8alpha8';
 
 export class GlTexture {
     constructor(
@@ -413,6 +451,7 @@ export class GlTexture {
         public readonly texture: WebGLTexture,
         public width: number = 0,
         public height: number = 0,
+        private params?: TextureParams,
     ) {}
 
     public static create(stateManager: GLStateManager, gl: WebGL2RenderingContext): GlTexture {
@@ -430,6 +469,17 @@ export class GlTexture {
         });
     }
 
+    public async useAsync(callback: (index: number) => Promise<void>): Promise<void> {
+        const { index, unbind } = this.stateManager.bindTexture(this);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+        try {
+            await callback(index);
+        } finally {
+            unbind();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+        }
+    }
+
     public bind(): Disposable & { index: number, unbind: () => void } {
         const { index, unbind } = this.stateManager.bindTexture(this);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
@@ -441,7 +491,6 @@ export class GlTexture {
             },
         };
     }
-        
 
     public setImage(image: TexImageSource, params: {
         internalFormat: ColorFormat;
@@ -460,8 +509,21 @@ export class GlTexture {
             rgb: this.gl.RGB,
             rgba16f: this.gl.RGBA16F,
             rgb16f: this.gl.RGB16F,
+            srgb: this.gl.SRGB,
+            srgb8: this.gl.SRGB8,
+            srgb8alpha8: this.gl.SRGB8_ALPHA8,
         };
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, COLOR_FORMATS[internalFormat], width, height, 0, COLOR_FORMATS[params.format ?? internalFormat], this.gl.UNSIGNED_BYTE, image);
+        this.gl.texImage2D(
+            this.gl.TEXTURE_2D,
+            0,
+            COLOR_FORMATS[internalFormat],
+            width,
+            height,
+            0,
+            COLOR_FORMATS[params.format ?? internalFormat],
+            this.gl.UNSIGNED_BYTE,
+            image
+        );
     }
 
     public setParams(params: TextureParams): void {
@@ -481,18 +543,19 @@ export class GlTexture {
             repeat: this.gl.REPEAT,
             'mirrored-repeat': this.gl.MIRRORED_REPEAT,
         };
-        if (params.wrapS != null) {
+        if (params.wrapS && this.params?.wrapS !== params.wrapS) {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, WRAPS[params.wrapS]);
         }
-        if (params.wrapT != null) {
+        if (params.wrapT && this.params?.wrapT !== params.wrapT) {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, WRAPS[params.wrapT]);
         }
-        if (params.minFilter != null) {
+        if (params.minFilter && this.params?.minFilter !== params.minFilter) {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, FILTERS[params.minFilter]);
         }
-        if (params.magFilter != null) {
+        if (params.magFilter && this.params?.magFilter !== params.magFilter) {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, FILTERS[params.magFilter]);
         }
+        this.params = params;
     }
 
     public ensureSize(width: number, height: number): void {
@@ -504,6 +567,10 @@ export class GlTexture {
             this.width = width;
             this.height = height;
         }
+    }
+
+    public delete() {
+        this.gl.deleteTexture(this.texture);
     }
 }
 
@@ -526,22 +593,81 @@ export class GlFramebuffer {
 
     public use(callback: () => void): void {
         this.stateManager.bindFramebuffer(this, () => {
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.framebuffer);
             callback();
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         });
     }
 
-    public attachTexture(texture: GlTexture): void {
+    public async useAsync(callback: () => Promise<void>): Promise<void> {
+        await this.stateManager.bindFramebufferAsync(this, async () => {
+            await callback();
+        });
+    }
+    
+    public attachTexture(texture: GlTexture | null): void {
         if (!this.stateManager.isFramebufferBound(this)) {
             throw new Error('Framebuffer not bound');
         }
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, texture.texture, 0);
+        if (texture) {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, texture.texture, 0);
+        } else {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, null, 0);
+        }
+    }
+
+    public readPixels(x: number, y: number, width: number, height: number, format: ColorFormat): Uint8Array {
+        width = Math.ceil(width);
+        height = Math.ceil(height);
+        if (width <= 0 || height <= 0) {
+            throw new Error('Invalid dimensions for reading pixels');
+        }
+        if (!this.stateManager.isFramebufferBound(this)) {
+            throw new Error('Framebuffer not bound');
+        }
+        const COLOR_FORMATS: Record<ColorFormat, number> = {
+            rgba: this.gl.RGBA,
+            rgb: this.gl.RGB,
+            rgba16f: this.gl.RGBA16F,
+            rgb16f: this.gl.RGB16F,
+            srgb: this.gl.SRGB,
+            srgb8: this.gl.SRGB8,
+            srgb8alpha8: this.gl.SRGB8_ALPHA8,
+        };
+        const data = new Uint8Array(width * height * 4);
+        this.gl.readPixels(x, y, width, height, COLOR_FORMATS[format], this.gl.UNSIGNED_BYTE, data);
+        return data;
+    }
+
+    public readAsImageData(x: number, y: number, width: number, height: number, format: ColorFormat): ImageData {
+        width = Math.ceil(width);
+        height = Math.ceil(height);
+        if (width <= 0 || height <= 0) {
+            throw new Error('Invalid dimensions for reading pixels');
+        }
+        const data = this.readPixels(x, y, width, height, format);
+        return new ImageData(new Uint8ClampedArray(data), width, height);
+    }
+
+    public readAs(x: number, y: number, width: number, height: number, type = 'image/png'): Promise<Blob> {
+        width = Math.ceil(width);
+        height = Math.ceil(height);
+        if (width <= 0 || height <= 0) {
+            throw new Error('Invalid dimensions for reading pixels');
+        }
+        const imageData = this.readAsImageData(x, y, width, height, 'rgba');
+        const canvas = new OffscreenCanvas(width, height);
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx == null) {
+            throw new Error('Failed to get canvas context');
+        }
+        ctx.putImageData(imageData, 0, 0);
+        return canvas.convertToBlob({ type });
     }
 }
 
 export class GlContext {
-    private readonly stateManager: GLStateManager;
+    public readonly stateManager: GLStateManager;
 
     constructor(public readonly gl: WebGL2RenderingContext) {
         this.stateManager = new GLStateManager(gl);
@@ -550,7 +676,7 @@ export class GlContext {
     public destroy(): void {}
 
     public static create(canvas: HTMLCanvasElement | OffscreenCanvas): GlContext {
-        const gl = canvas.getContext('webgl2', { premultipliedAlpha: false });
+        const gl = canvas.getContext('webgl2', { premultipliedAlpha: false }) as WebGL2RenderingContext | null;
         if (gl == null) {
             throw new Error('WebGL2 not supported');
         }

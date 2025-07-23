@@ -7,9 +7,9 @@ import { Serializer } from '../../serializer.js';
 
 export class RegistryPermissions {
     constructor(
-        public readonly all?: Identifier,
-        public readonly read?: Identifier,
-        public readonly write?: Identifier,
+        public readonly all?: Identifier | undefined,
+        public readonly read?: Identifier | undefined,
+        public readonly write?: Identifier | undefined,
     ) { }
 
     public serialize(writer: ByteWriter): void {

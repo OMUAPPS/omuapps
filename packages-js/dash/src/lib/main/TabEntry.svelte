@@ -68,7 +68,7 @@
 
             > .open {
                 visibility: visible;
-                margin-right: 0rem;
+                margin-right: 0;
                 transition: margin 0.0621s;
             }
         }

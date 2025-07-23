@@ -12,14 +12,14 @@ export class SignalPacket {
     public static serialize(packet: SignalPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.id.key());
-        writer.writeByteArray(packet.body);
+        writer.writeUint8Array(packet.body);
         return writer.finish();
     }
 
     public static deserialize(data: Uint8Array): SignalPacket {
-        const reader = new ByteReader(data);
+        const reader = ByteReader.fromUint8Array(data);
         const id = Identifier.fromKey(reader.readString());
-        const body = reader.readByteArray();
+        const body = reader.readUint8Array();
         return new SignalPacket(id, body);
     }
 }
@@ -38,7 +38,7 @@ export class SignalRegisterPacket {
     }
 
     public static deserialize(data: Uint8Array): SignalRegisterPacket {
-        const reader = new ByteReader(data);
+        const reader = ByteReader.fromUint8Array(data);
         const id = Identifier.fromKey(reader.readString());
         const permissions = SignalPermissions.deserialize(reader);
         return new SignalRegisterPacket(id, permissions);

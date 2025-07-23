@@ -7,8 +7,13 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from omu.address import get_lan_ip
+from omu.app import App
 from omu.errors import PermissionDenied
+from omu.extension.dashboard.packets import PermissionRequestPacket
+from omu.extension.permission.permission import PermissionType
 from omu.extension.server.server_extension import (
+    REMOTE_APP_REQUEST_ENDPOINT_TYPE,
     REQUIRE_APPS_PACKET_TYPE,
     SERVER_APP_TABLE_TYPE,
     SERVER_SESSION_TABLE_TYPE,
@@ -18,12 +23,14 @@ from omu.extension.server.server_extension import (
     SHUTDOWN_ENDPOINT_TYPE,
     TRUSTED_ORIGINS_REGISTRY_TYPE,
 )
+from omu.extension.server.types import RemoteAppRequestPayload, RequestRemoteAppResponse
 from omu.identifier import Identifier
 from omu.network.packet.packet_types import DisconnectType
 
 from omuserver.session import Session
 
 from .permissions import (
+    REMOTE_APP_REQUEST_PERMISSION,
     SERVER_APPS_READ_PERMISSION,
     SERVER_SESSIONS_READ_PERMISSION,
     SERVER_SHUTDOWN_PERMISSION,
@@ -67,16 +74,18 @@ class ServerExtension:
             SERVER_APPS_READ_PERMISSION,
             SERVER_SESSIONS_READ_PERMISSION,
             SERVER_TRUSTED_ORIGINS_GET_PERMISSION,
+            REMOTE_APP_REQUEST_PERMISSION,
         )
-        self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
-        self.sessions = self._server.tables.register(SERVER_SESSION_TABLE_TYPE)
-        self.trusted_origins = self._server.registries.register(TRUSTED_ORIGINS_REGISTRY_TYPE)
+        server.endpoints.bind(SHUTDOWN_ENDPOINT_TYPE, self.handle_shutdown)
+        server.endpoints.bind(REMOTE_APP_REQUEST_ENDPOINT_TYPE, self.handle_remote_app_request)
+        server.packets.bind(REQUIRE_APPS_PACKET_TYPE, self.handle_require_apps)
+        server.packets.bind(SESSION_OBSERVE_PACKET_TYPE, self.handle_observe_session)
         server.network.event.connected += self.on_connected
         server.network.event.disconnected += self.on_disconnected
         server.event.start += self.on_start
-        server.endpoints.bind(SHUTDOWN_ENDPOINT_TYPE, self.handle_shutdown)
-        server.packets.bind(REQUIRE_APPS_PACKET_TYPE, self.handle_require_apps)
-        server.packets.bind(SESSION_OBSERVE_PACKET_TYPE, self.handle_observe_session)
+        self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
+        self.sessions = self._server.tables.register(SERVER_SESSION_TABLE_TYPE)
+        self.trusted_origins = self._server.registries.register(TRUSTED_ORIGINS_REGISTRY_TYPE)
         self._app_waiters: dict[Identifier, list[WaitHandle]] = defaultdict(list)
         self._session_observers: dict[Identifier, list[Session]] = defaultdict(list)
 
@@ -111,6 +120,46 @@ class ServerExtension:
     async def handle_shutdown(self, session: Session, restart: bool = False) -> bool:
         await self.shutdown(restart)
         return True
+
+    async def handle_remote_app_request(
+        self, session: Session, request: RemoteAppRequestPayload
+    ) -> RequestRemoteAppResponse:
+        id = Identifier.from_key(request["id"])
+        url = request["url"]
+        metadata = request["metadata"]
+        permission_ids = list(map(Identifier.from_key, request["permissions"]))
+        permissions: list[PermissionType] = []
+        for permission_id in permission_ids:
+            permission = self._server.security.get_permission(permission_id)
+            if permission is None:
+                raise ValueError(f"Permission {permission_id} not found")
+            permissions.append(permission)
+
+        temp_app = App(
+            id=id,
+            url=url,
+            metadata={
+                "locale": metadata["locale"],
+                "name": metadata.get("name"),
+                "icon": metadata.get("icon"),
+                "description": metadata.get("description"),
+            },
+        )
+        permission_request = PermissionRequestPacket(
+            request_id=self._server.dashboard.gen_next_request_id(),
+            app=temp_app,
+            permissions=permissions,
+        )
+        accepted = await self._server.dashboard.request_permissions(permission_request)
+        if not accepted:
+            return {"type": "error", "message": "Permission denied"}
+        token = self._server.security.generate_remote_token(temp_app)
+        self._server.security.set_permissions(token, *permission_ids)
+        return {
+            "type": "success",
+            "token": token,
+            "lan_ip": get_lan_ip(),
+        }
 
     async def shutdown(self, restart: bool = False) -> None:
         try:
@@ -153,4 +202,6 @@ class ServerExtension:
         await self.sessions.remove(session.app)
 
         for observer in self._session_observers.get(session.app.id, []):
+            if session.closed:
+                continue
             await observer.send(SESSION_DISCONNECT_PACKET_TYPE, session.app)

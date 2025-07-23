@@ -3,12 +3,8 @@
     export let disabled = false;
     export let onclick: () => PromiseLike<T> | undefined | void = () => {};
     export let promise: PromiseLike<T> | undefined | void = undefined;
-</script>
 
-<button
-    class="button"
-    type="button"
-    on:click={async () => {
+    async function handleClick() {
         if (disabled) return;
         if (promise) {
             await promise;
@@ -16,14 +12,25 @@
         promise = onclick();
         try {
             await promise;
-        } catch {
+        } catch (error) {
+            console.error(error);
             setTimeout(() => {
                 promise = undefined;
             }, 3000);
             return;
         }
         promise = undefined;
+    }
+</script>
+
+<button
+    class="button"
+    type="button"
+    on:touchend={(event) => {
+        event.preventDefault();
+        handleClick();
     }}
+    on:click={handleClick}
     class:primary
     disabled={disabled || !!promise}
 >
@@ -46,6 +53,7 @@
         font-size: 0.8rem;
         white-space: nowrap;
         cursor: pointer;
+        touch-action: manipulation;
 
         &:focus {
             outline: 1px solid var(--color-1);

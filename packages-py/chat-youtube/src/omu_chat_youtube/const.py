@@ -2,7 +2,9 @@ from omu_chat.model import Provider
 from omu_chatprovider.chatprovider import BASE_PROVIDER_IDENTIFIER
 from omu_chatprovider.helper import HTTP_REGEX
 
-YOUTUBE_IDENTIFIER = BASE_PROVIDER_IDENTIFIER / "youtube"
+from .version import VERSION
+
+YOUTUBE_ID = BASE_PROVIDER_IDENTIFIER / "youtube"
 YOUTUBE_URL = "https://www.youtube.com"
 YOUTUBE_REGEX = (
     HTTP_REGEX + r"(youtu\.be\/(?P<video_id_short>[\w-]+))|(m\.)?youtube\.com\/"
@@ -11,10 +13,10 @@ YOUTUBE_REGEX = (
     r"|c\/(?P<channel_id_c>[^/]+|))"
 )
 PROVIDER = Provider(
-    id=YOUTUBE_IDENTIFIER,
+    id=YOUTUBE_ID,
     url="youtube.com",
     name="Youtube",
-    version="0.1.0",
+    version=VERSION,
     repository_url="https://github.com/OMUAPPS/omuapps-python/tree/master/packages/plugin-provider/src/omu_chatprovider/services/youtube",
     regex=YOUTUBE_REGEX,
 )

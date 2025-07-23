@@ -41,23 +41,19 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - uses: pnpm/action-setup@v4
+            - name: Cache Bun dependencies
+              uses: actions/cache@v4
               with:
-                version: 9.12.2
+                path: ~/.bun/install/cache
+                key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
+                restore-keys: |
+                  bun-${{ runner.os }}-
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
-              with:
-                cache: 'pnpm'
-                node-version: '20.18.2'
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
-              with:
-                cache: 'pnpm'
-
-            - name: Install dependencies
-              run: pnpm i --frozen-lockfile
+            - name: Install Dependencies
+              run: bun install --frozen-lockfile
 
             - name: Git Identity
               run: |
@@ -89,14 +85,13 @@ jobs:
                   git push --follow-tags
                   echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
 
-            - name: Publish
-              if: ${{ github.event.inputs.npm == 'true' }}
-              run: pnpm publish -r --access public --no-git-checks
-              env:
-                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+            # - name: Publish
+            #   if: ${{ github.event.inputs.npm == 'true' }}
+            #   run: bun run publish
+            #   env:
+            #       NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
     publish-pypi:
-        if: ${{ github.event.inputs.pypi == 'true' }}
         needs: publish-npm
         runs-on: ubuntu-latest
         outputs:
@@ -105,22 +100,26 @@ jobs:
             - uses: actions/checkout@v4
 
             - name: Set up Python
+              if: ${{ github.event.inputs.pypi == 'true' }}
               uses: actions/setup-python@v5.1.0
               with:
                   python-version: '3.12'
 
             - name: Install rye
+              if: ${{ github.event.inputs.pypi == 'true' }}
               uses: eifinger/setup-rye@v2.5.2
               with:
                   enable-cache: true
                   cache-prefix: 'rye'
 
             - name: Install dependencies
+              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   rye config --set-bool behavior.use-uv=true
-                  rye sync
+                  rye sync --no-lock
 
             - name: Git Identity
+              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   git config --global user.name 'github-actions[bot]'
                   git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -129,36 +128,41 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Pull
+              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   git pull
 
             - name: Generate version file
+              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   rye run gen_version
 
             - name: Push
+              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   git add .
                   git commit -m "chore: bump version"
                   git push
 
             - name: Output git commit
+              if: ${{ github.event.inputs.pypi == 'true' }}
               id: git_commit
               run: |
                   echo "COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
             - name: Build
+              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   rye build --all
 
             - name: Publish a Python distribution to PyPI
+              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   python -m pip install --upgrade pip
                   python -m pip install twine
                   python -m twine upload --repository pypi --username __token__ --password ${{ secrets.PYPI_API_TOKEN }} dist/*
 
     publish-tauri:
-        if: ${{ github.event.inputs.tauri == 'true' }}
         needs: [publish-npm, publish-pypi]
         permissions:
             contents: write
@@ -178,25 +182,30 @@ jobs:
         runs-on: ${{ matrix.platform }}
         steps:
             - name: Checkout
+              if: ${{ github.event.inputs.tauri == 'true' }}
               uses: actions/checkout@v4
               with:
                   ref: ${{ needs.publish-pypi.outputs.VERSION }}
 
-            - uses: pnpm/action-setup@v4
+            - name: Cache Bun dependencies
+              if: ${{ github.event.inputs.tauri == 'true' }}
+              uses: actions/cache@v4
               with:
-                version: 9.12.2
+                path: ~/.bun/install/cache
+                key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
+                restore-keys: |
+                  bun-${{ runner.os }}-
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
-              with:
-                cache: 'pnpm'
-                node-version: '20.18.2'
+            - name: Setup Bun
+              if: ${{ github.event.inputs.tauri == 'true' }}
+              uses: oven-sh/setup-bun@v2
 
-            - name: Install dependencies
-              run: pnpm i --frozen-lockfile
+            - name: Install Dependencies
+              if: ${{ github.event.inputs.tauri == 'true' }}
+              run: bun install --frozen-lockfile
 
             - name: install dependencies (ubuntu only)
-              if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+              if: ${{ matrix.platform == 'ubuntu-22.04' && github.event.inputs.tauri == 'true' }} # This must match the platform value defined above.
               run: |
                   sudo apt-get update
                   sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -204,22 +213,26 @@ jobs:
                   # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
             - name: install Rust stable
+              if: ${{ github.event.inputs.tauri == 'true' }}
               uses: dtolnay/rust-toolchain@stable
               with:
                   # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
                   targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
             - name: build-pre
+              if: ${{ github.event.inputs.tauri == 'true' }}
               run: |
-                  pnpm run build
-                  pnpm --filter dash run build-pre
+                  bun run build
+                  bun run --cwd packages-js/dash build-pre
 
             - name: Rust cache
+              if: ${{ github.event.inputs.tauri == 'true' }}
               uses: swatinem/rust-cache@v2
               with:
                   workspaces: './packages-js/dash/src-tauri -> target'
 
             - uses: tauri-apps/tauri-action@v0.5.19
+              if: ${{ github.event.inputs.tauri == 'true' }}
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -242,29 +255,24 @@ jobs:
         steps:
         - uses: actions/checkout@v4
 
-
-        - uses: pnpm/action-setup@v4
+        - name: Cache Bun dependencies
+          uses: actions/cache@v4
           with:
-            version: 9.12.2
+            path: ~/.bun/install/cache
+            key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
+            restore-keys: |
+              bun-${{ runner.os }}-
 
-        - name: Setup Node.js
-          uses: actions/setup-node@v4.0.3
-          with:
-            cache: 'pnpm'
-            node-version: '20.18.2'
+        - name: Setup Bun
+          uses: oven-sh/setup-bun@v2
 
-        - name: Setup Node.js
-          uses: actions/setup-node@v4.0.3
-          with:
-            cache: 'pnpm'
-
-        - name: Install dependencies
-          run: pnpm i --frozen-lockfile
+        - name: Install Dependencies
+          run: bun install --frozen-lockfile
 
         - name: Upload to Cloudflare R2
           env:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
-            pnpm wrangler whoami
-            node ./scripts/js-upload-to-r2.mjs --version ${{ needs.publish-npm.outputs.VERSION }} --beta true
+            bun wrangler whoami
+            bun ./scripts/js-upload-to-r2.ts --version ${{ needs.publish-npm.outputs.VERSION }} --beta true

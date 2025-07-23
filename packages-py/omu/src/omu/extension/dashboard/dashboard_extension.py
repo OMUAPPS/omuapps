@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import TypedDict
+import json
+from dataclasses import dataclass
+from typing import Literal, TypedDict
 
-from omu.app import App
+from omu.app import App, AppJson
+from omu.bytebuffer import ByteReader, ByteWriter
 from omu.client import Client
 from omu.errors import PermissionDenied
 from omu.extension import Extension, ExtensionType
@@ -130,6 +133,171 @@ DASHBOARD_APP_UPDATE_DENY_PACKET = PacketType[str].create_json(
     "update_app_deny",
 )
 
+DASHBOARD_DRAG_DROP_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "drag_drop"
+
+
+class DragDropFile(TypedDict):
+    type: Literal["file", "directory"]
+    size: int
+    name: str
+
+
+class DragDropPosition(TypedDict):
+    x: int
+    y: int
+
+
+class DragEnter(TypedDict):
+    type: Literal["enter"]
+    drag_id: str
+    files: list[DragDropFile]
+    position: DragDropPosition
+
+
+class DragOver(TypedDict):
+    type: Literal["over"]
+    drag_id: str
+    position: DragDropPosition
+
+
+class DragDrop(TypedDict):
+    type: Literal["drop"]
+    drag_id: str
+    files: list[DragDropFile]
+    position: DragDropPosition
+
+
+class DragLeave(TypedDict):
+    type: Literal["leave"]
+    drag_id: str
+
+
+type DragState = DragEnter | DragOver | DragDrop | DragLeave
+
+
+class FileDragPacket(TypedDict):
+    drag_id: str
+    app: AppJson
+    state: DragState
+
+
+DASHBOARD_DRAG_DROP_STATE_PACKET = PacketType[FileDragPacket].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "drag_drop_state",
+)
+
+
+class DragDropReadRequest(TypedDict):
+    drag_id: str
+
+
+class DragDropReadRequestDashboard(TypedDict):
+    request_id: str
+    drag_id: str
+
+
+class DragDropReadMeta(TypedDict):
+    request_id: str
+    drag_id: str
+    files: list[DragDropFile]
+
+
+class FileData(TypedDict):
+    file: DragDropFile
+    buffer: bytes
+
+
+@dataclass
+class DragDropReadResponse:
+    meta: DragDropReadMeta
+    files: dict[str, FileData]
+    version: int = 1
+
+    @staticmethod
+    def serialize(item: DragDropReadResponse) -> bytes:
+        writer = ByteWriter()
+        writer.write_uleb128(item.version)
+        writer.write_string(json.dumps(item.meta))
+        writer.write_uleb128(len(item.files))
+
+        for key, data in item.files.items():
+            writer.write_string(key)
+            writer.write_string(json.dumps(data["file"]))
+            writer.write_uint8_array(data["buffer"])
+
+        return writer.finish()
+
+    @staticmethod
+    def deserialize(item: bytes) -> DragDropReadResponse:
+        with ByteReader(item) as reader:
+            version = reader.read_uleb128()
+            meta: DragDropReadMeta = json.loads(reader.read_string())
+            length = reader.read_uleb128()
+
+            files: dict[str, FileData] = {}
+            for _ in range(length):
+                key = reader.read_string()
+                file: DragDropFile = json.loads(reader.read_string())
+                buffer = reader.read_uint8_array()
+                files[key] = {
+                    "file": file,
+                    "buffer": buffer,
+                }
+
+        return DragDropReadResponse(
+            version=version,
+            meta=meta,
+            files=files,
+        )
+
+
+DASHBOARD_DRAG_DROP_READ_ENDPOINT = EndpointType[DragDropReadRequest, DragDropReadResponse].create_serialized(
+    DASHBOARD_EXTENSION_TYPE,
+    "drag_drop_read",
+    request_serializer=Serializer.json(),
+    response_serializer=DragDropReadResponse,
+    permission_id=DASHBOARD_DRAG_DROP_PERMISSION_ID,
+)
+
+DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET = PacketType[DragDropReadRequestDashboard].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "drag_drop_read_request",
+)
+
+DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET = PacketType[DragDropReadResponse].create_serialized(
+    DASHBOARD_EXTENSION_TYPE,
+    "drag_drop_read_response",
+    serializer=DragDropReadResponse,
+)
+
+
+class DragDropRequest(TypedDict): ...
+
+
+class DragDropRequestDashboard(TypedDict):
+    request_id: str
+    app: AppJson
+
+
+class DragDropRequestResponse(TypedDict):
+    request_id: str
+    ok: bool
+
+
+DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT = EndpointType[DragDropRequest, DragDropRequestResponse].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "drag_drop_request",
+    permission_id=DASHBOARD_DRAG_DROP_PERMISSION_ID,
+)
+
+DASHBOARD_DRAG_DROP_REQUEST_PACKET = PacketType[DragDropRequestDashboard].create_json(
+    DASHBOARD_EXTENSION_TYPE, "drag_drop_request"
+)
+DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET = PacketType[DragDropRequestResponse].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "drag_drop_request_approval",
+)
+
 
 class DashboardExtension(Extension):
     @property
@@ -152,6 +320,11 @@ class DashboardExtension(Extension):
             DASHBOARD_APP_UPDATE_PACKET,
             DASHBOARD_APP_UPDATE_ACCEPT_PACKET,
             DASHBOARD_APP_UPDATE_DENY_PACKET,
+            DASHBOARD_DRAG_DROP_STATE_PACKET,
+            DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
+            DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
+            DASHBOARD_DRAG_DROP_REQUEST_PACKET,
+            DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET,
         )
         self.apps = client.tables.get(DASHBOARD_APP_TABLE_TYPE)
 

@@ -16,6 +16,7 @@ from omu.extension.plugin.plugin_extension import (
     ReloadResult,
 )
 from omu.network.packet.packet_types import DisconnectType
+from packaging.specifiers import SpecifierSet
 
 from omuserver.session import Session
 
@@ -79,6 +80,14 @@ class PluginExtension:
     async def handle_require(self, session: Session, requirements: dict[str, str | None]) -> None:
         if not requirements:
             return
+        satisfied = self.dependency_resolver.is_requirements_satisfied(
+            {k: SpecifierSet(v) if v else None for k, v in requirements.items()}
+        )
+        if satisfied:
+            return
+        if session.kind == AppType.REMOTE:
+            await session.disconnect(DisconnectType.PERMISSION_DENIED, "Remote apps cannot require plugins")
+            return
 
         async def task():
             if session.kind != AppType.DASHBOARD:
@@ -86,7 +95,7 @@ class PluginExtension:
 
             self.dependency_resolver.find_packages_distributions()
             try:
-                changed = self.dependency_resolver.add_dependencies(requirements)
+                changed = await self.dependency_resolver.add_dependencies(requirements)
             except RequiredVersionTooOld as e:
                 await session.disconnect(DisconnectType.INVALID_VERSION, str(e))
                 return
@@ -96,10 +105,13 @@ class PluginExtension:
 
             async with self.lock:
                 resolve_result = await self.dependency_resolver.resolve()
+                if resolve_result.is_err is True:
+                    await session.disconnect(DisconnectType.INVALID_VERSION, resolve_result.err)
+                    return
                 if RESTART:
                     await self.server.restart()
                 else:
-                    await self.loader.update_plugins(resolve_result)
+                    await self.loader.update_plugins(resolve_result.value)
 
         session.add_ready_task(task)
 

@@ -1,3 +1,3 @@
-# plugin-chat
+# plugin-youtube
 
-Describe your project here.
+OMUAPPSにYoutubeのサポートを追加するプラグインです。

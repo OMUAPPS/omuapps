@@ -61,6 +61,12 @@ class Serializer[T, D](Serializable[T, D]):
     def to_map(self) -> Serializer[Mapping[str, T], Mapping[str, D]]:
         return MapSerializer(self)
 
+    def fallback(self, fallback: T) -> Serializer[T, D]:
+        return FallbackSerializer(self, fallback)
+
+    def fallback_map(self, fallback_func: Callable[[D, Exception], T]) -> Serializer[T, D]:
+        return FallbackMapSerializer(self, fallback_func)
+
     def pipe[E](self, other: Serializable[D, E]) -> Serializer[T, E]:
         return PipeSerializer(self, other)
 
@@ -131,6 +137,36 @@ class MapSerializer[T, D](Serializer[Mapping[str, T], Mapping[str, D]]):
 
     def __repr__(self) -> str:
         return f"MapSerializer({self._serializer})"
+
+
+class FallbackSerializer[T, D](Serializer[T, D]):
+    def __init__(self, serializer: Serializable[T, D], fallback: T):
+        self.serializer = serializer
+        self.fallback_item = fallback
+
+    def serialize(self, item: T) -> D:
+        return self.serializer.serialize(item)
+
+    def deserialize(self, item: D) -> T:
+        try:
+            return self.serializer.deserialize(item)
+        except:  # noqa: E722
+            return self.fallback_item
+
+
+class FallbackMapSerializer[T, D](Serializer[T, D]):
+    def __init__(self, serializer: Serializable[T, D], fallback: Callable[[D, Exception], T]):
+        self.serializer = serializer
+        self.fallback_func = fallback
+
+    def serialize(self, item: T) -> D:
+        return self.serializer.serialize(item)
+
+    def deserialize(self, item: D) -> T:
+        try:
+            return self.serializer.deserialize(item)
+        except Exception as exception:
+            return self.fallback_func(item, exception)
 
 
 class PipeSerializer[T, D, E](Serializer[T, E]):

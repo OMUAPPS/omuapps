@@ -87,7 +87,7 @@
                     {$t('status.connected')}
                 </small>
             {/if}
-            {#if entry.metadata}
+            {#if entry.metadata && entry.metadata.viewers}
                 <button on:click={copyViewers}>
                     <Tooltip>{$t('panels.rooms.viewers')}</Tooltip>
                     {entry.metadata.viewers}
@@ -193,7 +193,7 @@
 
         > button {
             display: flex;
-            align-items: center;
+            align-items: baseline;
             justify-content: center;
             padding: 0.25rem 0.5rem;
             border: none;

@@ -1,16 +1,17 @@
 import type { Client } from '../../client.js';
+import { Identifier } from '../../identifier.js';
 import { PacketType } from '../../network/packet/packet.js';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
 import { Table, TableType } from '../table/table.js';
 
-export const PLUGIN_EXTENSION_TYPE = new ExtensionType(
+export const PLUGIN_EXTENSION_TYPE: ExtensionType<PluginExtension> = new ExtensionType(
     'plugin',
     (client: Client) => new PluginExtension(client),
 );
 
 export class PluginExtension {
-    public readonly type = PLUGIN_EXTENSION_TYPE;
+    public readonly type: ExtensionType<PluginExtension> = PLUGIN_EXTENSION_TYPE;
     private readonly requiredPlugins: Map<string, string | null> = new Map();
 
     constructor(private readonly client: Client) {
@@ -68,8 +69,8 @@ export class PluginPackageInfo {
     }
 }
 
-export const PLUGIN_READ_PACKAGE_PERMISSION_ID = PLUGIN_EXTENSION_TYPE.join('package', 'read')
-export const PLUGIN_MANAGE_PACKAGE_PERMISSION_ID = PLUGIN_EXTENSION_TYPE.join('package', 'manage')
+export const PLUGIN_READ_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'read')
+export const PLUGIN_MANAGE_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'manage')
 
 const PLUGIN_ALLOWED_PACKAGE_TABLE = TableType.createModel(PLUGIN_EXTENSION_TYPE, {
     name: 'allowed_package',

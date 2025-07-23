@@ -7,50 +7,17 @@ from omu.address import Address
 from omu.app import App
 from omu.event_emitter import Unlisten
 from omu.extension import ExtensionRegistry
-from omu.extension.asset import (
-    ASSET_EXTENSION_TYPE,
-    AssetExtension,
-)
-from omu.extension.dashboard import (
-    DASHBOARD_EXTENSION_TYPE,
-    DashboardExtension,
-)
-from omu.extension.endpoint import (
-    ENDPOINT_EXTENSION_TYPE,
-    EndpointExtension,
-)
-from omu.extension.i18n import (
-    I18N_EXTENSION_TYPE,
-    I18nExtension,
-)
-from omu.extension.logger import (
-    LOGGER_EXTENSION_TYPE,
-    LoggerExtension,
-)
-from omu.extension.permission import (
-    PERMISSION_EXTENSION_TYPE,
-    PermissionExtension,
-)
-from omu.extension.plugin import (
-    PLUGIN_EXTENSION_TYPE,
-    PluginExtension,
-)
-from omu.extension.registry import (
-    REGISTRY_EXTENSION_TYPE,
-    RegistryExtension,
-)
-from omu.extension.server import (
-    SERVER_EXTENSION_TYPE,
-    ServerExtension,
-)
-from omu.extension.signal import (
-    SIGNAL_EXTENSION_TYPE,
-    SignalExtension,
-)
-from omu.extension.table import (
-    TABLE_EXTENSION_TYPE,
-    TableExtension,
-)
+from omu.extension.asset import ASSET_EXTENSION_TYPE, AssetExtension
+from omu.extension.dashboard import DASHBOARD_EXTENSION_TYPE, DashboardExtension
+from omu.extension.endpoint import ENDPOINT_EXTENSION_TYPE, EndpointExtension
+from omu.extension.i18n import I18N_EXTENSION_TYPE, I18nExtension
+from omu.extension.logger import LOGGER_EXTENSION_TYPE, LoggerExtension
+from omu.extension.permission import PERMISSION_EXTENSION_TYPE, PermissionExtension
+from omu.extension.plugin import PLUGIN_EXTENSION_TYPE, PluginExtension
+from omu.extension.registry import REGISTRY_EXTENSION_TYPE, RegistryExtension
+from omu.extension.server import SERVER_EXTENSION_TYPE, ServerExtension
+from omu.extension.signal import SIGNAL_EXTENSION_TYPE, SignalExtension
+from omu.extension.table import TABLE_EXTENSION_TYPE, TableExtension
 from omu.helper import Coro, asyncio_error_logger
 from omu.network import Network
 from omu.network.packet import Packet, PacketType
@@ -228,3 +195,19 @@ class Omu(Client):
         if self._ready:
             self.loop.create_task(coro())
         return self.event.ready.listen(coro)
+
+    async def wait_for_ready(self):
+        if self._ready:
+            return
+
+        unlisten: Unlisten | None = None
+        future = self.loop.create_future()
+
+        async def _wait_for_ready():
+            nonlocal unlisten
+            if unlisten is not None:
+                unlisten()
+            future.set_result(None)
+
+        unlisten = self.event.ready.listen(_wait_for_ready)
+        await future

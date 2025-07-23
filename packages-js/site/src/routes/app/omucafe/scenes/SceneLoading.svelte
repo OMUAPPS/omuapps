@@ -1,16 +1,19 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { getGame, type SceneContext } from '../omucafe-app.js';
+    import { getGame } from '../omucafe-app.js';
+    import type { SceneContext } from './scene.js';
 
     export let context: SceneContext;
     $: console.log('SceneLoading', context);
     
     const { omu, scene } = getGame();
 
-    onMount(() => {
-        return omu.onReady(() => {
-            $scene = { type: 'main_menu' };
-        });
+    onMount(async () => {
+        await omu.waitForReady();
+        if ($scene.type !== 'loading') {
+            return;
+        }
+        $scene = { type: 'main_menu' };
     });
 </script>
 

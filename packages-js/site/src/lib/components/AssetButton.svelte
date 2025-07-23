@@ -1,20 +1,20 @@
 <script lang="ts">
     import { page } from '$app/stores';
     import type { OBSPlugin } from '@omujs/obs';
-    import type { BrowserCreateRequest } from '@omujs/obs/types.js';
+    import type { CreateBrowserRequest } from '@omujs/obs/types.js';
     import type { Omu } from '@omujs/omu';
     import { DragLink, Spinner, Tooltip } from '@omujs/ui';
 
     export let omu: Omu | null = null;
     export let obs: OBSPlugin | null = null;
-    export let dimensions: { width: BrowserCreateRequest['width'], height: BrowserCreateRequest['height'] } | undefined = undefined;
+    export let dimensions: { width: CreateBrowserRequest['width'], height: CreateBrowserRequest['height'] } | undefined = undefined;
 
     async function create() {
         if (!obs) {
             throw new Error('OBSPlugin is not initialized');
         }
         const name = omu?.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
-        const url = generateUrl().toString();
+        const url = getURL().toString();
         await obs.browserAdd({
             name: name,
             url: url,
@@ -32,10 +32,10 @@
     if (obs) {
         obs.on('connected', () => (obsConnected = true));
         obs.on('disconnected', () => (obsConnected = false));
-        obs.isConnected().then((connected) => (obsConnected = connected));
+        obsConnected = obs.isConnected();
     }
 
-    function generateUrl() {
+    function getURL() {
         const url = new URL($page.url);
         url.pathname = `${url.pathname}asset`;
         url.searchParams.set('assetId', Date.now().toString());
@@ -57,7 +57,7 @@
                 <i class="ti ti-download"></i>
             {/if}
         </button>
-        <DragLink href={generateUrl}>
+        <DragLink href={getURL}>
             <h3 slot="preview" class="preview">
                 <i class="ti ti-download"></i>
                 これをOBSにドロップ
@@ -69,7 +69,7 @@
         </DragLink>
     </div>
 {:else}
-    <DragLink href={generateUrl}>
+    <DragLink href={getURL}>
         <h3 slot="preview" class="preview">
             <i class="ti ti-download"></i>
             これを配信ソフトに追加

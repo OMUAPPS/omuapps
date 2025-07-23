@@ -8,7 +8,7 @@
     import { ArchiveApp } from './archive-app.js';
     import ArchiveEntry from './components/ArchiveEntry.svelte';
 
-    export const omu = new Omu(APP);
+    const omu = new Omu(APP);
     setClient(omu);
     const archiveApp = new ArchiveApp(omu);
     const { archiveTable, config } = archiveApp;
@@ -17,7 +17,7 @@
 
     if (BROWSER) {
         omu.plugins.require({
-            omuplugin_archive: `==${VERSION}`,
+            omuplugin_archive: `>=${VERSION}`,
         });
         omu.start();
     }

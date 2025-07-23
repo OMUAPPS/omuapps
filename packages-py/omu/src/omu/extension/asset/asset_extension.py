@@ -15,58 +15,58 @@ ASSET_EXTENSION_TYPE = ExtensionType(
 
 
 @dataclass(frozen=True, slots=True)
-class File:
-    identifier: Identifier
+class Asset:
+    id: Identifier
     buffer: bytes
 
 
 class FileSerializer:
     @classmethod
-    def serialize(cls, item: File) -> bytes:
+    def serialize(cls, item: Asset) -> bytes:
         writer = ByteWriter()
-        writer.write_string(item.identifier.key())
-        writer.write_byte_array(item.buffer)
+        writer.write_string(item.id.key())
+        writer.write_uint8_array(item.buffer)
         return writer.finish()
 
     @classmethod
-    def deserialize(cls, item: bytes) -> File:
+    def deserialize(cls, item: bytes) -> Asset:
         with ByteReader(item) as reader:
             identifier = Identifier.from_key(reader.read_string())
-            value = reader.read_byte_array()
-        return File(identifier, value)
+            value = reader.read_uint8_array()
+        return Asset(identifier, value)
 
 
 class FileArraySerializer:
     @classmethod
-    def serialize(cls, item: list[File]) -> bytes:
+    def serialize(cls, item: list[Asset]) -> bytes:
         writer = ByteWriter()
-        writer.write_int(len(item))
+        writer.write_uleb128(len(item))
         for file in item:
-            writer.write_string(file.identifier.key())
-            writer.write_byte_array(file.buffer)
+            writer.write_string(file.id.key())
+            writer.write_uint8_array(file.buffer)
         return writer.finish()
 
     @classmethod
-    def deserialize(cls, item: bytes) -> list[File]:
+    def deserialize(cls, item: bytes) -> list[Asset]:
         with ByteReader(item) as reader:
-            count = reader.read_int()
-            files: list[File] = []
+            count = reader.read_uleb128()
+            files: list[Asset] = []
             for _ in range(count):
                 identifier = Identifier.from_key(reader.read_string())
-                value = reader.read_byte_array()
-                files.append(File(identifier, value))
+                value = reader.read_uint8_array()
+                files.append(Asset(identifier, value))
         return files
 
 
 ASSET_UPLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE / "upload"
-ASSET_UPLOAD_ENDPOINT = EndpointType[File, Identifier].create_serialized(
+ASSET_UPLOAD_ENDPOINT = EndpointType[Asset, Identifier].create_serialized(
     ASSET_EXTENSION_TYPE,
     "upload",
     request_serializer=FileSerializer,
     response_serializer=Serializer.model(Identifier).to_json(),
     permission_id=ASSET_UPLOAD_PERMISSION_ID,
 )
-ASSET_UPLOAD_MANY_ENDPOINT = EndpointType[list[File], list[Identifier]].create_serialized(
+ASSET_UPLOAD_MANY_ENDPOINT = EndpointType[list[Asset], list[Identifier]].create_serialized(
     ASSET_EXTENSION_TYPE,
     "upload_many",
     request_serializer=FileArraySerializer,
@@ -74,19 +74,27 @@ ASSET_UPLOAD_MANY_ENDPOINT = EndpointType[list[File], list[Identifier]].create_s
     permission_id=ASSET_UPLOAD_PERMISSION_ID,
 )
 ASSET_DOWNLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE / "download"
-ASSET_DOWNLOAD_ENDPOINT = EndpointType[Identifier, File].create_serialized(
+ASSET_DOWNLOAD_ENDPOINT = EndpointType[Identifier, Asset].create_serialized(
     ASSET_EXTENSION_TYPE,
     "download",
     request_serializer=Serializer.model(Identifier).to_json(),
     response_serializer=FileSerializer,
     permission_id=ASSET_DOWNLOAD_PERMISSION_ID,
 )
-ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[list[Identifier], list[File]].create_serialized(
+ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[list[Identifier], list[Asset]].create_serialized(
     ASSET_EXTENSION_TYPE,
     "download_many",
     request_serializer=Serializer.model(Identifier).to_array().to_json(),
     response_serializer=FileArraySerializer,
     permission_id=ASSET_DOWNLOAD_PERMISSION_ID,
+)
+ASSET_DELETE_PERMISSION_ID = ASSET_EXTENSION_TYPE / "delete"
+ASSET_DELETE_ENDPOINT = EndpointType[Identifier, None].create_serialized(
+    ASSET_EXTENSION_TYPE,
+    "delete",
+    request_serializer=Serializer.model(Identifier).to_json(),
+    response_serializer=Serializer.json(),
+    permission_id=ASSET_DELETE_PERMISSION_ID,
 )
 
 
@@ -98,17 +106,20 @@ class AssetExtension(Extension):
     def __init__(self, client: Client) -> None:
         self.client = client
 
-    async def upload(self, file: File) -> Identifier:
+    async def upload(self, file: Asset) -> Identifier:
         return await self.client.endpoints.call(ASSET_UPLOAD_ENDPOINT, file)
 
-    async def upload_many(self, files: list[File]) -> list[Identifier]:
+    async def upload_many(self, files: list[Asset]) -> list[Identifier]:
         return await self.client.endpoints.call(ASSET_UPLOAD_MANY_ENDPOINT, files)
 
-    async def download(self, identifier: Identifier) -> File:
+    async def download(self, identifier: Identifier) -> Asset:
         return await self.client.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, identifier)
 
-    async def download_many(self, identifiers: list[Identifier]) -> list[File]:
+    async def download_many(self, identifiers: list[Identifier]) -> list[Asset]:
         return await self.client.endpoints.call(ASSET_DOWNLOAD_MANY_ENDPOINT, identifiers)
+
+    async def delete(self, identifier: Identifier) -> None:
+        await self.client.endpoints.call(ASSET_DELETE_ENDPOINT, identifier)
 
     def url(self, identifier: Identifier) -> str:
         address = self.client.network.address

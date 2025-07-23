@@ -13,7 +13,7 @@ export type MessageJson = {
     id: string;
     created_at: string; // ISO 8601 date string
     author_id?: string;
-    content?: content.ComponentJson;
+    content?: content.Component;
     paid?: PaidJson;
     gifts?: GiftJson[];
     deleted?: boolean;
@@ -57,7 +57,7 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
             roomId: Identifier.fromKey(info.room_id),
             id: Identifier.fromKey(info.id),
             authorId: info.author_id ? Identifier.fromKey(info.author_id) : undefined,
-            content: info.content && content.deserialize(info.content),
+            content: info.content,
             paid: info.paid && Paid.fromJson(info.paid),
             gifts: info.gifts?.map((gift) => Gift.fromJson(gift)),
             createdAt: new Date(info.created_at),
@@ -69,7 +69,7 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
         if (!this.content) {
             return '';
         }
-        return this.content.toString();
+        return content.format(this.content);
     }
 
     key(): string {
@@ -82,7 +82,7 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
             id: this.id.key(),
             author_id: this.authorId?.key(),
             created_at: this.createdAt.toISOString(),
-            content: this.content && content.serialize(this.content),
+            content: this.content,
             paid: this.paid?.toJson(),
             gifts: this.gifts?.map((gift) => gift.toJson()),
             deleted: this.deleted,

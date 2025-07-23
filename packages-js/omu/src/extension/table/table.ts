@@ -67,7 +67,7 @@ export class TableType<T> {
         public id: Identifier,
         public serializer: Serializable<T, Uint8Array>,
         public keyFunction: (item: T) => string,
-        public permissions?: TablePermissions,
+        public permissions?: TablePermissions | undefined,
     ) {}
 
     public static createModel<T extends Keyable & Model<D>, D = unknown>(

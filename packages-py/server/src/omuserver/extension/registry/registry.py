@@ -69,8 +69,12 @@ class ServerRegistry:
 
     async def attach_session(self, session: Session) -> None:
         if session.app.id in self._listeners:
-            logger.warning(f"Session {session.app.id} is already to registry {self.id}")
-            return
+            logger.warning(
+                f"Session {session} already attached to registry {self.id}",
+            )
+            unlisten = self._listeners[session.app.id][1]
+            unlisten()
+            del self._listeners[session.app.id]
         unlisten = session.event.disconnected.listen(self.detach_session)
         self._listeners[session.app.id] = session, unlisten
         await session.send(

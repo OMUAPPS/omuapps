@@ -4,8 +4,8 @@
     export let component: content.Image;
 </script>
 
-<input type="text" bind:value={component.url} placeholder="url" />
-<img src={component.url} alt="" />
+<input type="text" bind:value={component.data.url} placeholder="url" />
+<img src={component.data.url} alt="" />
 
 <style lang="scss">
     img {

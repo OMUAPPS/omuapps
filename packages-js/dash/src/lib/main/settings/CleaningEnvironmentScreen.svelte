@@ -202,7 +202,7 @@
         align-items: center;
         gap: 1rem;
         padding: 3rem 2rem;
-        width: 30rem;
+        width: 30;
         background: var(--color-bg-2);
     }
 

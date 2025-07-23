@@ -22,6 +22,18 @@ export class MatrixStack {
         }
     }
 
+    public scope(callback: () => void): void {
+        this.push();
+        callback();
+        this.pop();
+    }
+
+    public async scopeAsync(callback: () => Promise<void>): Promise<void> {
+        this.push();
+        await callback();
+        this.pop();
+    }
+
     public get(): Mat4 {
         return this.stack[this.stack.length - 1].pose;
     }

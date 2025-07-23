@@ -1,4 +1,5 @@
 import type { Client } from '../../client.js';
+import { Identifier } from '../../identifier.js';
 import type { Locale } from '../../localization/locale.js';
 import type { LocalizedText } from '../../localization/localization.js';
 import type { Extension } from '../extension.js';
@@ -6,17 +7,17 @@ import { ExtensionType } from '../extension.js';
 import type { Registry } from '../registry/index.js';
 import { RegistryType } from '../registry/index.js';
 
-export const I18N_EXTENSION_TYPE = new ExtensionType('i18n', (client) => new I18nExtension(client));
+export const I18N_EXTENSION_TYPE: ExtensionType<I18nExtension> = new ExtensionType('i18n', (client) => new I18nExtension(client));
 
-export const I18N_SET_LOCALES_PERMISSION_ID = I18N_EXTENSION_TYPE.join('locales', 'set');
-export const I18N_GET_LOCALES_PERMISSION_ID = I18N_EXTENSION_TYPE.join('locales', 'get');
+export const I18N_SET_LOCALES_PERMISSION_ID: Identifier = I18N_EXTENSION_TYPE.join('locales', 'set');
+export const I18N_GET_LOCALES_PERMISSION_ID: Identifier = I18N_EXTENSION_TYPE.join('locales', 'get');
 const I18N_LOCALES_REGISTRY_TYPE = RegistryType.createJson<Locale[]>(I18N_EXTENSION_TYPE, {
     name: 'locales',
     defaultValue: [],
 });
 
 export class I18nExtension implements Extension {
-    public readonly type = I18N_EXTENSION_TYPE;
+    public readonly type: ExtensionType<I18nExtension> = I18N_EXTENSION_TYPE;
     public readonly localesRegistry: Registry<Locale[]>;
     private locales?: Locale[];
     public defaultLocales?: Locale[];

@@ -13,6 +13,7 @@ import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
 import { APP as omucafe } from './omucafe/app.js';
 import { APP as reaction } from './reaction/app.js';
+import { APP as remote } from './remote/app.js';
 import { APP as replay } from './replay/app.js';
 import { APP as roulette } from './roulette/app.js';
 import { APP as tester } from './tester/app.js';
@@ -26,6 +27,7 @@ export const apps = [
     marshmallow,
     timer,
     roulette,
+    omucafe,
 ] satisfies App[];
 
 if (DEV) {
@@ -40,7 +42,8 @@ if (DEV) {
         archive,
         clock,
         omucafe,
-    )
+        remote,
+    );
 }
 
 export const personalApps: Record<string, App[]> = {

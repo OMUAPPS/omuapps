@@ -7,7 +7,7 @@
 <div class="header">
     <div class="title">
         {#if icon.startsWith('ti-')}
-            <i class="ti {icon}" />
+            <i class="ti {icon}"></i>
         {:else}
             <img src={icon} alt={title} />
         {/if}
@@ -46,8 +46,8 @@
     }
 
     img {
-        width: 40px;
-        height: 40px;
+        width: 2.5rem;
+        height: 2.5rem;
     }
 
     .text {

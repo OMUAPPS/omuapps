@@ -37,21 +37,21 @@ class TableItemsPacket:
     def serialize(cls, item: TableItemsPacket) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        writer.write_int(len(item.items))
+        writer.write_uleb128(len(item.items))
         for key, value in item.items.items():
             writer.write_string(key)
-            writer.write_byte_array(value)
+            writer.write_uint8_array(value)
         return writer.finish()
 
     @classmethod
     def deserialize(cls, item: bytes) -> TableItemsPacket:
         with ByteReader(item) as reader:
             id = reader.read_string()
-            item_count = reader.read_int()
+            item_count = reader.read_uleb128()
             items: Mapping[str, bytes] = {}
             for _ in range(item_count):
                 item_key = reader.read_string()
-                value = reader.read_byte_array()
+                value = reader.read_uint8_array()
                 items[item_key] = value
         return TableItemsPacket(id=Identifier.from_key(id), items=items)
 
@@ -65,7 +65,7 @@ class TableKeysPacket:
     def serialize(cls, item: TableKeysPacket) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        writer.write_int(len(item.keys))
+        writer.write_uleb128(len(item.keys))
         for key in item.keys:
             writer.write_string(key)
         return writer.finish()
@@ -74,7 +74,7 @@ class TableKeysPacket:
     def deserialize(cls, item: bytes) -> TableKeysPacket:
         with ByteReader(item) as reader:
             id = reader.read_string()
-            key_count = reader.read_int()
+            key_count = reader.read_uleb128()
             keys = [reader.read_string() for _ in range(key_count)]
         return TableKeysPacket(id=Identifier.from_key(id), keys=tuple(keys))
 
@@ -89,23 +89,23 @@ class TableProxyPacket:
     def serialize(cls, item: TableProxyPacket) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        writer.write_int(item.key)
-        writer.write_int(len(item.items))
+        writer.write_uleb128(item.key)
+        writer.write_uleb128(len(item.items))
         for key, value in item.items.items():
             writer.write_string(key)
-            writer.write_byte_array(value)
+            writer.write_uint8_array(value)
         return writer.finish()
 
     @classmethod
     def deserialize(cls, item: bytes) -> TableProxyPacket:
         with ByteReader(item) as reader:
             id = reader.read_string()
-            key = reader.read_int()
-            item_count = reader.read_int()
+            key = reader.read_uleb128()
+            item_count = reader.read_uleb128()
             items: Mapping[str, bytes] = {}
             for _ in range(item_count):
                 item_key = reader.read_string()
-                value = reader.read_byte_array()
+                value = reader.read_uint8_array()
                 items[item_key] = value
         return TableProxyPacket(
             id=Identifier.from_key(id),
@@ -125,7 +125,7 @@ class TableFetchPacket:
     def serialize(cls, item: TableFetchPacket) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        writer.write_int(item.limit)
+        writer.write_uleb128(item.limit)
         flags = Flags(length=2)
         if item.backward:
             flags.set(0)
@@ -140,7 +140,7 @@ class TableFetchPacket:
     def deserialize(cls, item: bytes) -> TableFetchPacket:
         with ByteReader(item) as reader:
             id = reader.read_string()
-            limit = reader.read_int()
+            limit = reader.read_uleb128()
             flags = reader.read_flags(length=2)
             backward = flags.get(0)
             cursor = reader.read_string() if flags.has(1) else None
@@ -219,7 +219,7 @@ class SetPermissionPacket:
             flags |= 0b1000
         if item.proxy is not None:
             flags |= 0b10000
-        writer.write_byte(flags)
+        writer.write_uint8(flags)
         if item.all is not None:
             writer.write_string(item.all.key())
         if item.read is not None:
@@ -236,7 +236,7 @@ class SetPermissionPacket:
     def deserialize(item: bytes) -> SetPermissionPacket:
         with ByteReader(item) as reader:
             id = reader.read_string()
-            flags = reader.read_byte()
+            flags = reader.read_uint8()
             permission = reader.read_string() if flags & 0b1 else None
             permission_read = reader.read_string() if flags & 0b10 else None
             permission_write = reader.read_string() if flags & 0b100 else None

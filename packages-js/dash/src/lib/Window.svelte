@@ -62,7 +62,7 @@
     <div class="titlebar">
         <div data-tauri-drag-region class:margin={!maximized}></div>
         <div class="title">
-            <img src={Title} alt="title" width="64" height="10" />
+            <img src={Title} alt="title" />
             <span class="version">
                 {VERSION}
                 {(DEV && ' (dev)') || ($isBetaEnabled && ' (beta)') || ''}
@@ -103,13 +103,15 @@
 </div>
 
 <style lang="scss">
+    $height: 2.5rem;
+
     div[data-tauri-drag-region] {
         -webkit-app-region: drag;
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
-        height: 40px;
+        height: $height;
 
         &.margin {
             $drag-margin: 5px;
@@ -117,7 +119,7 @@
             top: $drag-margin;
             left: $drag-margin;
             width: calc(100% - $drag-margin * 2);
-            height: 40px - $drag-margin;
+            height: calc($height - $drag-margin);
         }
     }
 
@@ -138,7 +140,7 @@
         flex-direction: row;
         align-items: center;
         width: 100vw;
-        height: 40px;
+        height: $height;
         user-select: none;
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
@@ -149,7 +151,6 @@
         color: var(--color-1);
         font-size: 0.6rem;
         font-weight: 600;
-        // upper alignment
         position: relative;
         top: -2px;
     }
@@ -161,8 +162,12 @@
         gap: 0.25rem;
         align-items: center;
         justify-content: center;
-        margin-left: 10px;
+        margin-left: 1rem;
         pointer-events: none;
+
+        > img {
+            height: 0.621rem;
+        }
     }
 
     .window {
@@ -176,9 +181,9 @@
 
     .content {
         position: absolute;
-        top: 40px;
+        top: $height;
         width: 100%;
-        height: calc(100% - 40px);
+        height: calc(100% - $height);
         overflow: hidden;
         background: var(--color-bg-2);
     }

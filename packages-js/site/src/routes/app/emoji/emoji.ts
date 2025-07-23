@@ -128,10 +128,10 @@ export class EmojiApp {
             new models.Message({
                 id: EMOJI_TEST_PROVIDER.id.join('test', 'message', new Date().getTime().toString()),
                 roomId: room.id,
-                content: new models.content.System([
-                    new models.content.Asset(emoji.asset),
-                    new models.content.Text(emoji.id),
-                ]),
+                content: { type: 'system', data: [
+                    { type: 'asset', data: { id: emoji.asset.key() } },
+                    { type: 'text', data: emoji.id },
+                ]},
                 createdAt: new Date(),
             }),
         );

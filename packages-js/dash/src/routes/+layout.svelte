@@ -53,6 +53,7 @@
     import { onMount } from 'svelte';
     import LoadingStatus from './_components/LoadingStatus.svelte';
     import UpdateNotify from './_components/UpdateNotify.svelte';
+    import { lock } from './lock.js';
     import './styles.scss';
 
     const PROGRESS_NAME: Record<Progress['type'], string> = {
@@ -111,6 +112,14 @@
     }
 
     async function init() {
+        if (lock.loaded) {
+            console.warn('Hot reload detected, reloading...');
+            setTimeout(() => {
+                window.location.reload();
+            }, 5000);
+            return;
+        }
+        lock.loaded = true;
         const STAGES = {
             loadingLocale: 'Loading Locale',
             waitingForTauri: 'Waiting for Tauri',

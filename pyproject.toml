@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = []
 readme = "README.md"
-requires-python = ">= 3.12"
+requires-python = ">= 3.11.5"
 
 [build-system]
 requires = ["hatchling"]
@@ -22,7 +22,7 @@ dev-dependencies = [
     "ruff>=0.1.6",
     "pytest-asyncio>=0.24",
     "pytest-cov>=5.0.0",
-    "pyright>=1.1.371",
+    "pyright>=1.1.397",
     "tomlkit>=0.13.2",
 ]
 
@@ -66,9 +66,4 @@ disable = [
 ]
 
 [tool.pyright]
-exclude = [
-    "**/node_modules",
-    "**/__pycache__",
-    "**/.venv",
-    "packages-py/plugin-obs/src/obspython.pyi",
-]
+include = ["packages-py/*"]

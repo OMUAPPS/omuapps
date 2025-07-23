@@ -1,37 +1,56 @@
-<script lang="ts">
-    export let value: boolean;
+<script lang="ts" generics="T">
+    type BooleanLike = true | false | T;
+    export let value: BooleanLike;
     export let disabled: boolean = false;
+    export let label: string | undefined = undefined;
+    export let handle: (value: boolean) => unknown = () => {};
 
     function toggle() {
-        value = !value;
+        if (value) {
+            value = false;
+        } else {
+            value = true;
+        }
+        handle(value);
     }
 </script>
 
-<label class="toggle">
-    <input type="checkbox" bind:checked={value} {disabled} on:click={toggle} />
-    {#if value}
-        <i class="toggle-icon ti ti-check" />
+<label>
+    {#if label}
+        <span>{label}</span>
     {/if}
+    <span class="toggle">
+        <input type="checkbox" checked={!!value} {disabled} on:click={toggle} />
+        {#if value}
+            <i class="ti ti-check"></i>
+        {/if}
+    </span>
 </label>
 
 <style lang="scss">
+    label {
+        display: flex;
+        align-items: center;
+    }
+
     .toggle {
         position: relative;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px;
+        padding: 0.5rem;
         cursor: pointer;
         user-select: none;
 
         input {
-            width: 20px;
-            height: 20px;
+            width: 1.5rem;
+            height: 1.5rem;
             appearance: none;
             background: var(--color-bg-2);
             border: none;
-            border-radius: 5px;
+            border-radius: 3px;
             outline: 1px solid var(--color-1);
+            outline-offset: -1px;
 
             &:checked {
                 background: var(--color-1);
@@ -45,14 +64,14 @@
             }
         }
 
-        .toggle-icon {
+        i {
             position: absolute;
-            right: 10px;
+            left: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 20px;
-            height: 20px;
+            width: 1rem;
+            height: 1rem;
             color: var(--color-bg-2);
         }
     }

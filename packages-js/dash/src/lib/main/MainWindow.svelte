@@ -3,7 +3,7 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
     import { checkUpdate } from '$lib/tauri.js';
-    import { TableList, Tooltip } from '@omujs/ui';
+    import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AppEntry from './AppEntry.svelte';
     import {
@@ -12,8 +12,7 @@
         registerPage,
         unregisterPage,
         type Page,
-
-        type PageItem
+        type PageItem,
     } from './page.js';
     import ConnectPage from './pages/ConnectPage.svelte';
     import ExplorePage from './pages/ExplorePage.svelte';
@@ -122,7 +121,7 @@
                         <i class="ti ti-apps"></i>
                     </span>
                     <div class="buttons">
-                        <button
+                        <ButtonMini
                             on:click={() =>
                                 screenContext.push(ManageAppsScreen, undefined)}
                         >
@@ -137,7 +136,7 @@
                                 </div>
                             </Tooltip>
                             <i class="ti ti-edit"></i>
-                        </button>
+                        </ButtonMini>
                     </div>
                 {/if}
             </div>
@@ -258,7 +257,7 @@
         display: flex;
         flex-direction: row;
         align-items: baseline;
-        padding: 0.5rem 0rem;
+        padding: 0.5rem 0;
         background: var(--color-bg-2);
         color: var(--color-1);
         border-bottom: 1px solid var(--color-outline);
@@ -274,24 +273,7 @@
 
         > .buttons {
             margin-left: auto;
-
-            > button {
-                background: none;
-                border: none;
-                color: var(--color-1);
-                font-size: 1rem;
-                font-weight: 600;
-                width: 2rem;
-                height: 2rem;
-
-                &:focus-visible,
-                &:hover {
-                    outline: none;
-                    background: var(--color-1);
-                    color: var(--color-bg-1);
-                    border-radius: 4px;
-                }
-            }
+            font-size: 0.9rem;
         }
     }
 

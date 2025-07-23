@@ -4,12 +4,12 @@ from omu.extension.server import (
     SERVER_SESSIONS_READ_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
 )
-from omu.extension.server.server_extension import TRUSTED_ORIGINS_GET_PERMISSION_ID
+from omu.extension.server.server_extension import REMOTE_APP_REQUEST_PERMISSION_ID, TRUSTED_ORIGINS_GET_PERMISSION_ID
 
 SERVER_SHUTDOWN_PERMISSION = PermissionType(
     id=SERVER_SHUTDOWN_PERMISSION_ID,
     metadata={
-        "level": "high",
+        "level": "medium",
         "name": {
             "ja": "サーバーをシャットダウン",
             "en": "Shutdown Server",
@@ -51,7 +51,7 @@ SERVER_SESSIONS_READ_PERMISSION = PermissionType(
 SERVER_TRUSTED_ORIGINS_GET_PERMISSION = PermissionType(
     id=TRUSTED_ORIGINS_GET_PERMISSION_ID,
     metadata={
-        "level": "medium",
+        "level": "high",
         "name": {
             "ja": "信頼されたオリジンを取得",
             "en": "Get Trusted Origins",
@@ -60,5 +60,16 @@ SERVER_TRUSTED_ORIGINS_GET_PERMISSION = PermissionType(
             "ja": "認証を通過するオリジンを取得するために使われます",
             "en": "Used to get origins that pass authentication",
         },
+    },
+)
+REMOTE_APP_REQUEST_PERMISSION = PermissionType(
+    REMOTE_APP_REQUEST_PERMISSION_ID,
+    metadata={
+        "level": "high",
+        "name": {
+            "ja": "遠隔アプリを要求",
+            "en": "Request Remote App",
+        },
+        "note": {},
     },
 )

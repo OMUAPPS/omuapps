@@ -8,7 +8,14 @@
         };
     };
     export let value: T;
-    $: key = Object.keys(options).find((key) => options[key].value === value);
+    export let key: string | null | undefined = Object.keys(options)[0];
+
+    $: {
+        const found = Object.keys(options).find((key) => options[key].value === value);
+        if (found) {
+            key = found;
+        }
+    }
 
     const dispatch = createEventDispatcher<{
         change: { key: string; value: T };
@@ -32,7 +39,7 @@
         on:focus={() => dispatch('open')}
         on:blur={() => dispatch('close')}
     >
-        {#each Object.entries(options) as [key, option]}
+        {#each Object.entries(options) as [key, option] (key)}
             <option value={key}>{option.label}</option>
         {/each}
     </select>
@@ -47,6 +54,7 @@
         color: var(--color-1);
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
+        border-radius: 2px;
         border: none;
         cursor: pointer;
 

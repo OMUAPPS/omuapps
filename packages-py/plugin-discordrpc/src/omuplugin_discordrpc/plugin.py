@@ -83,7 +83,7 @@ class Client:
                     exist_session["access_token"],
                 )
             except Exception as e:
-                logger.warning(f"Failed to connect with existing session: {e}")
+                logger.warning(f"Failed to connect with existing session {port}: {e}")
                 sessions["sessions"].pop(session_key)
                 await session_registry.set(sessions)
         rpc = await DiscordRPC.connect(port)

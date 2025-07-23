@@ -30,15 +30,16 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - uses: pnpm/action-setup@v4
+            - name: Cache Bun dependencies
+              uses: actions/cache@v4
               with:
-                version: 9.12.2
+                path: ~/.bun/install/cache
+                key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
+                restore-keys: |
+                  bun-${{ runner.os }}-
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4.0.3
-              with:
-                cache: 'pnpm'
-                node-version: '20.18.2'
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
 
             - name: install dependencies (ubuntu only)
               if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
@@ -48,8 +49,8 @@ jobs:
                   # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
                   # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
-            - name: Install dependencies
-              run: pnpm i --frozen-lockfile
+            - name: Install Dependencies
+              run: bun install --frozen-lockfile
 
             - name: install Rust stable
               uses: dtolnay/rust-toolchain@stable
@@ -59,8 +60,8 @@ jobs:
 
             - name: build-pre
               run: |
-                  pnpm run build
-                  pnpm --filter dash run build-pre
+                  bun run build
+                  bun run --cwd packages-js/dash build-pre
 
             - name: Rust cache
               uses: swatinem/rust-cache@v2

@@ -20,5 +20,6 @@
         scenes.map((scene) => [scene.name, { label: scene.name, value: scene.name }]),
     )}
     bind:value={scene}
+    key={scene}
     on:open={updateScenes}
 />

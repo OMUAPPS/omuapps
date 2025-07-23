@@ -17,14 +17,14 @@ class SignalPacket:
     def serialize(cls, item: SignalPacket) -> bytes:
         writer = ByteWriter()
         writer.write_string(item.id.key())
-        writer.write_byte_array(item.body)
+        writer.write_uint8_array(item.body)
         return writer.finish()
 
     @classmethod
     def deserialize(cls, item: bytes) -> SignalPacket:
         with ByteReader(item) as reader:
             key = Identifier.from_key(reader.read_string())
-            body = reader.read_byte_array()
+            body = reader.read_uint8_array()
         return SignalPacket(id=key, body=body)
 
 

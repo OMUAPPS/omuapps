@@ -1,4 +1,5 @@
 import type { Chat } from '@omujs/chat';
+import { App, Omu } from '@omujs/omu';
 import type { Client } from '@omujs/omu/client.js';
 import type { Locale } from '@omujs/omu/localization/index.js';
 import { BROWSER } from 'esm-env';
@@ -14,12 +15,23 @@ export const translate: Writable<TranslateFunction> = writable(
 
 export const client: Writable<Client> = writable();
 export const chat: Writable<Chat> = writable();
-
 export function setClient<T extends Client>(newClient: T): T {
-    client.set(newClient);
-    if (BROWSER) {
-        newClient.i18n.defaultLocales = window.navigator.languages as Locale[];
-    }
+    if (!BROWSER) {
+        const DUMMY_CLIENT = new Omu(new App('com.omuapps:dummy', { version: '0.0.0' }));
+        const newClient = DUMMY_CLIENT as unknown as T;
+        client.set(newClient);
+        return newClient;
+    };
+    client.update((oldClient) => {
+        if (oldClient) {
+            // throw new Error('Client already set');
+            console.warn('HMR detected. reloading...');
+            window.location.reload();
+            return oldClient;
+        }
+        return newClient;
+    });
+    newClient.i18n.defaultLocales = window.navigator.languages as Locale[];
     return newClient;
 }
 export function setChat<T extends Chat>(newChat: T): T {

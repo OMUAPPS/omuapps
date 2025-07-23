@@ -89,6 +89,10 @@
 {/if}
 
 <style lang="scss">
+    :global(body) {
+        background: transparent;
+    }
+
     main {
         position: relative;
         width: 100%;

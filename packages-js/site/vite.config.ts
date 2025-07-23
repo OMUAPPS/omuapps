@@ -30,14 +30,28 @@ const reloadPlugin = (): PluginOption => ({
 
 export default defineConfig({
     plugins: [sveltekit(), reloadPlugin()],
+    css: {
+        preprocessorOptions: {
+            scss: {
+                api: 'modern',
+            }
+        }
+    },
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}'],
     },
     server: {
+        host: '0.0.0.0',
         port: 5173,
         strictPort: true,
         fs: {
             allow: [searchForWorkspaceRoot(process.cwd() + '..')],
         },
+        allowedHosts: true,
     },
+    build: {
+        rollupOptions: {
+            external: '@2ji-han/kuromoji.js',
+        }
+    }
 });

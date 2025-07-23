@@ -5,17 +5,10 @@
     $: hours = Math.floor(value / 60 / 60) % 24;
     $: minutes = Math.floor(value / 60) % 60;
     $: seconds = value % 60;
+    $: console.log({ days, hours, minutes, seconds });
 
-    function update() {
+    function update(days: number, hours: number, minutes: number, seconds: number) {
         value = Math.max(0, days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds);
-        days = clamp0(days);
-        hours = clamp0(hours);
-        minutes = clamp0(minutes);
-        seconds = clamp0(seconds);
-    }
-
-    function clamp0(value: number) {
-        return Math.max(0, value);
     }
 </script>
 
@@ -36,8 +29,8 @@
                     type="number"
                     min={-1}
                     max={100}
-                    bind:value={days}
-                    on:input={update}
+                    value={days}
+                    on:input={(event) => update(event.currentTarget.valueAsNumber, hours, minutes, seconds)}
                 />
             </td>
             <td>
@@ -46,8 +39,8 @@
                     type="number"
                     min={-1}
                     max={25}
-                    bind:value={hours}
-                    on:input={update}
+                    value={hours}
+                    on:input={(event) => update(days, event.currentTarget.valueAsNumber, minutes, seconds)}
                 />
             </td>
             <td>
@@ -58,8 +51,8 @@
                         type="number"
                         min={-1}
                         max={61}
-                        bind:value={minutes}
-                        on:input={update}
+                        value={minutes}
+                        on:input={(event) => update(days, hours, event.currentTarget.valueAsNumber, seconds)}
                     />
                 </span>
             </td>
@@ -70,9 +63,9 @@
                         class="seconds"
                         type="number"
                         min={-1}
-                        max={60}
-                        bind:value={seconds}
-                        on:input={update}
+                        max={61}
+                        value={seconds}
+                        on:input={(event) => update(days, hours, minutes, event.currentTarget.valueAsNumber)}
                     />
                 </span>
             </td>

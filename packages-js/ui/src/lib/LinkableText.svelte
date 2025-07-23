@@ -27,7 +27,7 @@
     }
 </script>
 
-{#each parts as part}
+{#each parts as part, i (i)}
     {#if part.type === 'text'}
         {part.content}
     {:else if part.type === 'url'}

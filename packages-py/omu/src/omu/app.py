@@ -12,18 +12,20 @@ from omu.model import Model
 
 class AppMetadata(TypedDict):
     locale: Locale
-    name: NotRequired[LocalizedText]
-    description: NotRequired[LocalizedText]
-    image: NotRequired[LocalizedText]
-    site: NotRequired[LocalizedText]
-    repository: NotRequired[LocalizedText]
-    authors: NotRequired[LocalizedText]
-    license: NotRequired[LocalizedText]
-    tags: NotRequired[list[str]]
+    name: NotRequired[LocalizedText | None]
+    icon: NotRequired[LocalizedText | None]
+    description: NotRequired[LocalizedText | None]
+    image: NotRequired[LocalizedText | None]
+    site: NotRequired[LocalizedText | None]
+    repository: NotRequired[LocalizedText | None]
+    authors: NotRequired[LocalizedText | None]
+    license: NotRequired[LocalizedText | None]
+    tags: NotRequired[list[str] | None]
 
 
 class AppType(Enum):
     APP = "app"
+    REMOTE = "remote"
     PLUGIN = "plugin"
     DASHBOARD = "dashboard"
 

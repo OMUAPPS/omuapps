@@ -30,7 +30,9 @@
         "settings": "Settings",
         "dragdrop": "You can add by dragging and dropping",
         "second": "Second",
-        "no_description": "No Description"
+        "no_description": "No Description",
+        "reload": "Reload",
+        "current": "Current"
     },
     "permission_level": {
         "low": "Impact Level: Low",
@@ -260,6 +262,7 @@
             "serverRestartError": "Failed to restart server: {error}",
             "latestVersion": "Latest Version",
             "newVersionAvailable": "New version available",
+            "checkUpdateError": "Failed to check for updates: {error}",
             "update": "Update"
         },
         "about": {

@@ -8,6 +8,7 @@ from loguru import logger
 from omu import Omu
 from omu.helper import Coro
 from omu_chat import Channel, Chat, Provider, Room
+from typing_extensions import deprecated
 
 type ChatServiceFactory = Coro[[], ChatService]
 
@@ -18,21 +19,36 @@ class FetchedRoom:
     create: ChatServiceFactory
 
 
+class ProviderContext: ...  # For future compatibility's sake
+
+
 class ProviderService(abc.ABC):
     @abc.abstractmethod
     def __init__(self, omu: Omu, chat: Chat): ...
+
+    @classmethod
+    async def create(cls, omu: Omu, chat: Chat) -> ProviderService:
+        return cls(omu, chat)
 
     @property
     @abc.abstractmethod
     def provider(self) -> Provider: ...
 
-    @abc.abstractmethod
-    async def fetch_rooms(self, channel: Channel) -> list[FetchedRoom]: ...
+    @deprecated("Legacy method, Left for future compatibility")
+    async def fetch_rooms(self, channel: Channel) -> list[FetchedRoom]:
+        return []
 
-    @abc.abstractmethod
-    async def is_online(self, room: Room) -> bool: ...
+    async def start_channel(self, ctx: ProviderContext, channel: Channel):
+        return
+
+    async def stop_channel(self, ctx: ProviderContext, channel: Channel):
+        return
+
+    async def is_online(self, room: Room) -> bool:
+        return True
 
 
+@deprecated("Legacy type, Left for future compatibility")
 class ChatService(abc.ABC):
     @property
     @abc.abstractmethod
@@ -53,8 +69,12 @@ class ChatService(abc.ABC):
         finally:
             await self.stop()
 
-    @abc.abstractmethod
-    async def stop(self): ...
+    async def close(self):
+        return
+
+    @deprecated("Use `close` instead")
+    async def stop(self):
+        await self.close()
 
 
 def retrieve_services():

@@ -5,7 +5,6 @@
     import { t } from '$lib/i18n/i18n-context.js';
 
     import { chat, omu } from '$lib/client.js';
-    import ProviderIcon from '$lib/common/ProviderIcon.svelte';
     import { ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
 
     export let entry: models.Channel;
@@ -32,7 +31,7 @@
                     <img src={omu.assets.proxy(entry.iconUrl)} alt="icon" class="tooltip-image" />
                 </Tooltip>
             {:else}
-                <ProviderIcon providerId={entry.providerId} />
+                <i class="ti ti-user"></i>
             {/if}
         </div>
         <div class="info">
@@ -76,9 +75,8 @@
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
-        min-height: 60px;
-        padding: 10px;
-        padding-left: 10px;
+        padding: 0.5rem 1rem;
+        padding-left: 1rem;
 
         &:active,
         &.selected {
@@ -91,7 +89,7 @@
     .left {
         display: flex;
         flex-direction: row;
-        gap: 10px;
+        gap: 1rem;
         align-items: center;
     }
 
@@ -102,9 +100,8 @@
     }
 
     .channel-icon {
-        width: 32px;
-        height: 32px;
-        margin: 5px;
+        width: 2rem;
+        height: 2rem;
         border-radius: 50%;
 
         img {

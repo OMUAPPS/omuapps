@@ -17,6 +17,7 @@ import uv
 from loguru import logger
 from omu.extension.plugin import PackageInfo, PluginPackageInfo
 from omu.plugin import InstallContext, Plugin
+from omu.result import Err, Ok, Result, is_err
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
@@ -40,13 +41,18 @@ class DependencyResolver:
     def __init__(self) -> None:
         self._dependencies: dict[str, SpecifierSet] = {}
         self._packages_distributions: Mapping[str, importlib.metadata.Distribution] = {}
+        self._package_info_cache: dict[str, PackageInfo] = {}
         self._distributions_change_marked = True
         self.find_packages_distributions()
 
     async def fetch_package_info(self, package: str) -> PackageInfo:
+        if package in self._package_info_cache:
+            return self._package_info_cache[package]
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://pypi.org/pypi/{package}/json") as response:
-                return await response.json()
+                package_info = PackageInfo(await response.json())
+                self._package_info_cache[package] = package_info
+                return package_info
 
     async def get_installed_package_info(self, package: str) -> PluginPackageInfo | None:
         try:
@@ -67,9 +73,9 @@ class DependencyResolver:
                 args.append(dependency)
         return args
 
-    async def update_requirements(self, requirements: dict[str, SpecifierSet]) -> None:
+    async def install_requirements(self, requirements: dict[str, SpecifierSet]) -> Result[None, str]:
         if len(requirements) == 0:
-            return
+            return Ok(None)
         with tempfile.NamedTemporaryFile(mode="wb", delete=True) as req_file:
             dependency_lines = self.format_dependencies(requirements)
             req_file.write("\n".join(dependency_lines).encode("utf-8"))
@@ -88,17 +94,24 @@ class DependencyResolver:
             )
             stdout, stderr = await process.communicate()
         if process.returncode != 0:
-            logger.error(f"Failed to install dependencies: {stdout.decode()}")
-            logger.error(f"Failed to install dependencies: {stderr.decode()}")
-            return
+            return Err(f"Failed to install dependencies: stdout={stdout.decode()} stderr={stderr.decode()}")
         logger.info(f"Ran uv command: {(stdout or stderr).decode()}")
+        return Ok(None)
 
-    def is_package_satisfied(self, package: str, specifier: SpecifierSet) -> bool:
+    def is_package_satisfied(self, package: str, specifier: SpecifierSet | None) -> bool:
         package_info = self._packages_distributions.get(package)
         if package_info is None:
             return False
+        if specifier is None:
+            return True
         installed_version = Version(package_info.version)
         return installed_version in specifier
+
+    def is_requirements_satisfied(self, requirements: dict[str, SpecifierSet | None]) -> bool:
+        for package, specifier in requirements.items():
+            if not self.is_package_satisfied(package, specifier):
+                return False
+        return True
 
     def _get_minimum_version(self, specifier: SpecifierSet) -> Version:
         minimum_version = Version("0")
@@ -117,7 +130,15 @@ class DependencyResolver:
         minimum_version = self._get_minimum_version(specifier)
         return minimum_version < exist_version
 
-    def add_dependencies(self, dependencies: Mapping[str, str | None]) -> bool:
+    async def find_best_compatible_version(self, package: str, specifier: SpecifierSet) -> Version:
+        package_info = await self.fetch_package_info(package)
+        versions: list[Version] = sorted(map(Version, package_info["releases"].keys()))  # [0.1.0, 0.1.1, 0.2.0, 2.0.0]
+        for version in versions:
+            if version in specifier:
+                return version
+        raise ValueError(f"No compatible version found for {package} with specifier {specifier}")
+
+    async def add_dependencies(self, dependencies: Mapping[str, str | None]) -> bool:
         changed = False
         new_dependencies: dict[str, SpecifierSet] = {}
         for package, specifier in dependencies.items():
@@ -133,7 +154,8 @@ class DependencyResolver:
             too_old = self.is_package_version_too_old(package, specifier)
             if too_old:
                 raise RequiredVersionTooOld(f"Package {package} is too old: {package_info.version}")
-            new_dependencies[package] = specifier or SpecifierSet()
+            best_version = await self.find_best_compatible_version(package, specifier)
+            new_dependencies[package] = SpecifierSet(f"=={best_version}")
             changed = True
         self._dependencies.update(new_dependencies)
         return changed
@@ -149,7 +171,7 @@ class DependencyResolver:
         self._distributions_change_marked = False
         return self._packages_distributions
 
-    async def resolve(self) -> ResolveResult:
+    async def resolve(self) -> Result[ResolveResult, str]:
         packages_distributions = self.find_packages_distributions()
         requirements: dict[str, SpecifierSet] = {}
         update_distributions: dict[str, importlib.metadata.Distribution] = {}
@@ -169,19 +191,15 @@ class DependencyResolver:
             requirements[dependency] = specifier_set
             update_distributions[dependency] = exist_package
         if len(requirements) == 0:
-            return ResolveResult(
-                new_packages=new_distributions,
-                updated_packages=update_distributions,
-            )
+            return Ok(ResolveResult(new_packages=new_distributions, updated_packages=update_distributions))
 
-        await self.update_requirements(requirements)
+        result = await self.install_requirements(requirements)
+        if is_err(result):
+            return Err(result.err)
         self._distributions_change_marked = True
         logger.info(f"New packages: {new_distributions}")
         logger.info(f"Updated packages: {update_distributions}")
-        return ResolveResult(
-            new_packages=new_distributions,
-            updated_packages=update_distributions,
-        )
+        return Ok(ResolveResult(new_packages=new_distributions, updated_packages=update_distributions))
 
 
 @dataclass(frozen=True, slots=True)
