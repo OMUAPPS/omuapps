@@ -42,11 +42,12 @@ if (DEV) {
         clock,
         omucafe,
         remote,
-    )
+    );
 }
 
 export const personalApps: Record<string, App[]> = {
     aoikuru: [fries],
+    cafe: [omucafe],
 };
 
 if (BROWSER) {
