@@ -49,6 +49,7 @@ async function downloadRelease() {
     for (const asset of assets) {
         const url = asset.browser_download_url;
         const name = asset.name;
+        console.log($`bash -c curl -L -o ./release-assets/${name} ${url}`);
         await $`bash -c curl -L -o ./release-assets/${name} ${url}`;
     }
 }
