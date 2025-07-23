@@ -73,6 +73,8 @@ async function uploadToR2(file, path) {
     } catch (e) {
         throw new Error(`File not found: ${file}\n\nError: ${e}`);
     }
+    const stats = await fs.stat(file);
+    console.log(`Uploading ${file} (${stats.size} bytes) to ${BUCKET}/${path}`);
     await $`bun wrangler r2 object put ${BUCKET}/${path} --remote --file ${file}`;
     return `${BASE_URL}/${path}`;
 }
