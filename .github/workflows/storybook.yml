@@ -31,7 +31,7 @@ jobs:
 
             - name: Build storybook
               run: |
-                  bun build
+                  bun run build
                   bun --cwd packages-js/ui build-storybook
             - name: Upload Storybook
               run: bun --cwd packages-js/ui chromatic -d storybook-static --project-token=${{secrets.CHROMATIC_PROJECT_TOKEN}}
