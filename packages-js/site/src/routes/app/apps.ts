@@ -27,6 +27,7 @@ export const apps = [
     marshmallow,
     timer,
     roulette,
+    omucafe,
 ] satisfies App[];
 
 if (DEV) {
@@ -47,7 +48,6 @@ if (DEV) {
 
 export const personalApps: Record<string, App[]> = {
     aoikuru: [fries],
-    cafe: [omucafe],
 };
 
 if (BROWSER) {
