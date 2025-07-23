@@ -85,11 +85,11 @@ jobs:
                   git push --follow-tags
                   echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
 
-            - name: Publish
-              if: ${{ github.event.inputs.npm == 'true' }}
-              run: bun run publish
-              env:
-                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+            # - name: Publish
+            #   if: ${{ github.event.inputs.npm == 'true' }}
+            #   run: bun run publish
+            #   env:
+            #       NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
     publish-pypi:
         if: ${{ github.event.inputs.pypi == 'true' }}
