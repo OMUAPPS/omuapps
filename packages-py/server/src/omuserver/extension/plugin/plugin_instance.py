@@ -222,7 +222,7 @@ def run_plugin_isolated(
             raise ValueError(f"Invalid plugin: {client.app} is not a plugin")
         stage = "setting up"
         setup_logger(name=client.app.id.get_sanitized_key())
-        logger.info(f"Starting plugin {client.app.id}")
+        logger.info(f"Starting plugin {client.app.id} {client.app.version}")
         connection = WebsocketsConnection(client, address)
         client.network.set_connection(connection)
         client.network.set_token_provider(PluginTokenProvider(token))
