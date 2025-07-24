@@ -2,6 +2,7 @@ import type { Client } from '../../client.js';
 import type { Unlisten } from '../../event-emitter.js';
 import { EventEmitter } from '../../event-emitter.js';
 import { Identifier, IdentifierMap } from '../../identifier.js';
+import { Lock } from '../../lock.js';
 import { PacketType } from '../../network/packet/index.js';
 import { Serializer } from '../../serializer.js';
 import { EndpointType } from '../endpoint/endpoint.js';
@@ -54,8 +55,10 @@ export class RegistryExtension implements Extension {
     }
 }
 
+
 class RegistryImpl<T> implements Registry<T> {
     private readonly eventEmitter: EventEmitter<[T]> = new EventEmitter();
+    private readonly lock: Lock = new Lock();
     private listening = false;
     public value: T;
 
@@ -70,7 +73,7 @@ class RegistryImpl<T> implements Registry<T> {
         client.network.addTask(() => this.onTask());
     }
 
-    public async get(): Promise<T> {
+    async #get(): Promise<T> {
         const result = await this.client.endpoints.call(REGISTRY_GET_ENDPOINT, this.type.id);
         if (result.value === null) {
             return this.type.defaultValue;
@@ -78,26 +81,44 @@ class RegistryImpl<T> implements Registry<T> {
         return this.type.serializer.deserialize(result.value);
     }
 
-    public async set(value: T): Promise<void> {
+    async #set(value: T): Promise<void> {
         this.client.send(REGISTRY_UPDATE_PACKET, {
             id: this.type.id,
             value: this.type.serializer.serialize(value),
         });
+    }
+
+    public async get(): Promise<T> {
+        const value = await this.lock.use(async () => this.#get());
+        this.eventEmitter.emit(value);
+        return value;
+    }
+
+    public async set(value: T): Promise<void> {
+        await this.lock.use(async () => this.#set(value));
         this.eventEmitter.emit(value);
     }
 
     public async update(fn: (value: T) => PromiseLike<T> | T): Promise<T> {
-        const value = await this.get();
-        const newValue = await fn(value);
-        await this.set(newValue);
-        return newValue;
+        const value = await this.lock.use(async () => {
+            const value = await this.#get();
+            const newValue = await fn(value);
+            await this.#set(newValue);
+            return newValue;
+        });
+        this.eventEmitter.emit(value);
+        return value;
     }
 
     public async modify(fn: (value: T) => PromiseLike<T> | T): Promise<T> {
-        const value = await this.get();
-        const newValue = await fn(value);
-        await this.set(newValue);
-        return newValue;
+        const value = await this.lock.use(async () => {
+            const value = await this.#get();
+            const newValue = await fn(value);
+            await this.#set(newValue);
+            return newValue;
+        });
+        this.eventEmitter.emit(value);
+        return value;
     }
 
     public listen(handler: (value: T) => Promise<void> | void): Unlisten {
