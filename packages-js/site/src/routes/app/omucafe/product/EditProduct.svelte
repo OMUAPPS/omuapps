@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button, FileDrop } from '@omujs/ui';
-    import { uploadAssetByFile } from '../asset/asset.js';
+    import { uploadAssetByBlob } from '../asset/asset.js';
     import AssetImage from '../components/AssetImage.svelte';
     import { acquireRenderLock } from '../game/game.js';
     import { getGame } from '../omucafe-app.js';
@@ -23,7 +23,7 @@
                 if (fileList.length !== 1) {
                     throw new Error('FileDrop must receive only one file');
                 }
-                product.image = await uploadAssetByFile(fileList[0]);
+                product.image = await uploadAssetByBlob(fileList[0]);
             }} accept="image/*" primary={!product.image}>
                 {#if product.image}
                     <p>商品画像を編集</p>
@@ -73,7 +73,7 @@
         product.recipe.steps = [
             ...product.recipe.steps,
             {
-                image: await uploadAssetByFile(fileList[0]),
+                image: await uploadAssetByBlob(fileList[0]),
                 text: '',
             },
         ];

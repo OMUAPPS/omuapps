@@ -19,7 +19,13 @@ export function isAssetEqual(a: Asset, b: Asset): boolean {
     throw new Error(`Unknown asset type comparison: ${a.type} vs ${b.type}`);
 }
 
-export async function uploadAsset(id: Identifier, buffer: Uint8Array): Promise<Asset> {
+async function getBufferHash(buffer: Uint8Array): Promise<string> {
+    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer as ArrayBufferView<ArrayBuffer>);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function uploadAssetById(id: Identifier, buffer: Uint8Array): Promise<Asset> {
     const { omu, resourcesRegistry } = getGame();
     const result = await omu.assets.upload(id, buffer);
     const asset: Asset = {
@@ -33,42 +39,15 @@ export async function uploadAsset(id: Identifier, buffer: Uint8Array): Promise<A
     return asset;
 }
 
-export async function uploadAssetByFile(file: File): Promise<Asset> {
-    const buffer = new Uint8Array(await file.arrayBuffer());
-    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+export async function uploadAsset(buffer: Uint8Array): Promise<Asset> {
+    const hash = await getBufferHash(buffer);
     const id = APP_ID.join('asset', hash);
-    const { omu, resourcesRegistry } = getGame();
-    const result = await omu.assets.upload(id, buffer);
-    const asset: Asset = {
-        type: 'asset',
-        id: result.key(),
-    };
-    resourcesRegistry.modify((value) => {
-        value.assets[result.key()] = asset;
-        return value
-    })
-    return asset;
+    return await uploadAssetById(id, buffer);
 }
 
 export async function uploadAssetByBlob(blob: Blob): Promise<Asset> {
     const buffer = new Uint8Array(await blob.arrayBuffer());
-    const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    const id = APP_ID.join('asset', hash);
-    const { omu, resourcesRegistry } = getGame();
-    const result = await omu.assets.upload(id, buffer);
-    const asset: Asset = {
-        type: 'asset',
-        id: result.key(),
-    };
-    resourcesRegistry.modify((value) => {
-        value.assets[result.key()] = asset;
-        return value
-    })
-    return asset;
+    return await uploadAsset(buffer);
 }
 
 const assetCache = new Map<string, Promise<string>>();

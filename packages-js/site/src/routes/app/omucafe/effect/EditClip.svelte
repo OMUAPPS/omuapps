@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Checkbox, FileDrop } from '@omujs/ui';
-    import { uploadAssetByFile } from '../asset/asset.js';
+    import { uploadAssetByBlob } from '../asset/asset.js';
     import { createClip, type Clip } from '../asset/audioclip.js';
     import EditAudioAsset from './EditAudioAsset.svelte';
 
@@ -8,7 +8,7 @@
 
     async function handleChange(files: FileList) {
         const [file] = files;
-        const asset = await uploadAssetByFile(file);
+        const asset = await uploadAssetByBlob(file);
         clip ??= await createClip({}); 
         clip.asset = asset;
     }

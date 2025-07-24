@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button, ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
-    import { uploadAssetByFile } from '../asset/asset.js';
+    import { uploadAssetByBlob } from '../asset/asset.js';
     import { createClip } from '../asset/audioclip.js';
     import FitInput from '../components/FitInput.svelte';
     import { getGame } from '../omucafe-app.js';
@@ -64,7 +64,7 @@
                 音
                 <FileDrop handle={async (files) => {
                     const [file] = files;
-                    const asset = await uploadAssetByFile(file);
+                    const asset = await uploadAssetByBlob(file);
                     effect.attributes.sound = effect.attributes.sound ? undefined : createEffectSound({
                         clip: await createClip({
                             asset,

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { FileDrop, Slider, Tooltip } from '@omujs/ui';
-    import { uploadAssetByFile } from '../asset/asset.js';
+    import { uploadAssetByBlob } from '../asset/asset.js';
     import Aabb2Edit from '../components/AABB2Edit.svelte';
     import AssetImage from '../components/AssetImage.svelte';
     import type { EffectParticle } from './effect-state.js';
@@ -43,7 +43,11 @@
         画像 <small>- {particle.source.assets.length}個</small>
     </span>
     <FileDrop handle={async (files) => {
-        const assets = await Promise.all([...files].map((file) => uploadAssetByFile(file)));
+        const assets = await Promise.all([...files].map((file) => uploadAssetByBlob(file)));
+        // const assets = [];
+        // for (const file of files) {
+        //     assets.push(await uploadAssetByBlob(file));
+        // } 
         particle.source = {
             type: 'random',
             assets: assets,
