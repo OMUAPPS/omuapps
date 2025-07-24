@@ -24,7 +24,7 @@ from .const import (
 )
 from .twitch import TwitchAPI, TwitchChat, TwitchPubSub
 from .twitch.chat import TwitchCommand
-from .twitch.command import ChatParams, Commands, RoomStateParams
+from .twitch.command import ChatParams, ClearMSGParams, Commands, RoomStateParams
 from .twitch.pubsub import BroadcastSettingsUpdate, ChannelTopicHandle, PubSubTopics, VideoPlaybackById
 
 
@@ -198,6 +198,7 @@ class TwitchChatService(ProviderService):
         )
         handlers = {
             "PRIVMSG": service.on_privmsg,
+            "CLEARMSG": service.on_clearmsg,
             "CAP": service.on_cap,
             "JOIN": service.on_join,
             "PART": service.on_part,
@@ -223,9 +224,7 @@ class TwitchChatService(ProviderService):
     async def on_privmsg(self, chat: TwitchChat, packet: TwitchCommand):
         if len(packet.args) == 0:
             return
-        message_parts = packet.args[0]
         params = ChatParams(**packet.params)
-        root = self.parse_message(" ".join(message_parts), params.get("emotes", ""))
         topics = self.topics.get(int(params["room-id"]))
         if topics is None:
             logger.warning(f"No topics for room: {params['room-id']}")
@@ -234,12 +233,15 @@ class TwitchChatService(ProviderService):
             logger.warning(f"No room for topics: {params['room-id']}")
             return
         room = topics.room
+        message_id = room.id.join(params["id"])
         sender_login = packet.sender.split("!")[0]
         author = await self.fetch_author(params["user-id"], topics, sender_login)
-
+        message_parts = packet.args[0]
+        root = self.parse_message(" ".join(message_parts), params.get("emotes", ""))
         created_at = datetime.fromtimestamp(int(params["tmi-sent-ts"]) / 1000)
+
         message = Message(
-            id=room.id.join(params["id"]),
+            id=message_id,
             room_id=room.id,
             author_id=author.id,
             content=root,
@@ -248,6 +250,24 @@ class TwitchChatService(ProviderService):
         self.update_room_metadata(room, message)
         await self.chat.rooms.update(room)
         await self.chat.messages.add(message)
+
+    async def on_clearmsg(self, chat: TwitchChat, packet: TwitchCommand):
+        if len(packet.args) == 0:
+            return
+        params = ClearMSGParams(**packet.params)
+        topics = self.topics.get(int(params["room-id"]))
+        if topics is None:
+            logger.warning(f"No topics for room: {params['room-id']}")
+            return
+        if topics.room is None:
+            logger.warning(f"No room for topics: {params['room-id']}")
+            return
+        message_id = topics.room.id / params["target-msg-id"]
+        existing_message = await self.chat.messages.get(message_id.key())
+        if existing_message is None:
+            return
+        existing_message.deleted = True
+        await self.chat.messages.update(existing_message)
 
     def update_room_metadata(self, room: Room, message: Message):
         if room.metadata.get("first_message_id") is None:
@@ -336,37 +356,6 @@ class TwitchChatService(ProviderService):
         await chat.send(Commands.PONG())
 
     async def on_usernotice(self, chat: TwitchChat, packet: TwitchCommand):
-        # {
-        #     "params": {
-        #         "badge-info": "subscriber/1",
-        #         "badges": "subscriber/0,premium/1",
-        #         "color": "",
-        #         "display-name": "dunk1e",
-        #         "emotes": "",
-        #         "flags": "",
-        #         "id": "f0df6398-ad45-41f5-ae92-7e5ef418f0a6",
-        #         "login": "dunk1e",
-        #         "mod": "0",
-        #         "msg-id": "sub",
-        #         "msg-param-cumulative-months": "1",
-        #         "msg-param-months": "0",
-        #         "msg-param-multimonth-duration": "1",
-        #         "msg-param-multimonth-tenure": "0",
-        #         "msg-param-should-share-streak": "0",
-        #         "msg-param-sub-plan-name": "Rare\\sCommentary\\s(theprimeagen)",
-        #         "msg-param-sub-plan": "Prime",
-        #         "msg-param-was-gifted": "false",
-        #         "room-id": "167160215",
-        #         "subscriber": "1",
-        #         "system-msg": "dunk1e\\ssubscribed\\swith\\sPrime.",
-        #         "tmi-sent-ts": "1741622572328",
-        #         "user-id": "1277528173",
-        #         "user-type": "",
-        #         "vip": "0",
-        #     },
-        #     "arguments": [["tmi.twitch.tv", "USERNOTICE", "#theprimeagen"]],
-        # }
-
         logger.info(f"User notice: {packet}")
 
     async def start_channel(self, ctx: ProviderContext, channel: Channel):

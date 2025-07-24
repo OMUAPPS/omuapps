@@ -48,7 +48,8 @@ class TwitchChat:
         await self.send(Commands.PART(channel_login))
 
     async def send(self, command: Command):
-        assert self.socket is not None
+        assert self.socket is not None, "Socket is not connected"
+        assert not self.socket.closed, "Socket is closed"
         parts: list[str] = []
         if command.params:
             parts.append(f"@{';'.join(f'{k}={v}' for k, v in command.params.items())}")
@@ -111,7 +112,11 @@ class TwitchChat:
                 args=rest_args,
             )
         if action in self.handlers:
-            await self.handlers[action](self, packet)
+            coro = self.handlers[action](self, packet)
+            try:
+                await coro
+            except Exception as e:
+                logger.opt(exception=e).error(f"Error handling command {action}: {command.to_json()}")
         elif action.isnumeric():
             pass
         else:
