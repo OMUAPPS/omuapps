@@ -22,7 +22,8 @@
     },
     "devDependencies": {
         "@actions/github": "^6.0.0",
-        "@types/bun": "^1.2.6",
+        "@types/bun": "1.2.19",
+        "@types/node": "^20.11.2",
         "@types/eslint": "^9.6.0",
         "@sveltejs/package": "2.3.10",
         "bun-plugin-isolated-decl": "^0.1.10",

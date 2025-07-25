@@ -575,15 +575,19 @@ class OBSSource(Reference[obs_source_t]):
             return obspython.obs_source_is_group(source)
 
     @property
-    def group(self) -> OBSSource:
+    def group(self) -> OBSSource | None:
         with self as source:
             obs_group = obspython.obs_group_from_source(source)
+        if obs_group is None:
+            return None
         return OBSSource(obs_group)
 
     @property
-    def group_or_scene(self) -> OBSSource:
+    def group_or_scene(self) -> OBSSource | None:
         with self as source:
             obs_group_or_scene = obspython.obs_group_or_scene_from_source(source)
+        if obs_group_or_scene is None:
+            return None
         return OBSSource(obs_group_or_scene)
 
 

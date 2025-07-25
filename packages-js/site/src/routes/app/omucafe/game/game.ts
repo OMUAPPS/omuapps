@@ -4,9 +4,7 @@ import { Matrices } from '$lib/components/canvas/matrices.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
-import { getTextureByAsset, getTextureByUri, getTextureByUriCORS, uploadAssetByBlob } from '../asset/asset.js';
-import bell from '../asset/images/bell.png';
-import counter_client from '../asset/images/counter_client.png';
+import { getTextureByAsset, getTextureByUriCORS, uploadAssetByBlob } from '../asset/asset.js';
 import { createContainer } from '../item/behaviors/container.js';
 import { collectClickActions, createItemState, getItemStateRender, ITEM_LAYERS, loadBehaviorHandlers, markItemStateChanged, removeItemState, renderHeldItem, renderHoveredItem, renderItems, renderItemState, updateHoveringItem } from '../item/item-state.js';
 import { createItem } from '../item/item.js';
@@ -20,6 +18,7 @@ export let changed = false;
 export let glContext: GlContext;
 export let matrices: Matrices;
 export let canvas: HTMLCanvasElement;
+export let waitCanvasLoaded: Promise<void>;
 export let scaleFactor = 1;
 export let draw: Draw;
 let frameBuffer: GlFramebuffer;
@@ -117,12 +116,13 @@ export let resources: Resources;
 let readBuffer: GlFramebuffer;
 
 export async function init(ctx: GlContext) {
-    const { paintSignal, paintEvents, gameConfig } = getGame();
-    createAudioContext();
     glContext = ctx;
+    const { paintSignal, paintEvents, gameConfig } = getGame();
     matrices = new Matrices();
     matrices.width = ctx.gl.canvas.width;
     matrices.height = ctx.gl.canvas.height;
+    createAudioContext();
+    waitResourcesLoaded();
     draw = new Draw(matrices, ctx);
     frameBufferTexture = ctx.createTexture();
     frameBufferTexture.use(() => {
@@ -138,7 +138,7 @@ export async function init(ctx: GlContext) {
         frameBuffer.attachTexture(frameBufferTexture);
     });
     readBuffer = ctx.createFramebuffer();
-    resources = await getResources();
+    resources = await waitResourcesLoaded();
     paint = new Paint(ctx, resources.photo_frame);
     if (side !== 'client') {
         paintSignal.listen((events) => {
@@ -162,14 +162,14 @@ export async function init(ctx: GlContext) {
         
     await loadBehaviorHandlers();
     if (side === 'client') {
-        const counterTex = await getTextureByUri(counter_client);
+        const counterTex = resources.counter_client_tex;
         const existCounter = context.items['counter'];
         const counterItem = createItem({
             id: 'counter',
             name: 'カウンター',
             image: {
                 type: 'url',
-                url: counter_client,
+                url: resources.counter_client,
             },
             bounds: {
                 min: Vec2.ZERO,
@@ -195,14 +195,14 @@ export async function init(ctx: GlContext) {
             layer: ITEM_LAYERS.COUNTER,
             children: existCounter?.children,
         });
-        const bellTex = await getTextureByUri(bell);
+        const bellTex = resources.bell_tex;
         const existbell = context.items['bell'];
         const bellItem = createItem({
             id: 'bell',
             name: 'ベル',
             image: {
                 type: 'url',
-                url: bell,
+                url: resources.bell,
             },
             bounds: {
                 min: Vec2.ZERO,
@@ -629,9 +629,7 @@ export async function renderBackgroundSide() {
 
 import { BetterMath } from '$lib/math.js';
 import { invLerp, lerp } from '$lib/math/math.js';
-import dummy_back from '../asset/images/dummy_back.png';
-import dummy_front from '../asset/images/dummy_front.png';
-import { getResources, type Resources } from '../asset/resources.js';
+import { waitResourcesLoaded, type Resources } from '../asset/resources.js';
 import { getGame, type User } from '../omucafe-app.js';
 import { isNounLike, type OrderMessage } from '../order/order.js';
 import type { SceneType } from '../scenes/scene.js';
@@ -665,7 +663,7 @@ async function renderCustomersClient(position: Vec2) {
     const { order } = context;
     if (order) {
         const { user, message } = order;
-        const { tex, width, height } = await getTextureByUri(side === 'client' ? dummy_front : dummy_back);
+        const { tex, width, height } = side === 'client' ? resources.dummy_front : resources.dummy_back;
         draw.texture(position.x, position.y, position.x + width / 1.2, position.y + height / 1.2, tex);
         const nametagBounds = AABB2.from({
             min: {x: -340, y: -200},
@@ -722,7 +720,7 @@ async function renderCustomersAsset(position: Vec2) {
     const { order } = context;
     if (order) {
         const { user } = order;
-        const { tex, width, height } = await getTextureByUri(side === 'client' ? dummy_front : dummy_back);
+        const { tex, width, height } = side === 'client' ? resources.dummy_front : resources.dummy_back;
         draw.texture(position.x, position.y, position.x + width / 1.2, position.y + height / 1.2, tex);
         const center = position.add({x: width / 1.2 / 2, y: height / 1.2 / 2});
         draw.fontFamily = 'Noto Sans JP, sans-serif';

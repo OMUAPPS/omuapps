@@ -49,8 +49,47 @@ export class Flags {
     }
 }
 
+function readFloat16(dataView: DataView, offset: number): number {
+    const sign = (dataView.getUint16(offset) & 0x8000) ? -1 : 1;
+    const exponent = (dataView.getUint16(offset) & 0x7c00) >> 10;
+    const mantissa = (dataView.getUint16(offset) & 0x03ff);
+    if (exponent === 0 && mantissa === 0) {
+        return 0;
+    } else if (exponent === 0x1f) {
+        return mantissa === 0 ? Infinity * sign : NaN;
+    } else {
+        const normalizedExponent = exponent - 15;
+        const normalizedMantissa = mantissa / 1024;
+        return sign * Math.pow(2, normalizedExponent) * (1 + normalizedMantissa);
+    }
+}
+
+function writeFloat16(dataView: DataView, offset: number, value: number): void {
+    if (value === 0) {
+        dataView.setUint16(offset, 0);
+        return;
+    }
+    const sign = value < 0 ? 1 : 0;
+    value = Math.abs(value);
+    if (!isFinite(value)) {
+        dataView.setUint16(offset, 0x7c00 | (sign << 15));
+        return;
+    }
+    const exponent = Math.floor(Math.log2(value));
+    const mantissa = value / Math.pow(2, exponent) - 1;
+    const normalizedExponent = exponent + 15;
+    const normalizedMantissa = Math.round(mantissa * 1024);
+    if (normalizedExponent <= 0) {
+        dataView.setUint16(offset, sign << 15);
+    } else if (normalizedExponent >= 0x1f) {
+        dataView.setUint16(offset, 0x7c00 | (sign << 15));
+    } else {
+        dataView.setUint16(offset, (sign << 15) | (normalizedExponent << 10) | normalizedMantissa);
+    }
+}
+
 export class ByteWriter {
-    private dataArray: DataView;
+    private dataView: DataView;
     private buffer: ArrayBuffer;
     private offset = 0;
     private finished = false;
@@ -58,7 +97,7 @@ export class ByteWriter {
     constructor(init?: ArrayBuffer, offset?: number) {
         this.offset = offset ?? 0;
         this.buffer = init ?? new ArrayBuffer(1024);
-        this.dataArray = new DataView(this.buffer);
+        this.dataView = new DataView(this.buffer);
     }
 
     public static fromUint8Array(buffer: Uint8Array): ByteWriter {
@@ -74,7 +113,7 @@ export class ByteWriter {
             const newBuffer = new ArrayBuffer(newByteLength);
             new Uint8Array(newBuffer).set(new Uint8Array(this.buffer));
             this.buffer = newBuffer;
-            this.dataArray = new DataView(this.buffer);
+            this.dataView = new DataView(this.buffer);
         }
     }
 
@@ -90,63 +129,63 @@ export class ByteWriter {
 
     public writeBoolean(value: boolean): ByteWriter {
         this.allocate(1);
-        this.dataArray.setInt8(this.offset, value ? 1 : 0);
+        this.dataView.setInt8(this.offset, value ? 1 : 0);
         this.offset += 1;
         return this;
     }
 
     public writeInt8(value: number): ByteWriter {
         this.allocate(1);
-        this.dataArray.setInt8(this.offset, value);
+        this.dataView.setInt8(this.offset, value);
         this.offset += 1;
         return this;
     }
 
     public writeUint8(value: number): ByteWriter {
         this.allocate(1);
-        this.dataArray.setUint8(this.offset, value);
+        this.dataView.setUint8(this.offset, value);
         this.offset += 1;
         return this;
     }
 
     public writeInt16(value: number): ByteWriter {
         this.allocate(2);
-        this.dataArray.setInt16(this.offset, value);
+        this.dataView.setInt16(this.offset, value);
         this.offset += 2;
         return this;
     }
 
     public writeUint16(value: number): ByteWriter {
         this.allocate(2);
-        this.dataArray.setUint16(this.offset, value);
+        this.dataView.setUint16(this.offset, value);
         this.offset += 2;
         return this;
     }
 
     public writeInt32(value: number): ByteWriter {
         this.allocate(4);
-        this.dataArray.setInt32(this.offset, value);
+        this.dataView.setInt32(this.offset, value);
         this.offset += 4;
         return this;
     }
 
     public writeUint32(value: number): ByteWriter {
         this.allocate(4);
-        this.dataArray.setUint32(this.offset, value);
+        this.dataView.setUint32(this.offset, value);
         this.offset += 4;
         return this;
     }
 
     public writeInt64(value: bigint): ByteWriter {
         this.allocate(8);
-        this.dataArray.setBigInt64(this.offset, value);
+        this.dataView.setBigInt64(this.offset, value);
         this.offset += 8;
         return this;
     }
 
     public writeUint64(value: bigint): ByteWriter {
         this.allocate(8);
-        this.dataArray.setBigUint64(this.offset, value);
+        this.dataView.setBigUint64(this.offset, value);
         this.offset += 8;
         return this;
     }
@@ -158,33 +197,33 @@ export class ByteWriter {
         }
         while (value > 0x7f) {
             this.allocate(1);
-            this.dataArray.setUint8(this.offset, (value & 0x7f) | 0x80);
+            this.dataView.setUint8(this.offset, (value & 0x7f) | 0x80);
             this.offset += 1;
             value >>= 7;
         }
         this.allocate(1);
-        this.dataArray.setUint8(this.offset, value & 0x7f);
+        this.dataView.setUint8(this.offset, value & 0x7f);
         this.offset += 1;
         return this;
     }
 
     public writeFloat16(value: number): ByteWriter {
         this.allocate(2);
-        this.dataArray.setFloat16(this.offset, value);
+        writeFloat16(this.dataView, this.offset, value);
         this.offset += 2;
         return this;
     }
 
     public writeFloat32(value: number): ByteWriter {
         this.allocate(4);
-        this.dataArray.setFloat32(this.offset, value);
+        this.dataView.setFloat32(this.offset, value);
         this.offset += 4;
         return this;
     }
 
     public writeFloat64(value: number): ByteWriter {
         this.allocate(4);
-        this.dataArray.setFloat64(this.offset, value);
+        this.dataView.setFloat64(this.offset, value);
         this.offset += 4;
         return this;
     }
@@ -215,12 +254,12 @@ export class ByteWriter {
 }
 
 export class ByteReader {
-    private dataArray: DataView;
+    private dataView: DataView;
     private offset: number;
     private finished: boolean;
 
     private constructor(data: DataView) {
-        this.dataArray = data;
+        this.dataView = data;
         this.offset = 0;
         this.finished = false;
     }
@@ -251,64 +290,64 @@ export class ByteReader {
         if (size < 0) {
             throw new Error('Size must be positive');
         }
-        if (this.offset + size > this.dataArray.byteLength) {
+        if (this.offset + size > this.dataView.byteLength) {
             throw new Error('Buffer not fully read');
         }
-        const value = new Uint8Array(this.dataArray.buffer, this.offset, size);
+        const value = new Uint8Array(this.dataView.buffer, this.offset, size);
         this.offset += size;
         return value;
     }
 
     public readBoolean(): boolean {
-        const value = this.dataArray.getInt8(this.offset);
+        const value = this.dataView.getInt8(this.offset);
         this.offset += 1;
         return value !== 0;
     }
 
     public readInt8(): number {
-        const value = this.dataArray.getInt8(this.offset);
+        const value = this.dataView.getInt8(this.offset);
         this.offset += 1;
         return value;
     }
 
     public readUint8(): number {
-        const value = this.dataArray.getUint8(this.offset);
+        const value = this.dataView.getUint8(this.offset);
         this.offset += 1;
         return value;
     }
 
     public readInt16(): number {
-        const value = this.dataArray.getInt16(this.offset);
+        const value = this.dataView.getInt16(this.offset);
         this.offset += 2;
         return value;
     }
 
     public readUint16(): number {
-        const value = this.dataArray.getUint16(this.offset);
+        const value = this.dataView.getUint16(this.offset);
         this.offset += 2;
         return value;
     }
 
     public readInt32(): number {
-        const value = this.dataArray.getInt32(this.offset);
+        const value = this.dataView.getInt32(this.offset);
         this.offset += 4;
         return value;
     }
 
     public readUint32(): number {
-        const value = this.dataArray.getUint32(this.offset);
+        const value = this.dataView.getUint32(this.offset);
         this.offset += 4;
         return value;
     }
 
     public readInt64(): bigint {
-        const value = this.dataArray.getBigInt64(this.offset);
+        const value = this.dataView.getBigInt64(this.offset);
         this.offset += 8;
         return value;
     }
 
     public readUint64(): bigint {
-        const value = this.dataArray.getBigUint64(this.offset);
+        const value = this.dataView.getBigUint64(this.offset);
         this.offset += 8;
         return value;
     }
@@ -319,10 +358,10 @@ export class ByteReader {
         let shift = 0;
         let byte: number;
         do {
-            if (this.offset >= this.dataArray.byteLength) {
+            if (this.offset >= this.dataView.byteLength) {
                 throw new Error('Buffer not fully read');
             }
-            byte = this.dataArray.getUint8(this.offset);
+            byte = this.dataView.getUint8(this.offset);
             this.offset += 1;
             value |= (byte & 0b01111111) << shift;
             shift += 7;
@@ -332,19 +371,19 @@ export class ByteReader {
     }
 
     public readFloat16(): number {
-        const value = this.dataArray.getFloat16(this.offset);
+        const value = readFloat16(this.dataView, this.offset);
         this.offset += 2;
         return value;
     }
 
     public readFloat32(): number {
-        const value = this.dataArray.getFloat32(this.offset);
+        const value = this.dataView.getFloat32(this.offset);
         this.offset += 4;
         return value;
     }
 
     public readFloat64(): number {
-        const value = this.dataArray.getFloat64(this.offset);
+        const value = this.dataView.getFloat64(this.offset);
         this.offset += 8;
         return value;
     }
@@ -368,7 +407,7 @@ export class ByteReader {
             throw new Error('Buffer already finished');
         }
         this.finished = true;
-        if (this.offset !== this.dataArray.byteLength) {
+        if (this.offset !== this.dataView.byteLength) {
             throw new Error('Buffer not fully read');
         }
     }

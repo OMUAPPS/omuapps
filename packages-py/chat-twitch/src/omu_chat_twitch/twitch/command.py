@@ -105,3 +105,13 @@ RoomStateParams = TypedDict(
         "subs-only": str,
     },
 )
+
+ClearMSGParams = TypedDict(
+    "ClearMSGParams",
+    {
+        "login": str,
+        "room-id": str,
+        "target-msg-id": str,
+        "tmi-sent-ts": str,
+    },
+)

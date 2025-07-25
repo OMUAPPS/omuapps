@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button, Checkbox, FileDrop, Slider } from '@omujs/ui';
-    import { uploadAssetByFile } from '../../asset/asset.js';
+    import { uploadAssetByBlob } from '../../asset/asset.js';
     import EditImage from '../../components/EditImage.svelte';
     import TransformEdit from '../../components/TransformEdit.svelte';
     import { createTransform } from '../../game/transform.js';
@@ -59,7 +59,7 @@
     層
     <FileDrop primary handle={async (files) => {
         const [file] = files;
-        const asset = await uploadAssetByFile(file);
+        const asset = await uploadAssetByBlob(file);
         behavior.layers = [
             ...behavior.layers,
             {

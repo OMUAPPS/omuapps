@@ -76,6 +76,20 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         this.maskBuffer = maskBuffer;
         this.maskBufferTexture = maskBufferTexture;
     }
+
+    preLoadAssets(action: BehaviorAction<'container'>, args: undefined): Promise<void> | void {
+        const { item, behavior } = action;
+        if (behavior.mask) {
+            getTextureByAsset(behavior.mask.asset);
+        }
+        if (behavior.overlay) {
+            getTextureByAsset(behavior.overlay.asset);
+        }
+        if (get(showMask) && behavior.mask && item.layer === ITEM_LAYERS.EDIT_PREVIEW) {
+            const { asset } = behavior.mask;
+            getTextureByAsset(asset);
+        }
+    }
     
     async renderPre(
         action: BehaviorAction<'container'>,

@@ -5,6 +5,7 @@
     import KitchenRenderer from './components/KitchenRenderer.svelte';
     import SceneEffectEdit from './effect/SceneEffectEdit.svelte';
     import SceneGallery from './gallery/SceneGallery.svelte';
+    import { DEFAULT_CONFIG } from './game/config.js';
     import { getContext, markChanged, mouse } from './game/game.js';
     import { GameData } from './game/gamedata.js';
     import { PaintBuffer } from './game/paint.js';
@@ -12,7 +13,7 @@
     import SceneItemEdit from './item/SceneItemEdit.svelte';
     import SceneKitchen from './kitchen/SceneKitchen.svelte';
     import SceneKitchenEdit from './kitchen/SceneKitchenEdit.svelte';
-    import { DEFAULT_CONFIG, DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame } from './omucafe-app.js';
+    import { DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame } from './omucafe-app.js';
     import SceneProductEdit from './product/SceneProductEdit.svelte';
     import SceneProductList from './product/SceneProductList.svelte';
     import SceneTakeProductPhoto from './product/SceneTakeProductPhoto.svelte';

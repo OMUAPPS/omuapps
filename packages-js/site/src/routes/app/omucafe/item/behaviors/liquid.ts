@@ -231,6 +231,24 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
         });
     }
 
+    preLoadAssets(action: BehaviorAction<'liquid'>, args: undefined): Promise<void> | void {
+        const { behavior } = action;
+        if (behavior.layers.length === 0) return;
+            const { layers } = behavior;
+            if (!layers.length) return;
+            const layersFromTop = layers.toReversed();
+            const { side, top: topAsset } = layersFromTop[0];
+            getTextureByAsset(topAsset ?? side);
+            for (const layer of layersFromTop) {
+                const { side } = layer;
+                getTextureByAsset(side);
+            }
+        if (behavior.mask) {
+            const { asset } = behavior.mask;
+            getTextureByAsset(asset);
+        }
+    }
+
     async renderPre(action: BehaviorAction<'liquid'>, args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender>; }): Promise<void> {
         const { item, behavior } = action;
         const { bufferBounds } = args;

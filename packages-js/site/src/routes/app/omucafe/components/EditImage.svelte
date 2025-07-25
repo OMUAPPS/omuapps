@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button, FileDrop } from '@omujs/ui';
-    import { uploadAssetByFile, type Asset } from '../asset/asset.js';
+    import { uploadAssetByBlob, type Asset } from '../asset/asset.js';
     import AssetImage from './AssetImage.svelte';
 
     export let image: Asset | null | undefined;
@@ -20,7 +20,7 @@
             throw new Error('FileDrop must receive only one file');
         }
         const file = fileList[0];
-        handle(await uploadAssetByFile(file));
+        handle(await uploadAssetByBlob(file));
     }} accept="image/*">
         {#if image}
             <p>画像を変更</p>

@@ -466,9 +466,11 @@ class OBSScene(Reference[obs_scene_t]):
         obs_scene = obspython.obs_scene_duplicate(self, name, duplicate_type.value)
         return OBSScene(obs_scene)
 
-    def find_source(self, name: str) -> OBSSceneItem:
+    def find_source(self, name: str) -> OBSSceneItem | None:
         with self as scene:
             obs_sceneitem = obspython.obs_scene_find_source(scene, name)
+        if obs_sceneitem is None:
+            return
         return OBSSceneItem(obs_sceneitem)
 
     def find_source_recursive(self, name: str) -> OBSSceneItem:

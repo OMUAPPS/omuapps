@@ -2,6 +2,7 @@ import { getContext } from '../game/game.js'
 import { uniqueId } from '../game/helper.js'
 import { ARC4 } from '../game/random.js'
 import { Time } from '../game/time.js'
+import { getGame } from '../omucafe-app.js'
 import { getAssetArrayBuffer, type Asset } from './asset.js'
 
 export type Filter = {
@@ -461,10 +462,22 @@ class AudioInstanceEnvelope implements AudioInstance<EnvelopeClip> {
 
 const MAX_AUDIO_DURATION = 1000 * 60 * 5; // 5 minutes
 
+function getClipAudioDest(ctx: ClipContext): AudioNode {
+    if (!ctx.source) return masterNode;
+    return effectsNode;
+}
+
+function updateAudioConfig() {
+    const { configRegistry } = getGame();
+    masterNode.gain.value = configRegistry.value.audio.volumes.master;
+    effectsNode.gain.value = configRegistry.value.audio.volumes.effects;
+}
+
 export async function updateAudioClips(): Promise<void> {
     const time = Time.now();
     const context = getContext();
     if (context.side !== 'client') return;
+    updateAudioConfig();
     const { audios } = context
     for (const id in audios) {
         const playing = audios[id]
@@ -486,12 +499,13 @@ export async function updateAudioClips(): Promise<void> {
             }
             delete audios[id];
         }
+        const dest = getClipAudioDest(ctx);
         if (existing) {
-            existing.update(playing.clip, ctx)?.connect(audioCtx.destination);
+            existing.update(playing.clip, ctx)?.connect(dest);
             continue;
         } else {
             const instance = await createAudioInstance(playing.clip, ctx);
-            instance.update(playing.clip, ctx)?.connect(audioCtx.destination);;
+            instance.update(playing.clip, ctx)?.connect(dest);
             audioInstances.set(id, instance);
         }
     }
@@ -555,8 +569,14 @@ async function estimateClipEndTime(clip: AudioClip, ctx: ClipContext): Promise<n
     return;
 }
 
-export let audioCtx: AudioContext;
+let audioCtx: AudioContext;
+let masterNode: GainNode;
+let effectsNode: GainNode;
 
 export function createAudioContext() {
     audioCtx = new AudioContext();
+    masterNode = audioCtx.createGain();
+    masterNode.connect(audioCtx.destination);
+    effectsNode = audioCtx.createGain();
+    effectsNode.connect(masterNode);
 }

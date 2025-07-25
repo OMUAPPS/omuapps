@@ -1,7 +1,7 @@
 import { downloadFile } from '$lib/helper.js';
 import { Identifier } from '@omujs/omu';
 import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
-import { getAssetBuffer, uploadAsset, type Asset } from '../asset/asset.js';
+import { getAssetBuffer, uploadAssetById, type Asset } from '../asset/asset.js';
 import { getGame, type GameConfig, type ResourceRegistry, type States } from '../omucafe-app.js';
 import { getContext } from './game.js';
 
@@ -95,7 +95,7 @@ export class GameData {
         const { data } = this;
         await Promise.all(Object.entries(this.buffers).map(async ([id, buffer]) => {
             const key = Identifier.fromKey(id);
-            await uploadAsset(key, buffer);
+            await uploadAssetById(key, buffer);
         }));
         await gameConfigRegistry.set(data.gameConfig);
         await resourcesRegistry.set(data.resources);
