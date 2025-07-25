@@ -338,7 +338,7 @@ void main() {
     vec2 uv = v_texcoord * u_resolution;
     float dist = length(uv) / 2.0;
     float alpha = smoothstep(u_radiusOuter, u_radiusOuter - u_smoothness, dist) * smoothstep(u_radiusInner - u_smoothness, u_radiusInner, dist);
-    fragColor = u_color * alpha;
+    fragColor = vec4(u_color.rgb, u_color.a * alpha);
 }
 `;
 
