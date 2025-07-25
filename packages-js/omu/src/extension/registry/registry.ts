@@ -50,19 +50,21 @@ export class RegistryType<T> {
         public readonly permissions: RegistryPermissions,
     ) { }
 
-    public static createJson<T>(identifier: Identifier, {
+    public static createJson<T, D = T>(identifier: Identifier, {
         name,
         defaultValue,
         permissions,
+        serializer,
     }: {
         name: string;
         defaultValue: T;
         permissions?: RegistryPermissions;
+        serializer?: Serializable<T, D>;
     }): RegistryType<T> {
         return new RegistryType(
             identifier.join(name),
             defaultValue,
-            Serializer.json(),
+            serializer ? Serializer.of(serializer).pipe(Serializer.json()) : Serializer.json(),
             permissions ?? new RegistryPermissions(),
         );
     }
