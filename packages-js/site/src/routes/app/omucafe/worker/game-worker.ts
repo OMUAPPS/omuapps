@@ -1,5 +1,6 @@
 import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
 import { BROWSER } from 'esm-env';
+import type { OrderDetectResult, ProductTokens } from '../order/order.js';
 import GameWorker from './game-worker.worker.js?worker';
 import { WorkerPipe } from './worker.js';
 
@@ -8,6 +9,10 @@ export type GameCommands = {
         request: string,
         response: TOKEN[],
     },
+    analyzeOrder: {
+        request: { tokens: TOKEN[], productTokens: ProductTokens[] },
+        response: OrderDetectResult,
+    }
     ready: {
         request: void,
         response: void,

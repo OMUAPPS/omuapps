@@ -35,53 +35,12 @@ export type Order = {
     items: OrderItem[],
 };
 
-type ProductTokens = {
+export type ProductTokens = {
     product: Product;
     tokens: TOKEN[];
 };
 
-function isEmptyToken(token: TOKEN) {
-    return (
-        token.pos === '記号' &&
-        [
-            token.pos_detail_1,
-            token.pos_detail_2,
-            token.pos_detail_3,
-        ].includes('空白')
-    );
-}
-
-function matchTokens(
-    tokens: TOKEN[],
-    offset: number,
-    targetTokens: TOKEN[],
-): { length: number } | null {
-    let index = 0;
-    let targetIndex = 0;
-    while (targetIndex < targetTokens.length) {
-        if (index + offset >= tokens.length) return null;
-        const token = tokens[index + offset];
-        if (index + offset >= targetTokens.length) return null;
-        const target = targetTokens[targetIndex];
-        if (isEmptyToken(token)) {
-            index++;
-            continue;
-        }
-        if (isEmptyToken(target)) {
-            targetIndex++;
-            continue;
-        }
-        if (token.pos !== target.pos) return null;
-        if (token.pronunciation !== target.pronunciation) return null;
-        index++;
-        targetIndex++;
-    }
-    return {
-        length: index,
-    };
-}
-
-type OrderDetectToken = {
+export type OrderDetectToken = {
     type: 'product';
     product: Product;
 } | {
@@ -92,77 +51,10 @@ type OrderDetectToken = {
     pronunciation?: string;
 };
 
-type OrderDetectResult = {
+export type OrderDetectResult = {
     detected: boolean;
     products: Product[];
     tokens: OrderDetectToken[];
-}
-
-async function analyzeOrderRequest(tokens: TOKEN[], productTokens: ProductTokens[]): Promise<OrderDetectResult> {
-    const products: Product[] = [];
-    const replacedTokens: OrderDetectToken[] = [];
-    const required: TOKEN[][] = [
-        await parseToken('ください'),
-        await parseToken('御願い'),
-        await parseToken('お願い'),
-        await parseToken('いただけますか'),
-        await parseToken('ちょうだい'),
-        await parseToken('くれる'),
-        await parseToken('頼む'),
-    ];
-    let index = 0;
-    while (tokens.length > index) {
-        let matched = false;
-        for (let i = 0; i < required.length; i++) {
-            const word = required[i];
-            if (tokens.length < word.length) continue;
-            const match = matchTokens(tokens, index, word);
-            if (!match) continue;
-            matched = true;
-            break;
-        }
-        if (matched) {
-            break;
-        } else {
-            index ++;
-        }
-    }
-    index = 0;
-    while (tokens.length > index) {
-        let matched = false;
-        for (let i = 0; i < productTokens.length; i++) {
-            const entry = productTokens[i];
-            if (tokens.length < entry.tokens.length) continue;
-            const match = matchTokens(tokens, index, entry.tokens);
-            if (!match) continue;
-            const alreadyAdded = products.some((p) => p.id === entry.product.id);
-            if (alreadyAdded) continue;
-            replacedTokens.push({
-                type: 'product',
-                product: entry.product,
-            });
-            products.push(entry.product);
-            index += match.length;
-            matched = true;
-            break;
-        }
-        if (!matched) {
-            const token = tokens[index];
-            replacedTokens.push({
-                type: 'token',
-                pos: token.pos,
-                surface_form: token.surface_form,
-                basic_form: token.basic_form,
-                pronunciation: token.pronunciation,
-            });
-            index++;
-        }
-    }
-    return {
-        detected: products.length > 0,
-        products: products,
-        tokens: replacedTokens,
-    }
 }
 
 const tokenCache: Map<string, TOKEN[]> = new Map();
@@ -173,9 +65,7 @@ async function parseToken(text: string): Promise<TOKEN[]> {
         throw new Error('Worker is not initialized');
     }
     const existing = tokenCache.get(text);
-    if (existing) {
-        return existing;
-    }
+    if (existing) return existing;
     const tokens = await game.worker.call('tokenize', text);
     tokenCache.set(text, tokens);
     return tokens;
@@ -267,7 +157,7 @@ export async function processMessage(message: Message) {
     const author = await game.chat.authors.get(message.authorId.key());
     if (!author || !author.name) return;
     const { config } = ctx;
-    const tokens = await game.worker.call('tokenize', message.text);
+    const tokens = await parseToken(message.text);
     if (ctx.order && ctx.order.user.id === author.key()) {
         ctx.order.message = {
             timestamp: Time.now(),
@@ -282,7 +172,7 @@ export async function processMessage(message: Message) {
             tokens: await parseToken(product.name)
         }
     }));
-    const orderAnalysis = await analyzeOrderRequest(tokens, productTokens);
+    const orderAnalysis = await game.worker!.call('analyzeOrder', { tokens, productTokens });
     if (!orderAnalysis.detected) return;
     await playAudioClip(resources.bell_audio_clip);
     await game.orders.add({
