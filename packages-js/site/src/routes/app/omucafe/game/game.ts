@@ -86,6 +86,7 @@ function syncData() {
             held: context.held,
             hovering: context.hovering,
             order: context.order,
+            lastOrder: context.lastOrder,
             mouse: {
                 position: mouse.gl,
                 delta: mouse.deltaGl,
@@ -639,15 +640,14 @@ import { renderParticles } from './renderer/particle.js';
 
 async function renderNametag(user: User, bounds: AABB2) {
     const dimentions = bounds.dimensions();
-    // draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, new Vec4(0.99, 0.99, 0.99, 1));
     const strokeOffset = 2;
-    const size = dimentions.x / 6;
-    // draw.rectangleStroke(bounds.min.x + strokeOffset, bounds.min.y + strokeOffset, bounds.max.x - strokeOffset, bounds.max.y - strokeOffset, new Vec4(0, 0, 0, 0.5), 3);
+    const size = dimentions.x / 5;
     if (user.avatar) {
         const { tex } = await getTextureByUriCORS(user.avatar);
         const x = bounds.min.x + size / 2 + strokeOffset;
         const y = bounds.min.y + dimentions.y / 2 - size / 2;
-        draw.texture(x, y, x + size, y + size, tex);
+        draw.circle(x + size / 2, y + size / 2, 0, size + 2, Vec4.ONE);
+        draw.circleTex(x + size / 2, y + size / 2, 0, size, tex);
     }
     draw.fontFamily = '\'Noto Sans JP\', sans-serif';
     draw.fontSize = size / 1.5;
@@ -670,7 +670,7 @@ async function renderCustomersClient(position: Vec2) {
             max: {x: 340, y: 200},
         })
             .scale(side === 'client' ? 0.6 : 0.7)
-            .offset({ x: width / 1.2 / 2, y: height / 1.2 / 2 })
+            .offset({ x: width / 1.2 / 2, y: height / 2 })
             .offset(position);
         await renderNametag(user, nametagBounds);
         if (message) {
@@ -682,6 +682,9 @@ async function renderCustomersClient(position: Vec2) {
 async function renderMessage(message: OrderMessage, anchor: Vec2, maxWidth: number) {
     const { tokens, timestamp } = message;
     const elapsed = (Time.now() - timestamp) / 200;
+    const ziggleTime = (Time.now() - timestamp) / 1000;
+    const alpha = Math.min(1, (5 - ziggleTime) * 6);
+    if (alpha < 0) return;
     const t = Math.cos(elapsed * Math.sqrt(elapsed)) / (10 * elapsed * elapsed + 1);
     anchor = anchor.add({
         x: maxWidth / 1.2 / 2,
@@ -699,10 +702,48 @@ async function renderMessage(message: OrderMessage, anchor: Vec2, maxWidth: numb
     }, 0);
     anchor = anchor.add({ x: -textWidth + Math.min(maxWidth, textWidth / 2), y: 0 });
     const padding = 20;
-    draw.rectangle(
-        anchor.x - padding, anchor.y - padding,
-        anchor.x + textWidth + padding, anchor.y + height + padding,
-        new Vec4(1, 1, 1, 1)
+    const count = Math.max(3, textWidth / 150);
+    const ziggleAmplifier = 10;
+    if (alpha > 0.8) {
+        for (let index = 0; index < count; index ++) {
+            const t = index / (count - 1);
+            const x = lerp(anchor.x + padding, anchor.x + textWidth - padding, t);
+            const y = anchor.y + height / 2;
+            draw.circle(
+                x + Math.sin(ziggleTime + index * index * 312.31287) * ziggleAmplifier * 2,
+                y + Math.cos(ziggleTime + index * index * 376.31287) * ziggleAmplifier,
+                0,
+                310,
+                new Vec4(0, 0, 0, 0.621 * alpha),
+            );
+        }
+        for (let index = 0; index < count; index ++) {
+            const t = index / (count - 1);
+            const x = lerp(anchor.x + padding, anchor.x + textWidth - padding, t);
+            const y = anchor.y + height / 2;
+            draw.circle(
+                x + Math.sin(ziggleTime + index * index * 312.31287) * ziggleAmplifier * 2,
+                y + Math.cos(ziggleTime + index * index * 376.31287) * ziggleAmplifier,
+                0,
+                300,
+                new Vec4(1, 1, 1, alpha),
+            );
+        }
+    }
+    const arrowX = anchor.x + textWidth - padding;
+    const arrowY = anchor.y + height / 2;
+    const points: [Vec2Like, Vec2Like, Vec2Like] = [
+        {x: arrowX - 25, y: arrowY},
+        {x: arrowX + 25, y: arrowY},
+        {x: arrowX, y: arrowY + 50},
+    ]
+    draw.triangle(
+        ...points,
+        new Vec4(0, 0, 0, 0.621 * alpha),
+    );
+    draw.triangle(
+        ...points,
+        new Vec4(1, 1, 1, alpha),
     );
     let x = 0;
     for (const token of tokens) {
@@ -711,7 +752,11 @@ async function renderMessage(message: OrderMessage, anchor: Vec2, maxWidth: numb
         const text = token.surface_form;
         const metrics = draw.measureText(text);
         const baseline = height - metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent;
-        await draw.text(anchor.x + x + (isNounToken ? 5 : 0), anchor.y + baseline, text, new Vec4(0, 0, 0, isNounToken ? 1 : 0.5));
+        await draw.text(
+            anchor.x + x + (isNounToken ? 5 : 0),
+            anchor.y + baseline + Math.sin(x * 1231.31 + ziggleTime) * 3,
+            text, new Vec4(0, 0, 0, alpha * (isNounToken ? 0.8 : 0.5))
+        );
         x += (metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft) + (isNounToken ? 10 : 0);
     }
 }
@@ -731,8 +776,7 @@ async function renderCustomersAsset(position: Vec2) {
 
 export async function renderClientSide() {
     if (side !== 'client') return;
-    const { scene, items } = context;
-    const { gl } = glContext;
+    const { scene } = context;
 
     setupHUDProjection();
     await updateMouseClient();

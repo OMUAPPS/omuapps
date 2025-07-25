@@ -65,6 +65,7 @@
     $: {
         mouse.ui = false;
         if (sceneElement) {
+            mouse.ui = $scene.type === 'main_menu';
             const children = sceneElement.children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];

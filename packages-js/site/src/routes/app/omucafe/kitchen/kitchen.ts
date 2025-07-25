@@ -19,12 +19,14 @@ export type Kitchen = {
     hovering: string | null,
     mouse: MouseState,
     order: Order | null,
+    lastOrder: Order | null,
 };
 
 export type KitchenContext = {
     audios: Record<string, PlayingAudioClip>,
     items: Record<string, ItemState>,
     order: Order | null,
+    lastOrder: Order | null,
     held: string | null,
     hovering: string | null,
     mouse: MouseState,

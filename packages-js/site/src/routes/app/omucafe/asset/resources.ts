@@ -20,9 +20,11 @@ import bell_7 from './sounds/bell_7.wav';
 import bell_8 from './sounds/bell_8.wav';
 
 
-function awaitBatch<T extends Record<string, Promise<any>>>(promises: T): Promise<{ [K in keyof T]: Awaited<T[K]> }> {
-    return Promise.all(Object.entries(promises).map(([key, promise]) => promise.then(value => [key, value] as const)))
-        .then(entries => Object.fromEntries(entries) as { [K in keyof T]: Awaited<T[K]> });
+async function awaitBatch<T extends Record<string, Promise<any>>>(promises: T): Promise<{ [K in keyof T]: Awaited<T[K]> }> {
+    const entries = await Promise.all(Object.entries(promises).map(([key, promise]) => promise.then(value_1 => [key, value_1] as const)));
+    return Object.fromEntries(entries) as {
+        [K in keyof T]: Awaited<T[K]>;
+    };
 }
 
 

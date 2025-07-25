@@ -23,7 +23,6 @@
         color: #eee;
         width: 20rem;
         height: 30%;
-        font-family: "DotGothic16", serif;
         font-weight: 600;
         font-style: normal;
         overflow-y: auto;
