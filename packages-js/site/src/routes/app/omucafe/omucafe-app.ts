@@ -18,19 +18,16 @@ import type { PlayingAudioClip } from './asset/audioclip.js';
 import type { EffectState } from './effect/effect-state.js';
 import { GALLERY_TABLE_TYPE, type GalleryItem } from './gallery/gallery.js';
 import { APP_CONFIG_REGISTRY_TYPE, type Config } from './game/config.js';
-import { getContext, mouse, paint, setContext } from './game/game.js';
-import { copy } from './game/helper.js';
-import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PAINT_EVENTS_REGISTRY_TYPE, PAINT_SIGNAL_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
-import { Time } from './game/time.js';
-import { transformToMatrix } from './game/transform.js';
-import { createEffect } from './item/behaviors/effect.js';
-import { attachChild, cloneItemState, detachChildren, ITEM_LAYERS, removeItemState, type ItemState } from './item/item-state.js';
+import { getContext, mouse, setContext } from './game/game.js';
+import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENTS_REGISTRY_TYPE, PAINT_SIGNAL_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
+import { type ItemState } from './item/item-state.js';
 import type { Item } from './item/item.js';
 import type { Kitchen, MouseState } from './kitchen/kitchen.js';
 import { ORDER_TABLE_TYPE, processMessage, type Order } from './order/order.js';
 import type { Product } from './product/product.js';
 import { SCENE_REGISTRY_TYPE, type Scene } from './scenes/scene.js';
-import { assertValue, builder, Globals, type Script, type ScriptContext, type Value } from './script/script.js';
+import { scriptAPI } from './script/api.js';
+import { Globals, type Script } from './script/script.js';
 import { getWorker, type GameCommands } from './worker/game-worker.js';
 import type { WorkerPipe } from './worker/worker.js';
 
@@ -124,165 +121,6 @@ export function isInstalled(): boolean {
     return state.overlay && state.background;
 }
 
-class Debug {
-    private constructor(
-        public readonly count: Writable<number>,
-        public readonly logs: Value[],
-    ) {}
-
-    public static init() {
-        return new Debug(
-            writable(0),
-            [],
-        )
-    }
-
-    private update() {
-        this.count.update((val) => val + 1);
-    }
-
-    public log(message: Value) {
-        this.logs.push(message);
-        this.update();
-    }
-}
-
-const functions = {
-    log(ctx: ScriptContext, args: Value[]): Value {
-        const [message] = args;
-        console.log('[log]', message);
-        game?.debug.log(message);
-        const { v } = builder;
-        return v.void();
-    },
-    get_items(ctx: ScriptContext, args: Value[]): Value {
-        const kitchen = getContext();        
-        const { v } = builder;
-        return v.array(...Object.keys(kitchen.items).map(v.string));
-    },
-    get_children(ctx: ScriptContext, args: Value[]): Value {
-        const [itemId] = args;
-        assertValue(ctx, itemId, 'string');
-        const { v } = builder;
-        const item = getContext().items[itemId.value];
-        return v.array(...item.children.map(v.string));
-    },
-    remove_item(ctx: ScriptContext, args: Value[]): Value {
-        const { v } = builder;
-        const [itemId] = args;
-        assertValue(ctx, itemId, 'string');
-        const item = getContext().items[itemId.value];
-        removeItemState(item);
-        return v.void();
-    },
-    set_held_item(ctx: ScriptContext, args: Value[]): Value {
-        const { v } = builder;
-        const [itemId] = args;
-        const context = getContext();
-        if (itemId.type === 'string') {
-            const item = context.items[itemId.value];
-            const parent = item.parent ? context.items[item.parent] : null;
-            if (parent) {
-                detachChildren(parent, item);
-            }
-            context.held = itemId.value;
-        } else {
-            context.held = null;
-        }
-        return v.void();
-    },
-    set_item_parent(ctx: ScriptContext, args: Value[]): Value {
-        const { v } = builder;
-        const [itemId, parentId] = args;
-        assertValue(ctx, itemId, 'string');
-        assertValue(ctx, parentId, 'string');
-        const context = getContext();
-        const item = context.items[itemId.value];
-        const parent = context.items[parentId.value];
-        attachChild(parent, item);
-        if (context.held === itemId.value) {
-            context.held = null;
-        }
-        return v.void();
-    },
-    create_effect(ctx: ScriptContext, args: Value[]): Value {
-        const [itemId, effectId] = args;
-        assertValue(ctx, itemId, 'string');
-        assertValue(ctx, effectId, 'string');
-        const { v } = builder;
-        const config = getContext().config;
-        const item = getContext().items[itemId.value];
-        const effect = config.effects[effectId.value];
-        effect.startTime = Time.now();
-        item.behaviors.effect ??= createEffect();
-        item.behaviors.effect.effects[effect.id] = copy(effect);
-        return v.void();
-    },
-    remove_effect(ctx: ScriptContext, args: Value[]): Value {
-        const [itemId, effectId] = args;
-        assertValue(ctx, itemId, 'string');
-        assertValue(ctx, effectId, 'string');
-        const item = getContext().items[itemId.value];
-        item.behaviors.effect ??= createEffect();
-        delete item.behaviors.effect.effects[effectId.value];
-        const { v } = builder;
-        return v.void();
-    },
-    complete(ctx: ScriptContext, args: Value[]): Value {
-        const { v } = builder;
-        const [itemsValue] = args;
-        paint.emit({
-            t: PAINT_EVENT_TYPE.CLEAR,
-        });
-        assertValue(ctx, itemsValue, 'array');
-        const { items } = getContext();
-        const itemIds = itemsValue.items.map((id) => {
-            assertValue(ctx, id, 'string');
-            return id.value;
-        })
-        for (const item of Object.values(items)) {
-            if (item.parent) continue;
-            if (item.layer !== ITEM_LAYERS.PHOTO_MODE) continue;
-            removeItemState(item);
-        }
-        let i = 0;
-        for (const itemId of itemIds) {
-            const item = items[itemId];
-            if (!item) {
-                game?.debug.log(v.string(`Item with id ${itemId} not found`));
-                continue;
-            }
-            const transform = transformToMatrix(item.transform);
-            const { min, max } = item.bounds;
-            const offset = new Vec2(
-                (min.x + max.x) / 2,
-                (min.y + max.y) / 2,
-            ).mul({
-                x: transform.m00,
-                y: transform.m11,
-            });
-            cloneItemState(item, {
-                layer: ITEM_LAYERS.PHOTO_MODE,
-                transform: {
-                    right: item.transform.right,
-                    up: item.transform.up,
-                    offset: {
-                        x: -offset.x + (i / (itemIds.length) - 0.5) * 1000,
-                        y: -offset.y + 150,
-                    },
-                }
-            });
-            i ++;
-        }
-        game?.scene.set({
-            type: 'photo_mode',
-            time: Time.now(),
-            items: [...itemIds],
-        });
-        return v.void();
-    },
-}
-
 export const lastSceneChange = writable<number>(0);
 
 export type GameSide = 'client' | 'background' | 'overlay';
@@ -306,37 +144,6 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     const gallery = omu.tables.get(GALLERY_TABLE_TYPE);
     const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
     const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
-    const globals = new Globals();
-    const debug = Debug.init();
-    globals.registerFunction('log', [
-        {name: 'message'},
-    ], functions.log);
-    globals.registerFunction('get_items', [
-    ], functions.get_items);
-    globals.registerFunction('get_children', [
-        {name: 'itemId', type: 'string'},
-    ], functions.get_children);
-    globals.registerFunction('remove_item', [
-        {name: 'itemId', type: 'string'},
-    ], functions.remove_item);
-    globals.registerFunction('set_held_item', [
-        {name: 'itemId'}
-    ], functions.set_held_item);
-    globals.registerFunction('set_item_parent', [
-        {name: 'itemId', type: 'string'},
-        {name: 'parentId', type: 'string'},
-    ], functions.set_item_parent);
-    globals.registerFunction('create_effect', [
-        {name: 'itemId', type: 'string'},
-        {name: 'effectId', type: 'string'},
-    ], functions.create_effect);
-    globals.registerFunction('remove_effect', [
-        {name: 'itemId', type: 'string'},
-        {name: 'effectId', type: 'string'},
-    ], functions.remove_effect);
-    globals.registerFunction('complete', [
-        {name: 'items', type: 'array'},
-    ], functions.complete);
 
     chat.on(events.message.add, (message) => {
         processMessage(message);
@@ -361,8 +168,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
         paintSignal,
         paintEvents,
         scene,
-        globals,
-        debug,
+        globals: scriptAPI,
         worker: client ? await getWorker() : undefined,
     }
     if (BROWSER) {
@@ -459,7 +265,6 @@ export type Game = {
     paintSignal: Signal<PaintEvent[]>,
     paintEvents: Writable<PaintBuffer>,
     globals: Globals,
-    debug: Debug,
     worker?: WorkerPipe<GameCommands>,
 };
 

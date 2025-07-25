@@ -160,7 +160,9 @@
             try {
                 const obj = JSON.parse(value);
                 const result = validateScript(obj);
-                if (result) return;
+                if (result) {
+                    console.error(result.error);
+                }
                 script = obj;
             } catch {
                 return;
