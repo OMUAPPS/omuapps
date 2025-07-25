@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Interval } from '$lib/helper.js';
+    import { Slider } from '@omujs/ui';
     import button_line from '../asset/images/button_line.png';
     import photo_placeholder from '../asset/images/photo_placeholder.png';
     import title from '../asset/images/title.svg';
@@ -10,7 +11,7 @@
     export let context: SceneContext;
     $: console.log('SceneMainMenu', context);
 
-    const { scene, gallery } = getGame();
+    const { scene, gallery, config } = getGame();
 
     const latestGalleryItems = gallery.fetchItems({
         limit: 30,
@@ -53,6 +54,12 @@
             <span>メニュー</span>
             <i class="ti ti-chevron-right"></i>
         </button>
+        <div class="settings">
+            主音量
+            <Slider bind:value={$config.audio.volumes.master} min={0} max={1} step={1/100} type="percent" />
+            効果音
+            <Slider bind:value={$config.audio.volumes.effects} min={0} max={1} step={1/100} type="percent" />
+        </div>
     </div>
     {#await latestGalleryItems then items}
         {#if items.size > 0}
@@ -105,6 +112,15 @@
         display: flex;
         flex-direction: column;
         transform: matrix(1, 0, 0.08621, 1, 0, 0);
+    }
+
+    .settings {
+        margin-top: 4rem;
+        display: flex;
+        flex-direction: column;
+        height: 8rem;
+        justify-content: space-between;
+        color: var(--color-1);
     }
 
     .gallery {

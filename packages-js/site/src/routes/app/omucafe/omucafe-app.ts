@@ -17,6 +17,7 @@ import type { Asset } from './asset/asset.js';
 import type { PlayingAudioClip } from './asset/audioclip.js';
 import type { EffectState } from './effect/effect-state.js';
 import { GALLERY_TABLE_TYPE, type GalleryItem } from './gallery/gallery.js';
+import { APP_CONFIG_REGISTRY_TYPE, type Config } from './game/config.js';
 import { getContext, mouse, paint, setContext } from './game/game.js';
 import { copy } from './game/helper.js';
 import { DEFAULT_ERASER, DEFAULT_PEN, DEFAULT_TOOL, PAINT_EVENT_TYPE, PAINT_EVENTS_REGISTRY_TYPE, PAINT_SIGNAL_TYPE, PaintBuffer, type PaintEvent } from './game/paint.js';
@@ -42,28 +43,6 @@ export type ResourceRegistry = typeof DEFAULT_RESOURCE_REGISTRY;
 const RESOURCE_REGISTRY_TYPE = RegistryType.createJson<ResourceRegistry>(APP_ID, {
     name: 'resources',
     defaultValue: DEFAULT_RESOURCE_REGISTRY,
-});
-
-export const DEFAULT_CONFIG = {
-    version: 1,
-    obs: {
-        scene_uuid: null as string | null,
-        background_uuid: null as string | null,
-        overlay_uuid: null as string | null,
-    },
-    scenes: {
-        product_list: {
-            scroll: 0,
-            search: '',
-        }
-    }
-};
-
-export type Config = typeof DEFAULT_CONFIG;
-
-const APP_CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
-    name: 'config',
-    defaultValue: DEFAULT_CONFIG,
 });
 
 export const DEFAULT_GAME_CONFIG = {
@@ -310,9 +289,9 @@ export type GameSide = 'client' | 'background' | 'overlay';
 
 export async function createGame(app: App, side: GameSide): Promise<void> {
     const client = app.id.isEqual(APP_ID);
-    const omu = new Omu(app);
+    const omu = setClient(new Omu(app));
+    const chat = setChat(Chat.create(omu));
     const obs = OBSPlugin.create(omu);
-    const chat = Chat.create(omu);
     const gameConfigRegistry = omu.registries.get(CONFIG_REGISTRY_TYPE);
     const gameConfig = makeRegistryWritable(gameConfigRegistry);
     const configRegistry = omu.registries.get(APP_CONFIG_REGISTRY_TYPE);
@@ -358,8 +337,6 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     globals.registerFunction('complete', [
         {name: 'items', type: 'array'},
     ], functions.complete);
-    setClient(omu);
-    setChat(chat);
 
     chat.on(events.message.add, (message) => {
         processMessage(message);
