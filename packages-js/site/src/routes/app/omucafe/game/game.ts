@@ -173,7 +173,7 @@ export async function init(ctx: GlContext) {
                 url: resources.counter_client,
             },
             bounds: {
-                min: Vec2.ZERO,
+                min: { x: 0, y: -500 },
                 max: { x: counterTex.width, y: counterTex.height },
             },
             behaviors: {
@@ -181,7 +181,7 @@ export async function init(ctx: GlContext) {
                     left: true,
                     right: true,
                     bottom: true,
-                    top: false,
+                    top: true,
                 }}),
             },
             transform: {

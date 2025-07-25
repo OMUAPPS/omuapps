@@ -570,6 +570,7 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     const inverse = matrix.inverse();
     const inverseMVP = matrices.view.get().inverse();
     const inversedMouse = inverse.transform2(inverseMVP.transform2(mouse.position));
+    if (item.id === 'counter' && inversedMouse.y < 0) return true;
     
     const aabbTest = (
         inversedMouse.x >= min.x &&
