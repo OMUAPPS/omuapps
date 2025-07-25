@@ -640,15 +640,14 @@ import { renderParticles } from './renderer/particle.js';
 
 async function renderNametag(user: User, bounds: AABB2) {
     const dimentions = bounds.dimensions();
-    // draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, new Vec4(0.99, 0.99, 0.99, 1));
     const strokeOffset = 2;
-    const size = dimentions.x / 6;
-    // draw.rectangleStroke(bounds.min.x + strokeOffset, bounds.min.y + strokeOffset, bounds.max.x - strokeOffset, bounds.max.y - strokeOffset, new Vec4(0, 0, 0, 0.5), 3);
+    const size = dimentions.x / 5;
     if (user.avatar) {
         const { tex } = await getTextureByUriCORS(user.avatar);
         const x = bounds.min.x + size / 2 + strokeOffset;
         const y = bounds.min.y + dimentions.y / 2 - size / 2;
-        draw.texture(x, y, x + size, y + size, tex);
+        draw.circle(x + size / 2, y + size / 2, 0, size + 2, Vec4.ONE);
+        draw.circleTex(x + size / 2, y + size / 2, 0, size, tex);
     }
     draw.fontFamily = '\'Noto Sans JP\', sans-serif';
     draw.fontSize = size / 1.5;

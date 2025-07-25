@@ -342,14 +342,36 @@ void main() {
 }
 `;
 
+const CIRCLE_TEXTURE_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec4 u_color;
+uniform vec2 u_resolution;
+uniform float u_radiusInner;
+uniform float u_radiusOuter;
+uniform float u_smoothness;
+uniform sampler2D u_texture;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+void main() {
+    vec2 fragCoord = vec2(v_texcoord.x * 2.0 - 1.0, v_texcoord.y * 2.0 - 1.0) * u_resolution;
+    float dist = length(fragCoord) / 4.0;
+    float alpha = smoothstep(u_radiusOuter, u_radiusOuter - u_smoothness, dist) * smoothstep(u_radiusInner - u_smoothness, u_radiusInner, dist);
+    vec4 color = texture(u_texture, v_texcoord);
+    fragColor = vec4(color.rgb * u_color.rgb, color.a * u_color.a * alpha);
+    // fragColor = vec4(v_texcoord.x, v_texcoord.y, 0.0, 1.0);
+}
+`;
+
 type TextTexture = {
     texture: GlTexture;
     width: number;
     height: number;
     font: string;
 };
-
-const textEncoder = new TextEncoder();
 
 export class Draw {
     public readonly vertexShader: GlShader;
@@ -360,6 +382,7 @@ export class Draw {
     private readonly textureOutlineProgram: GlProgram;
     private readonly bezierProgram: GlProgram;
     private readonly circleProgram: GlProgram;
+    private readonly circleTextureProgram: GlProgram;
     public readonly vertexBuffer: GlBuffer;
     public readonly texcoordBuffer: GlBuffer;
     private readonly frameBuffer: GlFramebuffer;
@@ -385,6 +408,7 @@ export class Draw {
         this.textureOutlineProgram = this.createProgram(TEXTURE_OUTLINE_FRAGMENT_SHADER);
         this.bezierProgram = this.createProgram(QUADRATIC_BEZIER_FRAGMENT_SHADER);
         this.circleProgram = this.createProgram(CIRCLE_FRAGMENT_SHADER);
+        this.circleTextureProgram = this.createProgram(CIRCLE_TEXTURE_FRAGMENT_SHADER);
         this.vertexBuffer = glContext.createBuffer();
         this.texcoordBuffer = glContext.createBuffer();
         this.frameBuffer = glContext.createFramebuffer();
@@ -800,6 +824,47 @@ export class Draw {
             this.circleProgram.getUniform('u_radiusInner').asFloat().set(radiusInner / 2);
             this.circleProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter / 2);
             this.circleProgram.getUniform('u_smoothness').asFloat().set(smoothness);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public circleTex(
+        x: number,
+        y: number,
+        radiusInner: number,
+        radiusOuter: number,
+        texture: GlTexture,
+        color: Vec4 = Vec4.ONE,
+        smoothness: number = 1.0,
+    ): void {
+        const { gl } = this.glContext;
+        radiusInner /= 2;
+        radiusOuter /= 2;
+
+        this.circleTextureProgram.use(() => {
+            this.setMesh(this.circleTextureProgram, new Float32Array([
+                x - radiusOuter, y - radiusOuter, 0,
+                x + radiusOuter, y - radiusOuter, 0,
+                x + radiusOuter, y + radiusOuter, 0,
+                x - radiusOuter, y - radiusOuter, 0,
+                x + radiusOuter, y + radiusOuter, 0,
+                x - radiusOuter, y + radiusOuter, 0,
+            ]), new Float32Array([
+                0, 0,
+                1.0, 0,
+                1.0, 1.0,
+                0, 0,
+                1.0, 1.0,
+                0, 1.0,
+            ]));
+            this.setMatrices(this.circleTextureProgram);
+
+            this.circleTextureProgram.getUniform('u_resolution').asVec2().set({x: radiusOuter * 2, y: radiusOuter * 2});
+            this.circleTextureProgram.getUniform('u_color').asVec4().set(color);
+            this.circleTextureProgram.getUniform('u_radiusInner').asFloat().set(radiusInner / 2);
+            this.circleTextureProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter / 2);
+            this.circleTextureProgram.getUniform('u_smoothness').asFloat().set(smoothness);
+            this.circleTextureProgram.getUniform('u_texture').asSampler2D().set(texture);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
