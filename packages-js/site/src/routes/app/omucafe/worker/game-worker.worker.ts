@@ -1,7 +1,12 @@
+import { comparator } from '$lib/helper.js';
 import kuromoji from '@2ji-han/kuromoji.js';
 import { DynamicDictionaries } from '@2ji-han/kuromoji.js/dict/dynamic-dictionaries.js';
 import type { DictionaryLoader } from '@2ji-han/kuromoji.js/loader.js';
+import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
 import { BROWSER } from 'esm-env';
+import type { OrderDetectToken, ProductTokens } from '../order/order.js';
+import { calculateSimilarity, matchTokens } from '../order/token-helper.js';
+import type { Product } from '../product/product.js';
 import type { GameCommands } from './game-worker.js';
 import { WorkerPipe } from './worker.js';
 
@@ -29,7 +34,7 @@ export class ProxyGZipDictionaryLoader implements DictionaryLoader {
         const res = await fetch(`http://localhost:26423/proxy?url=${encodeURIComponent(url.toString())}`);
         const buffer = await res.arrayBuffer();
         const decompressionStream = new DecompressionStream('gzip');
-        const decompressedStream = new Blob([buffer]).stream().pipeThrough(decompressionStream);
+        const decompressedStream = new Blob([buffer]).stream().pipeThrough(decompressionStream as ReadableWritablePair<Uint8Array>);
         const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
         return decompressedBuffer;
     }
@@ -84,11 +89,124 @@ async function init() {
     const tokenizer = await kuromoji.fromDictionary(dictionary);
     const worker = WorkerPipe.self<GameCommands>();
     
-    worker.bind('tokenize', async (text: string) => {
-        const tokens = tokenizer.tokenize(text)
-        self.postMessage({type: 'tokenize', payload: tokens})
-        return tokens
-    });
+
+    const tokenCache: Map<string, TOKEN[]> = new Map();
+    function tokenize(text: string): TOKEN[] {
+        const existing = tokenCache.get(text);
+        if (existing) return existing;
+        const tokens = tokenizer.tokenize(text);
+        tokenCache.set(text, tokens);
+        return tokens;
+    }
+    worker.bind('tokenize', async (text) => tokenize(text));
+    worker.bind('analyzeOrder', async (args: {tokens: TOKEN[], productTokens: ProductTokens[]}) => {
+        const { tokens, productTokens } = args;
+        const products: Product[] = [];
+        const replacedTokens: OrderDetectToken[] = [];
+        const required: TOKEN[][] = [
+            tokenize('ください'),
+            tokenize('御願い'),
+            tokenize('お願い'),
+            tokenize('いただけますか'),
+            tokenize('頂ける'),
+            tokenize('ちょうだい'),
+            tokenize('ほしい'),
+            tokenize('くれる'),
+            tokenize('食べたい'),
+            tokenize('食べる'),
+            tokenize('頼む'),
+        ];
+        let index = 0;
+        let requiredMatched = false;
+        while (tokens.length > index) {
+            let matched = false;
+            for (let i = 0; i < required.length; i++) {
+                const word = required[i];
+                if (tokens.length < word.length) continue;
+                const match = matchTokens(tokens, index, word);
+                if (!match) continue;
+                matched = true;
+                break;
+            }
+            if (matched) {
+                requiredMatched = true;
+                break;
+            } else {
+                index ++;
+            }
+        }
+        if (!requiredMatched) {
+            return {
+                detected: false,
+                products: [],
+                tokens: [],
+            }
+        }
+        index = 0;
+        while (tokens.length > index) {
+            let matched = false;
+            for (const entry of productTokens) {
+                if (tokens.length < entry.tokens.length) continue;
+                const match = matchTokens(tokens, index, entry.tokens);
+                if (!match) continue;
+                const alreadyAdded = products.some((p) => p.id === entry.product.id);
+                if (alreadyAdded) continue;
+                replacedTokens.push({
+                    type: 'product',
+                    product: entry.product,
+                });
+                products.push(entry.product);
+                index += match.length;
+                matched = true;
+                break;
+            }
+            if (!matched) {
+                const token = tokens[index];
+                replacedTokens.push({
+                    type: 'token',
+                    pos: token.pos,
+                    surface_form: token.surface_form,
+                    basic_form: token.basic_form,
+                    pronunciation: token.pronunciation,
+                });
+                index++;
+            }
+        }
+        if (products.length > 0) {
+            return {
+                detected: products.length > 0,
+                products: products,
+                tokens: replacedTokens,
+            }
+        }
+
+        const similarities: { product: Product, similarity: number }[] = []
+        for (const entry of productTokens) {
+            const similarity = calculateSimilarity(entry.tokens, tokens);
+            similarities.push({ product: entry.product, similarity });
+        }
+        if (similarities.length === 0) return {
+            detected: false,
+            products: [],
+            tokens: [],
+        }
+        const sortedSimilarities = similarities.sort(comparator(({ similarity }) => -similarity));
+        if (
+            sortedSimilarities.length > 1 &&
+            sortedSimilarities[0].similarity === sortedSimilarities[sortedSimilarities.length - 1].similarity
+        ) return {
+            detected: false,
+            products: [],
+            tokens: [],
+        }
+        
+        return {
+            detected: true,
+            products: [sortedSimilarities[0].product],
+            tokens: [],
+        }
+    })
+
 
     worker.call('ready', undefined);
 }

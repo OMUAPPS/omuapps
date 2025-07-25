@@ -1,3 +1,4 @@
+import { writable, type Writable } from 'svelte/store';
 import { uniqueId } from '../game/helper.js';
 
 export type VString = {
@@ -456,8 +457,33 @@ export function createScript(options: Partial<Script>): Script {
     }
 }
 
+
+class Debug {
+    private constructor(
+        public readonly count: Writable<number>,
+        public readonly logs: Value[],
+    ) {}
+
+    public static create() {
+        return new Debug(
+            writable(0),
+            [],
+        )
+    }
+
+    private update() {
+        this.count.update((val) => val + 1);
+    }
+
+    public log(message: Value) {
+        this.logs.push(message);
+        this.update();
+    }
+}
+
 export class Globals {
     public readonly functions: Record<string, TypedFunction<any>> = {};
+    public readonly debug = Debug.create();
     
     public registerFunction<Args extends Value[]>(name: string, args: ArgumentList<Args>, invoke: (ctx: ScriptContext, args: Args) => Value): TypedFunction<Args> {
         const func: TypedFunction<Args> =  {
