@@ -5,6 +5,7 @@
     import { init, mouse, render as renderGame } from '../game/game.js';
     import { createItemState } from '../item/item-state.js';
     import { getGame } from '../omucafe-app.js';
+    import MenuRenderer from '../product/MenuRenderer.svelte';
 
     const { config, gameConfig, states, scene, paintEvents } = getGame();
     export let side: 'client' | 'overlay' | 'background';
@@ -62,6 +63,10 @@
                 <JsonDebugInfo value={$config} />
             {/if}
         </div>
+    {:else if side === 'overlay'}
+        <div class="menu" class:active={$scene.type === 'kitchen' || $scene.type === 'main_menu'}>
+            <MenuRenderer />
+        </div>
     {/if}
 </div>
 
@@ -76,6 +81,34 @@
         position: absolute;
         inset: 0;
         cursor: none;
+    }
+
+    .menu {
+        position: absolute;
+        left: 5rem;
+        top: 2rem;
+        visibility: hidden;
+
+        &.active {
+            animation: fadeIn forwards 0.1621s ease-in-out;
+        }
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-10rem);
+        }
+
+        80% {
+            transform: translateY(1rem);
+            rotate: 1deg;
+        }
+
+        100% {
+            opacity: 1;
+            visibility: visible;
+        }
     }
 
     .debug {

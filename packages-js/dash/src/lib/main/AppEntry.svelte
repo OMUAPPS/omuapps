@@ -180,6 +180,7 @@
         &:hover {
             outline: none;
             transition: background 0.0621s;
+            background: var(--color-bg-1);
 
             > .info > .open {
                 visibility: visible;

@@ -292,6 +292,8 @@ async function updateMouseClient() {
     if (side !== 'client') {
         throw new Error('Mouse is not in client side');
     }
+    const { scene } = getContext();
+    if (scene.type === 'main_menu') return;
     for (const event of mouse.iterate()) {
         if (event.type === 'down') {
             await handleMouseDown();

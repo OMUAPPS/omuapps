@@ -1,15 +1,16 @@
 <script lang="ts">
-    import { Button } from '@omujs/ui';
+    import { Button, ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import BackButton from '../components/BackButton.svelte';
     import { GameData } from '../game/gamedata.js';
     import { getGame } from '../omucafe-app.js';
     import type { SceneContext } from '../scenes/scene.js';
+    import MenuRenderer from './MenuRenderer.svelte';
     import ProductList from './ProductList.svelte';
 
     export let context: SceneContext;
 
-    const { scene, config } = getGame();
+    const { scene, config, gameConfig } = getGame();
 
     let container: HTMLElement;
 
@@ -37,20 +38,71 @@
     }}/>
     <i class="ti ti-search"></i>
 </span>
-<main class="omu-scroll" bind:this={container} on:scroll={() => {
-    if ($scene.type !== 'product_list') return;
-    $config.scenes.product_list.scroll = container.scrollTop;
-}}>
-    <div class="actions">
-        <Button onclick={handleExport}>
-            export
-            <i class="ti ti-file-arrow-right"></i>
-        </Button>
+<main>
+    <div class="list omu-scroll" bind:this={container} on:scroll={() => {
+        if ($scene.type !== 'product_list') return;
+        $config.scenes.product_list.scroll = container.scrollTop;
+    }}>
+        <div class="actions">
+            <Button onclick={handleExport}>
+                export
+                <i class="ti ti-file-arrow-right"></i>
+            </Button>
+        </div>
+        <ProductList search={$config.scenes.product_list.search} />
     </div>
-    <ProductList type="product" search={$config.scenes.product_list.search}/>
-    <ProductList type="item" search={$config.scenes.product_list.search}/>
-    <ProductList type="effect" search={$config.scenes.product_list.search}/>
-    <ProductList type="script" search={$config.scenes.product_list.search}/>
+    <div class="menu">
+        <div class="menu-items">
+            <h1>
+                メニュー看板
+            </h1>
+            <span>
+                表示する
+                <Checkbox bind:value={$gameConfig.menu.enabled} />
+            </span>
+            {#each Object.entries($gameConfig.products)
+                .filter(([id]) => !$gameConfig.menu.items.some((it) => it.product === id)) as [id, product] (id)}
+                <div class="item">
+                    <span>
+                        <ButtonMini primary on:click={() => {
+                            $gameConfig.menu.items = [
+                                ...$gameConfig.menu.items,
+                                {
+                                    product: id,
+                                    picture: false,
+                                    note: '',
+                                }
+                            ]
+                        }}>
+                            <Tooltip>
+                                追加
+                            </Tooltip>
+                            <i class="ti ti-plus"></i>
+                        </ButtonMini>
+                        {product.name}
+                    </span>
+                </div>
+            {/each}
+            <hr>
+            {#each $gameConfig.menu.items as entry, index (index)}
+                {@const product = $gameConfig.products[entry.product]}
+                <div class="item">
+                    <span>
+                        <ButtonMini primary on:click={() => {
+                            $gameConfig.menu.items = $gameConfig.menu.items.filter((_, i) => i !== index);
+                        }}>
+                            <Tooltip>
+                                消す
+                            </Tooltip>
+                            <i class="ti ti-minus"></i>
+                        </ButtonMini>
+                        {product.name}
+                    </span>
+                </div>
+            {/each}
+        </div>
+        <MenuRenderer />
+    </div>
 </main>
 <BackButton active={context.active} />
 
@@ -59,6 +111,11 @@
         position: absolute;
         inset: 0;
         display: flex;
+        background: color-mix(in srgb, var(--color-bg-1) 90%, transparent 0%);
+    }
+    
+    .list {
+        display: flex;
         justify-content: flex-start;
         flex-direction: column;
         padding: 1rem;
@@ -66,10 +123,47 @@
         padding-left: 2rem;
         padding-right: 1.5rem;
         width: 24rem;
+        min-width: 24rem;
         gap: 1rem;
         background: var(--color-bg-1);
         border-right: 1px solid var(--color-1);
         outline: 2px solid var(--color-bg-1);
+    }
+
+    h1 {
+        color: var(--color-1);
+        filter: drop-shadow(2px 2px 0px #fff8);
+        white-space: nowrap;
+    }
+
+    .menu {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10%;
+    }
+
+    .menu-items {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-right: 3rem;
+
+        > hr {
+            margin: 0.5rem 0;
+        }
+
+        > .item {
+            background: var(--color-bg-2);
+            padding: 0.75rem 1rem;
+        }
+    }
+
+    span {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
 
     .actions {

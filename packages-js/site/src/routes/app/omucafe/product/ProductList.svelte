@@ -9,7 +9,6 @@
     import { getGame } from '../omucafe-app.js';
     import { createScript } from '../script/script.js';
 
-    export let type: 'product' | 'item' | 'effect' | 'script' | undefined = undefined;
     export let search: string = '';
 
     const { gameConfig: config, scene } = getGame();
@@ -21,166 +20,161 @@
     }
 </script>
 
-{#if type === 'product'}
-    <div class="category">
-        <span>
-            <i class="ti ti-cup"></i>
-            商品
-        </span>
-        <Button primary onclick={() => {
-            const id = uniqueId();
-            $config.products = {
-                ...$config.products,
-                [id]: {
-                    id,
-                    name: '新商品',
-                    recipe: {
-                        ingredients: {},
-                        steps: [],
-                    },
+<div class="category">
+    <span>
+        <i class="ti ti-cup"></i>
+        商品
+    </span>
+    <Button primary onclick={() => {
+        const id = uniqueId();
+        $config.products = {
+            ...$config.products,
+            [id]: {
+                id,
+                name: '新商品',
+                recipe: {
+                    ingredients: {},
+                    steps: [],
                 },
-            };
+            },
+        };
+        $scene = { type: 'product_edit', id };
+    }}>
+        レシピを作る
+        <i class="ti ti-plus"></i>
+    </Button>
+</div>
+<div class="list">
+    {#each Object.entries($config.products).filter(([,item]) => compareSearch(item, search)) as [id, product] (id)}
+        <button on:click={() => {
             $scene = { type: 'product_edit', id };
         }}>
-            レシピを作る
-            <i class="ti ti-plus"></i>
-        </Button>
-    </div>
-    <div class="list">
-        {#each Object.entries($config.products).filter(([,item]) => compareSearch(item, search)) as [id, product] (id)}
-            <button on:click={() => {
-                $scene = { type: 'product_edit', id };
-            }}>
-                <div class="item">
-                    {#if product.image}
-                        <div class="image">
-                            <AssetImage asset={product.image} />
-                        </div>
-                    {/if}
-                    <span>{product.name}</span>
-                </div>
-            </button>
-        {:else}
-            {#if search && Object.keys($config.products).length > 0}
-                <small>レシピが見つかりません</small>
-            {:else}
-                <small>レシピがありません</small>
-            {/if}
-        {/each}
-    </div>
-{:else if type === 'item'}
-    <div class="category">
-        <span>
-            <i class="ti ti-fish"></i>
-            アイテム
-        </span>
-        <Button primary onclick={() => {
-            const item = createItem({
-                name: '新アイテム',
-                behaviors: { holdable: createHoldable() },
-            });
-            $config.items[item.id] = item;
-            $scene = { type: 'item_edit', id: item.id, created: true };
-        }}>
-            材料を追加
-            <i class="ti ti-plus"></i>
-        </Button>
-    </div>
-    <div class="list">
-        {#each Object.entries($config.items).filter(([,item]) => compareSearch(item, search)) as [id, item] (id)}
-            <button on:click={() => {
-                $scene = { type: 'item_edit', id };
-            }}>
-                <div class="item">
-                    {#if item.image}
-                        <div class="image">
-                            <AssetImage asset={item.image} />
-                        </div>
-                    {/if}
-                    <span>{item.name}</span>
-                </div>
-            </button>
-        {:else}
-            {#if search && Object.keys($config.items).length > 0}
-                <small>アイテムが見つかりません</small>
-            {:else}
-                <small>アイテムがありません</small>
-            {/if}
-        {/each}
-    </div>
-{:else if type === 'effect'}
-    <div class="category">
-        <span>
-            <i class="ti ti-sparkles"></i>
-            エフェクト
-        </span>
-        <Button primary onclick={() => {
-            const effect = createEffectState({
-                name: '新エフェクト',
-                attributes: {},
-            });
-            $config.effects[effect.id] = effect;
-            $scene = { type: 'effect_edit', id: effect.id, time: Time.now() };
-        }}>
-            エフェクトを追加
-            <i class="ti ti-plus"></i>
-        </Button>
-    </div>
-    <div class="list">
-        {#each Object.entries($config.effects).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
-            <button on:click={() => {
-                $scene = { type: 'effect_edit', id, time: Time.now() };
-            }}>
-                <div class="item">
+            <div class="item">
+                {#if product.image}
                     <div class="image">
-                        <i class="ti ti-wand"></i>
+                        <AssetImage asset={product.image} />
                     </div>
-                    <span>{effect.name}</span>
-                </div>
-            </button>
+                {/if}
+                <span>{product.name}</span>
+            </div>
+        </button>
+    {:else}
+        {#if search && Object.keys($config.products).length > 0}
+            <small>レシピが見つかりません</small>
         {:else}
-            {#if search && Object.keys($config.effects).length > 0}
-                <small>エフェクトが見つかりません</small>
-            {:else}
-                <small>エフェクトがありません</small>
-            {/if}
-        {/each}
-    </div>
-{:else if type === 'script'}
-    <div class="category">
-        <span>
-            <i class="ti ti-code"></i>
-            スクリプト
-        </span>
-        <Button primary onclick={() => {
-            const script = createScript({});
-            $config.scripts[script.id] = script;
+            <small>レシピがありません</small>
+        {/if}
+    {/each}
+</div>
+<div class="category">
+    <span>
+        <i class="ti ti-fish"></i>
+        アイテム
+    </span>
+    <Button primary onclick={() => {
+        const item = createItem({
+            name: '新アイテム',
+            behaviors: { holdable: createHoldable() },
+        });
+        $config.items[item.id] = item;
+        $scene = { type: 'item_edit', id: item.id, created: true };
+    }}>
+        材料を追加
+        <i class="ti ti-plus"></i>
+    </Button>
+</div>
+<div class="list">
+    {#each Object.entries($config.items).filter(([,item]) => compareSearch(item, search)) as [id, item] (id)}
+        <button on:click={() => {
+            $scene = { type: 'item_edit', id };
         }}>
-            スクリプトを追加
-            <i class="ti ti-plus"></i>
-        </Button>
-    </div>
-    <div class="list">
-        {#each Object.entries($config.scripts).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
-            <button on:click={() => {
-                $scene = { type: 'script_edit', id };
-            }}>
-                <div class="item">
+            <div class="item">
+                {#if item.image}
                     <div class="image">
-                        <i class="ti ti-code"></i>
+                        <AssetImage asset={item.image} />
                     </div>
-                    <span>{effect.name}</span>
-                </div>
-            </button>
+                {/if}
+                <span>{item.name}</span>
+            </div>
+        </button>
+    {:else}
+        {#if search && Object.keys($config.items).length > 0}
+            <small>アイテムが見つかりません</small>
         {:else}
-            {#if search && Object.keys($config.scripts).length > 0}
-                <small>エフェクトが見つかりません</small>
-            {:else}
-                <small>エフェクトがありません</small>
-            {/if}
-        {/each}
-    </div>
-{/if}
+            <small>アイテムがありません</small>
+        {/if}
+    {/each}
+</div>
+<div class="category">
+    <span>
+        <i class="ti ti-sparkles"></i>
+        エフェクト
+    </span>
+    <Button primary onclick={() => {
+        const effect = createEffectState({
+            name: '新エフェクト',
+            attributes: {},
+        });
+        $config.effects[effect.id] = effect;
+        $scene = { type: 'effect_edit', id: effect.id, time: Time.now() };
+    }}>
+        エフェクトを追加
+        <i class="ti ti-plus"></i>
+    </Button>
+</div>
+<div class="list">
+    {#each Object.entries($config.effects).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
+        <button on:click={() => {
+            $scene = { type: 'effect_edit', id, time: Time.now() };
+        }}>
+            <div class="item">
+                <div class="image">
+                    <i class="ti ti-wand"></i>
+                </div>
+                <span>{effect.name}</span>
+            </div>
+        </button>
+    {:else}
+        {#if search && Object.keys($config.effects).length > 0}
+            <small>エフェクトが見つかりません</small>
+        {:else}
+            <small>エフェクトがありません</small>
+        {/if}
+    {/each}
+</div>
+<div class="category">
+    <span>
+        <i class="ti ti-code"></i>
+        スクリプト
+    </span>
+    <Button primary onclick={() => {
+        const script = createScript({});
+        $config.scripts[script.id] = script;
+    }}>
+        スクリプトを追加
+        <i class="ti ti-plus"></i>
+    </Button>
+</div>
+<div class="list">
+    {#each Object.entries($config.scripts).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
+        <button on:click={() => {
+            $scene = { type: 'script_edit', id };
+        }}>
+            <div class="item">
+                <div class="image">
+                    <i class="ti ti-code"></i>
+                </div>
+                <span>{effect.name}</span>
+            </div>
+        </button>
+    {:else}
+        {#if search && Object.keys($config.scripts).length > 0}
+            <small>エフェクトが見つかりません</small>
+        {:else}
+            <small>エフェクトがありません</small>
+        {/if}
+    {/each}
+</div>
 
 <style lang="scss">
     .category {

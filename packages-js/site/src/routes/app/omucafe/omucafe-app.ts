@@ -3,7 +3,7 @@ import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Chat, events } from '@omujs/chat';
 import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
 import { OBSPlugin, permissions } from '@omujs/obs';
-import { App, Omu } from '@omujs/omu';
+import { App, Omu, Serializer } from '@omujs/omu';
 import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
 import { DAShBOARD_DRAG_DROP_PERMISSION_ID } from '@omujs/omu/extension/dashboard/dashboard-extension.js';
 import { RegistryType, type Registry } from '@omujs/omu/extension/registry/index.js';
@@ -42,12 +42,23 @@ const RESOURCE_REGISTRY_TYPE = RegistryType.createJson<ResourceRegistry>(APP_ID,
     defaultValue: DEFAULT_RESOURCE_REGISTRY,
 });
 
+type MenuItem = {
+    product: string;
+    picture: boolean;
+    note: string;
+}
+
 export const DEFAULT_GAME_CONFIG = {
+    version: 1,
     filter: {},
     products: {} as Record<string, Product>,
     items: {} as Record<string, Item>,
     effects: {} as Record<string, EffectState>,
     scripts: {} as Record<string, Script>,
+    menu: {
+        items: [] as MenuItem[],
+        enabled: false,
+    },
     photo_mode: {
         scale: 0,
         offset: Vec2.ZERO as Vec2Like,
@@ -62,6 +73,16 @@ export type GameConfig = typeof DEFAULT_GAME_CONFIG;
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<GameConfig>(APP_ID, {
     name: 'game_config',
     defaultValue: DEFAULT_GAME_CONFIG,
+    serializer: Serializer.transform<GameConfig>((config) => {
+        if (!config.version) {
+            config.menu = {
+                items: [],
+                enabled: false,
+            }
+            config.version = 1;
+        }
+        return config
+    }).fallback(DEFAULT_GAME_CONFIG),
 });
 
 export type User = {
