@@ -16,6 +16,13 @@ export class Serializer<T, D> {
         return new Serializer<T, D>(serializer.serialize, serializer.deserialize);
     }
 
+    static transform<T>(func: (value: T) => T): Serializer<T, T> {
+        return new Serializer<T, T>(
+            func,
+            func,
+        )
+    }
+
     static noop<T>(): Serializer<T, T> {
         return new Serializer<T, T>(
             (data) => data,
