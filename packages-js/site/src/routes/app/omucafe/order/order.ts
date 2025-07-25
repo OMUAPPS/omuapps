@@ -29,6 +29,7 @@ export type OrderMessage = {
 export type Order = {
     id: string,
     timestamp: number,
+    index: number,
     user: User,
     message?: OrderMessage,
     status: OrderStatus,
@@ -175,9 +176,11 @@ export async function processMessage(message: Message) {
     const orderAnalysis = await game.worker!.call('analyzeOrder', { tokens, productTokens });
     if (!orderAnalysis.detected) return;
     await playAudioClip(resources.bell_audio_clip);
-    await game.orders.add({
+    const index = await game.orders.size();
+    const order: Order = {
         id: message.id.key(),
         timestamp: Time.now(),
+        index,
         items: orderAnalysis.products.map((product) => {
             return {
                 notes: '',
@@ -193,8 +196,10 @@ export async function processMessage(message: Message) {
             name: author.name,
             avatar: author.avatarUrl,
         },
-    });
+    };
+    await game.orders.add(order);
     await updateOrders();
+    getContext().lastOrder = order;
     markChanged();
 }
 

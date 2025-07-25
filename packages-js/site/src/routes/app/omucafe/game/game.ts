@@ -86,6 +86,7 @@ function syncData() {
             held: context.held,
             hovering: context.hovering,
             order: context.order,
+            lastOrder: context.lastOrder,
             mouse: {
                 position: mouse.gl,
                 delta: mouse.deltaGl,
@@ -292,8 +293,6 @@ async function updateMouseClient() {
     if (side !== 'client') {
         throw new Error('Mouse is not in client side');
     }
-    const { scene } = getContext();
-    if (scene.type === 'main_menu') return;
     for (const event of mouse.iterate()) {
         if (event.type === 'down') {
             await handleMouseDown();
@@ -672,7 +671,7 @@ async function renderCustomersClient(position: Vec2) {
             max: {x: 340, y: 200},
         })
             .scale(side === 'client' ? 0.6 : 0.7)
-            .offset({ x: width / 1.2 / 2, y: height / 1.2 / 2 })
+            .offset({ x: width / 1.2 / 2, y: height / 2 })
             .offset(position);
         await renderNametag(user, nametagBounds);
         if (message) {

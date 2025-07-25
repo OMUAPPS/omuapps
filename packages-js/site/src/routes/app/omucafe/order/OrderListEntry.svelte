@@ -24,14 +24,14 @@
     </div>
     {#each items as item, i (i)}
         {@const product = $gameConfig.products[item.product_id]}
-        <ol>
+        <ul>
             <li>
                 {product.name}
                 {#if item.notes}
                     {`(${item.notes})`}
                 {/if}
             </li>
-        </ol>
+        </ul>
     {/each}
     {#if entry.status.type === 'waiting'}
         <button on:click={async () => {

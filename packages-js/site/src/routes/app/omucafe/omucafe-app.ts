@@ -105,6 +105,7 @@ export const DEFAULT_STATES = {
         } satisfies MouseState,
         hovering: null as string | null,
         order: null as Order | null,
+        lastOrder: null as Order | null,
     } satisfies Kitchen,
 };
 
