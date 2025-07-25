@@ -1,10 +1,7 @@
 
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec4 } from '$lib/math/vec4.js';
-import { getTextureByUri } from '../../asset/asset.js';
-import cursor_grab from '../../asset/images/cursor_grab.png';
-import cursor_point from '../../asset/images/cursor_point.png';
-import { draw, getContext, matrices, mouse } from '../game.js';
+import { draw, getContext, matrices, mouse, resources } from '../game.js';
 import { Time } from '../time.js';
 
 export async function renderCursor() {
@@ -47,14 +44,14 @@ export async function renderCursor() {
     matrices.model.multiply(model);
     const CURSORS = {
         grab: {
-            image: await getTextureByUri(cursor_grab),
+            image: resources.cursor_grab,
             width: 48,
             height: 48,
             x: -26,
             y: -26,
         },
         point: {
-            image: await getTextureByUri(cursor_point),
+            image: resources.cursor_point,
             width: 48,
             height: 48,
             x: -4,

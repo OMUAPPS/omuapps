@@ -510,6 +510,16 @@ function restrictPositionToDisplayBounds(itemState: ItemState) {
     };
 }
 
+async function preLoadAssets(items: ItemState[]) {
+    for (const item of items) {
+        const { image } = item.item;
+        if (image) {
+            getTextureByAsset(image);
+        }
+        await invokeBehaviors(item, (behavior) => behavior.preLoadAssets, undefined);
+    }
+}
+
 export async function renderItems(layers: ItemLayer[]) {
     const { held, side } = getContext();
     const flip = side === 'overlay' ? -1 : 1;
@@ -518,6 +528,7 @@ export async function renderItems(layers: ItemLayer[]) {
         const maxB = calculateItemStateRenderBounds(b).max.y;
         return (((b.transform.offset.y + maxB) - (a.transform.offset.y + maxA))) * (a.layer === 'photo_mode' ? 1 : flip);
     });
+    await preLoadAssets(itemsInOrder);
     for (const item of itemsInOrder.toReversed()) {
         if (item.id === held) continue;
         if (item.parent) continue;

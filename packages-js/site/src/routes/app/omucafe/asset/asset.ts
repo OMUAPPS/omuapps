@@ -124,15 +124,16 @@ const audios = new Map<string, Promise<HTMLAudioElement>>();
 
 export async function fetchImage(url: string | URL): Promise<HTMLImageElement> {
     const src = url.toString();
-    if (!images.has(src)) {
-        images.set(src, new Promise((resolve, reject) => {
-            const image = new Image();
-            image.src = src;
-            image.onload = () => resolve(image);
-            image.onerror = reject;
-        }));
-    }
-    return await images.get(src)!;
+    const existing = images.get(src);
+    if (existing) return existing;
+    const promise = new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image();
+        image.src = src;
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+    });
+    images.set(src, promise);
+    return promise;
 }
 
 export type Texture = {

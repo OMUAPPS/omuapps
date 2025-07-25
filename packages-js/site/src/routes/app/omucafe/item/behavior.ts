@@ -54,6 +54,7 @@ export interface BehaviorHandler<T extends keyof Behaviors> {
     collectActionsHovered?(action: BehaviorAction<T>, args: { held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
     handleChildrenOrder?(action: BehaviorAction<T>, args: { timing: 'hover', children: ItemState[] }): Promise<void> | void,
     handleChildrenHovered?(action: BehaviorAction<T>, args: { target: ItemState | null }): Promise<void> | void,
+    preLoadAssets?(action: BehaviorAction<T>, args: undefined): Promise<void> | void,
 };
 
 export type DefaultBehaviors<T extends keyof Behaviors = keyof Behaviors> = {
