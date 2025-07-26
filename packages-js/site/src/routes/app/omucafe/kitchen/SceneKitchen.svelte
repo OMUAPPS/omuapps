@@ -1,4 +1,5 @@
 <script lang="ts">
+    import ChatRenderer from '../components/ChatRenderer.svelte';
     import { mouse } from '../game/game.js';
     import { getGame } from '../omucafe-app.js';
     import OrderList from '../order/OrderList.svelte';
@@ -21,3 +22,4 @@
     }
 }} />
 <OrderList />
+<ChatRenderer />
