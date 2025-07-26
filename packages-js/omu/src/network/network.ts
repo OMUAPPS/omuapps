@@ -43,7 +43,7 @@ export type NetworkStatus = StatusType<'connecting'> | StatusType<'connected'> |
     timeout: number,
     date: Date,
     cancel: () => void,
-} | StatusType<'closed'>;
+};
 
 export class Network {
     public status: NetworkStatus = {type: 'disconnected'};
@@ -153,7 +153,7 @@ export class Network {
     }
 
     public async connect(recconect = true): Promise<void> {
-        if (!this.isState('disconnected')) {
+        if (!this.isState('disconnected') && !this.isState('error')) {
             throw new Error(`Cannot connect while ${this.status.type}`);
         }
 

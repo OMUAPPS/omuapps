@@ -8,7 +8,7 @@
     import MenuRenderer from '../product/MenuRenderer.svelte';
     import ChatRenderer from './ChatRenderer.svelte';
 
-    const { config, gameConfig, states, scene, paintEvents } = getGame();
+    const { omu, config, gameConfig, states, scene, paintEvents } = getGame();
     export let side: 'client' | 'overlay' | 'background';
     let showDebug = false;
 </script>
@@ -76,6 +76,15 @@
                 </div>
             {/key}
         {/if}
+        {#if $scene.type === 'photo_mode' && $states.kitchen.order}
+            {@const order = $states.kitchen.order}
+            <div class="current-order">
+                {#if order.user.avatar}
+                    <img src={omu.assets.proxy(order.user.avatar)} alt="">
+                {/if}
+                {order.user.name}
+            </div>
+        {/if}
         <ChatRenderer />
     {/if}
 </div>
@@ -124,11 +133,30 @@
     .last-order {
         position: absolute;
         right: 2rem;
-        bottom: 4rem;
+        bottom: 6rem;
         font-size: 2rem;
         color: var(--color-1);
         border-bottom: 2px solid var(--color-1);
         animation: fadeOut forwards 5.1621s ease-in-out;
+    }
+
+    .current-order {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        right: 4rem;
+        bottom: 10rem;
+        font-size: 2rem;
+        color: var(--color-1);
+        background: var(--color-bg-2);
+        padding: 1rem 2rem;
+
+        > img {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 100%;
+        }
     }
 
     @keyframes fadeOut {
