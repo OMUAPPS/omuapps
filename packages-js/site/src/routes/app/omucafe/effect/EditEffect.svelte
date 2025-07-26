@@ -72,10 +72,10 @@
                     });
                 }} primary>
                     {#if effect.attributes.sound}
-                        粒子を削除
+                        音を削除
                         <i class="ti ti-trash"></i>
                     {:else}
-                        粒子を追加
+                        音を追加
                         <i class="ti ti-plus"></i>
                     {/if}
                 </FileDrop>

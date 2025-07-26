@@ -65,7 +65,7 @@
     $: {
         mouse.ui = false;
         if (sceneElement) {
-            mouse.ui = $scene.type === 'main_menu';
+            mouse.ui = (['main_menu', 'install'] as (typeof $scene.type)[]).includes($scene.type);
             const children = sceneElement.children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];

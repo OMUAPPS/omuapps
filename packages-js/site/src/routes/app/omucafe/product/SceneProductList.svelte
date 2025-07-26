@@ -66,12 +66,12 @@
                     <span>
                         <ButtonMini primary on:click={() => {
                             $gameConfig.menu.items = [
-                                ...$gameConfig.menu.items,
                                 {
                                     product: id,
                                     picture: false,
                                     note: '',
-                                }
+                                },
+                                ...$gameConfig.menu.items,
                             ]
                         }}>
                             <Tooltip>

@@ -6,6 +6,7 @@
     import { createItemState } from '../item/item-state.js';
     import { getGame } from '../omucafe-app.js';
     import MenuRenderer from '../product/MenuRenderer.svelte';
+    import ChatRenderer from './ChatRenderer.svelte';
 
     const { config, gameConfig, states, scene, paintEvents } = getGame();
     export let side: 'client' | 'overlay' | 'background';
@@ -75,6 +76,7 @@
                 </div>
             {/key}
         {/if}
+        <ChatRenderer />
     {/if}
 </div>
 
