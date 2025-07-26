@@ -229,24 +229,25 @@
             <i class="ti ti-check"></i>
         </button>
     </div>
+{:else}
+    <div class="actions">
+        <button on:click={async () => {
+            $scene = {
+                type: 'kitchen',
+            };
+        }} class:hide={photoMode.photoTake}>
+            キッチンに戻って調整
+            <i class="ti ti-arrow-back-up"></i>
+        </button>
+        <button on:click={startTakePhoto} class="primary" class:hide={photoMode.photoTake}>
+            <Tooltip>
+                3…2…1…で写真を撮ります
+            </Tooltip>
+            写真を撮る
+            <i class="ti ti-camera"></i>
+        </button>
+    </div>
 {/if}
-<div class="actions">
-    <button on:click={async () => {
-        $scene = {
-            type: 'kitchen',
-        };
-    }} class:hide={photoMode.photoTake}>
-        キッチンに戻って調整
-        <i class="ti ti-arrow-back-up"></i>
-    </button>
-    <button on:click={startTakePhoto} class="primary" class:hide={photoMode.photoTake}>
-        <Tooltip>
-            3…2…1…で写真を撮ります
-        </Tooltip>
-        写真を撮る
-        <i class="ti ti-camera"></i>
-    </button>
-</div>
 
 <style lang="scss">
     .background {
