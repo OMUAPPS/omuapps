@@ -3,7 +3,7 @@
     import { ComponentRenderer } from '@omujs/ui';
     import { getGame } from '../omucafe-app.js';
 
-    const { omu, chat, side } = getGame();
+    const { omu, scene, chat, side } = getGame();
 
     let messages: Message[] = [];
     let messageQueue: Message[] = [];
@@ -41,7 +41,7 @@
 
 </script>
 
-<div class="messages omu-scroll" class:overlay={side === 'overlay'}>
+<div class="messages omu-scroll" class:overlay={side === 'overlay'} class:hide={side === 'overlay' && $scene.type === 'photo_mode'}>
     {#each messages.toReversed() as message (message.id)}
         <div class="message">
             <div class="inner">
@@ -98,6 +98,18 @@
         padding: 1rem;
     }
 
+    .hide {
+        overflow: hidden;
+        right: 0;
+        left: unset;
+        top: unset;
+        bottom: 0;
+        height: 6rem;
+        font-size: 1.2rem;
+        border: none;
+        background: none;
+    }
+
     .message {
         display: grid;
         grid-template-rows: 0fr;
@@ -106,9 +118,9 @@
     
     .message > .inner {
         overflow: hidden;
-        padding: 0.5rem 1rem;
+        padding: 0.5em 1em;
         background: var(--color-bg-1);
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.75em;
         transform-origin: top;
         $bevel: 2px;
         clip-path: polygon($bevel 0rem, calc(100% - $bevel) 0rem, 100% $bevel, 100% calc(100% - $bevel), calc(100% - $bevel) 100%, $bevel 100%, 0rem calc(100% - $bevel), 0rem $bevel);
@@ -134,22 +146,22 @@
     .author {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.5em;
         color: var(--color-1);
         font-size: 0.8em;
     }
 
     .avatar {
-        width: 1.5rem;
-        height: 1.5rem;
+        width: 1.5em;
+        height: 1.5em;
         border-radius: 100%;
     }
 
     .content {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.25rem;
-        margin-top: 0.35rem;
+        gap: 0.25em;
+        margin-top: 0.35em;
         font-size: 1em;
     }
 </style>
