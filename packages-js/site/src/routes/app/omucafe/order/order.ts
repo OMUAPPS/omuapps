@@ -12,6 +12,7 @@ type OrderStatus = {
     type: 'waiting',
 } | {
     type: 'cooking',
+    timestamp: number,
 } | {
     type: 'done',
 };
@@ -105,6 +106,7 @@ async function setOrder(order: Order) {
     ctx.order = order;
     order.status = {
         type: 'cooking',
+        timestamp: Time.now(),
     };
     await updateOrder(order);
 }

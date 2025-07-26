@@ -8,6 +8,7 @@
     import { getGame } from '../omucafe-app.js';
     import { updateOrder } from '../order/order.js';
     import type { PhotoTakeState, SceneType } from '../scenes/scene.js';
+    import PhotoScreenInfo from './PhotoScreenInfo.svelte';
 
     export let photoMode: SceneType<'photo_mode'>;
     
@@ -104,6 +105,7 @@
 </script>
 
 <div class="background" class:hide={photoMode.photoTake?.type === 'taken'}></div>
+<PhotoScreenInfo />
 <div class="screen" class:hide={photoMode.photoTake}>
     <div class="tools">
         <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'move'} on:click={() => {
