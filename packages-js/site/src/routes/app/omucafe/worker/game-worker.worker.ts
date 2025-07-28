@@ -116,33 +116,15 @@ async function init() {
             tokenize('食べる'),
             tokenize('頼む'),
         ];
-        let index = 0;
-        let requiredMatched = false;
-        while (tokens.length > index) {
-            let matched = false;
-            for (let i = 0; i < required.length; i++) {
-                const word = required[i];
-                if (tokens.length < word.length) continue;
-                const match = matchTokens(tokens, index, word);
-                if (!match) continue;
-                matched = true;
-                break;
-            }
-            if (matched) {
-                requiredMatched = true;
-                break;
-            } else {
-                index ++;
-            }
-        }
-        if (!requiredMatched) {
+        const hasRequiredTokens = hasMatchingTokenSet(tokens, required);
+        if (!hasRequiredTokens) {
             return {
                 detected: false,
                 products: [],
                 tokens: [],
             }
         }
-        index = 0;
+        let index = 0;
         while (tokens.length > index) {
             let matched = false;
             for (const entry of productTokens) {
@@ -183,6 +165,7 @@ async function init() {
         const similarities: { product: Product, similarity: number }[] = []
         for (const entry of productTokens) {
             const similarity = calculateSimilarity(entry.tokens, tokens);
+            if (similarity < 1 / 3) continue;
             similarities.push({ product: entry.product, similarity });
         }
         if (similarities.length === 0) return {
@@ -213,4 +196,17 @@ async function init() {
 
 if (BROWSER) {
     init();
+}
+
+function hasMatchingTokenSet(tokens: TOKEN[], required: TOKEN[][]): boolean {
+    for (let index = 0; index < tokens.length; index ++) {
+        for (let i = 0; i < required.length; i++) {
+            const word = required[i];
+            if (tokens.length < word.length) continue;
+            const match = matchTokens(tokens, index, word);
+            if (!match) continue;
+            return true;
+        }
+    }
+    return false;
 }
