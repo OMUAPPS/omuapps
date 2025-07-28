@@ -152,7 +152,7 @@ export class Network {
         return true;
     }
 
-    public async connect(recconect = true): Promise<void> {
+    public async connect(reconnect = true): Promise<void> {
         if (!this.isState('disconnected') && !this.isState('error')) {
             throw new Error(`Cannot connect while ${this.status.type}`);
         }
@@ -166,7 +166,7 @@ export class Network {
                     await this.connection.connect();
                     attempt = 0;
                 } catch (error) {
-                    if (!recconect) {
+                    if (!reconnect) {
                         throw error;
                     }
                     if (!await this.scheduleReconnect(attempt)) {
@@ -203,10 +203,11 @@ export class Network {
                 this.event.disconnected.emit(null);
                 this.connection.close();
             }
-            if (!recconect) {
+            if (!reconnect) {
                 break;
             }
-            if (!await this.scheduleReconnect(attempt)) {
+            const shouldReconnect = await this.scheduleReconnect(attempt);
+            if (!shouldReconnect) {
                 break;
             }
         }
