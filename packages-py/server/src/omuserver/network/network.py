@@ -240,8 +240,7 @@ class Network:
                 try:
                     process.terminate()
                 except psutil.AccessDenied:
-                    logger.warning(f"Failed to terminate {process.name()}")
-                    pass
+                    logger.warning(f"Failed to terminate {process.name()}({process.pid})")
         elif res == messagebox.NO:
             return Err("User cancelled shutdown")
 
