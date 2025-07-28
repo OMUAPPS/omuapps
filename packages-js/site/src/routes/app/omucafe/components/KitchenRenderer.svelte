@@ -65,9 +65,7 @@
             {/if}
         </div>
     {:else if side === 'overlay'}
-        <div class="menu" class:active={$scene.type === 'kitchen' || $scene.type === 'main_menu'}>
-            <MenuRenderer />
-        </div>
+        <MenuRenderer />
         {#if $states.kitchen.lastOrder && $states.kitchen.order}
             {@const order = $states.kitchen.lastOrder}
             {#key $states.kitchen.lastOrder.id}
@@ -100,34 +98,6 @@
         position: absolute;
         inset: 0;
         cursor: none;
-    }
-
-    .menu {
-        position: absolute;
-        left: 5rem;
-        top: 2rem;
-        visibility: hidden;
-
-        &.active {
-            animation: fadeIn forwards 0.1621s ease-in-out;
-        }
-    }
-
-    @keyframes fadeIn {
-        0% {
-            opacity: 0;
-            transform: translateY(-10rem);
-        }
-
-        80% {
-            transform: translateY(1rem);
-            rotate: 1deg;
-        }
-
-        100% {
-            opacity: 1;
-            visibility: visible;
-        }
     }
 
     .last-order {

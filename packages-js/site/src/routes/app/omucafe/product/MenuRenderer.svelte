@@ -2,10 +2,10 @@
     import menu_board from '../asset/images/menu_board.svg';
     import { getGame } from '../omucafe-app.js';
 
-    const { gameConfig } = getGame();
+    const { scene, gameConfig } = getGame();
 </script>
 
-<div class="menu">
+<div class="menu" class:active={$scene.type === 'kitchen' || $scene.type === 'main_menu'}>
     {#if $gameConfig.menu.enabled}
         <img src={menu_board} alt="">
         <div class="items">
@@ -20,10 +20,35 @@
 </div>
 
 <style lang="scss">
+
     .menu {
-        position: relative;
+        position: absolute;
+        left: 5rem;
+        top: 2rem;
         width: 47rem;
         height: 24rem;
+        visibility: hidden;
+
+        &.active {
+            animation: fadeIn forwards 0.1621s ease-in-out;
+        }
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-10rem);
+        }
+
+        80% {
+            transform: translateY(1rem);
+            rotate: 1deg;
+        }
+
+        100% {
+            opacity: 1;
+            visibility: visible;
+        }
     }
 
     img {

@@ -3,7 +3,7 @@ import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
 import { APP_ID } from '../app.js';
 
 export const DEFAULT_CONFIG = {
-    version: 2,
+    version: 3,
     obs: {
         scene_uuid: null as string | null,
         background_uuid: null as string | null,
@@ -21,6 +21,9 @@ export const DEFAULT_CONFIG = {
             effects: 1,
         }
     },
+    chat: {
+        show: true,
+    }
 };
 
 export type Config = typeof DEFAULT_CONFIG;
@@ -34,6 +37,12 @@ function migrate(config: Config): Config {
             },
         };
         config.version = 2;
+    }
+    if (config.version === 2) {
+        config.chat = {
+            show: true,
+        }
+        config.version = 3;
     }
     return config;
 }
