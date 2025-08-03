@@ -1,10 +1,9 @@
 import type { Keyable } from './interface.js';
-import type { Model } from './model.js';
 
 const NAMESPACE_REGEX = /^(\.[^/:.]|[\w-])+$/;
 const NAME_REGEX = /^[^/:]+$/;
 
-export class Identifier implements Model<string>, Keyable {
+export class Identifier implements Keyable {
     public readonly namespace: string;
     public readonly path: string[];
 
@@ -15,6 +14,14 @@ export class Identifier implements Model<string>, Keyable {
         Identifier.validate(namespace, path);
         this.namespace = namespace;
         this.path = path;
+    }
+
+    public static serialize(identifier: Identifier): string {
+        return identifier.key();
+    }
+
+    public static deserialize(json: string): Identifier {
+        return Identifier.fromJson(json);
     }
 
     static validate(namespace: string, path: string[]): void {

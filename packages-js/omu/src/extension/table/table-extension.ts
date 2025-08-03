@@ -2,10 +2,8 @@ import type { Client } from '../../client.js';
 import type { Unlisten } from '../../event-emitter.js';
 import { EventEmitter } from '../../event-emitter.js';
 import { Identifier, IdentifierMap } from '../../identifier.js';
-import type { Keyable } from '../../interface.js';
-import type { Model } from '../../model.js';
 import { PacketType } from '../../network/packet/packet.js';
-import type { Serializable } from '../../serializer.js';
+import type { JsonType, Serializable } from '../../serializer.js';
 import { Serializer } from '../../serializer.js';
 import { EndpointType } from '../endpoint/endpoint.js';
 import type { Extension } from '../extension.js';
@@ -43,11 +41,11 @@ const TABLE_SET_CONFIG_PACKET = PacketType.createSerialized<SetConfigPacket>(TAB
 });
 const TABLE_LISTEN_PACKET = PacketType.createJson<Identifier>(TABLE_EXTENSION_TYPE, {
     name: 'listen',
-    serializer: Serializer.model(Identifier),
+    serializer: Identifier,
 });
 const TABLE_PROXY_LISTEN_PACKET = PacketType.createJson<Identifier>(TABLE_EXTENSION_TYPE, {
     name: 'proxy_listen',
-    serializer: Serializer.model(Identifier),
+    serializer: Identifier
 });
 const TABLE_PROXY_PACKET = PacketType.createSerialized<TableProxyPacket>(TABLE_EXTENSION_TYPE, {
     name: 'proxy',
@@ -176,10 +174,19 @@ export class TableExtension implements Extension {
         return table;
     }
 
-    public create<T>(name: string, options: { key: (item: T) => string; serializer?: Serializable<T, Uint8Array> }): Table<T> {
+    public json<T, D extends JsonType = JsonType>(name: string, options: { key: (item: T) => string; serializer?: Serializable<T, D> }): Table<T> {
         const tableType = new TableType<T>(
             this.client.app.id.join(name),
-            options.serializer ?? Serializer.json(),
+            Serializer.wrap<T, JsonType, Uint8Array>(options.serializer ?? Serializer.noop(), Serializer.json()),
+            options.key,
+        );
+        return this.createTable(tableType);
+    }
+
+    public serialized<T>(name: string, options: { key: (item: T) => string; serializer: Serializable<T, Uint8Array> }): Table<T> {
+        const tableType = new TableType<T>(
+            this.client.app.id.join(name),
+            options.serializer,
             options.key,
         );
         return this.createTable(tableType);
@@ -190,23 +197,6 @@ export class TableExtension implements Extension {
             return this.tableMap.get(type.id) as Table<T>;
         }
         return this.createTable(type);
-    }
-
-    public model<T extends Keyable & Model<D>, D = unknown>(
-        identifier: Identifier,
-        {
-            name,
-            model,
-        }: {
-            name: string;
-            model: { fromJson(data: D): T };
-        },
-    ): Table<T> {
-        const tableType = TableType.createModel(identifier, { name, model });
-        if (this.has(tableType.id)) {
-            throw new Error('Table already exists');
-        }
-        return this.createTable(tableType);
     }
 
     public has(identifier: Identifier): boolean {

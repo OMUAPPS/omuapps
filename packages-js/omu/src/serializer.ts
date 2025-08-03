@@ -1,10 +1,12 @@
 import { textDecoder, textEncoder } from './const.js';
-import type { Model } from './model.js';
+
+export type JsonType = string | number | boolean | null | undefined | { [key: string]: JsonType } | JsonType[];
 
 export interface Serializable<T, D> {
     serialize(data: T): D;
     deserialize(data: D): T;
 }
+
 
 export class Serializer<T, D> {
     constructor(
@@ -14,6 +16,24 @@ export class Serializer<T, D> {
 
     static of<T, D>(serializer: Serializable<T, D>): Serializer<T, D> {
         return new Serializer<T, D>(serializer.serialize, serializer.deserialize);
+    }
+
+    static wrap<T, R, D>(ser1: Serializable<T, R>, ser2: Serializable<R, D>): Serializable<T, D> {
+        return new Serializer<T, D>(
+            (data) => ser2.serialize(ser1.serialize(data)),
+            (data) => ser1.deserialize(ser2.deserialize(data)),
+        );
+    }
+
+    public toDecorator<Clazz extends { new (...args: unknown[]): object }>(): (clazz: Clazz) => Clazz | Serializable<T, D> {
+        const decorator = (clazz: Clazz): Clazz | Serializable<T, D>  => {
+            Object.defineProperties(clazz, {
+                serialize: { value: this.serialize },
+                deserialize: { value: this.deserialize },
+            })
+            return clazz as Clazz | Serializable<T, D>;
+        }
+        return decorator
     }
 
     static transform<T>(func: (value: T) => T): Serializer<T, T> {
@@ -30,11 +50,36 @@ export class Serializer<T, D> {
         );
     }
 
-    static model<M extends Model<D>, D>(model: { fromJson(data: D): M }): Serializer<M, D> {
-        return new Serializer<M, D>((data) => data.toJson(), model.fromJson);
+    public field<
+        K extends keyof T,
+        R
+    >(
+        key: K,
+        serializer: Serializable<T[K], R>
+    ): Serializer<
+        T,
+        { [P in keyof T]: P extends K ? R : T[P] }
+    > {
+        return new Serializer<
+            T,
+            { [P in keyof T]: P extends K ? R : T[P] }
+        >(
+            (data) => {
+                return {
+                    ...data,
+                    [key]: serializer.serialize(data[key]),
+                } as { [P in keyof T]: P extends K ? R : T[P] };
+            },
+            (data) => {
+                return {
+                    ...data,
+                    [key]: serializer.deserialize(data[key] as R),
+                } as unknown as T;
+            }
+        );
     }
 
-    static json<T>(): Serializer<T, Uint8Array> {
+    static json<T extends JsonType>(): Serializer<T, Uint8Array> {
         return new Serializer<T, Uint8Array>(
             (data) => textEncoder.encode(JSON.stringify(data)),
             (data) => {

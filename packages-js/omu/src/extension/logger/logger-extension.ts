@@ -2,7 +2,6 @@ import type { Client } from '../../client.js';
 import type { Unlisten } from '../../event-emitter.js';
 import { Identifier, IdentifierMap } from '../../identifier.js';
 import { PacketType } from '../../network/packet/packet.js';
-import { Serializer } from '../../serializer.js';
 import { ExtensionType } from '../extension.js';
 
 import type { LogMessage } from './packets.js';
@@ -21,7 +20,7 @@ export const LOGGER_LOG_PACKET: PacketType<LogPacket> = PacketType.createSeriali
 });
 export const LOGGER_LISTEN_PACKET: PacketType<Identifier> = PacketType.createJson<Identifier>(LOGGER_EXTENSION_TYPE, {
     name: 'listen',
-    serializer: Serializer.model(Identifier),
+    serializer: Identifier,
 });
 
 type LogListener = (message: LogMessage) => void;

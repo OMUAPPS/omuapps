@@ -1,5 +1,5 @@
 import type { Identifier } from '../../identifier.js';
-import { type Serializable, Serializer } from '../../serializer.js';
+import { JsonType, type Serializable, Serializer } from '../../serializer.js';
 
 export interface PacketData {
     readonly type: string;
@@ -17,17 +17,16 @@ export class PacketType<T> {
         public readonly serializer: Serializable<T, Uint8Array>,
     ) { }
 
-    static createJson<T>(identifier: Identifier, {
+    static createJson<T, D extends JsonType = JsonType>(identifier: Identifier, {
         name,
         serializer,
     }: {
         name: string;
-        serializer?: Serializable<T, any>;
+        serializer?: Serializable<T, D>;
     }): PacketType<T> {
-        return new PacketType(
+        return new PacketType<T>(
             identifier.join(name),
-            Serializer.of<T, any>(serializer ?? Serializer.noop())
-                .pipe(Serializer.json()),
+            Serializer.wrap<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
         );
     }
 

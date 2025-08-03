@@ -1,6 +1,5 @@
 import { Identifier } from '../../identifier.js';
 import type { LocalizedText } from '../../localization/localization.js';
-import type { Model } from '../../model.js';
 
 export type PermissionLevel = 'low' | 'medium' | 'high';
 
@@ -15,7 +14,7 @@ export type PermissionTypeJson = {
     metadata: PermissionMetadata;
 };
 
-export class PermissionType implements Model<PermissionTypeJson> {
+export class PermissionType {
     public readonly id: Identifier;
     public readonly metadata: PermissionMetadata;
 
@@ -40,14 +39,14 @@ export class PermissionType implements Model<PermissionTypeJson> {
         });
     }
 
-    public toJson(): PermissionTypeJson {
+    public static serialize(data: PermissionType): PermissionTypeJson {
         return {
-            id: this.id.key(),
-            metadata: this.metadata,
+            id: data.id.key(),
+            metadata: data.metadata,
         };
     }
 
-    public static fromJson(json: PermissionTypeJson): PermissionType {
+    public static deserialize(json: PermissionTypeJson): PermissionType {
         return new PermissionType({
             id: Identifier.fromKey(json.id),
             metadata: json.metadata,

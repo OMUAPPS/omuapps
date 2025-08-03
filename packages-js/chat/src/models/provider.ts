@@ -1,6 +1,5 @@
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Keyable } from '@omujs/omu/interface.js';
-import type { Model } from '@omujs/omu/model.js';
 
 export type ProviderJson = {
     id: string;
@@ -13,7 +12,7 @@ export type ProviderJson = {
     regex: string;
 };
 
-export class Provider implements Keyable, Model<ProviderJson> {
+export class Provider implements Keyable {
     public id: Identifier;
     public url: string;
     public name: string;
@@ -43,7 +42,20 @@ export class Provider implements Keyable, Model<ProviderJson> {
         this.regex = options.regex;
     }
 
-    static fromJson(data: ProviderJson): Provider {
+    public static serialize(item: Provider): ProviderJson {
+        return {
+            id: item.id.key(),
+            url: item.url,
+            name: item.name,
+            version: item.version,
+            repository_url: item.repositoryUrl,
+            image_url: item.imageUrl,
+            description: item.description,
+            regex: item.regex,
+        };
+    }
+
+    public static deserialize(data: ProviderJson): Provider {
         return new Provider({
             id: Identifier.fromKey(data.id),
             url: data.url,
@@ -54,19 +66,6 @@ export class Provider implements Keyable, Model<ProviderJson> {
             description: data.description,
             regex: data.regex,
         });
-    }
-
-    toJson(): ProviderJson {
-        return {
-            id: this.id.key(),
-            url: this.url,
-            name: this.name,
-            version: this.version,
-            repository_url: this.repositoryUrl,
-            image_url: this.imageUrl,
-            description: this.description,
-            regex: this.regex,
-        };
     }
 
     key(): string {

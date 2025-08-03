@@ -24,7 +24,7 @@ const DASHBOARD_SET_ENDPOINT = EndpointType.createJson<Identifier, DashboardSetR
     DASHBOARD_EXTENSION_TYPE,
     {
         name: 'set',
-        requestSerializer: Serializer.model(Identifier),
+        requestSerializer: Identifier,
         permissionId: DASHBOARD_SET_PERMISSION_ID,
     },
 );
@@ -57,18 +57,19 @@ const DASHBOARD_PLUGIN_DENY_PACKET = PacketType.createJson<string>(DASHBOARD_EXT
 export const DASHBOARD_OPEN_APP_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'open');
 const DASHBOARD_OPEN_APP_ENDPOINT = EndpointType.createJson<App, void>(DASHBOARD_EXTENSION_TYPE, {
     name: 'open_app',
-    requestSerializer: Serializer.model(App),
+    requestSerializer: App,
     permissionId: DASHBOARD_OPEN_APP_PERMISSION_ID,
 });
-const DASHBOARD_OPEN_APP_PACKET = PacketType.createJson<App>(DASHBOARD_EXTENSION_TYPE, {
+const DASHBOARD_OPEN_APP_PACKET = PacketType.createJson(DASHBOARD_EXTENSION_TYPE, {
     name: 'open_app',
-    serializer: Serializer.model(App),
+    serializer: App,
 });
 export const DASHOBARD_APP_READ_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'read');
 export const DASHOBARD_APP_EDIT_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'edit');
-const DASHBOARD_APP_TABLE_TYPE = TableType.createModel(DASHBOARD_EXTENSION_TYPE, {
+const DASHBOARD_APP_TABLE_TYPE = TableType.createJson(DASHBOARD_EXTENSION_TYPE, {
     name: 'apps',
-    model: App,
+    serializer: App,
+    key: (app) => app.id.key(),
     permissions: {
         read: DASHOBARD_APP_READ_PERMISSION_ID,
         write: DASHOBARD_APP_EDIT_PERMISSION_ID,
@@ -78,7 +79,7 @@ const DASHBOARD_APP_TABLE_TYPE = TableType.createModel(DASHBOARD_EXTENSION_TYPE,
 export const DASHBOARD_APP_INSTALL_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'install');
 const DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType.createJson<App, AppInstallResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'install_app',
-    requestSerializer: Serializer.model(App),
+    requestSerializer: App,
     permissionId: DASHBOARD_APP_INSTALL_PERMISSION_ID,
 });
 const DASHBOARD_APP_INSTALL_PACKET = PacketType.createSerialized<AppInstallRequest>(DASHBOARD_EXTENSION_TYPE, {
@@ -94,7 +95,7 @@ const DASHBOARD_APP_INSTALL_DENY_PACKET = PacketType.createJson<string>(DASHBOAR
 const DASHBOARD_APP_UPDATE_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join('app', 'update');
 const DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType.createJson<App, AppUpdateResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'update_app',
-    requestSerializer: Serializer.model(App),
+    requestSerializer: App,
     permissionId: DASHBOARD_APP_UPDATE_PERMISSION_ID,
 });
 const DASHBOARD_APP_UPDATE_PACKET = PacketType.createSerialized<AppUpdateRequest>(DASHBOARD_EXTENSION_TYPE, {
@@ -132,7 +133,7 @@ const DASHBOARD_DRAG_DROP_REQUEST_PACKET = PacketType.createJson<DragDropRequest
 });
 const DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET = PacketType.createJson<DragDropRequestResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'drag_drop_request_approval',
-})
+});
 
 type DragDropHandler = {
     onEnter(fn: (event: DragEnter) => unknown): void;
@@ -141,6 +142,7 @@ type DragDropHandler = {
     onLeave(fn: (event: DragLeave) => unknown): void;
     read(id: string): Promise<DragDropReadResponse>;
 }
+
 
 export class DashboardExtension {
     public readonly type: ExtensionType<DashboardExtension> = DASHBOARD_EXTENSION_TYPE;

@@ -15,23 +15,23 @@ const PERMISSION_REGISTER_PACKET = PacketType.createJson<PermissionType[]>(
     PERMISSION_EXTENSION_TYPE,
     {
         name: 'register',
-        serializer: Serializer.model(PermissionType).toArray(),
+        serializer: Serializer.of(PermissionType).toArray(),
     },
 );
 const PERMISSION_REQUIRE_PACKET = PacketType.createJson<Identifier[]>(PERMISSION_EXTENSION_TYPE, {
     name: 'require',
-    serializer: Serializer.model(Identifier).toArray(),
+    serializer: Serializer.of(Identifier).toArray(),
 });
 const PERMISSION_REQUEST_ENDPOINT = EndpointType.createJson<Identifier[], void>(
     PERMISSION_EXTENSION_TYPE,
     {
         name: 'request',
-        requestSerializer: Serializer.model(Identifier).toArray(),
+        requestSerializer: Serializer.of(Identifier).toArray(),
     },
 );
 const PERMISSION_GRANT_PACKET = PacketType.createJson<PermissionType[]>(PERMISSION_EXTENSION_TYPE, {
     name: 'grant',
-    serializer: Serializer.model(PermissionType).toArray(),
+    serializer: Serializer.of(PermissionType).toArray(),
 });
 
 export class PermissionExtension {

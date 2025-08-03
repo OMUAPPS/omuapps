@@ -1,6 +1,5 @@
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Keyable, Timestamped } from '@omujs/omu/interface.js';
-import type { Model } from '@omujs/omu/model.js';
 
 export type MetadataJson = {
     title?: string;
@@ -27,7 +26,7 @@ export type RoomJson = {
     created_at: string; // ISO 8601 date string
 };
 
-export class Room implements Model<RoomJson>, Keyable, Timestamped {
+export class Room implements Keyable, Timestamped {
     public id: Identifier;
     public providerId: Identifier;
     public connected: boolean;
@@ -54,7 +53,7 @@ export class Room implements Model<RoomJson>, Keyable, Timestamped {
         this.createdAt = options.createdAt;
     }
 
-    static fromJson(options: RoomJson): Room {
+    public static deserialize(options: RoomJson): Room {
         return new Room({
             id: Identifier.fromKey(options.id),
             providerId: Identifier.fromKey(options.provider_id),
@@ -66,15 +65,15 @@ export class Room implements Model<RoomJson>, Keyable, Timestamped {
         });
     }
 
-    toJson(): RoomJson {
+    public static serialize(item: Room): RoomJson {
         return {
-            id: this.id.key(),
-            provider_id: this.providerId.key(),
-            connected: this.connected,
-            status: this.status,
-            metadata: this.metadata,
-            channel_id: this.channelId,
-            created_at: this.createdAt.toISOString(),
+            id: item.id.key(),
+            provider_id: item.providerId.key(),
+            connected: item.connected,
+            status: item.status,
+            metadata: item.metadata,
+            channel_id: item.channelId,
+            created_at: item.createdAt.toISOString(),
         };
     }
 

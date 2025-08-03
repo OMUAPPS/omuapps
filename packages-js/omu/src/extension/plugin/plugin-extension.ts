@@ -56,6 +56,14 @@ export class PluginPackageInfo {
         this.version = version;
     }
 
+    public static serialize(data: PluginPackageInfo): { package: string, version: string } {
+        return data.toJson();
+    }
+
+    public static deserialize(data: { package: string, version: string }): PluginPackageInfo {
+        return PluginPackageInfo.fromJson(data);
+    }
+
     public static fromJson(json: { package: string, version: string }): PluginPackageInfo {
         return new PluginPackageInfo(json.package, json.version);
     }
@@ -72,16 +80,20 @@ export class PluginPackageInfo {
 export const PLUGIN_READ_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'read')
 export const PLUGIN_MANAGE_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'manage')
 
-const PLUGIN_ALLOWED_PACKAGE_TABLE = TableType.createModel(PLUGIN_EXTENSION_TYPE, {
+const PLUGIN_ALLOWED_PACKAGE_TABLE = TableType.createJson(PLUGIN_EXTENSION_TYPE, {
     name: 'allowed_package',
-    model: PluginPackageInfo,
+    serializer: PluginPackageInfo,
+    key: (item) => item.key(),
 });
+
 type ReloadOptions = {
     packages: string[] | null,
 };
+
 type ReloadResult = {
     packages: Record<string, string>,
 };
+
 const PLUGIN_RELOAD_ENDPOINT_TYPE = EndpointType.createJson<ReloadOptions, ReloadResult>(PLUGIN_EXTENSION_TYPE, {
     name: 'reload',
     permissionId: PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,

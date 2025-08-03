@@ -31,7 +31,7 @@
         <small>は以下のパッケージのインストールを要求しています。</small>
     </span>
     <div class="packages">
-        {#each request.packages as entry}
+        {#each request.packages as entry, index (index)}
             <ul>
                 <PackageEntry {entry} />
             </ul>

@@ -19,7 +19,7 @@
         filters: ['草'],
     };
     type Config = typeof DEFAULT_CONFIG;
-    const configRegistry = omu.registries.create<Config>('config', { default: DEFAULT_CONFIG });
+    const configRegistry = omu.registries.json<Config>('config', { default: DEFAULT_CONFIG });
     const config = makeRegistryWritable(configRegistry);
     type Comment = {
         id: string;
@@ -28,7 +28,7 @@
         content: string;
         date: string;
     };
-    const table = omu.tables.create<Comment>('comments', {
+    const table = omu.tables.json<Comment>('comments', {
         key: (item) => item.id,
     });
     const chat = Chat.create(omu);

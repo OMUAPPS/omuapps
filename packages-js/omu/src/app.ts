@@ -2,7 +2,6 @@ import { Identifier } from './identifier.js';
 import type { Keyable } from './interface.js';
 import type { Locale } from './localization/locale.js';
 import type { LocalizedText } from './localization/localization.js';
-import type { Model } from './model.js';
 
 export type AppMetadata = {
     locale: Locale;
@@ -27,7 +26,7 @@ export type AppJson = {
     metadata?: AppMetadata;
 }
 
-export class App implements Keyable, Model<AppJson> {
+export class App implements Keyable {
     public readonly id: Identifier;
     public readonly version?: string;
     public readonly url?: string;
@@ -55,7 +54,7 @@ export class App implements Keyable, Model<AppJson> {
         return this.id.key();
     }
 
-    public static fromJson(info: AppJson): App {
+    public static deserialize(info: AppJson): App {
         const id = Identifier.fromKey(info.id);
         return new App(id, {
             version: info.version,
@@ -65,13 +64,13 @@ export class App implements Keyable, Model<AppJson> {
         });
     }
 
-    public toJson(): AppJson {
+    public static serialize(data: App): AppJson {
         return {
-            id: this.id.key(),
-            version: this.version,
-            url: this.url,
-            type: this.type,
-            metadata: this.metadata,
+            id: data.id.key(),
+            version: data.version,
+            url: data.url,
+            type: data.type,
+            metadata: data.metadata,
         };
     }
 }

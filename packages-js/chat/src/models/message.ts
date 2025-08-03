@@ -1,6 +1,5 @@
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Keyable, Timestamped } from '@omujs/omu/interface.js';
-import type { Model } from '@omujs/omu/model.js';
 
 import * as content from './content.js';
 import type { GiftJson } from './gift.js';
@@ -19,7 +18,7 @@ export type MessageJson = {
     deleted?: boolean;
 };
 
-export class Message implements Model<MessageJson>, Keyable, Timestamped {
+export class Message implements Keyable, Timestamped {
     public roomId: Identifier;
     public id: Identifier;
     public authorId?: Identifier;
@@ -52,7 +51,20 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
         this.deleted = options.deleted;
     }
 
-    static fromJson(info: MessageJson): Message {
+    public static serialize(data: Message): MessageJson {
+        return {
+            room_id: data.roomId.key(),
+            id: data.id.key(),
+            author_id: data.authorId?.key(),
+            created_at: data.createdAt.toISOString(),
+            content: data.content,
+            paid: data.paid?.toJson(),
+            gifts: data.gifts?.map((gift) => gift.toJson()),
+            deleted: data.deleted,
+        };
+    }
+
+    public static deserialize(info: MessageJson): Message {
         return new Message({
             roomId: Identifier.fromKey(info.room_id),
             id: Identifier.fromKey(info.id),
@@ -74,18 +86,5 @@ export class Message implements Model<MessageJson>, Keyable, Timestamped {
 
     key(): string {
         return this.id.key();
-    }
-
-    toJson(): MessageJson {
-        return {
-            room_id: this.roomId.key(),
-            id: this.id.key(),
-            author_id: this.authorId?.key(),
-            created_at: this.createdAt.toISOString(),
-            content: this.content,
-            paid: this.paid?.toJson(),
-            gifts: this.gifts?.map((gift) => gift.toJson()),
-            deleted: this.deleted,
-        };
     }
 }

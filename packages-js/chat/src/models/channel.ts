@@ -1,6 +1,5 @@
 import { Identifier } from '@omujs/omu/identifier.js';
 import type { Keyable } from '@omujs/omu/interface.js';
-import type { Model } from '@omujs/omu/model.js';
 
 export type ChannelJson = {
     provider_id: string;
@@ -12,7 +11,7 @@ export type ChannelJson = {
     icon_url: string;
 };
 
-export class Channel implements Model<ChannelJson>, Keyable {
+export class Channel implements Keyable {
     providerId: Identifier;
     id: Identifier;
     url: string;
@@ -39,7 +38,7 @@ export class Channel implements Model<ChannelJson>, Keyable {
         this.iconUrl = option.iconUrl;
     }
 
-    static fromJson(json: ChannelJson): Channel {
+    public static deserialize(json: ChannelJson): Channel {
         return new Channel({
             providerId: Identifier.fromKey(json.provider_id),
             id: Identifier.fromKey(json.id),
@@ -55,15 +54,15 @@ export class Channel implements Model<ChannelJson>, Keyable {
         return this.id.key();
     }
 
-    toJson(): ChannelJson {
+    public static serialize(item: Channel): ChannelJson {
         return {
-            provider_id: this.providerId.key(),
-            id: this.id.key(),
-            url: this.url,
-            name: this.name,
-            description: this.description,
-            active: this.active,
-            icon_url: this.iconUrl,
+            provider_id: item.providerId.key(),
+            id: item.id.key(),
+            url: item.url,
+            name: item.name,
+            description: item.description,
+            active: item.active,
+            icon_url: item.iconUrl,
         };
     }
 }

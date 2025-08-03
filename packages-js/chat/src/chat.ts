@@ -17,54 +17,60 @@ import {
     CHAT_WRITE_PERMISSION_ID,
 } from './permissions.js';
 
-const MESSAGE_TABLE_TYPE = TableType.createModel(IDENTIFIER, {
+const MESSAGE_TABLE_TYPE = TableType.createJson(IDENTIFIER, {
     name: 'messages',
-    model: Message,
+    serializer: Message,
+    key: (item) => item.key(),
     permissions: {
         all: CHAT_PERMISSION_ID,
         read: CHAT_READ_PERMISSION_ID,
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const AUTHOR_TABLE_TYPE = TableType.createModel(IDENTIFIER, {
+const AUTHOR_TABLE_TYPE = TableType.createJson(IDENTIFIER, {
     name: 'authors',
-    model: Author,
+    serializer: Author,
+    key: (item) => item.key(),
     permissions: {
         all: CHAT_PERMISSION_ID,
         read: CHAT_READ_PERMISSION_ID,
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const CHANNEL_TABLE_TYPE = TableType.createModel(IDENTIFIER, {
+const CHANNEL_TABLE_TYPE = TableType.createJson(IDENTIFIER, {
     name: 'channels',
-    model: Channel,
+    serializer: Channel,
+    key: (item) => item.key(),
     permissions: {
         all: CHAT_PERMISSION_ID,
         read: CHAT_READ_PERMISSION_ID,
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const PROVIDER_TABLE_TYPE = TableType.createModel(IDENTIFIER, {
+const PROVIDER_TABLE_TYPE = TableType.createJson(IDENTIFIER, {
     name: 'providers',
-    model: Provider,
+    serializer: Provider,
+    key: (item) => item.key(),
     permissions: {
         all: CHAT_PERMISSION_ID,
         read: CHAT_READ_PERMISSION_ID,
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const ROOM_TABLE_TYPE = TableType.createModel(IDENTIFIER, {
+const ROOM_TABLE_TYPE = TableType.createJson(IDENTIFIER, {
     name: 'rooms',
-    model: Room,
+    serializer: Room,
+    key: (item) => item.key(),
     permissions: {
         all: CHAT_PERMISSION_ID,
         read: CHAT_READ_PERMISSION_ID,
         write: CHAT_WRITE_PERMISSION_ID,
     },
 });
-const VOTE_TABLE_TYPE = TableType.createModel(IDENTIFIER, {
+const VOTE_TABLE_TYPE = TableType.createJson(IDENTIFIER, {
     name: 'votes',
-    model: Vote,
+    serializer: Vote,
+    key: (item) => item.key(),
     permissions: {
         all: CHAT_PERMISSION_ID,
         read: CHAT_READ_PERMISSION_ID,
@@ -74,12 +80,12 @@ const VOTE_TABLE_TYPE = TableType.createModel(IDENTIFIER, {
 const CREATE_CHANNEL_TREE_ENDPOINT = EndpointType.createJson(IDENTIFIER, {
     name: 'create_channel_tree',
     requestSerializer: Serializer.noop<string>(),
-    responseSerializer: Serializer.model(Channel).toArray(),
+    responseSerializer: Serializer.of(Channel).toArray(),
     permissionId: CHAT_CHANNEL_TREE_PERMISSION_ID,
 });
 const REACTION_SIGNAL = SignalType.createJson(IDENTIFIER, {
     name: 'reaction',
-    serializer: Serializer.model(Reaction),
+    serializer: Reaction,
     permissions: new SignalPermissions(CHAT_PERMISSION_ID),
 });
 

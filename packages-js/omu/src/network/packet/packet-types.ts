@@ -1,9 +1,6 @@
 import type { AppJson } from '../../app.js';
 import { App } from '../../app.js';
 import { Identifier } from '../../identifier.js';
-import type { Model } from '../../model.js';
-import { Serializer } from '../../serializer.js';
-
 import { PacketType } from './packet.js';
 
 const IDENTIFIER = new Identifier('core', 'packet');
@@ -19,7 +16,7 @@ type ConnectPacketJson = {
     is_dashboard?: boolean,
 };
 
-export class ConnectPacket implements Model<ConnectPacketJson> {
+export class ConnectPacket {
     public readonly app: App;
     public readonly protocol: ProtocolInfo;
     public readonly token?: string;
@@ -37,21 +34,21 @@ export class ConnectPacket implements Model<ConnectPacketJson> {
         this.isDashboard = options.is_dashboard;
     }
 
-    public static fromJson(data: ConnectPacketJson): ConnectPacket {
+    public static deserialize(data: ConnectPacketJson): ConnectPacket {
         return new ConnectPacket({
-            app: App.fromJson(data.app),
+            app: App.deserialize(data.app),
             protocol: data.protocol,
             token: data.token,
             is_dashboard: data.is_dashboard,
         });
     }
 
-    public toJson(): ConnectPacketJson {
+    public static serialize(data: ConnectPacket): ConnectPacketJson {
         return {
-            app: this.app.toJson(),
-            protocol: this.protocol,
-            token: this.token,
-            is_dashboard: this.isDashboard,
+            app: App.serialize(data.app),
+            protocol: data.protocol,
+            token: data.token,
+            is_dashboard: data.isDashboard,
         };
     }
 }
@@ -76,7 +73,7 @@ type DisconnectPacketJson = {
     message: string | null,
 };
 
-export class DisconnectPacket implements Model<DisconnectPacketJson> {
+export class DisconnectPacket {
     public readonly type: DisconnectType;
     public readonly message: string | null;
 
@@ -86,6 +83,14 @@ export class DisconnectPacket implements Model<DisconnectPacketJson> {
     }) {
         this.type = options.type;
         this.message = options.message ?? null;
+    }
+
+    public static serialize(data: DisconnectPacket): DisconnectPacketJson {
+        return data.toJson();
+    }
+
+    public static deserialize(data: DisconnectPacketJson): DisconnectPacket {
+        return DisconnectPacket.fromJson(data);
     }
 
     static fromJson(data: DisconnectPacketJson): DisconnectPacket {
@@ -111,11 +116,11 @@ export const PACKET_TYPES: {
 } = {
     CONNECT: PacketType.createJson<ConnectPacket>(IDENTIFIER, {
         name: 'connect',
-        serializer: Serializer.model(ConnectPacket),
+        serializer: ConnectPacket,
     }),
     DISCONNECT: PacketType.createJson<DisconnectPacket>(IDENTIFIER, {
         name: 'disconnect',
-        serializer: Serializer.model(DisconnectPacket),
+        serializer: DisconnectPacket,
     }),
     TOKEN: PacketType.createJson<string>(IDENTIFIER, {
         name: 'token',

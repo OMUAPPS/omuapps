@@ -1,6 +1,5 @@
 import { Identifier } from '@omujs/omu';
 import type { Keyable } from '@omujs/omu/interface.js';
-import type { Model } from '@omujs/omu/model.js';
 
 export type Choice = {
     text: string;
@@ -17,7 +16,7 @@ export type VoteJson = {
     total: number | null;
 };
 
-export class Vote implements Keyable, Model<VoteJson> {
+export class Vote implements Keyable {
     public readonly id: Identifier;
     public readonly roomId: Identifier;
     public title: string;
@@ -41,7 +40,7 @@ export class Vote implements Keyable, Model<VoteJson> {
         this.total = options.total;
     }
 
-    public static fromJson(options: VoteJson): Vote {
+    public static deserialize(options: VoteJson): Vote {
         return new Vote({
             id: Identifier.fromKey(options.id),
             roomId: Identifier.fromKey(options.room_id),
@@ -52,14 +51,14 @@ export class Vote implements Keyable, Model<VoteJson> {
         });
     }
 
-    public toJson(): VoteJson {
+    public static serialize(item: Vote): VoteJson {
         return {
-            id: this.id.key(),
-            room_id: this.roomId.key(),
-            title: this.title,
-            choices: this.choices,
-            ended: this.ended,
-            total: this.total,
+            id: item.id.key(),
+            room_id: item.roomId.key(),
+            title: item.title,
+            choices: item.choices,
+            ended: item.ended,
+            total: item.total,
         };
     }
 

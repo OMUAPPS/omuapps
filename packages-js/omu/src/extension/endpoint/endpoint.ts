@@ -1,5 +1,5 @@
 import type { Identifier } from '../../identifier.js';
-import { type Serializable, Serializer } from '../../serializer.js';
+import { JsonType, type Serializable, Serializer } from '../../serializer.js';
 
 export class EndpointType<Req = unknown, Res = unknown> {
     constructor(
@@ -9,7 +9,7 @@ export class EndpointType<Req = unknown, Res = unknown> {
         public readonly permissionId?: Identifier | undefined,
     ) { }
 
-    static createJson<Req, Res>(
+    static createJson<Req, Res, ReqData extends JsonType = JsonType, ResData extends JsonType = JsonType>(
         identifier: Identifier,
         {
             name,
@@ -18,17 +18,15 @@ export class EndpointType<Req = unknown, Res = unknown> {
             permissionId,
         }: {
             name: string,
-            requestSerializer?: Serializable<Req, any>,
-            responseSerializer?: Serializable<Res, any>,
+            requestSerializer?: Serializable<Req, ReqData>,
+            responseSerializer?: Serializable<Res, ResData>,
             permissionId?: Identifier,
         },
     ): EndpointType<Req, Res> {
         return new EndpointType<Req, Res>(
             identifier.join(name),
-            Serializer.of<Req, any>(requestSerializer ?? Serializer.noop())
-                .pipe(Serializer.json()),
-            Serializer.of<Res, any>(responseSerializer ?? Serializer.noop())
-                .pipe(Serializer.json()),
+            Serializer.wrap<Req, JsonType, Uint8Array>(requestSerializer ?? Serializer.noop(), Serializer.json()),
+            Serializer.wrap<Res, JsonType, Uint8Array>(responseSerializer ?? Serializer.noop(), Serializer.json()),
             permissionId,
         );
     }

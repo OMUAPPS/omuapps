@@ -1,8 +1,6 @@
 import type { EventEmitter, Unlisten } from '../../event-emitter.js';
 import type { Identifier } from '../../identifier.js';
-import type { Keyable } from '../../interface.js';
-import type { Model } from '../../model.js';
-import type { Serializable } from '../../serializer.js';
+import type { JsonType, Serializable } from '../../serializer.js';
 import { Serializer } from '../../serializer.js';
 import type { ExtensionType } from '../extension.js';
 
@@ -70,38 +68,25 @@ export class TableType<T> {
         public permissions?: TablePermissions | undefined,
     ) {}
 
-    public static createModel<T extends Keyable & Model<D>, D = unknown>(
-        identifier: Identifier | ExtensionType,
-        {
-            name,
-            model,
-            permissions,
-        }: {
-            name: string;
-            model: { fromJson(data: D): T };
-            permissions?: TablePermissions;
-        },
-    ): TableType<T> {
-        return new TableType<T>(
-            identifier.join(name),
-            Serializer.model(model).pipe(Serializer.json()),
-            (item) => item.key(),
-            permissions,
-        );
-    }
-
-    public static createJson<T>(
+    public static createJson<T, D extends JsonType = JsonType>(
         identifier: Identifier | ExtensionType,
         {
             name,
             key,
             permissions,
+            serializer,
         }: {
             name: string;
             key: (item: T) => string;
             permissions?: TablePermissions;
+            serializer?: Serializable<T, D>;
         },
     ): TableType<T> {
-        return new TableType<T>(identifier.join(name), Serializer.json<T>(), key, permissions);
+        return new TableType<T>(
+            identifier.join(name),
+            Serializer.wrap<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
+            key,
+            permissions
+        );
     }
 }

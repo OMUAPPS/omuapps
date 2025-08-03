@@ -2,7 +2,7 @@ import type { ByteReader, ByteWriter } from '../../bytebuffer.js';
 import { Flags } from '../../bytebuffer.js';
 import type { Unlisten } from '../../event-emitter.js';
 import { Identifier } from '../../identifier.js';
-import type { Serializable } from '../../serializer.js';
+import type { JsonType, Serializable } from '../../serializer.js';
 import { Serializer } from '../../serializer.js';
 
 export class RegistryPermissions {
@@ -50,7 +50,7 @@ export class RegistryType<T> {
         public readonly permissions: RegistryPermissions,
     ) { }
 
-    public static createJson<T, D = T>(identifier: Identifier, {
+    public static createJson<T, D extends JsonType = JsonType>(identifier: Identifier, {
         name,
         defaultValue,
         permissions,
@@ -64,7 +64,7 @@ export class RegistryType<T> {
         return new RegistryType(
             identifier.join(name),
             defaultValue,
-            serializer ? Serializer.of(serializer).pipe(Serializer.json()) : Serializer.json(),
+            Serializer.wrap<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
             permissions ?? new RegistryPermissions(),
         );
     }

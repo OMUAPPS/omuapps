@@ -4,7 +4,7 @@ import { EventEmitter } from '../../event-emitter.js';
 import { Identifier, IdentifierMap } from '../../identifier.js';
 import { Lock } from '../../lock.js';
 import { PacketType } from '../../network/packet/index.js';
-import { Serializer } from '../../serializer.js';
+import { JsonType, Serializer } from '../../serializer.js';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { type Extension, ExtensionType } from '../extension.js';
 
@@ -41,7 +41,20 @@ export class RegistryExtension implements Extension {
         return registry as Registry<T>;
     }
 
-    public create<T>(name: string, options: { default: T, serializer?: Serializer<T, Uint8Array> }): Registry<T> {
+    public json<T, D extends JsonType = JsonType>(name: string, options: { default: T, serializer?: Serializer<T, D> }): Registry<T> {
+        const identifier = this.client.app.id.join(name);
+        if (this.registries.has(identifier)) {
+            throw new Error(`Registry with name '${name}' already exists`);
+        }
+        const tableType = RegistryType.createJson<T>(identifier, {
+            name,
+            defaultValue: options.default,
+            serializer: options.serializer,
+        });
+        return this.createRegistry(tableType);
+    }
+
+    public serialized<T>(name: string, options: { default: T, serializer: Serializer<T, Uint8Array> }): Registry<T> {
         const identifier = this.client.app.id.join(name);
         if (this.registries.has(identifier)) {
             throw new Error(`Registry with name '${name}' already exists`);
@@ -49,7 +62,7 @@ export class RegistryExtension implements Extension {
         const tableType = RegistryType.createSerialized<T>(identifier, {
             name,
             defaultValue: options.default,
-            serializer: options.serializer ?? Serializer.json(),
+            serializer: options.serializer,
         });
         return this.createRegistry(tableType);
     }
@@ -174,13 +187,13 @@ const REGISTRY_UPDATE_PACKET = PacketType.createSerialized<RegistryPacket>(
 );
 const REGISTRY_LISTEN_PACKET = PacketType.createJson<Identifier>(REGISTRY_EXTENSION_TYPE, {
     name: 'listen',
-    serializer: Serializer.model(Identifier),
+    serializer: Identifier,
 });
 const REGISTRY_GET_ENDPOINT = EndpointType.createSerialized<Identifier, RegistryPacket>(
     REGISTRY_EXTENSION_TYPE,
     {
         name: 'get',
-        requestSerializer: Serializer.model(Identifier).toJson(),
+        requestSerializer: Serializer.of(Identifier).toJson(),
         responseSerializer: RegistryPacket,
         permissionId: REGISTRY_PERMISSION_ID,
     },

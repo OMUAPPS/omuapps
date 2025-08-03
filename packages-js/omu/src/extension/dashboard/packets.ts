@@ -13,16 +13,16 @@ export class PermissionRequestPacket {
     public static serialize(packet: PermissionRequestPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.requestId);
-        writer.writeString(JSON.stringify(packet.app.toJson()));
-        writer.writeString(JSON.stringify(packet.permissions.map(permission => permission.toJson())));
+        writer.writeString(JSON.stringify(App.serialize(packet.app)));
+        writer.writeString(JSON.stringify(packet.permissions.map(permission => PermissionType.serialize(permission))));
         return writer.finish();
     }
 
     public static deserialize(data: Uint8Array): PermissionRequestPacket {
         const reader = ByteReader.fromUint8Array(data);
         const requestId = reader.readString();
-        const app = App.fromJson(JSON.parse(reader.readString()));
-        const permissions = JSON.parse(reader.readString()).map(PermissionType.fromJson);
+        const app = App.deserialize(JSON.parse(reader.readString()));
+        const permissions = JSON.parse(reader.readString()).map(PermissionType.deserialize);
         return new PermissionRequestPacket(requestId, app, permissions);
     }
 }
@@ -37,7 +37,7 @@ export class PluginRequestPacket {
     public static serialize(packet: PluginRequestPacket): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.requestId);
-        writer.writeString(JSON.stringify(packet.app.toJson()));
+        writer.writeString(JSON.stringify(App.serialize(packet.app)));
         writer.writeString(JSON.stringify(packet.packages));
         return writer.finish();
     }
@@ -45,26 +45,29 @@ export class PluginRequestPacket {
     public static deserialize(data: Uint8Array): PluginRequestPacket {
         const reader = ByteReader.fromUint8Array(data);
         const requestId = reader.readString();
-        const app = App.fromJson(JSON.parse(reader.readString()));
+        const app = App.deserialize(JSON.parse(reader.readString()));
         const packages = JSON.parse(reader.readString());
         return new PluginRequestPacket(requestId, app, packages);
     }
 }
 
 export class AppInstallRequest {
-    constructor(public readonly requestId: string, public readonly app: App) { }
+    constructor(
+        public readonly requestId: string,
+        public readonly app: App,
+    ) { }
 
     public static serialize(packet: AppInstallRequest): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.requestId);
-        writer.writeString(JSON.stringify(packet.app.toJson()));
+        writer.writeString(JSON.stringify(App.serialize(packet.app)));
         return writer.finish();
     }
 
     public static deserialize(data: Uint8Array): AppInstallRequest {
         const reader = ByteReader.fromUint8Array(data);
         const requestId = reader.readString();
-        const app = App.fromJson(JSON.parse(reader.readString()));
+        const app = App.deserialize(JSON.parse(reader.readString()));
         return new AppInstallRequest(requestId, app);
     }
 }
@@ -75,16 +78,16 @@ export class AppUpdateRequest {
     public static serialize(packet: AppUpdateRequest): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.requestId);
-        writer.writeString(JSON.stringify(packet.oldApp.toJson()));
-        writer.writeString(JSON.stringify(packet.newApp.toJson()));
+        writer.writeString(JSON.stringify(App.serialize(packet.oldApp)));
+        writer.writeString(JSON.stringify(App.serialize(packet.newApp)));
         return writer.finish();
     }
 
     public static deserialize(data: Uint8Array): AppUpdateRequest {
         const reader = ByteReader.fromUint8Array(data);
         const requestId = reader.readString();
-        const oldApp = App.fromJson(JSON.parse(reader.readString()));
-        const newApp = App.fromJson(JSON.parse(reader.readString()));
+        const oldApp = App.deserialize(JSON.parse(reader.readString()));
+        const newApp = App.deserialize(JSON.parse(reader.readString()));
         return new AppUpdateRequest(requestId, oldApp, newApp);
     }
 }

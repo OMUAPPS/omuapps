@@ -1,5 +1,6 @@
+import { JsonType } from '@omujs/omu/serializer.js';
 
-export interface ComponentType<T extends string, D> {
+export type ComponentType<T extends string, D extends JsonType = JsonType> = {
     type: T;
     data: D;
 }
@@ -26,11 +27,11 @@ export type Link = ComponentType<'link', {
 export type System = ComponentType<'system', Component[]>
 
 export type Component = 
-                    | Root 
-                    | Text 
-                    | Image 
-                    | Asset 
-                    | Link 
+                    | Root
+                    | Text
+                    | Image
+                    | Asset
+                    | Link
                     | System;
 
 export function children(component: Component): Component[] {
@@ -50,7 +51,7 @@ export function *walk(component: Component): Iterable<Component> {
         const component = queue.pop();
         if (!component) return;
         yield component;
-        queue.push(...children(component).toReversed());
+        queue.push(...children(component).slice().reverse());
     }
 }
 

@@ -20,18 +20,20 @@ export const SERVER_EXTENSION_TYPE: ExtensionType<ServerExtension> = new Extensi
 );
 
 export const SERVER_APPS_READ_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('apps', 'read');
-const APP_TABLE_TYPE = TableType.createModel(SERVER_EXTENSION_TYPE, {
+const APP_TABLE_TYPE = TableType.createJson(SERVER_EXTENSION_TYPE, {
     name: 'apps',
-    model: App,
+    serializer: App,
+    key: (app) => app.id.key(),
     permissions: {
         read: SERVER_APPS_READ_PERMISSION_ID,
     },
 });
 
 export const SERVER_SESSIONS_READ_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('sessions', 'read');
-const SESSION_TABLE_TYPE = TableType.createModel(SERVER_EXTENSION_TYPE, {
+const SESSION_TABLE_TYPE = TableType.createJson(SERVER_EXTENSION_TYPE, {
     name: 'sessions',
-    model: App,
+    serializer: App,
+    key: (app) => app.id.key(),
     permissions: {
         read: SERVER_APPS_READ_PERMISSION_ID,
     },
@@ -43,7 +45,7 @@ const SHUTDOWN_ENDPOINT_TYPE = EndpointType.createJson<boolean, boolean>(SERVER_
 });
 const REQUIRE_APPS_PACKET_TYPE = PacketType.createJson<Identifier[]>(SERVER_EXTENSION_TYPE, {
     name: 'require_apps',
-    serializer: Serializer.model(Identifier).toArray(),
+    serializer: Serializer.of(Identifier).toArray(),
 });
 export const TRUSTED_ORIGINS_GET_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('trusted_origins', 'get');
 export const TRUSTED_ORIGINS_SET_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('trusted_origins', 'set');
@@ -57,15 +59,15 @@ const TRUSTED_ORIGINS_REGISTRY_TYPE = RegistryType.createJson<string[]>(SERVER_E
 });
 const SESSION_OBSERVE_PACKET_TYPE = PacketType.createJson<Identifier[]>(SERVER_EXTENSION_TYPE, {
     name: 'session_observe',
-    serializer: Serializer.model(Identifier).toArray(),
+    serializer: Serializer.of(Identifier).toArray(),
 });
 const SESSION_CONNECT_PACKET_TYPE = PacketType.createJson<App>(SERVER_EXTENSION_TYPE, {
     name: 'session_connect',
-    serializer: Serializer.model(App),
+    serializer: App,
 });
 const SESSION_DISCONNECT_PACKET_TYPE = PacketType.createJson<App>(SERVER_EXTENSION_TYPE, {
     name: 'session_disconnect',
-    serializer: Serializer.model(App),
+    serializer: App,
 });
 type RemoteAppRequestPayload = {
     id: string;
