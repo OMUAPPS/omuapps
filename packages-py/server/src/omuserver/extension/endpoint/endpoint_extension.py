@@ -5,19 +5,27 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from omu.app import AppType
 from omu.errors import PermissionDenied
 from omu.extension.endpoint.endpoint_extension import (
-    ENDPOINT_CALL_PACKET,
-    ENDPOINT_ERROR_PACKET,
-    ENDPOINT_RECEIVE_PACKET,
+    ENDPOINT_INVOKE_PACKET,
+    ENDPOINT_INVOKED_PACKET,
     ENDPOINT_REGISTER_PACKET,
-    EndpointDataPacket,
-    EndpointErrorPacket,
+    ENDPOINT_RESPONSE_PACKET,
     EndpointType,
 )
-from omu.extension.endpoint.packets import EndpointRegisterPacket
+from omu.extension.endpoint.packets import (
+    EndpointInvokedPacket,
+    EndpointInvokePacket,
+    EndpointRegisterPacket,
+    EndpointResponsePacket,
+    InvokedParams,
+    ResponseParams,
+)
+from omu.extension.extension import EXT_NAMESPACE
 from omu.helper import Coro
 from omu.identifier import Identifier
+from omu.network.packet.packet_types import DisconnectType
 
 from omuserver.session import Session
 
@@ -35,7 +43,7 @@ class Endpoint(abc.ABC):
     def permission(self) -> Identifier | None: ...
 
     @abc.abstractmethod
-    async def call(self, data: EndpointDataPacket, session: Session) -> Session | None: ...
+    async def call(self, data: EndpointInvokedPacket, session: Session) -> Session | None: ...
 
 
 class SessionEndpoint(Endpoint):
@@ -57,10 +65,10 @@ class SessionEndpoint(Endpoint):
     def permission(self) -> Identifier | None:
         return self._permission
 
-    async def call(self, data: EndpointDataPacket, session: Session) -> Session:
+    async def call(self, data: EndpointInvokedPacket, session: Session) -> Session:
         if self._session.closed:
             raise RuntimeError(f"Session {self._session.app.key()} already closed")
-        await self._session.send(ENDPOINT_CALL_PACKET, data)
+        await self._session.send(ENDPOINT_INVOKED_PACKET, data)
         return self._session
 
 
@@ -85,61 +93,65 @@ class ServerEndpoint[Req, Res](Endpoint):
     def permission(self) -> Identifier | None:
         return self._permission
 
-    async def call(self, data: EndpointDataPacket, session: Session) -> None:
+    async def call(self, data: EndpointInvokedPacket, session: Session) -> None:
         if session.closed:
             raise RuntimeError("Session already closed")
         try:
-            req = self._endpoint.request_serializer.deserialize(data.data)
+            req = self._endpoint.request_serializer.deserialize(data.buffer)
             res = await self._callback(session, req)
             serialized = self._endpoint.response_serializer.serialize(res)
             await session.send(
-                ENDPOINT_RECEIVE_PACKET,
-                EndpointDataPacket(id=data.id, key=data.key, data=serialized),
+                ENDPOINT_RESPONSE_PACKET,
+                EndpointResponsePacket(
+                    ResponseParams(
+                        id=data.params.id,
+                        key=data.params.key,
+                        error=None,
+                    ),
+                    buffer=serialized,
+                ),
             )
         except Exception as e:
             await session.send(
-                ENDPOINT_ERROR_PACKET,
-                EndpointErrorPacket(id=data.id, key=data.key, error=str(e)),
+                ENDPOINT_RESPONSE_PACKET,
+                EndpointResponsePacket(
+                    ResponseParams(
+                        id=data.params.id,
+                        key=data.params.key,
+                        error=repr(e),
+                    ),
+                    buffer=b"",
+                ),
             )
             raise e
         return None
 
 
 @dataclass(frozen=True, slots=True)
-class EndpointCall:
+class EndpointInvoke:
     caller: Session
     session: Session
-    packet: EndpointDataPacket
-
-    async def receive(self, data: EndpointDataPacket) -> None:
-        await self.caller.send(ENDPOINT_RECEIVE_PACKET, data)
-
-    async def error(self, error: str) -> None:
-        await self.caller.send(
-            ENDPOINT_ERROR_PACKET,
-            EndpointErrorPacket(id=self.packet.id, key=self.packet.key, error=error),
-        )
+    invoke: EndpointInvokedPacket
 
 
 class EndpointExtension:
     def __init__(self, server: Server) -> None:
         self._server = server
         self._endpoints: dict[Identifier, Endpoint] = {}
-        self._calls: dict[tuple[Identifier, int], EndpointCall] = {}
+        self._invokes: dict[tuple[Identifier, int], EndpointInvoke] = {}
         server.packets.register(
             ENDPOINT_REGISTER_PACKET,
-            ENDPOINT_CALL_PACKET,
-            ENDPOINT_RECEIVE_PACKET,
-            ENDPOINT_ERROR_PACKET,
+            ENDPOINT_INVOKE_PACKET,
+            ENDPOINT_INVOKED_PACKET,
+            ENDPOINT_RESPONSE_PACKET,
         )
         server.packets.bind(ENDPOINT_REGISTER_PACKET, self.handle_register)
-        server.packets.bind(ENDPOINT_CALL_PACKET, self.handle_call)
-        server.packets.bind(ENDPOINT_RECEIVE_PACKET, self.handle_receive)
-        server.packets.bind(ENDPOINT_ERROR_PACKET, self.handle_error)
+        server.packets.bind(ENDPOINT_INVOKE_PACKET, self.handle_invoke)
+        server.packets.bind(ENDPOINT_RESPONSE_PACKET, self.handle_response)
 
     async def handle_register(self, session: Session, packet: EndpointRegisterPacket) -> None:
         for id, permission in packet.endpoints.items():
-            if not id.is_subpath_of(session.app.id):
+            if not self.is_endpoint_binding_allowed(session, id):
                 msg = f"App {session.app.key()} not allowed to register endpoint {id}"
                 raise PermissionDenied(msg)
             self._endpoints[id] = SessionEndpoint(
@@ -147,6 +159,13 @@ class EndpointExtension:
                 id=id,
                 permission=permission,
             )
+
+    def is_endpoint_binding_allowed(self, session: Session, id: Identifier) -> bool:
+        if id.is_subpath_of(session.app.id):
+            return True
+        if session.kind == AppType.DASHBOARD and id.namespace == EXT_NAMESPACE:
+            return True
+        return False
 
     def bind[Req, Res](
         self,
@@ -172,94 +191,54 @@ class EndpointExtension:
         logger.warning(error)
         raise PermissionDenied(error)
 
-    async def handle_call(self, session: Session, packet: EndpointDataPacket) -> None:
-        endpoint = await self._get_endpoint(packet, session)
+    async def handle_invoke(self, session: Session, packet: EndpointInvokePacket) -> None:
+        endpoint = self._endpoints.get(packet.params.id)
         if endpoint is None:
-            logger.warning(f"{session.app.key()} tried to call unknown endpoint {packet.id}")
+            logger.warning(f"{session.app.key()} tried to call unknown endpoint {packet.params.id}")
             await session.send(
-                ENDPOINT_ERROR_PACKET,
-                EndpointErrorPacket(
-                    id=packet.id,
-                    key=packet.key,
-                    error=f"Endpoint {packet.id} not found",
+                ENDPOINT_RESPONSE_PACKET,
+                EndpointResponsePacket(
+                    ResponseParams(
+                        id=packet.params.id,
+                        key=packet.params.key,
+                        error=f"Endpoint {packet.params.id} not found",
+                    ),
+                    buffer=b"",
                 ),
             )
             return
         self.verify_permission(endpoint, session)
-
-        endpoint_session = await endpoint.call(packet, session)
+        invoke = EndpointInvokedPacket(
+            InvokedParams(
+                id=packet.params.id,
+                key=packet.params.key,
+                caller=session.app.id,
+            ),
+            buffer=packet.buffer,
+        )
+        endpoint_session = await endpoint.call(invoke, session)
         if endpoint_session is None:
             return
-        key = (packet.id, packet.key)
-        self._calls[key] = EndpointCall(
+        key = (packet.params.id, packet.params.key)
+        self._invokes[key] = EndpointInvoke(
             caller=session,
             session=endpoint_session,
-            packet=packet,
+            invoke=invoke,
         )
 
-    async def handle_receive(self, session: Session, packet: EndpointDataPacket) -> None:
-        key = (packet.id, packet.key)
-        call = self._calls.get(key)
-        if call is None:
-            await session.send(
-                ENDPOINT_ERROR_PACKET,
-                EndpointErrorPacket(
-                    id=packet.id,
-                    key=packet.key,
-                    error=f"Endpoint not found {packet.id}",
-                ),
+    async def handle_response(self, session: Session, packet: EndpointResponsePacket) -> None:
+        key = (packet.params.id, packet.params.key)
+        invoke = self._invokes.get(key)
+        if invoke is None:
+            logger.warning(
+                f"{session.app.key()} tried to handle response for unknown call {key} ({packet.params.id.key()})"
             )
             return
-        if session != call.session:
-            await session.send(
-                ENDPOINT_ERROR_PACKET,
-                EndpointErrorPacket(
-                    id=packet.id,
-                    key=packet.key,
-                    error="Session mismatch",
-                ),
+        if session != invoke.session:
+            await session.disconnect(
+                DisconnectType.PERMISSION_DENIED,
+                f"Session mismatch for call {key} ({packet.params.id.key()}): {session.app} != {invoke.session.app}",
             )
             return
-        await call.receive(packet)
-        del self._calls[key]
-
-    async def handle_error(self, session: Session, packet: EndpointErrorPacket) -> None:
-        key = (packet.id, packet.key)
-        call = self._calls.get(key)
-        if call is None:
-            await session.send(
-                ENDPOINT_ERROR_PACKET,
-                EndpointErrorPacket(
-                    id=packet.id,
-                    key=packet.key,
-                    error=f"Endpoint {packet.id} not found",
-                ),
-            )
-            return
-        if session != call.session:
-            await session.send(
-                ENDPOINT_ERROR_PACKET,
-                EndpointErrorPacket(
-                    id=packet.id,
-                    key=packet.key,
-                    error="Session mismatch",
-                ),
-            )
-            return
-        await call.error(packet.error)
-        del self._calls[key]
-
-    async def _get_endpoint(self, packet: EndpointDataPacket, session: Session) -> Endpoint | None:
-        endpoint = self._endpoints.get(packet.id)
-        if endpoint is None:
-            await session.send(
-                ENDPOINT_ERROR_PACKET,
-                EndpointErrorPacket(
-                    id=packet.id,
-                    key=packet.key,
-                    error=f"Endpoint {packet.id} not found",
-                ),
-            )
-            logger.warning(f"{session.app.key()} tried to call unconnected endpoint {packet.id}")
-            return
-        return endpoint
+        del self._invokes[key]
+        await invoke.caller.send(ENDPOINT_RESPONSE_PACKET, packet)

@@ -13,6 +13,9 @@ class Extension(abc.ABC):
     def type(self) -> ExtensionType: ...
 
 
+EXT_NAMESPACE = "ext"
+
+
 class ExtensionType[T: Extension](Identifier):
     name: str
     create: Callable[[Client], T]
@@ -24,7 +27,7 @@ class ExtensionType[T: Extension](Identifier):
         create: Callable[[Client], T],
         dependencies: Callable[[], list[ExtensionType]],
     ) -> None:
-        super().__init__("ext", name)
+        super().__init__(EXT_NAMESPACE, name)
         self.name = name
         self.create = create
         self.dependencies = dependencies

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 
 from omu.bytebuffer import ByteReader, ByteWriter
@@ -32,50 +33,152 @@ class EndpointRegisterPacket:
 
 
 @dataclass(frozen=True, slots=True)
-class EndpointDataPacket:
+class InvokedParams:
     id: Identifier
+    caller: Identifier
     key: int
-    data: bytes
 
-    @classmethod
-    def serialize(cls, item: EndpointDataPacket) -> bytes:
-        writer = ByteWriter()
-        writer.write_string(item.id.key())
-        writer.write_uleb128(item.key)
-        writer.write_uint8_array(item.data)
-        return writer.finish()
+    @staticmethod
+    def serialize(item: InvokedParams) -> str:
+        return json.dumps(
+            {
+                "id": item.id.key(),
+                "caller": item.caller.key(),
+                "key": item.key,
+            }
+        )
 
-    @classmethod
-    def deserialize(cls, item: bytes) -> EndpointDataPacket:
-        with ByteReader(item) as reader:
-            id = reader.read_string()
-            key = reader.read_uleb128()
-            data = reader.read_uint8_array()
-        return EndpointDataPacket(id=Identifier.from_key(id), key=key, data=data)
+    @staticmethod
+    def deserialize(item: str) -> InvokedParams:
+        data = json.loads(item)
+        assert isinstance(data["id"], str)
+        assert isinstance(data["caller"], str)
+        assert isinstance(data["key"], int)
+        return InvokedParams(
+            id=Identifier.from_key(data["id"]),
+            caller=Identifier.from_key(data["caller"]),
+            key=data["key"],
+        )
 
 
 @dataclass(frozen=True, slots=True)
-class EndpointErrorPacket:
-    id: Identifier
-    key: int
-    error: str
+class EndpointInvokedPacket:
+    params: InvokedParams
+    buffer: bytes
 
     @classmethod
-    def serialize(cls, item: EndpointErrorPacket) -> bytes:
+    def serialize(cls, item: EndpointInvokedPacket) -> bytes:
         writer = ByteWriter()
-        writer.write_string(item.id.key())
-        writer.write_uleb128(item.key)
-        writer.write_string(item.error)
+        writer.write_string(InvokedParams.serialize(item.params))
+        writer.write_uint8_array(item.buffer)
         return writer.finish()
 
     @classmethod
-    def deserialize(cls, item: bytes) -> EndpointErrorPacket:
+    def deserialize(cls, item: bytes) -> EndpointInvokedPacket:
         with ByteReader(item) as reader:
-            id = reader.read_string()
-            key = reader.read_uleb128()
-            error = reader.read_string()
-        return EndpointErrorPacket(
-            id=Identifier.from_key(id),
-            key=key,
-            error=error,
+            params = InvokedParams.deserialize(reader.read_string())
+            buffer = reader.read_uint8_array()
+        return EndpointInvokedPacket(
+            params=params,
+            buffer=buffer,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class InvokeParams:
+    id: Identifier
+    key: int
+
+    @staticmethod
+    def serialize(item: InvokeParams) -> str:
+        return json.dumps(
+            {
+                "id": item.id.key(),
+                "key": item.key,
+            }
+        )
+
+    @staticmethod
+    def deserialize(item: str) -> InvokeParams:
+        data = json.loads(item)
+        assert isinstance(data["id"], str)
+        assert isinstance(data["key"], int)
+        return InvokeParams(
+            id=Identifier.from_key(data["id"]),
+            key=data["key"],
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EndpointInvokePacket:
+    params: InvokeParams
+    buffer: bytes
+
+    @classmethod
+    def serialize(cls, item: EndpointInvokePacket) -> bytes:
+        writer = ByteWriter()
+        writer.write_string(InvokeParams.serialize(item.params))
+        writer.write_uint8_array(item.buffer)
+        return writer.finish()
+
+    @classmethod
+    def deserialize(cls, item: bytes) -> EndpointInvokePacket:
+        with ByteReader(item) as reader:
+            params = InvokeParams.deserialize(reader.read_string())
+            buffer = reader.read_uint8_array()
+        return EndpointInvokePacket(
+            params=params,
+            buffer=buffer,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ResponseParams:
+    id: Identifier
+    key: int
+    error: str | None
+
+    @staticmethod
+    def serialize(item: ResponseParams) -> str:
+        return json.dumps(
+            {
+                "id": item.id.key(),
+                "key": item.key,
+                "error": item.error,
+            }
+        )
+
+    @staticmethod
+    def deserialize(item: str) -> ResponseParams:
+        data = json.loads(item)
+        assert isinstance(data["id"], str)
+        assert isinstance(data["key"], int)
+        assert isinstance(data["error"], str | None)
+        return ResponseParams(
+            id=Identifier.from_key(data["id"]),
+            key=data["key"],
+            error=data["error"],
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EndpointResponsePacket:
+    params: ResponseParams
+    buffer: bytes
+
+    @classmethod
+    def serialize(cls, item: EndpointResponsePacket) -> bytes:
+        writer = ByteWriter()
+        writer.write_string(ResponseParams.serialize(item.params))
+        writer.write_uint8_array(item.buffer)
+        return writer.finish()
+
+    @classmethod
+    def deserialize(cls, item: bytes) -> EndpointResponsePacket:
+        with ByteReader(item) as reader:
+            params = ResponseParams.deserialize(reader.read_string())
+            buffer = reader.read_uint8_array()
+        return EndpointResponsePacket(
+            params=params,
+            buffer=buffer,
         )
