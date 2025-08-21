@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { App } from '@omujs/omu';
-    import { Spinner } from '@omujs/ui';
+    import type { App } from "@omujs/omu";
+    import { Spinner } from "@omujs/ui";
 
     export let props: {
         app: App;
@@ -10,7 +10,16 @@
 </script>
 
 <div class="container">
-    <iframe on:load={() => {loading = false;}} src={props.app.url} title="" frameborder="0" allow="camera; microphone; clipboard-read; clipboard-write"></iframe>
+    <iframe
+        on:load={() => {
+            loading = false;
+        }}
+        src={props.app.url}
+        title=""
+        frameborder="0"
+        allow="camera; microphone; clipboard-read; clipboard-write; fullscreen"
+        allowfullscreen
+    ></iframe>
     <div class="window-resize bottom"></div>
     <div class="window-resize right"></div>
     {#if loading}
