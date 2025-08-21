@@ -41,7 +41,6 @@ if (DEV) {
         breaktimer,
         archive,
         clock,
-        omucafe,
         remote,
     );
 }
