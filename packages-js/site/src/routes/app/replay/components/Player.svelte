@@ -1,11 +1,14 @@
 <script lang="ts">
+    import { ReplayApp } from "../replay-app.js";
+
     export let videoId: string | undefined;
     export let player: YT.Player | undefined = undefined;
     export let options: YT.PlayerOptions = {};
-    export let hide = false;
+    export let hideOverlay = false;
     export let iframe: HTMLIFrameElement | undefined = undefined;
-    export let heightToWidthRatio = 9/16;
+    export let heightToWidthRatio = 9 / 16;
     const initialVideoId = videoId;
+    const { config, side } = ReplayApp.getInstance();
 
     let width = 0;
     let height = 0;
@@ -57,12 +60,85 @@
             }
         }
     }
+
+    function toggle() {
+        if (!player) return;
+        if (player.getPlayerState() === YT.PlayerState.PAUSED) {
+            player.playVideo();
+        } else {
+            player.pauseVideo();
+        }
+    }
 </script>
 
-<div bind:clientWidth={width} bind:clientHeight={height}>
+<svelte:window
+    on:keydown={(event) => {
+        if (!player) return;
+        console.log(event.key);
+        switch (event.key) {
+            case " ":
+            case "k":
+                toggle();
+                break;
+            case "ArrowLeft":
+                player.seekTo(player.getCurrentTime() - 5, true);
+                break;
+            case "ArrowRight":
+                player.seekTo(player.getCurrentTime() + 5, true);
+                break;
+            case "j":
+                player.seekTo(player.getCurrentTime() - 10, true);
+                break;
+            case "l":
+                player.seekTo(player.getCurrentTime() + 10, true);
+                break;
+            default:
+                break;
+        }
+    }}
+/>
+<svg>
+    <filter id="filter" x="0" y="0">
+        {#if $config.filter.type === "pixelate"}
+            <feFlood x="4" y="4" height="1" width="1" />
+            <feComposite
+                width={$config.filter.radius * 2}
+                height={$config.filter.radius * 2}
+            />
+            <feTile result="a" />
+            <feComposite in="SourceGraphic" in2="a" operator="in" />
+            <feMorphology operator="dilate" radius={$config.filter.radius} />
+            <feColorMatrix
+                type="matrix"
+                values="1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        0 0 0 0 1"
+            />
+        {:else if $config.filter.type === "blur"}
+            <feFlood x="4" y="4" height="1" width="1" />
+            <feGaussianBlur
+                in="SourceGraphic"
+                stdDeviation={$config.filter.radius}
+            />
+            <feColorMatrix
+                type="matrix"
+                values="1 0 0 0 0
+                        0 1 0 0 0
+                        0 0 1 0 0
+                        0 0 0 0 1"
+            />
+        {/if}
+    </filter>
+</svg>
+<div
+    bind:clientWidth={width}
+    bind:clientHeight={height}
+    style={(side === "asset" && "filter: url(#filter)") || ""}
+>
     {#if videoId}
         {#key videoId}
-            {#if hide}
+            {#if hideOverlay}
                 <iframe
                     bind:this={iframe}
                     id="player"
@@ -73,6 +149,8 @@
                     src="https://www.youtube.com/embed/{initialVideoId}?enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1"
                     frameborder="0"
                     title="YouTube video player"
+                    allow="fullscreen"
+                    allowfullscreen
                 ></iframe>
             {:else}
                 <iframe
@@ -83,6 +161,8 @@
                     src="https://www.youtube.com/embed/{initialVideoId}?enablejsapi=1&rel=0&modestbranding=1"
                     frameborder="0"
                     title="YouTube video player"
+                    allow="fullscreen"
+                    allowfullscreen
                 ></iframe>
             {/if}
         {/key}
@@ -90,6 +170,10 @@
 </div>
 
 <style lang="scss">
+    svg {
+        position: absolute;
+    }
+
     div {
         position: relative;
         width: 100%;

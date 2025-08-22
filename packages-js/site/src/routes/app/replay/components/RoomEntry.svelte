@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { Room } from '@omujs/chat/models/room.js';
-    import { Tooltip } from '@omujs/ui';
-    import { playVideo } from '../stores.js';
+    import type { Room } from "@omujs/chat/models/room.js";
+    import { Tooltip } from "@omujs/ui";
+    import { playVideo } from "../stores.js";
 
     export let entry: Room;
     export let selected: boolean = false;
@@ -9,7 +9,7 @@
     function play() {
         if (!entry.metadata?.url) return;
         const url = new URL(entry.metadata.url);
-        const videoId = url.searchParams.get('v');
+        const videoId = url.searchParams.get("v");
         if (!videoId) return;
         $playVideo(videoId);
     }
@@ -19,7 +19,11 @@
     <div class="thumbnail-container">
         <Tooltip>
             <p class="tooltip">
-                <img src={entry.metadata?.thumbnail} class="thumbnail-preview" alt="" />
+                <img
+                    src={entry.metadata?.thumbnail}
+                    class="thumbnail-preview"
+                    alt=""
+                />
             </p>
         </Tooltip>
         <img src={entry.metadata?.thumbnail} class="thumbnail" alt="" />
@@ -37,6 +41,9 @@
             <Tooltip>
                 <p class="tooltip">{entry.metadata?.description}</p>
             </Tooltip>
+            {#if entry.metadata.started_at}
+                {new Date(entry.metadata.started_at).toLocaleDateString()}
+            {/if}
             {entry.metadata?.description}
         </div>
     </div>
