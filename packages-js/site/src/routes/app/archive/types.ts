@@ -5,8 +5,8 @@ import { APP_ID } from './app.js';
 import { Archive, type ArchiveConfig } from './archive.js';
 
 export const PLUGIN_ID = APP_ID.join('plugin');
-export const ARCHIVE_TABLE = TableType.createModel(PLUGIN_ID, {
-    model: Archive,
+export const ARCHIVE_TABLE = TableType.createJson<Archive>(PLUGIN_ID, {
+    key: (item) => item.key(),
     name: 'archive',
 });
 export const CONFIG_REGISTRY = RegistryType.createJson<ArchiveConfig>(PLUGIN_ID, {
