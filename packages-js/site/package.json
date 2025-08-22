@@ -30,7 +30,7 @@
         "@types/dom-webcodecs": "^0.1.13",
         "@types/pako": "^2.0.3",
         "@types/seedrandom": "^3.0.8",
-        "@types/youtube": "^0.0.50",
+        "@types/youtube": "0.1.2",
         "buffer": "^6.0.3",
         "esm-env": "^1.0.0",
         "pako": "^2.1.0",
