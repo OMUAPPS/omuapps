@@ -28,7 +28,7 @@ export type VArray = {
 
 export type VFunction = {
     type: 'function';
-    value: TypedFunction;
+    id: string;
 };
 
 export type VAttribute = {
@@ -57,6 +57,10 @@ export const value = {
     void: (): Value => ({
         type: 'void',
     }),
+    function: (id: string): Value => ({
+        type: 'function',
+        id,
+    }),
     expression: (value: Expression): Value => ({
         type: 'expression',
         value,
@@ -69,10 +73,6 @@ export const value = {
         type: 'attribute',
         value,
         name,
-    }),
-    function: (value: TypedFunction): Value => ({
-        type: 'function',
-        value,
     }),
     object: (value: Record<string, Value>): Value => ({
         type: 'object',
@@ -98,7 +98,7 @@ export const value = {
         type: 'invoke',
         function: func,
         args,
-    })
+    }),
 }
 
 
@@ -177,6 +177,7 @@ export const expr = {
 }
 
 export type ScriptContext = {
+    functions: Record<string, TypedFunction>,
     variables: Record<string, Value>,
     callstack: Expression[],
     index: number,
@@ -185,11 +186,13 @@ export type ScriptContext = {
 
 const context = {
     init: (): ScriptContext => ({
+        functions: {},
         variables: {},
         callstack: [],
         index: 0,
         copy: function () {
             return {
+                functions: this.functions,
                 variables: { ...this.variables },
                 callstack: [...this.callstack],
                 index: this.index,
@@ -204,10 +207,11 @@ export function evaluateValue(ctx: ScriptContext, value: Value): Value {
         case 'expression':
             return executeExpression(ctx, value.value);
         case 'invoke': {
-            const func = evaluateValue(ctx, value.function);
-            assertValue(ctx, func, 'function')
+            const funcValue = evaluateValue(ctx, value.function);
+            assertValue(ctx, funcValue, 'function')
             const args = value.args.map((arg) => evaluateValue(ctx, arg));
-            return func.value.invoke(ctx, args);
+            const func = ctx.functions[funcValue.id];
+            return func.invoke(ctx, args);
         }
         case 'variable': {
             const variable = ctx.variables[value.name];
@@ -252,6 +256,14 @@ export function assertValue<T extends Value['type']>(context: ScriptContext, val
     }
 }
 
+export function castValue<T extends Value['type']>(context: ScriptContext, value: Value, type: T): Extract<Value, { type: T }> {
+    if (value.type !== type) {
+        const { callstack, index } = context;
+        throw new ScriptError(`Expected ${type} but got ${value.type}`, { callstack, index });
+    }
+    return value as Extract<Value, { type: T }>;
+}
+
 export function executeExpression(ctx: ScriptContext, expression: Expression): Value {
     ctx.callstack.push(expression);
     for (const [index, command] of expression.commands.entries()) {
@@ -272,14 +284,14 @@ export function executeExpression(ctx: ScriptContext, expression: Expression): V
                 break;
             }
             case 'invoke': {
-                const func = evaluateValue(ctx, command.function);
-                assertValue(ctx, func, 'function')
+                const { id } = castValue(ctx, evaluateValue(ctx, command.function), 'function');
+                const func = ctx.functions[id];
                 const args = command.args.map((arg) => evaluateValue(ctx, arg));
-                if (func.value.args.length !== args.length) {
-                    throw new ScriptError(`Expected ${func.value.args.length} arguments but got ${args.length}`, { callstack: ctx.callstack, index });
+                if (func.args.length !== args.length) {
+                    throw new ScriptError(`Expected ${func.args.length} arguments but got ${args.length}`, { callstack: ctx.callstack, index });
                 }
-                for (let i = 0; i < func.value.args.length; i++) {
-                    const arg = func.value.args[i];
+                for (let i = 0; i < func.args.length; i++) {
+                    const arg = func.args[i];
                     const argValue = args[i];
                     if (arg.optional && argValue.type === 'void') {
                         continue;
@@ -288,7 +300,7 @@ export function executeExpression(ctx: ScriptContext, expression: Expression): V
                         throw new ScriptError(`Expected argument ${i} to be ${arg.type} but got ${argValue.type}`, { callstack: ctx.callstack, index });
                     }
                 }
-                func.value.invoke(ctx, args);
+                func.invoke(ctx, args);
                 break;
             }
             case 'throw': {
@@ -403,7 +415,7 @@ function validateValue(value: Value): ValidateResult {
 function validateCommand(command: Command): ValidateResult {
     switch (command.type) {
         case 'return': {
-            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof value.function}` };
+            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof command.value}` };
             return validateValue(command.value);
         }
         case 'assign': {
@@ -418,7 +430,7 @@ function validateCommand(command: Command): ValidateResult {
             return validateValue(command.object) ?? validateValue(command.value);
         }
         case 'throw': {
-            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof value.function}` };
+            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof command.value}` };
             return validateValue(command.value);
         }
         case 'invoke': {
@@ -499,7 +511,8 @@ export class Globals {
         const ctx = context.init();
         for (const key in this.functions) {
             const func = this.functions[key];
-            ctx.variables[func.name] = value.function(func);
+            ctx.functions[func.name] = func;
+            ctx.variables[func.name] = value.function(key);
         }
         return ctx;
     }
