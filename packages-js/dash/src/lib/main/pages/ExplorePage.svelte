@@ -1,17 +1,32 @@
 <script lang="ts">
-    import { DEV } from 'esm-env';
-    import { isBetaEnabled } from '../settings.js';
-    
+    import { appWindow } from "$lib/tauri.js";
+    import { DEV } from "esm-env";
+    import { isBetaEnabled } from "../settings.js";
+
     export const props = {};
 
-    $: url = DEV ? 'http://localhost:5173/app/' :
-        ($isBetaEnabled ? 'https://beta.omuapps.com/app/' : 'https://omuapps.com/app/');
+    $: url = DEV
+        ? "http://localhost:5173/app/"
+        : $isBetaEnabled
+          ? "https://beta.omuapps.com/app/"
+          : "https://omuapps.com/app/";
 </script>
 
 <div class="container">
-    <iframe src={url} title="" frameborder="0" allow="camera; microphone"></iframe>
-    <div class="window-resize bottom"></div>
-    <div class="window-resize right"></div>
+    <iframe src={url} title="" frameborder="0" allow="camera; microphone"
+    ></iframe>
+    <button
+        class="window-resize bottom"
+        on:mousedown={() => {
+            appWindow.startResizeDragging("South");
+        }}
+    ></button>
+    <button
+        class="window-resize right"
+        on:mousedown={() => {
+            appWindow.startResizeDragging("East");
+        }}
+    ></button>
 </div>
 
 <style lang="scss">
@@ -33,6 +48,8 @@
         position: absolute;
         bottom: 0;
         right: 0;
+        border: none;
+        background: none;
 
         &.bottom {
             left: 0;

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { appWindow } from "$lib/tauri";
     import type { App } from "@omujs/omu";
     import { Spinner } from "@omujs/ui";
 
@@ -18,10 +19,19 @@
         title=""
         frameborder="0"
         allow="camera; microphone; clipboard-read; clipboard-write; fullscreen"
-        allowfullscreen
     ></iframe>
-    <div class="window-resize bottom"></div>
-    <div class="window-resize right"></div>
+    <button
+        class="window-resize bottom"
+        on:mousedown={() => {
+            appWindow.startResizeDragging("South");
+        }}
+    ></button>
+    <button
+        class="window-resize right"
+        on:mousedown={() => {
+            appWindow.startResizeDragging("East");
+        }}
+    ></button>
     {#if loading}
         <div class="loading">
             <Spinner />
@@ -59,6 +69,8 @@
         position: absolute;
         bottom: 0;
         right: 0;
+        border: none;
+        background: none;
 
         &.bottom {
             left: 0;
