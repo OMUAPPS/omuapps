@@ -1,15 +1,22 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
-    import { VERSION } from '$lib/version.js';
-    import { Chat } from '@omujs/chat';
-    import { Omu } from '@omujs/omu';
-    import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-    import { AppHeader, Button, TableList, Textbox, Tooltip, setClient } from '@omujs/ui';
-    import { BROWSER } from 'esm-env';
-    import EmojiEdit from './EmojiEdit.svelte';
-    import EmojiEntry from './EmojiEntry.svelte';
-    import { APP, APP_ID } from './app.js';
-    import { Emoji, EmojiApp, emojiApp } from './emoji.js';
+    import AppPage from "$lib/components/AppPage.svelte";
+    import { VERSION } from "$lib/version.js";
+    import { Chat } from "@omujs/chat";
+    import { Omu } from "@omujs/omu";
+    import { ASSET_UPLOAD_PERMISSION_ID } from "@omujs/omu/extension/asset/asset-extension.js";
+    import {
+        AppHeader,
+        Button,
+        TableList,
+        Textbox,
+        Tooltip,
+        setClient,
+    } from "@omujs/ui";
+    import { BROWSER } from "esm-env";
+    import EmojiEdit from "./EmojiEdit.svelte";
+    import EmojiEntry from "./EmojiEntry.svelte";
+    import { APP, APP_ID } from "./app.js";
+    import { EmojiApp, emojiApp, type Emoji } from "./emoji.js";
 
     const omu = new Omu(APP);
     const chat = Chat.create(omu);
@@ -22,7 +29,7 @@
     });
     omu.permissions.require(ASSET_UPLOAD_PERMISSION_ID);
 
-    let search: string = '';
+    let search: string = "";
 
     let searchFilter: (key: string, emoji: Emoji) => boolean = () => true;
 
@@ -43,16 +50,16 @@
         assets.forEach((identifier) => {
             const name = identifier.path.at(-1);
             if (!name) return;
-            const emoji = new Emoji({
+            const emoji: Emoji = {
                 id: name,
                 asset: identifier,
                 patterns: [
                     {
-                        type: 'text',
+                        type: "text",
                         text: name,
                     },
                 ],
-            });
+            };
             emojis.add(emoji);
         });
         uploading--;
@@ -65,7 +72,7 @@
         if (!files) return;
         const selected = await Promise.all(
             Array.from(files).map(async (file) => {
-                let name = file.name.split('.')[0];
+                let name = file.name.split(".")[0];
                 if (name.length === 0) {
                     name = `emoji-${Date.now().toString().slice(-6)}`;
                 }
@@ -79,7 +86,6 @@
     if (BROWSER) {
         omu.start();
     }
-
 </script>
 
 <input
@@ -108,9 +114,7 @@
                         }}
                     />
                     <Button primary onclick={() => fileDrop.click()}>
-                        <Tooltip>
-                            画像をアップロード
-                        </Tooltip>
+                        <Tooltip>画像をアップロード</Tooltip>
                         <i class="ti ti-upload"></i>
                     </Button>
                 </span>
@@ -124,7 +128,11 @@
                 {/if}
             </div>
             <div class="emojis">
-                <TableList table={emojis} component={EmojiEntry} filter={searchFilter} />
+                <TableList
+                    table={emojis}
+                    component={EmojiEntry}
+                    filter={searchFilter}
+                />
             </div>
         </div>
         <div class="edit omu-scroll">

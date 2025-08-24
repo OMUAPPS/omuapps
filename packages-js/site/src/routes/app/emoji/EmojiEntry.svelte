@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Tooltip, client } from '@omujs/ui';
-    import { Emoji, emojiApp } from './emoji.js';
+    import { Tooltip, client } from "@omujs/ui";
+    import { emojiApp, type Emoji } from "./emoji.js";
 
     const { emojis, selectedEmoji } = $emojiApp;
 
@@ -25,7 +25,11 @@
 <div class="entry" class:selected>
     <div>
         <Tooltip>
-            <img src={$client.assets.url(entry.asset)} alt={entry.asset.key()} class="preview" />
+            <img
+                src={$client.assets.url(entry.asset)}
+                alt={entry.asset.key()}
+                class="preview"
+            />
         </Tooltip>
         <img src={$client.assets.url(entry.asset)} alt={entry.asset.key()} />
     </div>
@@ -35,7 +39,20 @@
             {entry.id}
         </button>
         <small>
-            {entry.getPatternText()}
+            {entry.patterns
+                .map((pattern) => {
+                    if (pattern.type === "text") {
+                        return pattern.text;
+                    }
+                    if (pattern.type === "image") {
+                        return `:${pattern.id}:`;
+                    }
+                    if (pattern.type === "regex") {
+                        return pattern.regex;
+                    }
+                    return "";
+                })
+                .join(", ")}
         </small>
     </div>
     {#if selected}
@@ -108,7 +125,7 @@
             color: var(--color-text);
         }
     }
-    
+
     .actions {
         display: flex;
         gap: 2px;
