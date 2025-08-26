@@ -164,3 +164,19 @@ class TableType[T]:
             key_function=key,
             permissions=permissions,
         )
+
+    @classmethod
+    def create_serialized(
+        cls,
+        identifier: Identifier,
+        name: str,
+        key: Callable[[T], str],
+        serializer: Serializable[T, bytes],
+        permissions: TablePermissions | None = None,
+    ) -> TableType[T]:
+        return TableType(
+            id=identifier / name,
+            serializer=serializer,
+            key_function=key,
+            permissions=permissions,
+        )

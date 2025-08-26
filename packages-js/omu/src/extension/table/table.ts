@@ -89,4 +89,26 @@ export class TableType<T> {
             permissions
         );
     }
+
+    public static createSerialized<T>(
+        identifier: Identifier | ExtensionType,
+        {
+            name,
+            key,
+            permissions,
+            serializer,
+        }: {
+            name: string;
+            key: (item: T) => string;
+            permissions?: TablePermissions;
+            serializer: Serializable<T, Uint8Array>;
+        },
+    ): TableType<T> {
+        return new TableType<T>(
+            identifier.join(name),
+            serializer,
+            key,
+            permissions
+        );
+    }
 }
