@@ -1,7 +1,7 @@
 import { lerp } from './math.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 
-export type AABB2Like = AABB2 | {
+export type AABB2Like = {
     min: Vec2Like,
     max: Vec2Like,
 }

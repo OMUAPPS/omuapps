@@ -26,7 +26,7 @@ export class PacketType<T> {
     }): PacketType<T> {
         return new PacketType<T>(
             identifier.join(name),
-            Serializer.wrap<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
+            Serializer.pipe<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
         );
     }
 

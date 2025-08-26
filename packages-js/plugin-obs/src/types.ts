@@ -316,7 +316,7 @@ export const SCREENSHOT_CREATE: EndpointType<ScreenshotCreateRequest, Screenshot
     name: 'screenshot_create',
 });
 
-export type ScreenshotGetLastBinaryRequest = object;
+export type ScreenshotGetLastBinaryRequest = unknown;
 
 export class ScreenshotGetLastBinaryResponse {
     version: number;

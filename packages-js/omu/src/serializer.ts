@@ -1,6 +1,6 @@
 import { textDecoder, textEncoder } from './const.js';
 
-export type JsonType = string | number | boolean | null | undefined | { [key: string]: JsonType } | JsonType[];
+export type JsonType = string | number | boolean | null | undefined | { [key: keyof never]: JsonType } | JsonType[];
 
 export interface Serializable<T, D> {
     serialize(data: T): D;
@@ -14,36 +14,25 @@ export class Serializer<T, D> {
         public deserialize: (data: D) => T,
     ) { }
 
-    static of<T, D>(serializer: Serializable<T, D>): Serializer<T, D> {
+    public static of<T, D>(serializer: Serializable<T, D>): Serializer<T, D> {
         return new Serializer<T, D>(serializer.serialize, serializer.deserialize);
     }
 
-    static wrap<T, R, D>(ser1: Serializable<T, R>, ser2: Serializable<R, D>): Serializable<T, D> {
+    public static pipe<T, R, D>(ser1: Serializable<T, R>, ser2: Serializable<R, D>): Serializable<T, D> {
         return new Serializer<T, D>(
             (data) => ser2.serialize(ser1.serialize(data)),
             (data) => ser1.deserialize(ser2.deserialize(data)),
         );
     }
 
-    public toDecorator<Clazz extends { new (...args: unknown[]): object }>(): (clazz: Clazz) => Clazz | Serializable<T, D> {
-        const decorator = (clazz: Clazz): Clazz | Serializable<T, D>  => {
-            Object.defineProperties(clazz, {
-                serialize: { value: this.serialize },
-                deserialize: { value: this.deserialize },
-            })
-            return clazz as Clazz | Serializable<T, D>;
-        }
-        return decorator
-    }
-
-    static transform<T>(func: (value: T) => T): Serializer<T, T> {
+    public static transform<T>(func: (value: T) => T): Serializer<T, T> {
         return new Serializer<T, T>(
             func,
             func,
         )
     }
 
-    static noop<T>(): Serializer<T, T> {
+    public static noop<T>(): Serializer<T, T> {
         return new Serializer<T, T>(
             (data) => data,
             (data) => data,
@@ -51,30 +40,31 @@ export class Serializer<T, D> {
     }
 
     public field<
-        K extends keyof T,
+        K extends keyof D,
         R
     >(
         key: K,
-        serializer: Serializable<T[K], R>
+        serializer: Serializable<D[K], R>
     ): Serializer<
         T,
-        { [P in keyof T]: P extends K ? R : T[P] }
+        { [P in keyof D]: P extends K ? R : D[P] }
     > {
         return new Serializer<
             T,
-            { [P in keyof T]: P extends K ? R : T[P] }
+            { [P in keyof D]: P extends K ? R : D[P] }
         >(
             (data) => {
+                const serialized = this.serialize(data);
                 return {
-                    ...data,
-                    [key]: serializer.serialize(data[key]),
-                } as { [P in keyof T]: P extends K ? R : T[P] };
+                    ...serialized,
+                    [key]: serializer.serialize(serialized[key]),
+                } as { [P in keyof D]: P extends K ? R : D[P] };
             },
             (data) => {
-                return {
+                return this.deserialize({
                     ...data,
                     [key]: serializer.deserialize(data[key] as R),
-                } as unknown as T;
+                } as D);
             }
         );
     }
@@ -155,13 +145,6 @@ export class Serializer<T, D> {
         return new Serializer<T, E>(
             (data) => serializer.serialize(this.serialize(data)),
             (data) => this.deserialize(serializer.deserialize(data)),
-        );
-    }
-    
-    public static pipe<T, D, E>(serializer: Serializable<T, D>, next: Serializable<D, E>): Serializer<T, E> {
-        return new Serializer<T, E>(
-            (data) => next.serialize(serializer.serialize(data)),
-            (data) => serializer.deserialize(next.deserialize(data)),
         );
     }
 }

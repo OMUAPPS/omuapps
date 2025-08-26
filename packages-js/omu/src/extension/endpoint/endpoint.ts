@@ -25,8 +25,8 @@ export class EndpointType<Req = unknown, Res = unknown> {
     ): EndpointType<Req, Res> {
         return new EndpointType<Req, Res>(
             identifier.join(name),
-            Serializer.wrap<Req, JsonType, Uint8Array>(requestSerializer ?? Serializer.noop(), Serializer.json()),
-            Serializer.wrap<Res, JsonType, Uint8Array>(responseSerializer ?? Serializer.noop(), Serializer.json()),
+            Serializer.pipe<Req, JsonType, Uint8Array>(requestSerializer ?? Serializer.noop(), Serializer.json()),
+            Serializer.pipe<Res, JsonType, Uint8Array>(responseSerializer ?? Serializer.noop(), Serializer.json()),
             permissionId,
         );
     }

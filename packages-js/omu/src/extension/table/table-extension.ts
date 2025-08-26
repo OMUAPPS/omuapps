@@ -177,7 +177,7 @@ export class TableExtension implements Extension {
     public json<T, D extends JsonType = JsonType>(name: string, options: { key: (item: T) => string; serializer?: Serializable<T, D> }): Table<T> {
         const tableType = new TableType<T>(
             this.client.app.id.join(name),
-            Serializer.wrap<T, JsonType, Uint8Array>(options.serializer ?? Serializer.noop(), Serializer.json()),
+            Serializer.pipe<T, JsonType, Uint8Array>(options.serializer ?? Serializer.noop(), Serializer.json()),
             options.key,
         );
         return this.createTable(tableType);

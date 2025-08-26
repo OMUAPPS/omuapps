@@ -84,7 +84,7 @@ export class TableType<T> {
     ): TableType<T> {
         return new TableType<T>(
             identifier.join(name),
-            Serializer.wrap<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
+            Serializer.pipe<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
             key,
             permissions
         );
