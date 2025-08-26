@@ -74,7 +74,6 @@
 <svelte:window
     on:keydown={(event) => {
         if (!player) return;
-        console.log(event.key);
         switch (event.key) {
             case " ":
             case "k":
@@ -91,6 +90,13 @@
                 break;
             case "l":
                 player.seekTo(player.getCurrentTime() + 10, true);
+                break;
+            case "m":
+                if (player.isMuted()) {
+                    player.unMute();
+                } else {
+                    player.mute();
+                }
                 break;
             default:
                 break;
@@ -150,7 +156,6 @@
                     frameborder="0"
                     title="YouTube video player"
                     allow="fullscreen"
-                    allowfullscreen
                 ></iframe>
             {:else}
                 <iframe
@@ -162,7 +167,6 @@
                     frameborder="0"
                     title="YouTube video player"
                     allow="fullscreen"
-                    allowfullscreen
                 ></iframe>
             {/if}
         {/key}
