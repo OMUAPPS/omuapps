@@ -66,4 +66,4 @@ export default [
             'quotes': ['error', 'single'],
         }
     },
-] satisfies ConfigArray;
+] as ConfigArray;
