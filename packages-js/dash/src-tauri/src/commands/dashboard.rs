@@ -116,9 +116,7 @@ pub async fn create_webview_window(
                         let _ = view.close();
                     }
                 }
-                println!("Close!");
             }
-            println!("{}", url);
             true
         })
         .build()
