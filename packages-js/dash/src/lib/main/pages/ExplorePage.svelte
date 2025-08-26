@@ -15,18 +15,20 @@
 <div class="container">
     <iframe src={url} title="" frameborder="0" allow="camera; microphone"
     ></iframe>
-    <button
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div
         class="window-resize bottom"
         on:mousedown={() => {
             appWindow.startResizeDragging("South");
         }}
-    ></button>
-    <button
+    ></div>
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div
         class="window-resize right"
         on:mousedown={() => {
             appWindow.startResizeDragging("East");
         }}
-    ></button>
+    ></div>
 </div>
 
 <style lang="scss">

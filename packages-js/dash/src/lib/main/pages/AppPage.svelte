@@ -20,18 +20,20 @@
         frameborder="0"
         allow="camera; microphone; clipboard-read; clipboard-write; fullscreen"
     ></iframe>
-    <button
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div
         class="window-resize bottom"
         on:mousedown={() => {
             appWindow.startResizeDragging("South");
         }}
-    ></button>
-    <button
+    ></div>
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div
         class="window-resize right"
         on:mousedown={() => {
             appWindow.startResizeDragging("East");
         }}
-    ></button>
+    ></div>
     {#if loading}
         <div class="loading">
             <Spinner />
