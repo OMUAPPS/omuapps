@@ -13,9 +13,6 @@ class PluginConnection(Connection):
         self._to_client_queue = asyncio.Queue[Packet]()
         self._to_server_queue = asyncio.Queue[Packet]()
 
-    async def connect(self) -> None:
-        self._connected = True
-
     async def receive(self, packet_mapper: Serializable[Packet, PacketData]) -> Packet:
         return await self._to_client_queue.get()
 

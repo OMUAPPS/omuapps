@@ -2,7 +2,7 @@
 import { ByteReader, ByteWriter } from '../bytebuffer.js';
 import type { Serializable } from '../serializer.js';
 
-import type { Connection } from './connection.js';
+import type { Connection, Transport } from './connection.js';
 import type { Packet, PacketData } from './packet/packet.js';
 
 const FRAME_TYPE_KEY = 'omuapps-frame';
@@ -31,6 +31,11 @@ type Command = ({
     type_key?: string,
 };
 
+export class FrameTransport implements Transport {
+    public connect(): Promise<FrameConnection> {
+        return FrameConnection.create();
+    }
+}
 
 export class FrameConnection implements Connection {
     public connected: boolean;
@@ -38,9 +43,10 @@ export class FrameConnection implements Connection {
     private readonly packetQueue: Array<PacketData> = [];
     private readonly sendQueue: Array<Command> = [];
     private receiveWaiter: (() => void) | null = null;
-    private connectedWaiter: (() => void) | null = null;
-
-    constructor(options?: object) {
+    
+    constructor(
+        private connectedWaiter: (() => void) | null,
+    ) {
         this.connected = false;
         window.addEventListener('message', (event) => {
             if (event.data === null || typeof event.data !== 'object') {
@@ -57,6 +63,16 @@ export class FrameConnection implements Connection {
                 return;
             }
             this.handleCommand(command);
+        });
+    }
+
+    public static create(): Promise<FrameConnection> {
+        return new Promise<FrameConnection>((resolve) => {
+            const connection = new FrameConnection((): void => resolve(connection));
+            connection.postCommand({
+                type: 'connect',
+                payload: {},
+            });
         });
     }
 
@@ -114,19 +130,6 @@ export class FrameConnection implements Connection {
         }
         this.sendQueue.length = 0;
         window.parent.postMessage(command, this.origin);
-    }
-
-    public connect(): Promise<void> {
-        if (this.connected) {
-            throw new Error('Already connected');
-        }
-        this.postCommand({
-            type: 'connect',
-            payload: {},
-        });
-        return new Promise<void>((resolve) => {
-            this.connectedWaiter = (): void => resolve();
-        });
     }
 
     public async receive(serializer: Serializable<Packet<unknown>, PacketData>): Promise<Packet | null> {

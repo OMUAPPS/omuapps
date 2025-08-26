@@ -10,10 +10,12 @@ class CloseError(Exception):
     pass
 
 
-class Connection(abc.ABC):
+class Transport(abc.ABC):
     @abc.abstractmethod
-    async def connect(self): ...
+    async def connect(self) -> Connection: ...
 
+
+class Connection(abc.ABC):
     @abc.abstractmethod
     async def send(
         self,

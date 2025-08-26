@@ -15,7 +15,7 @@ import { IdentifierMap } from '../identifier.js';
 import type { TokenProvider } from '../token.js';
 import { VERSION } from '../version.js';
 
-import type { Connection } from './connection.js';
+import type { Connection, Transport } from './connection.js';
 import { PacketMapper } from './connection.js';
 import type { DisconnectPacket } from './packet/packet-types.js';
 import { ConnectPacket, DisconnectType, PACKET_TYPES } from './packet/packet-types.js';
@@ -56,12 +56,14 @@ export class Network {
     private readonly tasks: Array<() => Promise<void> | void> = [];
     private readonly packetMapper = new PacketMapper();
     private readonly packetHandlers = new IdentifierMap<PacketHandler<unknown>>();
+    private listenTask: Promise<void> | undefined = undefined;
 
     constructor(
         private readonly client: Client,
         public readonly address: Address,
         private readonly tokenProvider: TokenProvider,
-        private connection: Connection,
+        private transport: Transport,
+        private connection?: Connection | undefined,
     ) {
         this.registerPacket(
             PACKET_TYPES.CONNECT,
@@ -156,6 +158,9 @@ export class Network {
         if (!this.isState('disconnected') && !this.isState('error')) {
             throw new Error(`Cannot connect while ${this.status.type}`);
         }
+        if (this.listenTask) {
+            throw new Error('Cannot connect while already connecting');
+        }
 
         let attempt = 0;
 
@@ -163,7 +168,7 @@ export class Network {
             attempt++;
             try {
                 try {
-                    await this.connection.connect();
+                    this.connection = this.connection ?? await this.transport.connect();
                     attempt = 0;
                 } catch (error) {
                     if (!reconnect) {
@@ -184,7 +189,7 @@ export class Network {
                         token,
                     }),
                 });
-                const listenPromise = this.listen();
+                this.listenTask = this.listen();
                 await this.setStatus({type: 'connected'});
                 await this.event.connected.emit();
                 await this.dispatchTasks();
@@ -192,7 +197,7 @@ export class Network {
                     type: PACKET_TYPES.READY,
                     data: null,
                 });
-                await listenPromise;
+                await this.listenTask;
                 if (this.status.type === 'error') {
                     throw this.status.error;
                 }
@@ -201,7 +206,8 @@ export class Network {
                     this.setStatus({type: 'disconnected', attempt});
                 }
                 this.event.disconnected.emit(null);
-                this.connection.close();
+                this.connection?.close();
+                this.listenTask = undefined;
             }
             if (!reconnect) {
                 break;
@@ -218,17 +224,17 @@ export class Network {
     }
 
     public send(packet: Packet): void {
-        if (this.connection.closed) {
-            throw new Error('Cannot send packet while connection is closed');
+        if (!this.connection) {
+            throw new Error('No connection established');
         }
         this.connection.send(packet, this.packetMapper);
     }
 
     private async listen(): Promise<void> {
-        while (!this.connection.closed) {
+        while (this.connection) {
             const packet = await this.connection.receive(this.packetMapper);
             if (!packet) {
-                return;
+                break;
             }
             this.dispatchPacket(packet);
         }

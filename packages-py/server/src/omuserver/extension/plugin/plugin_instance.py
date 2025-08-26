@@ -19,7 +19,7 @@ from omu.address import Address
 from omu.app import App, AppType
 from omu.client import Client
 from omu.helper import asyncio_error_logger
-from omu.network.websocket_connection import WebsocketsConnection
+from omu.network.websocket_connection import WebsocketsTransport
 from omu.plugin import InstallContext, Plugin
 from omu.token import TokenProvider
 
@@ -223,8 +223,8 @@ def run_plugin_isolated(
         stage = "setting up"
         setup_logger(name=client.app.id.get_sanitized_key())
         logger.info(f"Starting plugin {client.app.id} {client.app.version}")
-        connection = WebsocketsConnection(client, address)
-        client.network.set_connection(connection)
+        transport = WebsocketsTransport(address)
+        client.network.set_transport(transport)
         client.network.set_token_provider(PluginTokenProvider(token))
         loop = asyncio.new_event_loop()
         loop.set_exception_handler(asyncio_error_logger)

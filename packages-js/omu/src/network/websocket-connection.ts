@@ -3,21 +3,13 @@ import type { Address } from '../address.js';
 import { ByteReader, ByteWriter } from '../bytebuffer.js';
 import type { Serializable } from '../serializer.js';
 
-import type { Connection } from './connection.js';
+import type { Connection, Transport } from './connection.js';
 import type { Packet, PacketData } from './packet/packet.js';
 
-export class WebsocketConnection implements Connection {
-    public connected: boolean;
-    private socket: WebSocket | null;
-    private readonly packetQueue: Array<PacketData> = [];
-    private receiveWaiter: (() => void) | null = null;
-
+export class WebsocketTransport implements Transport {
     constructor(
         private readonly address: Address,
-    ) {
-        this.connected = false;
-        this.socket = null;
-    }
+    ) { }
 
     private get wsEndpoint(): string {
         const protocol = this.address.secure ? 'wss' : 'ws';
@@ -25,21 +17,30 @@ export class WebsocketConnection implements Connection {
         return `${protocol}://${host}:${port}/ws`;
     }
 
-    public connect(): Promise<void> {
-        if (this.socket && !this.connected) {
-            throw new Error('Already connecting');
-        }
+    public connect(): Promise<Connection> {
+        const socket = new WebSocket(this.wsEndpoint);
+        return WebsocketConnection.fromSocket(socket);
+    }
+}
+
+export class WebsocketConnection implements Connection {
+    private readonly packetQueue: Array<PacketData> = [];
+    private receiveWaiter: (() => void) | null = null;
+
+    constructor(
+        private socket: WebSocket,
+    ) { }
+    
+    public static fromSocket(socket: WebSocket): Promise<WebsocketConnection> {
+        const connection = new WebsocketConnection(socket);
         return new Promise((resolve, reject) => {
-            this.close();
-            this.socket = new WebSocket(this.wsEndpoint);
-            this.socket.onerror = reject;
-            this.socket.onclose = (): void => { this.close(); };
-            this.socket.onmessage = (event): void => { this.onMessage(event); };
-            this.socket.onopen = (): void => {
-                this.connected = true;
-                resolve();
+            socket.onerror = reject;
+            socket.onclose = (): void => { connection.close(); };
+            socket.onmessage = (event): void => { connection.onMessage(event); };
+            socket.onopen = (): void => {
+                resolve(connection);
             };
-        });
+        })
     }
 
     private async onMessage(event: MessageEvent<string | Blob>): Promise<void> {
@@ -61,15 +62,12 @@ export class WebsocketConnection implements Connection {
         if (this.receiveWaiter) {
             throw new Error('Already receiving');
         }
-        if (!this.connected || !this.socket) {
-            return null;
-        }
-        while (this.packetQueue.length === 0 && this.connected) {
+        while (this.packetQueue.length === 0) {
             await new Promise<void>((resolve) => {
                 this.receiveWaiter = (): void => resolve();
             });
         }
-        if (!this.connected) {
+        if (this.socket.readyState !== this.socket.OPEN) {
             return null;
         }
         const packet = serializer.deserialize(this.packetQueue.shift()!);
@@ -85,10 +83,8 @@ export class WebsocketConnection implements Connection {
     }
 
     close(): void {
-        this.connected = false;
         if (this.socket) {
             this.socket.close();
-            this.socket = null;
         }
         if (this.receiveWaiter) {
             this.receiveWaiter();
@@ -97,9 +93,6 @@ export class WebsocketConnection implements Connection {
     }
 
     send(packet: Packet, serializer: Serializable<Packet<unknown>, PacketData>): void {
-        if (!this.connected || !this.socket) {
-            throw new Error('Not connected');
-        }
         const packetData = serializer.serialize(packet);
         const writer = new ByteWriter();
         writer.writeString(packetData.type);

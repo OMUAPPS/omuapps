@@ -22,7 +22,7 @@ from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.token import TokenProvider
 
-from .connection import CloseError, Connection
+from .connection import CloseError, Connection, Transport
 from .packet import Packet, PacketType
 from .packet.packet_types import (
     PACKET_TYPES,
@@ -45,17 +45,19 @@ class Network:
         client: Client,
         address: Address,
         token_provider: TokenProvider,
-        connection: Connection,
+        transport: Transport,
+        connection: Connection | None = None,
     ):
         self._client = client
         self._address = address
         self._token_provider = token_provider
-        self._connection = connection
-        self._connected = False
+        self.transport = transport
+        self.connection: Connection | None = connection
         self._event = NetworkEvents()
         self._tasks: list[Coro[[], None]] = []
         self._packet_mapper = PacketMapper()
         self._packet_handlers: dict[Identifier, PacketHandler] = {}
+        self.listen_task: asyncio.Task[None] | None = None
         self.register_packet(
             PACKET_TYPES.CONNECT,
             PACKET_TYPES.DISCONNECT,
@@ -97,11 +99,18 @@ class Network:
         return self._address
 
     def set_connection(self, connection: Connection) -> None:
-        if self._connected:
+        if self.connection:
             raise RuntimeError("Cannot change connection while connected")
-        if self._connection:
-            del self._connection
-        self._connection = connection
+        if self.connection:
+            del self.connection
+        self.connection = connection
+
+    def set_transport(self, transport: Transport) -> None:
+        if self.connection:
+            raise RuntimeError("Cannot change connection while connected")
+        if self.connection:
+            del self.connection
+        self.transport = transport
 
     def set_token_provider(self, token_provider: TokenProvider) -> None:
         self._token_provider = token_provider
@@ -133,16 +142,18 @@ class Network:
 
     @property
     def connected(self) -> bool:
-        return self._connected
+        if not self.connection:
+            return False
+        return not self.connection.closed
 
     async def connect(self, *, reconnect: bool = True) -> None:
-        if self._connected:
+        if self.listen_task:
             raise RuntimeError("Already connected")
 
         exception: Exception | None = None
         while True:
             try:
-                await self._connection.connect()
+                self.connection = self.connection or await self.transport.connect()
             except Exception as e:
                 if reconnect:
                     if exception:
@@ -154,7 +165,6 @@ class Network:
                 else:
                     raise e
 
-            self._connected = True
             await self.send(
                 Packet(
                     PACKET_TYPES.CONNECT,
@@ -165,13 +175,14 @@ class Network:
                     ),
                 )
             )
-            listen_task = asyncio.create_task(self._listen_task())
+            self.listen_task = asyncio.create_task(self._listen_task())
             await self._event.status.emit("connected")
             await self._event.connected.emit()
             await self._dispatch_tasks()
 
             await self.send(Packet(PACKET_TYPES.READY, None))
-            await listen_task
+            await self.listen_task
+            self.listen_task = None
 
             if not reconnect:
                 break
@@ -179,7 +190,7 @@ class Network:
             await asyncio.sleep(1)
 
     async def disconnect(self) -> None:
-        if self._connection.closed:
+        if not self.connection:
             return
         await self.send(
             Packet(
@@ -187,8 +198,8 @@ class Network:
                 DisconnectPacket(DisconnectType.CLOSE, "Client disconnected"),
             )
         )
-        self._connected = False
-        await self._connection.close()
+        await self.connection.close()
+        self.connection = None
         await self._event.status.emit("disconnected")
         await self._event.disconnected.emit()
 
@@ -196,20 +207,19 @@ class Network:
         await self.disconnect()
 
     async def send(self, packet: Packet) -> None:
-        if not self._connected:
+        if not self.connection:
             raise RuntimeError("Not connected")
-        await self._connection.send(packet, self._packet_mapper)
+        await self.connection.send(packet, self._packet_mapper)
 
     async def _listen_task(self):
         try:
-            while not self._connection.closed:
-                packet = await self._connection.receive(self._packet_mapper)
+            while self.connection:
+                packet = await self.connection.receive(self._packet_mapper)
                 asyncio.create_task(self.dispatch_packet(packet))
         except CloseError as e:
             logger.opt(exception=e).error("Connection closed")
         finally:
             await self.disconnect()
-            self._connected = False
 
     async def dispatch_packet(self, packet: Packet) -> None:
         await self._event.packet.emit(packet)

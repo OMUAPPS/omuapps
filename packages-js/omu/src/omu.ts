@@ -20,11 +20,12 @@ import { REGISTRY_EXTENSION_TYPE, type RegistryExtension } from './extension/reg
 import { SERVER_EXTENSION_TYPE, type ServerExtension } from './extension/server/index.js';
 import { SIGNAL_EXTENSION_TYPE, type SignalExtension } from './extension/signal/index.js';
 import { TABLE_EXTENSION_TYPE, type TableExtension } from './extension/table/index.js';
+import { Transport } from './network/connection.js';
 import type { Address, Connection } from './network/index.js';
 import { Network } from './network/index.js';
 import { PACKET_TYPES } from './network/packet/packet-types.js';
 import type { PacketType } from './network/packet/packet.js';
-import { WebsocketConnection } from './network/websocket-connection.js';
+import { WebsocketTransport } from './network/websocket-connection.js';
 import { BrowserTokenProvider, type TokenProvider } from './token.js';
 
 export class Omu implements Client {
@@ -56,6 +57,7 @@ export class Omu implements Client {
         options?: {
             address?: Address;
             token?: TokenProvider | string;
+            transport?: Transport;
             connection?: Connection;
         },
     ) {
@@ -79,7 +81,8 @@ export class Omu implements Client {
             this,
             this.address,
             this.token,
-            options?.connection ?? new WebsocketConnection(this.address),
+            options?.transport ?? new WebsocketTransport(this.address),
+            options?.connection,
         );
         this.network.event.disconnected.listen(() => {
             this.ready = false;

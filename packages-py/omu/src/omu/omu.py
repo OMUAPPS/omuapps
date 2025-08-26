@@ -20,9 +20,10 @@ from omu.extension.signal import SIGNAL_EXTENSION_TYPE, SignalExtension
 from omu.extension.table import TABLE_EXTENSION_TYPE, TableExtension
 from omu.helper import Coro, asyncio_error_logger
 from omu.network import Network
+from omu.network.connection import Connection, Transport
 from omu.network.packet import Packet, PacketType
 from omu.network.packet.packet_types import PACKET_TYPES
-from omu.network.websocket_connection import WebsocketsConnection
+from omu.network.websocket_connection import WebsocketsTransport
 from omu.token import JsonTokenProvider, TokenProvider
 
 from .client import Client, ClientEvents
@@ -34,7 +35,8 @@ class Omu(Client):
         app: App,
         address: Address | None = None,
         token: TokenProvider | None = None,
-        connection: WebsocketsConnection | None = None,
+        connection: Connection | None = None,
+        transport: Transport | None = None,
         extension_registry: ExtensionRegistry | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
     ):
@@ -49,7 +51,8 @@ class Omu(Client):
             self,
             self.address,
             token or JsonTokenProvider(),
-            connection or WebsocketsConnection(self, self.address),
+            transport=transport or WebsocketsTransport(self.address),
+            connection=connection,
         )
         self._network.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
         self._extensions = extension_registry or ExtensionRegistry(self)
