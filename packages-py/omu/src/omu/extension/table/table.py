@@ -151,13 +151,13 @@ class TableType[T]:
         )
 
     @classmethod
-    def create_json[_T](
+    def create_json(
         cls,
         identifier: Identifier,
         name: str,
-        key: Callable[[_T], str],
+        key: Callable[[T], str],
         permissions: TablePermissions | None = None,
-    ) -> TableType[_T]:
+    ) -> TableType[T]:
         return TableType(
             id=identifier / name,
             serializer=Serializer.json(),

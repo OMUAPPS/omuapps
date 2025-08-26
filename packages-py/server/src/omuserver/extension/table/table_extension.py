@@ -252,7 +252,7 @@ class TableExtension:
         for table in self._tables.values():
             await table.store()
 
-    def register[T: Keyable](self, table_type: TableType[T]) -> Table[T]:
+    def register[T](self, table_type: TableType[T]) -> Table[T]:
         table = CachedTable(self.server, table_type.id)
         table.set_permissions(table_type.permissions)
         adapter = SqliteTableAdapter.create(self.get_table_path(table_type.id))

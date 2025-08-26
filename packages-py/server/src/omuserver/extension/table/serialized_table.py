@@ -5,13 +5,12 @@ from omu.extension.table import Table, TableConfig, TableType
 from omu.extension.table.table import TableEvents, TablePermissions
 from omu.helper import AsyncCallback, Coro
 from omu.identifier import Identifier
-from omu.interface import Keyable
 from omu.serializer import Serializable
 
 from .server_table import ServerTable
 
 
-class SerializeAdapter[T: Keyable](Mapping[str, T]):
+class SerializeAdapter[T](dict[str, T]):
     def __init__(self, cache: Mapping[str, bytes], serializer: Serializable[T, bytes]):
         self._cache = cache
         self._serializer = serializer
@@ -20,7 +19,7 @@ class SerializeAdapter[T: Keyable](Mapping[str, T]):
         return self._serializer.deserialize(self._cache[key])
 
 
-class SerializedTable[T: Keyable](Table[T]):
+class SerializedTable[T](Table[T]):
     def __init__(self, table: ServerTable, type: TableType[T]):
         self._table = table
         self._type = type
@@ -78,15 +77,15 @@ class SerializedTable[T: Keyable](Table[T]):
         return {key: self._type.serializer.deserialize(item) for key, item in items.items()}
 
     async def add(self, *items: T) -> None:
-        data = {item.key(): self._type.serializer.serialize(item) for item in items}
+        data = {self._type.key_function(item): self._type.serializer.serialize(item) for item in items}
         await self._table.add(data)
 
     async def update(self, *items: T) -> None:
-        data = {item.key(): self._type.serializer.serialize(item) for item in items}
+        data = {self._type.key_function(item): self._type.serializer.serialize(item) for item in items}
         await self._table.update(data)
 
     async def remove(self, *items: T) -> None:
-        await self._table.remove([item.key() for item in items])
+        await self._table.remove([self._type.key_function(item) for item in items])
 
     async def clear(self) -> None:
         await self._table.clear()
