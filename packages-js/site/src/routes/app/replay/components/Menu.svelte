@@ -11,6 +11,7 @@
         flex-direction: column;
         height: 100%;
         width: 22rem;
+        overflow-x: hidden;
         overflow-y: auto;
 
         > :global(h3) {

@@ -2,7 +2,7 @@
     import AssetButton from "$lib/components/AssetButton.svelte";
     import type { Chat } from "@omujs/chat";
     import { OBSPlugin } from "@omujs/obs";
-    import { Button, TableList, Textbox } from "@omujs/ui";
+    import { Button, TableList, Textbox, Tooltip } from "@omujs/ui";
     import Config from "./components/Config.svelte";
     import Menu from "./components/Menu.svelte";
     import MenuSection from "./components/MenuSection.svelte";
@@ -81,6 +81,7 @@
         </Button>
         <MenuSection name="最近の配信から" icon="ti-video" flex={1}>
             <div class="search" slot="actions">
+                <Tooltip>過去の配信から検索</Tooltip>
                 <input type="search" bind:value={search} placeholder="検索" />
                 {#if !search}
                     <i class="ti ti-search"></i>
