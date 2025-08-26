@@ -136,16 +136,13 @@ export class Omu implements Client {
     }
 
     public async waitForReady(): Promise<void> {
-        return new Promise((resolve) => {
-            if (this.ready) {
+        if (this.ready) return;
+        return new Promise<void>((resolve) => {
+            let unlisten = () => {};
+            unlisten = this.event.ready.listen(() => {
+                unlisten();
                 resolve();
-            } else {
-                let unlisten = () => {};
-                unlisten = this.event.ready.listen(() => {
-                    unlisten();
-                    resolve();
-                });
-            }
+            });
         });
     }
 }

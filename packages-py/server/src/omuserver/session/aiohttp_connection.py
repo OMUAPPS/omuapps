@@ -37,7 +37,11 @@ class WebsocketsConnection(SessionConnection):
             event_type = reader.read_string()
             event_data = reader.read_uint8_array()
         packet_data = PacketData(event_type, event_data)
-        return Ok(packet_mapper.deserialize(packet_data))
+        try:
+            return Ok(packet_mapper.deserialize(packet_data))
+        except Exception as err:
+            logger.opt(exception=err).error("Failed to deserialize packet")
+            return Err(InvalidPacket(f"Failed to deserialize packet: {packet_data.type}"))
 
     async def close(self) -> None:
         try:

@@ -9,6 +9,7 @@ from venv import logger
 from omu.app import App, AppType
 from omu.errors import PermissionDenied
 from omu.extension.dashboard.dashboard_extension import (
+    DASHBOARD_ALLOWED_HOSTS,
     DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
     DASHBOARD_APP_INSTALL_DENY_PACKET,
     DASHBOARD_APP_INSTALL_ENDPOINT,
@@ -37,6 +38,7 @@ from omu.extension.dashboard.dashboard_extension import (
     DASHBOARD_PLUGIN_DENY_PACKET,
     DASHBOARD_PLUGIN_REQUEST_PACKET,
     DASHBOARD_SET_ENDPOINT,
+    DASHBOARD_WEBVIEW_EVENT_PACKET,
     DashboardSetResponse,
     DragDropReadRequest,
     DragDropReadResponse,
@@ -44,6 +46,7 @@ from omu.extension.dashboard.dashboard_extension import (
     DragDropRequestDashboard,
     DragDropRequestResponse,
     FileDragPacket,
+    WebviewEventPacket,
 )
 from omu.extension.dashboard.packets import (
     AppInstallRequestPacket,
@@ -63,6 +66,7 @@ from .permission import (
     DASHBOARD_DRAG_DROP_PERMISSION,
     DASHBOARD_OPEN_APP_PERMISSION,
     DASHBOARD_SET_PERMISSION,
+    DASHBOARD_WEBVIEW_PERMISSION,
     DASHOBARD_APP_EDIT_PERMISSION,
     DASHOBARD_APP_READ_PERMISSION,
 )
@@ -91,6 +95,7 @@ class DashboardExtension:
             DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET,
             DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
             DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
+            DASHBOARD_WEBVIEW_EVENT_PACKET,
         )
         server.security.register(
             DASHBOARD_SET_PERMISSION,
@@ -100,6 +105,7 @@ class DashboardExtension:
             DASHBOARD_APP_INSTALL_PERMISSION,
             DASHBOARD_APP_UPDATE_PERMISSION,
             DASHBOARD_DRAG_DROP_PERMISSION,
+            DASHBOARD_WEBVIEW_PERMISSION,
         )
         server.packets.bind(DASHBOARD_PERMISSION_ACCEPT_PACKET, self.handle_permission_accept)
         server.packets.bind(DASHBOARD_PERMISSION_DENY_PACKET, self.handle_permission_deny)
@@ -112,6 +118,7 @@ class DashboardExtension:
         server.packets.bind(DASHBOARD_DRAG_DROP_STATE_PACKET, self.handle_drag_drop_state)
         server.packets.bind(DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET, self.handle_drag_drop_request_approval)
         server.packets.bind(DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET, self.handle_drag_drop_read_response)
+        server.packets.bind(DASHBOARD_WEBVIEW_EVENT_PACKET, self.handle_webview_event)
         server.endpoints.bind(DASHBOARD_SET_ENDPOINT, self.handle_dashboard_set)
         server.endpoints.bind(DASHBOARD_OPEN_APP_ENDPOINT, self.handle_dashboard_open_app)
         server.endpoints.bind(DASHBOARD_APP_INSTALL_ENDPOINT, self.handle_dashboard_app_install)
@@ -120,6 +127,7 @@ class DashboardExtension:
         server.endpoints.bind(DASHBOARD_DRAG_DROP_READ_ENDPOINT, self.handle_drag_drop_read)
         server.network.event.connected += self.handle_session_connected
         self.apps = server.tables.register(DASHBOARD_APP_TABLE_TYPE)
+        self.allowed_hosts = server.tables.register(DASHBOARD_ALLOWED_HOSTS)
         self.dashboard_session: Session | None = None
         self.dashboard_wait_future: Future[Session] | None = None
         self.permission_requests: dict[str, Future[bool]] = {}
@@ -165,6 +173,7 @@ class DashboardExtension:
         session.event.disconnected += self._on_dashboard_disconnected
         if self.dashboard_wait_future:
             self.dashboard_wait_future.set_result(session)
+            self.dashboard_wait_future = None
         return {"success": True}
 
     async def _on_dashboard_disconnected(self, session: Session) -> None:
@@ -359,6 +368,13 @@ class DashboardExtension:
         drag_id = response.meta["request_id"]
         request = self.drag_drop_read_requests[drag_id]
         request.set_result(response)
+
+    async def handle_webview_event(self, session: Session, packet: WebviewEventPacket):
+        self.ensure_dashboard_session(session)
+        target = self.server.network.sessions.get(packet.target)
+        if target is None:
+            return
+        await target.send(DASHBOARD_WEBVIEW_EVENT_PACKET, packet)
 
     def gen_next_request_id(self) -> str:
         self.request_id += 1

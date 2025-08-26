@@ -90,7 +90,7 @@ class ServerExtension:
         self._session_observers: dict[Identifier, list[Session]] = defaultdict(list)
 
     async def handle_require_apps(self, session: Session, app_ids: list[Identifier]) -> None:
-        for identifier in self._server.network._sessions.keys():
+        for identifier in self._server.network.sessions.keys():
             if identifier not in app_ids:
                 continue
             app_ids.remove(identifier)
@@ -164,7 +164,7 @@ class ServerExtension:
     async def shutdown(self, restart: bool = False) -> None:
         try:
             if restart:
-                for session in [*self._server.network._sessions.values()]:
+                for session in [*self._server.network.sessions.values()]:
                     if session.closed:
                         continue
                     await session.disconnect(DisconnectType.SERVER_RESTART, "Server is restarting")

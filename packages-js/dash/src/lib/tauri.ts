@@ -9,17 +9,36 @@ let _invoke: typeof api.invoke;
 export type Config = {
     enable_beta: boolean;
 };
+
+export type Cookie = {
+    name: string,
+    value: string,
+}
+
 type Commands = {
-    close_window: () => void;
-    start_server: () => string;
-    stop_server: () => string;
-    get_token: () => string | null;
-    get_config: () => Config;
-    set_config: (args: { config: Config }) => void;
-    generate_log_file: () => string;
-    clean_environment: () => void;
-    open_python_path: () => void;
-    open_uv_path: () => void;
+    close_window(): void;
+    start_server(): string;
+    stop_server(): string;
+    get_token(): string | null;
+    get_config(): Config;
+    set_config(options: { config: Config }): void;
+    create_webview_window(options: {
+        options: {
+            label: string,
+            url: string,
+            script: string,
+        }
+    }): Cookie[];
+    get_cookies(options: {
+        options: {
+            label: string,
+            url: string,
+        }
+    }): Cookie[];
+    generate_log_file(): string;
+    clean_environment(): void;
+    open_python_path(): void;
+    open_uv_path(): void;
 };
 
 export async function invoke<T extends keyof Commands>(
@@ -265,8 +284,7 @@ import { exit } from '@tauri-apps/plugin-process';
 import { get } from 'svelte/store';
 import { isBetaEnabled } from './main/settings.js';
 
-waitForTauri().then(async () => {
-
+async function initTrayIcon() {
     let visible = false;
     visible = await appWindow.isVisible();
 
@@ -277,6 +295,7 @@ waitForTauri().then(async () => {
                 text: visible ? 'Hide' : 'Show',
                 action: async () => {
                     const item = await menu.get('toggle');
+                    if (!item) throw new Error('Menu item not found');
                     if (visible) {
                         await appWindow.hide();
                     } else {
@@ -309,10 +328,15 @@ waitForTauri().then(async () => {
         tray.setMenu(menu);
         return;
     }
+    const icon = await defaultWindowIcon();
     await TrayIcon.new({
         id: 'omuapps',
-        icon: await defaultWindowIcon(),
+        icon: icon || undefined,
         menu,
         showMenuOnLeftClick: true,
     });
+}
+
+waitForTauri().then(async () => {
+    await initTrayIcon();
 });

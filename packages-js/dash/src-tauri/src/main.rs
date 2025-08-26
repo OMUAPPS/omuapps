@@ -96,6 +96,8 @@ fn main() {
             get_token,
             get_config,
             set_config,
+            create_webview_window,
+            get_cookies,
             generate_log_file,
             open_python_path,
             open_uv_path

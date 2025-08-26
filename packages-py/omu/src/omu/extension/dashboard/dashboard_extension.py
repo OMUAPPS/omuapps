@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Literal, TypedDict
+from typing import Any, Literal, TypedDict
 
 from omu.app import App, AppJson
 from omu.bytebuffer import ByteReader, ByteWriter
@@ -296,6 +296,50 @@ DASHBOARD_DRAG_DROP_REQUEST_PACKET = PacketType[DragDropRequestDashboard].create
 DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET = PacketType[DragDropRequestResponse].create_json(
     DASHBOARD_EXTENSION_TYPE,
     "drag_drop_request_approval",
+)
+
+DASHBOARD_WEBVIEW_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "webview"
+
+
+@dataclass
+class WebviewEventPacket:
+    id: Identifier
+    target: Identifier
+    event: Any
+
+    @staticmethod
+    def serialize(packet: WebviewEventPacket):
+        return {
+            "id": packet.id.key(),
+            "target": packet.target.key(),
+            "event": packet.event,
+        }
+
+    @staticmethod
+    def deserialize(packet: dict):
+        return WebviewEventPacket(
+            id=Identifier.from_key(packet["id"]),
+            target=Identifier.from_key(packet["target"]),
+            event=packet["event"],
+        )
+
+
+DASHBOARD_WEBVIEW_EVENT_PACKET = PacketType[WebviewEventPacket].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    name="webview_event",
+    serializer=WebviewEventPacket,
+)
+
+
+class AllowedHost(TypedDict):
+    host: str
+
+
+DASHBOARD_ALLOWED_HOSTS = TableType[AllowedHost].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    name="hosts",
+    key=lambda entry: entry["host"],
+    permissions=TablePermissions(DASHBOARD_SET_PERMISSION_ID),
 )
 
 

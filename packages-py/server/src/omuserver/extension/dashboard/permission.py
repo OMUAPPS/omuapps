@@ -4,6 +4,7 @@ from omu.extension.dashboard import (
     DASHBOARD_DRAG_DROP_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHBOARD_SET_PERMISSION_ID,
+    DASHBOARD_WEBVIEW_PERMISSION_ID,
     DASHOBARD_APP_EDIT_PERMISSION_ID,
     DASHOBARD_APP_READ_PERMISSION_ID,
 )
@@ -100,6 +101,16 @@ DASHBOARD_DRAG_DROP_PERMISSION = PermissionType(
         "name": {
             "ja": "ファイルのドラッグドロップ",
             "en": "Get File Drag Drop Information",
+        },
+    },
+)
+DASHBOARD_WEBVIEW_PERMISSION = PermissionType(
+    DASHBOARD_WEBVIEW_PERMISSION_ID,
+    {
+        "level": "high",
+        "name": {
+            "ja": "外部サイトのログインを使用",
+            "en": "Use external sites to login",
         },
     },
 )

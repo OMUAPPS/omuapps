@@ -1,6 +1,6 @@
 import { App } from '../../app.js';
 import type { Client } from '../../client.js';
-import { Identifier } from '../../identifier.js';
+import { Identifier, IdentifierMap } from '../../identifier.js';
 import { PacketType } from '../../network/packet/packet.js';
 import { Serializer } from '../../serializer.js';
 import { EndpointType } from '../endpoint/endpoint.js';
@@ -60,7 +60,7 @@ const DASHBOARD_OPEN_APP_ENDPOINT = EndpointType.createJson<App, void>(DASHBOARD
     requestSerializer: App,
     permissionId: DASHBOARD_OPEN_APP_PERMISSION_ID,
 });
-const DASHBOARD_OPEN_APP_PACKET = PacketType.createJson(DASHBOARD_EXTENSION_TYPE, {
+const DASHBOARD_OPEN_APP_PACKET = PacketType.createJson<App>(DASHBOARD_EXTENSION_TYPE, {
     name: 'open_app',
     serializer: App,
 });
@@ -143,6 +143,139 @@ type DragDropHandler = {
     read(id: string): Promise<DragDropReadResponse>;
 }
 
+export type Cookie = {
+    name: string,
+    value: string,
+}
+
+export type WebviewRequest = {
+    url: string;
+    script: string;
+};
+
+export type WebviewPacket = {
+    id: Identifier,
+};
+
+export type UserResponse<T = undefined> = {
+    type: 'ok';
+    value: T,
+} | {
+    type: 'blocked';
+} | {
+    type: 'cancelled';
+};
+export class UserResult<T> {
+    constructor(
+        public result: {
+            type: 'ok',
+            value: T,
+        } | {
+            type: 'blocked',
+        } | {
+            type: 'cancelled',
+        }
+    ) {}
+
+    public unwrap(): T {
+        if (this.result.type === 'ok') return this.result.value;
+        throw new Error(`Tried to unwrap a ${this.result.type} result`);
+    }
+}
+
+export type WebviewResponse = UserResponse & WebviewPacket;
+
+export const DASHBOARD_WEBVIEW_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('webview');
+
+export type HostRequest = {
+    host: string;
+};
+
+export type GetCookiesRequest = {
+    url: string;
+};
+
+const DASHBOARD_COOKIES_GET = EndpointType.createJson<GetCookiesRequest, UserResponse<Cookie[]>>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'cookies_get',
+    permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
+});
+
+const DASHBOARD_WEBVIEW_REQUEST = EndpointType.createJson<WebviewRequest, WebviewResponse>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'webview_request',
+    responseSerializer: Serializer.noop<WebviewResponse>()
+        .field('id', Identifier),
+    permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
+});
+
+const DASHBOARD_WEBVIEW_CLOSE = EndpointType.createJson<WebviewPacket, WebviewResponse>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'webview_close',
+    requestSerializer: Serializer.noop<WebviewPacket>()
+        .field('id', Identifier),
+    responseSerializer: Serializer.noop<WebviewResponse>()
+        .field('id', Identifier),
+    permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
+});
+
+export type WebviewEvent = {
+    type: 'closed',
+} | {
+    type: 'resize',
+    dimentions: {
+        x: number,
+        y: number,
+    },
+} | {
+    type: 'cookie',
+    cookies: Cookie[],
+}
+
+export type WebviewEventListeners = {
+    [K in WebviewEvent['type']]?: Array<(event: Extract<WebviewEvent, { type: K }>) => void>;
+}
+
+export type WebviewEventPacket = {
+    id: Identifier,
+    target: Identifier,
+    event: WebviewEvent
+};
+
+export type WebviewHandle = {
+    readonly id: Identifier;
+    readonly url: string;
+    getCookies(): Promise<Cookie[]>;
+    close(): void;
+    on<T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T }>) => void): void;
+    join(): Promise<void>;
+};
+
+export type WebviewEventEmit = <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T; }>) => void;
+
+const DASHBOARD_WEBVIEW_EVENT_PACKET = PacketType.createJson<WebviewEventPacket>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'webview_event',
+    serializer: Serializer.noop<WebviewEventPacket>()
+        .field('id', Identifier)
+        .field('target', Identifier),
+});
+
+type AllowedHost = {
+    host: string;
+    apps: Identifier[];
+};
+
+const DASHBOARD_ALLOWED_HOSTS = TableType.createJson<AllowedHost>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'hosts',
+    key: (entry) => entry.host,
+    serializer: Serializer.noop<AllowedHost>()
+        .field('apps', Serializer.of(Identifier).toArray()),
+});
+
+const DASHBOARD_HOST_REQUEST = EndpointType.createJson<{
+    host: string;
+}, UserResponse>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'host_request',
+    permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
+});
+
 
 export class DashboardExtension {
     public readonly type: ExtensionType<DashboardExtension> = DASHBOARD_EXTENSION_TYPE;
@@ -155,6 +288,8 @@ export class DashboardExtension {
         leave: [] as Array<(state: DragLeave) => unknown>,
     }
     public readonly apps: Table<App>;
+    public readonly allowedHosts: Table<AllowedHost>;
+    private readonly webviewHandles: IdentifierMap<{handle: WebviewHandle, emit: WebviewEventEmit}> = new IdentifierMap();
 
     constructor(private readonly client: Client) {
         client.network.registerPacket(
@@ -176,6 +311,7 @@ export class DashboardExtension {
             DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
             DASHBOARD_DRAG_DROP_REQUEST_PACKET,
             DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET,
+            DASHBOARD_WEBVIEW_EVENT_PACKET,
         );
         client.network.addPacketHandler(DASHBOARD_PERMISSION_REQUEST_PACKET, (request) =>
             this.handlePermissionRequest(request),
@@ -218,7 +354,13 @@ export class DashboardExtension {
         client.network.addPacketHandler(DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET, (request) => {
             this.handleDragDropReadRequest(request);
         });
+        client.network.addPacketHandler(DASHBOARD_WEBVIEW_EVENT_PACKET, (packet) => {
+            const handle = this.webviewHandles.get(packet.id);
+            if (!handle) return;
+            handle.emit(packet.event);
+        });
         this.apps = client.tables.get(DASHBOARD_APP_TABLE_TYPE);
+        this.allowedHosts = client.tables.get(DASHBOARD_ALLOWED_HOSTS);
     }
 
     private async handlePermissionRequest(request: PermissionRequestPacket): Promise<void> {
@@ -294,7 +436,66 @@ export class DashboardExtension {
             throw new Error('Dashboard already set');
         }
         this.dashboard = dashboard;
-        this.client.onReady(async () => {
+        this.client.endpoints.bind(DASHBOARD_COOKIES_GET, async (request, params): Promise<UserResponse<Cookie[]>> => {
+            const { url } = request;
+            const { hostname } = new URL(url);
+            const allowedHost = await this.allowedHosts.get(hostname) ?? { host: hostname, apps: [] };
+            const allowed = allowedHost.apps.some((host) => host.isEqual(params.caller));
+            if (!allowed) {
+                return {
+                    type: 'cancelled',
+                };
+            }
+            return await dashboard.getCookies(request);
+        });
+        this.client.endpoints.bind(DASHBOARD_HOST_REQUEST, async (request, params): Promise<UserResponse> => {
+            const { host } = request;
+            const hostEntry = await this.allowedHosts.get(host) ?? { host, apps: [] };
+            const allowed = hostEntry.apps.some((host) => host.isEqual(params.caller));
+            if (allowed) {
+                return {
+                    type: 'ok',
+                    value: undefined,
+                };
+            }
+            const result = await dashboard.hostRequested(request, params);
+            if (result.type === 'ok') {
+                hostEntry.apps.push(params.caller);
+                await this.allowedHosts.update(hostEntry);
+            }
+            return result;
+        });
+        this.client.endpoints.bind(DASHBOARD_WEBVIEW_REQUEST, async (request, params): Promise<WebviewResponse> => {
+            const emit = async (event: WebviewEvent) => {
+                this.client.send(DASHBOARD_WEBVIEW_EVENT_PACKET, {
+                    id,
+                    target: params.caller,
+                    event,
+                });
+            };
+            const id = await dashboard.createWebview(request, params, emit);
+            return {
+                type: 'ok',
+                id,
+                value: undefined,
+            }
+        });
+        this.client.endpoints.bind(DASHBOARD_WEBVIEW_CLOSE, async (request, params): Promise<WebviewResponse> => {
+            const id = await dashboard.getWebview(request, params);
+            if (!id) {
+                return {
+                    type: 'cancelled',
+                    id: request.id,
+                }
+            }
+            await dashboard.closeWebview(request, params);
+            return {
+                type: 'ok',
+                id,
+                value: undefined,
+            }
+        });
+        this.client.network.addTask(async () => {
             const response = await this.client.endpoints.call(
                 DASHBOARD_SET_ENDPOINT,
                 this.client.app.id,
@@ -303,6 +504,72 @@ export class DashboardExtension {
                 throw new Error('Failed to set dashboard');
             }
         });
+    }
+
+    public async requestHost(options: { host: string }): Promise<UserResponse> {
+        return this.client.endpoints.call(
+            DASHBOARD_HOST_REQUEST,
+            options,
+        );
+    }
+
+    public async requestWebview(options: WebviewRequest): Promise<UserResult<WebviewHandle>> {
+        const result = await this.client.endpoints.call(
+            DASHBOARD_WEBVIEW_REQUEST,
+            options,
+        );
+        if (result.type !== 'ok') return new UserResult(result);
+        const { id } = result;
+        const eventListeners: WebviewEventListeners = {};
+        const handle: WebviewHandle = {
+            id,
+            url: options.url,
+            close: async () => {
+                await this.client.endpoints.call(
+                    DASHBOARD_WEBVIEW_CLOSE,
+                    { id }
+                );
+            },
+            getCookies: async () => {
+                const cookies = (await this.getCookies({
+                    url: options.url,
+                })).unwrap();
+                return cookies;
+            },
+            on: function <T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T; }>) => void): void {
+                if (!eventListeners[key]) {
+                    eventListeners[key] = [];
+                }
+                const listeners = eventListeners[key]!;
+                listeners.push(callback);
+            },
+            join: async () => {
+                await new Promise<void>((resolve) => {
+                    handle.on('closed', () => resolve());
+                });
+            },
+        };
+        this.webviewHandles.set(id, {
+            handle,
+            emit: function <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T; }>): void {
+                const listeners = eventListeners[event.type];
+                if (!listeners) return;
+                for (const listener of listeners) {
+                    listener(event);
+                }
+            },
+        })
+        return new UserResult({
+            type: 'ok',
+            value: handle,
+        });
+    }
+
+    public async getCookies(options: GetCookiesRequest): Promise<UserResult<Cookie[]>> {
+        return new UserResult(await this.client.endpoints.call(
+            DASHBOARD_COOKIES_GET,
+            options,
+        ));
     }
 
     public async openApp(app: App): Promise<void> {

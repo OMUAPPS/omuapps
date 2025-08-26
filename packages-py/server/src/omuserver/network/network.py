@@ -4,7 +4,7 @@ import socket
 import tkinter
 import urllib.parse
 from tkinter import messagebox
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import psutil
 from aiohttp import web
@@ -52,7 +52,7 @@ class Network:
         self._server = server
         self._packet_dispatcher = packet_dispatcher
         self._event = NetworkEvents()
-        self._sessions: dict[Identifier, Session] = {}
+        self.sessions: Final[dict[Identifier, Session]] = {}
         self._app = web.Application(middlewares=[cors_middleware])
         self._runner: web.AppRunner | None = None
         self._app.router.add_get("/ws", self.websocket_handler)
@@ -161,22 +161,22 @@ class Network:
         return ws
 
     async def process_session(self, session: Session) -> None:
-        exist_session = self._sessions.get(session.app.id)
+        exist_session = self.sessions.get(session.app.id)
         if exist_session:
             logger.warning(f"Session {session.app} already connected")
             await exist_session.disconnect(
                 DisconnectType.ANOTHER_CONNECTION,
                 f"Another connection from {session.app}",
             )
-        self._sessions[session.app.id] = session
+        self.sessions[session.app.id] = session
         session.event.disconnected += self.handle_disconnection
         await self._event.connected.emit(session)
         await session.listen()
 
     async def handle_disconnection(self, session: Session) -> None:
-        if session.app.id not in self._sessions:
+        if session.app.id not in self.sessions:
             return
-        del self._sessions[session.app.id]
+        del self.sessions[session.app.id]
         await self._event.disconnected.emit(session)
 
     def is_port_free(self) -> bool:

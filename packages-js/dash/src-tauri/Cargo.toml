@@ -12,10 +12,10 @@ rust-version = "1.60"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "2.3.1", features = [] }
+tauri-build = { version = "2.4.0", features = [] }
 
 [dependencies]
-tauri = { version = "2.7.0", features = ["devtools", "tray-icon"] }
+tauri = { version = "2.8.2", features = ["devtools", "tray-icon", "unstable"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 pep440_rs = "0.4.0"
@@ -28,7 +28,7 @@ sha2 = "0.10.8"
 hex = "0.4.3"
 rand = "0.8.5"
 tauri-plugin-window-state = { version = "2.4.0" }
-tauri-plugin-single-instance = { version = "2.3.1" }
+tauri-plugin-single-instance = { version = "2.3.3" }
 tauri-plugin-log = "2.6.0"
 tauri-plugin-cli = { version = "2.4.0" }
 window-shadows = "0.2.1"
@@ -42,7 +42,7 @@ open = "5.3.0"
 walkdir = "2.5.0"
 tauri-plugin-process = "2.3.0"
 chrono = "0.4.31"
-tauri-plugin-fs = "2.4.1"
+tauri-plugin-fs = "2.4.2"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
