@@ -29,7 +29,7 @@ export type Container = {
         transform: Transform,
     },
     order?: 'up' | 'down',
-    spawn?: object,
+    spawn?: null,
 }
 
 export function createContainer(options?: Container): Container {

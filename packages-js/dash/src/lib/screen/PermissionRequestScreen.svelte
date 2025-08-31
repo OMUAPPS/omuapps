@@ -1,12 +1,12 @@
 <script lang="ts">
-    import AppInfo from '$lib/common/AppInfo.svelte';
-    import { t } from '$lib/i18n/i18n-context.js';
-    import type { PermissionRequestPacket } from '@omujs/omu/extension/dashboard/packets.js';
-    import type { PermissionLevel } from '@omujs/omu/extension/permission/permission.js';
-    import { Tooltip } from '@omujs/ui';
-    import PermissionEntry from './PermissionEntry.svelte';
-    import Screen from './Screen.svelte';
-    import type { ScreenHandle } from './screen.js';
+    import AppInfo from "$lib/common/AppInfo.svelte";
+    import { t } from "$lib/i18n/i18n-context.js";
+    import type { PermissionRequestPacket } from "@omujs/omu/extension/dashboard/packets.js";
+    import type { PermissionLevel } from "@omujs/omu/extension/permission/permission.js";
+    import { Tooltip } from "@omujs/ui";
+    import PermissionEntry from "./PermissionEntry.svelte";
+    import Screen from "./Screen.svelte";
+    import type { ScreenHandle } from "./screen.js";
 
     export let screen: {
         handle: ScreenHandle;
@@ -33,10 +33,13 @@
         high: 2,
     };
 
-    const permissions = request.permissions.sort((a, b) => LEVELS[a.metadata.level] - LEVELS[b.metadata.level]).reverse().map((permission) => ({
-        permission,
-        accepted: permission.metadata.level === 'low',
-    }));
+    const permissions = request.permissions
+        .sort((a, b) => LEVELS[a.metadata.level] - LEVELS[b.metadata.level])
+        .reverse()
+        .map((permission) => ({
+            permission,
+            accepted: permission.metadata.level === "low",
+        }));
 </script>
 
 <Screen {screen} title="permission_request" disableClose>
@@ -46,22 +49,52 @@
     </span>
     <div class="permissions">
         <ul>
-            {#if permissions.some(({permission}) => permission.metadata.level === 'high')}
-                <li><span class="level">{$t('permission_level.high')}<small>{$t('permission_level.high_hint')}</small></span></li>
-                {#each permissions.filter(({permission}) => permission.metadata.level === 'high') as entry, i (i)}
-                    <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
+            {#if permissions.some(({ permission }) => permission.metadata.level === "high")}
+                <li>
+                    <span class="level"
+                        >{$t("permission_level.high")}<small
+                            >{$t("permission_level.high_hint")}</small
+                        ></span
+                    >
+                </li>
+                {#each permissions.filter(({ permission }) => permission.metadata.level === "high") as entry, i (i)}
+                    <PermissionEntry
+                        permission={entry.permission}
+                        bind:accepted={entry.accepted}
+                        disabled={entry.permission.metadata.level === "low"}
+                    />
                 {/each}
             {/if}
-            {#if permissions.some(({permission}) => permission.metadata.level === 'medium')}
-                <li><span class="level">{$t('permission_level.medium')}<small>{$t('permission_level.medium_hint')}</small></span></li>
-                {#each permissions.filter(({permission}) => permission.metadata.level === 'medium') as entry, i (i)}
-                    <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
+            {#if permissions.some(({ permission }) => permission.metadata.level === "medium")}
+                <li>
+                    <span class="level"
+                        >{$t("permission_level.medium")}<small
+                            >{$t("permission_level.medium_hint")}</small
+                        ></span
+                    >
+                </li>
+                {#each permissions.filter(({ permission }) => permission.metadata.level === "medium") as entry, i (i)}
+                    <PermissionEntry
+                        permission={entry.permission}
+                        bind:accepted={entry.accepted}
+                        disabled={entry.permission.metadata.level === "low"}
+                    />
                 {/each}
             {/if}
-            {#if permissions.some(({permission}) => permission.metadata.level === 'low')}
-                <li><span class="level">{$t('permission_level.low')}<small>{$t('permission_level.low_hint')}</small></span></li>
-                {#each permissions.filter(({permission}) => permission.metadata.level === 'low') as entry, i (i)}
-                    <PermissionEntry permission={entry.permission} bind:accepted={entry.accepted} disabled={entry.permission.metadata.level === 'low'} />
+            {#if permissions.some(({ permission }) => permission.metadata.level === "low")}
+                <li>
+                    <span class="level"
+                        >{$t("permission_level.low")}<small
+                            >{$t("permission_level.low_hint")}</small
+                        ></span
+                    >
+                </li>
+                {#each permissions.filter(({ permission }) => permission.metadata.level === "low") as entry, i (i)}
+                    <PermissionEntry
+                        permission={entry.permission}
+                        bind:accepted={entry.accepted}
+                        disabled={entry.permission.metadata.level === "low"}
+                    />
                 {/each}
             {/if}
         </ul>
@@ -71,11 +104,13 @@
             キャンセル
             <i class="ti ti-x"></i>
         </button>
-        <button on:click={accept} class="accept" disabled={!permissions.every((entry) => entry.accepted)}>
+        <button
+            on:click={accept}
+            class="accept"
+            disabled={!permissions.every((entry) => entry.accepted)}
+        >
             {#if !permissions.every((entry) => entry.accepted)}
-                <Tooltip>
-                    確認が必要な権限があります
-                </Tooltip>
+                <Tooltip>確認が必要な権限があります</Tooltip>
             {/if}
             許可
             <i class="ti ti-check"></i>
@@ -182,7 +217,11 @@
             }
 
             &::-webkit-scrollbar-thumb {
-                background: color-mix(in srgb, var(--color-1) 10%, transparent 0%);
+                background: color-mix(
+                    in srgb,
+                    var(--color-1) 10%,
+                    transparent 0%
+                );
                 border: 1px solid var(--color-bg-2);
                 border-radius: 1px;
             }

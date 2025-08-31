@@ -1,13 +1,14 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
-    import { VERSION } from '$lib/version.js';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { AppHeader, setClient } from '@omujs/ui';
-    import { BROWSER } from 'esm-env';
-    import { APP } from './app.js';
-    import App from './App.svelte';
-    import { MarshmallowApp, PLUGIN_ID } from './marshmallow-app.js';
+    import AppPage from "$lib/components/AppPage.svelte";
+    import { VERSION } from "$lib/version.js";
+    import { OBSPlugin, permissions } from "@omujs/obs";
+    import { Omu } from "@omujs/omu";
+    import { DASHBOARD_WEBVIEW_PERMISSION_ID } from "@omujs/omu/extension/dashboard/dashboard-extension.js";
+    import { AppHeader, setClient } from "@omujs/ui";
+    import { BROWSER } from "esm-env";
+    import { APP } from "./app.js";
+    import App from "./App.svelte";
+    import { MarshmallowApp, PLUGIN_ID } from "./marshmallow-app.js";
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
@@ -24,6 +25,7 @@
     if (BROWSER) {
         omu.permissions.require(
             permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            DASHBOARD_WEBVIEW_PERMISSION_ID,
         );
         omu.start();
     }

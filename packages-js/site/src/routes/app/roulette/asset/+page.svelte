@@ -1,20 +1,20 @@
 <script lang="ts">
-    import { page } from '$app/stores';
-    import AssetPage from '$lib/components/AssetPage.svelte';
-    import '@fontsource/rocknroll-one';
-    import { Chat } from '@omujs/chat';
-    import { Message } from '@omujs/chat/models/message.js';
-    import { App, Omu } from '@omujs/omu';
-    import { ComponentRenderer, setClient } from '@omujs/ui';
-    import { BROWSER } from 'esm-env';
-    import { APP_ID } from '../app.js';
-    import RouletteRenderer from '../components/RouletteRenderer.svelte';
-    import { RouletteApp } from '../roulette-app.js';
+    import { page } from "$app/stores";
+    import AssetPage from "$lib/components/AssetPage.svelte";
+    import "@fontsource/rocknroll-one";
+    import { Chat } from "@omujs/chat";
+    import { Message } from "@omujs/chat/models/message.js";
+    import { App, Omu } from "@omujs/omu";
+    import { ComponentRenderer, setClient } from "@omujs/ui";
+    import { BROWSER } from "esm-env";
+    import { APP_ID } from "../app.js";
+    import RouletteRenderer from "../components/RouletteRenderer.svelte";
+    import { RouletteApp } from "../roulette-app.js";
 
-    let assetId = BROWSER && $page.url.searchParams.get('assetId');
+    let assetId = BROWSER && $page.url.searchParams.get("assetId");
     const id = assetId || Date.now().toString();
-    const ASSET_APP = new App(APP_ID.join('asset', id), {
-        version: '0.1.0',
+    const ASSET_APP = new App(APP_ID.join("asset", id), {
+        version: "0.1.0",
     });
     const omu = new Omu(ASSET_APP);
     const chat = Chat.create(omu);
@@ -28,13 +28,14 @@
 </script>
 
 <AssetPage>
-    <main class:end={$state.type === 'spin-result'}>
+    <main class:end={$state.type === "spin-result"}>
         <div class="roulette">
             <RouletteRenderer {roulette} />
         </div>
-        {#if $state.type === 'spin-result'}
+        {#if $state.type === "spin-result"}
             {@const message =
-                $state.result.entry.message && Message.fromJson($state.result.entry.message)}
+                $state.result.entry.message &&
+                Message.deserialize($state.result.entry.message)}
             <div class="result-container">
                 <div class="result">
                     <p>
@@ -45,12 +46,19 @@
                             {#await chat.authors.get(message.authorId.key()) then author}
                                 {#if author?.avatarUrl}
                                     <div class="author">
-                                        <img src={omu.assets.proxy(author?.avatarUrl)} alt="icon" />
+                                        <img
+                                            src={omu.assets.proxy(
+                                                author?.avatarUrl,
+                                            )}
+                                            alt="icon"
+                                        />
                                     </div>
                                 {/if}
                                 {#if message.content}
                                     <span class="content">
-                                        <ComponentRenderer component={message.content} />
+                                        <ComponentRenderer
+                                            component={message.content}
+                                        />
                                     </span>
                                 {/if}
                             {/await}

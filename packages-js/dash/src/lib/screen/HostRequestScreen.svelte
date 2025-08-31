@@ -19,7 +19,7 @@
     const { request, app, resolve } = screen.props;
 
     function accept() {
-        resolve({ type: "ok" });
+        resolve({ type: "ok", value: undefined });
         screen.handle.pop();
     }
 

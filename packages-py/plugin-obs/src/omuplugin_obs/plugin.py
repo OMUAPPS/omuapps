@@ -144,7 +144,7 @@ class SceneJson(TypedDict):
     modules: ModulesJson
 
 
-def check_installed() -> Result[bool, str]:
+def check_installed() -> Result[..., str]:
     config_path = get_config_path()
     if not config_path.exists():
         return Err(f"Config file not found: {config_path}")
@@ -179,7 +179,7 @@ def check_installed() -> Result[bool, str]:
     if not is_python_set:
         return Err(f"Python path is not set correctly in user.ini: {python_path} != {python}")
 
-    return Ok(True)
+    return Ok(...)
 
 
 def setup_python_path():

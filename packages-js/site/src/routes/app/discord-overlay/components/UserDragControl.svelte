@@ -401,7 +401,7 @@
             outline: 2px solid var(--color-1);
             outline-width: 2px;
             box-shadow: 0 0.3rem 0 0 color-mix(in srgb, var(--color-2) 100%, transparent 0%);
-            margin-bottom: 2px;
+            margin-bottom: 1px;
             margin-left: 1px;
             transition: margin-bottom, outline-width, box-shadow 0.0621s;
             z-index: 3;
