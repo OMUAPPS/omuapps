@@ -36,7 +36,7 @@ const app = new App(IDENTIFIER, {
     type: 'dashboard',
 });
 
-const address = {
+const address: Address = {
     host: window.location.hostname,
     port: 26423,
     secure: false,

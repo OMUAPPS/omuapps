@@ -184,7 +184,7 @@ export function checkOnTauri() {
 export const IS_TAURI = checkOnTauri();
 
 async function load() {
-    if (!checkOnTauri) {
+    if (!checkOnTauri()) {
         return;
     }
     if (loaded) {
@@ -310,9 +310,9 @@ async function initTrayIcon() {
                 text: 'Quit',
                 action: async () => {
                     await exit();
-                }
-            }
-        ]
+                },
+            },
+        ],
     });
 
     listen(TauriEvent.WINDOW_BLUR, async () => {

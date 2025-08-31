@@ -5,10 +5,13 @@ from typing import TypedDict
 
 from omu.app import App, AppJson
 from omu.identifier import Identifier
-from omu.model import Model
-from omu.serializer import Serializer
 
 from .packet import PacketType
+
+
+class ServerMetaJson(TypedDict):
+    protocol: ProtocolInfo
+    hash: str | None
 
 
 class ProtocolInfo(TypedDict):
@@ -21,7 +24,7 @@ class ConnectPacketData(TypedDict):
     token: str | None
 
 
-class ConnectPacket(Model[ConnectPacketData]):
+class ConnectPacket:
     def __init__(
         self,
         app: App,
@@ -32,16 +35,17 @@ class ConnectPacket(Model[ConnectPacketData]):
         self.protocol = protocol
         self.token = token
 
-    def to_json(self) -> ConnectPacketData:
+    @staticmethod
+    def serialize(packet: ConnectPacket) -> ConnectPacketData:
         return {
-            "app": self.app.to_json(),
-            "protocol": self.protocol,
-            "token": self.token,
+            "app": packet.app.to_json(),
+            "protocol": packet.protocol,
+            "token": packet.token,
         }
 
-    @classmethod
-    def from_json(cls, json: ConnectPacketData) -> ConnectPacket:
-        return cls(
+    @staticmethod
+    def deserialize(json: ConnectPacketData) -> ConnectPacket:
+        return ConnectPacket(
             app=App.from_json(json["app"]),
             protocol=json["protocol"],
             token=json["token"],
@@ -68,20 +72,21 @@ class DisconnectPacketData(TypedDict):
     message: str | None
 
 
-class DisconnectPacket(Model[DisconnectPacketData]):
+class DisconnectPacket:
     def __init__(self, type: DisconnectType, message: str | None = None):
         self.type: DisconnectType = type
         self.message = message
 
-    def to_json(self) -> DisconnectPacketData:
+    @staticmethod
+    def serialize(packet: DisconnectPacket) -> DisconnectPacketData:
         return {
-            "type": self.type.value,
-            "message": self.message,
+            "type": packet.type.value,
+            "message": packet.message,
         }
 
-    @classmethod
-    def from_json(cls, json: DisconnectPacketData) -> DisconnectPacket:
-        return cls(
+    @staticmethod
+    def deserialize(json: DisconnectPacketData) -> DisconnectPacket:
+        return DisconnectPacket(
             type=DisconnectType(json["type"]),
             message=json["message"],
         )
@@ -91,15 +96,19 @@ IDENTIFIER = Identifier("core", "packet")
 
 
 class PACKET_TYPES:
+    SERVER_META = PacketType[ServerMetaJson].create_json(
+        IDENTIFIER,
+        "server_meta",
+    )
     CONNECT = PacketType[ConnectPacket].create_json(
         IDENTIFIER,
         "connect",
-        Serializer.model(ConnectPacket),
+        ConnectPacket,
     )
     DISCONNECT = PacketType[DisconnectPacket].create_json(
         IDENTIFIER,
         "disconnect",
-        Serializer.model(DisconnectPacket),
+        DisconnectPacket,
     )
     TOKEN = PacketType[str | None].create_json(
         IDENTIFIER,

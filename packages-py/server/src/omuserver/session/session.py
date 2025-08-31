@@ -12,28 +12,15 @@ from omu.errors import DisconnectReason
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.identifier import Identifier
+from omu.network.connection import InvalidPacket, ReceiveError
 from omu.network.packet import PACKET_TYPES, Packet, PacketType
 from omu.network.packet.packet_types import DisconnectPacket, DisconnectType
 from omu.network.packet_mapper import PacketMapper
 from omu.result import Err, Ok, Result
 
-from omuserver.error import ServerError
-
 if TYPE_CHECKING:
     from omuserver.security import PermissionHandle
     from omuserver.server import Server
-
-
-class ConnectionClosed(ServerError): ...
-
-
-class ErrorReceiving(ServerError): ...
-
-
-class InvalidPacket(ServerError): ...
-
-
-type ReceiveError = ConnectionClosed | ErrorReceiving | InvalidPacket
 
 
 class SessionConnection(abc.ABC):
@@ -100,10 +87,11 @@ class Session:
         packet_mapper: PacketMapper,
         connection: SessionConnection,
     ) -> Session:
+        await connection.send(PACKET_TYPES.SERVER_META.new(server.meta), packet_mapper)
         received = await connection.receive_as(packet_mapper, PACKET_TYPES.CONNECT)
         if received.is_err is True:
             await connection.send(
-                Packet(PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_PACKET, received.err.message)),
+                PACKET_TYPES.DISCONNECT.new(DisconnectPacket(DisconnectType.INVALID_PACKET, received.err.message)),
                 packet_mapper,
             )
             await connection.close()
@@ -114,7 +102,7 @@ class Session:
         verify_result = await server.security.verify_token(packet.app, packet.token)
         if verify_result.is_err is True:
             await connection.send(
-                Packet(PACKET_TYPES.DISCONNECT, DisconnectPacket(DisconnectType.INVALID_TOKEN, verify_result.err)),
+                PACKET_TYPES.DISCONNECT.new(DisconnectPacket(DisconnectType.INVALID_TOKEN, verify_result.err)),
                 packet_mapper,
             )
             await connection.close()

@@ -4,12 +4,14 @@ from dataclasses import dataclass
 
 import aiohttp
 from aiohttp import ClientWebSocketResponse, web
+from loguru import logger
 
 from omu.address import Address
 from omu.bytebuffer import ByteReader, ByteWriter
+from omu.result import Err, Ok, Result
 from omu.serializer import Serializable
 
-from .connection import CloseError, Connection, Transport
+from .connection import Connection, ConnectionClosed, ErrorReceiving, InvalidPacket, ReceiveError, Transport
 from .packet import Packet, PacketData
 
 
@@ -43,9 +45,9 @@ class WebsocketsConnection(Connection):
         writer.write_uint8_array(packet_data.data)
         await self.socket.send_bytes(writer.finish())
 
-    async def receive(self, packet_mapper: Serializable[Packet, PacketData]) -> Packet:
+    async def receive(self, packet_mapper: Serializable[Packet, PacketData]) -> Result[Packet, ReceiveError]:
         if not self.socket or self.socket.closed:
-            raise RuntimeError("Not connected")
+            return Err(ConnectionClosed("Socket is closed"))
         msg = await self.socket.receive()
         if msg.type in {
             web.WSMsgType.CLOSE,
@@ -53,19 +55,20 @@ class WebsocketsConnection(Connection):
             web.WSMsgType.CLOSING,
             web.WSMsgType.ERROR,
         }:
-            raise CloseError(f"Socket {msg.type.name.lower()}")
+            return Err(ConnectionClosed("Socket is closed"))
         if msg.data is None:
-            raise RuntimeError("Received empty message")
+            return Err(ErrorReceiving("Received empty message"))
         if msg.type == web.WSMsgType.TEXT:
-            raise RuntimeError("Received text message")
-        elif msg.type == web.WSMsgType.BINARY:
-            with ByteReader(msg.data) as reader:
-                event_type = reader.read_string()
-                event_data = reader.read_uint8_array()
-            packet_data = PacketData(event_type, event_data)
-            return packet_mapper.deserialize(packet_data)
-        else:
-            raise RuntimeError(f"Unknown message type {msg.type}")
+            return Err(ErrorReceiving("Received text message"))
+        with ByteReader(msg.data) as reader:
+            event_type = reader.read_string()
+            event_data = reader.read_uint8_array()
+        packet_data = PacketData(event_type, event_data)
+        try:
+            return Ok(packet_mapper.deserialize(packet_data))
+        except Exception as err:
+            logger.opt(exception=err).error("Failed to deserialize packet")
+            return Err(InvalidPacket(f"Failed to deserialize packet: {packet_data.type}"))
 
     async def close(self) -> None:
         if not self.socket or self.socket.closed:

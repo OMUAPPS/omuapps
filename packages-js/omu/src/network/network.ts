@@ -60,12 +60,13 @@ export class Network {
 
     constructor(
         private readonly client: Client,
-        public readonly address: Address,
+        public address: Address,
         private readonly tokenProvider: TokenProvider,
         private transport: Transport,
         private connection?: Connection | undefined,
     ) {
         this.registerPacket(
+            PACKET_TYPES.SERVER_META,
             PACKET_TYPES.CONNECT,
             PACKET_TYPES.DISCONNECT,
             PACKET_TYPES.TOKEN,
@@ -180,6 +181,14 @@ export class Network {
                     continue;
                 }
                 await this.setStatus({type: 'connecting'});
+                const metaReceived = await this.connection.receive(this.packetMapper);
+                if (!metaReceived) {
+                    throw new Error('Connection closed before receiving server meta');
+                }
+                if (!PACKET_TYPES.SERVER_META.is(metaReceived)) {
+                    throw new Error('First packet received was not server meta');
+                }
+                this.address.hash = metaReceived.data.hash;
                 const token = await this.tokenProvider.get(this.address, this.client.app);
                 this.send({
                     type: PACKET_TYPES.CONNECT,

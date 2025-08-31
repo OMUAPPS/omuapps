@@ -3,7 +3,7 @@ use std::{path::PathBuf, process::Command};
 use anyhow::{anyhow, bail, Error};
 
 use crate::{
-    options::AppOptions,
+    options::{AppConfig, AppOptions},
     progress::Progress,
     sources::py::{get_download_url, PythonVersion},
     sync::{read_venv_marker, write_venv_marker},
@@ -21,7 +21,7 @@ impl Python {
         options: &AppOptions,
         on_progress: &(impl Fn(Progress) + Send + 'static),
     ) -> Result<Self, Error> {
-        let python_path = get_python_directory(&options);
+        let python_path = options.get_python_path();
         let python_bin = if cfg!(target_os = "windows") {
             python_path.join("install").join("python.exe")
         } else {
@@ -62,7 +62,7 @@ impl Python {
                 bail!("Unknown Python version: {}", version);
             }
         };
-        let python_dir = get_python_directory(options);
+        let python_dir = options.get_python_path();
         on_progress(Progress::PythonDownloading {
             msg: format!("Downloading Python {} from {}", version, python_url),
             progress: 0.0,
@@ -131,8 +131,4 @@ impl Python {
 
         command
     }
-}
-
-fn get_python_directory(options: &AppOptions) -> PathBuf {
-    options.python_path.join(options.python_version.to_string())
 }

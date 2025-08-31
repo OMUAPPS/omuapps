@@ -18,6 +18,8 @@
                 "--debug",
                 "--token-file",
                 "${workspaceFolder}/appdata/token.txt",
+                "--hash",
+                "dev",
                 "--extra-trusted-origin",
                 "localhost:5173"
             ],

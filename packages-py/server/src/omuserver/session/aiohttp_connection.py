@@ -3,11 +3,12 @@ from __future__ import annotations
 from aiohttp import web
 from loguru import logger
 from omu.bytebuffer import ByteReader, ByteWriter
+from omu.network.connection import ConnectionClosed, ErrorReceiving
 from omu.network.packet import Packet, PacketData
 from omu.network.packet_mapper import PacketMapper
 from omu.result import Err, Ok, Result
 
-from .session import ConnectionClosed, ErrorReceiving, InvalidPacket, ReceiveError, SessionConnection
+from .session import InvalidPacket, ReceiveError, SessionConnection
 
 
 class WebsocketsConnection(SessionConnection):

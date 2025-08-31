@@ -10,8 +10,8 @@ export interface TokenProvider {
 export class BrowserTokenProvider implements TokenProvider {
     constructor(private readonly key: string) {}
 
-    private getKey(serverAddress: Address, app: App): string {
-        return JSON.stringify([serverAddress.host, serverAddress.port, app.key()]);
+    private getKey(address: Address, app: App): string {
+        return JSON.stringify([address.host, address.port, address.hash ?? '', app.key()]);
     }
 
     public async set(serverAddress: Address, app: App, token: string): Promise<void> {

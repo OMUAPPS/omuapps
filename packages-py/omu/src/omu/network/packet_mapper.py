@@ -7,13 +7,13 @@ from .packet import Packet, PacketData, PacketType
 
 class PacketMapper(Serializable[Packet, PacketData]):
     def __init__(self) -> None:
-        self._map: dict[Identifier, PacketType] = {}
+        self.packet_types: dict[Identifier, PacketType] = {}
 
     def register(self, *packet_types: PacketType) -> None:
         for packet_type in packet_types:
-            if self._map.get(packet_type.id):
+            if self.packet_types.get(packet_type.id):
                 raise ValueError(f"Packet id {packet_type.id} already registered")
-            self._map[packet_type.id] = packet_type
+            self.packet_types[packet_type.id] = packet_type
 
     def serialize(self, item: Packet) -> PacketData:
         return PacketData(
@@ -23,7 +23,7 @@ class PacketMapper(Serializable[Packet, PacketData]):
 
     def deserialize(self, item: PacketData) -> Packet:
         id = Identifier.from_key(item.type)
-        packet_type = self._map.get(id)
+        packet_type = self.packet_types.get(id)
         if not packet_type:
             raise InvalidPacket(f"Packet type {id} not registered")
         try:

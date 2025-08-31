@@ -59,6 +59,7 @@ class Network:
         self._packet_handlers: dict[Identifier, PacketHandler] = {}
         self.listen_task: asyncio.Task[None] | None = None
         self.register_packet(
+            PACKET_TYPES.SERVER_META,
             PACKET_TYPES.CONNECT,
             PACKET_TYPES.DISCONNECT,
             PACKET_TYPES.TOKEN,
@@ -151,11 +152,37 @@ class Network:
             raise RuntimeError("Already connected")
 
         exception: Exception | None = None
+        attempts = 0
         while True:
             try:
                 self.connection = self.connection or await self.transport.connect()
+
+                meta_received = await self.connection.receive_as(self._packet_mapper, PACKET_TYPES.SERVER_META)
+                if meta_received.is_err is True:
+                    raise meta_received.err
+                address = self._address.with_hash(meta_received.value["hash"])
+                await self.send(
+                    Packet(
+                        PACKET_TYPES.CONNECT,
+                        ConnectPacket(
+                            app=self._client.app,
+                            protocol={"version": self._client.version},
+                            token=self._token_provider.get(address, self._client.app),
+                        ),
+                    )
+                )
+                self.listen_task = asyncio.create_task(self._listen_task())
+                await self._event.status.emit("connected")
+                await self._event.connected.emit()
+                await self._dispatch_tasks()
+
+                await self.send(Packet(PACKET_TYPES.READY, None))
+                await self.listen_task
             except Exception as e:
                 if reconnect:
+                    attempts += 1
+                    if attempts > 10:
+                        return
                     if exception:
                         logger.error("Failed to reconnect")
                     else:
@@ -164,25 +191,8 @@ class Network:
                     continue
                 else:
                     raise e
-
-            await self.send(
-                Packet(
-                    PACKET_TYPES.CONNECT,
-                    ConnectPacket(
-                        app=self._client.app,
-                        protocol={"version": self._client.version},
-                        token=self._token_provider.get(self._address, self._client.app),
-                    ),
-                )
-            )
-            self.listen_task = asyncio.create_task(self._listen_task())
-            await self._event.status.emit("connected")
-            await self._event.connected.emit()
-            await self._dispatch_tasks()
-
-            await self.send(Packet(PACKET_TYPES.READY, None))
-            await self.listen_task
-            self.listen_task = None
+            finally:
+                self.listen_task = None
 
             if not reconnect:
                 break
@@ -214,8 +224,11 @@ class Network:
     async def _listen_task(self):
         try:
             while self.connection:
-                packet = await self.connection.receive(self._packet_mapper)
-                asyncio.create_task(self.dispatch_packet(packet))
+                received = await self.connection.receive(self._packet_mapper)
+                if received.is_err is True:
+                    logger.error(received.err.message)
+                    return
+                asyncio.create_task(self.dispatch_packet(received.value))
         except CloseError as e:
             logger.opt(exception=e).error("Connection closed")
         finally:

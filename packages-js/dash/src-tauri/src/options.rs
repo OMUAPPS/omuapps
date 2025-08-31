@@ -1,9 +1,14 @@
 use std::{fs::create_dir_all, path::PathBuf};
 
-use anyhow::{ensure, Ok, Result};
+use anyhow::{ensure, Result};
+use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 
-use crate::{server::ServerOption, sources::py::PythonVersionRequest, APP_DIRECTORY};
+use crate::{
+    server::{Server, ServerConfig},
+    sources::py::PythonVersionRequest,
+    APP_DIRECTORY,
+};
 
 static PYTHON_VERSION: PythonVersionRequest = PythonVersionRequest {
     name: None,
@@ -21,11 +26,14 @@ pub struct AppOptions {
     pub python_path: PathBuf,
     pub uv_path: PathBuf,
     pub workdir: PathBuf,
-    pub server_options: ServerOption,
     pub config_path: PathBuf,
 }
 
 impl AppOptions {
+    pub fn get_python_path(self: &AppOptions) -> PathBuf {
+        self.python_path.join(self.python_version.to_string())
+    }
+
     pub fn ensure() -> Result<Self> {
         let data_dir = get_data_dir();
         let bin_dir = APP_DIRECTORY.data_local_dir();
@@ -48,10 +56,6 @@ impl AppOptions {
             python_path: bin_dir.join("python"),
             uv_path: bin_dir.join("uv"),
             workdir: data_dir.clone(),
-            server_options: ServerOption {
-                data_dir: data_dir.clone(),
-                port: 26423,
-            },
             config_path: bin_dir.join("config.json"),
         };
         Ok(options)
@@ -76,29 +80,40 @@ fn get_data_dir() -> std::path::PathBuf {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DashboardOptions {
+pub struct AppConfig {
     pub enable_beta: bool,
+    pub server: ServerConfig,
 }
 
-impl Default for DashboardOptions {
-    fn default() -> Self {
-        Self { enable_beta: false }
-    }
-}
-
-impl DashboardOptions {
-    pub fn ensure(path: &PathBuf) -> Self {
-        if !path.exists() {
-            let config = DashboardOptions::default();
-            config.store(path).unwrap();
-            config
+impl AppConfig {
+    pub fn ensure(options: &AppOptions) -> Self {
+        let path = &options.config_path;
+        if path.exists() {
+            info!("Loading config from {}", path.display());
+            match Self::load(path) {
+                Ok(config) => return config,
+                Err(err) => {
+                    warn!("Failed to load config: {}, generating default config", err);
+                }
+            };
         } else {
-            DashboardOptions::load(path).unwrap()
+            info!(
+                "Config file not found, generating default config at {}",
+                path.display()
+            );
         }
+        let config = AppConfig {
+            enable_beta: false,
+            server: ServerConfig::create(&options),
+        };
+        config.store(path).unwrap_or_else(|err| {
+            warn!("Failed to store default config: {}", err);
+        });
+        config
     }
 
     pub fn store(&self, path: &PathBuf) -> Result<(), std::io::Error> {
-        let content = serde_json::to_string_pretty(self).unwrap();
+        let content = serde_json::to_string_pretty(self)?;
         std::fs::write(path, content)
     }
 

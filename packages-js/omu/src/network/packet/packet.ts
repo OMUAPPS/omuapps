@@ -17,6 +17,10 @@ export class PacketType<T> {
         public readonly serializer: Serializable<T, Uint8Array>,
     ) { }
 
+    public is(packet: Packet): packet is Packet<T> {
+        return packet.type === this;
+    }
+
     static createJson<T, D extends JsonType = JsonType>(identifier: Identifier, {
         name,
         serializer,

@@ -37,10 +37,10 @@ class PluginTokenProvider(TokenProvider):
     def __init__(self, token: str):
         self._token = token
 
-    def get(self, server_address: Address, app: App) -> str | None:
+    def get(self, address: Address, app: App) -> str | None:
         return self._token
 
-    def store(self, server_address: Address, app: App, token: str) -> None:
+    def store(self, address: Address, app: App, token: str) -> None:
         raise NotImplementedError
 
 

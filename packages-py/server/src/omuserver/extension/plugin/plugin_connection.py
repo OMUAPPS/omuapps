@@ -2,19 +2,20 @@ from __future__ import annotations
 
 import asyncio
 
-from omu.network.connection import Connection
+from omu.network.connection import Connection, ReceiveError
 from omu.network.packet import Packet, PacketData
+from omu.result import Ok, Result
 from omu.serializer import Serializable
 
 
 class PluginConnection(Connection):
     def __init__(self) -> None:
-        self._connected = False
+        self._connected = True
         self._to_client_queue = asyncio.Queue[Packet]()
         self._to_server_queue = asyncio.Queue[Packet]()
 
-    async def receive(self, packet_mapper: Serializable[Packet, PacketData]) -> Packet:
-        return await self._to_client_queue.get()
+    async def receive(self, packet_mapper: Serializable[Packet, PacketData]) -> Result[Packet, ReceiveError]:
+        return Ok(await self._to_client_queue.get())
 
     def add_receive(self, packet: Packet) -> None:
         self._to_client_queue.put_nowait(packet)

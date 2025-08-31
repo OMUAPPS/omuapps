@@ -30,6 +30,9 @@ class PacketType[T]:
     id: Identifier
     serializer: Serializable[T, bytes]
 
+    def new(self, data: T) -> Packet[T]:
+        return Packet(self, data)
+
     @classmethod
     def create_json(
         cls,

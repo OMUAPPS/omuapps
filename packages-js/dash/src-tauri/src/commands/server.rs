@@ -33,12 +33,12 @@ pub async fn start_server(
         };
     };
 
-    let options = state.option.clone();
-    let python = Python::ensure(&options, &on_progress).map_err(|err| err.to_string())?;
-    let uv =
-        Uv::ensure(&options, &python.python_bin, &on_progress).map_err(|err| err.to_string())?;
+    let config = state.config.lock().unwrap().clone();
+    let python = Python::ensure(&state.options, &on_progress).map_err(|err| err.to_string())?;
+    let uv = Uv::ensure(&state.options, &python.python_bin, &on_progress)
+        .map_err(|err| err.to_string())?;
     let server = match Server::ensure_server(
-        options.server_options,
+        config.server.clone(),
         python,
         uv,
         &on_progress,
@@ -76,7 +76,7 @@ pub async fn stop_server(
         window.emit("server_state", progress).unwrap();
     };
 
-    let options = state.option.clone();
+    let options = &state.options;
     let python = if cfg!(dev) {
         Python {
             path: options.workdir.join("../.venv"),
@@ -103,7 +103,7 @@ pub async fn stop_server(
     on_progress(Progress::ServerStopping {
         msg: "Stopping server".to_string(),
     });
-    match Server::stop_server(&python, &options.server_options) {
+    match Server::stop_server(&python, &state.config.lock().unwrap().server) {
         Ok(_) => {}
         Err(err) => {
             // return Err(CleanEnvironmentError::ServerError(err.to_string()));
@@ -133,7 +133,7 @@ pub async fn clean_environment(
         window.emit("server_state", progress).unwrap();
     };
 
-    let options = state.option.clone();
+    let options = &state.options;
     let python = if cfg!(dev) {
         Python {
             path: options.workdir.join("../.venv"),
@@ -157,7 +157,7 @@ pub async fn clean_environment(
         }
     };
 
-    match Server::stop_server(&python, &options.server_options) {
+    match Server::stop_server(&python, &state.config.lock().unwrap().server) {
         Ok(_) => {}
         Err(err) => {
             // return Err(CleanEnvironmentError::ServerError(err.to_string()));
@@ -212,7 +212,7 @@ pub fn get_token(state: tauri::State<'_, AppState>) -> Result<Option<String>, St
 
 #[tauri::command]
 pub fn open_python_path(state: tauri::State<'_, AppState>) -> Result<String, String> {
-    let options = state.option.clone();
+    let options = &state.options;
     open::that(&options.python_path)
         .map_err(|err| format!("Failed to open python path: {}", err))?;
     Ok(options.python_path.to_string_lossy().to_string())
@@ -220,7 +220,7 @@ pub fn open_python_path(state: tauri::State<'_, AppState>) -> Result<String, Str
 
 #[tauri::command]
 pub fn open_uv_path(state: tauri::State<'_, AppState>) -> Result<String, String> {
-    let options = state.option.clone();
+    let options = &state.options;
     open::that(&options.uv_path).map_err(|err| format!("Failed to open uv path: {}", err))?;
     Ok(options.uv_path.to_string_lossy().to_string())
 }
@@ -228,7 +228,7 @@ pub fn open_uv_path(state: tauri::State<'_, AppState>) -> Result<String, String>
 #[tauri::command]
 pub async fn generate_log_file(state: tauri::State<'_, AppState>) -> Result<String, String> {
     // pack log files into a tar archive
-    let options = state.option.clone();
+    let options = &state.options;
     let log_dir = options.workdir.join("logs");
     let document_dir: Option<PathBuf> = match directories::UserDirs::new() {
         Some(dirs) => dirs

@@ -9,6 +9,11 @@ type ProtocolInfo = {
     version: string,
 };
 
+export type ServerMetaJson = {
+    protocol: ProtocolInfo,
+    hash: string | undefined,
+}
+
 type ConnectPacketJson = {
     app: AppJson,
     protocol: ProtocolInfo,
@@ -20,18 +25,15 @@ export class ConnectPacket {
     public readonly app: App;
     public readonly protocol: ProtocolInfo;
     public readonly token?: string;
-    public readonly isDashboard?: boolean;
     
     constructor(options: {
         app: App,
         protocol: ProtocolInfo,
         token?: string,
-        is_dashboard?: boolean,
     }) {
         this.app = options.app;
         this.protocol = options.protocol;
         this.token = options.token;
-        this.isDashboard = options.is_dashboard;
     }
 
     public static deserialize(data: ConnectPacketJson): ConnectPacket {
@@ -39,7 +41,6 @@ export class ConnectPacket {
             app: App.deserialize(data.app),
             protocol: data.protocol,
             token: data.token,
-            is_dashboard: data.is_dashboard,
         });
     }
 
@@ -48,7 +49,6 @@ export class ConnectPacket {
             app: App.serialize(data.app),
             protocol: data.protocol,
             token: data.token,
-            is_dashboard: data.isDashboard,
         };
     }
 }
@@ -109,11 +109,15 @@ export class DisconnectPacket {
 }
 
 export const PACKET_TYPES: {
+    SERVER_META: PacketType<ServerMetaJson>;
     CONNECT: PacketType<ConnectPacket>;
     DISCONNECT: PacketType<DisconnectPacket>;
     TOKEN: PacketType<string>;
     READY: PacketType<undefined>;
 } = {
+    SERVER_META: PacketType.createJson<ServerMetaJson>(IDENTIFIER, {
+        name: 'server_meta',
+    }),
     CONNECT: PacketType.createJson<ConnectPacket>(IDENTIFIER, {
         name: 'connect',
         serializer: ConnectPacket,

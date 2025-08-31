@@ -10,7 +10,7 @@ use std::io::Write;
 use tempfile::NamedTempFile;
 
 use crate::{
-    options::AppOptions,
+    options::{AppConfig, AppOptions},
     progress::Progress,
     sources::uv::{UvDownload, UvRequest},
     utils::{archive::unpack_archive, download::download_url, filesystem::remove_dir_all},

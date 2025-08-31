@@ -12,11 +12,11 @@ mod utils;
 mod uv;
 mod version;
 
-use crate::{commands::*, server::Server};
+use crate::{commands::*, options::AppOptions, server::Server};
 use directories::ProjectDirs;
 use log::info;
 use once_cell::sync::Lazy;
-use options::{AppOptions, DashboardOptions};
+use options::AppConfig;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
@@ -30,10 +30,18 @@ static APP_DIRECTORY: Lazy<ProjectDirs> =
     });
 
 struct AppState {
-    option: AppOptions,
+    options: AppOptions,
+    config: Arc<Mutex<AppConfig>>,
     server: Arc<Mutex<Option<Server>>>,
     app_handle: Arc<Mutex<Option<tauri::AppHandle>>>,
-    config: Arc<Mutex<DashboardOptions>>,
+}
+
+impl AppState {
+    pub fn update_config(&self, f: impl FnOnce(&mut AppConfig)) {
+        let mut config = self.config.lock().unwrap();
+        f(&mut config);
+        config.store(&self.options.config_path).unwrap();
+    }
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -49,13 +57,13 @@ fn main() {
             std::process::exit(1);
         })
         .unwrap();
-    let dashboard_options = DashboardOptions::ensure(&options.config_path);
+    let app_config = AppConfig::ensure(&options);
     let app_handle = Arc::new(Mutex::new(None));
     let app_state = AppState {
-        option: options.clone(),
+        options: options.clone(),
         server: Arc::new(Mutex::new(None)),
         app_handle: app_handle.clone(),
-        config: Arc::new(Mutex::new(dashboard_options.clone())),
+        config: Arc::new(Mutex::new(app_config.clone())),
     };
 
     tauri::Builder::default()

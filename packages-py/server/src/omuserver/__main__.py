@@ -60,6 +60,7 @@ def stop_server_processes(
 @click.option("--token-file", type=click.Path(), default=None)
 @click.option("--dashboard-path", type=click.Path(), default=None)
 @click.option("--port", type=int, default=None)
+@click.option("--hash", type=str, default=None)
 @click.option("--extra-trusted-origin", type=str, multiple=True)
 def main(
     debug: bool,
@@ -68,9 +69,11 @@ def main(
     token_file: str | None,
     dashboard_path: str | None,
     port: int | None,
+    hash: str | None,
     extra_trusted_origin: list[str],
 ):
     config = Config()
+    config.hash = hash
     config.address = Address(
         host=config.address.host,
         port=port or config.address.port,

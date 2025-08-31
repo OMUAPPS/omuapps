@@ -1,4 +1,4 @@
-import type { AppJson } from '@omujs/omu/app.js';
+import { App, type AppJson } from '@omujs/omu/app.js';
 import type { DragDropFile } from '@omujs/omu/extension/dashboard/packets.js';
 import { TauriEvent } from '@tauri-apps/api/event';
 import type { FileInfo } from '@tauri-apps/plugin-fs';
@@ -48,7 +48,7 @@ function getDragDropTarget(): AppJson | null {
     const { currentApp } = dashboard;
     if (!currentApp) return null;
     if (!dragDropApps.includes(currentApp.id.key())) return null;
-    return currentApp.toJson();
+    return App.serialize(currentApp);
 }
 
 waitForTauri().then(() => {
