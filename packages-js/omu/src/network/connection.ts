@@ -1,8 +1,7 @@
-import { Identifier, IdentifierMap } from '../identifier.js';
-import type { Serializable } from '../serializer.js';
+import { Identifier, IdentifierMap } from '../identifier';
+import type { Serializable } from '../serialize';
 
-import type { PacketData, PacketType } from './packet/index.js';
-import type { Packet } from './packet/packet.js';
+import type { Packet, PacketData, PacketType } from './packet';
 
 export class PacketMapper implements Serializable<Packet, PacketData> {
     private readonly packetMap = new IdentifierMap<PacketType<unknown>>();

@@ -1,6 +1,3 @@
-import type { Keyable } from '@omujs/omu/interface.js';
-import type { Model } from '@omujs/omu/model.js';
-
 export type ArchiveStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 type ArchiveData = {
@@ -15,48 +12,48 @@ type ArchiveData = {
     status: ArchiveStatus;
 };
 
-export class Archive implements Model<ArchiveData>, Keyable {
-    public readonly id: string;
-    public readonly url: string;
-    public readonly path: string;
-    public readonly title: string;
-    public readonly description: string;
-    public readonly thumbnail: string;
-    public readonly publishedAt: string;
-    public readonly duration: number;
-    public status: ArchiveStatus;
-
-    constructor(data: ArchiveData) {
-        this.id = data.id;
-        this.url = data.url;
-        this.path = data.path;
-        this.title = data.title;
-        this.description = data.description;
-        this.thumbnail = data.thumbnail;
-        this.publishedAt = data.publishedAt;
-        this.duration = data.duration;
-        this.status = data.status;
-    }
+export class Archive {
+    constructor(
+        public readonly id: string,
+        public readonly url: string,
+        public readonly path: string,
+        public readonly title: string,
+        public readonly description: string,
+        public readonly thumbnail: string,
+        public readonly publishedAt: string,
+        public readonly duration: number,
+        public status: ArchiveStatus,
+    ) { }
 
     public key(): string {
         return this.id;
     }
 
-    public static fromJson(data: ArchiveData): Archive {
-        return new Archive(data);
+    public static deserialize(data: ArchiveData): Archive {
+        return new Archive(
+            data.id,
+            data.url,
+            data.path,
+            data.title,
+            data.description,
+            data.thumbnail,
+            data.publishedAt,
+            data.duration,
+            data.status,
+        );
     }
 
-    public toJson(): ArchiveData {
+    public static serialize(archive: Archive): ArchiveData {
         return {
-            id: this.id,
-            url: this.url,
-            path: this.path,
-            title: this.title,
-            description: this.description,
-            thumbnail: this.thumbnail,
-            publishedAt: this.publishedAt,
-            duration: this.duration,
-            status: this.status,
+            id: archive.id,
+            url: archive.url,
+            path: archive.path,
+            title: archive.title,
+            description: archive.description,
+            thumbnail: archive.thumbnail,
+            publishedAt: archive.publishedAt,
+            duration: archive.duration,
+            status: archive.status,
         };
     }
 }

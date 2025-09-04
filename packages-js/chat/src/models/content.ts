@@ -1,4 +1,4 @@
-import { JsonType } from '@omujs/omu/serializer.js';
+import { JsonType } from '@omujs/omu/serialize';
 
 export type ComponentType<T extends string, D extends JsonType = JsonType> = {
     type: T;

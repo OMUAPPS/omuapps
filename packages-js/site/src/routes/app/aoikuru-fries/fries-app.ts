@@ -1,7 +1,7 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { SignalType, type Signal } from '@omujs/omu/extension/signal/signal.js';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { SignalType, type Signal } from '@omujs/omu/api/signal';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 import type { State } from './state.js';

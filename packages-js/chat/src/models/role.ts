@@ -1,5 +1,3 @@
-import type { Model } from '@omujs/omu/model.js';
-
 export type RoleJson = {
     id?: string;
     name: string;
@@ -9,7 +7,7 @@ export type RoleJson = {
     color?: string;
 };
 
-export class Role implements Model<RoleJson> {
+export class Role {
     id?: string;
     name: string;
     isOwner: boolean;

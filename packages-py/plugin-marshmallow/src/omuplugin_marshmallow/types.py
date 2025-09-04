@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import NotRequired, TypedDict
 
-from omu.extension.endpoint import EndpointType
+from omu.api.endpoint import EndpointType
 
 from .const import PLUGIN_ID
 

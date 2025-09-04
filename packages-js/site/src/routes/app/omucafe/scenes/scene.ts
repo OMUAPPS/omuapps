@@ -1,4 +1,4 @@
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { RegistryType } from '@omujs/omu/api/registry';
 import { APP_ID } from '../app.js';
 import type { Asset } from '../asset/asset.js';
 

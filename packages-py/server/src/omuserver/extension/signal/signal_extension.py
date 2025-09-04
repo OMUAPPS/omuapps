@@ -3,16 +3,16 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from omu.errors import PermissionDenied
-from omu.event_emitter import Unlisten
-from omu.extension.signal import SignalPermissions
-from omu.extension.signal.packets import SignalRegisterPacket
-from omu.extension.signal.signal_extension import (
+from omu.api.signal import SignalPermissions
+from omu.api.signal.extension import (
     SIGNAL_LISTEN_PACKET,
     SIGNAL_NOTIFY_PACKET,
     SIGNAL_REGISTER_PACKET,
     SignalPacket,
 )
+from omu.api.signal.packets import SignalRegisterPacket
+from omu.errors import PermissionDenied
+from omu.event_emitter import Unlisten
 from omu.identifier import Identifier
 
 from omuserver.session import Session

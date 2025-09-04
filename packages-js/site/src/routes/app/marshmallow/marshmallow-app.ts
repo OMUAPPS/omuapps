@@ -1,8 +1,8 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import { Omu } from '@omujs/omu';
-import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { TableType, type Table } from '@omujs/omu/extension/table/table.js';
+import { EndpointType } from '@omujs/omu/api/endpoint';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { TableType, type Table } from '@omujs/omu/api/table';
 import { get, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 

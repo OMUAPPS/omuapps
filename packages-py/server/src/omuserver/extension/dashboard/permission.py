@@ -1,4 +1,4 @@
-from omu.extension.dashboard import (
+from omu.api.dashboard import (
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
     DASHBOARD_APP_UPDATE_PERMISSION_ID,
     DASHBOARD_DRAG_DROP_PERMISSION_ID,
@@ -8,7 +8,7 @@ from omu.extension.dashboard import (
     DASHOBARD_APP_EDIT_PERMISSION_ID,
     DASHOBARD_APP_READ_PERMISSION_ID,
 )
-from omu.extension.permission import PermissionType
+from omu.api.permission import PermissionType
 
 DASHBOARD_SET_PERMISSION = PermissionType(
     DASHBOARD_SET_PERMISSION_ID,

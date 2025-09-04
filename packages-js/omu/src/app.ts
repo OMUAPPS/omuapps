@@ -1,5 +1,4 @@
-import { Identifier } from './identifier.js';
-import type { Keyable } from './interface.js';
+import { Identifier } from './identifier';
 import type { Locale } from './localization/locale.js';
 import type { LocalizedText } from './localization/localization.js';
 
@@ -26,7 +25,7 @@ export type AppJson = {
     metadata?: AppMetadata;
 }
 
-export class App implements Keyable {
+export class App {
     public readonly id: Identifier;
     public readonly version?: string;
     public readonly url?: string;
@@ -48,10 +47,6 @@ export class App implements Keyable {
         this.url = options.url;
         this.metadata = options.metadata;
         this.type = options.type;
-    }
-
-    public key(): string {
-        return this.id.key();
     }
 
     public static deserialize(info: AppJson): App {

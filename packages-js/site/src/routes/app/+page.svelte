@@ -1,6 +1,6 @@
 <script lang="ts">
     import Page from "$lib/components/Page.svelte";
-    import type { NetworkStatus } from "@omujs/omu/network/network.js";
+    import type { NetworkStatus } from "@omujs/omu/network";
     import { Button, Spinner } from "@omujs/ui";
     import { onMount } from "svelte";
     import { omu } from "../client.js";
@@ -115,7 +115,7 @@
             </h3>
             <div class="apps">
                 {#if status["type"] === "ready"}
-                    {#each filteredApps as app (app.key())}
+                    {#each filteredApps as app (app.id.key())}
                         <AppEntry {app} />
                     {/each}
                 {:else}

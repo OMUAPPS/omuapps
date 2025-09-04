@@ -1,6 +1,6 @@
 import { downloadFile } from '$lib/helper.js';
 import { Identifier } from '@omujs/omu';
-import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
+import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
 import { getAssetBuffer, uploadAssetById, type Asset } from '../asset/asset.js';
 import { getGame, type GameConfig, type ResourceRegistry, type States } from '../omucafe-app.js';
 import { getContext } from './game.js';

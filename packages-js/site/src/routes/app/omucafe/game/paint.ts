@@ -1,9 +1,9 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
-import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { SignalType } from '@omujs/omu/extension/signal/signal.js';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { SignalType } from '@omujs/omu/api/signal';
+import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
 import { APP_ID } from '../app.js';
 import { getGame } from '../omucafe-app.js';
 import { draw, getContext, matrices } from './game.js';

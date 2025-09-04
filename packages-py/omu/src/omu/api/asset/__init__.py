@@ -1,0 +1,9 @@
+from .extension import (
+    ASSET_DOWNLOAD_PERMISSION_ID,
+    ASSET_UPLOAD_PERMISSION_ID,
+)
+
+__all__ = [
+    "ASSET_UPLOAD_PERMISSION_ID",
+    "ASSET_DOWNLOAD_PERMISSION_ID",
+]

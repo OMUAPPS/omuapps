@@ -1,20 +1,20 @@
-import type { App } from './app.js';
-import type { EventEmitter, Unlisten } from './event-emitter.js';
-import type { AssetExtension } from './extension/asset/index.js';
-import type { DashboardExtension } from './extension/dashboard/index.js';
-import type { EndpointExtension } from './extension/endpoint/index.js';
-import type { I18nExtension } from './extension/i18n/index.js';
-import type { ExtensionRegistry } from './extension/index.js';
-import type { LoggerExtension } from './extension/logger/logger-extension.js';
-import type { PermissionExtension } from './extension/permission/index.js';
-import type { PluginExtension } from './extension/plugin/index.js';
-import type { RegistryExtension } from './extension/registry/index.js';
-import type { ServerExtension } from './extension/server/index.js';
-import type { SignalExtension } from './extension/signal/index.js';
-import type { TableExtension } from './extension/table/index.js';
-import type { Address, Network } from './network/index.js';
-import type { PacketType } from './network/packet/packet.js';
-import type { TokenProvider } from './token.js';
+import type { ExtensionRegistry } from './api';
+import type { AssetExtension } from './api/asset/extension';
+import type { DashboardExtension } from './api/dashboard/extension';
+import type { EndpointExtension } from './api/endpoint/extension';
+import type { I18nExtension } from './api/i18n/extension';
+import type { LoggerExtension } from './api/logger/extension';
+import type { PermissionExtension } from './api/permission/extension';
+import type { PluginExtension } from './api/plugin/extension';
+import type { RegistryExtension } from './api/registry/extension';
+import type { ServerExtension } from './api/server/extension';
+import type { SignalExtension } from './api/signal/extension';
+import type { TableExtension } from './api/table/extension';
+import type { App } from './app';
+import type { EventEmitter, Unlisten } from './event';
+import type { Address, Network } from './network/index';
+import type { PacketType } from './network/packet/packet';
+import type { TokenProvider } from './token';
 
 export type ClientEvents = {
     started: EventEmitter<[]>;

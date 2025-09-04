@@ -1,31 +1,25 @@
+import { ExtensionRegistry } from './api';
+import { ASSET_EXTENSION_TYPE, type AssetExtension } from './api/asset/extension';
+import { DASHBOARD_EXTENSION_TYPE, type DashboardExtension } from './api/dashboard/extension';
+import { ENDPOINT_EXTENSION_TYPE, type EndpointExtension } from './api/endpoint/extension';
+import { I18N_EXTENSION_TYPE, type I18nExtension } from './api/i18n/extension';
+import { LOGGER_EXTENSION_TYPE, type LoggerExtension } from './api/logger/extension.js';
+import { PERMISSION_EXTENSION_TYPE, type PermissionExtension } from './api/permission/extension';
+import { PLUGIN_EXTENSION_TYPE, type PluginExtension } from './api/plugin/extension';
+import { REGISTRY_EXTENSION_TYPE, type RegistryExtension } from './api/registry/extension';
+import { SERVER_EXTENSION_TYPE, type ServerExtension } from './api/server/extension';
+import { SIGNAL_EXTENSION_TYPE, type SignalExtension } from './api/signal/extension';
+import { TABLE_EXTENSION_TYPE, type TableExtension } from './api/table/extension';
 import type { App } from './app.js';
 import type { Client, ClientEvents } from './client.js';
-import type { Unlisten } from './event-emitter.js';
-import { EventEmitter } from './event-emitter.js';
-import { ASSET_EXTENSION_TYPE, type AssetExtension } from './extension/asset/index.js';
-import { DASHBOARD_EXTENSION_TYPE, type DashboardExtension } from './extension/dashboard/index.js';
-import { ENDPOINT_EXTENSION_TYPE, type EndpointExtension } from './extension/endpoint/index.js';
-import { I18N_EXTENSION_TYPE, type I18nExtension } from './extension/i18n/index.js';
-import { ExtensionRegistry } from './extension/index.js';
-import {
-    LOGGER_EXTENSION_TYPE,
-    type LoggerExtension,
-} from './extension/logger/logger-extension.js';
-import {
-    PERMISSION_EXTENSION_TYPE,
-    type PermissionExtension,
-} from './extension/permission/index.js';
-import { PLUGIN_EXTENSION_TYPE, type PluginExtension } from './extension/plugin/index.js';
-import { REGISTRY_EXTENSION_TYPE, type RegistryExtension } from './extension/registry/index.js';
-import { SERVER_EXTENSION_TYPE, type ServerExtension } from './extension/server/index.js';
-import { SIGNAL_EXTENSION_TYPE, type SignalExtension } from './extension/signal/index.js';
-import { TABLE_EXTENSION_TYPE, type TableExtension } from './extension/table/index.js';
+import type { Unlisten } from './event';
+import { EventEmitter } from './event';
+import type { Address, Connection } from './network';
+import { Network } from './network';
 import { Transport } from './network/connection.js';
-import type { Address, Connection } from './network/index.js';
-import { Network } from './network/index.js';
 import { PACKET_TYPES } from './network/packet/packet-types.js';
 import type { PacketType } from './network/packet/packet.js';
-import { WebsocketTransport } from './network/websocket-connection.js';
+import { WebsocketTransport } from './network/websocket-transport';
 import { BrowserTokenProvider, type TokenProvider } from './token.js';
 
 export class Omu implements Client {

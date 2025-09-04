@@ -1,8 +1,8 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import { VERSION } from '$lib/version.js';
 import { Identifier, type Omu } from '@omujs/omu';
-import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { EndpointType } from '@omujs/omu/api/endpoint';
+import { RegistryType } from '@omujs/omu/api/registry';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 import { DEFAULT_SHADOW_EFFECT_OPTIONS } from './effects/shadow.js';

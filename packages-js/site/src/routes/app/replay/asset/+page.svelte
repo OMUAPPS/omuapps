@@ -40,11 +40,6 @@
 </AssetPage>
 
 <style lang="scss">
-    main {
-        position: fixed;
-        inset: 0;
-    }
-
     :global(body) {
         background: transparent !important;
     }

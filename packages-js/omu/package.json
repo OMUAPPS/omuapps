@@ -2,16 +2,19 @@
     "type": "module",
     "name": "@omujs/omu",
     "version": "0.9.13",
+    "main": "./dist/esm/index.js",
+    "types": "./dist/dts/index.d.ts",
     "exports": {
         ".": {
             "import": "./dist/esm/index.js",
             "types": "./dist/dts/index.d.ts"
         },
         "./*": {
-            "import": "./dist/esm/*",
-            "types": "./dist/dts/*"
+            "import": "./dist/esm/*/index.js",
+            "types": "./dist/dts/*/index.d.js"
         }
     },
+    "module": "",
     "scripts": {
         "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",
         "dev": "bun run watch",

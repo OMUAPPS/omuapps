@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { Message } from '@omujs/chat/models/message.js';
-    import { Button, ComponentRenderer } from '@omujs/ui';
-    import { getGame } from '../omucafe-app.js';
+    import type { Message } from "@omujs/chat/models";
+    import { Button, ComponentRenderer } from "@omujs/ui";
+    import { getGame } from "../omucafe-app.js";
 
     const { omu, scene, chat, side, config } = getGame();
 
@@ -19,33 +19,42 @@
             queueTimer = null;
             const message = messageQueue.shift();
             if (!message) return;
-            messages = [...messages, message]
+            messages = [...messages, message];
             if (messages.length > MAX_MESSAGES) {
                 messages.splice(0, messages.length - MAX_MESSAGES);
             }
             updateQueue();
         }, delay);
     }
-    
+
     chat.messages.listen();
     chat.messages.event.add.listen((value) => {
         messageQueue = [...messageQueue, ...value.values()];
         updateQueue();
-    })
-    chat.messages.fetchItems({
-        limit: MAX_MESSAGES,
-        backward: true,
-    }).then((res) => {
-        messages = [...res.values()];
-    })
-
+    });
+    chat.messages
+        .fetchItems({
+            limit: MAX_MESSAGES,
+            backward: true,
+        })
+        .then((res) => {
+            messages = [...res.values()];
+        });
 </script>
 
-<div class="container" class:overlay={side === 'overlay'} class:hide={side === 'overlay' && ($scene.type === 'photo_mode' || !$config.chat.show)}>
-    {#if side === 'client'}
-        <Button primary onclick={() => {
-            $config.chat.show = !$config.chat.show;
-        }}>
+<div
+    class="container"
+    class:overlay={side === "overlay"}
+    class:hide={side === "overlay" &&
+        ($scene.type === "photo_mode" || !$config.chat.show)}
+>
+    {#if side === "client"}
+        <Button
+            primary
+            onclick={() => {
+                $config.chat.show = !$config.chat.show;
+            }}
+        >
             {#if $config.chat.show}
                 チャットをしまう
             {:else}
@@ -63,7 +72,13 @@
                                 {#await chat.authors.get(message.authorId.key()) then author}
                                     {#if author}
                                         {#if author.avatarUrl}
-                                            <img class="avatar" src={omu.assets.proxy(author.avatarUrl)} alt="">
+                                            <img
+                                                class="avatar"
+                                                src={omu.assets.proxy(
+                                                    author.avatarUrl,
+                                                )}
+                                                alt=""
+                                            />
                                         {/if}
                                         {author.name}
                                     {/if}
@@ -72,7 +87,9 @@
                         {/if}
                         {#if message.content}
                             <div class="content">
-                                <ComponentRenderer component={message.content} />
+                                <ComponentRenderer
+                                    component={message.content}
+                                />
                             </div>
                         {/if}
                     </div>
@@ -82,7 +99,6 @@
     {/if}
 </div>
 
-
 <style lang="scss">
     .container {
         position: absolute;
@@ -90,7 +106,16 @@
         top: 2px;
         height: 30%;
         $bevel: 0.25rem;
-        clip-path: polygon($bevel 0rem, calc(100% - $bevel) 0rem, 100% $bevel, 100% calc(100% - $bevel), calc(100% - $bevel) 100%, $bevel 100%, 0rem calc(100% - $bevel), 0rem $bevel);
+        clip-path: polygon(
+            $bevel 0rem,
+            calc(100% - $bevel) 0rem,
+            100% $bevel,
+            100% calc(100% - $bevel),
+            calc(100% - $bevel) 100%,
+            $bevel 100%,
+            0rem calc(100% - $bevel),
+            0rem $bevel
+        );
     }
 
     .messages {
@@ -112,8 +137,8 @@
         width: 20rem;
         font-size: 1.4rem;
         padding-right: 0;
-        background: #D9AD7D;
-        border: 3px solid #A97338;
+        background: #d9ad7d;
+        border: 3px solid #a97338;
         padding: 1rem;
     }
 
@@ -134,7 +159,7 @@
         grid-template-rows: 0fr;
         animation: grow 0.1621s ease-in-out forwards;
     }
-    
+
     .message > .inner {
         overflow: hidden;
         padding: 0.5em 1em;
@@ -142,7 +167,16 @@
         margin-bottom: 0.75em;
         transform-origin: top;
         $bevel: 2px;
-        clip-path: polygon($bevel 0rem, calc(100% - $bevel) 0rem, 100% $bevel, 100% calc(100% - $bevel), calc(100% - $bevel) 100%, $bevel 100%, 0rem calc(100% - $bevel), 0rem $bevel);
+        clip-path: polygon(
+            $bevel 0rem,
+            calc(100% - $bevel) 0rem,
+            100% $bevel,
+            100% calc(100% - $bevel),
+            calc(100% - $bevel) 100%,
+            $bevel 100%,
+            0rem calc(100% - $bevel),
+            0rem $bevel
+        );
     }
 
     @keyframes grow {

@@ -1,10 +1,9 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import { Chat, models } from '@omujs/chat';
-import { Provider } from '@omujs/chat/models/provider.js';
-import { Serializer, type Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { TableType, type Table } from '@omujs/omu/extension/table/index.js';
-import { Identifier } from '@omujs/omu/identifier.js';
+import { Provider } from '@omujs/chat/models';
+import { Identifier, Serializer, type Omu } from '@omujs/omu';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { TableType, type Table } from '@omujs/omu/api/table';
 import { writable, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 

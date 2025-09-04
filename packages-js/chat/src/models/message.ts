@@ -1,6 +1,4 @@
-import { Identifier } from '@omujs/omu/identifier.js';
-import type { Keyable, Timestamped } from '@omujs/omu/interface.js';
-
+import { Identifier } from '@omujs/omu';
 import * as content from './content.js';
 import type { GiftJson } from './gift.js';
 import { Gift } from './gift.js';
@@ -18,7 +16,7 @@ export type MessageJson = {
     deleted?: boolean;
 };
 
-export class Message implements Keyable, Timestamped {
+export class Message {
     public roomId: Identifier;
     public id: Identifier;
     public authorId?: Identifier;

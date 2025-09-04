@@ -10,8 +10,8 @@ import {
     InvalidVersion,
     PermissionDenied,
 } from '../errors.js';
-import { EventEmitter } from '../event-emitter.js';
-import { IdentifierMap } from '../identifier.js';
+import { EventEmitter } from '../event';
+import { IdentifierMap } from '../identifier';
 import type { TokenProvider } from '../token.js';
 import { VERSION } from '../version.js';
 

@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 from venv import logger
 
 from omu import App
+from omu.api.permission import PermissionType
 from omu.app import AppType
-from omu.extension.permission.permission import PermissionType
 from omu.identifier import Identifier
 from omu.result import Err, Ok, Result, is_err
 from yarl import URL

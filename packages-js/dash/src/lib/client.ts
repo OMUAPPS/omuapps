@@ -1,32 +1,29 @@
 import { setChat, setClient } from '@omujs/ui';
 import { Dashboard } from './dashboard.js';
 
-import type { Address } from '@omujs/omu/address.js';
+import type { Address } from '@omujs/omu/network';
 
 import { invoke, IS_TAURI } from '$lib/tauri.js';
 
-import { Chat } from '@omujs/chat';
-import { CHAT_CHANNEL_TREE_PERMISSION_ID } from '@omujs/chat/permissions.js';
-import { App, Omu } from '@omujs/omu';
+import { Chat, permissions } from '@omujs/chat';
+import { App, BrowserTokenProvider, Identifier, Omu } from '@omujs/omu';
 import {
     DAShBOARD_DRAG_DROP_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHOBARD_APP_EDIT_PERMISSION_ID,
     DASHOBARD_APP_READ_PERMISSION_ID,
-} from '@omujs/omu/extension/dashboard/index.js';
+} from '@omujs/omu/api/dashboard';
 import {
     I18N_GET_LOCALES_PERMISSION_ID,
     I18N_SET_LOCALES_PERMISSION_ID,
-} from '@omujs/omu/extension/i18n/index.js';
-import { PLUGIN_MANAGE_PACKAGE_PERMISSION_ID, PLUGIN_READ_PACKAGE_PERMISSION_ID } from '@omujs/omu/extension/plugin/plugin-extension.js';
+} from '@omujs/omu/api/i18n';
+import { PLUGIN_MANAGE_PACKAGE_PERMISSION_ID, PLUGIN_READ_PACKAGE_PERMISSION_ID } from '@omujs/omu/api/plugin';
 import {
     SERVER_APPS_READ_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
-} from '@omujs/omu/extension/server/index.js';
-import { TABLE_PERMISSION_ID } from '@omujs/omu/extension/table/index.js';
-import { Identifier } from '@omujs/omu/identifier.js';
-import type { Locale } from '@omujs/omu/localization/locale.js';
-import { BrowserTokenProvider } from '@omujs/omu/token.js';
+} from '@omujs/omu/api/server';
+import { TABLE_PERMISSION_ID } from '@omujs/omu/api/table';
+import type { Locale } from '@omujs/omu/localization';
 import { currentPage, language } from './main/settings.js';
 import { VERSION } from './version.js';
 
@@ -76,7 +73,7 @@ omu.permissions.require(
     TABLE_PERMISSION_ID,
     PLUGIN_READ_PACKAGE_PERMISSION_ID,
     PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
-    CHAT_CHANNEL_TREE_PERMISSION_ID,
+    permissions.CHAT_CHANNEL_TREE_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
     SERVER_APPS_READ_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,

@@ -1,38 +1,43 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
-    import { type Component } from '@omujs/chat/models/content.js';
-    import { Author, Message, Provider, Room } from '@omujs/chat/models/index.js';
-    import { AppHeader, MessageRenderer } from '@omujs/ui';
-    import { APP } from './app.js';
-    import { chat, omu } from './client.js';
-    import ComponentEditor from './components/ComponentEditor.svelte';
+    import AppPage from "$lib/components/AppPage.svelte";
+    import {
+        Author,
+        type Component,
+        Message,
+        Provider,
+        Room,
+    } from "@omujs/chat/models";
+    import { AppHeader, MessageRenderer } from "@omujs/ui";
+    import { APP } from "./app.js";
+    import { chat, omu } from "./client.js";
+    import ComponentEditor from "./components/ComponentEditor.svelte";
 
     let component: Component = {
-        type: 'root',
+        type: "root",
         data: [
-            { type: 'text', data: 'Hello, World!'},
-            { type: 'text', data: 'This is a test.'},
+            { type: "text", data: "Hello, World!" },
+            { type: "text", data: "This is a test." },
         ],
     };
 
     function reset() {
         component = {
-            type: 'root',
+            type: "root",
             data: [
-                { type: 'text', data: 'Hello, World!'},
-                { type: 'text', data: 'This is a test.'},
+                { type: "text", data: "Hello, World!" },
+                { type: "text", data: "This is a test." },
             ],
         };
     }
 
     const TEST_PROVIDER = new Provider({
         id: omu.app.id,
-        description: 'test',
-        name: 'test',
-        regex: '(?!x)x',
-        repository_url: 'https://github.com/OMUAPPS/omuapps',
-        url: 'https://example.com',
-        version: '0.0.1',
+        description: "test",
+        name: "test",
+        regex: "(?!x)x",
+        repository_url: "https://github.com/OMUAPPS/omuapps",
+        url: "https://example.com",
+        version: "0.0.1",
     });
 
     function send() {
@@ -46,12 +51,12 @@
         });
         chat.authors.add(author);
         const room = new Room({
-            id: TEST_PROVIDER.id.join('test-room'),
+            id: TEST_PROVIDER.id.join("test-room"),
             connected: false,
             createdAt: new Date(),
             providerId: TEST_PROVIDER.id,
             metadata: {},
-            status: 'offline',
+            status: "offline",
         });
         chat.rooms.update(room);
         chat.messages.add(

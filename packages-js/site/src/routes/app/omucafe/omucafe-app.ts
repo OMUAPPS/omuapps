@@ -1,14 +1,13 @@
 import { makeRegistryWritable, once } from '$lib/helper.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
-import { Chat, events } from '@omujs/chat';
-import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
-import { OBSPlugin, permissions } from '@omujs/obs';
+import { Chat, permissions as chatPerms, events } from '@omujs/chat';
+import { OBSPlugin, permissions as obsPerms } from '@omujs/obs';
 import { App, Omu, Serializer } from '@omujs/omu';
-import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-import { DAShBOARD_DRAG_DROP_PERMISSION_ID } from '@omujs/omu/extension/dashboard/dashboard-extension.js';
-import { RegistryType, type Registry } from '@omujs/omu/extension/registry/index.js';
-import { type Signal } from '@omujs/omu/extension/signal/signal.js';
-import { type Table } from '@omujs/omu/extension/table/table.js';
+import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/api/asset';
+import { DAShBOARD_DRAG_DROP_PERMISSION_ID } from '@omujs/omu/api/dashboard';
+import { RegistryType, type Registry } from '@omujs/omu/api/registry';
+import { type Signal } from '@omujs/omu/api/signal';
+import { type Table } from '@omujs/omu/api/table';
 import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { get, writable, type Writable } from 'svelte/store';
@@ -199,14 +198,14 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
         );
         if (client) {
             omu.permissions.require(
-                permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-                permissions.OBS_SOURCE_UPDATE_PERMISSION_ID,
-                permissions.OBS_SOURCE_READ_PERMISSION_ID,
-                permissions.OBS_SCENE_READ_PERMISSION_ID,
-                permissions.OBS_SCENE_CREATE_PERMISSION_ID,
                 DAShBOARD_DRAG_DROP_PERMISSION_ID,
                 ASSET_UPLOAD_PERMISSION_ID,
-                CHAT_REACTION_PERMISSION_ID,
+                obsPerms.OBS_SOURCE_CREATE_PERMISSION_ID,
+                obsPerms.OBS_SOURCE_UPDATE_PERMISSION_ID,
+                obsPerms.OBS_SOURCE_READ_PERMISSION_ID,
+                obsPerms.OBS_SCENE_READ_PERMISSION_ID,
+                obsPerms.OBS_SCENE_CREATE_PERMISSION_ID,
+                chatPerms.CHAT_REACTION_PERMISSION_ID,
             );
         }
         omu.start();

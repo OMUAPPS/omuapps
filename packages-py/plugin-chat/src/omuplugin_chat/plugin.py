@@ -2,8 +2,8 @@ import re
 
 import iwashi
 from omu import Address, App, Omu
+from omu.api.permission import PermissionType
 from omu.app import AppType
-from omu.extension.permission import PermissionType
 from omu_chat.chat import (
     AUTHOR_TABLE,
     CHANNEL_TABLE,

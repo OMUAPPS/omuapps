@@ -1,6 +1,6 @@
-from omu.extension.i18n import I18N_SET_LOCALES_PERMISSION_ID
-from omu.extension.i18n.i18n_extension import I18N_GET_LOCALES_PERMISSION_ID
-from omu.extension.permission import PermissionType
+from omu.api.i18n import I18N_SET_LOCALES_PERMISSION_ID
+from omu.api.i18n.extension import I18N_GET_LOCALES_PERMISSION_ID
+from omu.api.permission import PermissionType
 
 I18N_SET_LOCALES_PERMISSION = PermissionType(
     id=I18N_SET_LOCALES_PERMISSION_ID,

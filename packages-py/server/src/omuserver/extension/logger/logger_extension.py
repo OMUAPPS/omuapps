@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from omu.api.logger.extension import LOGGER_LISTEN_PACKET, LOGGER_LOG_PACKET, LOGGER_LOG_PERMISSION_ID
+from omu.api.logger.packets import LogMessage, LogPacket
 from omu.errors import PermissionDenied
-from omu.extension.logger.logger_extension import LOGGER_LISTEN_PACKET, LOGGER_LOG_PACKET, LOGGER_LOG_PERMISSION_ID
-from omu.extension.logger.packets import LogMessage, LogPacket
 from omu.identifier import Identifier
 
 from omuserver.session import Session

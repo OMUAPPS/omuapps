@@ -1,8 +1,8 @@
 <script lang="ts">
-    import AppInfo from '$lib/common/AppInfo.svelte';
-    import type { AppInstallRequest } from '@omujs/omu/extension/dashboard/packets.js';
-    import Screen from './Screen.svelte';
-    import type { ScreenHandle } from './screen.js';
+    import AppInfo from "$lib/common/AppInfo.svelte";
+    import type { AppInstallRequest } from "@omujs/omu/api/dashboard";
+    import Screen from "./Screen.svelte";
+    import type { ScreenHandle } from "./screen.js";
 
     export let screen: {
         handle: ScreenHandle;
@@ -11,7 +11,10 @@
             resolve: (accept: boolean) => void;
         };
     };
-    const { request: { app }, resolve } = screen.props;
+    const {
+        request: { app },
+        resolve,
+    } = screen.props;
 
     function accept() {
         resolve(true);

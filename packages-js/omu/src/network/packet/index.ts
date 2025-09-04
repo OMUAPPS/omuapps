@@ -1,2 +1,3 @@
-export { PacketType } from './packet.js';
-export type { PacketData } from './packet.js';
+export { DisconnectPacket, DisconnectType } from './packet-types.js';
+export { PacketType, type Packet, type PacketData } from './packet.js';
+

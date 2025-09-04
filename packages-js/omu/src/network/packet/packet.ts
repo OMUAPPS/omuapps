@@ -1,12 +1,12 @@
-import type { Identifier } from '../../identifier.js';
-import { JsonType, type Serializable, Serializer } from '../../serializer.js';
+import type { Identifier } from '../../identifier';
+import { JsonType, type Serializable, Serializer } from '../../serialize';
 
-export interface PacketData {
+export type PacketData = {
     readonly type: string;
     readonly data: Uint8Array;
 }
 
-export interface Packet<T = unknown> {
+export type Packet<T = unknown> = {
     readonly type: PacketType<T>;
     readonly data: T;
 }

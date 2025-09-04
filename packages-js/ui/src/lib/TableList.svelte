@@ -1,18 +1,18 @@
 <script lang="ts" generics="T">
-    import { client } from './stores.js';
+    import { client } from "./stores.js";
 
-    import VirtualList from './VirtualList.svelte';
+    import VirtualList from "./VirtualList.svelte";
 
-    import TableListEntry from './TableListEntry.svelte';
+    import TableListEntry from "./TableListEntry.svelte";
 
-    import type { Table } from '@omujs/omu/extension/table/table.js';
+    import type { Table } from "@omujs/omu/api/table";
     import {
         type ComponentType,
         type SvelteComponent,
         onDestroy,
         onMount,
         tick,
-    } from 'svelte';
+    } from "svelte";
 
     export let table: Table<T>;
     export let component: ComponentType<
@@ -23,7 +23,7 @@
     export let reverse: boolean = false;
     export let backward: boolean = true;
     export let initial: number = 40;
-     
+
     export let limit = 400;
     export let selectedItem: string | undefined = undefined;
 
@@ -43,7 +43,7 @@
             await fetchLock;
         }
         let cursor: string | undefined = last;
-        while (cursor && !await table.has(cursor)) {
+        while (cursor && !(await table.has(cursor))) {
             if (entries.size === 0) {
                 cursor = undefined;
                 break;
@@ -60,8 +60,10 @@
                 last = [...items.keys()].at(backward ? -1 : -1);
                 updateCache(items);
                 update();
-                return [...items.keys()].filter((key) => !entries.has(key))
-                    .length > 0;
+                return (
+                    [...items.keys()].filter((key) => !entries.has(key))
+                        .length > 0
+                );
             })
             .finally(() => {
                 fetchLock = undefined;
@@ -85,13 +87,10 @@
             }
         }
         if (changed) {
-            let newEntries = [
-                ...newItems,
-                ...entries.entries(),
-            ];
+            let newEntries = [...newItems, ...entries.entries()];
             if (sort) {
-                newEntries = newEntries.sort(([, entryA], [, entryB]) =>
-                    sort(entryA, entryB) || 0,
+                newEntries = newEntries.sort(
+                    ([, entryA], [, entryB]) => sort(entryA, entryB) || 0,
                 );
             }
             entries = new Map(newEntries);
@@ -160,8 +159,8 @@
         unlisten.forEach((unlisten) => unlisten());
     });
     onMount(() => {
-        viewport.addEventListener('scroll', handleScroll);
-        return () => viewport.removeEventListener('scroll', handleScroll);
+        viewport.addEventListener("scroll", handleScroll);
+        return () => viewport.removeEventListener("scroll", handleScroll);
     });
 
     function scrollToTop() {
@@ -264,7 +263,11 @@
             <i class="ti ti-chevron-up"></i>
         </button>
     {/if}
-    <button class="loading" class:active={fetchLock !== undefined} aria-label="loading">
+    <button
+        class="loading"
+        class:active={fetchLock !== undefined}
+        aria-label="loading"
+    >
         <i class="ti ti-loader-2"></i>
     </button>
 </div>

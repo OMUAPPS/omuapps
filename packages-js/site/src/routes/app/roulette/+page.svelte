@@ -2,7 +2,7 @@
     import AppPage from "$lib/components/AppPage.svelte";
     import AssetButton from "$lib/components/AssetButton.svelte";
     import { Chat, events } from "@omujs/chat";
-    import { Message } from "@omujs/chat/models/message.js";
+    import { Message } from "@omujs/chat/models";
     import { OBSPlugin, permissions } from "@omujs/obs";
     import { Omu } from "@omujs/omu";
     import {

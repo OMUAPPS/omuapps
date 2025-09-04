@@ -1,6 +1,6 @@
 import { makeRegistryWritable, md5 } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
 import { writable, type Writable } from 'svelte/store';
 import { APP_ID, REMOTE_APP_ID } from './app.js';

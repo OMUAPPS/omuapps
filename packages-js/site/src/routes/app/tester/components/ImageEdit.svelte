@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { content } from '@omujs/chat/models/index.js';
-    
+    import type { content } from "@omujs/chat";
+
     export let component: content.Image;
 </script>
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from omu.extension.table.table_extension import (
+from omu.api.table.extension import (
     TABLE_ITEM_ADD_PACKET,
     TABLE_ITEM_CLEAR_PACKET,
     TABLE_ITEM_REMOVE_PACKET,

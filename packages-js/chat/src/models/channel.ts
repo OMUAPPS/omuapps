@@ -1,5 +1,4 @@
-import { Identifier } from '@omujs/omu/identifier.js';
-import type { Keyable } from '@omujs/omu/interface.js';
+import { Identifier } from '@omujs/omu';
 
 export type ChannelJson = {
     provider_id: string;
@@ -11,7 +10,7 @@ export type ChannelJson = {
     icon_url: string;
 };
 
-export class Channel implements Keyable {
+export class Channel {
     providerId: Identifier;
     id: Identifier;
     url: string;

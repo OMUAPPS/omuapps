@@ -1,11 +1,9 @@
-import type { Model } from '@omujs/omu/model.js';
-
 export type PaidJson = {
     amount: number;
     currency: string;
 };
 
-export class Paid implements Model<PaidJson> {
+export class Paid {
     constructor(
         public amount: number,
         public currency: string,

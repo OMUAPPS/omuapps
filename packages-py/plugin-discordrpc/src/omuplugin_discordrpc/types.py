@@ -1,7 +1,7 @@
 from typing import TypedDict
 
-from omu.extension.endpoint.endpoint import EndpointType
-from omu.extension.registry import RegistryPermissions, RegistryType
+from omu.api.endpoint import EndpointType
+from omu.api.registry import RegistryPermissions, RegistryType
 
 from .const import PLUGIN_ID
 from .discordrpc.payloads import (

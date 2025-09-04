@@ -15,7 +15,7 @@ from typing import (
 import aiohttp
 import uv
 from loguru import logger
-from omu.extension.plugin import PackageInfo, PluginPackageInfo
+from omu.api.plugin import PackageInfo, PluginPackageInfo
 from omu.plugin import InstallContext, Plugin
 from omu.result import Err, Ok, Result, is_err
 from packaging.specifiers import SpecifierSet

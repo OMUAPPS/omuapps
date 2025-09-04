@@ -1,6 +1,4 @@
-import { Author } from '@omujs/chat/models/author.js';
-import { Gift } from '@omujs/chat/models/gift.js';
-import { Paid } from '@omujs/chat/models/paid.js';
+import { Author, Gift, Paid } from '@omujs/chat/models';
 import type { Meta, StoryObj } from '@storybook/svelte';
 import MessageRenderer from './MessageRenderer.svelte';
 
@@ -16,7 +14,7 @@ type Story = StoryObj<typeof meta>;
 export const Example: Story = {
     args: {
         content: { type: 'text', data: 'Hello, world!' },
-        author: Author.fromJson({
+        author: Author.deserialize({
             id: 'test:test/test',
             provider_id: 'test:test/test',
             name: 'Test User',

@@ -3,7 +3,7 @@
     import { VERSION } from "$lib/version.js";
     import { Chat } from "@omujs/chat";
     import { Omu } from "@omujs/omu";
-    import { ASSET_UPLOAD_PERMISSION_ID } from "@omujs/omu/extension/asset/asset-extension.js";
+    import { ASSET_UPLOAD_PERMISSION_ID } from "@omujs/omu/api/asset";
     import {
         AppHeader,
         Button,

@@ -1,5 +1,5 @@
 import { Identifier } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/index.js';
+import { RegistryType } from '@omujs/omu/api/registry';
 import { NAMESPACE } from '../origin.js';
 
 const PLUGIN_IDENTIFIER = new Identifier(NAMESPACE, 'translator', 'plugin');

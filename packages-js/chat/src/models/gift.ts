@@ -1,5 +1,3 @@
-import type { Model } from '@omujs/omu/model.js';
-
 export type GiftJson = {
     id: string;
     name?: string;
@@ -8,7 +6,7 @@ export type GiftJson = {
     image_url?: string;
 };
 
-export class Gift implements Model<GiftJson> {
+export class Gift {
     id: string;
     name?: string;
     amount?: number;

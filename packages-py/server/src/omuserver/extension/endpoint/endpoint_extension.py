@@ -5,16 +5,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from omu.app import AppType
-from omu.errors import PermissionDenied
-from omu.extension.endpoint.endpoint_extension import (
+from omu.api.endpoint.extension import (
     ENDPOINT_INVOKE_PACKET,
     ENDPOINT_INVOKED_PACKET,
     ENDPOINT_REGISTER_PACKET,
     ENDPOINT_RESPONSE_PACKET,
     EndpointType,
 )
-from omu.extension.endpoint.packets import (
+from omu.api.endpoint.packets import (
     EndpointInvokedPacket,
     EndpointInvokePacket,
     EndpointRegisterPacket,
@@ -22,7 +20,9 @@ from omu.extension.endpoint.packets import (
     InvokedParams,
     ResponseParams,
 )
-from omu.extension.extension import EXT_NAMESPACE
+from omu.api.extension import EXT_NAMESPACE
+from omu.app import AppType
+from omu.errors import PermissionDenied
 from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.network.packet.packet_types import DisconnectType

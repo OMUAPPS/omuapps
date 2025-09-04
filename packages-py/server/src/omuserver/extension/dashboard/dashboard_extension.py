@@ -6,9 +6,7 @@ from asyncio import Future
 from typing import TYPE_CHECKING
 from venv import logger
 
-from omu.app import App, AppType
-from omu.errors import PermissionDenied
-from omu.extension.dashboard.dashboard_extension import (
+from omu.api.dashboard.extension import (
     DASHBOARD_ALLOWED_HOSTS,
     DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
     DASHBOARD_APP_INSTALL_DENY_PACKET,
@@ -48,7 +46,7 @@ from omu.extension.dashboard.dashboard_extension import (
     FileDragPacket,
     WebviewEventPacket,
 )
-from omu.extension.dashboard.packets import (
+from omu.api.dashboard.packets import (
     AppInstallRequestPacket,
     AppInstallResponse,
     AppUpdateRequestPacket,
@@ -56,6 +54,8 @@ from omu.extension.dashboard.packets import (
     PermissionRequestPacket,
     PluginRequestPacket,
 )
+from omu.app import App, AppType
+from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 
 from omuserver.session import Session

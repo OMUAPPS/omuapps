@@ -1,5 +1,4 @@
 import { Identifier } from '@omujs/omu';
-import type { Keyable } from '@omujs/omu/interface.js';
 
 export type Choice = {
     text: string;
@@ -16,7 +15,7 @@ export type VoteJson = {
     total: number | null;
 };
 
-export class Vote implements Keyable {
+export class Vote {
     public readonly id: Identifier;
     public readonly roomId: Identifier;
     public title: string;

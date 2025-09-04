@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Omu } from "@omujs/omu";
-    import { FrameTransport } from "@omujs/omu/network/frame-connection.js";
+    import { FrameTransport } from "@omujs/omu/network";
     import { setClient, Spinner } from "@omujs/ui";
     import { BROWSER } from "esm-env";
     import { onMount } from "svelte";

@@ -3,13 +3,13 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from omu import Omu
-from omu.extension.endpoint import EndpointType
-from omu.extension.signal.signal import SignalPermissions, SignalType
-from omu.extension.table import TablePermissions, TableType
+from omu.api.endpoint import EndpointType
+from omu.api.signal import SignalPermissions, SignalType
+from omu.api.table import TablePermissions, TableType
 from omu.serializer import Serializer
 
 from omu_chat.const import IDENTIFIER
-from omu_chat.event.event import EventHandler, EventRegistry, EventSource
+from omu_chat.event import EventHandler, EventRegistry, EventSource
 from omu_chat.model import Author, Channel, Message, Provider, Reaction, Room, Vote
 from omu_chat.permissions import (
     CHAT_CHANNEL_TREE_PERMISSION_ID,

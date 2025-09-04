@@ -1,6 +1,6 @@
 import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
-import type { Message } from '@omujs/chat/models/message.js';
-import { TableType } from '@omujs/omu/extension/table/table.js';
+import type { Message } from '@omujs/chat/models';
+import { TableType } from '@omujs/omu/api/table';
 import { APP_ID } from '../app.js';
 import { playAudioClip } from '../asset/audioclip.js';
 import { acquireRenderLock, getContext, markChanged, resources } from '../game/game.js';

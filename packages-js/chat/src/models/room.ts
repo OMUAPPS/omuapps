@@ -1,5 +1,4 @@
-import { Identifier } from '@omujs/omu/identifier.js';
-import type { Keyable, Timestamped } from '@omujs/omu/interface.js';
+import { Identifier } from '@omujs/omu';
 
 export type MetadataJson = {
     title?: string;
@@ -26,7 +25,7 @@ export type RoomJson = {
     created_at: string; // ISO 8601 date string
 };
 
-export class Room implements Keyable, Timestamped {
+export class Room {
     public id: Identifier;
     public providerId: Identifier;
     public connected: boolean;

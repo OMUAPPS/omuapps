@@ -1,27 +1,31 @@
 import { currentPage } from '$lib/main/settings.js';
 import PermissionRequestScreen from '$lib/screen/PermissionRequestScreen.svelte';
 import PluginRequestScreen from '$lib/screen/PluginRequestScreen.svelte';
-import { appWindow, invoke, tauriFs, tauriPath } from '$lib/tauri.js';
-import { App, Omu } from '@omujs/omu';
-import type { Cookie, GetCookiesRequest, HostRequest, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from '@omujs/omu/extension/dashboard/dashboard-extension.js';
-import type { DashboardHandler } from '@omujs/omu/extension/dashboard/dashboard.js';
+import { appWindow, invoke, tauriFs, tauriPath, type Cookie } from '$lib/tauri.js';
+import { App, Identifier, IdentifierMap, Omu } from '@omujs/omu';
 import {
     DragDropReadResponse,
     type AppInstallRequest,
     type AppUpdateRequest,
+    type DashboardHandler,
     type DragDropReadRequestDashboard,
     type DragDropRequestDashboard,
     type FileData,
+    type GetCookiesRequest,
+    type HostRequest,
     type PermissionRequestPacket,
-    type PluginRequestPacket
-} from '@omujs/omu/extension/dashboard/packets.js';
-import type { InvokedParams } from '@omujs/omu/extension/endpoint/packets.js';
-import type { Table } from '@omujs/omu/extension/table/table.js';
-import { Identifier, IdentifierMap } from '@omujs/omu/identifier.js';
-import type { Locale } from '@omujs/omu/localization/locale.js';
+    type PluginRequestPacket,
+    type UserResponse,
+    type WebviewPacket,
+    type WebviewRequest
+} from '@omujs/omu/api/dashboard';
+import type { InvokedParams } from '@omujs/omu/api/endpoint';
+import type { Table } from '@omujs/omu/api/table';
+import type { Locale } from '@omujs/omu/localization';
 import { Webview } from '@tauri-apps/api/webview';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { Window } from '@tauri-apps/api/window';
+import type { WebviewEvent } from '../../../omu/dist/dts/api/dashboard/extension.js';
 import { dragDropApps, dragDrops } from './dragdrop.js';
 import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
 import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';

@@ -1,11 +1,14 @@
-export { Author } from './author.js';
-export { Channel } from './channel.js';
-export * as content from './content.js';
-export { Gift } from './gift.js';
-export { Message } from './message.js';
-export { Paid } from './paid.js';
-export { Reaction } from './reaction.js';
-export { Provider } from './provider.js';
-export { Role } from './role.js';
-export { Room } from './room.js';
-export { Vote, Choice } from './vote.js';
+export { Author, AuthorJson } from './author.js';
+export { Channel, ChannelJson } from './channel.js';
+export { Asset, Component, ComponentType, Image, Link, Root, System, Text } from './content.js';
+export { Gift, GiftJson } from './gift.js';
+export { Message, MessageJson } from './message.js';
+export { Paid, PaidJson } from './paid.js';
+export { Provider, ProviderJson } from './provider.js';
+export { Reaction, ReactionJson } from './reaction.js';
+export { Role, RoleJson } from './role.js';
+export { Room, RoomJson } from './room.js';
+export { Choice, Vote, VoteJson } from './vote.js';
+export { content };
+import * as content from './content.js';
+

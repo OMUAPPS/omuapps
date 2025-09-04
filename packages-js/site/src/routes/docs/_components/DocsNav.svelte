@@ -1,16 +1,22 @@
 <script lang="ts">
-    import type { DocsMeta } from '$lib/server/docs/index.js';
+    import type { DocsMeta } from "$lib/server/docs";
 
-    export let section: Readonly<{
-        meta: DocsMeta;
-        slug: string;
-    }> | undefined
-    export let group: [string, Readonly<{
-        meta: DocsMeta;
-        slug: string;
-    }>[]] | undefined
+    export let section:
+        | Readonly<{
+              meta: DocsMeta;
+              slug: string;
+          }>
+        | undefined;
+    export let group:
+        | [
+              string,
+              Readonly<{
+                  meta: DocsMeta;
+                  slug: string;
+              }>[],
+          ]
+        | undefined;
 </script>
-
 
 {#if section && group && group[1].length > 1}
     {@const [, groupEntries] = group}
@@ -38,6 +44,7 @@
         </span>
     </div>
 {/if}
+
 <style lang="scss">
     .nav {
         display: flex;

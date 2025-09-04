@@ -1,5 +1,4 @@
-import { Identifier } from '@omujs/omu/identifier.js';
-import type { Keyable } from '@omujs/omu/interface.js';
+import { Identifier } from '@omujs/omu';
 
 export type ProviderJson = {
     id: string;
@@ -12,7 +11,7 @@ export type ProviderJson = {
     regex: string;
 };
 
-export class Provider implements Keyable {
+export class Provider {
     public id: Identifier;
     public url: string;
     public name: string;

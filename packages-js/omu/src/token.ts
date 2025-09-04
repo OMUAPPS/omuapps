@@ -1,6 +1,6 @@
 import type { Address } from './address.js';
 
-import type { App } from './index.js';
+import type { App } from './app.js';
 
 export interface TokenProvider {
     get(serverAddress: Address, app: App): Promise<string | undefined>;
@@ -11,7 +11,7 @@ export class BrowserTokenProvider implements TokenProvider {
     constructor(private readonly key: string) {}
 
     private getKey(address: Address, app: App): string {
-        return JSON.stringify([address.host, address.port, address.hash ?? '', app.key()]);
+        return JSON.stringify([address.host, address.port, address.hash ?? '', app.id.key()]);
     }
 
     public async set(serverAddress: Address, app: App, token: string): Promise<void> {

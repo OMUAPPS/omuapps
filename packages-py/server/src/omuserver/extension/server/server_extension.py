@@ -8,11 +8,9 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 from omu.address import get_lan_ip
-from omu.app import App
-from omu.errors import PermissionDenied
-from omu.extension.dashboard.packets import PermissionRequestPacket
-from omu.extension.permission.permission import PermissionType
-from omu.extension.server.server_extension import (
+from omu.api.dashboard.packets import PermissionRequestPacket
+from omu.api.permission.permission import PermissionType
+from omu.api.server.extension import (
     REMOTE_APP_REQUEST_ENDPOINT_TYPE,
     REQUIRE_APPS_PACKET_TYPE,
     SERVER_APP_TABLE_TYPE,
@@ -23,7 +21,9 @@ from omu.extension.server.server_extension import (
     SHUTDOWN_ENDPOINT_TYPE,
     TRUSTED_ORIGINS_REGISTRY_TYPE,
 )
-from omu.extension.server.types import RemoteAppRequestPayload, RequestRemoteAppResponse
+from omu.api.server.types import RemoteAppRequestPayload, RequestRemoteAppResponse
+from omu.app import App
+from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 from omu.network.packet.packet_types import DisconnectType
 

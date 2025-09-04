@@ -1,8 +1,7 @@
-import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
-import { SignalType } from '@omujs/omu/extension/signal/signal.js';
+import { EndpointType } from '@omujs/omu/api/endpoint';
+import { SignalType } from '@omujs/omu/api/signal';
 
-import { Serializer } from '@omujs/omu';
-import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
+import { ByteReader, ByteWriter, Serializer } from '@omujs/omu/serialize';
 import { PLUGIN_ID } from './const.js';
 import {
     OBS_SCENE_READ_PERMISSION_ID,

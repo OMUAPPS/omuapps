@@ -5,16 +5,16 @@ import time
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from omu.app import AppType
-from omu.extension.dashboard.packets import PluginRequestPacket
-from omu.extension.plugin import PackageInfo
-from omu.extension.plugin.plugin_extension import (
+from omu.api.dashboard.packets import PluginRequestPacket
+from omu.api.plugin import PackageInfo
+from omu.api.plugin.extension import (
     PLUGIN_ALLOWED_PACKAGE_TABLE,
     PLUGIN_RELOAD_ENDPOINT_TYPE,
     PLUGIN_REQUIRE_PACKET,
     ReloadOptions,
     ReloadResult,
 )
+from omu.app import AppType
 from omu.network.packet.packet_types import DisconnectType
 from packaging.specifiers import SpecifierSet
 

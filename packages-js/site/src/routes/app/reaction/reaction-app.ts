@@ -1,9 +1,9 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import type { Chat } from '@omujs/chat';
-import { Reaction } from '@omujs/chat/models/reaction.js';
+import { Reaction } from '@omujs/chat/models';
 import type { Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/index.js';
-import type { Signal } from '@omujs/omu/extension/signal/signal.js';
+import { RegistryType } from '@omujs/omu/api/registry';
+import type { Signal } from '@omujs/omu/api/signal';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 

@@ -1,6 +1,6 @@
-import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { TableType } from '@omujs/omu/extension/table/table.js';
+import { EndpointType } from '@omujs/omu/api/endpoint';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { TableType } from '@omujs/omu/api/table';
 import { APP_ID } from './app.js';
 import { Archive, type ArchiveConfig } from './archive.js';
 

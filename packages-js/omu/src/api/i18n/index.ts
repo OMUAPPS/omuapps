@@ -1,0 +1,2 @@
+export { I18N_GET_LOCALES_PERMISSION_ID, I18N_SET_LOCALES_PERMISSION_ID } from './extension.js';
+

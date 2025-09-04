@@ -1,5 +1,4 @@
-import { Identifier } from '@omujs/omu/identifier.js';
-import type { Keyable } from '@omujs/omu/interface.js';
+import { Identifier } from '@omujs/omu';
 
 import type { RoleJson } from './role.js';
 import { Role } from './role.js';
@@ -21,7 +20,7 @@ export type AuthorJson = {
     roles?: RoleJson[];
 };
 
-export class Author implements Keyable {
+export class Author {
     public providerId: Identifier;
     public id: Identifier;
     public metadata: AuthorMetadata;

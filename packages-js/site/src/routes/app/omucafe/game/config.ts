@@ -1,5 +1,5 @@
 import { Serializer } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { RegistryType } from '@omujs/omu/api/registry';
 import { APP_ID } from '../app.js';
 
 export const DEFAULT_CONFIG = {

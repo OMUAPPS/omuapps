@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { content } from '@omujs/chat/models/index.js';
-    import LinkableText from './LinkableText.svelte';
-    import { client } from './stores.js';
-    import Tooltip from './Tooltip.svelte';
+    import { content } from "@omujs/chat/models";
+    import LinkableText from "./LinkableText.svelte";
+    import { client } from "./stores.js";
+    import Tooltip from "./Tooltip.svelte";
 
     export let component: content.Component;
 </script>
 
-{#if component.type === 'text'}
-    <LinkableText text={component.data || ''} />
-{:else if component.type === 'image'}
+{#if component.type === "text"}
+    <LinkableText text={component.data || ""} />
+{:else if component.type === "image"}
     {@const { id, url, name } = component.data}
     <span>
         <Tooltip>
@@ -29,12 +29,12 @@
         </Tooltip>
         <img src={url} alt={id} />
     </span>
-{:else if component.type === 'asset'}
+{:else if component.type === "asset"}
     {@const { id } = component.data}
     <span>
         <img src={$client.assets.url(id)} alt={id} />
     </span>
-{:else if component.type === 'link'}
+{:else if component.type === "link"}
     {@const { children, url } = component.data}
     <a href={url} target="_blank" rel="noopener noreferrer">
         <Tooltip>
@@ -44,12 +44,12 @@
             <svelte:self component={sibling} />
         {/each}
     </a>
-{:else if component.type === 'root'}
+{:else if component.type === "root"}
     {@const children = component.data}
     {#each children || [] as sibling, i (i)}
         <svelte:self component={sibling} />
     {/each}
-{:else if component.type === 'system'}
+{:else if component.type === "system"}
     {@const children = component.data}
     <code>
         {#each children || [] as sibling, i (i)}

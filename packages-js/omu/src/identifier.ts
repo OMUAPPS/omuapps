@@ -1,9 +1,7 @@
-import type { Keyable } from './interface.js';
-
 const NAMESPACE_REGEX = /^(\.[^/:.]|[\w-])+$/;
 const NAME_REGEX = /^[^/:]+$/;
 
-export class Identifier implements Keyable {
+export class Identifier {
     public readonly namespace: string;
     public readonly path: string[];
 

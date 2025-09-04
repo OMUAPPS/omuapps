@@ -1,6 +1,6 @@
-import type { Unlisten } from '@omujs/omu/event-emitter.js';
-import { EventEmitter } from '@omujs/omu/event-emitter.js';
-import type { Table } from '@omujs/omu/extension/table/table.js';
+import type { Table } from '@omujs/omu/api/table';
+import type { Unlisten } from '@omujs/omu/event';
+import { EventEmitter } from '@omujs/omu/event';
 
 import type { Chat } from '../chat.js';
 

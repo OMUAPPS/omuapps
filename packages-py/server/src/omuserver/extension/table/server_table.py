@@ -3,9 +3,8 @@ from __future__ import annotations
 import abc
 from collections.abc import AsyncGenerator, Mapping
 
+from omu.api.table import TableConfig, TablePermissions
 from omu.event_emitter import EventEmitter
-from omu.extension.table import TableConfig
-from omu.extension.table.table import TablePermissions
 from omu.identifier import Identifier
 
 from omuserver.session import Session

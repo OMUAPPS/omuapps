@@ -1,4 +1,4 @@
-from omu.extension.permission.permission import PermissionType
+from omu.api.permission.permission import PermissionType
 
 from .const import PLUGIN_ID
 

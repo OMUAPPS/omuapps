@@ -1,4 +1,4 @@
-import type { Registry } from '@omujs/omu/extension/registry/index.js';
+import type { Registry } from '@omujs/omu/api/registry';
 import { type Writable } from 'svelte/store';
 
 export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> & {

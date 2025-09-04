@@ -8,8 +8,8 @@
             "types": "./dist/dts/index.d.ts"
         },
         "./*": {
-            "import": "./dist/esm/*",
-            "types": "./dist/dts/*"
+            "import": "./dist/esm/*/index.js",
+            "types": "./dist/dts/*/index.d.js"
         }
     },
     "scripts": {

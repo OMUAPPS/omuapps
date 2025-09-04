@@ -3,7 +3,7 @@
     import { VERSION } from "$lib/version.js";
     import { OBSPlugin, permissions } from "@omujs/obs";
     import { Omu } from "@omujs/omu";
-    import { DASHBOARD_WEBVIEW_PERMISSION_ID } from "@omujs/omu/extension/dashboard/dashboard-extension.js";
+    import { DASHBOARD_WEBVIEW_PERMISSION_ID } from "@omujs/omu/api/dashboard";
     import { AppHeader, setClient } from "@omujs/ui";
     import { BROWSER } from "esm-env";
     import { APP } from "./app.js";

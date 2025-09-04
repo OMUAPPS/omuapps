@@ -1,4 +1,4 @@
-import { TableType } from '@omujs/omu/extension/table/table.js';
+import { TableType } from '@omujs/omu/api/table';
 import { APP_ID } from '../app.js';
 import type { Asset } from '../asset/asset.js';
 import type { Order } from '../order/order.js';

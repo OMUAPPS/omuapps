@@ -4,8 +4,8 @@ import asyncio
 from collections.abc import AsyncGenerator, Mapping
 from typing import TYPE_CHECKING
 
-from omu.extension.table import TableConfig, TablePermissions
-from omu.extension.table.table_extension import TABLE_PROXY_PACKET, TableProxyPacket
+from omu.api.table import TableConfig, TablePermissions
+from omu.api.table.extension import TABLE_PROXY_PACKET, TableProxyPacket
 from omu.identifier import Identifier
 
 from omuserver.session import Session

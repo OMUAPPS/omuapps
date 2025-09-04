@@ -1,6 +1,6 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import { Serializer, type Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import type { Writable } from 'svelte/store';

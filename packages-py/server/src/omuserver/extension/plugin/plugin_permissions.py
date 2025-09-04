@@ -1,5 +1,5 @@
-from omu.extension.permission.permission import PermissionType
-from omu.extension.plugin import (
+from omu.api.permission.permission import PermissionType
+from omu.api.plugin import (
     PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
     PLUGIN_READ_PACKAGE_PERMISSION_ID,
 )

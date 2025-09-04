@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Room } from "@omujs/chat/models/room.js";
+    import type { Room } from "@omujs/chat/models";
     import { Tooltip } from "@omujs/ui";
     import { playVideo } from "../stores.js";
 

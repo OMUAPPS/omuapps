@@ -1,6 +1,6 @@
 import type { AppJson } from '../../app.js';
 import { App } from '../../app.js';
-import { Identifier } from '../../identifier.js';
+import { Identifier } from '../../identifier';
 import { PacketType } from './packet.js';
 
 const IDENTIFIER = new Identifier('core', 'packet');

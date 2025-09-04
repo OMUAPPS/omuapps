@@ -1,7 +1,7 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import { VERSION } from '$lib/version.js';
 import { type Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { RegistryType } from '@omujs/omu/api/registry';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 import { DEFAULT_EVENT_CALENDAR, type Day, type EventCalendar } from './event.js';

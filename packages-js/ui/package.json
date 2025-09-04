@@ -29,6 +29,9 @@
         "url": "git+https://github.com/OMUAPPS/omuapps.git"
     },
     "devDependencies": {
+        "@omujs/chat": "workspace:*",
+        "@omujs/i18n": "workspace:*",
+        "@omujs/omu": "workspace:*",
         "@chromatic-com/storybook": "1.6.1",
         "@fontsource/noto-sans-jp": "^5.0.19",
         "@storybook/addon-essentials": "^8.2.8",
@@ -56,9 +59,6 @@
         "vitest": "^2.0.5"
     },
     "peerDependencies": {
-        "@omujs/chat": "workspace:*",
-        "@omujs/i18n": "workspace:*",
-        "@omujs/omu": "workspace:*",
         "@sveltejs/kit": "^2.5.4",
         "svelte": "^4.0.0"
     },

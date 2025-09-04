@@ -1,5 +1,5 @@
-import { App, type AppJson } from '@omujs/omu/app.js';
-import type { DragDropFile } from '@omujs/omu/extension/dashboard/packets.js';
+import { App } from '@omujs/omu';
+import type { DragDropFile } from '@omujs/omu/api/dashboard';
 import { TauriEvent } from '@tauri-apps/api/event';
 import type { FileInfo } from '@tauri-apps/plugin-fs';
 import { dashboard, omu } from './client.js';
@@ -44,11 +44,11 @@ async function getFilesByPaths(paths: string[]): Promise<DragDropFile[]> {
     return files;
 }
 
-function getDragDropTarget(): AppJson | null {
+function getDragDropTarget(): App | null {
     const { currentApp } = dashboard;
     if (!currentApp) return null;
     if (!dragDropApps.includes(currentApp.id.key())) return null;
-    return App.serialize(currentApp);
+    return currentApp;
 }
 
 waitForTauri().then(() => {

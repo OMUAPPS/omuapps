@@ -1,5 +1,6 @@
 import { $, type BuildConfig, Glob } from 'bun';
 import { watch } from 'node:fs';
+import * as fs from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import isolatedDecl from './bun-plugin-isolated-decl.js';
 
@@ -69,6 +70,8 @@ async function build(entrypoints: string[]) {
         console.log('building', entrypoints);
         console.time('build');
     }
+
+    await fs.rm(values.dtsdir, { recursive: true, force: true });
 
     const checkResult = await $`bun run tsc --noEmit --skipLibCheck --strict`.nothrow();
     if (checkResult.exitCode !== 0) {

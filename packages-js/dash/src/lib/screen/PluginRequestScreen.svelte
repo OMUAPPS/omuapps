@@ -1,9 +1,9 @@
 <script lang="ts">
-    import AppInfo from '$lib/common/AppInfo.svelte';
-    import type { PluginRequestPacket } from '@omujs/omu/extension/dashboard/packets.js';
-    import PackageEntry from './PackageEntry.svelte';
-    import Screen from './Screen.svelte';
-    import type { ScreenHandle } from './screen.js';
+    import AppInfo from "$lib/common/AppInfo.svelte";
+    import type { PluginRequestPacket } from "@omujs/omu/api/dashboard";
+    import PackageEntry from "./PackageEntry.svelte";
+    import Screen from "./Screen.svelte";
+    import type { ScreenHandle } from "./screen.js";
 
     export let screen: {
         handle: ScreenHandle;
@@ -100,7 +100,11 @@
             }
 
             &::-webkit-scrollbar-thumb {
-                background: color-mix(in srgb, var(--color-1) 10%, transparent 0%);
+                background: color-mix(
+                    in srgb,
+                    var(--color-1) 10%,
+                    transparent 0%
+                );
                 border: 1px solid var(--color-bg-2);
                 border-radius: 1px;
             }

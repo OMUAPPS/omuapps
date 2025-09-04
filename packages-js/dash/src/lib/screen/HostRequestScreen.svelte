@@ -1,10 +1,7 @@
 <script lang="ts">
     import AppInfo from "$lib/common/AppInfo.svelte";
     import type { App } from "@omujs/omu";
-    import type {
-        HostRequest,
-        UserResponse,
-    } from "@omujs/omu/extension/dashboard/dashboard-extension.js";
+    import type { HostRequest, UserResponse } from "@omujs/omu/api/dashboard";
     import Screen from "./Screen.svelte";
     import type { ScreenHandle } from "./screen.js";
 

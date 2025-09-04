@@ -1,9 +1,9 @@
-from omu.extension.asset import (
+from omu.api.asset import (
     ASSET_DOWNLOAD_PERMISSION_ID,
     ASSET_UPLOAD_PERMISSION_ID,
 )
-from omu.extension.asset.asset_extension import ASSET_DELETE_PERMISSION_ID
-from omu.extension.permission import PermissionType
+from omu.api.asset.extension import ASSET_DELETE_PERMISSION_ID
+from omu.api.permission import PermissionType
 
 ASSET_UPLOAD_PERMISSION = PermissionType(
     id=ASSET_UPLOAD_PERMISSION_ID,

@@ -1,6 +1,6 @@
 import type { Omu } from '@omujs/omu';
 
-import { SERVER_SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/extension/server/server-extension.js';
+import { SERVER_SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/api/server';
 import { PLUGIN_ID } from './const.js';
 import type { CreateBrowserRequest, CreateResponse, SceneCreateRequest, SceneCreateResponse, SceneJson, SceneListResponse, ScreenshotCreateRequest, ScreenshotCreateResponse, ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse, SourceGetByNameRequest, SourceGetByUuidRequest, SourceJson, SourceListRequest } from './types.js';
 import {

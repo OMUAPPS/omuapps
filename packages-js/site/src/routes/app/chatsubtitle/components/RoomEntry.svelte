@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type { Room } from '@omujs/chat/models/room.js';
-    import { createSubtitle } from '../stores.js';
+    import type { Room } from "@omujs/chat/models";
+    import { createSubtitle } from "../stores.js";
 
     export let entry: Room;
     export let selected: boolean = false;

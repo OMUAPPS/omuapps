@@ -1,18 +1,24 @@
 <script lang="ts">
-    import type { PackageInfo } from '@omujs/omu/extension/plugin/package-info.js';
-    import SvelteMarkdown from 'svelte-markdown';
+    import type { PackageInfo } from "@omujs/omu/api/plugin";
+    import SvelteMarkdown from "svelte-markdown";
 
     export let entry: PackageInfo;
     let open = false;
 
-    $: author = entry.info.author || entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim();
+    $: author =
+        entry.info.author ||
+        entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, "").trim();
 </script>
 
 <li>
     <i class="icon ti ti-package" />
     <div class="info">
         <span class="name">
-            <a href={entry.info.package_url} target="_blank" rel="noopener noreferrer">
+            <a
+                href={entry.info.package_url}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 {entry.info.name}
             </a>
             <i class="ti ti-external-link"></i>
@@ -32,7 +38,7 @@
     </div>
     {#if open}
         <span class="description">
-            {#if entry.info.description_content_type === 'text/markdown'}
+            {#if entry.info.description_content_type === "text/markdown"}
                 <SvelteMarkdown source={entry.info.description} />
             {:else}
                 {entry.info.description}
@@ -72,7 +78,7 @@
         align-items: baseline;
         font-size: 0.9rem;
     }
-    
+
     .name a {
         color: var(--color-1);
         text-decoration: none;

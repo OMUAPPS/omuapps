@@ -3,7 +3,7 @@
     import AssetPage from "$lib/components/AssetPage.svelte";
     import "@fontsource/rocknroll-one";
     import { Chat } from "@omujs/chat";
-    import { Message } from "@omujs/chat/models/message.js";
+    import { Message } from "@omujs/chat/models";
     import { App, Omu } from "@omujs/omu";
     import { ComponentRenderer, setClient } from "@omujs/ui";
     import { BROWSER } from "esm-env";

@@ -3,11 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from omu.errors import PermissionDenied
-from omu.extension.permission import PermissionType
-from omu.extension.registry import RegistryType
-from omu.extension.registry.packets import RegistryPermissions, RegistryRegisterPacket
-from omu.extension.registry.registry_extension import (
+from omu.api.permission import PermissionType
+from omu.api.registry import RegistryType
+from omu.api.registry.extension import (
     REGISTRY_GET_ENDPOINT,
     REGISTRY_LISTEN_PACKET,
     REGISTRY_PERMISSION_ID,
@@ -15,6 +13,8 @@ from omu.extension.registry.registry_extension import (
     REGISTRY_UPDATE_PACKET,
     RegistryPacket,
 )
+from omu.api.registry.packets import RegistryPermissions, RegistryRegisterPacket
+from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 
 from omuserver.session import Session

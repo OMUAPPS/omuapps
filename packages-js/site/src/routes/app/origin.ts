@@ -1,7 +1,7 @@
 import { IS_BETA } from '$lib/consts.js';
+import type { AppMetadata } from '@omujs/omu';
 import { Identifier } from '@omujs/omu';
-import type { AppMetadata } from '@omujs/omu/app.js';
-import type { LocalizedText } from '@omujs/omu/localization/localization.js';
+import type { LocalizedText } from '@omujs/omu/localization';
 import { DEV } from 'esm-env';
 
 const CF_PAGES_URL = IS_BETA ? 'https://beta.omuapps.com' : 'https://omuapps.com';

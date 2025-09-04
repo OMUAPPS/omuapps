@@ -4,8 +4,7 @@ import sqlite3
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from omu.errors import PermissionDenied
-from omu.extension.asset.asset_extension import (
+from omu.api.asset.extension import (
     ASSET_DELETE_ENDPOINT,
     ASSET_DOWNLOAD_ENDPOINT,
     ASSET_DOWNLOAD_MANY_ENDPOINT,
@@ -13,6 +12,7 @@ from omu.extension.asset.asset_extension import (
     ASSET_UPLOAD_MANY_ENDPOINT,
     Asset,
 )
+from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 
 from omuserver.helper import safe_path_join

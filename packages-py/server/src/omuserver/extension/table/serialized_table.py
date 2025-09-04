@@ -1,8 +1,7 @@
 from collections.abc import AsyncGenerator, Mapping
 
+from omu.api.table import Table, TableConfig, TableEvents, TablePermissions, TableType
 from omu.event_emitter import Unlisten
-from omu.extension.table import Table, TableConfig, TableType
-from omu.extension.table.table import TableEvents, TablePermissions
 from omu.helper import AsyncCallback, Coro
 from omu.identifier import Identifier
 from omu.serializer import Serializable

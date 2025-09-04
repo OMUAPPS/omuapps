@@ -1,10 +1,10 @@
-from omu.extension.permission import PermissionType
-from omu.extension.server import (
+from omu.api.permission import PermissionType
+from omu.api.server import (
     SERVER_APPS_READ_PERMISSION_ID,
     SERVER_SESSIONS_READ_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
 )
-from omu.extension.server.server_extension import REMOTE_APP_REQUEST_PERMISSION_ID, TRUSTED_ORIGINS_GET_PERMISSION_ID
+from omu.api.server.extension import REMOTE_APP_REQUEST_PERMISSION_ID, TRUSTED_ORIGINS_GET_PERMISSION_ID
 
 SERVER_SHUTDOWN_PERMISSION = PermissionType(
     id=SERVER_SHUTDOWN_PERMISSION_ID,

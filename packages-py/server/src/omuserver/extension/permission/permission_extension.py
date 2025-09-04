@@ -3,16 +3,16 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from omu.app import AppType
-from omu.errors import PermissionDenied
-from omu.extension.dashboard.packets import PermissionRequestPacket
-from omu.extension.permission import PermissionType
-from omu.extension.permission.permission_extension import (
+from omu.api.dashboard.packets import PermissionRequestPacket
+from omu.api.permission import PermissionType
+from omu.api.permission.extension import (
     PERMISSION_GRANT_PACKET,
     PERMISSION_REGISTER_PACKET,
     PERMISSION_REQUEST_ENDPOINT,
     PERMISSION_REQUIRE_PACKET,
 )
+from omu.app import AppType
+from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 
 from omuserver.session import Session

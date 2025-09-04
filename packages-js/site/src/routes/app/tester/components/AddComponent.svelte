@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { content } from '@omujs/chat/models/index.js';
+    import { content } from "@omujs/chat/models";
 
     export let component: content.Component;
 
@@ -9,13 +9,13 @@
         component = component;
     }
 
-    type ComponentType = 'text' | 'image';
+    type ComponentType = "text" | "image";
 
     function create(type: ComponentType) {
-        if (type === 'text') {
-            add({type: 'text', data: ''});
-        } else if (type === 'image') {
-            add({type: 'image', data: {'id': '', url: '', name: ''}});
+        if (type === "text") {
+            add({ type: "text", data: "" });
+        } else if (type === "image") {
+            add({ type: "image", data: { id: "", url: "", name: "" } });
         } else {
             throw new Error(`Unknown type: ${type}`);
         }
@@ -34,8 +34,8 @@
 <span>
     <select bind:this={select} on:change={(event) => handle(event)}>
         <option disabled selected>追加</option>
-        <option value="text" on:change={() => create('text')}>テキスト</option>
-        <option value="image" on:change={() => create('image')}>画像</option>
+        <option value="text" on:change={() => create("text")}>テキスト</option>
+        <option value="image" on:change={() => create("image")}>画像</option>
     </select>
 </span>
 

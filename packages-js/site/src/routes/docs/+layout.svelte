@@ -1,24 +1,30 @@
 <script lang="ts">
-    import Page from '$lib/components/Page.svelte';
-    import type { DocsSection } from '$lib/server/docs/index.js';
-    import github from 'svelte-highlight/styles/github';
-    import DocsFooter from './_components/DocsFooter.svelte';
-    import DocsNav from './_components/DocsNav.svelte';
-    import { config } from './constants.js';
-    import { docs } from './stores.js';
-    
+    import Page from "$lib/components/Page.svelte";
+    import type { DocsSection } from "$lib/server/docs";
+    import github from "svelte-highlight/styles/github";
+    import DocsFooter from "./_components/DocsFooter.svelte";
+    import DocsNav from "./_components/DocsNav.svelte";
+    import { config } from "./constants.js";
+    import { docs } from "./stores.js";
+
     export let data: { sections: Record<string, DocsSection[]> };
 
     $: sections = data.sections;
-    $: section = Object.values(sections).flat().find((s) => s.slug === $docs?.slug);
-    $: group = section && Object.entries(sections).find(([, entries]) => entries.includes(section));
+    $: section = Object.values(sections)
+        .flat()
+        .find((s) => s.slug === $docs?.slug);
+    $: group =
+        section &&
+        Object.entries(sections).find(([, entries]) =>
+            entries.includes(section),
+        );
 </script>
 
 <svelte:head>
     <svelte:element this="style">
         {github}
     </svelte:element>
-    <title>{($docs?.meta.title || 'ドキュメント')} | OMUAPPS</title>
+    <title>{$docs?.meta.title || "ドキュメント"} | OMUAPPS</title>
     <meta name="description" content={$docs?.meta.description} />
     <link rel="canonical" href={`https://omuapps.com/docs/${$docs?.slug}`} />
 </svelte:head>
@@ -56,7 +62,10 @@
                 <h3>{group}</h3>
                 <div class="sections">
                     {#each entries as section (section.slug)}
-                        <a href={`/docs/${section.slug}`} class:selected={section.slug === $docs?.slug}>
+                        <a
+                            href={`/docs/${section.slug}`}
+                            class:selected={section.slug === $docs?.slug}
+                        >
                             {section.meta.title}
                             <i class="ti ti-chevron-right"></i>
                         </a>
@@ -66,19 +75,31 @@
             <div class="config">
                 使用するパッケージマネージャー
                 <div class="package-manager">
-                    <button on:click={() => $config.PACKAGE_MANAGER = 'npm'} class:selected={$config.PACKAGE_MANAGER === 'npm'}>
+                    <button
+                        on:click={() => ($config.PACKAGE_MANAGER = "npm")}
+                        class:selected={$config.PACKAGE_MANAGER === "npm"}
+                    >
                         npm
                         <i class="ti ti-brand-npm"></i>
                     </button>
-                    <button on:click={() => $config.PACKAGE_MANAGER = 'yarn'} class:selected={$config.PACKAGE_MANAGER === 'yarn'}>
+                    <button
+                        on:click={() => ($config.PACKAGE_MANAGER = "yarn")}
+                        class:selected={$config.PACKAGE_MANAGER === "yarn"}
+                    >
                         yarn
                         <i class="ti ti-brand-yarn"></i>
                     </button>
-                    <button on:click={() => $config.PACKAGE_MANAGER = 'pnpm'} class:selected={$config.PACKAGE_MANAGER === 'pnpm'}>
+                    <button
+                        on:click={() => ($config.PACKAGE_MANAGER = "pnpm")}
+                        class:selected={$config.PACKAGE_MANAGER === "pnpm"}
+                    >
                         pnpm
                         <i class="ti ti-brand-pnpm"></i>
                     </button>
-                    <button on:click={() => $config.PACKAGE_MANAGER = 'bun'} class:selected={$config.PACKAGE_MANAGER === 'bun'}>
+                    <button
+                        on:click={() => ($config.PACKAGE_MANAGER = "bun")}
+                        class:selected={$config.PACKAGE_MANAGER === "bun"}
+                    >
                         bun
                         <i class="ti ti-package"></i>
                     </button>
@@ -202,14 +223,15 @@
                 visibility: hidden;
             }
 
-            &:hover, &.selected {
+            &:hover,
+            &.selected {
                 > i {
                     visibility: visible;
                     margin-right: 0;
                     transition: margin-right 0.01621s;
                 }
             }
-            
+
             &:hover {
                 color: var(--color-1);
                 background: var(--color-bg-1);
@@ -250,7 +272,8 @@
                     font-size: 1rem;
                 }
 
-                &:hover, &.selected {
+                &:hover,
+                &.selected {
                     color: var(--color-1);
                     background: var(--color-bg-1);
                 }

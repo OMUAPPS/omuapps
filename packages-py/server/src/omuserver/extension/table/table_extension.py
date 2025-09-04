@@ -4,20 +4,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from omu.errors import PermissionDenied
-from omu.extension.permission import PermissionType
-from omu.extension.table import Table, TablePermissions, TableType
-from omu.extension.table.packets import (
-    SetConfigPacket,
-    SetPermissionPacket,
-    TableFetchPacket,
-    TableFetchRangePacket,
-    TableItemsPacket,
-    TableKeysPacket,
-    TablePacket,
-    TableProxyPacket,
-)
-from omu.extension.table.table_extension import (
+from omu.api.permission import PermissionType
+from omu.api.table import Table, TablePermissions, TableType
+from omu.api.table.extension import (
     TABLE_FETCH_ALL_ENDPOINT,
     TABLE_FETCH_ENDPOINT,
     TABLE_FETCH_RANGE_ENDPOINT,
@@ -37,6 +26,17 @@ from omu.extension.table.table_extension import (
     TABLE_SET_PERMISSION_PACKET,
     TABLE_SIZE_ENDPOINT,
 )
+from omu.api.table.packets import (
+    SetConfigPacket,
+    SetPermissionPacket,
+    TableFetchPacket,
+    TableFetchRangePacket,
+    TableItemsPacket,
+    TableKeysPacket,
+    TablePacket,
+    TableProxyPacket,
+)
+from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 from omu.interface import Keyable
 

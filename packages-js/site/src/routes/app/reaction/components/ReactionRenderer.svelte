@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { lerp } from '$lib/math/math.js';
-    import { Timer } from '$lib/timer.js';
-    import type { Omu } from '@omujs/omu';
-    import { BROWSER } from 'esm-env';
-    import { onDestroy } from 'svelte';
-    import type { ReactionApp } from '../reaction-app.js';
+    import { lerp } from "$lib/math/math.js";
+    import { Timer } from "$lib/timer.js";
+    import type { Omu } from "@omujs/omu";
+    import { BROWSER } from "esm-env";
+    import { onDestroy } from "svelte";
+    import type { ReactionApp } from "../reaction-app.js";
 
     export let omu: Omu;
     export let reactionApp: ReactionApp;
@@ -24,8 +24,8 @@
     const spawnQueue: string[] = [];
     const MAX_REACTION_LIMIT = 100;
 
-    reactionSignal.listen((message) => {
-        Object.entries(message.reactions).forEach(([text, count]) => {
+    reactionSignal.listen((reaction) => {
+        Object.entries(reaction.reactions).forEach(([text, count]) => {
             for (let i = 0; i < count; i++) {
                 spawnQueue.push(text);
             }
@@ -43,7 +43,7 @@
                 if (!assetId) {
                     return [key, null];
                 }
-                const assetUrl = omu.assets.url(assetId, { cache: 'no-cache' });
+                const assetUrl = omu.assets.url(assetId, { cache: "no-cache" });
                 const img = new Image();
                 img.src = assetUrl;
                 return [key, img];
@@ -56,9 +56,9 @@
 
     $: if (canvas) {
         resize();
-        const context = canvas.getContext('2d');
+        const context = canvas.getContext("2d");
         if (!context) {
-            throw new Error('Failed to get 2d context');
+            throw new Error("Failed to get 2d context");
         }
         ctx = context;
     }
@@ -88,7 +88,10 @@
 
         prevSpawnTime = currentTime;
 
-        const toSpawnCount = Math.min(Math.floor(elapsedTime / spawnRate), spawnQueue.length);
+        const toSpawnCount = Math.min(
+            Math.floor(elapsedTime / spawnRate),
+            spawnQueue.length,
+        );
         for (let i = 0; i < toSpawnCount; i++) {
             spawnReaction(spawnQueue.shift()!);
         }
@@ -97,8 +100,16 @@
     $: reactionScale = 50 * $config.scale;
 
     function spawnReaction(text: string) {
-        const x = lerp(reactionScale, canvas.width - reactionScale - 50, Math.random());
-        const y = lerp(reactionScale + 300, canvas.height - reactionScale, Math.random());
+        const x = lerp(
+            reactionScale,
+            canvas.width - reactionScale - 50,
+            Math.random(),
+        );
+        const y = lerp(
+            reactionScale + 300,
+            canvas.height - reactionScale,
+            Math.random(),
+        );
         const z = lerp(1 - ($config.depth || 0), 1, Math.random());
         const vx = Math.random() - 0.5;
         const vy = Math.random() - 0.5;
@@ -124,8 +135,11 @@
         const newVy = -Math.pow(reaction.age, 0.2);
         const newX = x + newVx * reaction.depth;
         const newY = y + newVy * reaction.depth;
-        const newOpacity = Math.min(1, reaction.age / 10) - Math.max(0, (reaction.age - 50) / 50);
-        const newRotation = (Math.sin(reaction.age / 15 + 1) * 5 * Math.PI) / 180;
+        const newOpacity =
+            Math.min(1, reaction.age / 10) -
+            Math.max(0, (reaction.age - 50) / 50);
+        const newRotation =
+            (Math.sin(reaction.age / 15 + 1) * 5 * Math.PI) / 180;
 
         return {
             ...reaction,
@@ -164,7 +178,13 @@
         }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        for (const { text, position, depth, opacity, rotation } of reactionArray) {
+        for (const {
+            text,
+            position,
+            depth,
+            opacity,
+            rotation,
+        } of reactionArray) {
             const [x, y] = position;
 
             if (opacity <= 0) {
@@ -180,8 +200,15 @@
             const replacementImage = replaceImages[text];
             if (replacementImage) {
                 const height = 50 * $config.scale * depth;
-                const width = (replacementImage.width / replacementImage.height) * height;
-                ctx.drawImage(replacementImage, -width / 2, -height / 2, width, height);
+                const width =
+                    (replacementImage.width / replacementImage.height) * height;
+                ctx.drawImage(
+                    replacementImage,
+                    -width / 2,
+                    -height / 2,
+                    width,
+                    height,
+                );
             } else {
                 const centerX = ctx.measureText(text).width / 2;
                 ctx.fillText(text, -centerX, 0);
@@ -223,7 +250,7 @@
     }
 
     .hidden {
-        font-family: 'Noto Color Emoji';
+        font-family: "Noto Color Emoji";
         font-size: 0;
     }
 </style>

@@ -1,21 +1,21 @@
-import type { Client } from '@omujs/omu/client.js';
-import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
-import type { Signal } from '@omujs/omu/extension/signal/signal.js';
-import { SignalPermissions, SignalType } from '@omujs/omu/extension/signal/signal.js';
-import type { Table } from '@omujs/omu/extension/table/index.js';
-import { TableType } from '@omujs/omu/extension/table/index.js';
-import { Serializer } from '@omujs/omu/serializer.js';
+import type { Client } from '@omujs/omu';
+import { Serializer } from '@omujs/omu';
+import { EndpointType } from '@omujs/omu/api/endpoint';
+import type { Signal } from '@omujs/omu/api/signal';
+import { SignalPermissions, SignalType } from '@omujs/omu/api/signal';
+import type { Table } from '@omujs/omu/api/table';
+import { TableType } from '@omujs/omu/api/table';
 
-import { IDENTIFIER } from './const.js';
-import type { EventHandler, EventSource } from './event/event.js';
-import { EventRegistry } from './event/event.js';
-import { Author, Channel, Message, Provider, Reaction, Room, Vote } from './models/index.js';
+import { IDENTIFIER } from './const';
+import type { EventHandler, EventSource } from './event';
+import { EventRegistry } from './event';
+import { Author, Channel, Message, Provider, Reaction, Room, Vote } from './models';
 import {
     CHAT_CHANNEL_TREE_PERMISSION_ID,
     CHAT_PERMISSION_ID,
     CHAT_READ_PERMISSION_ID,
     CHAT_WRITE_PERMISSION_ID,
-} from './permissions.js';
+} from './permissions';
 
 const MESSAGE_TABLE_TYPE = TableType.createJson(IDENTIFIER, {
     name: 'messages',

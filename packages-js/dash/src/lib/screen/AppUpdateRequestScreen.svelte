@@ -1,8 +1,8 @@
 <script lang="ts">
-    import AppInfo from '$lib/common/AppInfo.svelte';
-    import type { AppUpdateRequest } from '@omujs/omu/extension/dashboard/packets.js';
-    import Screen from './Screen.svelte';
-    import type { ScreenHandle } from './screen.js';
+    import AppInfo from "$lib/common/AppInfo.svelte";
+    import type { AppUpdateRequest } from "@omujs/omu/api/dashboard";
+    import Screen from "./Screen.svelte";
+    import type { ScreenHandle } from "./screen.js";
 
     export let screen: {
         handle: ScreenHandle;
@@ -49,7 +49,7 @@
                 更新
                 <i class="ti ti-check"></i>
             </button>
-        </div>  
+        </div>
     </div>
 </Screen>
 

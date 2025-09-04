@@ -1,9 +1,9 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { searchForWorkspaceRoot } from 'vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-    plugins: [sveltekit()],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    plugins: [sveltekit() as any],
     css: {
         preprocessorOptions: {
             scss: {
@@ -17,9 +17,6 @@ export default defineConfig({
     server: {
         port: 26420,
         strictPort: true,
-        fs: {
-            allow: [searchForWorkspaceRoot(process.cwd() + '..')],
-        },
         watch: {
             ignored: ['**/src-tauri/**'],
         },

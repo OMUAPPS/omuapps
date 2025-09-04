@@ -9,17 +9,17 @@ from omu.event_emitter import EventEmitter, Unlisten
 from omu.helper import Coro
 
 if TYPE_CHECKING:
-    from omu.extension import ExtensionRegistry
-    from omu.extension.dashboard import DashboardExtension
-    from omu.extension.endpoint import EndpointExtension
-    from omu.extension.i18n import I18nExtension
-    from omu.extension.logger import LoggerExtension
-    from omu.extension.permission import PermissionExtension
-    from omu.extension.plugin import PluginExtension
-    from omu.extension.registry import RegistryExtension
-    from omu.extension.server import ServerExtension
-    from omu.extension.signal import SignalExtension
-    from omu.extension.table import TableExtension
+    from omu.api import ExtensionRegistry
+    from omu.api.dashboard.extension import DashboardExtension
+    from omu.api.endpoint.extension import EndpointExtension
+    from omu.api.i18n.extension import I18nExtension
+    from omu.api.logger.extension import LoggerExtension
+    from omu.api.permission.extension import PermissionExtension
+    from omu.api.plugin.extension import PluginExtension
+    from omu.api.registry.extension import RegistryExtension
+    from omu.api.server.extension import ServerExtension
+    from omu.api.signal.extension import SignalExtension
+    from omu.api.table.extension import TableExtension
     from omu.network import Network
     from omu.network.packet import PacketType
 
