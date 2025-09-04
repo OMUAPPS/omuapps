@@ -3,7 +3,6 @@
     import { ReplayApp } from "../replay-app.js";
 
     const { replayData, config } = ReplayApp.getInstance();
-
     let player: YT.Player;
 
     function updateReplay() {
@@ -49,6 +48,7 @@
     function onStateChange(event: YT.OnStateChangeEvent) {
         const player = event.target;
         const state = player.getPlayerState();
+        videoData = player.getVideoData();
         ended = state === YT.PlayerState.ENDED;
         if (state === YT.PlayerState.PLAYING) {
             timer = {
@@ -73,6 +73,7 @@
         duration: number;
     } | null = null;
     let formattedTime = "...";
+    let videoData: YT.VideoData | undefined = undefined;
 
     type TimeUnit = { factor: number };
 
@@ -192,11 +193,13 @@ time
             }[$config.overlay.align.vertical]}
         >
             {#if $config.overlay.title}
-                <div class="title">
-                    {#if player}
-                        {player.getVideoData().title}
-                    {/if}
-                </div>
+                {#key $replayData?.videoId}
+                    <div class="title">
+                        {#if player && videoData?.title}
+                            {videoData?.title}
+                        {/if}
+                    </div>
+                {/key}
             {/if}
             {#if $config.overlay.time.active}
                 <div class="time">
