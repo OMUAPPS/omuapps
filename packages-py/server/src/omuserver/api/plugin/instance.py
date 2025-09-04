@@ -26,8 +26,8 @@ from omu.token import TokenProvider
 from omuserver.helper import setup_logger
 from omuserver.session import Session
 
-from .plugin_connection import PluginConnection
-from .plugin_session_connection import PluginSessionConnection
+from .session_connection import PluginSessionConnection
+from .transport import PluginConnection
 
 if TYPE_CHECKING:
     from omuserver.server import Server

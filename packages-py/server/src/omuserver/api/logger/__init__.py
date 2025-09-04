@@ -1,4 +1,4 @@
-from .logger_extension import (
+from .extension import (
     LoggerExtension,
 )
 

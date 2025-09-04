@@ -7,7 +7,7 @@ from omu.result import Ok, Result
 
 from omuserver.session import ReceiveError, SessionConnection
 
-from .plugin_connection import PluginConnection
+from .transport import PluginConnection
 
 
 class PluginSessionConnection(SessionConnection):

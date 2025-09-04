@@ -20,8 +20,8 @@ from packaging.specifiers import SpecifierSet
 
 from omuserver.session import Session
 
-from .plugin_loader import DependencyResolver, PluginLoader, RequiredVersionTooOld
-from .plugin_permissions import PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION
+from .loader import DependencyResolver, PluginLoader, RequiredVersionTooOld
+from .permissions import PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION
 
 if TYPE_CHECKING:
     from omuserver.server import Server

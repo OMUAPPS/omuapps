@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import importlib.metadata
-import importlib.util
 import sys
 import tempfile
 from collections.abc import Mapping
@@ -21,7 +20,7 @@ from omu.result import Err, Ok, Result, is_err
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
-from .plugin_instance import PluginInstance
+from .instance import PluginInstance
 
 if TYPE_CHECKING:
     from omuserver.server import Server

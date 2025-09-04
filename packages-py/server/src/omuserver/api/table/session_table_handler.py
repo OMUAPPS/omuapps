@@ -14,7 +14,7 @@ from omu.api.table.extension import (
 from omu.helper import batch_call
 from omu.identifier import Identifier
 
-from omuserver.extension.table.server_table import ServerTable
+from omuserver.api.table.server_table import ServerTable
 from omuserver.session import Session
 
 
