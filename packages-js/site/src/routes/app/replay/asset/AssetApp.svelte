@@ -102,7 +102,7 @@
             components.push(
                 Math.floor((time / unit.factor) % 60)
                     .toString()
-                    .padEnd(last ? 0 : 2, "0"),
+                    .padStart(last ? 0 : 2, "0"),
             );
         }
         return components.join(":");
