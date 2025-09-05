@@ -5,11 +5,18 @@
 
     export const props = {};
 
-    $: url = DEV
-        ? 'http://localhost:5173/app/'
-        : $isBetaEnabled
-        ? 'https://beta.omuapps.com/app/'
-        : 'https://omuapps.com/app/';
+    function getExploreUrl(): string {
+        if (DEV) {
+            return 'http://localhost:5173/app/explore';
+        }
+        if ($isBetaEnabled) {
+            return 'https://beta.omuapps.com/app/explore';
+        } else {
+            return 'https://omuapps.com/app/explore';
+        }
+    }
+
+    const url = getExploreUrl();
 </script>
 
 <div class="container">

@@ -60,15 +60,6 @@ export default [
         rules: {
             '@typescript-eslint/no-explicit-any': 'warn',
             '@typescript-eslint/no-unused-vars': 'warn',
-            'svelte/indent': [
-                'error',
-                {
-                    'indent': 4,
-                    'ignoredNodes': [],
-                    'switchCase': 1,
-                    'alignAttributesVertically': false,
-                },
-            ],
             'quotes': ['error', 'single'],
             //#region stylistic
             '@stylistic/array-bracket-spacing': ['error', 'never'],
