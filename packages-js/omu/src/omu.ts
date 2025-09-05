@@ -2,6 +2,7 @@ import { ExtensionRegistry } from './api';
 import { ASSET_EXTENSION_TYPE, type AssetExtension } from './api/asset/extension';
 import { DASHBOARD_EXTENSION_TYPE, type DashboardExtension } from './api/dashboard/extension';
 import { ENDPOINT_EXTENSION_TYPE, type EndpointExtension } from './api/endpoint/extension';
+import { HTTP_EXTENSION_TYPE, HttpExtension } from './api/http/extension';
 import { I18N_EXTENSION_TYPE, type I18nExtension } from './api/i18n/extension';
 import { LOGGER_EXTENSION_TYPE, type LoggerExtension } from './api/logger/extension.js';
 import { PERMISSION_EXTENSION_TYPE, type PermissionExtension } from './api/permission/extension';
@@ -45,6 +46,7 @@ export class Omu implements Client {
     readonly i18n: I18nExtension;
     readonly server: ServerExtension;
     readonly logger: LoggerExtension;
+    readonly http: HttpExtension;
 
     constructor(
         public readonly app: App,
@@ -101,6 +103,7 @@ export class Omu implements Client {
         this.i18n = this.extensions.register(I18N_EXTENSION_TYPE);
         this.server = this.extensions.register(SERVER_EXTENSION_TYPE);
         this.logger = this.extensions.register(LOGGER_EXTENSION_TYPE);
+        this.http = this.extensions.register(HTTP_EXTENSION_TYPE);
     }
 
     public send<T>(packetType: PacketType<T>, data: T): void {

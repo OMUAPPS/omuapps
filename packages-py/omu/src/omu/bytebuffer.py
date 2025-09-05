@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import io
+import json
 import struct
 from collections.abc import Callable
+from typing import Any
 
 
 class Flags:
@@ -163,6 +165,10 @@ class ByteWriter:
         self.write(encoded)
         return self
 
+    def write_json(self, value: Any) -> ByteWriter:
+        self.write_string(json.dumps(value))
+        return self
+
     def write_flags(self, flags: Flags) -> ByteWriter:
         flags.write(self)
         return self
@@ -292,6 +298,11 @@ class ByteReader:
             raise ValueError("Reader not reading")
         length = self.read_uleb128()
         return self.read(length).decode("utf-8")
+
+    def read_json[T](self) -> T:  # type: ignore
+        if not self.is_reading:
+            raise ValueError("Reader not reading")
+        return json.loads(self.read_string())
 
     def read_flags(self, length: int) -> Flags:
         if not self.is_reading:

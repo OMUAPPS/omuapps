@@ -19,6 +19,7 @@ from yarl import URL
 from omuserver.api.asset import AssetExtension
 from omuserver.api.dashboard import DashboardExtension
 from omuserver.api.endpoint import EndpointExtension
+from omuserver.api.http import HttpExtension
 from omuserver.api.i18n import I18nExtension
 from omuserver.api.logger import LoggerExtension
 from omuserver.api.permission import PermissionExtension
@@ -70,6 +71,7 @@ class Server:
         self.endpoints = EndpointExtension(self)
         self.permissions = PermissionExtension(self)
         self.tables = TableExtension(self)
+        self.http = HttpExtension(self)
         self.dashboard = DashboardExtension(self)
         self.registries = RegistryExtension(self)
         self.server = ServerExtension(self)
