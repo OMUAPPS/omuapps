@@ -1,4 +1,5 @@
 import { textDecoder, textEncoder } from '../const.js';
+import { JsonType } from './serializer.js';
 
 export class Flags {
     private value: number;
@@ -239,6 +240,11 @@ export class ByteWriter {
         return this;
     }
 
+    public writeJSON(value: JsonType): ByteWriter {
+        this.writeString(JSON.stringify(value));
+        return this;
+    }
+
     public writeFlags(flags: Flags): ByteWriter {
         flags.write(this);
         return this;
@@ -396,6 +402,10 @@ export class ByteReader {
     public readString(): string {
         const byteArray = this.readUint8Array();
         return textDecoder.decode(byteArray);
+    }
+    
+    public readJSON<T extends JsonType>(): T {
+        return JSON.parse(this.readString());
     }
 
     public readFlags(length: number): Flags {
