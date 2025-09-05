@@ -126,8 +126,6 @@ async function rebuild() {
     }
 }
 
-;
-
 await build(entrypoints);
 
 if (values.watch) {
