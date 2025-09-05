@@ -19,7 +19,6 @@ import bell_6 from './sounds/bell_6.wav';
 import bell_7 from './sounds/bell_7.wav';
 import bell_8 from './sounds/bell_8.wav';
 
-
 async function awaitBatch<T extends Record<string, Promise<any>>>(promises: T): Promise<{ [K in keyof T]: Awaited<T[K]> }> {
     const entries = await Promise.all(Object.entries(promises).map(([key, promise]) => promise.then(value_1 => [key, value_1] as const)));
     return Object.fromEntries(entries) as {
@@ -27,21 +26,20 @@ async function awaitBatch<T extends Record<string, Promise<any>>>(promises: T): 
     };
 }
 
-
 async function getResources() {
     return {
         counter_client: counter_client,
         bell: bell,
         ...await awaitBatch({
             photo_frame: getTextureByUri(photo_frame),
-            counter_client_tex:  getTextureByUri(counter_client),
-            bell_tex:  getTextureByUri(bell),
-            kitchen_asset:  getTextureByUri(kitchen_asset),
-            kitchen_client:  getTextureByUri(kitchen_client),
-            dummy_front:  getTextureByUri(dummy_front),
-            dummy_back:  getTextureByUri(dummy_back),
-            cursor_grab:  getTextureByUri(cursor_grab),
-            cursor_point:  getTextureByUri(cursor_point),
+            counter_client_tex: getTextureByUri(counter_client),
+            bell_tex: getTextureByUri(bell),
+            kitchen_asset: getTextureByUri(kitchen_asset),
+            kitchen_client: getTextureByUri(kitchen_client),
+            dummy_front: getTextureByUri(dummy_front),
+            dummy_back: getTextureByUri(dummy_back),
+            cursor_grab: getTextureByUri(cursor_grab),
+            cursor_point: getTextureByUri(cursor_point),
             bell_audio_clip: (async () => createRandomClip({
                 seed: 1337,
                 clips: await Promise.all([
@@ -55,7 +53,7 @@ async function getResources() {
                     bell_8,
                 ].map(url => createClipFromAudio({ type: 'url', url }))),
             }))(),
-        })
+        }),
     };
 }
 

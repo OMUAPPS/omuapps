@@ -57,7 +57,7 @@ export type OrderDetectResult = {
     detected: boolean;
     products: Product[];
     tokens: OrderDetectToken[];
-}
+};
 
 const tokenCache: Map<string, TOKEN[]> = new Map();
 
@@ -137,8 +137,7 @@ function mergeNounTokens(tokens: TOKEN[]): TOKEN[] {
             if (token.pronunciation) {
                 lastToken.pronunciation = (lastToken.pronunciation || '') + token.pronunciation;
             }
-        }
-        else {
+        } else {
             if (lastToken) {
                 merged.push(lastToken);
             }
@@ -165,15 +164,15 @@ export async function processMessage(message: Message) {
         ctx.order.message = {
             timestamp: Time.now(),
             tokens: mergeNounTokens(tokens),
-        }
+        };
         markChanged();
     }
     console.log('[msg]', JSON.stringify(tokens));
     const productTokens: ProductTokens[] = await Promise.all(Object.values(config.products).map(async (product) => {
         return {
             product,
-            tokens: await parseToken(product.name)
-        }
+            tokens: await parseToken(product.name),
+        };
     }));
     const orderAnalysis = await game.worker!.call('analyzeOrder', { tokens, productTokens });
     if (!orderAnalysis.detected) return;
@@ -187,7 +186,7 @@ export async function processMessage(message: Message) {
             return {
                 notes: '',
                 product_id: product.id,
-            }
+            };
         }),
         status: {
             type: 'waiting',

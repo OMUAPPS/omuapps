@@ -35,7 +35,7 @@ export const DEFAULT_EVENT_CALENDAR: EventCalendar = {
     description: '',
     license: {
         url: '',
-        name: ''
+        name: '',
     },
-    months: []
-}
+    months: [],
+};

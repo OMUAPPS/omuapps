@@ -1,19 +1,19 @@
 <script lang="ts">
-    import { Author } from "@omujs/chat/models";
+    import { Author } from '@omujs/chat/models';
     import {
         Button,
         Combobox,
         MessageRenderer,
         Tooltip,
         client,
-    } from "@omujs/ui";
-    import dummy_icon from "./dummy_icon.svg";
+    } from '@omujs/ui';
+    import dummy_icon from './dummy_icon.svg';
     import {
         EMOJI_TEST_PROVIDER,
         emojiApp,
         type Emoji,
         type Pattern,
-    } from "./emoji.js";
+    } from './emoji.js';
 
     export let emoji: Emoji;
     let serialized = JSON.stringify(emoji);
@@ -26,16 +26,16 @@
         [key: string]: { value: () => Pattern; label: string };
     } = {
         text: {
-            value: () => ({ type: "text", text: "" }),
-            label: "文字",
+            value: () => ({ type: 'text', text: '' }),
+            label: '文字',
         },
         regex: {
-            value: () => ({ type: "regex", regex: "" }),
-            label: "正規表現",
+            value: () => ({ type: 'regex', regex: '' }),
+            label: '正規表現',
         },
         image: {
-            value: () => ({ type: "image", id: "" }),
-            label: "絵文字",
+            value: () => ({ type: 'image', id: '' }),
+            label: '絵文字',
         },
     };
 
@@ -51,7 +51,7 @@
     const TEST_AUTHOR = new Author({
         providerId: EMOJI_TEST_PROVIDER.id,
         id: EMOJI_TEST_PROVIDER.id.join(`${Date.now()}`),
-        name: "test",
+        name: 'test',
         avatarUrl: new URL(dummy_icon, window.location.origin).toString(),
     });
 </script>
@@ -87,7 +87,7 @@
             {#each emoji.patterns as pattern, i (i)}
                 <div class="pattern">
                     <div class="flex width between baseline">
-                        {#if pattern.type === "text"}
+                        {#if pattern.type === 'text'}
                             <span>
                                 <i class="ti ti-txt"></i>
                                 文字
@@ -97,7 +97,7 @@
                                 bind:value={pattern.text}
                                 placeholder="text"
                             />
-                        {:else if pattern.type === "image"}
+                        {:else if pattern.type === 'image'}
                             <span>
                                 <i class="ti ti-photo"></i>
                                 絵文字
@@ -107,7 +107,7 @@
                                 bind:value={pattern.id}
                                 placeholder="image id"
                             />
-                        {:else if pattern.type === "regex"}
+                        {:else if pattern.type === 'regex'}
                             <span>
                                 <i class="ti ti-regex"></i>
                                 正規表現
@@ -137,7 +137,7 @@
                     value={null}
                     on:change={(event) =>
                         event.detail.value != null &&
-                        addPattern(event.detail.value())}
+                            addPattern(event.detail.value())}
                 />
             </div>
         </div>
@@ -148,28 +148,28 @@
     <MessageRenderer
         author={TEST_AUTHOR}
         content={{
-            type: "root",
-            data: [{ type: "asset", data: { id: emoji.asset.key() } }],
+            type: 'root',
+            data: [{ type: 'asset', data: { id: emoji.asset.key() } }],
         }}
     />
     <MessageRenderer
         author={TEST_AUTHOR}
         content={{
-            type: "root",
+            type: 'root',
             data: [
-                { type: "text", data: emoji.id },
-                { type: "asset", data: { id: emoji.asset.key() } },
+                { type: 'text', data: emoji.id },
+                { type: 'asset', data: { id: emoji.asset.key() } },
             ],
         }}
     />
     <MessageRenderer
         author={TEST_AUTHOR}
         content={{
-            type: "root",
+            type: 'root',
             data: [
-                { type: "asset", data: { id: emoji.asset.key() } },
-                { type: "asset", data: { id: emoji.asset.key() } },
-                { type: "asset", data: { id: emoji.asset.key() } },
+                { type: 'asset', data: { id: emoji.asset.key() } },
+                { type: 'asset', data: { id: emoji.asset.key() } },
+                { type: 'asset', data: { id: emoji.asset.key() } },
             ],
         }}
     />

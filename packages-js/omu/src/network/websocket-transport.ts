@@ -40,7 +40,7 @@ export class WebsocketConnection implements Connection {
             socket.onopen = (): void => {
                 resolve(connection);
             };
-        })
+        });
     }
 
     private async onMessage(event: MessageEvent<string | Blob>): Promise<void> {

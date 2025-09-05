@@ -1,18 +1,18 @@
 <script lang="ts" generics="T">
-    import { client } from "./stores.js";
+    import { client } from './stores.js';
 
-    import VirtualList from "./VirtualList.svelte";
+    import VirtualList from './VirtualList.svelte';
 
-    import TableListEntry from "./TableListEntry.svelte";
+    import TableListEntry from './TableListEntry.svelte';
 
-    import type { Table } from "@omujs/omu/api/table";
+    import type { Table } from '@omujs/omu/api/table';
     import {
         type ComponentType,
         type SvelteComponent,
         onDestroy,
         onMount,
         tick,
-    } from "svelte";
+    } from 'svelte';
 
     export let table: Table<T>;
     export let component: ComponentType<
@@ -159,8 +159,8 @@
         unlisten.forEach((unlisten) => unlisten());
     });
     onMount(() => {
-        viewport.addEventListener("scroll", handleScroll);
-        return () => viewport.removeEventListener("scroll", handleScroll);
+        viewport.addEventListener('scroll', handleScroll);
+        return () => viewport.removeEventListener('scroll', handleScroll);
     });
 
     function scrollToTop() {

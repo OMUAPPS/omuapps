@@ -88,10 +88,10 @@ omu.onReady(() => {
     language.subscribe((lang) => {
         omu.i18n.setLocale([lang] as Locale[]);
     });
-})
+});
 
 export { chat, dashboard, omu };
 
 currentPage.subscribe(() => {
     dashboard.currentApp = null;
-})
+});

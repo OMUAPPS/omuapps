@@ -36,13 +36,13 @@ export type Emoji = {
     readonly id: string;
     asset: Identifier;
     patterns: Pattern[];
-}
+};
 
 export const EMOJI_TABLE = TableType.createJson<Emoji>(PLUGIN_IDENTIFIER, {
     name: 'emoji',
     key: (item) => item.id,
     serializer: Serializer.noop<Emoji>()
-        .field('asset', Identifier)
+        .field('asset', Identifier),
 });
 
 export type Config = {
@@ -87,7 +87,7 @@ export class EmojiApp {
                 content: { type: 'system', data: [
                     { type: 'asset', data: { id: emoji.asset.key() } },
                     { type: 'text', data: emoji.id },
-                ]},
+                ] },
                 createdAt: new Date(),
             }),
         );

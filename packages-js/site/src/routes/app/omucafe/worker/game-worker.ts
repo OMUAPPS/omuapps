@@ -17,7 +17,7 @@ export type GameCommands = {
         request: void,
         response: void,
     },
-}
+};
 
 export async function getWorker(): Promise<WorkerPipe<GameCommands>> {
     if (!BROWSER) return WorkerPipe.dummy<GameCommands>();

@@ -16,11 +16,11 @@
     <Combobox options={{
         contain: {
             label: '全体を表示',
-            value: {type: 'contain'},
+            value: { type: 'contain' },
         },
         cover: {
             label: '全体を覆う',
-            value: {type: 'cover'},
+            value: { type: 'cover' },
         },
         stretch: {
             label: '伸ばす',
@@ -77,19 +77,19 @@
     <Combobox options={{
         none: {
             label: 'なし',
-            value: {type: 'none'},
+            value: { type: 'none' },
         },
         fade: {
             label: 'フェード',
-            value: {type: 'fade', duration: 0.1},
+            value: { type: 'fade', duration: 0.1 },
         },
         flip: {
             label: 'フリップ',
-            value: {type: 'flip', duration: 0.1},
+            value: { type: 'flip', duration: 0.1 },
         },
         slide: {
             label: 'スライド',
-            value: {type: 'slide', duration: 0.1, direction: 'left'},
+            value: { type: 'slide', duration: 0.1, direction: 'left' },
         },
     }} bind:value={$config.asset.animation} key={$config.asset.animation.type} />
 </span>
@@ -135,19 +135,19 @@
         <Combobox options={{
             linear: {
                 label: 'リニア',
-                value: {type: 'linear'},
+                value: { type: 'linear' },
             },
             ease: {
                 label: 'イーズ',
-                value: {type: 'ease'},
+                value: { type: 'ease' },
             },
             bounce: {
                 label: 'バウンス',
-                value: {type: 'bounce'},
+                value: { type: 'bounce' },
             },
             elastic: {
                 label: 'エラスティック',
-                value: {type: 'elastic'},
+                value: { type: 'elastic' },
             },
         }} bind:value={$config.asset.easing} />
     </span>

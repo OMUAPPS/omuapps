@@ -4,7 +4,7 @@ type ReactiveAvatar = {
     deafened: string;
     muted: string;
     name: string;
-}
+};
 
 type ReactiveUser = {
     activeModelID: string;
@@ -15,7 +15,7 @@ type ReactiveUser = {
     includeSelf: string;
     nameSize: string;
     showNames: string;
-}
+};
 
 export class ReactiveAPI {
     constructor(

@@ -20,7 +20,7 @@
         GUILD_DIRECTORY: 14,
         GUILD_FORUM: 15,
         GUILD_MEDIA: 16,
-    }
+    };
 </script>
 
 {#if $selectedVoiceChannel && !state}

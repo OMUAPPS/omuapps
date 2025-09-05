@@ -1,22 +1,22 @@
 <script lang="ts">
-    import AppPage from "$lib/components/AppPage.svelte";
-    import AssetButton from "$lib/components/AssetButton.svelte";
-    import { Chat, events } from "@omujs/chat";
-    import { Message } from "@omujs/chat/models";
-    import { OBSPlugin, permissions } from "@omujs/obs";
-    import { Omu } from "@omujs/omu";
+    import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
+    import { Chat, events } from '@omujs/chat';
+    import { Message } from '@omujs/chat/models';
+    import { OBSPlugin, permissions } from '@omujs/obs';
+    import { Omu } from '@omujs/omu';
     import {
         AppHeader,
         ComponentRenderer,
         setClient,
         Tooltip,
-    } from "@omujs/ui";
-    import { BROWSER } from "esm-env";
-    import { APP } from "./app.js";
-    import EntryList from "./components/EntryList.svelte";
-    import RouletteRenderer from "./components/RouletteRenderer.svelte";
-    import SpinButton from "./components/SpinButton.svelte";
-    import { RouletteApp } from "./roulette-app.js";
+    } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import { APP } from './app.js';
+    import EntryList from './components/EntryList.svelte';
+    import RouletteRenderer from './components/RouletteRenderer.svelte';
+    import SpinButton from './components/SpinButton.svelte';
+    import { RouletteApp } from './roulette-app.js';
 
     const omu = new Omu(APP);
     setClient(omu);
@@ -26,10 +26,10 @@
     const roulette = new RouletteApp(omu);
     const { entries, state, config } = roulette;
 
-    let joinKeyword = "";
+    let joinKeyword = '';
 
     async function onMessage(message: Message) {
-        if ($state.type !== "recruiting") return;
+        if ($state.type !== 'recruiting') return;
         if (!message.authorId) return;
 
         if (message.text.includes(joinKeyword)) {
@@ -38,7 +38,7 @@
             if ($entries[id] && !$config.editable) return;
             roulette.addEntry({
                 id,
-                name: author?.name || "",
+                name: author?.name || '',
                 message: Message.serialize(message),
             });
         }
@@ -66,10 +66,10 @@
                     <i class="ti ti-users"></i>
                 </span>
                 <button
-                    class:recruiting={$state.type === "recruiting"}
+                    class:recruiting={$state.type === 'recruiting'}
                     on:click={() => roulette.toggleRecruiting()}
                 >
-                    {#if $state.type === "recruiting"}
+                    {#if $state.type === 'recruiting'}
                         募集を終了
                         <i class="ti ti-player-pause"></i>
                     {:else}
@@ -105,7 +105,7 @@
                     </button>
                     <button
                         on:click={() => {
-                            let name = "エントリー";
+                            let name = 'エントリー';
                             let i = 1;
                             while (
                                 Object.values($entries).some(
@@ -141,14 +141,14 @@
                 {obs}
             />
         </div>
-        <div class="right" class:end={$state.type === "spin-result"}>
+        <div class="right" class:end={$state.type === 'spin-result'}>
             <div class="roulette">
                 <RouletteRenderer {roulette} />
             </div>
-            {#if $state.type === "spin-result"}
+            {#if $state.type === 'spin-result'}
                 {@const message =
                     $state.result.entry.message &&
-                    Message.deserialize($state.result.entry.message)}
+                        Message.deserialize($state.result.entry.message)}
                 <div class="result-container">
                     <div class="spin-result">
                         <p>
@@ -185,24 +185,24 @@
                     <SpinButton {roulette} />
                 </div>
                 <div class="state">
-                    <span class:current={$state.type === "spin-start"}
-                        >抽選開始</span
+                    <span class:current={$state.type === 'spin-start'}
+                    >抽選開始</span
                     ><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === "recruiting"}
-                        >募集中</span
+                    <span class:current={$state.type === 'recruiting'}
+                    >募集中</span
                     ><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === "recruiting-end"}
-                        >募集終了</span
+                    <span class:current={$state.type === 'recruiting-end'}
+                    >募集終了</span
                     >
                     <br />
-                    <span class:current={$state.type === "idle"}>待機中</span><i
+                    <span class:current={$state.type === 'idle'}>待機中</span><i
                         class="ti ti-chevron-right"
                     ></i>
-                    <span class:current={$state.type === "spinning"}
-                        >抽選中 <small>({$config.duration}秒)</small></span
+                    <span class:current={$state.type === 'spinning'}
+                    >抽選中 <small>({$config.duration}秒)</small></span
                     ><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === "spin-result"}
-                        >結果</span
+                    <span class:current={$state.type === 'spin-result'}
+                    >結果</span
                     >
                 </div>
             </div>

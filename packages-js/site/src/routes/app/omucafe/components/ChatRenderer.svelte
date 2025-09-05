@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { Message } from "@omujs/chat/models";
-    import { Button, ComponentRenderer } from "@omujs/ui";
-    import { getGame } from "../omucafe-app.js";
+    import type { Message } from '@omujs/chat/models';
+    import { Button, ComponentRenderer } from '@omujs/ui';
+    import { getGame } from '../omucafe-app.js';
 
     const { omu, scene, chat, side, config } = getGame();
 
@@ -44,11 +44,11 @@
 
 <div
     class="container"
-    class:overlay={side === "overlay"}
-    class:hide={side === "overlay" &&
-        ($scene.type === "photo_mode" || !$config.chat.show)}
+    class:overlay={side === 'overlay'}
+    class:hide={side === 'overlay' &&
+        ($scene.type === 'photo_mode' || !$config.chat.show)}
 >
-    {#if side === "client"}
+    {#if side === 'client'}
         <Button
             primary
             onclick={() => {

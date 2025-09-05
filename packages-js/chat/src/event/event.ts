@@ -63,7 +63,7 @@ export class TableEvent<T> extends ListenerEvent<[Map<string, T>]> {
             return () => {
                 stopListen();
                 clearEvent();
-            }
+            };
         };
 
         return {

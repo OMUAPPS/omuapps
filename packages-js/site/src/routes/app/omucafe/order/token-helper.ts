@@ -75,10 +75,10 @@ export function calculateSimilarityPass(srcTokens: TOKEN[], dstTokens: TOKEN[]):
 export function calculateSimilarity(srcTokens: TOKEN[], dstTokens: TOKEN[]): number {
     let maxScore = 0;
     for (let dstOffset = 0; dstOffset < dstTokens.length; dstOffset ++) {
-        maxScore = Math.max(maxScore, calculateSimilarityPass(srcTokens, dstTokens.slice(dstOffset)))
+        maxScore = Math.max(maxScore, calculateSimilarityPass(srcTokens, dstTokens.slice(dstOffset)));
     }
     for (let srcOffset = 0; srcOffset < srcTokens.length; srcOffset ++) {
-        maxScore = Math.max(maxScore, calculateSimilarityPass(dstTokens, srcTokens.slice(srcOffset)))
+        maxScore = Math.max(maxScore, calculateSimilarityPass(dstTokens, srcTokens.slice(srcOffset)));
     }
     return maxScore;
 }

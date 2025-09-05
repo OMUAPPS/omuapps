@@ -45,7 +45,7 @@ const TABLE_LISTEN_PACKET = PacketType.createJson<Identifier>(TABLE_EXTENSION_TY
 });
 const TABLE_PROXY_LISTEN_PACKET = PacketType.createJson<Identifier>(TABLE_EXTENSION_TYPE, {
     name: 'proxy_listen',
-    serializer: Identifier
+    serializer: Identifier,
 });
 const TABLE_PROXY_PACKET = PacketType.createSerialized<TableProxyPacket>(TABLE_EXTENSION_TYPE, {
     name: 'proxy',

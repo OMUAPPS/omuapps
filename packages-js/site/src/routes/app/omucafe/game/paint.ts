@@ -18,14 +18,14 @@ export const DEFAULT_PEN = {
     } as Vec4Like,
     opacity: 1,
     width: 10,
-}
+};
 
 export type Pen = typeof DEFAULT_PEN;
 
 export const DEFAULT_ERASER = {
     width: 40,
     opacity: 1,
-}
+};
 
 export type Eraser = typeof DEFAULT_ERASER;
 
@@ -37,7 +37,7 @@ export const DEFAULT_TOOL = {
     type: 'pen',
 } | {
     type: 'eraser',
-}
+};
 
 export type Tool = typeof DEFAULT_TOOL;
 
@@ -48,7 +48,7 @@ export type DrawPath = {
     a: Vec2Like,
     b: Vec2Like,
     c: Vec2Like,
-}
+};
 
 export const PAINT_EVENT_TYPE = {
     PEN: 'dr',
@@ -73,7 +73,7 @@ export type PaintEvent = {
     eraser: Eraser,
 } | {
     t: typeof PAINT_EVENT_TYPE.CLEAR,
-}
+};
 
 export type PaintEvents = {
     data: string,
@@ -228,7 +228,6 @@ export class PaintBuffer {
     }
 }
 
-
 export class Paint {
     public readonly texture: GlTexture;
     private readonly framebuffer: GlFramebuffer;
@@ -236,11 +235,11 @@ export class Paint {
     private readonly paintTools = {
         pen: DEFAULT_PEN satisfies Pen,
         eraser: DEFAULT_ERASER satisfies Eraser,
-    }
+    };
 
     constructor(
         private readonly ctx: GlContext,
-        private readonly dimensions: { width: number, height: number }
+        private readonly dimensions: { width: number, height: number },
     ) {
         this.framebuffer = ctx.createFramebuffer();
         this.texture = ctx.createTexture();

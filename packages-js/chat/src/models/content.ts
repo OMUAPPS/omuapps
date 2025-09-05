@@ -3,7 +3,7 @@ import { JsonType } from '@omujs/omu/serialize';
 export type ComponentType<T extends string, D extends JsonType = JsonType> = {
     type: T;
     data: D;
-}
+};
 
 export type Root = ComponentType<'root', Component[]>;
 
@@ -22,9 +22,9 @@ export type Asset = ComponentType<'asset', {
 export type Link = ComponentType<'link', {
     url: string;
     children: Component[];
-}>
+}>;
 
-export type System = ComponentType<'system', Component[]>
+export type System = ComponentType<'system', Component[]>;
 
 export type Component = 
                     | Root

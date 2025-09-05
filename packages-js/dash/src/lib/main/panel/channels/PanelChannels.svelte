@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
     
-    
     import ChannelEntry from './ChannelEntry.svelte';
 
     import { chat } from '$lib/client.js';

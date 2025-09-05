@@ -10,7 +10,7 @@ export type MouseState = {
     delta: Vec2Like,
     over: boolean,
     ui: boolean,
-}
+};
 
 export type Kitchen = {
     audios: Record<string, PlayingAudioClip>,

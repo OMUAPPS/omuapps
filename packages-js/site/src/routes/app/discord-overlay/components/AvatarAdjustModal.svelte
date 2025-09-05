@@ -10,7 +10,7 @@
     
     const { config, voiceState, speakingState } = overlayApp;
 
-    let lastMouse: {x: number, y: number} | null = null;
+    let lastMouse: { x: number, y: number } | null = null;
     let dragger: HTMLElement | null = null;
     
     function handleMouseMove(event: MouseEvent) {
@@ -22,11 +22,11 @@
         const dx = event.clientX - lastMouse.x;
         const dy = event.clientY - lastMouse.y;
         avatarConfig.offset = [x + dx / $scaleFactor, y + dy / $scaleFactor];
-        lastMouse = {x: event.clientX, y: event.clientY};
+        lastMouse = { x: event.clientX, y: event.clientY };
     }
 
     function handleMouseDown(event: MouseEvent) {
-        lastMouse = {x: event.clientX, y: event.clientY};
+        lastMouse = { x: event.clientX, y: event.clientY };
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
     }
@@ -42,7 +42,7 @@
         lastMouse = null;
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
-        $config.avatars = {...$config.avatars};
+        $config.avatars = { ...$config.avatars };
     }
 
     onDestroy(() => {

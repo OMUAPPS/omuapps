@@ -16,7 +16,6 @@ export function createEffect(): Effect {
     };
 }
 
-
 export class EffectHandler implements BehaviorHandler<'effect'> {
     async renderOverlay(action: BehaviorAction<'effect'>, args: { matrices: Matrices; }): Promise<void> {
         const { item, behavior } = action;
@@ -38,7 +37,7 @@ export class EffectHandler implements BehaviorHandler<'effect'> {
                     type: 'effect',
                     item: item.id,
                     effect: effectId,
-                })
+                });
             }
         }
     }

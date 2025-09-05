@@ -29,7 +29,7 @@ export class Mat2 {
             this.m00 + mat.m00,
             this.m01 + mat.m01,
             this.m10 + mat.m10,
-            this.m11 + mat.m11
+            this.m11 + mat.m11,
         );
     }
 
@@ -38,7 +38,7 @@ export class Mat2 {
             this.m00 * mat.m00 + this.m01 * mat.m10,
             this.m00 * mat.m01 + this.m01 * mat.m11,
             this.m10 * mat.m00 + this.m11 * mat.m10,
-            this.m10 * mat.m01 + this.m11 * mat.m11
+            this.m10 * mat.m01 + this.m11 * mat.m11,
         );
     }
 
@@ -47,7 +47,7 @@ export class Mat2 {
             this.m00 * scalar,
             this.m01 * scalar,
             this.m10 * scalar,
-            this.m11 * scalar
+            this.m11 * scalar,
         );
     }
 
@@ -65,14 +65,14 @@ export class Mat2 {
             this.m11 * invDet,
             this.m01 * -invDet,
             this.m10 * -invDet,
-            this.m00 * invDet
+            this.m00 * invDet,
         );
     }
 
     public transform(v: Vec2Like): Vec2 {
         return new Vec2(
             this.m00 * v.x + this.m01 * v.y,
-            this.m10 * v.x + this.m11 * v.y
+            this.m10 * v.x + this.m11 * v.y,
         );
     }
 
@@ -81,7 +81,7 @@ export class Mat2 {
             this.m00,
             this.m10,
             this.m01,
-            this.m11
+            this.m11,
         );
     }
 
@@ -95,7 +95,7 @@ export class Mat2 {
             this.m11 * invDet,
             -this.m01 * invDet,
             -this.m10 * invDet,
-            this.m00 * invDet
+            this.m00 * invDet,
         );
     }
 }

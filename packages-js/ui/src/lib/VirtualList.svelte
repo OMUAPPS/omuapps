@@ -98,7 +98,7 @@
         if (viewport.offsetParent === null) return true;
         if (!viewport.offsetHeight) return true;
         var style = window.getComputedStyle(viewport);
-        return (style.display === 'none')
+        return (style.display === 'none');
     }
 
     async function handleUpdate() {

@@ -97,7 +97,7 @@ export class LayerData {
                 width: image.width,
                 height: image.height,
             });
-        })
+        });
         const vertexBuffer = glContext.createBuffer();
         vertexBuffer.bind(() => {
             const width = image.width / data.frames;
@@ -186,7 +186,7 @@ class SpriteGroup {
     public setParent(parent: SpriteGroup | null) {
         this.group.parent = null;
         if (!parent) return;
-        this.group.parent = parent.sprite
+        this.group.parent = parent.sprite;
         this.parentSprite = parent;
     }
 
@@ -292,7 +292,7 @@ export class PNGTuber implements Avatar {
             layer: 0,
             showOnTalk: 0,
             showOnBlink: 0,
-        }
+        };
         const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
         const bounds = () => this.getBoundingBox(context);
         return {
@@ -308,16 +308,16 @@ export class PNGTuber implements Avatar {
         const mvpVertexShader = glContext.createShader({
             source: MVP_VERTEX_SHADER,
             type: 'vertex',
-        })
+        });
         const spriteFShader = glContext.createShader({
             source: SPRITE_FRAGMENT_SHADER,
             type: 'fragment',
-        })
+        });
         this.spriteProgram = glContext.createProgram([mvpVertexShader, spriteFShader]);
         const textureFShader = glContext.createShader({
             source: TEXTURE_FRAGMENT_SHADER,
             type: 'fragment',
-        })
+        });
         this.bufferProgram = glContext.createProgram([mvpVertexShader, textureFShader]);
 
         this.frameBuffer = glContext.createFramebuffer();
@@ -406,7 +406,7 @@ export class PNGTuber implements Avatar {
                 context.bounceTick += 1;
             }
             context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
-            context.origin.position = context.origin.position.add({x: 0, y: -context.bounceVelocity * 0.0166}).min(Vec2.ZERO);
+            context.origin.position = context.origin.position.add({ x: 0, y: -context.bounceVelocity * 0.0166 }).min(Vec2.ZERO);
             if (!action.talking && context.origin.position.y >= -1) {
                 context.bounceVelocity = 0;
             }
@@ -481,7 +481,7 @@ export class PNGTuber implements Avatar {
                 const uvAttribute = this.bufferProgram.getAttribute('a_texcoord');
                 uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
-            })
+            });
         });
     }
 
@@ -517,7 +517,7 @@ export class PNGTuber implements Avatar {
                     .globalTransform
                     .getMat4()
                     .translate(-layerData.width / 2, -layerData.height / 2, 0)
-                    .translate(layerData.offset.x, layerData.offset.y, 0)
+                    .translate(layerData.offset.x, layerData.offset.y, 0);
                 model.set(matrix);
                 const view = this.spriteProgram.getUniform('u_view').asMat4();
                 view.set(matrices.get());
@@ -532,7 +532,7 @@ export class PNGTuber implements Avatar {
                 const uvAttribute = this.spriteProgram.getAttribute('a_texcoord');
                 uvAttribute.set(layerData.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
-            })
+            });
         }
         [...context.spriteGroups.values()].filter(child => child.layerData.parentId === layerData.identification).forEach(child => {
             this.renderLayer(context, matrices, child, pass);

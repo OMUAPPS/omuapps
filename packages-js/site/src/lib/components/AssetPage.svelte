@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { DisconnectType } from "@omujs/omu/network/packet";
-    import { client, Spinner } from "@omujs/ui";
+    import { DisconnectType } from '@omujs/omu/network/packet';
+    import { client, Spinner } from '@omujs/ui';
 
-    let state: "loading" | "loaded" | DisconnectType = "loaded";
+    let state: 'loading' | 'loaded' | DisconnectType = 'loaded';
 
-    state = "loading";
+    state = 'loading';
     client.subscribe((omu) => {
         if (!omu) return;
         omu.onReady(() => {
-            state = "loaded";
+            state = 'loaded';
         });
         omu.network.event.disconnected.listen((reason) => {
             if (reason) {
@@ -25,7 +25,7 @@
 </script>
 
 <slot />
-{#if state === "loading"}
+{#if state === 'loading'}
     <div class="modal">
         <Spinner />
     </div>
@@ -34,14 +34,14 @@
         <div class="info">
             <h1>同じアセットIDを持つアセットが接続されました</h1>
             <h2>これを使うにはどちらかを閉じて再読込してください</h2>
-            <small>id={$client.app.id.path.join(".")}</small>
+            <small>id={$client.app.id.path.join('.')}</small>
         </div>
     </div>
 {:else if state === DisconnectType.PERMISSION_DENIED}
     <div class="modal">
         <div class="info">
             <h1>権限が拒否されました</h1>
-            <small>id={$client.app.id.path.join(".")}</small>
+            <small>id={$client.app.id.path.join('.')}</small>
         </div>
     </div>
 {/if}

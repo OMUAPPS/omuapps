@@ -14,7 +14,7 @@
     </span>
 {:else if typeof value === 'number'}
     <span class="number">
-        <input type="text" value={value.toString()} on:input={({currentTarget}) => {
+        <input type="text" value={value.toString()} on:input={({ currentTarget }) => {
             const newValue = parseFloat(currentTarget.value);
             if (Number.isNaN(newValue) || Number.isFinite(newValue)) return;
             value = newValue;

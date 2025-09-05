@@ -21,7 +21,7 @@
     import { dragPosition, dragUser, isDraggingFinished, scaleFactor, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
-    export let message: {type: 'loading'| 'failed', text: string} | null = null;
+    export let message: { type: 'loading' | 'failed', text: string } | null = null;
     export let showGrid = false;
     export let dimensions = {
         width: 1920,
@@ -63,8 +63,8 @@
     }
 
     async function init(context: GlContext) {
-        const vertexShader = context.createShader({source: GRID_VERTEX_SHADER, type: 'vertex'});
-        const fragmentShader = context.createShader({source: GRID_FRAGMENT_SHADER, type: 'fragment'});
+        const vertexShader = context.createShader({ source: GRID_VERTEX_SHADER, type: 'vertex' });
+        const fragmentShader = context.createShader({ source: GRID_FRAGMENT_SHADER, type: 'fragment' });
         gridProgram = context.createProgram([vertexShader, fragmentShader]);
         const entries = Object.entries($voiceState);
         for (const [, state] of entries) {
@@ -131,7 +131,7 @@
                 const uvAttribute = gridProgram.getAttribute('a_texcoord');
                 uvAttribute.set(uvBuffer, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
-            })
+            });
 
             gizmo.rect(matrices.get(),
                 -dimensions.width / 2,
@@ -155,7 +155,7 @@
         ].filter((it): it is Effect => !!it);
         const renderOptions: RenderOptions = {
             effects,
-        }
+        };
         
         const toRender: { id: string, state: VoiceStateItem, user: UserConfig, avatar: AvatarContext }[] = [];
         for (const [id, state] of entries) {
@@ -296,8 +296,8 @@
 
     function worldToScreen(view: Mat4, point: Vec2, width: number, height: number) {
         const screen = view.transform2(point);
-        const zeroToOne = screen.mul({x: 0.5, y: -0.5}).add({x: 0.5, y: 0.5});
-        const screenSpace = zeroToOne.mul({x: width, y: height});
+        const zeroToOne = screen.mul({ x: 0.5, y: -0.5 }).add({ x: 0.5, y: 0.5 });
+        const screenSpace = zeroToOne.mul({ x: width, y: height });
         return screenSpace;
     }
 
@@ -341,28 +341,28 @@
         setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
         const view = matrices.get();
         const worldBounds = AABB2.from({
-            min: {x: -dimensions.width / 2, y: -dimensions.height / 2},
-            max: {x: dimensions.width / 2, y: dimensions.height / 2},
+            min: { x: -dimensions.width / 2, y: -dimensions.height / 2 },
+            max: { x: dimensions.width / 2, y: dimensions.height / 2 },
         });
         const screenBounds = AABB2.from({
             min: worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
             max: worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
         });
         const visibleBounds = AABB2.from({
-            min: {x: 60, y: dimensions.margin.top},
-            max: {x: context.canvas.width - dimensions.margin.right, y: context.canvas.height - dimensions.margin.bottom},
+            min: { x: 60, y: dimensions.margin.top },
+            max: { x: context.canvas.width - dimensions.margin.right, y: context.canvas.height - dimensions.margin.bottom },
         });
         const a = 20;
         const c = 100;
         const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
         const color = PALETTE_HEX.OUTLINE_2;
-        const directions: {origin: Vec2, direction: Vec2, name: string}[] = [
-            {origin: bounds.min, direction: new Vec2(-1, -1), name: '左上'},
-            {origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1), name: '左下'},
-            {origin: bounds.max, direction: new Vec2(1, 1), name: '右下'},
-            {origin: new Vec2(bounds.max.x, bounds.min.y), direction: new Vec2(1, -1), name: '右上'},
-        ]
-        for (const {origin, direction, name} of directions) {
+        const directions: { origin: Vec2, direction: Vec2, name: string }[] = [
+            { origin: bounds.min, direction: new Vec2(-1, -1), name: '左上' },
+            { origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1), name: '左下' },
+            { origin: bounds.max, direction: new Vec2(1, 1), name: '右下' },
+            { origin: new Vec2(bounds.max.x, bounds.min.y), direction: new Vec2(1, -1), name: '右上' },
+        ];
+        for (const { origin, direction, name } of directions) {
             const dirFromCenter = bounds.center().sub($dragPosition).normalize();
             const dotFromCenter = dirFromCenter.dot(direction);
             const offset = origin.sub($dragPosition).normalize();
@@ -426,19 +426,19 @@
             max: worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
         });
         const visibleBounds = AABB2.from({
-            min: {x: 60, y: dimensions.margin.top},
-            max: {x: context.canvas.width - dimensions.margin.right, y: context.canvas.height - dimensions.margin.bottom},
+            min: { x: 60, y: dimensions.margin.top },
+            max: { x: context.canvas.width - dimensions.margin.right, y: context.canvas.height - dimensions.margin.bottom },
         });
         const a = 20;
         const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
         const center = bounds.center();
         const directions = [
-            {origin: new Vec2(center.x, bounds.min.y), direction: Vec2.DOWN, name: '上'},
-            {origin: new Vec2(center.x, bounds.max.y), direction: Vec2.UP, name: '下'},
-            {origin: new Vec2(bounds.min.x, center.y), direction: Vec2.LEFT, name: '左'},
-            {origin: new Vec2(bounds.max.x, center.y), direction: Vec2.RIGHT, name: '右'},
-        ]
-        for (const {origin, direction, name} of directions) {
+            { origin: new Vec2(center.x, bounds.min.y), direction: Vec2.DOWN, name: '上' },
+            { origin: new Vec2(center.x, bounds.max.y), direction: Vec2.UP, name: '下' },
+            { origin: new Vec2(bounds.min.x, center.y), direction: Vec2.LEFT, name: '左' },
+            { origin: new Vec2(bounds.max.x, center.y), direction: Vec2.RIGHT, name: '右' },
+        ];
+        for (const { origin, direction, name } of directions) {
             const offset = origin.sub($dragPosition).normalize();
             const inDirection = offset.dot(direction) < 0;
             const directionLeft = direction.turnLeft();
@@ -530,12 +530,12 @@
             context.strokeText(
                 state.nick,
                 renderPosition.x * 0.5 * context.canvas.width + context.canvas.width / 2,
-                context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset
+                context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset,
             );
             context.fillText(
                 state.nick,
                 renderPosition.x * 0.5 * context.canvas.width + context.canvas.width / 2,
-                context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset
+                context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset,
             );
         }
     }
@@ -545,7 +545,7 @@
 
     function getScaleFactor(width: number, height: number): number {
         const MIN_SCALE_FACTOR = 1 / 3;
-        if(showGrid) {
+        if (showGrid) {
             if ($config.align.auto) {
                 const widthScale = (width - (dimensions.margin.left + dimensions.margin.right)) / dimensions.width;
                 const heightScale = (height - (dimensions.margin.top + dimensions.margin.bottom)) / dimensions.height;
@@ -609,16 +609,16 @@
         if (!config.align.auto || $dragUser === id) {
             return user.position;
         }
-        const { align: {horizontal, vertical, padding, spacing, scaling, direction} } = config;
+        const { align: { horizontal, vertical, padding, spacing, scaling, direction } } = config;
         const bounds = AABB2.from({
-            min: new Vec2(-dimensions.width / 2, -dimensions.height / 2).add({x: padding.left, y: padding.top}),
-            max: new Vec2(dimensions.width / 2, dimensions.height / 2).add({x: -padding.right, y:-padding.bottom}),
+            min: new Vec2(-dimensions.width / 2, -dimensions.height / 2).add({ x: padding.left, y: padding.top }),
+            max: new Vec2(dimensions.width / 2, dimensions.height / 2).add({ x: -padding.right, y: -padding.bottom }),
         });
         const ALIGN = {
             start: 0,
             middle: 0.5,
             end: 1,
-        }
+        };
         const uv = new Vec2(
             ALIGN[horizontal],
             ALIGN[vertical],
@@ -656,7 +656,7 @@
     }
 
     function getFlipDirection(): Vec2 {
-        const { align: {horizontal, vertical} } = $config;
+        const { align: { horizontal, vertical } } = $config;
         const flipHorizontal = horizontal === 'start';
         const flipVertical = vertical === 'start';
         return new Vec2(
@@ -665,10 +665,10 @@
         );
     }
     
-    const avatarCache = new Map<string, {key: string, avatar: Avatar}>();
-    const contextCache = new Map<string, {id: string, key: string, avatar: AvatarContext}>();
+    const avatarCache = new Map<string, { key: string, avatar: Avatar }>();
+    const contextCache = new Map<string, { id: string, key: string, avatar: AvatarContext }>();
 
-    async function getAvatarById(gl: GlContext, avatarId: string): Promise<{key:string, avatar: Avatar}> {
+    async function getAvatarById(gl: GlContext, avatarId: string): Promise<{ key: string, avatar: Avatar }> {
         const avatarConfig = $config.avatars[avatarId];
         if (!avatarConfig) {
             throw new Error(`Avatar not found: ${avatarId}`);
@@ -684,8 +684,8 @@
                 const buffer = await overlayApp.getSource(avatarConfig.source);
                 parsedData = JSON.parse(new TextDecoder().decode(buffer));
                 const avatar = await PNGTuber.load(gl, parsedData);
-                avatarCache.set(avatarId, {key: avatarConfig.key, avatar});
-                return {key: avatarConfig.key, avatar};
+                avatarCache.set(avatarId, { key: avatarConfig.key, avatar });
+                return { key: avatarConfig.key, avatar };
             } catch (e) {
                 console.error(e);
                 throw new Error(`Failed to load avatar: ${e}`);
@@ -702,8 +702,8 @@
                     deafened,
                     muted,
                 });
-                avatarCache.set(avatarId, {key: avatarConfig.key, avatar});
-                return {key: avatarConfig.key, avatar};
+                avatarCache.set(avatarId, { key: avatarConfig.key, avatar });
+                return { key: avatarConfig.key, avatar };
             } catch (e) {
                 console.error(e);
                 throw new Error(`Failed to load avatar: ${e}`);
@@ -717,6 +717,7 @@
         if (!$config.user_id) {
             throw new Error('User ID is not set');
         }
+
         async function proxy(url: string) {
             try {
                 const proxyUrl = overlayApp.omu.assets.proxy(url);
@@ -726,6 +727,7 @@
                 throw e;
             }
         }
+
         const api = new ReactiveAPI($config.user_id, (url: string) => proxy(url));
         const user = await api.user(userId);
         const model = user.activeModelID !== 'always' && await api.model(user.activeModelID);
@@ -733,7 +735,7 @@
         const modelData = {
             ...model,
             ...override,
-        }
+        };
         if (!modelData.inactive) {
             return null;
         }
@@ -758,7 +760,7 @@
                 type: 'url',
                 url: modelData.muted,
             } : undefined,
-        }
+        };
         const base = await proxy(modelData.inactive).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
         const active = await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
         const deafened = await proxy(modelData.deafened).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
@@ -799,42 +801,42 @@
                     if (reactiveAvatar) {
                         $config.users[user.id].avatar = avatarId;
                         const context = reactiveAvatar.create();
-                        contextCache.set(avatarId, {id: user.id, key: '', avatar: context});
+                        contextCache.set(avatarId, { id: user.id, key: '', avatar: context });
                         return context;
                     }
                 }
                 const context = await createDefaultAvatar(gl, user);
-                contextCache.set(user.id, {id: 'default', key: '', avatar: context});
+                contextCache.set(user.id, { id: 'default', key: '', avatar: context });
                 return context;
             } catch (e) {
                 console.error(e);
                 const context = await createDefaultAvatar(gl, user);
-                contextCache.set(user.id, {id: 'default', key: '', avatar: context});
+                contextCache.set(user.id, { id: 'default', key: '', avatar: context });
                 return context;
             }
         }
         message = {
             type: 'loading',
             text: `${user.username}のアバターを読み込み中...`,
-        }
+        };
         try {
             const { key, avatar } = await getAvatarById(gl, userConfig.avatar);
             message = null;
             const context = avatar.create();
-            contextCache.set(user.id, {id: userConfig.avatar, key, avatar: context});
+            contextCache.set(user.id, { id: userConfig.avatar, key, avatar: context });
             return context;
         } catch (e) {
             console.error(e);
             message = {
                 type: 'failed',
                 text: `${user.username}のアバターの読み込みに失敗しました: ${e}`,
-            }
+            };
             setTimeout(() => {
                 message = null;
             }, 5000);
         }
         const context = await createDefaultAvatar(gl, user);
-        contextCache.set(user.id, {id: 'default', key: '', avatar: context});
+        contextCache.set(user.id, { id: 'default', key: '', avatar: context });
         return context;
     }
 

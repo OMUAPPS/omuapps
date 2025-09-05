@@ -7,7 +7,7 @@
 
     async function update(asset: Asset | undefined) {
         if (asset) {
-            src = (await getAsset(asset)).toString()
+            src = (await getAsset(asset)).toString();
         }
     }
 

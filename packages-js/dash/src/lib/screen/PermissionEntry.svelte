@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { omu } from "$lib/client.js";
-    import { t } from "$lib/i18n/i18n-context.js";
-    import type { PermissionType } from "@omujs/omu/api/permission";
-    import { Tooltip } from "@omujs/ui";
+    import { omu } from '$lib/client.js';
+    import { t } from '$lib/i18n/i18n-context.js';
+    import type { PermissionType } from '@omujs/omu/api/permission';
+    import { Tooltip } from '@omujs/ui';
 
     export let permission: PermissionType;
     export let accepted: boolean;
@@ -16,7 +16,7 @@
         </Tooltip>
     {:else}
         <Tooltip>
-            {$t("general.no_description")}
+            {$t('general.no_description')}
         </Tooltip>
     {/if}
     <div class="check" class:disabled class:accepted>

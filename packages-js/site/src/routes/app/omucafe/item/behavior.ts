@@ -42,7 +42,7 @@ export type ClickAction = {
     priority: number;
     item: ItemState,
     callback: () => Promise<void> | void;
-}
+};
 
 export interface BehaviorHandler<T extends keyof Behaviors> {
     initialize?(): Promise<void>,
@@ -66,4 +66,4 @@ export type DefaultBehaviors<T extends keyof Behaviors = keyof Behaviors> = {
             behavior: Behaviors[key];
         }>;
     }
-}
+};

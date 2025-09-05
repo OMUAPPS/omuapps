@@ -3,7 +3,6 @@
     import { getGame } from '../../omucafe-app.js';
     import type { Action } from './action.js';
 
-
     export let behavior: Action;
 
     const { gameConfig } = getGame();
@@ -17,7 +16,7 @@
                 label: value.name,
                 value: key,
             }];
-        })])
+        })]),
     };
 </script>
 

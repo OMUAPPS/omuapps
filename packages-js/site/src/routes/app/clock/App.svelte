@@ -15,7 +15,7 @@
         <ClockRenderer {clockApp} />
     {/await}
     <p>
-        <AssetButton {omu} {obs} dimensions={{width: 500, height: 400}}/>
+        <AssetButton {omu} {obs} dimensions={{ width: 500, height: 400 }}/>
     </p>
 </main>
 

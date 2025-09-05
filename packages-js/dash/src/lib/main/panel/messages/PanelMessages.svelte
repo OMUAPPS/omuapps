@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { models } from "@omujs/chat";
-    import { onDestroy } from "svelte";
+    import type { models } from '@omujs/chat';
+    import { onDestroy } from 'svelte';
 
-    import { chat } from "$lib/client.js";
-    import type { Identifier } from "@omujs/omu";
-    import { MessageEntry, TableList } from "@omujs/ui";
+    import { chat } from '$lib/client.js';
+    import type { Identifier } from '@omujs/omu';
+    import { MessageEntry, TableList } from '@omujs/ui';
 
     export let filter: (key: string, message: models.Message) => boolean = (
         _,

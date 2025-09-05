@@ -5,7 +5,7 @@ export type Transform = {
     right: Vec2Like,
     up: Vec2Like,
     offset: Vec2Like,
-}
+};
 
 export function createTransform(): Transform {
     return {

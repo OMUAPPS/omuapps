@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { Room } from "@omujs/chat/models";
-    import { Tooltip } from "@omujs/ui";
-    import { playVideo } from "../stores.js";
+    import type { Room } from '@omujs/chat/models';
+    import { Tooltip } from '@omujs/ui';
+    import { playVideo } from '../stores.js';
 
     export let entry: Room;
     export let selected: boolean = false;
@@ -9,7 +9,7 @@
     function play() {
         if (!entry.metadata?.url) return;
         const url = new URL(entry.metadata.url);
-        const videoId = url.searchParams.get("v");
+        const videoId = url.searchParams.get('v');
         if (!videoId) return;
         $playVideo(videoId);
     }

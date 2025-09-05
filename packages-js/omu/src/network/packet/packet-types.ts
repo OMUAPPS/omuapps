@@ -12,7 +12,7 @@ type ProtocolInfo = {
 export type ServerMetaJson = {
     protocol: ProtocolInfo,
     hash: string | undefined,
-}
+};
 
 type ConnectPacketJson = {
     app: AppJson,

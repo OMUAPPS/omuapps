@@ -35,8 +35,8 @@ export class Gizmo {
     private vertexBuffer: GlBuffer | null = null;
 
     constructor(private readonly context: GlContext) {
-        const vertexShader = context.createShader({source: VERTEX_SHADER, type: 'vertex'});
-        const fragmentShader = context.createShader({source: RAGMENT_SHADER, type: 'fragment'});
+        const vertexShader = context.createShader({ source: VERTEX_SHADER, type: 'vertex' });
+        const fragmentShader = context.createShader({ source: RAGMENT_SHADER, type: 'fragment' });
         this.program = context.createProgram([vertexShader, fragmentShader]);
     }
 

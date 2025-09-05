@@ -1,18 +1,18 @@
 <script lang="ts">
-    import type { Omu } from "@omujs/omu";
+    import type { Omu } from '@omujs/omu';
     import {
         ASSET_DELETE_PERMISSION_ID,
         ASSET_DOWNLOAD_PERMISSION_ID,
         ASSET_UPLOAD_PERMISSION_ID,
-    } from "@omujs/omu/api/asset";
-    import { I18N_GET_LOCALES_PERMISSION_ID } from "@omujs/omu/api/i18n";
-    import { REGISTRY_PERMISSION_ID } from "@omujs/omu/api/registry";
-    import { type RequestRemoteAppResponse } from "@omujs/omu/api/server";
-    import { Button } from "@omujs/ui";
-    import { DEV } from "esm-env";
-    import QrCode from "qrious";
-    import { ORIGIN } from "../../origin.js";
-    import { REMOTE_APP } from "../app.js";
+    } from '@omujs/omu/api/asset';
+    import { I18N_GET_LOCALES_PERMISSION_ID } from '@omujs/omu/api/i18n';
+    import { REGISTRY_PERMISSION_ID } from '@omujs/omu/api/registry';
+    import { type RequestRemoteAppResponse } from '@omujs/omu/api/server';
+    import { Button } from '@omujs/ui';
+    import { DEV } from 'esm-env';
+    import QrCode from 'qrious';
+    import { ORIGIN } from '../../origin.js';
+    import { REMOTE_APP } from '../app.js';
 
     export let omu: Omu;
     export let cancel: () => void;
@@ -20,28 +20,28 @@
 
     let state:
         | {
-              type: "idle";
-          }
+            type: 'idle';
+        }
         | {
-              type: "requesting";
-          }
+            type: 'requesting';
+        }
         | {
-              type: "denied";
-          }
+            type: 'denied';
+        }
         | {
-              type: "generated";
-              qr: InstanceType<typeof QrCode>;
-          }
+            type: 'generated';
+            qr: InstanceType<typeof QrCode>;
+        }
         | {
-              type: "connected";
-          } = {
-        type: "idle",
-    };
+            type: 'connected';
+        } = {
+            type: 'idle',
+        };
     let result: RequestRemoteAppResponse | null = null;
 
     async function generateToken() {
         state = {
-            type: "requesting",
+            type: 'requesting',
         };
         result = await omu.server.requestRemoteApp({
             app: REMOTE_APP,
@@ -53,9 +53,9 @@
                 REGISTRY_PERMISSION_ID,
             ],
         });
-        if (result.type === "error") {
+        if (result.type === 'error') {
             state = {
-                type: "denied",
+                type: 'denied',
             };
             return;
         }
@@ -64,19 +64,19 @@
         const url = `http://${lan_ip}:26423/frame?url=${encodeURIComponent(`${DEV ? `http://${lan_ip}:5173` : ORIGIN}/app/remote/session/?token=${token}&lan=${lan_ip}`)}`;
         console.log(url);
         state = {
-            type: "generated",
+            type: 'generated',
             qr: new QrCode({
                 value: url,
                 size: 256,
                 backgroundAlpha: 0,
-                foreground: "#000",
+                foreground: '#000',
             }),
         };
     }
 
     $: if (connected) {
         state = {
-            type: "connected",
+            type: 'connected',
         };
         setTimeout(() => {
             cancel();
@@ -87,13 +87,13 @@
 </script>
 
 <div class="screen">
-    {#if state.type === "requesting"}
+    {#if state.type === 'requesting'}
         <h2>
             通信中
             <i class="ti ti-loader"></i>
         </h2>
         <small> デバイスとの接続をリクエストしています </small>
-    {:else if state.type === "generated"}
+    {:else if state.type === 'generated'}
         <h2>
             QRコードをスキャンしてください
             <i class="ti ti-scan"></i>
@@ -106,7 +106,7 @@
                 <i class="ti ti-check"></i>
             </Button>
         </div>
-    {:else if state.type === "connected"}
+    {:else if state.type === 'connected'}
         <h2>
             接続されました
             <i class="ti ti-check"></i>
@@ -118,7 +118,7 @@
                 <i class="ti ti-check"></i>
             </Button>
         </div>
-    {:else if state.type === "denied"}
+    {:else if state.type === 'denied'}
         <h2>
             キャンセルされました
             <i class="ti ti-alert-hexagon"></i>

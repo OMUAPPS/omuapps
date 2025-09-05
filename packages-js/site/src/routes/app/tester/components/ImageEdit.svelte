@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { content } from "@omujs/chat";
+    import type { content } from '@omujs/chat';
 
     export let component: content.Image;
 </script>

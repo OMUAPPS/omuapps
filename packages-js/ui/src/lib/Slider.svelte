@@ -144,7 +144,6 @@
                 margin: 0;
             }
 
-
             &:hover {
                 border-bottom: 1px solid var(--color-1);
             }

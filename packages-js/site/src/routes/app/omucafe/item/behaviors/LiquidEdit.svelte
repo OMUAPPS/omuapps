@@ -65,8 +65,8 @@
             {
                 side: asset,
                 volume: 0,
-            }
-        ]
+            },
+        ];
     }}>
         層を追加
     </FileDrop>

@@ -298,11 +298,11 @@ export const SCENE_SET_CURRENT_BY_UUID: EndpointType<SceneSetCurrentByUuidReques
 
 export type SceneCreateRequest = {
     name: string;
-}
+};
 
 export type SceneCreateResponse = {
     scene: SceneJson;
-}
+};
 
 export const SCENE_CREATE: EndpointType<SceneCreateRequest, SceneCreateResponse> = EndpointType.createJson<SceneCreateRequest, SceneCreateResponse>(PLUGIN_ID, {
     name: 'scene_create',

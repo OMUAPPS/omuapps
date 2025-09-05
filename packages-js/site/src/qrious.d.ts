@@ -2,7 +2,7 @@ type QRiousStatic = {
     new (options?: QRiousOptions): QRiousStatic;
     toDataURL(mime?: string): string;
     set(options: QRiousOptions): void;
-}
+};
 
 type CorrectionLevel = 'L' | 'M' | 'Q' | 'H' | string;
 

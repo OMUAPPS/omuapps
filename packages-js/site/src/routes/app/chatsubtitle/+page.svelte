@@ -1,15 +1,15 @@
 <script lang="ts">
-    import AppPage from "$lib/components/AppPage.svelte";
-    import { Chat, events } from "@omujs/chat";
-    import type { Room } from "@omujs/chat/models";
-    import { Identifier, Omu } from "@omujs/omu";
-    import { AppHeader, TableList, setClient } from "@omujs/ui";
-    import { BROWSER } from "esm-env";
-    import { APP } from "./app.js";
-    import { ChatSubtitleApp } from "./chatsubtitle-app.js";
-    import RoomEntry from "./components/RoomEntry.svelte";
-    import { createSubtitle } from "./stores.js";
-    import { AlignType, JustifyType, SubtitleWriter } from "./subtitle.js";
+    import AppPage from '$lib/components/AppPage.svelte';
+    import { Chat, events } from '@omujs/chat';
+    import type { Room } from '@omujs/chat/models';
+    import { Identifier, Omu } from '@omujs/omu';
+    import { AppHeader, TableList, setClient } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import { APP } from './app.js';
+    import { ChatSubtitleApp } from './chatsubtitle-app.js';
+    import RoomEntry from './components/RoomEntry.svelte';
+    import { createSubtitle } from './stores.js';
+    import { AlignType, JustifyType, SubtitleWriter } from './subtitle.js';
 
     const omu = new Omu(APP);
     const chatSubtitleApp = new ChatSubtitleApp(omu);
@@ -19,13 +19,12 @@
 
     function isChatSubCreatable(room: Room): boolean {
         const { metadata } = room;
-        if (!metadata.first_message_id || !metadata.last_message_id)
-            return false;
-        if (room.status !== "offline") return false;
+        if (!metadata.first_message_id || !metadata.last_message_id) return false;
+        if (room.status !== 'offline') return false;
         return true;
     }
 
-    let xml = "";
+    let xml = '';
 
     $createSubtitle = async (room: Room) => {
         const { first_message_id, last_message_id } = room.metadata;
@@ -70,18 +69,18 @@
         // penElement.setAttribute('et', '4');
         // penElement.setAttribute('ec', '#3C8AC2');
         const contentPenId = writer.getPenId({
-            foreground: "#D0E4F3",
+            foreground: '#D0E4F3',
             foregroundOpacity: 1.0,
             backgroundOpacity: 0,
         });
         const bgPenId = writer.getPenId({
-            foreground: "#000000",
+            foreground: '#000000',
             foregroundOpacity: 0.0,
-            background: "#A8C5DB",
+            background: '#A8C5DB',
             backgroundOpacity: 1,
         });
         const authorPenId = writer.getPenId({
-            foreground: "#ffffff",
+            foreground: '#ffffff',
             foregroundOpacity: 1.0,
             backgroundOpacity: 0,
         });
@@ -120,10 +119,10 @@
             if (!author) continue;
             const line: Line = {
                 left: {
-                    content: content?.toString() || "",
+                    content: content?.toString() || '',
                     penId: contentPenId,
                 },
-                right: { content: author.name || "", penId: authorPenId },
+                right: { content: author.name || '', penId: authorPenId },
             };
             insertLine(message.createdAt, line);
         }
@@ -141,45 +140,45 @@
                     );
                     count += textLength;
                 }
-                leftParts.push(...parts.map((p) => "　" + p));
-                rightParts.push("　" + line.right.content);
+                leftParts.push(...parts.map((p) => '　' + p));
+                rightParts.push('　' + line.right.content);
                 rightParts.push(
-                    ...new Array(Math.max(0, parts.length - 1)).fill("　"),
+                    ...new Array(Math.max(0, parts.length - 1)).fill('　'),
                 );
             }
             leftParts = [
-                "　　　　　　　　　　　　　　　　　　　　",
-                ...new Array(Math.max(0, 10 - leftParts.length)).fill("　"),
+                '　　　　　　　　　　　　　　　　　　　　',
+                ...new Array(Math.max(0, 10 - leftParts.length)).fill('　'),
                 ...leftParts,
-                "　　　　　　　　　　　　　　　　　　　　",
+                '　　　　　　　　　　　　　　　　　　　　',
             ];
             const bg = [
                 ...new Array(leftParts.length).fill(
-                    "　　　　　　　　　　　　　　　　　　　　",
+                    '　　　　　　　　　　　　　　　　　　　　',
                 ),
             ];
             rightParts = [
-                "　　　　　　　　　",
-                ...new Array(Math.max(0, 10 - rightParts.length)).fill("　"),
+                '　　　　　　　　　',
+                ...new Array(Math.max(0, 10 - rightParts.length)).fill('　'),
                 ...rightParts,
-                "　　　　　　　　　",
+                '　　　　　　　　　',
             ];
             writer.write(
                 time,
                 {
-                    content: bg.join("\n"),
+                    content: bg.join('\n'),
                     penId: bgPenId,
                     positionId: bgPositionId,
                     styleId: styleId,
                 },
                 {
-                    content: leftParts.join("\n"),
+                    content: leftParts.join('\n'),
                     penId: contentPenId,
                     positionId: contentPositionId,
                     styleId: styleId,
                 },
                 {
-                    content: rightParts.join("\n"),
+                    content: rightParts.join('\n'),
                     penId: authorPenId,
                     positionId: authorPositionId,
                     styleId: styleId,
@@ -195,7 +194,7 @@
         if (!$config.auto_generate) return;
         if (!isChatSubCreatable(room)) return;
         if (room.connected) return;
-        console.log("Creating chat subtitle for room:", room);
+        console.log('Creating chat subtitle for room:', room);
     });
 
     if (BROWSER) {

@@ -1,18 +1,18 @@
 <script lang="ts">
-    import { content } from "@omujs/chat/models";
-    import { Tooltip } from "@omujs/ui";
-    import AddComponent from "./AddComponent.svelte";
-    import ImageEdit from "./ImageEdit.svelte";
-    import TextEdit from "./TextEdit.svelte";
+    import { content } from '@omujs/chat/models';
+    import { Tooltip } from '@omujs/ui';
+    import AddComponent from './AddComponent.svelte';
+    import ImageEdit from './ImageEdit.svelte';
+    import TextEdit from './TextEdit.svelte';
 
     export let component: content.Component;
     export let remove: () => void;
 
     const icons = {
-        text: "ti ti-txt",
-        image: "ti ti-photo",
+        text: 'ti ti-txt',
+        image: 'ti ti-photo',
     };
-    $: icon = component && icons[component.type as "text" | "image"];
+    $: icon = component && icons[component.type as 'text' | 'image'];
 
     function removeChild(child: content.Component) {
         const children = content.children(component);
@@ -29,9 +29,9 @@
             <i class={icon}></i>
         </button>
     {/if}
-    {#if component.type === "text"}
+    {#if component.type === 'text'}
         <TextEdit bind:component />
-    {:else if component.type === "image"}
+    {:else if component.type === 'image'}
         <ImageEdit bind:component />
     {/if}
     {#if children.length > 0}

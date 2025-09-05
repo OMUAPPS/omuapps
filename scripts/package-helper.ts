@@ -43,7 +43,7 @@ const { values } = parseArgs({
         debug: {
             type: 'boolean',
             default: false,
-        }
+        },
     },
     strict: true,
     allowPositionals: true,
@@ -62,8 +62,10 @@ function getEntrypointsFromGlob(entrypoint: string[]): string[] {
     if (entrypoints.length === 0) {
         throw new Error('No entrypoints found');
     }
-    return entrypoints
-};
+    return entrypoints;
+}
+
+;
 
 async function build(entrypoints: string[]) {
     if (values.debug) {
@@ -122,7 +124,9 @@ async function rebuild() {
     } catch (error) {
         console.error('Error while rebuilding:', error);
     }
-};
+}
+
+;
 
 await build(entrypoints);
 

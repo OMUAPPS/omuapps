@@ -1,18 +1,18 @@
 <script lang="ts">
-    import AppPage from "$lib/components/AppPage.svelte";
-    import { Chat } from "@omujs/chat";
-    import { OBSPlugin, permissions } from "@omujs/obs";
-    import { Omu } from "@omujs/omu";
-    import { AppHeader, setClient } from "@omujs/ui";
-    import { BROWSER } from "esm-env";
-    import { APP } from "./app.js";
-    import App from "./App.svelte";
-    import { ReplayApp } from "./replay-app.js";
+    import AppPage from '$lib/components/AppPage.svelte';
+    import { Chat } from '@omujs/chat';
+    import { OBSPlugin, permissions } from '@omujs/obs';
+    import { Omu } from '@omujs/omu';
+    import { AppHeader, setClient } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import { APP } from './app.js';
+    import App from './App.svelte';
+    import { ReplayApp } from './replay-app.js';
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
-    ReplayApp.create(omu, "client");
+    ReplayApp.create(omu, 'client');
     setClient(omu);
 
     if (BROWSER) {

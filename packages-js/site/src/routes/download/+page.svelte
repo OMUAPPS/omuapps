@@ -45,7 +45,7 @@
         } finally {
             loading = false;
         }
-    })
+    });
 </script>
 
 <svelte:head>

@@ -14,7 +14,7 @@ export type PhotoTakeState = {
     type: 'taken',
     asset: Asset,
     time: number,
-}
+};
 
 export type Scene = {
     type: 'loading',
@@ -69,4 +69,4 @@ export const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {
 export type SceneContext = {
     time: number,
     active: boolean,
-}
+};

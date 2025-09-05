@@ -1,9 +1,9 @@
 <script lang="ts">
-    import AppPage from "$lib/components/AppPage.svelte";
-    import { VERSION } from "$lib/version.js";
-    import { Chat } from "@omujs/chat";
-    import { Omu } from "@omujs/omu";
-    import { ASSET_UPLOAD_PERMISSION_ID } from "@omujs/omu/api/asset";
+    import AppPage from '$lib/components/AppPage.svelte';
+    import { VERSION } from '$lib/version.js';
+    import { Chat } from '@omujs/chat';
+    import { Omu } from '@omujs/omu';
+    import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/api/asset';
     import {
         AppHeader,
         Button,
@@ -11,12 +11,12 @@
         Textbox,
         Tooltip,
         setClient,
-    } from "@omujs/ui";
-    import { BROWSER } from "esm-env";
-    import EmojiEdit from "./EmojiEdit.svelte";
-    import EmojiEntry from "./EmojiEntry.svelte";
-    import { APP, APP_ID } from "./app.js";
-    import { EmojiApp, emojiApp, type Emoji } from "./emoji.js";
+    } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import EmojiEdit from './EmojiEdit.svelte';
+    import EmojiEntry from './EmojiEntry.svelte';
+    import { APP, APP_ID } from './app.js';
+    import { EmojiApp, emojiApp, type Emoji } from './emoji.js';
 
     const omu = new Omu(APP);
     const chat = Chat.create(omu);
@@ -29,7 +29,7 @@
     });
     omu.permissions.require(ASSET_UPLOAD_PERMISSION_ID);
 
-    let search: string = "";
+    let search: string = '';
 
     let searchFilter: (key: string, emoji: Emoji) => boolean = () => true;
 
@@ -55,7 +55,7 @@
                 asset: identifier,
                 patterns: [
                     {
-                        type: "text",
+                        type: 'text',
                         text: name,
                     },
                 ],
@@ -72,7 +72,7 @@
         if (!files) return;
         const selected = await Promise.all(
             Array.from(files).map(async (file) => {
-                let name = file.name.split(".")[0];
+                let name = file.name.split('.')[0];
                 if (name.length === 0) {
                     name = `emoji-${Date.now().toString().slice(-6)}`;
                 }

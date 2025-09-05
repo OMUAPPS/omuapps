@@ -1,12 +1,12 @@
 <script lang="ts">
-    import AppInfo from "$lib/common/AppInfo.svelte";
-    import { t } from "$lib/i18n/i18n-context.js";
-    import type { PermissionRequestPacket } from "@omujs/omu/api/dashboard";
-    import type { PermissionLevel } from "@omujs/omu/api/permission";
-    import { Tooltip } from "@omujs/ui";
-    import PermissionEntry from "./PermissionEntry.svelte";
-    import Screen from "./Screen.svelte";
-    import type { ScreenHandle } from "./screen.js";
+    import AppInfo from '$lib/common/AppInfo.svelte';
+    import { t } from '$lib/i18n/i18n-context.js';
+    import type { PermissionRequestPacket } from '@omujs/omu/api/dashboard';
+    import type { PermissionLevel } from '@omujs/omu/api/permission';
+    import { Tooltip } from '@omujs/ui';
+    import PermissionEntry from './PermissionEntry.svelte';
+    import Screen from './Screen.svelte';
+    import type { ScreenHandle } from './screen.js';
 
     export let screen: {
         handle: ScreenHandle;
@@ -38,7 +38,7 @@
         .reverse()
         .map((permission) => ({
             permission,
-            accepted: permission.metadata.level === "low",
+            accepted: permission.metadata.level === 'low',
         }));
 </script>
 
@@ -49,51 +49,51 @@
     </span>
     <div class="permissions">
         <ul>
-            {#if permissions.some(({ permission }) => permission.metadata.level === "high")}
+            {#if permissions.some(({ permission }) => permission.metadata.level === 'high')}
                 <li>
                     <span class="level"
-                        >{$t("permission_level.high")}<small
-                            >{$t("permission_level.high_hint")}</small
-                        ></span
+                    >{$t('permission_level.high')}<small
+                    >{$t('permission_level.high_hint')}</small
+                    ></span
                     >
                 </li>
-                {#each permissions.filter(({ permission }) => permission.metadata.level === "high") as entry, i (i)}
+                {#each permissions.filter(({ permission }) => permission.metadata.level === 'high') as entry, i (i)}
                     <PermissionEntry
                         permission={entry.permission}
                         bind:accepted={entry.accepted}
-                        disabled={entry.permission.metadata.level === "low"}
+                        disabled={entry.permission.metadata.level === 'low'}
                     />
                 {/each}
             {/if}
-            {#if permissions.some(({ permission }) => permission.metadata.level === "medium")}
+            {#if permissions.some(({ permission }) => permission.metadata.level === 'medium')}
                 <li>
                     <span class="level"
-                        >{$t("permission_level.medium")}<small
-                            >{$t("permission_level.medium_hint")}</small
-                        ></span
+                    >{$t('permission_level.medium')}<small
+                    >{$t('permission_level.medium_hint')}</small
+                    ></span
                     >
                 </li>
-                {#each permissions.filter(({ permission }) => permission.metadata.level === "medium") as entry, i (i)}
+                {#each permissions.filter(({ permission }) => permission.metadata.level === 'medium') as entry, i (i)}
                     <PermissionEntry
                         permission={entry.permission}
                         bind:accepted={entry.accepted}
-                        disabled={entry.permission.metadata.level === "low"}
+                        disabled={entry.permission.metadata.level === 'low'}
                     />
                 {/each}
             {/if}
-            {#if permissions.some(({ permission }) => permission.metadata.level === "low")}
+            {#if permissions.some(({ permission }) => permission.metadata.level === 'low')}
                 <li>
                     <span class="level"
-                        >{$t("permission_level.low")}<small
-                            >{$t("permission_level.low_hint")}</small
-                        ></span
+                    >{$t('permission_level.low')}<small
+                    >{$t('permission_level.low_hint')}</small
+                    ></span
                     >
                 </li>
-                {#each permissions.filter(({ permission }) => permission.metadata.level === "low") as entry, i (i)}
+                {#each permissions.filter(({ permission }) => permission.metadata.level === 'low') as entry, i (i)}
                     <PermissionEntry
                         permission={entry.permission}
                         bind:accepted={entry.accepted}
-                        disabled={entry.permission.metadata.level === "low"}
+                        disabled={entry.permission.metadata.level === 'low'}
                     />
                 {/each}
             {/if}

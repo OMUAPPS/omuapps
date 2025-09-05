@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type { models } from "@omujs/chat";
-    import ButtonMini from "./ButtonMini.svelte";
-    import ComponentRenderer from "./ComponentRenderer.svelte";
-    import Gift from "./Gift.svelte";
-    import RelativeDate from "./RelativeDate.svelte";
-    import Role from "./Role.svelte";
-    import Tooltip from "./Tooltip.svelte";
-    import { client, dateTimeFormats, translate } from "./stores.js";
-    import { applyOpacity } from "./utils/class-helper.js";
+    import type { models } from '@omujs/chat';
+    import ButtonMini from './ButtonMini.svelte';
+    import ComponentRenderer from './ComponentRenderer.svelte';
+    import Gift from './Gift.svelte';
+    import RelativeDate from './RelativeDate.svelte';
+    import Role from './Role.svelte';
+    import Tooltip from './Tooltip.svelte';
+    import { client, dateTimeFormats, translate } from './stores.js';
+    import { applyOpacity } from './utils/class-helper.js';
 
     export let paid: models.Paid | undefined = undefined;
     export let gifts: Array<models.Gift> | undefined = undefined;
@@ -31,17 +31,17 @@
         const parts: string[] = [];
         const seconds = Math.floor(date.getTime() / 1000);
         if (seconds > 60 * 60 * 24 * 30) {
-            parts.push(Math.floor(seconds / 60 / 60 / 24 / 30) + "/");
+            parts.push(Math.floor(seconds / 60 / 60 / 24 / 30) + '/');
         }
         if (seconds > 60 * 60 * 24) {
-            parts.push((Math.floor(seconds / 60 / 60 / 24) % 30) + " ");
+            parts.push((Math.floor(seconds / 60 / 60 / 24) % 30) + ' ');
         }
         if (seconds > 60 * 60) {
-            parts.push((Math.floor(seconds / 60 / 60) % 24) + "h ");
+            parts.push((Math.floor(seconds / 60 / 60) % 24) + 'h ');
         }
-        parts.push(date.getMinutes().toString().padStart(2, "0") + "m ");
-        parts.push(date.getSeconds().toString().padStart(2, "0") + "s");
-        return parts.join("");
+        parts.push(date.getMinutes().toString().padStart(2, '0') + 'm ');
+        parts.push(date.getSeconds().toString().padStart(2, '0') + 's');
+        return parts.join('');
     }
 </script>
 
@@ -49,7 +49,7 @@
     class:special={!!(paid || gifts?.length)}
     class:selected
     style:background={paid || gifts?.length
-        ? applyOpacity(paid ? "var(--color-1)" : "var(--color-2)", 0.1)
+        ? applyOpacity(paid ? 'var(--color-1)' : 'var(--color-2)', 0.1)
         : undefined}
 >
     {#if author && author.avatarUrl}
@@ -80,8 +80,8 @@
                         <Role {role} />
                     {/each}
                     <small
-                        >{author.metadata?.screen_id ||
-                            author.id.path.at(-1)}</small
+                    >{author.metadata?.screen_id ||
+                        author.id.path.at(-1)}</small
                     >
                 </div>
                 {#if createdAt}
@@ -105,24 +105,24 @@
                     <div class="gifts">
                         {#if paid}
                             {@const currency = {
-                                "¥": "yen",
-                                "฿": "baht",
-                                $: "dollar",
-                                "€": "euro",
-                                "£": "pound",
-                                "₩": "won",
-                                "₹": "rupee",
-                                "₽": "ruble",
-                                "₣": "franc",
-                                R$: "real",
-                                "₺": "lira",
-                                "₱": "peso",
-                                RM: "ringgit",
+                                '¥': 'yen',
+                                '฿': 'baht',
+                                $: 'dollar',
+                                '€': 'euro',
+                                '£': 'pound',
+                                '₩': 'won',
+                                '₹': 'rupee',
+                                '₽': 'ruble',
+                                '₣': 'franc',
+                                R$: 'real',
+                                '₺': 'lira',
+                                '₱': 'peso',
+                                RM: 'ringgit',
                             }[paid.currency]}
                             <div class="paid">
                                 <span>
                                     <i class="ti ti-gift"></i>
-                                    {$translate("panels.messages.paid")}
+                                    {$translate('panels.messages.paid')}
                                 </span>
                                 <p>
                                     {#if currency}
@@ -149,18 +149,18 @@
                 <ButtonMini
                     primary
                     on:click={() => {
-                        window.open(timedLink, "_blank");
+                        window.open(timedLink, '_blank');
                     }}
                 >
                     <Tooltip>
-                        <p>{$translate("panels.messages.see_in_room")}</p>
+                        <p>{$translate('panels.messages.see_in_room')}</p>
                         <p>{formatTime(time)}</p>
                     </Tooltip>
                     <i class="ti ti-external-link"></i>
                 </ButtonMini>
             {/if}
             <ButtonMini primary on:click={handleCopy}>
-                <Tooltip>{$translate("panels.messages.copy")}</Tooltip>
+                <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
                 <i class="ti ti-files"></i>
             </ButtonMini>
         </div>

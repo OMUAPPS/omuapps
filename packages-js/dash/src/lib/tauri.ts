@@ -13,7 +13,7 @@ export type Config = {
 export type Cookie = {
     name: string,
     value: string,
-}
+};
 
 type Commands = {
     close_window(): void;
@@ -73,7 +73,7 @@ export type Progress = (
     | { type: 'ServerAlreadyStarted', msg: string, progress: undefined, total: undefined }
     | { type: 'PythonRemoving', msg: string, progress: number, total: number }
     | { type: 'UvRemoving', msg: string, progress: number, total: number }
-)
+);
 type Events = {
     server_state: Progress;
     server_restart: unknown;
@@ -250,24 +250,24 @@ export async function applyUpdate(update: Update, progress: (event: UpdateEvent)
     // alternatively we could also call update.download() and update.install() separately
     await update.downloadAndInstall((event) => {
         switch (event.event) {
-        case 'Started':
-            contentLength = event.data.contentLength || 0;
-            console.log(
-                `started downloading ${event.data.contentLength} bytes`,
-            );
-            progress({ type: 'updating', downloaded, contentLength });
-            break;
-        case 'Progress':
-            downloaded += event.data.chunkLength;
-            console.log(
-                `downloaded ${downloaded} from ${contentLength}`,
-            );
-            progress({ type: 'updating', downloaded, contentLength });
-            break;
-        case 'Finished':
-            console.log('download finished');
-            progress({ type: 'updating', downloaded, contentLength });
-            break;
+            case 'Started':
+                contentLength = event.data.contentLength || 0;
+                console.log(
+                    `started downloading ${event.data.contentLength} bytes`,
+                );
+                progress({ type: 'updating', downloaded, contentLength });
+                break;
+            case 'Progress':
+                downloaded += event.data.chunkLength;
+                console.log(
+                    `downloaded ${downloaded} from ${contentLength}`,
+                );
+                progress({ type: 'updating', downloaded, contentLength });
+                break;
+            case 'Finished':
+                console.log('download finished');
+                progress({ type: 'updating', downloaded, contentLength });
+                break;
         }
     });
 
@@ -303,7 +303,7 @@ async function initTrayIcon() {
                     }
                     visible = await appWindow.isVisible();
                     item.setText(visible ? 'Hide' : 'Show');
-                }
+                },
             },
             {
                 id: 'quit',

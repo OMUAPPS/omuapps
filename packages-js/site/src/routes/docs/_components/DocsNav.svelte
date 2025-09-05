@@ -1,20 +1,20 @@
 <script lang="ts">
-    import type { DocsMeta } from "$lib/server/docs";
+    import type { DocsMeta } from '$lib/server/docs';
 
     export let section:
         | Readonly<{
-              meta: DocsMeta;
-              slug: string;
-          }>
+            meta: DocsMeta;
+            slug: string;
+        }>
         | undefined;
     export let group:
         | [
-              string,
-              Readonly<{
-                  meta: DocsMeta;
-                  slug: string;
-              }>[],
-          ]
+            string,
+            Readonly<{
+                meta: DocsMeta;
+                slug: string;
+            }>[],
+        ]
         | undefined;
 </script>
 

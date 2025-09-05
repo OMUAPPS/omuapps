@@ -7,17 +7,17 @@ type Pose = {
 
 export class MatrixStack {
     constructor(
-        private readonly stack: Pose[] = [{pose: Mat4.IDENTITY}],
+        private readonly stack: Pose[] = [{ pose: Mat4.IDENTITY }],
     ) { }
 
     public push(): void {
-        this.stack.push({pose: this.stack[this.stack.length - 1].pose});
+        this.stack.push({ pose: this.stack[this.stack.length - 1].pose });
     }
 
     public pop(): void {
         this.stack.pop();
         if (this.stack.length === 0) {
-            this.stack.push({pose: Mat4.IDENTITY});
+            this.stack.push({ pose: Mat4.IDENTITY });
             console.warn('MatrixStack underflow');
         }
     }

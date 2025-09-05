@@ -7,7 +7,6 @@ export interface Serializable<T, D> {
     deserialize(data: D): T;
 }
 
-
 export class Serializer<T, D> {
     constructor(
         public serialize: (data: T) => D,
@@ -29,7 +28,7 @@ export class Serializer<T, D> {
         return new Serializer<T, T>(
             func,
             func,
-        )
+        );
     }
 
     public static noop<T>(): Serializer<T, T> {
@@ -41,10 +40,10 @@ export class Serializer<T, D> {
 
     public field<
         K extends keyof D,
-        R
+        R,
     >(
         key: K,
-        serializer: Serializable<D[K], R>
+        serializer: Serializable<D[K], R>,
     ): Serializer<
         T,
         { [P in keyof D]: P extends K ? R : D[P] }
@@ -65,7 +64,7 @@ export class Serializer<T, D> {
                     ...data,
                     [key]: serializer.deserialize(data[key] as R),
                 } as D);
-            }
+            },
         );
     }
 
@@ -122,10 +121,10 @@ export class Serializer<T, D> {
                 try {
                     return this.deserialize(data);
                 } catch {
-                    return fallback
+                    return fallback;
                 }
             },
-        )
+        );
     }
 
     public fallbackMap(fallback: (data: D, error: unknown) => T): Serializer<T, D> {
@@ -138,7 +137,7 @@ export class Serializer<T, D> {
                     return fallback(data, error);
                 }
             },
-        )
+        );
     }
 
     public pipe<E>(serializer: Serializable<D, E>): Serializer<T, E> {

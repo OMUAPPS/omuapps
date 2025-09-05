@@ -123,7 +123,7 @@ export class TableFetchPacket {
         const writer = new ByteWriter();
         writer.writeString(packet.id.key());
         writer.writeULEB128(packet.limit);
-        const flags = new Flags({length: 2});
+        const flags = new Flags({ length: 2 });
         flags.set(0, packet.backward);
         flags.set(1, packet.cursor !== null);
         writer.writeFlags(flags);

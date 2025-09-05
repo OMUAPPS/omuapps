@@ -3,7 +3,7 @@ import { type Writable } from 'svelte/store';
 
 export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> & {
     wait: () => Promise<void>;
-}{
+} {
     let ready = false;
     let value: T = registry.value;
     const listeners = new Set<(value: T) => void>();
@@ -62,14 +62,14 @@ export function md5(data: Uint8Array): Uint8Array {
         0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c, 0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
         0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05, 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
         0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
-        0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
+        0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391,
     ];
 
     const s = [
         7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
         5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
         4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
-        6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
+        6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
     ];
 
     const bitLen = data.length * 8;
@@ -132,7 +132,7 @@ export function md5(data: Uint8Array): Uint8Array {
     resView.setUint32(12, d0, true);
 
     // Convert to hex string
-    return result
+    return result;
 }
 
 export function formatBytes(bytes: number, decimals = 2) {
@@ -158,7 +158,7 @@ export function once(fn: (resolve: () => void) => (PromiseLike<() => unknown>) |
     });
 }
 
-export function downloadFile(options: {filename: string, content: Uint8Array, type: string}) {
+export function downloadFile(options: { filename: string, content: Uint8Array, type: string }) {
     const { filename, content, type } = options;
     const blob = new Blob([content as BlobPart], { type });
     const url = URL.createObjectURL(blob);
@@ -222,6 +222,6 @@ type Comparator<T> = (a: T, b: T) => number;
 export function comparator<T>(func: (value: T) => number): Comparator<T> {
     return (a, b) => {
         return func(a) - func(b);
-    }
+    };
 }
 

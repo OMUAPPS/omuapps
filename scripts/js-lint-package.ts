@@ -19,7 +19,7 @@ const KEY_ORDER = [
     'gitHead',
 ];
 
-const packages = await readdir('packages-js')
+const packages = await readdir('packages-js');
 packages.map((name) => `packages-js/${name}/package.json`).forEach(async (path) => {
     const pkg = await readFile(path, 'utf-8');
     const pkgObj = JSON.parse(pkg);

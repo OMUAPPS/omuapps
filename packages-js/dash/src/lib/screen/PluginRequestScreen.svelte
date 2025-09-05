@@ -1,9 +1,9 @@
 <script lang="ts">
-    import AppInfo from "$lib/common/AppInfo.svelte";
-    import type { PluginRequestPacket } from "@omujs/omu/api/dashboard";
-    import PackageEntry from "./PackageEntry.svelte";
-    import Screen from "./Screen.svelte";
-    import type { ScreenHandle } from "./screen.js";
+    import AppInfo from '$lib/common/AppInfo.svelte';
+    import type { PluginRequestPacket } from '@omujs/omu/api/dashboard';
+    import PackageEntry from './PackageEntry.svelte';
+    import Screen from './Screen.svelte';
+    import type { ScreenHandle } from './screen.js';
 
     export let screen: {
         handle: ScreenHandle;

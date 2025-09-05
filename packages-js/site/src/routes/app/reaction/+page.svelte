@@ -1,11 +1,11 @@
 <script lang="ts">
-    import AppPage from "$lib/components/AppPage.svelte";
-    import AssetButton from "$lib/components/AssetButton.svelte";
-    import { Chat, permissions as chatPerms } from "@omujs/chat";
-    import { Reaction } from "@omujs/chat/models";
-    import { OBSPlugin, permissions as obsPerms } from "@omujs/obs";
-    import { Omu } from "@omujs/omu";
-    import { ASSET_UPLOAD_PERMISSION_ID } from "@omujs/omu/api/asset";
+    import AppPage from '$lib/components/AppPage.svelte';
+    import AssetButton from '$lib/components/AssetButton.svelte';
+    import { Chat, permissions as chatPerms } from '@omujs/chat';
+    import { Reaction } from '@omujs/chat/models';
+    import { OBSPlugin, permissions as obsPerms } from '@omujs/obs';
+    import { Omu } from '@omujs/omu';
+    import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/api/asset';
     import {
         AppHeader,
         Button,
@@ -14,11 +14,11 @@
         Slider,
         Tooltip,
         setClient,
-    } from "@omujs/ui";
-    import { BROWSER } from "esm-env";
-    import { APP, APP_ID } from "./app.js";
-    import ReactionRenderer from "./components/ReactionRenderer.svelte";
-    import { ReactionApp } from "./reaction-app.js";
+    } from '@omujs/ui';
+    import { BROWSER } from 'esm-env';
+    import { APP, APP_ID } from './app.js';
+    import ReactionRenderer from './components/ReactionRenderer.svelte';
+    import { ReactionApp } from './reaction-app.js';
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
@@ -29,13 +29,13 @@
 
     function test() {
         const reaction = new Reaction({
-            roomId: APP_ID.join("test"),
+            roomId: APP_ID.join('test'),
             reactions: {
-                "❤": 1,
-                "😄": 1,
-                "🎉": 1,
-                "😳": 1,
-                "💯": 1,
+                '❤': 1,
+                '😄': 1,
+                '🎉': 1,
+                '😳': 1,
+                '💯': 1,
             },
         });
         reactionApp.send(reaction);
@@ -44,7 +44,7 @@
     async function handleReplace(key: string, files: FileList) {
         const file = files[0];
         const reader = new FileReader();
-        const id = omu.app.id.join("asset", key);
+        const id = omu.app.id.join('asset', key);
         reader.onload = async () => {
             const buffer = new Uint8Array(reader.result as ArrayBuffer);
             const asset = await omu.assets.upload(id, buffer);
@@ -134,7 +134,7 @@
                                 <i class="ti ti-chevron-right"></i>
                                 <img
                                     src={omu.assets.url(assetId, {
-                                        cache: "no-cache",
+                                        cache: 'no-cache',
                                     })}
                                     alt={key}
                                     class="replace-image"

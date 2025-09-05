@@ -31,8 +31,8 @@
         getUser(id);
     });
 
-    let message: {type: 'loading'| 'failed', text: string} | null = null;
-    let dimentions: {width: number, height: number} = {width: 0, height: 0};
+    let message: { type: 'loading' | 'failed', text: string } | null = null;
+    let dimentions: { width: number, height: number } = { width: 0, height: 0 };
 
     let state: 'wait-for-ready' | 'connecting-vc' | null = 'wait-for-ready';
     let clients: Record<string, AuthenticateUser> = {};
@@ -105,7 +105,7 @@
             {:else}
                 {#if dimentions && view}
                     {#each Object.entries($voiceState)
-                        .sort(([a,], [b,]) => $config.users[a].position[0] - $config.users[b].position[0]) as [id, state] (id)}
+                        .sort(([a], [b]) => $config.users[a].position[0] - $config.users[b].position[0]) as [id, state] (id)}
                         <UserDragControl {view} {dimentions} {overlayApp} {id} {state} bind:user={$config.users[id]}/>
                     {/each}
                 {/if}
@@ -179,7 +179,7 @@
                 <i class="ti ti-arrow-bar-to-down"></i>
             </h3>
             <section>
-                <AssetButton {omu} {obs} dimensions={{width: 1920, height: 1080}} />
+                <AssetButton {omu} {obs} dimensions={{ width: 1920, height: 1080 }} />
             </section>
         </div>
     {/if}

@@ -56,9 +56,9 @@
         </button>
         <div class="settings">
             主音量
-            <Slider bind:value={$config.audio.volumes.master} min={0} max={1} step={1/100} type="percent" />
+            <Slider bind:value={$config.audio.volumes.master} min={0} max={1} step={1 / 100} type="percent" />
             効果音
-            <Slider bind:value={$config.audio.volumes.effects} min={0} max={1} step={1/100} type="percent" />
+            <Slider bind:value={$config.audio.volumes.effects} min={0} max={1} step={1 / 100} type="percent" />
         </div>
     </div>
     {#await latestGalleryItems then items}

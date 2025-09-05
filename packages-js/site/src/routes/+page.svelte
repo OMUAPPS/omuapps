@@ -1,14 +1,14 @@
 <script lang="ts">
-    import Content from "$lib/components/Content.svelte";
-    import Footer from "$lib/components/Footer.svelte";
-    import Header from "$lib/components/Header.svelte";
-    import dashboard1 from "$lib/images/dashboard-1.png";
-    import indev from "$lib/images/in-dev.png";
-    import title from "$lib/images/title.svg";
-    import { Tooltip } from "@omujs/ui";
-    import IndexFeatures from "./_components/IndexFeatures.svelte";
-    import IndexLinks from "./_components/IndexLinks.svelte";
-    import IndexOpenSource from "./_components/IndexOpenSource.svelte";
+    import Content from '$lib/components/Content.svelte';
+    import Footer from '$lib/components/Footer.svelte';
+    import Header from '$lib/components/Header.svelte';
+    import dashboard1 from '$lib/images/dashboard-1.png';
+    import indev from '$lib/images/in-dev.png';
+    import title from '$lib/images/title.svg';
+    import { Tooltip } from '@omujs/ui';
+    import IndexFeatures from './_components/IndexFeatures.svelte';
+    import IndexLinks from './_components/IndexLinks.svelte';
+    import IndexOpenSource from './_components/IndexOpenSource.svelte';
 </script>
 
 <svelte:head>

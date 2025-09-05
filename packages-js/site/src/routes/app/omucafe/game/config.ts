@@ -13,17 +13,17 @@ export const DEFAULT_CONFIG = {
         product_list: {
             scroll: 0,
             search: '',
-        }
+        },
     },
     audio: {
         volumes: {
             master: 1,
             effects: 1,
-        }
+        },
     },
     chat: {
         show: true,
-    }
+    },
 };
 
 export type Config = typeof DEFAULT_CONFIG;
@@ -41,7 +41,7 @@ function migrate(config: Config): Config {
     if (config.version === 2) {
         config.chat = {
             show: true,
-        }
+        };
         config.version = 3;
     }
     return config;

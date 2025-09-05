@@ -49,7 +49,7 @@
                     source: {
                         type: 'asset',
                         asset_id: avatarId.key(),
-                    }
+                    },
                 };
                 $selectedAvatar = avatarId.key();
             }
@@ -73,14 +73,14 @@
                     base: {
                         type: 'asset',
                         asset_id: avatarId.key(),
-                    }
+                    },
                 };
                 newConfig.key = JSON.stringify({
                     base: newConfig.base,
                     active: newConfig.active,
                     deafened: newConfig.deafened,
                     muted: newConfig.muted,
-                })
+                });
                 $config.avatars[avatarId.key()] = newConfig;
                 $selectedAvatar = avatarId.key();
             }
@@ -142,7 +142,7 @@
                 <i class="ti ti-upload"></i>
             </FileDrop>
             {#if avatar}
-                <Button onclick={()=>{
+                <Button onclick={() => {
                     $config.users[id].avatar = '';
                 }}>
                     <Tooltip>
@@ -163,7 +163,7 @@
         {/if}
     </div>
     {#if avatar && $config.avatars[avatar]?.type === 'pngtuber'}
-        <button on:click={()=>{configOpen = !configOpen;}} class="config-toggle">
+        <button on:click={() => {configOpen = !configOpen;}} class="config-toggle">
             <Tooltip>
                 レイヤーを変更
             </Tooltip>
@@ -178,7 +178,7 @@
             <div class="pngtuber-config">
                 {#each Array.from({ length: 10 }) as _, i (i)}
                     <button
-                        on:click={()=>{
+                        on:click={() => {
                             $config.users[id].config.pngtuber.layer = i;
                         }}
                         class="layer"
@@ -190,7 +190,6 @@
         {/if}
     {/if}
 </div>
-
 
 <style lang="scss">
     .settings {

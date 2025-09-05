@@ -26,7 +26,7 @@
                         command.args = [
                             ...command.args,
                             builder.v.void(),
-                        ]
+                        ];
                     }}>
                         <i class="ti ti-plus"></i>
                     </button>
@@ -56,13 +56,13 @@
         invoke: {
             label: 'Invoke',
             value: () => command.invoke(value.void(), value.void()),
-        }
-    }} value={null} on:change={({detail: {value}}) => {
+        },
+    }} value={null} on:change={({ detail: { value } }) => {
         if (!value) return;
         expression.commands = [
             ...expression.commands,
             value(),
-        ]
+        ];
     }} />
 </div>
 

@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { Align, Button, Checkbox, Combobox, Slider } from "@omujs/ui";
+    import { Align, Button, Checkbox, Combobox, Slider } from '@omujs/ui';
     import {
         DEFAULT_FILTER_BLUR,
         DEFAULT_FILTER_NOOP,
         DEFAULT_FILTER_PIXELATE,
         ReplayApp,
-    } from "../replay-app.js";
-    import Section from "./Section.svelte";
-    import Setting from "./Setting.svelte";
+    } from '../replay-app.js';
+    import Section from './Section.svelte';
+    import Setting from './Setting.svelte';
 
     const { config } = ReplayApp.getInstance();
 
@@ -29,15 +29,15 @@
             <Combobox
                 options={{
                     noop: {
-                        label: "無し",
+                        label: '無し',
                         value: DEFAULT_FILTER_NOOP,
                     },
                     pixelate: {
-                        label: "ピクセル化",
+                        label: 'ピクセル化',
                         value: DEFAULT_FILTER_PIXELATE,
                     },
                     blur: {
-                        label: "ぼかし",
+                        label: 'ぼかし',
                         value: DEFAULT_FILTER_BLUR,
                     },
                 }}
@@ -45,7 +45,7 @@
                 key={$config.filter.type}
             />
         </Setting>
-        {#if $config.filter.type !== "noop"}
+        {#if $config.filter.type !== 'noop'}
             <Setting name="強さ">
                 <Slider
                     bind:value={$config.filter.radius}
@@ -67,13 +67,13 @@
             <Setting name="時間を表示">
                 <Checkbox bind:value={$config.overlay.time.active} />
             </Setting>
-            <div class="group">
-                {#if $config.overlay.time.active}
+            {#if $config.overlay.time.active}
+                <div class="group">
                     <Setting name="長さを表示">
                         <Checkbox bind:value={$config.overlay.time.duration} />
                     </Setting>
-                {/if}
-            </div>
+                </div>
+            {/if}
             <Setting name="タイトルを表示">
                 <Checkbox bind:value={$config.overlay.title} />
             </Setting>

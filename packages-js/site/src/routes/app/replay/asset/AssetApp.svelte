@@ -1,12 +1,12 @@
 <script lang="ts">
-    import Player from "../components/Player.svelte";
-    import { ReplayApp } from "../replay-app.js";
+    import Player from '../components/Player.svelte';
+    import { ReplayApp } from '../replay-app.js';
 
     const { replayData, config } = ReplayApp.getInstance();
     let player: YT.Player;
 
     function updateReplay() {
-        console.log("updateReplay");
+        console.log('updateReplay');
         if (!player) return;
         const data = $replayData;
         if (!data) return;
@@ -33,14 +33,14 @@
         updateReplay();
         if (!$replayData) return;
         const { title } = await fetch(
-            "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=" +
+            'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=' +
                 $replayData.videoId,
         )
             .then((res) => res.json())
             .catch(() => {
-                throw new Error("Failed to fetch video data");
+                throw new Error('Failed to fetch video data');
             });
-        shorts = title.includes("#shorts");
+        shorts = title.includes('#shorts');
     }
 
     let ended = false;
@@ -72,7 +72,7 @@
         time: number;
         duration: number;
     } | null = null;
-    let formattedTime = "...";
+    let formattedTime = '...';
     let videoData: YT.VideoData | undefined = undefined;
 
     type TimeUnit = { factor: number };
@@ -102,15 +102,15 @@
             components.push(
                 Math.floor((time / unit.factor) % 60)
                     .toString()
-                    .padStart(last ? 0 : 2, "0"),
+                    .padStart(last ? 0 : 2, '0'),
             );
         }
-        return components.join(":");
+        return components.join(':');
     }
 
     function updateTime() {
         if (!timer) {
-            formattedTime = "...";
+            formattedTime = '...';
             return;
         }
         const { duration } = timer;
@@ -125,7 +125,7 @@
 
     replayData.subscribe(() => {
         updateReplay();
-        console.log("replayData", $replayData);
+        console.log('replayData', $replayData);
     });
     config.subscribe(() => updateConfig());
 </script>
@@ -168,28 +168,28 @@ time
             <div
                 class="time-overlay"
                 style:background={{
-                    start: "linear-gradient(to bottom, #0008 0%, transparent 50%)",
-                    middle: "linear-gradient(to top, transparent 0%, #0004 50%, transparent 100%)",
-                    end: "linear-gradient(to top, #0008 0%, transparent 50%)",
+                    start: 'linear-gradient(to bottom, #0008 0%, transparent 50%)',
+                    middle: 'linear-gradient(to top, transparent 0%, #0004 50%, transparent 100%)',
+                    end: 'linear-gradient(to top, #0008 0%, transparent 50%)',
                 }[$config.overlay.align.vertical]}
             ></div>
         {/if}
         <div
             class="align"
             style:align-items={{
-                start: "flex-start",
-                middle: "center",
-                end: "flex-end",
+                start: 'flex-start',
+                middle: 'center',
+                end: 'flex-end',
             }[$config.overlay.align.horizontal]}
             style:justify-content={{
-                start: "flex-end",
-                middle: "center",
-                end: "flex-end",
+                start: 'flex-end',
+                middle: 'center',
+                end: 'flex-end',
             }[$config.overlay.align.vertical]}
             style:flex-direction={{
-                start: "column-reverse",
-                middle: "column",
-                end: "column",
+                start: 'column-reverse',
+                middle: 'column',
+                end: 'column',
             }[$config.overlay.align.vertical]}
         >
             {#if $config.overlay.title}
