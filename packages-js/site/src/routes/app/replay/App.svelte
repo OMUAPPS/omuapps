@@ -1,15 +1,15 @@
 <script lang="ts">
-    import AssetButton from "$lib/components/AssetButton.svelte";
-    import type { Chat } from "@omujs/chat";
-    import { OBSPlugin } from "@omujs/obs";
-    import { Button, TableList, Textbox, Tooltip } from "@omujs/ui";
-    import Config from "./components/Config.svelte";
-    import Menu from "./components/Menu.svelte";
-    import MenuSection from "./components/MenuSection.svelte";
-    import Player from "./components/Player.svelte";
-    import RoomEntry from "./components/RoomEntry.svelte";
-    import { ReplayApp } from "./replay-app.js";
-    import { playVideo } from "./stores.js";
+    import AssetButton from '$lib/components/AssetButton.svelte';
+    import type { Chat } from '@omujs/chat';
+    import { OBSPlugin } from '@omujs/obs';
+    import { Button, TableList, Textbox, Tooltip } from '@omujs/ui';
+    import Config from './components/Config.svelte';
+    import Menu from './components/Menu.svelte';
+    import MenuSection from './components/MenuSection.svelte';
+    import Player from './components/Player.svelte';
+    import RoomEntry from './components/RoomEntry.svelte';
+    import { ReplayApp } from './replay-app.js';
+    import { playVideo } from './stores.js';
 
     export let obs: OBSPlugin;
     export let chat: Chat;
@@ -45,19 +45,19 @@
         };
     }
 
-    let search: string = "";
+    let search: string = '';
 
     function matchVideoID(url: URL): string | undefined {
-        if (url.hostname === "youtu.be") {
+        if (url.hostname === 'youtu.be') {
             return url.pathname.slice(1);
-        } else if (url.hostname.endsWith("youtube.com")) {
-            const path = url.pathname.split("/");
+        } else if (url.hostname.endsWith('youtube.com')) {
+            const path = url.pathname.split('/');
             switch (path[1]) {
-                case "watch":
-                    return url.searchParams.get("v") || undefined;
-                case "embed":
-                case "shorts":
-                case "live":
+                case 'watch':
+                    return url.searchParams.get('v') || undefined;
+                case 'embed':
+                case 'shorts':
+                case 'live':
                     return path[2] || undefined;
                 default:
                     return undefined;
@@ -93,9 +93,8 @@
                 filter={(_, room) => {
                     if (
                         room.providerId.key() !==
-                        "com.omuapps:chatprovider/youtube"
-                    )
-                        return false;
+                        'com.omuapps:chatprovider/youtube'
+                    ) return false;
                     if (!room.metadata?.url) return false;
                     if (
                         search &&
@@ -117,7 +116,7 @@
             <AssetButton
                 {omu}
                 {obs}
-                dimensions={{ width: "50:%", height: "50:%" }}
+                dimensions={{ width: '50:%', height: '50:%' }}
             />
         </MenuSection>
     </Menu>

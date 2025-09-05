@@ -21,7 +21,11 @@
         "vue",
         "markdown",
         "json",
-        "jsonc"
+        "jsonc",
+        "svelte"
+    ],
+    "eslint.validate": [
+        "svelte"
     ],
     "files.exclude": {
         "**/.mypy_cache": true,
@@ -67,6 +71,6 @@
         "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
     "[svelte]": {
-        "editor.defaultFormatter": "svelte.svelte-vscode"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
 }
