@@ -91,10 +91,10 @@ const MARSHMALLOW_DATA_REGISTRY_TYPE = RegistryType.createJson<MarshmallowData>(
     },
 });
 
-export type RecentMessage = Message & {user_id: string};
+export type RecentMessage = Message & { user_id: string };
 const RECENT_MESSAGE_TABLE = TableType.createJson<RecentMessage>(APP_ID, {
     name: 'recent_message',
-    key: (message: Message) => message.message_id
+    key: (message: Message) => message.message_id,
 });
 
 export class MarshmallowApp {

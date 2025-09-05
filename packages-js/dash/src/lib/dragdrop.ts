@@ -65,7 +65,7 @@ waitForTauri().then(() => {
                 drag_id,
                 position,
                 files,
-            }
+            },
         });
         dragDrops[drag_id] = { files, paths };
     });
@@ -80,8 +80,8 @@ waitForTauri().then(() => {
                 type: 'over',
                 drag_id,
                 position,
-            }
-        })
+            },
+        });
     });
     listen(TauriEvent.DRAG_DROP, async ({ payload: { position, paths } }) => {
         const drag_id = getDragId();
@@ -95,8 +95,8 @@ waitForTauri().then(() => {
                 drag_id,
                 position,
                 files: await getFilesByPaths(paths),
-            }
-        })
+            },
+        });
     });
     listen(TauriEvent.DRAG_LEAVE, async () => {
         const drag_id = getDragId();
@@ -108,7 +108,7 @@ waitForTauri().then(() => {
             state: {
                 type: 'leave',
                 drag_id,
-            }
-        })
+            },
+        });
     });
-})
+});

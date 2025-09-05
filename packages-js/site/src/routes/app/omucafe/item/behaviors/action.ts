@@ -11,7 +11,7 @@ export type Action = {
         clickChild: string,
         dropChild: string,
     }>
-}
+};
 
 export function createAction(options: { on: Action['on'] }): Action {
     const { on } = options;
@@ -61,7 +61,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
                     held: context.held,
                     hovering: context.hovering,
                 });
-            }
+            },
         });
     }
 
@@ -88,7 +88,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
                     child: args.child?.id || null,
                     hovering: context.hovering,
                 });
-            }
+            },
         });
     }
 };

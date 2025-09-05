@@ -77,7 +77,7 @@ type RemoteAppRequestPayload = {
         description?: LocalizedText;
     },
     permissions: string[];
-}
+};
 
 export type RequestRemoteAppResponse = {
     type: 'success';
@@ -86,7 +86,7 @@ export type RequestRemoteAppResponse = {
 } | {
     type: 'error';
     message: string;
-}
+};
 
 export const REMOTE_APP_REQUEST_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('remote_app', 'request');
 const REMOTE_APP_REQUEST_ENDPOINT_TYPE = EndpointType.createJson<RemoteAppRequestPayload, RequestRemoteAppResponse>(SERVER_EXTENSION_TYPE, {
@@ -110,11 +110,11 @@ export class ServerExtension implements Extension {
             SESSION_DISCONNECT_PACKET_TYPE,
         );
         client.network.addPacketHandler(
-            SESSION_CONNECT_PACKET_TYPE, (app) => this.handleSessionConnect(app)
-        )
+            SESSION_CONNECT_PACKET_TYPE, (app) => this.handleSessionConnect(app),
+        );
         client.network.addPacketHandler(
-            SESSION_DISCONNECT_PACKET_TYPE, (app) => this.handleSessionDisconnect(app)
-        )
+            SESSION_DISCONNECT_PACKET_TYPE, (app) => this.handleSessionDisconnect(app),
+        );
         this.apps = client.tables.get(APP_TABLE_TYPE);
         this.sessions = client.tables.get(SESSION_TABLE_TYPE);
         this.trustedOrigins = client.registries.get(TRUSTED_ORIGINS_REGISTRY_TYPE);
@@ -147,7 +147,7 @@ export class ServerExtension implements Extension {
 
     public observeSession(appId: Identifier, {
         onConnect,
-        onDisconnect
+        onDisconnect,
     }: {
         onConnect(app: App): void;
         onDisconnect(app: App): void;

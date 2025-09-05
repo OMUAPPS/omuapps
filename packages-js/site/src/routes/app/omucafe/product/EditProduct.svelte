@@ -36,7 +36,7 @@
                 $scene = {
                     type: 'product_take_photo',
                     id: product.id,
-                }
+                };
             }}>
                 写真を撮る
             </Button>

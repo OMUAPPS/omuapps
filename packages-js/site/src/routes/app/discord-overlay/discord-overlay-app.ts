@@ -62,7 +62,7 @@ type SpeakState = {
     speaking: boolean;
     speaking_start: number;
     speaking_stop: number;
-}
+};
 
 const SPEAKING_STATE_REGISTRY_TYPE = RegistryType.createJson<Record<string, SpeakState>>(PLUGIN_ID, {
     name: 'speaking_states',
@@ -89,7 +89,7 @@ export type SelectedVoiceChannel = {
         messages: [];
         voice_states: [];
     };
-}
+};
 
 const SELECTED_VOICE_CHANNEL_REGISTRY_TYPE = RegistryType.createJson<SelectedVoiceChannel | null>(PLUGIN_ID, {
     name: 'selected_voice_channel',
@@ -109,7 +109,7 @@ export type AuthenticateUser = {
     accent_color: number;
     banner_color: string;
     clan: null;
-}
+};
 const GET_CLIENTS_ENDPOINT_TYPE = EndpointType.createJson<null, Record<string, AuthenticateUser>>(PLUGIN_ID, {
     name: 'get_clients',
 });
@@ -117,10 +117,10 @@ export type Guild = {
     id: string;
     name: string;
     icon_url?: string;
-}
+};
 type GetGuildsResponseData = {
     guilds: Guild[];
-}
+};
 const GET_GUILDS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string }, GetGuildsResponseData>(PLUGIN_ID, {
     name: 'get_guilds',
 });
@@ -128,10 +128,10 @@ export type Channel = {
     id: string;
     name: string;
     type: number;
-}
+};
 type GetChannelsResponseData = {
     channels: Channel[];
-}
+};
 const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, guild_id: string }, GetChannelsResponseData>(PLUGIN_ID, {
     name: 'get_channels',
 });
@@ -282,7 +282,7 @@ const DEFAULT_CONFIG: Config = {
     },
     reactive: {
         enabled: false,
-    }
+    },
 };
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
@@ -298,7 +298,7 @@ export class DiscordOverlayApp {
     constructor(public readonly omu: Omu) {
         omu.plugins.require({
             omuplugin_discordrpc: `>=${VERSION}`,
-        })
+        });
         this.voiceState = makeRegistryWritable(omu.registries.get(VOICE_STATE_REGISTRY_TYPE));
         this.speakingState = makeRegistryWritable(omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE));
         this.selectedVoiceChannel = makeRegistryWritable(omu.registries.get(SELECTED_VOICE_CHANNEL_REGISTRY_TYPE));

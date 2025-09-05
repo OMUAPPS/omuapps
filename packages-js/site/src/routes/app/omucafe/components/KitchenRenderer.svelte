@@ -39,7 +39,7 @@
                     <Button onclick={() => {
                         createItemState({
                             item,
-                        })
+                        });
                     }}>
                         {item.name}
                     </Button>

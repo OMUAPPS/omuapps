@@ -46,7 +46,7 @@ export type NetworkStatus = StatusType<'connecting'> | StatusType<'connected'> |
 };
 
 export class Network {
-    public status: NetworkStatus = {type: 'disconnected'};
+    public status: NetworkStatus = { type: 'disconnected' };
     public readonly event: { connected: EventEmitter<[]>; disconnected: EventEmitter<[DisconnectPacket | null]>; packet: EventEmitter<[Packet<unknown>]>; status: EventEmitter<[NetworkStatus]>; } = {
         connected: new EventEmitter<[]>(),
         disconnected: new EventEmitter<[DisconnectPacket | null]>(),
@@ -78,9 +78,9 @@ export class Network {
         this.addPacketHandler(PACKET_TYPES.DISCONNECT, async (reason) => {
             await this.event.disconnected.emit(reason);
             if (reason.type === DisconnectType.SHUTDOWN
-                ||reason.type === DisconnectType.CLOSE
-                ||reason.type === DisconnectType.SERVER_RESTART) {
-                this.setStatus({type: 'disconnected', reason});
+                || reason.type === DisconnectType.CLOSE
+                || reason.type === DisconnectType.SERVER_RESTART) {
+                this.setStatus({ type: 'disconnected', reason });
                 return;
             }
             const ERROR_MAP: Record<DisconnectType, typeof OmuError | undefined> = {
@@ -100,14 +100,14 @@ export class Network {
             const error = ERROR_MAP[reason.type];
             if (error) {
                 const omuError = new error(reason.message);
-                await this.setStatus({type: 'error', error: omuError});
+                await this.setStatus({ type: 'error', error: omuError });
             }
         });
         this.addPacketHandler(PACKET_TYPES.READY, () => {
             if (this.status.type === 'ready') {
                 throw new Error('Received READY packet when already ready');
             }
-            this.setStatus({type: 'ready'});
+            this.setStatus({ type: 'ready' });
         });
     }
 
@@ -145,7 +145,7 @@ export class Network {
             attempt,
             timeout,
             date,
-            cancel: () => {cancelled = true;}
+            cancel: () => {cancelled = true;},
         });
         if (cancelled) {
             return false;
@@ -180,7 +180,7 @@ export class Network {
                     }
                     continue;
                 }
-                await this.setStatus({type: 'connecting'});
+                await this.setStatus({ type: 'connecting' });
                 const metaReceived = await this.connection.receive(this.packetMapper);
                 if (!metaReceived) {
                     throw new Error('Connection closed before receiving server meta');
@@ -194,12 +194,12 @@ export class Network {
                     type: PACKET_TYPES.CONNECT,
                     data: new ConnectPacket({
                         app: this.client.app,
-                        protocol: {version: VERSION},
+                        protocol: { version: VERSION },
                         token,
                     }),
                 });
                 this.listenTask = this.listen();
-                await this.setStatus({type: 'connected'});
+                await this.setStatus({ type: 'connected' });
                 await this.event.connected.emit();
                 await this.dispatchTasks();
                 this.send({
@@ -212,7 +212,7 @@ export class Network {
                 }
             } finally {
                 if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting' && this.status.type !== 'error') {
-                    this.setStatus({type: 'disconnected', attempt});
+                    this.setStatus({ type: 'disconnected', attempt });
                 }
                 this.event.disconnected.emit(null);
                 this.connection?.close();

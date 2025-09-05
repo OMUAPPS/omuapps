@@ -57,7 +57,7 @@ const DEFAULT_REPLAY_CONFIG = {
         hideVideo: false,
     },
     filter: { type: 'noop' } as Filter,
-}
+};
 type ReplayConfig = typeof DEFAULT_REPLAY_CONFIG;
 
 const REPLAY_CONFIG_REGISTRY_TYPE = RegistryType.createJson<ReplayConfig>(APP_ID, {
@@ -106,5 +106,4 @@ export class ReplayApp {
         }
         return this.instance;
     }
-    
 }

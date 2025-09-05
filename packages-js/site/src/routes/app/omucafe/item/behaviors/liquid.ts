@@ -12,7 +12,7 @@ export type LiquidLayer = {
     side: Asset,
     top?: Asset,
     volume: number,
-}
+};
 
 export type Liquid = {
     layers: LiquidLayer[],
@@ -31,7 +31,7 @@ export type Liquid = {
         point: Vec2Like,
     },
     spawn?: null,
-}
+};
 
 export function createLiquid(): Liquid {
     return {
@@ -73,7 +73,7 @@ void main() {
     uv = fract(uv);
     fragColor = texture(u_texture, uv);
 }
-`}
+` };
 
 const LIQUID_TOP_FRAGMENT: ShaderSource = {
     type: 'fragment',
@@ -112,7 +112,7 @@ void main() {
     uv = fract(uv);
     fragColor = texture(u_texture, uv);
 }
-`}
+` };
 
 export class LiquidHandler implements BehaviorHandler<'liquid'> {
     private readonly childrenBuffer: GlFramebuffer;
@@ -132,7 +132,7 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-        })
+        });
         childrenBuffer.use(() => {
             childrenBuffer.attachTexture(childrenBufferTexture);
         });
@@ -147,7 +147,7 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-        })
+        });
         maskBuffer.use(() => {
             maskBuffer.attachTexture(maskBufferTexture);
         });
@@ -193,9 +193,9 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
             liquid.layers.length > 0 &&
             this.#isLayerEqual(
                 target.layers[target.layers.length - 1],
-                liquid.layers[liquid.layers.length - 1]
+                liquid.layers[liquid.layers.length - 1],
             )
-        )
+        );
         if (target.spawn && !sameLiquid) return;
         if (liquid.layers.length === 0) {
             actions.push({
@@ -234,15 +234,15 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
     preLoadAssets(action: BehaviorAction<'liquid'>, args: undefined): Promise<void> | void {
         const { behavior } = action;
         if (behavior.layers.length === 0) return;
-            const { layers } = behavior;
-            if (!layers.length) return;
-            const layersFromTop = layers.toReversed();
-            const { side, top: topAsset } = layersFromTop[0];
-            getTextureByAsset(topAsset ?? side);
-            for (const layer of layersFromTop) {
-                const { side } = layer;
-                getTextureByAsset(side);
-            }
+        const { layers } = behavior;
+        if (!layers.length) return;
+        const layersFromTop = layers.toReversed();
+        const { side, top: topAsset } = layersFromTop[0];
+        getTextureByAsset(topAsset ?? side);
+        for (const layer of layersFromTop) {
+            const { side } = layer;
+            getTextureByAsset(side);
+        }
         if (behavior.mask) {
             const { asset } = behavior.mask;
             getTextureByAsset(asset);

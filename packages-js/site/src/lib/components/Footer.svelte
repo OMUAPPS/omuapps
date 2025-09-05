@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Tooltip } from "@omujs/ui";
+    import { Tooltip } from '@omujs/ui';
 </script>
 
 <footer>

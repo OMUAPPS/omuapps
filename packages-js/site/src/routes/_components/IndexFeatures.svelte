@@ -1,18 +1,18 @@
 <script lang="ts">
     import { BROWSER } from 'esm-env';
-    
+
     let scroll = 0;
 
     function onScroll() {
         scroll = window.scrollY;
     }
 
-    function isVisible(element: HTMLElement | undefined, _scroll: number) {
+    function isVisible(element: HTMLElement | undefined, _: number) {
         if (!BROWSER) return true;
         if (!element) return false;
         const rect = element.getBoundingClientRect();
         return rect.top + 100 < window.innerHeight;
-    };
+    }
 
     let card0, card1, card2;
 </script>

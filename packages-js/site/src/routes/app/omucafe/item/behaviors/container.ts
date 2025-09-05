@@ -30,7 +30,7 @@ export type Container = {
     },
     order?: 'up' | 'down',
     spawn?: null,
-}
+};
 
 export function createContainer(options?: Container): Container {
     return options ?? {};
@@ -54,7 +54,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-        })
+        });
         childrenBuffer.use(() => {
             childrenBuffer.attachTexture(childrenBufferTexture);
         });
@@ -69,7 +69,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-        })
+        });
         maskBuffer.use(() => {
             maskBuffer.attachTexture(maskBufferTexture);
         });
@@ -218,7 +218,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             offset: {
                 x: offsetX,
                 y: offsetY,
-            }
+            },
         };
     }
 
@@ -271,7 +271,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 callback: async () => {
                     const clone = cloneItemState(child);
                     context.held = clone.id;
-                }
+                },
             });
             return;
         }
@@ -283,7 +283,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 const { item } = action;
                 context.held = child.id;
                 detachChildren(item, child);
-            }
+            },
         });
     }
 

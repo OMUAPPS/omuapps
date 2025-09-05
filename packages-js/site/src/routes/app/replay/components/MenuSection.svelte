@@ -2,7 +2,7 @@
     export let name: string;
     export let icon: string;
     export let flex: number = 0;
-    export let min: string = "";
+    export let min: string = '';
 </script>
 
 <h3>

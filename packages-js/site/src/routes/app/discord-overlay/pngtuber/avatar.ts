@@ -12,15 +12,15 @@ export type AvatarAction = {
     self_deaf: boolean;
     suppress: boolean;
     config: UserAvatarConfig;
-}
+};
 
 export type Effect = {
     render: (action: AvatarAction, texture: GlTexture, dest: GlFramebuffer) => void;
-}
+};
 
 export type RenderOptions = {
     effects: Effect[];
-}
+};
 
 export interface AvatarContext {
     render(matrices: MatrixStack, action: AvatarAction, options: RenderOptions): void;

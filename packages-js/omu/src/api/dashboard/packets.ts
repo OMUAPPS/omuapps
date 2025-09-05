@@ -94,75 +94,75 @@ export class AppUpdateRequest {
 
 export type AppInstallResponse = {
     accepted: boolean;
-}
+};
 
 export type AppUpdateResponse = {
     accepted: boolean;
-}
+};
 
 export type DragDropFile = {
     type: 'file' | 'directory';
     size: number;
     name: string;
-}
+};
 
 export type DragDropPosition = {
     x: number;
     y: number;
-}
+};
 
 export type DragEnter = {
     type: 'enter';
     drag_id: string;
     files: DragDropFile[];
     position: DragDropPosition;
-}
+};
 
 export type DragOver = {
     type: 'over';
     drag_id: string;
     position: DragDropPosition;
-}
+};
 
 export type DragDrop = {
     type: 'drop';
     drag_id: string;
     position: DragDropPosition;
     files: DragDropFile[];
-}
+};
 
 export type DragLeave = {
     type: 'leave';
     drag_id: string;
-}
+};
 
-export type DragState = DragEnter | DragOver | DragDrop | DragLeave
+export type DragState = DragEnter | DragOver | DragDrop | DragLeave;
 
 export type FileDragPacket = {
     drag_id: string;
     app: App;
     state: DragState;
-}
+};
 
 export type DragDropReadRequest = {
     drag_id: string;
-}
+};
 
 export type DragDropReadRequestDashboard = {
     request_id: string;
     drag_id: string;
-}
+};
 
 export type DragDropReadMeta = {
     request_id: string;
     drag_id: string;
     files: readonly DragDropFile[];
-}
+};
 
 export type FileData = {
     file: DragDropFile;
     buffer: Uint8Array;
-}
+};
 
 export class DragDropReadResponse {
     constructor(
@@ -213,9 +213,9 @@ export type DragDropRequest = object;
 export type DragDropRequestDashboard = {
     request_id: string;
     app: AppJson;
-}
+};
 
 export type DragDropRequestResponse = {
     request_id: string;
     ok: boolean;
-}
+};

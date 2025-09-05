@@ -34,8 +34,8 @@ export default defineConfig({
         preprocessorOptions: {
             scss: {
                 api: 'modern',
-            }
-        }
+            },
+        },
     },
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}'],
@@ -49,6 +49,6 @@ export default defineConfig({
     build: {
         rollupOptions: {
             external: '@2ji-han/kuromoji.js',
-        }
-    }
+        },
+    },
 });

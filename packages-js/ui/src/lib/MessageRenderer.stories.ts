@@ -34,7 +34,7 @@ export const Example: Story = {
                 links: ['https://example.com'],
                 screen_id: 'test',
                 url: 'https://example.com',
-            }
+            },
         }),
         createdAt: new Date(),
         gifts: [
@@ -52,7 +52,6 @@ export const Example: Story = {
         }),
     },
 };
-
 
 export const NoAuthor: Story = {
     args: {

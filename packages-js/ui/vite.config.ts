@@ -7,8 +7,8 @@ export default defineConfig({
         preprocessorOptions: {
             scss: {
                 api: 'modern',
-            }
-        }
+            },
+        },
     },
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}'],

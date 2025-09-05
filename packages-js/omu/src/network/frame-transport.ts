@@ -79,43 +79,43 @@ export class FrameConnection implements Connection {
     private handleCommand(command: Command): void {
         const { type, payload } = command;
         switch (type) {
-        case 'syn':
-            this.origin = payload.origin;
-            this.postCommand({
-                type: 'syn',
-                payload: {
-                    origin: window.origin,
-                },
-            });
-            break;
-        case 'connect':
-            this.connected = true;
-            if (this.connectedWaiter) {
-                this.connectedWaiter();
-                this.connectedWaiter = null;
+            case 'syn':
+                this.origin = payload.origin;
+                this.postCommand({
+                    type: 'syn',
+                    payload: {
+                        origin: window.origin,
+                    },
+                });
+                break;
+            case 'connect':
+                this.connected = true;
+                if (this.connectedWaiter) {
+                    this.connectedWaiter();
+                    this.connectedWaiter = null;
+                }
+                break;
+            case 'disconnect':
+                this.connected = false;
+                break;
+            case 'receive': {
+                const reader = ByteReader.fromUint8Array(payload);
+                this.packetQueue.push({
+                    type: reader.readString(),
+                    data: reader.readUint8Array(),
+                });
+                reader.finish();
+                if (this.receiveWaiter) {
+                    this.receiveWaiter();
+                }
+                break;
             }
-            break;
-        case 'disconnect':
-            this.connected = false;
-            break;
-        case 'receive': {
-            const reader = ByteReader.fromUint8Array(payload);
-            this.packetQueue.push({
-                type: reader.readString(),
-                data: reader.readUint8Array(),
-            });
-            reader.finish();
-            if (this.receiveWaiter) {
-                this.receiveWaiter();
-            }
-            break;
-        }
-        case 'error':
-            throw new Error(payload);
-        case 'send':
-            break;
-        default:
-            throw new Error(`Unknown command type: ${type}`);
+            case 'error':
+                throw new Error(payload);
+            case 'send':
+                break;
+            default:
+                throw new Error(`Unknown command type: ${type}`);
         }
     }
 

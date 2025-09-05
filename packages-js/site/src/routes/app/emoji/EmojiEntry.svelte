@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Tooltip, client } from "@omujs/ui";
-    import { emojiApp, type Emoji } from "./emoji.js";
+    import { Tooltip, client } from '@omujs/ui';
+    import { emojiApp, type Emoji } from './emoji.js';
 
     const { emojis, selectedEmoji } = $emojiApp;
 
@@ -41,18 +41,18 @@
         <small>
             {entry.patterns
                 .map((pattern) => {
-                    if (pattern.type === "text") {
+                    if (pattern.type === 'text') {
                         return pattern.text;
                     }
-                    if (pattern.type === "image") {
+                    if (pattern.type === 'image') {
                         return `:${pattern.id}:`;
                     }
-                    if (pattern.type === "regex") {
+                    if (pattern.type === 'regex') {
                         return pattern.regex;
                     }
-                    return "";
+                    return '';
                 })
-                .join(", ")}
+                .join(', ')}
         </small>
     </div>
     {#if selected}

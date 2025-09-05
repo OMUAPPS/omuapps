@@ -1,9 +1,9 @@
 <script lang="ts">
-    import AppInfo from "$lib/common/AppInfo.svelte";
-    import type { App } from "@omujs/omu";
-    import type { HostRequest, UserResponse } from "@omujs/omu/api/dashboard";
-    import Screen from "./Screen.svelte";
-    import type { ScreenHandle } from "./screen.js";
+    import AppInfo from '$lib/common/AppInfo.svelte';
+    import type { App } from '@omujs/omu';
+    import type { HostRequest, UserResponse } from '@omujs/omu/api/dashboard';
+    import Screen from './Screen.svelte';
+    import type { ScreenHandle } from './screen.js';
 
     export let screen: {
         handle: ScreenHandle;
@@ -16,12 +16,12 @@
     const { request, app, resolve } = screen.props;
 
     function accept() {
-        resolve({ type: "ok", value: undefined });
+        resolve({ type: 'ok', value: undefined });
         screen.handle.pop();
     }
 
     function reject() {
-        resolve({ type: "cancelled" });
+        resolve({ type: 'cancelled' });
         screen.handle.pop();
     }
 </script>

@@ -24,7 +24,7 @@ export class ClockApp {
     constructor(public readonly omu: Omu) {
         omu.plugins.require({
             omuplugin_discordrpc: `>=${VERSION}`,
-        })
+        });
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
         this.calendar = DEFAULT_EVENT_CALENDAR;
     }

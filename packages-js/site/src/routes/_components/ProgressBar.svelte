@@ -13,7 +13,6 @@
         }
     });
 
-
     function markLoaded() {
         if (timeout) {
             window.clearTimeout(timeout);

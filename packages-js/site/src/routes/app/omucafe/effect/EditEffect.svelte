@@ -68,7 +68,7 @@
                     effect.attributes.sound = effect.attributes.sound ? undefined : createEffectSound({
                         clip: await createClip({
                             asset,
-                        })
+                        }),
                     });
                 }} primary>
                     {#if effect.attributes.sound}

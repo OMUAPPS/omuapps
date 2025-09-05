@@ -3,11 +3,11 @@ const paramRegex = /\{([\w]+)\}/g;
 export type I18n = {
     translate: TranslateFunction;
     localeName: string;
-}
+};
 
 export type Translations = {
     [key: string]: string | Translations;
-}
+};
 
 export type TranslateFunction = (key: string, params?: Record<string, string>) => string;
 

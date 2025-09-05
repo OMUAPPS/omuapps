@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { appWindow } from "$lib/tauri.js";
-    import { DEV } from "esm-env";
-    import { isBetaEnabled } from "../settings.js";
+    import { appWindow } from '$lib/tauri.js';
+    import { DEV } from 'esm-env';
+    import { isBetaEnabled } from '../settings.js';
 
     export const props = {};
 
     $: url = DEV
-        ? "http://localhost:5173/app/"
+        ? 'http://localhost:5173/app/'
         : $isBetaEnabled
-          ? "https://beta.omuapps.com/app/"
-          : "https://omuapps.com/app/";
+        ? 'https://beta.omuapps.com/app/'
+        : 'https://omuapps.com/app/';
 </script>
 
 <div class="container">
@@ -19,14 +19,14 @@
     <div
         class="window-resize bottom"
         on:mousedown={() => {
-            appWindow.startResizeDragging("South");
+            appWindow.startResizeDragging('South');
         }}
     ></div>
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
         class="window-resize right"
         on:mousedown={() => {
-            appWindow.startResizeDragging("East");
+            appWindow.startResizeDragging('East');
         }}
     ></div>
 </div>

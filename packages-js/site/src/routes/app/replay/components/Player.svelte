@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ReplayApp } from "../replay-app.js";
+    import { ReplayApp } from '../replay-app.js';
 
     export let videoId: string | undefined;
     export let player: YT.Player | undefined = undefined;
@@ -75,23 +75,23 @@
     on:keydown={(event) => {
         if (!player) return;
         switch (event.key) {
-            case " ":
-            case "k":
+            case ' ':
+            case 'k':
                 toggle();
                 break;
-            case "ArrowLeft":
+            case 'ArrowLeft':
                 player.seekTo(player.getCurrentTime() - 5, true);
                 break;
-            case "ArrowRight":
+            case 'ArrowRight':
                 player.seekTo(player.getCurrentTime() + 5, true);
                 break;
-            case "j":
+            case 'j':
                 player.seekTo(player.getCurrentTime() - 10, true);
                 break;
-            case "l":
+            case 'l':
                 player.seekTo(player.getCurrentTime() + 10, true);
                 break;
-            case "m":
+            case 'm':
                 if (player.isMuted()) {
                     player.unMute();
                 } else {
@@ -105,7 +105,7 @@
 />
 <svg>
     <filter id="filter" x="0" y="0">
-        {#if $config.filter.type === "pixelate"}
+        {#if $config.filter.type === 'pixelate'}
             <feFlood x="4" y="4" height="1" width="1" />
             <feComposite
                 width={$config.filter.radius * 2}
@@ -117,11 +117,11 @@
             <feColorMatrix
                 type="matrix"
                 values="1 0 0 0 0
-                        0 1 0 0 0
-                        0 0 1 0 0
-                        0 0 0 0 1"
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    0 0 0 0 1"
             />
-        {:else if $config.filter.type === "blur"}
+        {:else if $config.filter.type === 'blur'}
             <feFlood x="4" y="4" height="1" width="1" />
             <feGaussianBlur
                 in="SourceGraphic"
@@ -130,9 +130,9 @@
             <feColorMatrix
                 type="matrix"
                 values="1 0 0 0 0
-                        0 1 0 0 0
-                        0 0 1 0 0
-                        0 0 0 0 1"
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    0 0 0 0 1"
             />
         {/if}
     </filter>
@@ -140,7 +140,7 @@
 <div
     bind:clientWidth={width}
     bind:clientHeight={height}
-    style={(side === "asset" && "filter: url(#filter)") || ""}
+    style={(side === 'asset' && 'filter: url(#filter)') || ''}
 >
     {#if videoId}
         {#key videoId}

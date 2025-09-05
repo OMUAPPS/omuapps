@@ -23,7 +23,7 @@ export class GLStateManager {
 
     public pushViewport(dimentions: Vec2Like) {
         if (this.viewportStack.length >= 100) {
-            console.warn('Viewport stack overflow (>=100)')
+            console.warn('Viewport stack overflow (>=100)');
         }
         this.viewportStack.push(dimentions);
         this.gl.viewport(0, 0, dimentions.x, dimentions.y);
@@ -162,11 +162,10 @@ export class GlShader {
 
 export type GlType = 'int' | 'float' | 'vec2' | 'vec3' | 'vec4' | 'mat2' | 'mat3' | 'mat4' | 'sampler2d';
 
-
 export type Uniform<T> = {
     set: (value: T) => void;
     release: () => void;
-}
+};
 
 export class ProgramUniform {
     constructor(
@@ -522,7 +521,7 @@ export class GlTexture {
             0,
             COLOR_FORMATS[params.format ?? internalFormat],
             this.gl.UNSIGNED_BYTE,
-            image
+            image,
         );
     }
 
@@ -575,7 +574,6 @@ export class GlTexture {
 }
 
 export class GlFramebuffer {
-
     constructor(
         public readonly stateManager: GLStateManager,
         public readonly gl: WebGL2RenderingContext,
@@ -690,14 +688,14 @@ export class GlContext {
     public createShader(source: ShaderSource): GlShader {
         let type: number;
         switch (source.type) {
-        case 'vertex':
-            type = this.gl.VERTEX_SHADER;
-            break;
-        case 'fragment':
-            type = this.gl.FRAGMENT_SHADER;
-            break;
-        default:
-            throw new Error(`Unsupported shader type: ${source.type}`);
+            case 'vertex':
+                type = this.gl.VERTEX_SHADER;
+                break;
+            case 'fragment':
+                type = this.gl.FRAGMENT_SHADER;
+                break;
+            default:
+                throw new Error(`Unsupported shader type: ${source.type}`);
         }
         return GlShader.create(this.gl, type, source.source);
     }

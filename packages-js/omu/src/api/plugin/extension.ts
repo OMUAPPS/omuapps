@@ -77,8 +77,8 @@ export class PluginPackageInfo {
     }
 }
 
-export const PLUGIN_READ_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'read')
-export const PLUGIN_MANAGE_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'manage')
+export const PLUGIN_READ_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'read');
+export const PLUGIN_MANAGE_PACKAGE_PERMISSION_ID: Identifier = PLUGIN_EXTENSION_TYPE.join('package', 'manage');
 
 const PLUGIN_ALLOWED_PACKAGE_TABLE = TableType.createJson(PLUGIN_EXTENSION_TYPE, {
     name: 'allowed_package',

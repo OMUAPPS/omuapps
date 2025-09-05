@@ -6,7 +6,6 @@
     export let resource: Resource;
 </script>
 
-
 <span class="setting">
     <p>名前</p>
     <span>{resource.filename}</span>

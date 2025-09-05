@@ -20,7 +20,7 @@ type MouseEvent = {
     type: 'leave',
     pos: Vec2,
     timestamp: number,
-}
+};
 
 export class Mouse {
     private constructor(

@@ -29,7 +29,6 @@ export class EndpointRegisterPacket {
     }
 }
 
-
 export class InvokedParams {
     constructor(
         public readonly id: Identifier,
@@ -80,7 +79,6 @@ export class EndpointInvokedPacket {
     }
 }
 
-
 export class InvokeParams {
     constructor(
         public readonly id: Identifier,
@@ -126,7 +124,6 @@ export class EndpointInvokePacket {
         return new EndpointInvokePacket(params, buffer);
     }
 }
-
 
 export class ResponseParams {
     constructor(

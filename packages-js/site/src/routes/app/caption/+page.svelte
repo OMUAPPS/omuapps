@@ -4,7 +4,7 @@
     import { Omu } from '@omujs/omu';
     import {
         AppHeader,
-        setClient
+        setClient,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import App from './App.svelte';

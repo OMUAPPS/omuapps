@@ -51,7 +51,7 @@
         particle.source = {
             type: 'random',
             assets: assets,
-        }
+        };
     }} primary multiple accept="image/*">
         画像を設定
         <i class="ti ti-upload"></i>

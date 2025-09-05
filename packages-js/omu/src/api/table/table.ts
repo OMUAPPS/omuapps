@@ -86,7 +86,7 @@ export class TableType<T> {
             identifier.join(name),
             Serializer.pipe<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
             key,
-            permissions
+            permissions,
         );
     }
 
@@ -108,7 +108,7 @@ export class TableType<T> {
             identifier.join(name),
             serializer,
             key,
-            permissions
+            permissions,
         );
     }
 }

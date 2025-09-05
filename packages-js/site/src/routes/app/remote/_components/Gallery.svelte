@@ -48,7 +48,7 @@
             $config.show = {
                 type: 'resource',
                 id,
-            }
+            };
         }
     }
 
@@ -275,7 +275,7 @@
         }}
     >
         <div class="image">
-            {#await omu.assets.download(selected.asset).then(async ({buffer}) => {
+            {#await omu.assets.download(selected.asset).then(async ({ buffer }) => {
                 const blob = new Blob([buffer]);
                 const uri = URL.createObjectURL(blob);
                 return uri;
@@ -469,7 +469,6 @@
                 outline: 2px solid var(--color-bg-2);
             }
         }
-
 
         &.album {
             filter: drop-shadow(2px 2px 0rem var(--color-bg-1)) drop-shadow(2px 2px 0rem var(--color-outline));

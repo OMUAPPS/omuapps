@@ -28,7 +28,6 @@
     </a>
 </main>
 
-
 <style lang="scss">
     main {
         position: absolute;

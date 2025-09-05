@@ -3,7 +3,7 @@ import { App, Identifier, Omu } from '@omujs/omu';
 import {
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
-    DASHOBARD_APP_READ_PERMISSION_ID
+    DASHOBARD_APP_READ_PERMISSION_ID,
 } from '@omujs/omu/api/dashboard';
 import { setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';

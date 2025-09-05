@@ -34,7 +34,7 @@ export class GameData {
             },
             gameConfig,
             states: states,
-        }
+        };
         const dataStr = JSON.stringify(data);
         const buffers: Record<string, Uint8Array> = {};
         for (const [key, value] of Object.entries(resources.assets)) {
@@ -78,7 +78,7 @@ export class GameData {
             data,
             buffers,
             version,
-        )
+        );
     }
 
     public async download() {

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { appWindow } from "$lib/tauri";
-    import type { App } from "@omujs/omu";
-    import { Spinner } from "@omujs/ui";
+    import { appWindow } from '$lib/tauri';
+    import type { App } from '@omujs/omu';
+    import { Spinner } from '@omujs/ui';
 
     export let props: {
         app: App;
@@ -24,14 +24,14 @@
     <div
         class="window-resize bottom"
         on:mousedown={() => {
-            appWindow.startResizeDragging("South");
+            appWindow.startResizeDragging('South');
         }}
     ></div>
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
         class="window-resize right"
         on:mousedown={() => {
-            appWindow.startResizeDragging("East");
+            appWindow.startResizeDragging('East');
         }}
     ></div>
     {#if loading}

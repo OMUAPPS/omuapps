@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { dashboard, omu } from "$lib/client.js";
-    import { tauriWindow } from "$lib/tauri.js";
-    import { PermissionType } from "@omujs/omu/api/permission";
-    import type { Registry } from "@omujs/omu/api/registry";
-    import { LogicalSize } from "@tauri-apps/api/window";
-    import type { Writable } from "svelte/store";
+    import { dashboard, omu } from '$lib/client.js';
+    import { tauriWindow } from '$lib/tauri.js';
+    import { PermissionType } from '@omujs/omu/api/permission';
+    import type { Registry } from '@omujs/omu/api/registry';
+    import { LogicalSize } from '@tauri-apps/api/window';
+    import type { Writable } from 'svelte/store';
     const appWindow = tauriWindow.getCurrentWindow();
 
     function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
@@ -24,7 +24,7 @@
     }
 
     const trustedOrigins = makeRegistryWritable(omu.server.trustedOrigins);
-    let newOrigin = "";
+    let newOrigin = '';
 
     function resetWindowSize() {
         appWindow.setSize(new LogicalSize(1280, 720));
@@ -53,7 +53,7 @@
         <button
             on:click={() => {
                 $trustedOrigins = [...$trustedOrigins, newOrigin];
-                newOrigin = "";
+                newOrigin = '';
             }}
             class="add"
             aria-label="Add origin"
@@ -82,14 +82,14 @@
                 app: omu.app,
                 permissions: [
                     PermissionType.deserialize({
-                        id: "test:test",
+                        id: 'test:test',
                         metadata: {
-                            level: "high",
-                            name: "Test Permission",
+                            level: 'high',
+                            name: 'Test Permission',
                         },
                     }),
                 ],
-                requestId: "test",
+                requestId: 'test',
             });
         }}
     >

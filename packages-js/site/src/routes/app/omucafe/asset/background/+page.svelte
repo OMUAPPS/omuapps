@@ -14,7 +14,6 @@
     <KitchenRenderer side='background' />
 {/await}
 
-
 <style lang="scss">
     :global(body) {
         background: transparent;

@@ -17,7 +17,7 @@ import {
     type PluginRequestPacket,
     type UserResponse,
     type WebviewPacket,
-    type WebviewRequest
+    type WebviewRequest,
 } from '@omujs/omu/api/dashboard';
 import type { InvokedParams } from '@omujs/omu/api/endpoint';
 import type { Table } from '@omujs/omu/api/table';
@@ -31,7 +31,6 @@ import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
 import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';
 import HostRequestScreen from './screen/HostRequestScreen.svelte';
 import { screenContext } from './screen/screen.js';
-
 
 export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 
@@ -115,7 +114,7 @@ export class Dashboard implements DashboardHandler {
             files[name] = {
                 file: dragDrop.files[index],
                 buffer: await tauriFs.readFile(path),
-            }
+            };
         }
         return new DragDropReadResponse(
             {
@@ -123,14 +122,14 @@ export class Dashboard implements DashboardHandler {
                 files: dragDrop.files,
             },
             files,
-        )
+        );
     }
     
     async getCookies(request: GetCookiesRequest): Promise<UserResponse<Cookie[]>> {
-        const cookies = await invoke('get_cookies', {options: {
+        const cookies = await invoke('get_cookies', { options: {
             label: appWindow.label,
             url: request.url,
-        }});
+        } });
         return {
             type: 'ok',
             value: cookies,
@@ -142,7 +141,7 @@ export class Dashboard implements DashboardHandler {
         const app = await this.apps.get(params.caller.key());
         if (!app) {
             console.warn('App not found for host request', params.caller);
-            return {type: 'cancelled'};
+            return { type: 'cancelled' };
         }
         return new Promise<UserResponse>((resolve) => {
             screenContext.push(HostRequestScreen, {
@@ -157,18 +156,18 @@ export class Dashboard implements DashboardHandler {
         const { url, script } = request;
         const uri = new URL(url);
         if (!['https:', 'http:'].includes(uri.protocol)) throw new Error('Invalid URL protocol');
-        const label = `webview-${Math.floor(performance.timeOrigin*1000)}-${this.webviewHandles.size}-${Math.floor(performance.now()*10000)}`;
+        const label = `webview-${Math.floor(performance.timeOrigin * 1000)}-${this.webviewHandles.size}-${Math.floor(performance.now() * 10000)}`;
         const existingWebviewWindow = await WebviewWindow.getByLabel(label);
         existingWebviewWindow?.destroy();
         const existingWebview = await Webview.getByLabel(label);
         existingWebview?.close();
         const existingWindow = await Window.getByLabel(label);
         existingWindow?.close();
-        await invoke('create_webview_window', {options: {
+        await invoke('create_webview_window', { options: {
             script,
             url,
             label,
-        }});
+        } });
         const webviewWindow = await WebviewWindow.getByLabel(label);
         if (!webviewWindow) {
             throw new Error('Webview not found');

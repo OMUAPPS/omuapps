@@ -32,7 +32,7 @@ import type { WorkerPipe } from './worker/worker.js';
 
 export const DEFAULT_RESOURCE_REGISTRY = {
     assets: {} as Record<string, Asset>,
-}
+};
 
 export type ResourceRegistry = typeof DEFAULT_RESOURCE_REGISTRY;
 
@@ -45,7 +45,7 @@ type MenuItem = {
     product: string;
     picture: boolean;
     note: string;
-}
+};
 
 export const DEFAULT_GAME_CONFIG = {
     version: 1,
@@ -77,10 +77,10 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<GameConfig>(APP_ID, {
             config.menu = {
                 items: [],
                 enabled: false,
-            }
+            };
             config.version = 1;
         }
-        return config
+        return config;
     }).fallback(DEFAULT_GAME_CONFIG),
 });
 
@@ -191,7 +191,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
         scene,
         globals: scriptAPI,
         worker: client ? await getWorker() : undefined,
-    }
+    };
     if (BROWSER) {
         omu.permissions.require(
             ASSET_DOWNLOAD_PERMISSION_ID,
@@ -226,25 +226,25 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
             config: await gameConfigRegistry.get(),
             scene: await sceneRegistry.get(),
             states: await statesRegistry.get(),
-        })
+        });
         gameConfig.subscribe((value) => {
             setContext({
                 ...getContext(),
                 config: value,
-            })
+            });
         });
         states.subscribe((value) => {
             setContext({
                 ...getContext(),
                 ...value.kitchen,
                 states: value,
-            })
+            });
         });
         scene.subscribe((value) => {
             setContext({
                 ...getContext(),
                 scene: value,
-            })
+            });
         });
 
         await startCheckInstalled();
@@ -254,11 +254,11 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
                     if (value.background && value.overlay) {
                         scene.set({
                             type: 'main_menu',
-                        })
+                        });
                         resolve();
                     }
-                })
-            })
+                });
+            });
             scene.set({
                 type: 'install',
             });

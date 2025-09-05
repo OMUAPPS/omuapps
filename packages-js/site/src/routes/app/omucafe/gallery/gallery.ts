@@ -8,7 +8,7 @@ export type GalleryItem = {
     asset: Asset,
     timestamp: string,
     order: Order | null,
-}
+};
 
 export const GALLERY_TABLE_TYPE = TableType.createJson<GalleryItem>(APP_ID, {
     name: 'gallery',

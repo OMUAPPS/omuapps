@@ -37,7 +37,6 @@ void main() {
 }
 `;
 
-
 export const SPRITE_FRAGMENT_SHADER = `#version 300 es
 
 precision highp float;

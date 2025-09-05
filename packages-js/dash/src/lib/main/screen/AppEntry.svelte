@@ -9,13 +9,13 @@
     export let entry: App;
     $: name = entry.metadata?.name
         ? omu.i18n.translate(entry.metadata?.name)
-        : ''
+        : '';
     $: description = entry.metadata?.description
         ? omu.i18n.translate(entry.metadata?.description)
-        : ''
+        : '';
     $: icon = entry.metadata?.icon
         ? omu.i18n.translate(entry.metadata?.icon)
-        : ''
+        : '';
 
     $: id = `app-${entry.id.key()}`;
 </script>

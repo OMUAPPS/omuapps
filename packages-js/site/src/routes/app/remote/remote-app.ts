@@ -25,7 +25,7 @@ export type Resource = ImageResource | AlbumResource;
 
 const DEFAULT_RESOURCES = {
     resources: {} as Record<string, Resource>,
-}
+};
 
 type Resources = typeof DEFAULT_RESOURCES;
 const RESOURCES_REGISTRY = RegistryType.createJson<Resources>(APP_ID, {
@@ -39,7 +39,7 @@ export type Scaler = {
 } | {
     type: 'pixel',
     value: number,
-}
+};
 
 export const DEFAULT_CONFIG = {
     show: null as {
@@ -51,7 +51,7 @@ export const DEFAULT_CONFIG = {
             x: 'middle' as AlignType,
             y: 'middle' as AlignType,
         },
-        scaling: {type: 'contain'} as {
+        scaling: { type: 'contain' } as {
             type: 'contain' | 'cover',
         } | {
             type: 'stretch',
@@ -87,8 +87,8 @@ export const DEFAULT_CONFIG = {
     },
     resource: {
         
-    }
-}
+    },
+};
 
 type Config = typeof DEFAULT_CONFIG;
 const CONFIG_REGISTRY = RegistryType.createJson<Config>(APP_ID, {
@@ -103,7 +103,7 @@ export class RemoteApp {
     
     constructor(
         private readonly omu: Omu,
-        private readonly side: 'app' | 'remote' | 'asset'
+        private readonly side: 'app' | 'remote' | 'asset',
     ) {
         this.resources = makeRegistryWritable(omu.registries.get(RESOURCES_REGISTRY));
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
@@ -190,7 +190,7 @@ export class RemoteApp {
             return await this.cache.get(asset)!;
         }
         const promise = new Promise<string>((resolve, reject) => {
-            this.omu.assets.download(asset).then(async ({buffer}) => {
+            this.omu.assets.download(asset).then(async ({ buffer }) => {
                 const blob = new Blob([buffer as BlobPart]);
                 const uri = URL.createObjectURL(blob);
                 const resized = await resizeImage(uri, 256, 256);

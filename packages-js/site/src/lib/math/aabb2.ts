@@ -4,7 +4,7 @@ import { Vec2, type Vec2Like } from './vec2.js';
 export type AABB2Like = {
     min: Vec2Like,
     max: Vec2Like,
-}
+};
 
 export class AABB2 {
     public static readonly ZEROZERO = new AABB2(Vec2.ZERO, Vec2.ZERO);
@@ -106,6 +106,6 @@ export class AABB2 {
         return new AABB2(
             this.min.scale(scaler),
             this.max.scale(scaler),
-        )
+        );
     }
 }

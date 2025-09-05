@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Page from "$lib/components/Page.svelte";
-    import type { DocsSection } from "$lib/server/docs";
-    import github from "svelte-highlight/styles/github";
-    import DocsFooter from "./_components/DocsFooter.svelte";
-    import DocsNav from "./_components/DocsNav.svelte";
-    import { config } from "./constants.js";
-    import { docs } from "./stores.js";
+    import Page from '$lib/components/Page.svelte';
+    import type { DocsSection } from '$lib/server/docs';
+    import github from 'svelte-highlight/styles/github';
+    import DocsFooter from './_components/DocsFooter.svelte';
+    import DocsNav from './_components/DocsNav.svelte';
+    import { config } from './constants.js';
+    import { docs } from './stores.js';
 
     export let data: { sections: Record<string, DocsSection[]> };
 
@@ -24,7 +24,7 @@
     <svelte:element this="style">
         {github}
     </svelte:element>
-    <title>{$docs?.meta.title || "ドキュメント"} | OMUAPPS</title>
+    <title>{$docs?.meta.title || 'ドキュメント'} | OMUAPPS</title>
     <meta name="description" content={$docs?.meta.description} />
     <link rel="canonical" href={`https://omuapps.com/docs/${$docs?.slug}`} />
 </svelte:head>
@@ -76,29 +76,29 @@
                 使用するパッケージマネージャー
                 <div class="package-manager">
                     <button
-                        on:click={() => ($config.PACKAGE_MANAGER = "npm")}
-                        class:selected={$config.PACKAGE_MANAGER === "npm"}
+                        on:click={() => ($config.PACKAGE_MANAGER = 'npm')}
+                        class:selected={$config.PACKAGE_MANAGER === 'npm'}
                     >
                         npm
                         <i class="ti ti-brand-npm"></i>
                     </button>
                     <button
-                        on:click={() => ($config.PACKAGE_MANAGER = "yarn")}
-                        class:selected={$config.PACKAGE_MANAGER === "yarn"}
+                        on:click={() => ($config.PACKAGE_MANAGER = 'yarn')}
+                        class:selected={$config.PACKAGE_MANAGER === 'yarn'}
                     >
                         yarn
                         <i class="ti ti-brand-yarn"></i>
                     </button>
                     <button
-                        on:click={() => ($config.PACKAGE_MANAGER = "pnpm")}
-                        class:selected={$config.PACKAGE_MANAGER === "pnpm"}
+                        on:click={() => ($config.PACKAGE_MANAGER = 'pnpm')}
+                        class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
                     >
                         pnpm
                         <i class="ti ti-brand-pnpm"></i>
                     </button>
                     <button
-                        on:click={() => ($config.PACKAGE_MANAGER = "bun")}
-                        class:selected={$config.PACKAGE_MANAGER === "bun"}
+                        on:click={() => ($config.PACKAGE_MANAGER = 'bun')}
+                        class:selected={$config.PACKAGE_MANAGER === 'bun'}
                     >
                         bun
                         <i class="ti ti-package"></i>

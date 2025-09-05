@@ -6,12 +6,11 @@
     export let app: App;
 
     $: namespace = app.id.namespace.split('.').reverse().join('.');
-    $: path=app.id.path.reverse().join('.');
+    $: path = app.id.path.reverse().join('.');
     
     const metadata = app.metadata;
     const icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
 </script>
-
 
 <div class="info">
     <Tooltip>

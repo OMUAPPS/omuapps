@@ -19,8 +19,6 @@
 
     let showSettings = false;
 
-    
-
     $: selected = $config.show?.id;
 </script>
 
@@ -32,7 +30,7 @@
         </h2>
         <section>
             <span>
-                <Button onclick={() => {screen = 'connect'}} primary>
+                <Button onclick={() => {screen = 'connect';}} primary>
                     接続する
                     <i class="ti ti-login-2"></i>
                 </Button>
@@ -59,7 +57,7 @@
             </section>
         {/if}
         <h2>
-            <button class="tab" on:click={() => {showSettings = !showSettings}}>
+            <button class="tab" on:click={() => {showSettings = !showSettings;}}>
                 表示の設定
                 <i class="ti ti-settings"></i>
                 {#if showSettings}
@@ -78,14 +76,14 @@
             配信に追加
             <i class="ti ti-arrow-bar-to-down"></i>
         </h2>
-        <AssetButton {omu} {obs} dimensions={{width: '50:%', height: '50:%'}} />
+        <AssetButton {omu} {obs} dimensions={{ width: '50:%', height: '50:%' }} />
     </div>
     <div class="gallery omu-scroll">
         <Gallery {omu} {remote} />
     </div>
     {#if screen === 'connect'}
         <div class="screen">
-            <ConnectScreen {omu} cancel={() => {screen = null}} connected={$connected} />
+            <ConnectScreen {omu} cancel={() => {screen = null;}} connected={$connected} />
         </div>
     {/if}
 </main>

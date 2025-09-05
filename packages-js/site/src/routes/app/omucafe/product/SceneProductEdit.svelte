@@ -16,7 +16,7 @@
         <EditProduct bind:product={$config.products[id]}/>
     {/if}
 </main>
-<BackButton to={{type: 'product_list'}} active={context.active}/>
+<BackButton to={{ type: 'product_list' }} active={context.active}/>
 
 <style lang="scss">
     main {

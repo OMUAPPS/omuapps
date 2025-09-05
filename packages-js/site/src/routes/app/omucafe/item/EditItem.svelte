@@ -48,7 +48,7 @@
             name: '液体',
             default: createLiquid(),
             edit: LiquidEdit,
-        }
+        },
     } satisfies DefaultBehaviors;
 </script>
 
@@ -104,7 +104,7 @@
                 item.bounds = {
                     min: { x: 0, y: 0 },
                     max: { x: image.width, y: image.height },
-                }
+                };
             }} />
         </div>
         <TransformEdit bind:transform={item.transform} />

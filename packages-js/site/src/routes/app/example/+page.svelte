@@ -1,25 +1,25 @@
 <script lang="ts">
-    import { makeRegistryWritable } from "$lib/helper.js";
-    import { Chat, ChatEvents } from "@omujs/chat";
-    import type { Author, Message } from "@omujs/chat/models";
-    import { App, Omu } from "@omujs/omu";
-    import { BROWSER } from "esm-env";
+    import { makeRegistryWritable } from '$lib/helper.js';
+    import { Chat, ChatEvents } from '@omujs/chat';
+    import type { Author, Message } from '@omujs/chat/models';
+    import { App, Omu } from '@omujs/omu';
+    import { BROWSER } from 'esm-env';
 
-    const APP = new App("com.example:my-keisatsu", {
-        version: "1.0.0",
+    const APP = new App('com.example:my-keisatsu', {
+        version: '1.0.0',
         metadata: {
-            locale: "ja",
-            name: "草警察",
+            locale: 'ja',
+            name: '草警察',
             description:
-                "【2025年最新版】草を投稿した人を自動で検出して収集するアプリ",
+                '【2025年最新版】草を投稿した人を自動で検出して収集するアプリ',
         },
     });
     const omu = new Omu(APP);
     const DEFAULT_CONFIG = {
-        filters: ["草"],
+        filters: ['草'],
     };
     type Config = typeof DEFAULT_CONFIG;
-    const configRegistry = omu.registries.json<Config>("config", {
+    const configRegistry = omu.registries.json<Config>('config', {
         default: DEFAULT_CONFIG,
     });
     const config = makeRegistryWritable(configRegistry);
@@ -30,7 +30,7 @@
         content: string;
         date: string;
     };
-    const table = omu.tables.json<Comment>("comments", {
+    const table = omu.tables.json<Comment>('comments', {
         key: (item) => item.id,
     });
     const chat = Chat.create(omu);
@@ -43,7 +43,7 @@
         if (isAuthorAdmin(author)) return;
         const comment: Comment = {
             id: message.id.key(),
-            name: author.name ?? "名無し",
+            name: author.name ?? '名無し',
             authorId: message.authorId.key(),
             content: message.text,
             date: message.createdAt.toISOString(),
@@ -107,7 +107,7 @@
         {/each}
         <button
             on:click={() => {
-                $config.filters = [...$config.filters, ""];
+                $config.filters = [...$config.filters, ''];
             }}>追加</button
         >
 

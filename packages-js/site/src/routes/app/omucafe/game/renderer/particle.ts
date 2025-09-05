@@ -21,7 +21,7 @@ type ParticleOptions = {
     seed: string,
     time: number,
     bounds: AABB2,
-}
+};
 
 function alphaFunc(t: number) {
     return Math.sin(t * Math.PI);

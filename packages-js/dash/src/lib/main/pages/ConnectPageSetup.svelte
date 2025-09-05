@@ -15,7 +15,7 @@
     } = { type: 'input' };
 
     let url = '';
-    let result: {channel: models.Channel, checked: boolean}[] = [];
+    let result: { channel: models.Channel, checked: boolean }[] = [];
 
     async function search(url: string) {
         stage = { type: 'searching' };
@@ -67,7 +67,7 @@
         {:else}
             <p>{$t('page.connect.select_channel')}</p>
             <div class="channels">
-                {#each result as {channel, checked} (channel.id)}
+                {#each result as { channel, checked } (channel.id)}
                     <button class="channel" class:checked={checked} on:click={() => {
                         checked = !checked;
                     }}>

@@ -1,16 +1,16 @@
 <script lang="ts">
-    import Page from "$lib/components/Page.svelte";
-    import type { NetworkStatus } from "@omujs/omu/network";
-    import { Button, Spinner } from "@omujs/ui";
-    import { onMount } from "svelte";
-    import { omu } from "../client.js";
-    import AppEntry from "./AppEntry.svelte";
-    import { apps, personalApps } from "./apps.js";
+    import Page from '$lib/components/Page.svelte';
+    import type { NetworkStatus } from '@omujs/omu/network';
+    import { Button, Spinner } from '@omujs/ui';
+    import { onMount } from 'svelte';
+    import { omu } from '../client.js';
+    import AppEntry from './AppEntry.svelte';
+    import { apps, personalApps } from './apps.js';
 
     let filteredApps = apps;
     let filterTags: string[] = [];
-    let search = "";
-    let password = "";
+    let search = '';
+    let password = '';
     let status: NetworkStatus = omu.network.status;
     let connecting = true;
 
@@ -35,9 +35,9 @@
                 );
             });
         }
-        if (!filterTags.includes("underdevelopment")) {
+        if (!filterTags.includes('underdevelopment')) {
             filteredApps = filteredApps.filter(
-                (app) => !app.metadata?.tags?.includes("underdevelopment"),
+                (app) => !app.metadata?.tags?.includes('underdevelopment'),
             );
         }
         if (search) {
@@ -76,9 +76,9 @@
     onMount(() => {
         status = omu.network.status;
         const unlistenNetwork = omu.network.event.status.listen((value) => {
-            console.log("Network status:", value);
+            console.log('Network status:', value);
             status = value;
-            if (status.type === "connected") {
+            if (status.type === 'connected') {
                 connecting = false;
             }
         });
@@ -114,13 +114,13 @@
                 <i class="ti ti-apps"></i>
             </h3>
             <div class="apps">
-                {#if status["type"] === "ready"}
+                {#if status['type'] === 'ready'}
                     {#each filteredApps as app (app.id.key())}
                         <AppEntry {app} />
                     {/each}
                 {:else}
                     <div class="loading">
-                        {#if status["type"] === "disconnected"}
+                        {#if status['type'] === 'disconnected'}
                             {#if connecting}
                                 <p>
                                     接続中
@@ -132,11 +132,11 @@
                                     <Button
                                         primary
                                         onclick={() => omu.network.connect()}
-                                        >再接続</Button
+                                    >再接続</Button
                                     >
                                 </p>
                             {/if}
-                        {:else if status["type"] === "reconnecting"}
+                        {:else if status['type'] === 'reconnecting'}
                             <p>
                                 接続に失敗しました ({status.attempt}回目)
                                 <Button primary disabled>再接続中…</Button>
@@ -147,27 +147,27 @@
                                     管理画面が起動してあるか確認してください。
                                 </p>
                             </small>
-                        {:else if status["type"] === "connecting"}
+                        {:else if status['type'] === 'connecting'}
                             <p>
                                 接続中
                                 <Spinner />
                             </p>
-                        {:else if status["type"] === "connected"}
+                        {:else if status['type'] === 'connected'}
                             <p>
                                 認証中
                                 <Spinner />
                             </p>
-                        {:else if status["type"] === "error"}
+                        {:else if status['type'] === 'error'}
                             <p>
                                 エラーが発生しました
                                 <Button
                                     primary
                                     onclick={() => omu.network.connect()}
-                                    >再接続</Button
+                                >再接続</Button
                                 >
                             </p>
                             <small>
-                                {status["error"].message}
+                                {status['error'].message}
                             </small>
                         {/if}
                     </div>
@@ -185,16 +185,16 @@
                 bind:value={search}
             />
             <button
-                on:click={() => toggleTag("underdevelopment")}
+                on:click={() => toggleTag('underdevelopment')}
                 class="tag"
-                class:selected={filterTags.includes("underdevelopment")}
+                class:selected={filterTags.includes('underdevelopment')}
             >
                 <i class="ti ti-package"></i>
                 開発中のアプリを表示
                 <span class="hint"
-                    >{apps.filter((app) =>
-                        app.metadata?.tags?.includes("underdevelopment"),
-                    ).length}</span
+                >{apps.filter((app) =>
+                    app.metadata?.tags?.includes('underdevelopment'),
+                ).length}</span
                 >
             </button>
             <input

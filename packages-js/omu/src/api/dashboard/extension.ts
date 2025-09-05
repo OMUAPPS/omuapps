@@ -143,12 +143,12 @@ type DragDropHandler = {
     onDrop(fn: (event: DragDrop) => unknown): void;
     onLeave(fn: (event: DragLeave) => unknown): void;
     read(id: string): Promise<DragDropReadResponse>;
-}
+};
 
 export type Cookie = {
     name: string,
     value: string,
-}
+};
 
 export type WebviewRequest = {
     url: string;
@@ -176,7 +176,7 @@ export class UserResult<T> {
             type: 'blocked',
         } | {
             type: 'cancelled',
-        }
+        },
     ) {}
 
     public unwrap(): T {
@@ -229,11 +229,11 @@ export type WebviewEvent = {
 } | {
     type: 'cookie',
     cookies: Cookie[],
-}
+};
 
 export type WebviewEventListeners = {
     [K in WebviewEvent['type']]?: Array<(event: Extract<WebviewEvent, { type: K }>) => void>;
-}
+};
 
 export type WebviewEventPacket = {
     id: Identifier,
@@ -278,7 +278,6 @@ const DASHBOARD_HOST_REQUEST = EndpointType.createJson<{
     permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
 });
 
-
 export class DashboardExtension {
     public readonly type: ExtensionType<DashboardExtension> = DASHBOARD_EXTENSION_TYPE;
     private dashboard: DashboardHandler | null = null;
@@ -288,10 +287,10 @@ export class DashboardExtension {
         over: [] as Array<(state: DragOver) => unknown>,
         drop: [] as Array<(state: DragDrop) => unknown>,
         leave: [] as Array<(state: DragLeave) => unknown>,
-    }
+    };
     public readonly apps: Table<App>;
     public readonly allowedHosts: Table<AllowedHost>;
-    private readonly webviewHandles: IdentifierMap<{handle: WebviewHandle, emit: WebviewEventEmit}> = new IdentifierMap();
+    private readonly webviewHandles: IdentifierMap<{ handle: WebviewHandle, emit: WebviewEventEmit }> = new IdentifierMap();
 
     constructor(private readonly client: Client) {
         client.network.registerPacket(
@@ -331,7 +330,7 @@ export class DashboardExtension {
             this.handleOpenApp(app),
         );
         client.network.addPacketHandler(DASHBOARD_DRAG_DROP_REQUEST_PACKET, (request) => {
-            this.handleDragDropRequest(request)
+            this.handleDragDropRequest(request);
         });
         client.network.addPacketHandler(DASHBOARD_DRAG_DROP_STATE_PACKET, ({ state }) => {
             switch (state.type) {
@@ -480,7 +479,7 @@ export class DashboardExtension {
                 type: 'ok',
                 id,
                 value: undefined,
-            }
+            };
         });
         this.client.endpoints.bind(DASHBOARD_WEBVIEW_CLOSE, async (request, params): Promise<WebviewResponse> => {
             const id = await dashboard.getWebview(request, params);
@@ -488,14 +487,14 @@ export class DashboardExtension {
                 return {
                     type: 'cancelled',
                     id: request.id,
-                }
+                };
             }
             await dashboard.closeWebview(request, params);
             return {
                 type: 'ok',
                 id,
                 value: undefined,
-            }
+            };
         });
         this.client.network.addTask(async () => {
             const response = await this.client.endpoints.call(
@@ -529,7 +528,7 @@ export class DashboardExtension {
             close: async () => {
                 await this.client.endpoints.call(
                     DASHBOARD_WEBVIEW_CLOSE,
-                    { id }
+                    { id },
                 );
             },
             getCookies: async () => {
@@ -560,7 +559,7 @@ export class DashboardExtension {
                     listener(event);
                 }
             },
-        })
+        });
         return new UserResult({
             type: 'ok',
             value: handle,
@@ -596,8 +595,8 @@ export class DashboardExtension {
             onDrop(fn) { listeners.drop.push(fn); },
             onLeave(fn) { listeners.leave.push(fn); },
             async read(id) { return await client.endpoints.call(DASHBOARD_DRAG_DROP_READ_ENDPOINT, { drag_id: id }); },
-        }
-        return this.dragDropHandler
+        };
+        return this.dragDropHandler;
     }
 
     public async notifyDropDragState(packet: FileDragPacket): Promise<void> {

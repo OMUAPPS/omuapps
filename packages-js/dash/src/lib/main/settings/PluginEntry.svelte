@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { omu } from "$lib/client.js";
-    import type { PluginPackageInfo } from "@omujs/omu/api/plugin";
-    import { Button } from "@omujs/ui";
+    import { omu } from '$lib/client.js';
+    import type { PluginPackageInfo } from '@omujs/omu/api/plugin';
+    import { Button } from '@omujs/ui';
 
     export let entry: PluginPackageInfo;
 </script>
@@ -20,7 +20,7 @@
             primary
             onclick={() => {
                 const url = `https://pypi.org/project/${entry.package}`;
-                window.open(url, "_blank");
+                window.open(url, '_blank');
             }}
         >
             PyPi <i class="ti ti-external-link"></i>

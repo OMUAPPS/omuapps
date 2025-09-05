@@ -5,6 +5,6 @@ export {
     SERVER_SHUTDOWN_PERMISSION_ID,
     TRUSTED_ORIGINS_GET_PERMISSION_ID,
     TRUSTED_ORIGINS_SET_PERMISSION_ID,
-    type RequestRemoteAppResponse
+    type RequestRemoteAppResponse,
 } from './extension.js';
 

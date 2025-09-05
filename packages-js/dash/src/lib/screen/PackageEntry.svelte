@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type { PackageInfo } from "@omujs/omu/api/plugin";
-    import SvelteMarkdown from "svelte-markdown";
+    import type { PackageInfo } from '@omujs/omu/api/plugin';
+    import SvelteMarkdown from 'svelte-markdown';
 
     export let entry: PackageInfo;
     let open = false;
 
     $: author =
         entry.info.author ||
-        entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, "").trim();
+        entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim();
 </script>
 
 <li>
@@ -38,7 +38,7 @@
     </div>
     {#if open}
         <span class="description">
-            {#if entry.info.description_content_type === "text/markdown"}
+            {#if entry.info.description_content_type === 'text/markdown'}
                 <SvelteMarkdown source={entry.info.description} />
             {:else}
                 {entry.info.description}

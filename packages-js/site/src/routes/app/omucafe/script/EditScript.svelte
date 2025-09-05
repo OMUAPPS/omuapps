@@ -21,7 +21,7 @@
             }
             edit = newEdit;
         },
-    } satisfies ScriptEditorContext)
+    } satisfies ScriptEditorContext);
 
     $: if (edit) {
         edit.setter(edit.value);
@@ -114,7 +114,7 @@
                                 <li>
                                     <button on:click={() => {
                                         if (!edit || edit.value.type !== 'invoke') return;
-                                        edit.value.args = edit.value.args.filter((_,idx) => idx !== index);
+                                        edit.value.args = edit.value.args.filter((_, idx) => idx !== index);
                                     }}>
                                         <i class="ti ti-x"></i>
                                     </button>

@@ -9,7 +9,7 @@
 </script>
 
 {#if header}
-    <Header always={header==='always'} />
+    <Header always={header === 'always'} />
 {/if}
 <slot name="banner">
     <img src={background} alt="background" class="background" />

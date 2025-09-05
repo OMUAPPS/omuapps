@@ -15,7 +15,7 @@
     let container: HTMLElement;
 
     $: if (container) {
-        container.scrollTo({top: $config.scenes.product_list.scroll});
+        container.scrollTo({ top: $config.scenes.product_list.scroll });
     }
 
     let searchElement: HTMLInputElement;
@@ -72,7 +72,7 @@
                                     note: '',
                                 },
                                 ...$gameConfig.menu.items,
-                            ]
+                            ];
                         }}>
                             <Tooltip>
                                 追加

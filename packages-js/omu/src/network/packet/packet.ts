@@ -4,12 +4,12 @@ import { JsonType, type Serializable, Serializer } from '../../serialize';
 export type PacketData = {
     readonly type: string;
     readonly data: Uint8Array;
-}
+};
 
 export type Packet<T = unknown> = {
     readonly type: PacketType<T>;
     readonly data: T;
-}
+};
 
 export class PacketType<T> {
     constructor(

@@ -14,7 +14,7 @@
     <main>
         <h1>カウンターにアイテムを置いて写真を取ります</h1>
     </main>
-    <BackButton to={{type: 'product_edit', id }} active={context.active}/>
+    <BackButton to={{ type: 'product_edit', id }} active={context.active}/>
 {/if}
 
 <style lang="scss">

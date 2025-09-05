@@ -14,7 +14,7 @@
     $: hasChannels = channels.length > 0;
 
     async function refresh() {
-        await overlayApp.refresh()
+        await overlayApp.refresh();
         clients = await overlayApp.getClients();
         console.log(clients);
     }
@@ -23,15 +23,15 @@
             label: '自動',
             value: null,
         },
-        ...Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))
-    }
+        ...Object.fromEntries(guilds.map((guild) => [guild.id, { label: guild.name, value: guild.id }])),
+    };
     $: channelOptions = {
         auto: {
             label: '自動',
             value: null,
         },
-        ...Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))
-    }
+        ...Object.fromEntries(channels.map((channel) => [channel.id, { label: channel.name, value: channel.id }])),
+    };
 </script>
 
 <div class="config">
@@ -59,7 +59,7 @@
                 <i class="ti ti-user"></i>
                 ユーザー
             </p>
-            <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
+            <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, { label: client.global_name, value: id }]))} bind:value={$config.user_id}/>
         {:else if Object.keys(clients).length === 0}
             <small>
                 起動しているDiscordが見つかりませんでした

@@ -21,23 +21,23 @@ export const Example: Story = {
                     url: 'https://via.placeholder.com/150',
                     id: 'placeholder-150',
                     name: 'This is a placeholder',
-                }},
+                } },
                 { type: 'system', data: [
                     { type: 'text', data: 'This is a system message' },
                     { type: 'image', data: {
                         url: 'https://via.placeholder.com/150',
                         id: 'placeholder-150',
                         name: 'This is a placeholder',
-                    }},
-                ]},
+                    } },
+                ] },
                 {
                     type: 'link',
                     data: {
                         url: 'https://example.com',
                         children: [{ type: 'text', data: 'This is a link' }],
-                    }
+                    },
                 },
-            ]
-        }
+            ],
+        },
     },
 };

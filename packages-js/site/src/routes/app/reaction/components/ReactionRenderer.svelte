@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { lerp } from "$lib/math/math.js";
-    import { Timer } from "$lib/timer.js";
-    import type { Omu } from "@omujs/omu";
-    import { BROWSER } from "esm-env";
-    import { onDestroy } from "svelte";
-    import type { ReactionApp } from "../reaction-app.js";
+    import { lerp } from '$lib/math/math.js';
+    import { Timer } from '$lib/timer.js';
+    import type { Omu } from '@omujs/omu';
+    import { BROWSER } from 'esm-env';
+    import { onDestroy } from 'svelte';
+    import type { ReactionApp } from '../reaction-app.js';
 
     export let omu: Omu;
     export let reactionApp: ReactionApp;
@@ -43,7 +43,7 @@
                 if (!assetId) {
                     return [key, null];
                 }
-                const assetUrl = omu.assets.url(assetId, { cache: "no-cache" });
+                const assetUrl = omu.assets.url(assetId, { cache: 'no-cache' });
                 const img = new Image();
                 img.src = assetUrl;
                 return [key, img];
@@ -56,9 +56,9 @@
 
     $: if (canvas) {
         resize();
-        const context = canvas.getContext("2d");
+        const context = canvas.getContext('2d');
         if (!context) {
-            throw new Error("Failed to get 2d context");
+            throw new Error('Failed to get 2d context');
         }
         ctx = context;
     }
@@ -137,7 +137,7 @@
         const newY = y + newVy * reaction.depth;
         const newOpacity =
             Math.min(1, reaction.age / 10) -
-            Math.max(0, (reaction.age - 50) / 50);
+                Math.max(0, (reaction.age - 50) / 50);
         const newRotation =
             (Math.sin(reaction.age / 15 + 1) * 5 * Math.PI) / 180;
 

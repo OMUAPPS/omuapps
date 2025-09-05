@@ -8,7 +8,7 @@
         AppHeader,
         setClient,
         Textbox,
-        Tooltip
+        Tooltip,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';

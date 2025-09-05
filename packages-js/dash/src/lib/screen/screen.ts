@@ -2,21 +2,21 @@ import type { TypedComponent } from '@omujs/ui';
 import { writable } from 'svelte/store';
 
 export type ScreenHandle = {
-  id: number;
-  pop: () => void;
+    id: number;
+    pop: () => void;
 };
 
 export type ScreenComponentType<T> = TypedComponent<{
-  screen: {
-    handle: ScreenHandle;
-    props: T;
-  };
+    screen: {
+        handle: ScreenHandle;
+        props: T;
+    };
 }>;
 
 export interface ScreenComponent<T> {
-  id: number;
-  component: ScreenComponentType<T>;
-  props: T;
+    id: number;
+    component: ScreenComponentType<T>;
+    props: T;
 }
 
 let id = 0;

@@ -50,7 +50,7 @@ export class HoldableHandler implements BehaviorHandler<'holdable'> {
             callback: async () => {
                 context.held = null;
                 playAudioClip(behavior.clip || await DEFAULT_AUDIO_CLIP);
-            }
+            },
         });
     }
 

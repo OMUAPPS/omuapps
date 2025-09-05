@@ -254,7 +254,7 @@ export class Mat4 {
             this.transform2(leftBottom),
             this.transform2(rightTop),
             this.transform2(rightBottom),
-        ])
+        ]);
     }
 
     public basisTransformAABB2(aabb: AABB2Like): AABB2 {
@@ -268,7 +268,7 @@ export class Mat4 {
             this.basisTransform2(leftBottom),
             this.basisTransform2(rightTop),
             this.basisTransform2(rightBottom),
-        ])
+        ]);
     }
     
     public transform3(point: Vec3): Vec3 {

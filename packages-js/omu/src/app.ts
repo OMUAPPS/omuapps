@@ -13,7 +13,7 @@ export type AppMetadata = {
     authors?: LocalizedText;
     license?: LocalizedText;
     tags?: string[];
-}
+};
 
 export type AppType = 'app' | 'remote' | 'plugin' | 'dashboard';
 
@@ -23,7 +23,7 @@ export type AppJson = {
     url?: string;
     type?: AppType;
     metadata?: AppMetadata;
-}
+};
 
 export class App {
     public readonly id: Identifier;

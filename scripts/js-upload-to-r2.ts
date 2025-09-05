@@ -123,7 +123,7 @@ const PLATFORMS_LATEST = [
         type: 'darwin-x86_64',
         filename: '{NAME_UPPER}_x64.app.tar.gz',
     },
-]
+];
 
 async function uploadVersion() {
     const files = await fs.readdir('./release-assets');
@@ -160,13 +160,13 @@ async function uploadBeta() {
                     throw new Error(`URL not found: ${name}`);
                 }
                 return [type, { url }];
-            }))
+            })),
         ),
     };
 
     await fs.writeFile(
         './release-assets/version-beta.json',
-        JSON.stringify(releaseData, null, 4)
+        JSON.stringify(releaseData, null, 4),
     );
     await uploadToR2('./release-assets/version-beta.json', 'app/version-beta.json');
 
@@ -191,11 +191,11 @@ async function uploadBeta() {
                 url,
                 signature: existing.signature,
             }];
-        }))
+        })),
     );
     await fs.writeFile(
         './release-assets/latest.json',
-        JSON.stringify(latest, null, 4)
+        JSON.stringify(latest, null, 4),
     );
     await uploadToR2('./release-assets/latest.json', 'app/latest-beta.json');
 }
@@ -213,19 +213,19 @@ async function graduateBeta() {
                 const name = filename
                     .replace('{NAME_UPPER}', 'OMUAPPS')
                     .replace('{NAME_LOWER}', 'omuapps')
-                    .replace('{VERSION}', VERSION|| '');
+                    .replace('{VERSION}', VERSION || '');
                 const url = urls[name];
                 if (!url) {
                     throw new Error(`URL not found: ${name}`);
                 }
                 return [type, { url }];
-            }))
+            })),
         ),
     };
 
     await fs.writeFile(
         './release-assets/version.json',
-        JSON.stringify(releaseData, null, 4)
+        JSON.stringify(releaseData, null, 4),
     );
     await uploadToR2('./release-assets/version.json', 'app/version.json');
 
@@ -250,11 +250,11 @@ async function graduateBeta() {
                 url,
                 signature: existing.signature,
             }];
-        }))
+        })),
     );
     await fs.writeFile(
         './release-assets/latest.json',
-        JSON.stringify(latest, null, 4)
+        JSON.stringify(latest, null, 4),
     );
     await uploadToR2('./release-assets/latest.json', 'app/latest-stable.json');
 }

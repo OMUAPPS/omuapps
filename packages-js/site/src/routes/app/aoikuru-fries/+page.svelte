@@ -75,7 +75,7 @@
             <div>
                 <h3>
                     状態
-                    <Button primary onclick={() => { $state = { type: 'idle' } }}>
+                    <Button primary onclick={() => { $state = { type: 'idle' }; }}>
                         状態をリセット
                         <i class="ti ti-reload"></i>
                     </Button>

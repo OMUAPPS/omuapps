@@ -1,35 +1,35 @@
 <script lang="ts">
-    import type { DragDropFile } from "@omujs/omu/api/dashboard";
-    import type { TypedComponent } from "@omujs/ui";
-    import { Spinner } from "@omujs/ui";
-    import KitchenRenderer from "./components/KitchenRenderer.svelte";
-    import SceneEffectEdit from "./effect/SceneEffectEdit.svelte";
-    import SceneGallery from "./gallery/SceneGallery.svelte";
-    import { DEFAULT_CONFIG } from "./game/config.js";
-    import { getContext, markChanged, mouse } from "./game/game.js";
-    import { GameData } from "./game/gamedata.js";
-    import { PaintBuffer } from "./game/paint.js";
-    import { Time } from "./game/time.js";
-    import SceneItemEdit from "./item/SceneItemEdit.svelte";
-    import SceneKitchen from "./kitchen/SceneKitchen.svelte";
-    import SceneKitchenEdit from "./kitchen/SceneKitchenEdit.svelte";
+    import type { DragDropFile } from '@omujs/omu/api/dashboard';
+    import type { TypedComponent } from '@omujs/ui';
+    import { Spinner } from '@omujs/ui';
+    import KitchenRenderer from './components/KitchenRenderer.svelte';
+    import SceneEffectEdit from './effect/SceneEffectEdit.svelte';
+    import SceneGallery from './gallery/SceneGallery.svelte';
+    import { DEFAULT_CONFIG } from './game/config.js';
+    import { getContext, markChanged, mouse } from './game/game.js';
+    import { GameData } from './game/gamedata.js';
+    import { PaintBuffer } from './game/paint.js';
+    import { Time } from './game/time.js';
+    import SceneItemEdit from './item/SceneItemEdit.svelte';
+    import SceneKitchen from './kitchen/SceneKitchen.svelte';
+    import SceneKitchenEdit from './kitchen/SceneKitchenEdit.svelte';
     import {
         DEFAULT_GAME_CONFIG,
         DEFAULT_STATES,
         getGame,
-    } from "./omucafe-app.js";
-    import SceneProductEdit from "./product/SceneProductEdit.svelte";
-    import SceneProductList from "./product/SceneProductList.svelte";
-    import SceneTakeProductPhoto from "./product/SceneTakeProductPhoto.svelte";
-    import SceneInstall from "./scenes/SceneInstall.svelte";
-    import SceneLoading from "./scenes/SceneLoading.svelte";
-    import SceneMainMenu from "./scenes/SceneMainMenu.svelte";
-    import ScenePhotoMode from "./scenes/ScenePhotoMode.svelte";
-    import { type Scene, type SceneContext } from "./scenes/scene.js";
-    import SceneScriptEdit from "./script/SceneScriptEdit.svelte";
+    } from './omucafe-app.js';
+    import SceneProductEdit from './product/SceneProductEdit.svelte';
+    import SceneProductList from './product/SceneProductList.svelte';
+    import SceneTakeProductPhoto from './product/SceneTakeProductPhoto.svelte';
+    import SceneInstall from './scenes/SceneInstall.svelte';
+    import SceneLoading from './scenes/SceneLoading.svelte';
+    import SceneMainMenu from './scenes/SceneMainMenu.svelte';
+    import ScenePhotoMode from './scenes/ScenePhotoMode.svelte';
+    import { type Scene, type SceneContext } from './scenes/scene.js';
+    import SceneScriptEdit from './script/SceneScriptEdit.svelte';
 
     export const SCENES: Record<
-        Scene["type"],
+        Scene['type'],
         TypedComponent<{
             context: SceneContext;
         }>
@@ -80,16 +80,16 @@
         mouse.ui = false;
         if (sceneElement) {
             mouse.ui = (
-                ["main_menu", "install"] as (typeof $scene.type)[]
+                ['main_menu', 'install'] as (typeof $scene.type)[]
             ).includes($scene.type);
             const children = sceneElement.children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
                 if (child instanceof HTMLElement) {
-                    child.addEventListener("mouseenter", () => {
+                    child.addEventListener('mouseenter', () => {
                         mouse.ui = true;
                     });
-                    child.addEventListener("mouseleave", () => {
+                    child.addEventListener('mouseleave', () => {
                         mouse.ui = false;
                     });
                 }
@@ -100,58 +100,58 @@
 
     let importState:
         | {
-              type: "drag-enter";
-              drag_id: string;
-              files: DragDropFile[];
-          }
+            type: 'drag-enter';
+            drag_id: string;
+            files: DragDropFile[];
+        }
         | {
-              type: "loading";
-          }
+            type: 'loading';
+        }
         | {
-              type: "failed";
-              kind: "invalid-format";
-          }
+            type: 'failed';
+            kind: 'invalid-format';
+        }
         | {
-              type: "loaded";
-          }
+            type: 'loaded';
+        }
         | null = null;
 
     omu.dashboard.requireDragDrop().then((handler) => {
         handler.onEnter(async ({ drag_id, files }) => {
-            if (!files.some((it) => it.name.endsWith(".omucafe"))) return;
+            if (!files.some((it) => it.name.endsWith('.omucafe'))) return;
             importState = {
-                type: "drag-enter",
+                type: 'drag-enter',
                 drag_id,
                 files,
             };
-            console.log("enter", drag_id);
+            console.log('enter', drag_id);
         });
         handler.onLeave(({ drag_id }) => {
-            console.log("leave", drag_id);
+            console.log('leave', drag_id);
             importState = null;
         });
         handler.onDrop(async ({ drag_id, files }) => {
-            if (!files.some((it) => it.name.endsWith(".omucafe"))) return;
-            console.log("drop", drag_id);
+            if (!files.some((it) => it.name.endsWith('.omucafe'))) return;
+            console.log('drop', drag_id);
             importState = {
-                type: "loading",
+                type: 'loading',
             };
             try {
                 const resp = await handler.read(drag_id);
                 const datas: GameData[] = [];
                 for (const { file, buffer } of Object.values(resp.files)) {
-                    if (!file.name.endsWith(".omucafe")) continue;
+                    if (!file.name.endsWith('.omucafe')) continue;
                     const gameData = GameData.deserialize(buffer);
                     datas.push(gameData);
                     await gameData.load();
                 }
                 importState = {
-                    type: "loaded",
+                    type: 'loaded',
                 };
             } catch {
                 importState = {
-                    type: "failed",
-                    kind: "invalid-format",
+                    type: 'failed',
+                    kind: 'invalid-format',
                 };
             }
             setTimeout(() => {
@@ -191,7 +191,7 @@
 <div class="debug">
     <button
         on:click={() => {
-            $scene = { type: "loading" };
+            $scene = { type: 'loading' };
             $config = DEFAULT_CONFIG;
             $gameConfig = DEFAULT_GAME_CONFIG;
             $states = DEFAULT_STATES;
@@ -222,23 +222,23 @@
 <div class="overlay" class:active={importState}>
     {#if !importState}
         ...
-    {:else if importState.type === "drag-enter"}
+    {:else if importState.type === 'drag-enter'}
         <span>
             <i class="ti ti-download"></i>
             ここに落として読み込み
         </span>
-    {:else if importState.type === "loading"}
+    {:else if importState.type === 'loading'}
         <span>
             <Spinner />
             読み込み中…
         </span>
-    {:else if importState.type === "failed"}
+    {:else if importState.type === 'failed'}
         <span>
             <i class="ti ti-alert-hexagon"></i>
             読み込みに失敗しました
         </span>
-        {{ "invalid-format": "無効なゲームファイル" }[importState.kind]}
-    {:else if importState.type === "loaded"}
+        {{ 'invalid-format': '無効なゲームファイル' }[importState.kind]}
+    {:else if importState.type === 'loaded'}
         <span>
             <i class="ti ti-check"></i>
             読み込み完了

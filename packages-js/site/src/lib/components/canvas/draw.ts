@@ -398,9 +398,9 @@ export class Draw {
 
     constructor(
         private readonly matrices: Matrices,
-        private readonly glContext: GlContext
+        private readonly glContext: GlContext,
     ) {
-        this.vertexShader = glContext.createShader({type: 'vertex', source: VERTEX_SHADER});
+        this.vertexShader = glContext.createShader({ type: 'vertex', source: VERTEX_SHADER });
         this.colorProgram = this.createProgram(COLOR_FRAGMENT_SHADER);
         this.textureProgram = this.createProgram(TEXTURE_FRAGMENT_SHADER);
         this.textureMaskProgram = this.createProgram(TEXTURE_MASK_FRAGMENT_SHADER);
@@ -432,7 +432,7 @@ export class Draw {
     }
 
     private createProgram(fragmentSource: string): GlProgram {
-        const fragmentShader = this.glContext.createShader({type: 'fragment', source: fragmentSource});
+        const fragmentShader = this.glContext.createShader({ type: 'fragment', source: fragmentSource });
         return this.glContext.createProgram([this.vertexShader, fragmentShader]);
     }
 
@@ -556,7 +556,7 @@ export class Draw {
             this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
             
-            this.colorProgram.getAttribute('a_position').set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);;
+            this.colorProgram.getAttribute('a_position').set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0); ;
             gl.drawArrays(gl.TRIANGLES, 0, 3);
         });
     }
@@ -736,7 +736,7 @@ export class Draw {
 
             this.textureOutlineProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.textureOutlineProgram.getUniform('u_outlineColor').asVec4().set(color);
-            this.textureOutlineProgram.getUniform('u_resolution').asVec2().set({x: right - left, y: bottom - top});
+            this.textureOutlineProgram.getUniform('u_resolution').asVec2().set({ x: right - left, y: bottom - top });
             const mvp = this.matrices.get();
             this.textureOutlineProgram.getUniform('u_outlineWidth').asFloat().set(outlineWidth / mvp.m00 / gl.canvas.width);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -749,7 +749,7 @@ export class Draw {
         c: Vec2Like,
         color: Vec4Like,
         widthIn: number,
-        widthOut: number
+        widthOut: number,
     ): void {
         const { gl } = this.glContext;
         
@@ -780,7 +780,7 @@ export class Draw {
             ]));
             this.setMatrices(this.bezierProgram);
 
-            this.bezierProgram.getUniform('u_resolution').asVec2().set({x: width, y: height});
+            this.bezierProgram.getUniform('u_resolution').asVec2().set({ x: width, y: height });
             this.bezierProgram.getUniform('u_color').asVec4().set(color);
             this.bezierProgram.getUniform('u_widthIn').asFloat().set(widthIn);
             this.bezierProgram.getUniform('u_widthOut').asFloat().set(widthOut);
@@ -819,7 +819,7 @@ export class Draw {
             ]));
             this.setMatrices(this.circleProgram);
 
-            this.circleProgram.getUniform('u_resolution').asVec2().set({x: radiusOuter * 2, y: radiusOuter * 2});
+            this.circleProgram.getUniform('u_resolution').asVec2().set({ x: radiusOuter * 2, y: radiusOuter * 2 });
             this.circleProgram.getUniform('u_color').asVec4().set(color);
             this.circleProgram.getUniform('u_radiusInner').asFloat().set(radiusInner / 2);
             this.circleProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter / 2);
@@ -859,7 +859,7 @@ export class Draw {
             ]));
             this.setMatrices(this.circleTextureProgram);
 
-            this.circleTextureProgram.getUniform('u_resolution').asVec2().set({x: radiusOuter * 2, y: radiusOuter * 2});
+            this.circleTextureProgram.getUniform('u_resolution').asVec2().set({ x: radiusOuter * 2, y: radiusOuter * 2 });
             this.circleTextureProgram.getUniform('u_color').asVec4().set(color);
             this.circleTextureProgram.getUniform('u_radiusInner').asFloat().set(radiusInner / 2);
             this.circleTextureProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter / 2);

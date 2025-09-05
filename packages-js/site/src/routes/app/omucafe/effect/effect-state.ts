@@ -28,7 +28,7 @@ type ParticleEmitter = {
     velocity: AABB2Like,
     acceleration: AABB2Like,
     scale: AABB2Like,
-}
+};
 
 export function createParticleEmitter(options: Partial<ParticleEmitter>): ParticleEmitter {
     return {
@@ -39,19 +39,19 @@ export function createParticleEmitter(options: Partial<ParticleEmitter>): Partic
         velocity: options.velocity ?? AABB2.ZEROZERO,
         acceleration: options.acceleration ?? AABB2.ZEROZERO,
         scale: options.scale ?? AABB2.ONEONE,
-    }
+    };
 }
 
 export type ParticleSource = {
     type: 'random',
     assets: Asset[],
-}
+};
 
 export function createParticleSource(options: Partial<ParticleSource>): ParticleSource {
     return {
         type: 'random',
         assets: options.assets ?? [],
-    }
+    };
 }
 
 export type EffectParticle = {
@@ -65,13 +65,13 @@ export function createParticle(options: Partial<EffectParticle>): EffectParticle
         type: 'particle',
         source: options.source ?? createParticleSource({}),
         emitter: options.emitter ?? createParticleEmitter({}),
-    }
+    };
 }
 
 export type EffectAttributes = {
     sound: EffectSound,
     particle: EffectParticle,
-}
+};
 
 export type EffectState = {
     id: string,

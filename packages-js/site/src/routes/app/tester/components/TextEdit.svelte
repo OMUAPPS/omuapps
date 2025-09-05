@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Text } from "@omujs/chat/models";
+    import type { Text } from '@omujs/chat/models';
 
     export let component: Text;
 
