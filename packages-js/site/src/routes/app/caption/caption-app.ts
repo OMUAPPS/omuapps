@@ -1,7 +1,7 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
-import { SignalType, type Signal } from '@omujs/omu/api/signal';
+import { SignalType } from '@omujs/omu/api/signal';
 import { BROWSER } from 'esm-env';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
@@ -138,25 +138,9 @@ export const FONTS = [
 ];
 
 export class CaptionApp {
-    private readonly listeners = new Set<(caption: Caption) => void>();
-    private readonly captionSignal: Signal<Caption>;
     public readonly config: Writable<Config>;
 
-    constructor(omu: Omu) {
-        this.captionSignal = omu.signals.get(CAPTION_SIGNAL);
-        this.captionSignal.listen((caption) => {
-            for (const listener of this.listeners) {
-                listener(caption);
-            }
-        });
+    constructor(public readonly omu: Omu) {
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
-    }
-
-    public setCaption(caption: Caption) {
-        this.captionSignal.notify(caption);
-    }
-
-    public listen(listener: (caption: Caption) => void) {
-        this.listeners.add(listener);
     }
 }

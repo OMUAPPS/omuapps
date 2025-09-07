@@ -4,6 +4,7 @@
     import { App, Omu } from '@omujs/omu';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
+    import { DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID } from '@omujs/omu/api/dashboard';
     import { APP_ID } from '../app.js';
     import { CaptionApp } from '../caption-app.js';
     import CaptionRenderer from '../CaptionRenderer.svelte';
@@ -19,6 +20,9 @@
     setClient(omu);
 
     if (BROWSER) {
+        omu.permissions.require(
+            DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>

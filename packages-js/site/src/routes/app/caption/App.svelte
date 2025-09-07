@@ -7,46 +7,15 @@
         Combobox,
         Tooltip,
     } from '@omujs/ui';
-    import { BROWSER } from 'esm-env';
     import CaptionRenderer from './CaptionRenderer.svelte';
     import { CaptionApp, FONTS, LANGUAGES_OPTIONS, type LanguageKey } from './caption-app.js';
 
     export let omu: Omu;
     export let obs: OBSPlugin;
     export let captionApp: CaptionApp;
-    
+
     const { config } = captionApp;
     console.log(omu.ready, $config);
-
-    let recognition = BROWSER && new (webkitSpeechRecognition || SpeechRecognition)() || null;
-
-    function setup(lang: string) {
-        if (!recognition) {
-            throw new Error('Speech recognition is not supported');
-        }
-        recognition.stop();
-        recognition.interimResults = true;
-        recognition.continuous = false;
-        recognition.lang = lang;
-
-        recognition.onresult = (event) => {
-            const texts = [...event.results]
-                .flatMap((result) => [...result])
-                .map((result) => result.transcript);
-            const final = event.results[event.results.length - 1].isFinal;
-            captionApp.setCaption({ texts, final });
-        };
-
-        recognition.onend = () => {
-            recognition.start();
-        };
-    }
-
-    $: setup($config.lang);
-
-    if (BROWSER) {
-        recognition!.start();
-    }
 
     function resetLang() {
         $config.lang = window.navigator.language as LanguageKey;

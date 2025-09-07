@@ -284,16 +284,16 @@ export const DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID: Identifier = DASHBOARD_
 export type TranscriptSegment = {
     confidence: number;
     transcript: string;
-    isFinal: boolean;
 };
 
 export type TranscriptResult = {
     segments: TranscriptSegment[];
+    isFinal: boolean;
 };
 
 const DASHBOARD_SPEECH_RECOGNITION = RegistryType.createJson<TranscriptResult>(DASHBOARD_EXTENSION_TYPE, {
     name: 'speech_recognition',
-    defaultValue: { segments: [] },
+    defaultValue: { segments: [], isFinal: false },
     permissions: RegistryPermissions.of({
         read: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         write: DASHBOARD_SET_PERMISSION_ID,

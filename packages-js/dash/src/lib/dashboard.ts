@@ -62,7 +62,7 @@ export class Dashboard implements DashboardHandler {
         console.log(response);
         if (!this.recognition) throw new Error('Speech Recognition is not supported in this browser.');
         this.recognition.continuous = false;
-        this.recognition.lang = 'ja-JP';
+        this.recognition.lang = navigator.language;
         this.recognition.interimResults = false;
         this.recognition.maxAlternatives = 1;
         this.recognition.onerror = ({ error }) => {
@@ -72,11 +72,12 @@ export class Dashboard implements DashboardHandler {
         this.recognition.onresult = async ({ results }) => {
             const segments: TranscriptSegment[] = [...results]
                 .map((result) => {
-                    return [...result].map(({ confidence, transcript }): TranscriptSegment => ({ confidence, transcript, isFinal: result.isFinal }));
+                    return [...result].map(({ confidence, transcript }): TranscriptSegment => ({ confidence, transcript }));
                 })
                 .flatMap((result) => [...result]);
             await this.omu.dashboard.speechRecognition.set({
                 segments,
+                isFinal: results[results.length - 1].isFinal,
             });
         };
         this.recognition.onend = () => {

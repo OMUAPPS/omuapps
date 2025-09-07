@@ -353,12 +353,13 @@ class TranscriptSegment(TypedDict):
 
 class TranscriptResult(TypedDict):
     segments: list[TranscriptSegment]
+    isFinal: bool
 
 
 DASHBOARD_SPEECH_RECOGNITION = RegistryType[TranscriptResult].create_json(
     DASHBOARD_EXTENSION_TYPE,
     name="speech_recognition",
-    default_value={"segments": []},
+    default_value={"segments": [], "isFinal": False},
     permissions=RegistryPermissions(
         read=DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         write=DASHBOARD_SET_PERMISSION_ID,
