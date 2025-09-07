@@ -189,6 +189,13 @@ export class Dashboard implements DashboardHandler {
         const uri = new URL(url);
         if (!['https:', 'http:'].includes(uri.protocol)) throw new Error('Invalid URL protocol');
         const label = `webview-${Math.floor(performance.timeOrigin * 1000)}-${this.webviewHandles.size}-${Math.floor(performance.now() * 10000)}`;
+        const id = params.caller.join(label);
+        this.webviewHandles.set(id, {
+            id,
+            close: () => {
+                webviewWindow?.destroy();
+            },
+        });
         const existingWebviewWindow = await WebviewWindow.getByLabel(label);
         existingWebviewWindow?.destroy();
         const existingWebview = await Webview.getByLabel(label);
@@ -207,13 +214,6 @@ export class Dashboard implements DashboardHandler {
         webviewWindow.once('tauri://close-requested', async () => {
             this.webviewHandles.delete(id);
             await emit({ type: 'closed' });
-        });
-        const id = params.caller.join(label);
-        this.webviewHandles.set(id, {
-            id,
-            close: () => {
-                webviewWindow.destroy();
-            },
         });
         return id;
     }

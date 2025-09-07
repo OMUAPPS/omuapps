@@ -113,6 +113,12 @@ DASHBOARD_WEBVIEW_PERMISSION = PermissionType(
             "ja": "外部サイトのログインを使用",
             "en": "Use external sites to login",
         },
+        "note": {
+            "ja": "すべてのアクセスが可能なため、慎重に扱う必要があります",
+            "en": "Since it can access everything, it needs to be handled carefully",
+        },
+    },
+)
 DASHBOARD_SPEECH_RECOGNITION_PERMISSION = PermissionType(
     DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
     {

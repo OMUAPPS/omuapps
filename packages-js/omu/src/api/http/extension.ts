@@ -209,7 +209,7 @@ export class HttpExtension implements Extension {
         return id.key();
     }
 
-    public async request(input: string | URL | globalThis.Request, init?: RequestInit): Promise<{ response: HttpResponse, stream: ReadableStream }> {
+    public async request(input: string | URL | globalThis.Request, init?: RequestInit): Promise<{ response: HttpResponse; stream: ReadableStream }> {
         const request = new Request(input, init);
         const id = this.generateId();
         this.client.send(REQUEST_CREATE, {
@@ -272,10 +272,63 @@ export class HttpExtension implements Extension {
 
     public async fetch(input: string | URL | globalThis.Request, init?: RequestInit): Promise<Response> {
         const { response, stream } = await this.request(input, init);
-        return new Response(stream, {
-            headers: response.header,
-            status: response.status,
-            statusText: response.statusText,
-        });
+        return new OmuResponse(
+            new Headers(response.header),
+            response.status >= 200 && response.status < 300,
+            response.redirected,
+            response.status,
+            response.statusText,
+            'basic',
+            response.url,
+            stream,
+            false,
+        );
+    }
+}
+
+class OmuResponse implements Response {
+    constructor(
+        public readonly headers: Headers,
+        public readonly ok: boolean,
+        public readonly redirected: boolean,
+        public readonly status: number,
+        public readonly statusText: string,
+        public readonly type: ResponseType,
+        public readonly url: string,
+        public readonly body: ReadableStream<Uint8Array<ArrayBuffer>> | null,
+        public readonly bodyUsed: boolean,
+    ) {}
+
+    clone(): OmuResponse {
+        return new OmuResponse(
+            this.headers,
+            this.ok,
+            this.redirected,
+            this.status,
+            this.statusText,
+            this.type,
+            this.url,
+            this.body,
+            this.bodyUsed,
+        );
+    }
+    async arrayBuffer(): Promise<ArrayBuffer> {
+        return await new Response(this.body).arrayBuffer();
+    }
+    blob(): Promise<Blob> {
+        return new Response(this.body).blob();
+    }
+    bytes(): Promise<Uint8Array<ArrayBuffer>> {
+        return new Response(this.body).arrayBuffer().then((buf) => new Uint8Array(buf));
+    }
+    formData(): Promise<FormData> {
+        return new Response(this.body).formData();
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    json(): Promise<any> {
+        return new Response(this.body).json();
+    }
+    text(): Promise<string> {
+        return new Response(this.body).text();
     }
 }
