@@ -5,6 +5,7 @@ import { PacketType } from '../../network/packet/packet.js';
 import { Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
+import { Registry, RegistryPermissions, RegistryType } from '../registry/registry.js';
 import type { Table } from '../table/table.js';
 import { TableType } from '../table/table.js';
 
@@ -278,6 +279,27 @@ const DASHBOARD_HOST_REQUEST = EndpointType.createJson<{
     permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
 });
 
+export const DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('speech_recognition');
+
+export type TranscriptSegment = {
+    confidence: number;
+    transcript: string;
+    isFinal: boolean;
+};
+
+export type TranscriptResult = {
+    segments: TranscriptSegment[];
+};
+
+const DASHBOARD_SPEECH_RECOGNITION = RegistryType.createJson<TranscriptResult>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'speech_recognition',
+    defaultValue: { segments: [] },
+    permissions: RegistryPermissions.of({
+        read: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+        write: DASHBOARD_SET_PERMISSION_ID,
+    }),
+});
+
 export class DashboardExtension {
     public readonly type: ExtensionType<DashboardExtension> = DASHBOARD_EXTENSION_TYPE;
     private dashboard: DashboardHandler | null = null;
@@ -290,7 +312,8 @@ export class DashboardExtension {
     };
     public readonly apps: Table<App>;
     public readonly allowedHosts: Table<AllowedHost>;
-    private readonly webviewHandles: IdentifierMap<{ handle: WebviewHandle, emit: WebviewEventEmit }> = new IdentifierMap();
+    public readonly speechRecognition: Registry<TranscriptResult>;
+    private readonly webviewHandles: IdentifierMap<{ handle: WebviewHandle; emit: WebviewEventEmit }> = new IdentifierMap();
 
     constructor(private readonly client: Client) {
         client.network.registerPacket(
@@ -362,6 +385,7 @@ export class DashboardExtension {
         });
         this.apps = client.tables.get(DASHBOARD_APP_TABLE_TYPE);
         this.allowedHosts = client.tables.get(DASHBOARD_ALLOWED_HOSTS);
+        this.speechRecognition = client.registries.get(DASHBOARD_SPEECH_RECOGNITION);
     }
 
     private async handlePermissionRequest(request: PermissionRequestPacket): Promise<void> {

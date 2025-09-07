@@ -36,6 +36,7 @@ from omu.api.dashboard.extension import (
     DASHBOARD_PLUGIN_DENY_PACKET,
     DASHBOARD_PLUGIN_REQUEST_PACKET,
     DASHBOARD_SET_ENDPOINT,
+    DASHBOARD_SPEECH_RECOGNITION,
     DASHBOARD_WEBVIEW_EVENT_PACKET,
     DashboardSetResponse,
     DragDropReadRequest,
@@ -66,6 +67,7 @@ from .permission import (
     DASHBOARD_DRAG_DROP_PERMISSION,
     DASHBOARD_OPEN_APP_PERMISSION,
     DASHBOARD_SET_PERMISSION,
+    DASHBOARD_SPEECH_RECOGNITION_PERMISSION,
     DASHBOARD_WEBVIEW_PERMISSION,
     DASHOBARD_APP_EDIT_PERMISSION,
     DASHOBARD_APP_READ_PERMISSION,
@@ -106,6 +108,7 @@ class DashboardExtension:
             DASHBOARD_APP_UPDATE_PERMISSION,
             DASHBOARD_DRAG_DROP_PERMISSION,
             DASHBOARD_WEBVIEW_PERMISSION,
+            DASHBOARD_SPEECH_RECOGNITION_PERMISSION,
         )
         server.packets.bind(DASHBOARD_PERMISSION_ACCEPT_PACKET, self.handle_permission_accept)
         server.packets.bind(DASHBOARD_PERMISSION_DENY_PACKET, self.handle_permission_deny)
@@ -128,6 +131,7 @@ class DashboardExtension:
         server.network.event.connected += self.handle_session_connected
         self.apps = server.tables.register(DASHBOARD_APP_TABLE_TYPE)
         self.allowed_hosts = server.tables.register(DASHBOARD_ALLOWED_HOSTS)
+        self.speech_recognition = server.registries.register(DASHBOARD_SPEECH_RECOGNITION)
         self.dashboard_session: Session | None = None
         self.dashboard_wait_future: Future[Session] | None = None
         self.permission_requests: dict[str, Future[bool]] = {}

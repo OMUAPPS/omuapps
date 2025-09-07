@@ -4,6 +4,7 @@ from omu.api.dashboard import (
     DASHBOARD_DRAG_DROP_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHBOARD_SET_PERMISSION_ID,
+    DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
     DASHBOARD_WEBVIEW_PERMISSION_ID,
     DASHOBARD_APP_EDIT_PERMISSION_ID,
     DASHOBARD_APP_READ_PERMISSION_ID,
@@ -111,6 +112,14 @@ DASHBOARD_WEBVIEW_PERMISSION = PermissionType(
         "name": {
             "ja": "外部サイトのログインを使用",
             "en": "Use external sites to login",
+        },
+DASHBOARD_SPEECH_RECOGNITION_PERMISSION = PermissionType(
+    DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+    {
+        "level": "medium",
+        "name": {
+            "ja": "音声認識を使用",
+            "en": "Use Speech Recognition",
         },
     },
 )

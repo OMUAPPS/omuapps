@@ -15,6 +15,7 @@ import {
     type HostRequest,
     type PermissionRequestPacket,
     type PluginRequestPacket,
+    type TranscriptSegment,
     type UserResponse,
     type WebviewPacket,
     type WebviewRequest,
@@ -41,8 +42,9 @@ export class Dashboard implements DashboardHandler {
         id: Identifier,
         close: () => void,
     }> = new IdentifierMap();
+    private readonly recognition = new (SpeechRecognition || webkitSpeechRecognition)();
 
-    constructor(omu: Omu) {
+    constructor(private readonly omu: Omu) {
         this.apps = omu.dashboard.apps;
         omu.dashboard.set(this);
         omu.onReady(() => {
@@ -51,6 +53,36 @@ export class Dashboard implements DashboardHandler {
         this.apps.event.add.listen(() => {
             appWindow.setFocus();
         });
+
+        this.initSpeechRecognition();
+    }
+
+    async initSpeechRecognition() {
+        const response = await navigator.permissions.query({ name: 'microphone' });
+        console.log(response);
+        if (!this.recognition) throw new Error('Speech Recognition is not supported in this browser.');
+        this.recognition.continuous = false;
+        this.recognition.lang = 'ja-JP';
+        this.recognition.interimResults = false;
+        this.recognition.maxAlternatives = 1;
+        this.recognition.onerror = ({ error }) => {
+            if (error === 'no-speech') return;
+            console.error('Speech recognition error:', error);
+        };
+        this.recognition.onresult = async ({ results }) => {
+            const segments: TranscriptSegment[] = [...results]
+                .map((result) => {
+                    return [...result].map(({ confidence, transcript }): TranscriptSegment => ({ confidence, transcript, isFinal: result.isFinal }));
+                })
+                .flatMap((result) => [...result]);
+            await this.omu.dashboard.speechRecognition.set({
+                segments,
+            });
+        };
+        this.recognition.onend = () => {
+            this.recognition.start();
+        };
+        this.recognition.start();
     }
 
     async handlePermissionRequest(request: PermissionRequestPacket): Promise<boolean> {

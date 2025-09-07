@@ -44,7 +44,7 @@ def serialize_response(id: str, response: ClientResponse) -> HttpResponse:
 @dataclass
 class Request:
     session: Session
-    buffer: io.BytesIO = field(default_factory=io.BytesIO)
+    buffer: io.BytesIO
     close_future: Future[io.BytesIO] = field(default_factory=Future)
 
 
@@ -63,30 +63,33 @@ class HttpExtension:
         server.network.add_packet_handler(HTTP_REQUEST_CLOSE, self.handle_request_close)
 
     async def handle_request_create(self, session: Session, packet: HttpRequest):
-        if not session.permissions.has(HTTP_REQUEST_PERMISSION_ID):
-            raise PermissionDenied(f"Missing HTTP request permission: {HTTP_REQUEST_PERMISSION_ID}")
-        url = URL(packet["url"])
-        request = Request(session=session)
-        self.requests[packet["id"]] = request
-        await request.close_future
-        async with ClientSession() as client:
-            async with client.request(
-                packet["method"],
-                url,
-                headers=packet["header"],
-                allow_redirects=packet["redirect"] == "follow",
-                data=request.buffer,
-            ) as response:
-                await session.send(HTTP_RESPONSE_CREATE, serialize_response(packet["id"], response))
-                async for data, _ in response.content.iter_chunks():
-                    await session.send(
-                        HTTP_RESPONSE_CHUNK,
-                        HttpChunk({"id": packet["id"]}, data),
-                    )
-        await session.send(
-            HTTP_RESPONSE_CLOSE,
-            {"id": packet["id"]},
-        )
+        try:
+            if not session.permissions.has(HTTP_REQUEST_PERMISSION_ID):
+                raise PermissionDenied(f"Missing HTTP request permission: {HTTP_REQUEST_PERMISSION_ID}")
+            url = URL(packet["url"])
+            request = Request(session=session, buffer=io.BytesIO())
+            self.requests[packet["id"]] = request
+            await request.close_future
+            async with ClientSession() as client:
+                async with client.request(
+                    packet["method"],
+                    url,
+                    headers=packet["header"],
+                    allow_redirects=packet["redirect"] == "follow",
+                    data=request.buffer.getbuffer(),
+                ) as response:
+                    await session.send(HTTP_RESPONSE_CREATE, serialize_response(packet["id"], response))
+                    async for data, _ in response.content.iter_chunks():
+                        await session.send(
+                            HTTP_RESPONSE_CHUNK,
+                            HttpChunk({"id": packet["id"]}, data),
+                        )
+            await session.send(
+                HTTP_RESPONSE_CLOSE,
+                {"id": packet["id"]},
+            )
+        finally:
+            del self.requests[packet["id"]]
 
     async def handle_request_send(self, session: Session, packet: HttpChunk[RequestHandle]):
         handle = self.requests[packet.meta["id"]]

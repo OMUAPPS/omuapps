@@ -10,6 +10,14 @@ export class RegistryPermissions {
         public readonly write?: Identifier | undefined,
     ) { }
 
+    public static of(permissions: {
+        all?: Identifier;
+        read?: Identifier;
+        write?: Identifier;
+    }): RegistryPermissions {
+        return new RegistryPermissions(permissions.all, permissions.read, permissions.write);
+    }
+
     public serialize(writer: ByteWriter): void {
         const flags = new Flags({ length: 3 });
         flags.set(0, this.all !== undefined);

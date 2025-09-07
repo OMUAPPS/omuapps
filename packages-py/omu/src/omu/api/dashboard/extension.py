@@ -6,6 +6,7 @@ from typing import Any, Literal, TypedDict
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
+from omu.api.registry.registry import RegistryPermissions, RegistryType
 from omu.api.table import TablePermissions, TableType
 from omu.app import App, AppJson
 from omu.bytebuffer import ByteReader, ByteWriter
@@ -340,6 +341,28 @@ DASHBOARD_ALLOWED_HOSTS = TableType[AllowedHost].create_json(
     name="hosts",
     key=lambda entry: entry["host"],
     permissions=TablePermissions(DASHBOARD_SET_PERMISSION_ID),
+)
+
+DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join("speech_recognition")
+
+
+class TranscriptSegment(TypedDict):
+    confidence: float
+    transcript: str
+
+
+class TranscriptResult(TypedDict):
+    segments: list[TranscriptSegment]
+
+
+DASHBOARD_SPEECH_RECOGNITION = RegistryType[TranscriptResult].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    name="speech_recognition",
+    default_value={"segments": []},
+    permissions=RegistryPermissions(
+        read=DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+        write=DASHBOARD_SET_PERMISSION_ID,
+    ),
 )
 
 
