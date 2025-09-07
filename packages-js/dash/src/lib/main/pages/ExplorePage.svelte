@@ -7,12 +7,12 @@
 
     function getExploreUrl(): string {
         if (DEV) {
-            return 'http://localhost:5173/app/explore';
+            return 'http://localhost:5173/app';
         }
         if ($isBetaEnabled) {
-            return 'https://beta.omuapps.com/app/explore';
+            return 'https://beta.omuapps.com/app';
         } else {
-            return 'https://omuapps.com/app/explore';
+            return 'https://omuapps.com/app';
         }
     }
 
