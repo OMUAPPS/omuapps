@@ -1,32 +1,37 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { VERSION } from '$lib/version.js';
     import { OBSPlugin, permissions as obsPerms } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { DASHBOARD_WEBVIEW_PERMISSION_ID } from '@omujs/omu/api/dashboard';
+    import { DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID, DASHBOARD_WEBVIEW_PERMISSION_ID } from '@omujs/omu/api/dashboard';
     import { HTTP_REQUEST_PERMISSION_ID } from '@omujs/omu/api/http';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
+    import { MarshmallowAPI, MarshmallowSession } from './api.js';
     import { APP } from './app.js';
     import App from './App.svelte';
-    import { MarshmallowApp, PLUGIN_ID } from './marshmallow-app.js';
+    import { MarshmallowApp } from './marshmallow-app.js';
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const marshmallow = new MarshmallowApp(omu);
     setClient(omu);
 
-    omu.plugins.require({
-        omuplugin_marshmallow: `>=${VERSION}`,
-    });
-    omu.server.require(PLUGIN_ID);
+    async function getAPI() {
+        const session = await MarshmallowSession.get(omu) ?? await MarshmallowSession.login(omu);
+        if (!session) {
+            console.warn('Failed to get session');
+            return;
+        }
+        return MarshmallowAPI.new(omu, session);
+    }
 
-    const waitReady = new Promise<void>((resolve) => omu.onReady(resolve));
+    const api = omu.waitForReady().then(() => getAPI());
 
     if (BROWSER) {
         omu.permissions.require(
             obsPerms.OBS_SOURCE_CREATE_PERMISSION_ID,
             DASHBOARD_WEBVIEW_PERMISSION_ID,
+            DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
             HTTP_REQUEST_PERMISSION_ID,
         );
         omu.start();
@@ -37,7 +42,9 @@
     <header slot="header">
         <AppHeader app={APP} />
     </header>
-    {#await waitReady then}
-        <App {omu} {marshmallow} {obs} />
+    {#await api then api}
+        {#if api}
+            <App {omu} {marshmallow} {obs} {api} />
+        {/if}
     {/await}
 </AppPage>

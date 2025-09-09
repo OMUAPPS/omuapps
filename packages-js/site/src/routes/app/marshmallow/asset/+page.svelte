@@ -4,6 +4,7 @@
     import { App, Omu } from '@omujs/omu';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
+    import { fade } from 'svelte/transition';
     import { APP, APP_ID } from '../app.js';
     import { MarshmallowApp } from '../marshmallow-app.js';
 
@@ -14,12 +15,12 @@
             ...APP.metadata,
             locale: 'en',
             name: {
-                ja: 'マシュマロ読み（アセット側）',
-                en: 'Marshmallow Reader (Asset)',
+                ja: 'マシュマロ読みOBS',
+                en: 'Marshmallow Reader OBS',
             },
             description: {
-                ja: '面倒なことなくマシュマロを読むことができます',
-                en: 'Read marshmallows without any hassle',
+                ja: 'OBSにマシュマロを表示します',
+                en: 'Display Marshmallow in OBS',
             },
         },
     });
@@ -41,7 +42,7 @@
             {#if $data.message}
                 <img
                     src="https://media.marshmallow-qa.com/system/images/{$data.message
-                        .message_id}.png"
+                        .id}.png"
                     class:async={!$config.syncScroll}
                     style:transform="translateY(-{$config.syncScroll ? $data.scroll * 100 : 0}%)"
                     bind:this={image}
@@ -56,6 +57,8 @@
                         style:transform="translateY(-{$config.syncScroll
                             ? $data.scroll * 100
                             : 0}%)"
+                        in:fade={{ duration: 1000 / 60 * 3 }}
+                        out:fade={{ duration: 1000 / 60 * 1 }}
                     >
                         <i
                             class="pointer ti ti-pointer-filled"
