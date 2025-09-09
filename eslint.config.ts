@@ -119,6 +119,7 @@ export default [
             '@stylistic/type-annotation-spacing': 'error',
             '@stylistic/no-trailing-spaces': 'error',
             '@stylistic/member-delimiter-style': 'error',
+            '@stylistic/space-in-parens': ['error', 'never'],
         },
     },
 ] as ConfigArray;

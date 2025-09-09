@@ -234,6 +234,7 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
     preLoadAssets(action: BehaviorAction<'liquid'>): Promise<void> | void {
         const { behavior } = action;
         if (behavior.layers.length === 0) return;
+        const { layers } = behavior;
         if (!layers.length) return;
         const layersFromTop = layers.toReversed();
         const { side, top: topAsset } = layersFromTop[0];
