@@ -95,7 +95,10 @@ pub async fn create_webview_window(
     let url = Url::parse(&options.url).map_err(|err| err.to_string())?;
     let host = url.host_str().unwrap().to_string();
     let init_script = format!(
-        "window.close = () => location.href='webview://close'; if (location.hostname === \"{}\") {{ eval(\"{}\") }}",
+        "if (location.hostname === \"{}\") {{
+    window.close = () => location.href='webview://close';
+    eval(\"{}\");
+}}",
         sanitize_string_literal(&host),
         sanitize_string_literal(&options.script),
     );
