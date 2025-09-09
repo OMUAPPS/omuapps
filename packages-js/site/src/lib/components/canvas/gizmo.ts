@@ -67,7 +67,7 @@ export class Gizmo {
             const viewUniform = this.program.getUniform('u_view').asMat4();
             const modelUniform = this.program.getUniform('u_model').asMat4();
             const colorUniform = this.program.getUniform('u_color').asVec4();
-            
+
             projectionUniform.set(matrix);
             viewUniform.set(Mat4.IDENTITY);
             modelUniform.set(Mat4.IDENTITY);
@@ -117,7 +117,7 @@ export class Gizmo {
             const viewUniform = this.program.getUniform('u_view').asMat4();
             const modelUniform = this.program.getUniform('u_model').asMat4();
             const colorUniform = this.program.getUniform('u_color').asVec4();
-            
+
             projectionUniform.set(matrix);
             viewUniform.set(Mat4.IDENTITY);
             modelUniform.set(Mat4.IDENTITY);
@@ -156,7 +156,7 @@ export class Gizmo {
             const viewUniform = this.program.getUniform('u_view').asMat4();
             const modelUniform = this.program.getUniform('u_model').asMat4();
             const colorUniform = this.program.getUniform('u_color').asVec4();
-            
+
             projectionUniform.set(matrix);
             viewUniform.set(Mat4.IDENTITY);
             modelUniform.set(Mat4.IDENTITY);
@@ -208,7 +208,7 @@ export class Gizmo {
             const viewUniform = this.program.getUniform('u_view').asMat4();
             const modelUniform = this.program.getUniform('u_model').asMat4();
             const colorUniform = this.program.getUniform('u_color').asVec4();
-            
+
             projectionUniform.set(matrix);
             viewUniform.set(Mat4.IDENTITY);
             modelUniform.set(Mat4.IDENTITY);
@@ -233,7 +233,7 @@ export class Gizmo {
             const viewUniform = this.program.getUniform('u_view').asMat4();
             const modelUniform = this.program.getUniform('u_model').asMat4();
             const colorUniform = this.program.getUniform('u_color').asVec4();
-            
+
             projectionUniform.set(matrix);
             viewUniform.set(Mat4.IDENTITY);
             modelUniform.set(Mat4.IDENTITY);

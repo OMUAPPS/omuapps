@@ -47,5 +47,5 @@
 />
 
 {#if $scene.type === 'photo_mode'}
-    <PhotoScreen bind:photoMode={$scene}/>
+    <PhotoScreen bind:photoMode={$scene} />
 {/if}

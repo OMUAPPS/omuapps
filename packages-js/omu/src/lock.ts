@@ -24,7 +24,7 @@ export class Lock {
         });
         return this.waiter;
     }
-    
+
     public async use<T>(callback: () => Promise<T>): Promise<T> {
         const promise = new Promise<T>((resolve, reject) => {
             const task = async () => {

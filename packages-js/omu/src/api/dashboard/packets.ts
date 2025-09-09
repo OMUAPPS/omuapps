@@ -74,7 +74,7 @@ export class AppInstallRequest {
 
 export class AppUpdateRequest {
     constructor(public readonly requestId: string, public readonly oldApp: App, public readonly newApp: App) { }
-    
+
     public static serialize(packet: AppUpdateRequest): Uint8Array {
         const writer = new ByteWriter();
         writer.writeString(packet.requestId);
@@ -176,7 +176,7 @@ export class DragDropReadResponse {
         writer.writeULEB128(data.version);
         writer.writeString(JSON.stringify(data.meta));
         writer.writeULEB128(Object.keys(data.files).length);
-        
+
         for (const [key, { file, buffer }] of Object.entries(data.files)) {
             writer.writeString(key);
             writer.writeString(JSON.stringify(file));

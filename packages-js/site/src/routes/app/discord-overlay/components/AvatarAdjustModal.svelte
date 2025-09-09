@@ -7,12 +7,12 @@
 
     export let overlayApp: DiscordOverlayApp;
     export let avatarConfig: AvatarConfig;
-    
+
     const { config, voiceState, speakingState } = overlayApp;
 
-    let lastMouse: { x: number, y: number } | null = null;
+    let lastMouse: { x: number; y: number } | null = null;
     let dragger: HTMLElement | null = null;
-    
+
     function handleMouseMove(event: MouseEvent) {
         if (!lastMouse) return;
         if (!$selectedAvatar) return;

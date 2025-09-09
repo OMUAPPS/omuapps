@@ -40,15 +40,6 @@ export async function renderEffect() {
 }
 
 export async function renderOverlay() {
-    const gl = glContext.gl;
-    // if (side === 'client') {
-    //     const tex = await getTextureByUri(overlay2);
-    //     draw.texture(
-    //         0, 0,
-    //         gl.canvas.width, gl.canvas.height,
-    //         tex.tex,
-    //     );
-    // }
     if (side === 'overlay') {
         const { tex, width, height } = await getTextureByUri(kitchen_asset_overlay);
         draw.texture(
@@ -60,15 +51,4 @@ export async function renderOverlay() {
 }
 
 export async function renderOverlay2() {
-    // const gl = glContext.gl;
-    // if (side === 'overlay') {
-    //     const tex = await getTextureByUri(overlay3);
-    //     const { height } = gl.canvas;
-    //     const scale = Math.min(height / tex.height, 1.5);
-    //     draw.texture(
-    //         0, height - tex.height * scale,
-    //         tex.width * scale, height,
-    //         tex.tex,
-    //     );
-    // }
 }

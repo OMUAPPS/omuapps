@@ -11,7 +11,7 @@
     import PhotoScreenInfo from './PhotoScreenInfo.svelte';
 
     export let photoMode: SceneType<'photo_mode'>;
-    
+
     const { scene, states, obs, gameConfig, gallery } = getGame();
 
     const COLORS = [
@@ -263,7 +263,7 @@
         );
         pointer-events: none;
     }
-    
+
     .screen {
         position: absolute;
         left: 4rem;
@@ -360,7 +360,7 @@
             font-size: 1.2rem;
         }
     }
-    
+
     .tool, .actions button {
         display: flex;
         align-items: center;
@@ -400,7 +400,7 @@
         > button {
             background: var(--color-bg-2);
         }
-        
+
         > .primary {
             background: var(--color-1);
             color: var(--color-bg-2);

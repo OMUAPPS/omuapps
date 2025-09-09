@@ -24,25 +24,25 @@ export type ItemLayer = typeof ITEM_LAYERS[keyof typeof ITEM_LAYERS];
 export const ITEM_LAYERS_LIST: ItemLayer[] = Object.values(ITEM_LAYERS);
 
 export type ItemState = {
-    id: string,
-    item: Item,
-    behaviors: Partial<Behaviors>,
-    layer: ItemLayer,
-    transform: Transform,
-    children: string[],
-    parent?: string,
-    bounds: Bounds,
-    update: number,
+    id: string;
+    item: Item;
+    behaviors: Partial<Behaviors>;
+    layer: ItemLayer;
+    transform: Transform;
+    children: string[];
+    parent?: string;
+    bounds: Bounds;
+    update: number;
 };
 
 export function createItemState(options: {
-    id?: string,
-    item: Item,
-    layer?: ItemLayer,
-    transform?: Transform,
-    children?: string[],
-    behaviors?: Partial<Behaviors>,
-    bounds?: Bounds,
+    id?: string;
+    item: Item;
+    layer?: ItemLayer;
+    transform?: Transform;
+    children?: string[];
+    behaviors?: Partial<Behaviors>;
+    bounds?: Bounds;
 }): ItemState {
     const { items } = getContext();
     const { id, item, layer, transform, children, behaviors, bounds } = options;
@@ -61,12 +61,12 @@ export function createItemState(options: {
 }
 
 export function cloneItemState(itemState: ItemState, options: {
-    layer?: ItemLayer,
-    transform?: Transform,
-    child?: boolean,
+    layer?: ItemLayer;
+    transform?: Transform;
+    child?: boolean;
 } = {}): ItemState {
     const { items } = getContext();
-    
+
     let newTransform = itemState.transform;
     if (itemState.parent && !options.child) {
         const parent = items[itemState.parent];
@@ -252,7 +252,7 @@ export function calculateItemStateRenderTransform(itemState: ItemState): Mat4 {
     const parents = getParents(itemState);
     const rootItem = parents[parents.length - 1] || itemState;
     parents.reverse();
-    
+
     let transform = Mat4.IDENTITY;
     const isAssetSide = ctx.side === 'overlay';
     for (const item of [...parents, itemState]) {
@@ -331,10 +331,10 @@ function calculateItemStateRenderBounds(itemState: ItemState): AABB2 {
 }
 
 export type ItemRender = {
-    bounds: AABB2,
-    texture: GlTexture,
-    update: number,
-    time: number,
+    bounds: AABB2;
+    texture: GlTexture;
+    update: number;
+    time: number;
 };
 const itemRenderMap: Map<string, ItemRender> = new Map();
 let itemRenderBuffer: GlFramebuffer | null = null;
@@ -452,8 +452,8 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
 }
 
 export async function renderItemState(itemState: ItemState, options: {
-    parent?: ItemState,
-    showRenderBounds?: boolean,
+    parent?: ItemState;
+    showRenderBounds?: boolean;
 } = {}) {
     const render = await getItemStateRender(itemState);
     const { bounds, texture } = render;
@@ -570,7 +570,7 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     const inverseMVP = matrices.view.get().inverse();
     const inversedMouse = inverse.transform2(inverseMVP.transform2(mouse.position));
     if (item.id === 'counter' && inversedMouse.y < 0) return true;
-    
+
     const aabbTest = (
         inversedMouse.x >= min.x &&
         inversedMouse.y >= min.y &&

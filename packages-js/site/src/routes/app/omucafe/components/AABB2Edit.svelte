@@ -20,7 +20,7 @@
                         x: valueAsNumber,
                     },
                 };
-            }}/>
+            }} />
         </label>
         <label>
             <Tooltip>
@@ -34,7 +34,7 @@
                         y: valueAsNumber,
                     },
                 };
-            }}/>
+            }} />
         </label>
     </span>
     <span class="max">
@@ -51,7 +51,7 @@
                         x: valueAsNumber,
                     },
                 };
-            }}/>
+            }} />
         </label>
         <label>
             <Tooltip>
@@ -65,7 +65,7 @@
                         y: valueAsNumber,
                     },
                 };
-            }}/>
+            }} />
         </label>
     </span>
 </div>

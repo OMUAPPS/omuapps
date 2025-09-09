@@ -6,20 +6,20 @@ import { getGame } from '../omucafe-app.js';
 import { getAssetArrayBuffer, type Asset } from './asset.js';
 
 export type Filter = {
-    type: 'filter',
-    clip: AudioClip,
-    volume?: number,
+    type: 'filter';
+    clip: AudioClip;
+    volume?: number;
     pan?: {
-        type: 'item',
-        id?: string,
+        type: 'item';
+        id?: string;
     } | {
-        type: 'const',
-        value: number,
-    },
-    lowpass?: number,
-    highpass?: number,
-    attack?: number,
-    release?: number,
+        type: 'const';
+        value: number;
+    };
+    lowpass?: number;
+    highpass?: number;
+    attack?: number;
+    release?: number;
 };
 
 export function createFilter(options: Omit<Filter, 'type'>): Filter {
@@ -30,20 +30,20 @@ export function createFilter(options: Omit<Filter, 'type'>): Filter {
 }
 
 export type Clip = {
-    readonly type: 'clip',
-    asset?: Asset,
-    start: number,
-    duration?: number,
-    playbackRate?: number,
-    loop: boolean,
+    readonly type: 'clip';
+    asset?: Asset;
+    start: number;
+    duration?: number;
+    playbackRate?: number;
+    loop: boolean;
 };
 
 export async function createClip(options: {
-    asset?: Asset,
-    start?: number,
-    duration?: number,
-    playbackRate?: number,
-    loop?: boolean,
+    asset?: Asset;
+    start?: number;
+    duration?: number;
+    playbackRate?: number;
+    loop?: boolean;
 }): Promise<Clip> {
     const { asset, start, playbackRate, loop } = options;
     let { duration } = options;
@@ -74,29 +74,29 @@ export async function createClipFromAudio(asset: Asset): Promise<Clip> {
 }
 
 export type EnvelopeClip = {
-    readonly type: 'envelope',
+    readonly type: 'envelope';
     sources: {
-        attack?: AudioClip,
-        sustain?: AudioClip,
-        release?: AudioClip,
-    },
+        attack?: AudioClip;
+        sustain?: AudioClip;
+        release?: AudioClip;
+    };
     durations: {
-        attack?: number,
-    },
+        attack?: number;
+    };
     velocities: {
-        attack?: number,
-        sustain?: number,
-        release?: number,
-    },
+        attack?: number;
+        sustain?: number;
+        release?: number;
+    };
 };
 
 export function createEnvelopeClip(options: {
     sources?: {
-        attack?: Clip,
-        decay?: Clip,
-        sustain?: Clip,
-        release?: Clip,
-    },
+        attack?: Clip;
+        decay?: Clip;
+        sustain?: Clip;
+        release?: Clip;
+    };
 }): EnvelopeClip {
     const { sources } = options;
     return {
@@ -110,14 +110,14 @@ export function createEnvelopeClip(options: {
 export type RandomClip = {
     // Randomly select a clip from the list of clips
     // playingClip = Math.floor(random(seed + time) * clips.length) % clips.length
-    readonly type: 'random',
-    clips: Clip[],
-    seed: number,
+    readonly type: 'random';
+    clips: Clip[];
+    seed: number;
 };
 
 export function createRandomClip(options: {
-    clips: Clip[],
-    seed?: number,
+    clips: Clip[];
+    seed?: number;
 }): RandomClip {
     const { clips, seed } = options;
     return {
@@ -130,20 +130,20 @@ export function createRandomClip(options: {
 export type AudioClip = Clip | EnvelopeClip | RandomClip | Filter;
 
 export type PlayingSource = {
-    type: 'item',
-    item: string,
+    type: 'item';
+    item: string;
 } | {
-    type: 'effect',
-    item: string,
-    effect: string,
+    type: 'effect';
+    item: string;
+    effect: string;
 };
 
 export type PlayingAudioClip = {
-    readonly id: string,
-    clip: AudioClip,
-    source?: PlayingSource,
-    readonly startTime: number,
-    stopTime?: number,
+    readonly id: string;
+    clip: AudioClip;
+    source?: PlayingSource;
+    readonly startTime: number;
+    stopTime?: number;
 };
 
 function getAudioKeyBySource(source: PlayingSource): string {

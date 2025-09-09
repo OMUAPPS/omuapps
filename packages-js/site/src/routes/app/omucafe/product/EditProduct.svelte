@@ -158,7 +158,7 @@
         align-items: center;
         justify-content: center;
         padding-bottom: 1rem;
-        
+
         &.no-image {
             border: 2px dashed var(--color-outline);
         }

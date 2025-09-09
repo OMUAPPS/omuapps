@@ -27,27 +27,27 @@ type PacketHandler<T> = {
 };
 
 type StatusType<T> = {
-    type: T,
+    type: T;
 };
 
 export type NetworkStatus = StatusType<'connecting'> | StatusType<'connected'> | StatusType<'ready'> | {
-    type: 'disconnected',
-    attempt?: number,
-    reason?: DisconnectPacket | null,
+    type: 'disconnected';
+    attempt?: number;
+    reason?: DisconnectPacket | null;
 } | {
-    type: 'error',
-    error: OmuError,
+    type: 'error';
+    error: OmuError;
 } | {
-    type: 'reconnecting',
-    attempt: number,
-    timeout: number,
-    date: Date,
-    cancel: () => void,
+    type: 'reconnecting';
+    attempt: number;
+    timeout: number;
+    date: Date;
+    cancel: () => void;
 };
 
 export class Network {
     public status: NetworkStatus = { type: 'disconnected' };
-    public readonly event: { connected: EventEmitter<[]>; disconnected: EventEmitter<[DisconnectPacket | null]>; packet: EventEmitter<[Packet<unknown>]>; status: EventEmitter<[NetworkStatus]>; } = {
+    public readonly event: { connected: EventEmitter<[]>; disconnected: EventEmitter<[DisconnectPacket | null]>; packet: EventEmitter<[Packet<unknown>]>; status: EventEmitter<[NetworkStatus]> } = {
         connected: new EventEmitter<[]>(),
         disconnected: new EventEmitter<[DisconnectPacket | null]>(),
         packet: new EventEmitter<[Packet]>(),

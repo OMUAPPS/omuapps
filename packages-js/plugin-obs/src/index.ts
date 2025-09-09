@@ -37,7 +37,7 @@ type EventRecord<K extends keyof Events> = {
 export class OBSPlugin {
     private connected = false;
     private readonly events: EventRecord<keyof Events> = {};
-    
+
     private constructor(private readonly omu: Omu) {
         omu.plugins.require({
             omuplugin_obs: `>=${VERSION}`,

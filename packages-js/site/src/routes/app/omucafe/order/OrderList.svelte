@@ -2,7 +2,7 @@
     import { TableList } from '@omujs/ui';
     import { getGame } from '../omucafe-app.js';
     import OrderListEntry from './OrderListEntry.svelte';
-    
+
     const { orders } = getGame();
 </script>
 

@@ -1,7 +1,6 @@
 <script lang="ts">
     export let value: string;
 
-    let bounds: HTMLElement;
     let element: HTMLElement;
     let width = 0;
 
@@ -29,7 +28,7 @@
         pointer-events: none;
         visibility: hidden;
     }
-    
+
     input {
         border: none;
         background: none;

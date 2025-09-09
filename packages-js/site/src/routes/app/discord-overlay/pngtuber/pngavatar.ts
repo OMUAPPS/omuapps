@@ -40,7 +40,7 @@ function getFileType(source: Uint8Array): string {
     return 'image/png';
 }
 
-async function createImage(source: Uint8Array): Promise<{ width: number, height: number, image: HTMLImageElement }> {
+async function createImage(source: Uint8Array): Promise<{ width: number; height: number; image: HTMLImageElement }> {
     const type = getFileType(source);
     const blob = new Blob([source], { type });
     const url = URL.createObjectURL(blob);
@@ -62,7 +62,7 @@ export class PNGAvatar implements Avatar {
     private readonly vertexBuffer: GlBuffer;
     private readonly texcoordBuffer: GlBuffer;
     private readonly frameCounts: number[] = [];
-    
+
     constructor(
         private readonly glContext: GlContext,
         public program: GlProgram,
@@ -124,7 +124,7 @@ export class PNGAvatar implements Avatar {
             ]), 'static');
         });
     }
-    
+
     public static async load(context: GlContext, options: {
         base: Uint8Array;
         active?: Uint8Array;
@@ -240,14 +240,14 @@ export class PNGAvatar implements Avatar {
             return this.base;
         }
     }
-    
+
     public create(): AvatarContext {
         const context = {
             y: 0,
             bounceVelocity: 0,
             bounceTick: 0,
         };
-            
+
         const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => {
             const { gl } = this.glContext;
 
@@ -267,7 +267,7 @@ export class PNGAvatar implements Avatar {
             this.effectTargetTexture.use(() => {
                 this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
             });
-            
+
             const textureMesh = this.getTextureMesh(action);
             this.updateTextureMesh(textureMesh);
             this.frameBuffer.use(() => {
@@ -296,7 +296,7 @@ export class PNGAvatar implements Avatar {
                     gl.drawArrays(gl.TRIANGLES, 0, 6);
                 });
             });
-            
+
             options.effects.forEach(effect => {
                 this.effectTargetFrameBuffer.use(() => {
                     gl.clearColor(0, 0, 0, 0);

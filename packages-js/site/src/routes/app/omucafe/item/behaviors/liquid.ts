@@ -9,28 +9,28 @@ import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.j
 import { markItemStateChanged, type ItemRender, type ItemState } from '../item-state.js';
 
 export type LiquidLayer = {
-    side: Asset,
-    top?: Asset,
-    volume: number,
+    side: Asset;
+    top?: Asset;
+    volume: number;
 };
 
 export type Liquid = {
-    layers: LiquidLayer[],
-    transform: Transform,
-    density?: number,
+    layers: LiquidLayer[];
+    transform: Transform;
+    density?: number;
     mask?: {
-        asset: Asset,
-        transform: Transform,
-    },
+        asset: Asset;
+        transform: Transform;
+    };
     curvature?: {
-        in: number,
-        out: number,
-    },
+        in: number;
+        out: number;
+    };
     liquidEscape?: {
-        type: 'dripping',
-        point: Vec2Like,
-    },
-    spawn?: null,
+        type: 'dripping';
+        point: Vec2Like;
+    };
+    spawn?: null;
 };
 
 export function createLiquid(): Liquid {
@@ -121,7 +121,7 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
     private readonly maskBufferTexture: GlTexture;
     private readonly liquidSideProgram: GlProgram;
     private readonly liquidTopProgram: GlProgram;
-    
+
     constructor() {
         const childrenBuffer = glContext.createFramebuffer();
         const childrenBufferTexture = glContext.createTexture();
@@ -182,7 +182,7 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
         return newLayers.filter(layer => layer.volume > 0);
     }
 
-    collectActionsHeld(action: BehaviorAction<'liquid'>, args: { hovering: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHeld(action: BehaviorAction<'liquid'>, args: { hovering: ItemState | null; actions: ClickAction[] }): Promise<void> | void {
         const { item, behavior: liquid } = action;
         const { hovering, actions } = args;
         if (!hovering) return;
@@ -231,10 +231,9 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
         });
     }
 
-    preLoadAssets(action: BehaviorAction<'liquid'>, args: undefined): Promise<void> | void {
+    preLoadAssets(action: BehaviorAction<'liquid'>): Promise<void> | void {
         const { behavior } = action;
         if (behavior.layers.length === 0) return;
-        const { layers } = behavior;
         if (!layers.length) return;
         const layersFromTop = layers.toReversed();
         const { side, top: topAsset } = layersFromTop[0];
@@ -249,7 +248,7 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
         }
     }
 
-    async renderPre(action: BehaviorAction<'liquid'>, args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender>; }): Promise<void> {
+    async renderPre(action: BehaviorAction<'liquid'>, args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender> }): Promise<void> {
         const { item, behavior } = action;
         const { bufferBounds } = args;
         if (behavior.layers.length === 0) return;

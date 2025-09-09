@@ -6,32 +6,32 @@ import type { Order } from '../order/order.js';
 import type { Scene } from '../scenes/scene.js';
 
 export type MouseState = {
-    position: Vec2Like,
-    delta: Vec2Like,
-    over: boolean,
-    ui: boolean,
+    position: Vec2Like;
+    delta: Vec2Like;
+    over: boolean;
+    ui: boolean;
 };
 
 export type Kitchen = {
-    audios: Record<string, PlayingAudioClip>,
-    items: Record<string, ItemState>,
-    held: string | null,
-    hovering: string | null,
-    mouse: MouseState,
-    order: Order | null,
-    lastOrder: Order | null,
+    audios: Record<string, PlayingAudioClip>;
+    items: Record<string, ItemState>;
+    held: string | null;
+    hovering: string | null;
+    mouse: MouseState;
+    order: Order | null;
+    lastOrder: Order | null;
 };
 
 export type KitchenContext = {
-    audios: Record<string, PlayingAudioClip>,
-    items: Record<string, ItemState>,
-    order: Order | null,
-    lastOrder: Order | null,
-    held: string | null,
-    hovering: string | null,
-    mouse: MouseState,
-    side: 'client' | 'background' | 'overlay',
-    config: GameConfig,
-    scene: Scene,
-    states: States,
+    audios: Record<string, PlayingAudioClip>;
+    items: Record<string, ItemState>;
+    order: Order | null;
+    lastOrder: Order | null;
+    held: string | null;
+    hovering: string | null;
+    mouse: MouseState;
+    side: 'client' | 'background' | 'overlay';
+    config: GameConfig;
+    scene: Scene;
+    states: States;
 };

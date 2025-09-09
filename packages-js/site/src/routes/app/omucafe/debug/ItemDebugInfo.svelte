@@ -4,7 +4,7 @@
 
     export let item: ItemState;
     let open = false;
-    
+
 </script>
 
 <div class="item-debug-info">

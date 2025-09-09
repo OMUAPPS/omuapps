@@ -9,9 +9,9 @@
     import ConnectPageSetup from './ConnectPageSetup.svelte';
 
     export const props = {};
-    
+
     let setupOpen = false;
-    
+
     omu.onReady(async () => {
         setupOpen = await chat.channels.size() == 0;
 

@@ -37,19 +37,19 @@
     <div class="options">
         <small>喋ってる時の明るさ</small>
         <span>
-            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.speaking}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.speaking} />
         </span>
         <small>喋ってない時の明るさ</small>
         <span>
-            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.inactive}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.inactive} />
         </span>
         <small>ミュート時の明るさ</small>
         <span>
-            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.muted}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.muted} />
         </span>
         <small>聞こえない時の明るさ</small>
         <span>
-            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.deafened}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.speech.intensity.deafened} />
         </span>
     </div>
 {/if}
@@ -91,11 +91,11 @@
                     b: parseInt(value.slice(5, 7), 16) / 255,
                     a: effects.shadow.color.a,
                 };
-            }}/>
+            }} />
         </span>
         <small>不透明度</small>
         <span>
-            <Slider min={0} max={1} step={0.01} bind:value={effects.shadow.color.a}/>
+            <Slider min={0} max={1} step={0.01} bind:value={effects.shadow.color.a} />
         </span>
     </div>
 {/if}

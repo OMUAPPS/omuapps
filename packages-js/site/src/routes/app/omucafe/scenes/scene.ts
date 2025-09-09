@@ -3,58 +3,58 @@ import { APP_ID } from '../app.js';
 import type { Asset } from '../asset/asset.js';
 
 export type PhotoTakeState = {
-    type: 'countdown',
-    startTime: number,
-    duration: number,
+    type: 'countdown';
+    startTime: number;
+    duration: number;
 } | {
-    type: 'taking',
-    startTime: number,
-    duration: number,
+    type: 'taking';
+    startTime: number;
+    duration: number;
 } | {
-    type: 'taken',
-    asset: Asset,
-    time: number,
+    type: 'taken';
+    asset: Asset;
+    time: number;
 };
 
 export type Scene = {
-    type: 'loading',
+    type: 'loading';
 } | {
-    type: 'install',
+    type: 'install';
 } | {
-    type: 'main_menu',
+    type: 'main_menu';
 } | {
-    type: 'photo_mode',
-    time: number,
-    items: string[],
-    photoTake?: PhotoTakeState,
+    type: 'photo_mode';
+    time: number;
+    items: string[];
+    photoTake?: PhotoTakeState;
 } | {
-    type: 'kitchen',
+    type: 'kitchen';
     transition?: {
-        time: number,
-    }
+        time: number;
+    };
 } | {
-    type: 'kitchen_edit',
+    type: 'kitchen_edit';
 } | {
-    type: 'product_list',
+    type: 'product_list';
 } | {
-    type: 'product_edit',
-    id: string,
+    type: 'product_edit';
+    id: string;
 } | {
-    type: 'product_take_photo',
-    id: string,
+    type: 'product_take_photo';
+    id: string;
 } | {
-    type: 'item_edit',
-    id: string,
-    created?: boolean,
+    type: 'item_edit';
+    id: string;
+    created?: boolean;
 } | {
-    type: 'effect_edit',
-    id: string,
-    time: number,
+    type: 'effect_edit';
+    id: string;
+    time: number;
 } | {
-    type: 'script_edit',
-    id: string,
+    type: 'script_edit';
+    id: string;
 } | {
-    type: 'gallery',
+    type: 'gallery';
 };
 
 export type SceneType<T extends Scene['type'] = Scene['type']> = Extract<Scene, { type: T }>;
@@ -67,6 +67,6 @@ export const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {
 });
 
 export type SceneContext = {
-    time: number,
-    active: boolean,
+    time: number;
+    active: boolean;
 };

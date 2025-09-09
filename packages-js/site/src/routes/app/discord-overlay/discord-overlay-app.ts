@@ -132,10 +132,10 @@ export type Channel = {
 type GetChannelsResponseData = {
     channels: Channel[];
 };
-const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, guild_id: string }, GetChannelsResponseData>(PLUGIN_ID, {
+const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string; guild_id: string }, GetChannelsResponseData>(PLUGIN_ID, {
     name: 'get_channels',
 });
-const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, guild_id: string | null, channel_id: string | null }, null>(PLUGIN_ID, {
+const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string; guild_id: string | null; channel_id: string | null }, null>(PLUGIN_ID, {
     name: 'set_vc',
 });
 const WAIT_FOR_READY_ENDPOINT_TYPE = EndpointType.createJson<null, null>(PLUGIN_ID, {
@@ -206,20 +206,20 @@ export type Config = {
     version?: number;
     users: {
         [key: string]: UserConfig;
-    },
+    };
     avatars: {
         [key: string]: AvatarConfig | undefined;
-    }
+    };
     effects: {
-        speech: typeof DEFAULT_SPEECH_EFFECT_OPTIONS,
+        speech: typeof DEFAULT_SPEECH_EFFECT_OPTIONS;
         shadow: typeof DEFAULT_SHADOW_EFFECT_OPTIONS;
         backlightEffect: {
-            active: boolean,
+            active: boolean;
         };
         bloom: {
-            active: boolean,
+            active: boolean;
         };
-    },
+    };
     user_id: string | null;
     guild_id: string | null;
     channel_id: string | null;
@@ -417,7 +417,7 @@ export class DiscordOverlayApp {
     }
 
     public async setVC(args: {
-        user_id: string, guild_id: string | null, channel_id: string | null
+        user_id: string; guild_id: string | null; channel_id: string | null;
     }): Promise<void> {
         await this.omu.endpoints.call(SET_VC_ENDPOINT_TYPE, args);
     }

@@ -61,6 +61,18 @@ export default [
             '@typescript-eslint/no-explicit-any': 'warn',
             '@typescript-eslint/no-unused-vars': 'warn',
             'quotes': ['error', 'single'],
+
+            'svelte/html-closing-bracket-spacing': 'error',
+            'svelte/indent': [
+                'error',
+                {
+                    'indent': 4,
+                    'ignoredNodes': [],
+                    'switchCase': 1,
+                    'alignAttributesVertically': false,
+                },
+            ],
+
             //#region stylistic
             '@stylistic/array-bracket-spacing': ['error', 'never'],
             '@stylistic/arrow-spacing': ['error', {
@@ -97,8 +109,16 @@ export default [
             '@stylistic/semi': ['error', 'always'],
             '@stylistic/semi-spacing': ['error', { 'before': false, 'after': true }],
             '@stylistic/space-before-blocks': ['error', 'always'],
+            '@stylistic/space-before-function-paren': ['error', {
+                'anonymous': 'always',
+                'named': 'never',
+                'asyncArrow': 'always',
+                'catch': 'always',
+            }],
             '@stylistic/space-infix-ops': ['error'],
             '@stylistic/type-annotation-spacing': 'error',
+            '@stylistic/no-trailing-spaces': 'error',
+            '@stylistic/member-delimiter-style': 'error',
         },
     },
 ] as ConfigArray;

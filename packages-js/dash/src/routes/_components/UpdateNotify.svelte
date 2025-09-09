@@ -6,7 +6,7 @@
 
     let update: Update | null = null;
     let updateProgress: UpdateEvent | null = null;
-    
+
     onMount(async () => {
         try {
             update = await checkUpdate();

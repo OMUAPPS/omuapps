@@ -9,7 +9,7 @@
     async function handleChange(files: FileList) {
         const [file] = files;
         const asset = await uploadAssetByBlob(file);
-        clip ??= await createClip({}); 
+        clip ??= await createClip({});
         clip.asset = asset;
     }
 </script>

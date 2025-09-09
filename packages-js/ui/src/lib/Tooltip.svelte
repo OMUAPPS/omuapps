@@ -101,7 +101,7 @@
             showTooltip();
         }
     }
-    
+
     function handleKeyDown() {
         keyboardFocus = true;
     }

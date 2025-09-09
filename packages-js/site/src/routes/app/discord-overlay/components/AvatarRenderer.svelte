@@ -21,7 +21,7 @@
     import { dragPosition, dragUser, isDraggingFinished, scaleFactor, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
-    export let message: { type: 'loading' | 'failed', text: string } | null = null;
+    export let message: { type: 'loading' | 'failed'; text: string } | null = null;
     export let showGrid = false;
     export let dimensions = {
         width: 1920,
@@ -117,7 +117,7 @@
                     1, 1,
                 ]), 'static');
             });
-    
+
             gridProgram.use(() => {
                 const transformUniform = gridProgram.getUniform('u_transform').asMat4();
                 const matrix = matrices.get().inverse();
@@ -156,8 +156,8 @@
         const renderOptions: RenderOptions = {
             effects,
         };
-        
-        const toRender: { id: string, state: VoiceStateItem, user: UserConfig, avatar: AvatarContext }[] = [];
+
+        const toRender: { id: string; state: VoiceStateItem; user: UserConfig; avatar: AvatarContext }[] = [];
         for (const [id, state] of entries) {
             if (!$config.users[id] || !$config.users[id].show) continue;
             const user = getUser(id);
@@ -210,7 +210,7 @@
                 }, renderOptions);
                 matrices.pop();
             });
-        
+
         await renderHeldAvatar(matrices, context);
     }
 
@@ -356,7 +356,7 @@
         const c = 100;
         const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
         const color = PALETTE_HEX.OUTLINE_2;
-        const directions: { origin: Vec2, direction: Vec2, name: string }[] = [
+        const directions: { origin: Vec2; direction: Vec2; name: string }[] = [
             { origin: bounds.min, direction: new Vec2(-1, -1), name: '左上' },
             { origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1), name: '左下' },
             { origin: bounds.max, direction: new Vec2(1, 1), name: '右下' },
@@ -377,7 +377,7 @@
             context.fillRect(origin.x - b / 2, origin.y - b * direction.y, b, -c * direction.y);
             const verticalStartX = origin.x - b / 2 + b - 1.5;
             const verticalStartY = origin.y - b * direction.y - (c + 10) * direction.y;
-            
+
             context.beginPath();
             context.moveTo(verticalStartX, verticalStartY);
             context.lineTo(verticalStartX + 10 * left.x, verticalStartY + 10 * direction.y);
@@ -453,7 +453,7 @@
             context.stroke();
             context.closePath();
             if (!inDirection) continue;
-            
+
             context.fillStyle = PALETTE_HEX.ACCENT;
             context.font = 'bold 14px "Noto Sans JP"';
             context.textAlign = 'center';
@@ -568,8 +568,8 @@
         }
         const { width: w, height: h, margin } = dimensions;
         const align: {
-            horizontal: 'start' | 'middle' | 'end',
-            vertical: 'start' | 'middle' | 'end',
+            horizontal: 'start' | 'middle' | 'end';
+            vertical: 'start' | 'middle' | 'end';
         } = $config.align.auto ? $config.align : {
             horizontal: 'middle',
             vertical: 'middle',
@@ -664,11 +664,11 @@
             flipVertical ? -1 : 1,
         );
     }
-    
-    const avatarCache = new Map<string, { key: string, avatar: Avatar }>();
-    const contextCache = new Map<string, { id: string, key: string, avatar: AvatarContext }>();
 
-    async function getAvatarById(gl: GlContext, avatarId: string): Promise<{ key: string, avatar: Avatar }> {
+    const avatarCache = new Map<string, { key: string; avatar: Avatar }>();
+    const contextCache = new Map<string, { id: string; key: string; avatar: AvatarContext }>();
+
+    async function getAvatarById(gl: GlContext, avatarId: string): Promise<{ key: string; avatar: Avatar }> {
         const avatarConfig = $config.avatars[avatarId];
         if (!avatarConfig) {
             throw new Error(`Avatar not found: ${avatarId}`);

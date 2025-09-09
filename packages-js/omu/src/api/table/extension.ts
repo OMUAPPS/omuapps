@@ -303,7 +303,7 @@ class TableImpl<T> implements Table<T> {
         });
         client.event.ready.listen(() => this.onReady());
     }
-    
+
     private updateCache(items: Map<string, T>): void {
         if (!this.cacheSize) {
             this.cache = items;

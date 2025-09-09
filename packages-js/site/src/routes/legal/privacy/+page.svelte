@@ -1,6 +1,6 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
-    
+
     import robotKilled from '$lib/images/robot-killed.svg';
 </script>
 

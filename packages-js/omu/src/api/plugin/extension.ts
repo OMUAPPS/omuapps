@@ -56,19 +56,19 @@ export class PluginPackageInfo {
         this.version = version;
     }
 
-    public static serialize(data: PluginPackageInfo): { package: string, version: string } {
+    public static serialize(data: PluginPackageInfo): { package: string; version: string } {
         return data.toJson();
     }
 
-    public static deserialize(data: { package: string, version: string }): PluginPackageInfo {
+    public static deserialize(data: { package: string; version: string }): PluginPackageInfo {
         return PluginPackageInfo.fromJson(data);
     }
 
-    public static fromJson(json: { package: string, version: string }): PluginPackageInfo {
+    public static fromJson(json: { package: string; version: string }): PluginPackageInfo {
         return new PluginPackageInfo(json.package, json.version);
     }
 
-    public toJson(): { package: string, version: string } {
+    public toJson(): { package: string; version: string } {
         return { package: this.package, version: this.version };
     }
 
@@ -87,11 +87,11 @@ const PLUGIN_ALLOWED_PACKAGE_TABLE = TableType.createJson(PLUGIN_EXTENSION_TYPE,
 });
 
 type ReloadOptions = {
-    packages: string[] | null,
+    packages: string[] | null;
 };
 
 type ReloadResult = {
-    packages: Record<string, string>,
+    packages: Record<string, string>;
 };
 
 const PLUGIN_RELOAD_ENDPOINT_TYPE = EndpointType.createJson<ReloadOptions, ReloadResult>(PLUGIN_EXTENSION_TYPE, {

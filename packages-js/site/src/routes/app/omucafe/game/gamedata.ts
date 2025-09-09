@@ -14,7 +14,7 @@ type GameDataJson = {
 
 export class GameData {
     public static VERSION = 0;
-    
+
     constructor(
         public readonly data: GameDataJson,
         public readonly buffers: Record<string, Uint8Array>,
@@ -61,7 +61,7 @@ export class GameData {
         }
         return writer.finish();
     }
-    
+
     public static deserialize(buffer: Uint8Array): GameData {
         const reader = ByteReader.fromUint8Array(buffer);
         const version = reader.readULEB128();

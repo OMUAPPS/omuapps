@@ -26,7 +26,7 @@ export type Link = ComponentType<'link', {
 
 export type System = ComponentType<'system', Component[]>;
 
-export type Component = 
+export type Component =
                     | Root
                     | Text
                     | Image

@@ -17,7 +17,7 @@
     export let obs: OBSPlugin;
     export let overlayApp: DiscordOverlayApp;
     const { voiceState, config } = overlayApp;
-    
+
     function getUser(id: string) {
         let user = $config.users[id];
         if (!user) {
@@ -31,8 +31,8 @@
         getUser(id);
     });
 
-    let message: { type: 'loading' | 'failed', text: string } | null = null;
-    let dimentions: { width: number, height: number } = { width: 0, height: 0 };
+    let message: { type: 'loading' | 'failed'; text: string } | null = null;
+    let dimentions: { width: number; height: number } = { width: 0, height: 0 };
 
     let state: 'wait-for-ready' | 'connecting-vc' | null = 'wait-for-ready';
     let clients: Record<string, AuthenticateUser> = {};
@@ -76,7 +76,7 @@
             state = null;
         }
     }
-    
+
     $: {
         const userFound = $config.user_id && clients[$config.user_id] || null;
         if (Object.keys(clients).length > 0 && !userFound) {
@@ -106,7 +106,7 @@
                 {#if dimentions && view}
                     {#each Object.entries($voiceState)
                         .sort(([a], [b]) => $config.users[a].position[0] - $config.users[b].position[0]) as [id, state] (id)}
-                        <UserDragControl {view} {dimentions} {overlayApp} {id} {state} bind:user={$config.users[id]}/>
+                        <UserDragControl {view} {dimentions} {overlayApp} {id} {state} bind:user={$config.users[id]} />
                     {/each}
                 {/if}
             {/if}
@@ -140,9 +140,9 @@
                             {@const user = clients[$config.user_id]}
                             <div class="logged-user">
                                 {#if user.avatar}
-                                    <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar"/>
+                                    <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar" />
                                 {:else}
-                                    <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar"/>
+                                    <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
                                 {/if}
                                 <span>{user.global_name}</span>
                                 <small>にログイン中</small>
@@ -298,7 +298,7 @@
         flex-direction: column;
         align-items: start;
         gap: 0.25rem;
-        
+
         > button {
             background: var(--color-bg-2);
             color: var(--color-1);

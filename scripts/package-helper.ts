@@ -79,7 +79,7 @@ async function build(entrypoints: string[]) {
     if (checkResult.exitCode !== 0) {
         console.error('TypeScript type checking failed. Please fix the errors before building.');
     }
-    
+
     for (const entrypoint of entrypoints) {
         try {
             const option: BuildConfig = {

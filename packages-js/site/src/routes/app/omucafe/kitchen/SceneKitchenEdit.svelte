@@ -4,7 +4,7 @@
 
     export let context: SceneContext;
     $: console.log('SceneKitchenEdit', context);
-    
+
     const { scene } = getGame();
 </script>
 

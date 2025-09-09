@@ -11,8 +11,8 @@ export type Config = {
 };
 
 export type Cookie = {
-    name: string,
-    value: string,
+    name: string;
+    value: string;
 };
 
 type Commands = {
@@ -24,16 +24,16 @@ type Commands = {
     set_config(options: { config: Config }): void;
     create_webview_window(options: {
         options: {
-            label: string,
-            url: string,
-            script: string,
-        }
+            label: string;
+            url: string;
+            script: string;
+        };
     }): Cookie[];
     get_cookies(options: {
         options: {
-            label: string,
-            url: string,
-        }
+            label: string;
+            url: string;
+        };
     }): Cookie[];
     generate_log_file(): string;
     clean_environment(): void;
@@ -49,38 +49,38 @@ export async function invoke<T extends keyof Commands>(
     return _invoke(command, ...args);
 }
 export type Progress = (
-    { type: 'PythonDownloading', msg: string, progress: number, total: number }
-    | { type: 'PythonUnkownVersion', msg: string, progress: undefined, total: undefined }
-    | { type: 'PythonChecksumFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'PythonExtracting', msg: string, progress: number, total: number }
-    | { type: 'PythonExtractFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'UvDownloading', msg: string, progress: number, total: number }
-    | { type: 'UvExtracting', msg: string, progress: number, total: number }
-    | { type: 'UvCleanupOldVersions', msg: string, progress: number, total: number }
-    | { type: 'UvCleanupOldVersionsFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'UvUpdatePip', msg: string, progress: undefined, total: undefined }
-    | { type: 'UvUpdatePipFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'UvUpdateRequirements', msg: string, progress: undefined, total: undefined }
-    | { type: 'UvUpdateRequirementsFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerTokenReadFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerTokenWriteFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerCreateDataDirFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerStopping', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerStopFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerStarting', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerStartFailed', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerStarted', msg: string, progress: undefined, total: undefined }
-    | { type: 'ServerAlreadyStarted', msg: string, progress: undefined, total: undefined }
-    | { type: 'PythonRemoving', msg: string, progress: number, total: number }
-    | { type: 'UvRemoving', msg: string, progress: number, total: number }
+    { type: 'PythonDownloading'; msg: string; progress: number; total: number }
+    | { type: 'PythonUnkownVersion'; msg: string; progress: undefined; total: undefined }
+    | { type: 'PythonChecksumFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'PythonExtracting'; msg: string; progress: number; total: number }
+    | { type: 'PythonExtractFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'UvDownloading'; msg: string; progress: number; total: number }
+    | { type: 'UvExtracting'; msg: string; progress: number; total: number }
+    | { type: 'UvCleanupOldVersions'; msg: string; progress: number; total: number }
+    | { type: 'UvCleanupOldVersionsFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'UvUpdatePip'; msg: string; progress: undefined; total: undefined }
+    | { type: 'UvUpdatePipFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'UvUpdateRequirements'; msg: string; progress: undefined; total: undefined }
+    | { type: 'UvUpdateRequirementsFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerTokenReadFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerTokenWriteFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerCreateDataDirFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerStopping'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerStopFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerStarting'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerStartFailed'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerStarted'; msg: string; progress: undefined; total: undefined }
+    | { type: 'ServerAlreadyStarted'; msg: string; progress: undefined; total: undefined }
+    | { type: 'PythonRemoving'; msg: string; progress: number; total: number }
+    | { type: 'UvRemoving'; msg: string; progress: number; total: number }
 );
 type Events = {
     server_state: Progress;
     server_restart: unknown;
     'single-instance': {
-        args: string[],
-        cwd: string,
-    }
+        args: string[];
+        cwd: string;
+    };
     [TauriEvent.WINDOW_RESIZED]: unknown;
     [TauriEvent.WINDOW_RESIZED]: unknown;
     [TauriEvent.WINDOW_MOVED]: unknown;
@@ -92,9 +92,9 @@ type Events = {
     [TauriEvent.WINDOW_THEME_CHANGED]: unknown;
     [TauriEvent.WINDOW_CREATED]: unknown;
     [TauriEvent.WEBVIEW_CREATED]: unknown;
-    [TauriEvent.DRAG_ENTER]: { position: { x: number, y: number }, paths: string[] };
-    [TauriEvent.DRAG_OVER]: { position: { x: number, y: number } };
-    [TauriEvent.DRAG_DROP]: { position: { x: number, y: number }, paths: string[] };
+    [TauriEvent.DRAG_ENTER]: { position: { x: number; y: number }; paths: string[] };
+    [TauriEvent.DRAG_OVER]: { position: { x: number; y: number } };
+    [TauriEvent.DRAG_DROP]: { position: { x: number; y: number }; paths: string[] };
     [TauriEvent.DRAG_LEAVE]: null;
 };
 
@@ -225,13 +225,13 @@ export async function checkUpdate() {
 }
 
 export type UpdateEvent = {
-    type: 'shutting-down',
+    type: 'shutting-down';
 } | {
-    type: 'updating',
-    downloaded: number,
-    contentLength: number,
+    type: 'updating';
+    downloaded: number;
+    contentLength: number;
 } | {
-    type: 'restarting',
+    type: 'restarting';
 };
 
 export async function applyUpdate(update: Update, progress: (event: UpdateEvent) => void) {

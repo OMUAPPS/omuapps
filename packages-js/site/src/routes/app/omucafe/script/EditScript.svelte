@@ -85,7 +85,7 @@
                         if (!edit) return;
                         edit.value = value.invoke(value.void(), []);
                     }}>
-                        <i class="ti ti-caret-right-filled"></i>    
+                        <i class="ti ti-caret-right-filled"></i>
                         invoke
                     </button>
                     <button on:click={() => {
@@ -135,7 +135,7 @@
                         </ul>
                     </div>
                     <div class="property">
-                        {#each Object.entries(globals.functions) as [key, func] (key)}
+                        {#each Object.keys(globals.functions) as key (key)}
                             {key}
                         {/each}
                     </div>

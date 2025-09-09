@@ -18,8 +18,8 @@ const functions = {
         const { v } = builder;
         return v.void();
     },
-    get_items(ctx: ScriptContext, args: Value[]): Value {
-        const kitchen = getContext();        
+    get_items(): Value {
+        const kitchen = getContext();
         const { v } = builder;
         return v.array(...Object.keys(kitchen.items).map(v.string));
     },

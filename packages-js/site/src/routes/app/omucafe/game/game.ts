@@ -160,7 +160,7 @@ export async function init(ctx: GlContext) {
         });
         resolve();
     }));
-        
+
     await loadBehaviorHandlers();
     if (side === 'client') {
         const counterTex = resources.counter_client_tex;
@@ -470,9 +470,9 @@ async function renderScreen() {
 }
 
 let penTrail: {
-    last: Vec2,
-    dir: Vec2,
-    time: number,
+    last: Vec2;
+    dir: Vec2;
+    time: number;
 } | null = null;
 
 async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2RenderingContext) {
@@ -609,7 +609,7 @@ async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2Rende
         penTrail = null;
     }
     paint.update(width, height);
-        
+
     const { order } = context;
     if (order && order.message) {
         matrices.view.push();
@@ -850,7 +850,7 @@ export async function renderOverlaySide() {
         gl.clearColor(1, 1, 1, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        
+
         await update();
         await renderCounter();
         await renderItems([ITEM_LAYERS.KITCHEN_ITEMS]);
@@ -859,7 +859,7 @@ export async function renderOverlaySide() {
         setupCounterProjection();
         await renderItems([ITEM_LAYERS.COUNTER, ITEM_LAYERS.BELL]);
         await renderHeldItem();
-    
+
         setupCustomerProjection();
         await renderCustomersAsset(new Vec2(1920 * 2 - 1200, 1200));
         setupHUDProjection();
@@ -922,7 +922,7 @@ export async function render(ctx: GlContext): Promise<void> {
     gl.clearColor(1, 1, 1, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    
+
     const rect = {
         width: matrices.width,
         height: matrices.height,

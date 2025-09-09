@@ -113,7 +113,7 @@ export async function createSpeechEffect(context: GlContext, getOptions: () => t
                 }
                 intensityMap.set(action.id, talkIntensity);
                 colorUniform.set(new Vec4(talkIntensity, talkIntensity, talkIntensity, 1));
-                
+
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             });
         });

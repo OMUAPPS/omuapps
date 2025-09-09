@@ -5,17 +5,17 @@
     import { Spinner, Tooltip } from '@omujs/ui';
 
     export let cancel: () => void = () => {};
-    
+
     let stage: {
-        type: 'input',
+        type: 'input';
     } | {
-        type: 'searching',
+        type: 'searching';
     } | {
-        type: 'select',
+        type: 'select';
     } = { type: 'input' };
 
     let url = '';
-    let result: { channel: models.Channel, checked: boolean }[] = [];
+    let result: { channel: models.Channel; checked: boolean }[] = [];
 
     async function search(url: string) {
         stage = { type: 'searching' };
@@ -207,7 +207,7 @@
                 display: flex;
                 flex-direction: column;
                 align-items: flex-start;
-                
+
                 > p {
                     color: var(--color-1);
                     font-size: 0.8621rem;

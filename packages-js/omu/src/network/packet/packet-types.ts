@@ -6,30 +6,30 @@ import { PacketType } from './packet.js';
 const IDENTIFIER = new Identifier('core', 'packet');
 
 type ProtocolInfo = {
-    version: string,
+    version: string;
 };
 
 export type ServerMetaJson = {
-    protocol: ProtocolInfo,
-    hash: string | undefined,
+    protocol: ProtocolInfo;
+    hash: string | undefined;
 };
 
 type ConnectPacketJson = {
-    app: AppJson,
-    protocol: ProtocolInfo,
-    token?: string,
-    is_dashboard?: boolean,
+    app: AppJson;
+    protocol: ProtocolInfo;
+    token?: string;
+    is_dashboard?: boolean;
 };
 
 export class ConnectPacket {
     public readonly app: App;
     public readonly protocol: ProtocolInfo;
     public readonly token?: string;
-    
+
     constructor(options: {
-        app: App,
-        protocol: ProtocolInfo,
-        token?: string,
+        app: App;
+        protocol: ProtocolInfo;
+        token?: string;
     }) {
         this.app = options.app;
         this.protocol = options.protocol;
@@ -69,8 +69,8 @@ export enum DisconnectType {
 }
 
 type DisconnectPacketJson = {
-    type: DisconnectType,
-    message: string | null,
+    type: DisconnectType;
+    message: string | null;
 };
 
 export class DisconnectPacket {
@@ -78,8 +78,8 @@ export class DisconnectPacket {
     public readonly message: string | null;
 
     constructor(options: {
-        type: DisconnectType,
-        message?: string | null,
+        type: DisconnectType;
+        message?: string | null;
     }) {
         this.type = options.type;
         this.message = options.message ?? null;

@@ -2,9 +2,9 @@ import { Mat4 } from '$lib/math/mat4.js';
 import type { Vec2Like } from '$lib/math/vec2.js';
 
 export type Transform = {
-    right: Vec2Like,
-    up: Vec2Like,
-    offset: Vec2Like,
+    right: Vec2Like;
+    up: Vec2Like;
+    offset: Vec2Like;
 };
 
 export function createTransform(): Transform {
@@ -30,8 +30,8 @@ export function createTransform2(
 }
 
 export type Bounds = {
-    min: Vec2Like,
-    max: Vec2Like,
+    min: Vec2Like;
+    max: Vec2Like;
 };
 
 export function transformToMatrix(transform: Transform): Mat4 {

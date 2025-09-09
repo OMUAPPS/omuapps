@@ -5,11 +5,11 @@ import { glContext } from '../game/game.js';
 import { getGame } from '../omucafe-app.js';
 
 export type Asset = {
-    type: 'url',
-    url: string,
+    type: 'url';
+    url: string;
 } | {
-    type: 'asset',
-    id: string,
+    type: 'asset';
+    id: string;
 };
 
 export function isAssetEqual(a: Asset, b: Asset): boolean {
@@ -137,11 +137,11 @@ export async function fetchImage(url: string | URL): Promise<HTMLImageElement> {
 }
 
 export type Texture = {
-    tex: GlTexture,
-    width: number,
-    height: number,
-    image: HTMLImageElement,
-    pixels: Uint8Array,
+    tex: GlTexture;
+    width: number;
+    height: number;
+    image: HTMLImageElement;
+    pixels: Uint8Array;
 };
 
 export const textures: Map<string, Promise<Texture>> = new Map();

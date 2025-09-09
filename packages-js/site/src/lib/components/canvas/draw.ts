@@ -425,7 +425,7 @@ export class Draw {
         this.frameBufferTexture.use(() => {
             this.frameBufferTexture.ensureSize(width, height);
         });
-        
+
         this.frameBuffer.use(() => {
             this.frameBuffer.attachTexture(this.frameBufferTexture);
         });
@@ -536,7 +536,7 @@ export class Draw {
             program.getAttribute('a_texcoord').set(this.texcoordBuffer, 2, this.glContext.gl.FLOAT, false, 0, 0);
         }
     }
-    
+
     public setMatrices(program: GlProgram): void {
         program.getUniform('u_projection').asMat4().set(this.matrices.projection.get());
         program.getUniform('u_view').asMat4().set(this.matrices.view.get());
@@ -555,7 +555,7 @@ export class Draw {
 
             this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
-            
+
             this.colorProgram.getAttribute('a_position').set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0); ;
             gl.drawArrays(gl.TRIANGLES, 0, 3);
         });
@@ -575,7 +575,7 @@ export class Draw {
             ]));
             this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
-            
+
             const position = this.colorProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -681,7 +681,7 @@ export class Draw {
 
     public textureColor(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4): void {
         const { gl } = this.glContext;
-        
+
         this.textureColorProgram.use(() => {
             this.setMesh(this.textureColorProgram, new Float32Array([
                 left, top, 0,
@@ -752,7 +752,7 @@ export class Draw {
         widthOut: number,
     ): void {
         const { gl } = this.glContext;
-        
+
         const bounds = Bezier.quadraticBounds2(a, b, c);
         const width = bounds.max.x - bounds.min.x;
         const height = bounds.max.y - bounds.min.y;
@@ -800,7 +800,7 @@ export class Draw {
         smoothness: number = 1.0,
     ): void {
         const { gl } = this.glContext;
-        
+
         this.circleProgram.use(() => {
             this.setMesh(this.circleProgram, new Float32Array([
                 x - radiusOuter, y - radiusOuter, 0,

@@ -424,7 +424,7 @@ export class PNGTuber implements Avatar {
         this.effectTargetTexture.use(() => {
             this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
         });
-    
+
         passes.sort((a, b) => a - b);
 
         this.frameBuffer.use(() => {
@@ -505,7 +505,7 @@ export class PNGTuber implements Avatar {
             return;
         }
         const { gl } = this.glContext;
-        
+
         if (layerData.zindex === pass) {
             this.spriteProgram.use(() => {
                 const textureUniform = this.spriteProgram.getUniform('u_texture').asSampler2D();

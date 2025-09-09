@@ -49,7 +49,7 @@ export class SignalExtension implements Extension {
 
     public json<T, D extends JsonType = JsonType>(name: string, options?: { serializer?: Serializable<T, D> }): Signal<T> {
         const id = this.client.app.id.join(name);
-        const type = SignalType.createJson<T>(id, { 
+        const type = SignalType.createJson<T>(id, {
             name,
             serializer: options?.serializer,
         });
@@ -58,7 +58,7 @@ export class SignalExtension implements Extension {
 
     public serialized<T>(name: string, options: { serializer: Serializable<T, Uint8Array> }): Signal<T> {
         const id = this.client.app.id.join(name);
-        const type = SignalType.createSerialized<T>(id, { 
+        const type = SignalType.createSerialized<T>(id, {
             name,
             serializer: options?.serializer,
         });

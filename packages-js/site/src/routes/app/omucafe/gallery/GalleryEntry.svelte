@@ -11,7 +11,7 @@
 
 <article>
     <div class="image">
-        <AssetImage asset={entry.asset}/>
+        <AssetImage asset={entry.asset} />
     </div>
     <img src="" alt="">
     {#if order}

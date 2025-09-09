@@ -85,10 +85,10 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<GameConfig>(APP_ID, {
 });
 
 export type User = {
-    id: string,
+    id: string;
     screen_id?: string;
-    name: string,
-    avatar?: string,
+    name: string;
+    avatar?: string;
 };
 
 export const DEFAULT_STATES = {
@@ -169,7 +169,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     chat.on(events.message.add, (message) => {
         processMessage(message);
     });
-    
+
     game = {
         side,
         omu,
@@ -267,26 +267,26 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
 }
 
 export type Game = {
-    side: GameSide,
-    omu: Omu,
-    obs: OBSPlugin,
-    chat: Chat,
-    gameConfigRegistry: Registry<GameConfig>,
-    gameConfig: Writable<GameConfig>,
-    configRegistry: Registry<Config>,
-    config: Writable<Config>,
-    resourcesRegistry: Registry<ResourceRegistry>,
-    resources: Writable<ResourceRegistry>,
-    statesRegistry: Registry<States>,
-    states: Writable<States>,
-    sceneRegistry: Registry<Scene>,
-    scene: Writable<Scene>,
-    orders: Table<Order>,
-    gallery: Table<GalleryItem>,
-    paintSignal: Signal<PaintEvent[]>,
-    paintEvents: Writable<PaintBuffer>,
-    globals: Globals,
-    worker?: WorkerPipe<GameCommands>,
+    side: GameSide;
+    omu: Omu;
+    obs: OBSPlugin;
+    chat: Chat;
+    gameConfigRegistry: Registry<GameConfig>;
+    gameConfig: Writable<GameConfig>;
+    configRegistry: Registry<Config>;
+    config: Writable<Config>;
+    resourcesRegistry: Registry<ResourceRegistry>;
+    resources: Writable<ResourceRegistry>;
+    statesRegistry: Registry<States>;
+    states: Writable<States>;
+    sceneRegistry: Registry<Scene>;
+    scene: Writable<Scene>;
+    orders: Table<Order>;
+    gallery: Table<GalleryItem>;
+    paintSignal: Signal<PaintEvent[]>;
+    paintEvents: Writable<PaintBuffer>;
+    globals: Globals;
+    worker?: WorkerPipe<GameCommands>;
 };
 
 let game: Game | null = null;

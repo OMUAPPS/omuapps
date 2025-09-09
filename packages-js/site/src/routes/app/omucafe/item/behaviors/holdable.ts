@@ -3,8 +3,8 @@ import type { KitchenContext } from '../../kitchen/kitchen.js';
 import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.js';
 
 export type Holdable = {
-    clip?: AudioClip,
-    editOnly?: boolean,
+    clip?: AudioClip;
+    editOnly?: boolean;
 };
 
 export function createHoldable(options?: Holdable): Holdable {
@@ -39,7 +39,7 @@ export class HoldableHandler implements BehaviorHandler<'holdable'> {
         return true;
     }
 
-    collectActionsHeld(action: BehaviorAction<'holdable'>, args: { hovering: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHeld(action: BehaviorAction<'holdable'>, args: { hovering: ItemState | null; actions: ClickAction[] }): Promise<void> | void {
         const { item, behavior, context } = action;
         const { actions, hovering } = args;
         if (hovering?.behaviors.container?.spawn) return;
@@ -54,7 +54,7 @@ export class HoldableHandler implements BehaviorHandler<'holdable'> {
         });
     }
 
-    collectActionsHovered(action: BehaviorAction<'holdable'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHovered(action: BehaviorAction<'holdable'>, args: { held: ItemState | null; actions: ClickAction[] }): Promise<void> | void {
         const { item, behavior, context } = action;
         const { actions } = args;
         if (!this.#canBeHeld(context, behavior)) return;

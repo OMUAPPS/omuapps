@@ -35,7 +35,7 @@ export class InvokedParams {
         public readonly caller: Identifier,
         public readonly key: number,
     ) { }
-    
+
     public static serialize(item: InvokedParams): string {
         return JSON.stringify({
             id: item.id.key(),
@@ -46,9 +46,9 @@ export class InvokedParams {
 
     public static deserialize(item: string): InvokedParams {
         const data: {
-            id: string,
-            caller: string,
-            key: number,
+            id: string;
+            caller: string;
+            key: number;
         } = JSON.parse(item);
         return new InvokedParams(
             Identifier.fromKey(data.id),
@@ -84,7 +84,7 @@ export class InvokeParams {
         public readonly id: Identifier,
         public readonly key: number,
     ) { }
-    
+
     public static serialize(item: InvokeParams): string {
         return JSON.stringify({
             id: item.id.key(),
@@ -94,8 +94,8 @@ export class InvokeParams {
 
     public static deserialize(item: string): InvokeParams {
         const data: {
-            id: string,
-            key: number,
+            id: string;
+            key: number;
         } = JSON.parse(item);
         return new InvokeParams(
             Identifier.fromKey(data.id),
@@ -131,7 +131,7 @@ export class ResponseParams {
         public readonly key: number,
         public readonly error: string | null,
     ) { }
-    
+
     public static serialize(item: ResponseParams): string {
         return JSON.stringify({
             id: item.id.key(),
@@ -142,9 +142,9 @@ export class ResponseParams {
 
     public static deserialize(item: string): ResponseParams {
         const data: {
-            id: string,
-            key: number,
-            error: string | null,
+            id: string;
+            key: number;
+            error: string | null;
         } = JSON.parse(item);
         return new ResponseParams(
             Identifier.fromKey(data.id),

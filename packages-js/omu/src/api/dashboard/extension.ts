@@ -147,8 +147,8 @@ type DragDropHandler = {
 };
 
 export type Cookie = {
-    name: string,
-    value: string,
+    name: string;
+    value: string;
 };
 
 export type WebviewRequest = {
@@ -157,12 +157,12 @@ export type WebviewRequest = {
 };
 
 export type WebviewPacket = {
-    id: Identifier,
+    id: Identifier;
 };
 
 export type UserResponse<T = undefined> = {
     type: 'ok';
-    value: T,
+    value: T;
 } | {
     type: 'blocked';
 } | {
@@ -171,12 +171,12 @@ export type UserResponse<T = undefined> = {
 export class UserResult<T> {
     constructor(
         public result: {
-            type: 'ok',
-            value: T,
+            type: 'ok';
+            value: T;
         } | {
-            type: 'blocked',
+            type: 'blocked';
         } | {
-            type: 'cancelled',
+            type: 'cancelled';
         },
     ) {}
 
@@ -220,16 +220,16 @@ const DASHBOARD_WEBVIEW_CLOSE = EndpointType.createJson<WebviewPacket, WebviewRe
 });
 
 export type WebviewEvent = {
-    type: 'closed',
+    type: 'closed';
 } | {
-    type: 'resize',
+    type: 'resize';
     dimentions: {
-        x: number,
-        y: number,
-    },
+        x: number;
+        y: number;
+    };
 } | {
-    type: 'cookie',
-    cookies: Cookie[],
+    type: 'cookie';
+    cookies: Cookie[];
 };
 
 export type WebviewEventListeners = {
@@ -237,9 +237,9 @@ export type WebviewEventListeners = {
 };
 
 export type WebviewEventPacket = {
-    id: Identifier,
-    target: Identifier,
-    event: WebviewEvent
+    id: Identifier;
+    target: Identifier;
+    event: WebviewEvent;
 };
 
 export type WebviewHandle = {
@@ -251,7 +251,7 @@ export type WebviewHandle = {
     join(): Promise<void>;
 };
 
-export type WebviewEventEmit = <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T; }>) => void;
+export type WebviewEventEmit = <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T }>) => void;
 
 const DASHBOARD_WEBVIEW_EVENT_PACKET = PacketType.createJson<WebviewEventPacket>(DASHBOARD_EXTENSION_TYPE, {
     name: 'webview_event',
@@ -561,7 +561,7 @@ export class DashboardExtension {
                 })).unwrap();
                 return cookies;
             },
-            on: function <T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T; }>) => void): void {
+            on: function <T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T }>) => void): void {
                 if (!eventListeners[key]) {
                     eventListeners[key] = [];
                 }
@@ -576,7 +576,7 @@ export class DashboardExtension {
         };
         this.webviewHandles.set(id, {
             handle,
-            emit: function <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T; }>): void {
+            emit: function <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T }>): void {
                 const listeners = eventListeners[event.type];
                 if (!listeners) return;
                 for (const listener of listeners) {

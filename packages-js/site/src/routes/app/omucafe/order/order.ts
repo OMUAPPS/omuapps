@@ -9,32 +9,32 @@ import { getGame, type User } from '../omucafe-app.js';
 import type { Product } from '../product/product.js';
 
 type OrderStatus = {
-    type: 'waiting',
+    type: 'waiting';
 } | {
-    type: 'cooking',
-    timestamp: number,
+    type: 'cooking';
+    timestamp: number;
 } | {
-    type: 'done',
+    type: 'done';
 };
 
 export type OrderItem = {
-    product_id: string,
-    notes: string,
+    product_id: string;
+    notes: string;
 };
 
 export type OrderMessage = {
-    tokens: TOKEN[],
-    timestamp: number,
+    tokens: TOKEN[];
+    timestamp: number;
 };
 
 export type Order = {
-    id: string,
-    timestamp: number,
-    index: number,
-    user: User,
-    message?: OrderMessage,
-    status: OrderStatus,
-    items: OrderItem[],
+    id: string;
+    timestamp: number;
+    index: number;
+    user: User;
+    message?: OrderMessage;
+    status: OrderStatus;
+    items: OrderItem[];
 };
 
 export type ProductTokens = {

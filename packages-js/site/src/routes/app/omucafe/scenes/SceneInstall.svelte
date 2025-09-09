@@ -10,17 +10,17 @@
 
     export let context: SceneContext;
     $: console.log('SceneCooking', context);
-    
+
     const { scene, config, obs } = getGame();
 
     let state: {
-        type: 'waiting'
+        type: 'waiting';
     } | {
-        type: 'prompt'
+        type: 'prompt';
     } | {
-        type: 'installing'
+        type: 'installing';
     } | {
-        type: 'setup'
+        type: 'setup';
     } = {
         type: 'waiting',
     };
@@ -204,7 +204,7 @@
         font-size: 0.8rem;
         color: var(--color-text);
     }
-    
+
     h1 {
         font-size: 2rem;
         margin-bottom: 0.5rem;

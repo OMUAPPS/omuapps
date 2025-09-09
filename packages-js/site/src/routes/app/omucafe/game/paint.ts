@@ -32,22 +32,22 @@ export type Eraser = typeof DEFAULT_ERASER;
 export const DEFAULT_TOOL = {
     type: 'move',
 } as {
-    type: 'move',
+    type: 'move';
 } | {
-    type: 'pen',
+    type: 'pen';
 } | {
-    type: 'eraser',
+    type: 'eraser';
 };
 
 export type Tool = typeof DEFAULT_TOOL;
 
 export type DrawPath = {
-    t: 'qb',
-    in: number,
-    out: number,
-    a: Vec2Like,
-    b: Vec2Like,
-    c: Vec2Like,
+    t: 'qb';
+    in: number;
+    out: number;
+    a: Vec2Like;
+    b: Vec2Like;
+    c: Vec2Like;
 };
 
 export const PAINT_EVENT_TYPE = {
@@ -60,29 +60,29 @@ export const PAINT_EVENT_TYPE = {
 
 export type PaintEvent = {
     // t: 'p',
-    t: typeof PAINT_EVENT_TYPE.PEN,
-    path: DrawPath,
+    t: typeof PAINT_EVENT_TYPE.PEN;
+    path: DrawPath;
 } | {
-    t: typeof PAINT_EVENT_TYPE.CHANGE_PEN,
-    pen: Pen,
+    t: typeof PAINT_EVENT_TYPE.CHANGE_PEN;
+    pen: Pen;
 } | {
-    t: typeof PAINT_EVENT_TYPE.ERASER,
-    path: DrawPath,
+    t: typeof PAINT_EVENT_TYPE.ERASER;
+    path: DrawPath;
 } | {
-    t: typeof PAINT_EVENT_TYPE.CHANGE_ERASER,
-    eraser: Eraser,
+    t: typeof PAINT_EVENT_TYPE.CHANGE_ERASER;
+    eraser: Eraser;
 } | {
-    t: typeof PAINT_EVENT_TYPE.CLEAR,
+    t: typeof PAINT_EVENT_TYPE.CLEAR;
 };
 
 export type PaintEvents = {
-    data: string,
+    data: string;
 };
 
 export class PaintBuffer {
     private static VERSION = 0;
     public static EMPTY = new PaintBuffer(PaintBuffer.VERSION, 0, new Uint8Array(0));
-    
+
     constructor(
         public readonly version: number,
         public readonly size: number,
@@ -162,7 +162,7 @@ export class PaintBuffer {
             [PAINT_EVENT_TYPE.CHANGE_ERASER]: 3,
             [PAINT_EVENT_TYPE.CLEAR]: 4,
         };
-        
+
         for (const event of events) {
             const { t } = event;
             const type = TYPES[t];
@@ -239,7 +239,7 @@ export class Paint {
 
     constructor(
         private readonly ctx: GlContext,
-        private readonly dimensions: { width: number, height: number },
+        private readonly dimensions: { width: number; height: number },
     ) {
         this.framebuffer = ctx.createFramebuffer();
         this.texture = ctx.createTexture();
@@ -260,7 +260,7 @@ export class Paint {
     emit(...event: PaintEvent[]): void {
         this.paintQueue.push(...event);
     }
-    
+
     update(width: number, height: number) {
         if (this.paintQueue.length === 0) return;
         const queue: PaintEvent[] = [];

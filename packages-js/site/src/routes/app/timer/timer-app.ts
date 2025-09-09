@@ -25,7 +25,7 @@ export type TimerConfig = {
         align: {
             x: AlignType;
             y: AlignType;
-        }
+        };
     };
 };
 

@@ -65,12 +65,12 @@
         }
         return str;
     }
-    
+
     $: percentValue = Math.round(invLerp(min, max, value) * 100);
 </script>
 
 <div class="setting">
-    <input type="range" id="scale" {value} {min} {max} {step} 
+    <input type="range" id="scale" {value} {min} {max} {step}
         on:input={(e) => setValue(e.currentTarget.valueAsNumber)}
         on:change={(e) => setValue(e.currentTarget.valueAsNumber)}
         on:keydown={(e) => {
@@ -83,7 +83,7 @@
     <span class="label">
         <label for="scale"><slot /></label>
         {#if type === 'normal'}
-            <input type="number" id="scale" value={toString(value)} {min} {max} {step} 
+            <input type="number" id="scale" value={toString(value)} {min} {max} {step}
                 on:input={(e) => setValue(e.currentTarget.valueAsNumber)}
                 on:change={(e) => setValue(e.currentTarget.valueAsNumber)}
             />
@@ -147,7 +147,7 @@
             &:hover {
                 border-bottom: 1px solid var(--color-1);
             }
-            
+
             &:focus {
                 outline: none;
                 border-bottom: 2px solid var(--color-1);

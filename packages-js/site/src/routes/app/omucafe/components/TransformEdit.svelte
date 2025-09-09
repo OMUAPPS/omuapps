@@ -6,8 +6,8 @@
     export let type: 'matrix' | 'transform' = 'transform';
 
     function getScale(): {
-        scaleX: number,
-        scaleY: number,
+        scaleX: number;
+        scaleY: number;
     } {
         const { right, up } = transform;
         const scaleX = Math.sqrt(right.x * right.x + right.y * right.y);
@@ -18,7 +18,7 @@
         };
     }
 
-    function setScale(scale: { x: number, y: number }) {
+    function setScale(scale: { x: number; y: number }) {
         const { right, up } = transform;
         const scaleX = Math.sqrt(right.x * right.x + right.y * right.y);
         const scaleY = Math.sqrt(up.x * up.x + up.y * up.y);

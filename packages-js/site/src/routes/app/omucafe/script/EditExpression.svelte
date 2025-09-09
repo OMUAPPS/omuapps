@@ -73,7 +73,7 @@
         padding: 1rem 0.25rem;
         gap: 0.5rem;
     }
-    
+
     i {
         font-size: 1rem;
     }

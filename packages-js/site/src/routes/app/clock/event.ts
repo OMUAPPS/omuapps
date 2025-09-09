@@ -1,32 +1,32 @@
 export interface EventCalendar {
-    source: string
-    name: string
-    description: string
-    license: License
-    months: Month[]
+    source: string;
+    name: string;
+    description: string;
+    license: License;
+    months: Month[];
 }
 
 export interface License {
-    url: string
-    name: string
+    url: string;
+    name: string;
 }
 
 export interface Month {
-    month: string
-    days: Day[]
-    url: string
+    month: string;
+    days: Day[];
+    url: string;
 }
 
 export interface Day {
-    day: string
-    url: string
-    events: Event[]
+    day: string;
+    url: string;
+    events: Event[];
 }
 
 export interface Event {
-    title: string
-    description: string[]
-    references?: string[]
+    title: string;
+    description: string[];
+    references?: string[];
 }
 
 export const DEFAULT_EVENT_CALENDAR: EventCalendar = {

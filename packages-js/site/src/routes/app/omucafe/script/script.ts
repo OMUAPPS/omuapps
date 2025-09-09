@@ -2,13 +2,13 @@ import { writable, type Writable } from 'svelte/store';
 import { uniqueId } from '../game/helper.js';
 
 export type VString = {
-    type: 'string',
-    value: string,
+    type: 'string';
+    value: string;
 };
 
 export type VTimer = {
-    type: 'timer',
-    value: Timer,
+    type: 'timer';
+    value: Timer;
 };
 
 export type VNumber = {
@@ -102,9 +102,9 @@ export const value = {
 };
 
 export type Argument<ValueType extends Value = Value> = {
-    name: string,
-    type?: ValueType['type'],
-    optional?: boolean,
+    name: string;
+    type?: ValueType['type'];
+    optional?: boolean;
 };
 
 export type ArgumentList<Args extends Value[]> = {
@@ -112,36 +112,36 @@ export type ArgumentList<Args extends Value[]> = {
 }[number][] | never[];
 
 export type TypedFunction<Args extends Value[] = Value[]> = {
-    name: string,
-    args: ArgumentList<Args>,
-    invoke: (ctx: ScriptContext, args: Args) => Value,
+    name: string;
+    args: ArgumentList<Args>;
+    invoke: (ctx: ScriptContext, args: Args) => Value;
 };
 
 export type Timer = {
-    start: number,
+    start: number;
 };
 
 export type VInvoke = {
-    type: 'invoke',
-    function: Value,
-    args: Value[],
+    type: 'invoke';
+    function: Value;
+    args: Value[];
 };
 
 export type Command = {
-    type: 'return',
-    value: Value,
+    type: 'return';
+    value: Value;
 } | {
-    type: 'assign',
-    variable: Value,
-    value: Value,
+    type: 'assign';
+    variable: Value;
+    value: Value;
 } | {
-    type: 'assign-attribute',
-    object: Value,
-    name: string,
-    value: Value,
+    type: 'assign-attribute';
+    object: Value;
+    name: string;
+    value: Value;
 } | {
-    type: 'throw',
-    value: Value,
+    type: 'throw';
+    value: Value;
 } | VInvoke;
 
 export const command = {
@@ -166,7 +166,7 @@ export const command = {
 };
 
 export type Expression = {
-    commands: Command[],
+    commands: Command[];
 };
 
 export const expr = {
@@ -176,11 +176,11 @@ export const expr = {
 };
 
 export type ScriptContext = {
-    functions: Record<string, TypedFunction>,
-    variables: Record<string, Value>,
-    callstack: Expression[],
-    index: number,
-    copy: () => ScriptContext,
+    functions: Record<string, TypedFunction>;
+    variables: Record<string, Value>;
+    callstack: Expression[];
+    index: number;
+    copy: () => ScriptContext;
 };
 
 const context = {
@@ -243,7 +243,7 @@ export function evaluateValue(ctx: ScriptContext, value: Value): Value {
 }
 
 export class ScriptError extends Error {
-    constructor(message: string, public readonly info: { callstack: Expression[], index: number }) {
+    constructor(message: string, public readonly info: { callstack: Expression[]; index: number }) {
         super(message);
     }
 }
@@ -325,13 +325,13 @@ export const builder = {
 };
 
 export type Script = {
-    id: string,
-    name: string,
-    expression: Expression,
+    id: string;
+    name: string;
+    expression: Expression;
 };
 
 type ValidateResult = {
-    error: string,
+    error: string;
 } | undefined;
 
 function assertType(value: unknown, type: 'string' | 'number' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'object' | 'function'): ValidateResult {
@@ -494,7 +494,7 @@ class Debug {
 export class Globals {
     public readonly functions: Record<string, TypedFunction<any>> = {};
     public readonly debug = Debug.create();
-    
+
     public registerFunction<Args extends Value[]>(name: string, args: ArgumentList<Args>, invoke: (ctx: ScriptContext, args: Args) => Value): TypedFunction<Args> {
         const func: TypedFunction<Args> = {
             name,

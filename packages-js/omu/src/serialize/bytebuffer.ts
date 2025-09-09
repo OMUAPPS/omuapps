@@ -5,7 +5,7 @@ export class Flags {
     private value: number;
     private length: number;
 
-    constructor(options: { value?: number, length?: number }) {
+    constructor(options: { value?: number; length?: number }) {
         this.value = options.value ?? 0;
         this.length = options.length ?? 32;
     }
@@ -403,7 +403,7 @@ export class ByteReader {
         const byteArray = this.readUint8Array();
         return textDecoder.decode(byteArray);
     }
-    
+
     public readJSON<T extends JsonType>(): T {
         return JSON.parse(this.readString());
     }

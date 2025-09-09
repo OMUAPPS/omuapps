@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { models } from '@omujs/chat';
-    
+
     import { t } from '$lib/i18n/i18n-context.js';
 
     import RoomEntry from './RoomEntry.svelte';

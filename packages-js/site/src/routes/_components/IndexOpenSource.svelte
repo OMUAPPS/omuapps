@@ -42,23 +42,23 @@
             border: 1px solid var(--color-1);
             outline: 0.25rem solid var(--color-bg-2);
             margin-bottom: 2rem;
-    
+
             > i {
                 font-size: 2rem;
                 color: var(--color-1);
             }
-    
+
             > .info {
                 display: flex;
                 flex-direction: column;
                 width: 20rem;
-    
+
                 > h3 {
                     color: var(--color-1);
                     font-size: 1.5rem;
                     white-space: nowrap;
                 }
-    
+
                 > p {
                     font-size: 0.75rem;
                     font-weight: 600;

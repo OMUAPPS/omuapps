@@ -5,7 +5,7 @@
 </script>
 
 <pre>
-    <JsonEditEntry bind:value={value} open/>
+    <JsonEditEntry bind:value={value} open />
 </pre>
 
 <style>

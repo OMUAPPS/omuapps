@@ -100,7 +100,7 @@ async function init() {
     }
 
     worker.bind('tokenize', async (text) => tokenize(text));
-    worker.bind('analyzeOrder', async (args: { tokens: TOKEN[], productTokens: ProductTokens[] }) => {
+    worker.bind('analyzeOrder', async (args: { tokens: TOKEN[]; productTokens: ProductTokens[] }) => {
         const { tokens, productTokens } = args;
         const products: Product[] = [];
         const replacedTokens: OrderDetectToken[] = [];
@@ -163,7 +163,7 @@ async function init() {
             };
         }
 
-        const similarities: { product: Product, similarity: number }[] = [];
+        const similarities: { product: Product; similarity: number }[] = [];
         for (const entry of productTokens) {
             const similarity = calculateSimilarity(entry.tokens, tokens);
             if (similarity < 1 / 3) continue;
@@ -183,7 +183,7 @@ async function init() {
             products: [],
             tokens: [],
         };
-        
+
         return {
             detected: true,
             products: [sortedSimilarities[0].product],

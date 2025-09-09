@@ -6,19 +6,19 @@ import { writable, type Writable } from 'svelte/store';
 import { APP_ID, REMOTE_APP_ID } from './app.js';
 
 export type ImageResource = {
-    type: 'image',
-    asset: string,
-    filename?: string,
-    addedAt?: number,
-    size?: number,
+    type: 'image';
+    asset: string;
+    filename?: string;
+    addedAt?: number;
+    size?: number;
 };
 export type AlbumResource = {
-    type: 'album',
-    assets: string[],
-    filename?: string,
-    addedAt?: number,
-    size?: number,
-    duration: number,
+    type: 'album';
+    assets: string[];
+    filename?: string;
+    addedAt?: number;
+    size?: number;
+    duration: number;
 };
 
 export type Resource = ImageResource | AlbumResource;
@@ -34,17 +34,17 @@ const RESOURCES_REGISTRY = RegistryType.createJson<Resources>(APP_ID, {
 });
 
 export type Scaler = {
-    type: 'percent',
-    value: number,
+    type: 'percent';
+    value: number;
 } | {
-    type: 'pixel',
-    value: number,
+    type: 'pixel';
+    value: number;
 };
 
 export const DEFAULT_CONFIG = {
     show: null as {
-        type: 'resource',
-        id: string,
+        type: 'resource';
+        id: string;
     } | null,
     asset: {
         align: {
@@ -52,41 +52,41 @@ export const DEFAULT_CONFIG = {
             y: 'middle' as AlignType,
         },
         scaling: { type: 'contain' } as {
-            type: 'contain' | 'cover',
+            type: 'contain' | 'cover';
         } | {
-            type: 'stretch',
-            width: Scaler,
-            height: Scaler,
+            type: 'stretch';
+            width: Scaler;
+            height: Scaler;
         },
         animation: {
             type: 'none',
         } as {
-            type: 'none',
+            type: 'none';
         } | {
-            type: 'fade',
-            duration: number,
+            type: 'fade';
+            duration: number;
         } | {
-            type: 'slide',
-            duration: number,
-            direction: 'left' | 'right' | 'up' | 'down',
+            type: 'slide';
+            duration: number;
+            direction: 'left' | 'right' | 'up' | 'down';
         } | {
-            type: 'flip',
-            duration: number,
+            type: 'flip';
+            duration: number;
         },
         easing: {
             type: 'linear',
         } as {
-            type: 'linear',
+            type: 'linear';
         } | {
-            type: 'ease',
+            type: 'ease';
         } | {
-            type: 'bounce',
+            type: 'bounce';
         } | {
-            type: 'elastic',
+            type: 'elastic';
         },
     },
     resource: {
-        
+
     },
 };
 
@@ -100,7 +100,7 @@ export class RemoteApp {
     public readonly resources: Writable<Resources>;
     public readonly config: Writable<Config>;
     public readonly connected: Writable<boolean>;
-    
+
     constructor(
         private readonly omu: Omu,
         private readonly side: 'app' | 'remote' | 'asset',

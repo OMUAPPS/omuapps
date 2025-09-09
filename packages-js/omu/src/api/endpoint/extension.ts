@@ -96,7 +96,7 @@ export class EndpointExtension {
             return type.responseSerializer.serialize(result);
         } });
     }
-    
+
     public async call<Req, Res>(endpoint: EndpointType<Req, Res>, data: Req): Promise<Res> {
         const key = this.callId++;
         const promise = new Promise<Uint8Array>((resolve, reject) => {

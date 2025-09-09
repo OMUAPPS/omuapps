@@ -27,7 +27,7 @@ export interface AvatarContext {
     bounds(): {
         min: Vec2;
         max: Vec2;
-    }
+    };
 }
 
 export interface Avatar {

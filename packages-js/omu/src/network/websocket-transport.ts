@@ -30,7 +30,7 @@ export class WebsocketConnection implements Connection {
     constructor(
         private socket: WebSocket,
     ) { }
-    
+
     public static fromSocket(socket: WebSocket): Promise<WebsocketConnection> {
         const connection = new WebsocketConnection(socket);
         return new Promise((resolve, reject) => {

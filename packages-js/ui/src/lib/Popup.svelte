@@ -6,7 +6,7 @@
     export let isOpen = false;
     export let onOpen: () => Promise<void> | void = () => {};
 
-    const eventDistacher = createEventDispatcher<{ open: void, close: void }>();
+    const eventDistacher = createEventDispatcher<{ open: void; close: void }>();
 
     let element: HTMLElement;
     let target: HTMLElement;

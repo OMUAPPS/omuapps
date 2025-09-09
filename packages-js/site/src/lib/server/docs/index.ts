@@ -45,7 +45,7 @@ export async function getDocsData(path = 'site'): Promise<DocsData[]> {
 
 export function getDocSections(docsData: DocsData[]): Record<string, DocsSection[]> {
     const sections: Record<string, DocsSection[]> = {};
-    
+
     for (const doc of docsData) {
         const group = doc.meta.group ?? 'General';
         if (!sections[group]) sections[group] = [];

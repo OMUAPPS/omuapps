@@ -8,27 +8,27 @@ import type { Packet, PacketData } from './packet/packet.js';
 const FRAME_TYPE_KEY = 'omuapps-frame';
 
 type Command = ({
-    type: 'syn',
+    type: 'syn';
     payload: {
-        origin: string,
-    }
+        origin: string;
+    };
 } | {
-    type: 'connect',
-    payload: object,
+    type: 'connect';
+    payload: object;
 } | {
-    type: 'disconnect',
-    payload: object,
+    type: 'disconnect';
+    payload: object;
 } | {
-    type: 'send',
-    payload: Uint8Array,
+    type: 'send';
+    payload: Uint8Array;
 } | {
-    type: 'receive',
-    payload: Uint8Array,
+    type: 'receive';
+    payload: Uint8Array;
 } | {
-    type: 'error',
-    payload: string,
+    type: 'error';
+    payload: string;
 }) & {
-    type_key?: string,
+    type_key?: string;
 };
 
 export class FrameTransport implements Transport {
@@ -43,7 +43,7 @@ export class FrameConnection implements Connection {
     private readonly packetQueue: Array<PacketData> = [];
     private readonly sendQueue: Array<Command> = [];
     private receiveWaiter: (() => void) | null = null;
-    
+
     constructor(
         private connectedWaiter: (() => void) | null,
     ) {

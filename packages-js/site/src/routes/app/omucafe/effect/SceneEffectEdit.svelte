@@ -5,7 +5,7 @@
     import EffectEdit from './EditEffect.svelte';
 
     export let context: SceneContext;
-    
+
     const { scene, gameConfig: config } = getGame();
 </script>
 
@@ -22,4 +22,4 @@
 {/if}
 <BackButton to={{
     type: 'product_list',
-}} active={context.active}/>
+}} active={context.active} />

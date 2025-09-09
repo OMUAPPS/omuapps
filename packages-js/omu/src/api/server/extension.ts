@@ -75,7 +75,7 @@ type RemoteAppRequestPayload = {
         name?: LocalizedText;
         icon?: LocalizedText;
         description?: LocalizedText;
-    },
+    };
     permissions: string[];
 };
 

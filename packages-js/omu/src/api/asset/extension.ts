@@ -140,7 +140,7 @@ export class AssetExtension {
 
     public url(
         id: Identifier | string,
-        options?: { cache?: 'no-cache'; },
+        options?: { cache?: 'no-cache' },
     ): string {
         const key = typeof id === 'string' ? id : id.key();
         const address = this.client.network.address;

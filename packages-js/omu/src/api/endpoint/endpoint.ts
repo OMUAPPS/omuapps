@@ -17,10 +17,10 @@ export class EndpointType<Req = unknown, Res = unknown> {
             responseSerializer,
             permissionId,
         }: {
-            name: string,
-            requestSerializer?: Serializable<Req, ReqData>,
-            responseSerializer?: Serializable<Res, ResData>,
-            permissionId?: Identifier,
+            name: string;
+            requestSerializer?: Serializable<Req, ReqData>;
+            responseSerializer?: Serializable<Res, ResData>;
+            permissionId?: Identifier;
         },
     ): EndpointType<Req, Res> {
         return new EndpointType<Req, Res>(
@@ -39,10 +39,10 @@ export class EndpointType<Req = unknown, Res = unknown> {
             responseSerializer,
             permissionId,
         }: {
-            name: string,
-            requestSerializer: Serializable<Req, Uint8Array>,
-            responseSerializer: Serializable<Res, Uint8Array>,
-            permissionId?: Identifier,
+            name: string;
+            requestSerializer: Serializable<Req, Uint8Array>;
+            responseSerializer: Serializable<Res, Uint8Array>;
+            permissionId?: Identifier;
         },
     ): EndpointType<Req, Res> {
         return new EndpointType<Req, Res>(

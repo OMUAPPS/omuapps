@@ -7,7 +7,7 @@
     export let omu: Omu;
     export let remote: RemoteApp;
     const { resources, config } = remote;
-    
+
     let selectedId: string | null = null;
     let multipleSelectedIds: string[] = [];
     $: multiple = multipleSelectedIds.length > 1;
@@ -54,8 +54,8 @@
 
     let search = '';
     type Sort = {
-        order: 'asc' | 'desc',
-        key: 'addedAt' | 'filename' | 'size',
+        order: 'asc' | 'desc';
+        key: 'addedAt' | 'filename' | 'size';
     };
     let sort: Sort = {
         order: 'desc',

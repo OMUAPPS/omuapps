@@ -16,15 +16,15 @@ export type PageItem<T> = {
 
 export const pageMap = writable<Record<string, PageItem<unknown>>>({});
 export const pages = writable<Record<string, {
-    type: 'waiting',
+    type: 'waiting';
 } | {
-    type: 'unloaded',
+    type: 'unloaded';
 } | {
-    type: 'loading',
+    type: 'loading';
 } | {
-    type: 'loaded',
-    page: Page<unknown>,
-}>>({}); 
+    type: 'loaded';
+    page: Page<unknown>;
+}>>({});
 
 export function registerPage<Props, T extends PageItem<Props>>(page: T): T {
     if (get(pageMap)[page.id]) {

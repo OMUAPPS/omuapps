@@ -28,7 +28,7 @@ export class GLStateManager {
         this.viewportStack.push(dimentions);
         this.gl.viewport(0, 0, dimentions.x, dimentions.y);
     }
-    
+
     public popViewport() {
         this.viewportStack.pop();
         if (this.viewportStack.length <= 0) {
@@ -107,7 +107,7 @@ export class GLStateManager {
         this.activeTexture = activeTexture - 1;
     }
 
-    public bindTexture(texture: GlTexture): { index: number, unbind: () => void } {
+    public bindTexture(texture: GlTexture): { index: number; unbind: () => void } {
         const activeTexture = this.activeTexture += 1;
         if (activeTexture >= GLStateManager.TEXTURE_UNITS) {
             throw new Error('Too many textures bound');
@@ -479,7 +479,7 @@ export class GlTexture {
         }
     }
 
-    public bind(): Disposable & { index: number, unbind: () => void } {
+    public bind(): Disposable & { index: number; unbind: () => void } {
         const { index, unbind } = this.stateManager.bindTexture(this);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
         return {
@@ -600,7 +600,7 @@ export class GlFramebuffer {
             await callback();
         });
     }
-    
+
     public attachTexture(texture: GlTexture | null): void {
         if (!this.stateManager.isFramebufferBound(this)) {
             throw new Error('Framebuffer not bound');

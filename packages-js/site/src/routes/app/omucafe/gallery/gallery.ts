@@ -4,10 +4,10 @@ import type { Asset } from '../asset/asset.js';
 import type { Order } from '../order/order.js';
 
 export type GalleryItem = {
-    id: string,
-    asset: Asset,
-    timestamp: string,
-    order: Order | null,
+    id: string;
+    asset: Asset;
+    timestamp: string;
+    order: Order | null;
 };
 
 export const GALLERY_TABLE_TYPE = TableType.createJson<GalleryItem>(APP_ID, {

@@ -5,7 +5,7 @@
 
     export let context: SceneContext;
     $: console.log('SceneLoading', context);
-    
+
     const { omu, scene } = getGame();
 
     onMount(async () => {

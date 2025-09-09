@@ -78,7 +78,7 @@ type AppSide = 'client' | 'asset';
 export class ReplayApp {
     public readonly replayData: Writable<ReplayData | null>;
     public readonly config: Writable<ReplayConfig>;
-    
+
     private constructor(
         public readonly omu: Omu,
         public readonly side: AppSide,
@@ -99,7 +99,7 @@ export class ReplayApp {
         this.instance = new ReplayApp(omu, side);
         return this.instance;
     }
-    
+
     public static getInstance() {
         if (!this.instance) {
             throw new Error('ReplayApp instance not created yet');

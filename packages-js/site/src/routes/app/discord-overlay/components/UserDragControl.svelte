@@ -14,7 +14,7 @@
     export let id: string;
     export let state: VoiceStateItem;
     export let user: UserConfig;
-    
+
     const { config } = overlayApp;
 
     let lastMouse: [number, number] | null = null;
@@ -29,7 +29,7 @@
             rect = element.getBoundingClientRect();
         }
     }
-    
+
     const hideAreaWidth = 240;
     const hideAreaMargin = 10;
     const OFFSET = 150;
@@ -109,7 +109,7 @@
         return [dimentions.width - hideAreaWidth + hideAreaMargin + 20, y];
     }
 
-    function getPosition(rect: { width: number, height: number }, offset: [number, number] = [0, OFFSET]): [number, number] {
+    function getPosition(rect: { width: number; height: number }, offset: [number, number] = [0, OFFSET]): [number, number] {
         const show = user.show || $dragUser == id;
         if (show) {
             const margin = 8;
@@ -130,10 +130,10 @@
     }
 
     function getStyle(
-        rect: { width: number, height: number },
+        rect: { width: number; height: number },
         config: Config,
         view: Mat4,
-        directions: { width: number, height: number },
+        directions: { width: number; height: number },
         offset: [number, number] = [0, OFFSET],
     ) {
         const clamped = getPosition(rect, [offset[0], config.align.vertical === 'start' ? -offset[1] : offset[1]]);
@@ -307,7 +307,7 @@
                 border: 0.5rem solid transparent;
                 border-left-color: var(--color-outline);
             }
-            
+
             &::after {
                 content: '';
                 position: absolute;

@@ -2,20 +2,20 @@ import { lerp } from './math.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 
 export type AABB2Like = {
-    min: Vec2Like,
-    max: Vec2Like,
+    min: Vec2Like;
+    max: Vec2Like;
 };
 
 export class AABB2 {
     public static readonly ZEROZERO = new AABB2(Vec2.ZERO, Vec2.ZERO);
     public static readonly ONEONE = new AABB2(Vec2.ONE, Vec2.ONE);
-    
+
     constructor(
         public readonly min: Vec2,
         public readonly max: Vec2,
     ) {}
 
-    public static from({ min, max }: { min: Vec2Like, max: Vec2Like }): AABB2 {
+    public static from({ min, max }: { min: Vec2Like; max: Vec2Like }): AABB2 {
         return new AABB2(new Vec2(min.x, min.y), new Vec2(max.x, max.y));
     }
 
@@ -88,7 +88,7 @@ export class AABB2 {
         const offset = this.at(at).sub(target);
         return new AABB2(this.min.sub(offset), this.max.sub(offset));
     }
-    
+
     public center(): Vec2 {
         return this.min.add(this.max).scale(0.5);
     }

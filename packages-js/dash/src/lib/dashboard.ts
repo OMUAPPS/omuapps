@@ -39,8 +39,8 @@ export class Dashboard implements DashboardHandler {
     public currentApp: App | null = null;
     readonly apps: Table<App>;
     readonly webviewHandles: IdentifierMap<{
-        id: Identifier,
-        close: () => void,
+        id: Identifier;
+        close: () => void;
     }> = new IdentifierMap();
     private readonly recognition = new (SpeechRecognition || webkitSpeechRecognition)();
 
@@ -157,7 +157,7 @@ export class Dashboard implements DashboardHandler {
             files,
         );
     }
-    
+
     async getCookies(request: GetCookiesRequest): Promise<UserResponse<Cookie[]>> {
         const cookies = await invoke('get_cookies', { options: {
             label: appWindow.label,
@@ -168,7 +168,7 @@ export class Dashboard implements DashboardHandler {
             value: cookies,
         };
     }
-    
+
     async hostRequested(request: HostRequest, params: InvokedParams): Promise<UserResponse> {
         await appWindow.setFocus();
         const app = await this.apps.get(params.caller.key());
@@ -184,7 +184,7 @@ export class Dashboard implements DashboardHandler {
             });
         });
     }
-    
+
     async createWebview(request: WebviewRequest, params: InvokedParams, emit: (event: WebviewEvent) => Promise<void>): Promise<Identifier> {
         const { url, script } = request;
         const uri = new URL(url);
@@ -224,7 +224,7 @@ export class Dashboard implements DashboardHandler {
         const handle = this.webviewHandles.get(request.id);
         return handle?.id;
     }
-    
+
     async closeWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined> {
         if (!request.id.isSubpathOf(params.caller)) return;
         const handle = this.webviewHandles.get(request.id);

@@ -96,7 +96,7 @@ export async function createShadowEffect(context: GlContext, getOptions: () => t
                 textureUniform.set(texture);
                 const { r, g, b, a } = options.color;
                 colorUniform.set(new Vec4(r, g, b, a));
-                
+
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
             });
         });

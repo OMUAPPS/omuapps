@@ -32,7 +32,7 @@
     <div class="icon">
         {#if icon}
             {#if icon.startsWith('ti')}
-                <i class="ti {icon}" ></i>
+                <i class="ti {icon}"></i>
             {:else}
                 <img src={icon} alt="" />
             {/if}

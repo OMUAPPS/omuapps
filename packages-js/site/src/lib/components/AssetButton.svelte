@@ -7,7 +7,7 @@
 
     export let omu: Omu | null = null;
     export let obs: OBSPlugin | null = null;
-    export let dimensions: { width: CreateBrowserRequest['width'], height: CreateBrowserRequest['height'] } | undefined = undefined;
+    export let dimensions: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined = undefined;
 
     async function create() {
         if (!obs) {
