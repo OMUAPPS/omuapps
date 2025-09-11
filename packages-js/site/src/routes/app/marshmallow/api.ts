@@ -140,6 +140,7 @@ export type User = {
     nickname: string;
     description: string;
     image?: string;
+    premium?: boolean;
 };
 
 export class MarshmallowSession {
@@ -237,6 +238,7 @@ export class MarshmallowAPI {
     }
 
     public async user(): Promise<User> {
+        const premium = this.hasPremium();
         const resp = await this.fetch('https://marshmallow-qa.com/settings/profile', {
             'headers': this.headers,
             'body': null,
@@ -274,7 +276,26 @@ export class MarshmallowAPI {
             nickname,
             description: DomUtils.textContent(description),
             image,
+            premium: await premium,
         };
+    }
+
+    private async hasPremium(): Promise<boolean | undefined> {
+        const resp = await this.fetch('https://marshmallow-qa.com/settings/premium', {
+            'headers': this.headers,
+            'body': null,
+            'method': 'GET',
+        });
+        const dom = parseDocument(await resp.text());
+        const setting = DOM.query(dom, { attrs: { id: 'premium-subscription-setting' } });
+        if (!setting) throw new Error('Premium setting not found');
+        const hasCheckoutForm = DOM.query(setting, {
+            name: 'form',
+            attrs: { action: /\/stripe\/checkout\/sessions?price=/gm },
+        });
+        const hasWithdrawalButton = DOM.query(setting, { attrs: { 'data-bs-target': '#premium-withdrawal-confirmation' } });
+        const hasPremium = hasWithdrawalButton && !hasCheckoutForm;
+        return hasPremium;
     }
 
     private extractMessageIdFromPathname(pathname: string): string {

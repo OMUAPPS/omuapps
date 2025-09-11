@@ -2,6 +2,7 @@
     import { Button, Spinner, Tooltip } from '@omujs/ui';
     import { DOM, type MarshmallowAPI, type Message, type MessageAction } from './api';
     import { MarshmallowApp } from './marshmallow-app';
+    import { hasPremium } from './stores';
 
     export let api: MarshmallowAPI;
     export let message: Message;
@@ -104,6 +105,20 @@
 </script>
 
 <div class="reply">
+    <div class="textarea">
+        <textarea bind:value={reply} disabled={!!message.reply}></textarea>
+        <div class="overlay">
+            {#if recognizing}
+                <div class="recognizing">
+                    認識中
+                    <Spinner />
+                    <small>
+                        {results}
+                    </small>
+                </div>
+            {/if}
+        </div>
+    </div>
     <div class="actions">
         {#if detail}
             {#if detail.type === 'ok'}
@@ -130,14 +145,23 @@
                 {/each}
             {/if}
         {/if}
-        <Button primary={!recognizing} disabled={replyEnable} onclick={() => {
+        <Button primary={!recognizing} disabled={replyEnable || !$hasPremium} onclick={() => {
             recognizing = !recognizing;
         }}>
+            {#if $hasPremium}
+                {#if recognizing}
+                    音声認識を停止
+                {:else}
+                    音声認識を開始
+                {/if}
+            {:else}
+                <Tooltip>
+                    マシュマロのプレミアムに加入することで音声認識で入力することできます
+                </Tooltip>
+            {/if}
             {#if recognizing}
-                音声認識を停止
                 <i class="ti ti-player-pause"></i>
             {:else}
-                音声認識を開始
                 <i class="ti ti-bubble-text"></i>
             {/if}
         </Button>
@@ -166,22 +190,13 @@
             <i class="ti ti-message-circle"></i>
         </Button>
     </div>
-    <div class="textarea">
-        <textarea bind:value={reply} disabled={!!message.reply}></textarea>
-        {#if recognizing}
-            <div class="recognizing">
-                認識中
-                <Spinner />
-            </div>
-        {/if}
-    </div>
 </div>
 
 <style lang="scss">
     .reply {
         position: relative;
         display: flex;
-        flex-direction: column;
+        flex-direction: column-reverse;
         gap: 1rem;
         width: 22rem;
         position: sticky;
@@ -199,10 +214,12 @@
     }
 
     .textarea {
+        position: relative;
         width: 100%;
         height: 100%;
 
         > textarea {
+            position: unset;
             outline: none;
             border: none;
             width: 100%;
@@ -219,6 +236,7 @@
 
     .recognizing {
         position: absolute;
+        inset: 0;
         display: flex;
         align-items: center;
         justify-content: center;

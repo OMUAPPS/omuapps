@@ -8,6 +8,7 @@
     import { MarshmallowApp } from './marshmallow-app.js';
     import Messages from './Messages.svelte';
     import MessageView from './MessageView.svelte';
+    import { hasPremium } from './stores';
 
     export let omu: Omu;
     export let marshmallow: MarshmallowApp;
@@ -24,6 +25,7 @@
 
     async function fetchUser() {
         user = await api.user();
+        $hasPremium = user.premium;
     }
 
     $: {
@@ -75,7 +77,15 @@
             <div class="user">
                 {#if user}
                     <img src={user.image} alt="">
-                    {user.nickname}
+                    <span>
+                        {user.nickname}
+                        {#if user.premium}
+                            <Tooltip>
+                                プレミアム会員
+                            </Tooltip>
+                            <i class="ti ti-crown"></i>
+                        {/if}
+                    </span>
                     <div class="actions">
                         <Button onclick={async () => {
                             const session = await MarshmallowSession.login(omu);
@@ -239,6 +249,8 @@
             height: 2rem;
             margin-right: 0.5rem;
             border-radius: 100%;
+            outline: 1px solid var(--color-outline);
+            outline-offset: -1px;
         }
 
         > .actions {
