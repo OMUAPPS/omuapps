@@ -69,6 +69,7 @@ export class Dashboard implements DashboardHandler {
             if (error === 'no-speech') return;
             console.error('Speech recognition error:', error);
         };
+        let timestamp = Date.now();
         this.recognition.onresult = async ({ results }) => {
             const segments: TranscriptSegment[] = [...results]
                 .map((result) => {
@@ -76,8 +77,22 @@ export class Dashboard implements DashboardHandler {
                 })
                 .flatMap((result) => [...result]);
             await this.omu.dashboard.speechRecognition.set({
-                segments,
-                isFinal: results[results.length - 1].isFinal,
+                type: results[results.length - 1].isFinal ? 'result' : 'final',
+                timestamp,
+                segments: segments,
+            });
+        };
+        this.recognition.onaudiostart = async () => {
+            timestamp = Date.now();
+            await this.omu.dashboard.speechRecognition.set({
+                type: 'audio_started',
+                timestamp,
+            });
+        };
+        this.recognition.onaudioend = async () => {
+            await this.omu.dashboard.speechRecognition.set({
+                type: 'audio_ended',
+                timestamp,
             });
         };
         this.recognition.onend = () => {

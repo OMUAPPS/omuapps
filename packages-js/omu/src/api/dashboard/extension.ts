@@ -286,14 +286,27 @@ export type TranscriptSegment = {
     transcript: string;
 };
 
-export type TranscriptResult = {
+export type TranscriptStatus = {
+    type: 'idle';
+} | {
+    type: 'result';
+    timestamp: number;
     segments: TranscriptSegment[];
-    isFinal: boolean;
+} | {
+    type: 'final';
+    timestamp: number;
+    segments: TranscriptSegment[];
+} | {
+    type: 'audio_started';
+    timestamp: number;
+} | {
+    type: 'audio_ended';
+    timestamp: number;
 };
 
-const DASHBOARD_SPEECH_RECOGNITION = RegistryType.createJson<TranscriptResult>(DASHBOARD_EXTENSION_TYPE, {
+const DASHBOARD_SPEECH_RECOGNITION = RegistryType.createJson<TranscriptStatus>(DASHBOARD_EXTENSION_TYPE, {
     name: 'speech_recognition',
-    defaultValue: { segments: [], isFinal: false },
+    defaultValue: { type: 'idle' },
     permissions: RegistryPermissions.of({
         read: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         write: DASHBOARD_SET_PERMISSION_ID,
@@ -312,7 +325,7 @@ export class DashboardExtension {
     };
     public readonly apps: Table<App>;
     public readonly allowedHosts: Table<AllowedHost>;
-    public readonly speechRecognition: Registry<TranscriptResult>;
+    public readonly speechRecognition: Registry<TranscriptStatus>;
     private readonly webviewHandles: IdentifierMap<{ handle: WebviewHandle; emit: WebviewEventEmit }> = new IdentifierMap();
 
     constructor(private readonly client: Client) {

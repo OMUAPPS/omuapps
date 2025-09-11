@@ -10,13 +10,14 @@
     const { omu } = MarshmallowApp.getInstance();
 
     let recognizing = false;
-    omu.dashboard.speechRecognition.listen(({ segments, isFinal }) => {
+    let speaking = false;
+    omu.dashboard.speechRecognition.listen((status) => {
+        speaking = status.type === 'result';
         if (!recognizing) return;
-        results = segments.map(({ transcript }) => transcript).join();
-        if (isFinal) {
-            reply += results;
-            results = '';
-        }
+        if (status.type !== 'final') return;
+        results = status.segments.map(({ transcript }) => transcript).join();
+        reply += results;
+        results = '';
     });
     let results: string = '';
     let detail: {
@@ -110,11 +111,12 @@
         <div class="overlay">
             {#if recognizing}
                 <div class="recognizing">
-                    認識中
-                    <Spinner />
-                    <small>
-                        {results}
-                    </small>
+                    {#if speaking}
+                        待機中
+                    {:else}
+                        認識中
+                        <Spinner />
+                    {/if}
                 </div>
             {/if}
         </div>

@@ -351,15 +351,45 @@ class TranscriptSegment(TypedDict):
     transcript: str
 
 
-class TranscriptResult(TypedDict):
+class TranscriptStatusIdle(TypedDict):
+    type: Literal["idle"]
+
+
+class TranscriptStatusResult(TypedDict):
+    type: Literal["result"]
+    timestamp: float
     segments: list[TranscriptSegment]
-    isFinal: bool
 
 
-DASHBOARD_SPEECH_RECOGNITION = RegistryType[TranscriptResult].create_json(
+class TranscriptStatusFinal(TypedDict):
+    type: Literal["final"]
+    timestamp: float
+    segments: list[TranscriptSegment]
+
+
+class TranscriptStatusAudioStarted(TypedDict):
+    type: Literal["audio_started"]
+    timestamp: float
+
+
+class TranscriptStatusAudioEnded(TypedDict):
+    type: Literal["audio_ended"]
+    timestamp: float
+
+
+type TranscriptStatus = (
+    TranscriptStatusIdle
+    | TranscriptStatusResult
+    | TranscriptStatusFinal
+    | TranscriptStatusAudioStarted
+    | TranscriptStatusAudioEnded
+)
+
+
+DASHBOARD_SPEECH_RECOGNITION = RegistryType[TranscriptStatus].create_json(
     DASHBOARD_EXTENSION_TYPE,
     name="speech_recognition",
-    default_value={"segments": [], "isFinal": False},
+    default_value={"type": "idle"},
     permissions=RegistryPermissions(
         read=DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         write=DASHBOARD_SET_PERMISSION_ID,
