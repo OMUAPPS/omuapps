@@ -6,7 +6,9 @@
     const { omu, config } = captionApp;
 
     let text = placeholder;
-    omu.dashboard.speechRecognition.listen(({ segments }) => {
+    omu.dashboard.speechRecognition.listen((status) => {
+        if (status.type !== 'final') return;
+        const { segments } = status;
         text = segments.map((segment) => segment.transcript).join();
     });
 
