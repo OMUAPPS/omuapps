@@ -89,9 +89,6 @@
         padding: 2rem;
     }
 
-    .asset {
-    }
-
     section {
         display: flex;
         flex-direction: row;
