@@ -27,6 +27,7 @@ const STATE_REGISTRY = RegistryType.createJson<State>(APP_ID, {
     name: 'state',
     defaultValue: {
         type: 'idle',
+        start: performance.now(),
     },
 });
 

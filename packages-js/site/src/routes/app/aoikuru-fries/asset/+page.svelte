@@ -31,29 +31,35 @@
         const data = queue.shift();
         if (!data) return;
         $state = {
-            type: 'throw_start',
-            thrower: data.thrower,
+            type: 'catching',
+            start: performance.timeOrigin + performance.now(),
+            data,
         };
     }
 
     state.subscribe(() => processQueue());
 
-    function isMessageGreasy(message: Message): boolean {
-        if (!message.content) return false;
+    function getMessageGreasiness(message: Message): number {
+        if (!message.content) return 0;
+        let greasyOMetor = 0;
         for (const component of content.walk(message.content)) {
             if (component.type !== 'image') continue;
             const { id } = component.data;
-            if (id === '🍟') return true;
+            if (id === '🍟') {
+                greasyOMetor++;
+            }
         }
-        return false;
+        return greasyOMetor;
     }
 
     chat.on(events.message.add, async (message) => {
         if (!message.authorId) return;
-        if (!isMessageGreasy(message)) return;
+        const greasiness = getMessageGreasiness(message);
+        if (greasiness <= 0) return;
         const author = await chat.authors.get(message.authorId.key());
         queue.push({
             thrower: author?.name || '',
+            count: greasiness,
         });
         processQueue();
     });
@@ -61,6 +67,7 @@
     friesApp.testSignal.listen(() => {
         queue.push({
             thrower: `test${Date.now() % 1000}`,
+            count: 1,
         });
         processQueue();
     });
