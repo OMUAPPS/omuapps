@@ -56,7 +56,8 @@
         {@const proxyUrl = $client.assets.proxy(author.avatarUrl)}
         <div class="avatar">
             <Tooltip noBackground>
-                <img src={proxyUrl} alt="avatar" class="avatar-preview" />
+                {@const fullProxyUrl = $client.assets.proxy(author.metadata.avatar_url ?? author.avatarUrl)}
+                <img src={fullProxyUrl} alt="avatar" class="avatar-preview" />
             </Tooltip>
             {#if author.metadata?.url}
                 <a
