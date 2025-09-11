@@ -36,6 +36,7 @@
             detail = undefined;
             return;
         }
+        if (detail?.type === 'fetching') return;
         if (detail && detail.id !== message.id) {
             detail = undefined;
         }
@@ -182,7 +183,7 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        flex: 0.4;
+        width: 22rem;
         position: sticky;
         top: 0;
         bottom: 10%;

@@ -25,6 +25,7 @@
     class="container omu-scroll"
     on:scroll={({ currentTarget }) => {
         $data.scroll = currentTarget.scrollTop / currentTarget.scrollHeight;
+        if (!$data.pointer) return;
         updatePointer();
     }}
 >
@@ -55,6 +56,7 @@
         position: absolute;
         inset: 0;
         display: flex;
+        flex-wrap: wrap;
         align-items: flex-start;
         justify-content: center;
         padding: 0 5%;
