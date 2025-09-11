@@ -18,7 +18,10 @@ use log::info;
 use once_cell::sync::Lazy;
 use options::AppConfig;
 use serde_json::Value;
-use std::sync::{Arc, Mutex};
+use std::{
+    env,
+    sync::{Arc, Mutex},
+};
 use tauri::{Emitter, Manager};
 use tauri_plugin_cli::CliExt;
 use tauri_plugin_log::{Target, TargetKind};

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import threading
+from pathlib import Path
 
 from loguru import logger
 from omu.app import App
@@ -618,7 +619,7 @@ _THREAD: threading.Thread | None = None
 
 
 def setup_obs_plugin():
-    logger.info("Setting up OBS Plugin")
+    logger.info(f"Setting up OBS Plugin v{VERSION} at {Path.cwd()}")
     global _LOOP
     _LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_LOOP)
