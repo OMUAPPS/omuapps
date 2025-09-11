@@ -15,7 +15,7 @@
     export let captionApp: CaptionApp;
 
     const { config } = captionApp;
-    console.log(omu.ready, $config);
+    omu.dashboard.speechRecognitionStart();
 
     function resetLang() {
         $config.lang = window.navigator.language as LanguageKey;
