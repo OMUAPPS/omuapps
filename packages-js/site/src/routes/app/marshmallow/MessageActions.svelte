@@ -12,14 +12,23 @@
     let recognizing = false;
     let speaking = false;
     omu.dashboard.speechRecognition.listen((status) => {
-        speaking = status.type === 'result';
         if (!recognizing) return;
-        if (status.type !== 'final') return;
-        results = status.segments.map(({ transcript }) => transcript).join();
-        reply += results;
-        results = '';
+        switch (status.type) {
+            case 'final':{
+                const results = status.segments.map(({ transcript }) => transcript).join();
+                reply += results;
+                break;
+            }
+            case 'audio_started':{
+                speaking = true;
+                break;
+            }
+            case 'audio_ended':{
+                speaking = false;
+                break;
+            }
+        }
     });
-    let results: string = '';
     let detail: {
         type: 'fetching';
         id: string;
@@ -46,7 +55,6 @@
         detail = { type: 'fetching', id: message.id };
         try {
             const newActions = await api.messageActions({ id: message.id });
-            console.log(newActions);
             const answer = newActions.find(action => action.action === 'answers');
             const actions = newActions.filter(action => action.action !== 'answers');
             detail = {
@@ -112,10 +120,10 @@
             {#if recognizing}
                 <div class="recognizing">
                     {#if speaking}
-                        待機中
-                    {:else}
                         認識中
                         <Spinner />
+                    {:else}
+                        待機中
                     {/if}
                 </div>
             {/if}

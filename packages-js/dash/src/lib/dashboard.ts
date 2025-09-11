@@ -77,19 +77,19 @@ export class Dashboard implements DashboardHandler {
                 })
                 .flatMap((result) => [...result]);
             await this.omu.dashboard.speechRecognition.set({
-                type: results[results.length - 1].isFinal ? 'result' : 'final',
+                type: results[results.length - 1].isFinal ? 'final' : 'result',
                 timestamp,
                 segments: segments,
             });
         };
-        this.recognition.onaudiostart = async () => {
+        this.recognition.onsoundstart = async () => {
             timestamp = Date.now();
             await this.omu.dashboard.speechRecognition.set({
                 type: 'audio_started',
                 timestamp,
             });
         };
-        this.recognition.onaudioend = async () => {
+        this.recognition.onsoundend = async () => {
             await this.omu.dashboard.speechRecognition.set({
                 type: 'audio_ended',
                 timestamp,
