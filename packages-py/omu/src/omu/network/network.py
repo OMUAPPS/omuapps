@@ -49,7 +49,7 @@ class Network:
         connection: Connection | None = None,
     ):
         self._client = client
-        self._address = address
+        self.address = address
         self._token_provider = token_provider
         self.transport = transport
         self.connection: Connection | None = connection
@@ -71,7 +71,7 @@ class Network:
     async def handle_token(self, token: str | None):
         if token is None:
             return
-        self._token_provider.store(self._address, self._client.app, token)
+        self._token_provider.store(self.address, self._client.app, token)
 
     async def handle_disconnect(self, reason: DisconnectPacket):
         if reason.type in {
@@ -94,10 +94,6 @@ class Network:
         error = ERROR_MAP.get(reason.type)
         if error:
             raise error(reason.message or reason.type.value)
-
-    @property
-    def address(self) -> Address:
-        return self._address
 
     def set_connection(self, connection: Connection) -> None:
         if self.connection:
@@ -160,14 +156,14 @@ class Network:
                 meta_received = await self.connection.receive_as(self._packet_mapper, PACKET_TYPES.SERVER_META)
                 if meta_received.is_err is True:
                     raise meta_received.err
-                address = self._address.with_hash(meta_received.value["hash"])
+                self.address = self.address.with_hash(meta_received.value["hash"])
                 await self.send(
                     Packet(
                         PACKET_TYPES.CONNECT,
                         ConnectPacket(
                             app=self._client.app,
                             protocol={"version": self._client.version},
-                            token=self._token_provider.get(address, self._client.app),
+                            token=self._token_provider.get(self.address, self._client.app),
                         ),
                     )
                 )
@@ -186,7 +182,7 @@ class Network:
                     if exception:
                         logger.error("Failed to reconnect")
                     else:
-                        logger.opt(exception=e).error(f"Failed to connect to {self._address.host}:{self._address.port}")
+                        logger.opt(exception=e).error(f"Failed to connect to {self.address.host}:{self.address.port}")
                     exception = e
                     continue
                 else:
