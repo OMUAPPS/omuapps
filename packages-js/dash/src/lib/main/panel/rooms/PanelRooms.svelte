@@ -10,14 +10,20 @@
 
     export let openSetup: () => void = () => {};
     export let filter: (key: string, room: models.Room) => boolean = () => true;
-    export let sort: (a: models.Room, b: models.Room) => number = (a, b) => {
-        if (!a.createdAt || !b.createdAt) return 0;
-        return a.createdAt.getTime() - b.createdAt.getTime();
+    export let sort: (a: models.Room) => number = (a) => {
+        if (!a.metadata.created_at) return 0;
+        return new Date(a.metadata.created_at).getTime();
     };
 </script>
 
 <div class="rooms">
-    <TableList table={chat.rooms} component={RoomEntry} {filter} {sort}>
+    <TableList
+        table={chat.rooms}
+        component={RoomEntry}
+        {filter}
+        {sort}
+        reverse={true}
+    >
         <div class="empty">
             {$t('panels.rooms.not_found_rooms')}
             <Button onclick={openSetup}>

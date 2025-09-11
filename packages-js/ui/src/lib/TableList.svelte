@@ -1,4 +1,5 @@
 <script lang="ts" generics="T">
+
     import { client } from './stores.js';
 
     import VirtualList from './VirtualList.svelte';
@@ -19,16 +20,14 @@
         SvelteComponent<{ entry: T; selected?: boolean }>
     >;
     export let filter: (key: string, entry: T) => boolean = () => true;
-    export let sort: ((a: T, b: T) => number) | undefined = undefined;
-    export let reverse: boolean = false;
-    export let backward: boolean = true;
+    export let sort: ((a: T) => number) | undefined = undefined;
+    export let reverse: boolean = true;
     export let initial: number = 40;
 
-    export let limit = 400;
     export let selectedItem: string | undefined = undefined;
 
     let entries: Map<string, T> = new Map();
-    let items: Array<[string, T]> = [];
+    let renderItems: Array<[string, T]> = [];
     let addedItems: string[] = [];
     let animationTimeout: number | undefined;
     let startIndex = 0;
@@ -37,27 +36,28 @@
     let viewport: HTMLDivElement;
     let last: string | undefined;
     let fetchLock: Promise<boolean> | undefined;
+    let average_height = 0;
+    let lastScroll = {
+        time: 0,
+        y: 0,
+    };
 
     async function fetch(): Promise<boolean> {
         if (fetchLock) {
             await fetchLock;
         }
-        let cursor: string | undefined = last;
-        while (cursor && !(await table.has(cursor))) {
-            if (entries.size === 0) {
-                cursor = undefined;
-                break;
-            }
-            cursor = [...entries.keys()].at(backward ? 0 : -1);
-        }
+        const scrollTop = viewport?.scrollTop ?? 0;
+        const deltaY = scrollTop - lastScroll.y;
+        const deltaTime = (performance.now() - lastScroll.time) / 1000;
+        const itemsInSeconds = (deltaY / deltaTime) / Math.max(1, average_height);
         fetchLock = table
             .fetchItems({
-                limit: initial,
-                backward,
-                cursor,
+                limit: Math.max(initial, itemsInSeconds * 1.5),
+                backward: reverse,
+                cursor: last,
             })
             .then((items) => {
-                last = [...items.keys()].at(backward ? -1 : -1);
+                last = [...items.keys()].at(-1);
                 updateCache(items);
                 update();
                 return (
@@ -68,6 +68,8 @@
             .finally(() => {
                 fetchLock = undefined;
             });
+        lastScroll.time = performance.now();
+        lastScroll.y = scrollTop;
         return await fetchLock;
     }
 
@@ -76,24 +78,16 @@
         let changed = false;
         const newItems: [string, T][] = [];
         for (const [key, value] of cache.entries()) {
-            if (filter && !filter(key, value)) {
-                continue;
-            }
             if (entries.has(key)) {
                 entries.set(key, value);
+                changed = true;
             } else {
                 newItems.push([key, value]);
                 changed = true;
             }
         }
         if (changed) {
-            let newEntries = [...newItems, ...entries.entries()];
-            if (sort) {
-                newEntries = newEntries.sort(
-                    ([, entryA], [, entryB]) => sort(entryA, entryB) || 0,
-                );
-            }
-            entries = new Map(newEntries);
+            entries = new Map([...entries.entries(), ...newItems]);
             updated = true;
         }
     }
@@ -169,26 +163,25 @@
 
     function update(
         filter?: (key: string, entry: T) => boolean,
-        sort?: (a: T, b: T) => number,
+        sort?: (a: T) => number,
         reverse?: boolean,
     ) {
-        items = Array.from(entries.entries());
+        let items = Array.from(entries.entries());
         if (filter) {
             items = items.filter(([key, entry]) => filter(key, entry));
         }
         if (sort) {
-            items = items.sort(([, entryA], [, entryB]) =>
-                sort(entryA, entryB),
-            );
+            items = items.sort(([, entryA], [, entryB]) => sort(entryA) - sort(entryB));
         }
         if (reverse) {
             items = items.reverse();
         }
+        renderItems = items;
         updated = false;
     }
 
     $: {
-        if (!items.length || (startIndex === 0 && updated)) {
+        if (!renderItems.length || (startIndex === 0 && updated)) {
             update(filter, sort, reverse);
         }
     }
@@ -198,11 +191,14 @@
     }
 
     let scrollLock: Promise<void> | undefined;
+    let prevScrollTop = 0;
 
     async function handleScroll(e: Event) {
         if (scrollLock) return;
         scrollLock = (async () => {
             const target = e.target as HTMLDivElement;
+            const scroll = target.scrollTop - prevScrollTop;
+            if (scroll < 0) return;
             let { scrollTop, scrollHeight, clientHeight } = target;
             while (scrollTop + clientHeight >= scrollHeight - 4000) {
                 if (fetchLock) {
@@ -221,6 +217,7 @@
                 scrollHeight = target.scrollHeight;
                 clientHeight = target.clientHeight;
             }
+            prevScrollTop = target.scrollTop;
         })().finally(() => {
             scrollLock = undefined;
         });
@@ -235,11 +232,12 @@
 <div class="list">
     <div class="items">
         <VirtualList
-            {items}
+            items={renderItems}
             limit={initial}
             bind:viewport
             bind:start={startIndex}
             bind:end={endIndex}
+            bind:average_height
             let:key
             let:item
         >

@@ -10,12 +10,9 @@
         _,
         message,
     ) => message.deleted !== true;
-    export let sort: (a: models.Message, b: models.Message) => number = (
-        a,
-        b,
-    ) => {
-        if (!a.createdAt || !b.createdAt) return 0;
-        return a.createdAt.getTime() - b.createdAt.getTime();
+    let sort = (a: models.Message) => {
+        if (!a.createdAt) return 0;
+        return a.createdAt.getTime();
     };
 
     onDestroy(chat.authors.listen());

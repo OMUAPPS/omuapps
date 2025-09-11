@@ -28,9 +28,8 @@
             <TableList
                 table={dashboard.apps}
                 component={AppEntry}
-                sort={(a, b) => {
-                    if (`app-${a.id.key()}` === $currentPage) return -1;
-                    if (`app-${b.id.key()}` === $currentPage) return 1;
+                sort={(a) => {
+                    if (`app-${a.id.key()}` === $currentPage) return 1;
                     return 0;
                 }}
             />
