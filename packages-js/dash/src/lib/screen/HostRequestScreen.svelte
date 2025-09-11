@@ -29,7 +29,12 @@
 <Screen {screen} title="host_request" disableClose>
     <div class="content">
         <AppInfo {app} />
-        {request.host}
+        <p>が<code>{request.host}</code>を要求しています</p>
+        <ul>
+            <li>これを許可するとこのアプリは認証情報を使ったり無制限のアクセスが可能になります。</li>
+            <li>信用できるアプリからの要求のみ許可してください。</li>
+            <li>設定から再び無効にすることができます</li>
+        </ul>
         <div class="actions">
             <button on:click={reject} class="reject">
                 キャンセル
@@ -50,11 +55,24 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: space-between;
         padding-top: 4rem;
+        gap: 2rem;
+        font-weight: 600;
+        color: var(--color-text);
+        font-size: 0.9rem;
+    }
+
+    code {
+        color: var(--color-1);
+        margin: 0 0.25rem;
+    }
+
+    ul {
+        text-align: left;
     }
 
     .actions {
+        margin-top: auto;
         display: flex;
         gap: 0.5rem;
     }

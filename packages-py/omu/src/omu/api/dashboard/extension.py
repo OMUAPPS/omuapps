@@ -397,6 +397,17 @@ DASHBOARD_SPEECH_RECOGNITION = RegistryType[TranscriptStatus].create_json(
 )
 
 
+class SpeechRecognitionStart(TypedDict):
+    type: Literal["start"]
+
+
+DASHBOARD_SPEECH_RECOGNITION_START = EndpointType[SpeechRecognitionStart, Any].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    name="speech_recognition_start",
+    permission_id=DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+)
+
+
 class DashboardExtension(Extension):
     @property
     def type(self) -> ExtensionType:

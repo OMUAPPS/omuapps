@@ -17,6 +17,9 @@
     setClient(omu);
 
     async function getAPI() {
+        await omu.dashboard.requestHost({
+            host: 'marshmallow-qae.com',
+        });
         const session = await MarshmallowSession.get(omu) ?? await MarshmallowSession.login(omu);
         if (!session) {
             console.warn('Failed to get session');

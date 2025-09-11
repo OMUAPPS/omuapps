@@ -12,6 +12,7 @@
         devMode,
         isBetaEnabled,
         language,
+        speechRecognition,
     } from '../settings.js';
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
@@ -178,6 +179,13 @@
                 <small>
                     {$t('settings.setting.betaModeDescription')}
                 </small>
+                <label class="setting">
+                    <p>{$t('settings.setting.speechRecognition')}</p>
+                    <input
+                        type="checkbox"
+                        bind:checked={$speechRecognition}
+                    />
+                </label>
                 {#if $isBetaEnabled}
                     <label class="setting">
                         <p>{$t('settings.setting.devMode')}</p>
@@ -209,10 +217,6 @@
                         {#if promise}
                             {#await promise}
                                 {$t('settings.setting.logFileGenerating')}
-                            {:then path}
-                                {$t('settings.setting.logFileGenerated', {
-                                    path,
-                                })}
                             {:catch error}
                                 {$t('settings.setting.logFileGenerateError', {
                                     error,

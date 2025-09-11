@@ -44,3 +44,4 @@ export const currentSettingsCategory = createSetting('currentPageSettings', 'gen
 export const isBetaEnabled = createSetting('isBetaEnabled', false);
 export const installed = createSetting('installed', false);
 export const menuOpen = createSetting('menuOpen', false);
+export const speechRecognition = createSetting('speechRecognition', false);

@@ -1,7 +1,7 @@
 import type { App } from '../../app.js';
 import { Identifier } from '../../identifier';
 import { InvokedParams } from '../endpoint/packets.js';
-import { Cookie, GetCookiesRequest, HostRequest, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from './extension.js';
+import { Cookie, GetCookiesRequest, HostRequest, SpeechRecognitionStart, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from './extension.js';
 
 import type { AppInstallRequest, AppUpdateRequest, DragDropReadRequestDashboard, DragDropReadResponse, DragDropRequestDashboard, PermissionRequestPacket, PluginRequestPacket } from './packets.js';
 
@@ -18,4 +18,5 @@ export interface DashboardHandler {
     createWebview(request: WebviewRequest, params: InvokedParams, emit: (event: WebviewEvent) => Promise<void>): Promise<Identifier>;
     getWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined>;
     closeWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined>;
+    speechRecognitionStart(request: SpeechRecognitionStart, params: InvokedParams): Promise<UserResponse<undefined>>;
 }

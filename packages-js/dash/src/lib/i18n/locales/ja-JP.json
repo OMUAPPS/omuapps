@@ -218,6 +218,14 @@
             "name": "アプリを管理",
             "icon": "ti ti-apps",
             "description": "設定やアンインストールを行います"
+        },
+        "speechrecognition_request": {
+            "name": "音声認識について",
+            "icon": "ti ti-microphone"
+        },
+        "host_request": {
+            "name": "サイトへのアクセスを要求",
+            "icon": "ti ti-world"
         }
     },
     "settings": {
@@ -252,7 +260,6 @@
             "logFileGenerate": "ログファイルを生成",
             "logFileGenerating": "ログファイルを生成中...",
             "logFileGenerateError": "ログファイルの生成に失敗しました: {error}",
-            "logFileGenerated": "ログファイルを生成しました: {path}",
             "cleanEnvironment": "動作環境を再構築",
             "cleaningEnvironment": "環境を削除して再起動中...",
             "serverRestart": "サーバーを再起動",
@@ -262,7 +269,8 @@
             "latestVersion": "最新バージョン",
             "newVersionAvailable": "新しいバージョンがあります",
             "checkUpdateError": "アップデートの確認に失敗しました: {error}",
-            "update": "アップデート"
+            "update": "アップデート",
+            "speechRecognition": "音声認識を有効にする"
         },
         "about": {
             "version": "バージョン",

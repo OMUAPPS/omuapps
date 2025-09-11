@@ -1,4 +1,4 @@
-import { currentPage } from '$lib/main/settings.js';
+import { currentPage, speechRecognition } from '$lib/main/settings.js';
 import PermissionRequestScreen from '$lib/screen/PermissionRequestScreen.svelte';
 import PluginRequestScreen from '$lib/screen/PluginRequestScreen.svelte';
 import { appWindow, invoke, tauriFs, tauriPath, type Cookie } from '$lib/tauri.js';
@@ -26,12 +26,14 @@ import type { Locale } from '@omujs/omu/localization';
 import { Webview } from '@tauri-apps/api/webview';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { Window } from '@tauri-apps/api/window';
-import type { WebviewEvent } from '../../../omu/dist/dts/api/dashboard/extension.js';
+import { get } from 'svelte/store';
+import type { SpeechRecognitionStart, WebviewEvent } from '../../../omu/dist/dts/api/dashboard/extension.js';
 import { dragDropApps, dragDrops } from './dragdrop.js';
 import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
 import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';
 import HostRequestScreen from './screen/HostRequestScreen.svelte';
 import { screenContext } from './screen/screen.js';
+import SpeechRecognitionScreen from './screen/SpeechRecognitionScreen.svelte';
 
 export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 
@@ -42,7 +44,7 @@ export class Dashboard implements DashboardHandler {
         id: Identifier;
         close: () => void;
     }> = new IdentifierMap();
-    private readonly recognition = new (SpeechRecognition || webkitSpeechRecognition)();
+    private recognition: SpeechRecognition | undefined;
 
     constructor(private readonly omu: Omu) {
         this.apps = omu.dashboard.apps;
@@ -53,24 +55,29 @@ export class Dashboard implements DashboardHandler {
         this.apps.event.add.listen(() => {
             appWindow.setFocus();
         });
-
-        this.initSpeechRecognition();
     }
 
-    async initSpeechRecognition() {
-        const response = await navigator.permissions.query({ name: 'microphone' });
-        console.log(response);
-        if (!this.recognition) throw new Error('Speech Recognition is not supported in this browser.');
-        this.recognition.continuous = false;
-        this.recognition.lang = navigator.language;
-        this.recognition.interimResults = false;
-        this.recognition.maxAlternatives = 1;
-        this.recognition.onerror = ({ error }) => {
+    async speechRecognitionStart(request: SpeechRecognitionStart, params: InvokedParams): Promise<UserResponse<undefined>> {
+        if (this.recognition) return { type: 'ok', value: undefined };
+        const accepted = get(speechRecognition) || await new Promise<boolean>((resolve) => {
+            screenContext.push(SpeechRecognitionScreen, {
+                resolve: (accept: boolean) => resolve(accept),
+            });
+        });
+        if (!accepted) return { type: 'cancelled' };
+        speechRecognition.set(true);
+        await navigator.permissions.query({ name: 'microphone' });
+        const recognition = this.recognition = new (SpeechRecognition || webkitSpeechRecognition)();
+        recognition.continuous = false;
+        recognition.lang = navigator.language;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onerror = ({ error }) => {
             if (error === 'no-speech') return;
             console.error('Speech recognition error:', error);
         };
         let timestamp = Date.now();
-        this.recognition.onresult = async ({ results }) => {
+        recognition.onresult = async ({ results }) => {
             const segments: TranscriptSegment[] = [...results]
                 .map((result) => {
                     return [...result].map(({ confidence, transcript }): TranscriptSegment => ({ confidence, transcript }));
@@ -82,23 +89,27 @@ export class Dashboard implements DashboardHandler {
                 segments: segments,
             });
         };
-        this.recognition.onsoundstart = async () => {
+        recognition.onsoundstart = async () => {
             timestamp = Date.now();
             await this.omu.dashboard.speechRecognition.set({
                 type: 'audio_started',
                 timestamp,
             });
         };
-        this.recognition.onsoundend = async () => {
+        recognition.onsoundend = async () => {
             await this.omu.dashboard.speechRecognition.set({
                 type: 'audio_ended',
                 timestamp,
             });
         };
-        this.recognition.onend = () => {
-            this.recognition.start();
+        recognition.onend = () => {
+            recognition.start();
         };
-        this.recognition.start();
+        recognition.start();
+        return {
+            type: 'ok',
+            value: undefined,
+        };
     }
 
     async handlePermissionRequest(request: PermissionRequestPacket): Promise<boolean> {

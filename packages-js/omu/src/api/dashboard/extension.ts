@@ -313,6 +313,15 @@ const DASHBOARD_SPEECH_RECOGNITION = RegistryType.createJson<TranscriptStatus>(D
     }),
 });
 
+export type SpeechRecognitionStart = {
+    type: 'start';
+};
+
+const DASHBOARD_SPEECH_RECOGNITION_START = EndpointType.createJson<SpeechRecognitionStart, UserResponse<undefined>>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'speech_recognition_start',
+    permissionId: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+});
+
 export class DashboardExtension {
     public readonly type: ExtensionType<DashboardExtension> = DASHBOARD_EXTENSION_TYPE;
     private dashboard: DashboardHandler | null = null;
@@ -533,6 +542,10 @@ export class DashboardExtension {
                 value: undefined,
             };
         });
+        this.client.endpoints.bind(DASHBOARD_SPEECH_RECOGNITION_START, async (request, params): Promise<UserResponse<undefined>> => {
+            const result = await dashboard.speechRecognitionStart(request, params);
+            return result;
+        });
         this.client.network.addTask(async () => {
             const response = await this.client.endpoints.call(
                 DASHBOARD_SET_ENDPOINT,
@@ -638,5 +651,9 @@ export class DashboardExtension {
 
     public async notifyDropDragState(packet: FileDragPacket): Promise<void> {
         this.client.send(DASHBOARD_DRAG_DROP_STATE_PACKET, packet);
+    }
+
+    public async speechRecognitionStart(): Promise<void> {
+        await this.client.endpoints.call(DASHBOARD_SPEECH_RECOGNITION_START, { type: 'start' });
     }
 }
