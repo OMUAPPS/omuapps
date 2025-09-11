@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import signal
 import socket
+import sys
 import tkinter
 import urllib.parse
+from pathlib import Path
 from tkinter import messagebox
 from typing import TYPE_CHECKING, Final
 
@@ -20,7 +23,7 @@ from omu.network.packet.packet_types import DisconnectPacket, DisconnectType
 from omu.result import Err, Ok, Result, is_err
 from psutil import Process
 
-from omuserver.helper import find_processes_by_port
+from omuserver.helper import find_processes_by_executable, find_processes_by_port, get_parent_pids
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
 from omuserver.session import Session
 from omuserver.session.aiohttp_connection import WebsocketsConnection
@@ -191,17 +194,30 @@ class Network:
         except OSError:
             return False
 
+    def _is_server_process(self, process: Process) -> bool:
+        args = process.cmdline()
+        if len(args) >= 2 and "python.debugpy" in args[1]:
+            return False
+        return True
+
     def ensure_port_availability(self) -> Result[None, tuple[str, list[Process]]]:
         if self.is_port_free():
             return Ok(None)
-        found_processes = set(find_processes_by_port(self._server.address.port))
+        executable = Path(sys.executable)
+        port = self._server.address.port
+        found_processes: set[Process] = set()
+        found_processes.update(find_processes_by_port(port))
+        logger.info(f"No processes found using port {port}")
+        found_processes.update(find_processes_by_executable(executable))
+        ignore_pids = list(get_parent_pids())
+        found_processes = {p for p in found_processes if (p.pid not in ignore_pids) and (self._is_server_process(p))}
         if len(found_processes) == 0:
-            return Err((f"Port {self._server.address.port} already in use by unknown process", []))
+            return Err((f"Port {port} already in use by unknown process", []))
         if len(found_processes) > 1:
             processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
             return Err(
                 (
-                    f"Port {self._server.address.port} already in use by multiple processes: {processes}",
+                    f"Port {port} already in use by multiple processes: {processes}",
                     list(found_processes),
                 )
             )
@@ -236,11 +252,21 @@ class Network:
             type=messagebox.YESNO,
         ).show()
         if not res or res == messagebox.YES:
+            ignore_pids = list(get_parent_pids())
             for process in processes:
                 try:
-                    process.terminate()
+                    if process.pid in ignore_pids:
+                        continue
+                    logger.info(f"Killing process {process.pid} ({process.name()}) running at {process.cwd()}")
+                    if not process.is_running():
+                        continue
+                    process.send_signal(signal.SIGTERM)
+                except psutil.NoSuchProcess:
+                    logger.warning(f"Process {process.pid} not found")
                 except psutil.AccessDenied:
-                    logger.warning(f"Failed to terminate {process.name()}({process.pid})")
+                    logger.warning(f"Access denied to process {process.pid}")
+                except Exception:
+                    logger.exception(f"Failed to kill process {process.pid}")
         elif res == messagebox.NO:
             return Err("User cancelled shutdown")
 

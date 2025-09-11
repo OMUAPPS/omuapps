@@ -48,7 +48,7 @@ class Server:
     ) -> None:
         self.config = config
         self.meta: ServerMetaJson = {
-            "hash": config.hash,
+            "hash": config.address.hash,
             "protocol": {
                 "version": VERSION,
             },

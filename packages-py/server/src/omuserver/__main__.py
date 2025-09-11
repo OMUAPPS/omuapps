@@ -1,4 +1,5 @@
 import os
+import platform
 import signal
 import sys
 import tracemalloc
@@ -72,11 +73,12 @@ def main(
     hash: str | None,
     extra_trusted_origin: list[str],
 ):
+    logger.info(f"// omuserver v{VERSION} (pid={os.getpid()}) at ({Path.cwd()}) on ({platform.platform()})")
     config = Config()
-    config.hash = hash
     config.address = Address(
         host=config.address.host,
         port=port or config.address.port,
+        hash=hash,
         secure=config.address.secure,
     )
 
@@ -105,8 +107,7 @@ def main(
     server = Server(config=config)
 
     migrate(server)
-
-    logger.info(f"Starting omuserver v{VERSION} on {config.address.to_url()}")
+    logger.info(f"Starting at {config.address.hash} {config.address.to_url()}")
     server.run()
 
 

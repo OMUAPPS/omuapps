@@ -1,5 +1,6 @@
 import datetime
 import io
+import os
 import sys
 import threading
 import time
@@ -182,3 +183,10 @@ def find_processes_by_executable(
             pass
         except psutil.AccessDenied:
             pass
+
+
+def get_parent_pids() -> Generator[int]:
+    pid = os.getpid()
+    yield pid
+    for parent in psutil.Process(pid).parents():
+        yield parent.pid
