@@ -1,3 +1,6 @@
+<script context="module" lang="ts">
+    const REPLY_CACHE: Record<string, string> = {};
+</script>
 <script lang="ts">
     import { Button, Spinner, Tooltip } from '@omujs/ui';
     import { DOM, type MarshmallowAPI, type Message, type MessageAction } from './api';
@@ -16,7 +19,8 @@
         switch (status.type) {
             case 'final':{
                 const results = status.segments.map(({ transcript }) => transcript).join();
-                reply += results;
+                reply.value += results;
+                saveReply();
                 break;
             }
             case 'audio_started':{
@@ -73,9 +77,28 @@
         updateActions(message);
     }
 
-    let reply: string = '';
+    let reply = {
+        value: '',
+        id: '',
+    };
+
+    function restoreReply() {
+        reply.value = REPLY_CACHE[message.id] ?? '';
+        reply.id = message.id;
+    }
+
+    function saveReply() {
+        REPLY_CACHE[reply.id] = reply.value;
+    }
+
+    $: {
+        if (reply.id !== message.id) {
+            restoreReply();
+        }
+    }
     $: if (message?.reply) {
-        reply = DOM.blockToString(message.reply);
+        reply.value = DOM.blockToString(message.reply);
+        reply.id = message.id;
     };
 
     type ActionTranslation = { name: string; icon?: string; remove: boolean };
@@ -115,7 +138,7 @@
 
 <div class="reply">
     <div class="textarea">
-        <textarea bind:value={reply} disabled={!!message.reply}></textarea>
+        <textarea bind:value={reply.value} on:change={saveReply} disabled={!!message.reply}></textarea>
         <div class="overlay">
             {#if recognizing}
                 <div class="recognizing">
@@ -176,21 +199,22 @@
                 <i class="ti ti-bubble-text"></i>
             {/if}
         </Button>
-        <Button primary disabled={!reply || replyEnable} onclick={async () => {
+        <Button primary disabled={!reply.value || replyEnable} onclick={async () => {
             recognizing = false;
             if (!message) throw new Error('No message selected');
             if (detail?.type !== 'ok') throw new Error('No answer action available');
             if (!detail?.answer) throw new Error('No answer action available');
             await detail.answer.submit(api, {
-                'answer[content]': reply,
+                'answer[content]': reply.value,
                 'answer[skip_tweet_confirmation]': 'on',
                 'answer[publish_method]': 'web_share_api',
             });
-            message.reply = { type: 'text', body: reply };
+            message.reply = { type: 'text', body: reply.value };
+            delete REPLY_CACHE[reply.id];
         }}>
             {#if !!message.reply}
                 <Tooltip>すでに返信しています</Tooltip>
-            {:else if !reply}
+            {:else if !reply.value}
                 <Tooltip>返信内容を入力してください</Tooltip>
             {:else if detail?.type !== 'ok'}
                 <Tooltip>アクションを取得中...</Tooltip>
