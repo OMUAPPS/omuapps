@@ -325,8 +325,12 @@ export class MarshmallowAPI {
             attrs: { 'data-obscene-word-target': 'content' },
         });
         if (!content) throw new Error('No content found');
-        const reply = DOM.query(root, {
+        const replyContainer = DOM.query(root, {
             attrs: { 'data-obscene-word-raw-content-path-value': /^\/messages\/([\da-z]+-)*[\da-z]+\/answers\/\d+\/raw/gm },
+        });
+        if (!replyContainer) throw new Error('No answer content found');
+        const reply = DOM.query(replyContainer, {
+            attrs: { 'data-obscene-word-target': 'content' },
         });
         if (!reply) throw new Error('No answer content found');
         const id = this.extractMessageIdFromPathname(DomUtils.getAttributeValue(messageCard, 'data-obscene-word-raw-content-path-value') ?? '');
@@ -436,6 +440,17 @@ export class MarshmallowAPI {
                 return action.action && action.messageId === options.id;
             });
         return actions;
+    }
+
+    public async messageRaw(options: {
+        id: string;
+    }): Promise<{ content: string }> {
+        const resp = await this.fetch(`https://marshmallow-qa.com/messages/${options.id}/raw`, {
+            'headers': this.headers,
+            'body': null,
+            'method': 'GET',
+        });
+        return await resp.json();
     }
 }
 
