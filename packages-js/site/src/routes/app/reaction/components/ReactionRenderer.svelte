@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { comparator } from '$lib/helper.js';
     import { lerp } from '$lib/math/math.js';
     import { Timer } from '$lib/timer.js';
     import type { Omu } from '@omujs/omu';
@@ -172,7 +173,7 @@
             });
     }
 
-    function draw() {
+    function renderReactions() {
         if (!canvas || !ctx) {
             return;
         }
@@ -184,7 +185,7 @@
             depth,
             opacity,
             rotation,
-        } of reactionArray) {
+        } of reactionArray.sort(comparator((reaction) => reaction.depth))) {
             const [x, y] = position;
 
             if (opacity <= 0) {
@@ -225,7 +226,7 @@
             for (let i = 0, ticks = timer.tick(33); i < ticks; i++) {
                 updatePosition();
             }
-            draw();
+            renderReactions();
             animationTimer = requestAnimationFrame(drawLoop);
         });
 
