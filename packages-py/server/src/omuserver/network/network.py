@@ -59,7 +59,12 @@ class Network:
         self._app = web.Application(middlewares=[cors_middleware])
         self._runner: web.AppRunner | None = None
         self._app.router.add_get("/ws", self.websocket_handler)
-        self.register_packet(PACKET_TYPES.CONNECT, PACKET_TYPES.READY, PACKET_TYPES.DISCONNECT)
+        self.register_packet(
+            PACKET_TYPES.CONNECT,
+            PACKET_TYPES.READY,
+            PACKET_TYPES.DISCONNECT,
+            PACKET_TYPES.ENCRYPTED_PACKET,
+        )
         self.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
         self.add_packet_handler(PACKET_TYPES.DISCONNECT, self._handle_disconnection)
         self.event.connected += self._packet_dispatcher.process_connection

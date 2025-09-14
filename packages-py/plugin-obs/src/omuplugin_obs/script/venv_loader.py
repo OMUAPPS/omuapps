@@ -53,6 +53,7 @@ def try_load():
         load_site_packages(python_path / "Lib" / "site-packages")
     if venv_path:
         load_site_packages(venv_path / "Lib" / "site-packages")
+    print(f"[+], {"\n".join(sys.path)}")
 
 
 def load_site_packages(site_packages: Path):
