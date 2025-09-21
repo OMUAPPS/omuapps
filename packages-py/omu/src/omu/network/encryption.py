@@ -14,6 +14,14 @@ from omu.bytebuffer import ByteReader, ByteWriter
 from omu.network.packet.packet import Packet, PacketData
 from omu.network.packet.packet_types import PACKET_TYPES, RSANumbers
 
+def urlsafe_b64encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode().rstrip("=")
+
+def urlsafe_b64decode(data: str) -> bytes:
+    padding_needed = 4 - (len(data) % 4)
+    if padding_needed and padding_needed != 4:
+        data += "=" * padding_needed
+    return base64.urlsafe_b64decode(data)
 
 @dataclass(frozen=True, slots=True)
 class Decryptor:
@@ -35,8 +43,8 @@ class Decryptor:
     def to_request(self) -> RSANumbers:
         numbers = self.public.public_numbers()
         return {
-            "e": base64.urlsafe_b64encode(numbers.e.to_bytes((0x010001.bit_length() + 7) // 8, "big")).decode(),
-            "n": base64.urlsafe_b64encode(numbers.n.to_bytes((numbers.n.bit_length() + 7) // 8, "big")).decode(),
+            "e": urlsafe_b64encode(numbers.e.to_bytes((0x010001.bit_length() + 7) // 8, "big")),
+            "n": urlsafe_b64encode(numbers.n.to_bytes((numbers.n.bit_length() + 7) // 8, "big")),
         }
 
     def decrypt(self, data: bytes) -> bytes:
@@ -51,7 +59,7 @@ class Decryptor:
         return decrypted
 
     def decrypt_string(self, data: str) -> str:
-        return self.decrypt(base64.urlsafe_b64decode(data)).decode()
+        return self.decrypt(urlsafe_b64decode(data)).decode()
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,8 +69,8 @@ class Encryptor:
     @classmethod
     def new(cls, request: RSANumbers) -> Encryptor:
         public_numbers = rsa.RSAPublicNumbers(
-            e=int.from_bytes(base64.urlsafe_b64decode(request["e"])),
-            n=int.from_bytes(base64.urlsafe_b64decode(request["n"])),
+            e=int.from_bytes(urlsafe_b64decode(request["e"])),
+            n=int.from_bytes(urlsafe_b64decode(request["n"])),
         )
         return Encryptor(
             public=public_numbers.public_key(),
@@ -80,7 +88,7 @@ class Encryptor:
         return encrypted
 
     def encrypt_string(self, data: str) -> str:
-        return base64.urlsafe_b64encode(self.encrypt(data.encode())).decode()
+        return urlsafe_b64encode(self.encrypt(data.encode()))
 
 
 @dataclass(slots=True)
@@ -100,7 +108,7 @@ class AES:
 
     @classmethod
     def deserialize(cls, aes: str, decryptor: Decryptor) -> AES:
-        decrypted = decryptor.decrypt(base64.urlsafe_b64decode(aes))
+        decrypted = decryptor.decrypt(urlsafe_b64decode(aes))
         with ByteReader(decrypted) as reader:
             key = reader.read_uint8_array()
             iv = reader.read_uint8_array()
@@ -114,7 +122,7 @@ class AES:
         writer = ByteWriter()
         writer.write_uint8_array(self.key)
         writer.write_uint8_array(self.iv)
-        return base64.urlsafe_b64encode(encryptor.encrypt(writer.finish())).decode()
+        return urlsafe_b64encode(encryptor.encrypt(writer.finish()))
 
     def encrypt(self, packet_data: PacketData) -> Packet:
         writer = ByteWriter()

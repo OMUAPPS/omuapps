@@ -7,6 +7,7 @@ from typing import Literal
 from loguru import logger
 
 from omu.address import Address
+from omu.app import AppType
 from omu.brand import BRAND
 from omu.client import Client
 from omu.errors import (
@@ -51,7 +52,7 @@ class Network:
         transport: Transport,
         connection: Connection | None = None,
     ):
-        self._client = client
+        self.client = client
         self.address = address
         self._token_provider = token_provider
         self.transport = transport
@@ -76,7 +77,7 @@ class Network:
     async def handle_token(self, token: str | None):
         if token is None:
             return
-        self._token_provider.store(self.address, self._client.app, token)
+        self._token_provider.store(self.address, self.client.app, token)
 
     async def handle_disconnect(self, reason: DisconnectPacket):
         if reason.type in {
@@ -160,10 +161,9 @@ class Network:
 
                 meta = (await self.connection.receive_as(self._packet_mapper, PACKET_TYPES.SERVER_META)).unwrap()
                 self.address = self.address.with_hash(meta["hash"])
-                token = self._token_provider.get(self.address, self._client.app)
+                token = self._token_provider.get(self.address, self.client.app)
                 encryption_resp: EncryptionResponse | None = None
-                # self._client.app.type == AppType.REMOTE
-                if meta["encryption"]:
+                if self.client.app.type == AppType.REMOTE and meta["encryption"]:
                     decryptor = Decryptor.new()
                     encryptor = Encryptor.new(meta["encryption"]["rsa"])
                     if token:
@@ -179,8 +179,8 @@ class Network:
                     Packet(
                         PACKET_TYPES.CONNECT,
                         ConnectPacket(
-                            app=self._client.app,
-                            protocol={"version": self._client.version, "brand": BRAND},
+                            app=self.client.app,
+                            protocol={"version": self.client.version, "brand": BRAND},
                             encryption=encryption_resp,
                             token=token,
                         ),
@@ -270,7 +270,7 @@ class Network:
         return self._event
 
     def add_task(self, task: Coro[[], None]) -> None:
-        if self._client.ready:
+        if self.client.ready:
             raise RuntimeError("Cannot add task after client is ready")
         self._tasks.append(task)
 

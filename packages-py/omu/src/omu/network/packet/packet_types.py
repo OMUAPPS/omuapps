@@ -11,6 +11,11 @@ from omu.serializer import Serializer
 from .packet import PacketType
 
 
+class ProtocolInfo(TypedDict):
+    brand: str
+    version: str
+
+
 class RSANumbers(TypedDict):
     e: str
     n: str
@@ -31,11 +36,6 @@ class ServerMeta(TypedDict):
     protocol: ProtocolInfo
     encryption: EncryptionRequest | None
     hash: str | None
-
-
-class ProtocolInfo(TypedDict):
-    brand: str
-    version: str
 
 
 class ConnectPacketData(TypedDict):

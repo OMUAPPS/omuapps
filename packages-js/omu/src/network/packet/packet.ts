@@ -17,7 +17,13 @@ export class PacketType<T> {
         public readonly serializer: Serializable<T, Uint8Array>,
     ) { }
 
-    public is(packet: Packet): packet is Packet<T> {
+    public new(data: T): Packet<T> {
+        return {
+            type: this,
+            data,
+        };
+    }
+    public match(packet: Packet): packet is Packet<T> {
         return packet.type === this;
     }
 

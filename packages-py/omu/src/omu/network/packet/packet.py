@@ -34,7 +34,7 @@ class PacketType[T]:
         return Packet(self, data)
 
     def match(self, packet: Packet) -> TypeGuard[Packet[T]]:
-        return packet.type != self
+        return packet.type == self
 
     @classmethod
     def create_json(

@@ -17,6 +17,7 @@ import { VERSION } from '../version.js';
 
 import type { Connection, Transport } from './connection.js';
 import { PacketMapper } from './connection.js';
+import { AES, Decryptor, EncryptionResponse, Encryptor } from './encryption.js';
 import type { DisconnectPacket } from './packet/packet-types.js';
 import { ConnectPacket, DisconnectType, PACKET_TYPES } from './packet/packet-types.js';
 import type { Packet, PacketType } from './packet/packet.js';
@@ -64,6 +65,7 @@ export class Network {
         private readonly tokenProvider: TokenProvider,
         private transport: Transport,
         private connection?: Connection | undefined,
+        private aes?: AES | undefined,
     ) {
         this.registerPacket(
             PACKET_TYPES.SERVER_META,
@@ -71,6 +73,7 @@ export class Network {
             PACKET_TYPES.DISCONNECT,
             PACKET_TYPES.TOKEN,
             PACKET_TYPES.READY,
+            PACKET_TYPES.ENCRYPTED_PACKET,
         );
         this.addPacketHandler(PACKET_TYPES.TOKEN, async (token: string) => {
             await this.tokenProvider.set(this.address, this.client.app, token);
@@ -168,36 +171,42 @@ export class Network {
         while (true) {
             attempt++;
             try {
-                try {
-                    this.connection = this.connection ?? await this.transport.connect();
-                    attempt = 0;
-                } catch (error) {
-                    if (!reconnect) {
-                        throw error;
-                    }
-                    if (!await this.scheduleReconnect(attempt)) {
-                        return;
-                    }
-                    continue;
-                }
+                this.connection = this.connection ?? await this.transport.connect();
+                attempt = 0;
                 await this.setStatus({ type: 'connecting' });
                 const metaReceived = await this.connection.receive(this.packetMapper);
                 if (!metaReceived) {
                     throw new Error('Connection closed before receiving server meta');
                 }
-                if (!PACKET_TYPES.SERVER_META.is(metaReceived)) {
+                if (!PACKET_TYPES.SERVER_META.match(metaReceived)) {
                     throw new Error('First packet received was not server meta');
                 }
-                this.address.hash = metaReceived.data.hash;
-                const token = await this.tokenProvider.get(this.address, this.client.app);
-                this.send({
+                const { data: meta } = metaReceived;
+                this.address.hash = meta.hash;
+                let token = await this.tokenProvider.get(this.address, this.client.app);
+                let encryptionResp: EncryptionResponse | undefined = undefined;
+                if (this.client.app.type === 'remote' && meta.encryption) {
+                    const decryptor = await Decryptor.new();
+                    const encryptor = await Encryptor.new(meta.encryption.rsa);
+                    if (token) {
+                        token = await encryptor.encryptString(token);
+                    }
+                    this.aes = await AES.new();
+                    encryptionResp = {
+                        kind: 'v1',
+                        rsa: decryptor.request,
+                        aes: await this.aes.serialize(encryptor),
+                    };
+                }
+                this.connection.send({
                     type: PACKET_TYPES.CONNECT,
                     data: new ConnectPacket({
                         app: this.client.app,
                         protocol: { version: VERSION },
+                        encryption: encryptionResp,
                         token,
                     }),
-                });
+                }, this.packetMapper);
                 this.listenTask = this.listen();
                 await this.setStatus({ type: 'connected' });
                 await this.event.connected.emit();
@@ -210,6 +219,16 @@ export class Network {
                 if (this.status.type === 'error') {
                     throw this.status.error;
                 }
+            } catch (error) {
+                if (!reconnect) {
+                    throw error;
+                } else {
+                    console.error('Connection error:', error);
+                }
+                if (!await this.scheduleReconnect(attempt)) {
+                    return;
+                }
+                continue;
             } finally {
                 if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting' && this.status.type !== 'error') {
                     this.setStatus({ type: 'disconnected', attempt });
@@ -232,9 +251,13 @@ export class Network {
         return this.status.type === state;
     }
 
-    public send(packet: Packet): void {
+    public async send(packet: Packet): Promise<void> {
         if (!this.connection) {
             throw new Error('No connection established');
+        }
+        if (this.aes) {
+            const serialized = this.packetMapper.serialize(packet);
+            packet = await this.aes.encrypt(serialized);
         }
         this.connection.send(packet, this.packetMapper);
     }
@@ -250,6 +273,13 @@ export class Network {
     }
 
     private async dispatchPacket(packet: Packet): Promise<void> {
+        if (PACKET_TYPES.ENCRYPTED_PACKET.match(packet)) {
+            if (!this.aes) {
+                throw new Error('Received encrypted packet before encryption was established');
+            }
+            const decrypted = await this.aes.decrypt(packet);
+            packet = this.packetMapper.deserialize(decrypted);
+        }
         await this.event.packet.emit(packet);
         const packetHandler = this.packetHandlers.get(packet.type.id);
         if (!packetHandler) {

@@ -1,6 +1,7 @@
 import type { AppJson } from '../../app.js';
 import { App } from '../../app.js';
 import { Identifier } from '../../identifier';
+import { Serializer } from '../../serialize/serializer.js';
 import { PacketType } from './packet.js';
 
 const IDENTIFIER = new Identifier('core', 'packet');
@@ -9,45 +10,67 @@ type ProtocolInfo = {
     version: string;
 };
 
-export type ServerMetaJson = {
+type RSANumbers = {
+    e: string;
+    n: string;
+};
+
+type EncryptionRequest = {
+    kind: 'v1';
+    rsa: RSANumbers;
+};
+
+type EncryptionResponse = {
+    kind: 'v1';
+    rsa: RSANumbers;
+    aes: string;
+};
+
+export type ServerMeta = {
     protocol: ProtocolInfo;
+    encryption: EncryptionRequest | null;
     hash: string | undefined;
 };
 
 type ConnectPacketJson = {
-    app: AppJson;
     protocol: ProtocolInfo;
+    app: AppJson;
+    encryption: EncryptionResponse | null;
     token?: string;
-    is_dashboard?: boolean;
 };
 
 export class ConnectPacket {
-    public readonly app: App;
     public readonly protocol: ProtocolInfo;
+    public readonly app: App;
+    public readonly encryption: EncryptionResponse | null;
     public readonly token?: string;
 
     constructor(options: {
-        app: App;
         protocol: ProtocolInfo;
+        app: App;
+        encryption?: EncryptionResponse | null;
         token?: string;
     }) {
-        this.app = options.app;
         this.protocol = options.protocol;
+        this.app = options.app;
+        this.encryption = options.encryption ?? null;
         this.token = options.token;
     }
 
     public static deserialize(data: ConnectPacketJson): ConnectPacket {
         return new ConnectPacket({
-            app: App.deserialize(data.app),
             protocol: data.protocol,
+            app: App.deserialize(data.app),
+            encryption: data.encryption,
             token: data.token,
         });
     }
 
     public static serialize(data: ConnectPacket): ConnectPacketJson {
         return {
-            app: App.serialize(data.app),
             protocol: data.protocol,
+            app: App.serialize(data.app),
+            encryption: data.encryption,
             token: data.token,
         };
     }
@@ -109,13 +132,14 @@ export class DisconnectPacket {
 }
 
 export const PACKET_TYPES: {
-    SERVER_META: PacketType<ServerMetaJson>;
+    SERVER_META: PacketType<ServerMeta>;
     CONNECT: PacketType<ConnectPacket>;
     DISCONNECT: PacketType<DisconnectPacket>;
     TOKEN: PacketType<string>;
     READY: PacketType<undefined>;
+    ENCRYPTED_PACKET: PacketType<Uint8Array>;
 } = {
-    SERVER_META: PacketType.createJson<ServerMetaJson>(IDENTIFIER, {
+    SERVER_META: PacketType.createJson<ServerMeta>(IDENTIFIER, {
         name: 'server_meta',
     }),
     CONNECT: PacketType.createJson<ConnectPacket>(IDENTIFIER, {
@@ -131,5 +155,9 @@ export const PACKET_TYPES: {
     }),
     READY: PacketType.createJson<undefined>(IDENTIFIER, {
         name: 'ready',
+    }),
+    ENCRYPTED_PACKET: PacketType.createSerialized<Uint8Array>(IDENTIFIER, {
+        name: 'e',
+        serializer: Serializer.noop(),
     }),
 };
