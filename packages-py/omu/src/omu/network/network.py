@@ -7,6 +7,8 @@ from typing import Literal
 from loguru import logger
 
 from omu.address import Address
+from omu.app import AppType
+from omu.brand import BRAND
 from omu.client import Client
 from omu.errors import (
     AnotherConnection,
@@ -23,12 +25,14 @@ from omu.identifier import Identifier
 from omu.token import TokenProvider
 
 from .connection import CloseError, Connection, Transport
+from .encryption import AES, Decryptor, Encryptor
 from .packet import Packet, PacketType
 from .packet.packet_types import (
     PACKET_TYPES,
     ConnectPacket,
     DisconnectPacket,
     DisconnectType,
+    EncryptionResponse,
 )
 from .packet_mapper import PacketMapper
 
@@ -48,7 +52,7 @@ class Network:
         transport: Transport,
         connection: Connection | None = None,
     ):
-        self._client = client
+        self.client = client
         self.address = address
         self._token_provider = token_provider
         self.transport = transport
@@ -64,14 +68,16 @@ class Network:
             PACKET_TYPES.DISCONNECT,
             PACKET_TYPES.TOKEN,
             PACKET_TYPES.READY,
+            PACKET_TYPES.ENCRYPTED_PACKET,
         )
         self.add_packet_handler(PACKET_TYPES.TOKEN, self.handle_token)
         self.add_packet_handler(PACKET_TYPES.DISCONNECT, self.handle_disconnect)
+        self.aes: AES | None = None
 
     async def handle_token(self, token: str | None):
         if token is None:
             return
-        self._token_provider.store(self.address, self._client.app, token)
+        self._token_provider.store(self.address, self.client.app, token)
 
     async def handle_disconnect(self, reason: DisconnectPacket):
         if reason.type in {
@@ -153,19 +159,33 @@ class Network:
             try:
                 self.connection = self.connection or await self.transport.connect()
 
-                meta_received = await self.connection.receive_as(self._packet_mapper, PACKET_TYPES.SERVER_META)
-                if meta_received.is_err is True:
-                    raise meta_received.err
-                self.address = self.address.with_hash(meta_received.value["hash"])
-                await self.send(
+                meta = (await self.connection.receive_as(self._packet_mapper, PACKET_TYPES.SERVER_META)).unwrap()
+                self.address = self.address.with_hash(meta["hash"])
+                token = self._token_provider.get(self.address, self.client.app)
+                encryption_resp: EncryptionResponse | None = None
+                if self.client.app.type == AppType.REMOTE and meta["encryption"]:
+                    decryptor = Decryptor.new()
+                    encryptor = Encryptor.new(meta["encryption"]["rsa"])
+                    if token:
+                        token = encryptor.encrypt_string(token)
+                    aes = AES.new()
+                    encryption_resp = {
+                        "kind": "v1",
+                        "rsa": decryptor.to_request(),
+                        "aes": aes.serialize(encryptor),
+                    }
+                    self.aes = aes
+                await self.connection.send(
                     Packet(
                         PACKET_TYPES.CONNECT,
                         ConnectPacket(
-                            app=self._client.app,
-                            protocol={"version": self._client.version},
-                            token=self._token_provider.get(self.address, self._client.app),
+                            app=self.client.app,
+                            protocol={"version": self.client.version, "brand": BRAND},
+                            encryption=encryption_resp,
+                            token=token,
                         ),
-                    )
+                    ),
+                    self._packet_mapper,
                 )
                 self.listen_task = asyncio.create_task(self._listen_task())
                 await self._event.status.emit("connected")
@@ -215,6 +235,9 @@ class Network:
     async def send(self, packet: Packet) -> None:
         if not self.connection:
             raise RuntimeError("Not connected")
+        if self.aes:
+            serialized = self._packet_mapper.serialize(packet)
+            packet = self.aes.encrypt(serialized)
         await self.connection.send(packet, self._packet_mapper)
 
     async def _listen_task(self):
@@ -231,6 +254,11 @@ class Network:
             await self.disconnect()
 
     async def dispatch_packet(self, packet: Packet) -> None:
+        if PACKET_TYPES.ENCRYPTED_PACKET.match(packet):
+            if self.aes is None:
+                raise RuntimeError("Received encrypted packet before encryption was established")
+            decrypted = self.aes.decrypt(packet)
+            packet = self._packet_mapper.deserialize(decrypted)
         await self._event.packet.emit(packet)
         packet_handler = self._packet_handlers.get(packet.type.id)
         if not packet_handler:
@@ -242,7 +270,7 @@ class Network:
         return self._event
 
     def add_task(self, task: Coro[[], None]) -> None:
-        if self._client.ready:
+        if self.client.ready:
             raise RuntimeError("Cannot add task after client is ready")
         self._tasks.append(task)
 

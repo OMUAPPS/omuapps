@@ -13,7 +13,6 @@ from loguru import logger
 from omu import Identifier
 from omu.event_emitter import EventEmitter
 from omu.helper import asyncio_error_logger
-from omu.network.packet.packet_types import ServerMetaJson
 from yarl import URL
 
 from omuserver.api.asset import AssetExtension
@@ -47,12 +46,6 @@ class Server:
         loop: asyncio.AbstractEventLoop | None = None,
     ) -> None:
         self.config = config
-        self.meta: ServerMetaJson = {
-            "hash": config.address.hash,
-            "protocol": {
-                "version": VERSION,
-            },
-        }
         self._loop = self._set_loop(loop or asyncio.new_event_loop())
         self.address = config.address
         self.event = ServerEvents()

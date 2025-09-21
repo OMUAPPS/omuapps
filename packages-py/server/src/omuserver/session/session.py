@@ -13,10 +13,14 @@ from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.network.connection import InvalidPacket, ReceiveError
+from omu.network.encryption import AES, Decryptor
 from omu.network.packet import PACKET_TYPES, Packet, PacketType
-from omu.network.packet.packet_types import DisconnectPacket, DisconnectType
+from omu.network.packet.packet_types import DisconnectPacket, DisconnectType, ServerMeta
 from omu.network.packet_mapper import PacketMapper
 from omu.result import Err, Ok, Result
+
+from omuserver.brand import BRAND
+from omuserver.version import VERSION
 
 if TYPE_CHECKING:
     from omuserver.security import PermissionHandle
@@ -69,6 +73,7 @@ class Session:
         permission_handle: PermissionHandle,
         kind: AppType,
         connection: SessionConnection,
+        aes: AES | None = None,
     ) -> None:
         self.packet_mapper = packet_mapper
         self.app = app
@@ -79,6 +84,7 @@ class Session:
         self.ready_tasks: list[SessionTask] = []
         self.ready_waiters: list[asyncio.Future[None]] = []
         self.ready = False
+        self.aes = aes
 
     @classmethod
     async def from_connection(
@@ -87,7 +93,19 @@ class Session:
         packet_mapper: PacketMapper,
         connection: SessionConnection,
     ) -> Session:
-        await connection.send(PACKET_TYPES.SERVER_META.new(server.meta), packet_mapper)
+        decryptor = Decryptor.new()
+        meta: ServerMeta = {
+            "protocol": {
+                "version": VERSION,
+                "brand": BRAND,
+            },
+            "encryption": {
+                "kind": "v1",
+                "rsa": decryptor.to_request(),
+            },
+            "hash": server.address.hash,
+        }
+        await connection.send(PACKET_TYPES.SERVER_META.new(meta), packet_mapper)
         received = await connection.receive_as(packet_mapper, PACKET_TYPES.CONNECT)
         if received.is_err is True:
             await connection.send(
@@ -98,8 +116,14 @@ class Session:
             raise RuntimeError(f"Invalid packet received while connecting: {received.err}")
         else:
             packet = received.value
-
-        verify_result = await server.security.verify_token(packet.app, packet.token)
+        aes: AES | None = None
+        token = packet.token
+        if packet.encryption:
+            # encryptor = Encryptor.new(packet.encryption["rsa"])
+            aes = AES.deserialize(packet.encryption["aes"], decryptor)
+            if token:
+                token = decryptor.decrypt_string(token)
+        verify_result = await server.security.verify_token(packet.app, token)
         if verify_result.is_err is True:
             await connection.send(
                 PACKET_TYPES.DISCONNECT.new(DisconnectPacket(DisconnectType.INVALID_TOKEN, verify_result.err)),
@@ -114,6 +138,7 @@ class Session:
             permission_handle=permission_handle,
             kind=packet.app.type or AppType.APP,
             connection=connection,
+            aes=aes,
         )
         if session.kind != AppType.PLUGIN:
             await session.send(PACKET_TYPES.TOKEN, new_token)
@@ -139,13 +164,18 @@ class Session:
 
     async def dispatch_packet(self, packet: Packet) -> None:
         try:
+            if self.aes:
+                packet = self.packet_mapper.deserialize(self.aes.decrypt(packet))
             await self.event.packet.emit(self, packet)
         except DisconnectReason as reason:
             logger.opt(exception=reason).error("Disconnecting session")
             await self.disconnect(reason.type, reason.message)
 
     async def send[T](self, packet_type: PacketType[T], data: T) -> None:
-        await self.connection.send(Packet(packet_type, data), self.packet_mapper)
+        packet = Packet(packet_type, data)
+        if self.aes:
+            packet = self.aes.encrypt(self.packet_mapper.serialize(packet))
+        await self.connection.send(packet, self.packet_mapper)
 
     def add_ready_task(self, coro: Coro[[], None]):
         if self.ready:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Protocol, TypeGuard
 
 from omu.identifier import Identifier
 from omu.serializer import Serializable, Serializer
@@ -32,6 +32,9 @@ class PacketType[T]:
 
     def new(self, data: T) -> Packet[T]:
         return Packet(self, data)
+
+    def match(self, packet: Packet) -> TypeGuard[Packet[T]]:
+        return packet.type == self
 
     @classmethod
     def create_json(
