@@ -2,7 +2,7 @@
 name: Feature request - 機能追加/改善
 about: Suggest an idea for this project
 title: "[Feature/機能]"
-labels: bug
+labels: feature
 assignees: ''
 
 ---

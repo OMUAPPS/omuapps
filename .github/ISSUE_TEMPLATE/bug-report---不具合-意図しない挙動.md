@@ -2,7 +2,7 @@
 name: Bug report - 不具合/意図しない挙動
 about: Create a report to help us improve
 title: "[Bug/不具合]"
-labels: ''
+labels: bug
 assignees: ''
 
 ---
