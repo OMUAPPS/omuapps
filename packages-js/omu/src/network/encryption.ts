@@ -37,10 +37,12 @@ export type EncryptionResponse = {
     aes: string;
 };
 
+export const ENCRYPTION_AVAILABLE: boolean = typeof crypto !== 'undefined' && !!crypto.subtle;
+
 export class Decryptor {
     private constructor(
-        public readonly decrypt: (data: ArrayBuffer) => Promise<ArrayBuffer>,
-        public readonly request: RSANumbers,
+        private readonly privateKey: CryptoKey,
+        private readonly publicKey: CryptoKey,
     ) {}
 
     public static async new(): Promise<Decryptor> {
@@ -55,21 +57,34 @@ export class Decryptor {
             ['encrypt', 'decrypt'],
         );
 
-        const key = await crypto.subtle.exportKey('jwk', publicKey);
+        return new Decryptor(privateKey, publicKey);
+    }
+
+    public async toRequest(): Promise<RSANumbers> {
+        const key = await crypto.subtle.exportKey('jwk', this.publicKey);
         if (!key.e) throw new Error('Key export failed: missing exponent');
         if (!key.n) throw new Error('Key export failed: missing modulus');
-        return new Decryptor(async (data) => await crypto.subtle.decrypt(
-            { name: 'RSA-OAEP' },
-            privateKey,
-            data,
-        ), {
+        return {
             e: key.e,
             n: key.n,
-        });
+        };
+    }
+
+    public async decrypt(data: ArrayBuffer): Promise<ArrayBuffer> {
+        const decrypted = await crypto.subtle.decrypt(
+            { name: 'RSA-OAEP' },
+            this.privateKey,
+            data,
+        );
+        return decrypted;
     }
 
     public async decryptString(data: string): Promise<string> {
-        const decrypted = await this.decrypt(convertUint8ArrayToArrayBuffer(base64UrlDecode(data)));
+        const decrypted = await crypto.subtle.decrypt(
+            { name: 'RSA-OAEP' },
+            this.privateKey,
+            convertUint8ArrayToArrayBuffer(base64UrlDecode(data)),
+        );
         return textDecoder.decode(decrypted);
     }
 }

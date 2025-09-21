@@ -17,7 +17,7 @@ import { VERSION } from '../version.js';
 
 import type { Connection, Transport } from './connection.js';
 import { PacketMapper } from './connection.js';
-import { AES, Decryptor, EncryptionResponse, Encryptor } from './encryption.js';
+import { AES, Decryptor, ENCRYPTION_AVAILABLE, EncryptionResponse, Encryptor } from './encryption.js';
 import type { DisconnectPacket } from './packet/packet-types.js';
 import { ConnectPacket, DisconnectType, PACKET_TYPES } from './packet/packet-types.js';
 import type { Packet, PacketType } from './packet/packet.js';
@@ -185,7 +185,7 @@ export class Network {
                 this.address.hash = meta.hash;
                 let token = await this.tokenProvider.get(this.address, this.client.app);
                 let encryptionResp: EncryptionResponse | undefined = undefined;
-                if (this.client.app.type === 'remote' && meta.encryption) {
+                if (this.client.app.type === 'remote' && ENCRYPTION_AVAILABLE && meta.encryption) {
                     const decryptor = await Decryptor.new();
                     const encryptor = await Encryptor.new(meta.encryption.rsa);
                     if (token) {
@@ -194,7 +194,7 @@ export class Network {
                     this.aes = await AES.new();
                     encryptionResp = {
                         kind: 'v1',
-                        rsa: decryptor.request,
+                        rsa: await decryptor.toRequest(),
                         aes: await this.aes.serialize(encryptor),
                     };
                 }
