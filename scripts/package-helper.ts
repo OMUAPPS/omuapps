@@ -1,5 +1,5 @@
 import { $, type BuildConfig, Glob } from 'bun';
-import { watch } from 'node:fs';
+import { watch } from 'fs';
 import * as fs from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import isolatedDecl from './bun-plugin-isolated-decl.js';
@@ -129,10 +129,11 @@ async function rebuild() {
 await build(entrypoints);
 
 if (values.watch) {
-    console.log('start watching');
+    console.log(`watching for changes in ${values.watchDir}...`);
     let debounceTimeout: Timer | null = null;
 
-    const watcher = watch(values.watchDir, () => {
+    const watcher = watch(values.watchDir, { recursive: true }, () => {
+        console.log('file change detected, rebuilding...');
         if (debounceTimeout) clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(rebuild, 100);
     });
