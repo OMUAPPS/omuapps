@@ -23,7 +23,7 @@ from omu.errors import PermissionDenied
 from yarl import URL
 
 from omuserver.api.http.permission import HTTP_REQUEST_PERMISSION
-from omuserver.session.session import Session
+from omuserver.session import Session
 
 if TYPE_CHECKING:
     from omuserver.server import Server

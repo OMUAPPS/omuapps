@@ -1,10 +1,9 @@
 from omu.api.permission import PermissionType
 from omu.api.server import (
     SERVER_APPS_READ_PERMISSION_ID,
-    SERVER_SESSIONS_READ_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
 )
-from omu.api.server.extension import REMOTE_APP_REQUEST_PERMISSION_ID, TRUSTED_ORIGINS_GET_PERMISSION_ID
+from omu.api.server.extension import TRUSTED_ORIGINS_GET_PERMISSION_ID
 
 SERVER_SHUTDOWN_PERMISSION = PermissionType(
     id=SERVER_SHUTDOWN_PERMISSION_ID,
@@ -34,20 +33,6 @@ SERVER_APPS_READ_PERMISSION = PermissionType(
         },
     },
 )
-SERVER_SESSIONS_READ_PERMISSION = PermissionType(
-    id=SERVER_SESSIONS_READ_PERMISSION_ID,
-    metadata={
-        "level": "low",
-        "name": {
-            "ja": "接続中のアプリを取得",
-            "en": "Get Running Apps",
-        },
-        "note": {
-            "ja": "接続されているアプリ一覧を取得するために使われます",
-            "en": "Used to get a list of apps connected to the server",
-        },
-    },
-)
 SERVER_TRUSTED_ORIGINS_GET_PERMISSION = PermissionType(
     id=TRUSTED_ORIGINS_GET_PERMISSION_ID,
     metadata={
@@ -60,16 +45,5 @@ SERVER_TRUSTED_ORIGINS_GET_PERMISSION = PermissionType(
             "ja": "認証を通過するオリジンを取得するために使われます",
             "en": "Used to get origins that pass authentication",
         },
-    },
-)
-REMOTE_APP_REQUEST_PERMISSION = PermissionType(
-    REMOTE_APP_REQUEST_PERMISSION_ID,
-    metadata={
-        "level": "high",
-        "name": {
-            "ja": "遠隔アプリを要求",
-            "en": "Request Remote App",
-        },
-        "note": {},
     },
 )

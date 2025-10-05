@@ -1,7 +1,7 @@
-import type { Client } from '../../client.js';
 import type { Unlisten } from '../../event';
 import { Identifier, IdentifierMap } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
+import { Omu } from '../../omu';
 import { ExtensionType } from '../extension.js';
 
 import type { LogMessage } from './packets.js';
@@ -28,9 +28,9 @@ export class LoggerExtension {
     public readonly type: ExtensionType<LoggerExtension> = LOGGER_EXTENSION_TYPE;
     private readonly listeners: IdentifierMap<LogListener[]> = new IdentifierMap();
 
-    constructor(private readonly client: Client) {
-        client.network.registerPacket(LOGGER_LOG_PACKET, LOGGER_LISTEN_PACKET);
-        client.network.addPacketHandler(LOGGER_LOG_PACKET, (packet) => {
+    constructor(private readonly omu: Omu) {
+        omu.network.registerPacket(LOGGER_LOG_PACKET, LOGGER_LISTEN_PACKET);
+        omu.network.addPacketHandler(LOGGER_LOG_PACKET, (packet) => {
             const listener = this.listeners.get(packet.id);
             if (listener) {
                 listener.forEach((it) => it(packet.message));
@@ -39,8 +39,8 @@ export class LoggerExtension {
     }
 
     public log(message: LogMessage): void {
-        const packet = new LogPacket(this.client.app.id, message);
-        this.client.send(LOGGER_LOG_PACKET, packet);
+        const packet = new LogPacket(this.omu.app.id, message);
+        this.omu.send(LOGGER_LOG_PACKET, packet);
     }
 
     public error(text: string): void {
@@ -61,8 +61,8 @@ export class LoggerExtension {
 
     public listen(id: Identifier, listener: LogListener): Unlisten {
         if (!this.listeners.has(id)) {
-            this.client.onReady(() => {
-                this.client.send(LOGGER_LISTEN_PACKET, id);
+            this.omu.onReady(() => {
+                this.omu.send(LOGGER_LISTEN_PACKET, id);
             });
         }
         const list = this.listeners.get(id) ?? [];

@@ -1,6 +1,6 @@
 import type { Omu } from '@omujs/omu';
 
-import { SERVER_SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/api/server';
+import { SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/api/session';
 import { PLUGIN_ID } from './const.js';
 import type { CreateBrowserRequest, CreateResponse, SceneCreateRequest, SceneCreateResponse, SceneJson, SceneListResponse, ScreenshotCreateRequest, ScreenshotCreateResponse, ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse, SourceGetByNameRequest, SourceGetByUuidRequest, SourceJson, SourceListRequest } from './types.js';
 import {
@@ -42,13 +42,13 @@ export class OBSPlugin {
         omu.plugins.require({
             omuplugin_obs: `>=${VERSION}`,
         });
-        omu.permissions.require(SERVER_SESSIONS_READ_PERMISSION_ID);
-        omu.server.observeSession(PLUGIN_ID, {
+        omu.permissions.require(SESSIONS_READ_PERMISSION_ID);
+        omu.sessions.observe(PLUGIN_ID, {
             onConnect: () => this.setConnected(true),
             onDisconnect: () => this.setConnected(false),
         });
         omu.onReady(async () => {
-            this.setConnected(await omu.server.sessions.has(PLUGIN_ID.key()));
+            this.setConnected(await omu.sessions.has(PLUGIN_ID));
         });
     }
 
@@ -93,7 +93,7 @@ export class OBSPlugin {
     }
 
     public requirePlugin(): void {
-        this.omu.server.require(PLUGIN_ID);
+        this.omu.sessions.require(PLUGIN_ID);
     }
 
     public assetConnected(): void {

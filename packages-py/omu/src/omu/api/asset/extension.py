@@ -1,17 +1,18 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
 from omu.bytebuffer import ByteReader, ByteWriter
-from omu.client import Client
 from omu.identifier import Identifier
 from omu.serializer import Serializer
 
-ASSET_EXTENSION_TYPE = ExtensionType(
-    "asset",
-    lambda client: AssetExtension(client),
-    lambda: [],
-)
+if TYPE_CHECKING:
+    from omu.omu import Omu
+
+ASSET_EXTENSION_TYPE = ExtensionType("asset", lambda client: AssetExtension(client))
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,30 +104,30 @@ class AssetExtension(Extension):
     def type(self) -> ExtensionType:
         return ASSET_EXTENSION_TYPE
 
-    def __init__(self, client: Client) -> None:
-        self.client = client
+    def __init__(self, omu: Omu) -> None:
+        self.omu = omu
 
     async def upload(self, file: Asset) -> Identifier:
-        return await self.client.endpoints.call(ASSET_UPLOAD_ENDPOINT, file)
+        return await self.omu.endpoints.call(ASSET_UPLOAD_ENDPOINT, file)
 
     async def upload_many(self, files: list[Asset]) -> list[Identifier]:
-        return await self.client.endpoints.call(ASSET_UPLOAD_MANY_ENDPOINT, files)
+        return await self.omu.endpoints.call(ASSET_UPLOAD_MANY_ENDPOINT, files)
 
     async def download(self, identifier: Identifier) -> Asset:
-        return await self.client.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, identifier)
+        return await self.omu.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, identifier)
 
     async def download_many(self, identifiers: list[Identifier]) -> list[Asset]:
-        return await self.client.endpoints.call(ASSET_DOWNLOAD_MANY_ENDPOINT, identifiers)
+        return await self.omu.endpoints.call(ASSET_DOWNLOAD_MANY_ENDPOINT, identifiers)
 
     async def delete(self, identifier: Identifier) -> None:
-        await self.client.endpoints.call(ASSET_DELETE_ENDPOINT, identifier)
+        await self.omu.endpoints.call(ASSET_DELETE_ENDPOINT, identifier)
 
     def url(self, identifier: Identifier) -> str:
-        address = self.client.network.address
+        address = self.omu.network.address
         protocol = "https" if address.secure else "http"
         return f"{protocol}://{address.host}:{address.port}/asset?id={identifier.key()}"
 
     def proxy(self, url: str) -> str:
-        address = self.client.network.address
+        address = self.omu.network.address
         protocol = "https" if address.secure else "http"
         return f"{protocol}://{address.host}:{address.port}/proxy?url={url}"

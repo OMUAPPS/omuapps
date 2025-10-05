@@ -32,6 +32,7 @@ class AppType(Enum):
 
 class AppJson(TypedDict):
     id: str
+    parent_id: NotRequired[str] | None
     version: NotRequired[str] | None
     url: NotRequired[str] | None
     type: NotRequired[str] | None
@@ -46,10 +47,12 @@ class App(Keyable, Model[AppJson]):
         version: str | None = None,
         url: str | None = None,
         type: AppType | None = None,
+        parent_id: Identifier | None = None,
         metadata: AppMetadata | None = None,
     ) -> None:
         if isinstance(id, str):
             id = Identifier.from_key(id)
+        self.parent_id = parent_id
         self.id: Final[Identifier] = id
         self.version = version
         self.url = url
@@ -61,6 +64,7 @@ class App(Keyable, Model[AppJson]):
         id = Identifier.from_key(json["id"])
         return cls(
             id,
+            parent_id=map_optional(json.get("parent_id"), Identifier.from_key),
             version=json.get("version"),
             url=json.get("url"),
             type=map_optional(json.get("type"), AppType),
@@ -70,9 +74,10 @@ class App(Keyable, Model[AppJson]):
     def to_json(self) -> AppJson:
         return AppJson(
             id=self.key(),
+            parent_id=self.parent_id.key() if self.parent_id else None,
             version=self.version,
             url=self.url,
-            type=self.type.value if self.type is not None else None,
+            type=self.type.value if self.type else None,
             metadata=self.metadata,
         )
 

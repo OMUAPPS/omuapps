@@ -7,7 +7,7 @@
     } from '@omujs/omu/api/asset';
     import { I18N_GET_LOCALES_PERMISSION_ID } from '@omujs/omu/api/i18n';
     import { REGISTRY_PERMISSION_ID } from '@omujs/omu/api/registry';
-    import { type RequestRemoteAppResponse } from '@omujs/omu/api/server';
+    import type { RequestRemoteAppResponse } from '@omujs/omu/api/session';
     import { Button } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import QrCode from 'qrious';
@@ -43,7 +43,7 @@
         state = {
             type: 'requesting',
         };
-        result = await omu.server.requestRemoteApp({
+        result = await omu.sessions.requestRemoteApp({
             app: REMOTE_APP,
             permissions: [
                 I18N_GET_LOCALES_PERMISSION_ID,

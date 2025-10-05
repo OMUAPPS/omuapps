@@ -8,8 +8,8 @@ from omu_chat.chat import (
     AUTHOR_TABLE,
     CHANNEL_TABLE,
     CREATE_CHANNEL_TREE_ENDPOINT,
-    IDENTIFIER,
     MESSAGE_TABLE,
+    PLUGIN_ID,
     PROVIDER_TABLE,
     REACTION_SIGNAL,
     ROOM_TABLE,
@@ -28,7 +28,7 @@ from omu_chat.permissions import (
 from .version import VERSION
 
 app = App(
-    id=IDENTIFIER,
+    id=PLUGIN_ID,
     version=VERSION,
     type=AppType.PLUGIN,
 )

@@ -109,7 +109,7 @@ export class RemoteApp {
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
         this.connected = writable(false);
         if (side === 'app') {
-            omu.server.observeSession(REMOTE_APP_ID, {
+            omu.sessions.observe(REMOTE_APP_ID, {
                 onConnect: () => {
                     this.connected.set(true);
                 },
@@ -118,7 +118,7 @@ export class RemoteApp {
                 },
             });
             omu.onReady(async () => {
-                this.connected.set(await omu.server.sessions.has(REMOTE_APP_ID.key()));
+                this.connected.set(await omu.sessions.has(REMOTE_APP_ID));
             });
         }
     }

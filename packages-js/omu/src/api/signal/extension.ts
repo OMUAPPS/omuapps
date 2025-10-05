@@ -1,7 +1,7 @@
-import type { Client } from '../../client.js';
 import type { Unlisten } from '../../event';
 import { Identifier, IdentifierMap } from '../../identifier';
 import { PacketType } from '../../network/packet';
+import { Omu } from '../../omu';
 import { JsonType, Serializable } from '../../serialize';
 import { ExtensionType, type Extension } from '../extension.js';
 import { SignalPacket, SignalRegisterPacket } from './packets.js';
@@ -9,7 +9,7 @@ import { SignalType, type Signal } from './signal.js';
 
 export const SIGNAL_EXTENSION_TYPE: ExtensionType<SignalExtension> = new ExtensionType(
     'signal',
-    (client: Client) => new SignalExtension(client),
+    (omu: Omu) => new SignalExtension(omu),
 );
 
 const SIGNAL_REGISTER_PACKET = PacketType.createSerialized<SignalRegisterPacket>(
@@ -32,8 +32,8 @@ export class SignalExtension implements Extension {
     public readonly type: ExtensionType<SignalExtension> = SIGNAL_EXTENSION_TYPE;
     private readonly signals = new IdentifierMap<SignalType<unknown>>();
 
-    constructor(private readonly client: Client) {
-        client.network.registerPacket(
+    constructor(private readonly omu: Omu) {
+        omu.network.registerPacket(
             SIGNAL_REGISTER_PACKET,
             SIGNAL_LISTEN_PACKET,
             SIGNAL_NOTIFY_PACKET,
@@ -44,11 +44,11 @@ export class SignalExtension implements Extension {
         if (this.signals.has(signalType.id)) {
             throw new Error(`Signal for key ${signalType.id} already created`);
         }
-        return new SignalImpl(this.client, signalType);
+        return new SignalImpl(this.omu, signalType);
     }
 
     public json<T, D extends JsonType = JsonType>(name: string, options?: { serializer?: Serializable<T, D> }): Signal<T> {
-        const id = this.client.app.id.join(name);
+        const id = this.omu.app.id.join(name);
         const type = SignalType.createJson<T>(id, {
             name,
             serializer: options?.serializer,
@@ -57,7 +57,7 @@ export class SignalExtension implements Extension {
     }
 
     public serialized<T>(name: string, options: { serializer: Serializable<T, Uint8Array> }): Signal<T> {
-        const id = this.client.app.id.join(name);
+        const id = this.omu.app.id.join(name);
         const type = SignalType.createSerialized<T>(id, {
             name,
             serializer: options?.serializer,
@@ -75,16 +75,16 @@ class SignalImpl<T> implements Signal<T> {
     private listening = false;
 
     constructor(
-        private readonly client: Client,
+        private readonly omu: Omu,
         private readonly type: SignalType<T>,
     ) {
-        client.network.addPacketHandler(SIGNAL_NOTIFY_PACKET, (data) => this.handleBroadcast(data));
-        client.network.addTask(() => this.onTask());
+        omu.network.addPacketHandler(SIGNAL_NOTIFY_PACKET, (data) => this.handleBroadcast(data));
+        omu.network.addTask(() => this.onTask());
     }
 
     public notify(body: T): void {
         const data = this.type.serializer.serialize(body);
-        this.client.send(SIGNAL_NOTIFY_PACKET, {
+        this.omu.send(SIGNAL_NOTIFY_PACKET, {
             id: this.type.id,
             body: data,
         });
@@ -95,8 +95,8 @@ class SignalImpl<T> implements Signal<T> {
 
     public listen(handler: (value: T) => void): Unlisten {
         if (!this.listening) {
-            this.client.onReady(() => {
-                this.client.send(SIGNAL_LISTEN_PACKET, this.type.id);
+            this.omu.onReady(() => {
+                this.omu.send(SIGNAL_LISTEN_PACKET, this.type.id);
             });
             this.listening = true;
         }
@@ -117,10 +117,10 @@ class SignalImpl<T> implements Signal<T> {
     }
 
     private onTask(): void {
-        if (!this.type.id.isSubpathOf(this.client.app.id)) {
+        if (!this.type.id.isSubpathOf(this.omu.app.id)) {
             return;
         }
-        this.client.send(SIGNAL_REGISTER_PACKET, {
+        this.omu.send(SIGNAL_REGISTER_PACKET, {
             id: this.type.id,
             permissions: this.type.permissions,
         });

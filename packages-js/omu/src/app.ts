@@ -1,4 +1,4 @@
-import { Identifier } from './identifier';
+import { Identifier, IntoId } from './identifier';
 import type { Locale } from './localization/locale.js';
 import type { LocalizedText } from './localization/localization.js';
 
@@ -19,6 +19,7 @@ export type AppType = 'app' | 'remote' | 'plugin' | 'dashboard';
 
 export type AppJson = {
     id: string;
+    parent_id?: string;
     version?: string;
     url?: string;
     type?: AppType;
@@ -27,22 +28,21 @@ export type AppJson = {
 
 export class App {
     public readonly id: Identifier;
+    public readonly parentId?: Identifier;
     public readonly version?: string;
     public readonly url?: string;
     public readonly metadata?: AppMetadata;
     public readonly type?: AppType;
 
-    constructor(id: Identifier | string, options: {
+    constructor(id: IntoId, options: {
+        parentId?: IntoId;
         version?: string;
         url?: string;
         metadata?: AppMetadata;
         type?: AppType;
     }) {
-        if (typeof id === 'string') {
-            this.id = Identifier.fromKey(id);
-        } else {
-            this.id = id;
-        }
+        this.id = Identifier.from(id);
+        this.parentId = Identifier.fromOptional(options.parentId);
         this.version = options.version;
         this.url = options.url;
         this.metadata = options.metadata;
@@ -52,6 +52,7 @@ export class App {
     public static deserialize(info: AppJson): App {
         const id = Identifier.fromKey(info.id);
         return new App(id, {
+            parentId: Identifier.fromOptional(info.parent_id),
             version: info.version,
             url: info.url,
             type: info.type,

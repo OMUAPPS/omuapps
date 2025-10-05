@@ -4,10 +4,10 @@ from asyncio import Future
 from dataclasses import dataclass
 
 from omu.api import Extension, ExtensionType
-from omu.client import Client
 from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
+from omu.omu import Omu
 
 from .endpoint import EndpointType
 from .packets import (
@@ -19,11 +19,7 @@ from .packets import (
     ResponseParams,
 )
 
-ENDPOINT_EXTENSION_TYPE = ExtensionType(
-    "endpoint",
-    lambda client: EndpointExtension(client),
-    lambda: [],
-)
+ENDPOINT_EXTENSION_TYPE = ExtensionType("endpoint", lambda client: EndpointExtension(client))
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,20 +33,20 @@ class EndpointExtension(Extension):
     def type(self) -> ExtensionType:
         return ENDPOINT_EXTENSION_TYPE
 
-    def __init__(self, client: Client) -> None:
-        self.client = client
+    def __init__(self, omu: Omu) -> None:
+        self.omu = omu
         self.response_futures: dict[int, Future[EndpointResponsePacket]] = {}
         self.registered_endpoints: dict[Identifier, EndpointHandler] = {}
         self.call_id = 0
-        client.network.register_packet(
+        omu.network.register_packet(
             ENDPOINT_REGISTER_PACKET,
             ENDPOINT_INVOKE_PACKET,
             ENDPOINT_INVOKED_PACKET,
             ENDPOINT_RESPONSE_PACKET,
         )
-        client.network.add_packet_handler(ENDPOINT_RESPONSE_PACKET, self._on_response)
-        client.network.add_packet_handler(ENDPOINT_INVOKED_PACKET, self._on_invoked)
-        client.network.add_task(self.on_ready)
+        omu.network.add_packet_handler(ENDPOINT_RESPONSE_PACKET, self._on_response)
+        omu.network.add_packet_handler(ENDPOINT_INVOKED_PACKET, self._on_invoked)
+        omu.network.add_task(self.on_ready)
 
     async def _on_response(self, packet: EndpointResponsePacket) -> None:
         future = self.response_futures.pop(packet.params.key, None)
@@ -64,7 +60,7 @@ class EndpointExtension(Extension):
             raise Exception(f"Received invocation for unknown endpoint {packet.params.id.key()} ({packet.params.key})")
         try:
             result = await handler.func(packet)
-            await self.client.send(
+            await self.omu.send(
                 ENDPOINT_RESPONSE_PACKET,
                 EndpointResponsePacket(
                     params=ResponseParams(
@@ -76,7 +72,7 @@ class EndpointExtension(Extension):
                 ),
             )
         except Exception as e:
-            await self.client.send(
+            await self.omu.send(
                 ENDPOINT_RESPONSE_PACKET,
                 EndpointResponsePacket(
                     params=ResponseParams(
@@ -92,10 +88,10 @@ class EndpointExtension(Extension):
     async def on_ready(self) -> None:
         endpoints = {key: endpoint.endpoint_type.permission_id for key, endpoint in self.registered_endpoints.items()}
         packet = EndpointRegisterPacket(endpoints=endpoints)
-        await self.client.send(ENDPOINT_REGISTER_PACKET, packet)
+        await self.omu.send(ENDPOINT_REGISTER_PACKET, packet)
 
     def register[Req, Res](self, type: EndpointType[Req, Res], func: Coro[[Req], Res]) -> None:
-        if self.client.ready:
+        if self.omu.ready:
             raise Exception("Cannot register endpoint after client is ready")
         if type.id in self.registered_endpoints:
             raise Exception(f"Endpoint for key {type.id} already registered")
@@ -132,7 +128,7 @@ class EndpointExtension(Extension):
             future = Future[EndpointResponsePacket]()
             self.response_futures[self.call_id] = future
             serialized = endpoint.request_serializer.serialize(data)
-            await self.client.send(
+            await self.omu.send(
                 ENDPOINT_INVOKE_PACKET,
                 EndpointInvokePacket(
                     params=InvokeParams(

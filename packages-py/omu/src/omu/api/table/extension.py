@@ -4,12 +4,12 @@ from collections.abc import AsyncGenerator, Iterable, Mapping
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
-from omu.client import Client
 from omu.event_emitter import Unlisten
 from omu.helper import AsyncCallback, Coro
 from omu.identifier import Identifier
 from omu.interface import Keyable
 from omu.network.packet.packet import PacketType
+from omu.omu import Omu
 from omu.serializer import JsonSerializable, Serializer
 
 from .packets import (
@@ -38,10 +38,10 @@ class TableExtension(Extension):
     def type(self) -> ExtensionType:
         return TABLE_EXTENSION_TYPE
 
-    def __init__(self, client: Client):
-        self._client = client
+    def __init__(self, omu: Omu):
+        self._client = omu
         self._tables: dict[Identifier, Table] = {}
-        client.network.register_packet(
+        omu.network.register_packet(
             TABLE_SET_PERMISSION_PACKET,
             TABLE_SET_CONFIG_PACKET,
             TABLE_LISTEN_PACKET,
@@ -83,7 +83,7 @@ class TableExtension(Extension):
         return id in self._tables
 
 
-TABLE_EXTENSION_TYPE = ExtensionType("table", lambda client: TableExtension(client), lambda: [])
+TABLE_EXTENSION_TYPE = ExtensionType("table", lambda client: TableExtension(client))
 
 TABLE_PERMISSION_ID = TABLE_EXTENSION_TYPE / "permission"
 
@@ -193,10 +193,10 @@ TABLE_ITEM_CLEAR_PACKET = PacketType[TablePacket].create(
 class TableImpl[T](Table[T]):
     def __init__(
         self,
-        client: Client,
+        omu: Omu,
         table_type: TableType,
     ):
-        self._client = client
+        self._client = omu
         self._id = table_type.id
         self._serializer = table_type.serializer
         self._key_function = table_type.key_function
@@ -209,27 +209,27 @@ class TableImpl[T](Table[T]):
         self._config: TableConfig | None = None
         self._permissions: TablePermissions | None = table_type.permissions
 
-        client.network.add_packet_handler(
+        omu.network.add_packet_handler(
             TABLE_PROXY_PACKET,
             self._on_proxy,
         )
-        client.network.add_packet_handler(
+        omu.network.add_packet_handler(
             TABLE_ITEM_ADD_PACKET,
             self._on_item_add,
         )
-        client.network.add_packet_handler(
+        omu.network.add_packet_handler(
             TABLE_ITEM_UPDATE_PACKET,
             self._on_item_update,
         )
-        client.network.add_packet_handler(
+        omu.network.add_packet_handler(
             TABLE_ITEM_REMOVE_PACKET,
             self._on_item_remove,
         )
-        client.network.add_packet_handler(
+        omu.network.add_packet_handler(
             TABLE_ITEM_CLEAR_PACKET,
             self._on_item_clear,
         )
-        client.network.add_task(self._on_ready)
+        omu.network.add_task(self._on_ready)
 
     @property
     def cache(self) -> Mapping[str, T]:

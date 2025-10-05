@@ -13,6 +13,21 @@
         if (!obs) {
             throw new Error('OBSPlugin is not initialized');
         }
+        if (omu) {
+            // Usecases
+
+            omu.sessions.clear(APP_ID);
+            omu.apps.clear(APP_ID);
+            omu.apps.clear(APP_ID);
+            omu.dashboard.requestBackground(APP_ID);
+            const result = omu.sessions.generateToken(ASSET_APP, {
+                permissions: [''],
+            });
+            if (result.type === 'error') {
+                throw new Error(result.message);
+            }
+            result.value;
+        }
         const name = omu?.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
         const url = getURL().toString();
         await obs.browserAdd({

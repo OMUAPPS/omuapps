@@ -1,5 +1,5 @@
-import { type Client } from '../client.js';
 import { Identifier } from '../identifier';
+import { Omu } from '../omu';
 
 export interface Extension {
     readonly type: ExtensionType;
@@ -8,8 +8,7 @@ export interface Extension {
 export class ExtensionType<T extends Extension = Extension> extends Identifier {
     constructor(
         public readonly name: string,
-        public readonly create: (client: Client) => T,
-        public readonly dependencies?: () => ExtensionType[],
+        public readonly create: (omu: Omu) => T,
     ) {
         super('ext', name);
     }

@@ -53,7 +53,6 @@ class SessionConnection(abc.ABC):
 
 class SessionEvents:
     def __init__(self) -> None:
-        self.packet = EventEmitter[Session, Packet]()
         self.disconnected = EventEmitter[Session](catch_errors=True)
         self.ready = EventEmitter[Session]()
 
@@ -68,6 +67,7 @@ class SessionTask:
 class Session:
     def __init__(
         self,
+        server: Server,
         packet_mapper: PacketMapper,
         app: App,
         permission_handle: PermissionHandle,
@@ -75,8 +75,10 @@ class Session:
         connection: SessionConnection,
         aes: AES | None = None,
     ) -> None:
+        self.server = server
         self.packet_mapper = packet_mapper
         self.app = app
+        self.id = app.id
         self.permissions = permission_handle
         self.kind = kind
         self.connection = connection
@@ -133,6 +135,7 @@ class Session:
             raise RuntimeError(f"Invalid token for {packet.app}: {verify_result.err}")
         permission_handle, new_token = verify_result.value
         session = Session(
+            server=server,
             packet_mapper=packet_mapper,
             app=packet.app,
             permission_handle=permission_handle,
@@ -166,7 +169,7 @@ class Session:
         try:
             if self.aes:
                 packet = self.packet_mapper.deserialize(self.aes.decrypt(packet))
-            await self.event.packet.emit(self, packet)
+            await self.server.packets.process_packet(self, packet)
         except DisconnectReason as reason:
             logger.opt(exception=reason).error("Disconnecting session")
             await self.disconnect(reason.type, reason.message)

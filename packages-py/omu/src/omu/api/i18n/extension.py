@@ -1,10 +1,10 @@
 from omu.api import Extension, ExtensionType
 from omu.api.registry import RegistryType
 from omu.api.registry.packets import RegistryPermissions
-from omu.client import Client
 from omu.localization import Locale, LocalizedText
+from omu.omu import Omu
 
-I18N_EXTENSION_TYPE = ExtensionType("i18n", lambda client: I18nExtension(client), lambda: [])
+I18N_EXTENSION_TYPE = ExtensionType("i18n", lambda client: I18nExtension(client))
 I18N_SET_LOCALES_PERMISSION_ID = I18N_EXTENSION_TYPE / "locales" / "set"
 I18N_GET_LOCALES_PERMISSION_ID = I18N_EXTENSION_TYPE / "locales" / "get"
 I18N_LOCALES_REGISTRY_TYPE = RegistryType[list[Locale]].create_json(
@@ -23,10 +23,9 @@ class I18nExtension(Extension):
     def type(self) -> ExtensionType:
         return I18N_EXTENSION_TYPE
 
-    def __init__(self, client: Client):
-        self.client = client
-        client.permissions.require(I18N_GET_LOCALES_PERMISSION_ID)
-        self.locales_registry = client.registries.get(I18N_LOCALES_REGISTRY_TYPE)
+    def __init__(self, omu: Omu):
+        omu.permissions.require(I18N_GET_LOCALES_PERMISSION_ID)
+        self.locales_registry = omu.registries.get(I18N_LOCALES_REGISTRY_TYPE)
         self.locales: list[Locale] = []
         self.default_locales: list[Locale] = []
 

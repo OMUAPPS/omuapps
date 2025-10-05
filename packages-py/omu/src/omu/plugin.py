@@ -5,12 +5,12 @@ from dataclasses import dataclass
 from importlib.metadata import Distribution
 from typing import TYPE_CHECKING
 
+from omu.omu import Omu
+
 if TYPE_CHECKING:
     from omuserver.server import Server
 
 from omu.helper import AsyncCallback
-
-from .client import Client
 
 
 class InstallContext:
@@ -33,7 +33,7 @@ class InstallContext:
 
 @dataclass(frozen=True, slots=True)
 class Plugin:
-    get_client: Callable[[], Client] | None = None
+    get_client: Callable[[], Omu] | None = None
     on_start: AsyncCallback[[Server]] | None = None
     on_stop: AsyncCallback[[Server]] | None = None
     on_install: AsyncCallback[[InstallContext]] | None = None

@@ -1,5 +1,4 @@
 import type { Address } from '../address.js';
-import type { Client } from '../client.js';
 import type { OmuError } from '../errors.js';
 import {
     AnotherConnection,
@@ -12,6 +11,7 @@ import {
 } from '../errors.js';
 import { EventEmitter } from '../event';
 import { IdentifierMap } from '../identifier';
+import { Omu } from '../omu.js';
 import type { TokenProvider } from '../token.js';
 import { VERSION } from '../version.js';
 
@@ -60,7 +60,7 @@ export class Network {
     private listenTask: Promise<void> | undefined = undefined;
 
     constructor(
-        private readonly client: Client,
+        private readonly omu: Omu,
         public address: Address,
         private readonly tokenProvider: TokenProvider,
         private transport: Transport,
@@ -76,7 +76,7 @@ export class Network {
             PACKET_TYPES.ENCRYPTED_PACKET,
         );
         this.addPacketHandler(PACKET_TYPES.TOKEN, async (token: string) => {
-            await this.tokenProvider.set(this.address, this.client.app, token);
+            await this.tokenProvider.set(this.address, this.omu.app, token);
         });
         this.addPacketHandler(PACKET_TYPES.DISCONNECT, async (reason) => {
             await this.event.disconnected.emit(reason);
@@ -183,9 +183,9 @@ export class Network {
                 }
                 const { data: meta } = metaReceived;
                 this.address.hash = meta.hash;
-                let token = await this.tokenProvider.get(this.address, this.client.app);
+                let token = await this.tokenProvider.get(this.address, this.omu.app);
                 let encryptionResp: EncryptionResponse | undefined = undefined;
-                if (this.client.app.type === 'remote' && ENCRYPTION_AVAILABLE && meta.encryption) {
+                if (this.omu.app.type === 'remote' && ENCRYPTION_AVAILABLE && meta.encryption) {
                     const decryptor = await Decryptor.new();
                     const encryptor = await Encryptor.new(meta.encryption.rsa);
                     if (token) {
@@ -201,7 +201,7 @@ export class Network {
                 this.connection.send({
                     type: PACKET_TYPES.CONNECT,
                     data: new ConnectPacket({
-                        app: this.client.app,
+                        app: this.omu.app,
                         protocol: { version: VERSION },
                         encryption: encryptionResp,
                         token,
@@ -289,7 +289,7 @@ export class Network {
     }
 
     public addTask(task: () => Promise<void> | void): void {
-        if (this.client.running) {
+        if (this.omu.running) {
             throw new Error('Cannot add task after client is ready');
         }
         this.tasks.push(task);

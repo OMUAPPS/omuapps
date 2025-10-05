@@ -1,9 +1,9 @@
-import type { Client } from '../../client.js';
 import type { Unlisten } from '../../event';
 import { EventEmitter } from '../../event';
 import { Identifier, IdentifierMap } from '../../identifier';
 import { Lock } from '../../lock.js';
 import { PacketType } from '../../network/packet';
+import { Omu } from '../../omu';
 import { JsonType, Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { type Extension, ExtensionType } from '../extension.js';
@@ -15,8 +15,8 @@ export class RegistryExtension implements Extension {
     public readonly type: ExtensionType<RegistryExtension> = REGISTRY_EXTENSION_TYPE;
     private readonly registries = new IdentifierMap<Registry<unknown>>();
 
-    constructor(private readonly client: Client) {
-        client.network.registerPacket(
+    constructor(private readonly omu: Omu) {
+        omu.network.registerPacket(
             REGISTRY_REGISTER_PACKET,
             REGISTRY_UPDATE_PACKET,
             REGISTRY_LISTEN_PACKET,
@@ -24,11 +24,11 @@ export class RegistryExtension implements Extension {
     }
 
     private createRegistry<T>(registryType: RegistryType<T>): Registry<T> {
-        this.client.permissions.require(REGISTRY_PERMISSION_ID);
+        this.omu.permissions.require(REGISTRY_PERMISSION_ID);
         if (this.registries.has(registryType.id)) {
             throw new Error(`Registry with identifier '${registryType.id}' already exists`);
         }
-        return new RegistryImpl(this.client, registryType);
+        return new RegistryImpl(this.omu, registryType);
     }
 
     public get<T>(registryType: RegistryType<T>): Registry<T> {
@@ -42,7 +42,7 @@ export class RegistryExtension implements Extension {
     }
 
     public json<T, D extends JsonType = JsonType>(name: string, options: { default: T; serializer?: Serializer<T, D> }): Registry<T> {
-        const identifier = this.client.app.id.join(name);
+        const identifier = this.omu.app.id.join(name);
         if (this.registries.has(identifier)) {
             throw new Error(`Registry with name '${name}' already exists`);
         }
@@ -55,7 +55,7 @@ export class RegistryExtension implements Extension {
     }
 
     public serialized<T>(name: string, options: { default: T; serializer: Serializer<T, Uint8Array> }): Registry<T> {
-        const identifier = this.client.app.id.join(name);
+        const identifier = this.omu.app.id.join(name);
         if (this.registries.has(identifier)) {
             throw new Error(`Registry with name '${name}' already exists`);
         }
@@ -75,18 +75,18 @@ class RegistryImpl<T> implements Registry<T> {
     public value: T;
 
     constructor(
-        private readonly client: Client,
+        private readonly omu: Omu,
         public readonly type: RegistryType<T>,
     ) {
         this.value = type.defaultValue;
-        client.network.addPacketHandler(REGISTRY_UPDATE_PACKET, (packet) =>
+        omu.network.addPacketHandler(REGISTRY_UPDATE_PACKET, (packet) =>
             this.handleUpdate(packet),
         );
-        client.network.addTask(() => this.onTask());
+        omu.network.addTask(() => this.onTask());
     }
 
     async #get(): Promise<T> {
-        const result = await this.client.endpoints.call(REGISTRY_GET_ENDPOINT, this.type.id);
+        const result = await this.omu.endpoints.call(REGISTRY_GET_ENDPOINT, this.type.id);
         if (result.value === null) {
             return this.type.defaultValue;
         }
@@ -94,7 +94,7 @@ class RegistryImpl<T> implements Registry<T> {
     }
 
     async #set(value: T): Promise<void> {
-        this.client.send(REGISTRY_UPDATE_PACKET, {
+        this.omu.send(REGISTRY_UPDATE_PACKET, {
             id: this.type.id,
             value: this.type.serializer.serialize(value),
         });
@@ -134,8 +134,8 @@ class RegistryImpl<T> implements Registry<T> {
     }
 
     public listen(handler: (value: T) => Promise<void> | void): Unlisten {
-        if (!this.listening && this.client.ready) {
-            this.client.send(REGISTRY_LISTEN_PACKET, this.type.id);
+        if (!this.listening && this.omu.ready) {
+            this.omu.send(REGISTRY_LISTEN_PACKET, this.type.id);
         }
         this.listening = true;
         return this.eventEmitter.listen(handler);
@@ -153,12 +153,12 @@ class RegistryImpl<T> implements Registry<T> {
 
     private onTask(): void {
         if (this.listening) {
-            this.client.send(REGISTRY_LISTEN_PACKET, this.type.id);
+            this.omu.send(REGISTRY_LISTEN_PACKET, this.type.id);
         }
-        if (!this.type.id.isSubpathOf(this.client.app.id)) {
+        if (!this.type.id.isSubpathOf(this.omu.app.id)) {
             return;
         }
-        this.client.send(REGISTRY_REGISTER_PACKET, {
+        this.omu.send(REGISTRY_REGISTER_PACKET, {
             id: this.type.id,
             permissions: this.type.permissions,
         });
@@ -167,7 +167,7 @@ class RegistryImpl<T> implements Registry<T> {
 
 export const REGISTRY_EXTENSION_TYPE: ExtensionType<RegistryExtension> = new ExtensionType(
     'registry',
-    (client: Client) => new RegistryExtension(client),
+    (omu: Omu) => new RegistryExtension(omu),
 );
 export const REGISTRY_PERMISSION_ID: Identifier = REGISTRY_EXTENSION_TYPE.join('permission');
 const REGISTRY_REGISTER_PACKET = PacketType.createSerialized<RegistryRegisterPacket>(

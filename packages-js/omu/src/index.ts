@@ -1,5 +1,4 @@
 export { App, AppMetadata } from './app.js';
-export { Client } from './client.js';
 export { Identifier, IdentifierMap, IdentifierSet } from './identifier';
 export * as network from './network';
 export { Omu } from './omu.js';

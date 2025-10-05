@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import abc
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from omu.client import Client
 from omu.identifier import Identifier
+
+if TYPE_CHECKING:
+    from omu.omu import Omu
 
 
 class Extension(abc.ABC):
@@ -18,19 +21,16 @@ EXT_NAMESPACE = "ext"
 
 class ExtensionType[T: Extension](Identifier):
     name: str
-    create: Callable[[Client], T]
-    dependencies: Callable[[], list[ExtensionType]]
+    create: Callable[[Omu], T]
 
     def __init__(
         self,
         name: str,
-        create: Callable[[Client], T],
-        dependencies: Callable[[], list[ExtensionType]],
+        create: Callable[[Omu], T],
     ) -> None:
         super().__init__(EXT_NAMESPACE, name)
         self.name = name
         self.create = create
-        self.dependencies = dependencies
 
     def key(self) -> str:
         return self.name

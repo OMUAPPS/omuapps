@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import importlib
 import importlib.metadata
-import importlib.util
 import os
 import sys
 import threading
@@ -17,9 +16,9 @@ import psutil
 from loguru import logger
 from omu.address import Address
 from omu.app import App, AppType
-from omu.client import Client
 from omu.helper import asyncio_error_logger
 from omu.network.websocket_connection import WebsocketsTransport
+from omu.omu import Omu
 from omu.plugin import InstallContext, Plugin
 from omu.token import TokenProvider
 
@@ -63,7 +62,7 @@ class PluginInstance:
     entry_point: importlib.metadata.EntryPoint
     module: ModuleType
     process: Process | None = None
-    client: Client | None = None
+    omu: Omu | None = None
 
     @classmethod
     def try_load(
@@ -131,9 +130,9 @@ class PluginInstance:
             except Exception as e:
                 logger.opt(exception=e).error(f"Error terminating plugin {self.entry_point.name}")
             self.process = None
-        if self.client is not None:
-            await self.client.stop()
-            self.client = None
+        if self.omu is not None:
+            await self.omu.stop()
+            self.omu = None
         if self.plugin.on_stop is not None:
             await self.plugin.on_stop(server)
 
@@ -154,24 +153,24 @@ class PluginInstance:
             logger.opt(exception=e).error(f"Error while {stage} plugin {self.entry_point.name}")
 
     async def _start_internally(self, server: Server, token: str):
-        if self.client:
+        if self.omu:
             raise ValueError(f'Plugin "{self.plugin}" already started')
         if self.plugin.get_client is not None:
             connection = PluginConnection()
-            self.client = self.plugin.get_client()
-            if self.client.app.type != AppType.PLUGIN:
-                raise ValueError(f"Invalid plugin: {self.client.app} is not a plugin")
-            self.client.network.set_connection(connection)
-            self.client.network.set_token_provider(PluginTokenProvider(token))
-            self.client.set_loop(server.loop)
-            server.loop.create_task(self.client.start(reconnect=False))
+            self.omu = self.plugin.get_client()
+            if self.omu.app.type != AppType.PLUGIN:
+                raise ValueError(f"Invalid plugin: {self.omu.app} is not a plugin")
+            self.omu.network.set_connection(connection)
+            self.omu.network.set_token_provider(PluginTokenProvider(token))
+            self.omu.set_loop(server.loop)
+            self.omu.loop.create_task(self.omu.start(reconnect=False))
             session_connection = PluginSessionConnection(connection)
             session = await Session.from_connection(
                 server,
                 server.packets.packet_mapper,
                 session_connection,
             )
-            server.loop.create_task(server.network.process_session(session))
+            server.loop.create_task(server.sessions.process_new(session))
 
     def _start_isolated(self, server: Server, token: str):
         pid = os.getpid()
