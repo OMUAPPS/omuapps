@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import datetime
 import json
-import random
+import secrets
 import sqlite3
 import string
 from collections.abc import Iterable
@@ -42,7 +42,7 @@ class TokenGenerator:
         self._chars = string.ascii_letters + string.digits
 
     def generate(self, length: int) -> str:
-        return "".join(random.choices(self._chars, k=length))
+        return secrets.token_urlsafe(length)[:length]
 
 
 class PermissionManager:
