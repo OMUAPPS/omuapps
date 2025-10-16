@@ -72,7 +72,7 @@ class TableExtension:
         self.server = server
         self._tables: dict[Identifier, ServerTable] = {}
         self._adapters: list[TableAdapter] = []
-        server.security.register(TABLE_PERMISSION)
+        server.security.register_permission(TABLE_PERMISSION)
         server.packets.register(
             TABLE_SET_PERMISSION_PACKET,
             TABLE_SET_CONFIG_PACKET,

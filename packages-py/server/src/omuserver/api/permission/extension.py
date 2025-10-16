@@ -35,17 +35,17 @@ class PermissionExtension:
             if not perm.id.is_subpath_of(session.app.id):
                 msg = f"Permission identifier {perm.id} " f"is not a subpart of app identifier {session.app.id}"
                 raise ValueError(msg)
-        self.server.security.register(*permission_types, overwrite=True)
+        self.server.security.register_permission(*permission_types, overwrite=True)
 
     async def handle_require(self, session: Session, permission_ids: list[Identifier]):
         if session.ready:
             raise ValueError("Session is already ready")
+        permissions = list(filter(None, (self.server.security.permissions.get(perm_id) for perm_id in permission_ids)))
+        missing_permissions = list(filter(lambda id: id not in self.server.security.permissions, permission_ids))
+        if missing_permissions:
+            raise PermissionDenied(f"Requested permissions do not exist: {missing_permissions}")
         if session.permissions.has_all(permission_ids):
-            permissions = filter(
-                None,
-                [self.server.security.get_permission(permission_id) for permission_id in permission_ids],
-            )
-            await session.send(PERMISSION_GRANT_PACKET, list(permissions))
+            await session.send(PERMISSION_GRANT_PACKET, permissions)
             return
         if session.kind == AppType.REMOTE:
             raise PermissionDenied("Remote apps cannot request permissions")
@@ -53,24 +53,15 @@ class PermissionExtension:
             return
 
         async def task():
-            permissions: list[PermissionType] = []
-            for permission_id in permission_ids:
-                permission = self.server.security.get_permission(permission_id)
-                if permission is None:
-                    raise ValueError(f"Permission {permission_id} not registered")
-                permissions.append(permission)
-
             request_id = self._get_next_request_key()
-            accepted = await self.server.dashboard.request_permissions(
-                PermissionRequestPacket(request_id, session.app, permissions)
-            )
-            if accepted:
-                session.permissions.set_permissions(*[p.id for p in permissions])
-                if not session.closed:
-                    await session.send(PERMISSION_GRANT_PACKET, permissions)
-            else:
+            request = PermissionRequestPacket(request_id, session.app, permissions)
+            accepted = await self.server.dashboard.request_permissions(request)
+            if not accepted:
                 msg = f"Permission request denied (id={request_id})"
                 raise PermissionDenied(msg)
+            session.permissions.grant_all([p.id for p in permissions])
+            if not session.closed:
+                await session.send(PERMISSION_GRANT_PACKET, permissions)
 
         session.add_ready_task(task)
 

@@ -35,6 +35,7 @@ type EventRecord<K extends keyof Events> = {
     [P in K]?: Array<Events[P]>;
 };
 export class OBSPlugin {
+    private static INSTANCE: OBSPlugin | undefined;
     private connected = false;
     private readonly events: EventRecord<keyof Events> = {};
 
@@ -50,6 +51,7 @@ export class OBSPlugin {
         omu.onReady(async () => {
             this.setConnected(await omu.sessions.has(PLUGIN_ID));
         });
+        OBSPlugin.INSTANCE = this;
     }
 
     public on<K extends keyof Events>(event: K, handler: Events[K]): () => void {

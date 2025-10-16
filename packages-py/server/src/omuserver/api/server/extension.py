@@ -39,7 +39,7 @@ class LogHandler:
 class ServerExtension:
     def __init__(self, server: Server) -> None:
         self._server = server
-        server.security.register(
+        server.security.register_permission(
             SERVER_SHUTDOWN_PERMISSION,
             SERVER_APPS_READ_PERMISSION,
             SERVER_TRUSTED_ORIGINS_GET_PERMISSION,

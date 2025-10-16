@@ -31,7 +31,7 @@ RESTART = True
 class PluginExtension:
     def __init__(self, server: Server) -> None:
         self.allowed_packages = server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
-        server.security.register(PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION)
+        server.security.register_permission(PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION)
         server.packets.register(PLUGIN_REQUIRE_PACKET)
         server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
         server.packets.bind(PLUGIN_REQUIRE_PACKET, self.handle_require)

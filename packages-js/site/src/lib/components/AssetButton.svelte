@@ -2,37 +2,26 @@
     import { page } from '$app/stores';
     import type { OBSPlugin } from '@omujs/obs';
     import type { CreateBrowserRequest } from '@omujs/obs/types.js';
-    import type { Omu } from '@omujs/omu';
-    import { DragLink, Spinner, Tooltip } from '@omujs/ui';
+    import type { App, Omu, SessionParam } from '@omujs/omu';
+    import { BrowserTokenProvider, type IntoId } from '@omujs/omu';
+    import { Spinner, Tooltip } from '@omujs/ui';
 
-    export let omu: Omu | null = null;
+    export let omu: Omu;
+    export let asset: App;
+    export let multiple = true;
     export let obs: OBSPlugin | null = null;
     export let dimensions: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined = undefined;
+    export let permissions: IntoId[] = [];
 
     async function create() {
         if (!obs) {
             throw new Error('OBSPlugin is not initialized');
         }
-        if (omu) {
-            // Usecases
-
-            omu.sessions.clear(APP_ID);
-            omu.apps.clear(APP_ID);
-            omu.apps.clear(APP_ID);
-            omu.dashboard.requestBackground(APP_ID);
-            const result = omu.sessions.generateToken(ASSET_APP, {
-                permissions: [''],
-            });
-            if (result.type === 'error') {
-                throw new Error(result.message);
-            }
-            result.value;
-        }
-        const name = omu?.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
-        const url = getURL().toString();
+        const name = omu.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
+        const url = await generateURL();
         await obs.browserAdd({
             name: name,
-            url: url,
+            url: url.toString(),
             blend_properties: {
                 blending_method: 'SRGB_OFF',
                 blending_mode: 'NORMAL',
@@ -50,10 +39,27 @@
         obsConnected = obs.isConnected();
     }
 
-    function getURL() {
-        const url = new URL($page.url);
-        url.pathname = `${url.pathname}asset`;
-        url.searchParams.set('assetId', Date.now().toString());
+    async function generateURL() {
+        const url = new URL(asset.url ?? $page.url);
+        const timestamp = Date.now().toString(36);
+        let app = asset;
+        if (multiple) {
+            url.searchParams.set('id', timestamp);
+            app = app.join(timestamp);
+        }
+        const result = await omu.sessions.generateToken({
+            app,
+            permissions,
+        });
+        if (result.type === 'error') {
+            throw new Error(result.message);
+        }
+        const { token } = result;
+        const tokenJson: SessionParam = {
+            token,
+            address: omu.address,
+        };
+        url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(tokenJson));
         return url;
     }
 
@@ -72,28 +78,14 @@
                 <i class="ti ti-download"></i>
             {/if}
         </button>
-        <DragLink href={getURL}>
-            <h3 slot="preview" class="preview">
-                <i class="ti ti-download"></i>
-                これをOBSにドロップ
-            </h3>
-            <div class="drag obs">
-                <Tooltip>ドラッグ&ドロップで追加</Tooltip>
-                <i class="ti ti-drag-drop"></i>
-            </div>
-        </DragLink>
     </div>
 {:else}
-    <DragLink href={getURL}>
-        <h3 slot="preview" class="preview">
-            <i class="ti ti-download"></i>
-            これを配信ソフトに追加
-        </h3>
-        <div class="drag">
-            <i class="ti ti-drag-drop"></i>
-            ここをドラッグ&ドロップ
-        </div>
-    </DragLink>
+    <div class="container">
+        <button class="add-button" disabled title="OBSに接続されていません">
+            OBSに接続されていません
+            <i class="ti ti-alert-circle"></i>
+        </button>
+    </div>
 {/if}
 
 <style lang="scss">

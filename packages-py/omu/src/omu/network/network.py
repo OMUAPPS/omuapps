@@ -162,6 +162,8 @@ class Network:
                 meta = (await self.connection.receive_as(self._packet_mapper, PACKET_TYPES.SERVER_META)).unwrap()
                 self.address = self.address.with_hash(meta["hash"])
                 token = self._token_provider.get(self.address, self.omu.app)
+                if token is None:
+                    raise InvalidToken(f"No token for {self.address} and app {self.omu.app.id}")
                 encryption_resp: EncryptionResponse | None = None
                 if self.omu.app.type == AppType.REMOTE and meta["encryption"]:
                     decryptor = Decryptor.new()

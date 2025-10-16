@@ -63,12 +63,12 @@ export class WebsocketConnection implements Connection {
             throw new Error('Already receiving');
         }
         while (this.packetQueue.length === 0) {
+            if (this.socket.readyState !== this.socket.OPEN) {
+                return null;
+            }
             await new Promise<void>((resolve) => {
                 this.receiveWaiter = (): void => resolve();
             });
-        }
-        if (this.socket.readyState !== this.socket.OPEN) {
-            return null;
         }
         const packet = serializer.deserialize(this.packetQueue.shift()!);
         this.receiveWaiter = null;

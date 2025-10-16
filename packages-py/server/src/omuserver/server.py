@@ -59,7 +59,7 @@ class Server:
         self.network.add_http_route("/frame", self._handle_frame)
         self.network.add_http_route("/proxy", self._handle_proxy)
         self.network.add_http_route("/asset", self._handle_assets)
-        self.security = PermissionManager(self)
+        self.security = PermissionManager.load(self)
         self.running = False
         self.endpoints = EndpointExtension(self)
         self.permissions = PermissionExtension(self)

@@ -35,26 +35,26 @@ export type ServerMeta = {
 type ConnectPacketJson = {
     protocol: ProtocolInfo;
     app: AppJson;
+    token: string;
     encryption: EncryptionResponse | null;
-    token?: string;
 };
 
 export class ConnectPacket {
     public readonly protocol: ProtocolInfo;
     public readonly app: App;
+    public readonly token: string;
     public readonly encryption: EncryptionResponse | null;
-    public readonly token?: string;
 
     constructor(options: {
         protocol: ProtocolInfo;
         app: App;
+        token: string;
         encryption?: EncryptionResponse | null;
-        token?: string;
     }) {
         this.protocol = options.protocol;
         this.app = options.app;
-        this.encryption = options.encryption ?? null;
         this.token = options.token;
+        this.encryption = options.encryption ?? null;
     }
 
     public static deserialize(data: ConnectPacketJson): ConnectPacket {

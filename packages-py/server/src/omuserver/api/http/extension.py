@@ -52,7 +52,7 @@ class HttpExtension:
     def __init__(self, server: Server):
         self.server = server
         self.requests: dict[str, Request] = {}
-        server.security.register(HTTP_REQUEST_PERMISSION)
+        server.security.register_permission(HTTP_REQUEST_PERMISSION)
         server.network.register_packet(
             HTTP_REQUEST_CREATE,
             HTTP_REQUEST_SEND,

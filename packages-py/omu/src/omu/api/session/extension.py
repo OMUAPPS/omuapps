@@ -6,7 +6,7 @@ from typing import Literal, NotRequired, TypedDict
 from omu.api.endpoint.endpoint import EndpointType
 from omu.api.extension import Extension, ExtensionType
 from omu.api.table.table import TablePermissions, TableType
-from omu.app import App
+from omu.app import App, AppJson
 from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.localization.locale import Locale
@@ -81,6 +81,31 @@ SESSION_REQUIRE_PACKET_TYPE = PacketType[list[Identifier]].create_json(
     SESSION_EXTENSION_TYPE,
     "require",
     serializer=Serializer.model(Identifier).to_array(),
+)
+
+
+class GenerateTokenPayload(TypedDict):
+    app: AppJson
+    permissions: list[str]
+
+
+class GenerateTokenResponseOk(TypedDict):
+    type: Literal["success"]
+    token: str
+
+
+class GenerateTokenResponseError(TypedDict):
+    type: Literal["error"]
+    message: str
+
+
+type GenerateTokenResponse = GenerateTokenResponseOk | GenerateTokenResponseError
+
+GENERATE_TOKEN_PERMISSION_ID = SESSION_EXTENSION_TYPE / "generate_token"
+GENERATE_TOKEN_ENDPOINT_TYPE = EndpointType[GenerateTokenPayload, GenerateTokenResponse].create_json(
+    SESSION_EXTENSION_TYPE,
+    "generate_token",
+    permission_id=GENERATE_TOKEN_PERMISSION_ID,
 )
 
 

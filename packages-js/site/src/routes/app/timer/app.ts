@@ -22,3 +22,19 @@ export const APP = new App(APP_ID, {
         tags: ['asset', 'tool'] as TagKey[],
     }),
 });
+export const ASSET_APP = new App(APP_ID, {
+    url: getUrl('/app/timer/asset'),
+    parentId: APP,
+    metadata: buildMetadata({
+        locale: 'en',
+        name: {
+            ja: 'タイマー表示',
+            en: 'Timer',
+        },
+        description: {
+            ja: 'タイマーアプリの表示用アセット',
+            en: 'An asset for displaying the timer app',
+        },
+        icon: 'ti-alarm',
+    }),
+});

@@ -1,9 +1,10 @@
 import type { ExtensionType } from './api';
+import { App } from './app';
 
 const NAMESPACE_REGEX = /^(\.[^/:.]|[\w-])+$/;
 const NAME_REGEX = /^[^/:]+$/;
 
-export type IntoId = Identifier | string | ExtensionType;
+export type IntoId = Identifier | string | ExtensionType | App;
 
 export class Identifier {
     public readonly namespace: string;
@@ -29,9 +30,19 @@ export class Identifier {
     public static from(id: IntoId): Identifier {
         if (id instanceof Identifier) {
             return id;
+        } else if (id instanceof App) {
+            return id.id;
         } else if (typeof id === 'string') {
             return Identifier.fromKey(id);
         } else {
+            const idCasted = id as { namespace: string; path: string[] };
+            if (
+                typeof idCasted.namespace === 'string' &&
+                Array.isArray(idCasted.path) &&
+                idCasted.path.every((p) => typeof p === 'string')
+            ) {
+                return new Identifier(idCasted.namespace, ...idCasted.path);
+            }
             throw new Error(`Cannot convert to Identifier: ${id}`);
         }
     }

@@ -99,7 +99,7 @@ class DashboardExtension:
             DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
             DASHBOARD_WEBVIEW_EVENT_PACKET,
         )
-        server.security.register(
+        server.security.register_permission(
             DASHBOARD_SET_PERMISSION,
             DASHBOARD_OPEN_APP_PERMISSION,
             DASHOBARD_APP_READ_PERMISSION,

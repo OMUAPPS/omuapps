@@ -1,5 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import type { Omu } from '@omujs/omu';
+import { Serializer, type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
 import type { Writable } from 'svelte/store';
@@ -57,6 +57,16 @@ const TIMER_CONFIG_REGISTRY_TYPE = RegistryType.createJson<TimerConfig>(APP_ID, 
             },
         },
     },
+    serializer: Serializer.transform<TimerConfig>((config) => {
+        if (!config.version) {
+            config.version = 1;
+            config.style.align = {
+                x: 'middle',
+                y: 'middle',
+            };
+        }
+        return config;
+    }),
 });
 
 export class TimerApp {
@@ -66,18 +76,6 @@ export class TimerApp {
     constructor(omu: Omu) {
         this.data = makeRegistryWritable(omu.registries.get(TIMER_REGISTRY_TYPE));
         this.config = makeRegistryWritable(omu.registries.get(TIMER_CONFIG_REGISTRY_TYPE));
-        omu.onReady(() => this.config.update((config) => this.migrateConfig(config)));
-    }
-
-    private migrateConfig(config: TimerConfig): TimerConfig {
-        if (!config.version) {
-            config.version = 1;
-            config.style.align = {
-                x: 'middle',
-                y: 'middle',
-            };
-        }
-        return config;
     }
 
     public toggle() {

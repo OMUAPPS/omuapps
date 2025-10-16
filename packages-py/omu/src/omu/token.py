@@ -24,7 +24,8 @@ class JsonTokenProvider(TokenProvider):
         path.parent.mkdir(parents=True, exist_ok=True)
         self._path = path
 
-    def get_store_key(self, address: Address, app: App) -> str:
+    @classmethod
+    def get_store_key(cls, address: Address, app: App) -> str:
         return f"{address.host}:{address.port}:{address.hash or ""}:{app.id.key()}"
 
     def get(self, address: Address, app: App) -> str | None:

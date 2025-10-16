@@ -1,49 +1,84 @@
-<script lang="ts">
-    import { DisconnectType } from '@omujs/omu/network/packet';
-    import { client, Spinner } from '@omujs/ui';
+<script lang="ts" generics="T">
+    import { page } from '$app/stores';
+    import { Omu, type App } from '@omujs/omu';
+    import { DisconnectPacket, DisconnectType } from '@omujs/omu/network/packet';
+    import { client, setClient, Spinner } from '@omujs/ui';
+    import { onMount } from 'svelte';
 
-    let state: 'loading' | 'loaded' | DisconnectType = 'loaded';
+    export let asset: App;
+    export let multiple = true;
+    export let create: (omu: Omu) => T;
 
-    state = 'loading';
-    client.subscribe((omu) => {
-        if (!omu) return;
+    let state: {
+        type: 'connecting';
+    } | {
+        type: 'ready';
+        omu: Omu;
+        app: T;
+    } | {
+        type: 'disconnected';
+        reason: DisconnectPacket | null;
+    } = { type: 'connecting' };
+
+    onMount(() => {
+        let id = $page.url.searchParams.get('id') ?? '';
+        const omu = new Omu(multiple ? asset.join(id) : asset);
+        setClient(omu);
+        const app = create(omu);
+
         omu.onReady(() => {
-            state = 'loaded';
+            state = { type: 'ready', omu, app };
         });
         omu.network.event.disconnected.listen((reason) => {
-            if (reason) {
-                if (
-                    reason.type === DisconnectType.SHUTDOWN ||
-                    reason.type === DisconnectType.CLOSE
-                ) {
-                    return;
-                }
-                state = reason.type;
-            }
+            state = {
+                type: 'disconnected',
+                reason,
+            };
         });
+        omu.start();
     });
 </script>
 
-<slot />
-{#if state === 'loading'}
-    <div class="modal">
-        <Spinner />
-    </div>
-{:else if state === DisconnectType.ANOTHER_CONNECTION}
-    <div class="modal">
-        <div class="info">
-            <h1>同じアセットIDを持つアセットが接続されました</h1>
-            <h2>これを使うにはどちらかを閉じて再読込してください</h2>
-            <small>id={$client.app.id.path.join('.')}</small>
+{#if state.type === 'connecting'}
+    <slot name="connecting">
+        <div class="modal">
+            <Spinner />
         </div>
-    </div>
-{:else if state === DisconnectType.PERMISSION_DENIED}
-    <div class="modal">
-        <div class="info">
-            <h1>権限が拒否されました</h1>
-            <small>id={$client.app.id.path.join('.')}</small>
+    </slot>
+{:else if state.type === 'ready'}
+    <slot omu={state.omu} app={state.app} />
+{:else if state.type === 'disconnected'}
+    {#if !state.reason}
+        <div class="modal">
+            <div class="info">
+                <h1>切断されました</h1>
+                <small>id={$client.app.id.path.join('.')}</small>
+            </div>
         </div>
-    </div>
+    {:else if state.reason.type === DisconnectType.ANOTHER_CONNECTION}
+        <div class="modal">
+            <div class="info">
+                <h1>同じアセットIDを持つアセットが接続されました</h1>
+                <h2>これを使うにはどちらかを閉じて再読込してください</h2>
+                <small>id={$client.app.id.path.join('.')}</small>
+            </div>
+        </div>
+    {:else if state.reason.type === DisconnectType.PERMISSION_DENIED}
+        <div class="modal">
+            <div class="info">
+                <h1>権限が拒否されました</h1>
+                <small>id={$client.app.id.path.join('.')}</small>
+            </div>
+        </div>
+    {:else}
+        <div class="modal">
+            <div class="info">
+                <h1>切断されました</h1>
+                <h2>{state.reason.message}</h2>
+                <small>id={$client.app.id.path.join('.')}</small>
+            </div>
+        </div>
+    {/if}
 {/if}
 
 <style lang="scss">

@@ -1,5 +1,5 @@
-import { App } from '../../app';
-import { Identifier, IdentifierMap, IdentifierSet } from '../../identifier';
+import { App, AppJson } from '../../app';
+import { Identifier, IdentifierMap, IdentifierSet, IntoId } from '../../identifier';
 import { Locale, LocalizedText } from '../../localization';
 import { PacketType } from '../../network/packet';
 import { Omu } from '../../omu';
@@ -36,6 +36,7 @@ const SESSION_DISCONNECTED_PACKET_TYPE = PacketType.createJson<App>(SESSION_EXTE
     name: 'session_disconnected',
     serializer: App,
 });
+
 type RemoteAppRequestPayload = {
     id: string;
     url: string;
@@ -58,9 +59,30 @@ export type RequestRemoteAppResponse = {
 };
 
 export const REMOTE_APP_REQUEST_PERMISSION_ID: Identifier = SESSION_EXTENSION_TYPE.join('remote_app', 'request');
+
 const REMOTE_APP_REQUEST_ENDPOINT_TYPE = EndpointType.createJson<RemoteAppRequestPayload, RequestRemoteAppResponse>(SESSION_EXTENSION_TYPE, {
     name: 'remote_app_request',
     permissionId: REMOTE_APP_REQUEST_PERMISSION_ID,
+});
+
+export type GenerateTokenResponse = {
+    type: 'success';
+    token: string;
+} | {
+    type: 'error';
+    message: string;
+};
+
+export const GENERATE_TOKEN_PERMISSION_ID: Identifier = SESSION_EXTENSION_TYPE.join('generate_token');
+
+type GenerateTokenPayload = {
+    app: AppJson;
+    permissions: string[];
+};
+
+const GENERATE_TOKEN_ENDPOINT_TYPE = EndpointType.createJson<GenerateTokenPayload, GenerateTokenResponse>(SESSION_EXTENSION_TYPE, {
+    name: 'generate_token',
+    permissionId: GENERATE_TOKEN_PERMISSION_ID,
 });
 
 export class SessionExtension implements Extension {
@@ -151,7 +173,7 @@ export class SessionExtension implements Extension {
 
     public async requestRemoteApp(payload: {
         app: App;
-        permissions: (string | Identifier)[];
+        permissions: IntoId[];
     }): Promise<RequestRemoteAppResponse> {
         const { app } = payload;
         if (!app.url) {
@@ -167,9 +189,18 @@ export class SessionExtension implements Extension {
             id: app.id.key(),
             url: app.url,
             metadata: app.metadata,
-            permissions: payload.permissions.map((permission) => {
-                return typeof permission === 'string' ? permission : permission.key();
-            }),
+            permissions: payload.permissions.map(id => Identifier.from(id).key()),
+        });
+    }
+
+    public async generateToken(options: {
+        app: App;
+        permissions: IntoId[];
+        keepPermissions?: boolean;
+    }): Promise<GenerateTokenResponse> {
+        return this.omu.endpoints.call(GENERATE_TOKEN_ENDPOINT_TYPE, {
+            app: App.serialize(options.app),
+            permissions: options.permissions.map(id => Identifier.from(id).key()),
         });
     }
 }

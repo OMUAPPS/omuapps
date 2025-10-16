@@ -25,7 +25,7 @@ def install_start(server: Server) -> None:
 
 async def on_start(server: Server) -> None:
     logger.info("Starting OBS plugin")
-    server.security.register(
+    server.security.register_permission(
         *PERMISSION_TYPES,
         overwrite=True,
     )

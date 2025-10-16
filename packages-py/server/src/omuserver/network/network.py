@@ -4,7 +4,6 @@ import signal
 import socket
 import sys
 import tkinter
-import urllib.parse
 from pathlib import Path
 from tkinter import messagebox
 from typing import TYPE_CHECKING
@@ -120,26 +119,9 @@ class Network:
             return Ok(None)
         return Err(InvalidOrigin(f"Invalid origin: {origin_namespace} != {session_namespace}"))
 
-    def _verify_frame_token(self, request: web.Request, session: Session) -> Result[None, DisconnectReason]:
-        query = request.query
-        if "frame_token" not in query:
-            return Err(InvalidOrigin("Missing frame token"))
-        frame_token = query["frame_token"]
-        origin = request.headers.get("Origin")
-        if origin is None:
-            return Err(InvalidOrigin("Missing origin"))
-        url = query.get("url")
-        if url is None:
-            return Err(InvalidOrigin("Missing url"))
-        parsed_url = urllib.parse.unquote(url)
-        verified = self.server.security.verify_frame_token(frame_token, parsed_url)
-        if not verified:
-            return Err(InvalidOrigin("Invalid frame token"))
-        return Ok(None)
-
     async def _verify(self, session: Session, request: web.Request) -> Result[None, DisconnectReason]:
         if session.kind == AppType.REMOTE:
-            return self._verify_frame_token(request, session)
+            return self.server.security.verify_frame_token(request)
         ip_verified = self._verify_remote_ip(request, session)
         if session.kind in {AppType.DASHBOARD, AppType.PLUGIN}:
             return ip_verified

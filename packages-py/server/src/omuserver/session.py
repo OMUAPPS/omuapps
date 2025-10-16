@@ -20,6 +20,7 @@ from omu.network.packet_mapper import PacketMapper
 from omu.result import Err, Ok, Result
 
 from omuserver.brand import BRAND
+from omuserver.security import InputToken
 from omuserver.version import VERSION
 
 if TYPE_CHECKING:
@@ -125,7 +126,7 @@ class Session:
             aes = AES.deserialize(packet.encryption["aes"], decryptor)
             if token:
                 token = decryptor.decrypt_string(token)
-        verify_result = await server.security.verify_token(packet.app, token)
+        verify_result = server.security.verify_app(packet.app, InputToken(token))
         if verify_result.is_err is True:
             await connection.send(
                 PACKET_TYPES.DISCONNECT.new(DisconnectPacket(DisconnectType.INVALID_TOKEN, verify_result.err)),

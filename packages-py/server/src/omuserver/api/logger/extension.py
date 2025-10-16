@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class LoggerExtension:
     def __init__(self, server: Server):
-        server.security.register(LOGGER_LOG_PERMISSION)
+        server.security.register_permission(LOGGER_LOG_PERMISSION)
         server.packets.register(LOGGER_LOG_PACKET, LOGGER_LISTEN_PACKET)
         server.packets.bind(LOGGER_LOG_PACKET, self.handle_log)
         server.packets.bind(LOGGER_LISTEN_PACKET, self.handle_listen)
