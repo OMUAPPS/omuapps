@@ -1,4 +1,4 @@
-import type { Identifier } from '../../identifier';
+import { Identifier, IntoId } from '../../identifier';
 import { JsonType, type Serializable, Serializer } from '../../serialize';
 
 export class EndpointType<Req = unknown, Res = unknown> {
@@ -10,7 +10,7 @@ export class EndpointType<Req = unknown, Res = unknown> {
     ) { }
 
     static createJson<Req, Res, ReqData extends JsonType = JsonType, ResData extends JsonType = JsonType>(
-        identifier: Identifier,
+        identifier: IntoId,
         {
             name,
             requestSerializer,
@@ -24,7 +24,7 @@ export class EndpointType<Req = unknown, Res = unknown> {
         },
     ): EndpointType<Req, Res> {
         return new EndpointType<Req, Res>(
-            identifier.join(name),
+            Identifier.from(identifier).join(name),
             Serializer.pipe<Req, JsonType, Uint8Array>(requestSerializer ?? Serializer.noop(), Serializer.json()),
             Serializer.pipe<Res, JsonType, Uint8Array>(responseSerializer ?? Serializer.noop(), Serializer.json()),
             permissionId,
@@ -32,7 +32,7 @@ export class EndpointType<Req = unknown, Res = unknown> {
     }
 
     static createSerialized<Req, Res>(
-        identifier: Identifier,
+        identifier: IntoId,
         {
             name,
             requestSerializer,
@@ -46,7 +46,7 @@ export class EndpointType<Req = unknown, Res = unknown> {
         },
     ): EndpointType<Req, Res> {
         return new EndpointType<Req, Res>(
-            identifier.join(name),
+            Identifier.from(identifier).join(name),
             requestSerializer,
             responseSerializer,
             permissionId,

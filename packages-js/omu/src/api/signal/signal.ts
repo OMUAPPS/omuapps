@@ -1,5 +1,5 @@
 import type { Unlisten } from '../../event';
-import { Identifier } from '../../identifier';
+import { Identifier, IntoId } from '../../identifier';
 import type { ByteReader, ByteWriter, Serializable } from '../../serialize';
 import { Flags, Serializer } from '../../serialize';
 
@@ -43,7 +43,7 @@ export class SignalType<T> {
     ) {}
 
     static createJson<T>(
-        identifier: Identifier,
+        identifier: IntoId,
         {
             name,
             serializer,
@@ -55,14 +55,14 @@ export class SignalType<T> {
         },
     ): SignalType<T> {
         return new SignalType(
-            identifier.join(name),
+            Identifier.from(identifier).join(name),
             Serializer.of<T, any>(serializer ?? Serializer.noop()).toJson(),
             permissions ?? new SignalPermissions(),
         );
     }
 
     static createSerialized<T>(
-        identifier: Identifier,
+        identifier: IntoId,
         {
             name,
             serializer,
@@ -74,7 +74,7 @@ export class SignalType<T> {
         },
     ): SignalType<T> {
         return new SignalType(
-            identifier.join(name),
+            Identifier.from(identifier).join(name),
             serializer,
             permissions ?? new SignalPermissions(),
         );

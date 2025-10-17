@@ -109,24 +109,25 @@ export class SessionExtension implements Extension {
         omu.onReady(() => this.onReady());
     }
 
-    public async has(id: Identifier): Promise<boolean> {
-        return await this.sessions.has(id.key());
+    public async has(id: IntoId): Promise<boolean> {
+        return await this.sessions.has(Identifier.from(id).key());
     }
 
-    public observe(appId: Identifier, {
+    public observe(appId: IntoId, {
         onConnect,
         onDisconnect,
     }: {
         onConnect(app: App): void;
         onDisconnect(app: App): void;
     }): SessionObserver {
+        const id = Identifier.from(appId);
         if (this.omu.running) {
-            this.omu.send(SESSION_OBSERVE_PACKET_TYPE, [appId]);
+            this.omu.send(SESSION_OBSERVE_PACKET_TYPE, [id]);
         }
-        const observer = this.sessionObservers.get(appId) ?? new SessionObserver([], []);
+        const observer = this.sessionObservers.get(id) ?? new SessionObserver([], []);
         observer.onConnect(onConnect);
         observer.onDisconnect(onDisconnect);
-        this.sessionObservers.set(appId, observer);
+        this.sessionObservers.set(id, observer);
         return observer;
     }
 
@@ -150,12 +151,12 @@ export class SessionExtension implements Extension {
         }
     }
 
-    public require(...appIds: Identifier[]): void {
+    public require(...appIds: IntoId[]): void {
         if (this.omu.running) {
             throw new Error('Cannot require apps after the client has started');
         }
         for (const appId of appIds) {
-            this.requiredApps.add(appId);
+            this.requiredApps.add(Identifier.from(appId));
         }
     }
 

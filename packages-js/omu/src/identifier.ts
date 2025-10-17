@@ -66,7 +66,7 @@ export class Identifier {
         }
         for (const name of path) {
             if (!NAME_REGEX.test(name)) {
-                throw new Error(`Invalid path: Name must match ${NAME_REGEX}`);
+                throw new Error(`Invalid path: Name must match ${NAME_REGEX} but got ${name}`);
             }
         }
     }

@@ -1,5 +1,5 @@
 import type { Unlisten } from '../../event';
-import { Identifier } from '../../identifier';
+import { Identifier, IntoId } from '../../identifier';
 import type { ByteReader, ByteWriter, JsonType, Serializable } from '../../serialize';
 import { Flags, Serializer } from '../../serialize';
 
@@ -56,7 +56,7 @@ export class RegistryType<T> {
         public readonly permissions: RegistryPermissions,
     ) { }
 
-    public static createJson<T, D extends JsonType = JsonType>(identifier: Identifier, {
+    public static createJson<T, D extends JsonType = JsonType>(identifier: IntoId, {
         name,
         defaultValue,
         permissions,
@@ -68,14 +68,14 @@ export class RegistryType<T> {
         serializer?: Serializable<T, D>;
     }): RegistryType<T> {
         return new RegistryType(
-            identifier.join(name),
+            Identifier.from(identifier).join(name),
             defaultValue,
             Serializer.pipe<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
             permissions ?? new RegistryPermissions(),
         );
     }
 
-    public static createSerialized<T>(identifier: Identifier, {
+    public static createSerialized<T>(identifier: IntoId, {
         name,
         defaultValue,
         serializer,
@@ -87,7 +87,7 @@ export class RegistryType<T> {
         permissions?: RegistryPermissions;
     }): RegistryType<T> {
         return new RegistryType(
-            identifier.join(name),
+            Identifier.from(identifier).join(name),
             defaultValue,
             serializer,
             permissions ?? new RegistryPermissions(),

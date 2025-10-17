@@ -1,4 +1,4 @@
-import { Identifier } from '../../identifier';
+import { Identifier, IntoId } from '../../identifier';
 import type { LocalizedText } from '../../localization/localization.js';
 
 export type PermissionLevel = 'low' | 'medium' | 'high';
@@ -24,7 +24,7 @@ export class PermissionType {
     }
 
     public static create(
-        identifier: Identifier,
+        identifier: IntoId,
         {
             name,
             metadata,
@@ -34,7 +34,7 @@ export class PermissionType {
         },
     ): PermissionType {
         return new PermissionType({
-            id: identifier.join(name),
+            id: Identifier.from(identifier).join(name),
             metadata: metadata,
         });
     }
