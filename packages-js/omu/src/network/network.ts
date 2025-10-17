@@ -227,7 +227,7 @@ export class Network {
                 this.connection = undefined;
                 this.listenTask = undefined;
             }
-            if (!reason?.type || ![
+            if (reason && ![
                 DisconnectType.SHUTDOWN,
                 DisconnectType.SERVER_RESTART,
                 DisconnectType.INTERNAL_ERROR,
