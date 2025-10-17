@@ -2,14 +2,20 @@
     import { comparator } from '$lib/helper.js';
     import { lerp } from '$lib/math/math.js';
     import { Timer } from '$lib/timer.js';
+    import { permissions } from '@omujs/chat';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
     import { onDestroy } from 'svelte';
-    import type { ReactionApp } from '../reaction-app.js';
+    import { ReactionApp } from '../reaction-app.js';
 
     export let omu: Omu;
     export let reactionApp: ReactionApp;
     let { config, reactionSignal } = reactionApp;
+
+    if (BROWSER) {
+        omu.permissions.require(permissions.CHAT_REACTION_PERMISSION_ID);
+        omu.start();
+    }
 
     type Reaction = {
         text: string;

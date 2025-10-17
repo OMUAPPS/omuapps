@@ -7,9 +7,7 @@
 </script>
 
 <div class="order-list">
-    <TableList table={orders} component={OrderListEntry} backward sort={(a, b) => {
-        return a.timestamp - b.timestamp;
-    }} />
+    <TableList table={orders} component={OrderListEntry} sort={(item) => item.timestamp} />
 </div>
 
 <style lang="scss">

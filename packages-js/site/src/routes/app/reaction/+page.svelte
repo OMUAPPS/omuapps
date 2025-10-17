@@ -16,7 +16,7 @@
         setClient,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP, APP_ID } from './app.js';
+    import { APP, APP_ID, ASSET_APP } from './app.js';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
     import { ReactionApp } from './reaction-app.js';
 
@@ -77,7 +77,7 @@
                 <i class="ti ti-arrow-bar-to-down"></i>
             </h2>
             <section>
-                <AssetButton {omu} {obs} />
+                <AssetButton asset={ASSET_APP} {omu} {obs} />
             </section>
             <h2>
                 試してみる

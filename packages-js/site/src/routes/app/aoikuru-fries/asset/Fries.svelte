@@ -5,17 +5,10 @@
     export let state: Writable<State>;
 </script>
 
-{#if 'thrower' in $state}
-    {#key $state.thrower}
+{#if $state.type === 'catching'}
+    {#key $state.data.thrower}
         <p>
-            {$state.thrower}が🍟を投げた！
-        </p>
-    {/key}
-{/if}
-{#if 'throwers' in $state}
-    {#key $state.throwers}
-        <p>
-            {$state.throwers.join(' と ')}が🍟を投げた！
+            {$state.data.thrower}が🍟を投げた！
         </p>
     {/key}
 {/if}

@@ -22,7 +22,7 @@ export const APP = new App(APP_ID, {
         tags: ['asset', 'tool'] as TagKey[],
     }),
 });
-export const ASSET_APP = new App(APP_ID, {
+export const ASSET_APP = new App(APP_ID.join('asset'), {
     url: getUrl('/app/timer/asset'),
     parentId: APP,
     metadata: buildMetadata({

@@ -19,3 +19,19 @@ export const APP = new App(APP_ID, {
         tags: ['tool', 'asset'] as TagKey[],
     }),
 });
+export const ASSET_APP = new App(APP_ID.join('asset'), {
+    url: getUrl('/app/discord-overlay/asset'),
+    parentId: APP,
+    metadata: buildMetadata({
+        locale: 'en',
+        name: {
+            ja: 'Discordオーバーレイ表示用アセット',
+            en: 'Discord Overlay Display Asset',
+        },
+        description: {
+            ja: 'Discordオーバーレイアプリで使用する表示用アセットです',
+            en: 'This is a display asset used in the Discord Overlay app',
+        },
+        icon: 'ti-brand-discord',
+    }),
+});

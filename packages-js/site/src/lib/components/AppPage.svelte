@@ -5,11 +5,13 @@
     import { client, Spinner } from '@omujs/ui';
 
     let state: {
-        type: 'connecting'; status: NetworkStatus;
+        type: 'connecting';
+        status: NetworkStatus;
     } | {
         type: 'ready';
     } | {
-        type: 'disconnected'; reason: DisconnectReason | undefined;
+        type: 'disconnected';
+        reason?: DisconnectReason;
     } = { type: 'connecting', status: { type: 'connecting' } };
 
     client.subscribe((omu) => {

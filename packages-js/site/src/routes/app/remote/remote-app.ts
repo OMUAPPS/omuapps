@@ -3,7 +3,7 @@ import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
 import { writable, type Writable } from 'svelte/store';
-import { APP_ID, REMOTE_APP_ID } from './app.js';
+import { APP_ID, REMOTE_APP } from './app.js';
 
 export type ImageResource = {
     type: 'image';
@@ -109,7 +109,7 @@ export class RemoteApp {
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
         this.connected = writable(false);
         if (side === 'app') {
-            omu.sessions.observe(REMOTE_APP_ID, {
+            omu.sessions.observe(REMOTE_APP, {
                 onConnect: () => {
                     this.connected.set(true);
                 },
@@ -118,7 +118,7 @@ export class RemoteApp {
                 },
             });
             omu.onReady(async () => {
-                this.connected.set(await omu.sessions.has(REMOTE_APP_ID));
+                this.connected.set(await omu.sessions.has(REMOTE_APP));
             });
         }
     }

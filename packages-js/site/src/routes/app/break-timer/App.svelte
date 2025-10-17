@@ -4,6 +4,7 @@
     import type { Omu } from '@omujs/omu';
     import { RelativeDate } from '@omujs/ui';
     import { onDestroy } from 'svelte';
+    import { ASSET_APP } from './app.js';
     import type { BreakTimerApp, BreakTimerConfig } from './break-timer-app.js';
     import SceneSelect from './components/SceneSelect.svelte';
     import TimeEdit from './components/TimeEdit.svelte';
@@ -53,7 +54,7 @@
         <SceneSelect {obs} bind:scene={$config.switch.scene} />
     </div>
     <div class="right">
-        <AssetButton {omu} {obs} />
+        <AssetButton asset={ASSET_APP} {omu} {obs} />
         <p>
             {JSON.stringify($config)}
         </p>

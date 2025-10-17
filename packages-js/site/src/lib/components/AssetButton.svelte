@@ -8,15 +8,12 @@
 
     export let omu: Omu;
     export let asset: App;
+    export let obs: OBSPlugin;
     export let multiple = true;
-    export let obs: OBSPlugin | null = null;
     export let dimensions: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined = undefined;
     export let permissions: IntoId[] = [];
 
     async function create() {
-        if (!obs) {
-            throw new Error('OBSPlugin is not initialized');
-        }
         const name = omu.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
         const url = await generateURL();
         await obs.browserAdd({
@@ -33,11 +30,9 @@
     }
 
     let obsConnected = false;
-    if (obs) {
-        obs.on('connected', () => (obsConnected = true));
-        obs.on('disconnected', () => (obsConnected = false));
-        obsConnected = obs.isConnected();
-    }
+    obs.on('connected', () => (obsConnected = true));
+    obs.on('disconnected', () => (obsConnected = false));
+    obsConnected = obs.isConnected();
 
     async function generateURL() {
         const url = new URL(asset.url ?? $page.url);
@@ -89,16 +84,6 @@
 {/if}
 
 <style lang="scss">
-    .preview {
-        background: var(--color-1);
-        color: var(--color-bg-2);
-        outline: 2px solid var(--color-bg-2);
-        outline-offset: -1px;
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-        border-radius: 2px;
-    }
-
     .container {
         position: relative;
         display: flex;
@@ -130,7 +115,6 @@
         &:focus-visible,
         &:hover {
             outline: none;
-            // background: var(--color-bg-1);
             color: var(--color-1);
             transition: 0.0621s;
             box-shadow: 0 0.25rem 0 0px var(--color-2);
@@ -148,38 +132,6 @@
             color: var(--color-bg-2);
             box-shadow: none;
             transition: 0s;
-        }
-    }
-
-    .drag {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        min-width: 3rem;
-        height: 100%;
-        color: var(--color-1);
-        background: var(--color-bg-2);
-        outline: 2px solid var(--color-1);
-        outline-offset: -2px;
-        font-weight: bold;
-        padding: 0.75rem 2rem;
-        gap: 5px;
-        cursor: grab;
-
-        & > i {
-            font-size: 20px;
-        }
-
-        &.obs {
-            padding: 0.75rem 1rem;
-        }
-
-        &:hover {
-            transform: translate(2px, 0);
-            outline: 2px solid var(--color-1);
-            box-shadow: -2px 3px 0 0px var(--color-2);
-            transition: 0.0621s;
         }
     }
 </style>
