@@ -11,6 +11,8 @@ def migrate(server: Server):
     if previous_version == "0.0.0":
         previous_version = "0.9.10"
     if previous_version == "0.9.10":
-        pass
+        previous_version = "0.9.13"
+    if previous_version == "0.9.13":
+        (server.config.directories.get("security") / "tokens.sqlite").unlink(missing_ok=True)
 
     version_path.write_text(VERSION)
