@@ -12,7 +12,6 @@
 -e file:packages-py/chat
     # via omu-chatprovider
     # via omuplugin-archive
-    # via omuplugin-chat
     # via omuplugin-discordrpc
     # via omuplugin-emoji
     # via omuplugin-nyanya
@@ -27,7 +26,6 @@
     # via omu-chat
     # via omuserver
 -e file:packages-py/plugin-archive
--e file:packages-py/plugin-chat
 -e file:packages-py/plugin-discordrpc
 -e file:packages-py/plugin-emoji
 -e file:packages-py/plugin-nyanya
@@ -83,7 +81,6 @@ idna==3.10
     # via yarl
 iwashi==3.1.1
     # via omu-chatprovider
-    # via omuplugin-chat
 loguru==0.7.2
     # via iwashi
     # via omu
@@ -92,7 +89,6 @@ loguru==0.7.2
     # via omu-chat-youtube
     # via omu-chatprovider
     # via omuplugin-archive
-    # via omuplugin-chat
     # via omuplugin-discordrpc
     # via omuplugin-emoji
     # via omuplugin-nyanya
