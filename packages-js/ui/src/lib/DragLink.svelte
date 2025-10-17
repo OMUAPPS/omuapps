@@ -1,13 +1,25 @@
 <script lang="ts">
-    export let href: (() => string | URL) | string | URL;
+    type UrlLike = string | URL | Promise<string | URL> | (() => UrlLike);
+    export let href: UrlLike;
 
     let preview: HTMLDivElement;
 
-    function handleDragStart(event: DragEvent) {
-        event.dataTransfer?.setDragImage(preview, 0, 0);
-        const url = typeof href === 'function' ? href() : href;
-        const urlString = typeof url === 'string' ? url : url.toString();
-        event.dataTransfer?.setData('text/uri-list', urlString);
+    async function resolveUrl(url: UrlLike): Promise<string> {
+        if (typeof url === 'string') {
+            return url;
+        } else if (url instanceof URL) {
+            return url.toString();
+        } else if (typeof url === 'function') {
+            return resolveUrl(url());
+        } else {
+            return resolveUrl(await url);
+        }
+    }
+
+    async function handleDragStart(event: DragEvent) {
+        event.dataTransfer.setDragImage(preview, 0, 0);
+        const url = await resolveUrl(href);
+        event.dataTransfer.setData('text/uri-list', url);
     }
 </script>
 

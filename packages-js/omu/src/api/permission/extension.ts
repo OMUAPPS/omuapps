@@ -1,6 +1,6 @@
-import type { Client } from '../../client.js';
 import { Identifier, IdentifierMap, IdentifierSet } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
+import { Omu } from '../../omu';
 import { Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
@@ -40,32 +40,32 @@ export class PermissionExtension {
     private readonly registeredPermissions = new IdentifierMap<PermissionType>();
     private readonly requiredPermissions = new IdentifierSet();
 
-    constructor(private readonly client: Client) {
-        client.network.registerPacket(
+    constructor(private readonly omu: Omu) {
+        omu.network.registerPacket(
             PERMISSION_REGISTER_PACKET,
             PERMISSION_REQUIRE_PACKET,
             PERMISSION_GRANT_PACKET,
         );
-        client.network.addPacketHandler(PERMISSION_GRANT_PACKET, (permissions) => {
+        omu.network.addPacketHandler(PERMISSION_GRANT_PACKET, (permissions) => {
             for (const permission of permissions) {
                 this.permissions.set(permission.id, permission);
             }
         });
-        client.network.addTask(() => this.onTask());
+        omu.network.addTask(() => this.onTask());
     }
 
     private onTask(): void {
-        if (this.client.app.type === 'remote') {
+        if (this.omu.app.type === 'remote') {
             return;
         }
         if (this.registeredPermissions.size > 0) {
-            this.client.send(
+            this.omu.send(
                 PERMISSION_REGISTER_PACKET,
                 Array.from(this.registeredPermissions.values()),
             );
         }
         if (this.requiredPermissions.size > 0) {
-            this.client.send(
+            this.omu.send(
                 PERMISSION_REQUIRE_PACKET,
                 Array.from(this.requiredPermissions.values()),
             );
@@ -73,8 +73,8 @@ export class PermissionExtension {
     }
 
     public register(permission: PermissionType): void {
-        if (this.client.running) {
-            this.client.send(PERMISSION_REGISTER_PACKET, [permission]);
+        if (this.omu.running) {
+            this.omu.send(PERMISSION_REGISTER_PACKET, [permission]);
         }
         this.registeredPermissions.set(permission.id, permission);
     }
@@ -84,7 +84,7 @@ export class PermissionExtension {
             typeof id === 'string' ? Identifier.fromKey(id) : id,
         );
         const missing = ids.filter((id) => !this.permissions.has(id));
-        if (this.client.running) {
+        if (this.omu.running) {
             if (missing.length > 0) {
                 throw new Error('Permissions must be registered before the client starts');
             }
@@ -96,7 +96,7 @@ export class PermissionExtension {
     }
 
     public async request(...permissionIds: Identifier[]): Promise<void> {
-        await this.client.endpoints.call(PERMISSION_REQUEST_ENDPOINT, permissionIds);
+        await this.omu.endpoints.call(PERMISSION_REQUEST_ENDPOINT, permissionIds);
     }
 
     public has(permissionIdentifier: Identifier): boolean {

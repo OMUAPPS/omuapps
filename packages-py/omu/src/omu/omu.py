@@ -1,35 +1,28 @@
 from __future__ import annotations
 
 import asyncio
+from typing import Final
 
 from omu import version
 from omu.address import Address
-from omu.api import ExtensionRegistry
-from omu.api.asset.extension import ASSET_EXTENSION_TYPE, AssetExtension
-from omu.api.dashboard.extension import DASHBOARD_EXTENSION_TYPE, DashboardExtension
-from omu.api.endpoint.extension import ENDPOINT_EXTENSION_TYPE, EndpointExtension
-from omu.api.i18n.extension import I18N_EXTENSION_TYPE, I18nExtension
-from omu.api.logger.extension import LOGGER_EXTENSION_TYPE, LoggerExtension
-from omu.api.permission.extension import PERMISSION_EXTENSION_TYPE, PermissionExtension
-from omu.api.plugin.extension import PLUGIN_EXTENSION_TYPE, PluginExtension
-from omu.api.registry.extension import REGISTRY_EXTENSION_TYPE, RegistryExtension
-from omu.api.server.extension import SERVER_EXTENSION_TYPE, ServerExtension
-from omu.api.signal.extension import SIGNAL_EXTENSION_TYPE, SignalExtension
-from omu.api.table.extension import TABLE_EXTENSION_TYPE, TableExtension
 from omu.app import App
-from omu.event_emitter import Unlisten
+from omu.event_emitter import EventEmitter, Unlisten
 from omu.helper import Coro, asyncio_error_logger
-from omu.network import Network
 from omu.network.connection import Connection, Transport
 from omu.network.packet import Packet, PacketType
 from omu.network.packet.packet_types import PACKET_TYPES
 from omu.network.websocket_connection import WebsocketsTransport
 from omu.token import JsonTokenProvider, TokenProvider
 
-from .client import Client, ClientEvents
+
+class ClientEvents:
+    def __init__(self) -> None:
+        self.started = EventEmitter[[]]()
+        self.stopped = EventEmitter[[]]()
+        self.ready = EventEmitter[[]]()
 
 
-class Omu(Client):
+class Omu:
     def __init__(
         self,
         app: App,
@@ -37,121 +30,70 @@ class Omu(Client):
         token: TokenProvider | None = None,
         connection: Connection | None = None,
         transport: Transport | None = None,
-        extension_registry: ExtensionRegistry | None = None,
         loop: asyncio.AbstractEventLoop | None = None,
     ):
-        self._version = version.VERSION
-        self._loop = self.set_loop(loop or asyncio.new_event_loop())
+        from omu.api.asset.extension import ASSET_EXTENSION_TYPE
+        from omu.api.dashboard.extension import DASHBOARD_EXTENSION_TYPE
+        from omu.api.endpoint.extension import ENDPOINT_EXTENSION_TYPE
+        from omu.api.i18n.extension import I18N_EXTENSION_TYPE
+        from omu.api.logger.extension import LOGGER_EXTENSION_TYPE
+        from omu.api.permission.extension import PERMISSION_EXTENSION_TYPE
+        from omu.api.plugin.extension import PLUGIN_EXTENSION_TYPE
+        from omu.api.registry.extension import REGISTRY_EXTENSION_TYPE
+        from omu.api.server.extension import SERVER_EXTENSION_TYPE
+        from omu.api.session.extension import SESSION_EXTENSION_TYPE
+        from omu.api.signal.extension import SIGNAL_EXTENSION_TYPE
+        from omu.api.table.extension import TABLE_EXTENSION_TYPE
+        from omu.network import Network
+
+        self.version: Final = version.VERSION
+        self.loop = self.set_loop(loop or asyncio.new_event_loop())
         self._ready = False
         self._running = False
-        self._event = ClientEvents()
-        self._app = app
+        self.event: Final = ClientEvents()
+        self.app: Final = app
         self.address = address or Address("127.0.0.1", 26423)
-        self._network = Network(
+        self.network: Final = Network(
             self,
             self.address,
             token or JsonTokenProvider(),
             transport=transport or WebsocketsTransport(self.address),
             connection=connection,
         )
-        self._network.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
-        self._extensions = extension_registry or ExtensionRegistry(self)
+        self.network.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
 
-        self._endpoints = self.extensions.register(ENDPOINT_EXTENSION_TYPE)
-        self._plugins = self.extensions.register(PLUGIN_EXTENSION_TYPE)
-        self._tables = self.extensions.register(TABLE_EXTENSION_TYPE)
-        self._registries = self.extensions.register(REGISTRY_EXTENSION_TYPE)
-        self._signals = self.extensions.register(SIGNAL_EXTENSION_TYPE)
-        self._permissions = self.extensions.register(PERMISSION_EXTENSION_TYPE)
-        self._server = self.extensions.register(SERVER_EXTENSION_TYPE)
-        self._assets = self.extensions.register(ASSET_EXTENSION_TYPE)
-        self._dashboard = self.extensions.register(DASHBOARD_EXTENSION_TYPE)
-        self._i18n = self.extensions.register(I18N_EXTENSION_TYPE)
-        self._logger = self.extensions.register(LOGGER_EXTENSION_TYPE)
+        self.sessions = SESSION_EXTENSION_TYPE.create(self)
+        self.endpoints: Final = ENDPOINT_EXTENSION_TYPE.create(self)
+        self.plugins: Final = PLUGIN_EXTENSION_TYPE.create(self)
+        self.tables: Final = TABLE_EXTENSION_TYPE.create(self)
+        self.registries: Final = REGISTRY_EXTENSION_TYPE.create(self)
+        self.signals: Final = SIGNAL_EXTENSION_TYPE.create(self)
+        self.permissions: Final = PERMISSION_EXTENSION_TYPE.create(self)
+        self.server: Final = SERVER_EXTENSION_TYPE.create(self)
+        self.assets: Final = ASSET_EXTENSION_TYPE.create(self)
+        self.dashboard: Final = DASHBOARD_EXTENSION_TYPE.create(self)
+        self.i18n: Final = I18N_EXTENSION_TYPE.create(self)
+        self.logger: Final = LOGGER_EXTENSION_TYPE.create(self)
 
     async def _handle_ready(self, detail: None) -> None:
         self._ready = True
-        await self._event.ready()
+        await self.event.ready()
 
     def set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
         loop.set_exception_handler(asyncio_error_logger)
-        self._loop = loop
+        self.loop = loop
         return loop
-
-    @property
-    def version(self) -> str:
-        return self._version
 
     @property
     def ready(self) -> bool:
         return self._ready
 
     @property
-    def app(self) -> App:
-        return self._app
-
-    @property
-    def loop(self) -> asyncio.AbstractEventLoop:
-        return self._loop
-
-    @property
-    def network(self) -> Network:
-        return self._network
-
-    @property
-    def extensions(self) -> ExtensionRegistry:
-        return self._extensions
-
-    @property
-    def endpoints(self) -> EndpointExtension:
-        return self._endpoints
-
-    @property
-    def plugins(self) -> PluginExtension:
-        return self._plugins
-
-    @property
-    def tables(self) -> TableExtension:
-        return self._tables
-
-    @property
-    def registries(self) -> RegistryExtension:
-        return self._registries
-
-    @property
-    def signals(self) -> SignalExtension:
-        return self._signals
-
-    @property
-    def assets(self) -> AssetExtension:
-        return self._assets
-
-    @property
-    def server(self) -> ServerExtension:
-        return self._server
-
-    @property
-    def permissions(self) -> PermissionExtension:
-        return self._permissions
-
-    @property
-    def dashboard(self) -> DashboardExtension:
-        return self._dashboard
-
-    @property
-    def i18n(self) -> I18nExtension:
-        return self._i18n
-
-    @property
-    def logger(self) -> LoggerExtension:
-        return self._logger
-
-    @property
     def running(self) -> bool:
         return self._running
 
     async def send[T](self, type: PacketType[T], data: T) -> None:
-        await self._network.send(Packet(type, data))
+        await self.network.send(Packet(type, data))
 
     def run(
         self,
@@ -159,7 +101,7 @@ class Omu(Client):
         loop: asyncio.AbstractEventLoop | None = None,
         reconnect: bool = True,
     ) -> None:
-        self._loop = self.set_loop(loop or self._loop)
+        self.loop = self.set_loop(loop or self.loop)
 
         async def _run():
             try:
@@ -168,10 +110,10 @@ class Omu(Client):
                 if self._running:
                     await self.stop()
 
-        if self._loop is None:
+        if self.loop is None:
             asyncio.run(_run())
         else:
-            self._loop.create_task(_run())
+            self.loop.create_task(_run())
 
     async def start(self, *, reconnect: bool = True) -> None:
         current_loop = asyncio.get_event_loop()
@@ -180,19 +122,15 @@ class Omu(Client):
         if self._running:
             raise RuntimeError("Already running")
         self._running = True
-        await self._event.started()
-        await self._network.connect(reconnect=reconnect)
+        await self.event.started()
+        await self.network.connect(reconnect=reconnect)
 
     async def stop(self) -> None:
         if not self._running:
             raise RuntimeError("Not running")
         self._running = False
-        await self._network.close()
-        await self._event.stopped()
-
-    @property
-    def event(self) -> ClientEvents:
-        return self._event
+        await self.network.close()
+        await self.event.stopped()
 
     def on_ready(self, coro: Coro[[], None]) -> Unlisten:
         if self._ready:

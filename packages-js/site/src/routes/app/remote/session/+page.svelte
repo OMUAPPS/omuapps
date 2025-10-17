@@ -72,12 +72,6 @@
             logs.push(
                 `[disconnected] disconnected from ${omu.address.host}:${omu.address.port}`,
             );
-        } else if (status.type === 'error') {
-            state = {
-                type: 'disconnected',
-                reason: status.error.message || undefined,
-            };
-            logs.push(`[error] ${status.error.message}`);
         } else if (status.type === 'ready') {
             state = { type: 'ready' };
             logs.length = 0;

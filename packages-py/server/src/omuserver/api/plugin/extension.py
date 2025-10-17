@@ -31,18 +31,18 @@ RESTART = True
 class PluginExtension:
     def __init__(self, server: Server) -> None:
         self.allowed_packages = server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
-        server.security.register(PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION)
+        server.security.register_permission(PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION)
         server.packets.register(PLUGIN_REQUIRE_PACKET)
         server.tables.register(PLUGIN_ALLOWED_PACKAGE_TABLE)
         server.packets.bind(PLUGIN_REQUIRE_PACKET, self.handle_require)
         server.endpoints.bind(PLUGIN_RELOAD_ENDPOINT_TYPE, self.handle_reload)
-        server.network.event.start += self.on_network_start
+        server.event.start += self.on_network_start
         server.event.stop += self.on_stop
         self.server = server
         self.request_id = 0
         self.lock = asyncio.Lock()
-        self.loader = PluginLoader(server)
         self.dependency_resolver = DependencyResolver()
+        self.loader = PluginLoader(server, self.dependency_resolver)
 
     async def on_network_start(self) -> None:
         await self.loader.run_plugins()

@@ -25,18 +25,13 @@
         omu.start();
     }
 
-    let promise = new Promise<void>((resolve) => {
-        omu.onReady(async () => {
-            resolve();
-        });
-    });
 </script>
 
 <AppPage>
     <header slot="header">
         <AppHeader app={APP} />
     </header>
-    {#await promise then}
+    {#await omu.waitForReady() then}
         <App {omu} {obs} {captionApp} />
     {/await}
 </AppPage>

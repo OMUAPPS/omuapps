@@ -45,7 +45,7 @@ class RegistryExtension:
         self._server = server
         self.registries: dict[Identifier, ServerRegistry] = {}
         self._startup_registries: list[ServerRegistry] = []
-        server.security.register(REGISTRY_PERMISSION)
+        server.security.register_permission(REGISTRY_PERMISSION)
         server.packets.register(REGISTRY_REGISTER_PACKET, REGISTRY_LISTEN_PACKET, REGISTRY_UPDATE_PACKET)
         server.packets.bind(REGISTRY_REGISTER_PACKET, self.handle_register)
         server.packets.bind(REGISTRY_LISTEN_PACKET, self.handle_listen)

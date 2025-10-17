@@ -7,7 +7,7 @@
         ASSET_DOWNLOAD_PERMISSION_ID,
         ASSET_UPLOAD_PERMISSION_ID,
     } from '@omujs/omu/api/asset';
-    import { REMOTE_APP_REQUEST_PERMISSION_ID } from '@omujs/omu/api/server';
+    import { REMOTE_APP_REQUEST_PERMISSION_ID } from '@omujs/omu/api/session';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';

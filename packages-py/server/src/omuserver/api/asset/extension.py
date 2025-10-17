@@ -122,7 +122,7 @@ class AssetIndex:
 
 class AssetExtension:
     def __init__(self, server: Server) -> None:
-        server.security.register(ASSET_UPLOAD_PERMISSION, ASSET_DOWNLOAD_PERMISSION, ASSET_DELETE_PERMISSION)
+        server.security.register_permission(ASSET_UPLOAD_PERMISSION, ASSET_DOWNLOAD_PERMISSION, ASSET_DELETE_PERMISSION)
         server.endpoints.bind(ASSET_UPLOAD_ENDPOINT, self.handle_upload)
         server.endpoints.bind(ASSET_UPLOAD_MANY_ENDPOINT, self.handle_upload_many)
         server.endpoints.bind(ASSET_DOWNLOAD_ENDPOINT, self.handle_download)

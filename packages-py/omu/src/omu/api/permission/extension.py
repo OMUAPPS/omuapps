@@ -1,17 +1,13 @@
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
-from omu.client import Client
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
+from omu.omu import Omu
 from omu.serializer import Serializer
 
 from .permission import PermissionType
 
-PERMISSION_EXTENSION_TYPE = ExtensionType(
-    "permission",
-    lambda client: PermissionExtension(client),
-    lambda: [],
-)
+PERMISSION_EXTENSION_TYPE = ExtensionType("permission", lambda client: PermissionExtension(client))
 
 
 class PermissionExtension(Extension):
@@ -19,21 +15,21 @@ class PermissionExtension(Extension):
     def type(self) -> ExtensionType:
         return PERMISSION_EXTENSION_TYPE
 
-    def __init__(self, client: Client):
-        self.client = client
+    def __init__(self, omu: Omu):
+        self.client = omu
         self.permissions: list[PermissionType] = []
         self.registered_permissions: dict[Identifier, PermissionType] = {}
         self.required_permission_ids: set[Identifier] = set()
-        client.network.register_packet(
+        omu.network.register_packet(
             PERMISSION_REGISTER_PACKET,
             PERMISSION_REQUIRE_PACKET,
             PERMISSION_GRANT_PACKET,
         )
-        client.network.add_packet_handler(
+        omu.network.add_packet_handler(
             PERMISSION_GRANT_PACKET,
             self.handle_grant,
         )
-        client.network.add_task(self.on_network_task)
+        omu.network.add_task(self.on_network_task)
 
     def register(self, *permission_types: PermissionType):
         base_identifier = self.client.app.id

@@ -4,6 +4,7 @@
     import { OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { Spinner, Tooltip } from '@omujs/ui';
+    import { ASSET_APP } from './app';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
@@ -179,7 +180,7 @@
                 <i class="ti ti-arrow-bar-to-down"></i>
             </h3>
             <section>
-                <AssetButton {omu} {obs} dimensions={{ width: 1920, height: 1080 }} />
+                <AssetButton asset={ASSET_APP} {omu} {obs} dimensions={{ width: 1920, height: 1080 }} />
             </section>
         </div>
     {/if}

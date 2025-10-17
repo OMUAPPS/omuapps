@@ -1,8 +1,8 @@
-import type { Client } from '../../client.js';
 import type { Unlisten } from '../../event';
 import { EventEmitter } from '../../event';
 import { Identifier, IdentifierMap } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
+import { Omu } from '../../omu';
 import type { JsonType, Serializable } from '../../serialize';
 import { Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
@@ -28,13 +28,10 @@ export const TABLE_EXTENSION_TYPE: ExtensionType<TableExtension> = new Extension
 );
 export const TABLE_PERMISSION_ID: Identifier = TABLE_EXTENSION_TYPE.join('permission');
 
-const TABLE_SET_PERMISSION_PACKET = PacketType.createSerialized<SetPermissionPacket>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'set_permission',
-        serializer: SetPermissionPacket,
-    },
-);
+const TABLE_SET_PERMISSION_PACKET = PacketType.createSerialized<SetPermissionPacket>(TABLE_EXTENSION_TYPE, {
+    name: 'set_permission',
+    serializer: SetPermissionPacket,
+});
 const TABLE_SET_CONFIG_PACKET = PacketType.createSerialized<SetConfigPacket>(TABLE_EXTENSION_TYPE, {
     name: 'set_config',
     serializer: SetConfigPacket,
@@ -55,92 +52,62 @@ const TABLE_ITEM_ADD_PACKET = PacketType.createSerialized<TableItemsPacket>(TABL
     name: 'item_add',
     serializer: TableItemsPacket,
 });
-const TABLE_ITEM_UPDATE_PACKET = PacketType.createSerialized<TableItemsPacket>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'item_update',
-        serializer: TableItemsPacket,
-    },
-);
-const TABLE_ITEM_REMOVE_PACKET = PacketType.createSerialized<TableItemsPacket>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'item_remove',
-        serializer: TableItemsPacket,
-    },
-);
-const TABLE_ITEM_GET_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, TableItemsPacket>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'item_get',
-        requestSerializer: TableKeysPacket,
-        responseSerializer: TableItemsPacket,
-        permissionId: TABLE_PERMISSION_ID,
-    },
-);
-const TABLE_ITEM_HAS_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, Record<string, boolean>>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'item_has',
-        requestSerializer: TableKeysPacket,
-        responseSerializer: Serializer.json(),
-        permissionId: TABLE_PERMISSION_ID,
-    },
-);
-const TABLE_ITEM_HAS_ALL_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, boolean>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'item_has_all',
-        requestSerializer: TableKeysPacket,
-        responseSerializer: Serializer.json(),
-        permissionId: TABLE_PERMISSION_ID,
-    },
-);
-const TABLE_ITEM_HAS_ANY_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, boolean>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'item_has_any',
-        requestSerializer: TableKeysPacket,
-        responseSerializer: Serializer.json(),
-        permissionId: TABLE_PERMISSION_ID,
-    },
-);
-const TABLE_FETCH_ENDPOINT = EndpointType.createSerialized<TableFetchPacket, TableItemsPacket>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'fetch',
-        requestSerializer: TableFetchPacket,
-        responseSerializer: TableItemsPacket,
-        permissionId: TABLE_PERMISSION_ID,
-    },
-);
-const TABLE_FETCH_RANGE_ENDPOINT = EndpointType.createSerialized<
-    TableFetchRangePacket,
-    TableItemsPacket
->(TABLE_EXTENSION_TYPE, {
+const TABLE_ITEM_UPDATE_PACKET = PacketType.createSerialized<TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+    name: 'item_update',
+    serializer: TableItemsPacket,
+});
+const TABLE_ITEM_REMOVE_PACKET = PacketType.createSerialized<TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+    name: 'item_remove',
+    serializer: TableItemsPacket,
+});
+const TABLE_ITEM_GET_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+    name: 'item_get',
+    requestSerializer: TableKeysPacket,
+    responseSerializer: TableItemsPacket,
+    permissionId: TABLE_PERMISSION_ID,
+});
+const TABLE_ITEM_HAS_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, Record<string, boolean>>(TABLE_EXTENSION_TYPE, {
+    name: 'item_has',
+    requestSerializer: TableKeysPacket,
+    responseSerializer: Serializer.json(),
+    permissionId: TABLE_PERMISSION_ID,
+});
+const TABLE_ITEM_HAS_ALL_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, boolean>(TABLE_EXTENSION_TYPE, {
+    name: 'item_has_all',
+    requestSerializer: TableKeysPacket,
+    responseSerializer: Serializer.json(),
+    permissionId: TABLE_PERMISSION_ID,
+});
+const TABLE_ITEM_HAS_ANY_ENDPOINT = EndpointType.createSerialized<TableKeysPacket, boolean>(TABLE_EXTENSION_TYPE, {
+    name: 'item_has_any',
+    requestSerializer: TableKeysPacket,
+    responseSerializer: Serializer.json(),
+    permissionId: TABLE_PERMISSION_ID,
+});
+const TABLE_FETCH_ENDPOINT = EndpointType.createSerialized<TableFetchPacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+    name: 'fetch',
+    requestSerializer: TableFetchPacket,
+    responseSerializer: TableItemsPacket,
+    permissionId: TABLE_PERMISSION_ID,
+});
+const TABLE_FETCH_RANGE_ENDPOINT = EndpointType.createSerialized<TableFetchRangePacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
     name: 'fetch_range',
     requestSerializer: TableFetchRangePacket,
     responseSerializer: TableItemsPacket,
     permissionId: TABLE_PERMISSION_ID,
 });
-const TABLE_FETCH_ALL_ENDPOINT = EndpointType.createSerialized<TablePacket, TableItemsPacket>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'fetch_all',
-        requestSerializer: TablePacket,
-        responseSerializer: TableItemsPacket,
-        permissionId: TABLE_PERMISSION_ID,
-    },
-);
-const TABLE_SIZE_ENDPOINT = EndpointType.createSerialized<TablePacket, number>(
-    TABLE_EXTENSION_TYPE,
-    {
-        name: 'size',
-        requestSerializer: TablePacket,
-        responseSerializer: Serializer.json(),
-        permissionId: TABLE_PERMISSION_ID,
-    },
-);
+const TABLE_FETCH_ALL_ENDPOINT = EndpointType.createSerialized<TablePacket, TableItemsPacket>(TABLE_EXTENSION_TYPE, {
+    name: 'fetch_all',
+    requestSerializer: TablePacket,
+    responseSerializer: TableItemsPacket,
+    permissionId: TABLE_PERMISSION_ID,
+});
+const TABLE_SIZE_ENDPOINT = EndpointType.createSerialized<TablePacket, number>(TABLE_EXTENSION_TYPE, {
+    name: 'size',
+    requestSerializer: TablePacket,
+    responseSerializer: Serializer.json(),
+    permissionId: TABLE_PERMISSION_ID,
+});
 const TABLE_ITEM_CLEAR_PACKET = PacketType.createSerialized<TablePacket>(TABLE_EXTENSION_TYPE, {
     name: 'clear',
     serializer: TablePacket,
@@ -150,8 +117,8 @@ export class TableExtension implements Extension {
     public readonly type: ExtensionType<TableExtension> = TABLE_EXTENSION_TYPE;
     private readonly tableMap = new IdentifierMap<Table<unknown>>();
 
-    constructor(private readonly client: Client) {
-        client.network.registerPacket(
+    constructor(private readonly omu: Omu) {
+        omu.network.registerPacket(
             TABLE_SET_PERMISSION_PACKET,
             TABLE_SET_CONFIG_PACKET,
             TABLE_LISTEN_PACKET,
@@ -165,18 +132,18 @@ export class TableExtension implements Extension {
     }
 
     private createTable<T>(tableType: TableType<T>): Table<T> {
-        this.client.permissions.require(TABLE_PERMISSION_ID);
+        this.omu.permissions.require(TABLE_PERMISSION_ID);
         if (this.has(tableType.id)) {
             throw new Error('Table already exists');
         }
-        const table = new TableImpl<T>(this.client, tableType);
+        const table = new TableImpl<T>(this.omu, tableType);
         this.tableMap.set(tableType.id, table as Table<unknown>);
         return table;
     }
 
     public json<T, D extends JsonType = JsonType>(name: string, options: { key: (item: T) => string; serializer?: Serializable<T, D> }): Table<T> {
         const tableType = new TableType<T>(
-            this.client.app.id.join(name),
+            this.omu.app.id.join(name),
             Serializer.pipe<T, JsonType, Uint8Array>(options.serializer ?? Serializer.noop(), Serializer.json()),
             options.key,
         );
@@ -185,7 +152,7 @@ export class TableExtension implements Extension {
 
     public serialized<T>(name: string, options: { key: (item: T) => string; serializer: Serializable<T, Uint8Array> }): Table<T> {
         const tableType = new TableType<T>(
-            this.client.app.id.join(name),
+            this.omu.app.id.join(name),
             options.serializer,
             options.key,
         );
@@ -218,7 +185,7 @@ class TableImpl<T> implements Table<T> {
     private permissions?: TablePermissions;
 
     constructor(
-        private readonly client: Client,
+        private readonly omu: Omu,
         tableType: TableType<T>,
     ) {
         this.id = tableType.id;
@@ -236,7 +203,7 @@ class TableImpl<T> implements Table<T> {
         this.proxies = [];
         this.listening = false;
 
-        client.network.addPacketHandler(TABLE_PROXY_PACKET, (packet) => {
+        omu.network.addPacketHandler(TABLE_PROXY_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
                 return;
             }
@@ -256,7 +223,7 @@ class TableImpl<T> implements Table<T> {
                         }),
                 );
             });
-            client.send(TABLE_PROXY_PACKET, {
+            omu.send(TABLE_PROXY_PACKET, {
                 id: this.id,
                 key: packet.key,
                 items: Object.fromEntries(
@@ -266,7 +233,7 @@ class TableImpl<T> implements Table<T> {
                 ),
             });
         });
-        client.network.addPacketHandler(TABLE_ITEM_ADD_PACKET, (packet) => {
+        omu.network.addPacketHandler(TABLE_ITEM_ADD_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
                 return;
             }
@@ -274,7 +241,7 @@ class TableImpl<T> implements Table<T> {
             this.updateCache(items);
             this.event.add.emit(items);
         });
-        client.network.addPacketHandler(TABLE_ITEM_UPDATE_PACKET, (packet) => {
+        omu.network.addPacketHandler(TABLE_ITEM_UPDATE_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
                 return;
             }
@@ -282,7 +249,7 @@ class TableImpl<T> implements Table<T> {
             this.updateCache(items);
             this.event.update.emit(items);
         });
-        client.network.addPacketHandler(TABLE_ITEM_REMOVE_PACKET, (packet) => {
+        omu.network.addPacketHandler(TABLE_ITEM_REMOVE_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
                 return;
             }
@@ -293,7 +260,7 @@ class TableImpl<T> implements Table<T> {
             this.event.remove.emit(items);
             this.event.cacheUpdate.emit(this.cache);
         });
-        client.network.addPacketHandler(TABLE_ITEM_CLEAR_PACKET, (packet) => {
+        omu.network.addPacketHandler(TABLE_ITEM_CLEAR_PACKET, (packet) => {
             if (!packet.id.isEqual(this.id)) {
                 return;
             }
@@ -301,7 +268,7 @@ class TableImpl<T> implements Table<T> {
             this.event.clear.emit();
             this.event.cacheUpdate.emit(this.cache);
         });
-        client.event.ready.listen(() => this.onReady());
+        omu.event.ready.listen(() => this.onReady());
     }
 
     private updateCache(items: Map<string, T>): void {
@@ -316,8 +283,8 @@ class TableImpl<T> implements Table<T> {
 
     public listen(listener?: (items: Map<string, T>) => void): Unlisten {
         if (!this.listening) {
-            this.client.onReady(() => {
-                this.client.send(TABLE_LISTEN_PACKET, this.id);
+            this.omu.onReady(() => {
+                this.omu.send(TABLE_LISTEN_PACKET, this.id);
             });
             this.listening = true;
         }
@@ -330,12 +297,12 @@ class TableImpl<T> implements Table<T> {
     public proxy(callback: (item: T) => T | undefined): Unlisten {
         if (this.proxies.length === 0) {
             let cancel = (): void => {};
-            cancel = this.client.onReady(() => {
+            cancel = this.omu.onReady(() => {
                 if (this.proxies.length === 0) {
                     cancel();
                     return;
                 }
-                this.client.send(TABLE_PROXY_LISTEN_PACKET, this.id);
+                this.omu.send(TABLE_PROXY_LISTEN_PACKET, this.id);
             });
         }
         this.proxies.push(callback);
@@ -346,7 +313,7 @@ class TableImpl<T> implements Table<T> {
 
     private onReady(): void {
         if (this.config) {
-            this.client.send(TABLE_SET_CONFIG_PACKET, {
+            this.omu.send(TABLE_SET_CONFIG_PACKET, {
                 id: this.id,
                 config: this.config,
             });
@@ -360,7 +327,7 @@ class TableImpl<T> implements Table<T> {
         if (this.promiseMap.has(key)) {
             return await this.promiseMap.get(key);
         }
-        const promise = this.client.endpoints
+        const promise = this.omu.endpoints
             .call(TABLE_ITEM_GET_ENDPOINT, {
                 id: this.id,
                 keys: [key],
@@ -384,7 +351,7 @@ class TableImpl<T> implements Table<T> {
         if (filteredKeys.length === 0) {
             return new Map([...this.cache].filter(([key]) => keys.includes(key)));
         }
-        const promise = this.client.endpoints
+        const promise = this.omu.endpoints
             .call(TABLE_ITEM_GET_ENDPOINT, {
                 id: this.id,
                 keys: filteredKeys,
@@ -409,7 +376,7 @@ class TableImpl<T> implements Table<T> {
 
     public async add(...items: T[]): Promise<void> {
         const data = this.serializeItems(items);
-        this.client.send(TABLE_ITEM_ADD_PACKET, {
+        this.omu.send(TABLE_ITEM_ADD_PACKET, {
             id: this.id,
             items: data,
         });
@@ -417,7 +384,7 @@ class TableImpl<T> implements Table<T> {
 
     public async update(...items: T[]): Promise<void> {
         const data = this.serializeItems(items);
-        this.client.send(TABLE_ITEM_UPDATE_PACKET, {
+        this.omu.send(TABLE_ITEM_UPDATE_PACKET, {
             id: this.id,
             items: data,
         });
@@ -427,14 +394,14 @@ class TableImpl<T> implements Table<T> {
         const data = this.serializeItems(items);
         const keys = Object.keys(data);
         this.cache = new Map([...this.cache].filter(([key]) => !keys.includes(key)));
-        this.client.send(TABLE_ITEM_REMOVE_PACKET, {
+        this.omu.send(TABLE_ITEM_REMOVE_PACKET, {
             id: this.id,
             items: data,
         });
     }
 
     public async clear(): Promise<void> {
-        this.client.send(TABLE_ITEM_CLEAR_PACKET, {
+        this.omu.send(TABLE_ITEM_CLEAR_PACKET, {
             id: this.id,
         });
     }
@@ -443,7 +410,7 @@ class TableImpl<T> implements Table<T> {
         if (this.cache.has(key)) {
             return true;
         }
-        const res = await this.client.endpoints.call(TABLE_ITEM_HAS_ENDPOINT, {
+        const res = await this.omu.endpoints.call(TABLE_ITEM_HAS_ENDPOINT, {
             id: this.id,
             keys: [key],
         });
@@ -451,7 +418,7 @@ class TableImpl<T> implements Table<T> {
     }
 
     public async hasMany<T extends Record<string, unknown>>(...keys: (keyof T)[]): Promise<{ [key in keyof T]: boolean }> {
-        const res = await this.client.endpoints.call(TABLE_ITEM_HAS_ENDPOINT, {
+        const res = await this.omu.endpoints.call(TABLE_ITEM_HAS_ENDPOINT, {
             id: this.id,
             keys: keys,
         });
@@ -459,7 +426,7 @@ class TableImpl<T> implements Table<T> {
     }
 
     public async hasAll(...keys: string[]): Promise<boolean> {
-        const res = await this.client.endpoints.call(TABLE_ITEM_HAS_ALL_ENDPOINT, {
+        const res = await this.omu.endpoints.call(TABLE_ITEM_HAS_ALL_ENDPOINT, {
             id: this.id,
             keys,
         });
@@ -467,7 +434,7 @@ class TableImpl<T> implements Table<T> {
     }
 
     public async hasAny(...keys: string[]): Promise<boolean> {
-        const res = await this.client.endpoints.call(TABLE_ITEM_HAS_ANY_ENDPOINT, {
+        const res = await this.omu.endpoints.call(TABLE_ITEM_HAS_ANY_ENDPOINT, {
             id: this.id,
             keys,
         });
@@ -483,7 +450,7 @@ class TableImpl<T> implements Table<T> {
         backward?: boolean;
         cursor?: string;
     }): Promise<Map<string, T>> {
-        const res = await this.client.endpoints.call(
+        const res = await this.omu.endpoints.call(
             TABLE_FETCH_ENDPOINT,
             new TableFetchPacket(this.id, limit, backward, cursor),
         );
@@ -499,7 +466,7 @@ class TableImpl<T> implements Table<T> {
         start: string;
         end: string;
     }): Promise<Map<string, T>> {
-        const res = await this.client.endpoints.call(TABLE_FETCH_RANGE_ENDPOINT, {
+        const res = await this.omu.endpoints.call(TABLE_FETCH_RANGE_ENDPOINT, {
             id: this.id,
             start,
             end,
@@ -510,7 +477,7 @@ class TableImpl<T> implements Table<T> {
     }
 
     public async fetchAll(): Promise<Map<string, T>> {
-        const res = await this.client.endpoints.call(TABLE_FETCH_ALL_ENDPOINT, {
+        const res = await this.omu.endpoints.call(TABLE_FETCH_ALL_ENDPOINT, {
             id: this.id,
         });
         const items = this.deserializeItems(res.items);
@@ -547,7 +514,7 @@ class TableImpl<T> implements Table<T> {
     }
 
     public async size(): Promise<number> {
-        return await this.client.endpoints.call(TABLE_SIZE_ENDPOINT, {
+        return await this.omu.endpoints.call(TABLE_SIZE_ENDPOINT, {
             id: this.id,
         });
     }
@@ -575,7 +542,7 @@ class TableImpl<T> implements Table<T> {
     }
 
     public setConfig(config: TableConfig): void {
-        if (this.client.running) {
+        if (this.omu.running) {
             throw new Error('Cannot set config after client has started');
         }
         this.config = config;

@@ -1,21 +1,17 @@
 from __future__ import annotations
 
 from omu.api import Extension, ExtensionType
-from omu.client import Client
 from omu.event_emitter import Unlisten
 from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
+from omu.omu import Omu
 from omu.serializer import Serializer
 
 from .packets import SignalPacket, SignalRegisterPacket
 from .signal import Signal, SignalType
 
-SIGNAL_EXTENSION_TYPE = ExtensionType(
-    "signal",
-    lambda client: SignalExtension(client),
-    lambda: [],
-)
+SIGNAL_EXTENSION_TYPE = ExtensionType("signal", lambda client: SignalExtension(client))
 
 
 SIGNAL_REGISTER_PACKET = PacketType[SignalRegisterPacket].create_serialized(
@@ -40,10 +36,10 @@ class SignalExtension(Extension):
     def type(self) -> ExtensionType:
         return SIGNAL_EXTENSION_TYPE
 
-    def __init__(self, client: Client):
-        self.client = client
+    def __init__(self, omu: Omu):
+        self.client = omu
         self.signals: dict[Identifier, Signal] = {}
-        client.network.register_packet(
+        omu.network.register_packet(
             SIGNAL_REGISTER_PACKET,
             SIGNAL_LISTEN_PACKET,
             SIGNAL_NOTIFY_PACKET,
@@ -67,13 +63,13 @@ class SignalExtension(Extension):
 
 
 class SignalImpl[T](Signal):
-    def __init__(self, client: Client, type: SignalType[T]):
-        self.client = client
+    def __init__(self, omu: Omu, type: SignalType[T]):
+        self.client = omu
         self.type = type
         self.listeners: list[Coro[[T], None]] = []
         self.listening = False
-        client.network.add_packet_handler(SIGNAL_NOTIFY_PACKET, self._on_broadcast)
-        client.network.add_task(self._on_task)
+        omu.network.add_packet_handler(SIGNAL_NOTIFY_PACKET, self._on_broadcast)
+        omu.network.add_task(self._on_task)
 
     async def notify(self, body: T) -> None:
         data = self.type.serializer.serialize(body)

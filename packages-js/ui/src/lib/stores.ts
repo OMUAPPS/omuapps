@@ -1,5 +1,4 @@
 import type { Chat } from '@omujs/chat';
-import type { Client } from '@omujs/omu';
 import { App, Omu } from '@omujs/omu';
 import type { Locale } from '@omujs/omu/localization';
 import { BROWSER } from 'esm-env';
@@ -13,12 +12,12 @@ export const translate: Writable<TranslateFunction> = writable(
     },
 );
 
-export const client: Writable<Client> = writable();
+export const client: Writable<Omu> = writable();
 export const chat: Writable<Chat> = writable();
-export function setClient<T extends Client>(newClient: T): T {
+export function setClient(newClient: Omu): Omu {
     if (!BROWSER) {
         const DUMMY_CLIENT = new Omu(new App('com.omuapps:dummy', { version: '0.0.0' }));
-        const newClient = DUMMY_CLIENT as unknown as T;
+        const newClient = DUMMY_CLIENT;
         client.set(newClient);
         return newClient;
     };

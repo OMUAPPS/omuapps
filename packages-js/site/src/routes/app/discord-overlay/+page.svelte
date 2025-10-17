@@ -28,7 +28,7 @@
             ASSET_DOWNLOAD_PERMISSION_ID,
             permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
-        omu.server.require(PLUGIN_ID);
+        omu.sessions.require(PLUGIN_ID);
         omu.start();
     }
 

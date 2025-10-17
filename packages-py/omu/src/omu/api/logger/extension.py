@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from omu.api import Extension, ExtensionType
-from omu.client import Client
 from omu.event_emitter import Unlisten
 from omu.helper import AsyncCallback
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
+from omu.omu import Omu
 from omu.serializer import Serializer
 
 from .packets import LogMessage, LogPacket
 
-LOGGER_EXTENSION_TYPE = ExtensionType("logger", lambda client: LoggerExtension(client), lambda: [])
+LOGGER_EXTENSION_TYPE = ExtensionType("logger", lambda client: LoggerExtension(client))
 LOGGER_LOG_PERMISSION_ID = LOGGER_EXTENSION_TYPE / "log"
 
 LOGGER_LOG_PACKET = PacketType[LogPacket].create_serialized(
@@ -31,14 +31,14 @@ class LoggerExtension(Extension):
     def type(self) -> ExtensionType:
         return LOGGER_EXTENSION_TYPE
 
-    def __init__(self, client: Client):
-        client.network.register_packet(
+    def __init__(self, omu: Omu):
+        omu.network.register_packet(
             LOGGER_LOG_PACKET,
             LOGGER_LISTEN_PACKET,
         )
-        client.network.add_packet_handler(LOGGER_LOG_PACKET, self.handle_log)
-        client.permissions.require(LOGGER_LOG_PERMISSION_ID)
-        self.client = client
+        omu.network.add_packet_handler(LOGGER_LOG_PACKET, self.handle_log)
+        omu.permissions.require(LOGGER_LOG_PERMISSION_ID)
+        self.client = omu
         self.listeners: dict[Identifier, set[AsyncCallback[LogMessage]]] = {}
 
     async def log(self, message: LogMessage) -> None:

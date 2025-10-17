@@ -1,38 +1,38 @@
-import type { Client } from '../../client.js';
 import { Identifier } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
+import { Omu } from '../../omu';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
 import { Table, TableType } from '../table/table.js';
 
 export const PLUGIN_EXTENSION_TYPE: ExtensionType<PluginExtension> = new ExtensionType(
     'plugin',
-    (client: Client) => new PluginExtension(client),
+    (omu: Omu) => new PluginExtension(omu),
 );
 
 export class PluginExtension {
     public readonly type: ExtensionType<PluginExtension> = PLUGIN_EXTENSION_TYPE;
     private readonly requiredPlugins: Map<string, string | null> = new Map();
 
-    constructor(private readonly client: Client) {
-        client.network.registerPacket(PLUGIN_REQUIRE_PACKET);
-        client.network.addTask(() => this.onTask());
+    constructor(private readonly omu: Omu) {
+        omu.network.registerPacket(PLUGIN_REQUIRE_PACKET);
+        omu.network.addTask(() => this.onTask());
     }
 
     public getAllowedPackages(): Table<PluginPackageInfo> {
-        return this.client.tables.get(PLUGIN_ALLOWED_PACKAGE_TABLE);
+        return this.omu.tables.get(PLUGIN_ALLOWED_PACKAGE_TABLE);
     }
 
     public reload(options: ReloadOptions): void {
-        this.client.endpoints.call(PLUGIN_RELOAD_ENDPOINT_TYPE, options);
+        this.omu.endpoints.call(PLUGIN_RELOAD_ENDPOINT_TYPE, options);
     }
 
     private async onTask(): Promise<void> {
-        this.client.send(PLUGIN_REQUIRE_PACKET, Object.fromEntries(this.requiredPlugins));
+        this.omu.send(PLUGIN_REQUIRE_PACKET, Object.fromEntries(this.requiredPlugins));
     }
 
     public require(plugins: Record<string, string | null>): void {
-        if (this.client.running) {
+        if (this.omu.running) {
             throw new Error('Plugins must be required before the client starts');
         }
         for (const [key, value] of Object.entries(plugins)) {

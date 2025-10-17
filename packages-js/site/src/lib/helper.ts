@@ -224,4 +224,3 @@ export function comparator<T>(func: (value: T) => number): Comparator<T> {
         return func(a) - func(b);
     };
 }
-

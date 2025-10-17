@@ -23,7 +23,7 @@ from omu.errors import PermissionDenied
 from yarl import URL
 
 from omuserver.api.http.permission import HTTP_REQUEST_PERMISSION
-from omuserver.session.session import Session
+from omuserver.session import Session
 
 if TYPE_CHECKING:
     from omuserver.server import Server
@@ -52,7 +52,7 @@ class HttpExtension:
     def __init__(self, server: Server):
         self.server = server
         self.requests: dict[str, Request] = {}
-        server.security.register(HTTP_REQUEST_PERMISSION)
+        server.security.register_permission(HTTP_REQUEST_PERMISSION)
         server.network.register_packet(
             HTTP_REQUEST_CREATE,
             HTTP_REQUEST_SEND,

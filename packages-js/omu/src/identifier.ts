@@ -1,5 +1,10 @@
+import type { ExtensionType } from './api';
+import { App } from './app';
+
 const NAMESPACE_REGEX = /^(\.[^/:.]|[\w-])+$/;
 const NAME_REGEX = /^[^/:]+$/;
+
+export type IntoId = Identifier | string | ExtensionType | App;
 
 export class Identifier {
     public readonly namespace: string;
@@ -22,6 +27,33 @@ export class Identifier {
         return Identifier.fromJson(json);
     }
 
+    public static from(id: IntoId): Identifier {
+        if (id instanceof Identifier) {
+            return id;
+        } else if (id instanceof App) {
+            return id.id;
+        } else if (typeof id === 'string') {
+            return Identifier.fromKey(id);
+        } else {
+            const idCasted = id as { namespace: string; path: string[] };
+            if (
+                typeof idCasted.namespace === 'string' &&
+                Array.isArray(idCasted.path) &&
+                idCasted.path.every((p) => typeof p === 'string')
+            ) {
+                return new Identifier(idCasted.namespace, ...idCasted.path);
+            }
+            throw new Error(`Cannot convert to Identifier: ${id}`);
+        }
+    }
+
+    public static fromOptional(id: IntoId | undefined | null): Identifier | undefined {
+        if (id === undefined || id === null) {
+            return undefined;
+        }
+        return Identifier.from(id);
+    }
+
     static validate(namespace: string, path: string[]): void {
         if (!namespace) {
             throw new Error('Invalid namespace: Namespace cannot be empty');
@@ -34,7 +66,7 @@ export class Identifier {
         }
         for (const name of path) {
             if (!NAME_REGEX.test(name)) {
-                throw new Error(`Invalid path: Name must match ${NAME_REGEX}`);
+                throw new Error(`Invalid path: Name must match ${NAME_REGEX} but got ${name}`);
             }
         }
     }

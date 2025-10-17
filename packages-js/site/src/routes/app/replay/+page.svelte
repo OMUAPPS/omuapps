@@ -3,6 +3,7 @@
     import { Chat } from '@omujs/chat';
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
+    import { GENERATE_TOKEN_PERMISSION_ID } from '@omujs/omu/api/session';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
@@ -16,7 +17,7 @@
     setClient(omu);
 
     if (BROWSER) {
-        omu.permissions.require(permissions.OBS_SOURCE_CREATE_PERMISSION_ID);
+        omu.permissions.require(permissions.OBS_SOURCE_CREATE_PERMISSION_ID, GENERATE_TOKEN_PERMISSION_ID);
         omu.start();
     }
 </script>

@@ -1,25 +1,57 @@
 <script lang="ts">
+    import { omu } from '$lib/client';
     import { appWindow } from '$lib/tauri';
-    import type { App } from '@omujs/omu';
+    import { BrowserTokenProvider, type App, type SessionParam } from '@omujs/omu';
     import { Spinner } from '@omujs/ui';
+    import { onMount } from 'svelte';
 
     export let props: {
         app: App;
     };
 
+    let state: { type: 'generating' } | { type: 'error'; message: string } | { type: 'open'; url: URL } = { type: 'generating' };
+    onMount(async () => {
+        if (!props.app.url) {
+            state = { type: 'error', message: 'App has no URL' };
+            return;
+        }
+        const tokenResult = await omu.sessions.generateToken({
+            app: props.app,
+            permissions: [],
+        });
+        if (tokenResult.type === 'error') {
+            state = { type: 'error', message: 'Failed to generate token: ' + tokenResult.message };
+            return;
+        }
+        const url = new URL(props.app.url);
+        const paramJson: SessionParam = {
+            token: tokenResult.token,
+            address: omu.address,
+        };
+        url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(paramJson));
+        state = { type: 'open', url };
+    });
     let loading = true;
 </script>
 
 <div class="container">
-    <iframe
-        on:load={() => {
-            loading = false;
-        }}
-        src={props.app.url}
-        title=""
-        frameborder="0"
-        allow="camera; microphone; clipboard-read; clipboard-write; fullscreen"
-    ></iframe>
+    {#if state.type === 'generating'}
+        <div class="loading">
+            <Spinner /> Generating token...
+        </div>
+    {:else if state.type === 'error'}
+        <div class="loading">Error: {state.message}</div>
+    {:else if state.type === 'open'}
+        <iframe
+            on:load={() => {
+                loading = false;
+            }}
+            src={state.url.toJSON()}
+            title=""
+            frameborder="0"
+            allow="camera; microphone; clipboard-read; clipboard-write; fullscreen"
+        ></iframe>
+    {/if}
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
         class="window-resize bottom"

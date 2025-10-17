@@ -5,6 +5,7 @@
     import { Message } from '@omujs/chat/models';
     import { OBSPlugin, permissions } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
+    import { GENERATE_TOKEN_PERMISSION_ID } from '@omujs/omu/api/session';
     import {
         AppHeader,
         ComponentRenderer,
@@ -12,7 +13,7 @@
         Tooltip,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP } from './app.js';
+    import { APP, ASSET_APP } from './app.js';
     import EntryList from './components/EntryList.svelte';
     import RouletteRenderer from './components/RouletteRenderer.svelte';
     import SpinButton from './components/SpinButton.svelte';
@@ -48,7 +49,10 @@
     chat.messages.listen();
 
     if (BROWSER) {
-        omu.permissions.require(permissions.OBS_SOURCE_CREATE_PERMISSION_ID);
+        omu.permissions.require(
+            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            GENERATE_TOKEN_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>
@@ -137,6 +141,7 @@
             </h3>
             <AssetButton
                 dimensions={{ width: 1080, height: 1080 }}
+                asset={ASSET_APP}
                 {omu}
                 {obs}
             />

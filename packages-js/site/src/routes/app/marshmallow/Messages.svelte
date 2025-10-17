@@ -110,8 +110,4 @@
     small {
         color: var(--color-1);
     }
-
-    .content {
-        user-select: text;
-    }
 </style>

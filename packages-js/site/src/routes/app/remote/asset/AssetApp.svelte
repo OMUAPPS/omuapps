@@ -10,10 +10,16 @@
     import { Vec2 } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
     import type { Omu } from '@omujs/omu';
-    import type { RemoteApp, Resource } from '../remote-app.js';
+    import { BROWSER } from 'esm-env';
+    import { RemoteApp, type Resource } from '../remote-app.js';
 
     export let omu: Omu;
-    export let remote: RemoteApp;
+    const remote = new RemoteApp(omu, 'asset');
+
+    if (BROWSER) {
+        omu.start();
+    }
+
     const { config, resources } = remote;
 
     const matrices = new Matrices();

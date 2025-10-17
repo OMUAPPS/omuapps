@@ -1,7 +1,7 @@
 import { App } from '../../app.js';
-import type { Client } from '../../client.js';
 import { Identifier, IdentifierMap } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
+import { Omu } from '../../omu.js';
 import { Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
@@ -14,7 +14,7 @@ import { AppInstallRequest, AppInstallResponse, AppUpdateRequest, AppUpdateRespo
 
 export const DASHBOARD_EXTENSION_TYPE: ExtensionType<DashboardExtension> = new ExtensionType(
     'dashboard',
-    (client: Client) => new DashboardExtension(client),
+    (omu: Omu) => new DashboardExtension(omu),
 );
 
 type DashboardSetResponse = {
@@ -337,8 +337,8 @@ export class DashboardExtension {
     public readonly speechRecognition: Registry<TranscriptStatus>;
     private readonly webviewHandles: IdentifierMap<{ handle: WebviewHandle; emit: WebviewEventEmit }> = new IdentifierMap();
 
-    constructor(private readonly client: Client) {
-        client.network.registerPacket(
+    constructor(private readonly omu: Omu) {
+        omu.network.registerPacket(
             DASHBOARD_PERMISSION_REQUEST_PACKET,
             DASHBOARD_PERMISSION_ACCEPT_PACKET,
             DASHBOARD_PERMISSION_DENY_PACKET,
@@ -359,25 +359,25 @@ export class DashboardExtension {
             DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET,
             DASHBOARD_WEBVIEW_EVENT_PACKET,
         );
-        client.network.addPacketHandler(DASHBOARD_PERMISSION_REQUEST_PACKET, (request) =>
+        omu.network.addPacketHandler(DASHBOARD_PERMISSION_REQUEST_PACKET, (request) =>
             this.handlePermissionRequest(request),
         );
-        client.network.addPacketHandler(DASHBOARD_PLUGIN_REQUEST_PACKET, (request) =>
+        omu.network.addPacketHandler(DASHBOARD_PLUGIN_REQUEST_PACKET, (request) =>
             this.handlePluginRequest(request),
         );
-        client.network.addPacketHandler(DASHBOARD_APP_INSTALL_PACKET, async (request) => {
+        omu.network.addPacketHandler(DASHBOARD_APP_INSTALL_PACKET, async (request) => {
             this.handleInstallApp(request);
         });
-        client.network.addPacketHandler(DASHBOARD_APP_UPDATE_PACKET, async (request) => {
+        omu.network.addPacketHandler(DASHBOARD_APP_UPDATE_PACKET, async (request) => {
             this.handleUpdateApp(request);
         });
-        client.network.addPacketHandler(DASHBOARD_OPEN_APP_PACKET, (app) =>
+        omu.network.addPacketHandler(DASHBOARD_OPEN_APP_PACKET, (app) =>
             this.handleOpenApp(app),
         );
-        client.network.addPacketHandler(DASHBOARD_DRAG_DROP_REQUEST_PACKET, (request) => {
+        omu.network.addPacketHandler(DASHBOARD_DRAG_DROP_REQUEST_PACKET, (request) => {
             this.handleDragDropRequest(request);
         });
-        client.network.addPacketHandler(DASHBOARD_DRAG_DROP_STATE_PACKET, ({ state }) => {
+        omu.network.addPacketHandler(DASHBOARD_DRAG_DROP_STATE_PACKET, ({ state }) => {
             switch (state.type) {
                 case 'enter': {
                     this.dragDropListeners.enter.forEach((fn) => fn(state));
@@ -397,26 +397,26 @@ export class DashboardExtension {
                 }
             }
         });
-        client.network.addPacketHandler(DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET, (request) => {
+        omu.network.addPacketHandler(DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET, (request) => {
             this.handleDragDropReadRequest(request);
         });
-        client.network.addPacketHandler(DASHBOARD_WEBVIEW_EVENT_PACKET, (packet) => {
+        omu.network.addPacketHandler(DASHBOARD_WEBVIEW_EVENT_PACKET, (packet) => {
             const handle = this.webviewHandles.get(packet.id);
             if (!handle) return;
             handle.emit(packet.event);
         });
-        this.apps = client.tables.get(DASHBOARD_APP_TABLE_TYPE);
-        this.allowedHosts = client.tables.get(DASHBOARD_ALLOWED_HOSTS);
-        this.speechRecognition = client.registries.get(DASHBOARD_SPEECH_RECOGNITION);
+        this.apps = omu.tables.get(DASHBOARD_APP_TABLE_TYPE);
+        this.allowedHosts = omu.tables.get(DASHBOARD_ALLOWED_HOSTS);
+        this.speechRecognition = omu.registries.get(DASHBOARD_SPEECH_RECOGNITION);
     }
 
     private async handlePermissionRequest(request: PermissionRequestPacket): Promise<void> {
         const dashboard = this.getDashboard();
         const response = await dashboard.handlePermissionRequest(request);
         if (response) {
-            this.client.send(DASHBOARD_PERMISSION_ACCEPT_PACKET, request.requestId);
+            this.omu.send(DASHBOARD_PERMISSION_ACCEPT_PACKET, request.requestId);
         } else {
-            this.client.send(DASHBOARD_PERMISSION_DENY_PACKET, request.requestId);
+            this.omu.send(DASHBOARD_PERMISSION_DENY_PACKET, request.requestId);
         }
     }
 
@@ -424,9 +424,9 @@ export class DashboardExtension {
         const dashboard = this.getDashboard();
         const response = await dashboard.handlePluginRequest(request);
         if (response) {
-            this.client.send(DASHBOARD_PLUGIN_ACCEPT_PACKET, request.requestId);
+            this.omu.send(DASHBOARD_PLUGIN_ACCEPT_PACKET, request.requestId);
         } else {
-            this.client.send(DASHBOARD_PLUGIN_DENY_PACKET, request.requestId);
+            this.omu.send(DASHBOARD_PLUGIN_DENY_PACKET, request.requestId);
         }
     }
 
@@ -434,9 +434,9 @@ export class DashboardExtension {
         const dashboard = this.getDashboard();
         const response = await dashboard.handleInstallApp(request);
         if (response) {
-            this.client.send(DASHBOARD_APP_INSTALL_ACCEPT_PACKET, request.requestId);
+            this.omu.send(DASHBOARD_APP_INSTALL_ACCEPT_PACKET, request.requestId);
         } else {
-            this.client.send(DASHBOARD_APP_INSTALL_DENY_PACKET, request.requestId);
+            this.omu.send(DASHBOARD_APP_INSTALL_DENY_PACKET, request.requestId);
         }
     }
 
@@ -444,9 +444,9 @@ export class DashboardExtension {
         const dashboard = this.getDashboard();
         const response = await dashboard.handleUpdateApp(request);
         if (response) {
-            this.client.send(DASHBOARD_APP_UPDATE_ACCEPT_PACKET, request.requestId);
+            this.omu.send(DASHBOARD_APP_UPDATE_ACCEPT_PACKET, request.requestId);
         } else {
-            this.client.send(DASHBOARD_APP_UPDATE_DENY_PACKET, request.requestId);
+            this.omu.send(DASHBOARD_APP_UPDATE_DENY_PACKET, request.requestId);
         }
     }
 
@@ -458,7 +458,7 @@ export class DashboardExtension {
     private async handleDragDropRequest(request: DragDropRequestDashboard): Promise<void> {
         const dashboard = this.getDashboard();
         const accepted = await dashboard.handleDragDropRequest(request);
-        this.client.send(DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET, {
+        this.omu.send(DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET, {
             ok: accepted,
             request_id: request.request_id,
         });
@@ -467,7 +467,7 @@ export class DashboardExtension {
     private async handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<void> {
         const dashboard = this.getDashboard();
         const response = await dashboard.handleDragDropReadRequest(request);
-        this.client.send(DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET, response);
+        this.omu.send(DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET, response);
     }
 
     private getDashboard(): DashboardHandler {
@@ -478,12 +478,12 @@ export class DashboardExtension {
     }
 
     public set(dashboard: DashboardHandler): void {
-        this.client.permissions.require(DASHBOARD_SET_PERMISSION_ID);
+        this.omu.permissions.require(DASHBOARD_SET_PERMISSION_ID);
         if (this.dashboard !== null) {
             throw new Error('Dashboard already set');
         }
         this.dashboard = dashboard;
-        this.client.endpoints.bind(DASHBOARD_COOKIES_GET, async (request, params): Promise<UserResponse<Cookie[]>> => {
+        this.omu.endpoints.bind(DASHBOARD_COOKIES_GET, async (request, params): Promise<UserResponse<Cookie[]>> => {
             const { url } = request;
             const { hostname } = new URL(url);
             const allowedHost = await this.allowedHosts.get(hostname) ?? { host: hostname, apps: [] };
@@ -495,7 +495,7 @@ export class DashboardExtension {
             }
             return await dashboard.getCookies(request);
         });
-        this.client.endpoints.bind(DASHBOARD_HOST_REQUEST, async (request, params): Promise<UserResponse> => {
+        this.omu.endpoints.bind(DASHBOARD_HOST_REQUEST, async (request, params): Promise<UserResponse> => {
             const { host } = request;
             const hostEntry = await this.allowedHosts.get(host) ?? { host, apps: [] };
             const allowed = hostEntry.apps.some((host) => host.isEqual(params.caller));
@@ -512,9 +512,9 @@ export class DashboardExtension {
             }
             return result;
         });
-        this.client.endpoints.bind(DASHBOARD_WEBVIEW_REQUEST, async (request, params): Promise<WebviewResponse> => {
+        this.omu.endpoints.bind(DASHBOARD_WEBVIEW_REQUEST, async (request, params): Promise<WebviewResponse> => {
             const emit = async (event: WebviewEvent) => {
-                this.client.send(DASHBOARD_WEBVIEW_EVENT_PACKET, {
+                this.omu.send(DASHBOARD_WEBVIEW_EVENT_PACKET, {
                     id,
                     target: params.caller,
                     event,
@@ -527,7 +527,7 @@ export class DashboardExtension {
                 value: undefined,
             };
         });
-        this.client.endpoints.bind(DASHBOARD_WEBVIEW_CLOSE, async (request, params): Promise<WebviewResponse> => {
+        this.omu.endpoints.bind(DASHBOARD_WEBVIEW_CLOSE, async (request, params): Promise<WebviewResponse> => {
             const id = await dashboard.getWebview(request, params);
             if (!id) {
                 return {
@@ -542,14 +542,14 @@ export class DashboardExtension {
                 value: undefined,
             };
         });
-        this.client.endpoints.bind(DASHBOARD_SPEECH_RECOGNITION_START, async (request, params): Promise<UserResponse<undefined>> => {
+        this.omu.endpoints.bind(DASHBOARD_SPEECH_RECOGNITION_START, async (request, params): Promise<UserResponse<undefined>> => {
             const result = await dashboard.speechRecognitionStart(request, params);
             return result;
         });
-        this.client.network.addTask(async () => {
-            const response = await this.client.endpoints.call(
+        this.omu.network.addTask(async () => {
+            const response = await this.omu.endpoints.call(
                 DASHBOARD_SET_ENDPOINT,
-                this.client.app.id,
+                this.omu.app.id,
             );
             if (!response.success) {
                 throw new Error('Failed to set dashboard');
@@ -558,14 +558,14 @@ export class DashboardExtension {
     }
 
     public async requestHost(options: { host: string }): Promise<UserResponse> {
-        return this.client.endpoints.call(
+        return this.omu.endpoints.call(
             DASHBOARD_HOST_REQUEST,
             options,
         );
     }
 
     public async requestWebview(options: WebviewRequest): Promise<UserResult<WebviewHandle>> {
-        const result = await this.client.endpoints.call(
+        const result = await this.omu.endpoints.call(
             DASHBOARD_WEBVIEW_REQUEST,
             options,
         );
@@ -576,7 +576,7 @@ export class DashboardExtension {
             id,
             url: options.url,
             close: async () => {
-                await this.client.endpoints.call(
+                await this.omu.endpoints.call(
                     DASHBOARD_WEBVIEW_CLOSE,
                     { id },
                 );
@@ -617,28 +617,28 @@ export class DashboardExtension {
     }
 
     public async getCookies(options: GetCookiesRequest): Promise<UserResult<Cookie[]>> {
-        return new UserResult(await this.client.endpoints.call(
+        return new UserResult(await this.omu.endpoints.call(
             DASHBOARD_COOKIES_GET,
             options,
         ));
     }
 
     public async openApp(app: App): Promise<void> {
-        return await this.client.endpoints.call(DASHBOARD_OPEN_APP_ENDPOINT, app);
+        return await this.omu.endpoints.call(DASHBOARD_OPEN_APP_ENDPOINT, app);
     }
 
     public async installApp(app: App): Promise<AppInstallResponse> {
-        return await this.client.endpoints.call(DASHBOARD_APP_INSTALL_ENDPOINT, app);
+        return await this.omu.endpoints.call(DASHBOARD_APP_INSTALL_ENDPOINT, app);
     }
 
     public async updateApp(app: App): Promise<AppUpdateResponse> {
-        return await this.client.endpoints.call(DASHBOARD_APP_UPDATE_ENDPOINT, app);
+        return await this.omu.endpoints.call(DASHBOARD_APP_UPDATE_ENDPOINT, app);
     }
 
     public async requireDragDrop(): Promise<DragDropHandler> {
-        await this.client.endpoints.call(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, {});
+        await this.omu.endpoints.call(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, {});
         const listeners = this.dragDropListeners;
-        const client = this.client;
+        const client = this.omu;
         this.dragDropHandler = {
             onEnter(fn) { listeners.enter.push(fn); },
             onOver(fn) { listeners.over.push(fn); },
@@ -650,10 +650,10 @@ export class DashboardExtension {
     }
 
     public async notifyDropDragState(packet: FileDragPacket): Promise<void> {
-        this.client.send(DASHBOARD_DRAG_DROP_STATE_PACKET, packet);
+        this.omu.send(DASHBOARD_DRAG_DROP_STATE_PACKET, packet);
     }
 
     public async speechRecognitionStart(): Promise<void> {
-        await this.client.endpoints.call(DASHBOARD_SPEECH_RECOGNITION_START, { type: 'start' });
+        await this.omu.endpoints.call(DASHBOARD_SPEECH_RECOGNITION_START, { type: 'start' });
     }
 }

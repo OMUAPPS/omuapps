@@ -123,17 +123,17 @@ export const sessions = writable({
 async function startCheckInstalled(): Promise<void> {
     if (!game) throw new Error('Game not created');
     const { omu } = game;
-    omu.server.observeSession(OVERLAY_ID, {
+    omu.sessions.observe(OVERLAY_ID, {
         onConnect: () => sessions.update((s) => ({ ...s, overlay: true })),
         onDisconnect: () => sessions.update((s) => ({ ...s, overlay: false })),
     });
-    omu.server.observeSession(BACKGROUND_ID, {
+    omu.sessions.observe(BACKGROUND_ID, {
         onConnect: () => sessions.update((s) => ({ ...s, background: true })),
         onDisconnect: () => sessions.update((s) => ({ ...s, background: false })),
     });
     sessions.set({
-        overlay: await omu.server.sessions.has(OVERLAY_ID.key()),
-        background: await omu.server.sessions.has(BACKGROUND_ID.key()),
+        overlay: await omu.sessions.has(OVERLAY_ID),
+        background: await omu.sessions.has(BACKGROUND_ID),
     });
 }
 

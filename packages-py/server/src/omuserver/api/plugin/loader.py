@@ -17,15 +17,17 @@ from loguru import logger
 from omu.api.plugin import PackageInfo, PluginPackageInfo
 from omu.plugin import InstallContext, Plugin
 from omu.result import Err, Ok, Result, is_err
+from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+from omuserver.helper import normalize_package_name
+
+from .entry import PluginEntry
 from .instance import PluginInstance
 
 if TYPE_CHECKING:
     from omuserver.server import Server
-
-PLUGIN_GROUP = "omu.plugins"
 
 
 class PluginModule(Protocol):
@@ -200,6 +202,35 @@ class DependencyResolver:
         logger.info(f"Updated packages: {update_distributions}")
         return Ok(ResolveResult(new_packages=new_distributions, updated_packages=update_distributions))
 
+    def solve_dependency_order(self, entrypoints: dict[str, PluginEntry]):
+        # sort dependenies by entrypoint.dist.requires
+        normalized_map = {normalize_package_name(k): k for k in entrypoints.keys()}
+        sorted_packages: list[str] = []
+        visited: set[str] = set()
+        temp_mark: set[str] = set()
+
+        def visit(package: str):
+            if package in visited:
+                return
+            if package in temp_mark:
+                raise Exception(f"Cyclic dependency detected: {' -> '.join(temp_mark)} -> {package}")
+            temp_mark.add(package)
+            entry_point = entrypoints.get(package)
+            if entry_point is not None and entry_point.dist is not None:
+                for req in entry_point.dist.requires or []:
+                    requirement = Requirement(req)
+                    dep_name = normalize_package_name(requirement.name)
+                    dep_package = normalized_map.get(dep_name)
+                    if dep_package is not None:
+                        visit(dep_package)
+            temp_mark.remove(package)
+            visited.add(package)
+            sorted_packages.append(package)
+
+        for pkg in entrypoints.keys():
+            visit(pkg)
+        return [(pkg, entrypoints[pkg]) for pkg in sorted_packages]
+
 
 @dataclass(frozen=True, slots=True)
 class ResolveResult:
@@ -208,123 +239,98 @@ class ResolveResult:
 
 
 class PluginLoader:
-    def __init__(self, server: Server) -> None:
+    def __init__(
+        self,
+        server: Server,
+        resolver: DependencyResolver,
+    ) -> None:
         self._server = server
         self.instances: dict[str, PluginInstance] = {}
+        self.resolver = resolver
 
     async def run_plugins(self):
-        try:
-            self.load_plugins()
-        except Exception as e:
-            logger.opt(exception=e).error("Failed to load plugins")
-
-        logger.info(f"Loaded plugins: {self.instances.keys()}")
-
-        try:
-            for instance in self.instances.values():
-                await instance.start(self._server)
-        except Exception as e:
-            logger.opt(exception=e).error("Failed to start plugins")
-
-    def retrieve_valid_entry_points(self) -> dict[str, importlib.metadata.EntryPoint]:
-        valid_entry_points: dict[str, importlib.metadata.EntryPoint] = {}
-        entry_points = importlib.metadata.entry_points(group=PLUGIN_GROUP)
-        for entry_point in entry_points:
-            assert entry_point.dist is not None
-            package = entry_point.dist.name
-            if package in valid_entry_points:
-                logger.warning(f"Duplicate plugin: {entry_point}")
-                continue
-            if entry_point.dist is None:
-                logger.warning(f"Invalid plugin: {entry_point} has no distribution")
-                continue
-            if len(entry_point.dist.entry_points) == 0:
-                logger.warning(f"Plugin {entry_point.dist.name} has no entry points")
-                continue
-            valid_entry_points[package] = entry_point
-        return valid_entry_points
-
-    def load_plugins(self):
-        for package, entry_point in self.retrieve_valid_entry_points().items():
+        ordered_entries = self.resolver.solve_dependency_order(PluginEntry.retrieve_plugin_entries())
+        for package, entry in ordered_entries:
             if package in self.instances:
-                logger.warning(f"Duplicate plugin {package}: {entry_point}")
+                logger.warning(f"Duplicate plugin {package}: {entry}")
                 continue
-            plugin = PluginInstance.try_load(entry_point)
-            if plugin is None:
-                logger.warning(f"Failed to load plugin {package}: {entry_point}")
-                continue
-            self.instances[package] = plugin
+            match PluginInstance.try_load(entry):
+                case Ok(instance):
+                    self.instances[entry.key] = instance
+                case Err(message):
+                    logger.warning(f"Failed to load plugin {entry.name}: {message}")
+
+        logger.info(f"Loaded plugins: {', '.join(self.instances.keys())}")
+
+        for instance in self.instances.values():
+            await instance.start(self._server)
 
     async def update_plugins(self, resolve_result: ResolveResult):
-        restart_required = False
-        plugins_pending_start: list[PluginInstance] = []
-        new_packages = resolve_result.new_packages
-        for updated_package in resolve_result.updated_packages.keys():
-            instance = self.instances.get(updated_package)
-            if instance is not None:
+        new_entries: dict[str, PluginEntry] = {}
+        updated_entries: dict[str, PluginEntry] = {}
+        for package in resolve_result.new_packages:
+            distribution = importlib.metadata.distribution(package)
+            for key, entry in PluginEntry.retrieve_from_distribution(distribution).items():
+                if key in new_entries:
+                    logger.error(f"Duplicate plugin {key} during installation")
+                    continue
+                new_entries[key] = entry
+
+        for package in resolve_result.updated_packages.keys():
+            distribution = importlib.metadata.distribution(package)
+            for key, entry in PluginEntry.retrieve_from_distribution(distribution).items():
+                if key in updated_entries:
+                    logger.error(f"Duplicate plugin {key} during update")
+                    continue
+                updated_entries[key] = entry
+
+        instances_to_start: list[PluginInstance] = []
+        restart_requires: list[str] = []
+
+        for key, entry in self.resolver.solve_dependency_order(new_entries):
+            if key in self.instances:
+                logger.error(f"Plugin {key} already exists during installation")
                 continue
-            new_packages.append(updated_package)
-        for new_package in new_packages:
-            try:
-                entry_points = tuple(importlib.metadata.entry_points(group=PLUGIN_GROUP, module=new_package))
-                if len(entry_points) == 0:
-                    logger.warning(f"Plugin {new_package} has no entry points")
+            match PluginInstance.try_load(entry):
+                case Err(message):
+                    logger.error(f"Error loading plugin {key}: {message}")
                     continue
-                if len(entry_points) > 1:
-                    logger.warning(f"Plugin {new_package} has multiple entry points {entry_points}")
-                    continue
-                entry_point = entry_points[0]
-                if entry_point.dist is None:
-                    raise ValueError(f"Invalid plugin: {entry_point} has no distribution")
-                if entry_point.dist.name != new_package:
-                    continue
-                instance = PluginInstance.try_load(entry_point)
-                if instance is None:
-                    logger.warning(f"Failed to load plugin: {entry_point}")
-                    continue
-                self.instances[new_package] = instance
-                ctx = InstallContext(
-                    server=self._server,
-                    new_distribution=entry_point.dist,
-                )
-                await instance.notify_install(ctx)
-                if ctx.restart_required:
-                    restart_required = True
-                    logger.info(f"Plugin {instance.plugin} requires restart")
-                else:
-                    plugins_pending_start.append(instance)
-            except Exception as e:
-                logger.opt(exception=e).error(f"Error installing plugin {new_package}")
+                case Ok(instance):
+                    ...
+            self.instances[key] = instance
+            ctx = InstallContext(
+                server=self._server,
+                new_distribution=entry.dist,
+            )
+            await instance.notify_install(ctx)
+            if ctx.restart_required:
+                restart_requires.append(key)
+            instances_to_start.append(instance)
 
-        for updated_package, dist in resolve_result.updated_packages.items():
-            try:
-                instance = self.instances.get(updated_package)
-                if instance is None:
-                    continue
-                distribution = importlib.metadata.distribution(updated_package)
-                await instance.terminate(self._server)
-                await instance.reload()
-                ctx = InstallContext(
-                    server=self._server,
-                    old_distribution=distribution,
-                    new_distribution=dist,
-                    old_plugin=instance.plugin,
-                )
-                await instance.notify_update(ctx)
-                await instance.notify_install(ctx)
-                if ctx.restart_required:
-                    restart_required = True
-                    logger.info(f"Plugin {instance.plugin} requires restart")
-                else:
-                    plugins_pending_start.append(instance)
-            except Exception as e:
-                logger.opt(exception=e).error(f"Error updating plugin {updated_package}")
+        for key, entry in self.resolver.solve_dependency_order(updated_entries):
+            instance = self.instances.get(key)
+            if instance is None:
+                continue
+            await instance.terminate(self._server)
+            await instance.reload()
+            ctx = InstallContext(
+                server=self._server,
+                old_distribution=instance.entry.dist,
+                new_distribution=entry.dist,
+                old_plugin=instance.plugin,
+            )
+            await instance.notify_update(ctx)
+            await instance.notify_install(ctx)
+            if ctx.restart_required:
+                restart_requires.append(key)
+            instances_to_start.append(instance)
 
-        if restart_required:
+        if restart_requires:
+            logger.info(f"Restart required for plugins: {restart_requires}")
             await self._server.restart()
             return
 
-        for instance in plugins_pending_start:
+        for instance in instances_to_start:
             await instance.start(self._server)
 
     async def stop_plugins(self):

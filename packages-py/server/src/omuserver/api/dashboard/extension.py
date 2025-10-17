@@ -99,7 +99,7 @@ class DashboardExtension:
             DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
             DASHBOARD_WEBVIEW_EVENT_PACKET,
         )
-        server.security.register(
+        server.security.register_permission(
             DASHBOARD_SET_PERMISSION,
             DASHBOARD_OPEN_APP_PERMISSION,
             DASHOBARD_APP_READ_PERMISSION,
@@ -128,7 +128,6 @@ class DashboardExtension:
         server.endpoints.bind(DASHBOARD_APP_UPDATE_ENDPOINT, self.handle_dashboard_app_update)
         server.endpoints.bind(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, self.handle_drag_drop_request)
         server.endpoints.bind(DASHBOARD_DRAG_DROP_READ_ENDPOINT, self.handle_drag_drop_read)
-        server.network.event.connected += self.handle_session_connected
         self.apps = server.tables.register(DASHBOARD_APP_TABLE_TYPE)
         self.allowed_hosts = server.tables.register(DASHBOARD_ALLOWED_HOSTS)
         self.speech_recognition = server.registries.register(DASHBOARD_SPEECH_RECOGNITION)
@@ -375,7 +374,7 @@ class DashboardExtension:
 
     async def handle_webview_event(self, session: Session, packet: WebviewEventPacket):
         self.ensure_dashboard_session(session)
-        target = self.server.network.sessions.get(packet.target)
+        target = self.server.sessions.find(packet.target)
         if target is None:
             return
         await target.send(DASHBOARD_WEBVIEW_EVENT_PACKET, packet)

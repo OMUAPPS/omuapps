@@ -18,7 +18,7 @@
 
     async function getAPI() {
         await omu.dashboard.requestHost({
-            host: 'marshmallow-qae.com',
+            host: 'marshmallow-qa.com',
         });
         const session = await MarshmallowSession.get(omu) ?? await MarshmallowSession.login(omu);
         if (!session) {

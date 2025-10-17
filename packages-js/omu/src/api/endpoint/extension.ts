@@ -1,7 +1,7 @@
-import type { Client } from '../../client.js';
 import type { Identifier } from '../../identifier';
 import { IdentifierMap } from '../../identifier';
 import { PacketType } from '../../network/packet';
+import { Omu } from '../../omu';
 import { ExtensionType } from '../extension.js';
 
 import { EndpointType } from './endpoint.js';
@@ -9,7 +9,7 @@ import { EndpointInvokedPacket, EndpointInvokePacket, EndpointRegisterPacket, En
 
 export const ENDPOINT_EXTENSION_TYPE: ExtensionType<EndpointExtension> = new ExtensionType(
     'endpoint',
-    (client: Client) => new EndpointExtension(client),
+    (omu: Omu) => new EndpointExtension(omu),
 );
 
 type CallPromise = {
@@ -28,33 +28,33 @@ export class EndpointExtension {
     private readonly responsePromises: Map<number, CallPromise> = new Map();
     private callId: number;
 
-    constructor(private readonly client: Client) {
+    constructor(private readonly omu: Omu) {
         this.callId = Math.floor((performance.timeOrigin + performance.now()) * 1000);
-        client.network.registerPacket(
+        omu.network.registerPacket(
             ENDPOINT_REGISTER_PACKET,
             ENDPOINT_INVOKE_PACKET,
             ENDPOINT_INVOKED_PACKET,
             ENDPOINT_RESPONSE_PACKET,
         );
-        client.network.addPacketHandler(ENDPOINT_INVOKED_PACKET, async (packet) => {
+        omu.network.addPacketHandler(ENDPOINT_INVOKED_PACKET, async (packet) => {
             const endpoint = this.boundEndpoints.get(packet.params.id);
             if (!endpoint) {
                 throw new Error(`Received invocation for unknown endpoint ${packet.params.id.key()} (${packet.params.key})`);
             }
             try {
                 const result = await endpoint.handler(packet);
-                client.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
+                omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
                     new ResponseParams(packet.params.id, packet.params.key, null),
                     result,
                 ));
             } catch (error) {
-                client.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
+                omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
                     new ResponseParams(packet.params.id, packet.params.key, JSON.stringify(error)),
                     new Uint8Array(),
                 ));
             }
         });
-        client.network.addPacketHandler(ENDPOINT_RESPONSE_PACKET, (packet) => {
+        omu.network.addPacketHandler(ENDPOINT_RESPONSE_PACKET, (packet) => {
             const promise = this.responsePromises.get(packet.params.key);
             if (!promise) {
                 throw new Error(
@@ -68,7 +68,7 @@ export class EndpointExtension {
             }
             promise.resolve(packet.buffer);
         });
-        client.network.addTask(() => this.onTask());
+        omu.network.addTask(() => this.onTask());
     }
 
     private onTask(): void {
@@ -77,14 +77,14 @@ export class EndpointExtension {
             endpoints.set(key, endpoint.type.permissionId);
         }
         const packet = new EndpointRegisterPacket(endpoints);
-        this.client.send(ENDPOINT_REGISTER_PACKET, packet);
+        this.omu.send(ENDPOINT_REGISTER_PACKET, packet);
     }
 
     public bind<Req, Res>(
         type: EndpointType<Req, Res>,
         handler: (data: Req, params: InvokedParams) => Promise<Res>,
     ): void {
-        if (this.client.running) {
+        if (this.omu.running) {
             throw new Error('Cannot register endpoints after the client has started');
         }
         if (this.boundEndpoints.has(type.id)) {
@@ -102,7 +102,7 @@ export class EndpointExtension {
         const promise = new Promise<Uint8Array>((resolve, reject) => {
             this.responsePromises.set(key, { resolve, reject });
         });
-        this.client.send(ENDPOINT_INVOKE_PACKET, new EndpointInvokePacket(
+        this.omu.send(ENDPOINT_INVOKE_PACKET, new EndpointInvokePacket(
             new InvokeParams(endpoint.id, key),
             endpoint.requestSerializer.serialize(data),
         ));

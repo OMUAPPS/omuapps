@@ -5,7 +5,7 @@
     import { Omu } from '@omujs/omu';
     import { AppHeader, Button, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP } from './app.js';
+    import { APP, ASSET_APP } from './app.js';
     import { FriesApp } from './fries-app.js';
     import board from './img/board.png';
     import hint from './img/hint.png';
@@ -46,7 +46,7 @@
     </header>
     <main>
         <section class="asset">
-            <AssetButton {omu} {obs} />
+            <AssetButton asset={ASSET_APP} {omu} {obs} />
         </section>
         <h3>試しに投げてみる</h3>
         <section>
@@ -85,10 +85,6 @@
 </AppPage>
 
 <style lang="scss">
-    main {
-        padding: 2rem;
-    }
-
     section {
         display: flex;
         flex-direction: row;
@@ -151,11 +147,5 @@
         color: var(--color-1);
         font-size: 0.9rem;
         border-left: 2px solid var(--color-1);
-    }
-
-    .state {
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: #444;
     }
 </style>

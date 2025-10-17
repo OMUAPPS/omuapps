@@ -3,6 +3,7 @@
     import type { Chat } from '@omujs/chat';
     import { OBSPlugin } from '@omujs/obs';
     import { Button, TableList, Textbox, Tooltip } from '@omujs/ui';
+    import { ASSET_APP } from './app';
     import Config from './components/Config.svelte';
     import Menu from './components/Menu.svelte';
     import MenuSection from './components/MenuSection.svelte';
@@ -114,9 +115,10 @@
         </MenuSection>
         <MenuSection name="配信ソフトに追加する" icon="ti-arrow-bar-to-down">
             <AssetButton
+                asset={ASSET_APP}
+                dimensions={{ width: '50:%', height: '50:%' }}
                 {omu}
                 {obs}
-                dimensions={{ width: '50:%', height: '50:%' }}
             />
         </MenuSection>
     </Menu>

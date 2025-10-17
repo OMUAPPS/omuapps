@@ -1,12 +1,12 @@
-import type { Client } from '../../client.js';
-import { Identifier } from '../../identifier';
+import { Identifier, IntoId } from '../../identifier';
+import { Omu } from '../../omu';
 import { ByteReader, ByteWriter, Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
 
 export const ASSET_EXTENSION_TYPE: ExtensionType<AssetExtension> = new ExtensionType(
     'asset',
-    (client: Client) => new AssetExtension(client),
+    (omu: Omu) => new AssetExtension(omu),
 );
 
 export type Asset = {
@@ -104,46 +104,46 @@ const ASSET_DELETE_ENDPOINT = EndpointType.createJson<Identifier, null>(
 export class AssetExtension {
     public readonly type: ExtensionType<AssetExtension> = ASSET_EXTENSION_TYPE;
 
-    constructor(private readonly client: Client) {}
+    constructor(private readonly omu: Omu) {}
 
-    public async upload(identifier: Identifier, buffer: Uint8Array): Promise<Identifier> {
-        const assetIdentifier = await this.client.endpoints.call(ASSET_UPLOAD_ENDPOINT, {
-            identifier,
+    public async upload(identifier: IntoId, buffer: Uint8Array): Promise<Identifier> {
+        const assetIdentifier = await this.omu.endpoints.call(ASSET_UPLOAD_ENDPOINT, {
+            identifier: Identifier.from(identifier),
             buffer,
         });
         return assetIdentifier;
     }
 
     public async uploadMany(...files: Asset[]): Promise<Identifier[]> {
-        const uploaded = await this.client.endpoints.call(ASSET_UPLOAD_MANY_ENDPOINT, files);
+        const uploaded = await this.omu.endpoints.call(ASSET_UPLOAD_MANY_ENDPOINT, files);
         return uploaded;
     }
 
-    public async download(identifier: Identifier | string): Promise<Asset> {
-        const id = typeof identifier === 'string' ? Identifier.fromKey(identifier) : identifier;
-        const downloaded = await this.client.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, id);
+    public async download(identifier: IntoId): Promise<Asset> {
+        const id = Identifier.from(identifier);
+        const downloaded = await this.omu.endpoints.call(ASSET_DOWNLOAD_ENDPOINT, id);
         return downloaded;
     }
 
-    public async downloadMany(...identifiers: Identifier[]): Promise<Asset[]> {
-        const downloaded = await this.client.endpoints.call(
+    public async downloadMany(...identifiers: IntoId[]): Promise<Asset[]> {
+        const downloaded = await this.omu.endpoints.call(
             ASSET_DOWNLOAD_MANY_ENDPOINT,
-            identifiers,
+            identifiers.map((id) => Identifier.from(id)),
         );
         return downloaded;
     }
 
-    public async delete(identifier: Identifier | string): Promise<void> {
-        const id = typeof identifier === 'string' ? Identifier.fromKey(identifier) : identifier;
-        await this.client.endpoints.call(ASSET_DELETE_ENDPOINT, id);
+    public async delete(identifier: IntoId): Promise<void> {
+        const id = Identifier.from(identifier);
+        await this.omu.endpoints.call(ASSET_DELETE_ENDPOINT, id);
     }
 
     public url(
-        id: Identifier | string,
+        id: IntoId,
         options?: { cache?: 'no-cache' },
     ): string {
-        const key = typeof id === 'string' ? id : id.key();
-        const address = this.client.network.address;
+        const key = Identifier.from(id).key();
+        const address = this.omu.network.address;
         const protocol = address.secure ? 'https' : 'http';
         if (options?.cache === 'no-cache') {
             return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(key)}&t=${Date.now()}`;
@@ -152,7 +152,7 @@ export class AssetExtension {
     }
 
     public proxy(url: string): string {
-        const address = this.client.network.address;
+        const address = this.omu.network.address;
         const protocol = address.secure ? 'https' : 'http';
         return `${protocol}://${address.host}:${address.port}/proxy?url=${encodeURIComponent(url)}`;
     }

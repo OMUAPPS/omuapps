@@ -1,8 +1,11 @@
 <script lang="ts">
+    import type { Omu } from '@omujs/omu';
+    import { BROWSER } from 'esm-env';
     import Player from '../components/Player.svelte';
     import { ReplayApp } from '../replay-app.js';
 
-    const { replayData, config } = ReplayApp.getInstance();
+    export let omu: Omu;
+    const { replayData, config } = ReplayApp.create(omu, 'asset');
     let player: YT.Player;
 
     function updateReplay() {
@@ -128,6 +131,10 @@
         console.log('replayData', $replayData);
     });
     config.subscribe(() => updateConfig());
+
+    if (BROWSER) {
+        omu.start();
+    }
 </script>
 
 <svelte:head>

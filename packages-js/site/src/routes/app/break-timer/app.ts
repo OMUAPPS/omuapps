@@ -19,3 +19,19 @@ export const APP = new App(APP_ID, {
         tags: ['underdevelopment', 'tool', 'asset'] as TagKey[],
     }),
 });
+export const ASSET_APP = new App(APP_ID.join('asset'), {
+    url: getUrl('/app/break-timer/asset'),
+    parentId: APP,
+    metadata: buildMetadata({
+        locale: 'en',
+        name: {
+            ja: '休憩タイマー表示用アセット',
+            en: 'Break Time Timer Display Asset',
+        },
+        description: {
+            ja: '休憩タイマーアプリで使用する表示用アセットです',
+            en: 'This is a display asset used in the Break Time Timer app',
+        },
+        icon: 'ti-clock-pause',
+    }),
+});

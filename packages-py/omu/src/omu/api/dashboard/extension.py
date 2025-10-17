@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, TypedDict
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
@@ -10,7 +10,6 @@ from omu.api.registry.registry import RegistryPermissions, RegistryType
 from omu.api.table import TablePermissions, TableType
 from omu.app import App, AppJson
 from omu.bytebuffer import ByteReader, ByteWriter
-from omu.client import Client
 from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
@@ -25,11 +24,10 @@ from .packets import (
     PluginRequestPacket,
 )
 
-DASHBOARD_EXTENSION_TYPE = ExtensionType(
-    "dashboard",
-    lambda client: DashboardExtension(client),
-    lambda: [],
-)
+if TYPE_CHECKING:
+    from omu.omu import Omu
+
+DASHBOARD_EXTENSION_TYPE = ExtensionType("dashboard", lambda client: DashboardExtension(client))
 
 
 class DashboardSetResponse(TypedDict):
@@ -413,9 +411,9 @@ class DashboardExtension(Extension):
     def type(self) -> ExtensionType:
         return DASHBOARD_EXTENSION_TYPE
 
-    def __init__(self, client: Client):
-        self.client = client
-        self.client.network.register_packet(
+    def __init__(self, omu: Omu):
+        self.omu = omu
+        self.omu.network.register_packet(
             DASHBOARD_PERMISSION_REQUEST_PACKET,
             DASHBOARD_PERMISSION_ACCEPT_PACKET,
             DASHBOARD_PERMISSION_DENY_PACKET,
@@ -435,10 +433,10 @@ class DashboardExtension(Extension):
             DASHBOARD_DRAG_DROP_REQUEST_PACKET,
             DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET,
         )
-        self.apps = client.tables.get(DASHBOARD_APP_TABLE_TYPE)
+        self.apps = omu.tables.get(DASHBOARD_APP_TABLE_TYPE)
 
     async def open_app(self, app: App) -> None:
-        if not self.client.permissions.has(DASHBOARD_OPEN_APP_PERMISSION_ID):
+        if not self.omu.permissions.has(DASHBOARD_OPEN_APP_PERMISSION_ID):
             error = f"Pemission {DASHBOARD_OPEN_APP_PERMISSION_ID} required to open app {app}"
             raise PermissionDenied(error)
-        await self.client.endpoints.call(DASHBOARD_OPEN_APP_ENDPOINT, app)
+        await self.omu.endpoints.call(DASHBOARD_OPEN_APP_ENDPOINT, app)

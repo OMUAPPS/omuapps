@@ -9,7 +9,7 @@ import { setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { NAMESPACE } from './app/origin.js';
 
-export const APP = new Identifier(NAMESPACE, 'page');
+export const APP = new Identifier(NAMESPACE, 'explore');
 const app = new App(APP, {
     version: VERSION,
     metadata: {

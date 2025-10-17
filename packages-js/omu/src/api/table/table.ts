@@ -1,8 +1,7 @@
 import type { EventEmitter, Unlisten } from '../../event';
-import type { Identifier } from '../../identifier';
+import { Identifier, IntoId } from '../../identifier';
 import type { JsonType, Serializable } from '../../serialize';
 import { Serializer } from '../../serialize';
-import type { ExtensionType } from '../extension.js';
 
 export type TableConfig = {
     cache_size: number;
@@ -69,7 +68,7 @@ export class TableType<T> {
     ) {}
 
     public static createJson<T, D extends JsonType = JsonType>(
-        identifier: Identifier | ExtensionType,
+        identifier: IntoId,
         {
             name,
             key,
@@ -83,7 +82,7 @@ export class TableType<T> {
         },
     ): TableType<T> {
         return new TableType<T>(
-            identifier.join(name),
+            Identifier.from(identifier).join(name),
             Serializer.pipe<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
             key,
             permissions,
@@ -91,7 +90,7 @@ export class TableType<T> {
     }
 
     public static createSerialized<T>(
-        identifier: Identifier | ExtensionType,
+        identifier: IntoId,
         {
             name,
             key,
@@ -105,7 +104,7 @@ export class TableType<T> {
         },
     ): TableType<T> {
         return new TableType<T>(
-            identifier.join(name),
+            Identifier.from(identifier).join(name),
             serializer,
             key,
             permissions,

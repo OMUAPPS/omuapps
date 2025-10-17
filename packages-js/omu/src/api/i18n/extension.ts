@@ -1,7 +1,7 @@
-import type { Client } from '../../client.js';
 import { Identifier } from '../../identifier';
 import type { Locale } from '../../localization/locale.js';
 import type { LocalizedText } from '../../localization/localization.js';
+import { Omu } from '../../omu';
 import type { Extension } from '../extension.js';
 import { ExtensionType } from '../extension.js';
 import { RegistryType, type Registry } from '../registry';
@@ -21,9 +21,9 @@ export class I18nExtension implements Extension {
     private locales?: Locale[];
     public defaultLocales?: Locale[];
 
-    constructor(private readonly client: Client) {
-        client.permissions.require(I18N_GET_LOCALES_PERMISSION_ID);
-        this.localesRegistry = client.registries.get(I18N_LOCALES_REGISTRY_TYPE);
+    constructor(private readonly omu: Omu) {
+        omu.permissions.require(I18N_GET_LOCALES_PERMISSION_ID);
+        this.localesRegistry = omu.registries.get(I18N_LOCALES_REGISTRY_TYPE);
         this.localesRegistry.listen((locale) => {
             this.locales = locale;
         });

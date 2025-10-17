@@ -1,19 +1,19 @@
-from typing import TypedDict
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypedDict
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
 from omu.api.table import TableType
 from omu.api.table.table import TablePermissions
-from omu.client import Client
 from omu.network.packet import PacketType
+
+if TYPE_CHECKING:
+    from omu.omu import Omu
 
 from .plugin import PluginPackageInfo
 
-PLUGIN_EXTENSION_TYPE = ExtensionType(
-    "plugin",
-    lambda client: PluginExtension(client),
-    lambda: [],
-)
+PLUGIN_EXTENSION_TYPE = ExtensionType("plugin", lambda client: PluginExtension(client))
 
 
 class PluginExtension(Extension):
@@ -21,20 +21,20 @@ class PluginExtension(Extension):
     def type(self) -> ExtensionType:
         return PLUGIN_EXTENSION_TYPE
 
-    def __init__(self, client: Client):
-        self.client = client
+    def __init__(self, omu: Omu):
+        self.omu = omu
         self.plugins: dict[str, str | None] = {}
 
-        self.client.network.register_packet(
+        self.omu.network.register_packet(
             PLUGIN_REQUIRE_PACKET,
         )
-        self.client.network.add_task(self.on_task)
+        self.omu.network.add_task(self.on_task)
 
     async def on_task(self):
-        await self.client.send(PLUGIN_REQUIRE_PACKET, self.plugins)
+        await self.omu.send(PLUGIN_REQUIRE_PACKET, self.plugins)
 
     def require(self, plugins: dict[str, str | None]):
-        if self.client.running:
+        if self.omu.running:
             raise RuntimeError("Cannot require plugins after client has started")
         self.plugins.update(plugins)
 

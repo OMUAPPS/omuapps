@@ -9,7 +9,6 @@ from loguru import logger
 from omu.address import Address
 from omu.app import AppType
 from omu.brand import BRAND
-from omu.client import Client
 from omu.errors import (
     AnotherConnection,
     InvalidOrigin,
@@ -22,6 +21,7 @@ from omu.errors import (
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.identifier import Identifier
+from omu.omu import Omu
 from omu.token import TokenProvider
 
 from .connection import CloseError, Connection, Transport
@@ -46,13 +46,13 @@ class PacketHandler[T]:
 class Network:
     def __init__(
         self,
-        client: Client,
+        omu: Omu,
         address: Address,
         token_provider: TokenProvider,
         transport: Transport,
         connection: Connection | None = None,
     ):
-        self.client = client
+        self.omu = omu
         self.address = address
         self._token_provider = token_provider
         self.transport = transport
@@ -77,7 +77,7 @@ class Network:
     async def handle_token(self, token: str | None):
         if token is None:
             return
-        self._token_provider.store(self.address, self.client.app, token)
+        self._token_provider.store(self.address, self.omu.app, token)
 
     async def handle_disconnect(self, reason: DisconnectPacket):
         if reason.type in {
@@ -161,9 +161,11 @@ class Network:
 
                 meta = (await self.connection.receive_as(self._packet_mapper, PACKET_TYPES.SERVER_META)).unwrap()
                 self.address = self.address.with_hash(meta["hash"])
-                token = self._token_provider.get(self.address, self.client.app)
+                token = self._token_provider.get(self.address, self.omu.app)
+                if token is None:
+                    raise InvalidToken(f"No token for {self.address} and app {self.omu.app.id}")
                 encryption_resp: EncryptionResponse | None = None
-                if self.client.app.type == AppType.REMOTE and meta["encryption"]:
+                if self.omu.app.type == AppType.REMOTE and meta["encryption"]:
                     decryptor = Decryptor.new()
                     encryptor = Encryptor.new(meta["encryption"]["rsa"])
                     if token:
@@ -179,8 +181,8 @@ class Network:
                     Packet(
                         PACKET_TYPES.CONNECT,
                         ConnectPacket(
-                            app=self.client.app,
-                            protocol={"version": self.client.version, "brand": BRAND},
+                            app=self.omu.app,
+                            protocol={"version": self.omu.version, "brand": BRAND},
                             encryption=encryption_resp,
                             token=token,
                         ),
@@ -270,7 +272,7 @@ class Network:
         return self._event
 
     def add_task(self, task: Coro[[], None]) -> None:
-        if self.client.ready:
+        if self.omu.ready:
             raise RuntimeError("Cannot add task after client is ready")
         self._tasks.append(task)
 

@@ -25,6 +25,7 @@ from omuserver.api.permission import PermissionExtension
 from omuserver.api.plugin import PluginExtension
 from omuserver.api.registry import RegistryExtension
 from omuserver.api.server import ServerExtension
+from omuserver.api.session import SessionExtension
 from omuserver.api.signal import SignalExtension
 from omuserver.api.table import TableExtension
 from omuserver.config import Config
@@ -53,17 +54,17 @@ class Server:
         self.directories.mkdir()
         self.packets = ServerPacketDispatcher()
         self.network = Network(self, self.packets)
-        self.network.event.start += self._handle_network_start
         self.network.add_http_route("/", self._handle_index)
         self.network.add_http_route("/version", self._handle_version)
         self.network.add_http_route("/frame", self._handle_frame)
         self.network.add_http_route("/proxy", self._handle_proxy)
         self.network.add_http_route("/asset", self._handle_assets)
-        self.security = PermissionManager(self)
+        self.security = PermissionManager.load(self)
         self.running = False
         self.endpoints = EndpointExtension(self)
         self.permissions = PermissionExtension(self)
         self.tables = TableExtension(self)
+        self.sessions = SessionExtension(self)
         self.http = HttpExtension(self)
         self.registries = RegistryExtension(self)
         self.dashboard = DashboardExtension(self)
@@ -167,19 +168,12 @@ class Server:
             self._loop.create_task(_run())
             self._loop.run_forever()
 
-    async def _handle_network_start(self) -> None:
-        logger.info(f"Listening on {self.address.host}:{self.address.port}")
-        try:
-            await self.event.start()
-        except Exception as e:
-            await self.stop()
-            self.loop.stop()
-            raise e
-
     async def start(self) -> None:
         self.running = True
         try:
             await self.network.start()
+            logger.info(f"Listening on {self.address.host}:{self.address.port}")
+            await self.event.start()
         except Exception as e:
             logger.opt(exception=e).error("Failed to start server")
             await self.stop()

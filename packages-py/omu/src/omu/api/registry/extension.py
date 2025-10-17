@@ -6,21 +6,17 @@ from typing import Any
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
-from omu.client import Client
 from omu.event_emitter import EventEmitter, Unlisten
 from omu.helper import Coro
 from omu.identifier import Identifier
 from omu.network.packet import PacketType
+from omu.omu import Omu
 from omu.serializer import SerializeError, Serializer
 
 from .packets import RegistryPacket, RegistryRegisterPacket
 from .registry import Registry, RegistryType
 
-REGISTRY_EXTENSION_TYPE = ExtensionType(
-    "registry",
-    lambda client: RegistryExtension(client),
-    lambda: [],
-)
+REGISTRY_EXTENSION_TYPE = ExtensionType("registry", lambda client: RegistryExtension(client))
 
 REGISTRY_PERMISSION_ID = REGISTRY_EXTENSION_TYPE / "permission"
 
@@ -53,10 +49,10 @@ class RegistryExtension(Extension):
     def type(self) -> ExtensionType:
         return REGISTRY_EXTENSION_TYPE
 
-    def __init__(self, client: Client) -> None:
-        self.client = client
+    def __init__(self, omu: Omu) -> None:
+        self.client = omu
         self.registries: dict[Identifier, Registry] = {}
-        client.network.register_packet(
+        omu.network.register_packet(
             REGISTRY_REGISTER_PACKET,
             REGISTRY_LISTEN_PACKET,
             REGISTRY_UPDATE_PACKET,
@@ -87,16 +83,16 @@ class RegistryExtension(Extension):
 class RegistryImpl[T](Registry[T]):
     def __init__(
         self,
-        client: Client,
+        omu: Omu,
         registry_type: RegistryType[T],
     ) -> None:
-        self.client = client
+        self.client = omu
         self.type = registry_type
         self._value = registry_type.default_value
         self.event_emitter: EventEmitter[T] = EventEmitter()
         self.listening = False
-        client.network.add_packet_handler(REGISTRY_UPDATE_PACKET, self._handle_update)
-        client.network.add_task(self._on_ready_task)
+        omu.network.add_packet_handler(REGISTRY_UPDATE_PACKET, self._handle_update)
+        omu.network.add_task(self._on_ready_task)
 
     @property
     def value(self) -> T:

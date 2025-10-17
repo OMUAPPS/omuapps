@@ -41,16 +41,16 @@ class ServerMeta(TypedDict):
 class ConnectPacketData(TypedDict):
     protocol: ProtocolInfo
     app: AppJson
+    token: str
     encryption: EncryptionResponse | None
-    token: str | None
 
 
 @dataclass(frozen=True, slots=True)
 class ConnectPacket:
     app: App
     protocol: ProtocolInfo
+    token: str
     encryption: EncryptionResponse | None = None
-    token: str | None = None
 
     @staticmethod
     def serialize(packet: ConnectPacket) -> ConnectPacketData:
@@ -66,8 +66,8 @@ class ConnectPacket:
         return ConnectPacket(
             app=App.from_json(json["app"]),
             protocol=json["protocol"],
-            encryption=json["encryption"],
             token=json["token"],
+            encryption=json["encryption"],
         )
 
 

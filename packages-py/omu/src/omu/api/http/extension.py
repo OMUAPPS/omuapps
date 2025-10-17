@@ -13,14 +13,10 @@ from yarl import URL
 
 from omu.api.extension import Extension, ExtensionType
 from omu.bytebuffer import ByteReader, ByteWriter
-from omu.client import Client
 from omu.network.packet.packet import PacketType
+from omu.omu import Omu
 
-HTTP_EXTENSION_TYPE = ExtensionType(
-    "http",
-    lambda client: HttpExtension(client),
-    lambda: [],
-)
+HTTP_EXTENSION_TYPE = ExtensionType("http", lambda client: HttpExtension(client))
 
 HTTP_REQUEST_PERMISSION_ID = HTTP_EXTENSION_TYPE / "request"
 
@@ -128,12 +124,9 @@ class HttpExtension(Extension):
 
     handles: dict[str, HandleState] = {}
 
-    def __init__(
-        self,
-        client: Client,
-    ):
-        self.client = client
-        client.network.register_packet(
+    def __init__(self, omu: Omu):
+        self.omu = omu
+        omu.network.register_packet(
             HTTP_REQUEST_CREATE,
             HTTP_REQUEST_SEND,
             HTTP_REQUEST_CLOSE,
@@ -141,9 +134,9 @@ class HttpExtension(Extension):
             HTTP_RESPONSE_CHUNK,
             HTTP_RESPONSE_CLOSE,
         )
-        client.network.add_packet_handler(HTTP_RESPONSE_CREATE, self.handle_response_create)
-        client.network.add_packet_handler(HTTP_RESPONSE_CHUNK, self.handle_response_chunk)
-        client.network.add_packet_handler(HTTP_RESPONSE_CLOSE, self.handle_response_close)
+        omu.network.add_packet_handler(HTTP_RESPONSE_CREATE, self.handle_response_create)
+        omu.network.add_packet_handler(HTTP_RESPONSE_CHUNK, self.handle_response_chunk)
+        omu.network.add_packet_handler(HTTP_RESPONSE_CLOSE, self.handle_response_close)
 
     async def handle_response_create(self, packet: HttpResponse):
         handle = self.handles.get(packet["id"])
@@ -177,7 +170,7 @@ class HttpExtension(Extension):
 
     def generate_id(self) -> str:
         rnd = int(time.time_ns() - random.random() * 1e12)
-        id = self.client.app.id / str(rnd)
+        id = self.omu.app.id / str(rnd)
         return id.key()
 
     async def request(
@@ -190,7 +183,7 @@ class HttpExtension(Extension):
     ) -> HttpResponse:
         url = URL(input)
         id = self.generate_id()
-        await self.client.send(
+        await self.omu.send(
             HTTP_REQUEST_CREATE,
             {
                 "id": id,
@@ -202,16 +195,16 @@ class HttpExtension(Extension):
         )
         if body:
             if isinstance(body, bytes):
-                await self.client.send(HTTP_REQUEST_SEND, HttpChunk[RequestHandle]({"id": id}, body))
+                await self.omu.send(HTTP_REQUEST_SEND, HttpChunk[RequestHandle]({"id": id}, body))
             else:
                 while True:
                     # Read in 16MB chunks
                     chunk = body.read(1024 * 1024 * 16)
                     if not chunk:
                         break
-                    await self.client.send(HTTP_REQUEST_SEND, HttpChunk[RequestHandle]({"id": id}, chunk))
+                    await self.omu.send(HTTP_REQUEST_SEND, HttpChunk[RequestHandle]({"id": id}, chunk))
 
-        await self.client.send(HTTP_REQUEST_CLOSE, {"id": id})
+        await self.omu.send(HTTP_REQUEST_CLOSE, {"id": id})
         chunks: bytes = b""
         responseFuture = Future[HttpResponse]()
         chunkEvent = Future[bool]()

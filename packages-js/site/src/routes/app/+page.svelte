@@ -157,18 +157,6 @@
                                 認証中
                                 <Spinner />
                             </p>
-                        {:else if status['type'] === 'error'}
-                            <p>
-                                エラーが発生しました
-                                <Button
-                                    primary
-                                    onclick={() => omu.network.connect()}
-                                >再接続</Button
-                                >
-                            </p>
-                            <small>
-                                {status['error'].message}
-                            </small>
                         {/if}
                     </div>
                 {/if}

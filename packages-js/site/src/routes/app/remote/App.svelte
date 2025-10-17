@@ -7,6 +7,7 @@
     import Gallery from './_components/Gallery.svelte';
     import ResourceEdit from './_components/ResourceEdit.svelte';
     import VisualSettings from './_components/VisualSettings.svelte';
+    import { ASSET_APP } from './app';
     import type { RemoteApp } from './remote-app.js';
 
     export let remote: RemoteApp;
@@ -76,7 +77,7 @@
             配信に追加
             <i class="ti ti-arrow-bar-to-down"></i>
         </h2>
-        <AssetButton {omu} {obs} dimensions={{ width: '50:%', height: '50:%' }} />
+        <AssetButton asset={ASSET_APP} {omu} {obs} dimensions={{ width: '50:%', height: '50:%' }} />
     </div>
     <div class="gallery omu-scroll">
         <Gallery {omu} {remote} />

@@ -1,4 +1,4 @@
-import { Identifier } from './identifier';
+import { Identifier, IntoId } from './identifier';
 import type { Locale } from './localization/locale.js';
 import type { LocalizedText } from './localization/localization.js';
 
@@ -19,39 +19,40 @@ export type AppType = 'app' | 'remote' | 'plugin' | 'dashboard';
 
 export type AppJson = {
     id: string;
+    type: AppType;
+    parent_id?: string;
     version?: string;
     url?: string;
-    type?: AppType;
     metadata?: AppMetadata;
 };
 
 export class App {
     public readonly id: Identifier;
+    public readonly type: AppType;
+    public readonly parentId?: Identifier;
     public readonly version?: string;
     public readonly url?: string;
     public readonly metadata?: AppMetadata;
-    public readonly type?: AppType;
 
-    constructor(id: Identifier | string, options: {
+    constructor(id: IntoId, options: {
+        type?: AppType;
+        parentId?: IntoId;
         version?: string;
         url?: string;
         metadata?: AppMetadata;
-        type?: AppType;
     }) {
-        if (typeof id === 'string') {
-            this.id = Identifier.fromKey(id);
-        } else {
-            this.id = id;
-        }
+        this.id = Identifier.from(id);
+        this.parentId = Identifier.fromOptional(options.parentId);
         this.version = options.version;
         this.url = options.url;
         this.metadata = options.metadata;
-        this.type = options.type;
+        this.type = options.type ?? 'app';
     }
 
     public static deserialize(info: AppJson): App {
         const id = Identifier.fromKey(info.id);
         return new App(id, {
+            parentId: Identifier.fromOptional(info.parent_id),
             version: info.version,
             url: info.url,
             type: info.type,
@@ -62,10 +63,21 @@ export class App {
     public static serialize(data: App): AppJson {
         return {
             id: data.id.key(),
+            type: data.type,
+            parent_id: data.parentId?.key(),
             version: data.version,
             url: data.url,
-            type: data.type,
             metadata: data.metadata,
         };
+    }
+
+    public join(...paths: string[]): App {
+        return new App(this.id.join(...paths), {
+            parentId: this.parentId,
+            version: this.version,
+            url: this.url,
+            type: this.type,
+            metadata: this.metadata,
+        });
     }
 }

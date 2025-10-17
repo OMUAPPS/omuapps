@@ -1,12 +1,12 @@
-import { Client } from '../../client';
 import { Identifier } from '../../identifier';
 import { PacketType } from '../../network/packet';
+import { Omu } from '../../omu';
 import { ByteReader, ByteWriter, JsonType } from '../../serialize';
 import { Extension, ExtensionType } from '../extension';
 
 export const HTTP_EXTENSION_TYPE: ExtensionType<HttpExtension> = new ExtensionType(
     'http',
-    (client: Client) => new HttpExtension(client),
+    (omu: Omu) => new HttpExtension(omu),
 );
 
 export const HTTP_REQUEST_PERMISSION_ID: Identifier = HTTP_EXTENSION_TYPE.join('request');
@@ -120,9 +120,9 @@ export class HttpExtension implements Extension {
     private readonly handles: Record<number, HandleState | undefined> = {};
 
     constructor(
-        private readonly client: Client,
+        private readonly omu: Omu,
     ) {
-        client.network.registerPacket(
+        omu.network.registerPacket(
             REQUEST_CREATE,
             REQUEST_SEND,
             REQUEST_CLOSE,
@@ -130,7 +130,7 @@ export class HttpExtension implements Extension {
             RESPONSE_CHUNK,
             RESPONSE_CLOSE,
         );
-        client.network.addPacketHandler(RESPONSE_CREATE, (packet) => {
+        omu.network.addPacketHandler(RESPONSE_CREATE, (packet) => {
             const handle = this.handles[packet.id];
             if (!handle) {
                 console.warn('Received response for unknown request', packet.id);
@@ -142,7 +142,7 @@ export class HttpExtension implements Extension {
             }
             handle.setResponse(packet);
         });
-        client.network.addPacketHandler(RESPONSE_CHUNK, (packet) => {
+        omu.network.addPacketHandler(RESPONSE_CHUNK, (packet) => {
             const handle = this.handles[packet.meta.id];
             if (!handle) {
                 console.warn('Received response for unknown request', packet.meta.id);
@@ -154,7 +154,7 @@ export class HttpExtension implements Extension {
             }
             handle.receive(packet.body);
         });
-        client.network.addPacketHandler(RESPONSE_CLOSE, (packet) => {
+        omu.network.addPacketHandler(RESPONSE_CLOSE, (packet) => {
             const handle = this.handles[packet.id];
             if (!handle) {
                 console.warn('Received response for unknown request', packet.id);
@@ -205,14 +205,14 @@ export class HttpExtension implements Extension {
 
     private generateId(): string {
         const rnd = Math.floor(performance.timeOrigin + performance.now() - Math.random() * 1e12);
-        const id = this.client.app.id.join(`${rnd}`);
+        const id = this.omu.app.id.join(`${rnd}`);
         return id.key();
     }
 
     public async request(input: string | URL | globalThis.Request, init?: RequestInit): Promise<{ response: HttpResponse; stream: ReadableStream }> {
         const request = new Request(input, init);
         const id = this.generateId();
-        this.client.send(REQUEST_CREATE, {
+        this.omu.send(REQUEST_CREATE, {
             id,
             header: this.generateHeaders(request, init),
             method: request.method,
@@ -226,13 +226,13 @@ export class HttpExtension implements Extension {
                 if (result.done) {
                     break;
                 }
-                this.client.send(REQUEST_SEND, {
+                this.omu.send(REQUEST_SEND, {
                     meta: { id },
                     body: result.value,
                 });
             }
         }
-        this.client.send(REQUEST_CLOSE, { id });
+        this.omu.send(REQUEST_CLOSE, { id });
         const chunks: Uint8Array[] = [];
         const responseFuture = createFuture<HttpResponse>();
         let chunkEvent = createFuture<boolean>();

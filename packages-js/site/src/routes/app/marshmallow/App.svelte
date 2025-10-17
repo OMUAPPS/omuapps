@@ -5,6 +5,7 @@
     import { Button, Checkbox, Tooltip } from '@omujs/ui';
     import Answers from './Answers.svelte';
     import { MarshmallowAPI, MarshmallowSession, type Message, type User } from './api.js';
+    import { ASSET_APP } from './app';
     import { MarshmallowApp } from './marshmallow-app.js';
     import Messages from './Messages.svelte';
     import MessageView from './MessageView.svelte';
@@ -115,7 +116,7 @@
             </span>
         </div>
         <div class="asset">
-            <AssetButton {omu} {obs} />
+            <AssetButton asset={ASSET_APP} {omu} {obs} />
         </div>
     </div>
 </main>

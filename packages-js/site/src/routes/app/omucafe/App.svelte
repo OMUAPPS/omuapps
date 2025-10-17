@@ -109,7 +109,6 @@
         }
         | {
             type: 'failed';
-            kind: 'invalid-format';
         }
         | {
             type: 'loaded';
@@ -151,7 +150,6 @@
             } catch {
                 importState = {
                     type: 'failed',
-                    kind: 'invalid-format',
                 };
             }
             setTimeout(() => {
@@ -237,7 +235,7 @@
             <i class="ti ti-alert-hexagon"></i>
             読み込みに失敗しました
         </span>
-        {{ 'invalid-format': '無効なゲームファイル' }[importState.kind]}
+        無効なゲームファイル
     {:else if importState.type === 'loaded'}
         <span>
             <i class="ti ti-check"></i>

@@ -21,3 +21,19 @@ export const APP = new App(APP_ID, {
         tags: ['asset', 'game', 'tool'] as TagKey[],
     }),
 });
+export const ASSET_APP = new App(APP_ID.join('asset'), {
+    url: getUrl('/app/roulette/asset'),
+    parentId: APP,
+    metadata: buildMetadata({
+        locale: 'ja',
+        name: {
+            ja: 'ルーレット表示用アセット',
+            en: 'Roulette Display Asset',
+        },
+        description: {
+            ja: 'ルーレットアプリで使用する表示用アセットです',
+            en: 'This is a display asset used in the Roulette app',
+        },
+        icon: 'ti-wheel',
+    }),
+});

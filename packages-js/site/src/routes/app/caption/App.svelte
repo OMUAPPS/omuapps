@@ -8,6 +8,7 @@
         Tooltip,
     } from '@omujs/ui';
     import CaptionRenderer from './CaptionRenderer.svelte';
+    import { ASSET_APP } from './app';
     import { CaptionApp, FONTS, LANGUAGES_OPTIONS, type LanguageKey } from './caption-app.js';
 
     export let omu: Omu;
@@ -116,7 +117,7 @@
             </div>
         </section>
         <h2>字幕</h2>
-        <AssetButton {omu} {obs} />
+        <AssetButton asset={ASSET_APP} {omu} {obs} />
     </div>
     <div class="preview">
         <h2>字幕のプレビュー</h2>

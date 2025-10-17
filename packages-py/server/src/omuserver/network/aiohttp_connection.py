@@ -8,7 +8,7 @@ from omu.network.packet import Packet, PacketData
 from omu.network.packet_mapper import PacketMapper
 from omu.result import Err, Ok, Result
 
-from .session import InvalidPacket, ReceiveError, SessionConnection
+from omuserver.session import InvalidPacket, ReceiveError, SessionConnection
 
 
 class WebsocketsConnection(SessionConnection):
