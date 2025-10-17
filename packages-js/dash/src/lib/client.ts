@@ -64,7 +64,7 @@ const dashboard = new Dashboard(omu);
 setClient(omu);
 setChat(chat);
 omu.plugins.require({
-    omuplugin_chat: `==${VERSION}`,
+    omu_chat: `==${VERSION}`,
     omu_chat_youtube: `==${VERSION}`,
     omu_chat_twitch: `==${VERSION}`,
     omu_chatprovider: `==${VERSION}`,

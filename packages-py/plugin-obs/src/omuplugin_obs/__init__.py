@@ -1,7 +1,7 @@
 import threading
 
 from loguru import logger
-from omu.plugin import InstallContext, Plugin
+from omu.plugin import InstallContext, Plugin, StartContext
 from omuserver.server import Server
 
 from .permissions import PERMISSION_TYPES
@@ -23,21 +23,17 @@ def install_start(server: Server) -> None:
     install_thread.start()
 
 
-async def on_start(server: Server) -> None:
-    logger.info("Starting OBS plugin")
-    server.security.register_permission(
+async def plugin_install(ctx: StartContext | InstallContext) -> None:
+    logger.info("Installing OBS plugin")
+    ctx.server.security.register_permission(
         *PERMISSION_TYPES,
         overwrite=True,
     )
-    install_start(server)
-
-
-async def on_install(ctx: InstallContext) -> None:
-    await on_start(ctx.server)
+    install_start(ctx.server)
 
 
 plugin = Plugin(
-    on_start=on_start,
-    on_install=on_install,
+    on_start=plugin_install,
+    on_install=plugin_install,
     isolated=False,
 )

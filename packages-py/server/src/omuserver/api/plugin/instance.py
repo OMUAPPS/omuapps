@@ -19,12 +19,14 @@ from omu.app import App, AppType
 from omu.helper import asyncio_error_logger
 from omu.network.websocket_connection import WebsocketsTransport
 from omu.omu import Omu
-from omu.plugin import InstallContext, Plugin
+from omu.plugin import InstallContext, Plugin, StartContext, StopContext
+from omu.result import Err, Ok, Result
 from omu.token import TokenProvider
 
 from omuserver.helper import setup_logger
 from omuserver.session import Session
 
+from .loader import PluginEntry
 from .session_connection import PluginSessionConnection
 from .transport import PluginConnection
 
@@ -59,7 +61,7 @@ def deep_reload(module: ModuleType) -> None:
 @dataclass(slots=True)
 class PluginInstance:
     plugin: Plugin
-    entry_point: importlib.metadata.EntryPoint
+    entry: PluginEntry
     module: ModuleType
     process: Process | None = None
     omu: Omu | None = None
@@ -67,27 +69,29 @@ class PluginInstance:
     @classmethod
     def try_load(
         cls,
-        entry_point: importlib.metadata.EntryPoint,
-    ) -> PluginInstance | None:
-        package = entry_point.dist
+        entry: PluginEntry,
+    ) -> Result[PluginInstance, str]:
+        package = entry.dist
         stage = "loading"
         try:
-            plugin = entry_point.load()
+            plugin = entry.entry_point.load()
             stage = "validating"
             if not isinstance(plugin, Plugin):
-                raise ValueError(f"Invalid plugin: {plugin} is not a Plugin")
+                return Err(f"{plugin} is not a Plugin")
             stage = "importing"
-            module = importlib.import_module(entry_point.module)
-            return cls(
-                plugin=plugin,
-                entry_point=entry_point,
-                module=module,
+            module = importlib.import_module(entry.entry_point.module)
+            return Ok(
+                cls(
+                    plugin=plugin,
+                    entry=entry,
+                    module=module,
+                )
             )
         except Exception as e:
             logger.opt(exception=e).error(
-                f"Error while {stage} plugin {entry_point.name} from {package.name if package else 'unknown'}"
+                f"Error while {stage} plugin {entry.name} from {package.name if package else 'unknown'}"
             )
-            return None
+            return Err(f"Error while {stage} plugin {entry.name}: {e}")
 
     async def notify_install(self, ctx: InstallContext):
         if self.plugin.on_install is not None:
@@ -115,7 +119,7 @@ class PluginInstance:
 
     async def reload(self):
         deep_reload(self.module)
-        new_plugin = self.entry_point.load()
+        new_plugin = self.entry.entry_point.load()
         if not isinstance(new_plugin, Plugin):
             raise ValueError(f"Invalid plugin: {new_plugin} is not a Plugin")
         self.plugin = new_plugin
@@ -126,21 +130,21 @@ class PluginInstance:
                 self.process.terminate()
                 self.process.join()
             except AttributeError:
-                logger.warning(f"Error terminating plugin {self.entry_point.name}")
+                logger.warning(f"Error terminating plugin {self.entry.name}")
             except Exception as e:
-                logger.opt(exception=e).error(f"Error terminating plugin {self.entry_point.name}")
+                logger.opt(exception=e).error(f"Error terminating plugin {self.entry.name}")
             self.process = None
         if self.omu is not None:
             await self.omu.stop()
             self.omu = None
         if self.plugin.on_stop is not None:
-            await self.plugin.on_stop(server)
+            await self.plugin.on_stop(StopContext(server=server))
 
     async def start(self, server: Server):
         stage = "invoking on_start"
         try:
             if self.plugin.on_start is not None:
-                await self.plugin.on_start(server)
+                await self.plugin.on_start(StartContext(server=server))
             stage = "generating token"
             token = server.security.generate_plugin_token()
             if self.plugin.isolated:
@@ -150,7 +154,7 @@ class PluginInstance:
                 stage = "starting internally"
                 await self._start_internally(server, token)
         except Exception as e:
-            logger.opt(exception=e).error(f"Error while {stage} plugin {self.entry_point.name}")
+            logger.opt(exception=e).error(f"Error while {stage} plugin {self.entry.name}")
 
     async def _start_internally(self, server: Server, token: str):
         if self.omu:
@@ -179,12 +183,12 @@ class PluginInstance:
         process = Process(
             target=run_plugin_isolated,
             args=(
-                self.entry_point,
+                self.entry.entry_point,
                 server.address,
                 token,
                 pid,
             ),
-            name=f"Plugin {self.entry_point.value}",
+            name=f"Plugin {self.entry.entry_point.value}",
             daemon=True,
         )
         process.start()

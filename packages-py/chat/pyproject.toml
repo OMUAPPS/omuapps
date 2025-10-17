@@ -9,6 +9,9 @@ dependencies = ["loguru>=0.7.2", "omu>=0.9.13"]
 readme = "README.md"
 requires-python = ">= 3.12"
 
+[project.entry-points."omu.plugins"]
+plugin = "omu_chat:plugin"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

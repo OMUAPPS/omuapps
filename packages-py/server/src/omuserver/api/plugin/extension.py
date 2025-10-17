@@ -41,8 +41,8 @@ class PluginExtension:
         self.server = server
         self.request_id = 0
         self.lock = asyncio.Lock()
-        self.loader = PluginLoader(server)
         self.dependency_resolver = DependencyResolver()
+        self.loader = PluginLoader(server, self.dependency_resolver)
 
     async def on_network_start(self) -> None:
         await self.loader.run_plugins()

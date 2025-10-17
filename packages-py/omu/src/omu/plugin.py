@@ -31,11 +31,21 @@ class InstallContext:
         self.restart_required = True
 
 
+class StartContext:
+    def __init__(self, server: Server):
+        self.server = server
+
+
+class StopContext:
+    def __init__(self, server: Server):
+        self.server = server
+
+
 @dataclass(frozen=True, slots=True)
 class Plugin:
     get_client: Callable[[], Omu] | None = None
-    on_start: AsyncCallback[[Server]] | None = None
-    on_stop: AsyncCallback[[Server]] | None = None
+    on_start: AsyncCallback[[StartContext]] | None = None
+    on_stop: AsyncCallback[[StopContext]] | None = None
     on_install: AsyncCallback[[InstallContext]] | None = None
     on_uninstall: AsyncCallback[[InstallContext]] | None = None
     on_update: AsyncCallback[[InstallContext]] | None = None
