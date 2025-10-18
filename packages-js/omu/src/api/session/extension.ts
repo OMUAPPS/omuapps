@@ -1,6 +1,5 @@
 import { App, AppJson } from '../../app';
 import { Identifier, IdentifierMap, IdentifierSet, IntoId } from '../../identifier';
-import { Locale, LocalizedText } from '../../localization';
 import { PacketType } from '../../network/packet';
 import { Omu } from '../../omu';
 import { Serializer } from '../../serialize';
@@ -38,14 +37,7 @@ const SESSION_DISCONNECTED_PACKET_TYPE = PacketType.createJson<App>(SESSION_EXTE
 });
 
 type RemoteAppRequestPayload = {
-    id: string;
-    url: string;
-    metadata: {
-        locale: Locale;
-        name?: LocalizedText;
-        icon?: LocalizedText;
-        description?: LocalizedText;
-    };
+    app: AppJson;
     permissions: string[];
 };
 
@@ -172,11 +164,11 @@ export class SessionExtension implements Extension {
         }
     }
 
-    public async requestRemoteApp(payload: {
+    public async requestRemoteApp(options: {
         app: App;
         permissions: IntoId[];
     }): Promise<RequestRemoteAppResponse> {
-        const { app } = payload;
+        const { app } = options;
         if (!app.url) {
             throw new Error('App must have a URL to request it remotely');
         }
@@ -187,17 +179,14 @@ export class SessionExtension implements Extension {
             throw new Error('App must have metadata to request it remotely');
         }
         return this.omu.endpoints.call(REMOTE_APP_REQUEST_ENDPOINT_TYPE, {
-            id: app.id.key(),
-            url: app.url,
-            metadata: app.metadata,
-            permissions: payload.permissions.map(id => Identifier.from(id).key()),
+            app: App.serialize(options.app),
+            permissions: options.permissions.map(id => Identifier.from(id).key()),
         });
     }
 
     public async generateToken(options: {
         app: App;
         permissions: IntoId[];
-        keepPermissions?: boolean;
     }): Promise<GenerateTokenResponse> {
         return this.omu.endpoints.call(GENERATE_TOKEN_ENDPOINT_TYPE, {
             app: App.serialize(options.app),

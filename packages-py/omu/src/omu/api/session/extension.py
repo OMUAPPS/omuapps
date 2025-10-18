@@ -52,9 +52,7 @@ class RemoteAppMetadata(TypedDict):
 
 
 class RemoteAppRequestPayload(TypedDict):
-    id: str
-    url: str
-    metadata: RemoteAppMetadata
+    app: AppJson
     permissions: list[str]
 
 
