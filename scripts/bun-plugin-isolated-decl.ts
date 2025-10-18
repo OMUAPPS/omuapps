@@ -1,10 +1,7 @@
 import { type BunPlugin, Glob } from 'bun';
-import _isGlob from 'is-glob';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { oxcTransform } from 'unplugin-isolated-decl/api';
-
-const isGlob: (str: string) => boolean = _isGlob;
 
 export type TransformResult = {
     code: string;
@@ -39,18 +36,8 @@ function isolatedDecl(options: Options = {}): BunPlugin {
             } satisfies Options;
 
             for (const entry of entrypoints) {
-                if (isGlob(entry)) {
-                    const globs = new Glob(entry);
-                    for await (const entry of globs.scan()) {
-                        const file = Bun.file(entry);
-                        if (!(await file.exists())) {
-                            console.error(`File ${entry} does not exist`);
-                            continue;
-                        }
-                        const source = await file.text();
-                        entriies.push({ id: entry, source });
-                    }
-                } else {
+                const globs = new Glob(entry);
+                for await (const entry of globs.scan()) {
                     const file = Bun.file(entry);
                     if (!(await file.exists())) {
                         console.error(`File ${entry} does not exist`);
