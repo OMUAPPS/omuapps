@@ -1,79 +1,128 @@
 use std::{borrow, fs::create_dir_all, path::PathBuf};
 
 use crate::{
-    progress::Progress,
-    python::Python,
-    server::Server,
+    python::{Python, PythonEnsureError, PythonEnsureProgress},
+    server::{Server, ServerEnsureError, ServerEnsureProgress},
     sources::py::PythonVersion,
     utils::{archive::pack_archive, filesystem::remove_dir_all},
-    uv::Uv,
+    uv::{Uv, UvEnsureError, UvEnsureProgress},
     AppState,
 };
-use log::{info, warn};
+use log::info;
 use tauri::Emitter;
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum StartError {
+    ServerStartFailed { msg: String },
+    PythonEnsureError { reason: PythonEnsureError },
+    UvEnsureError { reason: UvEnsureError },
+    ServerEnsureError { reason: ServerEnsureError },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum StartProgress {
+    Python { progress: PythonEnsureProgress },
+    Uv { progress: UvEnsureProgress },
+    Server { progress: ServerEnsureProgress },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum StartResult {
+    AlreadyRunning { token: String },
+    Starting { token: String },
+}
 
 #[tauri::command]
 pub async fn start_server(
     window: tauri::Window,
     state: tauri::State<'_, AppState>,
-) -> Result<Option<String>, String> {
-    let on_progress = move |progress: Progress| {
+) -> Result<StartResult, StartError> {
+    let on_progress = move |progress: StartProgress| {
         info!("{:?}", progress);
-        window.emit("server_state", progress).unwrap();
+        window.emit("start_progress", progress).unwrap();
     };
     info!("Starting server");
-    let mut server_mutex = state.server.lock().map_err(|err| err.to_string())?;
+    let mut server_mutex = state
+        .server
+        .lock()
+        .map_err(|err| StartError::ServerStartFailed {
+            msg: format!("Failed to lock server mutex: {}", err),
+        })?;
     if server_mutex.is_some() {
         let server = server_mutex.as_ref().unwrap();
         if server.is_running() {
-            on_progress(Progress::ServerAlreadyStarted {
-                msg: "Existing server is already running".to_string(),
+            return Ok(StartResult::AlreadyRunning {
+                token: server.token.clone(),
             });
-            return Ok(None);
         };
     };
 
     let config = state.config.lock().unwrap().clone();
-    let python = Python::ensure(&state.options, &on_progress).map_err(|err| err.to_string())?;
-    let uv = Uv::ensure(&state.options, &python.python_bin, &on_progress)
-        .map_err(|err| err.to_string())?;
-    let server = match Server::ensure_server(
+    let callback = on_progress.clone();
+    let python = Python::ensure(&state.options, move |progress: PythonEnsureProgress| {
+        callback(StartProgress::Python { progress: progress });
+    })
+    .map_err(|err| StartError::PythonEnsureError { reason: err })?;
+    let callback = on_progress.clone();
+    let uv = Uv::ensure(
+        &state.options,
+        &python.python_bin,
+        move |progress: UvEnsureProgress| {
+            callback(StartProgress::Uv { progress });
+        },
+    )
+    .map_err(|err| StartError::UvEnsureError { reason: err })?;
+    let callback = on_progress.clone();
+    let server = Server::ensure_server(
         config.server.clone(),
         python,
         uv,
-        &on_progress,
+        move |progress: ServerEnsureProgress| {
+            callback(StartProgress::Server { progress });
+        },
         state.app_handle.clone(),
-    ) {
-        Ok(server) => server,
-        Err(err) => {
-            return Err(err.to_string());
-        }
-    };
-
-    if server.already_started {
-        on_progress(Progress::ServerAlreadyStarted {
-            msg: "Server already started".to_string(),
-        });
-    } else {
-        on_progress(Progress::ServerStarting {
-            msg: "Starting server".to_string(),
-        });
-        server.start(&on_progress).map_err(|err| err.to_string())?;
-    }
+    )
+    .map_err(|err| StartError::ServerEnsureError { reason: err })?;
 
     let token = server.token.clone();
-    *server_mutex = Some(server);
-    Ok(Some(token))
+    if server.already_started {
+        *server_mutex = Some(server);
+        Ok(StartResult::AlreadyRunning { token })
+    } else {
+        server
+            .start()
+            .map_err(|err| StartError::ServerEnsureError { reason: err })?;
+
+        *server_mutex = Some(server);
+        Ok(StartResult::Starting { token })
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum StopError {
+    PythonEnsureError { reason: PythonEnsureError },
+    ServerEnsureError { reason: ServerEnsureError },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum StopProgress {
+    Python { progress: PythonEnsureProgress },
+    ServerStopping { msg: String },
 }
 
 #[tauri::command]
 pub async fn stop_server(
     window: tauri::Window,
     state: tauri::State<'_, AppState>,
-) -> Result<(), CleanEnvironmentError> {
-    let on_progress = move |progress: Progress| {
+) -> Result<(), StopError> {
+    let on_progress = move |progress: StopProgress| {
         info!("{:?}", progress);
-        window.emit("server_state", progress).unwrap();
+        window.emit("stop_progress", progress).unwrap();
     };
 
     let options = &state.options;
@@ -92,45 +141,57 @@ pub async fn stop_server(
             },
         }
     } else {
-        match Python::ensure(&options, &on_progress) {
-            Ok(python) => python,
-            Err(err) => {
-                return Err(CleanEnvironmentError::PythonError(err.to_string()));
-            }
-        }
+        let callback = on_progress.clone();
+        Python::ensure(&options, move |progress| {
+            callback(StopProgress::Python { progress });
+        })
+        .map_err(|err| StopError::PythonEnsureError { reason: err })?
     };
 
-    on_progress(Progress::ServerStopping {
+    on_progress(StopProgress::ServerStopping {
         msg: "Stopping server".to_string(),
     });
-    match Server::stop_server(&python, &state.config.lock().unwrap().server) {
-        Ok(_) => {}
-        Err(err) => {
-            // return Err(CleanEnvironmentError::ServerError(err.to_string()));
-            warn!("Failed to stop server: {}", err);
+    Server::stop_server(&python, &state.config.lock().unwrap().server).map_err(|err| {
+        StopError::ServerEnsureError {
+            reason: ServerEnsureError::StopFailed { msg: err },
         }
-    };
+    })?;
     Ok(())
 }
 
-#[derive(serde::Serialize)]
-#[serde(tag = "type", content = "message")]
-pub enum CleanEnvironmentError {
-    DevMode(String),
-    PythonError(String),
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum CleanError {
+    PythonError(PythonEnsureError),
     ServerError(String),
     RemovePythonError(String),
     RemoveUvError(String),
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum CleanProgress {
+    Python(PythonEnsureProgress),
+    PythonRemoving {
+        msg: String,
+        progress: f64,
+        total: f64,
+    },
+    UvRemoving {
+        msg: String,
+        progress: f64,
+        total: f64,
+    },
 }
 
 #[tauri::command]
 pub async fn clean_environment(
     window: tauri::Window,
     state: tauri::State<'_, AppState>,
-) -> Result<(), CleanEnvironmentError> {
-    let on_progress = move |progress: Progress| {
+) -> Result<(), CleanError> {
+    let on_progress = move |progress: CleanProgress| {
         info!("{:?}", progress);
-        window.emit("server_state", progress).unwrap();
+        window.emit("clean_progress", progress).unwrap();
     };
 
     let options = &state.options;
@@ -149,51 +210,34 @@ pub async fn clean_environment(
             },
         }
     } else {
-        match Python::ensure(&options, &on_progress) {
-            Ok(python) => python,
-            Err(err) => {
-                return Err(CleanEnvironmentError::PythonError(err.to_string()));
-            }
-        }
+        let callback = on_progress.clone();
+        Python::ensure(&options, move |progress| {
+            callback(CleanProgress::Python(progress));
+        })
+        .map_err(|err| CleanError::PythonError(err))?
     };
 
-    match Server::stop_server(&python, &state.config.lock().unwrap().server) {
-        Ok(_) => {}
-        Err(err) => {
-            // return Err(CleanEnvironmentError::ServerError(err.to_string()));
-            warn!("Failed to stop server: {}", err);
-        }
-    }
+    Server::stop_server(&python, &state.config.lock().unwrap().server)
+        .map_err(|err| CleanError::ServerError(err))?;
 
-    match remove_dir_all(&options.python_path, |current, total| {
-        on_progress(Progress::PythonRemoving {
+    let callback = on_progress.clone();
+    remove_dir_all(&options.python_path, |current, total| {
+        callback(CleanProgress::PythonRemoving {
             msg: "Removing python".to_string(),
             progress: current,
             total,
         });
-    }) {
-        Ok(_) => {}
-        Err(err) => {
-            on_progress(Progress::PythonRemoving {
-                msg: format!("Failed to remove python: {}", err),
-                progress: 0.0,
-                total: 0.0,
-            });
-            return Err(CleanEnvironmentError::RemovePythonError(err.to_string()));
-        }
-    }
-    match remove_dir_all(&options.uv_path, |current, total| {
-        on_progress(Progress::UvRemoving {
+    })
+    .map_err(|err| CleanError::RemovePythonError(err.to_string()))?;
+    let callback = on_progress.clone();
+    remove_dir_all(&options.uv_path, |current, total| {
+        callback(CleanProgress::UvRemoving {
             msg: "Removing uv".to_string(),
             progress: current,
             total,
         });
-    }) {
-        Ok(_) => {}
-        Err(err) => {
-            return Err(CleanEnvironmentError::RemoveUvError(err.to_string()));
-        }
-    }
+    })
+    .map_err(|err| CleanError::RemoveUvError(err.to_string()))?;
 
     info!("Environment cleaned");
 

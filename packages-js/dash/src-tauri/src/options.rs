@@ -1,14 +1,10 @@
 use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{ensure, Result};
-use log::{error, info, warn};
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    server::{Server, ServerConfig},
-    sources::py::PythonVersionRequest,
-    APP_DIRECTORY,
-};
+use crate::{server::ServerConfig, sources::py::PythonVersionRequest, APP_DIRECTORY};
 
 static PYTHON_VERSION: PythonVersionRequest = PythonVersionRequest {
     name: None,

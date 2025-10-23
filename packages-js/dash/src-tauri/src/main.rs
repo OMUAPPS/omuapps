@@ -3,7 +3,6 @@
 
 mod commands;
 mod options;
-mod progress;
 mod python;
 mod server;
 mod sources;

@@ -4,7 +4,6 @@
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
     import TitlebarButton from './TitlebarButton.svelte';
-    import StatusBar from './common/StatusBar.svelte';
     import Title from './images/title.svg';
     import { isBetaEnabled } from './main/settings.js';
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
@@ -67,7 +66,6 @@
                 {VERSION}
                 {(DEV && ' (dev)') || ($isBetaEnabled && ' (beta)') || ''}
             </span>
-            <StatusBar />
         </div>
         <div class="buttons">
             <TitlebarButton

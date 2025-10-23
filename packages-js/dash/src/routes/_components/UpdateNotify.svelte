@@ -1,5 +1,6 @@
 <script lang="ts">
     import { applyUpdate, checkUpdate, type UpdateEvent } from '$lib/tauri.js';
+    import { VERSION } from '$lib/version';
     import { Button } from '@omujs/ui';
     import type { Update } from '@tauri-apps/plugin-updater';
     import { onMount } from 'svelte';
@@ -16,8 +17,8 @@
     });
 </script>
 
-{#if update}
-    <div class="update">
+<div class="update">
+    {#if update}
         {#if updateProgress}
             {#if updateProgress.type === 'restarting'}
                 <span>再起動中...</span>
@@ -42,21 +43,19 @@
                 <i class="ti ti-arrow-up"></i>
             </Button>
         {/if}
-    </div>
-{/if}
+    {:else}
+        <p>最新の状態です {VERSION}</p>
+    {/if}
+</div>
 
 <style lang="scss">
     .update {
-        position: absolute;
-        top: 3rem;
-        right: 2rem;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         justify-content: center;
         padding: 0.25rem 1rem;
         padding-top: 0;
-        border-right: 2px solid var(--color-1);
 
         > p {
             color: var(--color-1);

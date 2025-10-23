@@ -40,6 +40,7 @@ export const ASSET_APP = new App(APP_ID.join('asset'), {
 export const REMOTE_APP = new App(APP_ID.join('session'), {
     url: getUrl('/app/remote/session'),
     type: 'remote',
+    parentId: APP,
     metadata: buildMetadata({
         locale: 'en',
         name: {

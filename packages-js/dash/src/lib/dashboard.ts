@@ -15,8 +15,10 @@ import {
     type HostRequest,
     type PermissionRequestPacket,
     type PluginRequestPacket,
+    type SpeechRecognitionStart,
     type TranscriptSegment,
     type UserResponse,
+    type WebviewEvent,
     type WebviewPacket,
     type WebviewRequest,
 } from '@omujs/omu/api/dashboard';
@@ -27,7 +29,6 @@ import { Webview } from '@tauri-apps/api/webview';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { Window } from '@tauri-apps/api/window';
 import { get } from 'svelte/store';
-import type { SpeechRecognitionStart, WebviewEvent } from '../../../omu/dist/dts/api/dashboard/extension.js';
 import { dragDropApps, dragDrops } from './dragdrop.js';
 import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
 import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';
