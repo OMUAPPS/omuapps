@@ -5,6 +5,7 @@
     import { installed } from '$lib/main/settings';
     import { checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
     import { Button, Spinner } from '@omujs/ui';
+    import { error } from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
     import Agreements from './_components/Agreements.svelte';
     import InstallStepAddChannels from './_components/InstallStepAddChannels.svelte';
@@ -72,6 +73,7 @@
         } catch (e) {
             console.error('Error during start:', e);
             $state = { type: 'restore' };
+            error(`Error during start: ${JSON.stringify(e)}`);
         }
     }
 

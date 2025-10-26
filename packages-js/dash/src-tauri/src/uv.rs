@@ -5,6 +5,7 @@ use std::{
 };
 
 use anyhow::Result;
+use log::debug;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -18,6 +19,7 @@ pub struct Uv {
     uv_bin: PathBuf,
     workdir: PathBuf,
     python_bin: PathBuf,
+    index_url: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -74,11 +76,17 @@ impl Uv {
         } else {
             uv_dir.join("uv")
         };
+        let index_url = if cfg!(dev) {
+            "http://localhost:26410/simple/".to_string()
+        } else {
+            "https://pypi.org/simple/".to_string()
+        };
         if uv_dir.exists() && uv_bin.exists() {
             return Ok(Uv {
                 uv_bin,
                 workdir: options.workdir.clone(),
                 python_bin: python_bin.clone(),
+                index_url,
             });
         }
 
@@ -89,6 +97,7 @@ impl Uv {
                 uv_bin,
                 workdir: options.workdir.clone(),
                 python_bin: python_bin.clone(),
+                index_url,
             });
         }
         Err(UvEnsureError::NoDownloadFound {
@@ -263,6 +272,7 @@ impl Uv {
         requirements: &str,
         on_progress: &(impl Fn(UvEnsureProgress) + Send + 'static),
     ) -> Result<(), UvEnsureError> {
+        debug!("Package Index URL: {}", self.index_url);
         on_progress(UvEnsureProgress::UpdateRequirements {
             msg: format!(
                 "Updating requirements {} at {}",
@@ -297,6 +307,8 @@ impl Uv {
             .arg(req_file.path())
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
+            .arg("--index-url")
+            .arg(&self.index_url)
             .output()
             .map_err(|err| UvEnsureError::UpdateRequirementsFailed {
                 msg: format!(
