@@ -19,7 +19,7 @@ export type AddChannelStatus = {
     }[];
 };
 
-type AppState = {
+export type AppState = {
     type: 'initializing';
 } | {
     type: 'checking_update';

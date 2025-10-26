@@ -60,6 +60,7 @@ pub struct Server {
 #[serde(tag = "type")]
 pub enum ServerState {
     ServerStarting { msg: String },
+    ServerRestarting { msg: String },
     ServerStopped { msg: String },
 }
 
@@ -303,28 +304,39 @@ impl Server {
             let exit = child_arc.lock().unwrap().wait();
             *process_store.lock().unwrap() = None;
 
-            match exit {
-                Ok(status) => {
-                    let code = status.code().unwrap_or(0);
-                    if code == RESTART_CODE {
-                        info!("Restarting server: {}", code);
-                        return;
-                    } else if code == 0 {
-                        info!("Server exited normally: {}", code);
-                        return;
-                    }
-                    info!("Server process exited with code: {}", code);
-                    if let Some(app) = app_handle.lock().unwrap().as_ref() {
-                        let _ = app.emit(
-                            "server_state",
-                            ServerState::ServerStopped {
-                                msg: format!("Server exited with code {}", code),
-                            },
-                        );
-                    }
-                }
+            let status = match exit {
+                Ok(status) => status,
                 Err(err) => {
                     warn!("Server process exited with error: {}", err);
+                    return;
+                }
+            };
+
+            let code = status.code().unwrap_or(0);
+            let state = match code {
+                0 => {
+                    info!("Server exited normally: {}", code);
+                    None
+                }
+                RESTART_CODE => {
+                    info!("Restarting server: {}", code);
+                    Some(ServerState::ServerRestarting {
+                        msg: "Server is restarting".to_string(),
+                    })
+                }
+                _ => {
+                    info!("Server process exited with code: {}", code);
+                    Some(ServerState::ServerStopped {
+                        msg: format!("Server exited with code {}", code),
+                    })
+                }
+            };
+
+            if let Some(state) = state {
+                if let Some(app) = app_handle.lock().unwrap().as_ref() {
+                    if let Err(err) = app.emit("server_state", state) {
+                        warn!("Failed to emit server_state event: {}", err);
+                    }
                 }
             }
         });

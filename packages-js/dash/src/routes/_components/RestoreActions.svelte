@@ -34,13 +34,13 @@
 <div class="restore">
     {#if restoreState.type === 'idle'}
         <div class="actions">
-            <Button primary onclick={cleanEnvironment}>
-                再構築
-                <i class="ti ti-trash-x"></i>
-            </Button>
             <Button primary onclick={restart}>
                 再起動
                 <i class="ti ti-rotate"></i>
+            </Button>
+            <Button primary onclick={cleanEnvironment}>
+                再構築
+                <i class="ti ti-trash-x"></i>
             </Button>
         </div>
         <small>報告するときは以下からログを生成してください</small>

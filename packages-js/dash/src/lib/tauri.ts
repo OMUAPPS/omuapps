@@ -114,6 +114,7 @@ export type CleanProgress = SerdeEnum<{
 
 export type ServerState = SerdeEnum<{
     ServerStarting: { msg: string };
+    ServerRestarting: { msg: string };
     ServerStopped: { msg: string };
 }>;
 
