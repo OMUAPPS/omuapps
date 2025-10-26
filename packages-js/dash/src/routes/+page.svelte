@@ -3,7 +3,7 @@
     import { t } from '$lib/i18n/i18n-context';
     import MainWindow from '$lib/main/MainWindow.svelte';
     import { installed } from '$lib/main/settings';
-    import { applyUpdate, checkUpdate, invoke, startProgress } from '$lib/tauri';
+    import { applyUpdate, checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
     import { Button, Spinner } from '@omujs/ui';
     import { DEV } from 'esm-env';
     import { onMount } from 'svelte';
@@ -21,81 +21,104 @@
         await start();
     });
 
+    $: {
+        if ($serverState?.type === 'ServerStopped' && $state.type === 'connecting') {
+            $state.reject({
+                type: 'server_start_failed',
+            });
+        }
+    }
+
+    $: console.log('serverState', $serverState);
+
     async function start() {
-        $state = { type: 'checking_update' };
-        const update = await checkUpdate();
-        if (update) {
-            await new Promise<void>((resolve) => {
-                $state = { type: 'update', update, resolve };
+        try {
+            $state = { type: 'checking_update' };
+            const update = await checkUpdate();
+            if (update) {
+                await new Promise<void>((resolve) => {
+                    $state = { type: 'update', update, resolve };
+                });
+            }
+            if (DEV) {
+                //             await new Promise<void>((resolve) => {
+                //                 $state = { type: 'update', resolve, update: new Update({
+                //                     rid: 0,
+                //                     currentVersion: VERSION,
+                //                     version: VERSION,
+                //                     body: `
+                // # OMUAPPSについて
+
+                // OMUAPPSは、アプリ間の連携やブラウザだけでは実現できない機能を厳格に制限された権限のもと提供をするAPIアプリケーションおよびそのAPIを利用するアプリケーションを提供するプラットフォームです。
+
+                // ## 開発
+
+                // OMUAPPSの開発環境を構築する方法です。
+
+                // この手順はvscodeを使用することを前提としています。
+
+                // ### 必要なもの
+
+                // 必要なものをインストールしてください。
+
+                // - Install [Rust](https://www.rust-lang.org/ja)
+                // - Install [Nodejs](https://nodejs.org/)
+                // - Install [bun](https://bun.sh/)
+                // - Install [rye](https://rye.astral.sh/)
+
+                // ### 起動
+
+                // vscodeでは、起動構成から [ Server/Client ] を選択して起動してください。`,
+                //                     date: new Date().toISOString(),
+                //                     rawJson: {},
+                //                 }),
+                //                 };
+                //             });
+                // $state = { type: 'restore' };
+                // return;
+                $installed = false;
+            }
+            if (!$installed) {
+                await new Promise<void>((accept) => {
+                    $state = { type: 'agreements', accept };
+                });
+            }
+            $state = { type: 'starting' };
+            await invoke('start_server');
+
+            await new Promise<void>((resolve, reject) => {
+                $state = { type: 'connecting', reject };
+                if (omu.running) {
+                    omu.stop();
+                }
+                omu.start();
+                omu.network.event.status.listen((status) => {
+                    $netState = status;
+                });
+                omu.waitForReady().then(() => {
+                    resolve();
+                });
             });
+            if (!$installed) {
+                await new Promise<void>((resolve) => {
+                    $state = { type: 'add_channels', state: { type: 'idle' }, resolve };
+                });
+            }
+            if (DEV) {
+                // $state = { type: 'starting' };
+                // $startProgress = { type: 'Python', progress: { type: 'Downloading', progress: 10, total: 100, msg: 'Downloading to ...' } };
+                // return;
+                await new Promise<void>((resolve) => {
+                    $state = { type: 'add_channels', state: { type: 'idle' }, resolve };
+                });
+                $installed = false;
+            }
+            $state = { type: 'ready' };
+            $installed = true;
+        } catch (e) {
+            console.error('Error during start:', e);
+            $state = { type: 'restore' };
         }
-        if (DEV) {
-            //             await new Promise<void>((resolve) => {
-            //                 $state = { type: 'update', resolve, update: new Update({
-            //                     rid: 0,
-            //                     currentVersion: VERSION,
-            //                     version: VERSION,
-            //                     body: `
-            // # OMUAPPSについて
-
-            // OMUAPPSは、アプリ間の連携やブラウザだけでは実現できない機能を厳格に制限された権限のもと提供をするAPIアプリケーションおよびそのAPIを利用するアプリケーションを提供するプラットフォームです。
-
-            // ## 開発
-
-            // OMUAPPSの開発環境を構築する方法です。
-
-            // この手順はvscodeを使用することを前提としています。
-
-            // ### 必要なもの
-
-            // 必要なものをインストールしてください。
-
-            // - Install [Rust](https://www.rust-lang.org/ja)
-            // - Install [Nodejs](https://nodejs.org/)
-            // - Install [bun](https://bun.sh/)
-            // - Install [rye](https://rye.astral.sh/)
-
-            // ### 起動
-
-            // vscodeでは、起動構成から [ Server/Client ] を選択して起動してください。`,
-            //                     date: new Date().toISOString(),
-            //                     rawJson: {},
-            //                 }),
-            //                 };
-            //             });
-            // $state = { type: 'restore' };
-            // return;
-            $installed = false;
-        }
-        if (!$installed) {
-            await new Promise<void>((accept) => {
-                $state = { type: 'agreements', accept };
-            });
-        }
-        $state = { type: 'starting' };
-        await invoke('start_server');
-        $state = { type: 'connecting' };
-        omu.start();
-        omu.network.event.status.listen((status) => {
-            $netState = status;
-        });
-        await omu.waitForReady();
-        if (!$installed) {
-            await new Promise<void>((resolve) => {
-                $state = { type: 'add_channels', state: { type: 'idle' }, resolve };
-            });
-        }
-        if (DEV) {
-            // $state = { type: 'starting' };
-            // $startProgress = { type: 'Python', progress: { type: 'Downloading', progress: 10, total: 100, msg: 'Downloading to ...' } };
-            // return;
-            await new Promise<void>((resolve) => {
-                $state = { type: 'add_channels', state: { type: 'idle' }, resolve };
-            });
-            $installed = false;
-        }
-        $state = { type: 'ready' };
-        $installed = true;
     }
 
     async function retry() {

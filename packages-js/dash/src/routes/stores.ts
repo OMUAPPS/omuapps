@@ -30,6 +30,7 @@ type AppState = {
     type: 'starting';
 } | {
     type: 'connecting';
+    reject: (reason: { type: 'server_start_failed' }) => void;
 } | {
     type: 'add_channels';
     state: AddChannelStatus;

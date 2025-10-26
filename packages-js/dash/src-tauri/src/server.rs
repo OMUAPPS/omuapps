@@ -44,9 +44,7 @@ fn generate_hash() -> String {
     format!("{:x}", hasher.finalize())
 }
 
-pub struct ServerProcess {
-    pub handle: Arc<Mutex<std::process::Child>>,
-}
+pub struct ServerProcess(Arc<Mutex<std::process::Child>>);
 
 pub struct Server {
     config: ServerConfig,
@@ -61,6 +59,7 @@ pub struct Server {
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum ServerState {
+    ServerStarting { msg: String },
     ServerStopped { msg: String },
 }
 
@@ -261,6 +260,14 @@ impl Server {
             "Starting server with args: {:?} in {:?}",
             cmd, self.config.data_dir
         );
+        if let Some(app) = self.app_handle.lock().unwrap().as_ref() {
+            let _ = app.emit(
+                "server_state",
+                ServerState::ServerStarting {
+                    msg: format!("Starting server: {:?}", cmd),
+                },
+            );
+        }
         let child = cmd.spawn().map_err(|err| ServerEnsureError::StartFailed {
             msg: format!("Failed to start server process: {}", err),
         })?;
@@ -269,39 +276,32 @@ impl Server {
     }
 
     fn handle_io(&self, mut child: std::process::Child) -> Result<(), String> {
-        let stdout = child.stdout.take().unwrap();
-        let stderr = child.stderr.take().unwrap();
-        std::thread::spawn(move || {
-            std::io::BufReader::new(stdout).lines().for_each(|line| {
-                if let Ok(line) = line {
-                    info!("{}", line);
-                }
+        if let Some(stdout) = child.stdout.take() {
+            std::thread::spawn(move || {
+                std::io::BufReader::new(stdout)
+                    .lines()
+                    .filter_map(Result::ok)
+                    .for_each(|line| info!("{}", line));
             });
-        });
-        std::thread::spawn(move || {
-            std::io::BufReader::new(stderr).lines().for_each(|line| {
-                if let Ok(line) = line {
-                    info!("{}", line);
-                }
-            });
-        });
-        let process = ServerProcess {
-            handle: Arc::new(Mutex::new(child)),
-        };
-        {
-            *self.process.lock().unwrap() = Some(process);
         }
-        let process = self.process.clone();
+        if let Some(stderr) = child.stderr.take() {
+            std::thread::spawn(move || {
+                std::io::BufReader::new(stderr)
+                    .lines()
+                    .filter_map(Result::ok)
+                    .for_each(|line| info!("{}", line));
+            });
+        }
+
+        let child_arc = Arc::new(Mutex::new(child));
+        *self.process.lock().unwrap() = Some(ServerProcess(child_arc.clone()));
+
+        let process_store = self.process.clone();
         let app_handle = self.app_handle.clone();
+
         std::thread::spawn(move || {
-            let handle = {
-                let process = process.lock().unwrap();
-                process.as_ref().unwrap().handle.clone()
-            };
-            let exit = handle.lock().unwrap().wait();
-            {
-                *process.lock().unwrap() = None;
-            }
+            let exit = child_arc.lock().unwrap().wait();
+            *process_store.lock().unwrap() = None;
 
             match exit {
                 Ok(status) => {
@@ -313,16 +313,14 @@ impl Server {
                         info!("Server exited normally: {}", code);
                         return;
                     }
-                    let app_handle = app_handle.lock().unwrap();
-                    if let Some(app_handle) = &*app_handle {
-                        app_handle
-                            .emit(
-                                "server_state",
-                                ServerState::ServerStopped {
-                                    msg: format!("Server exited with code {}", code),
-                                },
-                            )
-                            .unwrap();
+                    info!("Server process exited with code: {}", code);
+                    if let Some(app) = app_handle.lock().unwrap().as_ref() {
+                        let _ = app.emit(
+                            "server_state",
+                            ServerState::ServerStopped {
+                                msg: format!("Server exited with code {}", code),
+                            },
+                        );
                     }
                 }
                 Err(err) => {
@@ -330,6 +328,7 @@ impl Server {
                 }
             }
         });
+
         Ok(())
     }
 

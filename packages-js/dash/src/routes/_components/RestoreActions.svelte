@@ -24,7 +24,6 @@
             restoreState = { type: 'cleaning_failed', reason: err as CleanError };
         }
         retry();
-    // await relaunch();
     }
 
     async function restart() {

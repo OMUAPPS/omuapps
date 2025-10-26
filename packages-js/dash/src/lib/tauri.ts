@@ -45,10 +45,6 @@ export type UvEnsureError = SerdeEnum<{
     NoDownloadFound: { msg: string };
 }>;
 
-export type ServerState = SerdeEnum<{
-    ServerStopped: { msg: string };
-}>;
-
 export type ServerEnsureProgress = SerdeEnum<{
     UpdatingDependencies: { progress: UvEnsureProgress };
     ServerStopping: { msg: string };
@@ -116,10 +112,16 @@ export type CleanProgress = SerdeEnum<{
     UvRemoving: { progress: Progress };
 }>;
 
+export type ServerState = SerdeEnum<{
+    ServerStarting: { msg: string };
+    ServerStopped: { msg: string };
+}>;
+
 type Events = {
     start_progress: StartProgress;
     stop_progress: StopProgress;
     clean_progress: CleanProgress;
+    server_state: ServerState;
     server_restart: unknown;
     'single-instance': {
         args: string[];
@@ -264,6 +266,7 @@ export const IS_TAURI = checkOnTauri();
 export const startProgress = writable<StartProgress | undefined>();
 export const stopProgress = writable<StopProgress | undefined>();
 export const cleanProgress = writable<CleanProgress | undefined>();
+export const serverState = writable<ServerState | undefined>();
 
 async function load() {
     if (!checkOnTauri()) {
@@ -291,6 +294,9 @@ async function load() {
     });
     await listen('clean_progress', ({ payload }) => {
         cleanProgress.set(payload);
+    });
+    await listen('server_state', ({ payload }) => {
+        serverState.set(payload);
     });
 }
 
