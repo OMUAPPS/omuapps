@@ -22,36 +22,49 @@ from omuserver.server import Server
 from omuserver.version import VERSION
 
 
-def stop_server_processes(
-    port: int,
-):
+def stop_server_processes(port: int):
     executable = Path(sys.executable)
-    found_processes = list(find_processes_by_port(port))
-    if not found_processes:
-        logger.info(f"No processes found using port {port}")
-    else:
-        for process in found_processes:
-            try:
-                if process.exe() != executable:
-                    logger.warning(f"Process {process.pid} ({process.name()}) is not a Python process")
-                logger.info(f"Killing process {process.pid} ({process.name()})")
-                process.send_signal(signal.SIGTERM)
-            except psutil.NoSuchProcess:
-                logger.warning(f"Process {process.pid} not found")
-            except psutil.AccessDenied:
-                logger.warning(f"Access denied to process {process.pid}")
-    executable_processes = list(find_processes_by_executable(executable))
     self_pid = os.getpid()
-    for process in executable_processes:
+    parents_pids = {p.pid for p in psutil.Process(self_pid).parents()}
+    processed: set[int] = set()
+
+    def _handle(process, warn_non_python: bool):
+        pid = process.pid
+        if pid in processed:
+            return
+        processed.add(pid)
         try:
-            if process.pid == self_pid:
-                continue
-            logger.info(f"Killing process {process.pid} ({process.name()})")
+            if not process.is_running():
+                return
+            if pid == self_pid:
+                logger.debug(f"Skipping self process {pid}")
+                return
+            if pid in parents_pids:
+                logger.debug(f"Skipping parent process {pid}")
+                return
+            if warn_non_python:
+                try:
+                    exe = Path(process.exe())
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    exe = None
+                if exe != executable:
+                    logger.warning(f"Process {pid} ({process.name()}) is not a Python process")
+            logger.info(f"Killing process {pid} ({process.name()})")
             process.send_signal(signal.SIGTERM)
         except psutil.NoSuchProcess:
-            logger.warning(f"Process {process.pid} not found")
+            logger.warning(f"Process {pid} not found")
         except psutil.AccessDenied:
-            logger.warning(f"Access denied to process {process.pid}")
+            logger.warning(f"Access denied to process {pid}")
+
+    for process in find_processes_by_port(port):
+        _handle(process, warn_non_python=True)
+    else:
+        logger.info(f"No processes found using port {port}")
+
+    for process in find_processes_by_executable(executable):
+        _handle(process, warn_non_python=False)
+    else:
+        logger.info(f"No other processes found with executable {executable}")
 
 
 @click.command()
