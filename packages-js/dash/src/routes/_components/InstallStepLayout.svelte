@@ -1,6 +1,6 @@
-<script>
-
+<script lang="ts">
 </script>
+
 <div class="content">
     <div class="main">
         <slot />
@@ -28,7 +28,6 @@
         padding-bottom: 15%;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         gap: 1rem;
     }
 

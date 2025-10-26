@@ -29,8 +29,6 @@ type AppState = {
 } | {
     type: 'starting';
 } | {
-    type: 'setup';
-} | {
     type: 'connecting';
 } | {
     type: 'add_channels';

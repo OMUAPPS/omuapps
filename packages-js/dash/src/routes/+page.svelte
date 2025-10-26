@@ -1,11 +1,10 @@
 <script lang="ts">
     import { omu } from '$lib/client';
+    import { t } from '$lib/i18n/i18n-context';
     import MainWindow from '$lib/main/MainWindow.svelte';
     import { installed } from '$lib/main/settings';
-    import { applyUpdate, checkUpdate, invoke } from '$lib/tauri';
-    import { VERSION } from '$lib/version';
+    import { applyUpdate, checkUpdate, invoke, startProgress } from '$lib/tauri';
     import { Button, Spinner } from '@omujs/ui';
-    import { Update } from '@tauri-apps/plugin-updater';
     import { DEV } from 'esm-env';
     import { onMount } from 'svelte';
     import Agreements from './_components/Agreements.svelte';
@@ -14,10 +13,15 @@
     import InstallStepConnectionProgress from './_components/InstallStepConnectionProgress.svelte';
     import InstallStepLayout from './_components/InstallStepLayout.svelte';
     import InstallStepStartProgress from './_components/InstallStepStartProgress.svelte';
+    import RestoreActions from './_components/RestoreActions.svelte';
     import StepUpdateHint from './_components/StepUpdateHint.svelte';
     import { netState, state } from './stores';
 
     onMount(async () => {
+        await start();
+    });
+
+    async function start() {
         $state = { type: 'checking_update' };
         const update = await checkUpdate();
         if (update) {
@@ -26,39 +30,42 @@
             });
         }
         if (DEV) {
-            await new Promise<void>((resolve) => {
-                $state = { type: 'update', resolve, update: new Update({
-                    rid: 0,
-                    currentVersion: VERSION,
-                    version: VERSION,
-                    body: `
-# OMUAPPSについて
+            //             await new Promise<void>((resolve) => {
+            //                 $state = { type: 'update', resolve, update: new Update({
+            //                     rid: 0,
+            //                     currentVersion: VERSION,
+            //                     version: VERSION,
+            //                     body: `
+            // # OMUAPPSについて
 
-OMUAPPSは、アプリ間の連携やブラウザだけでは実現できない機能を厳格に制限された権限のもと提供をするAPIアプリケーションおよびそのAPIを利用するアプリケーションを提供するプラットフォームです。
+            // OMUAPPSは、アプリ間の連携やブラウザだけでは実現できない機能を厳格に制限された権限のもと提供をするAPIアプリケーションおよびそのAPIを利用するアプリケーションを提供するプラットフォームです。
 
-## 開発
+            // ## 開発
 
-OMUAPPSの開発環境を構築する方法です。
+            // OMUAPPSの開発環境を構築する方法です。
 
-この手順はvscodeを使用することを前提としています。
+            // この手順はvscodeを使用することを前提としています。
 
-### 必要なもの
+            // ### 必要なもの
 
-必要なものをインストールしてください。
+            // 必要なものをインストールしてください。
 
-- Install [Rust](https://www.rust-lang.org/ja)
-- Install [Nodejs](https://nodejs.org/)
-- Install [bun](https://bun.sh/)
-- Install [rye](https://rye.astral.sh/)
+            // - Install [Rust](https://www.rust-lang.org/ja)
+            // - Install [Nodejs](https://nodejs.org/)
+            // - Install [bun](https://bun.sh/)
+            // - Install [rye](https://rye.astral.sh/)
 
-### 起動
+            // ### 起動
 
-vscodeでは、起動構成から [ Server/Client ] を選択して起動してください。`,
-                    date: new Date().toISOString(),
-                    rawJson: {},
-                }),
-                };
-            });
+            // vscodeでは、起動構成から [ Server/Client ] を選択して起動してください。`,
+            //                     date: new Date().toISOString(),
+            //                     rawJson: {},
+            //                 }),
+            //                 };
+            //             });
+            // $state = { type: 'restore' };
+            // return;
+            $installed = false;
         }
         if (!$installed) {
             await new Promise<void>((accept) => {
@@ -89,7 +96,11 @@ vscodeでは、起動構成から [ Server/Client ] を選択して起動して�
         }
         $state = { type: 'ready' };
         $installed = true;
-    });
+    }
+
+    async function retry() {
+        await start();
+    }
 </script>
 
 {#if $state.type === 'ready'}
@@ -108,9 +119,11 @@ vscodeでは、起動構成から [ Server/Client ] を選択して起動して�
                 <h1>利用規約</h1>
                 <small>使用するにあたって</small>
             </div>
-            <Button onclick={$state.accept} primary>
-                インストールを開始
-            </Button>
+            <div class="actions">
+                <Button onclick={$state.accept} primary>
+                    インストールを開始
+                </Button>
+            </div>
 
             <Agreements slot="hint" />
         </InstallStepLayout>
@@ -125,6 +138,11 @@ vscodeでは、起動構成から [ Server/Client ] を選択して起動して�
                     {/if}
                     <Spinner />
                 </h1>
+                {#if $startProgress}
+                    <small>
+                        {$t(`setup.progress.${$startProgress.type}.${$startProgress.progress.type}`)}
+                    </small>
+                {/if}
             </div>
             <div class="progress">
                 <InstallStepStartProgress />
@@ -189,6 +207,7 @@ vscodeでは、起動構成から [ Server/Client ] を選択して起動して�
                 <h1>起動に失敗しました</h1>
                 <small>環境を再構築するか、アプリケーションを再起動してください。</small>
             </div>
+            <RestoreActions {retry} />
         </InstallStepLayout>
     {:else}
         <pre>
@@ -212,5 +231,10 @@ vscodeでは、起動構成から [ Server/Client ] を選択して起動して�
     .actions {
         display: flex;
         justify-content: space-between;
+        margin-top: auto;
+    }
+
+    .progress {
+        margin-top: auto;
     }
 </style>

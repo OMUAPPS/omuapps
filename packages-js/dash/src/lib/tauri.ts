@@ -103,9 +103,23 @@ export type StopProgress = SerdeEnum< {
     ServerStopping: { msg: string };
 }>;
 
+export type CleanError = SerdeEnum<{
+    PythonError: { reason: PythonEnsureError };
+    ServerError: { reason: string };
+    RemovePythonError: { reason: string };
+    RemoveUvError: { reason: string };
+}>;
+
+export type CleanProgress = SerdeEnum<{
+    Python: { progress: PythonEnsureProgress };
+    PythonRemoving: { progress: Progress };
+    UvRemoving: { progress: Progress };
+}>;
+
 type Events = {
     start_progress: StartProgress;
     stop_progress: StopProgress;
+    clean_progress: CleanProgress;
     server_restart: unknown;
     'single-instance': {
         args: string[];
@@ -132,6 +146,7 @@ type Commands = {
     close_window(): void;
     start_server(): StartResult;
     stop_server(): undefined;
+    clean_environment(): undefined;
     get_token(): string | null;
     get_config(): Config;
     set_config(options: { config: Config }): void;
@@ -248,6 +263,7 @@ export const IS_TAURI = checkOnTauri();
 
 export const startProgress = writable<StartProgress | undefined>();
 export const stopProgress = writable<StopProgress | undefined>();
+export const cleanProgress = writable<CleanProgress | undefined>();
 
 async function load() {
     if (!checkOnTauri()) {
@@ -272,6 +288,9 @@ async function load() {
     });
     await listen('stop_progress', ({ payload }) => {
         stopProgress.set(payload);
+    });
+    await listen('clean_progress', ({ payload }) => {
+        cleanProgress.set(payload);
     });
 }
 

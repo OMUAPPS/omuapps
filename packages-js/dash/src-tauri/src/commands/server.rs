@@ -12,6 +12,13 @@ use log::info;
 use tauri::Emitter;
 
 #[derive(Debug, Clone, serde::Serialize)]
+pub struct Progress {
+    msg: String,
+    progress: f64,
+    total: f64,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum StartError {
     ServerStartFailed { msg: String },
@@ -162,26 +169,18 @@ pub async fn stop_server(
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum CleanError {
-    PythonError(PythonEnsureError),
-    ServerError(String),
-    RemovePythonError(String),
-    RemoveUvError(String),
+    PythonError { reason: PythonEnsureError },
+    ServerError { reason: String },
+    RemovePythonError { reason: String },
+    RemoveUvError { reason: String },
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(tag = "type")]
 pub enum CleanProgress {
-    Python(PythonEnsureProgress),
-    PythonRemoving {
-        msg: String,
-        progress: f64,
-        total: f64,
-    },
-    UvRemoving {
-        msg: String,
-        progress: f64,
-        total: f64,
-    },
+    Python { progress: PythonEnsureProgress },
+    PythonRemoving { progress: Progress },
+    UvRemoving { progress: Progress },
 }
 
 #[tauri::command]
@@ -212,32 +211,40 @@ pub async fn clean_environment(
     } else {
         let callback = on_progress.clone();
         Python::ensure(&options, move |progress| {
-            callback(CleanProgress::Python(progress));
+            callback(CleanProgress::Python { progress });
         })
-        .map_err(|err| CleanError::PythonError(err))?
+        .map_err(|err| CleanError::PythonError { reason: err })?
     };
 
     Server::stop_server(&python, &state.config.lock().unwrap().server)
-        .map_err(|err| CleanError::ServerError(err))?;
+        .map_err(|err| CleanError::ServerError { reason: err })?;
 
     let callback = on_progress.clone();
     remove_dir_all(&options.python_path, |current, total| {
         callback(CleanProgress::PythonRemoving {
-            msg: "Removing python".to_string(),
-            progress: current,
-            total,
+            progress: Progress {
+                msg: "Removing python".to_string(),
+                progress: current,
+                total,
+            },
         });
     })
-    .map_err(|err| CleanError::RemovePythonError(err.to_string()))?;
+    .map_err(|err| CleanError::RemovePythonError {
+        reason: err.to_string(),
+    })?;
     let callback = on_progress.clone();
     remove_dir_all(&options.uv_path, |current, total| {
         callback(CleanProgress::UvRemoving {
-            msg: "Removing uv".to_string(),
-            progress: current,
-            total,
+            progress: Progress {
+                msg: "Removing uv".to_string(),
+                progress: current,
+                total,
+            },
         });
     })
-    .map_err(|err| CleanError::RemoveUvError(err.to_string()))?;
+    .map_err(|err| CleanError::RemoveUvError {
+        reason: err.to_string(),
+    })?;
 
     info!("Environment cleaned");
 

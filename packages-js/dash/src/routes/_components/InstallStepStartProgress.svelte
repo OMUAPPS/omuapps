@@ -1,20 +1,27 @@
 <script lang="ts">
-    import { t } from '$lib/i18n/i18n-context';
     import { startProgress } from '$lib/tauri';
+    import ProgressBar from './ProgressBar.svelte';
+
 </script>
 
-<small>
+<div class="step">
     {#if $startProgress}
         {#if $startProgress.type === 'Python'}
-            <progress value={$startProgress.progress.progress / $startProgress.progress.total} />
+            <ProgressBar progress={$startProgress.progress} />
         {:else if $startProgress.type === 'Uv' &&
             (
                 $startProgress.progress.type === 'Downloading' ||
                 $startProgress.progress.type === 'Extracting' ||
                 $startProgress.progress.type === 'UvCleanupOldVersions'
             )}
-            <progress value={$startProgress.progress.progress / $startProgress.progress.total} />
+            <ProgressBar progress={$startProgress.progress} />
         {/if}
-        {$t(`setup.progress.${$startProgress.type}.${$startProgress.progress.type}`)}
     {/if}
-</small>
+</div>
+
+<style lang="scss">
+    .step {
+        display: flex;
+        flex-direction: column;
+    }
+</style>

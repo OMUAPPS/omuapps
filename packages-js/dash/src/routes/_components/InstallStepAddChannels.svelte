@@ -62,8 +62,10 @@
             </Button>
         </div>
     {:else if state.type === 'searching'}
-        <Spinner />
-        検索中...
+        <p>
+            検索中
+            <Spinner />
+        </p>
     {:else if state.type === 'result'}
         <div class="channels">
             {#each state.channels as { channel, added }, index (index)}
@@ -107,7 +109,7 @@
                     {/if}
                 </Tooltip>
                 {#if state.channels.length > 0}
-                    追加
+                    追加して終了
                 {:else}
                     追加せずに終了
                 {/if}
@@ -122,6 +124,7 @@
         display: flex;
         flex-direction: column;
         gap: 2rem;
+        margin-top: auto;
     }
 
     .actions {
@@ -172,6 +175,7 @@
             display: flex;
             align-items: center;
             padding: 0.75rem 1rem;
+            margin: 0 1px;
             background: var(--color-bg-1);
             border: none;
             font-weight: 600;

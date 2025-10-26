@@ -171,7 +171,8 @@ impl Server {
         })?;
         if !output.status.success() {
             let msg = format!(
-                "Failed to stop server: {}",
+                "Failed to stop server (process exited with code {}): {}",
+                output.status.code().unwrap_or(-1),
                 String::from_utf8_lossy(&output.stderr)
             );
             return Err(msg);
