@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.15 (2025-10-27)
+
+
+### Bug Fixes
+
+* **app-reaction:** アセット側の表示がされない問題を修正 ([d680875](https://github.com/OMUAPPS/omuapps/commit/d680875954e68de8a8de3902fcf3d5c7a46c1846))
+
+
+
+
+
 ## 0.9.14 (2025-10-27)
 
 **Note:** Version bump only for package @omujs/i18n
