@@ -3,8 +3,9 @@ import type { TagKey } from '../category.js';
 import { buildMetadata, getUrl, NAMESPACE } from '../origin.js';
 import thumbnail from './thumbnail.png';
 
-const id = new Identifier(NAMESPACE, 'aoikuru-fries');
-export const APP = new App(id, {
+export const APP_ID = new Identifier(NAMESPACE, 'aoikuru-fries');
+
+export const APP = new App(APP_ID, {
     url: getUrl('/app/aoikuru-fries'),
     metadata: buildMetadata({
         locale: 'ja',
@@ -21,7 +22,7 @@ export const APP = new App(id, {
         tags: ['asset'] as TagKey[],
     }),
 });
-export const ASSET_APP = new App(id.join('asset'), {
+export const ASSET_APP = new App(APP_ID.join('asset'), {
     url: getUrl('/app/aoikuru-fries/asset'),
     parentId: APP,
     metadata: buildMetadata({
