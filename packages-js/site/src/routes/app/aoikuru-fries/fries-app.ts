@@ -6,7 +6,7 @@ import type { Writable } from 'svelte/store';
 import { APP } from './app.js';
 import type { State } from './state.js';
 
-const TEST_SIGNAL = SignalType.createJson<null>(APP, {
+const TEST_SIGNAL = SignalType.createJson<null>(APP.join('test'), {
     name: 'test',
 });
 
