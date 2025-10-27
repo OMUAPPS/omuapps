@@ -48,6 +48,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Tauri Development Debug",
+            "cwd": "${workspaceFolder}/packages-js/dash/src-tauri",
             "cargo": {
                 "args": [
                     "build",
