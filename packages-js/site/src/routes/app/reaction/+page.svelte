@@ -6,6 +6,7 @@
     import { OBSPlugin, permissions as obsPerms } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/api/asset';
+    import { GENERATE_TOKEN_PERMISSION_ID } from '@omujs/omu/api/session';
     import {
         AppHeader,
         Button,
@@ -58,6 +59,7 @@
             ASSET_UPLOAD_PERMISSION_ID,
             obsPerms.OBS_SOURCE_CREATE_PERMISSION_ID,
             chatPerms.CHAT_REACTION_PERMISSION_ID,
+            GENERATE_TOKEN_PERMISSION_ID,
         );
         omu.start();
     }
