@@ -4,14 +4,13 @@ use std::{
     process::Command,
 };
 
-use anyhow::{bail, Error};
-use anyhow::{Context, Result};
+use anyhow::Result;
+use log::debug;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
 use crate::{
-    options::{AppConfig, AppOptions},
-    progress::Progress,
+    options::AppOptions,
     sources::uv::{UvDownload, UvRequest},
     utils::{archive::unpack_archive, download::download_url, filesystem::remove_dir_all},
 };
@@ -20,15 +19,55 @@ pub struct Uv {
     uv_bin: PathBuf,
     workdir: PathBuf,
     python_bin: PathBuf,
+    index_url: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum UvEnsureProgress {
+    Downloading {
+        msg: String,
+        progress: f64,
+        total: f64,
+    },
+    Extracting {
+        msg: String,
+        progress: f64,
+        total: f64,
+    },
+    UvCleanupOldVersions {
+        msg: String,
+        progress: f64,
+        total: f64,
+    },
+    UvUpdatePip {
+        msg: String,
+    },
+    UpdateRequirements {
+        msg: String,
+    },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum UvEnsureError {
+    CleanupOldVersionsFailed { msg: String },
+    UpdatePipFailed { msg: String },
+    UpdateRequirementsFailed { msg: String },
+    NoDownloadFound { msg: String },
 }
 
 impl Uv {
     pub fn ensure(
         options: &AppOptions,
         python_bin: &PathBuf,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<Self, Error> {
-        let download = UvDownload::try_from(UvRequest::default())?;
+        on_progress: impl Fn(UvEnsureProgress) + Send + Clone + 'static,
+    ) -> Result<Self, UvEnsureError> {
+        let download = UvDownload::try_from(UvRequest::default()).map_err(|err| {
+            UvEnsureError::NoDownloadFound {
+                msg: format!("No uv download found: {}", err),
+            }
+        })?;
         let uv_dir = options.uv_path.join(download.version());
         let uv_bin = if cfg!(target_os = "windows") {
             let mut bin = uv_dir.join("uv");
@@ -37,49 +76,71 @@ impl Uv {
         } else {
             uv_dir.join("uv")
         };
+        let index_url = if cfg!(dev) {
+            "http://localhost:26410/simple/".to_string()
+        } else {
+            "https://pypi.org/simple/".to_string()
+        };
         if uv_dir.exists() && uv_bin.exists() {
             return Ok(Uv {
                 uv_bin,
                 workdir: options.workdir.clone(),
                 python_bin: python_bin.clone(),
+                index_url,
             });
         }
 
-        Self::download(options, on_progress)?;
-        Self::cleanup_old_versions(&options.uv_path, &uv_dir, on_progress)?;
+        Self::download(options, &on_progress)?;
+        Self::cleanup_old_versions(&options.uv_path, &uv_dir, &on_progress)?;
         if uv_dir.exists() && uv_bin.exists() {
             return Ok(Uv {
                 uv_bin,
                 workdir: options.workdir.clone(),
                 python_bin: python_bin.clone(),
+                index_url,
             });
         }
-
-        bail!("Failed to download uv")
+        Err(UvEnsureError::NoDownloadFound {
+            msg: format!("uv not found after installation at {}", uv_dir.display()),
+        })
     }
     fn cleanup_old_versions(
         base_dir: &Path,
         current_version: &Path,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<(), Error> {
+        on_progress: &(impl Fn(UvEnsureProgress) + Send + 'static),
+    ) -> Result<(), UvEnsureError> {
         let versions = base_dir
-            .read_dir()?
+            .read_dir()
+            .map_err(|err| UvEnsureError::CleanupOldVersionsFailed {
+                msg: format!(
+                    "Failed to read uv versions directory {}: {}",
+                    base_dir.display(),
+                    err
+                ),
+            })?
             .filter_map(|entry| entry.ok())
             .filter(|entry| entry.path().is_dir())
             .filter(|entry| entry.path() != current_version);
 
         for entry in versions {
-            on_progress(Progress::UvCleanupOldVersions {
+            on_progress(UvEnsureProgress::UvCleanupOldVersions {
                 msg: format!("Removing old uv version: {}", entry.path().display()),
                 progress: 0.0,
                 total: 0.0,
             });
             remove_dir_all(&entry.path(), |progress, total| {
-                on_progress(Progress::UvCleanupOldVersions {
+                on_progress(UvEnsureProgress::UvCleanupOldVersions {
                     msg: format!("Removing old uv version: {}", entry.path().display()),
                     progress,
                     total,
                 });
+            })
+            .map_err(|err| UvEnsureError::CleanupOldVersionsFailed {
+                msg: format!(
+                    "Failed to remove old uv version {}: {}",
+                    entry.path().display(),
+                    err
+                ),
             })?;
         }
         Ok(())
@@ -87,24 +148,27 @@ impl Uv {
 
     pub fn download(
         options: &AppOptions,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<(), Error> {
+        on_progress: &(impl Fn(UvEnsureProgress) + Send + 'static),
+    ) -> Result<(), UvEnsureError> {
         let uv_request = UvRequest::default();
         let uv_download = UvDownload::try_from(uv_request).unwrap();
         let uv_url = uv_download.url.as_ref();
-        on_progress(Progress::UvDownloading {
+        on_progress(UvEnsureProgress::Downloading {
             msg: format!("Downloading uv from {}", uv_url),
             progress: 0.0,
             total: 0.0,
         });
         let contents = download_url(&uv_url, |progress, total| {
-            on_progress(Progress::UvDownloading {
+            on_progress(UvEnsureProgress::Downloading {
                 msg: format!("Downloading uv from {}", uv_url),
                 progress,
                 total,
             });
+        })
+        .map_err(|err| UvEnsureError::NoDownloadFound {
+            msg: format!("Failed to download uv from {}: {}", uv_url, err),
         })?;
-        on_progress(Progress::UvExtracting {
+        on_progress(UvEnsureProgress::Extracting {
             msg: format!("Extracting uv to {}", options.uv_path.display()),
             progress: 0.0,
             total: 0.0,
@@ -112,11 +176,18 @@ impl Uv {
         let dst = options.uv_path.join(uv_download.version());
         let strip = if cfg!(target_os = "windows") { 0 } else { 1 };
         unpack_archive(&contents, &dst, strip, |progress, total| {
-            on_progress(Progress::UvExtracting {
+            on_progress(UvEnsureProgress::Extracting {
                 msg: format!("Extracting uv to {}", options.uv_path.display()),
                 progress,
                 total,
             });
+        })
+        .map_err(|err| UvEnsureError::NoDownloadFound {
+            msg: format!(
+                "Failed to extract uv to {}: {}",
+                options.uv_path.display(),
+                err
+            ),
         })?;
         Ok(())
     }
@@ -141,10 +212,10 @@ impl Uv {
         &self,
         pip_version: &str,
         requirements: &str,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<(), Error> {
-        self.update_pip(pip_version, on_progress)?;
-        self.update_requirements(requirements, on_progress)?;
+        on_progress: impl Fn(UvEnsureProgress) + Send + Clone + 'static,
+    ) -> Result<(), UvEnsureError> {
+        self.update_pip(pip_version, &on_progress)?;
+        self.update_requirements(requirements, &on_progress)?;
         Ok(())
     }
 
@@ -152,9 +223,9 @@ impl Uv {
     pub fn update_pip(
         &self,
         pip_version: &str,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<(), Error> {
-        on_progress(Progress::UvUpdatePip {
+        on_progress: &(impl Fn(UvEnsureProgress) + Send + 'static),
+    ) -> Result<(), UvEnsureError> {
+        on_progress(UvEnsureProgress::UvUpdatePip {
             msg: format!(
                 "Updating pip to {} at {}",
                 pip_version,
@@ -168,17 +239,16 @@ impl Uv {
             .arg(pip_version)
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
+            .arg("--extra-index-url")
+            .arg(&self.index_url)
             .output()
-            .with_context(|| {
-                let message = format!(
-                    "unable to update pip to {} at {}",
+            .map_err(|err| UvEnsureError::UpdatePipFailed {
+                msg: format!(
+                    "unable to update pip to {} at {}: {}",
                     pip_version,
-                    self.workdir.display()
-                );
-                on_progress(Progress::UvUpdatePipFailed {
-                    msg: message.clone(),
-                });
-                message
+                    self.workdir.display(),
+                    err
+                ),
             })?;
 
         if !output.status.success() {
@@ -188,10 +258,12 @@ impl Uv {
                 self.workdir.display(),
                 String::from_utf8_lossy(&output.stderr)
             );
-            on_progress(Progress::UvUpdatePipFailed {
+            on_progress(UvEnsureProgress::UvUpdatePip {
                 msg: update_error_message.clone(),
             });
-            bail!(update_error_message.clone());
+            return Err(UvEnsureError::UpdatePipFailed {
+                msg: update_error_message.clone(),
+            });
         }
         Ok(())
     }
@@ -200,49 +272,65 @@ impl Uv {
     pub fn update_requirements(
         &self,
         requirements: &str,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<(), Error> {
-        on_progress(Progress::UvUpdateRequirements {
+        on_progress: &(impl Fn(UvEnsureProgress) + Send + 'static),
+    ) -> Result<(), UvEnsureError> {
+        debug!("Package Index URL: {}", self.index_url);
+        on_progress(UvEnsureProgress::UpdateRequirements {
             msg: format!(
                 "Updating requirements {} at {}",
                 requirements,
-                self.workdir.display()
+                self.python_bin.display()
             ),
         });
 
-        let mut req_file = NamedTempFile::new()?;
-        writeln!(req_file, "{}", requirements)?;
+        let mut req_file =
+            NamedTempFile::new().map_err(|err| UvEnsureError::UpdateRequirementsFailed {
+                msg: format!(
+                    "unable to create temporary requirements file at {}: {}",
+                    self.workdir.display(),
+                    err
+                ),
+            })?;
+        writeln!(req_file, "{}", requirements).map_err(|err| {
+            UvEnsureError::UpdateRequirementsFailed {
+                msg: format!(
+                    "unable to write to temporary requirements file at {}: {}",
+                    self.workdir.display(),
+                    err
+                ),
+            }
+        })?;
 
-        let output = self
-            .cmd()
-            .arg("pip")
+        let mut cmd = self.cmd();
+        cmd.arg("pip")
             .arg("install")
             .arg("-r")
             .arg(req_file.path())
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
+            .arg("--extra-index-url")
+            .arg(&self.index_url);
+        if cfg!(dev) {
+            cmd.arg("--no-cache");
+        }
+        let output = cmd
             .output()
-            .with_context(|| {
-                let message = format!(
-                    "unable to update requirements at {}",
-                    self.workdir.display()
-                );
-                on_progress(Progress::UvUpdateRequirementsFailed {
-                    msg: message.clone(),
-                });
-                message
+            .map_err(|err| UvEnsureError::UpdateRequirementsFailed {
+                msg: format!(
+                    "unable to update requirements at {}: {}",
+                    self.workdir.display(),
+                    err
+                ),
             })?;
 
         if !output.status.success() {
-            let update_error_message = format!(
-                "Failed to update requirements at {}: {}",
-                self.workdir.display(),
-                String::from_utf8_lossy(&output.stderr)
-            );
-            on_progress(Progress::UvUpdateRequirementsFailed {
-                msg: update_error_message.clone(),
-            });
-            bail!(update_error_message.clone());
+            Err(UvEnsureError::UpdateRequirementsFailed {
+                msg: format!(
+                    "Failed to update requirements at {}: {}",
+                    self.workdir.display(),
+                    String::from_utf8_lossy(&output.stderr)
+                ),
+            })?;
         }
 
         Ok(())

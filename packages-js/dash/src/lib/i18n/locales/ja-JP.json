@@ -67,10 +67,10 @@
     },
     "status": {
         "connecting": "接続中...",
+        "connected": "認証中...",
         "reconnecting": "再接続中...",
-        "connected": "接続済み",
-        "disconnected": "切断済み",
-        "connect_attempt_count": "接続試行回数: {count}"
+        "disconnected": "切断されました",
+        "attempt": "{count} 回目の接続。 {date} に再接続を試みます"
     },
     "titlebar": {
         "close": "閉じる",
@@ -283,6 +283,23 @@
         }
     },
     "setup": {
+        "progress": {
+            "Python": {
+                "Downloading": "Pythonをダウンロード中...",
+                "Extracting": "Pythonを展開中..."
+            },
+            "Uv": {
+                "Downloading": "Uvをダウンロード中...",
+                "Extracting": "Uvを展開中...",
+                "UvCleanupOldVersions": "古いバージョンをクリーンアップ中...",
+                "UvUpdatePip": "pipを更新中...",
+                "UpdateRequirements": "依存関係を更新中..."
+            },
+            "Server": {
+                "UpdatingDependencies": "依存関係を更新中...",
+                "ServerStopping": "サーバーを停止中..."
+            }
+        },
         "title": "セットアップ",
         "which_channel": "どのチャンネルを追加しますか？",
         "installing": "インストール中",

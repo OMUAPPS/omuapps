@@ -3,7 +3,7 @@ import type { DragDropFile } from '@omujs/omu/api/dashboard';
 import { TauriEvent } from '@tauri-apps/api/event';
 import type { FileInfo } from '@tauri-apps/plugin-fs';
 import { dashboard, omu } from './client.js';
-import { listen, tauriFs, tauriPath, waitForTauri } from './tauri.js';
+import { listen, tauriFs, tauriPath } from './tauri.js';
 
 type DragDrop = {
     files: DragDropFile[];
@@ -51,7 +51,7 @@ function getDragDropTarget(): App | null {
     return currentApp;
 }
 
-waitForTauri().then(() => {
+export function initDragDrop() {
     listen(TauriEvent.DRAG_ENTER, async ({ payload: { position, paths } }) => {
         const drag_id = nextDragId();
         const app = getDragDropTarget();
@@ -111,4 +111,4 @@ waitForTauri().then(() => {
             },
         });
     });
-});
+}

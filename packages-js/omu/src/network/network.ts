@@ -131,20 +131,21 @@ export class Network {
     }
 
     private async scheduleReconnect(attempt: number): Promise<boolean> {
-        const timeout = Math.min(30000, 2000 * Math.pow(2, attempt));
+        const timeout = Math.min(30000, 2000 * (Math.pow(1.5, attempt) - 1) + 2000);
         const date = new Date();
         let cancelled = false;
-        await this.setStatus({
+        const status: Extract<NetworkStatus, { type: 'reconnecting' }> = {
             type: 'reconnecting',
             attempt,
             timeout,
             date,
             cancel: () => {cancelled = true;},
-        });
+        };
+        await this.setStatus(status);
         if (cancelled) {
             return false;
         }
-        const remaining = timeout - (new Date().getTime() - date.getTime());
+        const remaining = status.timeout - (new Date().getTime() - date.getTime());
         await new Promise((resolve) => setTimeout(resolve, remaining));
         return true;
     }
@@ -159,10 +160,11 @@ export class Network {
 
         let attempt = 0;
 
-        while (true) {
+        while (this.omu.running) {
             attempt++;
             let reason: DisconnectReason | undefined = undefined;
             try {
+                this.aes = undefined;
                 this.connection = await this.transport.connect();
                 attempt = 0;
                 await this.setStatus({ type: 'connecting' });
@@ -243,6 +245,9 @@ export class Network {
                 break;
             }
         }
+        await this.setStatus({ type: 'disconnected' });
+        this.connection?.close();
+        this.connection = undefined;
     }
 
     private isState(state: NetworkStatus['type']): boolean {

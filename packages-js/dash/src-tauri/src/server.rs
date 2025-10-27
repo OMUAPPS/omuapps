@@ -5,14 +5,14 @@ use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use log::{error, info, warn};
+use log::{info, warn};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use tauri::utils::platform::current_exe;
 use tauri::{AppHandle, Emitter};
 
 use crate::options::AppOptions;
-use crate::progress::Progress;
+use crate::uv::{UvEnsureError, UvEnsureProgress};
 use crate::version::VERSION;
 use crate::{python::Python, uv::Uv};
 
@@ -44,11 +44,7 @@ fn generate_hash() -> String {
     format!("{:x}", hasher.finalize())
 }
 
-pub struct ServerProcess {
-    pub handle: Arc<Mutex<std::process::Child>>,
-    pub stdout: std::thread::JoinHandle<()>,
-    pub stderr: std::thread::JoinHandle<()>,
-}
+pub struct ServerProcess(Arc<Mutex<std::process::Child>>);
 
 pub struct Server {
     config: ServerConfig,
@@ -60,51 +56,70 @@ pub struct Server {
     pub already_started: bool,
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum ServerState {
+    ServerStarting { msg: String },
+    ServerRestarting { msg: String },
+    ServerStopped { msg: String },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum ServerEnsureProgress {
+    UpdatingDependencies { progress: UvEnsureProgress },
+    ServerStopping { msg: String },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum ServerEnsureError {
+    VersionReadFailed { msg: String },
+    UpdateDependenciesFailed { reason: UvEnsureError },
+    StopFailed { msg: String },
+    TokenReadFailed { msg: String },
+    TokenWriteFailed { msg: String },
+    CreateDataDirFailed { msg: String },
+    StartFailed { msg: String },
+    AlreadyRunning { msg: String },
+}
+
 impl Server {
     pub fn ensure_server(
         config: ServerConfig,
         python: Python,
         uv: Uv,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
+        on_progress: impl Fn(ServerEnsureProgress) + Send + Sync + Clone + 'static,
         app_handle: Arc<Mutex<Option<AppHandle>>>,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, ServerEnsureError> {
         let mut already_started = !is_port_free(config.port);
 
         let version = Self::read_version(&config)?;
         let needs_update = version.as_deref() != Some(VERSION);
         let requirements = format!("omuserver=={}", VERSION);
         if already_started && needs_update {
-            uv.update(LATEST_PIP, &requirements, on_progress)
-                .map_err(|err| err.to_string())?;
-            on_progress(Progress::ServerStopping {
+            let callback = on_progress.clone();
+            uv.update(LATEST_PIP, &requirements, move |progress| {
+                callback(ServerEnsureProgress::UpdatingDependencies { progress });
+            })
+            .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
+            on_progress(ServerEnsureProgress::ServerStopping {
                 msg: format!(
                     "Server version mismatch ({} != {}), stopping server",
-                    version.unwrap(),
+                    version.unwrap_or("none".to_string()),
                     VERSION
                 ),
             });
-            match Self::stop_server(&python, &config) {
-                Ok(_) => {}
-                Err(err) => {
-                    on_progress(Progress::ServerStopFailed { msg: err });
-                }
-            }
+            Self::stop_server(&python, &config)
+                .map_err(|err| ServerEnsureError::StopFailed { msg: err })?;
             already_started = false;
         }
 
         let token = if already_started {
-            match Self::read_token(&config) {
-                Ok(token) => token,
-                Err(err) => {
-                    on_progress(Progress::ServerTokenReadFailed { msg: err.clone() });
-                    return Err(err);
-                }
-            }
+            Self::read_token(&config)
+                .map_err(|err| ServerEnsureError::TokenReadFailed { msg: err })?
         } else {
-            match Self::generate_token(&config, on_progress) {
-                Ok(value) => value,
-                Err(value) => return Err(value),
-            }
+            Self::generate_token(&config)?
         };
 
         let server = Self {
@@ -119,20 +134,23 @@ impl Server {
 
         if !server.config.data_dir.exists() {
             std::fs::create_dir_all(&server.config.data_dir).map_err(|err| {
-                let msg = format!(
-                    "Failed to create data directory at {}: {}",
-                    server.config.data_dir.display(),
-                    err
-                );
-                on_progress(Progress::ServerCreateDataDirFailed { msg: msg.clone() });
-                msg
+                ServerEnsureError::CreateDataDirFailed {
+                    msg: format!(
+                        "Failed to create server data directory at {}: {}",
+                        server.config.data_dir.display(),
+                        err
+                    ),
+                }
             })?;
         }
 
+        let callback = on_progress.clone();
         server
             .uv
-            .update(LATEST_PIP, &requirements, on_progress)
-            .map_err(|err| err.to_string())?;
+            .update(LATEST_PIP, &requirements, move |progress| {
+                callback(ServerEnsureProgress::UpdatingDependencies { progress });
+            })
+            .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
 
         Ok(server)
     }
@@ -147,45 +165,39 @@ impl Server {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.current_dir(&option.data_dir);
+        info!("Stopping server with command: {:?}", cmd);
         let output = cmd.output().map_err(|err| {
-            let msg = format!("Failed to stop server: {}", err);
+            let msg = format!("Failed to stop server with command {:?}: {}", cmd, err);
             msg
         })?;
-        Ok(if !output.status.success() {
-            let msg = format!(
-                "Failed to stop server: {}",
+        if !output.status.success() {
+            warn!(
+                "Failed to stop server with command {:?}: exited with code {}: {}",
+                cmd,
+                output.status.code().unwrap_or(-1),
                 String::from_utf8_lossy(&output.stderr)
             );
-            return Err(msg);
-        })
+        }
+        Ok(())
     }
 
-    pub fn read_version(option: &ServerConfig) -> Result<Option<String>, String> {
+    pub fn read_version(option: &ServerConfig) -> Result<Option<String>, ServerEnsureError> {
         let path = option.data_dir.join("VERSION");
         if !path.exists() {
             return Ok(None);
         }
         match std::fs::read_to_string(&path) {
             Ok(version) => Ok(Some(version)),
-            Err(err) => Err(format!(
-                "Failed to read version file at {}: {}",
-                path.display(),
-                err
-            )),
+            Err(err) => Err(ServerEnsureError::VersionReadFailed {
+                msg: format!("Failed to read version file at {}: {}", path.display(), err),
+            }),
         }
     }
 
-    fn generate_token(
-        option: &ServerConfig,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<String, String> {
+    fn generate_token(option: &ServerConfig) -> Result<String, ServerEnsureError> {
         let token = generate_token();
-        if Self::save_token(&token, option).is_err() {
-            on_progress(Progress::ServerTokenWriteFailed {
-                msg: "Failed to save token".to_string(),
-            });
-            return Err("Failed to save token".to_string());
-        }
+        Self::save_token(&token, option)
+            .map_err(|err| ServerEnsureError::TokenWriteFailed { msg: err })?;
         Ok(token)
     }
 
@@ -221,26 +233,30 @@ impl Server {
         })
     }
 
-    pub fn start(&self, on_progress: &(impl Fn(Progress) + Send + 'static)) -> Result<(), String> {
+    pub fn start(&self) -> Result<(), ServerEnsureError> {
         if self.already_started {
-            return Err("Server already started".to_string());
+            return Err(ServerEnsureError::AlreadyRunning {
+                msg: format!("Server is already running on port {}", self.config.port),
+            });
         }
         let mut cmd = self.python.cmd();
-        cmd.arg("-m");
-        cmd.arg("omuserver");
-        cmd.arg("--token");
-        cmd.arg(self.token.clone());
-        cmd.arg("--port");
-        cmd.arg(self.config.port.to_string());
-        cmd.arg("--hash");
-        cmd.arg(self.config.hash.clone());
-        cmd.arg("--dashboard-path");
+        cmd.arg("-m").arg("omuserver");
+        cmd.arg("--token").arg(self.token.clone());
+        cmd.arg("--port").arg(self.config.port.to_string());
+        cmd.arg("--hash").arg(self.config.hash.clone());
         let executable = canonicalize(current_exe().unwrap())
             .unwrap()
             .to_string_lossy()
             .to_string();
         info!("Executable: {}", executable);
-        cmd.arg(executable);
+        cmd.arg("--dashboard-path").arg(executable);
+
+        let index_url = if cfg!(dev) {
+            "http://localhost:26410/simple/".to_string()
+        } else {
+            "https://pypi.org/simple/".to_string()
+        };
+        cmd.arg("--index-url").arg(index_url);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.current_dir(&self.config.data_dir);
@@ -248,79 +264,86 @@ impl Server {
             "Starting server with args: {:?} in {:?}",
             cmd, self.config.data_dir
         );
-        let child = cmd.spawn().map_err(|err| {
-            let msg = format!("Failed to start server: {}", err);
-            on_progress(Progress::ServerStartFailed { msg: msg.clone() });
-            msg
+        if let Some(app) = self.app_handle.lock().unwrap().as_ref() {
+            let _ = app.emit(
+                "server_state",
+                ServerState::ServerStarting {
+                    msg: format!("Starting server: {:?}", cmd),
+                },
+            );
+        }
+        let child = cmd.spawn().map_err(|err| ServerEnsureError::StartFailed {
+            msg: format!("Failed to start server process: {}", err),
         })?;
         self.handle_io(child).unwrap();
         Ok(())
     }
 
     fn handle_io(&self, mut child: std::process::Child) -> Result<(), String> {
-        let stdout = child.stdout.take().unwrap();
-        let stderr = child.stderr.take().unwrap();
-        let stdout = std::thread::spawn(move || {
-            std::io::BufReader::new(stdout).lines().for_each(|line| {
-                if let Ok(line) = line {
-                    info!("{}", line);
-                }
+        if let Some(stdout) = child.stdout.take() {
+            std::thread::spawn(move || {
+                std::io::BufReader::new(stdout)
+                    .lines()
+                    .filter_map(Result::ok)
+                    .for_each(|line| info!("{}", line));
             });
-        });
-        let stderr = std::thread::spawn(move || {
-            std::io::BufReader::new(stderr).lines().for_each(|line| {
-                if let Ok(line) = line {
-                    info!("{}", line);
-                }
-            });
-        });
-        let process = ServerProcess {
-            handle: Arc::new(Mutex::new(child)),
-            stdout,
-            stderr,
-        };
-        {
-            *self.process.lock().unwrap() = Some(process);
         }
-        let process = self.process.clone();
-        let app_handle = self.app_handle.clone();
-        std::thread::spawn(move || {
-            let handle = {
-                let process = process.lock().unwrap();
-                process.as_ref().unwrap().handle.clone()
-            };
-            let exit = handle.lock().unwrap().wait();
-            {
-                *process.lock().unwrap() = None;
-            }
+        if let Some(stderr) = child.stderr.take() {
+            std::thread::spawn(move || {
+                std::io::BufReader::new(stderr)
+                    .lines()
+                    .filter_map(Result::ok)
+                    .for_each(|line| info!("{}", line));
+            });
+        }
 
-            match exit {
-                Ok(status) => {
-                    let code = status.code().unwrap_or(0);
-                    if code == RESTART_CODE {
-                        info!("Restarting server: {}", code);
-                        return;
-                    } else if code == 0 {
-                        info!("Server exited normally: {}", code);
-                        return;
-                    }
-                    let app_handle = app_handle.lock().unwrap();
-                    if let Some(app_handle) = &*app_handle {
-                        app_handle
-                            .emit(
-                                "server_state",
-                                Progress::ServerStopped {
-                                    msg: format!("Server exited with code {}", code),
-                                },
-                            )
-                            .unwrap();
-                    }
-                }
+        let child_arc = Arc::new(Mutex::new(child));
+        *self.process.lock().unwrap() = Some(ServerProcess(child_arc.clone()));
+
+        let process_store = self.process.clone();
+        let app_handle = self.app_handle.clone();
+
+        std::thread::spawn(move || {
+            let exit = child_arc.lock().unwrap().wait();
+            *process_store.lock().unwrap() = None;
+
+            let status = match exit {
+                Ok(status) => status,
                 Err(err) => {
                     warn!("Server process exited with error: {}", err);
+                    return;
+                }
+            };
+
+            let code = status.code().unwrap_or(0);
+            let state = match code {
+                0 => {
+                    info!("Server exited normally: {}", code);
+                    None
+                }
+                RESTART_CODE => {
+                    info!("Restarting server: {}", code);
+                    Some(ServerState::ServerRestarting {
+                        msg: "Server is restarting".to_string(),
+                    })
+                }
+                _ => {
+                    info!("Server process exited with code: {}", code);
+                    Some(ServerState::ServerStopped {
+                        msg: format!("Server exited with code {}", code),
+                    })
+                }
+            };
+
+            if let Some(state) = state {
+                if let Some(app) = app_handle.lock().unwrap().as_ref() {
+                    if let Err(err) = app.emit("server_state", state) {
+                        warn!("Failed to emit server_state event: {}", err);
+                    }
                 }
             }
         });
+
         Ok(())
     }
 

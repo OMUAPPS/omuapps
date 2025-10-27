@@ -63,6 +63,13 @@ class SessionTask:
     session: Session
     coro: Coro[[], None]
     name: str
+    detail: str | None = None
+
+    def __repr__(self) -> str:
+        return f"SessionTask(name={self.name}, detail={self.detail})"
+
+    def __str__(self) -> str:
+        return self.__repr__()
 
 
 class Session:
@@ -86,7 +93,7 @@ class Session:
         self.event = SessionEvents()
         self.ready_tasks: list[SessionTask] = []
         self.ready_waiters: list[asyncio.Future[None]] = []
-        self.ready = False
+        self.ready: bool = False
         self.aes = aes
 
     @classmethod
@@ -144,7 +151,7 @@ class Session:
             connection=connection,
             aes=aes,
         )
-        if session.kind != AppType.PLUGIN:
+        if session.kind not in {AppType.PLUGIN, AppType.DASHBOARD}:
             await session.send(PACKET_TYPES.TOKEN, new_token)
         return session
 
@@ -181,11 +188,23 @@ class Session:
             packet = self.aes.encrypt(self.packet_mapper.serialize(packet))
         await self.connection.send(packet, self.packet_mapper)
 
-    def add_ready_task(self, coro: Coro[[], None]):
+    def add_task(
+        self,
+        coro: Coro[[], None],
+        name: str,
+        detail: str | None = None,
+    ) -> SessionTask:
         if self.ready:
             raise RuntimeError("Session is already ready")
-        task = SessionTask(session=self, coro=coro, name=coro.__name__)
+
+        task = SessionTask(
+            session=self,
+            coro=coro,
+            name=name,
+            detail=detail,
+        )
         self.ready_tasks.append(task)
+        return task
 
     async def wait_ready(self) -> None:
         if self.ready:
@@ -198,8 +217,10 @@ class Session:
         if self.ready:
             raise RuntimeError("Session is already ready")
         self.ready = True
+        logger.debug(f"Session {self.app.key()} is ready, processing {self.ready_tasks} ready tasks")
         for task in self.ready_tasks:
             try:
+                logger.debug(f"Processing ready task {task} for session {self.app.key()}")
                 await task.coro()
             except Exception as e:
                 logger.opt(exception=e).error(f"Error while processing ready task {task.name}")
@@ -209,6 +230,7 @@ class Session:
         for waiter in self.ready_waiters:
             waiter.set_result(None)
         await self.event.ready.emit(self)
+        self.ready = True
 
     def is_app_id(self, id: Identifier) -> bool:
         return self.app.id.is_namepath_equal(id, max_depth=1)

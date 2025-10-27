@@ -14,5 +14,15 @@
             "isBackground": true,
             "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py",
         },
+        {
+            "label": "dev-package-index",
+            "type": "shell",
+            "isBackground": true,
+            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-upload-dev-index.py",
+        },
+        {
+            "label": "prepare",
+            "dependsOn": ["prelaunch", "dev-package-index", "dev"],
+        }
     ]
 }

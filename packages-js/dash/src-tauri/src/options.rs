@@ -1,14 +1,10 @@
 use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{ensure, Result};
-use log::{error, info, warn};
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    server::{Server, ServerConfig},
-    sources::py::PythonVersionRequest,
-    APP_DIRECTORY,
-};
+use crate::{server::ServerConfig, sources::py::PythonVersionRequest, APP_DIRECTORY};
 
 static PYTHON_VERSION: PythonVersionRequest = PythonVersionRequest {
     name: None,
@@ -73,7 +69,7 @@ impl AppOptions {
 fn get_data_dir() -> std::path::PathBuf {
     if cfg!(dev) {
         let path = std::env::current_dir().unwrap();
-        let path = path.join("../../../appdata");
+        let path = path.join("appdata");
         return path;
     }
     return APP_DIRECTORY.data_dir().to_path_buf();

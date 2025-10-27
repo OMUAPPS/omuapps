@@ -25,6 +25,7 @@ from omuserver.version import VERSION
 def stop_server_processes(
     port: int,
 ):
+    logger.info(f"Stopping server processes using port {port}")
     executable = Path(sys.executable)
     found_processes = list(find_processes_by_port(port))
     if not found_processes:
@@ -47,11 +48,14 @@ def stop_server_processes(
             if process.pid == self_pid:
                 continue
             logger.info(f"Killing process {process.pid} ({process.name()})")
+
             process.send_signal(signal.SIGTERM)
         except psutil.NoSuchProcess:
             logger.warning(f"Process {process.pid} not found")
         except psutil.AccessDenied:
             logger.warning(f"Access denied to process {process.pid}")
+
+    logger.info("Finished stopping server processes")
 
 
 @click.command()
@@ -63,6 +67,7 @@ def stop_server_processes(
 @click.option("--port", type=int, default=None)
 @click.option("--hash", type=str, default=None)
 @click.option("--extra-trusted-origin", type=str, multiple=True)
+@click.option("--index-url", type=str, default=None)
 def main(
     debug: bool,
     stop: bool,
@@ -72,6 +77,7 @@ def main(
     port: int | None,
     hash: str | None,
     extra_trusted_origin: list[str],
+    index_url: str | None,
 ):
     logger.info(f"// omuserver v{VERSION} (pid={os.getpid()}) at ({Path.cwd()}) on ({platform.platform()})")
     config = Config()
@@ -84,7 +90,7 @@ def main(
 
     if stop:
         stop_server_processes(config.address.port)
-        os._exit(0)
+        sys.exit(0)
 
     if dashboard_path:
         config.directories.dashboard = Path(dashboard_path).resolve()
@@ -103,6 +109,7 @@ def main(
     if debug:
         logger.warning("Debug mode enabled")
         tracemalloc.start()
+    config.index_url = index_url
 
     server = Server(config=config)
 

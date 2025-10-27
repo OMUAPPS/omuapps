@@ -58,28 +58,33 @@ class SessionExtension:
             SESSION_CONNECTED_PACKET_TYPE,
             SESSION_DISCONNECTED_PACKET_TYPE,
         )
-        server.packets.bind(SESSION_REQUIRE_PACKET_TYPE, self.handle_require_apps)
+        server.packets.bind(SESSION_REQUIRE_PACKET_TYPE, self.handle_require)
         server.packets.bind(SESSION_OBSERVE_PACKET_TYPE, self.handle_observe)
         server.event.start += self.on_start
 
     async def on_start(self):
         await self.session_table.clear()
 
-    async def handle_require_apps(self, session: Session, app_ids: list[Identifier]) -> None:
-        for session in self.server.sessions.iter():
-            if session.id not in app_ids:
-                continue
-            app_ids.remove(session.id)
+    async def handle_require(self, session: Session, app_ids: list[Identifier]) -> None:
         if len(app_ids) == 0:
             return
 
         async def task():
-            waiter = SessionWaiter(app_ids)
             for app_id in app_ids:
-                self.session_waiters[app_id].append(waiter)
-            await waiter.future
+                existing_session = self.server.sessions.find(app_id)
+                if existing_session:
+                    await existing_session.wait_ready()
+                    continue
+                waiter = SessionWaiter(app_ids)
+                for app_id in app_ids:
+                    self.session_waiters[app_id].append(waiter)
+                await waiter.future
 
-        session.add_ready_task(task)
+        session.add_task(
+            task,
+            name="session_require",
+            detail=f"Requiring sessions: {app_ids}",
+        )
 
     async def handle_observe(self, session: Session, app_ids: list[Identifier]) -> None:
         if not session.permissions.has(SESSIONS_READ_PERMISSION_ID):
