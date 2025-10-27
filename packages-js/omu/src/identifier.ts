@@ -35,6 +35,8 @@ export class Identifier {
         } else if (typeof id === 'string') {
             return Identifier.fromKey(id);
         } else {
+            // Try to infer
+            // Vite does not preserve class information when importing from different packages
             const idCasted = id as { namespace: string; path: string[] };
             if (
                 typeof idCasted.namespace === 'string' &&
@@ -42,6 +44,10 @@ export class Identifier {
                 idCasted.path.every((p) => typeof p === 'string')
             ) {
                 return new Identifier(idCasted.namespace, ...idCasted.path);
+            }
+            const idWithId = id as { id: IntoId | undefined };
+            if (typeof idWithId.id !== 'undefined') {
+                return Identifier.from(idWithId.id);
             }
             throw new Error(`Cannot convert to Identifier: ${id}`);
         }
