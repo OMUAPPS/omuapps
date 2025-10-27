@@ -58,15 +58,23 @@ class SessionEvents:
         self.ready = EventEmitter[Session]()
 
 
+class TaskPriority:
+    AFTER_CONNECTED = 0
+    AFTER_PLUGIN = 200
+    AFTER_SESSION = 300
+    PERMISSION_GRANTED = 400
+
+
 @dataclass(frozen=True, slots=True)
 class SessionTask:
     session: Session
     coro: Coro[[], None]
     name: str
     detail: str | None = None
+    priority: int = 0
 
     def __repr__(self) -> str:
-        return f"SessionTask(name={self.name}, detail={self.detail})"
+        return f"SessionTask(name={self.name}, detail={self.detail}, priority={self.priority})"
 
     def __str__(self) -> str:
         return self.__repr__()
@@ -193,6 +201,7 @@ class Session:
         coro: Coro[[], None],
         name: str,
         detail: str | None = None,
+        priority: int = 0,
     ) -> SessionTask:
         if self.ready:
             raise RuntimeError("Session is already ready")
@@ -202,6 +211,7 @@ class Session:
             coro=coro,
             name=name,
             detail=detail,
+            priority=priority,
         )
         self.ready_tasks.append(task)
         return task
@@ -217,6 +227,7 @@ class Session:
         if self.ready:
             raise RuntimeError("Session is already ready")
         self.ready = True
+        self.ready_tasks.sort(key=lambda t: t.priority)
         logger.debug(f"Session {self.app.key()} is ready, processing {self.ready_tasks} ready tasks")
         for task in self.ready_tasks:
             try:

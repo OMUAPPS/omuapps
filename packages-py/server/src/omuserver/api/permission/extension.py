@@ -15,7 +15,7 @@ from omu.app import AppType
 from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 
-from omuserver.session import Session
+from omuserver.session import Session, TaskPriority
 
 if TYPE_CHECKING:
     from omuserver.server import Server
@@ -40,19 +40,21 @@ class PermissionExtension:
     async def handle_require(self, session: Session, permission_ids: list[Identifier]):
         if session.ready:
             raise ValueError("Session is already ready")
-        permissions = list(filter(None, (self.server.security.permissions.get(perm_id) for perm_id in permission_ids)))
-        missing_permissions = list(filter(lambda id: id not in self.server.security.permissions, permission_ids))
-        if missing_permissions:
-            raise PermissionDenied(f"Requested permissions do not exist: {missing_permissions}")
-        if session.permissions.has_all(permission_ids):
-            await session.send(PERMISSION_GRANT_PACKET, permissions)
-            return
-        if session.kind == AppType.REMOTE:
-            raise PermissionDenied("Remote apps cannot request permissions")
-        if session.kind in {AppType.PLUGIN, AppType.DASHBOARD}:
-            return
 
         async def task():
+            permissions = list(
+                filter(None, (self.server.security.permissions.get(perm_id) for perm_id in permission_ids))
+            )
+            missing_permissions = list(filter(lambda id: id not in self.server.security.permissions, permission_ids))
+            if missing_permissions:
+                raise PermissionDenied(f"Requested permissions do not exist: {missing_permissions}")
+            if session.permissions.has_all(permission_ids):
+                await session.send(PERMISSION_GRANT_PACKET, permissions)
+                return
+            if session.kind == AppType.REMOTE:
+                raise PermissionDenied("Remote apps cannot request permissions")
+            if session.kind in {AppType.PLUGIN, AppType.DASHBOARD}:
+                return
             request_id = self._get_next_request_key()
             request = PermissionRequestPacket(request_id, session.app, permissions)
             accepted = await self.server.dashboard.request_permissions(request)
@@ -67,6 +69,7 @@ class PermissionExtension:
             task,
             name="permission_require",
             detail=f"Requiring permissions: {permission_ids}",
+            priority=TaskPriority.AFTER_SESSION,
         )
 
     async def handle_request(self, session: Session, permission_identifiers: list[Identifier]): ...

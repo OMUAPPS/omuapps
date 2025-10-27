@@ -27,7 +27,7 @@ from omu.network.packet.packet_types import DisconnectType
 
 if TYPE_CHECKING:
     from omuserver.server import Server
-from omuserver.session import Session
+from omuserver.session import Session, TaskPriority
 
 from .permissions import GENERATE_TOKEN_PERMISSION, REMOTE_APP_REQUEST_PERMISSION, SESSIONS_READ_PERMISSION
 
@@ -84,6 +84,7 @@ class SessionExtension:
             task,
             name="session_require",
             detail=f"Requiring sessions: {app_ids}",
+            priority=TaskPriority.AFTER_PLUGIN,
         )
 
     async def handle_observe(self, session: Session, app_ids: list[Identifier]) -> None:

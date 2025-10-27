@@ -39,8 +39,17 @@ where
     let write_archive = &mut archive_buffer;
     {
         let mut transfer = handle.transfer();
+        let mut last_percentage = 0.0;
         transfer.progress_function(move |dl_total, dl_current, _, _| {
-            on_progress(dl_current, dl_total);
+            let percentage = if dl_total > 0.0 {
+                (dl_current / dl_total) * 100.0
+            } else {
+                0.0
+            };
+            if (percentage - last_percentage).abs() >= 1.0 || percentage == 100.0 {
+                on_progress(dl_total, dl_current);
+                last_percentage = percentage;
+            }
             true
         })?;
         transfer.write_function(move |data| {

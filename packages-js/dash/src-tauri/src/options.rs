@@ -67,11 +67,6 @@ impl AppOptions {
 }
 
 fn get_data_dir() -> std::path::PathBuf {
-    if cfg!(dev) {
-        let path = std::env::current_dir().unwrap();
-        let path = path.join("../../../appdata");
-        return path;
-    }
     return APP_DIRECTORY.data_dir().to_path_buf();
 }
 

@@ -59,7 +59,8 @@ fn main() {
             std::process::exit(1);
         })
         .unwrap();
-    let app_config = AppConfig::ensure(&options);
+    let mut app_config = AppConfig::ensure(&options);
+    app_config.server.data_dir = options.workdir.clone();
     let app_handle = Arc::new(Mutex::new(None));
     let app_state = AppState {
         options: options.clone(),

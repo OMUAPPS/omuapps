@@ -18,7 +18,7 @@ from omu.app import AppType
 from omu.network.packet.packet_types import DisconnectType
 from packaging.specifiers import SpecifierSet
 
-from omuserver.session import Session
+from omuserver.session import Session, TaskPriority
 
 from .loader import DependencyResolver, PluginLoader, RequiredVersionTooOld
 from .permissions import PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION
@@ -117,6 +117,7 @@ class PluginExtension:
             task,
             name="plugin_require",
             detail=f"Requiring plugins: {list(requirements.keys())}",
+            priority=TaskPriority.AFTER_CONNECTED,
         )
 
     async def handle_reload(self, session: Session, options: ReloadOptions) -> ReloadResult:
