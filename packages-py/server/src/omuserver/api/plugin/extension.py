@@ -41,7 +41,7 @@ class PluginExtension:
         self.server = server
         self.request_id = 0
         self.lock = asyncio.Lock()
-        self.dependency_resolver = DependencyResolver()
+        self.dependency_resolver = DependencyResolver(server)
         self.loader = PluginLoader(server, self.dependency_resolver)
 
     async def on_network_start(self) -> None:
@@ -113,7 +113,11 @@ class PluginExtension:
                 else:
                     await self.loader.update_plugins(resolve_result.value)
 
-        session.add_ready_task(task)
+        session.add_task(
+            task,
+            name="plugin_require",
+            detail=f"Requiring plugins: {list(requirements.keys())}",
+        )
 
     async def handle_reload(self, session: Session, options: ReloadOptions) -> ReloadResult:
         packages = self.loader.instances

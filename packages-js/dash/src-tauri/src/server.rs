@@ -106,7 +106,7 @@ impl Server {
             on_progress(ServerEnsureProgress::ServerStopping {
                 msg: format!(
                     "Server version mismatch ({} != {}), stopping server",
-                    version.unwrap(),
+                    version.unwrap_or("none".to_string()),
                     VERSION
                 ),
             });
@@ -165,17 +165,18 @@ impl Server {
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.current_dir(&option.data_dir);
+        info!("Stopping server with command: {:?}", cmd);
         let output = cmd.output().map_err(|err| {
-            let msg = format!("Failed to stop server: {}", err);
+            let msg = format!("Failed to stop server with command {:?}: {}", cmd, err);
             msg
         })?;
         if !output.status.success() {
-            let msg = format!(
-                "Failed to stop server (process exited with code {}): {}",
+            warn!(
+                "Failed to stop server with command {:?}: exited with code {}: {}",
+                cmd,
                 output.status.code().unwrap_or(-1),
                 String::from_utf8_lossy(&output.stderr)
             );
-            return Err(msg);
         }
         Ok(())
     }
@@ -239,21 +240,23 @@ impl Server {
             });
         }
         let mut cmd = self.python.cmd();
-        cmd.arg("-m");
-        cmd.arg("omuserver");
-        cmd.arg("--token");
-        cmd.arg(self.token.clone());
-        cmd.arg("--port");
-        cmd.arg(self.config.port.to_string());
-        cmd.arg("--hash");
-        cmd.arg(self.config.hash.clone());
-        cmd.arg("--dashboard-path");
+        cmd.arg("-m").arg("omuserver");
+        cmd.arg("--token").arg(self.token.clone());
+        cmd.arg("--port").arg(self.config.port.to_string());
+        cmd.arg("--hash").arg(self.config.hash.clone());
         let executable = canonicalize(current_exe().unwrap())
             .unwrap()
             .to_string_lossy()
             .to_string();
         info!("Executable: {}", executable);
-        cmd.arg(executable);
+        cmd.arg("--dashboard-path").arg(executable);
+
+        let index_url = if cfg!(dev) {
+            "http://localhost:26410/simple/".to_string()
+        } else {
+            "https://pypi.org/simple/".to_string()
+        };
+        cmd.arg("--index-url").arg(index_url);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
         cmd.current_dir(&self.config.data_dir);

@@ -23,7 +23,12 @@
 
     async function restartServer() {
         if (omu.ready) {
-            await omu.server.shutdown(true);
+            omu.server.shutdown(true);
+        } else {
+            await invoke('start_server');
+        }
+        if (omu.running) {
+            omu.stop();
         }
         await new Promise<void>((resolve) => omu.onReady(resolve));
         window.location.reload();
@@ -204,7 +209,7 @@
                                 {$t('settings.setting.serverRestarted')}
                             {:catch error}
                                 {$t('settings.setting.serverRestartError', {
-                                    error,
+                                    error: JSON.stringify(error),
                                 })}
                             {/await}
                         {:else}

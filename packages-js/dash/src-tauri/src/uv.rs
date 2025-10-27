@@ -239,6 +239,8 @@ impl Uv {
             .arg(pip_version)
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
+            .arg("--extra-index-url")
+            .arg(&self.index_url)
             .output()
             .map_err(|err| UvEnsureError::UpdatePipFailed {
                 msg: format!(
@@ -277,7 +279,7 @@ impl Uv {
             msg: format!(
                 "Updating requirements {} at {}",
                 requirements,
-                self.workdir.display()
+                self.python_bin.display()
             ),
         });
 
@@ -299,16 +301,19 @@ impl Uv {
             }
         })?;
 
-        let output = self
-            .cmd()
-            .arg("pip")
+        let mut cmd = self.cmd();
+        cmd.arg("pip")
             .arg("install")
             .arg("-r")
             .arg(req_file.path())
             .arg("--python")
             .arg(make_project_root_fragment(&self.python_bin))
-            .arg("--index-url")
-            .arg(&self.index_url)
+            .arg("--extra-index-url")
+            .arg(&self.index_url);
+        if cfg!(dev) {
+            cmd.arg("--no-cache");
+        }
+        let output = cmd
             .output()
             .map_err(|err| UvEnsureError::UpdateRequirementsFailed {
                 msg: format!(

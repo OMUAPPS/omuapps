@@ -63,7 +63,11 @@ class PermissionExtension:
             if not session.closed:
                 await session.send(PERMISSION_GRANT_PACKET, permissions)
 
-        session.add_ready_task(task)
+        session.add_task(
+            task,
+            name="permission_require",
+            detail=f"Requiring permissions: {permission_ids}",
+        )
 
     async def handle_request(self, session: Session, permission_identifiers: list[Identifier]): ...
 

@@ -12,3 +12,4 @@ class Config:
     extra_trusted_origins: list[str] = field(default_factory=list)
     directories: Directories = field(default_factory=Directories.default)
     dashboard_token: str | None = None
+    index_url: str | None = None

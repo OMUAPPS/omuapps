@@ -2,6 +2,7 @@
     import { t } from '$lib/i18n/i18n-context';
     import { cleanProgress, invoke, type CleanError } from '$lib/tauri.js';
     import { Button, Spinner } from '@omujs/ui';
+    import { error } from '@tauri-apps/plugin-log';
     import { relaunch } from '@tauri-apps/plugin-process';
     import ProgressBar from './ProgressBar.svelte';
 
@@ -20,10 +21,11 @@
         try {
             restoreState = { type: 'cleaning' };
             await invoke('clean_environment');
+            retry();
         } catch (err) {
             restoreState = { type: 'cleaning_failed', reason: err as CleanError };
+            error(`Failed to clean environment: ${JSON.stringify(err)}`);
         }
-        retry();
     }
 
     async function restart() {

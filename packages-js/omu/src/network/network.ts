@@ -164,6 +164,7 @@ export class Network {
             attempt++;
             let reason: DisconnectReason | undefined = undefined;
             try {
+                this.aes = undefined;
                 this.connection = await this.transport.connect();
                 attempt = 0;
                 await this.setStatus({ type: 'connecting' });

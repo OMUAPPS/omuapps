@@ -1,9 +1,8 @@
-use std::{borrow, fs::create_dir_all, path::PathBuf};
+use std::{fs::create_dir_all, path::PathBuf};
 
 use crate::{
     python::{Python, PythonEnsureError, PythonEnsureProgress},
     server::{Server, ServerEnsureError, ServerEnsureProgress},
-    sources::py::PythonVersion,
     utils::{archive::pack_archive, filesystem::remove_dir_all},
     uv::{Uv, UvEnsureError, UvEnsureProgress},
     AppState,
@@ -52,20 +51,22 @@ pub async fn start_server(
         window.emit("start_progress", progress).unwrap();
     };
     info!("Starting server");
-    let mut server_mutex = state
-        .server
-        .lock()
-        .map_err(|err| StartError::ServerStartFailed {
-            msg: format!("Failed to lock server mutex: {}", err),
-        })?;
-    if server_mutex.is_some() {
-        let server = server_mutex.as_ref().unwrap();
-        if server.is_running() {
-            return Ok(StartResult::AlreadyRunning {
-                token: server.token.clone(),
-            });
+    {
+        let server_mutex = state
+            .server
+            .lock()
+            .map_err(|err| StartError::ServerStartFailed {
+                msg: format!("Failed to lock server mutex: {}", err),
+            })?;
+        if server_mutex.is_some() {
+            let server = server_mutex.as_ref().unwrap();
+            if server.is_running() {
+                return Ok(StartResult::AlreadyRunning {
+                    token: server.token.clone(),
+                });
+            };
         };
-    };
+    }
 
     let config = state.config.lock().unwrap().clone();
     let callback = on_progress.clone();
@@ -95,6 +96,12 @@ pub async fn start_server(
     .map_err(|err| StartError::ServerEnsureError { reason: err })?;
 
     let token = server.token.clone();
+    let mut server_mutex = state
+        .server
+        .lock()
+        .map_err(|err| StartError::ServerStartFailed {
+            msg: format!("Failed to lock server mutex: {}", err),
+        })?;
     if server.already_started {
         *server_mutex = Some(server);
         Ok(StartResult::AlreadyRunning { token })
@@ -133,21 +140,7 @@ pub async fn stop_server(
     };
 
     let options = &state.options;
-    let python = if cfg!(dev) {
-        Python {
-            path: options.workdir.join("../.venv"),
-            python_bin: options.workdir.join("../.venv/Scripts/python.exe"),
-            version: PythonVersion {
-                major: 3,
-                minor: 12,
-                patch: 3,
-                suffix: None,
-                arch: borrow::Cow::Borrowed(""),
-                name: borrow::Cow::Borrowed(""),
-                os: borrow::Cow::Borrowed(""),
-            },
-        }
-    } else {
+    let python = {
         let callback = on_progress.clone();
         Python::ensure(&options, move |progress| {
             callback(StopProgress::Python { progress });
@@ -194,21 +187,7 @@ pub async fn clean_environment(
     };
 
     let options = &state.options;
-    let python = if cfg!(dev) {
-        Python {
-            path: options.workdir.join("../.venv"),
-            python_bin: options.workdir.join("../.venv/Scripts/python.exe"),
-            version: PythonVersion {
-                major: 3,
-                minor: 12,
-                patch: 3,
-                suffix: None,
-                arch: borrow::Cow::Borrowed(""),
-                name: borrow::Cow::Borrowed(""),
-                os: borrow::Cow::Borrowed(""),
-            },
-        }
-    } else {
+    let python = {
         let callback = on_progress.clone();
         Python::ensure(&options, move |progress| {
             callback(CleanProgress::Python { progress });
@@ -223,7 +202,7 @@ pub async fn clean_environment(
     remove_dir_all(&options.python_path, |current, total| {
         callback(CleanProgress::PythonRemoving {
             progress: Progress {
-                msg: "Removing python".to_string(),
+                msg: format!("Removing python at {}", options.python_path.display()),
                 progress: current,
                 total,
             },
@@ -236,7 +215,7 @@ pub async fn clean_environment(
     remove_dir_all(&options.uv_path, |current, total| {
         callback(CleanProgress::UvRemoving {
             progress: Progress {
-                msg: "Removing uv".to_string(),
+                msg: format!("Removing uv at {}", options.uv_path.display()),
                 progress: current,
                 total,
             },

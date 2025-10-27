@@ -27,6 +27,7 @@
             $state.reject({
                 type: 'server_start_failed',
             });
+            omu.stop();
         }
     }
 

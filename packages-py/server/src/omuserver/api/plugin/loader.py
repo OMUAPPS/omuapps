@@ -39,7 +39,8 @@ class RequiredVersionTooOld(Exception):
 
 
 class DependencyResolver:
-    def __init__(self) -> None:
+    def __init__(self, server: Server) -> None:
+        self.server = server
         self._dependencies: dict[str, SpecifierSet] = {}
         self._packages_distributions: Mapping[str, importlib.metadata.Distribution] = {}
         self._package_info_cache: dict[str, PackageInfo] = {}
@@ -81,6 +82,9 @@ class DependencyResolver:
             dependency_lines = self.format_dependencies(requirements)
             req_file.write("\n".join(dependency_lines).encode("utf-8"))
             req_file.flush()
+            index_args: list[str] = []
+            if self.server.config.index_url:
+                index_args = ["--extra-index-url", self.server.config.index_url]
             process = await asyncio.create_subprocess_exec(
                 uv.find_uv_bin(),
                 "pip",
@@ -90,6 +94,7 @@ class DependencyResolver:
                 req_file.name,
                 "--python",
                 sys.executable,
+                *index_args,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
