@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/ui",
-    "version": "0.9.13",
+    "version": "0.9.14",
     "svelte": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
@@ -29,11 +29,11 @@
         "url": "git+https://github.com/OMUAPPS/omuapps.git"
     },
     "devDependencies": {
+        "@chromatic-com/storybook": "1.6.1",
+        "@fontsource/noto-sans-jp": "^5.0.19",
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
         "@omujs/omu": "workspace:*",
-        "@chromatic-com/storybook": "1.6.1",
-        "@fontsource/noto-sans-jp": "^5.0.19",
         "@storybook/addon-essentials": "^8.2.8",
         "@storybook/addon-interactions": "^8.2.8",
         "@storybook/addon-links": "^8.2.8",
