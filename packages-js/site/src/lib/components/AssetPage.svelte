@@ -28,7 +28,7 @@
         reason?: DisconnectReason;
     } = { type: 'initializing', browser: BROWSER };
 
-    const id = $page.url.searchParams.get('id');
+    const id = BROWSER && $page.url.searchParams.get('id');
     if (id) {
         const omu = new Omu(single ? asset : asset.join(id));
         setClient(omu);
