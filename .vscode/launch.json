@@ -2,12 +2,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Client",
+            "name": "Dashboard",
             "type": "chrome",
             "request": "launch",
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}",
             "preLaunchTask": "prepare"
+        },
+        {
+            "name": "AppsOnly",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}",
+            "preLaunchTask": "prepare-without-dash"
         },
         {
             "name": "Server",
@@ -60,10 +68,10 @@
     ],
     "compounds": [
         {
-            "name": "Server/Client",
+            "name": "Server/Dashboard",
             "configurations": [
                 "Server",
-                "Client"
+                "Dashboard"
             ],
             "preLaunchTask": "prelaunch",
             "stopAll": true

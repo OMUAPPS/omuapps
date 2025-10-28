@@ -4,6 +4,7 @@ import sys
 import traceback
 from collections.abc import Generator
 
+import click
 import psutil
 from omu.result import Err, Ok, Result
 
@@ -91,25 +92,31 @@ async def build_packages():
     await process.wait()
 
 
-async def main():
-    check_ports()
-    await build_packages()
-    loop = asyncio.get_event_loop()
-    commands = [
-        "bun run --cwd packages-js/dash ui:dev",
-        "bun run --cwd packages-js/dash dev",
-        "bun run --cwd packages-js/site dev",
-        "bun run --cwd packages-js/dash ui:check-watch",
-        "bun run --cwd packages-js/site check:watch",
-        "bun run --cwd packages-js/ui watch",
-        "bun run --cwd packages-js/i18n watch",
-        "bun run --cwd packages-js/omu watch",
-        "bun run --cwd packages-js/chat watch",
-        "bun run --cwd packages-js/plugin-obs watch",
-    ]
-    tasks = [loop.create_task(start_process(command)) for command in commands]
-    await asyncio.gather(*tasks)
+@click.command()
+@click.option("--skip-dash", is_flag=True, default=False, help="Skip building and watching the dashboard")
+def main(skip_dash: bool = False):
+    async def run():
+        check_ports()
+        await build_packages()
+        loop = asyncio.get_event_loop()
+        commands = [
+            "bun run --cwd packages-js/dash ui:dev",
+            "bun run --cwd packages-js/site dev",
+            "bun run --cwd packages-js/dash ui:check-watch",
+            "bun run --cwd packages-js/site check:watch",
+            "bun run --cwd packages-js/ui watch",
+            "bun run --cwd packages-js/i18n watch",
+            "bun run --cwd packages-js/omu watch",
+            "bun run --cwd packages-js/chat watch",
+            "bun run --cwd packages-js/plugin-obs watch",
+        ]
+        if not skip_dash:
+            commands.append("bun run --cwd packages-js/dash dev")
+        tasks = [loop.create_task(start_process(command)) for command in commands]
+        await asyncio.gather(*tasks)
+
+    asyncio.run(run())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
