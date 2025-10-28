@@ -52,4 +52,10 @@
     h3 {
         margin-top: 2rem;
     }
+
+    h1,
+    h2,
+    h3 {
+        color: var(--color-1);
+    }
 </style>

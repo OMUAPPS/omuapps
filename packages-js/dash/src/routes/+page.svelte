@@ -73,7 +73,7 @@
             $installed = true;
         } catch (e) {
             console.error('Error during start:', e);
-            $state = { type: 'restore' };
+            $state = { type: 'restore', message: JSON.stringify(e, null, 2) };
             error(`Error during start: ${JSON.stringify(e)}`);
         }
     }
@@ -175,7 +175,7 @@
                 <h1>起動に失敗しました</h1>
                 <small>環境を再構築するか、アプリケーションを再起動してください。</small>
             </div>
-            <RestoreActions {retry} />
+            <RestoreActions {retry} message={$state.message} />
         </InstallStepLayout>
     {:else}
         <pre>
@@ -188,6 +188,7 @@
     h1 {
         font-size: 1.421rem;
         margin-bottom: 0;
+        color: var(--color-1);
     }
 
     .header {

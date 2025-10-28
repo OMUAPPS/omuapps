@@ -7,6 +7,7 @@
     import ProgressBar from './ProgressBar.svelte';
 
     export let retry: () => void;
+    export let message: string | undefined;
 
     let restoreState: {
         type: 'idle';
@@ -81,6 +82,12 @@
         </small>
     {/if}
 </div>
+{#if message}
+    <div class="message">
+        <p>エラーメッセージ</p>
+        <textarea>{message}</textarea>
+    </div>
+{/if}
 
 <style lang="scss">
     .restore {
@@ -98,5 +105,30 @@
         flex-wrap: wrap;
         gap: 1rem;
         margin-top: 1rem;
+    }
+
+    .message {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 20%;
+        margin: 2rem 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+
+        > textarea {
+            flex: 1;
+            width: 100%;
+            resize: none;
+            background: var(--color-bg-1);
+            border: 1px solid var(--color-outline);
+            color: var(--color-text);
+            padding: 0.5rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
     }
 </style>

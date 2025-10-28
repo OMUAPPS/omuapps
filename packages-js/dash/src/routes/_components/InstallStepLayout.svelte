@@ -21,6 +21,7 @@
     $padding-vertically: max(8rem, 12%);
 
     .main {
+        position: relative;
         width: 24rem;
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
@@ -38,13 +39,5 @@
         display: flex;
         flex: 1;
         justify-content: flex-start;
-    }
-
-    h1 {
-        color: var(--color-1);
-    }
-
-    small {
-        font-weight: 600;
     }
 </style>

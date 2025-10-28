@@ -6,7 +6,7 @@
     $: {
         if ($netState?.type === 'reconnecting') {
             if ($netState.attempt && $netState.attempt > 2) {
-                $state = { type: 'restore' };
+                $state = { type: 'restore', message: omu.network.reason?.message };
                 omu.stop();
             }
         }

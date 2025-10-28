@@ -41,6 +41,7 @@ export type AppState = {
     resolve: () => void;
 } | {
     type: 'restore';
+    message?: string;
 } | {
     type: 'ready';
 };
