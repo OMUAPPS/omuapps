@@ -13,6 +13,7 @@ from loguru import logger
 from omu import Identifier
 from omu.event_emitter import EventEmitter
 from omu.helper import asyncio_error_logger
+from omu.network.packet.packet_types import DisconnectType
 from yarl import URL
 
 from omuserver.api.asset import AssetExtension
@@ -187,6 +188,10 @@ class Server:
         await self.network.stop()
 
     async def restart(self) -> None:
+        for session in list(self.sessions.iter()):
+            if session.closed:
+                continue
+            await session.disconnect(DisconnectType.SERVER_RESTART, "Server is restarting")
         await self.stop()
         child = subprocess.Popen(
             args=[sys.executable, "-m", "omuserver", *sys.argv[1:]],

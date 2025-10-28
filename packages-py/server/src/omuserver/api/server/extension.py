@@ -9,7 +9,6 @@ from omu.api.server.extension import (
     SHUTDOWN_ENDPOINT_TYPE,
     TRUSTED_ORIGINS_REGISTRY_TYPE,
 )
-from omu.network.packet.packet_types import DisconnectType
 
 from omuserver.session import Session
 
@@ -55,10 +54,6 @@ class ServerExtension:
     async def shutdown(self, restart: bool = False) -> None:
         try:
             if restart:
-                for session in list(self._server.sessions.iter()):
-                    if session.closed:
-                        continue
-                    await session.disconnect(DisconnectType.SERVER_RESTART, "Server is restarting")
                 await self._server.restart()
             else:
                 await self._server.stop()
