@@ -30,6 +30,11 @@
     }
 
     async function restart() {
+        try {
+            await invoke('stop_server');
+        } catch (err) {
+            error(`Failed to clean environment: ${JSON.stringify(err)}`);
+        }
         await relaunch();
     }
 </script>
