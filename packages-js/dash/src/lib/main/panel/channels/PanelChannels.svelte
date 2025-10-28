@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
 
     import ChannelEntry from './ChannelEntry.svelte';
 
@@ -8,7 +8,7 @@
     import { TableList, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
 
-    export let filter: (key: string, message: models.Channel) => boolean = () => true;
+    export let filter: (key: string, message: Models.Channel) => boolean = () => true;
 
     let checkIntervalLeft = 0;
 

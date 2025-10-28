@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { content } from '@omujs/chat/models';
+    import { Content } from '@omujs/chat/models';
 
-    export let component: content.Component;
+    export let component: Content.Component;
 
-    function add(child: content.Component) {
-        const children = content.children(component);
+    function add(child: Content.Component) {
+        const children = Content.children(component);
         children.push(child);
         component = component;
     }

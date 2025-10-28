@@ -1,10 +1,8 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { I18N_GET_LOCALES_PERMISSION_ID } from '@omujs/omu/api/i18n';
-    import { GENERATE_TOKEN_PERMISSION_ID } from '@omujs/omu/api/session';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         Align,
         AppHeader,
@@ -25,9 +23,9 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-            GENERATE_TOKEN_PERMISSION_ID,
-            I18N_GET_LOCALES_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
         );
         omu.start();
     }

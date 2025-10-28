@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type { Omu } from '@omujs/omu';
-    import { ASSET_DOWNLOAD_PERMISSION_ID } from '@omujs/omu/api/asset';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
     import AvatarRenderer from '../components/AvatarRenderer.svelte';
     import { DiscordOverlayApp, DISCORDRPC_PERMISSIONS } from '../discord-overlay-app';
@@ -11,7 +10,7 @@
     if (BROWSER) {
         omu.permissions.require(
             DISCORDRPC_PERMISSIONS.DISCORDRPC_VC_READ_PERMISSION_ID,
-            ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
         );
         omu.start();
     }

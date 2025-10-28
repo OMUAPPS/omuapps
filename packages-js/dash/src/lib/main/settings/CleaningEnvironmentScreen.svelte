@@ -2,10 +2,9 @@
     import { omu } from '$lib/client.js';
     import { type ScreenHandle } from '$lib/screen/screen.js';
     import Screen from '$lib/screen/Screen.svelte';
-    import { invoke, listen, type Progress } from '$lib/tauri.js';
+    import { invoke } from '$lib/tauri.js';
     import { Button, Spinner } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/plugin-process';
-    import { onMount } from 'svelte';
 
     export let screen: {
         handle: ScreenHandle;
@@ -35,18 +34,6 @@
         },
     };
 
-    let progress: Progress | null = null;
-
-    onMount(() => {
-        const unlisten = listen('server_state', (state) => {
-            progress = state.payload;
-            console.log('progress', progress);
-        });
-        return async () => {
-            (await unlisten)();
-        };
-    });
-
     type ErrorType = { type: keyof typeof ERROR_MESSAGES; message: string };
     let errorMessage: ErrorType | null = null;
 
@@ -74,24 +61,6 @@
                     環境の再構築中
                     <Spinner />
                 </h1>
-                {#if progress}
-                    <div class="progress">
-                        {#if progress.progress !== undefined && progress.total !== undefined}
-                            <progress
-                                value={progress.progress}
-                                max={progress.total}
-                            ></progress>
-                            <p>
-                                {#if progress.type === 'PythonRemoving'}
-                                    Python環境を削除中...
-                                {:else if progress.type === 'UvRemoving'}
-                                    uv環境を削除中...
-                                {/if}
-                                {progress.progress} / {progress.total}
-                            </p>
-                        {/if}
-                    </div>
-                {/if}
             </div>
         {:then}
             <h1>
@@ -142,10 +111,6 @@
                 </Button>
             </div>
         {/await}
-    </div>
-    <div class="debug">
-        debug:
-        {JSON.stringify(progress)}
     </div>
 </Screen>
 

@@ -1,11 +1,10 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { Chat, events } from '@omujs/chat';
+    import { Chat, ChatEvents } from '@omujs/chat';
     import { Message } from '@omujs/chat/models';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { GENERATE_TOKEN_PERMISSION_ID } from '@omujs/omu/api/session';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
         ComponentRenderer,
@@ -45,13 +44,13 @@
         }
     }
 
-    chat.on(events.message.add, (message) => onMessage(message));
+    chat.on(ChatEvents.Message.Add, (message) => onMessage(message));
     chat.messages.listen();
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-            GENERATE_TOKEN_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
         );
         omu.start();
     }

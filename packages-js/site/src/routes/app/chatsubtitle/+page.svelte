@@ -1,6 +1,6 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { Chat, events } from '@omujs/chat';
+    import { Chat, ChatEvents } from '@omujs/chat';
     import type { Room } from '@omujs/chat/models';
     import { Identifier, Omu } from '@omujs/omu';
     import { AppHeader, TableList, setClient } from '@omujs/ui';
@@ -190,7 +190,7 @@
         console.log(xml);
     };
 
-    chat.on(events.room.update, async (room: Room) => {
+    chat.on(ChatEvents.Room.Update, async (room: Room) => {
         if (!$config.auto_generate) return;
         if (!isChatSubCreatable(room)) return;
         if (room.connected) return;

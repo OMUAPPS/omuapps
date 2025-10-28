@@ -1,7 +1,7 @@
 <script lang="ts">
     import { chat } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
     import { Spinner, Tooltip } from '@omujs/ui';
 
     export let cancel: () => void = () => {};
@@ -15,7 +15,7 @@
     } = { type: 'input' };
 
     let url = '';
-    let result: { channel: models.Channel; checked: boolean }[] = [];
+    let result: { channel: Models.Channel; checked: boolean }[] = [];
 
     async function search(url: string) {
         stage = { type: 'searching' };

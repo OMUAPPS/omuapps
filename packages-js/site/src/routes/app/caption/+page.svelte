@@ -1,8 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID } from '@omujs/omu/api/dashboard';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
         setClient,
@@ -19,8 +18,8 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-            DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         );
         omu.start();
     }

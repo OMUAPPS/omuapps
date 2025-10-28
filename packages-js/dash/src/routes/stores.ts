@@ -1,4 +1,4 @@
-import type { models } from '@omujs/chat';
+import type { Models } from '@omujs/chat';
 import type { NetworkStatus } from '@omujs/omu/network';
 import type { Update } from '@tauri-apps/plugin-updater';
 import { writable } from 'svelte/store';
@@ -14,7 +14,7 @@ export type AddChannelStatus = {
 } | {
     type: 'result';
     channels: {
-        channel: models.Channel;
+        channel: Models.Channel;
         added: boolean;
     }[];
 };

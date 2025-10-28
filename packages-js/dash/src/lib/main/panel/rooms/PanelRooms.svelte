@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
 
     import { t } from '$lib/i18n/i18n-context.js';
 
@@ -9,8 +9,8 @@
     import { Button, TableList } from '@omujs/ui';
 
     export let openSetup: () => void = () => {};
-    export let filter: (key: string, room: models.Room) => boolean = () => true;
-    export let sort: (a: models.Room) => number = (a) => {
+    export let filter: (key: string, room: Models.Room) => boolean = () => true;
+    export let sort: (a: Models.Room) => number = (a) => {
         if (!a.metadata.created_at) return 0;
         return new Date(a.metadata.created_at).getTime();
     };

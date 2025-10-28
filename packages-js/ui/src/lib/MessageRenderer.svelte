@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Content, Models } from '@omujs/chat';
     import ButtonMini from './ButtonMini.svelte';
     import ComponentRenderer from './ComponentRenderer.svelte';
     import Gift from './Gift.svelte';
@@ -9,12 +9,12 @@
     import { client, dateTimeFormats, translate } from './stores.js';
     import { applyOpacity } from './utils/class-helper.js';
 
-    export let paid: models.Paid | undefined = undefined;
-    export let gifts: Array<models.Gift> | undefined = undefined;
-    export let author: models.Author | undefined = undefined;
-    export let room: models.Room | undefined = undefined;
+    export let paid: Models.Paid | undefined = undefined;
+    export let gifts: Array<Models.Gift> | undefined = undefined;
+    export let author: Models.Author | undefined = undefined;
+    export let room: Models.Room | undefined = undefined;
     export let createdAt: Date | undefined = undefined;
-    export let content: models.content.Component | undefined = undefined;
+    export let content: Content.Component | undefined = undefined;
     export let handleCopy: () => void = () => {};
     export let selected: boolean = false;
 

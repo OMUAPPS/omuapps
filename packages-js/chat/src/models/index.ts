@@ -9,6 +9,6 @@ export { Reaction, ReactionJson } from './reaction.js';
 export { Role, RoleJson } from './role.js';
 export { Room, RoomJson } from './room.js';
 export { Choice, Vote, VoteJson } from './vote.js';
-export { content };
-import * as content from './content.js';
+export { Content };
+import * as Content from './content.js';
 

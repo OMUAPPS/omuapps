@@ -1,9 +1,6 @@
 export { Chat } from './chat.js';
-export { events as ChatEvents, events } from './event';
-export * as permissions from './permissions.js';
-export {
-    content, models,
-};
-import * as models from './models';
-import { content } from './models';
-
+export { Events as ChatEvents } from './event';
+export * as Models from './models';
+export { Content };
+import { Content } from './models';
+export * as ChatPermissions from './permissions.js';

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Chat, models } from '@omujs/chat';
+    import { Chat, Models } from '@omujs/chat';
     import type { Omu } from '@omujs/omu';
     import { ComponentRenderer } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -20,7 +20,7 @@
         <RouletteRenderer {roulette} />
     </div>
     {#if $state.type === 'spin-result'}
-        {@const message = $state.result.entry.message && models.Message.deserialize($state.result.entry.message)}
+        {@const message = $state.result.entry.message && Models.Message.deserialize($state.result.entry.message)}
         <div class="result-container">
             <div class="result">
                 <p>

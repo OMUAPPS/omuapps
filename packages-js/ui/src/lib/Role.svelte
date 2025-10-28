@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
 
     import Tooltip from './Tooltip.svelte';
     import { client } from './stores.js';
     import { applyOpacity } from './utils/class-helper.js';
 
-    export let role: models.Role;
+    export let role: Models.Role;
 </script>
 
 <div

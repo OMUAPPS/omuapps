@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
 
     import { Tooltip } from '@omujs/ui';
 
@@ -7,7 +7,7 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
-    export let entry: models.Room;
+    export let entry: Models.Room;
     export let selected: boolean = false;
 
     function open() {

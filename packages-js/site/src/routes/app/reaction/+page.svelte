@@ -1,12 +1,10 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { Chat, permissions as chatPerms } from '@omujs/chat';
+    import { Chat, ChatPermissions } from '@omujs/chat';
     import { Reaction } from '@omujs/chat/models';
-    import { OBSPlugin, permissions as obsPerms } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/api/asset';
-    import { GENERATE_TOKEN_PERMISSION_ID } from '@omujs/omu/api/session';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
         Button,
@@ -56,10 +54,10 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            ASSET_UPLOAD_PERMISSION_ID,
-            obsPerms.OBS_SOURCE_CREATE_PERMISSION_ID,
-            chatPerms.CHAT_REACTION_PERMISSION_ID,
-            GENERATE_TOKEN_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
+            OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            ChatPermissions.CHAT_REACTION_PERMISSION_ID,
         );
         omu.start();
     }

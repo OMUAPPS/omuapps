@@ -25,7 +25,7 @@ import {
     SOURCE_UPDATE,
 } from './types.js';
 import { VERSION } from './version.js';
-export * as permissions from './permissions.js';
+export * as OBSPermissions from './permissions.js';
 
 type Events = {
     connected: () => void;
@@ -34,6 +34,7 @@ type Events = {
 type EventRecord<K extends keyof Events> = {
     [P in K]?: Array<Events[P]>;
 };
+
 export class OBSPlugin {
     private static INSTANCE: OBSPlugin | undefined;
     private connected = false;

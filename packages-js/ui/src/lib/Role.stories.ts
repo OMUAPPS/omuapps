@@ -1,4 +1,4 @@
-import { models } from '@omujs/chat';
+import { Models } from '@omujs/chat';
 import type { Meta, StoryObj } from '@storybook/svelte';
 import Role from './Role.svelte';
 
@@ -14,7 +14,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Icon: Story = {
     args: {
-        role: new models.Role({
+        role: new Models.Role({
             id: 'test',
             name: 'Test',
             isOwner: true,
@@ -27,7 +27,7 @@ export const Icon: Story = {
 
 export const NoIcon: Story = {
     args: {
-        role: new models.Role({
+        role: new Models.Role({
             id: 'test',
             name: 'Test',
             color: 'red',

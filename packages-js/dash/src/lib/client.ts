@@ -5,24 +5,8 @@ import type { Address } from '@omujs/omu/network';
 
 import { invoke, IS_TAURI } from '$lib/tauri.js';
 
-import { Chat, permissions } from '@omujs/chat';
-import { App, BrowserTokenProvider, Identifier, Omu } from '@omujs/omu';
-import {
-    DAShBOARD_DRAG_DROP_PERMISSION_ID,
-    DASHBOARD_OPEN_APP_PERMISSION_ID,
-    DASHOBARD_APP_EDIT_PERMISSION_ID,
-    DASHOBARD_APP_READ_PERMISSION_ID,
-} from '@omujs/omu/api/dashboard';
-import {
-    I18N_GET_LOCALES_PERMISSION_ID,
-    I18N_SET_LOCALES_PERMISSION_ID,
-} from '@omujs/omu/api/i18n';
-import { PLUGIN_MANAGE_PACKAGE_PERMISSION_ID, PLUGIN_READ_PACKAGE_PERMISSION_ID } from '@omujs/omu/api/plugin';
-import {
-    SERVER_APPS_READ_PERMISSION_ID,
-    SERVER_SHUTDOWN_PERMISSION_ID,
-} from '@omujs/omu/api/server';
-import { TABLE_PERMISSION_ID } from '@omujs/omu/api/table';
+import { Chat, ChatPermissions } from '@omujs/chat';
+import { App, BrowserTokenProvider, Identifier, Omu, OmuPermissions } from '@omujs/omu';
 import type { Locale } from '@omujs/omu/localization';
 import { currentPage, language } from './main/settings.js';
 import { VERSION } from './version.js';
@@ -70,18 +54,18 @@ omu.plugins.require({
     omu_chatprovider: `==${VERSION}`,
 });
 omu.permissions.require(
-    TABLE_PERMISSION_ID,
-    PLUGIN_READ_PACKAGE_PERMISSION_ID,
-    PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
-    permissions.CHAT_CHANNEL_TREE_PERMISSION_ID,
-    SERVER_SHUTDOWN_PERMISSION_ID,
-    SERVER_APPS_READ_PERMISSION_ID,
-    DASHBOARD_OPEN_APP_PERMISSION_ID,
-    DASHOBARD_APP_READ_PERMISSION_ID,
-    DASHOBARD_APP_EDIT_PERMISSION_ID,
-    DAShBOARD_DRAG_DROP_PERMISSION_ID,
-    I18N_GET_LOCALES_PERMISSION_ID,
-    I18N_SET_LOCALES_PERMISSION_ID,
+    ChatPermissions.CHAT_CHANNEL_TREE_PERMISSION_ID,
+    OmuPermissions.TABLE_PERMISSION_ID,
+    OmuPermissions.PLUGIN_READ_PACKAGE_PERMISSION_ID,
+    OmuPermissions.PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
+    OmuPermissions.SERVER_SHUTDOWN_PERMISSION_ID,
+    OmuPermissions.SERVER_APPS_READ_PERMISSION_ID,
+    OmuPermissions.DASHBOARD_OPEN_APP_PERMISSION_ID,
+    OmuPermissions.DASHOBARD_APP_READ_PERMISSION_ID,
+    OmuPermissions.DASHOBARD_APP_EDIT_PERMISSION_ID,
+    OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
+    OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+    OmuPermissions.I18N_SET_LOCALES_PERMISSION_ID,
 );
 
 omu.onReady(() => {

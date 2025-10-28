@@ -35,7 +35,7 @@
     });
     const chat = Chat.create(omu);
 
-    chat.on(ChatEvents.message.add, async (message) => {
+    chat.on(ChatEvents.Message.Add, async (message) => {
         if (!message.authorId) return;
         if (!shouldDiscardMessage(message)) return;
         const author = await chat.authors.get(message.authorId.key());

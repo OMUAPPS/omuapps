@@ -1,10 +1,8 @@
 import { makeRegistryWritable, once } from '$lib/helper.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
-import { Chat, permissions as chatPerms, events } from '@omujs/chat';
-import { OBSPlugin, permissions as obsPerms } from '@omujs/obs';
-import { App, Omu, Serializer } from '@omujs/omu';
-import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/api/asset';
-import { DAShBOARD_DRAG_DROP_PERMISSION_ID } from '@omujs/omu/api/dashboard';
+import { Chat, ChatEvents, ChatPermissions } from '@omujs/chat';
+import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+import { App, Omu, OmuPermissions, Serializer } from '@omujs/omu';
 import { RegistryType, type Registry } from '@omujs/omu/api/registry';
 import { type Signal } from '@omujs/omu/api/signal';
 import { type Table } from '@omujs/omu/api/table';
@@ -166,7 +164,7 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
     const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
 
-    chat.on(events.message.add, (message) => {
+    chat.on(ChatEvents.Message.Add, (message) => {
         processMessage(message);
     });
 
@@ -194,18 +192,18 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     };
     if (BROWSER) {
         omu.permissions.require(
-            ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
         );
         if (client) {
             omu.permissions.require(
-                DAShBOARD_DRAG_DROP_PERMISSION_ID,
-                ASSET_UPLOAD_PERMISSION_ID,
-                obsPerms.OBS_SOURCE_CREATE_PERMISSION_ID,
-                obsPerms.OBS_SOURCE_UPDATE_PERMISSION_ID,
-                obsPerms.OBS_SOURCE_READ_PERMISSION_ID,
-                obsPerms.OBS_SCENE_READ_PERMISSION_ID,
-                obsPerms.OBS_SCENE_CREATE_PERMISSION_ID,
-                chatPerms.CHAT_REACTION_PERMISSION_ID,
+                OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
+                OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+                OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+                OBSPermissions.OBS_SOURCE_UPDATE_PERMISSION_ID,
+                OBSPermissions.OBS_SOURCE_READ_PERMISSION_ID,
+                OBSPermissions.OBS_SCENE_READ_PERMISSION_ID,
+                OBSPermissions.OBS_SCENE_CREATE_PERMISSION_ID,
+                ChatPermissions.CHAT_REACTION_PERMISSION_ID,
             );
         }
         omu.start();

@@ -1,16 +1,16 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
     import { onDestroy } from 'svelte';
 
     import { chat } from '$lib/client.js';
     import type { Identifier } from '@omujs/omu';
     import { MessageEntry, TableList } from '@omujs/ui';
 
-    export let filter: (key: string, message: models.Message) => boolean = (
+    export let filter: (key: string, message: Models.Message) => boolean = (
         _,
         message,
     ) => message.deleted !== true;
-    let sort = (a: models.Message) => {
+    let sort = (a: Models.Message) => {
         if (!a.createdAt) return 0;
         return a.createdAt.getTime();
     };

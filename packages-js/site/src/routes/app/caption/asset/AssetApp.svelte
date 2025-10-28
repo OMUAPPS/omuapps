@@ -1,6 +1,5 @@
 <script lang="ts">
-    import type { Omu } from '@omujs/omu';
-    import { DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID } from '@omujs/omu/api/dashboard';
+    import { OmuPermissions, type Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
     import { CaptionApp } from '../caption-app';
     import CaptionRenderer from '../CaptionRenderer.svelte';
@@ -11,7 +10,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         );
         omu.start();
     }

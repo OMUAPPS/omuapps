@@ -1,5 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { Chat, models } from '@omujs/chat';
+import { Chat, Models } from '@omujs/chat';
 import { Provider } from '@omujs/chat/models';
 import { Identifier, Serializer, type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
@@ -71,7 +71,7 @@ export class EmojiApp {
     }
 
     testEmoji(emoji: Emoji) {
-        const room = new models.Room({
+        const room = new Models.Room({
             id: EMOJI_TEST_PROVIDER.id.join('test'),
             providerId: EMOJI_TEST_PROVIDER.id,
             connected: false,
@@ -81,7 +81,7 @@ export class EmojiApp {
         });
         this.chat.rooms.update(room);
         this.chat.messages.add(
-            new models.Message({
+            new Models.Message({
                 id: EMOJI_TEST_PROVIDER.id.join('test', 'message', new Date().getTime().toString()),
                 roomId: room.id,
                 content: { type: 'system', data: [

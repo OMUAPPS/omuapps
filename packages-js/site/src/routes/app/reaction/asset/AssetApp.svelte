@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Chat, permissions } from '@omujs/chat';
+    import { Chat, ChatPermissions } from '@omujs/chat';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
     import ReactionRenderer from '../components/ReactionRenderer.svelte';
@@ -10,7 +10,7 @@
     const reactionApp = new ReactionApp(omu, chat);
 
     if (BROWSER) {
-        omu.permissions.require(permissions.CHAT_REACTION_PERMISSION_ID);
+        omu.permissions.require(ChatPermissions.CHAT_REACTION_PERMISSION_ID);
         omu.start();
     }
 </script>

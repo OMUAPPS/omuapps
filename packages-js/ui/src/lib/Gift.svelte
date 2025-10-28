@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
     import Tooltip from './Tooltip.svelte';
     import { client } from './stores.js';
 
-    export let gift: models.Gift;
+    export let gift: Models.Gift;
 </script>
 
 <div class="gift">

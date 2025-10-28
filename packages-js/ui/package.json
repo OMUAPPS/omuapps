@@ -14,6 +14,7 @@
         "build": "bun run package",
         "build-storybook": "storybook build",
         "check": "bun x --bun svelte-check --tsconfig ./tsconfig.json",
+        "check:watch": "bun x --bun svelte-check --tsconfig ./tsconfig.json --watch",
         "chromatic": "chromatic",
         "dev": "bun x --bun vite dev --port 5174",
         "package": "bun x --bun svelte-package && bun x --bun publint",

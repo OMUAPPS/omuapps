@@ -1,9 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { OBSPlugin, permissions as obsPerms } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID, DASHBOARD_WEBVIEW_PERMISSION_ID } from '@omujs/omu/api/dashboard';
-    import { HTTP_REQUEST_PERMISSION_ID } from '@omujs/omu/api/http';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { MarshmallowAPI, MarshmallowSession } from './api.js';
@@ -32,10 +30,10 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            obsPerms.OBS_SOURCE_CREATE_PERMISSION_ID,
-            DASHBOARD_WEBVIEW_PERMISSION_ID,
-            DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
-            HTTP_REQUEST_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_WEBVIEW_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+            OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
         );
         omu.start();
     }

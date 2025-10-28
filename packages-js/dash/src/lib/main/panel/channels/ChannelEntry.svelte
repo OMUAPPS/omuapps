@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
     import { writable } from 'svelte/store';
 
     import { t } from '$lib/i18n/i18n-context.js';
@@ -7,7 +7,7 @@
     import { chat, omu } from '$lib/client.js';
     import { ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
 
-    export let entry: models.Channel;
+    export let entry: Models.Channel;
     export let selected: boolean = false;
 
     let active = writable(entry.active);

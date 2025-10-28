@@ -1,7 +1,7 @@
 <script lang="ts">
     import { chat, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
-    import { events } from '@omujs/chat';
+    import { ChatEvents } from '@omujs/chat';
     import { Header, Tooltip } from '@omujs/ui';
     import PanelChannels from '../panel/channels/PanelChannels.svelte';
     import PanelMessages from '../panel/messages/PanelMessages.svelte';
@@ -15,10 +15,10 @@
     omu.onReady(async () => {
         setupOpen = await chat.channels.size() == 0;
 
-        chat.on(events.channel.remove, async () => {
+        chat.on(ChatEvents.Channel.Remove, async () => {
             setupOpen = await chat.channels.size() == 0;
         });
-        chat.on(events.channel.add, async () => {
+        chat.on(ChatEvents.Channel.Add, async () => {
             setupOpen = await chat.channels.size() == 0;
         });
     });

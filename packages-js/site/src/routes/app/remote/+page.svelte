@@ -1,13 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import {
-        ASSET_DELETE_PERMISSION_ID,
-        ASSET_DOWNLOAD_PERMISSION_ID,
-        ASSET_UPLOAD_PERMISSION_ID,
-    } from '@omujs/omu/api/asset';
-    import { REMOTE_APP_REQUEST_PERMISSION_ID } from '@omujs/omu/api/session';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import { AppHeader, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
@@ -23,11 +17,11 @@
     if (BROWSER) {
         onMount(() => {
             omu.permissions.require(
-                permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-                REMOTE_APP_REQUEST_PERMISSION_ID,
-                ASSET_UPLOAD_PERMISSION_ID,
-                ASSET_DOWNLOAD_PERMISSION_ID,
-                ASSET_DELETE_PERMISSION_ID,
+                OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+                OmuPermissions.REMOTE_APP_REQUEST_PERMISSION_ID,
+                OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+                OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+                OmuPermissions.ASSET_DELETE_PERMISSION_ID,
             );
             omu.start();
         });

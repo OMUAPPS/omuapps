@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { Chat, events, models } from '@omujs/chat';
+    import { Chat, Content, Models } from '@omujs/chat';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
+    import { Events } from '../../../../../../chat/dist/dts/event';
     import { FriesApp } from '../fries-app';
     import type { ThrowData } from '../state';
     import Avatar from './Avatar.svelte';
@@ -29,10 +30,10 @@
 
     state.subscribe(() => processQueue());
 
-    function getMessageGreasiness(message: models.Message): number {
+    function getMessageGreasiness(message: Models.Message): number {
         if (!message.content) return 0;
         let greasyOMetor = 0;
-        for (const component of models.content.walk(message.content)) {
+        for (const component of Content.walk(message.content)) {
             if (component.type !== 'image') continue;
             const { id } = component.data;
             if (id === '🍟') {
@@ -42,7 +43,7 @@
         return greasyOMetor;
     }
 
-    chat.on(events.message.add, async (message) => {
+    chat.on(Events.Message.Add, async (message) => {
         if (!message.authorId) return;
         const greasiness = getMessageGreasiness(message);
         if (greasiness <= 0) return;
