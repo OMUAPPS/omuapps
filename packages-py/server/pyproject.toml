@@ -1,11 +1,11 @@
 [project]
 name = "omuserver"
-version = "0.9.16"
+version = "0.9.17"
 description = "Add your description here"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "aiohttp>=3.10.6", "click>=8.1.7", "omu>=0.9.16", "pip>=24.2", "packaging>=24.1", "psutil>=6.0.0", "uv>=0.4.16", "cryptography>=45.0.7"]
+dependencies = ["loguru>=0.7.2", "aiohttp>=3.10.6", "click>=8.1.7", "omu>=0.9.17", "pip>=24.2", "packaging>=24.1", "psutil>=6.0.0", "uv>=0.4.16", "cryptography>=45.0.7"]
 readme = "README.md"
 requires-python = ">= 3.12"
 
