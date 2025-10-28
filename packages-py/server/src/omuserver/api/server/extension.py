@@ -55,7 +55,7 @@ class ServerExtension:
     async def shutdown(self, restart: bool = False) -> None:
         try:
             if restart:
-                for session in self._server.sessions.iter():
+                for session in list(self._server.sessions.iter()):
                     if session.closed:
                         continue
                     await session.disconnect(DisconnectType.SERVER_RESTART, "Server is restarting")

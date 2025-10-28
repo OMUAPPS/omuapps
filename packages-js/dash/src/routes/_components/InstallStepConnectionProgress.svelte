@@ -1,12 +1,18 @@
 <script lang="ts">
     import { omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
+    import { DisconnectType } from '@omujs/omu/network/packet';
     import { netState, state } from '../stores';
 
     $: {
         if ($netState?.type === 'reconnecting') {
             if ($netState.attempt && $netState.attempt > 2) {
                 $state = { type: 'restore', message: omu.network.reason?.message };
+                omu.stop();
+            }
+        } else if ($netState?.type === 'disconnected' && $netState.reason) {
+            if (![DisconnectType.SERVER_RESTART].includes($netState.reason.type)) {
+                $state = { type: 'restore', message: `${$netState.reason.type}: ${$netState.reason.message}` };
                 omu.stop();
             }
         }

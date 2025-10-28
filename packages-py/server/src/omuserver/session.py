@@ -62,7 +62,7 @@ class TaskPriority:
     AFTER_CONNECTED = 0
     AFTER_PLUGIN = 200
     AFTER_SESSION = 300
-    PERMISSION_GRANTED = 400
+    AFTER_PERMITTED = 400
 
 
 @dataclass(frozen=True, slots=True)

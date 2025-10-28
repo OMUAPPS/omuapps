@@ -4,7 +4,9 @@ import {
     InvalidOrigin,
     InvalidPacket,
     InvalidToken,
-    InvalidVersion, OmuError, PermissionDenied,
+    InvalidVersion,
+    PermissionDenied,
+    ServerRestart,
 } from '../errors.js';
 import { EventEmitter } from '../event';
 import { IdentifierMap } from '../identifier';
@@ -51,6 +53,7 @@ export class Network {
     private readonly packetMapper = new PacketMapper();
     private readonly packetHandlers = new IdentifierMap<PacketHandler<unknown>>();
     private listenTask: Promise<void> | undefined = undefined;
+    public reason: DisconnectReason | undefined = undefined;
 
     constructor(
         private readonly omu: Omu,
@@ -73,12 +76,11 @@ export class Network {
         });
         this.addPacketHandler(PACKET_TYPES.DISCONNECT, async (reason) => {
             if (reason.type === DisconnectType.SHUTDOWN
-                || reason.type === DisconnectType.CLOSE
-                || reason.type === DisconnectType.SERVER_RESTART) {
+                || reason.type === DisconnectType.CLOSE) {
                 this.setStatus({ type: 'disconnected' });
                 return;
             }
-            const ERROR_MAP: Record<DisconnectType, typeof OmuError | undefined> = {
+            const ERROR_MAP = {
                 [DisconnectType.ANOTHER_CONNECTION]: AnotherConnection,
                 [DisconnectType.PERMISSION_DENIED]: PermissionDenied,
                 [DisconnectType.INVALID_TOKEN]: InvalidToken,
@@ -88,13 +90,13 @@ export class Network {
                 [DisconnectType.INVALID_PACKET]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_TYPE]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_DATA]: InvalidPacket,
-                [DisconnectType.SERVER_RESTART]: undefined,
+                [DisconnectType.SERVER_RESTART]: ServerRestart,
                 [DisconnectType.CLOSE]: undefined,
                 [DisconnectType.SHUTDOWN]: undefined,
             };
             const error = ERROR_MAP[reason.type];
             if (error) {
-                throw new error(reason.message);
+                this.reason = new error(reason.message ?? '');
             }
         });
         this.addPacketHandler(PACKET_TYPES.READY, () => {
@@ -162,7 +164,6 @@ export class Network {
 
         while (this.omu.running) {
             attempt++;
-            let reason: DisconnectReason | undefined = undefined;
             try {
                 this.aes = undefined;
                 this.connection = await this.transport.connect();
@@ -207,36 +208,36 @@ export class Network {
                 this.listenTask = this.listen();
                 await this.setStatus({ type: 'connected' });
                 await this.event.connected.emit();
-                await this.dispatchTasks();
-                this.send({
-                    type: PACKET_TYPES.READY,
-                    data: null,
+                this.dispatchTasks().then(() => {
+                    this.send({
+                        type: PACKET_TYPES.READY,
+                        data: null,
+                    });
                 });
                 await this.listenTask;
             } catch (error) {
                 if (error instanceof DisconnectReason) {
-                    reason = error;
+                    this.reason = error;
                 }
                 if (!reconnect) {
                     throw error;
                 }
             } finally {
-                this.event.disconnected.emit(reason);
+                this.event.disconnected.emit(this.reason);
                 if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting') {
-                    this.setStatus({ type: 'disconnected', attempt, reason });
+                    this.setStatus({ type: 'disconnected', attempt, reason: this.reason });
                 }
                 this.connection?.close();
                 this.connection = undefined;
                 this.listenTask = undefined;
             }
-            if (reason && ![
+            if (this.reason && ![
                 DisconnectType.SHUTDOWN,
                 DisconnectType.SERVER_RESTART,
-                DisconnectType.INTERNAL_ERROR,
-            ].includes(reason.type)) {
+            ].includes(this.reason.type)) {
                 break;
             }
-            reason = undefined;
+            this.reason = undefined;
             if (!reconnect) {
                 break;
             }
@@ -245,7 +246,7 @@ export class Network {
                 break;
             }
         }
-        await this.setStatus({ type: 'disconnected' });
+        await this.setStatus({ type: 'disconnected', reason: this.reason });
         this.connection?.close();
         this.connection = undefined;
     }

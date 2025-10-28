@@ -4,6 +4,7 @@
     import MainWindow from '$lib/main/MainWindow.svelte';
     import { installed } from '$lib/main/settings';
     import { checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
+    import { DisconnectType } from '@omujs/omu/network/packet';
     import { Button, Spinner } from '@omujs/ui';
     import { error } from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
@@ -28,6 +29,20 @@
                 type: 'server_start_failed',
             });
             omu.stop();
+        }
+    }
+
+    $: {
+        if ($netState?.type === 'reconnecting') {
+            if ($netState.attempt && $netState.attempt > 2) {
+                $state = { type: 'restore', message: omu.network.reason?.message };
+                omu.stop();
+            }
+        } else if ($netState?.type === 'disconnected' && $netState.reason && $state.type === 'ready') {
+            if (![DisconnectType.SERVER_RESTART].includes($netState.reason.type)) {
+                $state = { type: 'restore', message: `${$netState.reason.type}: ${$netState.reason.message}` };
+                omu.stop();
+            }
         }
     }
 

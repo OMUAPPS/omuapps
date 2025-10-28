@@ -26,6 +26,7 @@ export class WebsocketTransport implements Transport {
 export class WebsocketConnection implements Connection {
     private readonly packetQueue: Array<PacketData> = [];
     private receiveWaiter: (() => void) | null = null;
+    private readingPromise: Promise<void> | null = null;
 
     constructor(
         private socket: WebSocket,
@@ -35,8 +36,15 @@ export class WebsocketConnection implements Connection {
         const connection = new WebsocketConnection(socket);
         return new Promise((resolve, reject) => {
             socket.onerror = reject;
-            socket.onclose = (): void => { connection.close(); };
-            socket.onmessage = (event): void => { connection.onMessage(event); };
+            socket.onclose = async () => {
+                if (connection.readingPromise) {
+                    await connection.readingPromise;
+                }
+                connection.close();
+            };
+            socket.onmessage = (event): void => {
+                connection.readingPromise = connection.onMessage(event);
+            };
             socket.onopen = (): void => {
                 resolve(connection);
             };
@@ -48,10 +56,11 @@ export class WebsocketConnection implements Connection {
             throw new Error('Received string data');
         }
         const reader = await ByteReader.fromBlob(event.data);
-        this.packetQueue.push({
+        const data = {
             type: reader.readString(),
             data: reader.readUint8Array(),
-        });
+        };
+        this.packetQueue.push(data);
         reader.finish();
         if (this.receiveWaiter) {
             this.receiveWaiter();
