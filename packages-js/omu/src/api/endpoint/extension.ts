@@ -36,23 +36,8 @@ export class EndpointExtension {
             ENDPOINT_INVOKED_PACKET,
             ENDPOINT_RESPONSE_PACKET,
         );
-        omu.network.addPacketHandler(ENDPOINT_INVOKED_PACKET, async (packet) => {
-            const endpoint = this.boundEndpoints.get(packet.params.id);
-            if (!endpoint) {
-                throw new Error(`Received invocation for unknown endpoint ${packet.params.id.key()} (${packet.params.key})`);
-            }
-            try {
-                const result = await endpoint.handler(packet);
-                omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
-                    new ResponseParams(packet.params.id, packet.params.key, null),
-                    result,
-                ));
-            } catch (error) {
-                omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
-                    new ResponseParams(packet.params.id, packet.params.key, JSON.stringify(error)),
-                    new Uint8Array(),
-                ));
-            }
+        omu.network.addPacketHandler(ENDPOINT_INVOKED_PACKET, (packet) => {
+            this.handleInvoked(packet);
         });
         omu.network.addPacketHandler(ENDPOINT_RESPONSE_PACKET, (packet) => {
             const promise = this.responsePromises.get(packet.params.key);
@@ -69,6 +54,25 @@ export class EndpointExtension {
             promise.resolve(packet.buffer);
         });
         omu.network.addTask(() => this.onTask());
+    }
+
+    private async handleInvoked(packet: EndpointInvokedPacket) {
+        const endpoint = this.boundEndpoints.get(packet.params.id);
+        if (!endpoint) {
+            throw new Error(`Received invocation for unknown endpoint ${packet.params.id.key()} (${packet.params.key})`);
+        }
+        try {
+            const result = await endpoint.handler(packet);
+            this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
+                new ResponseParams(packet.params.id, packet.params.key, null),
+                result,
+            ));
+        } catch (error) {
+            this.omu.send(ENDPOINT_RESPONSE_PACKET, new EndpointResponsePacket(
+                new ResponseParams(packet.params.id, packet.params.key, JSON.stringify(error)),
+                new Uint8Array(),
+            ));
+        }
     }
 
     private onTask(): void {
