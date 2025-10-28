@@ -21,6 +21,7 @@ vite.config.ts.*.mjs
 
 # tauri
 src-tauri/target
+target
 
 # Logs
 logs

@@ -85,7 +85,7 @@ pub async fn start_server(
     .map_err(|err| StartError::UvEnsureError { reason: err })?;
     let callback = on_progress.clone();
     let server = Server::ensure_server(
-        config.server.clone(),
+        &state.server_config,
         python,
         uv,
         move |progress: ServerEnsureProgress| {
@@ -151,7 +151,7 @@ pub async fn stop_server(
     on_progress(StopProgress::ServerStopping {
         msg: "Stopping server".to_string(),
     });
-    Server::stop_server(&python, &state.config.lock().unwrap().server).map_err(|err| {
+    Server::stop_server(&python, &state.server_config).map_err(|err| {
         StopError::ServerEnsureError {
             reason: ServerEnsureError::StopFailed { msg: err },
         }
@@ -195,7 +195,7 @@ pub async fn clean_environment(
         .map_err(|err| CleanError::PythonError { reason: err })?
     };
 
-    Server::stop_server(&python, &state.config.lock().unwrap().server)
+    Server::stop_server(&python, &state.server_config)
         .map_err(|err| CleanError::ServerError { reason: err })?;
 
     let callback = on_progress.clone();

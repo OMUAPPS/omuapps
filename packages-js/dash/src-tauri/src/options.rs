@@ -22,7 +22,7 @@ pub struct AppOptions {
     pub python_path: PathBuf,
     pub uv_path: PathBuf,
     pub workdir: PathBuf,
-    pub config_path: PathBuf,
+    pub appdir: PathBuf,
 }
 
 impl AppOptions {
@@ -52,7 +52,7 @@ impl AppOptions {
             python_path: bin_dir.join("python"),
             uv_path: bin_dir.join("uv"),
             workdir: data_dir.clone(),
-            config_path: bin_dir.join("config.json"),
+            appdir: bin_dir.to_path_buf(),
         };
         Ok(options)
     }
@@ -73,12 +73,11 @@ fn get_data_dir() -> std::path::PathBuf {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AppConfig {
     pub enable_beta: bool,
-    pub server: ServerConfig,
 }
 
 impl AppConfig {
     pub fn ensure(options: &AppOptions) -> Self {
-        let path = &options.config_path;
+        let path = &options.appdir.join("config.json");
         if path.exists() {
             info!("Loading config from {}", path.display());
             match Self::load(path) {
@@ -93,10 +92,7 @@ impl AppConfig {
                 path.display()
             );
         }
-        let config = AppConfig {
-            enable_beta: false,
-            server: ServerConfig::create(&options),
-        };
+        let config = AppConfig { enable_beta: false };
         config.store(path).unwrap_or_else(|err| {
             warn!("Failed to store default config: {}", err);
         });

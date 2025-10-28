@@ -27,12 +27,42 @@ pub struct ServerConfig {
 }
 
 impl ServerConfig {
-    pub fn create(options: &AppOptions) -> Self {
-        Self {
+    pub fn ensure(options: &AppOptions) -> Self {
+        let path = &options.appdir.join("server.json");
+        if path.exists() {
+            info!("Loading config from {}", path.display());
+            match Self::load(path) {
+                Ok(config) => return config,
+                Err(err) => {
+                    warn!("Failed to load config: {}, generating default config", err);
+                }
+            };
+        } else {
+            info!(
+                "Config file not found, generating default config at {}",
+                path.display()
+            );
+        }
+        let config = ServerConfig {
             data_dir: options.workdir.clone(),
             port: 26423,
             hash: generate_hash(),
-        }
+        };
+        config.store(path).unwrap_or_else(|err| {
+            warn!("Failed to store default config: {}", err);
+        });
+        config
+    }
+
+    pub fn store(&self, path: &PathBuf) -> Result<(), std::io::Error> {
+        let content = serde_json::to_string_pretty(self)?;
+        std::fs::write(path, content)
+    }
+
+    pub fn load(path: &PathBuf) -> Result<Self> {
+        let content = std::fs::read_to_string(path)?;
+        let config: Self = serde_json::from_str(&content)?;
+        Ok(config)
     }
 }
 
@@ -86,7 +116,7 @@ pub enum ServerEnsureError {
 
 impl Server {
     pub fn ensure_server(
-        config: ServerConfig,
+        config: &ServerConfig,
         python: Python,
         uv: Uv,
         on_progress: impl Fn(ServerEnsureProgress) + Send + Sync + Clone + 'static,
@@ -123,7 +153,7 @@ impl Server {
         };
 
         let server = Self {
-            config,
+            config: config.clone(),
             python,
             uv,
             process: Arc::new(Mutex::new(None)),
@@ -215,7 +245,12 @@ impl Server {
     }
 
     fn read_token(option: &ServerConfig) -> Result<String, String> {
-        let token_path = option.data_dir.join("token.txt");
+        let mut token_path = option.data_dir.join("token.txt");
+        if cfg!(dev) {
+            token_path = std::env::current_dir()
+                .unwrap()
+                .join("../../../appdata/token.txt");
+        }
         if !token_path.exists() {
             Err(format!(
                 "Port {} is already in use, but token file does not exist at {}",
@@ -243,7 +278,12 @@ impl Server {
         cmd.arg("-m").arg("omuserver");
         cmd.arg("--token").arg(self.token.clone());
         cmd.arg("--port").arg(self.config.port.to_string());
-        cmd.arg("--hash").arg(self.config.hash.clone());
+        let hash = if cfg!(dev) {
+            &"dev".to_string()
+        } else {
+            &self.config.hash
+        };
+        cmd.arg("--hash").arg(&hash);
         let executable = canonicalize(current_exe().unwrap())
             .unwrap()
             .to_string_lossy()

@@ -11,7 +11,11 @@ mod utils;
 mod uv;
 mod version;
 
-use crate::{commands::*, options::AppOptions, server::Server};
+use crate::{
+    commands::*,
+    options::AppOptions,
+    server::{Server, ServerConfig},
+};
 use directories::ProjectDirs;
 use log::info;
 use once_cell::sync::Lazy;
@@ -34,6 +38,7 @@ static APP_DIRECTORY: Lazy<ProjectDirs> =
 struct AppState {
     options: AppOptions,
     config: Arc<Mutex<AppConfig>>,
+    server_config: ServerConfig,
     server: Arc<Mutex<Option<Server>>>,
     app_handle: Arc<Mutex<Option<tauri::AppHandle>>>,
 }
@@ -42,7 +47,7 @@ impl AppState {
     pub fn update_config(&self, f: impl FnOnce(&mut AppConfig)) {
         let mut config = self.config.lock().unwrap();
         f(&mut config);
-        config.store(&self.options.config_path).unwrap();
+        config.store(&self.options.appdir).unwrap();
     }
 }
 
@@ -60,13 +65,15 @@ fn main() {
         })
         .unwrap();
     let mut app_config = AppConfig::ensure(&options);
-    app_config.server.data_dir = options.workdir.clone();
+    let mut server_config = ServerConfig::ensure(&options);
+    server_config.data_dir = options.workdir.clone();
     let app_handle = Arc::new(Mutex::new(None));
     let app_state = AppState {
         options: options.clone(),
         server: Arc::new(Mutex::new(None)),
         app_handle: app_handle.clone(),
         config: Arc::new(Mutex::new(app_config.clone())),
+        server_config: server_config,
     };
 
     tauri::Builder::default()

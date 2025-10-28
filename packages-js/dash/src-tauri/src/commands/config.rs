@@ -11,7 +11,7 @@ pub fn set_config(state: tauri::State<'_, AppState>, config: AppConfig) -> Resul
     let mut config_state = state.config.lock().unwrap();
     *config_state = config.clone();
     config
-        .store(&state.options.config_path)
+        .store(&state.options.appdir)
         .map_err(|err| format!("Failed to store config: {}", err))?;
     Ok(())
 }
