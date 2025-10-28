@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Models } from '@omujs/chat';
 
-    import { Tooltip } from '@omujs/ui';
+    import { linkOpenHandler, Tooltip } from '@omujs/ui';
 
     import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
@@ -34,7 +34,13 @@
     <div class="thumbnail">
         {#if entry.metadata && entry.metadata.thumbnail}
             {#if entry.metadata.url}
-                <button on:click={open}>
+                <a href={entry.metadata.url} target="_blank" rel="noopener noreferrer" on:click={(event) => {
+                    if (!entry.metadata.url) return;
+                    if (!$linkOpenHandler) return;
+                    const prevent = $linkOpenHandler(entry.metadata.url);
+                    if (!prevent) return;
+                    event.preventDefault();
+                }}>
                     <Tooltip noBackground>
                         <img
                             src={omu.assets.proxy(entry.metadata.thumbnail)}
@@ -53,7 +59,7 @@
                             <i class="ti ti-external-link"></i>
                         </p>
                     </div>
-                </button>
+                </a>
             {:else}
                 <Tooltip noBackground>
                     <img
@@ -91,10 +97,10 @@
             {#if entry.connected}
                 <small class="online-state">
                     <Tooltip>
-                        {$t('status.connected')}
+                        {$t('room_status.connected')}
                     </Tooltip>
                     <i class="ti ti-bolt-filled"></i>
-                    {$t('status.connected')}
+                    {$t('room_status.connected')}
                 </small>
             {/if}
             {#if entry.metadata && entry.metadata.viewers}
@@ -136,7 +142,7 @@
         aspect-ratio: 16 / 9;
         object-fit: contain;
 
-        > button {
+        > a {
             position: relative;
             border: none;
             background: none;
@@ -155,7 +161,7 @@
             }
         }
 
-        > button > .overlay {
+        > a > .overlay {
             position: absolute;
             inset: 0;
             background: color-mix(in srgb, var(--color-text) 70%, transparent 0%);

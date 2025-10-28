@@ -12,6 +12,7 @@
         devMode,
         isBetaEnabled,
         language,
+        openLinkMode,
         speechRecognition,
     } from '../settings.js';
     import About from './about/About.svelte';
@@ -161,6 +162,22 @@
                         <p>{$t('settings.setting.checkUpdateError', { error })}</p>
                     </span>
                 {/await}
+                <span class="setting">
+                    <p>{$t('settings.setting.link')}</p>
+                    <Combobox
+                        bind:value={$openLinkMode}
+                        options={{
+                            browser: {
+                                value: 'browser',
+                                label: $t('settings.setting.link_browser'),
+                            },
+                            window: {
+                                value: 'window',
+                                label: $t('settings.setting.link_window'),
+                            },
+                        }}
+                    />
+                </span>
                 <span class="setting">
                     <p>{$t('settings.setting.language')}</p>
                     <Combobox

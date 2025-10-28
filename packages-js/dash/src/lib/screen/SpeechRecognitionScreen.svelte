@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button } from '@omujs/ui';
+    import { Button, ExternalLink } from '@omujs/ui';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
@@ -26,7 +26,7 @@
     <div class="screen">
         <h2>音声認識を使用します</h2>
         <small>
-            これには<a href="https://cloud.google.com/speech-to-text">Google Cloud</a>もしくは<a href="https://azure.microsoft.com/ja-jp/products/ai-services/ai-speech">Azure</a>の音声認識サービスに音声が送信されます。
+            これには<ExternalLink href="https://cloud.google.com/speech-to-text">Google Cloud</ExternalLink>もしくは<ExternalLink href="https://azure.microsoft.com/ja-jp/products/ai-services/ai-speech">Azure</ExternalLink>の音声認識サービスに音声が送信されます。
         </small>
         <small>
             設定から再び無効にすることができます

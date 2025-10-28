@@ -63,6 +63,9 @@ export const dateTimeFormats = writable<{
     time: Intl.DateTimeFormat;
 }>();
 
+export type LinkHandler = (href: string) => boolean;
+export const linkOpenHandler = writable<LinkHandler | undefined>(undefined);
+
 if (BROWSER) {
     dateTimeFormats.set({
         full: new Intl.DateTimeFormat(window.navigator.language, {

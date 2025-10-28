@@ -1,7 +1,9 @@
 <script lang="ts">
     import type { Content, Models } from '@omujs/chat';
+    import ButtonLink from './ButtonLink.svelte';
     import ButtonMini from './ButtonMini.svelte';
     import ComponentRenderer from './ComponentRenderer.svelte';
+    import ExternalLink from './ExternalLink.svelte';
     import Gift from './Gift.svelte';
     import RelativeDate from './RelativeDate.svelte';
     import Role from './Role.svelte';
@@ -43,6 +45,22 @@
         parts.push(date.getSeconds().toString().padStart(2, '0') + 's');
         return parts.join('');
     }
+
+    const CURRENCIES: Record<string, string | undefined> = {
+        '¥': 'yen',
+        '฿': 'baht',
+        '$': 'dollar',
+        '€': 'euro',
+        '£': 'pound',
+        '₩': 'won',
+        '₹': 'rupee',
+        '₽': 'ruble',
+        '₣': 'franc',
+        'R$': 'real',
+        '₺': 'lira',
+        '₱': 'peso',
+        'RM': 'ringgit',
+    };
 </script>
 
 <article
@@ -60,13 +78,9 @@
                 <img src={fullProxyUrl} alt="avatar" class="avatar-preview" />
             </Tooltip>
             {#if author.metadata?.url}
-                <a
-                    href={author.metadata.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
+                <ExternalLink href={author.metadata.url}>
                     <img src={proxyUrl} alt="avatar" class="avatar-image" />
-                </a>
+                </ExternalLink>
             {:else}
                 <img src={proxyUrl} alt="avatar" class="avatar-image" />
             {/if}
@@ -105,21 +119,7 @@
                 {#if gifts?.length}
                     <div class="gifts">
                         {#if paid}
-                            {@const currency = {
-                                '¥': 'yen',
-                                '฿': 'baht',
-                                $: 'dollar',
-                                '€': 'euro',
-                                '£': 'pound',
-                                '₩': 'won',
-                                '₹': 'rupee',
-                                '₽': 'ruble',
-                                '₣': 'franc',
-                                R$: 'real',
-                                '₺': 'lira',
-                                '₱': 'peso',
-                                RM: 'ringgit',
-                            }[paid.currency]}
+                            {@const currency = CURRENCIES[paid.currency]}
                             <div class="paid">
                                 <span>
                                     <i class="ti ti-gift"></i>
@@ -147,18 +147,16 @@
         <div class="actions">
             {#if time}
                 {@const timedLink = `${url}&t=${Math.floor(time.getTime() / 1000) + 10}s`}
-                <ButtonMini
+                <ButtonLink
+                    href={timedLink}
                     primary
-                    on:click={() => {
-                        window.open(timedLink, '_blank');
-                    }}
                 >
                     <Tooltip>
                         <p>{$translate('panels.messages.see_in_room')}</p>
                         <p>{formatTime(time)}</p>
                     </Tooltip>
                     <i class="ti ti-external-link"></i>
-                </ButtonMini>
+                </ButtonLink>
             {/if}
             <ButtonMini primary on:click={handleCopy}>
                 <Tooltip>{$translate('panels.messages.copy')}</Tooltip>

@@ -72,6 +72,9 @@
         "disconnected": "切断されました",
         "attempt": "{count} 回目の接続。 {date} に再接続を試みます"
     },
+    "room_status": {
+        "connected": "接続済み"
+    },
     "titlebar": {
         "close": "閉じる",
         "minimize": "最小化",
@@ -256,6 +259,9 @@
             "betaMode": "開発版の機能を有効にする",
             "betaModeDescription": "有効にするにはアプリの再起動が必要です。",
             "language": "言語",
+            "link": "リンクの開き方",
+            "link_browser": "ブラウザで開く",
+            "link_window": "ウィンドウで開く",
             "debug": "デバッグ",
             "logFileGenerate": "ログファイルを生成",
             "logFileGenerating": "ログファイルを生成中...",

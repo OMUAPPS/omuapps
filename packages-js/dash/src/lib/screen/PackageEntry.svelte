@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { PackageInfo } from '@omujs/omu/api/plugin';
+    import { ExternalLink } from '@omujs/ui';
     import SvelteMarkdown from 'svelte-markdown';
 
     export let entry: PackageInfo;
@@ -14,13 +15,9 @@
     <i class="icon ti ti-package" />
     <div class="info">
         <span class="name">
-            <a
-                href={entry.info.package_url}
-                target="_blank"
-                rel="noopener noreferrer"
-            >
+            <ExternalLink href={entry.info.package_url}>
                 {entry.info.name}
-            </a>
+            </ExternalLink>
             <i class="ti ti-external-link"></i>
             <span class="version">
                 v{entry.info.version}
