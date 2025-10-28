@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { type DisconnectReason } from '@omujs/omu';
+    import { DisconnectReason } from '@omujs/omu';
     import { type NetworkStatus } from '@omujs/omu/network';
     import { DisconnectType } from '@omujs/omu/network/packet';
-    import { client, Spinner } from '@omujs/ui';
+    import { Button, client, Spinner } from '@omujs/ui';
 
     let state: {
         type: 'connecting';
@@ -21,11 +21,10 @@
         });
         omu.network.event.status.listen((status) => {
             state = { type: 'connecting', status };
+            console.warn(status);
         });
         omu.network.event.disconnected.listen((reason) => {
-            if (!reason && state.type === 'disconnected') reason = state.reason;
             state = { type: 'disconnected', reason };
-            console.warn(reason);
         });
     });
 </script>
@@ -51,7 +50,7 @@
     {#if !state.reason}
         <div class="modal">
             <p>接続が切断されました</p>
-            <button on:click={() => location.reload()}>再接続</button>
+            <Button primary on:click={() => location.reload()}>再接続</Button>
         </div>
     {:else if state.reason.type === DisconnectType.ANOTHER_CONNECTION}
         <div class="modal">
@@ -61,32 +60,36 @@
     {:else if state.reason.type === DisconnectType.PERMISSION_DENIED}
         <div class="modal">
             <p>権限がありませんでした</p>
-            <small>{state.reason.message}</small>
+            <p class="message">{state.reason.message}</p>
         </div>
     {:else if state.reason.type === DisconnectType.INVALID_ORIGIN}
         <div class="modal">
             <p>無効なオリジンです</p>
-            <small>{state.reason.message}</small>
+            <p class="message">{state.reason.message}</p>
         </div>
     {:else if state.reason.type === DisconnectType.INVALID_VERSION}
         <div class="modal">
             <p>無効なバージョンです</p>
-            <small>{state.reason.message}</small>
+            <p class="message">{state.reason.message}</p>
         </div>
     {:else if state.reason.type === DisconnectType.INVALID_TOKEN}
         <div class="modal">
             <p>無効な認証情報です</p>
-            <small>{state.reason.message}</small>
+            <p class="message">{state.reason.message}</p>
         </div>
     {:else if state.reason.type === DisconnectType.SERVER_RESTART}
         <div class="modal">
-            <p>サーバーが再起動されました</p>
-            <small>{state.reason.message}</small>
+            <p>
+                サーバーを再起動中
+                <Spinner />
+            </p>
+            <small>再接続しています</small>
+            <p class="message">{state.reason.message}</p>
         </div>
     {:else if state.reason.type === DisconnectType.INTERNAL_ERROR}
         <div class="modal">
             <p>内部エラーが発生しました</p>
-            <small>{state.reason.message}</small>
+            <p class="message">{state.reason.message}</p>
         </div>
     {:else if state.reason.type === DisconnectType.CLOSE}
         <div class="modal">
@@ -125,10 +128,19 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 1rem;
         font-size: 1.5rem;
     }
 
     small {
+        font-size: 1rem;
+        color: var(--color-text);
+    }
+
+    .message {
+        position: absolute;
+        top: 1rem;
+        left: 2rem;
         font-size: 1rem;
     }
 </style>

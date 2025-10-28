@@ -37,11 +37,22 @@
 <div class="container">
     {#if state.type === 'generating'}
         <div class="loading">
-            <Spinner /> Generating token...
+            <Spinner /> 認証中
         </div>
     {:else if state.type === 'error'}
         <div class="loading">Error: {state.message}</div>
     {:else if state.type === 'open'}
+        {#if loading}
+            <div class="loading">
+                <Spinner />
+                {#if props.app.metadata?.name}
+                    {omu.i18n.translate(props.app.metadata.name)}
+                    アプリを読み込み中
+                {:else}
+                    読み込み中
+                {/if}
+            </div>
+        {/if}
         <iframe
             on:load={() => {
                 loading = false;
@@ -66,11 +77,6 @@
             appWindow.startResizeDragging('East');
         }}
     ></div>
-    {#if loading}
-        <div class="loading">
-            <Spinner />
-        </div>
-    {/if}
 </div>
 
 <style lang="scss">
@@ -84,9 +90,9 @@
         position: absolute;
         inset: 0;
         display: flex;
-        align-items: flex-start;
+        align-items: baseline;
         gap: 1rem;
-        font-size: 1.5rem;
+        font-size: 1rem;
         padding: 1rem 1rem;
         color: var(--color-1);
     }
