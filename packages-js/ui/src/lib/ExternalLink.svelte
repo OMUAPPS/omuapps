@@ -4,13 +4,14 @@
 
     export let href: string = '';
     export let title: string | undefined = undefined;
+    export let decorated: boolean = true;
 
     if (href?.length && !href.startsWith('http')) {
         href = `https://${href}`;
     }
 </script>
 
-<a {href} {title} target="_blank" rel="noopener noreferrer" on:click={(event) => {
+<a class:decorated {href} {title} target="_blank" rel="noopener noreferrer" on:click={(event) => {
     if (!$linkOpenHandler) return;
     const prevent = $linkOpenHandler(href);
     if (!prevent) return;
@@ -21,3 +22,14 @@
     </Tooltip>
     <slot />
 </a>
+
+<style lang="scss">
+    a:not(.decorated) {
+        color: inherit;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+</style>

@@ -34,8 +34,8 @@
 
     .hint {
         position: relative;
-        padding-top: $padding-vertically;
-        padding-bottom: $padding-vertically;
+        padding: $padding-vertically 2rem;
+        padding-bottom: 15%;
         display: flex;
         flex: 1;
         justify-content: flex-start;

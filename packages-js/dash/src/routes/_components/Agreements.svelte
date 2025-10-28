@@ -1,21 +1,34 @@
 <script lang="ts">
+    import SvelteMarkdown from 'svelte-markdown';
+    import agreements from '../agreements.md?raw';
+    import AgreementLink from './AgreementLink.svelte';
 </script>
 
 <div class="agreements">
-    <h1>OMUAPPSとは</h1>
-    <p>配信向けに特化したアプリ管理ツールです。</p>
-    <p>
-        セキュリティを気にする必要なしに、配信に便利なアプリケーションを管理・インストールできるほか、配信に便利な機能を備えたアプリケーションを提供しています。
-    </p>
+    <SvelteMarkdown source={agreements} renderers={{ link: AgreementLink }} />
 </div>
 
 <style lang="scss">
     .agreements {
-        padding: 0 max(5rem, 15%);
-    }
+        position: absolute;
+        inset: 0;
+        padding: max(4rem, 10%) max(2rem, 10%);
+        overflow-y: auto;
 
-    h1, h2 {
-        color: var(--color-1);
-        margin-bottom: 1rem;
+        > :global(h1) {
+            color: var(--color-1);
+        }
+
+        > :global(h2) {
+            color: var(--color-1);
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        > :global(h3) {
+            color: var(--color-1);
+            margin-top: 2rem;
+            margin-bottom: 0.5rem;
+        }
     }
 </style>
