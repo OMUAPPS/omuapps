@@ -59,7 +59,7 @@
                 <i class="ti ti-user"></i>
                 ユーザー
             </p>
-            <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, { label: client.global_name, value: id }]))} bind:value={$config.user_id} />
+            <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, { label: client.global_name ?? client.username, value: id }]))} bind:value={$config.user_id} />
         {:else if Object.keys(clients).length === 0}
             <small>
                 起動しているDiscordが見つかりませんでした
@@ -76,7 +76,7 @@
                 <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
             {/if}
             <small>
-                {user.global_name}
+                {user.global_name ?? user.id}
             </small>
         {:else}
             <small>

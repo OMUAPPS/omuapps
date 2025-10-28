@@ -103,7 +103,7 @@ export type AuthenticateUser = {
     avatar: string | null;
     avatar_decoration_data: null;
     flags: number;
-    global_name: string;
+    global_name: string | null;
     public_flags: number;
     banner: null;
     accent_color: number;
