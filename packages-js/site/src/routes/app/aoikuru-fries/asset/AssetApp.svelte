@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { Chat, Content, Models } from '@omujs/chat';
+    import { Chat, ChatEvents, Content, Models } from '@omujs/chat';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
-    import { Events } from '../../../../../../chat/dist/dts/event';
     import { FriesApp } from '../fries-app';
     import type { ThrowData } from '../state';
     import Avatar from './Avatar.svelte';
@@ -43,7 +42,7 @@
         return greasyOMetor;
     }
 
-    chat.on(Events.Message.Add, async (message) => {
+    chat.on(ChatEvents.Message.Add, async (message) => {
         if (!message.authorId) return;
         const greasiness = getMessageGreasiness(message);
         if (greasiness <= 0) return;
