@@ -64,6 +64,16 @@ impl ServerConfig {
         let config: Self = serde_json::from_str(&content)?;
         Ok(config)
     }
+
+    pub fn get_token_path(&self) -> PathBuf {
+        let mut token_path = self.data_dir.join("token.txt");
+        if cfg!(dev) {
+            token_path = std::env::current_dir()
+                .unwrap()
+                .join("../../../appdata/token.txt");
+        }
+        return token_path;
+    }
 }
 
 fn generate_hash() -> String {
@@ -232,7 +242,7 @@ impl Server {
     }
 
     fn save_token(token: &str, option: &ServerConfig) -> Result<(), String> {
-        let token_path = option.data_dir.join("token.txt");
+        let token_path = option.get_token_path();
         std::fs::write(token_path.clone(), token).map_err(|err| {
             format!(
                 "Port {} is already in use, but failed to write token file at {}: {}",
@@ -245,12 +255,7 @@ impl Server {
     }
 
     fn read_token(option: &ServerConfig) -> Result<String, String> {
-        let mut token_path = option.data_dir.join("token.txt");
-        if cfg!(dev) {
-            token_path = std::env::current_dir()
-                .unwrap()
-                .join("../../../appdata/token.txt");
-        }
+        let token_path = option.get_token_path();
         if !token_path.exists() {
             Err(format!(
                 "Port {} is already in use, but token file does not exist at {}",
