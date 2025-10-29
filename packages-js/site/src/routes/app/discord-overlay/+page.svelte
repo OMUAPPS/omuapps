@@ -22,6 +22,7 @@
             ...Object.values(DISCORDRPC_PERMISSIONS),
             OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
             OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
         omu.sessions.require(PLUGIN_ID);
