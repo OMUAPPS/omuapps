@@ -67,10 +67,6 @@
         <small>は以下のプラグインのインストールを要求しています。</small>
     </div>
     <div class="packages">
-        <p class="warning">
-            <i class="ti ti-alert-triangle"></i>
-            プラグインはPC上のすべてのデータにアクセスできます。
-        </p>
         {#if insecurePackages.length > 0}
             <h3 class="insecure">
                 <Tooltip>
@@ -177,6 +173,7 @@
             font-weight: 700;
             color: var(--color-1);
             border-bottom: 1px solid var(--color-outline);
+            text-align: left;
 
             &.insecure {
                 color: #a23023;
@@ -184,18 +181,6 @@
         }
     }
 
-    .warning {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem 1.5rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--color-text);
-        background: var(--color-bg-1);
-        border-radius: 4px;
-        text-align: left;
-    }
     .actions {
         display: flex;
         margin-top: auto;
