@@ -30,7 +30,7 @@ window.addEventListener('DOMContentLoaded', () => {
             ${script.name}();
             lastPath = location.pathname;
         }
-    }, 100);
+    }, 300);
 });
 `;
 
@@ -145,14 +145,14 @@ export type User = {
 
 export class MarshmallowSession {
     private constructor(
-        private readonly _marshmallow_session: string,
+        private readonly cookie: string,
         public readonly id: string,
     ) {}
 
-    private static async fetchId(omu: Omu, session: string): Promise<string | undefined> {
+    private static async fetchId(omu: Omu, cookie: string): Promise<string | undefined> {
         const idResp = await omu.http.fetch('https://marshmallow-qa.com/', {
             headers: {
-                cookie: `_marshmallow_session=${session}`,
+                cookie,
             },
         });
         const idUrl = new URL(idResp.url);
@@ -188,9 +188,10 @@ export class MarshmallowSession {
             console.warn('No session cookie found');
             return;
         }
-        const id = await this.fetchId(omu, session);
+        const cookie = cookies.map(({ name, value }) => `${name}=${value}`).join('; ');
+        const id = await this.fetchId(omu, cookie);
         if (!id) return;
-        return new MarshmallowSession(session, id);
+        return new MarshmallowSession(cookie, id);
     }
 
     public static async login(omu: Omu): Promise<MarshmallowSession | undefined> {
@@ -214,13 +215,14 @@ export class MarshmallowSession {
             console.warn('No session cookie found');
             return;
         }
-        const id = await this.fetchId(omu, session);
+        const cookie = cookies.map(({ name, value }) => `${name}=${value}`).join('; ');
+        const id = await this.fetchId(omu, cookie);
         if (!id) return;
-        return new MarshmallowSession(session, id);
+        return new MarshmallowSession(cookie, id);
     }
 
     public getCookie(): string {
-        return `_marshmallow_session=${this._marshmallow_session}`;
+        return this.cookie;
     }
 };
 
