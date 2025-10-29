@@ -1,5 +1,6 @@
 <script lang="ts">
     import { invLerp } from '$lib/math/math';
+    import { ExternalLink } from '@omujs/ui';
     import { MarshmallowAPI } from './api';
     import { MarshmallowApp } from './marshmallow-app';
     import MessageActions from './MessageActions.svelte';
@@ -30,20 +31,26 @@
     }}
 >
     {#if $data.message}
-        <div class="image"
-            role="img"
-            on:mousemove={(event) => {
-                mouse = event;
-                updatePointer();
-            }}
-            on:mouseleave={() => {
-                $data.pointer = null;
-            }}
-            bind:this={imageContainer}>
-            <img
-                src="https://media.marshmallow-qa.com/system/images/{$data.message.id}.png"
-                alt=""
-            />
+        <div class="message">
+            <div class="image"
+                role="img"
+                on:mousemove={(event) => {
+                    mouse = event;
+                    updatePointer();
+                }}
+                on:mouseleave={() => {
+                    $data.pointer = null;
+                }}
+                bind:this={imageContainer}>
+                <img
+                    src="https://media.marshmallow-qa.com/system/images/{$data.message.id}.png"
+                    alt=""
+                />
+            </div>
+            <ExternalLink href={`https://marshmallow-qa.com/messages/${$data.message.id}`}>
+                ブラウザーで開く
+                <i class="ti ti-external-link"></i>
+            </ExternalLink>
         </div>
         {#if $data.message}
             <MessageActions {api} message={$data.message} />
@@ -52,6 +59,17 @@
 </div>
 
 <style lang="scss">
+    .message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        padding: 0 5%;
+        padding-left: 5%;
+        padding-top: 10%;
+        margin-bottom: 10rem;
+    }
+
     .container {
         position: absolute;
         inset: 0;
@@ -59,17 +77,13 @@
         flex-wrap: wrap;
         align-items: flex-start;
         justify-content: center;
-        padding: 0 5%;
-        padding-left: 5%;
-        padding-top: 10%;
         overflow-y: auto;
         gap: 2rem;
     }
 
     .image {
-        width: max(23rem, 36.21%);
+        width: max(24rem, 70.21%);
         object-fit: contain;
-        margin-bottom: 10rem;
     }
 
     img {

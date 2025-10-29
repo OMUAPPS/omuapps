@@ -80,7 +80,7 @@
                 {#if user}
                     <img src={user.image} alt="">
                     <span>
-                        {user.nickname}
+                        <a href={`https://marshmallow-qa.com/${api.session.displayId}`} target="_blank">{user.nickname}</a>
                         {#if user.premium}
                             <Tooltip>
                                 プレミアム会員

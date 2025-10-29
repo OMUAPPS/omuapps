@@ -147,9 +147,10 @@ export class MarshmallowSession {
     private constructor(
         private readonly cookie: string,
         public readonly id: string,
+        public readonly displayId: string,
     ) {}
 
-    private static async fetchId(omu: Omu, cookie: string): Promise<string | undefined> {
+    private static async fetchId(omu: Omu, cookie: string): Promise<{ id: string; displayId: string } | undefined> {
         const idResp = await omu.http.fetch('https://marshmallow-qa.com/', {
             headers: {
                 cookie,
@@ -173,7 +174,7 @@ export class MarshmallowSession {
         if (!value) {
             throw new Error('No user id value found');
         }
-        return value;
+        return { id: value, displayId: id };
     }
 
     public static async get(omu: Omu): Promise<MarshmallowSession | undefined> {
@@ -191,7 +192,7 @@ export class MarshmallowSession {
         const cookie = cookies.map(({ name, value }) => `${name}=${value}`).join('; ');
         const id = await this.fetchId(omu, cookie);
         if (!id) return;
-        return new MarshmallowSession(cookie, id);
+        return new MarshmallowSession(cookie, id.id, id.displayId);
     }
 
     public static async login(omu: Omu): Promise<MarshmallowSession | undefined> {
@@ -218,7 +219,7 @@ export class MarshmallowSession {
         const cookie = cookies.map(({ name, value }) => `${name}=${value}`).join('; ');
         const id = await this.fetchId(omu, cookie);
         if (!id) return;
-        return new MarshmallowSession(cookie, id);
+        return new MarshmallowSession(cookie, id.id, id.displayId);
     }
 
     public getCookie(): string {
@@ -352,7 +353,7 @@ export class MarshmallowAPI {
             .toISOString()
             .replace('T', ' ')
             .replace('Z', '');
-        const resp = await this.fetch(`https://marshmallow-qa.com/users/${this.session.id}/answers?before=${timestamp}`, {
+        const resp = await this.fetch(`https://marshmallow-qa.com/users/${this.session.displayId}/answers?before=${timestamp}`, {
             headers: {
                 ...this.headers,
                 accept: 'application/json',
