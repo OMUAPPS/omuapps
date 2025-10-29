@@ -50,7 +50,7 @@
             if (state.logout) {
                 session = await MarshmallowSession.login(omu);
             } else {
-                session = await MarshmallowSession.login(omu) ?? await MarshmallowSession.get(omu);
+                session = await MarshmallowSession.get(omu) ?? await MarshmallowSession.login(omu);
             }
             if (!session) {
                 console.warn('Failed to get session');
