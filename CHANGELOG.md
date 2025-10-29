@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.18 (2025-10-29)
+
+
+### Bug Fixes
+
+* **dash:** プラグインインストール画面の重複してる警告を削除 ([3002828](https://github.com/OMUAPPS/omuapps/commit/3002828a3a9cbca89629b6507806f1757000e26e))
+
+
+
+
+
 ## 0.9.17 (2025-10-28)
 
 **Note:** Version bump only for package omuapps
