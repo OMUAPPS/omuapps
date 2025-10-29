@@ -31,7 +31,7 @@
     <div class="screen" class:windowed>
         <slot />
     </div>
-    <div class="info">
+    <div class="info" class:disableClose>
         <slot name="info" />
     </div>
 </button>
@@ -65,6 +65,10 @@
         padding: max(4rem, 10%) max(2rem, 10%);
         overflow-y: auto;
         pointer-events: none;
+    }
+
+    .disableClose {
+        pointer-events: auto;
     }
 
     @keyframes slide {
