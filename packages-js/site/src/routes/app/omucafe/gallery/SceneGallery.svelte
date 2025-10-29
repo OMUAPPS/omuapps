@@ -6,20 +6,20 @@
     import GalleryEntry from './GalleryEntry.svelte';
 
     export let context: SceneContext;
-    
+
     const { scene, gallery } = getGame();
 </script>
 
 {#if $scene.type === 'gallery'}
     <main>
         <div class="items">
-            <TableList table={gallery} component={GalleryEntry} reverse/>
+            <TableList table={gallery} component={GalleryEntry} reverse />
         </div>
     </main>
 {/if}
 <BackButton to={{
     type: 'main_menu',
-}} active={context.active}/>
+}} active={context.active} />
 
 <style lang="scss">
     main {

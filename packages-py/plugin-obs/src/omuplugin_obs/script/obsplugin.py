@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import threading
+from pathlib import Path
 
 from loguru import logger
-from omu.app import App
+from omu.address import Address
 from omu.helper import map_optional
 from omu.omu import Omu
 from omu.token import JsonTokenProvider
 from omuplugin_obs.version import VERSION
 
-from ..const import PLUGIN_ID
 from ..obs.data import OBSData
 from ..obs.obs import OBS, OBSFrontendEvent
 from ..obs.scene import OBSBlendingMethod, OBSBlendingType, OBSScaleType, OBSScene, OBSSceneItem
@@ -66,21 +66,16 @@ from ..types import (
     TextSourceData,
     UpdateResponse,
 )
-from .config import get_token_path
-
-APP = App(
-    PLUGIN_ID,
-    version=VERSION,
-    metadata={
-        "locale": "en",
-        "name": {"ja": "OBSプラグイン", "en": "OBS Plugin"},
-        "description": {"ja": "アプリがOBSを制御するためのプラグイン", "en": "Plugin for app to control OBS"},
-    },
-)
+from .config import APP, get_config, get_token_path
 
 global loop
 loop = asyncio.new_event_loop()
-omu = Omu(APP, loop=loop, token=JsonTokenProvider(get_token_path()))
+omu = Omu(
+    APP,
+    loop=loop,
+    address=Address(**get_config()["server"]),
+    token=JsonTokenProvider(get_token_path()),
+)
 
 
 def source_to_json(scene_item: OBSSceneItem) -> SourceJson | None:
@@ -618,7 +613,7 @@ _THREAD: threading.Thread | None = None
 
 
 def setup_obs_plugin():
-    logger.info("Setting up OBS Plugin")
+    logger.info(f"Setting up OBS Plugin v{VERSION} at {Path.cwd()}")
     global _LOOP
     _LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_LOOP)

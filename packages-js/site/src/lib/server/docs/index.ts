@@ -1,6 +1,5 @@
 import { join } from 'path';
 
-
 export type DocsData = Readonly<{
     meta: DocsMeta;
     slug: string;
@@ -34,7 +33,7 @@ export async function getDocsData(path = 'site'): Promise<DocsData[]> {
         const meta: DocsMeta = {
             ...metaRaw,
             index: metaRaw.index ? parseInt(metaRaw.index, 10) : undefined,
-        }
+        };
         const content = contentRaw.replace(/^---\n([\s\S]*?)\n---\n/, '');
         const slug = file.replace(/\.md$/, '');
 
@@ -46,7 +45,7 @@ export async function getDocsData(path = 'site'): Promise<DocsData[]> {
 
 export function getDocSections(docsData: DocsData[]): Record<string, DocsSection[]> {
     const sections: Record<string, DocsSection[]> = {};
-    
+
     for (const doc of docsData) {
         const group = doc.meta.group ?? 'General';
         if (!sections[group]) sections[group] = [];

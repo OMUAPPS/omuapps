@@ -1,12 +1,10 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { Chat } from '@omujs/chat';
-    import { Reaction } from '@omujs/chat/models/reaction.js';
-    import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
+    import { Chat, ChatPermissions } from '@omujs/chat';
+    import { Reaction } from '@omujs/chat/models';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
         Button,
@@ -17,7 +15,7 @@
         setClient,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP, APP_ID } from './app.js';
+    import { APP, APP_ID, ASSET_APP } from './app.js';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
     import { ReactionApp } from './reaction-app.js';
 
@@ -56,9 +54,10 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-            ASSET_UPLOAD_PERMISSION_ID,
-            CHAT_REACTION_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
+            OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            ChatPermissions.CHAT_REACTION_PERMISSION_ID,
         );
         omu.start();
     }
@@ -78,7 +77,7 @@
                 <i class="ti ti-arrow-bar-to-down"></i>
             </h2>
             <section>
-                <AssetButton {omu} {obs} />
+                <AssetButton asset={ASSET_APP} {omu} {obs} />
             </section>
             <h2>
                 試してみる
@@ -145,7 +144,10 @@
                         {#if assetId}
                             <ButtonMini
                                 on:click={() =>
-                                    ($config.replaces = { ...$config.replaces, [key]: null })}
+                                    ($config.replaces = {
+                                        ...$config.replaces,
+                                        [key]: null,
+                                    })}
                             >
                                 <Tooltip>置き換えを削除</Tooltip>
                                 <i class="ti ti-trash"></i>

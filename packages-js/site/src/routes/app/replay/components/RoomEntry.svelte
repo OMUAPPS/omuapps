@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Room } from '@omujs/chat/models/room.js';
+    import type { Room } from '@omujs/chat/models';
     import { Tooltip } from '@omujs/ui';
     import { playVideo } from '../stores.js';
 
@@ -19,7 +19,11 @@
     <div class="thumbnail-container">
         <Tooltip>
             <p class="tooltip">
-                <img src={entry.metadata?.thumbnail} class="thumbnail-preview" alt="" />
+                <img
+                    src={entry.metadata?.thumbnail}
+                    class="thumbnail-preview"
+                    alt=""
+                />
             </p>
         </Tooltip>
         <img src={entry.metadata?.thumbnail} class="thumbnail" alt="" />
@@ -37,6 +41,9 @@
             <Tooltip>
                 <p class="tooltip">{entry.metadata?.description}</p>
             </Tooltip>
+            {#if entry.metadata.started_at}
+                {new Date(entry.metadata.started_at).toLocaleDateString()}
+            {/if}
             {entry.metadata?.description}
         </div>
     </div>

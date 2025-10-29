@@ -225,6 +225,8 @@ class TwitchPubSub:
         )
 
     async def connect(self):
+        if self.socket:
+            await self.socket.close()
         socket = await self.session.ws_connect("wss://pubsub-edge.twitch.tv/v1")
         self.socket = socket
         await self.listen(*self.subscriptions.keys())
@@ -269,6 +271,7 @@ class TwitchPubSub:
                     logger.error("No handler for message type: {}", data["type"])
                     continue
                 await handler(data)
+            await self.connect()
         except asyncio.CancelledError:
             await self.close()
         finally:

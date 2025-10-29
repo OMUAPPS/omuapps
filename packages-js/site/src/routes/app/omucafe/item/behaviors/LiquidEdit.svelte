@@ -5,7 +5,7 @@
     import TransformEdit from '../../components/TransformEdit.svelte';
     import { createTransform } from '../../game/transform.js';
     import type { Liquid } from './liquid.js';
-    
+
     export let behavior: Liquid;
 </script>
 
@@ -27,7 +27,7 @@
         <TransformEdit bind:transform={behavior.mask.transform} />
     {/if}
     液体の変形
-    <TransformEdit bind:transform={behavior.transform}/>
+    <TransformEdit bind:transform={behavior.transform} />
     曲率
     <Checkbox value={behavior.curvature !== undefined} handle={(value) => {
         if (value) {
@@ -65,8 +65,8 @@
             {
                 side: asset,
                 volume: 0,
-            }
-        ]
+            },
+        ];
     }}>
         層を追加
     </FileDrop>
@@ -127,7 +127,7 @@
         flex-direction: column;
         gap: 0.5rem;
     }
-    
+
     .layer {
         display: flex;
         flex-direction: column;

@@ -9,15 +9,36 @@
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
     },
-    "[svelte]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "eslint.format.enable": true,
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
-    "eslint.validate": [
+    "eslint.probe": [
+        "astro",
+        "civet",
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+        "html",
+        "mdx",
+        "vue",
+        "markdown",
+        "json",
+        "jsonc",
         "svelte"
     ],
-    "prettier.enable": false,
+    "eslint.validate": [
+        "astro",
+        "civet",
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+        "html",
+        "mdx",
+        "vue",
+        "markdown",
+        "json",
+        "jsonc",
+        "svelte"
+    ],
     "files.exclude": {
         "**/.mypy_cache": true,
         "**/.ruff_cache": true,
@@ -43,20 +64,25 @@
         "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
     },
     "files.insertFinalNewline": true,
-    "[typescript]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
     "rust-analyzer.linkedProjects": [
         "./packages-js/dash/src-tauri/Cargo.toml"
     ],
     "[rust]": {
         "editor.defaultFormatter": "rust-lang.rust-analyzer"
     },
-    "[jsonc]": {
-        "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
-    },
     "npm.packageManager": "bun",
     "[html]": {
         "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "eslint.format.enable": true,
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+    "[typescript]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[svelte]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
     },
 }

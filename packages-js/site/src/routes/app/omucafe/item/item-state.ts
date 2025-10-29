@@ -13,7 +13,6 @@ import { transformToMatrix, type Bounds, type Transform } from '../game/transfor
 import { type BehaviorFunction, type BehaviorHandler, type BehaviorHandlers, type Behaviors, type ClickAction } from './behavior.js';
 import type { Item } from './item.js';
 
-
 export const ITEM_LAYERS = {
     PHOTO_MODE: 'photo_mode',
     KITCHEN_ITEMS: 'kitchen_items',
@@ -25,25 +24,25 @@ export type ItemLayer = typeof ITEM_LAYERS[keyof typeof ITEM_LAYERS];
 export const ITEM_LAYERS_LIST: ItemLayer[] = Object.values(ITEM_LAYERS);
 
 export type ItemState = {
-    id: string,
-    item: Item,
-    behaviors: Partial<Behaviors>,
-    layer: ItemLayer,
-    transform: Transform,
-    children: string[],
-    parent?: string,
-    bounds: Bounds,
-    update: number,
+    id: string;
+    item: Item;
+    behaviors: Partial<Behaviors>;
+    layer: ItemLayer;
+    transform: Transform;
+    children: string[];
+    parent?: string;
+    bounds: Bounds;
+    update: number;
 };
 
 export function createItemState(options: {
-    id?: string,
-    item: Item,
-    layer?: ItemLayer,
-    transform?: Transform,
-    children?: string[],
-    behaviors?: Partial<Behaviors>,
-    bounds?: Bounds,
+    id?: string;
+    item: Item;
+    layer?: ItemLayer;
+    transform?: Transform;
+    children?: string[];
+    behaviors?: Partial<Behaviors>;
+    bounds?: Bounds;
 }): ItemState {
     const { items } = getContext();
     const { id, item, layer, transform, children, behaviors, bounds } = options;
@@ -62,12 +61,12 @@ export function createItemState(options: {
 }
 
 export function cloneItemState(itemState: ItemState, options: {
-    layer?: ItemLayer,
-    transform?: Transform,
-    child?: boolean,
+    layer?: ItemLayer;
+    transform?: Transform;
+    child?: boolean;
 } = {}): ItemState {
     const { items } = getContext();
-    
+
     let newTransform = itemState.transform;
     if (itemState.parent && !options.child) {
         const parent = items[itemState.parent];
@@ -75,9 +74,9 @@ export function cloneItemState(itemState: ItemState, options: {
         const itemTransform = transformToMatrix(itemState.transform);
         const newMatrix = parentTransform.multiply(itemTransform);
         newTransform = {
-            right: {x: newMatrix.m00, y: newMatrix.m01},
-            up: {x: newMatrix.m10, y: newMatrix.m11},
-            offset: {x: newMatrix.m30, y: newMatrix.m31},
+            right: { x: newMatrix.m00, y: newMatrix.m01 },
+            up: { x: newMatrix.m10, y: newMatrix.m11 },
+            offset: { x: newMatrix.m30, y: newMatrix.m31 },
         };
     }
     const item = createItemState({
@@ -236,9 +235,9 @@ export function detachChildren(item: ItemState, ...children: ItemState[]) {
             const heldTransform = transformToMatrix(child.transform);
             const newMatrix = containerTransform.multiply(heldTransform);
             child.transform = {
-                right: {x: newMatrix.m00, y: newMatrix.m01},
-                up: {x: newMatrix.m10, y: newMatrix.m11},
-                offset: {x: newMatrix.m30, y: newMatrix.m31},
+                right: { x: newMatrix.m00, y: newMatrix.m01 },
+                up: { x: newMatrix.m10, y: newMatrix.m11 },
+                offset: { x: newMatrix.m30, y: newMatrix.m31 },
             };
         }
         child.parent = undefined;
@@ -253,7 +252,7 @@ export function calculateItemStateRenderTransform(itemState: ItemState): Mat4 {
     const parents = getParents(itemState);
     const rootItem = parents[parents.length - 1] || itemState;
     parents.reverse();
-    
+
     let transform = Mat4.IDENTITY;
     const isAssetSide = ctx.side === 'overlay';
     for (const item of [...parents, itemState]) {
@@ -332,11 +331,11 @@ function calculateItemStateRenderBounds(itemState: ItemState): AABB2 {
 }
 
 export type ItemRender = {
-    bounds: AABB2,
-    texture: GlTexture,
-    update: number,
-    time: number,
-}
+    bounds: AABB2;
+    texture: GlTexture;
+    update: number;
+    time: number;
+};
 const itemRenderMap: Map<string, ItemRender> = new Map();
 let itemRenderBuffer: GlFramebuffer | null = null;
 
@@ -360,7 +359,7 @@ function createItemRenderTexture(itemState: ItemState): ItemRender {
         time: Time.now(),
     };
     itemRenderMap.set(itemState.id, render);
-    return render
+    return render;
 }
 
 export function getRenderBounds(itemState: ItemState): AABB2 {
@@ -453,8 +452,8 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
 }
 
 export async function renderItemState(itemState: ItemState, options: {
-    parent?: ItemState,
-    showRenderBounds?: boolean,
+    parent?: ItemState;
+    showRenderBounds?: boolean;
 } = {}) {
     const render = await getItemStateRender(itemState);
     const { bounds, texture } = render;
@@ -506,7 +505,7 @@ function restrictPositionToDisplayBounds(itemState: ItemState) {
         offset: {
             x: offsetX,
             y: offsetY,
-        }
+        },
     };
 }
 
@@ -554,7 +553,7 @@ export async function renderHeldItem() {
         item.transform.offset = {
             x: item.transform.offset.x + delta.x,
             y: item.transform.offset.y + delta.y,
-        }
+        };
     }
     await renderItemState(item);
     await invokeBehaviors(item, it => it.renderOverlay, {
@@ -571,7 +570,7 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     const inverseMVP = matrices.view.get().inverse();
     const inversedMouse = inverse.transform2(inverseMVP.transform2(mouse.position));
     if (item.id === 'counter' && inversedMouse.y < 0) return true;
-    
+
     const aabbTest = (
         inversedMouse.x >= min.x &&
         inversedMouse.y >= min.y &&
@@ -662,15 +661,15 @@ export async function renderHoveredItem() {
         draw.fontFamily = 'Noto Sans JP';
         draw.fontSize = 16;
         const bounds = calculateItemStateViewBounds(target);
-        const screenPos = matrices.projectPoint(bounds.at({ x: 0.5, y: 1 }))
+        const screenPos = matrices.projectPoint(bounds.at({ x: 0.5, y: 1 }));
         const pos = matrices.unprojectPoint(screenPos);
         matrices.push();
         matrices.identity();
         matrices.projection.orthographic(0, matrices.width, matrices.height, 0, -1, 1);
         const metrics = draw.measureTextActual(action.name).expand({ x: 10, y: 8 });
         matrices.model.translate(pos.x - (metrics.min.x + metrics.max.x) / 2, pos.y + 20, 0);
-        const center = metrics.min.add({ x: (metrics.min.x + metrics.max.x) / 2 + 10, y: 0});
-        draw.triangle(center.add({x: -6, y: 0}), center.add({x: 0, y: -6}), center.add({x: 6, y: 0}), new Vec4(0, 0, 0, 1));
+        const center = metrics.min.add({ x: (metrics.min.x + metrics.max.x) / 2 + 10, y: 0 });
+        draw.triangle(center.add({ x: -6, y: 0 }), center.add({ x: 0, y: -6 }), center.add({ x: 6, y: 0 }), new Vec4(0, 0, 0, 1));
         draw.rectangle(metrics.min.x, metrics.min.y, metrics.max.x, metrics.max.y, new Vec4(0, 0, 0, 1));
         await draw.textAlign(Vec2.ZERO, action.name, Vec2.ZERO, Vec4.ONE);
         matrices.pop();
@@ -683,6 +682,7 @@ export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: I
     return (b.transform.offset.y + maxB) - (a.transform.offset.y + maxA);
 }): ItemState[] {
     const items: ItemState[] = [];
+
     function collectItems(item: ItemState, passed: string[]) {
         const children = item.children
             .map((id) => getContext().items[id])
@@ -698,6 +698,7 @@ export function getAllItemStates(layers: ItemLayer[], order: (a: ItemState, b: I
         }
         items.push(item);
     }
+
     for (const item of Object.values(getContext().items)
         .sort(comparator((item) => -(item.transform.offset.y + item.bounds.max.y)))
         .sort(order)
@@ -722,12 +723,15 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
     }
     const heldItem = held ? items[held] : null;
     const ignoreItems = heldItem ? [...getParents(heldItem), ...retrieveAllChildItems(heldItem)].map(item => item.id) : [];
+
     function sort(items: ItemState[]) {
         return items
             .sort(comparator(item => -(item.transform.offset.y + item.bounds.max.y)))
             .sort(comparator(item => ITEM_LAYERS_LIST.indexOf(item.layer)));
     }
+
     const args = { target: null as ItemState | null };
+
     async function check(item: ItemState) {
         if (item.id === held) return false;
         if (ignoreItems.includes(item.id)) return false;
@@ -742,7 +746,7 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
                 await invokeBehaviors(item, (behavior) => behavior.handleChildrenHovered, args);
                 childHovered = !!args.target;
             }
-            if (childHovered) break
+            if (childHovered) break;
         }
         if (childHovered) return true;
         const hovered = await isItemHovering(item);
@@ -751,13 +755,14 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
         }
         return hovered;
     }
+
     const itemsInOrder: ItemState[] = [];
     itemsInOrder.push(
         ...Object.values(items)
-        .filter(item => !item.parent)
-        .filter(item => layers.includes(item.layer))
-        .filter(item => !SPECIAL_ITEM_IDS.includes(item.id))
-        .toSorted(comparator((item) => -calculateItemStateRenderBounds(item).max.y))
+            .filter(item => !item.parent)
+            .filter(item => layers.includes(item.layer))
+            .filter(item => !SPECIAL_ITEM_IDS.includes(item.id))
+            .toSorted(comparator((item) => -calculateItemStateRenderBounds(item).max.y)),
     );
     if (items['bell']) itemsInOrder.push(items['bell']);
     if (items['counter']) itemsInOrder.push(items['counter']);

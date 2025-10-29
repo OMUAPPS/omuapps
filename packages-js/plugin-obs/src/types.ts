@@ -1,8 +1,7 @@
-import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
-import { SignalType } from '@omujs/omu/extension/signal/signal.js';
+import { EndpointType } from '@omujs/omu/api/endpoint';
+import { SignalType } from '@omujs/omu/api/signal';
 
-import { Serializer } from '@omujs/omu';
-import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
+import { ByteReader, ByteWriter, Serializer } from '@omujs/omu/serialize';
 import { PLUGIN_ID } from './const.js';
 import {
     OBS_SCENE_READ_PERMISSION_ID,
@@ -299,11 +298,11 @@ export const SCENE_SET_CURRENT_BY_UUID: EndpointType<SceneSetCurrentByUuidReques
 
 export type SceneCreateRequest = {
     name: string;
-}
+};
 
 export type SceneCreateResponse = {
     scene: SceneJson;
-}
+};
 
 export const SCENE_CREATE: EndpointType<SceneCreateRequest, SceneCreateResponse> = EndpointType.createJson<SceneCreateRequest, SceneCreateResponse>(PLUGIN_ID, {
     name: 'scene_create',
@@ -316,7 +315,7 @@ export const SCREENSHOT_CREATE: EndpointType<ScreenshotCreateRequest, Screenshot
     name: 'screenshot_create',
 });
 
-export type ScreenshotGetLastBinaryRequest = object;
+export type ScreenshotGetLastBinaryRequest = unknown;
 
 export class ScreenshotGetLastBinaryResponse {
     version: number;

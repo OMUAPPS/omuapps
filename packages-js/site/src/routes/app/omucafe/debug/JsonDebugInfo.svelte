@@ -5,7 +5,7 @@
 </script>
 
 <pre>
-    <JsonDebugInfoEntry value={value} open/>
+    <JsonDebugInfoEntry value={value} open />
 </pre>
 
 <style>

@@ -7,9 +7,9 @@
     import EffectParticleEdit from './EditEffectParticle.svelte';
     import EffectSoundEdit from './EditEffectSound.svelte';
     import { createEffectSound, createParticle, type EffectState } from './effect-state.js';
-    
+
     export let effect: EffectState;
-    
+
     const { scene, gameConfig } = getGame();
 </script>
 
@@ -68,7 +68,7 @@
                     effect.attributes.sound = effect.attributes.sound ? undefined : createEffectSound({
                         clip: await createClip({
                             asset,
-                        })
+                        }),
                     });
                 }} primary>
                     {#if effect.attributes.sound}

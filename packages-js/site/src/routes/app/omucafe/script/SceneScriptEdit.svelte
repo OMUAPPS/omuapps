@@ -6,7 +6,7 @@
 
     export let context: SceneContext;
     $: console.log('SceneScriptEdit', context);
-    
+
     const { scene, gameConfig: config } = getGame();
 </script>
 
@@ -23,4 +23,4 @@
 {/if}
 <BackButton to={{
     type: 'product_list',
-}} active={context.active}/>
+}} active={context.active} />

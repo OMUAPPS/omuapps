@@ -1,4 +1,4 @@
-from omu.extension.permission.permission import PermissionType
+from omu.api.permission.permission import PermissionType
 
 from .const import PLUGIN_ID
 
@@ -12,7 +12,7 @@ OBS_SOURCE_READ_PERMISSION_TYPE = PermissionType(
             "en": "Read source",
         },
         "note": {
-            "ja": "OBS上のソース情報を使うために使われます",
+            "ja": "OBSのソース情報を取得するために使われます",
             "en": "Used to access source information on OBS",
         },
     },
@@ -27,7 +27,7 @@ OBS_SOURCE_CREATE_PERMISSION_TYPE = PermissionType(
             "en": "Create source",
         },
         "note": {
-            "ja": "OBS上に新しいソースを作成するために使われます",
+            "ja": "OBSにソースを追加するために使われます",
             "en": "Used to create a new source on OBS",
         },
     },
@@ -42,7 +42,7 @@ OBS_SOURCE_UPDATE_PERMISSION_TYPE = PermissionType(
             "en": "Update source",
         },
         "note": {
-            "ja": "OBS上のソース情報を更新するために使われます",
+            "ja": "OBSのソースを更新するために使われます",
             "en": "Used to update source information on OBS",
         },
     },
@@ -57,7 +57,7 @@ OBS_SOURCE_REMOVE_PERMISSION_TYPE = PermissionType(
             "en": "Remove source",
         },
         "note": {
-            "ja": "OBS上のソースを削除するために使われます",
+            "ja": "OBSのソースを削除するために使われます",
             "en": "Used to remove a source on OBS",
         },
     },
@@ -72,7 +72,7 @@ OBS_SCENE_READ_PERMISSION_TYPE = PermissionType(
             "en": "Read scene",
         },
         "note": {
-            "ja": "OBS上のシーン情報を使うために使われます",
+            "ja": "OBSのシーン情報を使うために使われます",
             "en": "Used to access scene information on OBS",
         },
     },
@@ -87,7 +87,7 @@ OBS_SCENE_CREATE_PERMISSION_TYPE = PermissionType(
             "en": "Create scene",
         },
         "note": {
-            "ja": "OBS上に新しいシーンを作成するために使われます",
+            "ja": "OBSに新しいシーンを作成するために使われます",
             "en": "Used to create a new scene on OBS",
         },
     },
@@ -102,7 +102,7 @@ OBS_SCENE_UPDATE_PERMISSION_TYPE = PermissionType(
             "en": "Update scene",
         },
         "note": {
-            "ja": "OBS上のシーン情報を更新するために使われます",
+            "ja": "OBSのシーン情報を更新するために使われます",
             "en": "Used to update scene information on OBS",
         },
     },
@@ -117,7 +117,7 @@ OBS_SCENE_REMOVE_PERMISSION_TYPE = PermissionType(
             "en": "Remove scene",
         },
         "note": {
-            "ja": "OBS上のシーンを削除するために使われます",
+            "ja": "OBSのシーンを削除するために使われます",
             "en": "Used to remove a scene on OBS",
         },
     },
@@ -132,7 +132,7 @@ OBS_SCENE_SET_CURRENT_PERMISSION_TYPE = PermissionType(
             "en": "Switch scene",
         },
         "note": {
-            "ja": "OBS上のシーンを切り替えるために使われます",
+            "ja": "OBSのシーンを切り替えるために使われます",
             "en": "Used to switch a scene on OBS",
         },
     },

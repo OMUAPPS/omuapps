@@ -5,7 +5,7 @@
     export let accept: string | null = null;
     export let handle: (files: FileList) => void = () => {};
     export let fileDrop: HTMLInputElement | null = null;
-    
+
     export const open = (): Promise<FileList> => {
         if (!fileDrop) return;
         fileDrop.click();

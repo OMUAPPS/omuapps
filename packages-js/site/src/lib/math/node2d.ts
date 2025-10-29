@@ -13,7 +13,7 @@ export class Node2D {
         return new Transform2D([
             new Vec2(Math.cos(this.rotation), Math.sin(this.rotation)).scale(this.scale.x),
             new Vec2(-Math.sin(this.rotation), Math.cos(this.rotation)).scale(this.scale.y),
-            this.position
+            this.position,
         ]);
     }
 

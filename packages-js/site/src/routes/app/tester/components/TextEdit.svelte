@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Text } from '@omujs/chat/models/content.js';
+    import type { Text } from '@omujs/chat/models';
 
     export let component: Text;
 
@@ -14,7 +14,9 @@
         style:width="{rect.width || 32}px"
         style:height="{rect.height || 24}px"
     />
-    <p bind:clientWidth={rect.width} bind:clientHeight={rect.height}>{component.data}</p>
+    <p bind:clientWidth={rect.width} bind:clientHeight={rect.height}>
+        {component.data}
+    </p>
 </span>
 
 <style>

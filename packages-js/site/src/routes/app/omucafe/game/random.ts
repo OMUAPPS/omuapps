@@ -2,15 +2,15 @@ const width = 256;
 const mask = width - 1;
 
 function mixkey(seed: string): number[] {
-  const stringseed = seed + '';
-  const key: number[] = [];
-  let j = 0;
-  let smear = 0;
-  while (j < stringseed.length) {
-    key[mask & j] =
-      mask & ((smear ^= key[mask & j] * 19) + stringseed.charCodeAt(j++));
-  }
-  return key;
+    const stringseed = seed + '';
+    const key: number[] = [];
+    let j = 0;
+    let smear = 0;
+    while (j < stringseed.length) {
+        key[mask & j] =
+            mask & ((smear ^= key[mask & j] * 19) + stringseed.charCodeAt(j++));
+    }
+    return key;
 }
 
 export class ARC4 {
@@ -44,8 +44,8 @@ export class ARC4 {
         let t, r = 0,
             i = this.i, j = this.j;
         while (count--) {
-        t = this.S[i = mask & (i + 1)];
-        r = r * width + this.S[mask & ((this.S[i] = this.S[j = mask & (j + t)]) + (this.S[j] = t))];
+            t = this.S[i = mask & (i + 1)];
+            r = r * width + this.S[mask & ((this.S[i] = this.S[j = mask & (j + t)]) + (this.S[j] = t))];
         }
         this.i = i; this.j = j;
         return r / 0x100000000;

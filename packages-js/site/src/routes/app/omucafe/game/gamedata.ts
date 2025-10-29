@@ -1,6 +1,6 @@
 import { downloadFile } from '$lib/helper.js';
 import { Identifier } from '@omujs/omu';
-import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
+import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
 import { getAssetBuffer, uploadAssetById, type Asset } from '../asset/asset.js';
 import { getGame, type GameConfig, type ResourceRegistry, type States } from '../omucafe-app.js';
 import { getContext } from './game.js';
@@ -14,7 +14,7 @@ type GameDataJson = {
 
 export class GameData {
     public static VERSION = 0;
-    
+
     constructor(
         public readonly data: GameDataJson,
         public readonly buffers: Record<string, Uint8Array>,
@@ -34,7 +34,7 @@ export class GameData {
             },
             gameConfig,
             states: states,
-        }
+        };
         const dataStr = JSON.stringify(data);
         const buffers: Record<string, Uint8Array> = {};
         for (const [key, value] of Object.entries(resources.assets)) {
@@ -61,7 +61,7 @@ export class GameData {
         }
         return writer.finish();
     }
-    
+
     public static deserialize(buffer: Uint8Array): GameData {
         const reader = ByteReader.fromUint8Array(buffer);
         const version = reader.readULEB128();
@@ -78,7 +78,7 @@ export class GameData {
             data,
             buffers,
             version,
-        )
+        );
     }
 
     public async download() {

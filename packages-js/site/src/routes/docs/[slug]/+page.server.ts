@@ -1,4 +1,4 @@
-import { getDocsData } from '$lib/server/docs/index.js';
+import { getDocsData } from '$lib/server/docs';
 import { error } from '@sveltejs/kit';
 import type { EntryGenerator } from './$types.js';
 

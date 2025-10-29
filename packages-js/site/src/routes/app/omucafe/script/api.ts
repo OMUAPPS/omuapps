@@ -18,8 +18,8 @@ const functions = {
         const { v } = builder;
         return v.void();
     },
-    get_items(ctx: ScriptContext, args: Value[]): Value {
-        const kitchen = getContext();        
+    get_items(): Value {
+        const kitchen = getContext();
         const { v } = builder;
         return v.array(...Object.keys(kitchen.items).map(v.string));
     },
@@ -103,7 +103,7 @@ const functions = {
         const itemIds = itemsValue.items.map((id) => {
             assertValue(ctx, id, 'string');
             return id.value;
-        })
+        });
         for (const item of Object.values(items)) {
             if (item.parent) continue;
             if (item.layer !== ITEM_LAYERS.PHOTO_MODE) continue;
@@ -134,7 +134,7 @@ const functions = {
                         x: -offset.x + (i / (itemIds.length) - 0.5) * 1000,
                         y: -offset.y + 150,
                     },
-                }
+                },
             });
             i ++;
         }
@@ -145,35 +145,35 @@ const functions = {
         });
         return v.void();
     },
-}
+};
 
 export const scriptAPI = new Globals();
 scriptAPI.registerFunction('log', [
-    {name: 'message'},
+    { name: 'message' },
 ], functions.log);
 scriptAPI.registerFunction('get_items', [
 ], functions.get_items);
 scriptAPI.registerFunction('get_children', [
-    {name: 'itemId', type: 'string'},
+    { name: 'itemId', type: 'string' },
 ], functions.get_children);
 scriptAPI.registerFunction('remove_item', [
-    {name: 'itemId', type: 'string'},
+    { name: 'itemId', type: 'string' },
 ], functions.remove_item);
 scriptAPI.registerFunction('set_held_item', [
-    {name: 'itemId'}
+    { name: 'itemId' },
 ], functions.set_held_item);
 scriptAPI.registerFunction('set_item_parent', [
-    {name: 'itemId', type: 'string'},
-    {name: 'parentId', type: 'string'},
+    { name: 'itemId', type: 'string' },
+    { name: 'parentId', type: 'string' },
 ], functions.set_item_parent);
 scriptAPI.registerFunction('create_effect', [
-    {name: 'itemId', type: 'string'},
-    {name: 'effectId', type: 'string'},
+    { name: 'itemId', type: 'string' },
+    { name: 'effectId', type: 'string' },
 ], functions.create_effect);
 scriptAPI.registerFunction('remove_effect', [
-    {name: 'itemId', type: 'string'},
-    {name: 'effectId', type: 'string'},
+    { name: 'itemId', type: 'string' },
+    { name: 'effectId', type: 'string' },
 ], functions.remove_effect);
 scriptAPI.registerFunction('complete', [
-    {name: 'items', type: 'array'},
+    { name: 'items', type: 'array' },
 ], functions.complete);

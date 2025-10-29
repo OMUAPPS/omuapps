@@ -20,10 +20,27 @@ export const APP = new App(APP_ID, {
     }),
 });
 
-export const REMOTE_APP_ID = new Identifier(NAMESPACE, 'remote', 'session');
-export const REMOTE_APP = new App(REMOTE_APP_ID, {
+export const ASSET_APP = new App(APP_ID.join('asset'), {
+    url: getUrl('/app/remote/asset'),
+    parentId: APP,
+    metadata: buildMetadata({
+        locale: 'en',
+        name: {
+            ja: 'リモート表示用アセット',
+            en: 'Remote Display Asset',
+        },
+        description: {
+            ja: 'リモートアプリで使用する表示用アセットです',
+            en: 'This is a display asset used in the Remote app',
+        },
+        icon: 'ti-access-point',
+    }),
+});
+
+export const REMOTE_APP = new App(APP_ID.join('session'), {
     url: getUrl('/app/remote/session'),
     type: 'remote',
+    parentId: APP,
     metadata: buildMetadata({
         locale: 'en',
         name: {

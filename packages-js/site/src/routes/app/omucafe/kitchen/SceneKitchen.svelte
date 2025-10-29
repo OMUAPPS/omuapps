@@ -7,7 +7,7 @@
 
     export let context: SceneContext;
     $: console.log('SceneCooking', context);
-    
+
     const { scene } = getGame();
 
     $: if (context.active) {

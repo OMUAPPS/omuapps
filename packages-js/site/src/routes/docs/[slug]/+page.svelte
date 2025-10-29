@@ -1,6 +1,6 @@
 <script lang="ts">
     import Markdown from '$lib/components/markdown/Markdown.svelte';
-    import type { DocsData } from '$lib/server/docs/index.js';
+    import type { DocsData } from '$lib/server/docs';
     import { config, replaceConstants } from '../constants.js';
     import { docs } from '../stores.js';
 
@@ -9,4 +9,4 @@
     $: source = replaceConstants($docs.content, $config);
 </script>
 
-<Markdown source={source} />
+<Markdown {source} />

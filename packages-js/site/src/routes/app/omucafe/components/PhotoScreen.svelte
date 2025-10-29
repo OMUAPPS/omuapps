@@ -11,24 +11,24 @@
     import PhotoScreenInfo from './PhotoScreenInfo.svelte';
 
     export let photoMode: SceneType<'photo_mode'>;
-    
+
     const { scene, states, obs, gameConfig, gallery } = getGame();
 
     const COLORS = [
-        {x: 0x30, y: 0x30, z: 0x30},
-        {x: 0xEB, y: 0x6F, z: 0x9A},
-        {x: 0xF1, y: 0x73, z: 0x61},
-        {x: 0xE4, y: 0x83, z: 0x16},
-        {x: 0xC5, y: 0x98, z: 0x00},
-        {x: 0x92, y: 0xAC, z: 0x1C},
-        {x: 0x44, y: 0xB9, z: 0x67},
-        {x: 0xff, y: 0xff, z: 0xff},
-        {x: 0x00, y: 0xBB, z: 0xA2},
-        {x: 0x00, y: 0xB5, z: 0xCE},
-        {x: 0x0B, y: 0xA9, z: 0xF6},
-        {x: 0x79, y: 0x97, z: 0xFF},
-        {x: 0xAE, y: 0x85, z: 0xF1},
-        {x: 0xD4, y: 0x76, z: 0xCD},
+        { x: 0x30, y: 0x30, z: 0x30 },
+        { x: 0xEB, y: 0x6F, z: 0x9A },
+        { x: 0xF1, y: 0x73, z: 0x61 },
+        { x: 0xE4, y: 0x83, z: 0x16 },
+        { x: 0xC5, y: 0x98, z: 0x00 },
+        { x: 0x92, y: 0xAC, z: 0x1C },
+        { x: 0x44, y: 0xB9, z: 0x67 },
+        { x: 0xff, y: 0xff, z: 0xff },
+        { x: 0x00, y: 0xBB, z: 0xA2 },
+        { x: 0x00, y: 0xB5, z: 0xCE },
+        { x: 0x0B, y: 0xA9, z: 0xF6 },
+        { x: 0x79, y: 0x97, z: 0xFF },
+        { x: 0xAE, y: 0x85, z: 0xF1 },
+        { x: 0xD4, y: 0x76, z: 0xCD },
     ];
 
     let timer: number | null = null;
@@ -100,7 +100,7 @@
             type: 'countdown',
             startTime: Time.now(),
             duration: 3000,
-        }
+        };
     }
 </script>
 
@@ -111,7 +111,7 @@
         <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'move'} on:click={() => {
             $gameConfig.photo_mode.tool = {
                 type: 'move',
-            }
+            };
         }}>
             <Tooltip>
                 <p>Mキーで移動モードに切り替え</p>
@@ -122,7 +122,7 @@
         <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'pen'} on:click={() => {
             $gameConfig.photo_mode.tool = {
                 type: 'pen',
-            }
+            };
         }}>
             <Tooltip>
                 <p>PまたはBキーでペンモードに切り替え</p>
@@ -133,7 +133,7 @@
         <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'eraser'} on:click={() => {
             $gameConfig.photo_mode.tool = {
                 type: 'eraser',
-            }
+            };
         }}>
             <Tooltip>
                 <p>Eキーで消しゴムモードに切り替え</p>
@@ -166,7 +166,7 @@
                                 y: color.y,
                                 z: color.z,
                                 w: 255,
-                            }
+                            };
                         }}
                     ></button>
                 {/each}
@@ -212,8 +212,8 @@
                 type: 'kitchen',
                 transition: {
                     time: Time.now(),
-                }
-            }
+                },
+            };
             const { items, order } = getContext();
             for (const id of photoMode.items) {
                 const item = items[id];
@@ -263,7 +263,7 @@
         );
         pointer-events: none;
     }
-    
+
     .screen {
         position: absolute;
         left: 4rem;
@@ -360,7 +360,7 @@
             font-size: 1.2rem;
         }
     }
-    
+
     .tool, .actions button {
         display: flex;
         align-items: center;
@@ -400,7 +400,7 @@
         > button {
             background: var(--color-bg-2);
         }
-        
+
         > .primary {
             background: var(--color-1);
             color: var(--color-bg-2);

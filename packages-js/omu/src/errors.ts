@@ -15,6 +15,12 @@ export class DisconnectReason extends OmuError {
     }
 }
 
+export class ServerRestart extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.SERVER_RESTART, message);
+    }
+}
+
 export class AnotherConnection extends DisconnectReason {
     constructor(message: string) {
         super(DisconnectType.ANOTHER_CONNECTION, message);

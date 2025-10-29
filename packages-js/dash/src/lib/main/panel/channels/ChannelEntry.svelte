@@ -1,13 +1,13 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
     import { writable } from 'svelte/store';
 
     import { t } from '$lib/i18n/i18n-context.js';
 
     import { chat, omu } from '$lib/client.js';
-    import { ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
+    import { ButtonLink, ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
 
-    export let entry: models.Channel;
+    export let entry: Models.Channel;
     export let selected: boolean = false;
 
     let active = writable(entry.active);
@@ -23,25 +23,21 @@
 </script>
 
 <div class="entry" class:selected>
-    <div class="left">
-        <div class="channel-icon">
-            {#if entry.iconUrl}
-                <img src={omu.assets.proxy(entry.iconUrl)} alt="icon" />
-                <Tooltip>
-                    <img src={omu.assets.proxy(entry.iconUrl)} alt="icon" class="tooltip-image" />
-                </Tooltip>
-            {:else}
-                <i class="ti ti-user"></i>
-            {/if}
-        </div>
-        <div class="info">
-            <div class="name">{entry.name || entry.providerId}</div>
-            <small class="url">
-                {entry.url}
-            </small>
-        </div>
+    <div class="channel-icon">
+        {#if entry.iconUrl}
+            <img src={omu.assets.proxy(entry.iconUrl)} alt="icon" />
+            <Tooltip>
+                <img src={omu.assets.proxy(entry.iconUrl)} alt="icon" class="tooltip-image" />
+            </Tooltip>
+        {:else}
+            <i class="ti ti-user"></i>
+        {/if}
     </div>
-    <div class="right">
+    <div class="info">
+        <p>{entry.name || entry.providerId}</p>
+        <small>{entry.url}</small>
+    </div>
+    <div class="actions">
         {#if selected}
             <ButtonMini on:click={remove}>
                 <Tooltip>
@@ -49,14 +45,12 @@
                 </Tooltip>
                 <i class="ti ti-trash"></i>
             </ButtonMini>
-            <a href={entry.url} target="_blank">
-                <ButtonMini>
-                    <Tooltip>
-                        <div>{$t('panels.channels.open')}</div>
-                    </Tooltip>
-                    <i class="ti ti-external-link"></i>
-                </ButtonMini>
-            </a>
+            <ButtonLink href={entry.url}>
+                <Tooltip>
+                    <div>{$t('panels.channels.open')}</div>
+                </Tooltip>
+                <i class="ti ti-external-link"></i>
+            </ButtonLink>
         {:else}
             <small>{$t('panels.channels.connect')}</small>
         {/if}
@@ -74,7 +68,6 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        justify-content: space-between;
         padding: 0.5rem 1rem;
         padding-left: 1rem;
 
@@ -86,23 +79,21 @@
         }
     }
 
-    .left {
-        display: flex;
-        flex-direction: row;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .right {
+    .actions {
         display: flex;
         flex-direction: row;
         align-items: center;
+        margin-left: auto;
+        white-space: nowrap;
     }
 
     .channel-icon {
+        min-width: 2rem;
+        min-height: 2rem;
         width: 2rem;
         height: 2rem;
         border-radius: 50%;
+        margin-right: 1rem;
 
         img {
             width: 100%;
@@ -120,22 +111,32 @@
     }
 
     .info {
+        position: relative;
         display: flex;
         flex-direction: column;
-    }
+        flex: 1;
+        height: 2.25rem;
 
-    .name {
-        font-size: 0.9rem;
-        opacity: 1;
-        color: var(--color-1);
-    }
+        > p {
+            position: absolute;
+            top: 0;
+            font-size: 0.9rem;
+            color: var(--color-1);
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
 
-    .url {
-        font-size: 0.621rem;
-        color: var(--color-text);
-    }
-
-    a {
-        text-decoration: none;
+        > small {
+            position: absolute;
+            bottom: 0;
+            font-size: 0.621rem;
+            color: var(--color-text);
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     }
 </style>

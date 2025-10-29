@@ -26,7 +26,7 @@
 </h2>
 <section>
     <span>
-        <Checkbox bind:value={$config.show_name_tags} label="名前を表示"/>
+        <Checkbox bind:value={$config.show_name_tags} label="名前を表示" />
     </span>
 </section>
 

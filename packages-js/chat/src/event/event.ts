@@ -1,6 +1,6 @@
-import type { Unlisten } from '@omujs/omu/event-emitter.js';
-import { EventEmitter } from '@omujs/omu/event-emitter.js';
-import type { Table } from '@omujs/omu/extension/table/table.js';
+import type { Table } from '@omujs/omu/api/table';
+import type { Unlisten } from '@omujs/omu/event';
+import { EventEmitter } from '@omujs/omu/event';
 
 import type { Chat } from '../chat.js';
 
@@ -20,24 +20,24 @@ export class ListenerEvent<P extends Array<any>> implements EventSource<P> {
 }
 
 export class TableEvent<T> extends ListenerEvent<[Map<string, T>]> {
-    public readonly addBatch: ListenerEvent<[Map<string, T>]>;
-    public readonly updateBatch: ListenerEvent<[Map<string, T>]>;
-    public readonly removeBatch: ListenerEvent<[Map<string, T>]>;
-    public readonly add: EventSource<[T]>;
-    public readonly update: EventSource<[T]>;
-    public readonly remove: EventSource<[T]>;
-    public readonly clear: EventSource<[]>;
+    public readonly AddBatch: ListenerEvent<[Map<string, T>]>;
+    public readonly UpdateBatch: ListenerEvent<[Map<string, T>]>;
+    public readonly RemoveBatch: ListenerEvent<[Map<string, T>]>;
+    public readonly Add: EventSource<[T]>;
+    public readonly Update: EventSource<[T]>;
+    public readonly Remove: EventSource<[T]>;
+    public readonly Clear: EventSource<[]>;
     public readonly wrappers: Record<string, Unlisten>;
 
     constructor(private readonly getTable: (chat: Chat) => Table<T>) {
         super((chat) => getTable(chat).event.cacheUpdate);
-        this.addBatch = new ListenerEvent((chat) => getTable(chat).event.add);
-        this.updateBatch = new ListenerEvent((chat) => getTable(chat).event.update);
-        this.removeBatch = new ListenerEvent((chat) => getTable(chat).event.remove);
-        this.add = this.createBatchSubscriber((table) => table.event.add);
-        this.update = this.createBatchSubscriber((table) => table.event.update);
-        this.remove = this.createBatchSubscriber((table) => table.event.remove);
-        this.clear = new ListenerEvent((client) => getTable(client).event.clear);
+        this.AddBatch = new ListenerEvent((chat) => getTable(chat).event.add);
+        this.UpdateBatch = new ListenerEvent((chat) => getTable(chat).event.update);
+        this.RemoveBatch = new ListenerEvent((chat) => getTable(chat).event.remove);
+        this.Add = this.createBatchSubscriber((table) => table.event.add);
+        this.Update = this.createBatchSubscriber((table) => table.event.update);
+        this.Remove = this.createBatchSubscriber((table) => table.event.remove);
+        this.Clear = new ListenerEvent((client) => getTable(client).event.clear);
         this.wrappers = {};
     }
 
@@ -63,7 +63,7 @@ export class TableEvent<T> extends ListenerEvent<[Map<string, T>]> {
             return () => {
                 stopListen();
                 clearEvent();
-            }
+            };
         };
 
         return {

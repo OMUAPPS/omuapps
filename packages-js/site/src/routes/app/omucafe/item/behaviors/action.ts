@@ -7,11 +7,11 @@ import type { ItemState } from '../item-state.js';
 
 export type Action = {
     on: Partial<{
-        click: string,
-        clickChild: string,
-        dropChild: string,
-    }>
-}
+        click: string;
+        clickChild: string;
+        dropChild: string;
+    }>;
+};
 
 export function createAction(options: { on: Action['on'] }): Action {
     const { on } = options;
@@ -21,7 +21,7 @@ export function createAction(options: { on: Action['on'] }): Action {
 }
 
 function execute(kitchen: KitchenContext, script: Script, args: Record<string, string | null>) {
-    const { ctx, v } = builder;
+    const { v } = builder;
     const context = getGame().globals.newContext();
     const { variables } = context;
     for (const key in args) {
@@ -39,7 +39,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
     async initialize?(): Promise<void> {
     }
 
-    collectActionsHovered(action: BehaviorAction<'action'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHovered(action: BehaviorAction<'action'>, args: { held: ItemState | null; actions: ClickAction[] }): Promise<void> | void {
         const { item, context, behavior: { on } } = action;
         const type = args.held ? 'dropChild' : 'click';
         const scriptId = on[type];
@@ -61,11 +61,11 @@ export class ActionHandler implements BehaviorHandler<'action'> {
                     held: context.held,
                     hovering: context.hovering,
                 });
-            }
+            },
         });
     }
 
-    collectActionsParent(action: BehaviorAction<'action'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsParent(action: BehaviorAction<'action'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[] }): Promise<void> | void {
         const { item, context, behavior: { on } } = action;
         const type = 'clickChild';
         const scriptId = on[type];
@@ -88,7 +88,7 @@ export class ActionHandler implements BehaviorHandler<'action'> {
                     child: args.child?.id || null,
                     hovering: context.hovering,
                 });
-            }
+            },
         });
     }
 };

@@ -1,6 +1,6 @@
 import { lerp } from './math.js';
 
-export type Vec4Like = Vec4 | { x: number, y: number, z: number, w: number };
+export type Vec4Like = { x: number; y: number; z: number; w: number };
 
 export class Vec4 {
     public static ZERO = new Vec4(0, 0, 0, 0);

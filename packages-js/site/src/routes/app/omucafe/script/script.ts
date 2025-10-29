@@ -2,13 +2,13 @@ import { writable, type Writable } from 'svelte/store';
 import { uniqueId } from '../game/helper.js';
 
 export type VString = {
-    type: 'string',
-    value: string,
-}
+    type: 'string';
+    value: string;
+};
 
 export type VTimer = {
-    type: 'timer',
-    value: Timer,
+    type: 'timer';
+    value: Timer;
 };
 
 export type VNumber = {
@@ -24,11 +24,11 @@ export type VObject = {
 export type VArray = {
     type: 'array';
     items: Value[];
-}
+};
 
 export type VFunction = {
     type: 'function';
-    value: TypedFunction;
+    id: string;
 };
 
 export type VAttribute = {
@@ -57,6 +57,10 @@ export const value = {
     void: (): Value => ({
         type: 'void',
     }),
+    function: (id: string): Value => ({
+        type: 'function',
+        id,
+    }),
     expression: (value: Expression): Value => ({
         type: 'expression',
         value,
@@ -69,10 +73,6 @@ export const value = {
         type: 'attribute',
         value,
         name,
-    }),
-    function: (value: TypedFunction): Value => ({
-        type: 'function',
-        value,
     }),
     object: (value: Record<string, Value>): Value => ({
         type: 'object',
@@ -98,51 +98,50 @@ export const value = {
         type: 'invoke',
         function: func,
         args,
-    })
-}
-
+    }),
+};
 
 export type Argument<ValueType extends Value = Value> = {
-    name: string,
-    type?: ValueType['type'],
-    optional?: boolean,
-}
+    name: string;
+    type?: ValueType['type'];
+    optional?: boolean;
+};
 
 export type ArgumentList<Args extends Value[]> = {
     [K in keyof Args]: Args[K] extends Value ? Argument<Args[K]> : never
 }[number][] | never[];
 
 export type TypedFunction<Args extends Value[] = Value[]> = {
-    name: string,
-    args: ArgumentList<Args>,
-    invoke: (ctx: ScriptContext, args: Args) => Value,
-}
+    name: string;
+    args: ArgumentList<Args>;
+    invoke: (ctx: ScriptContext, args: Args) => Value;
+};
 
 export type Timer = {
-    start: number,
-}
+    start: number;
+};
 
 export type VInvoke = {
-    type: 'invoke',
-    function: Value,
-    args: Value[],
-}
+    type: 'invoke';
+    function: Value;
+    args: Value[];
+};
 
 export type Command = {
-    type: 'return',
-    value: Value,
+    type: 'return';
+    value: Value;
 } | {
-    type: 'assign',
-    variable: Value,
-    value: Value,
+    type: 'assign';
+    variable: Value;
+    value: Value;
 } | {
-    type: 'assign-attribute',
-    object: Value,
-    name: string,
-    value: Value,
+    type: 'assign-attribute';
+    object: Value;
+    name: string;
+    value: Value;
 } | {
-    type: 'throw',
-    value: Value,
+    type: 'throw';
+    value: Value;
 } | VInvoke;
 
 export const command = {
@@ -164,50 +163,54 @@ export const command = {
         type: 'throw',
         value,
     }),
-}
+};
 
 export type Expression = {
-    commands: Command[],
-}
+    commands: Command[];
+};
 
 export const expr = {
     of: (commands: Command[]): Expression => ({
         commands,
     }),
-}
+};
 
 export type ScriptContext = {
-    variables: Record<string, Value>,
-    callstack: Expression[],
-    index: number,
-    copy: () => ScriptContext,
-}
+    functions: Record<string, TypedFunction>;
+    variables: Record<string, Value>;
+    callstack: Expression[];
+    index: number;
+    copy: () => ScriptContext;
+};
 
 const context = {
     init: (): ScriptContext => ({
+        functions: {},
         variables: {},
         callstack: [],
         index: 0,
         copy: function () {
             return {
+                functions: this.functions,
                 variables: { ...this.variables },
                 callstack: [...this.callstack],
                 index: this.index,
                 copy: this.copy,
-            }
+            };
         },
     }),
-}
+};
 
 export function evaluateValue(ctx: ScriptContext, value: Value): Value {
     switch (value.type) {
         case 'expression':
             return executeExpression(ctx, value.value);
         case 'invoke': {
-            const func = evaluateValue(ctx, value.function);
-            assertValue(ctx, func, 'function')
+            const funcValue = evaluateValue(ctx, value.function);
+            assertValue(ctx, funcValue, 'function');
             const args = value.args.map((arg) => evaluateValue(ctx, arg));
-            return func.value.invoke(ctx, args);
+            const func = ctx.functions[funcValue.id];
+            return func.invoke(ctx, args);
         }
         case 'variable': {
             const variable = ctx.variables[value.name];
@@ -233,14 +236,14 @@ export function evaluateValue(ctx: ScriptContext, value: Value): Value {
         case 'number':
         case 'string':
         case 'timer':
-            return value
+            return value;
         default:
             throw new Error('Unexpected value type');
     }
 }
 
 export class ScriptError extends Error {
-    constructor(message: string, public readonly info: { callstack: Expression[], index: number }) {
+    constructor(message: string, public readonly info: { callstack: Expression[]; index: number }) {
         super(message);
     }
 }
@@ -252,6 +255,14 @@ export function assertValue<T extends Value['type']>(context: ScriptContext, val
     }
 }
 
+export function castValue<T extends Value['type']>(context: ScriptContext, value: Value, type: T): Extract<Value, { type: T }> {
+    if (value.type !== type) {
+        const { callstack, index } = context;
+        throw new ScriptError(`Expected ${type} but got ${value.type}`, { callstack, index });
+    }
+    return value as Extract<Value, { type: T }>;
+}
+
 export function executeExpression(ctx: ScriptContext, expression: Expression): Value {
     ctx.callstack.push(expression);
     for (const [index, command] of expression.commands.entries()) {
@@ -261,25 +272,25 @@ export function executeExpression(ctx: ScriptContext, expression: Expression): V
                 return evaluateValue(ctx, command.value);
             }
             case 'assign': {
-                assertValue(ctx, command.variable, 'variable')
+                assertValue(ctx, command.variable, 'variable');
                 ctx.variables[command.variable.name] = evaluateValue(ctx, command.value);
                 break;
             }
             case 'assign-attribute': {
                 const object = evaluateValue(ctx, command.object);
-                assertValue(ctx, object, 'object')
+                assertValue(ctx, object, 'object');
                 object.value[command.name] = evaluateValue(ctx, command.value);
                 break;
             }
             case 'invoke': {
-                const func = evaluateValue(ctx, command.function);
-                assertValue(ctx, func, 'function')
+                const { id } = castValue(ctx, evaluateValue(ctx, command.function), 'function');
+                const func = ctx.functions[id];
                 const args = command.args.map((arg) => evaluateValue(ctx, arg));
-                if (func.value.args.length !== args.length) {
-                    throw new ScriptError(`Expected ${func.value.args.length} arguments but got ${args.length}`, { callstack: ctx.callstack, index });
+                if (func.args.length !== args.length) {
+                    throw new ScriptError(`Expected ${func.args.length} arguments but got ${args.length}`, { callstack: ctx.callstack, index });
                 }
-                for (let i = 0; i < func.value.args.length; i++) {
-                    const arg = func.value.args[i];
+                for (let i = 0; i < func.args.length; i++) {
+                    const arg = func.args[i];
                     const argValue = args[i];
                     if (arg.optional && argValue.type === 'void') {
                         continue;
@@ -288,7 +299,7 @@ export function executeExpression(ctx: ScriptContext, expression: Expression): V
                         throw new ScriptError(`Expected argument ${i} to be ${arg.type} but got ${argValue.type}`, { callstack: ctx.callstack, index });
                     }
                 }
-                func.value.invoke(ctx, args);
+                func.invoke(ctx, args);
                 break;
             }
             case 'throw': {
@@ -311,20 +322,20 @@ export const builder = {
     c: command,
     e: expr,
     ctx: context,
-}
+};
 
 export type Script = {
-    id: string,
-    name: string,
-    expression: Expression,
-}
+    id: string;
+    name: string;
+    expression: Expression;
+};
 
 type ValidateResult = {
-    error: string,
+    error: string;
 } | undefined;
 
 function assertType(value: unknown, type: 'string' | 'number' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'object' | 'function'): ValidateResult {
-    if (typeof value !== type) return { error: `value is not a ${type} but ${typeof value}` }
+    if (typeof value !== type) return { error: `value is not a ${type} but ${typeof value}` };
 }
 
 function validateValue(value: Value): ValidateResult {
@@ -340,9 +351,9 @@ function validateValue(value: Value): ValidateResult {
             break;
         }
         case 'object': {
-            if (typeof value.value !== 'object') return { error: `Value type is object but value is ${typeof value.value}` }
+            if (typeof value.value !== 'object') return { error: `Value type is object but value is ${typeof value.value}` };
             for (const [key, val] of Object.entries(value.value)) {
-                if (typeof key !== 'string') return { error: `Value type is object but key is ${typeof key}` }
+                if (typeof key !== 'string') return { error: `Value type is object but key is ${typeof key}` };
                 const result = validateValue(val);
                 if (result) return result;
                 break;
@@ -350,30 +361,30 @@ function validateValue(value: Value): ValidateResult {
             break;
         }
         case 'function': {
-            return { error: 'Value type function is not supported for now.' }
+            return { error: 'Value type function is not supported for now.' };
         }
         case 'void': {
             break;
         }
         case 'expression': {
-            if (typeof value.value !== 'object') return { error: `value is not a object but ${typeof value.value}` }
+            if (typeof value.value !== 'object') return { error: `value is not a object but ${typeof value.value}` };
             const result = validateExpression(value.value);
             if (!result) break;
             return result;
         }
         case 'variable': {
-            if (typeof value.name !== 'string') return { error: `value.name is not a string but ${typeof value.name}` }
+            if (typeof value.name !== 'string') return { error: `value.name is not a string but ${typeof value.name}` };
             break;
         }
         case 'attribute': {
-            if (typeof value.value !== 'object') return { error: `value.value is not a object but ${typeof value.name}` }
+            if (typeof value.value !== 'object') return { error: `value.value is not a object but ${typeof value.name}` };
             const result = validateValue(value.value);
             if (result) return result;
-            if (typeof value.name !== 'string') return { error: `value.name is not a string but ${typeof value.name}` }
+            if (typeof value.name !== 'string') return { error: `value.name is not a string but ${typeof value.name}` };
             break;
         }
         case 'array': {
-            if (!Array.isArray(value.items)) return { error: `value.item is not a array but ${typeof value.items}` }
+            if (!Array.isArray(value.items)) return { error: `value.item is not a array but ${typeof value.items}` };
             for (const item of value.items) {
                 const result = validateValue(item);
                 if (result) return result;
@@ -381,10 +392,10 @@ function validateValue(value: Value): ValidateResult {
             break;
         }
         case 'timer': {
-            return { error: 'Value type timer is not supported for now.' }
+            return { error: 'Value type timer is not supported for now.' };
         }
         case 'invoke': {
-            if (!Array.isArray(value.args)) return { error: `value.args is not a array but ${typeof value.args}` }
+            if (!Array.isArray(value.args)) return { error: `value.args is not a array but ${typeof value.args}` };
             const args = value.args.reduce((array, value) => {
                 array.push(validateValue(value));
                 return array;
@@ -396,14 +407,14 @@ function validateValue(value: Value): ValidateResult {
             break;
         }
         default:
-            return { error: `Unknown value type ${command}` }
+            return { error: `Unknown value type ${command}` };
     }
 }
 
 function validateCommand(command: Command): ValidateResult {
     switch (command.type) {
         case 'return': {
-            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof value.function}` };
+            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof command.value}` };
             return validateValue(command.value);
         }
         case 'assign': {
@@ -418,7 +429,7 @@ function validateCommand(command: Command): ValidateResult {
             return validateValue(command.object) ?? validateValue(command.value);
         }
         case 'throw': {
-            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof value.function}` };
+            if (typeof command.value !== 'object') return { error: `command.value is not a object but ${typeof command.value}` };
             return validateValue(command.value);
         }
         case 'invoke': {
@@ -427,7 +438,7 @@ function validateCommand(command: Command): ValidateResult {
             return command.args.map(value => validateValue(value)).find(result => result);
         }
         default:
-            return { error: `Unknown command type ${command}` }
+            return { error: `Unknown command type ${command}` };
     }
 }
 
@@ -454,9 +465,8 @@ export function createScript(options: Partial<Script>): Script {
         id: id ?? uniqueId(),
         name: name ?? 'New Script',
         expression: expression ?? expr.of([]),
-    }
+    };
 }
-
 
 class Debug {
     private constructor(
@@ -468,7 +478,7 @@ class Debug {
         return new Debug(
             writable(0),
             [],
-        )
+        );
     }
 
     private update() {
@@ -484,9 +494,9 @@ class Debug {
 export class Globals {
     public readonly functions: Record<string, TypedFunction<any>> = {};
     public readonly debug = Debug.create();
-    
+
     public registerFunction<Args extends Value[]>(name: string, args: ArgumentList<Args>, invoke: (ctx: ScriptContext, args: Args) => Value): TypedFunction<Args> {
-        const func: TypedFunction<Args> =  {
+        const func: TypedFunction<Args> = {
             name,
             args,
             invoke,
@@ -499,7 +509,8 @@ export class Globals {
         const ctx = context.init();
         for (const key in this.functions) {
             const func = this.functions[key];
-            ctx.variables[func.name] = value.function(func);
+            ctx.functions[func.name] = func;
+            ctx.variables[func.name] = value.function(key);
         }
         return ctx;
     }

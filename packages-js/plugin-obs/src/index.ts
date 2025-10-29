@@ -1,6 +1,6 @@
 import type { Omu } from '@omujs/omu';
 
-import { SERVER_SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/extension/server/server-extension.js';
+import { SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/api/session';
 import { PLUGIN_ID } from './const.js';
 import type { CreateBrowserRequest, CreateResponse, SceneCreateRequest, SceneCreateResponse, SceneJson, SceneListResponse, ScreenshotCreateRequest, ScreenshotCreateResponse, ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse, SourceGetByNameRequest, SourceGetByUuidRequest, SourceJson, SourceListRequest } from './types.js';
 import {
@@ -25,7 +25,7 @@ import {
     SOURCE_UPDATE,
 } from './types.js';
 import { VERSION } from './version.js';
-export * as permissions from './permissions.js';
+export * as OBSPermissions from './permissions.js';
 
 type Events = {
     connected: () => void;
@@ -34,22 +34,25 @@ type Events = {
 type EventRecord<K extends keyof Events> = {
     [P in K]?: Array<Events[P]>;
 };
+
 export class OBSPlugin {
+    private static INSTANCE: OBSPlugin | undefined;
     private connected = false;
     private readonly events: EventRecord<keyof Events> = {};
-    
+
     private constructor(private readonly omu: Omu) {
         omu.plugins.require({
             omuplugin_obs: `>=${VERSION}`,
         });
-        omu.permissions.require(SERVER_SESSIONS_READ_PERMISSION_ID);
-        omu.server.observeSession(PLUGIN_ID, {
+        omu.permissions.require(SESSIONS_READ_PERMISSION_ID);
+        omu.sessions.observe(PLUGIN_ID, {
             onConnect: () => this.setConnected(true),
             onDisconnect: () => this.setConnected(false),
         });
         omu.onReady(async () => {
-            this.setConnected(await omu.server.sessions.has(PLUGIN_ID.key()));
+            this.setConnected(await omu.sessions.has(PLUGIN_ID));
         });
+        OBSPlugin.INSTANCE = this;
     }
 
     public on<K extends keyof Events>(event: K, handler: Events[K]): () => void {
@@ -93,7 +96,7 @@ export class OBSPlugin {
     }
 
     public requirePlugin(): void {
-        this.omu.server.require(PLUGIN_ID);
+        this.omu.sessions.require(PLUGIN_ID);
     }
 
     public assetConnected(): void {

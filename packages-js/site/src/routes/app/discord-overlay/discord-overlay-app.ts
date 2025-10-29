@@ -1,8 +1,8 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import { VERSION } from '$lib/version.js';
 import { Identifier, type Omu } from '@omujs/omu';
-import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
+import { EndpointType } from '@omujs/omu/api/endpoint';
+import { RegistryType } from '@omujs/omu/api/registry';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 import { DEFAULT_SHADOW_EFFECT_OPTIONS } from './effects/shadow.js';
@@ -62,7 +62,7 @@ type SpeakState = {
     speaking: boolean;
     speaking_start: number;
     speaking_stop: number;
-}
+};
 
 const SPEAKING_STATE_REGISTRY_TYPE = RegistryType.createJson<Record<string, SpeakState>>(PLUGIN_ID, {
     name: 'speaking_states',
@@ -89,7 +89,7 @@ export type SelectedVoiceChannel = {
         messages: [];
         voice_states: [];
     };
-}
+};
 
 const SELECTED_VOICE_CHANNEL_REGISTRY_TYPE = RegistryType.createJson<SelectedVoiceChannel | null>(PLUGIN_ID, {
     name: 'selected_voice_channel',
@@ -103,13 +103,13 @@ export type AuthenticateUser = {
     avatar: string | null;
     avatar_decoration_data: null;
     flags: number;
-    global_name: string;
+    global_name: string | null;
     public_flags: number;
     banner: null;
     accent_color: number;
     banner_color: string;
     clan: null;
-}
+};
 const GET_CLIENTS_ENDPOINT_TYPE = EndpointType.createJson<null, Record<string, AuthenticateUser>>(PLUGIN_ID, {
     name: 'get_clients',
 });
@@ -117,10 +117,10 @@ export type Guild = {
     id: string;
     name: string;
     icon_url?: string;
-}
+};
 type GetGuildsResponseData = {
     guilds: Guild[];
-}
+};
 const GET_GUILDS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string }, GetGuildsResponseData>(PLUGIN_ID, {
     name: 'get_guilds',
 });
@@ -128,14 +128,14 @@ export type Channel = {
     id: string;
     name: string;
     type: number;
-}
+};
 type GetChannelsResponseData = {
     channels: Channel[];
-}
-const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, guild_id: string }, GetChannelsResponseData>(PLUGIN_ID, {
+};
+const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string; guild_id: string }, GetChannelsResponseData>(PLUGIN_ID, {
     name: 'get_channels',
 });
-const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string, guild_id: string | null, channel_id: string | null }, null>(PLUGIN_ID, {
+const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string; guild_id: string | null; channel_id: string | null }, null>(PLUGIN_ID, {
     name: 'set_vc',
 });
 const WAIT_FOR_READY_ENDPOINT_TYPE = EndpointType.createJson<null, null>(PLUGIN_ID, {
@@ -206,20 +206,20 @@ export type Config = {
     version?: number;
     users: {
         [key: string]: UserConfig;
-    },
+    };
     avatars: {
         [key: string]: AvatarConfig | undefined;
-    }
+    };
     effects: {
-        speech: typeof DEFAULT_SPEECH_EFFECT_OPTIONS,
+        speech: typeof DEFAULT_SPEECH_EFFECT_OPTIONS;
         shadow: typeof DEFAULT_SHADOW_EFFECT_OPTIONS;
         backlightEffect: {
-            active: boolean,
+            active: boolean;
         };
         bloom: {
-            active: boolean,
+            active: boolean;
         };
-    },
+    };
     user_id: string | null;
     guild_id: string | null;
     channel_id: string | null;
@@ -282,7 +282,7 @@ const DEFAULT_CONFIG: Config = {
     },
     reactive: {
         enabled: false,
-    }
+    },
 };
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
@@ -298,7 +298,7 @@ export class DiscordOverlayApp {
     constructor(public readonly omu: Omu) {
         omu.plugins.require({
             omuplugin_discordrpc: `>=${VERSION}`,
-        })
+        });
         this.voiceState = makeRegistryWritable(omu.registries.get(VOICE_STATE_REGISTRY_TYPE));
         this.speakingState = makeRegistryWritable(omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE));
         this.selectedVoiceChannel = makeRegistryWritable(omu.registries.get(SELECTED_VOICE_CHANNEL_REGISTRY_TYPE));
@@ -417,7 +417,7 @@ export class DiscordOverlayApp {
     }
 
     public async setVC(args: {
-        user_id: string, guild_id: string | null, channel_id: string | null
+        user_id: string; guild_id: string | null; channel_id: string | null;
     }): Promise<void> {
         await this.omu.endpoints.call(SET_VC_ENDPOINT_TYPE, args);
     }

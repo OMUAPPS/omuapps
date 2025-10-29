@@ -1,5 +1,5 @@
 <script lang="ts">
-    
+
     export let value: any;
     export let open = false;
 </script>
@@ -14,12 +14,12 @@
     </span>
 {:else if typeof value === 'number'}
     <span class="number">
-        <input type="text" value={value.toString()} on:input={({currentTarget}) => {
+        <input type="text" value={value.toString()} on:input={({ currentTarget }) => {
             const newValue = parseFloat(currentTarget.value);
             if (Number.isNaN(newValue) || Number.isFinite(newValue)) return;
             value = newValue;
             console.log(value);
-        }}/>
+        }} />
     </span>
 {:else if typeof value === 'boolean'}
     <span class="boolean">{value ? 'true' : 'false'}</span>
@@ -79,7 +79,7 @@
     strong {
         font-weight: bold;
     }
-    
+
     span {
         font-style: italic;
     }

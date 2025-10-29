@@ -1,10 +1,10 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
-        setClient
+        setClient,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import App from './App.svelte';
@@ -18,23 +18,19 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         );
         omu.start();
     }
 
-    let promise = new Promise<void>((resolve) => {
-        omu.onReady(async () => {
-            resolve();
-        });
-    });
 </script>
 
 <AppPage>
     <header slot="header">
         <AppHeader app={APP} />
     </header>
-    {#await promise then}
+    {#await omu.waitForReady() then}
         <App {omu} {obs} {captionApp} />
     {/await}
 </AppPage>

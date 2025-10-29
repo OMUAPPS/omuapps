@@ -1,15 +1,12 @@
 <script lang="ts">
     import { type ScreenHandle } from './screen.js';
-    import ScreenHeader from './ScreenHeader.svelte';
 
     export let screen: { handle: ScreenHandle };
-    export let title: string;
     export let windowed: boolean = true;
-    export let disableDecorations: boolean = false;
     export let disableClose: boolean = false;
     let container: HTMLButtonElement;
 
-    function onClick(event: MouseEvent) {
+    function handleClick(event: MouseEvent) {
         if (disableClose) {
             return;
         }
@@ -30,17 +27,12 @@
 
 <svelte:window on:keydown={onKeyPress} />
 
-<button class="container" class:windowed on:click={onClick} bind:this={container}>
+<button class="container" class:windowed on:click={handleClick} bind:this={container}>
     <div class="screen" class:windowed>
-        {#if !disableDecorations && windowed}
-            <ScreenHeader {title} />
-        {/if}
-        <div class:windowed class="content" class:no-decorated={disableDecorations}>
-            {#if !disableDecorations && !windowed}
-                <ScreenHeader {title} />
-            {/if}
-            <slot />
-        </div>
+        <slot />
+    </div>
+    <div class="info" class:disableClose>
+        <slot name="info" />
     </div>
 </button>
 
@@ -50,70 +42,62 @@
         inset: 0;
         z-index: 100;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        align-items: stretch;
         overflow: hidden;
         appearance: none;
         background: color-mix(in srgb, var(--color-bg-1) 97%, transparent);
         border: none;
+        top: 2rem;
+        animation: forwards 0.08621s fade;
     }
 
     .screen {
-        max-width: 100%;
-        max-height: 100%;
-        animation-fill-mode: forwards;
-
-        &:not(.windowed) {
-            width: 100%;
-            height: 100%;
-        }
-
-        &.windowed {
-            animation: menu-in 0.1621s cubic-bezier(0, 1.14, 0, 1);
-        }
-    }
-
-    .content {
-        position: relative;
+        width: 24rem;
+        background: color-mix(in srgb, var(--color-bg-2) 97%, transparent);
+        outline: 1px solid var(--color-outline);
         display: flex;
         flex-direction: column;
-        flex-shrink: 0;
-        align-items: center;
-        overflow: hidden;
-        background: var(--color-bg-2);
+        animation: forwards 0.08621s slide;
+    }
 
-        &.windowed {
-            width: 40rem;
-            height: 24rem;
-            border: 2px solid var(--color-1);
+    .info {
+        flex: 1;
+        padding: max(4rem, 10%) max(2rem, 10%);
+        overflow-y: auto;
+        pointer-events: none;
+    }
+
+    .disableClose {
+        pointer-events: auto;
+    }
+
+    @keyframes slide {
+        0% {
+            transform: translateX(-100%);
         }
-
-        &:not(.windowed) {
-            position: absolute;
-            top: 2.5rem;
-            width: 100%;
-            height: calc(100% - 2.5rem);
-
-            &:not(.no-decorated) {
-                top: 2.5rem;
-            }
+        20% {
+            transform: translateX(-3%);
+        }
+        98% {
+            transform: translateX(0.621%);
+        }
+        100% {
+            transform: translateX(0);
         }
     }
 
-    @keyframes menu-in {
+    @keyframes fade {
         0% {
-            opacity: 0;
-            transform: scale(0);
+            background: color-mix(in srgb, var(--color-bg-1) 0%, transparent);
         }
-
-        86% {
-            opacity: 1;
-            transform: scale(1.001);
+        20% {
+            background: color-mix(in srgb, var(--color-bg-1) 70%, transparent);
         }
-
+        92% {
+            background: color-mix(in srgb, var(--color-bg-1) 90%, transparent);
+        }
         100% {
-            opacity: 1;
-            transform: scale(1);
+            background: color-mix(in srgb, var(--color-bg-1) 96%, transparent);
         }
     }
 </style>

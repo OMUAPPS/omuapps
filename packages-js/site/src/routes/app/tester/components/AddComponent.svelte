@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { content } from '@omujs/chat/models/index.js';
+    import { Content } from '@omujs/chat/models';
 
-    export let component: content.Component;
+    export let component: Content.Component;
 
-    function add(child: content.Component) {
-        const children = content.children(component);
+    function add(child: Content.Component) {
+        const children = Content.children(component);
         children.push(child);
         component = component;
     }
@@ -13,9 +13,9 @@
 
     function create(type: ComponentType) {
         if (type === 'text') {
-            add({type: 'text', data: ''});
+            add({ type: 'text', data: '' });
         } else if (type === 'image') {
-            add({type: 'image', data: {'id': '', url: '', name: ''}});
+            add({ type: 'image', data: { id: '', url: '', name: '' } });
         } else {
             throw new Error(`Unknown type: ${type}`);
         }

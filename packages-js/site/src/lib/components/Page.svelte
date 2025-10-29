@@ -6,10 +6,11 @@
 
     export let noBackground = false;
     export let header: boolean | 'always' = true;
+    export let footer: boolean = true;
 </script>
 
 {#if header}
-    <Header always={header==='always'} />
+    <Header always={header === 'always'} />
 {/if}
 <slot name="banner">
     <img src={background} alt="background" class="background" />
@@ -26,7 +27,9 @@
         <div class="main-content">
             <slot name="content" />
         </div>
-        <Footer />
+        {#if footer}
+            <Footer />
+        {/if}
     </Content>
 </main>
 

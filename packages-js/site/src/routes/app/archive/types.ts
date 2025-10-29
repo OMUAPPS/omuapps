@@ -1,12 +1,12 @@
-import { EndpointType } from '@omujs/omu/extension/endpoint/endpoint.js';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { TableType } from '@omujs/omu/extension/table/table.js';
+import { EndpointType } from '@omujs/omu/api/endpoint';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { TableType } from '@omujs/omu/api/table';
 import { APP_ID } from './app.js';
 import { Archive, type ArchiveConfig } from './archive.js';
 
 export const PLUGIN_ID = APP_ID.join('plugin');
-export const ARCHIVE_TABLE = TableType.createModel(PLUGIN_ID, {
-    model: Archive,
+export const ARCHIVE_TABLE = TableType.createJson<Archive>(PLUGIN_ID, {
+    key: (item) => item.key(),
     name: 'archive',
 });
 export const CONFIG_REGISTRY = RegistryType.createJson<ArchiveConfig>(PLUGIN_ID, {

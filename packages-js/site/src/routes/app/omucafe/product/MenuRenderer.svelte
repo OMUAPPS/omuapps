@@ -20,10 +20,12 @@
 </div>
 
 <style lang="scss">
+
     .menu {
         position: relative;
         width: 47rem;
         height: 24rem;
+
     }
 
     img {

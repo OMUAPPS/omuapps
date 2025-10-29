@@ -6,18 +6,18 @@ import { WorkerPipe } from './worker.js';
 
 export type GameCommands = {
     tokenize: {
-        request: string,
-        response: TOKEN[],
-    },
+        request: string;
+        response: TOKEN[];
+    };
     analyzeOrder: {
-        request: { tokens: TOKEN[], productTokens: ProductTokens[] },
-        response: OrderDetectResult,
-    }
+        request: { tokens: TOKEN[]; productTokens: ProductTokens[] };
+        response: OrderDetectResult;
+    };
     ready: {
-        request: void,
-        response: void,
-    },
-}
+        request: void;
+        response: void;
+    };
+};
 
 export async function getWorker(): Promise<WorkerPipe<GameCommands>> {
     if (!BROWSER) return WorkerPipe.dummy<GameCommands>();

@@ -9,28 +9,28 @@ import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.j
 import { attachChildren, cloneItemState, detachChildren, getRenderBounds, ITEM_LAYERS, removeItemState, type ItemRender, type ItemState } from '../item-state.js';
 
 export type LiquidLayer = {
-    side: Asset,
-    top: Asset,
-    volume: number,
+    side: Asset;
+    top: Asset;
+    volume: number;
 };
 export type Container = {
     bounded?: {
-        left: boolean,
-        top: boolean,
-        right: boolean,
-        bottom: boolean,
-    },
+        left: boolean;
+        top: boolean;
+        right: boolean;
+        bottom: boolean;
+    };
     mask?: {
-        asset: Asset,
-        transform: Transform,
-    },
+        asset: Asset;
+        transform: Transform;
+    };
     overlay?: {
-        asset: Asset,
-        transform: Transform,
-    },
-    order?: 'up' | 'down',
-    spawn?: object,
-}
+        asset: Asset;
+        transform: Transform;
+    };
+    order?: 'up' | 'down';
+    spawn?: null;
+};
 
 export function createContainer(options?: Container): Container {
     return options ?? {};
@@ -43,7 +43,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
     private readonly childrenBufferTexture: GlTexture;
     private readonly maskBuffer: GlFramebuffer;
     private readonly maskBufferTexture: GlTexture;
-    
+
     constructor() {
         const childrenBuffer = glContext.createFramebuffer();
         const childrenBufferTexture = glContext.createTexture();
@@ -54,7 +54,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-        })
+        });
         childrenBuffer.use(() => {
             childrenBuffer.attachTexture(childrenBufferTexture);
         });
@@ -69,7 +69,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 wrapS: 'clamp-to-edge',
                 wrapT: 'clamp-to-edge',
             });
-        })
+        });
         maskBuffer.use(() => {
             maskBuffer.attachTexture(maskBufferTexture);
         });
@@ -77,7 +77,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         this.maskBufferTexture = maskBufferTexture;
     }
 
-    preLoadAssets(action: BehaviorAction<'container'>, args: undefined): Promise<void> | void {
+    preLoadAssets(action: BehaviorAction<'container'>): Promise<void> | void {
         const { item, behavior } = action;
         if (behavior.mask) {
             getTextureByAsset(behavior.mask.asset);
@@ -90,10 +90,10 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             getTextureByAsset(asset);
         }
     }
-    
+
     async renderPre(
         action: BehaviorAction<'container'>,
-        args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> },
+        args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender> },
     ) {
         const { item, behavior, context } = action;
         const { bufferBounds, childRenders } = args;
@@ -151,10 +151,10 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             draw.texture(bufferBounds.min.x, bufferBounds.min.y, bufferBounds.max.x, bufferBounds.max.y, this.childrenBufferTexture);
         }
     }
-    
+
     async renderPost(
         action: BehaviorAction<'container'>,
-        args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> },
+        args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender> },
     ) {
         const { item, behavior } = action;
         const { bufferBounds } = args;
@@ -218,7 +218,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             offset: {
                 x: offsetX,
                 y: offsetY,
-            }
+            },
         };
     }
 
@@ -226,7 +226,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         return getContext().scene.type === 'kitchen_edit';
     }
 
-    collectActionsHovered(action: BehaviorAction<'container'>, args: { held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsHovered(action: BehaviorAction<'container'>, args: { held: ItemState | null; actions: ClickAction[] }): Promise<void> | void {
         const { item, behavior, context } = action;
         const { held, actions } = args;
         if (!held) return;
@@ -246,7 +246,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                     removeItemState(held);
                 },
             });
-        }        
+        }
         actions.push({
             name: `${held.item.name}を置く`,
             priority: 20,
@@ -259,7 +259,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         });
     }
 
-    collectActionsParent(action: BehaviorAction<'container'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[]; }): Promise<void> | void {
+    collectActionsParent(action: BehaviorAction<'container'>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[] }): Promise<void> | void {
         const { behavior, context } = action;
         const { child, actions, held } = args;
         if (held) return;
@@ -271,7 +271,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 callback: async () => {
                     const clone = cloneItemState(child);
                     context.held = clone.id;
-                }
+                },
             });
             return;
         }
@@ -283,11 +283,11 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 const { item } = action;
                 context.held = child.id;
                 detachChildren(item, child);
-            }
+            },
         });
     }
 
-    handleChildrenOrder(action: BehaviorAction<'container'>, args: { timing: 'hover'; children: ItemState[]; }): Promise<void> | void {
+    handleChildrenOrder(action: BehaviorAction<'container'>, args: { timing: 'hover'; children: ItemState[] }): Promise<void> | void {
         const { behavior } = action;
         const { timing, children } = args;
         if (timing !== 'hover') return;
@@ -296,7 +296,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         }));
     }
 
-    handleChildrenHovered(action: BehaviorAction<'container'>, args: { target: ItemState | null; }): Promise<void> | void {
+    handleChildrenHovered(action: BehaviorAction<'container'>, args: { target: ItemState | null }): Promise<void> | void {
         const { context, behavior } = action;
         if (context.held) {
             if (!behavior.spawn && args.target?.behaviors.container) return;

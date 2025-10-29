@@ -2,7 +2,7 @@
     import { getGame } from '../omucafe-app.js';
     import DebugValue from './DebugValue.svelte';
 
-    const { globals: { debug } } = getGame();    
+    const { globals: { debug } } = getGame();
     const { count, logs } = debug;
 </script>
 

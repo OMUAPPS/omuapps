@@ -50,6 +50,15 @@
         height: 2.5rem;
     }
 
+    i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1.2621rem;
+    }
+
     .text {
         display: flex;
         flex-direction: column;

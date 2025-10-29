@@ -3,7 +3,6 @@
 
 mod commands;
 mod options;
-mod progress;
 mod python;
 mod server;
 mod sources;
@@ -12,13 +11,20 @@ mod utils;
 mod uv;
 mod version;
 
-use crate::{commands::*, server::Server};
+use crate::{
+    commands::*,
+    options::AppOptions,
+    server::{Server, ServerConfig},
+};
 use directories::ProjectDirs;
 use log::info;
 use once_cell::sync::Lazy;
-use options::{AppOptions, DashboardOptions};
+use options::AppConfig;
 use serde_json::Value;
-use std::sync::{Arc, Mutex};
+use std::{
+    env,
+    sync::{Arc, Mutex},
+};
 use tauri::{Emitter, Manager};
 use tauri_plugin_cli::CliExt;
 use tauri_plugin_log::{Target, TargetKind};
@@ -30,10 +36,19 @@ static APP_DIRECTORY: Lazy<ProjectDirs> =
     });
 
 struct AppState {
-    option: AppOptions,
+    options: AppOptions,
+    config: Arc<Mutex<AppConfig>>,
+    server_config: ServerConfig,
     server: Arc<Mutex<Option<Server>>>,
     app_handle: Arc<Mutex<Option<tauri::AppHandle>>>,
-    config: Arc<Mutex<DashboardOptions>>,
+}
+
+impl AppState {
+    pub fn update_config(&self, f: impl FnOnce(&mut AppConfig)) {
+        let mut config = self.config.lock().unwrap();
+        f(&mut config);
+        config.store(&self.options.appdir).unwrap();
+    }
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -49,16 +64,21 @@ fn main() {
             std::process::exit(1);
         })
         .unwrap();
-    let dashboard_options = DashboardOptions::ensure(&options.config_path);
+    let mut app_config = AppConfig::ensure(&options);
+    let mut server_config = ServerConfig::ensure(&options);
+    server_config.data_dir = options.workdir.clone();
     let app_handle = Arc::new(Mutex::new(None));
     let app_state = AppState {
-        option: options.clone(),
+        options: options.clone(),
         server: Arc::new(Mutex::new(None)),
         app_handle: app_handle.clone(),
-        config: Arc::new(Mutex::new(dashboard_options.clone())),
+        config: Arc::new(Mutex::new(app_config.clone())),
+        server_config: server_config,
     };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -96,6 +116,8 @@ fn main() {
             get_token,
             get_config,
             set_config,
+            create_webview_window,
+            get_cookies,
             generate_log_file,
             open_python_path,
             open_uv_path

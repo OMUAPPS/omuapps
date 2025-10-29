@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { DragDropFile } from '@omujs/omu/extension/dashboard/packets.js';
+    import type { DragDropFile } from '@omujs/omu/api/dashboard';
     import type { TypedComponent } from '@omujs/ui';
     import { Spinner } from '@omujs/ui';
     import KitchenRenderer from './components/KitchenRenderer.svelte';
@@ -13,7 +13,11 @@
     import SceneItemEdit from './item/SceneItemEdit.svelte';
     import SceneKitchen from './kitchen/SceneKitchen.svelte';
     import SceneKitchenEdit from './kitchen/SceneKitchenEdit.svelte';
-    import { DEFAULT_GAME_CONFIG, DEFAULT_STATES, getGame } from './omucafe-app.js';
+    import {
+        DEFAULT_GAME_CONFIG,
+        DEFAULT_STATES,
+        getGame,
+    } from './omucafe-app.js';
     import SceneProductEdit from './product/SceneProductEdit.svelte';
     import SceneProductList from './product/SceneProductList.svelte';
     import SceneTakeProductPhoto from './product/SceneTakeProductPhoto.svelte';
@@ -24,9 +28,12 @@
     import { type Scene, type SceneContext } from './scenes/scene.js';
     import SceneScriptEdit from './script/SceneScriptEdit.svelte';
 
-    export const SCENES: Record<Scene['type'], TypedComponent<{
-        context: SceneContext;
-    }>> = {
+    export const SCENES: Record<
+        Scene['type'],
+        TypedComponent<{
+            context: SceneContext;
+        }>
+    > = {
         loading: SceneLoading,
         install: SceneInstall,
         main_menu: SceneMainMenu,
@@ -40,22 +47,29 @@
         effect_edit: SceneEffectEdit,
         script_edit: SceneScriptEdit,
         gallery: SceneGallery,
-    }
+    };
 
-    const { omu, scene, config, gameConfig, orders, states, paintEvents } = getGame();
-    
-    let lastScene: {type: string, comp: TypedComponent<{
-        context: SceneContext;
-    }>} = {type: $scene.type, comp: SCENES[$scene.type]};
-    let currentScene: {type: string, comp: TypedComponent<{
-        context: SceneContext;
-    }>} = { type: $scene.type, comp: SCENES[$scene.type] };
+    const { omu, scene, config, gameConfig, orders, states, paintEvents } =
+        getGame();
+
+    let lastScene: {
+        type: string;
+        comp: TypedComponent<{
+            context: SceneContext;
+        }>;
+    } = { type: $scene.type, comp: SCENES[$scene.type] };
+    let currentScene: {
+        type: string;
+        comp: TypedComponent<{
+            context: SceneContext;
+        }>;
+    } = { type: $scene.type, comp: SCENES[$scene.type] };
     $: {
         if ($scene.type !== currentScene.type) {
             lastScene = currentScene;
             currentScene = {
                 type: $scene.type,
-                comp: SCENES[$scene.type]
+                comp: SCENES[$scene.type],
             };
         }
     }
@@ -65,7 +79,9 @@
     $: {
         mouse.ui = false;
         if (sceneElement) {
-            mouse.ui = (['main_menu', 'install'] as (typeof $scene.type)[]).includes($scene.type);
+            mouse.ui = (
+                ['main_menu', 'install'] as (typeof $scene.type)[]
+            ).includes($scene.type);
             const children = sceneElement.children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
@@ -82,19 +98,23 @@
         }
     }
 
-    let importState: {
-        type: 'drag-enter',
-        drag_id: string,
-        files: DragDropFile[],
-    } | {
-        type: 'loading',
-    } | {
-        type: 'failed',
-        kind: 'invalid-format',
-    } | {
-        type: 'loaded',
-    }| null = null;
-    
+    let importState:
+        | {
+            type: 'drag-enter';
+            drag_id: string;
+            files: DragDropFile[];
+        }
+        | {
+            type: 'loading';
+        }
+        | {
+            type: 'failed';
+        }
+        | {
+            type: 'loaded';
+        }
+        | null = null;
+
     omu.dashboard.requireDragDrop().then((handler) => {
         handler.onEnter(async ({ drag_id, files }) => {
             if (!files.some((it) => it.name.endsWith('.omucafe'))) return;
@@ -126,11 +146,10 @@
                 }
                 importState = {
                     type: 'loaded',
-                }
+                };
             } catch {
                 importState = {
                     type: 'failed',
-                    kind: 'invalid-format',
                 };
             }
             setTimeout(() => {
@@ -145,43 +164,55 @@
     {#if lastScene !== currentScene}
         {#key lastScene.type}
             <div class="scene last" tabindex="-1">
-                <svelte:component this={lastScene.comp} context={{
-                    time: Time.now(),
-                    active: false,
-                }} />
+                <svelte:component
+                    this={lastScene.comp}
+                    context={{
+                        time: Time.now(),
+                        active: false,
+                    }}
+                />
             </div>
         {/key}
     {/if}
     {#key lastScene.type}
         <div class="scene current" bind:this={sceneElement}>
-            <svelte:component this={SCENES[$scene.type]} context={{
-                time: Time.now(),
-                active: true,
-            }} />
+            <svelte:component
+                this={SCENES[$scene.type]}
+                context={{
+                    time: Time.now(),
+                    active: true,
+                }}
+            />
         </div>
     {/key}
 </main>
 <div class="debug">
-    <button on:click={() => {
-        $scene = { type: 'loading' };
-        $config = DEFAULT_CONFIG;
-        $gameConfig = DEFAULT_GAME_CONFIG;
-        $states = DEFAULT_STATES;
-        $paintEvents = PaintBuffer.EMPTY;
-        orders.clear();
-        markChanged();
-    }}>
+    <button
+        on:click={() => {
+            $scene = { type: 'loading' };
+            $config = DEFAULT_CONFIG;
+            $gameConfig = DEFAULT_GAME_CONFIG;
+            $states = DEFAULT_STATES;
+            $paintEvents = PaintBuffer.EMPTY;
+            orders.clear();
+            markChanged();
+        }}
+    >
         reset
     </button>
-    <button on:click={() => {
-        window.location.reload();
-    }}>
+    <button
+        on:click={() => {
+            window.location.reload();
+        }}
+    >
         reload
     </button>
-    <button on:click={() => {
-        const ctx = getContext();
-        ctx.order = null;
-    }}>
+    <button
+        on:click={() => {
+            const ctx = getContext();
+            ctx.order = null;
+        }}
+    >
         set order
     </button>
 </div>
@@ -204,7 +235,7 @@
             <i class="ti ti-alert-hexagon"></i>
             読み込みに失敗しました
         </span>
-        {({'invalid-format': '無効なゲームファイル'})[importState.kind]}
+        無効なゲームファイル
     {:else if importState.type === 'loaded'}
         <span>
             <i class="ti ti-check"></i>
@@ -240,7 +271,7 @@
             pointer-events: auto;
         }
     }
-    
+
     .overlay {
         position: fixed;
         inset: 0;
@@ -277,12 +308,20 @@
         }
 
         32% {
-            background: color-mix(in srgb, var(--color-bg-2) 100%, transparent 0%);
+            background: color-mix(
+                in srgb,
+                var(--color-bg-2) 100%,
+                transparent 0%
+            );
             outline-offset: -3.25rem;
         }
 
         100% {
-            background: color-mix(in srgb, var(--color-bg-1) 90%, transparent 0%);
+            background: color-mix(
+                in srgb,
+                var(--color-bg-1) 90%,
+                transparent 0%
+            );
         }
     }
 
@@ -292,7 +331,7 @@
             color: var(--color-bg-2);
             opacity: 0;
         }
-        
+
         32% {
             transform: translateY(0.2621rem);
             opacity: 0.8;

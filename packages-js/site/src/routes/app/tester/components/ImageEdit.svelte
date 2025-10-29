@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { content } from '@omujs/chat/models/index.js';
-    
-    export let component: content.Image;
+    import type { Content } from '@omujs/chat';
+
+    export let component: Content.Image;
 </script>
 
 <input type="text" bind:value={component.data.url} placeholder="url" />

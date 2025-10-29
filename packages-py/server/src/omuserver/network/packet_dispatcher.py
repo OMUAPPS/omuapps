@@ -17,9 +17,6 @@ class ServerPacketDispatcher:
         self.packet_mapper = PacketMapper()
         self._packet_listeners: dict[Identifier, PacketHandler] = {}
 
-    async def process_connection(self, session: Session) -> None:
-        session.event.packet += self.process_packet
-
     async def process_packet(self, session: Session, packet: Packet) -> None:
         listeners = self._packet_listeners.get(packet.type.id)
         if not listeners:

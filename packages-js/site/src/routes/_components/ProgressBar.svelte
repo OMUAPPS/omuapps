@@ -1,6 +1,6 @@
 <script lang="ts">
     import { beforeNavigate } from '$app/navigation';
-    
+
     let loading = false;
     let loaded = true;
     let timeout: number;
@@ -12,7 +12,6 @@
             nav.complete.catch().finally(() => markLoaded());
         }
     });
-
 
     function markLoaded() {
         if (timeout) {

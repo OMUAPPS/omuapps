@@ -4,21 +4,21 @@ import { createTransform, type Bounds, type Transform } from '../game/transform.
 import type { Behaviors } from './behavior.js';
 
 export type Item = {
-    id: string,
-    name: string,
-    image?: Asset,
-    transform: Transform,
-    behaviors: Partial<Behaviors>,
-    bounds: Bounds,
+    id: string;
+    name: string;
+    image?: Asset;
+    transform: Transform;
+    behaviors: Partial<Behaviors>;
+    bounds: Bounds;
 };
 
 export function createItem(options: {
-    id?: string,
-    name: string,
-    image?: Asset,
-    transform?: Transform,
-    behaviors?: Partial<Behaviors>,
-    bounds?: Bounds,
+    id?: string;
+    name: string;
+    image?: Asset;
+    transform?: Transform;
+    behaviors?: Partial<Behaviors>;
+    bounds?: Bounds;
 }): Item {
     const { id, name, image, transform, behaviors, bounds } = options;
     return copy({

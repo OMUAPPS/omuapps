@@ -7,7 +7,8 @@ from typing import Literal
 from loguru import logger
 
 from omu.address import Address
-from omu.client import Client
+from omu.app import AppType
+from omu.brand import BRAND
 from omu.errors import (
     AnotherConnection,
     InvalidOrigin,
@@ -20,15 +21,18 @@ from omu.errors import (
 from omu.event_emitter import EventEmitter
 from omu.helper import Coro
 from omu.identifier import Identifier
+from omu.omu import Omu
 from omu.token import TokenProvider
 
-from .connection import CloseError, Connection
+from .connection import CloseError, Connection, Transport
+from .encryption import AES, Decryptor, Encryptor
 from .packet import Packet, PacketType
 from .packet.packet_types import (
     PACKET_TYPES,
     ConnectPacket,
     DisconnectPacket,
     DisconnectType,
+    EncryptionResponse,
 )
 from .packet_mapper import PacketMapper
 
@@ -42,33 +46,38 @@ class PacketHandler[T]:
 class Network:
     def __init__(
         self,
-        client: Client,
+        omu: Omu,
         address: Address,
         token_provider: TokenProvider,
-        connection: Connection,
+        transport: Transport,
+        connection: Connection | None = None,
     ):
-        self._client = client
-        self._address = address
+        self.omu = omu
+        self.address = address
         self._token_provider = token_provider
-        self._connection = connection
-        self._connected = False
+        self.transport = transport
+        self.connection: Connection | None = connection
         self._event = NetworkEvents()
         self._tasks: list[Coro[[], None]] = []
         self._packet_mapper = PacketMapper()
         self._packet_handlers: dict[Identifier, PacketHandler] = {}
+        self.listen_task: asyncio.Task[None] | None = None
         self.register_packet(
+            PACKET_TYPES.SERVER_META,
             PACKET_TYPES.CONNECT,
             PACKET_TYPES.DISCONNECT,
             PACKET_TYPES.TOKEN,
             PACKET_TYPES.READY,
+            PACKET_TYPES.ENCRYPTED_PACKET,
         )
         self.add_packet_handler(PACKET_TYPES.TOKEN, self.handle_token)
         self.add_packet_handler(PACKET_TYPES.DISCONNECT, self.handle_disconnect)
+        self.aes: AES | None = None
 
     async def handle_token(self, token: str | None):
         if token is None:
             return
-        self._token_provider.store(self._address, self._client.app, token)
+        self._token_provider.store(self.address, self.omu.app, token)
 
     async def handle_disconnect(self, reason: DisconnectPacket):
         if reason.type in {
@@ -92,16 +101,19 @@ class Network:
         if error:
             raise error(reason.message or reason.type.value)
 
-    @property
-    def address(self) -> Address:
-        return self._address
-
     def set_connection(self, connection: Connection) -> None:
-        if self._connected:
+        if self.connection:
             raise RuntimeError("Cannot change connection while connected")
-        if self._connection:
-            del self._connection
-        self._connection = connection
+        if self.connection:
+            del self.connection
+        self.connection = connection
+
+    def set_transport(self, transport: Transport) -> None:
+        if self.connection:
+            raise RuntimeError("Cannot change connection while connected")
+        if self.connection:
+            del self.connection
+        self.transport = transport
 
     def set_token_provider(self, token_provider: TokenProvider) -> None:
         self._token_provider = token_provider
@@ -133,45 +145,72 @@ class Network:
 
     @property
     def connected(self) -> bool:
-        return self._connected
+        if not self.connection:
+            return False
+        return not self.connection.closed
 
     async def connect(self, *, reconnect: bool = True) -> None:
-        if self._connected:
+        if self.listen_task:
             raise RuntimeError("Already connected")
 
         exception: Exception | None = None
+        attempts = 0
         while True:
             try:
-                await self._connection.connect()
+                self.connection = self.connection or await self.transport.connect()
+
+                meta = (await self.connection.receive_as(self._packet_mapper, PACKET_TYPES.SERVER_META)).unwrap()
+                self.address = self.address.with_hash(meta["hash"])
+                token = self._token_provider.get(self.address, self.omu.app)
+                if token is None:
+                    raise InvalidToken(f"No token for {self.address} and app {self.omu.app.id}")
+                encryption_resp: EncryptionResponse | None = None
+                if self.omu.app.type == AppType.REMOTE and meta["encryption"]:
+                    decryptor = Decryptor.new()
+                    encryptor = Encryptor.new(meta["encryption"]["rsa"])
+                    if token:
+                        token = encryptor.encrypt_string(token)
+                    aes = AES.new()
+                    encryption_resp = {
+                        "kind": "v1",
+                        "rsa": decryptor.to_request(),
+                        "aes": aes.serialize(encryptor),
+                    }
+                    self.aes = aes
+                await self.connection.send(
+                    Packet(
+                        PACKET_TYPES.CONNECT,
+                        ConnectPacket(
+                            app=self.omu.app,
+                            protocol={"version": self.omu.version, "brand": BRAND},
+                            encryption=encryption_resp,
+                            token=token,
+                        ),
+                    ),
+                    self._packet_mapper,
+                )
+                self.listen_task = asyncio.create_task(self._listen_task())
+                await self._event.status.emit("connected")
+                await self._event.connected.emit()
+                await self._dispatch_tasks()
+
+                await self.send(Packet(PACKET_TYPES.READY, None))
+                await self.listen_task
             except Exception as e:
                 if reconnect:
+                    attempts += 1
+                    if attempts > 10:
+                        return
                     if exception:
                         logger.error("Failed to reconnect")
                     else:
-                        logger.opt(exception=e).error(f"Failed to connect to {self._address.host}:{self._address.port}")
+                        logger.opt(exception=e).error(f"Failed to connect to {self.address.host}:{self.address.port}")
                     exception = e
                     continue
                 else:
                     raise e
-
-            self._connected = True
-            await self.send(
-                Packet(
-                    PACKET_TYPES.CONNECT,
-                    ConnectPacket(
-                        app=self._client.app,
-                        protocol={"version": self._client.version},
-                        token=self._token_provider.get(self._address, self._client.app),
-                    ),
-                )
-            )
-            listen_task = asyncio.create_task(self._listen_task())
-            await self._event.status.emit("connected")
-            await self._event.connected.emit()
-            await self._dispatch_tasks()
-
-            await self.send(Packet(PACKET_TYPES.READY, None))
-            await listen_task
+            finally:
+                self.listen_task = None
 
             if not reconnect:
                 break
@@ -179,7 +218,7 @@ class Network:
             await asyncio.sleep(1)
 
     async def disconnect(self) -> None:
-        if self._connection.closed:
+        if not self.connection:
             return
         await self.send(
             Packet(
@@ -187,8 +226,8 @@ class Network:
                 DisconnectPacket(DisconnectType.CLOSE, "Client disconnected"),
             )
         )
-        self._connected = False
-        await self._connection.close()
+        await self.connection.close()
+        self.connection = None
         await self._event.status.emit("disconnected")
         await self._event.disconnected.emit()
 
@@ -196,22 +235,32 @@ class Network:
         await self.disconnect()
 
     async def send(self, packet: Packet) -> None:
-        if not self._connected:
+        if not self.connection:
             raise RuntimeError("Not connected")
-        await self._connection.send(packet, self._packet_mapper)
+        if self.aes:
+            serialized = self._packet_mapper.serialize(packet)
+            packet = self.aes.encrypt(serialized)
+        await self.connection.send(packet, self._packet_mapper)
 
     async def _listen_task(self):
         try:
-            while not self._connection.closed:
-                packet = await self._connection.receive(self._packet_mapper)
-                asyncio.create_task(self.dispatch_packet(packet))
+            while self.connection:
+                received = await self.connection.receive(self._packet_mapper)
+                if received.is_err is True:
+                    logger.error(received.err.message)
+                    return
+                asyncio.create_task(self.dispatch_packet(received.value))
         except CloseError as e:
             logger.opt(exception=e).error("Connection closed")
         finally:
             await self.disconnect()
-            self._connected = False
 
     async def dispatch_packet(self, packet: Packet) -> None:
+        if PACKET_TYPES.ENCRYPTED_PACKET.match(packet):
+            if self.aes is None:
+                raise RuntimeError("Received encrypted packet before encryption was established")
+            decrypted = self.aes.decrypt(packet)
+            packet = self._packet_mapper.deserialize(decrypted)
         await self._event.packet.emit(packet)
         packet_handler = self._packet_handlers.get(packet.type.id)
         if not packet_handler:
@@ -223,7 +272,7 @@ class Network:
         return self._event
 
     def add_task(self, task: Coro[[], None]) -> None:
-        if self._client.ready:
+        if self.omu.ready:
             raise RuntimeError("Cannot add task after client is ready")
         self._tasks.append(task)
 

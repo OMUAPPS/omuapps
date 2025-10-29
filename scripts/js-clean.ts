@@ -11,7 +11,7 @@ const { values } = parseArgs({
         full: {
             type: 'boolean',
             default: false,
-        }
+        },
     },
     strict: true,
     allowPositionals: true,
@@ -24,14 +24,14 @@ const rm = async (path: string) => {
     }
     fs.rm(path, { recursive: true })
         .then(() => console.info(`Successfully deleted: ${path}`))
-        .catch(err => console.error(`Error cleaning ${path}: ${err.message}`))
-}
+        .catch(err => console.error(`Error cleaning ${path}: ${err.message}`));
+};
 
 const modulePaths = [
     'node_modules',
     ...await fs.readdir('packages-js', { withFileTypes: true })
-        .then(entries => entries.filter(entry => entry.isDirectory() && entry.name.startsWith('node_modules')).map(entry => `packages-js/${entry.name}`))
-]
+        .then(entries => entries.filter(entry => entry.isDirectory() && entry.name.startsWith('node_modules')).map(entry => `packages-js/${entry.name}`)),
+];
 
 const builtPaths = [
     'packages-js/chat/dist',
@@ -41,12 +41,12 @@ const builtPaths = [
     'packages-js/plugin-obs/dist',
     'packages-js/site/.svelte-kit',
     'packages-js/ui/dist',
-    'packages-js/ui/.svelte-kit'
+    'packages-js/ui/.svelte-kit',
 ];
 
 const tauriPaths = [
-    'packages-js/dash/src-tauri/target'
-]
+    'packages-js/dash/src-tauri/target',
+];
 
 if (values.full) {
     for (const path of builtPaths) {

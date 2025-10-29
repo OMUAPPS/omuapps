@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Locale, LocalizedText } from '@omujs/omu/localization/index.js';
+    import type { Locale, LocalizedText } from '@omujs/omu/localization';
     import { BROWSER } from 'esm-env';
     import { onDestroy } from 'svelte';
     import { client } from './stores.js';

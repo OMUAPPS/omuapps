@@ -48,7 +48,7 @@
             name: '液体',
             default: createLiquid(),
             edit: LiquidEdit,
-        }
+        },
     } satisfies DefaultBehaviors;
 </script>
 
@@ -104,7 +104,7 @@
                 item.bounds = {
                     min: { x: 0, y: 0 },
                     max: { x: image.width, y: image.height },
-                }
+                };
             }} />
         </div>
         <TransformEdit bind:transform={item.transform} />
@@ -112,7 +112,7 @@
             <JsonDebugInfo value={item.behaviors} />
         </code>
     </div>
-    <div class="behaviors omu-scroll"> 
+    <div class="behaviors omu-scroll">
         <h1>機能</h1>
         {#each Object.values(BEHAVIROS) as behavior, i (i)}
             <div class="behavior" class:active={item.behaviors[behavior.key]}>
@@ -198,7 +198,7 @@
         padding: 1rem 0;
         width: 100%;
         background: var(--color-bg-1);
-        
+
         &.no-image {
             border: 2px dashed var(--color-outline);
         }

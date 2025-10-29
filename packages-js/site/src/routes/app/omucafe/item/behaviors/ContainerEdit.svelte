@@ -20,12 +20,13 @@
 >
     <label class="setting">
         内容物を範囲内に収める
-        <input type="checkbox" value={!!behavior.bounded} on:change={({currentTarget}) => {
+        <input type="checkbox" value={!!behavior.bounded} on:change={({ currentTarget }) => {
             if (!currentTarget.checked) {
                 behavior.bounded = undefined;
                 return;
             }
-            behavior.bounded = { left: true, top: true, right: true, bottom: true}}
+            behavior.bounded = { left: true, top: true, right: true, bottom: true };
+        }
         } />
     </label>
     {#if behavior.bounded}
@@ -55,7 +56,7 @@
         behavior.mask = {
             asset,
             transform: createTransform(),
-        }
+        };
     }} />
     {#if behavior.mask}
         <TransformEdit bind:transform={behavior.mask.transform} />
@@ -69,7 +70,7 @@
         behavior.overlay = {
             asset,
             transform: createTransform(),
-        }
+        };
     }} />
     {#if behavior.overlay}
         <TransformEdit bind:transform={behavior.overlay.transform} />

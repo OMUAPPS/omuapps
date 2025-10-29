@@ -1,15 +1,15 @@
 {
     "type": "module",
     "name": "@omujs/chat",
-    "version": "0.9.13",
+    "version": "0.9.19",
     "exports": {
         ".": {
             "import": "./dist/esm/index.js",
             "types": "./dist/dts/index.d.ts"
         },
         "./*": {
-            "import": "./dist/esm/*",
-            "types": "./dist/dts/*"
+            "import": "./dist/esm/*/index.js",
+            "types": "./dist/dts/*/index.d.js"
         }
     },
     "scripts": {

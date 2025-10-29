@@ -1,6 +1,6 @@
 <script lang="ts">
     import AppInfo from '$lib/common/AppInfo.svelte';
-    import type { AppUpdateRequest } from '@omujs/omu/extension/dashboard/packets.js';
+    import type { AppUpdateRequest } from '@omujs/omu/api/dashboard';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
@@ -24,7 +24,7 @@
     }
 </script>
 
-<Screen {screen} title="app_update" disableClose>
+<Screen {screen} disableClose>
     <div class="screen">
         <h3>
             古いバージョン
@@ -49,7 +49,7 @@
                 更新
                 <i class="ti ti-check"></i>
             </button>
-        </div>  
+        </div>
     </div>
 </Screen>
 

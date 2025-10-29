@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { content } from '@omujs/chat/models/index.js';
+    import { Content } from '@omujs/chat/models';
     import LinkableText from './LinkableText.svelte';
     import { client } from './stores.js';
     import Tooltip from './Tooltip.svelte';
 
-    export let component: content.Component;
+    export let component: Content.Component;
 </script>
 
 {#if component.type === 'text'}

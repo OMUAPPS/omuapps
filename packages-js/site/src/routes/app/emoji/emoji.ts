@@ -1,12 +1,9 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { Chat, models } from '@omujs/chat';
-import { Provider } from '@omujs/chat/models/provider.js';
-import type { Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { TableType, type Table } from '@omujs/omu/extension/table/index.js';
-import { Identifier } from '@omujs/omu/identifier.js';
-import type { Keyable } from '@omujs/omu/interface.js';
-import type { Model } from '@omujs/omu/model.js';
+import { Chat, Models } from '@omujs/chat';
+import { Provider } from '@omujs/chat/models';
+import { Identifier, Serializer, type Omu } from '@omujs/omu';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { TableType, type Table } from '@omujs/omu/api/table';
 import { writable, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 
@@ -35,58 +32,17 @@ export interface EmojiData {
     patterns: Pattern[];
 }
 
-export class Emoji implements Model<EmojiData>, Keyable {
+export type Emoji = {
     readonly id: string;
     asset: Identifier;
     patterns: Pattern[];
+};
 
-    constructor(options: { id: string; asset: Identifier; patterns: Pattern[] }) {
-        this.id = options.id;
-        this.asset = options.asset;
-        this.patterns = options.patterns;
-    }
-
-    public getPatternText() {
-        return this.patterns
-            .map((pattern) => {
-                if (pattern.type === 'text') {
-                    return pattern.text;
-                }
-                if (pattern.type === 'image') {
-                    return `:${pattern.id}:`;
-                }
-                if (pattern.type === 'regex') {
-                    return pattern.regex;
-                }
-                return '';
-            })
-            .join(', ');
-    }
-
-    key() {
-        return this.id;
-    }
-
-    static fromJson(data: EmojiData) {
-        return new Emoji({
-            id: data.id,
-            asset: Identifier.fromKey(data.asset),
-            patterns: data.patterns,
-        });
-    }
-
-    toJson() {
-        return {
-            id: this.id,
-            asset: this.asset.key(),
-            patterns: this.patterns,
-        };
-    }
-}
-
-export const EMOJI_TABLE = TableType.createModel(PLUGIN_IDENTIFIER, {
+export const EMOJI_TABLE = TableType.createJson<Emoji>(PLUGIN_IDENTIFIER, {
     name: 'emoji',
-    model: Emoji,
+    key: (item) => item.id,
+    serializer: Serializer.noop<Emoji>()
+        .field('asset', Identifier),
 });
 
 export type Config = {
@@ -115,7 +71,7 @@ export class EmojiApp {
     }
 
     testEmoji(emoji: Emoji) {
-        const room = new models.Room({
+        const room = new Models.Room({
             id: EMOJI_TEST_PROVIDER.id.join('test'),
             providerId: EMOJI_TEST_PROVIDER.id,
             connected: false,
@@ -125,13 +81,13 @@ export class EmojiApp {
         });
         this.chat.rooms.update(room);
         this.chat.messages.add(
-            new models.Message({
+            new Models.Message({
                 id: EMOJI_TEST_PROVIDER.id.join('test', 'message', new Date().getTime().toString()),
                 roomId: room.id,
                 content: { type: 'system', data: [
                     { type: 'asset', data: { id: emoji.asset.key() } },
                     { type: 'text', data: emoji.id },
-                ]},
+                ] },
                 createdAt: new Date(),
             }),
         );

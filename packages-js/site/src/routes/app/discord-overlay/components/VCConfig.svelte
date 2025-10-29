@@ -14,7 +14,7 @@
     $: hasChannels = channels.length > 0;
 
     async function refresh() {
-        await overlayApp.refresh()
+        await overlayApp.refresh();
         clients = await overlayApp.getClients();
         console.log(clients);
     }
@@ -23,15 +23,15 @@
             label: '自動',
             value: null,
         },
-        ...Object.fromEntries(guilds.map((guild) => [guild.id, {label: guild.name, value: guild.id}]))
-    }
+        ...Object.fromEntries(guilds.map((guild) => [guild.id, { label: guild.name, value: guild.id }])),
+    };
     $: channelOptions = {
         auto: {
             label: '自動',
             value: null,
         },
-        ...Object.fromEntries(channels.map((channel) => [channel.id, {label: channel.name, value: channel.id}]))
-    }
+        ...Object.fromEntries(channels.map((channel) => [channel.id, { label: channel.name, value: channel.id }])),
+    };
 </script>
 
 <div class="config">
@@ -59,7 +59,7 @@
                 <i class="ti ti-user"></i>
                 ユーザー
             </p>
-            <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, {label: client.global_name, value: id}]))} bind:value={$config.user_id}/>
+            <Combobox options={Object.fromEntries(Object.entries(clients).map(([id, client]) => [id, { label: client.global_name ?? client.username, value: id }]))} bind:value={$config.user_id} />
         {:else if Object.keys(clients).length === 0}
             <small>
                 起動しているDiscordが見つかりませんでした
@@ -71,12 +71,12 @@
                 ユーザー
             </p>
             {#if user.avatar}
-                <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar"/>
+                <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar" />
             {:else}
-                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar"/>
+                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
             {/if}
             <small>
-                {user.global_name}
+                {user.global_name ?? user.id}
             </small>
         {:else}
             <small>
@@ -90,7 +90,7 @@
                 <i class="ti ti-server"></i>
                 サーバー
             </p>
-            <Combobox options={guildOptions} bind:value={$config.guild_id}/>
+            <Combobox options={guildOptions} bind:value={$config.guild_id} />
         {:else if hasUsers}
             <small>
                 入っているサーバーは見つかりませんでした
@@ -103,7 +103,7 @@
                 <i class="ti ti-headphones"></i>
                 チャンネル
             </p>
-            <Combobox options={channelOptions} bind:value={$config.channel_id}/>
+            <Combobox options={channelOptions} bind:value={$config.channel_id} />
         {:else if hasGuilds && hasUsers && $config.guild_id}
             <small>
                 ボイスチャンネルは見つかりませんでした
@@ -142,7 +142,7 @@
             location.reload();
         }}>
             <Tooltip>
-                アプリを再読み込みする  
+                アプリを再読み込みする
             </Tooltip>
             <i class="ti ti-reload"></i>
         </button>
@@ -153,7 +153,7 @@
             Reactiveアバターを使う
             <input type="checkbox" bind:checked={$config.reactive.enabled} on:change={() => {
                 window.location.reload();
-            }}/>
+            }} />
         </label>
     </span>
 </div>

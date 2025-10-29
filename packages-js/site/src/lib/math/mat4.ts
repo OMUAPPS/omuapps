@@ -148,7 +148,7 @@ export class Mat4 {
             this.m30, this.m31, this.m32, this.m33,
         );
     }
-    
+
     public rotate(quaternion: Quaternion): Mat4 {
         const w2 = quaternion.w * quaternion.w, x2 = quaternion.x * quaternion.x;
         const y2 = quaternion.y * quaternion.y, z2 = quaternion.z * quaternion.z;
@@ -230,7 +230,7 @@ export class Mat4 {
             nm30, nm31, nm32, nm33,
         );
     }
-    
+
     public transform2(point: Vec2Like): Vec2 {
         const x = this.m00 * point.x + this.m10 * point.y + this.m30;
         const y = this.m01 * point.x + this.m11 * point.y + this.m31;
@@ -254,7 +254,7 @@ export class Mat4 {
             this.transform2(leftBottom),
             this.transform2(rightTop),
             this.transform2(rightBottom),
-        ])
+        ]);
     }
 
     public basisTransformAABB2(aabb: AABB2Like): AABB2 {
@@ -268,9 +268,9 @@ export class Mat4 {
             this.basisTransform2(leftBottom),
             this.basisTransform2(rightTop),
             this.basisTransform2(rightBottom),
-        ])
+        ]);
     }
-    
+
     public transform3(point: Vec3): Vec3 {
         const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30;
         const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31;

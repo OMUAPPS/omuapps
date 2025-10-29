@@ -21,3 +21,20 @@ export const APP = new App(APP_ID, {
         tags: ['underdevelopment', 'tool'] as TagKey[],
     }),
 });
+
+export const ASSET_APP = new App(APP_ID.join('asset'), {
+    url: getUrl('/app/marshmallow/asset'),
+    parentId: APP,
+    metadata: buildMetadata({
+        locale: 'en',
+        name: {
+            ja: 'マシュマロ読み',
+            en: 'Marshmallow Reader',
+        },
+        description: {
+            ja: '面倒なことなくマシュマロを読むことができます',
+            en: 'Read marshmallows without any hassle',
+        },
+        icon: 'ti-notes',
+    }),
+});

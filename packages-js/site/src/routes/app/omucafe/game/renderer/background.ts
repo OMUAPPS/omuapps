@@ -5,7 +5,6 @@ import effect from '../../asset/images/effect.png';
 import kitchen_asset_overlay from '../../asset/images/kitchen_asset_overlay.png';
 import { draw, glContext, matrices, side } from '../game.js';
 
-
 export async function renderBackground() {
     const tex = side === 'background' ? await getTextureByUri(background2) : await getTextureByUri(background);
     // Background
@@ -40,17 +39,7 @@ export async function renderEffect() {
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 }
 
-
 export async function renderOverlay() {
-    const gl = glContext.gl;
-    // if (side === 'client') {
-    //     const tex = await getTextureByUri(overlay2);
-    //     draw.texture(
-    //         0, 0,
-    //         gl.canvas.width, gl.canvas.height,
-    //         tex.tex,
-    //     );
-    // }
     if (side === 'overlay') {
         const { tex, width, height } = await getTextureByUri(kitchen_asset_overlay);
         draw.texture(
@@ -62,15 +51,4 @@ export async function renderOverlay() {
 }
 
 export async function renderOverlay2() {
-    // const gl = glContext.gl;
-    // if (side === 'overlay') {
-    //     const tex = await getTextureByUri(overlay3);
-    //     const { height } = gl.canvas;
-    //     const scale = Math.min(height / tex.height, 1.5);
-    //     draw.texture(
-    //         0, height - tex.height * scale,
-    //         tex.width * scale, height,
-    //         tex.tex,
-    //     );
-    // }
 }

@@ -1,33 +1,35 @@
+import { ExtensionRegistry } from './api';
+import { ASSET_EXTENSION_TYPE, type AssetExtension } from './api/asset/extension';
+import { DASHBOARD_EXTENSION_TYPE, type DashboardExtension } from './api/dashboard/extension';
+import { ENDPOINT_EXTENSION_TYPE, type EndpointExtension } from './api/endpoint/extension';
+import { HTTP_EXTENSION_TYPE, HttpExtension } from './api/http/extension';
+import { I18N_EXTENSION_TYPE, type I18nExtension } from './api/i18n/extension';
+import { LOGGER_EXTENSION_TYPE, type LoggerExtension } from './api/logger/extension.js';
+import { PERMISSION_EXTENSION_TYPE, type PermissionExtension } from './api/permission/extension';
+import { PLUGIN_EXTENSION_TYPE, type PluginExtension } from './api/plugin/extension';
+import { REGISTRY_EXTENSION_TYPE, type RegistryExtension } from './api/registry/extension';
+import { SERVER_EXTENSION_TYPE, type ServerExtension } from './api/server/extension';
+import { SESSION_EXTENSION_TYPE, SessionExtension } from './api/session';
+import { SIGNAL_EXTENSION_TYPE, type SignalExtension } from './api/signal/extension';
+import { TABLE_EXTENSION_TYPE, type TableExtension } from './api/table/extension';
 import type { App } from './app.js';
-import type { Client, ClientEvents } from './client.js';
-import type { Unlisten } from './event-emitter.js';
-import { EventEmitter } from './event-emitter.js';
-import { ASSET_EXTENSION_TYPE, type AssetExtension } from './extension/asset/index.js';
-import { DASHBOARD_EXTENSION_TYPE, type DashboardExtension } from './extension/dashboard/index.js';
-import { ENDPOINT_EXTENSION_TYPE, type EndpointExtension } from './extension/endpoint/index.js';
-import { I18N_EXTENSION_TYPE, type I18nExtension } from './extension/i18n/index.js';
-import { ExtensionRegistry } from './extension/index.js';
-import {
-    LOGGER_EXTENSION_TYPE,
-    type LoggerExtension,
-} from './extension/logger/logger-extension.js';
-import {
-    PERMISSION_EXTENSION_TYPE,
-    type PermissionExtension,
-} from './extension/permission/index.js';
-import { PLUGIN_EXTENSION_TYPE, type PluginExtension } from './extension/plugin/index.js';
-import { REGISTRY_EXTENSION_TYPE, type RegistryExtension } from './extension/registry/index.js';
-import { SERVER_EXTENSION_TYPE, type ServerExtension } from './extension/server/index.js';
-import { SIGNAL_EXTENSION_TYPE, type SignalExtension } from './extension/signal/index.js';
-import { TABLE_EXTENSION_TYPE, type TableExtension } from './extension/table/index.js';
-import type { Address, Connection } from './network/index.js';
-import { Network } from './network/index.js';
+import type { Unlisten } from './event';
+import { EventEmitter } from './event';
+import type { Address, Connection } from './network';
+import { Network } from './network';
+import { Transport } from './network/connection.js';
 import { PACKET_TYPES } from './network/packet/packet-types.js';
 import type { PacketType } from './network/packet/packet.js';
-import { WebsocketConnection } from './network/websocket-connection.js';
+import { WebsocketTransport } from './network/websocket-transport';
 import { BrowserTokenProvider, type TokenProvider } from './token.js';
 
-export class Omu implements Client {
+export type ClientEvents = {
+    started: EventEmitter<[]>;
+    stopped: EventEmitter<[]>;
+    ready: EventEmitter<[]>;
+};
+
+export class Omu {
     public ready: boolean;
     public running: boolean;
     readonly event: ClientEvents = {
@@ -37,6 +39,7 @@ export class Omu implements Client {
     };
     readonly token: TokenProvider;
     readonly address: Address;
+    readonly sessions: SessionExtension;
     readonly network: Network;
     readonly endpoints: EndpointExtension;
     readonly permissions: PermissionExtension;
@@ -50,12 +53,14 @@ export class Omu implements Client {
     readonly i18n: I18nExtension;
     readonly server: ServerExtension;
     readonly logger: LoggerExtension;
+    readonly http: HttpExtension;
 
     constructor(
         public readonly app: App,
         options?: {
             address?: Address;
             token?: TokenProvider | string;
+            transport?: Transport;
             connection?: Connection;
         },
     ) {
@@ -79,7 +84,8 @@ export class Omu implements Client {
             this,
             this.address,
             this.token,
-            options?.connection ?? new WebsocketConnection(this.address),
+            options?.transport ?? new WebsocketTransport(this.address),
+            options?.connection,
         );
         this.network.event.disconnected.listen(() => {
             this.ready = false;
@@ -92,18 +98,19 @@ export class Omu implements Client {
             this.event.ready.emit();
         });
         this.extensions = new ExtensionRegistry(this);
-
         this.endpoints = this.extensions.register(ENDPOINT_EXTENSION_TYPE);
         this.plugins = this.extensions.register(PLUGIN_EXTENSION_TYPE);
         this.permissions = this.extensions.register(PERMISSION_EXTENSION_TYPE);
         this.tables = this.extensions.register(TABLE_EXTENSION_TYPE);
-        this.dashboard = this.extensions.register(DASHBOARD_EXTENSION_TYPE);
+        this.sessions = this.extensions.register(SESSION_EXTENSION_TYPE);
         this.registries = this.extensions.register(REGISTRY_EXTENSION_TYPE);
+        this.dashboard = this.extensions.register(DASHBOARD_EXTENSION_TYPE);
         this.signals = this.extensions.register(SIGNAL_EXTENSION_TYPE);
         this.assets = this.extensions.register(ASSET_EXTENSION_TYPE);
         this.i18n = this.extensions.register(I18N_EXTENSION_TYPE);
         this.server = this.extensions.register(SERVER_EXTENSION_TYPE);
         this.logger = this.extensions.register(LOGGER_EXTENSION_TYPE);
+        this.http = this.extensions.register(HTTP_EXTENSION_TYPE);
     }
 
     public send<T>(packetType: PacketType<T>, data: T): void {
@@ -136,16 +143,13 @@ export class Omu implements Client {
     }
 
     public async waitForReady(): Promise<void> {
-        return new Promise((resolve) => {
-            if (this.ready) {
+        if (this.ready) return;
+        return new Promise<void>((resolve) => {
+            let unlisten = () => {};
+            unlisten = this.event.ready.listen(() => {
+                unlisten();
                 resolve();
-            } else {
-                let unlisten = () => {};
-                unlisten = this.event.ready.listen(() => {
-                    unlisten();
-                    resolve();
-                });
-            }
+            });
         });
     }
 }

@@ -67,7 +67,6 @@
     </div>
 {/if}
 
-
 <style lang="scss">
     .selected {
         display: flex;

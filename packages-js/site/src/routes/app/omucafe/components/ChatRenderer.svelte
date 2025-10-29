@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { Message } from '@omujs/chat/models/message.js';
-    import { ComponentRenderer } from '@omujs/ui';
+    import type { Message } from '@omujs/chat/models';
+    import { Button, ComponentRenderer } from '@omujs/ui';
     import { getGame } from '../omucafe-app.js';
 
-    const { omu, scene, chat, side } = getGame();
+    const { omu, scene, chat, side, config } = getGame();
 
     let messages: Message[] = [];
     let messageQueue: Message[] = [];
@@ -19,70 +19,114 @@
             queueTimer = null;
             const message = messageQueue.shift();
             if (!message) return;
-            messages = [...messages, message]
+            messages = [...messages, message];
             if (messages.length > MAX_MESSAGES) {
                 messages.splice(0, messages.length - MAX_MESSAGES);
             }
             updateQueue();
         }, delay);
     }
-    
+
     chat.messages.listen();
     chat.messages.event.add.listen((value) => {
         messageQueue = [...messageQueue, ...value.values()];
         updateQueue();
-    })
-    chat.messages.fetchItems({
-        limit: MAX_MESSAGES,
-        backward: true,
-    }).then((res) => {
-        messages = [...res.values()];
-    })
-
+    });
+    chat.messages
+        .fetchItems({
+            limit: MAX_MESSAGES,
+            backward: true,
+        })
+        .then((res) => {
+            messages = [...res.values()];
+        });
 </script>
 
-<div class="messages omu-scroll" class:overlay={side === 'overlay'} class:hide={side === 'overlay' && $scene.type === 'photo_mode'}>
-    {#each messages.toReversed() as message (message.id)}
-        <div class="message">
-            <div class="inner">
-                {#if message.authorId}
-                    <div class="author">
-                        {#await chat.authors.get(message.authorId.key()) then author}
-                            {#if author}
-                                {#if author.avatarUrl}
-                                    <img class="avatar" src={omu.assets.proxy(author.avatarUrl)} alt="">
-                                {/if}
-                                {author.name}
-                            {/if}
-                        {/await}
+<div
+    class="container"
+    class:overlay={side === 'overlay'}
+    class:hide={side === 'overlay' &&
+        ($scene.type === 'photo_mode' || !$config.chat.show)}
+>
+    {#if side === 'client'}
+        <Button
+            primary
+            onclick={() => {
+                $config.chat.show = !$config.chat.show;
+            }}
+        >
+            {#if $config.chat.show}
+                チャットをしまう
+            {:else}
+                チャットを開く
+            {/if}
+        </Button>
+    {/if}
+    {#if $config.chat.show}
+        <div class="messages omu-scroll">
+            {#each messages.toReversed() as message (message.id)}
+                <div class="message">
+                    <div class="inner">
+                        {#if message.authorId}
+                            <div class="author">
+                                {#await chat.authors.get(message.authorId.key()) then author}
+                                    {#if author}
+                                        {#if author.avatarUrl}
+                                            <img
+                                                class="avatar"
+                                                src={omu.assets.proxy(
+                                                    author.avatarUrl,
+                                                )}
+                                                alt=""
+                                            />
+                                        {/if}
+                                        {author.name}
+                                    {/if}
+                                {/await}
+                            </div>
+                        {/if}
+                        {#if message.content}
+                            <div class="content">
+                                <ComponentRenderer
+                                    component={message.content}
+                                />
+                            </div>
+                        {/if}
                     </div>
-                {/if}
-                {#if message.content}
-                    <div class="content">
-                        <ComponentRenderer component={message.content} />
-                    </div>
-                {/if}
-            </div>
+                </div>
+            {/each}
         </div>
-    {/each}
+    {/if}
 </div>
 
-
 <style lang="scss">
-    .messages {
+    .container {
         position: absolute;
         left: 26rem;
         top: 2px;
+        height: 30%;
+        $bevel: 0.25rem;
+        clip-path: polygon(
+            $bevel 0rem,
+            calc(100% - $bevel) 0rem,
+            100% $bevel,
+            100% calc(100% - $bevel),
+            calc(100% - $bevel) 100%,
+            $bevel 100%,
+            0rem calc(100% - $bevel),
+            0rem $bevel
+        );
+    }
+
+    .messages {
+        padding-right: 1rem;
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        height: 30%;
+        height: 100%;
         width: 18rem;
         overflow-y: auto;
         overflow-x: hidden;
-        padding-right: 1rem;
-        $bevel: 0.25rem;
-        clip-path: polygon($bevel 0rem, calc(100% - $bevel) 0rem, 100% $bevel, 100% calc(100% - $bevel), calc(100% - $bevel) 100%, $bevel 100%, 0rem calc(100% - $bevel), 0rem $bevel);
     }
 
     .overlay {
@@ -93,8 +137,8 @@
         width: 20rem;
         font-size: 1.4rem;
         padding-right: 0;
-        background: #D9AD7D;
-        border: 3px solid #A97338;
+        background: #d9ad7d;
+        border: 3px solid #a97338;
         padding: 1rem;
     }
 
@@ -115,7 +159,7 @@
         grid-template-rows: 0fr;
         animation: grow 0.1621s ease-in-out forwards;
     }
-    
+
     .message > .inner {
         overflow: hidden;
         padding: 0.5em 1em;
@@ -123,7 +167,16 @@
         margin-bottom: 0.75em;
         transform-origin: top;
         $bevel: 2px;
-        clip-path: polygon($bevel 0rem, calc(100% - $bevel) 0rem, 100% $bevel, 100% calc(100% - $bevel), calc(100% - $bevel) 100%, $bevel 100%, 0rem calc(100% - $bevel), 0rem $bevel);
+        clip-path: polygon(
+            $bevel 0rem,
+            calc(100% - $bevel) 0rem,
+            100% $bevel,
+            100% calc(100% - $bevel),
+            calc(100% - $bevel) 100%,
+            $bevel 100%,
+            0rem calc(100% - $bevel),
+            0rem $bevel
+        );
     }
 
     @keyframes grow {

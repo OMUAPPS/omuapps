@@ -1,8 +1,9 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
-    import { Paid } from '@omujs/chat/models/paid.js';
+    import type { Content, Models } from '@omujs/chat';
+    import ButtonLink from './ButtonLink.svelte';
     import ButtonMini from './ButtonMini.svelte';
     import ComponentRenderer from './ComponentRenderer.svelte';
+    import ExternalLink from './ExternalLink.svelte';
     import Gift from './Gift.svelte';
     import RelativeDate from './RelativeDate.svelte';
     import Role from './Role.svelte';
@@ -10,17 +11,22 @@
     import { client, dateTimeFormats, translate } from './stores.js';
     import { applyOpacity } from './utils/class-helper.js';
 
-    export let paid: Paid | undefined = undefined;
-    export let gifts: Array<models.Gift> | undefined = undefined;
-    export let author: models.Author | undefined = undefined;
-    export let room: models.Room | undefined = undefined;
+    export let paid: Models.Paid | undefined = undefined;
+    export let gifts: Array<Models.Gift> | undefined = undefined;
+    export let author: Models.Author | undefined = undefined;
+    export let room: Models.Room | undefined = undefined;
     export let createdAt: Date | undefined = undefined;
-    export let content: models.content.Component | undefined = undefined;
+    export let content: Content.Component | undefined = undefined;
     export let handleCopy: () => void = () => {};
     export let selected: boolean = false;
 
-    $: roomStartedAt = room?.metadata.started_at && new Date(room.metadata.started_at);
-    $: time = createdAt && roomStartedAt && new Date(createdAt.getTime() - roomStartedAt.getTime()) || null;
+    $: roomStartedAt =
+        room?.metadata.started_at && new Date(room.metadata.started_at);
+    $: time =
+        (createdAt &&
+            roomStartedAt &&
+            new Date(createdAt.getTime() - roomStartedAt.getTime())) ||
+        null;
     $: url = room?.metadata.url || null;
 
     function formatTime(date: Date): string {
@@ -30,15 +36,31 @@
             parts.push(Math.floor(seconds / 60 / 60 / 24 / 30) + '/');
         }
         if (seconds > 60 * 60 * 24) {
-            parts.push(Math.floor(seconds / 60 / 60 / 24) % 30 + ' ');
+            parts.push((Math.floor(seconds / 60 / 60 / 24) % 30) + ' ');
         }
         if (seconds > 60 * 60) {
-            parts.push(Math.floor(seconds / 60 / 60) % 24 + 'h ');
+            parts.push((Math.floor(seconds / 60 / 60) % 24) + 'h ');
         }
         parts.push(date.getMinutes().toString().padStart(2, '0') + 'm ');
         parts.push(date.getSeconds().toString().padStart(2, '0') + 's');
         return parts.join('');
     }
+
+    const CURRENCIES: Record<string, string | undefined> = {
+        '¥': 'yen',
+        '฿': 'baht',
+        '$': 'dollar',
+        '€': 'euro',
+        '£': 'pound',
+        '₩': 'won',
+        '₹': 'rupee',
+        '₽': 'ruble',
+        '₣': 'franc',
+        'R$': 'real',
+        '₺': 'lira',
+        '₱': 'peso',
+        'RM': 'ringgit',
+    };
 </script>
 
 <article
@@ -52,12 +74,13 @@
         {@const proxyUrl = $client.assets.proxy(author.avatarUrl)}
         <div class="avatar">
             <Tooltip noBackground>
-                <img src={proxyUrl} alt="avatar" class="avatar-preview" />
+                {@const fullProxyUrl = $client.assets.proxy(author.metadata.avatar_url ?? author.avatarUrl)}
+                <img src={fullProxyUrl} alt="avatar" class="avatar-preview" />
             </Tooltip>
             {#if author.metadata?.url}
-                <a href={author.metadata.url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink href={author.metadata.url}>
                     <img src={proxyUrl} alt="avatar" class="avatar-image" />
-                </a>
+                </ExternalLink>
             {:else}
                 <img src={proxyUrl} alt="avatar" class="avatar-image" />
             {/if}
@@ -71,7 +94,10 @@
                     {#each author.roles || [] as role (role.id)}
                         <Role {role} />
                     {/each}
-                    <small>{author.metadata?.screen_id || author.id.path.at(-1)}</small>
+                    <small
+                    >{author.metadata?.screen_id ||
+                        author.id.path.at(-1)}</small
+                    >
                 </div>
                 {#if createdAt}
                     <span class="time">
@@ -86,26 +112,14 @@
         <div class="flex width between">
             <div class="content">
                 {#if content}
-                    <div class="content-renderer"><ComponentRenderer component={content} /></div>
+                    <div class="content-renderer">
+                        <ComponentRenderer component={content} />
+                    </div>
                 {/if}
                 {#if gifts?.length}
                     <div class="gifts">
                         {#if paid}
-                            {@const currency = {
-                                '¥': 'yen',
-                                '฿': 'baht',
-                                '$': 'dollar',
-                                '€': 'euro',
-                                '£': 'pound',
-                                '₩': 'won',
-                                '₹': 'rupee',
-                                '₽': 'ruble',
-                                '₣': 'franc',
-                                'R$': 'real',
-                                '₺': 'lira',
-                                '₱': 'peso',
-                                'RM': 'ringgit',
-                            }[paid.currency]}
+                            {@const currency = CURRENCIES[paid.currency]}
                             <div class="paid">
                                 <span>
                                     <i class="ti ti-gift"></i>
@@ -132,14 +146,17 @@
     {#if selected}
         <div class="actions">
             {#if time}
-                {@const timedLink = `${url}&t=${Math.floor(time.getTime()/1000)+10}s`}
-                <ButtonMini primary on:click={() => {window.open(timedLink, '_blank')}}>
+                {@const timedLink = `${url}&t=${Math.floor(time.getTime() / 1000) + 10}s`}
+                <ButtonLink
+                    href={timedLink}
+                    primary
+                >
                     <Tooltip>
                         <p>{$translate('panels.messages.see_in_room')}</p>
                         <p>{formatTime(time)}</p>
                     </Tooltip>
                     <i class="ti ti-external-link"></i>
-                </ButtonMini>
+                </ButtonLink>
             {/if}
             <ButtonMini primary on:click={handleCopy}>
                 <Tooltip>{$translate('panels.messages.copy')}</Tooltip>

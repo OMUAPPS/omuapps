@@ -25,13 +25,13 @@ export async function renderCursor() {
         -delta.x / 100, 1, 0, 0,
         0, 0, 1, 0,
         position.x, position.y, 0, 1,
-    )
+    );
     if (ctx.side === 'overlay' && ctx.scene.type !== 'photo_mode') {
         matrices.view.translate(
             0,
             matrices.height / 2,
-            0.
-        )
+            0.,
+        );
         const z = model.m31 + 1080;
         model = new Mat4(
             model.m00 * 0.8 * 2, model.m01, model.m02, model.m03,
@@ -57,7 +57,7 @@ export async function renderCursor() {
             x: -4,
             y: -4,
         },
-    }
+    };
     const cursor = getContext().held ? CURSORS.point : CURSORS.grab;
     const time = Time.now();
     const duration = time - (mouse.down ? mouse.downTime : mouse.upTime);

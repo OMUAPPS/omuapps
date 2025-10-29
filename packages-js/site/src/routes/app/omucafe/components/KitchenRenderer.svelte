@@ -39,7 +39,7 @@
                     <Button onclick={() => {
                         createItemState({
                             item,
-                        })
+                        });
                     }}>
                         {item.name}
                     </Button>
@@ -102,34 +102,6 @@
         cursor: none;
     }
 
-    .menu {
-        position: absolute;
-        left: 5rem;
-        top: 2rem;
-        visibility: hidden;
-
-        &.active {
-            animation: fadeIn forwards 0.1621s ease-in-out;
-        }
-    }
-
-    @keyframes fadeIn {
-        0% {
-            opacity: 0;
-            transform: translateY(-10rem);
-        }
-
-        80% {
-            transform: translateY(1rem);
-            rotate: 1deg;
-        }
-
-        100% {
-            opacity: 1;
-            visibility: visible;
-        }
-    }
-
     .last-order {
         position: absolute;
         right: 2rem;
@@ -156,6 +128,34 @@
             width: 3rem;
             height: 3rem;
             border-radius: 100%;
+        }
+    }
+
+    .menu {
+        position: absolute;
+        left: 5rem;
+        top: 2rem;
+        visibility: hidden;
+
+        &.active {
+            animation: fadeIn forwards 0.1621s ease-in-out;
+        }
+    }
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-10rem);
+        }
+
+        80% {
+            transform: translateY(1rem);
+            rotate: 1deg;
+        }
+
+        100% {
+            opacity: 1;
+            visibility: visible;
         }
     }
 

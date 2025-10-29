@@ -1,5 +1,4 @@
 import { Identifier } from '@omujs/omu';
-import type { Model } from '@omujs/omu/model.js';
 
 export type ReactionJson = {
     room_id: string;
@@ -8,7 +7,7 @@ export type ReactionJson = {
     };
 };
 
-export class Reaction implements Model<ReactionJson> {
+export class Reaction {
     public roomId: Identifier;
     public reactions: {
         [key: string]: number;
@@ -24,17 +23,17 @@ export class Reaction implements Model<ReactionJson> {
         this.reactions = options.reactions;
     }
 
-    static fromJson(data: ReactionJson): Reaction {
+    public static deserialize(data: ReactionJson): Reaction {
         return new Reaction({
             roomId: Identifier.fromKey(data.room_id),
             reactions: data.reactions,
         });
     }
 
-    toJson(): ReactionJson {
+    public static serialize(item: Reaction): ReactionJson {
         return {
-            room_id: this.roomId.key(),
-            reactions: this.reactions,
+            room_id: item.roomId.key(),
+            reactions: item.reactions,
         };
     }
 }

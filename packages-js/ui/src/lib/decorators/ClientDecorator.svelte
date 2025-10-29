@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { App, Omu } from '@omujs/omu';
-    import { Identifier } from '@omujs/omu/identifier.js';
+    import { App, Identifier, Omu } from '@omujs/omu';
     import { client } from '../stores.js';
 
     const app = new App(Identifier.fromKey('com.omuapps:test'), {

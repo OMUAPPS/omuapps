@@ -12,29 +12,29 @@
             <Tooltip>
                 最小値X
             </Tooltip>
-            <input type="number" value={bounds.min.x} on:change={({currentTarget: {valueAsNumber}}) => {
+            <input type="number" value={bounds.min.x} on:change={({ currentTarget: { valueAsNumber } }) => {
                 bounds = {
                     ...bounds,
                     min: {
                         ...bounds.min,
                         x: valueAsNumber,
-                    }
-                }
-            }}/>
+                    },
+                };
+            }} />
         </label>
         <label>
             <Tooltip>
                 最小値Y
             </Tooltip>
-            <input type="number" value={bounds.min.y} on:change={({currentTarget: {valueAsNumber}}) => {
+            <input type="number" value={bounds.min.y} on:change={({ currentTarget: { valueAsNumber } }) => {
                 bounds = {
                     ...bounds,
                     min: {
                         ...bounds.min,
                         y: valueAsNumber,
-                    }
-                }
-            }}/>
+                    },
+                };
+            }} />
         </label>
     </span>
     <span class="max">
@@ -43,29 +43,29 @@
             <Tooltip>
                 最大値X
             </Tooltip>
-            <input type="number" value={bounds.max.x} on:change={({currentTarget: {valueAsNumber}}) => {
+            <input type="number" value={bounds.max.x} on:change={({ currentTarget: { valueAsNumber } }) => {
                 bounds = {
                     ...bounds,
                     max: {
                         ...bounds.max,
                         x: valueAsNumber,
-                    }
-                }
-            }}/>
+                    },
+                };
+            }} />
         </label>
         <label>
             <Tooltip>
                 最大値Y
             </Tooltip>
-            <input type="number" value={bounds.max.y} on:change={({currentTarget: {valueAsNumber}}) => {
+            <input type="number" value={bounds.max.y} on:change={({ currentTarget: { valueAsNumber } }) => {
                 bounds = {
                     ...bounds,
                     max: {
                         ...bounds.max,
                         y: valueAsNumber,
-                    }
-                }
-            }}/>
+                    },
+                };
+            }} />
         </label>
     </span>
 </div>

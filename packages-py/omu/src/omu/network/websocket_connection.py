@@ -1,85 +1,80 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import aiohttp
-from aiohttp import web
+from aiohttp import ClientWebSocketResponse, web
+from loguru import logger
 
 from omu.address import Address
 from omu.bytebuffer import ByteReader, ByteWriter
-from omu.client import Client
+from omu.result import Err, Ok, Result
 from omu.serializer import Serializable
 
-from .connection import CloseError, Connection
+from .connection import Connection, ConnectionClosed, ErrorReceiving, InvalidPacket, ReceiveError, Transport
 from .packet import Packet, PacketData
 
 
-class WebsocketsConnection(Connection):
-    def __init__(self, client: Client, address: Address):
-        self._client = client
-        self._address = address
-        self._connected = False
-        self._socket: aiohttp.ClientWebSocketResponse | None = None
-        self._session: aiohttp.ClientSession | None = None
+@dataclass(frozen=True, slots=True)
+class WebsocketsTransport(Transport):
+    address: Address
 
     @property
     def _ws_endpoint(self) -> str:
-        protocol = "wss" if self._address.secure else "ws"
-        host = self._address.host or "127.0.0.1"
-        port = self._address.port
+        protocol = "wss" if self.address.secure else "ws"
+        host = self.address.host or "127.0.0.1"
+        port = self.address.port
         return f"{protocol}://{host}:{port}/ws"
 
-    async def connect(self) -> None:
-        if self._socket and not self._socket.closed:
-            raise RuntimeError("Already connected")
-        self._session = aiohttp.ClientSession()
-        self._socket = await self._session.ws_connect(self._ws_endpoint)
-        self._connected = True
+    async def connect(self) -> WebsocketsConnection:
+        session = aiohttp.ClientSession()
+        socket = await session.ws_connect(self._ws_endpoint)
+        return WebsocketsConnection(socket)
+
+
+@dataclass(frozen=True, slots=True)
+class WebsocketsConnection(Connection):
+    socket: ClientWebSocketResponse
 
     async def send(self, packet: Packet, packet_mapper: Serializable[Packet, PacketData]) -> None:
-        if not self._socket or self._socket.closed or not self._connected:
+        if not self.socket or self.socket.closed:
             raise RuntimeError("Not connected")
         packet_data = packet_mapper.serialize(packet)
         writer = ByteWriter()
         writer.write_string(packet_data.type)
         writer.write_uint8_array(packet_data.data)
-        await self._socket.send_bytes(writer.finish())
+        await self.socket.send_bytes(writer.finish())
 
-    async def receive(self, packet_mapper: Serializable[Packet, PacketData]) -> Packet:
-        if not self._socket or self._socket.closed:
-            raise RuntimeError("Not connected")
-        msg = await self._socket.receive()
+    async def receive(self, packet_mapper: Serializable[Packet, PacketData]) -> Result[Packet, ReceiveError]:
+        if not self.socket or self.socket.closed:
+            return Err(ConnectionClosed("Socket is closed"))
+        msg = await self.socket.receive()
         if msg.type in {
             web.WSMsgType.CLOSE,
             web.WSMsgType.CLOSED,
             web.WSMsgType.CLOSING,
             web.WSMsgType.ERROR,
         }:
-            raise CloseError(f"Socket {msg.type.name.lower()}")
+            return Err(ConnectionClosed("Socket is closed"))
         if msg.data is None:
-            raise RuntimeError("Received empty message")
+            return Err(ErrorReceiving("Received empty message"))
         if msg.type == web.WSMsgType.TEXT:
-            raise RuntimeError("Received text message")
-        elif msg.type == web.WSMsgType.BINARY:
-            with ByteReader(msg.data) as reader:
-                event_type = reader.read_string()
-                event_data = reader.read_uint8_array()
-            packet_data = PacketData(event_type, event_data)
-            return packet_mapper.deserialize(packet_data)
-        else:
-            raise RuntimeError(f"Unknown message type {msg.type}")
+            return Err(ErrorReceiving("Received text message"))
+        with ByteReader(msg.data) as reader:
+            event_type = reader.read_string()
+            event_data = reader.read_uint8_array()
+        packet_data = PacketData(event_type, event_data)
+        try:
+            return Ok(packet_mapper.deserialize(packet_data))
+        except Exception as err:
+            logger.opt(exception=err).error("Failed to deserialize packet")
+            return Err(InvalidPacket(f"Failed to deserialize packet: {packet_data.type}"))
 
     async def close(self) -> None:
-        if not self._socket or self._socket.closed:
+        if not self.socket or self.socket.closed:
             return
-        await self._socket.close()
-        self._socket = None
-        self._connected = False
+        await self.socket.close()
 
     @property
     def closed(self) -> bool:
-        return not self._socket or self._socket.closed
-
-    def __del__(self):
-        if not self.closed:
-            self._client.loop.create_task(self.close())
-        if self._session:
-            self._client.loop.create_task(self._session.close())
+        return not self.socket or self.socket.closed

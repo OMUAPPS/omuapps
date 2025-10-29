@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, LiteralString, NotRequired, TypedDict
 
+from omu.api.endpoint import EndpointType
+from omu.api.signal import SignalType
 from omu.bytebuffer import ByteReader, ByteWriter
-from omu.extension.endpoint import EndpointType
-from omu.extension.signal.signal import SignalType
 from omu.serializer import Serializer
 
 from omuplugin_obs.const import PLUGIN_ID

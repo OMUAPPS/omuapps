@@ -24,6 +24,7 @@ dev-dependencies = [
     "pytest-cov>=5.0.0",
     "pyright>=1.1.397",
     "tomlkit>=0.13.2",
+    "pypiserver[passlib]>=2.4.0",
 ]
 
 [tool.rye.scripts]

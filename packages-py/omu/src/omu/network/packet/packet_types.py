@@ -1,50 +1,73 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from omu.app import App, AppJson
 from omu.identifier import Identifier
-from omu.model import Model
 from omu.serializer import Serializer
 
 from .packet import PacketType
 
 
 class ProtocolInfo(TypedDict):
+    brand: str
     version: str
+
+
+class RSANumbers(TypedDict):
+    e: str
+    n: str
+
+
+class EncryptionRequest(TypedDict):
+    kind: Literal["v1"]
+    rsa: RSANumbers
+
+
+class EncryptionResponse(TypedDict):
+    kind: Literal["v1"]
+    rsa: RSANumbers
+    aes: str
+
+
+class ServerMeta(TypedDict):
+    protocol: ProtocolInfo
+    encryption: EncryptionRequest | None
+    hash: str | None
 
 
 class ConnectPacketData(TypedDict):
     protocol: ProtocolInfo
     app: AppJson
-    token: str | None
+    token: str
+    encryption: EncryptionResponse | None
 
 
-class ConnectPacket(Model[ConnectPacketData]):
-    def __init__(
-        self,
-        app: App,
-        protocol: ProtocolInfo,
-        token: str | None = None,
-    ):
-        self.app = app
-        self.protocol = protocol
-        self.token = token
+@dataclass(frozen=True, slots=True)
+class ConnectPacket:
+    app: App
+    protocol: ProtocolInfo
+    token: str
+    encryption: EncryptionResponse | None = None
 
-    def to_json(self) -> ConnectPacketData:
+    @staticmethod
+    def serialize(packet: ConnectPacket) -> ConnectPacketData:
         return {
-            "app": self.app.to_json(),
-            "protocol": self.protocol,
-            "token": self.token,
+            "app": packet.app.to_json(),
+            "protocol": packet.protocol,
+            "encryption": packet.encryption,
+            "token": packet.token,
         }
 
-    @classmethod
-    def from_json(cls, json: ConnectPacketData) -> ConnectPacket:
-        return cls(
+    @staticmethod
+    def deserialize(json: ConnectPacketData) -> ConnectPacket:
+        return ConnectPacket(
             app=App.from_json(json["app"]),
             protocol=json["protocol"],
             token=json["token"],
+            encryption=json["encryption"],
         )
 
 
@@ -68,44 +91,67 @@ class DisconnectPacketData(TypedDict):
     message: str | None
 
 
-class DisconnectPacket(Model[DisconnectPacketData]):
+class DisconnectPacket:
     def __init__(self, type: DisconnectType, message: str | None = None):
         self.type: DisconnectType = type
         self.message = message
 
-    def to_json(self) -> DisconnectPacketData:
+    @staticmethod
+    def serialize(packet: DisconnectPacket) -> DisconnectPacketData:
         return {
-            "type": self.type.value,
-            "message": self.message,
+            "type": packet.type.value,
+            "message": packet.message,
         }
 
-    @classmethod
-    def from_json(cls, json: DisconnectPacketData) -> DisconnectPacket:
-        return cls(
+    @staticmethod
+    def deserialize(json: DisconnectPacketData) -> DisconnectPacket:
+        return DisconnectPacket(
             type=DisconnectType(json["type"]),
             message=json["message"],
         )
 
 
-IDENTIFIER = Identifier("core", "packet")
+CORE_ID = Identifier("core", "packet")
+
+
+class Authenticate(TypedDict):
+    kind: Literal["v1"]
+    token: str
+
+
+"""
+[C->S] connect to server
+[C<-S] rsa public key sharing and send metadata to authenticate if target is a valid server.
+[C->S] rsa public key sharing and send AES CBC key
+// Encryption starts here and all packets are encrypted with AES CBC using the shared key
+"""
 
 
 class PACKET_TYPES:
+    SERVER_META = PacketType[ServerMeta].create_json(
+        CORE_ID,
+        "server_meta",
+    )
     CONNECT = PacketType[ConnectPacket].create_json(
-        IDENTIFIER,
+        CORE_ID,
         "connect",
-        Serializer.model(ConnectPacket),
+        ConnectPacket,
     )
     DISCONNECT = PacketType[DisconnectPacket].create_json(
-        IDENTIFIER,
+        CORE_ID,
         "disconnect",
-        Serializer.model(DisconnectPacket),
+        DisconnectPacket,
     )
     TOKEN = PacketType[str | None].create_json(
-        IDENTIFIER,
+        CORE_ID,
         "token",
     )
     READY = PacketType[None].create_json(
-        IDENTIFIER,
+        CORE_ID,
         "ready",
+    )
+    ENCRYPTED_PACKET = PacketType[bytes].create_serialized(
+        CORE_ID,
+        name="e",
+        serializer=Serializer.noop(),
     )

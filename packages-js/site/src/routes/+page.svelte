@@ -23,11 +23,9 @@
             <img src={title} class="title" alt="title" />
             <p class="info">配信者と視聴者をつなぐアプリ管理ツール。</p>
             <img src={indev} class="in-dev" alt="in-dev" />
-            
+
             <div class="download">
-                <small>
-                    現在ベータ版が公開されています！
-                </small>
+                <small> 現在ベータ版が公開されています！ </small>
                 <a href="/download">
                     <Tooltip>
                         <p>アプリを動かすための手順を見る</p>
@@ -41,14 +39,12 @@
             <IndexLinks />
         </div>
     </header>
-    <hr>
+    <hr />
     <div class="content-width card-container">
         <div class="left">
             <div class="information">
                 <div class="info">
-                    <h3>
-                        配信向けアプリを使いやすく
-                    </h3>
+                    <h3>配信向けアプリを使いやすく</h3>
                     <p>
                         OMUAPPSは、ブラウザソース向けに作りながら、より快適に使えるようにするためのAPIを提供します。
                     </p>
@@ -60,7 +56,7 @@
             <img src={dashboard1} class="dashboard" alt="dashboard" />
         </div>
     </div>
-    <hr>
+    <hr />
     <div class="content-width">
         <IndexOpenSource />
     </div>
@@ -77,7 +73,6 @@
     .content-width {
         width: min(100%, 80rem);
     }
-
 
     header {
         position: relative;
@@ -101,7 +96,7 @@
                 display: block;
                 height: 5rem;
             }
-    
+
             > .info {
                 width: fit-content;
                 font-weight: 700;
@@ -130,7 +125,7 @@
                     color: var(--color-1);
                     margin-bottom: 0.5rem;
                 }
-                
+
                 > a {
                     display: flex;
                     flex-direction: row;
@@ -180,7 +175,6 @@
         margin-top: 10vh;
         margin-bottom: 10vh;
     }
-
 
     .card-container {
         position: relative;

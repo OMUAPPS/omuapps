@@ -94,7 +94,7 @@
         max-width: 500px;
         max-height: 400px;
     }
-    
+
     .time {
         font-size: 3rem;
         display: flex;
@@ -147,7 +147,7 @@
     .event {
         width: 100%;
         display: flex;
-        
+
         > .name {
             font-weight: bold;
             font-size: 1.5rem;

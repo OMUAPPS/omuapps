@@ -47,7 +47,7 @@
     i {
         font-size: 1rem;
     }
-    
+
     button {
         background: rgb(58, 180, 119);
         color: #fff;

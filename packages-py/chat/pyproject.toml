@@ -1,13 +1,16 @@
 [project]
 name = "omu_chat"
-version = "0.9.13"
+version = "0.9.19"
 description = "Add your description here"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu>=0.9.13"]
+dependencies = ["loguru>=0.7.2", "omu>=0.9.19"]
 readme = "README.md"
 requires-python = ">= 3.12"
+
+[project.entry-points."omu.plugins"]
+plugin = "omu_chat:plugin"
 
 [build-system]
 requires = ["hatchling"]

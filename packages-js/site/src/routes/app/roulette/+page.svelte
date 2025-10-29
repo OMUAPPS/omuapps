@@ -1,13 +1,18 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { Chat, events } from '@omujs/chat';
-    import { Message } from '@omujs/chat/models/message.js';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { AppHeader, ComponentRenderer, setClient, Tooltip } from '@omujs/ui';
+    import { Chat, ChatEvents } from '@omujs/chat';
+    import { Message } from '@omujs/chat/models';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
+    import {
+        AppHeader,
+        ComponentRenderer,
+        setClient,
+        Tooltip,
+    } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP } from './app.js';
+    import { APP, ASSET_APP } from './app.js';
     import EntryList from './components/EntryList.svelte';
     import RouletteRenderer from './components/RouletteRenderer.svelte';
     import SpinButton from './components/SpinButton.svelte';
@@ -34,17 +39,18 @@
             roulette.addEntry({
                 id,
                 name: author?.name || '',
-                message: message.toJson(),
+                message: Message.serialize(message),
             });
         }
     }
 
-    chat.on(events.message.add, (message) => onMessage(message));
+    chat.on(ChatEvents.Message.Add, (message) => onMessage(message));
     chat.messages.listen();
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
         );
         omu.start();
     }
@@ -104,8 +110,12 @@
                         on:click={() => {
                             let name = 'エントリー';
                             let i = 1;
-                            while (Object.values($entries).some(it => it.name == `${name} ${i}`)) {
-                                i ++;
+                            while (
+                                Object.values($entries).some(
+                                    (it) => it.name == `${name} ${i}`,
+                                )
+                            ) {
+                                i++;
                             }
                             roulette.addEntry({
                                 id: Date.now().toString(),
@@ -128,14 +138,21 @@
                     <i class="ti ti-arrow-bar-to-down"></i>
                 </span>
             </h3>
-            <AssetButton dimensions={{width: 1080, height: 1080}} {omu} {obs} />
+            <AssetButton
+                dimensions={{ width: 1080, height: 1080 }}
+                asset={ASSET_APP}
+                {omu}
+                {obs}
+            />
         </div>
         <div class="right" class:end={$state.type === 'spin-result'}>
             <div class="roulette">
                 <RouletteRenderer {roulette} />
             </div>
             {#if $state.type === 'spin-result'}
-                {@const message = $state.result.entry.message && Message.fromJson($state.result.entry.message)}
+                {@const message =
+                    $state.result.entry.message &&
+                        Message.deserialize($state.result.entry.message)}
                 <div class="result-container">
                     <div class="spin-result">
                         <p>
@@ -146,12 +163,19 @@
                                 {#await chat.authors.get(message.authorId.key()) then author}
                                     {#if author?.avatarUrl}
                                         <div class="author">
-                                            <img src={omu.assets.proxy(author?.avatarUrl)} alt="icon" />
+                                            <img
+                                                src={omu.assets.proxy(
+                                                    author?.avatarUrl,
+                                                )}
+                                                alt="icon"
+                                            />
                                         </div>
                                     {/if}
                                     {#if message.content}
                                         <span class="content">
-                                            <ComponentRenderer component={message.content} />
+                                            <ComponentRenderer
+                                                component={message.content}
+                                            />
                                         </span>
                                     {/if}
                                 {/await}
@@ -165,13 +189,25 @@
                     <SpinButton {roulette} />
                 </div>
                 <div class="state">
-                    <span class:current={$state.type === 'spin-start'}>抽選開始</span><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === 'recruiting'}>募集中</span><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === 'recruiting-end'}>募集終了</span>
-                    <br>
-                    <span class:current={$state.type === 'idle'}>待機中</span><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === 'spinning'}>抽選中 <small>({$config.duration}秒)</small></span><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === 'spin-result'}>結果</span>
+                    <span class:current={$state.type === 'spin-start'}
+                    >抽選開始</span
+                    ><i class="ti ti-chevron-right"></i>
+                    <span class:current={$state.type === 'recruiting'}
+                    >募集中</span
+                    ><i class="ti ti-chevron-right"></i>
+                    <span class:current={$state.type === 'recruiting-end'}
+                    >募集終了</span
+                    >
+                    <br />
+                    <span class:current={$state.type === 'idle'}>待機中</span><i
+                        class="ti ti-chevron-right"
+                    ></i>
+                    <span class:current={$state.type === 'spinning'}
+                    >抽選中 <small>({$config.duration}秒)</small></span
+                    ><i class="ti ti-chevron-right"></i>
+                    <span class:current={$state.type === 'spin-result'}
+                    >結果</span
+                    >
                 </div>
             </div>
         </div>
@@ -200,12 +236,12 @@
         width: 22rem;
         height: 100%;
         padding: 2rem 0;
-        
+
         > h3 {
             display: flex;
             align-items: end;
             justify-content: space-between;
-            margin-bottom: .75rem;
+            margin-bottom: 0.75rem;
             font-size: 1rem;
             color: var(--color-1);
 
@@ -219,7 +255,6 @@
             margin-bottom: 2rem;
         }
     }
-
 
     .join-settings {
         display: flex;
@@ -235,7 +270,7 @@
             flex-direction: column;
             gap: 0.5rem;
             width: 100%;
-            
+
             > input {
                 border: 1px solid var(--color-outline);
                 background: var(--color-bg-2);
@@ -282,7 +317,7 @@
         font-weight: 600;
         white-space: nowrap;
         border-radius: 2px;
-        
+
         &:focus-visible,
         &:hover {
             background: var(--color-bg-2);
@@ -290,7 +325,6 @@
             outline: 1px solid var(--color-1);
             outline-offset: -1px;
         }
-
     }
 
     .right {
@@ -316,7 +350,7 @@
             > .spin {
                 width: 20rem;
             }
-        
+
             > .state {
                 color: var(--color-outline);
                 font-weight: 500;
@@ -329,16 +363,14 @@
         }
     }
 
-
     .roulette {
         position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
         flex: 1;
-
     }
-    
+
     .result-container {
         position: absolute;
         inset: 0;
@@ -425,7 +457,7 @@
             transform: scale(1.03);
         }
         100% {
-            transform: scale(1.0);
+            transform: scale(1);
         }
     }
 

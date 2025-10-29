@@ -6,12 +6,12 @@ import { uniqueId } from '../game/helper.js';
 import { Time } from '../game/time.js';
 
 export type EffectSound = {
-    type: 'sound',
-    clip: AudioClip,
+    type: 'sound';
+    clip: AudioClip;
 };
 
 export function createEffectSound(options: {
-    clip: AudioClip,
+    clip: AudioClip;
 }): EffectSound {
     const { clip } = options;
     return {
@@ -21,14 +21,14 @@ export function createEffectSound(options: {
 }
 
 type ParticleEmitter = {
-    type: 'physics',
-    count: number,
-    duration: number,
-    opacity: Vec2Like
-    velocity: AABB2Like,
-    acceleration: AABB2Like,
-    scale: AABB2Like,
-}
+    type: 'physics';
+    count: number;
+    duration: number;
+    opacity: Vec2Like;
+    velocity: AABB2Like;
+    acceleration: AABB2Like;
+    scale: AABB2Like;
+};
 
 export function createParticleEmitter(options: Partial<ParticleEmitter>): ParticleEmitter {
     return {
@@ -39,25 +39,25 @@ export function createParticleEmitter(options: Partial<ParticleEmitter>): Partic
         velocity: options.velocity ?? AABB2.ZEROZERO,
         acceleration: options.acceleration ?? AABB2.ZEROZERO,
         scale: options.scale ?? AABB2.ONEONE,
-    }
+    };
 }
 
 export type ParticleSource = {
-    type: 'random',
-    assets: Asset[],
-}
+    type: 'random';
+    assets: Asset[];
+};
 
 export function createParticleSource(options: Partial<ParticleSource>): ParticleSource {
     return {
         type: 'random',
         assets: options.assets ?? [],
-    }
+    };
 }
 
 export type EffectParticle = {
-    type: 'particle',
-    source: ParticleSource,
-    emitter: ParticleEmitter,
+    type: 'particle';
+    source: ParticleSource;
+    emitter: ParticleEmitter;
 };
 
 export function createParticle(options: Partial<EffectParticle>): EffectParticle {
@@ -65,25 +65,25 @@ export function createParticle(options: Partial<EffectParticle>): EffectParticle
         type: 'particle',
         source: options.source ?? createParticleSource({}),
         emitter: options.emitter ?? createParticleEmitter({}),
-    }
+    };
 }
 
 export type EffectAttributes = {
-    sound: EffectSound,
-    particle: EffectParticle,
-}
+    sound: EffectSound;
+    particle: EffectParticle;
+};
 
 export type EffectState = {
-    id: string,
-    name: string,
-    attributes: Partial<EffectAttributes>,
-    startTime: number,
+    id: string;
+    name: string;
+    attributes: Partial<EffectAttributes>;
+    startTime: number;
 };
 
 export function createEffectState(options: {
-    id?: string,
-    name: string,
-    attributes: Partial<EffectAttributes>,
+    id?: string;
+    name: string;
+    attributes: Partial<EffectAttributes>;
 }): EffectState {
     const { id, name, attributes } = options;
     return {

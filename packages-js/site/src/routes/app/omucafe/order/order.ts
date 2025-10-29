@@ -1,6 +1,6 @@
 import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
-import type { Message } from '@omujs/chat/models/message.js';
-import { TableType } from '@omujs/omu/extension/table/table.js';
+import type { Message } from '@omujs/chat/models';
+import { TableType } from '@omujs/omu/api/table';
 import { APP_ID } from '../app.js';
 import { playAudioClip } from '../asset/audioclip.js';
 import { acquireRenderLock, getContext, markChanged, resources } from '../game/game.js';
@@ -9,32 +9,32 @@ import { getGame, type User } from '../omucafe-app.js';
 import type { Product } from '../product/product.js';
 
 type OrderStatus = {
-    type: 'waiting',
+    type: 'waiting';
 } | {
-    type: 'cooking',
-    timestamp: number,
+    type: 'cooking';
+    timestamp: number;
 } | {
-    type: 'done',
+    type: 'done';
 };
 
 export type OrderItem = {
-    product_id: string,
-    notes: string,
+    product_id: string;
+    notes: string;
 };
 
 export type OrderMessage = {
-    tokens: TOKEN[],
-    timestamp: number,
+    tokens: TOKEN[];
+    timestamp: number;
 };
 
 export type Order = {
-    id: string,
-    timestamp: number,
-    index: number,
-    user: User,
-    message?: OrderMessage,
-    status: OrderStatus,
-    items: OrderItem[],
+    id: string;
+    timestamp: number;
+    index: number;
+    user: User;
+    message?: OrderMessage;
+    status: OrderStatus;
+    items: OrderItem[];
 };
 
 export type ProductTokens = {
@@ -57,7 +57,7 @@ export type OrderDetectResult = {
     detected: boolean;
     products: Product[];
     tokens: OrderDetectToken[];
-}
+};
 
 const tokenCache: Map<string, TOKEN[]> = new Map();
 
@@ -137,8 +137,7 @@ function mergeNounTokens(tokens: TOKEN[]): TOKEN[] {
             if (token.pronunciation) {
                 lastToken.pronunciation = (lastToken.pronunciation || '') + token.pronunciation;
             }
-        }
-        else {
+        } else {
             if (lastToken) {
                 merged.push(lastToken);
             }
@@ -165,15 +164,15 @@ export async function processMessage(message: Message) {
         ctx.order.message = {
             timestamp: Time.now(),
             tokens: mergeNounTokens(tokens),
-        }
+        };
         markChanged();
     }
     console.log('[msg]', JSON.stringify(tokens));
     const productTokens: ProductTokens[] = await Promise.all(Object.values(config.products).map(async (product) => {
         return {
             product,
-            tokens: await parseToken(product.name)
-        }
+            tokens: await parseToken(product.name),
+        };
     }));
     const orderAnalysis = await game.worker!.call('analyzeOrder', { tokens, productTokens });
     if (!orderAnalysis.detected) return;
@@ -187,7 +186,7 @@ export async function processMessage(message: Message) {
             return {
                 notes: '',
                 product_id: product.id,
-            }
+            };
         }),
         status: {
             type: 'waiting',

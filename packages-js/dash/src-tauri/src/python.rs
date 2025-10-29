@@ -1,10 +1,7 @@
 use std::{path::PathBuf, process::Command};
 
-use anyhow::{anyhow, bail, Error};
-
 use crate::{
     options::AppOptions,
-    progress::Progress,
     sources::py::{get_download_url, PythonVersion},
     sync::{read_venv_marker, write_venv_marker},
     utils::{archive::unpack_archive, checksum::check_checksum, download::download_url},
@@ -16,19 +13,42 @@ pub struct Python {
     pub python_bin: PathBuf,
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum PythonEnsureError {
+    ChecksumFailed { msg: String },
+    ExtractFailed { msg: String },
+    UnkownVersion { msg: String },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum PythonEnsureProgress {
+    Downloading {
+        msg: String,
+        progress: f64,
+        total: f64,
+    },
+    Extracting {
+        msg: String,
+        progress: f64,
+        total: f64,
+    },
+}
+
 impl Python {
     pub fn ensure(
         options: &AppOptions,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<Self, Error> {
-        let python_path = get_python_directory(&options);
+        on_progress: impl Fn(PythonEnsureProgress) + Send + Clone + 'static,
+    ) -> Result<Self, PythonEnsureError> {
+        let python_path = options.get_python_path();
         let python_bin = if cfg!(target_os = "windows") {
             python_path.join("install").join("python.exe")
         } else {
             python_path.join("install").join("bin").join("python")
         };
         if !python_path.exists() {
-            return Self::download(&options, on_progress).map(|version| Self {
+            return Self::download(&options, &on_progress).map(|version| Self {
                 version,
                 path: python_path,
                 python_bin,
@@ -40,7 +60,7 @@ impl Python {
                 path: python_path,
                 python_bin: python_bin,
             }),
-            None => Self::download(&options, on_progress).map(|version| Self {
+            None => Self::download(&options, &on_progress).map(|version| Self {
                 version,
                 path: python_path,
                 python_bin,
@@ -50,70 +70,63 @@ impl Python {
 
     fn download(
         options: &AppOptions,
-        on_progress: &(impl Fn(Progress) + Send + 'static),
-    ) -> Result<PythonVersion, Error> {
+        on_progress: &(impl Fn(PythonEnsureProgress) + Send + 'static),
+    ) -> Result<PythonVersion, PythonEnsureError> {
         let version = &options.python_version;
-        let (version, python_url, checksum) = match get_download_url(&version) {
-            Some(result) => result,
-            None => {
-                on_progress(Progress::PythonUnkownVersion {
-                    msg: format!("Unknown Python version: {}", version),
-                });
-                bail!("Unknown Python version: {}", version);
-            }
-        };
-        let python_dir = get_python_directory(options);
-        on_progress(Progress::PythonDownloading {
-            msg: format!("Downloading Python {} from {}", version, python_url),
+        let (version, python_url, checksum) =
+            get_download_url(&version).ok_or_else(|| PythonEnsureError::UnkownVersion {
+                msg: format!("Unknown Python version: {}", version),
+            })?;
+        let python_dir = options.get_python_path();
+        on_progress(PythonEnsureProgress::Downloading {
+            msg: format!("Downloading Python {}...", version),
             progress: 0.0,
             total: 0.0,
         });
         let contents = download_url(python_url, |progress, total| {
-            on_progress(Progress::PythonDownloading {
-                msg: format!("Downloading Python {} from {}", version, python_url),
+            on_progress(PythonEnsureProgress::Downloading {
+                msg: format!("Downloading Python {}...", version),
                 progress,
                 total,
             });
+        })
+        .map_err(|e| PythonEnsureError::UnkownVersion {
+            msg: format!("Failed to download Python {}: {}", version, e),
         })?;
         if let Some(checksum) = checksum {
             check_checksum(&contents, &checksum).map_err(|e| {
-                on_progress(Progress::PythonChecksumFailed {
+                PythonEnsureError::ChecksumFailed {
                     msg: format!("Checksum failed for Python {}: {}", version, e),
-                });
-                anyhow!("Checksum failed for Python {}: {}", version, e)
+                }
             })?;
         }
-        on_progress(Progress::PythonExtracting {
+        on_progress(PythonEnsureProgress::Extracting {
             msg: format!("Extracting Python to {}", python_dir.display()),
             progress: 0.0,
             total: 0.0,
         });
         if python_dir.exists() {
-            std::fs::remove_dir_all(&python_dir).map_err(|e| {
-                let msg = format!(
+            std::fs::remove_dir_all(&python_dir).map_err(|e| PythonEnsureError::ExtractFailed {
+                msg: format!(
                     "Failed to remove existing Python directory {}: {}",
                     python_dir.display(),
                     e
-                );
-                on_progress(Progress::PythonExtractFailed { msg: msg.clone() });
-                anyhow!("{}", msg)
+                ),
             })?;
         }
         unpack_archive(&contents, &python_dir, 1, |progress, total| {
-            on_progress(Progress::PythonExtracting {
+            on_progress(PythonEnsureProgress::Extracting {
                 msg: format!("Extracting Python to {}", python_dir.display()),
                 progress,
                 total,
             });
         })
-        .map_err(|e| {
-            let msg = format!(
+        .map_err(|e| PythonEnsureError::ExtractFailed {
+            msg: format!(
                 "Failed to extract Python to {}: {}",
                 python_dir.display(),
                 e
-            );
-            on_progress(Progress::PythonExtractFailed { msg: msg.clone() });
-            anyhow!("{}", msg)
+            ),
         })?;
         write_venv_marker(&python_dir, &version).unwrap();
         Ok(version)
@@ -131,8 +144,4 @@ impl Python {
 
         command
     }
-}
-
-fn get_python_directory(options: &AppOptions) -> PathBuf {
-    options.python_path.join(options.python_version.to_string())
 }

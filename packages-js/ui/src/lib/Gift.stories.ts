@@ -1,4 +1,4 @@
-import { models } from '@omujs/chat';
+import { Models } from '@omujs/chat';
 import type { Meta, StoryObj } from '@storybook/svelte';
 import Gift from './Gift.svelte';
 
@@ -14,7 +14,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
     args: {
-        gift: new models.Gift({
+        gift: new Models.Gift({
             id: 'test',
             name: 'Test',
             amount: 100,
@@ -26,7 +26,7 @@ export const Default: Story = {
 
 export const NoImage: Story = {
     args: {
-        gift: new models.Gift({
+        gift: new Models.Gift({
             id: 'test',
             name: 'Test',
             amount: 100,
@@ -37,7 +37,7 @@ export const NoImage: Story = {
 
 export const Paid: Story = {
     args: {
-        gift: new models.Gift({
+        gift: new Models.Gift({
             id: 'test',
             name: 'Test',
             amount: 100,
@@ -49,7 +49,7 @@ export const Paid: Story = {
 
 export const NoAmount: Story = {
     args: {
-        gift: new models.Gift({
+        gift: new Models.Gift({
             id: 'test',
             name: 'Test',
             isPaid: false,

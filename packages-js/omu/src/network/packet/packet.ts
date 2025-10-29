@@ -1,15 +1,15 @@
-import type { Identifier } from '../../identifier.js';
-import { type Serializable, Serializer } from '../../serializer.js';
+import type { Identifier } from '../../identifier';
+import { JsonType, type Serializable, Serializer } from '../../serialize';
 
-export interface PacketData {
+export type PacketData = {
     readonly type: string;
     readonly data: Uint8Array;
-}
+};
 
-export interface Packet<T = unknown> {
+export type Packet<T = unknown> = {
     readonly type: PacketType<T>;
     readonly data: T;
-}
+};
 
 export class PacketType<T> {
     constructor(
@@ -17,17 +17,26 @@ export class PacketType<T> {
         public readonly serializer: Serializable<T, Uint8Array>,
     ) { }
 
-    static createJson<T>(identifier: Identifier, {
+    public new(data: T): Packet<T> {
+        return {
+            type: this,
+            data,
+        };
+    }
+    public match(packet: Packet): packet is Packet<T> {
+        return packet.type === this;
+    }
+
+    static createJson<T, D extends JsonType = JsonType>(identifier: Identifier, {
         name,
         serializer,
     }: {
         name: string;
-        serializer?: Serializable<T, any>;
+        serializer?: Serializable<T, D>;
     }): PacketType<T> {
-        return new PacketType(
+        return new PacketType<T>(
             identifier.join(name),
-            Serializer.of<T, any>(serializer ?? Serializer.noop())
-                .pipe(Serializer.json()),
+            Serializer.pipe<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
         );
     }
 

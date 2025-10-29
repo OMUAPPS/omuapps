@@ -93,7 +93,7 @@ function syncData() {
                 over: mouse.over,
                 ui: mouse.ui,
             },
-        }
+        },
     });
 }
 
@@ -160,7 +160,7 @@ export async function init(ctx: GlContext) {
         });
         resolve();
     }));
-        
+
     await loadBehaviorHandlers();
     if (side === 'client') {
         const counterTex = resources.counter_client_tex;
@@ -177,12 +177,12 @@ export async function init(ctx: GlContext) {
                 max: { x: counterTex.width, y: counterTex.height },
             },
             behaviors: {
-                container: createContainer({bounded: {
+                container: createContainer({ bounded: {
                     left: true,
                     right: true,
                     bottom: true,
                     top: true,
-                }}),
+                } }),
             },
             transform: {
                 right: Vec2.RIGHT,
@@ -220,7 +220,7 @@ export async function init(ctx: GlContext) {
                 Vec2.ONE,
                 0,
                 { x: 50, y: -100 },
-            )
+            ),
         });
         createItemState({
             id: 'bell',
@@ -286,7 +286,6 @@ async function renderCounter() {
     matrices.model.pop();
 }
 
-
 import { createTransform2, transformToMatrix } from './transform.js';
 
 async function updateMouseClient() {
@@ -296,8 +295,7 @@ async function updateMouseClient() {
     for (const event of mouse.iterate()) {
         if (event.type === 'down') {
             await handleMouseDown();
-        }
-        else if (event.type === 'up') {
+        } else if (event.type === 'up') {
             await handleMouseUp();
         }
         markChanged();
@@ -305,9 +303,9 @@ async function updateMouseClient() {
     const { gl } = glContext;
     const glMouse = mouse.client.remap(
         Vec2.ZERO,
-        {x: gl.canvas.width, y: gl.canvas.height},
-        {x: -1, y: 1},
-        {x: 1, y: -1},
+        { x: gl.canvas.width, y: gl.canvas.height },
+        { x: -1, y: 1 },
+        { x: 1, y: -1 },
     );
     mouse.deltaGl = glMouse.sub(mouse.gl);
     mouse.gl = glMouse;
@@ -413,7 +411,7 @@ async function renderScreen() {
                 bounds.min.x, bounds.min.y,
                 bounds.max.x, bounds.max.y,
                 new Vec4(0, 0, 0, 0.5), 2,
-            )
+            );
             await renderParticles(particle, {
                 seed: effect.id,
                 bounds,
@@ -472,9 +470,9 @@ async function renderScreen() {
 }
 
 let penTrail: {
-    last: Vec2,
-    dir: Vec2,
-    time: number,
+    last: Vec2;
+    dir: Vec2;
+    time: number;
 } | null = null;
 
 async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2RenderingContext) {
@@ -513,12 +511,12 @@ async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2Rende
     draw.texture(
         -width / 2, -height / 2,
         width / 2, height / 2,
-        tex
+        tex,
     );
     draw.texture(
         -width / 2, -height / 2,
         width / 2, height / 2,
-        paint.texture
+        paint.texture,
     );
     draw.fontFamily = 'Note Sans JP';
     draw.fontSize = 26;
@@ -553,14 +551,14 @@ async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2Rende
             cursor.y,
             penRadius + 2,
             penRadius + 8,
-            new Vec4(1, 1, 1, 1)
+            new Vec4(1, 1, 1, 1),
         );
         draw.circle(
             cursor.x,
             cursor.y,
             penRadius + 0,
             penRadius + 2,
-            new Vec4(0, 0, 0, 1)
+            new Vec4(0, 0, 0, 1),
         );
     }
     if (client && tool.type !== 'move' && mouse.down && mouse.over && !mouse.ui) {
@@ -592,7 +590,7 @@ async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2Rende
                         in: penTrail ? photoMode.eraser.width : 0,
                         out: photoMode.eraser.width,
                         a, b, c,
-                    }
+                    },
                 });
             } else {
                 newQueue.push({
@@ -602,7 +600,7 @@ async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2Rende
                         in: penTrail ? photoMode.pen.width : 0,
                         out: photoMode.pen.width,
                         a, b, c,
-                    }
+                    },
                 });
             }
         }
@@ -611,7 +609,7 @@ async function renderPhotoScreen(scene: SceneType<'photo_mode'>, gl: WebGL2Rende
         penTrail = null;
     }
     paint.update(width, height);
-        
+
     const { order } = context;
     if (order && order.message) {
         matrices.view.push();
@@ -651,7 +649,7 @@ async function renderNametag(user: User, bounds: AABB2) {
     }
     draw.fontFamily = '\'Noto Sans JP\', sans-serif';
     draw.fontSize = size / 1.5;
-    const textAnchor: Vec2Like = { x: bounds.min.x + size * 2 + strokeOffset, y: bounds.min.y + dimentions.y / 2 }
+    const textAnchor: Vec2Like = { x: bounds.min.x + size * 2 + strokeOffset, y: bounds.min.y + dimentions.y / 2 };
     await draw.textAlign(textAnchor, user.name, Vec2.UP, new Vec4(0, 0, 0, 1));
     if (user.screen_id) {
         draw.fontSize = size / 2;
@@ -666,8 +664,8 @@ async function renderCustomersClient(position: Vec2) {
         const { tex, width, height } = side === 'client' ? resources.dummy_front : resources.dummy_back;
         draw.texture(position.x, position.y, position.x + width / 1.2, position.y + height / 1.2, tex);
         const nametagBounds = AABB2.from({
-            min: {x: -340, y: -200},
-            max: {x: 340, y: 200},
+            min: { x: -340, y: -200 },
+            max: { x: 340, y: 200 },
         })
             .scale(side === 'client' ? 0.6 : 0.7)
             .offset({ x: width / 1.2 / 2, y: height / 2 })
@@ -733,10 +731,10 @@ async function renderMessage(message: OrderMessage, anchor: Vec2, maxWidth: numb
     const arrowX = anchor.x + textWidth - padding;
     const arrowY = anchor.y + height / 2;
     const points: [Vec2Like, Vec2Like, Vec2Like] = [
-        {x: arrowX - 25, y: arrowY},
-        {x: arrowX + 25, y: arrowY},
-        {x: arrowX, y: arrowY + 50},
-    ]
+        { x: arrowX - 25, y: arrowY },
+        { x: arrowX + 25, y: arrowY },
+        { x: arrowX, y: arrowY + 50 },
+    ];
     draw.triangle(
         ...points,
         new Vec4(0, 0, 0, 0.621 * alpha),
@@ -755,7 +753,7 @@ async function renderMessage(message: OrderMessage, anchor: Vec2, maxWidth: numb
         await draw.text(
             anchor.x + x + (isNounToken ? 5 : 0),
             anchor.y + baseline + Math.sin(x * 1231.31 + ziggleTime) * 3,
-            text, new Vec4(0, 0, 0, alpha * (isNounToken ? 0.8 : 0.5))
+            text, new Vec4(0, 0, 0, alpha * (isNounToken ? 0.8 : 0.5)),
         );
         x += (metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft) + (isNounToken ? 10 : 0);
     }
@@ -767,10 +765,10 @@ async function renderCustomersAsset(position: Vec2) {
         const { user } = order;
         const { tex, width, height } = side === 'client' ? resources.dummy_front : resources.dummy_back;
         draw.texture(position.x, position.y, position.x + width / 1.2, position.y + height / 1.2, tex);
-        const center = position.add({x: width / 1.2 / 2, y: height / 1.2 / 2});
+        const center = position.add({ x: width / 1.2 / 2, y: height / 1.2 / 2 });
         draw.fontFamily = 'Noto Sans JP, sans-serif';
         draw.fontSize = 40;
-        await draw.textAlign(center, user.name, {x: 0.5, y: 0}, new Vec4(0, 0, 0, 0.5));
+        await draw.textAlign(center, user.name, { x: 0.5, y: 0 }, new Vec4(0, 0, 0, 0.5));
     }
 }
 
@@ -852,7 +850,7 @@ export async function renderOverlaySide() {
         gl.clearColor(1, 1, 1, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        
+
         await update();
         await renderCounter();
         await renderItems([ITEM_LAYERS.KITCHEN_ITEMS]);
@@ -861,7 +859,7 @@ export async function renderOverlaySide() {
         setupCounterProjection();
         await renderItems([ITEM_LAYERS.COUNTER, ITEM_LAYERS.BELL]);
         await renderHeldItem();
-    
+
         setupCustomerProjection();
         await renderCustomersAsset(new Vec2(1920 * 2 - 1200, 1200));
         setupHUDProjection();
@@ -924,11 +922,11 @@ export async function render(ctx: GlContext): Promise<void> {
     gl.clearColor(1, 1, 1, 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    
+
     const rect = {
         width: matrices.width,
         height: matrices.height,
-    }
+    };
     scaleFactor = rect.width / COUNTER_WIDTH;
 
     if (side === 'client') {

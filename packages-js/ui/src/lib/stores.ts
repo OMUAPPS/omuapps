@@ -1,7 +1,6 @@
 import type { Chat } from '@omujs/chat';
 import { App, Omu } from '@omujs/omu';
-import type { Client } from '@omujs/omu/client.js';
-import type { Locale } from '@omujs/omu/localization/index.js';
+import type { Locale } from '@omujs/omu/localization';
 import { BROWSER } from 'esm-env';
 import { type Writable, writable } from 'svelte/store';
 
@@ -13,12 +12,12 @@ export const translate: Writable<TranslateFunction> = writable(
     },
 );
 
-export const client: Writable<Client> = writable();
+export const client: Writable<Omu> = writable();
 export const chat: Writable<Chat> = writable();
-export function setClient<T extends Client>(newClient: T): T {
+export function setClient(newClient: Omu): Omu {
     if (!BROWSER) {
         const DUMMY_CLIENT = new Omu(new App('com.omuapps:dummy', { version: '0.0.0' }));
-        const newClient = DUMMY_CLIENT as unknown as T;
+        const newClient = DUMMY_CLIENT;
         client.set(newClient);
         return newClient;
     };
@@ -63,6 +62,9 @@ export const dateTimeFormats = writable<{
     short: Intl.DateTimeFormat;
     time: Intl.DateTimeFormat;
 }>();
+
+export type LinkHandler = (href: string) => boolean;
+export const linkOpenHandler = writable<LinkHandler | undefined>(undefined);
 
 if (BROWSER) {
     dateTimeFormats.set({

@@ -11,11 +11,11 @@
 <h2>動き</h2>
 <div class="property">
     個数
-    <Slider min={0} max={16} step={1} clamp={false} bind:value={particle.emitter.count}/>
+    <Slider min={0} max={16} step={1} clamp={false} bind:value={particle.emitter.count} />
 </div>
 <div class="property">
     時間
-    <Slider min={0} max={4000} step={1} clamp={false} unit="ms" bind:value={particle.emitter.duration}/>
+    <Slider min={0} max={4000} step={1} clamp={false} unit="ms" bind:value={particle.emitter.duration} />
 </div>
 <div class="property">
     速度
@@ -32,11 +32,11 @@
 <h2>不透明度</h2>
 <div class="property">
     最低
-    <Slider min={0} max={1} step={0.01} type="percent" clamp={false} bind:value={particle.emitter.opacity.x}/>
+    <Slider min={0} max={1} step={0.01} type="percent" clamp={false} bind:value={particle.emitter.opacity.x} />
 </div>
 <div class="property">
     最高
-    <Slider min={0} max={1} step={0.01} type="percent" clamp={false} bind:value={particle.emitter.opacity.y}/>
+    <Slider min={0} max={1} step={0.01} type="percent" clamp={false} bind:value={particle.emitter.opacity.y} />
 </div>
 <h2>
     <span>
@@ -47,11 +47,11 @@
         // const assets = [];
         // for (const file of files) {
         //     assets.push(await uploadAssetByBlob(file));
-        // } 
+        // }
         particle.source = {
             type: 'random',
             assets: assets,
-        }
+        };
     }} primary multiple accept="image/*">
         画像を設定
         <i class="ti ti-upload"></i>
@@ -86,7 +86,7 @@
         padding: 1rem;
         margin-top: 0.5rem;
     }
-    
+
     .sources {
         width: 100%;
         display: flex;

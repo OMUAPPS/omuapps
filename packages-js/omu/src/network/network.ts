@@ -1,23 +1,22 @@
 import type { Address } from '../address.js';
-import type { Client } from '../client.js';
-import type { OmuError } from '../errors.js';
 import {
-    AnotherConnection,
-    InternalError,
+    AnotherConnection, DisconnectReason, InternalError,
     InvalidOrigin,
     InvalidPacket,
     InvalidToken,
     InvalidVersion,
     PermissionDenied,
+    ServerRestart,
 } from '../errors.js';
-import { EventEmitter } from '../event-emitter.js';
-import { IdentifierMap } from '../identifier.js';
+import { EventEmitter } from '../event';
+import { IdentifierMap } from '../identifier';
+import { Omu } from '../omu.js';
 import type { TokenProvider } from '../token.js';
 import { VERSION } from '../version.js';
 
-import type { Connection } from './connection.js';
+import type { Connection, Transport } from './connection.js';
 import { PacketMapper } from './connection.js';
-import type { DisconnectPacket } from './packet/packet-types.js';
+import { AES, Decryptor, ENCRYPTION_AVAILABLE, EncryptionResponse, Encryptor } from './encryption.js';
 import { ConnectPacket, DisconnectType, PACKET_TYPES } from './packet/packet-types.js';
 import type { Packet, PacketType } from './packet/packet.js';
 
@@ -27,60 +26,61 @@ type PacketHandler<T> = {
 };
 
 type StatusType<T> = {
-    type: T,
+    type: T;
 };
 
 export type NetworkStatus = StatusType<'connecting'> | StatusType<'connected'> | StatusType<'ready'> | {
-    type: 'disconnected',
-    attempt?: number,
-    reason?: DisconnectPacket | null,
+    type: 'disconnected';
+    attempt?: number;
+    reason?: DisconnectReason;
 } | {
-    type: 'error',
-    error: OmuError,
-} | {
-    type: 'reconnecting',
-    attempt: number,
-    timeout: number,
-    date: Date,
-    cancel: () => void,
+    type: 'reconnecting';
+    attempt: number;
+    timeout: number;
+    date: Date;
+    cancel: () => void;
 };
 
 export class Network {
-    public status: NetworkStatus = {type: 'disconnected'};
-    public readonly event: { connected: EventEmitter<[]>; disconnected: EventEmitter<[DisconnectPacket | null]>; packet: EventEmitter<[Packet<unknown>]>; status: EventEmitter<[NetworkStatus]>; } = {
-        connected: new EventEmitter<[]>(),
-        disconnected: new EventEmitter<[DisconnectPacket | null]>(),
-        packet: new EventEmitter<[Packet]>(),
-        status: new EventEmitter<[NetworkStatus]>(),
+    public status: NetworkStatus = { type: 'disconnected' };
+    public readonly event: { connected: EventEmitter<[]>; disconnected: EventEmitter<[DisconnectReason | undefined]>; packet: EventEmitter<[Packet<unknown>]>; status: EventEmitter<[NetworkStatus]> } = {
+        connected: new EventEmitter(),
+        disconnected: new EventEmitter(),
+        packet: new EventEmitter(),
+        status: new EventEmitter(),
     };
     private readonly tasks: Array<() => Promise<void> | void> = [];
     private readonly packetMapper = new PacketMapper();
     private readonly packetHandlers = new IdentifierMap<PacketHandler<unknown>>();
+    private listenTask: Promise<void> | undefined = undefined;
+    public reason: DisconnectReason | undefined = undefined;
 
     constructor(
-        private readonly client: Client,
-        public readonly address: Address,
+        private readonly omu: Omu,
+        public address: Address,
         private readonly tokenProvider: TokenProvider,
-        private connection: Connection,
+        private transport: Transport,
+        private connection?: Connection | undefined,
+        private aes?: AES | undefined,
     ) {
         this.registerPacket(
+            PACKET_TYPES.SERVER_META,
             PACKET_TYPES.CONNECT,
             PACKET_TYPES.DISCONNECT,
             PACKET_TYPES.TOKEN,
             PACKET_TYPES.READY,
+            PACKET_TYPES.ENCRYPTED_PACKET,
         );
         this.addPacketHandler(PACKET_TYPES.TOKEN, async (token: string) => {
-            await this.tokenProvider.set(this.address, this.client.app, token);
+            await this.tokenProvider.set(this.address, this.omu.app, token);
         });
         this.addPacketHandler(PACKET_TYPES.DISCONNECT, async (reason) => {
-            await this.event.disconnected.emit(reason);
             if (reason.type === DisconnectType.SHUTDOWN
-                ||reason.type === DisconnectType.CLOSE
-                ||reason.type === DisconnectType.SERVER_RESTART) {
-                this.setStatus({type: 'disconnected', reason});
+                || reason.type === DisconnectType.CLOSE) {
+                this.setStatus({ type: 'disconnected' });
                 return;
             }
-            const ERROR_MAP: Record<DisconnectType, typeof OmuError | undefined> = {
+            const ERROR_MAP = {
                 [DisconnectType.ANOTHER_CONNECTION]: AnotherConnection,
                 [DisconnectType.PERMISSION_DENIED]: PermissionDenied,
                 [DisconnectType.INVALID_TOKEN]: InvalidToken,
@@ -90,21 +90,20 @@ export class Network {
                 [DisconnectType.INVALID_PACKET]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_TYPE]: InvalidPacket,
                 [DisconnectType.INVALID_PACKET_DATA]: InvalidPacket,
-                [DisconnectType.SERVER_RESTART]: undefined,
+                [DisconnectType.SERVER_RESTART]: ServerRestart,
                 [DisconnectType.CLOSE]: undefined,
                 [DisconnectType.SHUTDOWN]: undefined,
             };
             const error = ERROR_MAP[reason.type];
             if (error) {
-                const omuError = new error(reason.message);
-                await this.setStatus({type: 'error', error: omuError});
+                this.reason = new error(reason.message ?? '');
             }
         });
         this.addPacketHandler(PACKET_TYPES.READY, () => {
             if (this.status.type === 'ready') {
                 throw new Error('Received READY packet when already ready');
             }
-            this.setStatus({type: 'ready'});
+            this.setStatus({ type: 'ready' });
         });
     }
 
@@ -134,106 +133,157 @@ export class Network {
     }
 
     private async scheduleReconnect(attempt: number): Promise<boolean> {
-        const timeout = Math.min(30000, 2000 * Math.pow(2, attempt));
+        const timeout = Math.min(30000, 2000 * (Math.pow(1.5, attempt) - 1) + 2000);
         const date = new Date();
         let cancelled = false;
-        await this.setStatus({
+        const status: Extract<NetworkStatus, { type: 'reconnecting' }> = {
             type: 'reconnecting',
             attempt,
             timeout,
             date,
-            cancel: () => {cancelled = true;}
-        });
+            cancel: () => {cancelled = true;},
+        };
+        await this.setStatus(status);
         if (cancelled) {
             return false;
         }
-        const remaining = timeout - (new Date().getTime() - date.getTime());
+        const remaining = status.timeout - (new Date().getTime() - date.getTime());
         await new Promise((resolve) => setTimeout(resolve, remaining));
         return true;
     }
 
-    public async connect(recconect = true): Promise<void> {
-        if (!this.isState('disconnected') && !this.isState('error')) {
+    public async connect(reconnect = true): Promise<void> {
+        if (!this.isState('disconnected')) {
             throw new Error(`Cannot connect while ${this.status.type}`);
+        }
+        if (this.listenTask) {
+            throw new Error('Cannot connect while already connecting');
         }
 
         let attempt = 0;
 
-        while (true) {
+        while (this.omu.running) {
             attempt++;
             try {
-                try {
-                    await this.connection.connect();
-                    attempt = 0;
-                } catch (error) {
-                    if (!recconect) {
-                        throw error;
-                    }
-                    if (!await this.scheduleReconnect(attempt)) {
-                        return;
-                    }
-                    continue;
+                this.aes = undefined;
+                this.connection = await this.transport.connect();
+                attempt = 0;
+                await this.setStatus({ type: 'connecting' });
+                const metaReceived = await this.connection.receive(this.packetMapper);
+                if (!metaReceived) {
+                    throw new Error('Connection closed before receiving server meta');
                 }
-                await this.setStatus({type: 'connecting'});
-                const token = await this.tokenProvider.get(this.address, this.client.app);
-                this.send({
+                if (!PACKET_TYPES.SERVER_META.match(metaReceived)) {
+                    throw new Error('First packet received was not server meta');
+                }
+                const { data: meta } = metaReceived;
+                this.address.hash = meta.hash;
+                let token = await this.tokenProvider.get(this.address, this.omu.app);
+                if (!token) {
+                    throw new InvalidToken(`No token available for app ${this.omu.app.id.key()} at ${this.address.host}:${this.address.port}:${this.address.hash}`);
+                }
+                let encryptionResp: EncryptionResponse | undefined = undefined;
+                if (this.omu.app.type === 'remote' && ENCRYPTION_AVAILABLE && meta.encryption) {
+                    const decryptor = await Decryptor.new();
+                    const encryptor = await Encryptor.new(meta.encryption.rsa);
+                    if (token) {
+                        token = await encryptor.encryptString(token);
+                    }
+                    this.aes = await AES.new();
+                    encryptionResp = {
+                        kind: 'v1',
+                        rsa: await decryptor.toRequest(),
+                        aes: await this.aes.serialize(encryptor),
+                    };
+                }
+                this.connection.send({
                     type: PACKET_TYPES.CONNECT,
                     data: new ConnectPacket({
-                        app: this.client.app,
-                        protocol: {version: VERSION},
+                        app: this.omu.app,
+                        protocol: { version: VERSION },
+                        encryption: encryptionResp,
                         token,
                     }),
-                });
-                const listenPromise = this.listen();
-                await this.setStatus({type: 'connected'});
+                }, this.packetMapper);
+                this.listenTask = this.listen();
+                await this.setStatus({ type: 'connected' });
                 await this.event.connected.emit();
-                await this.dispatchTasks();
-                this.send({
-                    type: PACKET_TYPES.READY,
-                    data: null,
+                this.dispatchTasks().then(() => {
+                    this.send({
+                        type: PACKET_TYPES.READY,
+                        data: null,
+                    });
                 });
-                await listenPromise;
-                if (this.status.type === 'error') {
-                    throw this.status.error;
+                await this.listenTask;
+            } catch (error) {
+                if (error instanceof DisconnectReason) {
+                    this.reason = error;
+                }
+                if (!reconnect) {
+                    throw error;
                 }
             } finally {
-                if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting' && this.status.type !== 'error') {
-                    this.setStatus({type: 'disconnected', attempt});
+                this.event.disconnected.emit(this.reason);
+                if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting') {
+                    this.setStatus({ type: 'disconnected', attempt, reason: this.reason });
                 }
-                this.event.disconnected.emit(null);
-                this.connection.close();
+                this.connection?.close();
+                this.connection = undefined;
+                this.listenTask = undefined;
             }
-            if (!recconect) {
+            if (this.reason && ![
+                DisconnectType.SHUTDOWN,
+                DisconnectType.SERVER_RESTART,
+            ].includes(this.reason.type)) {
                 break;
             }
-            if (!await this.scheduleReconnect(attempt)) {
+            this.reason = undefined;
+            if (!reconnect) {
+                break;
+            }
+            const shouldReconnect = await this.scheduleReconnect(attempt);
+            if (!shouldReconnect) {
                 break;
             }
         }
+        await this.setStatus({ type: 'disconnected', reason: this.reason });
+        this.connection?.close();
+        this.connection = undefined;
     }
 
     private isState(state: NetworkStatus['type']): boolean {
         return this.status.type === state;
     }
 
-    public send(packet: Packet): void {
-        if (this.connection.closed) {
-            throw new Error('Cannot send packet while connection is closed');
+    public async send(packet: Packet): Promise<void> {
+        if (!this.connection) {
+            throw new Error('No connection established');
+        }
+        if (this.aes) {
+            const serialized = this.packetMapper.serialize(packet);
+            packet = await this.aes.encrypt(serialized);
         }
         this.connection.send(packet, this.packetMapper);
     }
 
     private async listen(): Promise<void> {
-        while (!this.connection.closed) {
+        while (this.connection) {
             const packet = await this.connection.receive(this.packetMapper);
             if (!packet) {
-                return;
+                break;
             }
-            this.dispatchPacket(packet);
+            await this.dispatchPacket(packet);
         }
     }
 
     private async dispatchPacket(packet: Packet): Promise<void> {
+        if (PACKET_TYPES.ENCRYPTED_PACKET.match(packet)) {
+            if (!this.aes) {
+                throw new Error('Received encrypted packet before encryption was established');
+            }
+            const decrypted = await this.aes.decrypt(packet);
+            packet = this.packetMapper.deserialize(decrypted);
+        }
         await this.event.packet.emit(packet);
         const packetHandler = this.packetHandlers.get(packet.type.id);
         if (!packetHandler) {
@@ -243,7 +293,7 @@ export class Network {
     }
 
     public addTask(task: () => Promise<void> | void): void {
-        if (this.client.running) {
+        if (this.omu.running) {
             throw new Error('Cannot add task after client is ready');
         }
         this.tasks.push(task);

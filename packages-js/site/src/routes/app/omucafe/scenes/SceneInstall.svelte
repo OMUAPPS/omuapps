@@ -10,17 +10,17 @@
 
     export let context: SceneContext;
     $: console.log('SceneCooking', context);
-    
+
     const { scene, config, obs } = getGame();
 
     let state: {
-        type: 'waiting'
+        type: 'waiting';
     } | {
-        type: 'prompt'
+        type: 'prompt';
     } | {
-        type: 'installing'
+        type: 'installing';
     } | {
-        type: 'setup'
+        type: 'setup';
     } = {
         type: 'waiting',
     };
@@ -50,7 +50,7 @@
         SCENE: '配信喫茶',
         BACKGROUND: 'キッチン',
         OVERLAY: 'カウンター',
-    }
+    };
 
     async function install() {
         if (isInstalled()) {
@@ -61,7 +61,7 @@
         const scene = sceneRes ?? (await obs.sceneCreate({
             name: NAMES.SCENE,
         })).scene;
-        const sources = await obs.sourceList({scene: scene.name});
+        const sources = await obs.sourceList({ scene: scene.name });
         const overlayUrl = getURL('overlay');
         const backgroundUrl = getURL('background');
         console.log('sources', sources);
@@ -92,7 +92,7 @@
             }
         }
         $config.obs.scene_uuid = scene.uuid;
-        const backgroundRes = $config.obs.background_uuid && (await tryCatch(obs.sourceGetByUuid({uuid: $config.obs.background_uuid}))).data || (await tryCatch(obs.sourceGetByName({name: NAMES.BACKGROUND, scene: scene.name}))).data || null;
+        const backgroundRes = $config.obs.background_uuid && (await tryCatch(obs.sourceGetByUuid({ uuid: $config.obs.background_uuid }))).data || (await tryCatch(obs.sourceGetByName({ name: NAMES.BACKGROUND, scene: scene.name }))).data || null;
         const background = backgroundRes ?? (await obs.browserAdd({
             name: NAMES.BACKGROUND,
             scene: scene.name,
@@ -104,7 +104,7 @@
             width: '100:%',
             height: '100:%',
         })).source;
-        const overlayRes = $config.obs.overlay_uuid && (await tryCatch(obs.sourceGetByUuid({uuid: $config.obs.overlay_uuid}))).data || (await tryCatch(obs.sourceGetByName({name: NAMES.OVERLAY, scene: scene.name}))).data || null;
+        const overlayRes = $config.obs.overlay_uuid && (await tryCatch(obs.sourceGetByUuid({ uuid: $config.obs.overlay_uuid }))).data || (await tryCatch(obs.sourceGetByName({ name: NAMES.OVERLAY, scene: scene.name }))).data || null;
         const overlay = overlayRes ?? (await obs.browserAdd({
             name: NAMES.OVERLAY,
             scene: scene.name,
@@ -204,7 +204,7 @@
         font-size: 0.8rem;
         color: var(--color-text);
     }
-    
+
     h1 {
         font-size: 2rem;
         margin-bottom: 0.5rem;

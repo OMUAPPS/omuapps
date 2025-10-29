@@ -2,14 +2,12 @@
     import { TableList } from '@omujs/ui';
     import { getGame } from '../omucafe-app.js';
     import OrderListEntry from './OrderListEntry.svelte';
-    
+
     const { orders } = getGame();
 </script>
 
 <div class="order-list">
-    <TableList table={orders} component={OrderListEntry} backward sort={(a, b) => {
-        return a.timestamp - b.timestamp;
-    }} />
+    <TableList table={orders} component={OrderListEntry} sort={(item) => item.timestamp} />
 </div>
 
 <style lang="scss">

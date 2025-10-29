@@ -1,57 +1,77 @@
 import type { AppJson } from '../../app.js';
 import { App } from '../../app.js';
-import { Identifier } from '../../identifier.js';
-import type { Model } from '../../model.js';
-import { Serializer } from '../../serializer.js';
-
+import { Identifier } from '../../identifier';
+import { Serializer } from '../../serialize/serializer.js';
 import { PacketType } from './packet.js';
 
 const IDENTIFIER = new Identifier('core', 'packet');
 
 type ProtocolInfo = {
-    version: string,
+    version: string;
+};
+
+type RSANumbers = {
+    e: string;
+    n: string;
+};
+
+type EncryptionRequest = {
+    kind: 'v1';
+    rsa: RSANumbers;
+};
+
+type EncryptionResponse = {
+    kind: 'v1';
+    rsa: RSANumbers;
+    aes: string;
+};
+
+export type ServerMeta = {
+    protocol: ProtocolInfo;
+    encryption: EncryptionRequest | null;
+    hash: string | undefined;
 };
 
 type ConnectPacketJson = {
-    app: AppJson,
-    protocol: ProtocolInfo,
-    token?: string,
-    is_dashboard?: boolean,
+    protocol: ProtocolInfo;
+    app: AppJson;
+    token: string;
+    encryption: EncryptionResponse | null;
 };
 
-export class ConnectPacket implements Model<ConnectPacketJson> {
-    public readonly app: App;
+export class ConnectPacket {
     public readonly protocol: ProtocolInfo;
-    public readonly token?: string;
-    public readonly isDashboard?: boolean;
-    
+    public readonly app: App;
+    public readonly token: string;
+    public readonly encryption: EncryptionResponse | null;
+
     constructor(options: {
-        app: App,
-        protocol: ProtocolInfo,
-        token?: string,
-        is_dashboard?: boolean,
+        protocol: ProtocolInfo;
+        app: App;
+        token: string;
+        encryption?: EncryptionResponse | null;
     }) {
-        this.app = options.app;
         this.protocol = options.protocol;
+        this.app = options.app;
         this.token = options.token;
-        this.isDashboard = options.is_dashboard;
+        this.encryption = options.encryption ?? null;
     }
 
-    public static fromJson(data: ConnectPacketJson): ConnectPacket {
+    public static deserialize(data: ConnectPacketJson): ConnectPacket {
         return new ConnectPacket({
-            app: App.fromJson(data.app),
             protocol: data.protocol,
+            app: App.deserialize(data.app),
+            encryption: data.encryption,
             token: data.token,
-            is_dashboard: data.is_dashboard,
         });
     }
 
-    public toJson(): ConnectPacketJson {
+    public static serialize(data: ConnectPacket): ConnectPacketJson {
         return {
-            app: this.app.toJson(),
-            protocol: this.protocol,
-            token: this.token,
-            is_dashboard: this.isDashboard,
+            protocol: data.protocol,
+            app: App.serialize(data.app),
+            encryption: data.encryption,
+            token: data.token,
         };
     }
 }
@@ -72,20 +92,28 @@ export enum DisconnectType {
 }
 
 type DisconnectPacketJson = {
-    type: DisconnectType,
-    message: string | null,
+    type: DisconnectType;
+    message: string | null;
 };
 
-export class DisconnectPacket implements Model<DisconnectPacketJson> {
+export class DisconnectPacket {
     public readonly type: DisconnectType;
     public readonly message: string | null;
 
     constructor(options: {
-        type: DisconnectType,
-        message?: string | null,
+        type: DisconnectType;
+        message?: string | null;
     }) {
         this.type = options.type;
         this.message = options.message ?? null;
+    }
+
+    public static serialize(data: DisconnectPacket): DisconnectPacketJson {
+        return data.toJson();
+    }
+
+    public static deserialize(data: DisconnectPacketJson): DisconnectPacket {
+        return DisconnectPacket.fromJson(data);
     }
 
     static fromJson(data: DisconnectPacketJson): DisconnectPacket {
@@ -104,23 +132,32 @@ export class DisconnectPacket implements Model<DisconnectPacketJson> {
 }
 
 export const PACKET_TYPES: {
+    SERVER_META: PacketType<ServerMeta>;
     CONNECT: PacketType<ConnectPacket>;
     DISCONNECT: PacketType<DisconnectPacket>;
     TOKEN: PacketType<string>;
     READY: PacketType<undefined>;
+    ENCRYPTED_PACKET: PacketType<Uint8Array>;
 } = {
+    SERVER_META: PacketType.createJson<ServerMeta>(IDENTIFIER, {
+        name: 'server_meta',
+    }),
     CONNECT: PacketType.createJson<ConnectPacket>(IDENTIFIER, {
         name: 'connect',
-        serializer: Serializer.model(ConnectPacket),
+        serializer: ConnectPacket,
     }),
     DISCONNECT: PacketType.createJson<DisconnectPacket>(IDENTIFIER, {
         name: 'disconnect',
-        serializer: Serializer.model(DisconnectPacket),
+        serializer: DisconnectPacket,
     }),
     TOKEN: PacketType.createJson<string>(IDENTIFIER, {
         name: 'token',
     }),
     READY: PacketType.createJson<undefined>(IDENTIFIER, {
         name: 'ready',
+    }),
+    ENCRYPTED_PACKET: PacketType.createSerialized<Uint8Array>(IDENTIFIER, {
+        name: 'e',
+        serializer: Serializer.noop(),
     }),
 };

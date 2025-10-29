@@ -1,9 +1,9 @@
-import type { AppJson } from '@omujs/omu/app.js';
-import type { DragDropFile } from '@omujs/omu/extension/dashboard/packets.js';
+import { App } from '@omujs/omu';
+import type { DragDropFile } from '@omujs/omu/api/dashboard';
 import { TauriEvent } from '@tauri-apps/api/event';
 import type { FileInfo } from '@tauri-apps/plugin-fs';
 import { dashboard, omu } from './client.js';
-import { listen, tauriFs, tauriPath, waitForTauri } from './tauri.js';
+import { listen, tauriFs, tauriPath } from './tauri.js';
 
 type DragDrop = {
     files: DragDropFile[];
@@ -44,14 +44,14 @@ async function getFilesByPaths(paths: string[]): Promise<DragDropFile[]> {
     return files;
 }
 
-function getDragDropTarget(): AppJson | null {
+function getDragDropTarget(): App | null {
     const { currentApp } = dashboard;
     if (!currentApp) return null;
     if (!dragDropApps.includes(currentApp.id.key())) return null;
-    return currentApp.toJson();
+    return currentApp;
 }
 
-waitForTauri().then(() => {
+export function initDragDrop() {
     listen(TauriEvent.DRAG_ENTER, async ({ payload: { position, paths } }) => {
         const drag_id = nextDragId();
         const app = getDragDropTarget();
@@ -65,7 +65,7 @@ waitForTauri().then(() => {
                 drag_id,
                 position,
                 files,
-            }
+            },
         });
         dragDrops[drag_id] = { files, paths };
     });
@@ -80,8 +80,8 @@ waitForTauri().then(() => {
                 type: 'over',
                 drag_id,
                 position,
-            }
-        })
+            },
+        });
     });
     listen(TauriEvent.DRAG_DROP, async ({ payload: { position, paths } }) => {
         const drag_id = getDragId();
@@ -95,8 +95,8 @@ waitForTauri().then(() => {
                 drag_id,
                 position,
                 files: await getFilesByPaths(paths),
-            }
-        })
+            },
+        });
     });
     listen(TauriEvent.DRAG_LEAVE, async () => {
         const drag_id = getDragId();
@@ -108,7 +108,7 @@ waitForTauri().then(() => {
             state: {
                 type: 'leave',
                 drag_id,
-            }
-        })
+            },
+        });
     });
-})
+}

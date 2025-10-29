@@ -14,5 +14,25 @@
             "isBackground": true,
             "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py",
         },
+        {
+            "label": "dev-without-dash",
+            "type": "shell",
+            "isBackground": true,
+            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py --skip-dash",
+        },
+        {
+            "label": "dev-package-index",
+            "type": "shell",
+            "isBackground": true,
+            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-upload-dev-index.py",
+        },
+        {
+            "label": "prepare",
+            "dependsOn": ["prelaunch", "dev-package-index", "dev"],
+        },
+        {
+            "label": "prepare-without-dash",
+            "dependsOn": ["prelaunch", "dev-package-index", "dev-without-dash"],
+        }
     ]
 }

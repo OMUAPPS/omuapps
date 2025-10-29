@@ -1,52 +1,52 @@
-import { getContext } from '../game/game.js'
-import { uniqueId } from '../game/helper.js'
-import { ARC4 } from '../game/random.js'
-import { Time } from '../game/time.js'
-import { getGame } from '../omucafe-app.js'
-import { getAssetArrayBuffer, type Asset } from './asset.js'
+import { getContext } from '../game/game.js';
+import { uniqueId } from '../game/helper.js';
+import { ARC4 } from '../game/random.js';
+import { Time } from '../game/time.js';
+import { getGame } from '../omucafe-app.js';
+import { getAssetArrayBuffer, type Asset } from './asset.js';
 
 export type Filter = {
-    type: 'filter',
-    clip: AudioClip,
-    volume?: number,
+    type: 'filter';
+    clip: AudioClip;
+    volume?: number;
     pan?: {
-        type: 'item',
-        id?: string,
+        type: 'item';
+        id?: string;
     } | {
-        type: 'const',
-        value: number,
-    },
-    lowpass?: number,
-    highpass?: number,
-    attack?: number,
-    release?: number,
+        type: 'const';
+        value: number;
+    };
+    lowpass?: number;
+    highpass?: number;
+    attack?: number;
+    release?: number;
 };
 
 export function createFilter(options: Omit<Filter, 'type'>): Filter {
     return {
         type: 'filter',
         ...options,
-    }
+    };
 }
 
 export type Clip = {
-    readonly type: 'clip',
-    asset?: Asset,
-    start: number,
-    duration?: number,
-    playbackRate?: number,
-    loop: boolean,
-}
+    readonly type: 'clip';
+    asset?: Asset;
+    start: number;
+    duration?: number;
+    playbackRate?: number;
+    loop: boolean;
+};
 
 export async function createClip(options: {
-    asset?: Asset,
-    start?: number,
-    duration?: number,
-    playbackRate?: number,
-    loop?: boolean,
+    asset?: Asset;
+    start?: number;
+    duration?: number;
+    playbackRate?: number;
+    loop?: boolean;
 }): Promise<Clip> {
-    const { asset, start, playbackRate, loop } = options
-    let { duration } = options
+    const { asset, start, playbackRate, loop } = options;
+    let { duration } = options;
     if (!duration && asset) {
         const buffer = await getAudioBuffer(asset);
         duration = buffer.length / buffer.sampleRate * 1000;
@@ -58,7 +58,7 @@ export async function createClip(options: {
         duration: duration,
         playbackRate,
         loop: loop ?? false,
-    }
+    };
 }
 
 export async function createClipFromAudio(asset: Asset): Promise<Clip> {
@@ -74,77 +74,77 @@ export async function createClipFromAudio(asset: Asset): Promise<Clip> {
 }
 
 export type EnvelopeClip = {
-    readonly type: 'envelope',
+    readonly type: 'envelope';
     sources: {
-        attack?: AudioClip,
-        sustain?: AudioClip,
-        release?: AudioClip,
-    },
+        attack?: AudioClip;
+        sustain?: AudioClip;
+        release?: AudioClip;
+    };
     durations: {
-        attack?: number,
-    },
+        attack?: number;
+    };
     velocities: {
-        attack?: number,
-        sustain?: number,
-        release?: number,
-    },
-}
+        attack?: number;
+        sustain?: number;
+        release?: number;
+    };
+};
 
 export function createEnvelopeClip(options: {
     sources?: {
-        attack?: Clip,
-        decay?: Clip,
-        sustain?: Clip,
-        release?: Clip,
-    },
+        attack?: Clip;
+        decay?: Clip;
+        sustain?: Clip;
+        release?: Clip;
+    };
 }): EnvelopeClip {
-    const { sources } = options
+    const { sources } = options;
     return {
         type: 'envelope',
         sources: sources ?? {},
         durations: {},
         velocities: {},
-    }
+    };
 }
 
 export type RandomClip = {
     // Randomly select a clip from the list of clips
     // playingClip = Math.floor(random(seed + time) * clips.length) % clips.length
-    readonly type: 'random',
-    clips: Clip[],
-    seed: number,
-}
+    readonly type: 'random';
+    clips: Clip[];
+    seed: number;
+};
 
 export function createRandomClip(options: {
-    clips: Clip[],
-    seed?: number,
+    clips: Clip[];
+    seed?: number;
 }): RandomClip {
-    const { clips, seed } = options
+    const { clips, seed } = options;
     return {
         type: 'random',
         clips,
         seed: seed ?? 0,
-    }
+    };
 }
 
-export type AudioClip = Clip | EnvelopeClip | RandomClip | Filter
+export type AudioClip = Clip | EnvelopeClip | RandomClip | Filter;
 
 export type PlayingSource = {
-    type: 'item',
-    item: string,
+    type: 'item';
+    item: string;
 } | {
-    type: 'effect',
-    item: string,
-    effect: string,
-}
+    type: 'effect';
+    item: string;
+    effect: string;
+};
 
 export type PlayingAudioClip = {
-    readonly id: string,
-    clip: AudioClip,
-    source?: PlayingSource,
-    readonly startTime: number,
-    stopTime?: number,
-}
+    readonly id: string;
+    clip: AudioClip;
+    source?: PlayingSource;
+    readonly startTime: number;
+    stopTime?: number;
+};
 
 function getAudioKeyBySource(source: PlayingSource): string {
     switch (source.type) {
@@ -183,9 +183,9 @@ export async function playAudioClip(clip: AudioClip, source?: PlayingSource): Pr
         clip,
         startTime: time,
         source,
-    }
-    ctx.audios[id] = audio
-    return audio
+    };
+    ctx.audios[id] = audio;
+    return audio;
 }
 
 export function stopAudioClip(
@@ -225,7 +225,7 @@ class ClipContext {
             playing.startTime,
             playing.stopTime,
             playing.source,
-        )
+        );
     }
 
     public static fromClip(clip: AudioClip, source?: PlayingSource) {
@@ -236,7 +236,7 @@ class ClipContext {
             time,
             undefined,
             source,
-        )
+        );
     }
 
     get elapsed() {
@@ -250,7 +250,7 @@ class ClipContext {
             this.startTime + offset,
             this.stopTime,
             this.source,
-        )
+        );
     }
 };
 
@@ -327,7 +327,7 @@ class AudioInstanceFilter implements AudioInstance<Filter> {
                 }
                 case 'const': {
                     this.panner.pan.value = pan.value;
-                    break
+                    break;
                 }
             }
         }
@@ -364,7 +364,7 @@ class AudioInstanceClip implements AudioInstance<Clip> {
         return new AudioInstanceClip(
             source,
             false,
-        )
+        );
     }
 
     public dispose() {
@@ -404,7 +404,7 @@ class AudioInstanceRandom implements AudioInstance<RandomClip> {
         const instance = await createAudioInstance(clip, ctx);
         return new AudioInstanceRandom(
             instance,
-        )
+        );
     }
 
     public dispose() {
@@ -434,14 +434,14 @@ class AudioInstanceEnvelope implements AudioInstance<EnvelopeClip> {
                 release: release && await createAudioInstance(release, ctx),
             },
             audioCtx.createGain(),
-        )
+        );
     }
 
     public dispose() {
         Object.values(this.sources).map((source) => {
             if (!source) return;
             source.dispose();
-        })
+        });
         this.dest.disconnect();
     }
 
@@ -478,12 +478,12 @@ export async function updateAudioClips(): Promise<void> {
     const context = getContext();
     if (context.side !== 'client') return;
     updateAudioConfig();
-    const { audios } = context
+    const { audios } = context;
     for (const id in audios) {
-        const playing = audios[id]
+        const playing = audios[id];
         const elapsed = time - playing.startTime;
         if (elapsed > MAX_AUDIO_DURATION) {
-            delete audios[id]
+            delete audios[id];
             continue;
         }
         if (!playing.stopTime && playing.source && !sourceExists(playing.source)) {

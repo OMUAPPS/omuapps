@@ -3,24 +3,24 @@ import { BROWSER } from 'esm-env';
 import { Time } from './time.js';
 
 type MouseEvent = {
-    type: 'move',
-    pos: Vec2,
-    timestamp: number,
+    type: 'move';
+    pos: Vec2;
+    timestamp: number;
 } | {
-    type: 'down',
-    timestamp: number,
+    type: 'down';
+    timestamp: number;
 } | {
-    type: 'up',
-    timestamp: number,
+    type: 'up';
+    timestamp: number;
 } | {
-    type: 'enter',
-    pos: Vec2,
-    timestamp: number,
+    type: 'enter';
+    pos: Vec2;
+    timestamp: number;
 } | {
-    type: 'leave',
-    pos: Vec2,
-    timestamp: number,
-}
+    type: 'leave';
+    pos: Vec2;
+    timestamp: number;
+};
 
 export class Mouse {
     private constructor(

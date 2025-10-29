@@ -175,7 +175,9 @@ class DiscordRPC:
             }
         )
         assert res["cmd"] == "AUTHENTICATE"
-        assert res["evt"] is None
+        if res["evt"] == "ERROR":
+            raise Exception(f"Failed to authenticate: {res['data']}")
+        assert res["evt"] is None, res
         return res["data"]
 
     async def get_guilds(self) -> GetGuildsResponseData:

@@ -1,5 +1,6 @@
 import { $, type BuildConfig, Glob } from 'bun';
-import { watch } from 'node:fs';
+import { watch } from 'fs';
+import * as fs from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import isolatedDecl from './bun-plugin-isolated-decl.js';
 
@@ -42,7 +43,7 @@ const { values } = parseArgs({
         debug: {
             type: 'boolean',
             default: false,
-        }
+        },
     },
     strict: true,
     allowPositionals: true,
@@ -61,8 +62,10 @@ function getEntrypointsFromGlob(entrypoint: string[]): string[] {
     if (entrypoints.length === 0) {
         throw new Error('No entrypoints found');
     }
-    return entrypoints
-};
+    return entrypoints;
+}
+
+;
 
 async function build(entrypoints: string[]) {
     if (values.debug) {
@@ -70,11 +73,13 @@ async function build(entrypoints: string[]) {
         console.time('build');
     }
 
+    await fs.rm(values.dtsdir, { recursive: true, force: true });
+
     const checkResult = await $`bun run tsc --noEmit --skipLibCheck --strict`.nothrow();
     if (checkResult.exitCode !== 0) {
         console.error('TypeScript type checking failed. Please fix the errors before building.');
     }
-    
+
     for (const entrypoint of entrypoints) {
         try {
             const option: BuildConfig = {
@@ -119,15 +124,16 @@ async function rebuild() {
     } catch (error) {
         console.error('Error while rebuilding:', error);
     }
-};
+}
 
 await build(entrypoints);
 
 if (values.watch) {
-    console.log('start watching');
+    console.log(`watching for changes in ${values.watchDir}...`);
     let debounceTimeout: Timer | null = null;
 
-    const watcher = watch(values.watchDir, () => {
+    const watcher = watch(values.watchDir, { recursive: true }, () => {
+        console.log('file change detected, rebuilding...');
         if (debounceTimeout) clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(rebuild, 100);
     });

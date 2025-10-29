@@ -1,11 +1,11 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { OBSPlugin, permissions } from '@omujs/obs';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { Button, setClient } from '@omujs/ui';
+    import { AppHeader, Button, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
-    import { APP } from './app.js';
+    import { APP, ASSET_APP } from './app.js';
     import { FriesApp } from './fries-app.js';
     import board from './img/board.png';
     import hint from './img/hint.png';
@@ -22,7 +22,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
         omu.start();
     }
@@ -41,41 +41,37 @@
 </script>
 
 <AppPage>
+    <header slot="header">
+        <AppHeader app={APP} />
+    </header>
     <main>
-        <p>このアプリは一つのみ配置することができます。</p>
         <section class="asset">
-            <AssetButton {omu} {obs} />
+            <AssetButton asset={ASSET_APP} {omu} {obs} />
         </section>
+        <h3>試しに投げてみる</h3>
         <section>
-            <div>
-                <h3>試しに投げてみる</h3>
-                <Button primary onclick={() => friesApp.test()}>
-                    投げる
-                    <i class="ti ti-arrow-up-right"></i>
-                </Button>
-            </div>
+            <Button primary onclick={() => friesApp.test()}>
+                投げる
+                <i class="ti ti-arrow-up-right"></i>
+            </Button>
         </section>
+        <h3>看板</h3>
         <section>
-            <div>
-                <h3>ヒント</h3>
-                <textarea bind:value={$config.hint} class="hint"></textarea>
-            </div>
+            <textarea bind:value={$config.text} class="text"></textarea>
+            <hr />
+            <img src={board} alt="" />
+        </section>
+        <h3>ヒント</h3>
+        <section>
+            <textarea bind:value={$config.hint} class="hint"></textarea>
             <hr />
             <img src={hint} alt="" />
         </section>
         <section>
             <div>
-                <h3>看板</h3>
-                <textarea bind:value={$config.text} class="text"></textarea>
-            </div>
-            <hr />
-            <img src={board} alt="" />
-        </section>
-        <section>
-            <div>
                 <h3>
                     状態
-                    <Button primary onclick={() => { $state = { type: 'idle' } }}>
+                    <Button primary onclick={() => { $state = { type: 'idle', start: Date.now() }; }}>
                         状態をリセット
                         <i class="ti ti-reload"></i>
                     </Button>
@@ -83,23 +79,12 @@
                 <code>
                     {stateText}
                 </code>
-                <span class="state">
-                    {JSON.stringify($state)}
-                </span>
             </div>
         </section>
     </main>
 </AppPage>
 
 <style lang="scss">
-    main {
-        padding: 2rem;
-    }
-
-    .asset {
-        margin-bottom: 2rem;
-    }
-
     section {
         display: flex;
         flex-direction: row;
@@ -107,21 +92,22 @@
         justify-content: space-between;
         width: 50rem;
         max-width: 100%;
+        margin-bottom: 1rem;
 
         hr {
             width: 100%;
             height: 1px;
             margin: 0 1rem;
-            margin-top: 4rem;
+            margin-top: 2rem;
             margin-left: 2.5rem;
             background: var(--color-1);
             border: none;
-            transform: rotate(-1deg);
+            transform: rotate(1deg);
         }
 
         img {
             width: 12rem;
-            margin-top: 2rem;
+            margin-top: 0;
             object-fit: contain;
             transform: rotate(-1.5deg);
         }
@@ -131,13 +117,13 @@
         display: flex;
         align-items: center;
         gap: 1.5rem;
-        margin-top: 1rem;
+        margin-bottom: 0.5rem;
         color: var(--color-1);
     }
 
     textarea {
         margin-top: 0.5rem;
-        width: 20rem;
+        width: 50rem;
         height: 5rem;
         background: var(--color-bg-2);
         border: 1px solid var(--color-outline);
@@ -161,11 +147,5 @@
         color: var(--color-1);
         font-size: 0.9rem;
         border-left: 2px solid var(--color-1);
-    }
-
-    .state {
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: #444;
     }
 </style>

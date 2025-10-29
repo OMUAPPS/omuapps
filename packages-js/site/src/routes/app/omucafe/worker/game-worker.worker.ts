@@ -14,7 +14,7 @@ function resolvePath(base: URL, path: string): URL {
     const { pathname } = base;
     return new URL(
         pathname.endsWith('/') ? pathname + path : `${pathname}/${path}`,
-        base
+        base,
     );
 }
 
@@ -59,15 +59,15 @@ export class ProxyGZipDictionaryLoader implements DictionaryLoader {
                 'unk_char.dat.gz',
                 'unk_compat.dat.gz',
                 'unk_invoke.dat.gz',
-            ].map((filename) => this.#loadArrayBuffer(resolvePath(this.#resourceBase, filename)))
-        )
+            ].map((filename) => this.#loadArrayBuffer(resolvePath(this.#resourceBase, filename))),
+        );
         // Trie
         dictionaries.loadTrie(new Int32Array(buffers[0]), new Int32Array(buffers[1]));
         // Token info dictionaries
         dictionaries.loadTokenInfoDictionaries(
             new Uint8Array(buffers[2]),
             new Uint8Array(buffers[3]),
-            new Uint8Array(buffers[4])
+            new Uint8Array(buffers[4]),
         );
         // Connection cost matrix
         dictionaries.loadConnectionCosts(new Int16Array(buffers[5]));
@@ -78,7 +78,7 @@ export class ProxyGZipDictionaryLoader implements DictionaryLoader {
             new Uint8Array(buffers[8]),
             new Uint8Array(buffers[9]),
             new Uint32Array(buffers[10]),
-            new Uint8Array(buffers[11])
+            new Uint8Array(buffers[11]),
         );
         return dictionaries;
     }
@@ -88,9 +88,9 @@ async function init() {
     const dictionary = await ProxyGZipDictionaryLoader.fromURL('https://github.com/OMUAPPS/assets/raw/refs/heads/main/data/dict/');
     const tokenizer = await kuromoji.fromDictionary(dictionary);
     const worker = WorkerPipe.self<GameCommands>();
-    
 
     const tokenCache: Map<string, TOKEN[]> = new Map();
+
     function tokenize(text: string): TOKEN[] {
         const existing = tokenCache.get(text);
         if (existing) return existing;
@@ -98,8 +98,9 @@ async function init() {
         tokenCache.set(text, tokens);
         return tokens;
     }
+
     worker.bind('tokenize', async (text) => tokenize(text));
-    worker.bind('analyzeOrder', async (args: {tokens: TOKEN[], productTokens: ProductTokens[]}) => {
+    worker.bind('analyzeOrder', async (args: { tokens: TOKEN[]; productTokens: ProductTokens[] }) => {
         const { tokens, productTokens } = args;
         const products: Product[] = [];
         const replacedTokens: OrderDetectToken[] = [];
@@ -116,33 +117,15 @@ async function init() {
             tokenize('食べる'),
             tokenize('頼む'),
         ];
-        let index = 0;
-        let requiredMatched = false;
-        while (tokens.length > index) {
-            let matched = false;
-            for (let i = 0; i < required.length; i++) {
-                const word = required[i];
-                if (tokens.length < word.length) continue;
-                const match = matchTokens(tokens, index, word);
-                if (!match) continue;
-                matched = true;
-                break;
-            }
-            if (matched) {
-                requiredMatched = true;
-                break;
-            } else {
-                index ++;
-            }
-        }
-        if (!requiredMatched) {
+        const hasRequiredTokens = hasMatchingTokenSet(tokens, required);
+        if (!hasRequiredTokens) {
             return {
                 detected: false,
                 products: [],
                 tokens: [],
-            }
+            };
         }
-        index = 0;
+        let index = 0;
         while (tokens.length > index) {
             let matched = false;
             for (const entry of productTokens) {
@@ -177,19 +160,20 @@ async function init() {
                 detected: products.length > 0,
                 products: products,
                 tokens: replacedTokens,
-            }
+            };
         }
 
-        const similarities: { product: Product, similarity: number }[] = []
+        const similarities: { product: Product; similarity: number }[] = [];
         for (const entry of productTokens) {
             const similarity = calculateSimilarity(entry.tokens, tokens);
+            if (similarity < 1 / 3) continue;
             similarities.push({ product: entry.product, similarity });
         }
         if (similarities.length === 0) return {
             detected: false,
             products: [],
             tokens: [],
-        }
+        };
         const sortedSimilarities = similarities.sort(comparator(({ similarity }) => -similarity));
         if (
             sortedSimilarities.length > 1 &&
@@ -198,19 +182,31 @@ async function init() {
             detected: false,
             products: [],
             tokens: [],
-        }
-        
+        };
+
         return {
             detected: true,
             products: [sortedSimilarities[0].product],
             tokens: [],
-        }
-    })
-
+        };
+    });
 
     worker.call('ready', undefined);
 }
 
 if (BROWSER) {
     init();
+}
+
+function hasMatchingTokenSet(tokens: TOKEN[], required: TOKEN[][]): boolean {
+    for (let index = 0; index < tokens.length; index ++) {
+        for (let i = 0; i < required.length; i++) {
+            const word = required[i];
+            if (tokens.length < word.length) continue;
+            const match = matchTokens(tokens, index, word);
+            if (!match) continue;
+            return true;
+        }
+    }
+    return false;
 }

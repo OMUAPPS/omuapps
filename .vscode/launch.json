@@ -2,12 +2,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Client",
+            "name": "Dashboard",
             "type": "chrome",
             "request": "launch",
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}",
-            "preLaunchTask": "dev"
+            "preLaunchTask": "prepare"
+        },
+        {
+            "name": "AppsOnly",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}",
+            "preLaunchTask": "prepare-without-dash"
         },
         {
             "name": "Server",
@@ -18,6 +26,8 @@
                 "--debug",
                 "--token-file",
                 "${workspaceFolder}/appdata/token.txt",
+                "--hash",
+                "dev",
                 "--extra-trusted-origin",
                 "localhost:5173"
             ],
@@ -46,6 +56,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Tauri Development Debug",
+            "cwd": "${workspaceFolder}/packages-js/dash/src-tauri",
             "cargo": {
                 "args": [
                     "build",
@@ -57,10 +68,10 @@
     ],
     "compounds": [
         {
-            "name": "Server/Client",
+            "name": "Server/Dashboard",
             "configurations": [
                 "Server",
-                "Client"
+                "Dashboard"
             ],
             "preLaunchTask": "prelaunch",
             "stopAll": true

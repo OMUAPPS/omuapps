@@ -3,8 +3,20 @@ from pathlib import Path
 from typing import NotRequired, TypedDict
 
 from loguru import logger
+from omu.app import App
 from omuplugin_obs.const import PLUGIN_ID
+from omuplugin_obs.version import VERSION
 from omuserver.helper import start_compressing_logs
+
+APP = App(
+    PLUGIN_ID,
+    version=VERSION,
+    metadata={
+        "locale": "en",
+        "name": {"ja": "OBSプラグイン", "en": "OBS Plugin"},
+        "description": {"ja": "アプリがOBSを制御するためのプラグイン", "en": "Plugin for app to control OBS"},
+    },
+)
 
 
 class LaunchCommand(TypedDict):
@@ -12,9 +24,16 @@ class LaunchCommand(TypedDict):
     cwd: NotRequired[str]
 
 
+class ServerAddress(TypedDict):
+    host: str
+    port: int
+    hash: str | None
+
+
 class Config(TypedDict):
     log_path: NotRequired[str]
     python_path: NotRequired[str]
+    server: ServerAddress
     launch: NotRequired[LaunchCommand]
 
 

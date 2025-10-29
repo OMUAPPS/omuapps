@@ -1,14 +1,11 @@
 import { makeRegistryWritable, once } from '$lib/helper.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
-import { Chat, events } from '@omujs/chat';
-import { CHAT_REACTION_PERMISSION_ID } from '@omujs/chat/permissions.js';
-import { OBSPlugin, permissions } from '@omujs/obs';
-import { App, Omu, Serializer } from '@omujs/omu';
-import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
-import { DAShBOARD_DRAG_DROP_PERMISSION_ID } from '@omujs/omu/extension/dashboard/dashboard-extension.js';
-import { RegistryType, type Registry } from '@omujs/omu/extension/registry/index.js';
-import { type Signal } from '@omujs/omu/extension/signal/signal.js';
-import { type Table } from '@omujs/omu/extension/table/table.js';
+import { Chat, ChatEvents, ChatPermissions } from '@omujs/chat';
+import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+import { App, Omu, OmuPermissions, Serializer } from '@omujs/omu';
+import { RegistryType, type Registry } from '@omujs/omu/api/registry';
+import { type Signal } from '@omujs/omu/api/signal';
+import { type Table } from '@omujs/omu/api/table';
 import { setChat, setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { get, writable, type Writable } from 'svelte/store';
@@ -33,7 +30,7 @@ import type { WorkerPipe } from './worker/worker.js';
 
 export const DEFAULT_RESOURCE_REGISTRY = {
     assets: {} as Record<string, Asset>,
-}
+};
 
 export type ResourceRegistry = typeof DEFAULT_RESOURCE_REGISTRY;
 
@@ -46,7 +43,7 @@ type MenuItem = {
     product: string;
     picture: boolean;
     note: string;
-}
+};
 
 export const DEFAULT_GAME_CONFIG = {
     version: 1,
@@ -78,18 +75,18 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<GameConfig>(APP_ID, {
             config.menu = {
                 items: [],
                 enabled: false,
-            }
+            };
             config.version = 1;
         }
-        return config
+        return config;
     }).fallback(DEFAULT_GAME_CONFIG),
 });
 
 export type User = {
-    id: string,
+    id: string;
     screen_id?: string;
-    name: string,
-    avatar?: string,
+    name: string;
+    avatar?: string;
 };
 
 export const DEFAULT_STATES = {
@@ -124,17 +121,17 @@ export const sessions = writable({
 async function startCheckInstalled(): Promise<void> {
     if (!game) throw new Error('Game not created');
     const { omu } = game;
-    omu.server.observeSession(OVERLAY_ID, {
+    omu.sessions.observe(OVERLAY_ID, {
         onConnect: () => sessions.update((s) => ({ ...s, overlay: true })),
         onDisconnect: () => sessions.update((s) => ({ ...s, overlay: false })),
     });
-    omu.server.observeSession(BACKGROUND_ID, {
+    omu.sessions.observe(BACKGROUND_ID, {
         onConnect: () => sessions.update((s) => ({ ...s, background: true })),
         onDisconnect: () => sessions.update((s) => ({ ...s, background: false })),
     });
     sessions.set({
-        overlay: await omu.server.sessions.has(OVERLAY_ID.key()),
-        background: await omu.server.sessions.has(BACKGROUND_ID.key()),
+        overlay: await omu.sessions.has(OVERLAY_ID),
+        background: await omu.sessions.has(BACKGROUND_ID),
     });
 }
 
@@ -167,10 +164,10 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
     const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
 
-    chat.on(events.message.add, (message) => {
+    chat.on(ChatEvents.Message.Add, (message) => {
         processMessage(message);
     });
-    
+
     game = {
         side,
         omu,
@@ -192,21 +189,21 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
         scene,
         globals: scriptAPI,
         worker: client ? await getWorker() : undefined,
-    }
+    };
     if (BROWSER) {
         omu.permissions.require(
-            ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
         );
         if (client) {
             omu.permissions.require(
-                permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
-                permissions.OBS_SOURCE_UPDATE_PERMISSION_ID,
-                permissions.OBS_SOURCE_READ_PERMISSION_ID,
-                permissions.OBS_SCENE_READ_PERMISSION_ID,
-                permissions.OBS_SCENE_CREATE_PERMISSION_ID,
-                DAShBOARD_DRAG_DROP_PERMISSION_ID,
-                ASSET_UPLOAD_PERMISSION_ID,
-                CHAT_REACTION_PERMISSION_ID,
+                OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
+                OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+                OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+                OBSPermissions.OBS_SOURCE_UPDATE_PERMISSION_ID,
+                OBSPermissions.OBS_SOURCE_READ_PERMISSION_ID,
+                OBSPermissions.OBS_SCENE_READ_PERMISSION_ID,
+                OBSPermissions.OBS_SCENE_CREATE_PERMISSION_ID,
+                ChatPermissions.CHAT_REACTION_PERMISSION_ID,
             );
         }
         omu.start();
@@ -227,25 +224,25 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
             config: await gameConfigRegistry.get(),
             scene: await sceneRegistry.get(),
             states: await statesRegistry.get(),
-        })
+        });
         gameConfig.subscribe((value) => {
             setContext({
                 ...getContext(),
                 config: value,
-            })
+            });
         });
         states.subscribe((value) => {
             setContext({
                 ...getContext(),
                 ...value.kitchen,
                 states: value,
-            })
+            });
         });
         scene.subscribe((value) => {
             setContext({
                 ...getContext(),
                 scene: value,
-            })
+            });
         });
 
         await startCheckInstalled();
@@ -255,11 +252,11 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
                     if (value.background && value.overlay) {
                         scene.set({
                             type: 'main_menu',
-                        })
+                        });
                         resolve();
                     }
-                })
-            })
+                });
+            });
             scene.set({
                 type: 'install',
             });
@@ -268,26 +265,26 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
 }
 
 export type Game = {
-    side: GameSide,
-    omu: Omu,
-    obs: OBSPlugin,
-    chat: Chat,
-    gameConfigRegistry: Registry<GameConfig>,
-    gameConfig: Writable<GameConfig>,
-    configRegistry: Registry<Config>,
-    config: Writable<Config>,
-    resourcesRegistry: Registry<ResourceRegistry>,
-    resources: Writable<ResourceRegistry>,
-    statesRegistry: Registry<States>,
-    states: Writable<States>,
-    sceneRegistry: Registry<Scene>,
-    scene: Writable<Scene>,
-    orders: Table<Order>,
-    gallery: Table<GalleryItem>,
-    paintSignal: Signal<PaintEvent[]>,
-    paintEvents: Writable<PaintBuffer>,
-    globals: Globals,
-    worker?: WorkerPipe<GameCommands>,
+    side: GameSide;
+    omu: Omu;
+    obs: OBSPlugin;
+    chat: Chat;
+    gameConfigRegistry: Registry<GameConfig>;
+    gameConfig: Writable<GameConfig>;
+    configRegistry: Registry<Config>;
+    config: Writable<Config>;
+    resourcesRegistry: Registry<ResourceRegistry>;
+    resources: Writable<ResourceRegistry>;
+    statesRegistry: Registry<States>;
+    states: Writable<States>;
+    sceneRegistry: Registry<Scene>;
+    scene: Writable<Scene>;
+    orders: Table<Order>;
+    gallery: Table<GalleryItem>;
+    paintSignal: Signal<PaintEvent[]>;
+    paintEvents: Writable<PaintBuffer>;
+    globals: Globals;
+    worker?: WorkerPipe<GameCommands>;
 };
 
 let game: Game | null = null;

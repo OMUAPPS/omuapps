@@ -1,6 +1,6 @@
 type CommandRegistry = Record<string, {
-    request: unknown,
-    response: unknown,
+    request: unknown;
+    response: unknown;
 }>;
 
 export class WorkerPipe<Commands extends CommandRegistry> {

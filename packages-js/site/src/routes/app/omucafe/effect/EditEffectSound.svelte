@@ -5,4 +5,4 @@
     export let sound: EffectSound;
 </script>
 
-<EditClip bind:clip={sound.clip}/>
+<EditClip bind:clip={sound.clip} />

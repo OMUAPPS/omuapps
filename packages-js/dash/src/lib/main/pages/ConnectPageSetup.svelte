@@ -1,21 +1,21 @@
 <script lang="ts">
     import { chat } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
     import { Spinner, Tooltip } from '@omujs/ui';
 
     export let cancel: () => void = () => {};
-    
+
     let stage: {
-        type: 'input',
+        type: 'input';
     } | {
-        type: 'searching',
+        type: 'searching';
     } | {
-        type: 'select',
+        type: 'select';
     } = { type: 'input' };
 
     let url = '';
-    let result: {channel: models.Channel, checked: boolean}[] = [];
+    let result: { channel: Models.Channel; checked: boolean }[] = [];
 
     async function search(url: string) {
         stage = { type: 'searching' };
@@ -67,7 +67,7 @@
         {:else}
             <p>{$t('page.connect.select_channel')}</p>
             <div class="channels">
-                {#each result as {channel, checked} (channel.id)}
+                {#each result as { channel, checked } (channel.id)}
                     <button class="channel" class:checked={checked} on:click={() => {
                         checked = !checked;
                     }}>
@@ -207,7 +207,7 @@
                 display: flex;
                 flex-direction: column;
                 align-items: flex-start;
-                
+
                 > p {
                     color: var(--color-1);
                     font-size: 0.8621rem;

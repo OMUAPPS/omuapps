@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Checkbox } from '@omujs/ui';
     import type { Holdable } from './holdable.js';
-    
+
     export let behavior: Holdable;
 </script>
 

@@ -1,12 +1,15 @@
 <script lang="ts">
-    import type { DocsSection } from '$lib/server/docs/index.js';
+    import type { DocsSection } from '$lib/server/docs';
 
     export let section: DocsSection;
 </script>
 
 {#if section}
     <div class="footer">
-        <a href="https://github.com/OMUAPPS/omuapps/blob/develop/documentation/site/{section.slug}.md" target="_blank">
+        <a
+            href="https://github.com/OMUAPPS/omuapps/blob/develop/documentation/site/{section.slug}.md"
+            target="_blank"
+        >
             このページをGitHubで編集する
             <i class="ti ti-brand-github"></i>
         </a>

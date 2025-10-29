@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Omu } from '@omujs/omu';
-    import { FrameConnection } from '@omujs/omu/network/frame-connection.js';
+    import { FrameTransport } from '@omujs/omu/network';
     import { setClient, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
@@ -8,18 +8,22 @@
     import { RemoteApp } from '../remote-app.js';
     import SessionApp from './SessionApp.svelte';
 
-    const params = BROWSER && new URLSearchParams(window.location.search) || new URLSearchParams('');
+    const params =
+        (BROWSER && new URLSearchParams(window.location.search)) ||
+            new URLSearchParams('');
     let token = params.get('token') || undefined;
     let lan = params.get('lan') || undefined;
     let secure = params.get('secure') === 'true' || false;
     const omu = new Omu(REMOTE_APP, {
         token: token,
-        address: BROWSER && {
-            host: lan || window.location.hostname,
-            port: 26423,
-            secure,
-        } || undefined,
-        connection: BROWSER && new FrameConnection() || undefined,
+        address:
+            (BROWSER && {
+                host: lan || window.location.hostname,
+                port: 26423,
+                secure,
+            }) ||
+                undefined,
+        transport: (BROWSER && new FrameTransport()) || undefined,
     });
     const remote = new RemoteApp(omu, 'remote');
     setClient(omu);
@@ -30,35 +34,44 @@
         });
     }
 
-    let state: {
-        type: 'connecting';
-    } | {
-        type: 'connected';
-    } | {
-        type: 'ready';
-    } | {
-        type: 'disconnected';
-        reason?: string;
-    } = { type: 'connecting' };
+    let state:
+        | {
+            type: 'connecting';
+        }
+        | {
+            type: 'connected';
+        }
+        | {
+            type: 'ready';
+        }
+        | {
+            type: 'disconnected';
+            reason?: string;
+        } = { type: 'connecting' };
     omu.network.event.status.listen((status) => {
         if (status.type === 'connecting') {
             state = { type: 'connecting' };
-            logs.push(`[connecting] connecting to ${omu.address.host}:${omu.address.port}`);
+            logs.push(
+                `[connecting] connecting to ${omu.address.host}:${omu.address.port}`,
+            );
         } else if (status.type === 'connected') {
             state = { type: 'connected' };
-            logs.push(`[connected] connected to ${omu.address.host}:${omu.address.port}`);
+            logs.push(
+                `[connected] connected to ${omu.address.host}:${omu.address.port}`,
+            );
         } else if (status.type === 'reconnecting') {
             state = { type: 'connected' };
-            logs.push(`[reconnecting] reconnecting to ${omu.address.host}:${omu.address.port}`);
+            logs.push(
+                `[reconnecting] reconnecting to ${omu.address.host}:${omu.address.port}`,
+            );
         } else if (status.type === 'disconnected') {
-            state = { type: 'disconnected', reason: status.reason?.message || undefined };
-            logs.push(`[disconnected] disconnected from ${omu.address.host}:${omu.address.port}`);
-        } else if (status.type === 'error') {
-            state = { type: 'disconnected', reason: status.error.message || undefined };
-            logs.push(`[error] ${status.error.message}`);
-        } else if (status.type === 'closed') {
-            state = { type: 'disconnected', reason: 'closed' };
-            logs.push(`[closed] closed connection to ${omu.address.host}:${omu.address.port}`);
+            state = {
+                type: 'disconnected',
+                reason: status.reason?.message || undefined,
+            };
+            logs.push(
+                `[disconnected] disconnected from ${omu.address.host}:${omu.address.port}`,
+            );
         } else if (status.type === 'ready') {
             state = { type: 'ready' };
             logs.length = 0;
@@ -69,7 +82,7 @@
 </script>
 
 <svelte:head>
-    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
 </svelte:head>
 
 <main>
@@ -116,7 +129,7 @@
         background: transparent !important;
         font-size: 40px;
     }
-    
+
     :global(html) {
         font-size: calc(100vw * 18 / 480);
     }

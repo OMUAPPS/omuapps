@@ -1,6 +1,6 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
-    
+
     import robotKilled from '$lib/images/robot-killed.svg';
 </script>
 
@@ -23,9 +23,9 @@
                 かんたんに3行で言うと（本文はこの下）
             </h2>
             <ul>
-                <li>このソフト自体は個人情報は何も取得しないよ</li>
-                <li>「アプリを探す」タブ以外から入れるアプリはそれぞれのプライバシーポリシーを確認してね</li>
-                <li>あくまでアプリ管理ソフトだから、アプリが何をするかはわからないよ</li>
+                <li>OMUAPPSは個人情報を外部に送信することなく、すべてあなたのPCの中で動きます</li>
+                <li>OMUAPPS内のアプリ導入機能以外から入れるアプリはそれぞれのプライバシーポリシーを確認してください</li>
+                <li>あくまでアプリ管理ソフトなので、入れたアプリが何をするかは分かりません</li>
             </ul>
         </div>
         <h1 id="privacy">プライバシーポリシー</h1>

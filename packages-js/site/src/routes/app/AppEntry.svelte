@@ -37,8 +37,8 @@
             return {
                 id: tag,
                 data: tagData,
-            }
-        }).sort((a,) => -(a.id === 'underdevelopment')) || [];
+            };
+        }).sort((a) => -(a.id === 'underdevelopment')) || [];
 </script>
 
 <article class:added={alreadyAdded}>

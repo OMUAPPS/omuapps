@@ -21,7 +21,7 @@
             }
             edit = newEdit;
         },
-    } satisfies ScriptEditorContext)
+    } satisfies ScriptEditorContext);
 
     $: if (edit) {
         edit.setter(edit.value);
@@ -85,7 +85,7 @@
                         if (!edit) return;
                         edit.value = value.invoke(value.void(), []);
                     }}>
-                        <i class="ti ti-caret-right-filled"></i>    
+                        <i class="ti ti-caret-right-filled"></i>
                         invoke
                     </button>
                     <button on:click={() => {
@@ -114,7 +114,7 @@
                                 <li>
                                     <button on:click={() => {
                                         if (!edit || edit.value.type !== 'invoke') return;
-                                        edit.value.args = edit.value.args.filter((_,idx) => idx !== index);
+                                        edit.value.args = edit.value.args.filter((_, idx) => idx !== index);
                                     }}>
                                         <i class="ti ti-x"></i>
                                     </button>
@@ -135,7 +135,7 @@
                         </ul>
                     </div>
                     <div class="property">
-                        {#each Object.entries(globals.functions) as [key, func] (key)}
+                        {#each Object.keys(globals.functions) as key (key)}
                             {key}
                         {/each}
                     </div>

@@ -15,7 +15,7 @@
     let container: HTMLElement;
 
     $: if (container) {
-        container.scrollTo({top: $config.scenes.product_list.scroll});
+        container.scrollTo({ top: $config.scenes.product_list.scroll });
     }
 
     let searchElement: HTMLInputElement;
@@ -35,7 +35,7 @@
     <input type="text" bind:this={searchElement} bind:value={$config.scenes.product_list.search} on:blur={() => {
         if ($scene.type !== 'product_list') return;
         searchElement.focus();
-    }}/>
+    }} />
     <i class="ti ti-search"></i>
 </span>
 <main>
@@ -72,7 +72,7 @@
                                     note: '',
                                 },
                                 ...$gameConfig.menu.items,
-                            ]
+                            ];
                         }}>
                             <Tooltip>
                                 追加
@@ -113,7 +113,7 @@
         display: flex;
         background: color-mix(in srgb, var(--color-bg-1) 90%, transparent 0%);
     }
-    
+
     .list {
         display: flex;
         justify-content: flex-start;
@@ -195,7 +195,7 @@
             opacity: 1;
             animation: fadeIn forwards 0.12621s;
         }
-        
+
         > input {
             position: absolute;
             top: 1.1rem;

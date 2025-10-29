@@ -14,7 +14,7 @@
         : 1.4}) translateY(-35px)"
 />
 <h1 bind:clientWidth={textWidth}>
-    {#each title.split('\n') as line, i (line)}
+    {#each title.split('\n') as line, index (index)}
         {line}
         <br />
     {/each}

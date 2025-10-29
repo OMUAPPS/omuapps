@@ -13,20 +13,23 @@ from loguru import logger
 from omu import Identifier
 from omu.event_emitter import EventEmitter
 from omu.helper import asyncio_error_logger
+from omu.network.packet.packet_types import DisconnectType
 from yarl import URL
 
+from omuserver.api.asset import AssetExtension
+from omuserver.api.dashboard import DashboardExtension
+from omuserver.api.endpoint import EndpointExtension
+from omuserver.api.http import HttpExtension
+from omuserver.api.i18n import I18nExtension
+from omuserver.api.logger import LoggerExtension
+from omuserver.api.permission import PermissionExtension
+from omuserver.api.plugin import PluginExtension
+from omuserver.api.registry import RegistryExtension
+from omuserver.api.server import ServerExtension
+from omuserver.api.session import SessionExtension
+from omuserver.api.signal import SignalExtension
+from omuserver.api.table import TableExtension
 from omuserver.config import Config
-from omuserver.extension.asset import AssetExtension
-from omuserver.extension.dashboard import DashboardExtension
-from omuserver.extension.endpoint import EndpointExtension
-from omuserver.extension.i18n import I18nExtension
-from omuserver.extension.logger import LoggerExtension
-from omuserver.extension.permission import PermissionExtension
-from omuserver.extension.plugin import PluginExtension
-from omuserver.extension.registry import RegistryExtension
-from omuserver.extension.server import ServerExtension
-from omuserver.extension.signal import SignalExtension
-from omuserver.extension.table import TableExtension
 from omuserver.helper import safe_path_join
 from omuserver.network import Network
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
@@ -52,19 +55,20 @@ class Server:
         self.directories.mkdir()
         self.packets = ServerPacketDispatcher()
         self.network = Network(self, self.packets)
-        self.network.event.start += self._handle_network_start
         self.network.add_http_route("/", self._handle_index)
         self.network.add_http_route("/version", self._handle_version)
         self.network.add_http_route("/frame", self._handle_frame)
         self.network.add_http_route("/proxy", self._handle_proxy)
         self.network.add_http_route("/asset", self._handle_assets)
-        self.security = PermissionManager(self)
+        self.security = PermissionManager.load(self)
         self.running = False
         self.endpoints = EndpointExtension(self)
         self.permissions = PermissionExtension(self)
         self.tables = TableExtension(self)
-        self.dashboard = DashboardExtension(self)
+        self.sessions = SessionExtension(self)
+        self.http = HttpExtension(self)
         self.registries = RegistryExtension(self)
+        self.dashboard = DashboardExtension(self)
         self.server = ServerExtension(self)
         self.signals = SignalExtension(self)
         self.plugins = PluginExtension(self)
@@ -165,19 +169,12 @@ class Server:
             self._loop.create_task(_run())
             self._loop.run_forever()
 
-    async def _handle_network_start(self) -> None:
-        logger.info(f"Listening on {self.address.host}:{self.address.port}")
-        try:
-            await self.event.start()
-        except Exception as e:
-            await self.stop()
-            self.loop.stop()
-            raise e
-
     async def start(self) -> None:
         self.running = True
         try:
             await self.network.start()
+            logger.info(f"Listening on {self.address.host}:{self.address.port}")
+            await self.event.start()
         except Exception as e:
             logger.opt(exception=e).error("Failed to start server")
             await self.stop()
@@ -191,6 +188,10 @@ class Server:
         await self.network.stop()
 
     async def restart(self) -> None:
+        for session in list(self.sessions.iter()):
+            if session.closed:
+                continue
+            await session.disconnect(DisconnectType.SERVER_RESTART, "Server is restarting")
         await self.stop()
         child = subprocess.Popen(
             args=[sys.executable, "-m", "omuserver", *sys.argv[1:]],

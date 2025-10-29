@@ -3,13 +3,13 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from omu import Omu
-from omu.extension.endpoint import EndpointType
-from omu.extension.signal.signal import SignalPermissions, SignalType
-from omu.extension.table import TablePermissions, TableType
+from omu.api.endpoint import EndpointType
+from omu.api.signal import SignalPermissions, SignalType
+from omu.api.table import TablePermissions, TableType
 from omu.serializer import Serializer
 
-from omu_chat.const import IDENTIFIER
-from omu_chat.event.event import EventHandler, EventRegistry, EventSource
+from omu_chat.const import PLUGIN_ID
+from omu_chat.event import EventHandler, EventRegistry, EventSource
 from omu_chat.model import Author, Channel, Message, Provider, Reaction, Room, Vote
 from omu_chat.permissions import (
     CHAT_CHANNEL_TREE_PERMISSION_ID,
@@ -19,7 +19,7 @@ from omu_chat.permissions import (
 )
 
 MESSAGE_TABLE = TableType.create_model(
-    IDENTIFIER,
+    PLUGIN_ID,
     "messages",
     Message,
     permissions=TablePermissions(
@@ -29,7 +29,7 @@ MESSAGE_TABLE = TableType.create_model(
     ),
 )
 AUTHOR_TABLE = TableType.create_model(
-    IDENTIFIER,
+    PLUGIN_ID,
     "authors",
     Author,
     permissions=TablePermissions(
@@ -39,7 +39,7 @@ AUTHOR_TABLE = TableType.create_model(
     ),
 )
 CHANNEL_TABLE = TableType.create_model(
-    IDENTIFIER,
+    PLUGIN_ID,
     "channels",
     Channel,
     permissions=TablePermissions(
@@ -49,7 +49,7 @@ CHANNEL_TABLE = TableType.create_model(
     ),
 )
 PROVIDER_TABLE = TableType.create_model(
-    IDENTIFIER,
+    PLUGIN_ID,
     "providers",
     Provider,
     permissions=TablePermissions(
@@ -59,7 +59,7 @@ PROVIDER_TABLE = TableType.create_model(
     ),
 )
 ROOM_TABLE = TableType.create_model(
-    IDENTIFIER,
+    PLUGIN_ID,
     "rooms",
     Room,
     permissions=TablePermissions(
@@ -69,7 +69,7 @@ ROOM_TABLE = TableType.create_model(
     ),
 )
 VOTE_TABLE = TableType.create_model(
-    IDENTIFIER,
+    PLUGIN_ID,
     "votes",
     Vote,
     permissions=TablePermissions(
@@ -79,13 +79,13 @@ VOTE_TABLE = TableType.create_model(
     ),
 )
 CREATE_CHANNEL_TREE_ENDPOINT = EndpointType[str, list[Channel]].create_json(
-    IDENTIFIER,
+    PLUGIN_ID,
     "create_channel_tree",
     response_serializer=Serializer.model(Channel).to_array(),
     permission_id=CHAT_CHANNEL_TREE_PERMISSION_ID,
 )
 REACTION_SIGNAL = SignalType[Reaction].create_json(
-    IDENTIFIER,
+    PLUGIN_ID,
     "reaction",
     serializer=Serializer.model(Reaction),
     permissions=SignalPermissions(
@@ -101,7 +101,7 @@ class Chat:
         self,
         omu: Omu,
     ):
-        omu.server.require(IDENTIFIER)
+        omu.sessions.require(PLUGIN_ID)
         omu.permissions.require(CHAT_PERMISSION_ID)
         self.messages = omu.tables.get(MESSAGE_TABLE)
         self.authors = omu.tables.get(AUTHOR_TABLE)

@@ -3,6 +3,63 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.19 (2025-10-29)
+
+
+### Bug Fixes
+
+* **app-marshmallow:** アカウント切り替えができない問題を修正 ([33bede6](https://github.com/OMUAPPS/omuapps/commit/33bede6ed97cf2c6beed341bab6f6d8b56c81036))
+
+
+
+
+
+## 0.9.18 (2025-10-29)
+
+
+### Bug Fixes
+
+* **dash:** プラグインインストール画面の重複してる警告を削除 ([3002828](https://github.com/OMUAPPS/omuapps/commit/3002828a3a9cbca89629b6507806f1757000e26e))
+
+
+
+
+
+## 0.9.17 (2025-10-28)
+
+**Note:** Version bump only for package @omujs/i18n
+
+
+
+
+
+## 0.9.16 (2025-10-27)
+
+**Note:** Version bump only for package @omujs/i18n
+
+
+
+
+
+## 0.9.15 (2025-10-27)
+
+
+### Bug Fixes
+
+* **app-reaction:** アセット側の表示がされない問題を修正 ([d680875](https://github.com/OMUAPPS/omuapps/commit/d680875954e68de8a8de3902fcf3d5c7a46c1846))
+
+
+
+
+
+## 0.9.14 (2025-10-27)
+
+**Note:** Version bump only for package @omujs/i18n
+
+
+
+
+
 ## 0.9.13 (2025-07-23)
 
 **Note:** Version bump only for package @omujs/i18n

@@ -218,6 +218,14 @@
             "name": "Manage Apps",
             "icon": "ti ti-apps",
             "description": "Uninstall or change settings"
+        },
+        "speechrecognition_request": {
+            "name": "About Speech Recognition",
+            "icon": "ti ti-microphone"
+        },
+        "host_request": {
+            "name": "Request Access to Site",
+            "icon": "ti ti-world"
         }
     },
     "settings": {
@@ -253,7 +261,6 @@
             "logFileGenerate": "Generate Log File",
             "logFileGenerating": "Generating log file...",
             "logFileGenerateError": "Failed to generate log file: {error}",
-            "logFileGenerated": "Log file generated: {path}",
             "cleanEnvironment": "Rebuild Environment",
             "cleaningEnvironment": "Cleaning environment and restarting...",
             "serverRestart": "Restart Server",
@@ -263,7 +270,8 @@
             "latestVersion": "Latest Version",
             "newVersionAvailable": "New version available",
             "checkUpdateError": "Failed to check for updates: {error}",
-            "update": "Update"
+            "update": "Update",
+            "speechRecognition": "Enable Speech Recognition"
         },
         "about": {
             "version": "Version",

@@ -1,14 +1,19 @@
 <script lang="ts">
-    import { Author } from '@omujs/chat/models/author.js';
+    import { Author } from '@omujs/chat/models';
     import {
         Button,
         Combobox,
         MessageRenderer,
         Tooltip,
-        client
+        client,
     } from '@omujs/ui';
     import dummy_icon from './dummy_icon.svg';
-    import { EMOJI_TEST_PROVIDER, emojiApp, type Emoji, type Pattern } from './emoji.js';
+    import {
+        EMOJI_TEST_PROVIDER,
+        emojiApp,
+        type Emoji,
+        type Pattern,
+    } from './emoji.js';
 
     export let emoji: Emoji;
     let serialized = JSON.stringify(emoji);
@@ -17,7 +22,9 @@
         emoji.patterns = [...emoji.patterns, newPattern];
     }
 
-    const patternFactory: { [key: string]: { value: () => Pattern; label: string } } = {
+    const patternFactory: {
+        [key: string]: { value: () => Pattern; label: string };
+    } = {
         text: {
             value: () => ({ type: 'text', text: '' }),
             label: '文字',
@@ -46,7 +53,7 @@
         id: EMOJI_TEST_PROVIDER.id.join(`${Date.now()}`),
         name: 'test',
         avatarUrl: new URL(dummy_icon, window.location.origin).toString(),
-    })
+    });
 </script>
 
 <div class="emoji-edit">
@@ -54,10 +61,18 @@
         <div class="flex width between">
             <div class="flex baseline gap">
                 <small>名前</small>
-                <input class="name" type="text" bind:value={emoji.id} placeholder="Name" />
+                <input
+                    class="name"
+                    type="text"
+                    bind:value={emoji.id}
+                    placeholder="Name"
+                />
             </div>
             <div class="flex gap">
-                <Button primary={serialized !== JSON.stringify(emoji)} onclick={save}>
+                <Button
+                    primary={serialized !== JSON.stringify(emoji)}
+                    onclick={save}
+                >
                     <Tooltip>保存</Tooltip>
                     <i class="ti ti-device-floppy"></i>
                 </Button>
@@ -104,7 +119,12 @@
                             />
                         {/if}
                     </div>
-                    <button on:click={() => (emoji.patterns = emoji.patterns.filter((p) => p !== pattern))}>
+                    <button
+                        on:click={() =>
+                            (emoji.patterns = emoji.patterns.filter(
+                                (p) => p !== pattern,
+                            ))}
+                    >
                         <Tooltip>削除</Tooltip>
                         <i class="ti ti-x"></i>
                     </button>
@@ -116,7 +136,8 @@
                     options={patternFactory}
                     value={null}
                     on:change={(event) =>
-                        event.detail.value != null && addPattern(event.detail.value())}
+                        event.detail.value != null &&
+                            addPattern(event.detail.value())}
                 />
             </div>
         </div>
@@ -126,11 +147,20 @@
 <div class="preview">
     <MessageRenderer
         author={TEST_AUTHOR}
-        content={{ type: 'root', data: [{ type: 'asset', data: { id: emoji.asset.key()} }]}}
+        content={{
+            type: 'root',
+            data: [{ type: 'asset', data: { id: emoji.asset.key() } }],
+        }}
     />
     <MessageRenderer
         author={TEST_AUTHOR}
-        content={{ type: 'root', data: [{type: 'text', data: emoji.id}, { type: 'asset', data: { id: emoji.asset.key()} }]}}
+        content={{
+            type: 'root',
+            data: [
+                { type: 'text', data: emoji.id },
+                { type: 'asset', data: { id: emoji.asset.key() } },
+            ],
+        }}
     />
     <MessageRenderer
         author={TEST_AUTHOR}
@@ -192,7 +222,7 @@
             background: var(--color-bg-2);
             color: var(--color-1);
         }
-        
+
         > button {
             background: none;
             border: none;

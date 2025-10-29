@@ -13,11 +13,12 @@ from typing import Any, TypedDict
 import psutil
 from loguru import logger
 from omu.result import Err, Ok, Result
+from omu.token import JsonTokenProvider
 from omuserver.helper import LOG_DIRECTORY
 from omuserver.server import Server
 
 from . import obsconfig
-from .script.config import LaunchCommand, get_config, get_config_path, save_config
+from .script.config import APP, LaunchCommand, get_config, get_config_path, get_token_path, save_config
 
 
 class obs:
@@ -144,7 +145,7 @@ class SceneJson(TypedDict):
     modules: ModulesJson
 
 
-def check_installed() -> Result[bool, str]:
+def check_installed() -> Result[..., str]:
     config_path = get_config_path()
     if not config_path.exists():
         return Err(f"Config file not found: {config_path}")
@@ -179,7 +180,7 @@ def check_installed() -> Result[bool, str]:
     if not is_python_set:
         return Err(f"Python path is not set correctly in user.ini: {python_path} != {python}")
 
-    return Ok(True)
+    return Ok(...)
 
 
 def setup_python_path():
@@ -239,8 +240,16 @@ def update_config(server: Server):
         config["launch"] = LaunchCommand(args=[dashboard.resolve().as_posix(), "--background"])
     config["python_path"] = get_python_directory()
     config["log_path"] = LOG_DIRECTORY.resolve().as_posix()
+    config["server"] = {"host": server.address.host, "port": server.address.port, "hash": server.address.hash}
     logger.info(f"Updated config: {config}")
     save_config(config)
+
+    token_path = get_token_path()
+    tokens = json.loads(token_path.read_text(encoding="utf-8"))
+    token_key = JsonTokenProvider.get_store_key(server.address, APP)
+    _, new_token = server.security.generate_app_token(APP)
+    tokens[token_key] = new_token
+    token_path.write_text(json.dumps(tokens, ensure_ascii=False), encoding="utf-8")
 
 
 def install(server: Server):

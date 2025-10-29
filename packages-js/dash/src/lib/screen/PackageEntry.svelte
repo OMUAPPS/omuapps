@@ -1,20 +1,24 @@
 <script lang="ts">
-    import type { PackageInfo } from '@omujs/omu/extension/plugin/package-info.js';
+    import type { PackageInfo } from '@omujs/omu/api/plugin';
+    import { ExternalLink } from '@omujs/ui';
     import SvelteMarkdown from 'svelte-markdown';
 
     export let entry: PackageInfo;
+    export let secure: boolean;
+
     let open = false;
 
-    $: author = entry.info.author || entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim();
+    $: author =
+        entry.info.author ||
+        entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim();
 </script>
 
-<li>
-    <i class="icon ti ti-package" />
+<div class="entry">
     <div class="info">
         <span class="name">
-            <a href={entry.info.package_url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink href={entry.info.package_url}>
                 {entry.info.name}
-            </a>
+            </ExternalLink>
             <i class="ti ti-external-link"></i>
             <span class="version">
                 v{entry.info.version}
@@ -39,12 +43,11 @@
             {/if}
         </span>
     {/if}
-</li>
+</div>
 
 <style lang="scss">
-    li {
+    .entry {
         list-style: none;
-        margin: 1rem;
         display: flex;
         align-items: center;
         gap: 1rem;
@@ -71,11 +74,6 @@
         display: flex;
         align-items: baseline;
         font-size: 0.9rem;
-    }
-    
-    .name a {
-        color: var(--color-1);
-        text-decoration: none;
     }
 
     .author {

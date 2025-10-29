@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
 
-    import { applyOpacity } from '$lib/utils/class-helper.js';
     import Tooltip from './Tooltip.svelte';
     import { client } from './stores.js';
+    import { applyOpacity } from './utils/class-helper.js';
 
-    export let role: models.Role;
+    export let role: Models.Role;
 </script>
 
 <div
@@ -18,7 +18,11 @@
             <div class="name">
                 {role.name}
                 {#if role.iconUrl}
-                    <img class="preview" src={$client.assets.proxy(role.iconUrl)} alt="role icon" />
+                    <img
+                        class="preview"
+                        src={$client.assets.proxy(role.iconUrl)}
+                        alt="role icon"
+                    />
                 {/if}
             </div>
             {#if role.color}
@@ -38,12 +42,10 @@
     <span class="icon">
         {#if role.iconUrl}
             <img src={role.iconUrl} alt="role" />
-        {:else}
-            {#if role.isOwner}
-                <i class="ti ti-crown-filled"></i>
-            {:else if role.isModerator}
-                <i class="ti ti-shield-filled"></i>
-            {/if}
+        {:else if role.isOwner}
+            <i class="ti ti-crown-filled"></i>
+        {:else if role.isModerator}
+            <i class="ti ti-shield-filled"></i>
         {/if}
     </span>
 </div>

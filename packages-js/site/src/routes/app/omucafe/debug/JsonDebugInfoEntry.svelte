@@ -69,7 +69,7 @@
     strong {
         font-weight: bold;
     }
-    
+
     span {
         font-style: italic;
     }

@@ -6,34 +6,34 @@
     export let type: 'matrix' | 'transform' = 'transform';
 
     function getScale(): {
-        scaleX: number,
-        scaleY: number,
+        scaleX: number;
+        scaleY: number;
     } {
         const { right, up } = transform;
         const scaleX = Math.sqrt(right.x * right.x + right.y * right.y);
         const scaleY = Math.sqrt(up.x * up.x + up.y * up.y);
         return {
             scaleX: scaleX,
-            scaleY: scaleY
+            scaleY: scaleY,
         };
     }
 
-    function setScale(scale: {x: number, y: number}) {
+    function setScale(scale: { x: number; y: number }) {
         const { right, up } = transform;
         const scaleX = Math.sqrt(right.x * right.x + right.y * right.y);
         const scaleY = Math.sqrt(up.x * up.x + up.y * up.y);
         const newRight = {
             x: (right.x / scaleX) * scale.x,
-            y: (right.y / scaleX) * scale.x
+            y: (right.y / scaleX) * scale.x,
         };
         const newUp = {
             x: (up.x / scaleY) * scale.y,
-            y: (up.y / scaleY) * scale.y
+            y: (up.y / scaleY) * scale.y,
         };
         transform = {
             ...transform,
             right: newRight,
-            up: newUp
+            up: newUp,
         };
     }
 
@@ -50,12 +50,12 @@
             ...transform,
             right: {
                 x: Math.cos(angle) * scaleX,
-                y: Math.sin(angle) * scaleX
+                y: Math.sin(angle) * scaleX,
             },
             up: {
                 x: -Math.sin(angle) * scaleY,
-                y: Math.cos(angle) * scaleY
-            }
+                y: Math.cos(angle) * scaleY,
+            },
         };
     }
 </script>
@@ -143,8 +143,8 @@
             transform = {
                 right: { x: 1, y: 0 },
                 up: { x: 0, y: 1 },
-                offset: { x: 0, y: 0 }
-            }
+                offset: { x: 0, y: 0 },
+            };
         }}>
             Reset
             <i class="ti ti-refresh"></i>

@@ -5,6 +5,7 @@
     import { currentPage, menuOpen } from './settings.js';
 
     export let entry: PageItem<unknown>;
+    export let badge: string | undefined = undefined;
 
     $: title = $t(`page.${entry.id}.title`);
     $: tooltip = $t(`page.${entry.id}.tooltip`);
@@ -31,10 +32,16 @@
         <span class="title">{title}</span>
         <i class="open ti ti-chevron-right"></i>
     {/if}
+    {#if badge}
+        <div class="badge">
+            {badge}
+        </div>
+    {/if}
 </button>
 
 <style lang="scss">
     .tab {
+        position: relative;
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -89,5 +96,18 @@
         flex-direction: column;
         align-items: start;
         text-wrap: wrap;
+    }
+
+    .badge {
+        position: absolute;
+        left: 1.621rem;
+        bottom: 0.621rem;
+        color: var(--color-1);
+        width: 1rem;
+        height: 1rem;
+        font-size: 0.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>

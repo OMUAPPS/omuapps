@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import signal
 import socket
+import sys
 import tkinter
-import urllib.parse
+from pathlib import Path
 from tkinter import messagebox
 from typing import TYPE_CHECKING
 
@@ -20,10 +22,10 @@ from omu.network.packet.packet_types import DisconnectPacket, DisconnectType
 from omu.result import Err, Ok, Result, is_err
 from psutil import Process
 
-from omuserver.helper import find_processes_by_port
+from omuserver.helper import find_processes_by_executable, find_processes_by_port, get_parent_pids
+from omuserver.network.aiohttp_connection import WebsocketsConnection
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
 from omuserver.session import Session
-from omuserver.session.aiohttp_connection import WebsocketsConnection
 
 if TYPE_CHECKING:
     from omuserver.server import Server
@@ -49,17 +51,19 @@ async def cors_middleware(request: web.Request, handler) -> web.Response:
 
 class Network:
     def __init__(self, server: Server, packet_dispatcher: ServerPacketDispatcher) -> None:
-        self._server = server
+        self.server = server
         self._packet_dispatcher = packet_dispatcher
-        self._event = NetworkEvents()
-        self._sessions: dict[Identifier, Session] = {}
         self._app = web.Application(middlewares=[cors_middleware])
         self._runner: web.AppRunner | None = None
         self._app.router.add_get("/ws", self.websocket_handler)
-        self.register_packet(PACKET_TYPES.CONNECT, PACKET_TYPES.READY, PACKET_TYPES.DISCONNECT)
+        self.register_packet(
+            PACKET_TYPES.CONNECT,
+            PACKET_TYPES.READY,
+            PACKET_TYPES.DISCONNECT,
+            PACKET_TYPES.ENCRYPTED_PACKET,
+        )
         self.add_packet_handler(PACKET_TYPES.READY, self._handle_ready)
         self.add_packet_handler(PACKET_TYPES.DISCONNECT, self._handle_disconnection)
-        self.event.connected += self._packet_dispatcher.process_connection
         self.local_ip = get_lan_ip()
 
     async def stop(self) -> None:
@@ -108,33 +112,16 @@ class Network:
         session_namespace = session.app.id.namespace
         if origin_namespace == session_namespace:
             return Ok(None)
-        if origin_namespace in self._server.config.extra_trusted_origins:
+        if origin_namespace in self.server.config.extra_trusted_origins:
             return Ok(None)
-        trusted_origins = await self._server.server.trusted_origins.get()
+        trusted_origins = await self.server.server.trusted_origins.get()
         if origin_namespace in trusted_origins:
             return Ok(None)
         return Err(InvalidOrigin(f"Invalid origin: {origin_namespace} != {session_namespace}"))
 
-    def _verify_frame_token(self, request: web.Request, session: Session) -> Result[None, DisconnectReason]:
-        query = request.query
-        if "frame_token" not in query:
-            return Err(InvalidOrigin("Missing frame token"))
-        frame_token = query["frame_token"]
-        origin = request.headers.get("Origin")
-        if origin is None:
-            return Err(InvalidOrigin("Missing origin"))
-        url = query.get("url")
-        if url is None:
-            return Err(InvalidOrigin("Missing url"))
-        parsed_url = urllib.parse.unquote(url)
-        verified = self._server.security.verify_frame_token(frame_token, parsed_url)
-        if not verified:
-            return Err(InvalidOrigin("Invalid frame token"))
-        return Ok(None)
-
     async def _verify(self, session: Session, request: web.Request) -> Result[None, DisconnectReason]:
         if session.kind == AppType.REMOTE:
-            return self._verify_frame_token(request, session)
+            return self.server.security.verify_frame_token(request)
         ip_verified = self._verify_remote_ip(request, session)
         if session.kind in {AppType.DASHBOARD, AppType.PLUGIN}:
             return ip_verified
@@ -146,7 +133,7 @@ class Network:
         await ws.prepare(request)
         connection = WebsocketsConnection(ws)
         session = await Session.from_connection(
-            self._server,
+            self.server,
             self._packet_dispatcher.packet_mapper,
             connection,
         )
@@ -157,56 +144,50 @@ class Network:
             await session.disconnect(verify_result.err.type, verify_result.err.message)
             return web.Response(status=403)
 
-        await self.process_session(session)
+        await self.server.sessions.process_new(session)
         return ws
-
-    async def process_session(self, session: Session) -> None:
-        exist_session = self._sessions.get(session.app.id)
-        if exist_session:
-            logger.warning(f"Session {session.app} already connected")
-            await exist_session.disconnect(
-                DisconnectType.ANOTHER_CONNECTION,
-                f"Another connection from {session.app}",
-            )
-        self._sessions[session.app.id] = session
-        session.event.disconnected += self.handle_disconnection
-        await self._event.connected.emit(session)
-        await session.listen()
-
-    async def handle_disconnection(self, session: Session) -> None:
-        if session.app.id not in self._sessions:
-            return
-        del self._sessions[session.app.id]
-        await self._event.disconnected.emit(session)
 
     def is_port_free(self) -> bool:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(("0.0.0.0", self._server.address.port))
+                s.bind(("0.0.0.0", self.server.address.port))
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(("127.0.0.1", self._server.address.port))
+                s.bind(("127.0.0.1", self.server.address.port))
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind((self._server.address.host, self._server.address.port))
+                s.bind((self.server.address.host, self.server.address.port))
             return True
         except OSError:
             return False
 
+    def _is_server_process(self, process: Process) -> bool:
+        args = process.cmdline()
+        if len(args) >= 2 and "python.debugpy" in args[1]:
+            return False
+        return True
+
     def ensure_port_availability(self) -> Result[None, tuple[str, list[Process]]]:
         if self.is_port_free():
             return Ok(None)
-        found_processes = set(find_processes_by_port(self._server.address.port))
+        executable = Path(sys.executable)
+        port = self.server.address.port
+        found_processes: set[Process] = set()
+        found_processes.update(find_processes_by_port(port))
+        logger.info(f"No processes found using port {port}")
+        found_processes.update(find_processes_by_executable(executable))
+        ignore_pids = list(get_parent_pids())
+        found_processes = {p for p in found_processes if (p.pid not in ignore_pids) and (self._is_server_process(p))}
         if len(found_processes) == 0:
-            return Err((f"Port {self._server.address.port} already in use by unknown process", []))
+            return Err((f"Port {port} already in use by unknown process", []))
         if len(found_processes) > 1:
             processes = " ".join(f"{p.name()} ({p.pid=})" for p in found_processes)
             return Err(
                 (
-                    f"Port {self._server.address.port} already in use by multiple processes: {processes}",
+                    f"Port {port} already in use by multiple processes: {processes}",
                     list(found_processes),
                 )
             )
         process = found_processes.pop()
-        port = self._server.address.port
+        port = self.server.address.port
         name = process.name()
         pid = process.pid
         parents = process.parents()
@@ -236,12 +217,21 @@ class Network:
             type=messagebox.YESNO,
         ).show()
         if not res or res == messagebox.YES:
+            ignore_pids = list(get_parent_pids())
             for process in processes:
                 try:
-                    process.terminate()
+                    if process.pid in ignore_pids:
+                        continue
+                    logger.info(f"Killing process {process.pid} ({process.name()}) running at {process.cwd()}")
+                    if not process.is_running():
+                        continue
+                    process.send_signal(signal.SIGTERM)
+                except psutil.NoSuchProcess:
+                    logger.warning(f"Process {process.pid} not found")
                 except psutil.AccessDenied:
-                    logger.warning(f"Failed to terminate {process.name()}")
-                    pass
+                    logger.warning(f"Access denied to process {process.pid}")
+                except Exception:
+                    logger.exception(f"Failed to kill process {process.pid}")
         elif res == messagebox.NO:
             return Err("User cancelled shutdown")
 
@@ -273,18 +263,12 @@ class Network:
         site = web.TCPSite(
             runner,
             host="0.0.0.0",
-            port=self._server.address.port,
+            port=self.server.address.port,
         )
         await site.start()
-        await self._event.start.emit()
-
-    @property
-    def event(self) -> NetworkEvents:
-        return self._event
 
 
 class NetworkEvents:
     def __init__(self) -> None:
-        self.start = EventEmitter[[]]()
         self.connected = EventEmitter[Session]()
         self.disconnected = EventEmitter[Session]()

@@ -1,6 +1,4 @@
-import { Identifier } from '@omujs/omu/identifier.js';
-import type { Keyable } from '@omujs/omu/interface.js';
-import type { Model } from '@omujs/omu/model.js';
+import { Identifier } from '@omujs/omu';
 
 import type { RoleJson } from './role.js';
 import { Role } from './role.js';
@@ -22,7 +20,7 @@ export type AuthorJson = {
     roles?: RoleJson[];
 };
 
-export class Author implements Keyable, Model<AuthorJson> {
+export class Author {
     public providerId: Identifier;
     public id: Identifier;
     public metadata: AuthorMetadata;
@@ -46,7 +44,7 @@ export class Author implements Keyable, Model<AuthorJson> {
         this.roles = options.roles;
     }
 
-    static fromJson(info: AuthorJson): Author {
+    public static deserialize(info: AuthorJson): Author {
         return new Author({
             providerId: Identifier.fromKey(info.provider_id),
             id: Identifier.fromKey(info.id),
@@ -61,14 +59,14 @@ export class Author implements Keyable, Model<AuthorJson> {
         return this.id.key();
     }
 
-    toJson(): AuthorJson {
+    public static serialize(item: Author): AuthorJson {
         return {
-            provider_id: this.providerId.key(),
-            id: this.id.key(),
-            name: this.name,
-            avatar_url: this.avatarUrl,
-            roles: this.roles?.map((role) => role.toJson()),
-            metadata: this.metadata,
+            provider_id: item.providerId.key(),
+            id: item.id.key(),
+            name: item.name,
+            avatar_url: item.avatarUrl,
+            roles: item.roles?.map((role) => role.toJson()),
+            metadata: item.metadata,
         };
     }
 }

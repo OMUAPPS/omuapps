@@ -1,8 +1,8 @@
 <script lang="ts">
     import { dashboard, omu } from '$lib/client.js';
     import { tauriWindow } from '$lib/tauri.js';
-    import { PermissionType } from '@omujs/omu/extension/permission/permission.js';
-    import type { Registry } from '@omujs/omu/extension/registry/registry.js';
+    import { PermissionType } from '@omujs/omu/api/permission';
+    import type { Registry } from '@omujs/omu/api/registry';
     import { LogicalSize } from '@tauri-apps/api/window';
     import type { Writable } from 'svelte/store';
     const appWindow = tauriWindow.getCurrentWindow();
@@ -81,7 +81,7 @@
             dashboard.handlePermissionRequest({
                 app: omu.app,
                 permissions: [
-                    PermissionType.fromJson({
+                    PermissionType.deserialize({
                         id: 'test:test',
                         metadata: {
                             level: 'high',

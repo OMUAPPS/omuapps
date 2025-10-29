@@ -1,7 +1,12 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { type Component } from '@omujs/chat/models/content.js';
-    import { Author, Message, Provider, Room } from '@omujs/chat/models/index.js';
+    import {
+        Author,
+        type Component,
+        Message,
+        Provider,
+        Room,
+    } from '@omujs/chat/models';
     import { AppHeader, MessageRenderer } from '@omujs/ui';
     import { APP } from './app.js';
     import { chat, omu } from './client.js';
@@ -10,8 +15,8 @@
     let component: Component = {
         type: 'root',
         data: [
-            { type: 'text', data: 'Hello, World!'},
-            { type: 'text', data: 'This is a test.'},
+            { type: 'text', data: 'Hello, World!' },
+            { type: 'text', data: 'This is a test.' },
         ],
     };
 
@@ -19,8 +24,8 @@
         component = {
             type: 'root',
             data: [
-                { type: 'text', data: 'Hello, World!'},
-                { type: 'text', data: 'This is a test.'},
+                { type: 'text', data: 'Hello, World!' },
+                { type: 'text', data: 'This is a test.' },
             ],
         };
     }

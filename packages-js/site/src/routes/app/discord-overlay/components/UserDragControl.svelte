@@ -14,7 +14,7 @@
     export let id: string;
     export let state: VoiceStateItem;
     export let user: UserConfig;
-    
+
     const { config } = overlayApp;
 
     let lastMouse: [number, number] | null = null;
@@ -29,7 +29,7 @@
             rect = element.getBoundingClientRect();
         }
     }
-    
+
     const hideAreaWidth = 240;
     const hideAreaMargin = 10;
     const OFFSET = 150;
@@ -58,7 +58,7 @@
         user.position = [world.x, world.y];
         $dragPosition = new Vec2(x, y);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
-        user.show = !isInHideArea({ x: user.position[0], y: user.position[1]});
+        user.show = !isInHideArea({ x: user.position[0], y: user.position[1] });
         $config = { ...$config };
         lastUpdate = now;
     }
@@ -109,16 +109,16 @@
         return [dimentions.width - hideAreaWidth + hideAreaMargin + 20, y];
     }
 
-    function getPosition(rect: { width: number, height: number }, offset: [number, number] = [0, OFFSET]): [number, number] {
+    function getPosition(rect: { width: number; height: number }, offset: [number, number] = [0, OFFSET]): [number, number] {
         const show = user.show || $dragUser == id;
         if (show) {
             const margin = 8;
             const position = user.position || [0, 0];
             const screen = worldToScreen(position[0] + offset[0], position[1] + offset[1]);
             const clamped = screen
-                .add({x: -rect.width / 2, y: -rect.height})
-                .max({x: margin, y: margin})
-                .min({x: dimentions.width - rect.width - margin, y: dimentions.height - rect.height - margin});
+                .add({ x: -rect.width / 2, y: -rect.height })
+                .max({ x: margin, y: margin })
+                .min({ x: dimentions.width - rect.width - margin, y: dimentions.height - rect.height - margin });
             return [clamped.x, clamped.y];
         }
         const invisible = Object.entries($config.users)
@@ -130,13 +130,13 @@
     }
 
     function getStyle(
-        rect: { width: number, height: number },
+        rect: { width: number; height: number },
         config: Config,
         view: Mat4,
-        directions: { width: number, height: number },
+        directions: { width: number; height: number },
         offset: [number, number] = [0, OFFSET],
     ) {
-        const clamped = getPosition(rect, [offset[0], config.align.vertical === 'start' ?  -offset[1] : offset[1]]);
+        const clamped = getPosition(rect, [offset[0], config.align.vertical === 'start' ? -offset[1] : offset[1]]);
         return `
             left: ${clamped[0]}px;
             bottom: ${clamped[1]}px;
@@ -144,15 +144,15 @@
     }
 
     function worldToScreen(x: number, y: number) {
-        const screen = view.transform2({x, y});
-        const zeroToOne = screen.scale(0.5).add({x: 0.5, y: 0.5});
-        const screenSpace = zeroToOne.mul({x: dimentions.width, y: dimentions.height});
+        const screen = view.transform2({ x, y });
+        const zeroToOne = screen.scale(0.5).add({ x: 0.5, y: 0.5 });
+        const screenSpace = zeroToOne.mul({ x: dimentions.width, y: dimentions.height });
         return screenSpace;
     }
 
     function screenToWorld(x: number, y: number) {
-        const zeroToOne = new Vec2(x, y).mul({x: 1 / dimentions.width, y: 1 / dimentions.height});
-        const screen = zeroToOne.sub({x: 0.5, y: 0.5}).scale(2);
+        const zeroToOne = new Vec2(x, y).mul({ x: 1 / dimentions.width, y: 1 / dimentions.height });
+        const screen = zeroToOne.sub({ x: 0.5, y: 0.5 }).scale(2);
         const world = view.inverse().transform2(screen);
         return world;
     }
@@ -163,7 +163,7 @@
             ArrowDown: [0, 1],
             ArrowLeft: [-1, 0],
             ArrowRight: [1, 0],
-        }
+        };
         if (e.key === 'r') {
             user.position = [0, 0];
             $config = { ...$config };
@@ -307,7 +307,7 @@
                 border: 0.5rem solid transparent;
                 border-left-color: var(--color-outline);
             }
-            
+
             &::after {
                 content: '';
                 position: absolute;
@@ -401,7 +401,7 @@
             outline: 2px solid var(--color-1);
             outline-width: 2px;
             box-shadow: 0 0.3rem 0 0 color-mix(in srgb, var(--color-2) 100%, transparent 0%);
-            margin-bottom: 2px;
+            margin-bottom: 1px;
             margin-left: 1px;
             transition: margin-bottom, outline-width, box-shadow 0.0621s;
             z-index: 3;

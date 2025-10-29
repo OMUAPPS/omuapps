@@ -1,6 +1,8 @@
 import { writable } from 'svelte/store';
 
 import { LOCALES } from '$lib/i18n/i18n.js';
+import { linkOpenHandler } from '@omujs/ui';
+import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 function getSystemLanguage(): keyof typeof LOCALES {
     if (typeof window === 'undefined') {
@@ -44,3 +46,26 @@ export const currentSettingsCategory = createSetting('currentPageSettings', 'gen
 export const isBetaEnabled = createSetting('isBetaEnabled', false);
 export const installed = createSetting('installed', false);
 export const menuOpen = createSetting('menuOpen', false);
+export const speechRecognition = createSetting('speechRecognition', false);
+export type OpenLinkMode = 'browser' | 'window';
+export const openLinkMode = createSetting<OpenLinkMode>('openLink', 'browser');
+
+openLinkMode.subscribe((value) => {
+    if (value === 'browser') {
+        linkOpenHandler.set(() => false);
+    } else {
+        linkOpenHandler.set((href) => {
+            const alphanumericHref = href.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+            const label = `webview-${alphanumericHref}-${Date.now()}`;
+            const webviewWindow = new WebviewWindow(label, {
+                url: href,
+            });
+            webviewWindow.setAutoResize(true);
+            webviewWindow.once('tauri://close-requested', () => {
+                webviewWindow.destroy();
+            });
+            webviewWindow.show();
+            return true;
+        });
+    }
+});

@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { content } from '@omujs/chat/models/index.js';
+    import { Content } from '@omujs/chat/models';
     import { Tooltip } from '@omujs/ui';
     import AddComponent from './AddComponent.svelte';
     import ImageEdit from './ImageEdit.svelte';
     import TextEdit from './TextEdit.svelte';
 
-    export let component: content.Component;
+    export let component: Content.Component;
     export let remove: () => void;
 
     const icons = {
@@ -14,15 +14,15 @@
     };
     $: icon = component && icons[component.type as 'text' | 'image'];
 
-    function removeChild(child: content.Component) {
-        const children = content.children(component);
+    function removeChild(child: Content.Component) {
+        const children = Content.children(component);
         const index = children.findIndex((it) => it === child);
         children.splice(index);
     }
 </script>
 
 {#if component}
-    {@const children = content.children(component)}
+    {@const children = Content.children(component)}
     {#if icon}
         <button on:click={remove}>
             <Tooltip>コンポーネントを削除</Tooltip>
@@ -37,7 +37,10 @@
     {#if children.length > 0}
         <div>
             {#each children as child, i (i)}
-                <svelte:self bind:component={child} remove={() => removeChild(child)} />
+                <svelte:self
+                    bind:component={child}
+                    remove={() => removeChild(child)}
+                />
             {/each}
             <AddComponent bind:component />
         </div>

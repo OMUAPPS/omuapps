@@ -1,13 +1,16 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { OBSPlugin, permissions } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
-    import { ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from '@omujs/omu/extension/asset/asset-extension.js';
+    import { OBSPermissions, OBSPlugin } from '@omujs/obs';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import { setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import App from './App.svelte';
-    import { DiscordOverlayApp, DISCORDRPC_PERMISSIONS, PLUGIN_ID } from './discord-overlay-app.js';
+    import {
+        DiscordOverlayApp,
+        DISCORDRPC_PERMISSIONS,
+        PLUGIN_ID,
+    } from './discord-overlay-app.js';
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
@@ -17,11 +20,12 @@
     if (BROWSER) {
         omu.permissions.require(
             ...Object.values(DISCORDRPC_PERMISSIONS),
-            ASSET_UPLOAD_PERMISSION_ID,
-            ASSET_DOWNLOAD_PERMISSION_ID,
-            permissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
-        omu.server.require(PLUGIN_ID);
+        omu.sessions.require(PLUGIN_ID);
         omu.start();
     }
 

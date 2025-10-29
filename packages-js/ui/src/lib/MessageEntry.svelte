@@ -1,14 +1,14 @@
 <script lang="ts">
-    import type { models } from '@omujs/chat';
+    import type { Models } from '@omujs/chat';
 
     import MessageRenderer from './MessageRenderer.svelte';
     import { chat } from './stores.js';
 
-    export let entry: models.Message;
+    export let entry: Models.Message;
     export let selected: boolean = false;
 
-    let author: models.Author | undefined;
-    let room: models.Room | undefined;
+    let author: Models.Author | undefined;
+    let room: Models.Room | undefined;
 
     if (entry.authorId) {
         $chat.authors.get(entry.authorId.key()).then((res) => {

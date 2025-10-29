@@ -5,8 +5,8 @@ from typing import Literal, TypedDict
 
 from loguru import logger
 from omu import App, Identifier, Omu
+from omu.api.table import TableType
 from omu.app import AppType
-from omu.extension.table import TableType
 from omu.interface.keyable import Keyable
 from omu.model import Model
 from omu_chat import Chat

@@ -1,12 +1,12 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { SignalType, type Signal } from '@omujs/omu/extension/signal/signal.js';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { SignalType, type Signal } from '@omujs/omu/api/signal';
 import type { Writable } from 'svelte/store';
-import { APP_ID } from './app.js';
+import { APP } from './app.js';
 import type { State } from './state.js';
 
-const TEST_SIGNAL = SignalType.createJson<null>(APP_ID, {
+const TEST_SIGNAL = SignalType.createJson<null>(APP.join('test'), {
     name: 'test',
 });
 
@@ -15,7 +15,7 @@ type Config = {
     hint: string;
 };
 
-const CONFIG_REGISTRY = RegistryType.createJson<Config>(APP_ID, {
+const CONFIG_REGISTRY = RegistryType.createJson<Config>(APP, {
     name: 'config',
     defaultValue: {
         text: '芋準備中',
@@ -23,10 +23,11 @@ const CONFIG_REGISTRY = RegistryType.createJson<Config>(APP_ID, {
     },
 });
 
-const STATE_REGISTRY = RegistryType.createJson<State>(APP_ID, {
+const STATE_REGISTRY = RegistryType.createJson<State>(APP, {
     name: 'state',
     defaultValue: {
         type: 'idle',
+        start: performance.now(),
     },
 });
 

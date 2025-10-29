@@ -10,8 +10,8 @@
         "sourceMap": true,
         "strict": true,
         "target": "es2022",
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext"
+        "module": "esnext",
+        "moduleResolution": "bundler",
     }
     // Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
     //

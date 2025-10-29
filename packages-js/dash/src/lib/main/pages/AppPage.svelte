@@ -1,23 +1,85 @@
 <script lang="ts">
-    import type { App } from '@omujs/omu';
+    import { omu } from '$lib/client';
+    import { appWindow } from '$lib/tauri';
+    import { BrowserTokenProvider, type App, type SessionParam } from '@omujs/omu';
     import { Spinner } from '@omujs/ui';
+    import { onMount } from 'svelte';
 
     export let props: {
         app: App;
     };
 
-    let loading = true;
+    let state: { type: 'generating' } | { type: 'error'; message: string } | { type: 'open'; url: URL; loading: boolean } = { type: 'generating' };
+
+    onMount(async () => {
+        if (!props.app.url) {
+            state = { type: 'error', message: 'App has no URL' };
+            return;
+        }
+        const tokenResult = await omu.sessions.generateToken({
+            app: props.app,
+            permissions: [],
+        });
+        if (tokenResult.type === 'error') {
+            state = { type: 'error', message: 'Failed to generate token: ' + tokenResult.message };
+            return;
+        }
+        const url = new URL(props.app.url);
+        const paramJson: SessionParam = {
+            token: tokenResult.token,
+            address: omu.address,
+        };
+        url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(paramJson));
+        state = { type: 'open', url, loading: true };
+    });
 </script>
 
 <div class="container">
-    <iframe on:load={() => {loading = false;}} src={props.app.url} title="" frameborder="0" allow="camera; microphone; clipboard-read; clipboard-write"></iframe>
-    <div class="window-resize bottom"></div>
-    <div class="window-resize right"></div>
-    {#if loading}
+    {#if state.type === 'generating'}
         <div class="loading">
-            <Spinner />
+            <Spinner /> 認証中
         </div>
+    {:else if state.type === 'error'}
+        <div class="loading">Error: {state.message}</div>
+    {:else if state.type === 'open'}
+        {#if state.loading}
+            <div class="loading">
+                <Spinner />
+                {#if props.app.metadata?.name}
+                    {omu.i18n.translate(props.app.metadata.name)}
+                    アプリを読み込み中
+                {:else}
+                    読み込み中
+                {/if}
+            </div>
+        {/if}
+        <iframe
+            on:load={() => {
+                if (state.type !== 'open') {
+                    throw new Error(`Invalid state: ${state.type}`);
+                }
+                state.loading = false;
+            }}
+            src={state.url.toJSON()}
+            title=""
+            frameborder="0"
+            allow="camera; microphone; clipboard-read; clipboard-write; fullscreen"
+        ></iframe>
     {/if}
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div
+        class="window-resize bottom"
+        on:mousedown={() => {
+            appWindow.startResizeDragging('South');
+        }}
+    ></div>
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div
+        class="window-resize right"
+        on:mousedown={() => {
+            appWindow.startResizeDragging('East');
+        }}
+    ></div>
 </div>
 
 <style lang="scss">
@@ -31,9 +93,9 @@
         position: absolute;
         inset: 0;
         display: flex;
-        align-items: flex-start;
+        align-items: baseline;
         gap: 1rem;
-        font-size: 1.5rem;
+        font-size: 1rem;
         padding: 1rem 1rem;
         color: var(--color-1);
     }
@@ -50,6 +112,8 @@
         position: absolute;
         bottom: 0;
         right: 0;
+        border: none;
+        background: none;
 
         &.bottom {
             left: 0;

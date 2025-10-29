@@ -67,10 +67,13 @@
     },
     "status": {
         "connecting": "接続中...",
+        "connected": "認証中...",
         "reconnecting": "再接続中...",
-        "connected": "接続済み",
-        "disconnected": "切断済み",
-        "connect_attempt_count": "接続試行回数: {count}"
+        "disconnected": "切断されました",
+        "attempt": "{count} 回目の接続。 {date} に再接続を試みます"
+    },
+    "room_status": {
+        "connected": "接続済み"
     },
     "titlebar": {
         "close": "閉じる",
@@ -202,7 +205,15 @@
         "app_install": {
             "name": "アプリをインストール",
             "icon": "ti ti-download",
-            "description": "アプリをインストールします。"
+            "description": "アプリをインストールします。",
+            "info": {
+                "authors": "作者",
+                "description": "説明",
+                "license": "ライセンス",
+                "repository": "リポジトリ",
+                "site": "サイト",
+                "tags": "タグ"
+            }
         },
         "app_update": {
             "name": "アプリを更新",
@@ -218,6 +229,14 @@
             "name": "アプリを管理",
             "icon": "ti ti-apps",
             "description": "設定やアンインストールを行います"
+        },
+        "speechrecognition_request": {
+            "name": "音声認識について",
+            "icon": "ti ti-microphone"
+        },
+        "host_request": {
+            "name": "サイトへのアクセスを要求",
+            "icon": "ti ti-world"
         }
     },
     "settings": {
@@ -248,11 +267,13 @@
             "betaMode": "開発版の機能を有効にする",
             "betaModeDescription": "有効にするにはアプリの再起動が必要です。",
             "language": "言語",
+            "link": "リンクの開き方",
+            "link_browser": "ブラウザで開く",
+            "link_window": "ウィンドウで開く",
             "debug": "デバッグ",
             "logFileGenerate": "ログファイルを生成",
             "logFileGenerating": "ログファイルを生成中...",
             "logFileGenerateError": "ログファイルの生成に失敗しました: {error}",
-            "logFileGenerated": "ログファイルを生成しました: {path}",
             "cleanEnvironment": "動作環境を再構築",
             "cleaningEnvironment": "環境を削除して再起動中...",
             "serverRestart": "サーバーを再起動",
@@ -262,7 +283,8 @@
             "latestVersion": "最新バージョン",
             "newVersionAvailable": "新しいバージョンがあります",
             "checkUpdateError": "アップデートの確認に失敗しました: {error}",
-            "update": "アップデート"
+            "update": "アップデート",
+            "speechRecognition": "音声認識を有効にする"
         },
         "about": {
             "version": "バージョン",
@@ -275,6 +297,23 @@
         }
     },
     "setup": {
+        "progress": {
+            "Python": {
+                "Downloading": "Pythonをダウンロード中...",
+                "Extracting": "Pythonを展開中..."
+            },
+            "Uv": {
+                "Downloading": "Uvをダウンロード中...",
+                "Extracting": "Uvを展開中...",
+                "UvCleanupOldVersions": "古いバージョンをクリーンアップ中...",
+                "UvUpdatePip": "pipを更新中...",
+                "UpdateRequirements": "依存関係を更新中..."
+            },
+            "Server": {
+                "UpdatingDependencies": "依存関係を更新中...",
+                "ServerStopping": "サーバーを停止中..."
+            }
+        },
         "title": "セットアップ",
         "which_channel": "どのチャンネルを追加しますか？",
         "installing": "インストール中",

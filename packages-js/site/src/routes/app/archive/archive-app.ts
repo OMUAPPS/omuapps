@@ -1,6 +1,6 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
-import { type Table } from '@omujs/omu/extension/table/table.js';
+import { type Table } from '@omujs/omu/api/table';
 import type { Writable } from 'svelte/store';
 import { Archive, type ArchiveConfig } from './archive.js';
 import { ARCHIVE_TABLE, CONFIG_REGISTRY, OPEN_OUTPUT_DIR_ENDPOINT_TYPE } from './types.js';

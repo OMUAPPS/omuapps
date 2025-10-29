@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Room } from '@omujs/chat/models/room.js';
+    import type { Room } from '@omujs/chat/models';
     import { createSubtitle } from '../stores.js';
 
     export let entry: Room;

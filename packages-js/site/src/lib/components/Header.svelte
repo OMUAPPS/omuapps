@@ -7,7 +7,7 @@
     import Content from './Content.svelte';
 
     export let always = false;
-    
+
     let onTop = BROWSER && window.scrollY < 1;
 
     function onScroll() {

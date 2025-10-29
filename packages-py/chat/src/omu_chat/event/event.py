@@ -4,8 +4,8 @@ from collections.abc import Callable, Coroutine, Mapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from omu.api.table import Table
 from omu.event_emitter import EventEmitter, Unlisten
-from omu.extension.table import Table
 
 if TYPE_CHECKING:
     from omu_chat.chat import Chat

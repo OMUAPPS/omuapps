@@ -18,14 +18,14 @@ export class Transform2D {
     public basisXForm(point: Vec2Like): Vec2 {
         return new Vec2(
             this.tdotx(point),
-            this.tdoty(point)
+            this.tdoty(point),
         );
     }
 
     public xform(point: Vec2Like): Vec2 {
         return new Vec2(
             this.tdotx(point),
-            this.tdoty(point)
+            this.tdoty(point),
         ).add(this.columns[2]);
     }
 
@@ -50,7 +50,7 @@ export class Transform2D {
         return new Transform2D([
             this.basisXForm(other.columns[0]),
             this.basisXForm(other.columns[1]),
-            this.xform(other.columns[2])
+            this.xform(other.columns[2]),
         ]);
     }
 
@@ -62,7 +62,7 @@ export class Transform2D {
         return new Mat3(
             this.columns[0].x, this.columns[0].y, 0,
             this.columns[1].x, this.columns[1].y, 0,
-            this.columns[2].x, this.columns[2].y, 1
+            this.columns[2].x, this.columns[2].y, 1,
         );
     }
 
@@ -71,7 +71,7 @@ export class Transform2D {
             this.columns[0].x, this.columns[0].y, 0, 0,
             this.columns[1].x, this.columns[1].y, 0, 0,
             0, 0, 1, 0,
-            this.columns[2].x, this.columns[2].y, 0, 1
+            this.columns[2].x, this.columns[2].y, 0, 1,
         );
     }
 }

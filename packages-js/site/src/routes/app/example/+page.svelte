@@ -1,8 +1,7 @@
 <script lang="ts">
     import { makeRegistryWritable } from '$lib/helper.js';
     import { Chat, ChatEvents } from '@omujs/chat';
-    import type { Author } from '@omujs/chat/models/author.js';
-    import type { Message } from '@omujs/chat/models/message.js';
+    import type { Author, Message } from '@omujs/chat/models';
     import { App, Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
 
@@ -11,7 +10,8 @@
         metadata: {
             locale: 'ja',
             name: '草警察',
-            description: '【2025年最新版】草を投稿した人を自動で検出して収集するアプリ',
+            description:
+                '【2025年最新版】草を投稿した人を自動で検出して収集するアプリ',
         },
     });
     const omu = new Omu(APP);
@@ -19,7 +19,9 @@
         filters: ['草'],
     };
     type Config = typeof DEFAULT_CONFIG;
-    const configRegistry = omu.registries.create<Config>('config', { default: DEFAULT_CONFIG });
+    const configRegistry = omu.registries.json<Config>('config', {
+        default: DEFAULT_CONFIG,
+    });
     const config = makeRegistryWritable(configRegistry);
     type Comment = {
         id: string;
@@ -28,12 +30,12 @@
         content: string;
         date: string;
     };
-    const table = omu.tables.create<Comment>('comments', {
+    const table = omu.tables.json<Comment>('comments', {
         key: (item) => item.id,
     });
     const chat = Chat.create(omu);
-    
-    chat.on(ChatEvents.message.add, async (message) => {
+
+    chat.on(ChatEvents.Message.Add, async (message) => {
         if (!message.authorId) return;
         if (!shouldDiscardMessage(message)) return;
         const author = await chat.authors.get(message.authorId.key());
@@ -50,9 +52,7 @@
     });
 
     if (BROWSER) {
-        omu.permissions.require(
-            
-        )
+        omu.permissions.require();
         omu.start();
     }
 
@@ -61,7 +61,9 @@
     table.listen((newItems) => {
         comments = new Map([
             ...Array.from(comments.entries()),
-            ...Array.from(newItems.values()).map((comment): [string, Comment] => [comment.id, comment]),
+            ...Array.from(newItems.values()).map(
+                (comment): [string, Comment] => [comment.id, comment],
+            ),
         ]);
     });
     table.event.clear.listen(() => {
@@ -76,11 +78,10 @@
         table.fetchAll();
     });
 
-
-    function shouldDiscardMessage( message: Message) {
+    function shouldDiscardMessage(message: Message) {
         return $config.filters
             .map((filter) => filter.trim())
-            .filter(it => it.length > 0)
+            .filter((it) => it.length > 0)
             .some((filter) => message.text.includes(filter));
     }
 
@@ -95,45 +96,57 @@
         {#each $config.filters as filter, i (i)}
             <span>
                 <input type="text" bind:value={filter} />
-                <button on:click={() => {
-                    $config.filters = $config.filters.filter((_, j) => i !== j);
-                }}>削除</button>
+                <button
+                    on:click={() => {
+                        $config.filters = $config.filters.filter(
+                            (_, j) => i !== j,
+                        );
+                    }}>削除</button
+                >
             </span>
         {/each}
-        <button on:click={() => {
-            $config.filters = [
-                ...$config.filters,
-                '',
-            ]
-        }}>追加</button>
+        <button
+            on:click={() => {
+                $config.filters = [...$config.filters, ''];
+            }}>追加</button
+        >
 
-        <button on:click={() => {
-            $config = DEFAULT_CONFIG;
-        }}>
+        <button
+            on:click={() => {
+                $config = DEFAULT_CONFIG;
+            }}
+        >
             リセット
         </button>
     </div>
     <div class="comments">
         <h2>
             comments
-            <button on:click={() => {
-                table.clear();
-            }}>すべて削除</button>
+            <button
+                on:click={() => {
+                    table.clear();
+                }}>すべて削除</button
+            >
         </h2>
         {#each Array.from(comments.values()).reverse() as comment (comment.id)}
             <div class="comment">
                 {#await chat.authors.get(comment.authorId) then author}
                     {#if author}
                         {#if author.avatarUrl}
-                            <img src={omu.assets.proxy(author.avatarUrl)} alt={author.name} />
+                            <img
+                                src={omu.assets.proxy(author.avatarUrl)}
+                                alt={author.name}
+                            />
                         {/if}
                         <p>{author.name}</p>
                     {/if}
                 {/await}
                 <p>{comment.content}</p>
-                <button on:click={() => {
-                    table.remove(comment);
-                }}>削除</button>
+                <button
+                    on:click={() => {
+                        table.remove(comment);
+                    }}>削除</button
+                >
                 {new Date(comment.date).toLocaleString()}
             </div>
         {/each}

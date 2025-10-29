@@ -1,6 +1,6 @@
-from omu.extension.endpoint.endpoint import EndpointType
-from omu.extension.registry import RegistryType
-from omu.extension.table import TableType
+from omu.api.endpoint.endpoint import EndpointType
+from omu.api.registry import RegistryType
+from omu.api.table import TableType
 
 from .archive import Archive, ArchiveConfig
 from .const import DEFAULT_CONFIG, IDENTIFIER

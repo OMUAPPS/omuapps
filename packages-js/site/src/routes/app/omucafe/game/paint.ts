@@ -1,9 +1,9 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
-import { ByteReader, ByteWriter } from '@omujs/omu/bytebuffer.js';
-import { RegistryType } from '@omujs/omu/extension/registry/registry.js';
-import { SignalType } from '@omujs/omu/extension/signal/signal.js';
+import { RegistryType } from '@omujs/omu/api/registry';
+import { SignalType } from '@omujs/omu/api/signal';
+import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
 import { APP_ID } from '../app.js';
 import { getGame } from '../omucafe-app.js';
 import { draw, getContext, matrices } from './game.js';
@@ -18,37 +18,37 @@ export const DEFAULT_PEN = {
     } as Vec4Like,
     opacity: 1,
     width: 10,
-}
+};
 
 export type Pen = typeof DEFAULT_PEN;
 
 export const DEFAULT_ERASER = {
     width: 40,
     opacity: 1,
-}
+};
 
 export type Eraser = typeof DEFAULT_ERASER;
 
 export const DEFAULT_TOOL = {
     type: 'move',
 } as {
-    type: 'move',
+    type: 'move';
 } | {
-    type: 'pen',
+    type: 'pen';
 } | {
-    type: 'eraser',
-}
+    type: 'eraser';
+};
 
 export type Tool = typeof DEFAULT_TOOL;
 
 export type DrawPath = {
-    t: 'qb',
-    in: number,
-    out: number,
-    a: Vec2Like,
-    b: Vec2Like,
-    c: Vec2Like,
-}
+    t: 'qb';
+    in: number;
+    out: number;
+    a: Vec2Like;
+    b: Vec2Like;
+    c: Vec2Like;
+};
 
 export const PAINT_EVENT_TYPE = {
     PEN: 'dr',
@@ -60,29 +60,29 @@ export const PAINT_EVENT_TYPE = {
 
 export type PaintEvent = {
     // t: 'p',
-    t: typeof PAINT_EVENT_TYPE.PEN,
-    path: DrawPath,
+    t: typeof PAINT_EVENT_TYPE.PEN;
+    path: DrawPath;
 } | {
-    t: typeof PAINT_EVENT_TYPE.CHANGE_PEN,
-    pen: Pen,
+    t: typeof PAINT_EVENT_TYPE.CHANGE_PEN;
+    pen: Pen;
 } | {
-    t: typeof PAINT_EVENT_TYPE.ERASER,
-    path: DrawPath,
+    t: typeof PAINT_EVENT_TYPE.ERASER;
+    path: DrawPath;
 } | {
-    t: typeof PAINT_EVENT_TYPE.CHANGE_ERASER,
-    eraser: Eraser,
+    t: typeof PAINT_EVENT_TYPE.CHANGE_ERASER;
+    eraser: Eraser;
 } | {
-    t: typeof PAINT_EVENT_TYPE.CLEAR,
-}
+    t: typeof PAINT_EVENT_TYPE.CLEAR;
+};
 
 export type PaintEvents = {
-    data: string,
+    data: string;
 };
 
 export class PaintBuffer {
     private static VERSION = 0;
     public static EMPTY = new PaintBuffer(PaintBuffer.VERSION, 0, new Uint8Array(0));
-    
+
     constructor(
         public readonly version: number,
         public readonly size: number,
@@ -162,7 +162,7 @@ export class PaintBuffer {
             [PAINT_EVENT_TYPE.CHANGE_ERASER]: 3,
             [PAINT_EVENT_TYPE.CLEAR]: 4,
         };
-        
+
         for (const event of events) {
             const { t } = event;
             const type = TYPES[t];
@@ -228,7 +228,6 @@ export class PaintBuffer {
     }
 }
 
-
 export class Paint {
     public readonly texture: GlTexture;
     private readonly framebuffer: GlFramebuffer;
@@ -236,11 +235,11 @@ export class Paint {
     private readonly paintTools = {
         pen: DEFAULT_PEN satisfies Pen,
         eraser: DEFAULT_ERASER satisfies Eraser,
-    }
+    };
 
     constructor(
         private readonly ctx: GlContext,
-        private readonly dimensions: { width: number, height: number }
+        private readonly dimensions: { width: number; height: number },
     ) {
         this.framebuffer = ctx.createFramebuffer();
         this.texture = ctx.createTexture();
@@ -261,7 +260,7 @@ export class Paint {
     emit(...event: PaintEvent[]): void {
         this.paintQueue.push(...event);
     }
-    
+
     update(width: number, height: number) {
         if (this.paintQueue.length === 0) return;
         const queue: PaintEvent[] = [];

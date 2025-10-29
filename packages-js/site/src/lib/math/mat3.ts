@@ -13,35 +13,35 @@ export class Mat3 {
     get m00() {
         return this.elements[0];
     }
-    
+
     get m01() {
         return this.elements[1];
     }
-    
+
     get m02() {
         return this.elements[2];
     }
-    
+
     get m10() {
         return this.elements[3];
     }
-    
+
     get m11() {
         return this.elements[4];
     }
-    
+
     get m12() {
         return this.elements[5];
     }
-    
+
     get m20() {
         return this.elements[6];
     }
-    
+
     get m21() {
         return this.elements[7];
     }
-    
+
     get m22() {
         return this.elements[8];
     }

@@ -1,5 +1,7 @@
 import datetime
 import io
+import os
+import re
 import sys
 import threading
 import time
@@ -182,3 +184,15 @@ def find_processes_by_executable(
             pass
         except psutil.AccessDenied:
             pass
+
+
+def get_parent_pids() -> Generator[int]:
+    pid = os.getpid()
+    yield pid
+    for parent in psutil.Process(pid).parents():
+        yield parent.pid
+
+
+def normalize_package_name(pkg: str) -> str:
+    # https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization
+    return re.sub(r"[-_.]+", "-", pkg).lower()

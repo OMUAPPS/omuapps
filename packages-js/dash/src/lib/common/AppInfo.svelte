@@ -2,16 +2,14 @@
     import { omu } from '$lib/client.js';
     import type { App } from '@omujs/omu';
     import { Localized, Tooltip } from '@omujs/ui';
-    
+
     export let app: App;
 
     $: namespace = app.id.namespace.split('.').reverse().join('.');
-    $: path=app.id.path.reverse().join('.');
-    
-    const metadata = app.metadata;
-    const icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
+    $: path = app.id.path.reverse().join('.');
+    $: metadata = app.metadata;
+    $: icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
 </script>
-
 
 <div class="info">
     <Tooltip>
@@ -29,7 +27,7 @@
     <div class="content">
         <p>
             <span class="name">
-                <Localized text={app.metadata?.name}/>
+                <Localized text={app.metadata?.name} />
             </span>
             <small class="id">
                 {namespace}
@@ -43,7 +41,7 @@
             </small>
         </p>
         <small class="description">
-            <Localized text={app.metadata?.description}/>
+            <Localized text={app.metadata?.description} />
         </small>
     </div>
 </div>
@@ -54,6 +52,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        padding: 1rem 0;
 
         .name {
             white-space: nowrap;
@@ -105,6 +104,7 @@
 
     .description {
         color: var(--color-text);
+        text-align: left;
     }
 
     p {

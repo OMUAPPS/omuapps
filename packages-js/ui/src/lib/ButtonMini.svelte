@@ -38,7 +38,7 @@
             opacity: 0.5;
         }
     }
-    
+
     .primary {
         background: var(--color-1);
         color: var(--color-bg-1);

@@ -22,7 +22,7 @@
         bottom: 12rem;
         right: 8rem;
     }
-    
+
     .order {
         display: flex;
         align-items: center;

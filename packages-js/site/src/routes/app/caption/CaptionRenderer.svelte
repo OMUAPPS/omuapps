@@ -3,15 +3,13 @@
 
     export let captionApp: CaptionApp;
     export let placeholder = '';
-    const { config } = captionApp;
+    const { omu, config } = captionApp;
 
     let text = placeholder;
-    captionApp.listen((caption) => {
-        text = caption.texts.join(' ');
-
-        if (caption.final) {
-            previosWidth = clientWidth;
-        }
+    omu.dashboard.speechRecognition.listen((status) => {
+        if (status.type !== 'final') return;
+        const { segments } = status;
+        text = segments.map((segment) => segment.transcript).join();
     });
 
     let previosWidth = 0;

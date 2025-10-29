@@ -1,8 +1,7 @@
 <script lang="ts">
-    import { dashboard } from '$lib/client.js';
+    import { chat, dashboard } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
-    import { checkUpdate } from '$lib/tauri.js';
     import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AppEntry from './AppEntry.svelte';
@@ -17,7 +16,6 @@
     import ConnectPage from './pages/ConnectPage.svelte';
     import ExplorePage from './pages/ExplorePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
-    import UpdateScreen from './screen/UpdateScreen.svelte';
     import { currentPage, menuOpen } from './settings.js';
     import SettingsPage from './settings/SettingsPage.svelte';
     import TabEntry from './TabEntry.svelte';
@@ -78,12 +76,9 @@
         await loadPage($currentPage, pageItem);
     });
 
-    onMount(async () => {
-        const update = await checkUpdate();
-        if (update) {
-            screenContext.push(UpdateScreen, { update });
-        }
+    let onlineChats = 0;
 
+    onMount(async () => {
         dashboard.apps.event.remove.listen((removedItems) => {
             removedItems.forEach((item) => {
                 delete $pages[`app-${item.id.key()}`];
@@ -96,6 +91,17 @@
                 unregisterPage(`app-${item.id.key()}`);
             });
         });
+
+        function updateOnlineChats() {
+            onlineChats = chat.rooms.cache.values().filter((room) => room.connected).toArray().length;
+        }
+
+        chat.rooms.listen(() => updateOnlineChats());
+        await chat.rooms.fetchItems({
+            limit: 10,
+            backward: true,
+        });
+        updateOnlineChats();
     });
 </script>
 
@@ -112,7 +118,7 @@
                 {/if}
             </button>
             <TabEntry entry={EXPLORE_PAGE} />
-            <TabEntry entry={CONNECT_PAGE} />
+            <TabEntry entry={CONNECT_PAGE} badge={onlineChats ? `${onlineChats}` : undefined} />
             <TabEntry entry={SETTINGS_PAGE} />
             <div class="tab-group">
                 {#if $menuOpen}

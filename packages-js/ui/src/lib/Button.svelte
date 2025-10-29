@@ -1,8 +1,8 @@
 <script lang="ts" generics="T">
     export let primary = false;
     export let disabled = false;
-    export let onclick: () => PromiseLike<T> | undefined | void = () => {};
-    export let promise: PromiseLike<T> | undefined | void = undefined;
+    export let onclick: () => PromiseLike<T> | undefined | unknown = () => {};
+    export let promise: PromiseLike<T> | undefined | unknown = undefined;
 
     async function handleClick() {
         if (disabled) return;

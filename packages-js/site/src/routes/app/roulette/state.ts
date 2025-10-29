@@ -6,7 +6,7 @@ export type State =
     | SpinningState
     | SpinResultState;
 
-import type { MessageJson } from '@omujs/chat/models/message.js';
+import type { MessageJson } from '@omujs/chat/models';
 
 export type RouletteItem = {
     id: string;

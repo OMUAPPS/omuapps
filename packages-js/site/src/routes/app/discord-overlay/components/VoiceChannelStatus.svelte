@@ -20,7 +20,7 @@
         GUILD_DIRECTORY: 14,
         GUILD_FORUM: 15,
         GUILD_MEDIA: 16,
-    }
+    };
 </script>
 
 {#if $selectedVoiceChannel && !state}
@@ -45,7 +45,7 @@
             </Tooltip>
             <div class="icon">
                 {#if guild?.icon_url}
-                    <img src={guild.icon_url} alt=""/>
+                    <img src={guild.icon_url} alt="" />
                 {:else if channel.type === CHANNEL_TYPE.DM}
                     <i class="ti ti-user"></i>
                 {:else if channel.type === CHANNEL_TYPE.GROUP_DM}

@@ -1,11 +1,11 @@
 [project]
 name = "omu_chat_twitch"
-version = "0.9.13"
+version = "0.9.19"
 description = "OMUAPPS Twitch Chat Service"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu_chatprovider>=0.9.13"]
+dependencies = ["loguru>=0.7.2", "omu_chatprovider>=0.9.19"]
 readme = "README.md"
 requires-python = ">= 3.12"
 

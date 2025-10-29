@@ -1,4 +1,4 @@
-import { getDocSections, getDocsData } from '$lib/server/docs/index.js';
+import { getDocSections, getDocsData } from '$lib/server/docs';
 
 export const prerender = true;
 

@@ -6,11 +6,11 @@ import { Room } from '../models/room.js';
 import { Vote } from '../models/vote.js';
 import { TableEvent } from './event.js';
 
-export const events: { message: TableEvent<Message>; author: TableEvent<Author>; channel: TableEvent<Channel>; provider: TableEvent<Provider>; room: TableEvent<Room>; vote: TableEvent<Vote>; } = {
-    message: new TableEvent((chat) => chat.messages),
-    author: new TableEvent((chat) => chat.authors),
-    channel: new TableEvent((chat) => chat.channels),
-    provider: new TableEvent((chat) => chat.providers),
-    room: new TableEvent((chat) => chat.rooms),
-    vote: new TableEvent((chat) => chat.votes),
+export const events: { Message: TableEvent<Message>; Author: TableEvent<Author>; Channel: TableEvent<Channel>; Provider: TableEvent<Provider>; Room: TableEvent<Room>; Vote: TableEvent<Vote> } = {
+    Message: new TableEvent((chat) => chat.messages),
+    Author: new TableEvent((chat) => chat.authors),
+    Channel: new TableEvent((chat) => chat.channels),
+    Provider: new TableEvent((chat) => chat.providers),
+    Room: new TableEvent((chat) => chat.rooms),
+    Vote: new TableEvent((chat) => chat.votes),
 };

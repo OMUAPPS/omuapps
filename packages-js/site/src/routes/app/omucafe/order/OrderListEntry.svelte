@@ -3,7 +3,7 @@
     import { updateOrder, type Order } from './order.js';
 
     const { gameConfig, states } = getGame();
-    
+
     export let entry: Order;
     export let selected: boolean = false;
     $: user = entry.user;
@@ -13,7 +13,7 @@
 <div class="order" class:selected class:current={$states.kitchen.order?.id === entry.id}>
     <div class="user">
         {#if user.avatar}
-            <img src={user.avatar} class="avatar" alt=""/>
+            <img src={user.avatar} class="avatar" alt="" />
         {:else}
             <i class="avatar ti ti-user" style="font-size: 32px;"></i>
         {/if}

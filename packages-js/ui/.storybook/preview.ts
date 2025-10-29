@@ -1,5 +1,5 @@
 import type { Preview } from '@storybook/svelte';
-import { decorators } from '../src/lib/decorators/index.js';
+import { decorators } from '../src/lib/decorators';
 
 const preview: Preview = {
     parameters: {

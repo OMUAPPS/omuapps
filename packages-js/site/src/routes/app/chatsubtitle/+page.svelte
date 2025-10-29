@@ -1,7 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import { Chat, events } from '@omujs/chat';
-    import type { Room } from '@omujs/chat/models/room.js';
+    import { Chat, ChatEvents } from '@omujs/chat';
+    import type { Room } from '@omujs/chat/models';
     import { Identifier, Omu } from '@omujs/omu';
     import { AppHeader, TableList, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -118,7 +118,10 @@
             const author = authorId && authors.get(authorId.key());
             if (!author) continue;
             const line: Line = {
-                left: { content: content?.toString() || '', penId: contentPenId },
+                left: {
+                    content: content?.toString() || '',
+                    penId: contentPenId,
+                },
                 right: { content: author.name || '', penId: authorPenId },
             };
             insertLine(message.createdAt, line);
@@ -132,12 +135,16 @@
                 let count = 0;
                 let parts: string[] = [];
                 while (line.left.content.length > count) {
-                    parts.push(line.left.content.slice(count, count + textLength));
+                    parts.push(
+                        line.left.content.slice(count, count + textLength),
+                    );
                     count += textLength;
                 }
                 leftParts.push(...parts.map((p) => '　' + p));
                 rightParts.push('　' + line.right.content);
-                rightParts.push(...new Array(Math.max(0, parts.length - 1)).fill('　'));
+                rightParts.push(
+                    ...new Array(Math.max(0, parts.length - 1)).fill('　'),
+                );
             }
             leftParts = [
                 '　　　　　　　　　　　　　　　　　　　　',
@@ -146,7 +153,9 @@
                 '　　　　　　　　　　　　　　　　　　　　',
             ];
             const bg = [
-                ...new Array(leftParts.length).fill('　　　　　　　　　　　　　　　　　　　　'),
+                ...new Array(leftParts.length).fill(
+                    '　　　　　　　　　　　　　　　　　　　　',
+                ),
             ];
             rightParts = [
                 '　　　　　　　　　',
@@ -181,7 +190,7 @@
         console.log(xml);
     };
 
-    chat.on(events.room.update, async (room: Room) => {
+    chat.on(ChatEvents.Room.Update, async (room: Room) => {
         if (!$config.auto_generate) return;
         if (!isChatSubCreatable(room)) return;
         if (room.connected) return;
@@ -199,7 +208,10 @@
     </header>
     <main>
         {#if xml}
-            <a href="data:text/xml;charset=utf-8,{encodeURIComponent(xml)}" download="subtitle.xml">
+            <a
+                href="data:text/xml;charset=utf-8,{encodeURIComponent(xml)}"
+                download="subtitle.xml"
+            >
                 Download Subtitle
             </a>
         {/if}
@@ -207,7 +219,10 @@
             table={chat.rooms}
             component={RoomEntry}
             filter={(key, room) =>
-                !!(room.metadata.first_message_id && room.metadata.last_message_id)}
+                !!(
+                    room.metadata.first_message_id &&
+                    room.metadata.last_message_id
+                )}
         />
     </main>
 </AppPage>

@@ -6,7 +6,7 @@
     export let text: string;
 
     let language = {
-        typescript
+        typescript,
     }[lang] || typescript;
 </script>
 

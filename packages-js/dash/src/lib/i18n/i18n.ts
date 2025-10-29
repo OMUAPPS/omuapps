@@ -23,7 +23,7 @@ export const LOCALES = {
         'code': 'en-US',
         'alias': ['en-US', 'en'],
         load: () => loadI18n(() => import('./locales/en-US.json'), 'en-US'),
-    }
+    },
 } satisfies ILocale;
 
 export const DEFAULT_LOCALE = 'ja-JP';

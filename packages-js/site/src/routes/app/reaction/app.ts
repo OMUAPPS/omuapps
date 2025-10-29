@@ -23,3 +23,19 @@ export const APP = new App(APP_ID, {
         tags: ['youtube', 'asset'] as TagKey[],
     }),
 });
+export const ASSET_APP = new App(APP_ID.join('asset'), {
+    url: getUrl('/app/reaction/asset'),
+    parentId: APP,
+    metadata: buildMetadata({
+        locale: 'en',
+        name: {
+            ja: 'リアクション',
+            en: 'Reaction',
+        },
+        description: {
+            ja: 'Youtubeのチャットに送られたリアクションを配信画面にも乗せることができます',
+            en: 'Display reactions sent to Youtube chat on your stream',
+        },
+        icon,
+    }),
+});

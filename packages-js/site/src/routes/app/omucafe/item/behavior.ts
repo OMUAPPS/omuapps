@@ -14,7 +14,7 @@ export type Behaviors = {
     holdable: Holdable;
     action: Action;
     effect: Effect;
-    liquid: Liquid,
+    liquid: Liquid;
 };
 
 export const getBehaviorHandlers = async () => ({
@@ -30,9 +30,9 @@ export type BehaviorHandlers<T extends keyof Behaviors = keyof Behaviors> = {
 };
 
 export type BehaviorAction<T extends keyof Behaviors> = {
-    item: ItemState,
-    behavior: Behaviors[T],
-    context: KitchenContext,
+    item: ItemState;
+    behavior: Behaviors[T];
+    context: KitchenContext;
 };
 
 export type BehaviorFunction<T extends keyof Behaviors, U> = (action: BehaviorAction<T>, args: U) => Promise<void> | void;
@@ -40,21 +40,21 @@ export type BehaviorFunction<T extends keyof Behaviors, U> = (action: BehaviorAc
 export type ClickAction = {
     name: string;
     priority: number;
-    item: ItemState,
+    item: ItemState;
     callback: () => Promise<void> | void;
-}
+};
 
 export interface BehaviorHandler<T extends keyof Behaviors> {
-    initialize?(): Promise<void>,
-    renderPre?(action: BehaviorAction<T>, args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> }): Promise<void> | void,
-    renderPost?(action: BehaviorAction<T>, args: { bufferBounds: AABB2, childRenders: Record<string, ItemRender> }): Promise<void> | void,
-    renderOverlay?(action: BehaviorAction<T>, args: { matrices: Matrices }): Promise<void> | void,
-    collectActionsParent?(action: BehaviorAction<T>, args: { child: ItemState, held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
-    collectActionsHeld?(action: BehaviorAction<T>, args: { hovering: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
-    collectActionsHovered?(action: BehaviorAction<T>, args: { held: ItemState | null, actions: ClickAction[] }): Promise<void> | void,
-    handleChildrenOrder?(action: BehaviorAction<T>, args: { timing: 'hover', children: ItemState[] }): Promise<void> | void,
-    handleChildrenHovered?(action: BehaviorAction<T>, args: { target: ItemState | null }): Promise<void> | void,
-    preLoadAssets?(action: BehaviorAction<T>, args: undefined): Promise<void> | void,
+    initialize?(): Promise<void>;
+    renderPre?(action: BehaviorAction<T>, args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender> }): Promise<void> | void;
+    renderPost?(action: BehaviorAction<T>, args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender> }): Promise<void> | void;
+    renderOverlay?(action: BehaviorAction<T>, args: { matrices: Matrices }): Promise<void> | void;
+    collectActionsParent?(action: BehaviorAction<T>, args: { child: ItemState; held: ItemState | null; actions: ClickAction[] }): Promise<void> | void;
+    collectActionsHeld?(action: BehaviorAction<T>, args: { hovering: ItemState | null; actions: ClickAction[] }): Promise<void> | void;
+    collectActionsHovered?(action: BehaviorAction<T>, args: { held: ItemState | null; actions: ClickAction[] }): Promise<void> | void;
+    handleChildrenOrder?(action: BehaviorAction<T>, args: { timing: 'hover'; children: ItemState[] }): Promise<void> | void;
+    handleChildrenHovered?(action: BehaviorAction<T>, args: { target: ItemState | null }): Promise<void> | void;
+    preLoadAssets?(action: BehaviorAction<T>, args: undefined): Promise<void> | void;
 };
 
 export type DefaultBehaviors<T extends keyof Behaviors = keyof Behaviors> = {
@@ -66,4 +66,4 @@ export type DefaultBehaviors<T extends keyof Behaviors = keyof Behaviors> = {
             behavior: Behaviors[key];
         }>;
     }
-}
+};

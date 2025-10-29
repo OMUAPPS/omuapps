@@ -12,6 +12,8 @@
         devMode,
         isBetaEnabled,
         language,
+        openLinkMode,
+        speechRecognition,
     } from '../settings.js';
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
@@ -22,7 +24,12 @@
 
     async function restartServer() {
         if (omu.ready) {
-            await omu.server.shutdown(true);
+            omu.server.shutdown(true);
+        } else {
+            await invoke('start_server');
+        }
+        if (omu.running) {
+            omu.stop();
         }
         await new Promise<void>((resolve) => omu.onReady(resolve));
         window.location.reload();
@@ -156,6 +163,22 @@
                     </span>
                 {/await}
                 <span class="setting">
+                    <p>{$t('settings.setting.link')}</p>
+                    <Combobox
+                        bind:value={$openLinkMode}
+                        options={{
+                            browser: {
+                                value: 'browser',
+                                label: $t('settings.setting.link_browser'),
+                            },
+                            window: {
+                                value: 'window',
+                                label: $t('settings.setting.link_window'),
+                            },
+                        }}
+                    />
+                </span>
+                <span class="setting">
                     <p>{$t('settings.setting.language')}</p>
                     <Combobox
                         bind:value={$language}
@@ -168,16 +191,12 @@
                     />
                 </span>
                 <label class="setting">
-                    <p>{$t('settings.setting.betaMode')}</p>
+                    <p>{$t('settings.setting.speechRecognition')}</p>
                     <input
                         type="checkbox"
-                        bind:checked={$isBetaEnabled}
-                        on:change={async () => updateConfig()}
+                        bind:checked={$speechRecognition}
                     />
                 </label>
-                <small>
-                    {$t('settings.setting.betaModeDescription')}
-                </small>
                 {#if $isBetaEnabled}
                     <label class="setting">
                         <p>{$t('settings.setting.devMode')}</p>
@@ -196,7 +215,7 @@
                                 {$t('settings.setting.serverRestarted')}
                             {:catch error}
                                 {$t('settings.setting.serverRestartError', {
-                                    error,
+                                    error: JSON.stringify(error),
                                 })}
                             {/await}
                         {:else}
@@ -209,10 +228,6 @@
                         {#if promise}
                             {#await promise}
                                 {$t('settings.setting.logFileGenerating')}
-                            {:then path}
-                                {$t('settings.setting.logFileGenerated', {
-                                    path,
-                                })}
                             {:catch error}
                                 {$t('settings.setting.logFileGenerateError', {
                                     error,
@@ -234,6 +249,17 @@
                     </Button>
                 </span>
                 <small>先にOBSを終了する必要があります</small>
+                <label class="setting">
+                    <p>{$t('settings.setting.betaMode')}</p>
+                    <input
+                        type="checkbox"
+                        bind:checked={$isBetaEnabled}
+                        on:change={async () => updateConfig()}
+                    />
+                </label>
+                <small>
+                    {$t('settings.setting.betaModeDescription')}
+                </small>
             {:else if $currentSettingsCategory === 'plugins'}
                 <PluginSettings />
             {:else if $currentSettingsCategory === 'about'}
