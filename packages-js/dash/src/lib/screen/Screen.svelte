@@ -64,6 +64,7 @@
         flex: 1;
         padding: max(4rem, 10%) max(2rem, 10%);
         overflow-y: auto;
+        pointer-events: none;
     }
 
     @keyframes slide {
