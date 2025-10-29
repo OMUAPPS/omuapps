@@ -4,7 +4,7 @@
     import type { Omu } from '@omujs/omu';
     import { Button, Checkbox, Tooltip } from '@omujs/ui';
     import Answers from './Answers.svelte';
-    import { MarshmallowAPI, MarshmallowSession, type Message, type User } from './api.js';
+    import { MarshmallowAPI, type Message, type User } from './api.js';
     import { ASSET_APP } from './app';
     import { MarshmallowApp } from './marshmallow-app.js';
     import Messages from './Messages.svelte';
@@ -15,6 +15,7 @@
     export let marshmallow: MarshmallowApp;
     export let obs: OBSPlugin;
     export let api: MarshmallowAPI;
+    export let logout: () => void;
 
     const { config } = marshmallow;
 
@@ -88,11 +89,7 @@
                         {/if}
                     </span>
                     <div class="actions">
-                        <Button onclick={async () => {
-                            const session = await MarshmallowSession.login(omu);
-                            if (!session) return;
-                            api = MarshmallowAPI.new(omu, session);
-                        }}>
+                        <Button onclick={logout}>
                             <Tooltip>
                                 アカウントを切り替える
                             </Tooltip>

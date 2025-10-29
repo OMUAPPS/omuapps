@@ -16,6 +16,7 @@
 
     let state: {
         type: 'loading';
+        logout?: boolean;
     } | {
         type: 'ready';
         api: MarshmallowAPI;
@@ -26,6 +27,9 @@
     } = { type: 'loading' };
 
     async function init() {
+        if (state.type !== 'loading') {
+            state = { type: 'loading' };
+        }
         await omu.waitForReady();
         while (true) {
             const hostResult = await omu.dashboard.requestHost({
@@ -42,7 +46,12 @@
                 });
                 continue;
             }
-            const session = await MarshmallowSession.get(omu) ?? await MarshmallowSession.login(omu);
+            let session: MarshmallowSession | undefined = undefined;
+            if (state.logout) {
+                session = await MarshmallowSession.login(omu);
+            } else {
+                session = await MarshmallowSession.login(omu) ?? await MarshmallowSession.get(omu);
+            }
             if (!session) {
                 console.warn('Failed to get session');
                 await new Promise<void>((resolve) => {
@@ -52,6 +61,7 @@
                         retry: () => resolve(),
                     };
                 });
+                state = { type: 'loading' };
                 continue;
             }
             const api = MarshmallowAPI.new(omu, session);
@@ -61,6 +71,11 @@
             };
             break;
         }
+    }
+
+    async function logout() {
+        state = { type: 'loading', logout: true };
+        init();
     }
 
     if (BROWSER) {
@@ -85,7 +100,7 @@
             <Spinner />
         </div>
     {:else if state.type === 'ready'}
-        <App {omu} {marshmallow} {obs} api={state.api} />
+        <App {omu} {marshmallow} {obs} api={state.api} logout={logout} />
     {:else if state.type === 'failed'}
         <div class="screen">
             {#if state.kind === 'host'}
