@@ -59,16 +59,6 @@
 </div>
 
 <style lang="scss">
-    .message {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2rem;
-        padding: 0 5%;
-        padding-left: 5%;
-        padding-top: 10%;
-        margin-bottom: 10rem;
-    }
 
     .container {
         position: absolute;
@@ -79,6 +69,17 @@
         justify-content: center;
         overflow-y: auto;
         gap: 2rem;
+        padding: 0 5%;
+        padding-left: 5%;
+        padding-top: 10%;
+    }
+
+    .message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 6rem;
     }
 
     .image {
