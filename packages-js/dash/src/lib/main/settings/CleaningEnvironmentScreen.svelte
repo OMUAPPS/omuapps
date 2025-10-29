@@ -53,7 +53,7 @@
     let cleanPromise: Promise<void> = cleanEnvironment();
 </script>
 
-<Screen {screen} title="" windowed={false} disableDecorations disableClose>
+<Screen {screen} disableClose>
     <div class="screen">
         {#await cleanPromise}
             <div class="container">
@@ -154,7 +154,6 @@
     .screen {
         position: absolute;
         inset: 0;
-        background: var(--color-bg-1);
         display: flex;
         flex-direction: column;
         align-items: center;

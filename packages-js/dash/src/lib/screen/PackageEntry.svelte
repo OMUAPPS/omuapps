@@ -11,8 +11,7 @@
         entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim();
 </script>
 
-<li>
-    <i class="icon ti ti-package" />
+<div class="entry">
     <div class="info">
         <span class="name">
             <ExternalLink href={entry.info.package_url}>
@@ -42,12 +41,11 @@
             {/if}
         </span>
     {/if}
-</li>
+</div>
 
 <style lang="scss">
-    li {
+    .entry {
         list-style: none;
-        margin: 1rem;
         display: flex;
         align-items: center;
         gap: 1rem;
@@ -74,11 +72,6 @@
         display: flex;
         align-items: baseline;
         font-size: 0.9rem;
-    }
-
-    .name a {
-        color: var(--color-1);
-        text-decoration: none;
     }
 
     .author {

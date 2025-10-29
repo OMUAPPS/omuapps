@@ -50,7 +50,7 @@
     {#if !state.reason}
         <div class="modal">
             <p>接続が切断されました</p>
-            <Button primary on:click={() => location.reload()}>再接続</Button>
+            <Button primary onclick={() => location.reload()}>再接続</Button>
         </div>
     {:else if state.reason.type === DisconnectType.ANOTHER_CONNECTION}
         <div class="modal">
@@ -59,8 +59,9 @@
         </div>
     {:else if state.reason.type === DisconnectType.PERMISSION_DENIED}
         <div class="modal">
-            <p>権限がありませんでした</p>
+            <p>権限が拒否されました</p>
             <p class="message">{state.reason.message}</p>
+            <Button primary onclick={() => location.reload()}>再接続</Button>
         </div>
     {:else if state.reason.type === DisconnectType.INVALID_ORIGIN}
         <div class="modal">

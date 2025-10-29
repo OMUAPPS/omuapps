@@ -2,7 +2,6 @@
     import { chat, dashboard } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
-    import { checkUpdate } from '$lib/tauri.js';
     import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AppEntry from './AppEntry.svelte';
@@ -17,7 +16,6 @@
     import ConnectPage from './pages/ConnectPage.svelte';
     import ExplorePage from './pages/ExplorePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
-    import UpdateScreen from './screen/UpdateScreen.svelte';
     import { currentPage, menuOpen } from './settings.js';
     import SettingsPage from './settings/SettingsPage.svelte';
     import TabEntry from './TabEntry.svelte';
@@ -81,11 +79,6 @@
     let onlineChats = 0;
 
     onMount(async () => {
-        const update = await checkUpdate();
-        if (update) {
-            screenContext.push(UpdateScreen, { update });
-        }
-
         dashboard.apps.event.remove.listen((removedItems) => {
             removedItems.forEach((item) => {
                 delete $pages[`app-${item.id.key()}`];

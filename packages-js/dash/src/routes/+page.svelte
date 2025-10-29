@@ -166,7 +166,7 @@
                     {/if}
                 </h1>
                 <small>
-                    チャットの機能で使用するチャンネルを追加します。
+                    チャットの機能で使用するチャンネルを追加します
                 </small>
             </div>
             <InstallStepAddChannels bind:state={$state.state} resolve={$state.resolve} />

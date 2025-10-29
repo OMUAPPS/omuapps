@@ -205,7 +205,15 @@
         "app_install": {
             "name": "アプリをインストール",
             "icon": "ti ti-download",
-            "description": "アプリをインストールします。"
+            "description": "アプリをインストールします。",
+            "info": {
+                "authors": "作者",
+                "description": "説明",
+                "license": "ライセンス",
+                "repository": "リポジトリ",
+                "site": "サイト",
+                "tags": "タグ"
+            }
         },
         "app_update": {
             "name": "アプリを更新",

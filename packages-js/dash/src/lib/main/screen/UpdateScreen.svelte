@@ -17,7 +17,7 @@
     let state: UpdateEvent | null = null;
 </script>
 
-<Screen {screen} title="update">
+<Screen {screen}>
     {#if !state}
         <div class="info">
             <h3>

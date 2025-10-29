@@ -28,7 +28,10 @@ REMOTE_APP_REQUEST_PERMISSION = PermissionType(
             "ja": "遠隔アプリを要求",
             "en": "Request Remote App",
         },
-        "note": {},
+        "note": {
+            "ja": "ネットワークを経由して操作を可能にするために使われます",
+            "en": "Used to enable control over the network",
+        },
     },
 )
 
@@ -39,6 +42,10 @@ GENERATE_TOKEN_PERMISSION = PermissionType(
         "name": {
             "ja": "認証トークンを生成",
             "en": "Generate Auth Token",
+        },
+        "note": {
+            "ja": "OBSにアプリを追加したり、複数画面でアプリを起動するために使われます",
+            "en": "Used to add apps to OBS or launch apps on multiple screens",
         },
     },
 )

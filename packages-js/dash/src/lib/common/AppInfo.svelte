@@ -7,9 +7,8 @@
 
     $: namespace = app.id.namespace.split('.').reverse().join('.');
     $: path = app.id.path.reverse().join('.');
-
-    const metadata = app.metadata;
-    const icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
+    $: metadata = app.metadata;
+    $: icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
 </script>
 
 <div class="info">
@@ -53,6 +52,7 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        padding: 1rem 0;
 
         .name {
             white-space: nowrap;
@@ -104,6 +104,7 @@
 
     .description {
         color: var(--color-text);
+        text-align: left;
     }
 
     p {

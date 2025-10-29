@@ -7,12 +7,14 @@
     export let permission: PermissionType;
     export let accepted: boolean;
     export let disabled: boolean;
+
+    $: note = permission.metadata.note && omu.i18n.translate(permission.metadata.note);
 </script>
 
 <button class:accepted on:click={() => (accepted = !accepted)} {disabled}>
-    {#if permission.metadata.note}
+    {#if note}
         <Tooltip>
-            {omu.i18n.translate(permission.metadata.note)}
+            {note}
         </Tooltip>
     {:else}
         <Tooltip>
@@ -26,14 +28,7 @@
             <i class="ti ti-check"></i>
         {/if}
     </div>
-    <div class="info">
-        <p class="name">
-            {omu.i18n.translate(permission.metadata.name)}
-            <span class="id">
-                {permission.id.key()}
-            </span>
-        </p>
-    </div>
+    <p>{omu.i18n.translate(permission.metadata.name)}</p>
 </button>
 
 <style lang="scss">
@@ -41,18 +36,34 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-        padding: 0.65rem 1rem;
-        margin: 2px 4px;
+        padding: 1rem 1rem;
+        margin: 2px 1rem;
         font-weight: 600;
         color: var(--color-1);
         background: var(--color-bg-1);
         border: none;
         cursor: pointer;
 
+        &:hover {
+            outline: 1px solid var(--color-1);
+            outline-offset: -4px;
+
+            > .check {
+                outline: 1px solid var(--color-1);
+                outline-offset: -1px;
+            }
+        }
+
         &:disabled {
-            height: 2rem;
+            padding: 0.5rem 1rem;
             color: var(--color-text);
-            background: var(--color-bg-1);
+            background: var(--color-bg-2);
+            cursor: initial;
+
+            &:hover {
+                outline: none;
+                background: var(--color-bg-1);
+            }
         }
     }
 
@@ -94,24 +105,13 @@
         outline: 1px solid var(--color-outline);
 
         &.disabled {
-            visibility: hidden;
+            display: none;
         }
 
         &.accepted {
             background: var(--color-1);
             color: var(--color-bg-2);
             outline: none;
-        }
-    }
-
-    button {
-        &:hover {
-            outline: 1px solid var(--color-1);
-
-            > .check {
-                outline: 1px solid var(--color-1);
-                outline-offset: -1px;
-            }
         }
     }
 </style>

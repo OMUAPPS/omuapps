@@ -9,7 +9,8 @@
         app: App;
     };
 
-    let state: { type: 'generating' } | { type: 'error'; message: string } | { type: 'open'; url: URL } = { type: 'generating' };
+    let state: { type: 'generating' } | { type: 'error'; message: string } | { type: 'open'; url: URL; loading: boolean } = { type: 'generating' };
+
     onMount(async () => {
         if (!props.app.url) {
             state = { type: 'error', message: 'App has no URL' };
@@ -29,9 +30,8 @@
             address: omu.address,
         };
         url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(paramJson));
-        state = { type: 'open', url };
+        state = { type: 'open', url, loading: true };
     });
-    let loading = true;
 </script>
 
 <div class="container">
@@ -42,7 +42,7 @@
     {:else if state.type === 'error'}
         <div class="loading">Error: {state.message}</div>
     {:else if state.type === 'open'}
-        {#if loading}
+        {#if state.loading}
             <div class="loading">
                 <Spinner />
                 {#if props.app.metadata?.name}
@@ -55,7 +55,10 @@
         {/if}
         <iframe
             on:load={() => {
-                loading = false;
+                if (state.type !== 'open') {
+                    throw new Error(`Invalid state: ${state.type}`);
+                }
+                state.loading = false;
             }}
             src={state.url.toJSON()}
             title=""

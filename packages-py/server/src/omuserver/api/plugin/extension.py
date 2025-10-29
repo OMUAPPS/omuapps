@@ -15,6 +15,7 @@ from omu.api.plugin.extension import (
     ReloadResult,
 )
 from omu.app import AppType
+from omu.errors import PermissionDenied
 from omu.network.packet.packet_types import DisconnectType
 from packaging.specifiers import SpecifierSet
 
@@ -75,7 +76,7 @@ class PluginExtension:
         )
         accepted = await self.server.dashboard.request_plugins(request)
         if not accepted:
-            raise Exception("Request was not accepted")
+            raise PermissionDenied("Plugin request was denied by the dashboard")
 
     async def handle_require(self, session: Session, requirements: dict[str, str | None]) -> None:
         if not requirements:

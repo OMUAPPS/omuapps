@@ -231,10 +231,14 @@ class Session:
         logger.debug(f"Session {self.app.key()} is ready, processing {self.ready_tasks} ready tasks")
         for task in self.ready_tasks:
             try:
-                logger.debug(f"Processing ready task {task} for session {self.app.key()}")
+                logger.debug(f"Processing ready task {task} for session {self.app.key()}: {task.detail}")
                 await task.coro()
+            except DisconnectReason as e:
+                logger.opt(exception=e).error(f"Disconnecting session while processing ready task {task.name}: {task.detail}")
+                await self.disconnect(e.type, e.message)
+                return
             except Exception as e:
-                logger.opt(exception=e).error(f"Error while processing ready task {task.name}")
+                logger.opt(exception=e).error(f"Error while processing ready task {task.name}: {task.detail}")
                 await self.disconnect(DisconnectType.INTERNAL_ERROR, "Error while processing ready tasks")
                 return
         self.ready_tasks.clear()

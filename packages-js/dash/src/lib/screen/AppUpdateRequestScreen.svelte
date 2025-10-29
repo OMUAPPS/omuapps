@@ -24,7 +24,7 @@
     }
 </script>
 
-<Screen {screen} title="app_update" disableClose>
+<Screen {screen} disableClose>
     <div class="screen">
         <h3>
             古いバージョン
