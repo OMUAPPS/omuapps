@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Omu } from '@omujs/omu';
+    import { BROWSER } from 'esm-env';
     import { fade } from 'svelte/transition';
     import { MarshmallowApp } from '../marshmallow-app';
 
@@ -9,6 +10,10 @@
     const { config, data } = marshmallow;
 
     let image: HTMLImageElement;
+
+    if (BROWSER) {
+        omu.start();
+    }
 </script>
 
 <main>
