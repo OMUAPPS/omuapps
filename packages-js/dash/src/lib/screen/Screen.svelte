@@ -31,6 +31,9 @@
     <div class="screen" class:windowed>
         <slot />
     </div>
+    <div class="info">
+        <slot name="info" />
+    </div>
 </button>
 
 <style lang="scss">
@@ -39,8 +42,7 @@
         inset: 0;
         z-index: 100;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        align-items: stretch;
         overflow: hidden;
         appearance: none;
         background: color-mix(in srgb, var(--color-bg-1) 97%, transparent);
@@ -50,16 +52,18 @@
     }
 
     .screen {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
         width: 24rem;
         background: color-mix(in srgb, var(--color-bg-2) 97%, transparent);
         outline: 1px solid var(--color-outline);
         display: flex;
         flex-direction: column;
         animation: forwards 0.08621s slide;
+    }
+
+    .info {
+        flex: 1;
+        padding: max(4rem, 10%) max(2rem, 10%);
+        overflow-y: auto;
     }
 
     @keyframes slide {
@@ -85,10 +89,10 @@
             background: color-mix(in srgb, var(--color-bg-1) 70%, transparent);
         }
         92% {
-            background: color-mix(in srgb, var(--color-bg-1) 80%, transparent);
+            background: color-mix(in srgb, var(--color-bg-1) 90%, transparent);
         }
         100% {
-            background: color-mix(in srgb, var(--color-bg-1) 89%, transparent);
+            background: color-mix(in srgb, var(--color-bg-1) 96%, transparent);
         }
     }
 </style>

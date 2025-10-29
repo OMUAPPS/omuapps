@@ -4,6 +4,8 @@
     import SvelteMarkdown from 'svelte-markdown';
 
     export let entry: PackageInfo;
+    export let secure: boolean;
+
     let open = false;
 
     $: author =

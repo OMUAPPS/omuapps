@@ -1,11 +1,10 @@
 <script lang="ts">
-    import SvelteMarkdown from 'svelte-markdown';
+    import Document from '$lib/common/Document.svelte';
     import agreements from '../agreements.md?raw';
-    import AgreementLink from './AgreementLink.svelte';
 </script>
 
 <div class="agreements">
-    <SvelteMarkdown source={agreements} renderers={{ link: AgreementLink }} />
+    <Document source={agreements} />
 </div>
 
 <style lang="scss">
@@ -14,21 +13,5 @@
         inset: 0;
         padding: max(4rem, 10%) max(2rem, 10%);
         overflow-y: auto;
-
-        > :global(h1) {
-            color: var(--color-1);
-        }
-
-        > :global(h2) {
-            color: var(--color-1);
-            margin-top: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        > :global(h3) {
-            color: var(--color-1);
-            margin-top: 2rem;
-            margin-bottom: 0.5rem;
-        }
     }
 </style>

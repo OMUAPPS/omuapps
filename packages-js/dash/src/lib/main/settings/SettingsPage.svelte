@@ -191,17 +191,6 @@
                     />
                 </span>
                 <label class="setting">
-                    <p>{$t('settings.setting.betaMode')}</p>
-                    <input
-                        type="checkbox"
-                        bind:checked={$isBetaEnabled}
-                        on:change={async () => updateConfig()}
-                    />
-                </label>
-                <small>
-                    {$t('settings.setting.betaModeDescription')}
-                </small>
-                <label class="setting">
                     <p>{$t('settings.setting.speechRecognition')}</p>
                     <input
                         type="checkbox"
@@ -260,6 +249,17 @@
                     </Button>
                 </span>
                 <small>先にOBSを終了する必要があります</small>
+                <label class="setting">
+                    <p>{$t('settings.setting.betaMode')}</p>
+                    <input
+                        type="checkbox"
+                        bind:checked={$isBetaEnabled}
+                        on:change={async () => updateConfig()}
+                    />
+                </label>
+                <small>
+                    {$t('settings.setting.betaModeDescription')}
+                </small>
             {:else if $currentSettingsCategory === 'plugins'}
                 <PluginSettings />
             {:else if $currentSettingsCategory === 'about'}

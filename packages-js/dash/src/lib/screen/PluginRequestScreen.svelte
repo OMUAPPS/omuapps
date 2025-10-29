@@ -1,8 +1,11 @@
 <script lang="ts">
     import AppInfo from '$lib/common/AppInfo.svelte';
+    import Document from '$lib/common/Document.svelte';
     import type { PluginRequestPacket } from '@omujs/omu/api/dashboard';
+    import { Tooltip } from '@omujs/ui';
     import PackageEntry from './PackageEntry.svelte';
     import Screen from './Screen.svelte';
+    import about_plugin from './about_plugin.md?raw';
     import type { ScreenHandle } from './screen.js';
 
     export let screen: {
@@ -12,6 +15,7 @@
             resolve: (accept: boolean) => void;
         };
     };
+
     const { request, resolve } = screen.props;
 
     function accept() {
@@ -23,6 +27,38 @@
         resolve(false);
         screen.handle.pop();
     }
+
+    const SECURELIST = [
+        'omuserver',
+        'omuplugin-obs',
+        'omuplugin-nyanya',
+        'omuplugin-emoji',
+        'omuplugin-discordrpc',
+        'omuplugin-archive',
+        'omu-chatprovider',
+        'omu-chat-youtube',
+        'omu-chat-twitch',
+        'omu-chat',
+        'omu',
+        'omuplugin-marshmallow',
+        'omuplugin-chat',
+        'omu-chat-twitcasting',
+    ].map((name) => normalizePackageName(name));
+
+    function normalizePackageName(packageName: string): string {
+        return packageName.replace(/[-_.]+/g, '-').toLowerCase();
+    }
+
+    function isPackageSecure(packageName: string): boolean {
+        return SECURELIST.includes(normalizePackageName(packageName));
+    }
+
+    const securePackages = request.packages.filter((entry) =>
+        isPackageSecure(entry.info.name),
+    );
+    const insecurePackages = request.packages.filter((entry) =>
+        !isPackageSecure(entry.info.name),
+    );
 </script>
 
 <Screen {screen} disableClose>
@@ -35,9 +71,36 @@
             <i class="ti ti-alert-triangle"></i>
             プラグインはPC上のすべてのデータにアクセスできます。
         </p>
-        {#each request.packages as entry, index (index)}
-            <PackageEntry {entry} />
-        {/each}
+        {#if insecurePackages.length > 0}
+            <h3 class="insecure">
+                <Tooltip>
+                    <div class="tooltip">
+                        <h3>非公式プラグイン</h3>
+                        以下は公式または信頼できるソースから提供されていないプラグインです。注意してインストールしてください。
+                    </div>
+                </Tooltip>
+                安全でないプラグイン
+                <i class="ti ti-alert-triangle"></i>
+            </h3>
+            {#each insecurePackages as entry, index (index)}
+                <PackageEntry {entry} secure={false} />
+            {/each}
+        {/if}
+        {#if securePackages.length > 0}
+            <h3>
+                <Tooltip>
+                    <div class="tooltip">
+                        <h3>安全なプラグイン</h3>
+                        以下は公式または信頼できるソースから提供されているプラグインです。
+                    </div>
+                </Tooltip>
+                OMUAPPS公式プラグイン
+                <i class="ti ti-info-circle"></i>
+            </h3>
+            {#each securePackages as entry, index (index)}
+                <PackageEntry {entry} secure={true} />
+            {/each}
+        {/if}
     </div>
     <div class="actions">
         <button on:click={reject} class="reject">
@@ -45,10 +108,11 @@
             <i class="ti ti-x"></i>
         </button>
         <button on:click={accept} class="accept">
-            許可
+            インストール
             <i class="ti ti-check"></i>
         </button>
     </div>
+    <Document source={about_plugin} slot="info" />
 </Screen>
 
 <style lang="scss">
@@ -103,6 +167,19 @@
         @supports not selector(::-webkit-scrollbar) {
             & {
                 scrollbar-color: var(--color-1) var(--color-bg-2);
+            }
+        }
+
+        > h3 {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--color-1);
+            border-bottom: 1px solid var(--color-outline);
+
+            &.insecure {
+                color: #a23023;
             }
         }
     }

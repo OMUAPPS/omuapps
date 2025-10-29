@@ -1,11 +1,13 @@
 <script lang="ts">
     import AppInfo from '$lib/common/AppInfo.svelte';
+    import Document from '$lib/common/Document.svelte';
     import { t } from '$lib/i18n/i18n-context.js';
     import type { PermissionRequestPacket } from '@omujs/omu/api/dashboard';
     import type { PermissionLevel } from '@omujs/omu/api/permission';
     import { Tooltip } from '@omujs/ui';
     import PermissionEntry from './PermissionEntry.svelte';
     import Screen from './Screen.svelte';
+    import about_permission from './about_permission.md?raw';
     import type { ScreenHandle } from './screen.js';
 
     export let screen: {
@@ -115,6 +117,7 @@
             <i class="ti ti-check"></i>
         </button>
     </div>
+    <Document source={about_permission} slot="info" />
 </Screen>
 
 <style lang="scss">
