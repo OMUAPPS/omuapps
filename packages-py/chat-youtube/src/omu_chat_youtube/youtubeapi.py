@@ -42,7 +42,8 @@ class YoutubePage:
         )
 
     def get_ytinitialdata(self) -> types.ytinitialdata | None:
-        initial_data = self.extract_script('window["ytInitialData"]')
+        initial_data = self.extract_script("var ytInitialData =")
+        initial_data = initial_data or self.extract_script('window["ytInitialData"]')
         return initial_data
 
     def get_ytinitialplayerresponse(self) -> types.ytInitialPlayerResponse:
@@ -130,7 +131,7 @@ class YoutubeAPI:
         soup = bs4.BeautifulSoup(await response.text(), "html.parser")
         canonical_link = soup.select_one('link[rel="canonical"]')
         if canonical_link is None:
-            return await self.get_video_id_by_channel_feeds(channel_id)
+            return await self.get_video_id_by_channel_page(channel_id)
         href = canonical_link.attrs.get("href")
         if href is None:
             return None
@@ -140,24 +141,33 @@ class YoutubeAPI:
         options = match.groupdict()
         return options.get("video_id") or options.get("video_id_short")
 
-    async def get_video_id_by_channel_feeds(self, channel_id: str) -> str | None:
+    async def get_video_id_by_channel_page(self, channel_id: str) -> str | None:
         async with self.throttle:
             response = await self.session.get(
-                f"{YOUTUBE_URL}/feeds/videos.xml?channel_id={channel_id}",
+                f"{YOUTUBE_URL}/channel/{channel_id}",
                 headers=BASE_HEADERS,
             )
-        soup = bs4.BeautifulSoup(await response.text(), "xml")
-        link = soup.select_one("entry link")
-        if link is None:
-            return None
-        href = link.attrs.get("href")
-        if href is None:
-            return None
-        match = re.search(YOUTUBE_REGEX, href)
-        if match is None:
-            return None
-        options = match.groupdict()
-        return options.get("video_id") or options.get("video_id_short")
+        if not response.ok:
+            return
+        page = await YoutubePage.from_response(response)
+        data = page.get_ytinitialdata()
+        if data is None:
+            raise ProviderError(f"Could not get initial data for channel {channel_id}")
+        video_id = (
+            data.get("header", {})
+            .get("pageHeaderRenderer", {})
+            .get("content", {})
+            .get("pageHeaderViewModel", {})
+            .get("image", {})
+            .get("decoratedAvatarViewModel", {})
+            .get("rendererContext", {})
+            .get("commandContext", {})
+            .get("onTap", {})
+            .get("innertubeCommand", {})
+            .get("watchEndpoint", {})
+            .get("videoId", {})
+        )
+        return video_id
 
     async def get_live_chat(
         self,
