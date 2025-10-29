@@ -1,0 +1,22 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "open_link",
+    "description": "Open link capability",
+    "local": false,
+    "webviews": [
+        "*"
+    ],
+    "windows": [
+        "*"
+    ],
+    "remote": {
+        "urls": [
+            "https://*",
+            "http://*",
+            "http://*:*"
+        ]
+    },
+    "permissions": [
+        "opener:allow-open-url"
+    ]
+}
