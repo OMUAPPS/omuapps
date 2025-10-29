@@ -77,6 +77,9 @@
 {:else}
     <div class="container">
         <button class="add-button" disabled title="OBSに接続されていません">
+            <Tooltip>
+                すでに起動されていても認識されない場合は再起動をお試しください
+            </Tooltip>
             OBSに接続されていません
             <i class="ti ti-alert-circle"></i>
         </button>
