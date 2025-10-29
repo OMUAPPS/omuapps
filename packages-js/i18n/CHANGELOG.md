@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.19 (2025-10-29)
+
+
+### Bug Fixes
+
+* **app-marshmallow:** アカウント切り替えができない問題を修正 ([33bede6](https://github.com/OMUAPPS/omuapps/commit/33bede6ed97cf2c6beed341bab6f6d8b56c81036))
+
+
+
+
+
 ## 0.9.18 (2025-10-29)
 
 
