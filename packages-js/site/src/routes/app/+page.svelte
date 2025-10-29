@@ -99,7 +99,7 @@
     <meta name="description" content="OMUAPPSで使えるアプリを探してみる" />
 </svelte:head>
 
-<Page header={false}>
+<Page header={false} footer={false}>
     <header slot="header">
         <h1>
             アプリを探す
@@ -212,6 +212,7 @@
         display: flex;
         flex-direction: row;
         gap: 1rem;
+        padding-bottom: 8rem;
     }
 
     .options {

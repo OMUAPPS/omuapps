@@ -6,6 +6,7 @@
 
     export let noBackground = false;
     export let header: boolean | 'always' = true;
+    export let footer: boolean = true;
 </script>
 
 {#if header}
@@ -26,7 +27,9 @@
         <div class="main-content">
             <slot name="content" />
         </div>
-        <Footer />
+        {#if footer}
+            <Footer />
+        {/if}
     </Content>
 </main>
 
