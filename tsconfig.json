@@ -11,6 +11,7 @@
         "sourceMap": true,
         "target": "es2023",
         "moduleResolution": "bundler",
+        "module": "nodenext",
         "removeComments": false,
         "noLib": false,
         "strict": true,
