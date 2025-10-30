@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Document from '$lib/common/Document.svelte';
     import Screen from '$lib/screen/Screen.svelte';
     import type { ScreenHandle } from '$lib/screen/screen.js';
     import { applyUpdate, type UpdateEvent } from '$lib/tauri.js';
@@ -31,9 +32,6 @@
                     </small>
                 {/if}
             </h3>
-            <p>
-                {update.body}
-            </p>
             <div class="actions">
                 <Button onclick={screen.handle.pop}>
                     スキップ
@@ -66,6 +64,8 @@
             <h3>インストーラーを起動しています...</h3>
         </div>
     {/if}
+
+    <Document source={update.body ?? ''} slot="info" />
 </Screen>
 
 <style lang="scss">
