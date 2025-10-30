@@ -8,6 +8,11 @@
     padding: 0;
     user-select: none;
     font-family: 'Noto Sans JP', sans-serif;
+
+    &:focus-visible {
+        outline: 2px solid var(--color-1);
+        outline-offset: 1px;
+    }
 }
 
 a {

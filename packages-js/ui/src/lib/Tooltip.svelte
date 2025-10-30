@@ -97,9 +97,7 @@
     let keyboardFocus = false;
 
     function handleFocus() {
-        if (!keyboardFocus) {
-            showTooltip();
-        }
+        showTooltip();
     }
 
     function handleKeyDown() {
