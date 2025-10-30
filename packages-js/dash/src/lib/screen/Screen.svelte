@@ -68,6 +68,7 @@
         display: flex;
         flex-direction: column;
         animation: forwards 0.08621s slide;
+        z-index: 10;
     }
 
     .info {
