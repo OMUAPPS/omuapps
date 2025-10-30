@@ -426,6 +426,13 @@ async function initTrayIcon() {
             item.setText('Show');
         }
     });
+    listen(TauriEvent.WINDOW_FOCUS, async () => {
+        visible = true;
+        const item = await menu.get('toggle');
+        if (item) {
+            item.setText('Hide');
+        }
+    });
     const tray = await TrayIcon.getById('omuapps');
     if (tray) {
         tray.setMenu(menu);

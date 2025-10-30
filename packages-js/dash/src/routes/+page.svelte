@@ -3,7 +3,7 @@
     import { t } from '$lib/i18n/i18n-context';
     import MainWindow from '$lib/main/MainWindow.svelte';
     import { installed } from '$lib/main/settings';
-    import { checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
+    import { appWindow, checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Button, Spinner } from '@omujs/ui';
     import { error } from '@tauri-apps/plugin-log';
@@ -53,6 +53,7 @@
             $state = { type: 'checking_update' };
             const update = await checkUpdate();
             if (update) {
+                await appWindow.show();
                 await new Promise<void>((resolve) => {
                     $state = { type: 'update', update, resolve };
                 });
