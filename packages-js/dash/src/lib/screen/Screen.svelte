@@ -65,6 +65,7 @@
     .content {
         width: 24rem;
         background: color-mix(in srgb, var(--color-bg-2) 97%, transparent);
+        outline: 1px solid var(--color-outline);
         display: flex;
         flex-direction: column;
         animation: forwards 0.08621s slide;
@@ -74,7 +75,6 @@
     .info {
         flex: 1;
         padding: max(4rem, 10%) max(2rem, 10%);
-        outline: 1px solid var(--color-outline);
         overflow-y: auto;
         pointer-events: none;
         overflow: auto;
