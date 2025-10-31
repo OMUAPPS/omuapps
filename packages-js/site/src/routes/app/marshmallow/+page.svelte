@@ -1,8 +1,9 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
+    import { getSetting } from '$lib/helper.js';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, Button, setClient, Spinner } from '@omujs/ui';
+    import { AppHeader, Button, ExternalLink, setClient, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { MarshmallowAPI, MarshmallowSession } from './api.js';
     import { APP } from './app.js';
@@ -14,7 +15,12 @@
     const marshmallow = new MarshmallowApp(omu);
     setClient(omu);
 
+    const agreed = getSetting(APP.join('agreed'), false);
+
     let state: {
+        type: 'agreements';
+        accept: () => void;
+    } | {
         type: 'loading';
         logout?: boolean;
     } | {
@@ -27,6 +33,15 @@
     } = { type: 'loading' };
 
     async function init() {
+        if (!$agreed) {
+            await new Promise<void>((resolve) => {
+                state = {
+                    type: 'agreements',
+                    accept: () => resolve(),
+                };
+            });
+            $agreed = true;
+        }
         if (state.type !== 'loading') {
             state = { type: 'loading' };
         }
@@ -95,7 +110,34 @@
     <header slot="header">
         <AppHeader app={APP} />
     </header>
-    {#if state.type === 'loading'}
+    {#if state.type === 'agreements'}
+        <div class="screen">
+            <h2>このアプリはマシュマロの非公式クライアントです</h2>
+            <p>
+                このアプリは株式会社Diver Downが提供している
+                <ExternalLink href="https://marshmallow-qa.com/">
+                    マシュマロ
+                    <i class="ti ti-external-link"></i>
+                </ExternalLink>
+                の公式アプリケーションではなく、非公式に開発されたクライアントアプリです。利用にあたっては、マシュマロの利用規約およびプライバシーポリシーを遵守してください。
+            </p>
+            <p>
+                また、このアプリはOMUAPPSコミュニティによって開発・保守されています。マシュマロの公式サポート対象外であることを理解した上で利用してください。
+            </p>
+            <small>
+                不具合などが発生した場合はマシュマロではなく
+                <ExternalLink href="https://omuapps.com/redirect/discord">
+                    OMUAPPSのサポート
+                    <i class="ti ti-external-link"></i>
+                </ExternalLink>
+                までご報告をお願いいたします。
+            </small>
+            <Button primary onclick={state.accept}>
+                同意する
+                <i class="ti ti-check"></i>
+            </Button>
+        </div>
+    {:else if state.type === 'loading'}
         <div class="screen">
             <Spinner />
         </div>
@@ -115,6 +157,8 @@
 
 <style lang="scss">
     .screen {
+        position: absolute;
+        inset: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -122,5 +166,15 @@
         gap: 1.5rem;
         padding: 2rem;
         text-align: center;
+    }
+
+    p {
+        max-width: 40rem;
+    }
+
+    h2 {
+        margin-bottom: 1rem;
+        color: var(--color-1);
+        font-size: 1.5rem;
     }
 </style>

@@ -5,6 +5,8 @@
     import { Button, client, Spinner } from '@omujs/ui';
 
     let state: {
+        type: 'not_running';
+    } | {
         type: 'connecting';
         status: NetworkStatus;
     } | {
@@ -12,10 +14,13 @@
     } | {
         type: 'disconnected';
         reason?: DisconnectReason;
-    } = { type: 'connecting', status: { type: 'connecting' } };
+    } = { type: 'not_running' };
 
-    client.subscribe((omu) => {
+    client.subscribe(async (omu) => {
         if (!omu) return;
+        await new Promise<void>((resolve) => {
+            omu.event.started.listen(() => resolve());
+        });
         omu.onReady(() => {
             state = { type: 'ready' };
         });

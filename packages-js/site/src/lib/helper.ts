@@ -1,5 +1,7 @@
+import { Identifier, type IntoId } from '@omujs/omu';
 import type { Registry } from '@omujs/omu/api/registry';
-import { type Writable } from 'svelte/store';
+import { BROWSER } from 'esm-env';
+import { writable, type Writable } from 'svelte/store';
 
 export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> & {
     wait: () => Promise<void>;
@@ -222,5 +224,32 @@ type Comparator<T> = (a: T, b: T) => number;
 export function comparator<T>(func: (value: T) => number): Comparator<T> {
     return (a, b) => {
         return func(a) - func(b);
+    };
+}
+
+export function getSetting<T>(id: IntoId, defaultValue: T): Writable<T> {
+    if (!BROWSER) return writable(defaultValue);
+    const key = `setting:${Identifier.from(id).key()}`;
+    const stored = localStorage.getItem(key);
+    let value: T = stored ? JSON.parse(stored) as T : defaultValue;
+    const listeners = new Set<(value: T) => void>();
+    return {
+        set: (newValue: T) => {
+            value = newValue;
+            localStorage.setItem(key, JSON.stringify(value));
+            listeners.forEach((run) => run(value));
+        },
+        subscribe: (run) => {
+            listeners.add(run);
+            run(value);
+            return () => {
+                listeners.delete(run);
+            };
+        },
+        update: (fn) => {
+            value = fn(value);
+            localStorage.setItem(key, JSON.stringify(value));
+            listeners.forEach((run) => run(value));
+        },
     };
 }
