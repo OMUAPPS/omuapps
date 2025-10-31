@@ -1,4 +1,3 @@
-
 import type { Address } from '../address.js';
 import type { Serializable } from '../serialize';
 import { ByteReader, ByteWriter } from '../serialize';
@@ -27,6 +26,7 @@ export class WebsocketConnection implements Connection {
     private readonly packetQueue: Array<PacketData> = [];
     private receiveWaiter: (() => void) | null = null;
     private readingPromise: Promise<void> | null = null;
+    private beingClosed: boolean = false;
 
     constructor(
         private socket: WebSocket,
@@ -36,14 +36,17 @@ export class WebsocketConnection implements Connection {
         const connection = new WebsocketConnection(socket);
         return new Promise((resolve, reject) => {
             socket.onerror = reject;
-            socket.onclose = async () => {
-                if (connection.readingPromise) {
-                    await connection.readingPromise;
+            socket.onclose = () => {
+                connection.beingClosed = true;
+                if (connection.receiveWaiter) {
+                    connection.receiveWaiter();
+                    connection.receiveWaiter = null;
                 }
-                connection.close();
             };
             socket.onmessage = (event): void => {
-                connection.readingPromise = connection.onMessage(event);
+                connection.readingPromise = connection.onMessage(event).finally(() => {
+                    connection.readingPromise = null;
+                });
             };
             socket.onopen = (): void => {
                 resolve(connection);
@@ -71,22 +74,31 @@ export class WebsocketConnection implements Connection {
         if (this.receiveWaiter) {
             throw new Error('Already receiving');
         }
-        while (this.packetQueue.length === 0) {
-            if (this.socket.readyState !== this.socket.OPEN) {
-                return null;
-            }
+        while (this.packetQueue.length === 0 && !this.beingClosed) {
             await new Promise<void>((resolve) => {
-                this.receiveWaiter = (): void => resolve();
+                this.receiveWaiter = resolve;
             });
+            this.receiveWaiter = null;
         }
-        const packet = serializer.deserialize(this.packetQueue.shift()!);
-        this.receiveWaiter = null;
-        return packet;
+        if (this.packetQueue.length === 0 && this.beingClosed) {
+            return null;
+        }
+        const packetData = this.packetQueue.shift()!;
+        return serializer.deserialize(packetData);
     }
 
     get closed(): boolean {
-        if (this.socket) {
-            return this.socket.readyState === WebSocket.CLOSED;
+        if (this.readingPromise) {
+            return false;
+        }
+        if (this.packetQueue.length > 0) {
+            return false;
+        }
+        if (this.receiveWaiter) {
+            return false;
+        }
+        if (this.socket.readyState !== WebSocket.CLOSED && this.socket.readyState !== WebSocket.CLOSING) {
+            return false;
         }
         return true;
     }
