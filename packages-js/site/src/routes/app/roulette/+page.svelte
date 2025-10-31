@@ -1,7 +1,7 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { Chat, ChatEvents } from '@omujs/chat';
+    import { Chat, ChatEvents, ChatPermissions } from '@omujs/chat';
     import { Message } from '@omujs/chat/models';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
@@ -142,7 +142,7 @@
                 dimensions={{ width: 1080, height: 1080 }}
                 asset={ASSET_APP}
                 permissions={[
-                    'com.omuapps:chat',
+                    ChatPermissions.CHAT_PERMISSION_ID,
                 ]}
                 {omu}
                 {obs}
