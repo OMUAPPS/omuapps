@@ -66,7 +66,7 @@ fn main() {
         .unwrap();
     let mut app_config = AppConfig::ensure(&options);
     let mut server_config = ServerConfig::ensure(&options);
-    server_config.data_dir = options.workdir.clone();
+    server_config.workdir = options.workdir.clone();
     let app_handle = Arc::new(Mutex::new(None));
     let app_state = AppState {
         options: options.clone(),
@@ -113,6 +113,7 @@ fn main() {
             start_server,
             stop_server,
             clean_environment,
+            uninstall,
             get_token,
             get_config,
             set_config,

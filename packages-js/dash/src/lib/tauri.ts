@@ -112,6 +112,22 @@ export type CleanProgress = SerdeEnum<{
     UvRemoving: { progress: Progress };
 }>;
 
+export type UninstallProgress = SerdeEnum<{
+    Python: { progress: PythonEnsureProgress };
+    PluginRemoving: unknown;
+    AppDataRemoving: { progress: Progress };
+    PythonRemoving: { progress: Progress };
+    UvRemoving: { progress: Progress };
+}>;
+
+export type UninstallError = SerdeEnum<{
+    PythonError: { reason: PythonEnsureError };
+    ServerError: { reason: string };
+    RemoveAppDataError: { reason: string };
+    RemovePythonError: { reason: string };
+    RemoveUvError: { reason: string };
+}>;
+
 export type ServerState = SerdeEnum<{
     ServerStarting: { msg: string };
     ServerRestarting: { msg: string };
@@ -122,6 +138,7 @@ type Events = {
     start_progress: StartProgress;
     stop_progress: StopProgress;
     clean_progress: CleanProgress;
+    uninstall_progress: UninstallProgress;
     server_state: ServerState;
     server_restart: unknown;
     'single-instance': {
@@ -150,6 +167,7 @@ type Commands = {
     start_server(): StartResult;
     stop_server(): undefined;
     clean_environment(): undefined;
+    uninstall(): undefined;
     get_token(): string | null;
     get_config(): Config;
     set_config(options: { config: Config }): void;
@@ -267,6 +285,7 @@ export const IS_TAURI = checkOnTauri();
 export const startProgress = writable<StartProgress | undefined>();
 export const stopProgress = writable<StopProgress | undefined>();
 export const cleanProgress = writable<CleanProgress | undefined>();
+export const uninstallProgress = writable<UninstallProgress | undefined>();
 export const serverState = writable<ServerState | undefined>();
 
 async function load() {
@@ -295,6 +314,9 @@ async function load() {
     });
     await listen('clean_progress', ({ payload }) => {
         cleanProgress.set(payload);
+    });
+    await listen('uninstall_progress', ({ payload }) => {
+        uninstallProgress.set(payload);
     });
     await listen('server_state', ({ payload }) => {
         serverState.set(payload);

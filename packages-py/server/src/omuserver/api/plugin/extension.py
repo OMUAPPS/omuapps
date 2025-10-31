@@ -17,6 +17,7 @@ from omu.api.plugin.extension import (
 from omu.app import AppType
 from omu.errors import PermissionDenied
 from omu.network.packet.packet_types import DisconnectType
+from omu.plugin import UninstallContext
 from packaging.specifiers import SpecifierSet
 
 from omuserver.session import Session, TaskPriority
@@ -122,14 +123,23 @@ class PluginExtension:
         )
 
     async def handle_reload(self, session: Session, options: ReloadOptions) -> ReloadResult:
-        packages = self.loader.instances
+        instances = self.loader.instances
         if options.get("packages") is not None:
             filters = options["packages"] or []
-            packages = {name: version for name, version in packages.items() if name in filters}
-        for package in packages.values():
-            await package.terminate(self.server)
-            await package.reload()
-            await package.start(self.server)
+            instances = {name: version for name, version in instances.items() if name in filters}
+        for instance in instances.values():
+            await instance.terminate(self.server)
+            await instance.reload()
+            await instance.start(self.server)
         return {
             "packages": {},
         }
+
+    async def uninstall(self):
+        for instance in self.loader.instances.values():
+            ctx = UninstallContext(
+                self.server,
+                instance.entry.dist,
+                plugin=instance.plugin,
+            )
+            await instance.notify_uninstall(ctx)

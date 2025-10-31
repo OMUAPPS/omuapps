@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from importlib.metadata import Distribution
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from omu.omu import Omu
 
@@ -13,7 +13,11 @@ if TYPE_CHECKING:
 from omu.helper import AsyncCallback
 
 
-class InstallContext:
+class PluginContext(Protocol):
+    server: Server
+
+
+class InstallContext(PluginContext):
     def __init__(
         self,
         server: Server,
@@ -31,14 +35,21 @@ class InstallContext:
         self.restart_required = True
 
 
-class StartContext:
-    def __init__(self, server: Server):
-        self.server = server
+@dataclass(frozen=True, slots=True)
+class UninstallContext(PluginContext):
+    server: Server
+    distribution: Distribution | None
+    plugin: Plugin | None
 
 
-class StopContext:
-    def __init__(self, server: Server):
-        self.server = server
+@dataclass(frozen=True, slots=True)
+class StartContext(PluginContext):
+    server: Server
+
+
+@dataclass(frozen=True, slots=True)
+class StopContext(PluginContext):
+    server: Server
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,7 +58,7 @@ class Plugin:
     on_start: AsyncCallback[[StartContext]] | None = None
     on_stop: AsyncCallback[[StopContext]] | None = None
     on_install: AsyncCallback[[InstallContext]] | None = None
-    on_uninstall: AsyncCallback[[InstallContext]] | None = None
+    on_uninstall: AsyncCallback[[UninstallContext]] | None = None
     on_update: AsyncCallback[[InstallContext]] | None = None
     isolated: bool = True
 
