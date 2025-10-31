@@ -1,10 +1,9 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
     import { appWindow } from '$lib/tauri.js';
-    import { App, BrowserTokenProvider, Identifier, type SessionParam } from '@omujs/omu';
+    import { App, BrowserTokenProvider, Identifier, OmuPermissions, type SessionParam } from '@omujs/omu';
     import { DEV } from 'esm-env';
     import { onMount } from 'svelte';
-    import { DASHBOARD_APP_INSTALL_PERMISSION_ID, DASHBOARD_OPEN_APP_PERMISSION_ID } from '@omujs/omu/api/dashboard';
     import { isBetaEnabled } from '../settings.js';
 
     export const props = {};
@@ -38,8 +37,12 @@
         const tokenResult = await omu.sessions.generateToken({
             app: app,
             permissions: [
-                DASHBOARD_APP_INSTALL_PERMISSION_ID,
-                DASHBOARD_OPEN_APP_PERMISSION_ID,
+                OmuPermissions.DASHBOARD_APP_INSTALL_PERMISSION_ID,
+                OmuPermissions.DASHBOARD_OPEN_APP_PERMISSION_ID,
+                OmuPermissions.DASHOBARD_APP_READ_PERMISSION_ID,
+                OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+                OmuPermissions.REGISTRY_PERMISSION_ID,
+                OmuPermissions.TABLE_PERMISSION_ID,
             ],
         });
         if (tokenResult.type === 'error') {
