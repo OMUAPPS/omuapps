@@ -1,6 +1,6 @@
 <script lang="ts">
     import { invLerp } from '$lib/math/math';
-    import { ExternalLink } from '@omujs/ui';
+    import { Button, ExternalLink } from '@omujs/ui';
     import { MarshmallowAPI } from './api';
     import { MarshmallowApp } from './marshmallow-app';
     import MessageActions from './MessageActions.svelte';
@@ -31,6 +31,12 @@
     }}
 >
     {#if $data.message}
+        <div class="close">
+            <Button onclick={() => ($data.message = null)}>
+                閉じる
+                <i class="ti ti-x"></i>
+            </Button>
+        </div>
         <div class="message">
             <div class="image"
                 role="img"
@@ -55,6 +61,8 @@
         {#if $data.message}
             <MessageActions {api} message={$data.message} />
         {/if}
+    {:else}
+        <p>メッセージを選択するとここに表示されます</p>
     {/if}
 </div>
 
@@ -72,6 +80,12 @@
         padding: 0 5%;
         padding-left: 5%;
         padding-top: 10%;
+    }
+
+    .close {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
     }
 
     .message {

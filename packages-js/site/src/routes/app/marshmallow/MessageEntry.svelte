@@ -42,6 +42,7 @@
     .message {
         appearance: none;
         background: var(--color-bg-2);
+        color: var(--color-text);
         padding: 1rem;
         width: 100%;
         border: none;
