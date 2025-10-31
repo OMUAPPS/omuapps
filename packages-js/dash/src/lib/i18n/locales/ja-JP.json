@@ -276,6 +276,7 @@
             "logFileGenerateError": "ログファイルの生成に失敗しました: {error}",
             "cleanEnvironment": "動作環境を再構築",
             "cleaningEnvironment": "環境を削除して再起動中...",
+            "uninstall": "完全なアンインストール",
             "serverRestart": "サーバーを再起動",
             "serverRestarting": "サーバーを再起動中...",
             "serverRestarted": "サーバーを再起動しました",

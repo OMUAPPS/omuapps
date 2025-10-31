@@ -21,7 +21,7 @@ const RESTART_CODE: i32 = 100;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerConfig {
-    pub data_dir: PathBuf,
+    pub workdir: PathBuf,
     pub port: u16,
     pub hash: String,
 }
@@ -44,7 +44,7 @@ impl ServerConfig {
             );
         }
         let config = ServerConfig {
-            data_dir: options.workdir.clone(),
+            workdir: options.workdir.clone(),
             port: 26423,
             hash: generate_hash(),
         };
@@ -66,7 +66,7 @@ impl ServerConfig {
     }
 
     pub fn get_token_path(&self) -> PathBuf {
-        let mut token_path = self.data_dir.join("token.txt");
+        let mut token_path = self.workdir.join("token.txt");
         if cfg!(dev) {
             token_path = std::env::current_dir()
                 .unwrap()
@@ -172,12 +172,12 @@ impl Server {
             already_started,
         };
 
-        if !server.config.data_dir.exists() {
-            std::fs::create_dir_all(&server.config.data_dir).map_err(|err| {
+        if !server.config.workdir.exists() {
+            std::fs::create_dir_all(&server.config.workdir).map_err(|err| {
                 ServerEnsureError::CreateDataDirFailed {
                     msg: format!(
                         "Failed to create server data directory at {}: {}",
-                        server.config.data_dir.display(),
+                        server.config.workdir.display(),
                         err
                     ),
                 }
@@ -204,7 +204,7 @@ impl Server {
         cmd.arg("--stop");
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
-        cmd.current_dir(&option.data_dir);
+        cmd.current_dir(&option.workdir);
         info!("Stopping server with command: {:?}", cmd);
         let output = cmd.output().map_err(|err| {
             let msg = format!("Failed to stop server with command {:?}: {}", cmd, err);
@@ -221,8 +221,34 @@ impl Server {
         Ok(())
     }
 
+    pub fn uninstall(python: &Python, option: &ServerConfig) -> Result<(), String> {
+        let mut cmd = python.cmd();
+        cmd.arg("-m");
+        cmd.arg("omuserver");
+        cmd.arg("--port");
+        cmd.arg(option.port.to_string());
+        cmd.arg("--uninstall");
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+        cmd.current_dir(&option.workdir);
+        info!("Uninstalling server with command: {:?}", cmd);
+        let output = cmd.output().map_err(|err| {
+            let msg = format!("Failed to uninstall server with command {:?}: {}", cmd, err);
+            msg
+        })?;
+        if !output.status.success() {
+            warn!(
+                "Failed to uninstall server with command {:?}: exited with code {}: {}",
+                cmd,
+                output.status.code().unwrap_or(-1),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+        Ok(())
+    }
+
     pub fn read_version(option: &ServerConfig) -> Result<Option<String>, ServerEnsureError> {
-        let path = option.data_dir.join("VERSION");
+        let path = option.workdir.join("VERSION");
         if !path.exists() {
             return Ok(None);
         }
@@ -304,10 +330,10 @@ impl Server {
         cmd.arg("--index-url").arg(index_url);
         cmd.stderr(Stdio::piped());
         cmd.stdout(Stdio::piped());
-        cmd.current_dir(&self.config.data_dir);
+        cmd.current_dir(&self.config.workdir);
         info!(
             "Starting server with args: {:?} in {:?}",
-            cmd, self.config.data_dir
+            cmd, self.config.workdir
         );
         if let Some(app) = self.app_handle.lock().unwrap().as_ref() {
             let _ = app.emit(
