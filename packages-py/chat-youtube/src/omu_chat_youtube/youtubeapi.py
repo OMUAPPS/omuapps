@@ -165,7 +165,7 @@ class YoutubeAPI:
             .get("onTap", {})
             .get("innertubeCommand", {})
             .get("watchEndpoint", {})
-            .get("videoId", {})
+            .get("videoId", None)
         )
         return video_id
 
