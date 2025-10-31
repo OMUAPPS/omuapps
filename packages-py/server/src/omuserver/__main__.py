@@ -1,3 +1,4 @@
+import asyncio
 import os
 import platform
 import signal
@@ -61,6 +62,7 @@ def stop_server_processes(
 @click.command()
 @click.option("--debug", is_flag=True)
 @click.option("--stop", is_flag=True)
+@click.option("--uninstall", is_flag=True)
 @click.option("--token", type=str, default=None)
 @click.option("--token-file", type=click.Path(), default=None)
 @click.option("--dashboard-path", type=click.Path(), default=None)
@@ -71,6 +73,7 @@ def stop_server_processes(
 def main(
     debug: bool,
     stop: bool,
+    uninstall: bool,
     token: str | None,
     token_file: str | None,
     dashboard_path: str | None,
@@ -112,6 +115,10 @@ def main(
     config.index_url = index_url
 
     server = Server(config=config)
+
+    if uninstall:
+        asyncio.run(server.plugins.uninstall())
+        return
 
     migrate(server)
     logger.info(f"Starting at {config.address.hash} {config.address.to_url()}")

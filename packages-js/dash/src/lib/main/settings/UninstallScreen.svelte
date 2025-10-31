@@ -85,7 +85,6 @@
         {#if state.type === 'yesno'}
             <h2>全て消えます</h2>
             <small>今までのコメント、今までのアプリのデータ全て消えます</small>
-            <small>何かしらバックアップがない場合</small>
             <div class="actions">
                 <Button onclick={state.cancel}>キャンセル</Button>
                 <Button onclick={state.accept} primary disabled={state.remaining > 0}>
