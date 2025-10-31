@@ -55,10 +55,6 @@
     async function close() {
         await appWindow.hide();
     }
-
-    function focus(node: HTMLElement) {
-        node.focus();
-    }
 </script>
 
 <div class="window">
@@ -98,7 +94,7 @@
             />
         </div>
     </div>
-    <div class="content" tabindex="-1" use:focus>
+    <div class="content" tabindex="-1">
         <slot />
     </div>
     <ScreenRenderer />
