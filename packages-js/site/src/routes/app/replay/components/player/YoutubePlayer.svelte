@@ -1,20 +1,20 @@
 <script lang="ts">
-    import { ReplayApp } from '../replay-app.js';
+    import type { Action } from 'svelte/action';
+    import { ReplayApp, type Playback, type Video, type VideoInfo } from '../../replay-app.js';
 
-    export let videoId: string | undefined;
-    export let player: YT.Player | undefined = undefined;
-    export let options: YT.PlayerOptions = {};
+    export let video: Extract<Video, { type: 'youtube' }>;
+    export let playback: Playback;
+    export let info: VideoInfo;
     export let hideOverlay = false;
-    export let iframe: HTMLIFrameElement | undefined = undefined;
     export let heightToWidthRatio = 9 / 16;
-    const initialVideoId = videoId;
     const { config, side } = ReplayApp.getInstance();
-
+    let player: YT.Player;
     let width = 0;
     let height = 0;
     let playerWidth = 0;
     let playerHeight = 0;
     let padding = 0;
+    let ended = false;
 
     $: {
         if (heightToWidthRatio < 1) {
@@ -28,38 +28,64 @@
         }
     }
 
-    function createPlayer() {
-        if (!iframe) return;
-        if (player) {
-            player.destroy();
-            player = undefined;
-        }
-        new YT.Player(iframe, {
-            ...options,
-            events: {
-                ...options.events,
-                onReady: (event) => {
-                    player = event.target;
-                    options.events?.onReady?.(event);
-                },
-            },
-        });
+    function onReady(event: YT.PlayerEvent) {
+        player = event.target;
+        player.playVideo();
+        player.mute();
+        info = {
+            ...player.getVideoData(),
+            duration: player.getDuration() * 1000,
+        };
     }
 
-    $: {
-        if (iframe) {
-            console.log(iframe, videoId);
-            createPlayer();
+    function onPlaybackRateChange(event: YT.OnPlaybackRateChangeEvent) {
+        $config.playbackRate = event.data;
+    }
+
+    function onStateChange(event: YT.OnStateChangeEvent) {
+        if (!player) return;
+        const name = {
+            [-1]: 'UNSTARTED',
+            0: 'ENDED',
+            1: 'PLAYING',
+            2: 'PAUSED',
+            3: 'BUFFERING',
+            5: 'CUED',
+        }[event.data];
+        console.log(name);
+        ended = event.data === YT.PlayerState.ENDED;
+        if (event.data === YT.PlayerState.BUFFERING) {
+            return;
+        }
+        if (event.data === YT.PlayerState.UNSTARTED) {
+            player.playVideo();
+            return;
+        }
+        if (side === 'asset') return;
+        const time = player.getCurrentTime();
+        playback = {
+            offset: time,
+            start: Date.now(),
+            playing: event.data === YT.PlayerState.PLAYING,
+        };
+    }
+
+    function updatePlayback(playback: Playback) {
+        if (side === 'client') return;
+        if (!player) return;
+        const now = Date.now();
+        const elapsed = playback.offset + (now - playback.start) / 1000;
+        player.seekTo(elapsed, true);
+        player.setPlaybackRate($config.playbackRate);
+        if (playback.playing) {
+            player.playVideo();
+        } else {
+            player.pauseVideo();
         }
     }
 
-    $: {
-        if (videoId !== initialVideoId) {
-            if (player && videoId) {
-                player.loadVideoById(videoId);
-            }
-        }
-    }
+    $: updatePlayback(playback);
+    $: console.log(playback);
 
     function toggle() {
         if (!player) return;
@@ -69,6 +95,20 @@
             player.pauseVideo();
         }
     }
+
+    const setup: Action = (node) => {
+        new YT.Player(node, {
+            videoId: video.id,
+            playerVars: {
+                'origin': location.origin,
+            },
+            events: {
+                onReady,
+                onPlaybackRateChange,
+                onStateChange,
+            },
+        });
+    };
 </script>
 
 <svelte:window
@@ -103,6 +143,7 @@
         }
     }}
 />
+
 <svg>
     <filter id="filter" x="0" y="0">
         {#if $config.filter.type === 'pixelate'}
@@ -142,34 +183,42 @@
     bind:clientHeight={height}
     style={(side === 'asset' && 'filter: url(#filter)') || ''}
 >
-    {#if videoId}
-        {#key videoId}
+    {#if video}
+        {#key video.id}
             {#if hideOverlay}
                 <iframe
-                    bind:this={iframe}
+                    use:setup
                     id="player"
                     width={playerWidth}
                     height={playerHeight}
                     style:top="{-padding}px"
                     style:clip-path="inset({padding}px 0 {padding}px 0)"
-                    src="https://www.youtube.com/embed/{initialVideoId}?enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1"
+                    src="https://www.youtube.com/embed/{video.id}?enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&origin={location.origin}"
                     frameborder="0"
                     title="YouTube video player"
                     allow="fullscreen"
                 ></iframe>
             {:else}
                 <iframe
-                    bind:this={iframe}
+                    use:setup
                     id="player"
                     {width}
                     {height}
-                    src="https://www.youtube.com/embed/{initialVideoId}?enablejsapi=1&rel=0&modestbranding=1"
+                    src="https://www.youtube.com/embed/{video.id}?enablejsapi=1&rel=0&modestbranding=1&origin={location.origin}"
                     frameborder="0"
                     title="YouTube video player"
                     allow="fullscreen"
                 ></iframe>
             {/if}
         {/key}
+        {#if ended && side === 'asset'}
+            <div class="thumbnail">
+                <img
+                    src="https://i.ytimg.com/vi/{video.id}/maxresdefault.jpg"
+                    alt=""
+                />
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -189,5 +238,20 @@
 
     iframe {
         position: absolute;
+    }
+
+    .thumbnail {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        inset: 0;
+        background: #000;
+
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
     }
 </style>

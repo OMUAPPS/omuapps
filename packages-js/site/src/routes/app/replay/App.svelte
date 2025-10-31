@@ -2,69 +2,22 @@
     import AssetButton from '$lib/components/AssetButton.svelte';
     import type { Chat } from '@omujs/chat';
     import { OBSPlugin } from '@omujs/obs';
-    import { Button, TableList, Textbox, Tooltip } from '@omujs/ui';
+    import { Button, TableList, Tooltip } from '@omujs/ui';
     import { ASSET_APP } from './app';
     import Config from './components/Config.svelte';
     import Menu from './components/Menu.svelte';
     import MenuSection from './components/MenuSection.svelte';
-    import Player from './components/Player.svelte';
+    import TwitchPlayer from './components/player/TwitchPlayer.svelte';
+    import YoutubePlayer from './components/player/YoutubePlayer.svelte';
     import RoomEntry from './components/RoomEntry.svelte';
     import { ReplayApp } from './replay-app.js';
-    import { playVideo } from './stores.js';
 
     export let obs: OBSPlugin;
     export let chat: Chat;
 
-    const { replayData, config, omu } = ReplayApp.getInstance();
-
-    $playVideo = (videoId: string) => {
-        $replayData = {
-            videoId,
-            offset: 0,
-            start: Date.now(),
-            playing: true,
-        };
-    };
-
-    function onReady(event: YT.PlayerEvent) {
-        const player = event.target;
-        player.playVideo();
-        player.mute();
-    }
-
-    function onPlaybackRateChange(event: YT.OnPlaybackRateChangeEvent) {
-        $config.playbackRate = event.data;
-    }
-
-    function onStateChange(event: YT.OnStateChangeEvent) {
-        if (!$replayData) return;
-        $replayData = {
-            videoId: $replayData.videoId,
-            offset: event.target.getCurrentTime(),
-            start: Date.now(),
-            playing: event.data === YT.PlayerState.PLAYING,
-        };
-    }
+    const { replayData, omu } = ReplayApp.getInstance();
 
     let search: string = '';
-
-    function matchVideoID(url: URL): string | undefined {
-        if (url.hostname === 'youtu.be') {
-            return url.pathname.slice(1);
-        } else if (url.hostname.endsWith('youtube.com')) {
-            const path = url.pathname.split('/');
-            switch (path[1]) {
-                case 'watch':
-                    return url.searchParams.get('v') || undefined;
-                case 'embed':
-                case 'shorts':
-                case 'live':
-                    return path[2] || undefined;
-                default:
-                    return undefined;
-            }
-        }
-    }
 
     let showConfig = false;
 </script>
@@ -92,10 +45,6 @@
                 table={chat.rooms}
                 component={RoomEntry}
                 filter={(_, room) => {
-                    if (
-                        room.providerId.key() !==
-                        'com.omuapps:chatprovider/youtube'
-                    ) return false;
                     if (!room.metadata?.url) return false;
                     if (
                         search &&
@@ -124,34 +73,25 @@
     </Menu>
     <div class="player">
         {#if $replayData}
-            <Player
-                videoId={$replayData.videoId}
-                options={{
-                    events: {
-                        onReady,
-                        onPlaybackRateChange,
-                        onStateChange,
-                    },
-                }}
-            />
+            {#if $replayData.video.type === 'youtube'}
+                <YoutubePlayer
+                    video={$replayData.video}
+                    bind:playback={$replayData.playback}
+                    bind:info={$replayData.info}
+                />
+            {:else if $replayData.video.type === 'twitch'}
+                <TwitchPlayer
+                    video={$replayData.video}
+                    bind:playback={$replayData.playback}
+                    bind:info={$replayData.info}
+                />
+            {/if}
         {:else}
             <div class="empty">
                 動画を選択するとここに表示されます
                 <i class="ti ti-video"></i>
             </div>
         {/if}
-        <MenuSection name="URLから" icon="ti-link">
-            <Textbox
-                placeholder="https://youtu.be/..."
-                on:input={(event) => {
-                    const url = new URL(event.detail);
-                    const videoId = matchVideoID(url);
-                    if (!videoId) return;
-                    $playVideo(videoId);
-                }}
-                lazy
-            />
-        </MenuSection>
     </div>
 </div>
 {#if showConfig}
@@ -214,6 +154,7 @@
     }
 
     .player {
+        position: relative;
         display: flex;
         flex-direction: column;
         flex: 1;

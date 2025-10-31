@@ -51,6 +51,7 @@ export default [
                 ...globals.browser,
                 ...globals.node,
                 YT: 'readonly',
+                Twitch: 'readonly',
                 webkitSpeechRecognition: 'readonly',
                 SpeechRecognition: 'readonly',
             },

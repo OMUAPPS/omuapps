@@ -6,11 +6,31 @@ import { BROWSER } from 'esm-env';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 
-type ReplayData = {
-    videoId: string;
+export type Video = {
+    type: 'youtube';
+    id: string;
+} | {
+    type: 'twitch';
+    channel: string;
+    video?: string;
+};
+
+export type Playback = {
     start: number;
     offset: number;
     playing: boolean;
+};
+
+export type VideoInfo = {
+    author?: string;
+    title?: string;
+    duration?: number;
+};
+
+type ReplayData = {
+    video: Video;
+    info: VideoInfo;
+    playback: Playback;
 };
 
 const REPLAY_DATA_REGISTRY_TYPE = RegistryType.createJson<ReplayData | null>(APP_ID, {
@@ -105,5 +125,40 @@ export class ReplayApp {
             throw new Error('ReplayApp instance not created yet');
         }
         return this.instance;
+    }
+
+    public playByUrl(url: URL) {
+        const videoId = url.searchParams.get('v');
+        if (videoId) {
+            this.replayData.set({
+                video: {
+                    type: 'youtube',
+                    id: videoId,
+                },
+                info: {},
+                playback: {
+                    start: 0,
+                    offset: 0,
+                    playing: false,
+                },
+            });
+            return;
+        }
+        if (url.hostname === 'www.twitch.tv' || url.hostname === 'twitch.tv') {
+            const [, channel] = url.pathname.split('/');
+            this.replayData.set({
+                video: {
+                    type: 'twitch',
+                    channel: channel,
+                },
+                info: {},
+                playback: {
+                    start: 0,
+                    offset: 0,
+                    playing: false,
+                },
+            });
+            return;
+        }
     }
 }

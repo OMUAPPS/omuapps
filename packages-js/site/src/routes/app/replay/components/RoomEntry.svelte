@@ -1,17 +1,17 @@
 <script lang="ts">
     import type { Room } from '@omujs/chat/models';
     import { Tooltip } from '@omujs/ui';
-    import { playVideo } from '../stores.js';
+    import { ReplayApp } from '../replay-app';
 
     export let entry: Room;
     export let selected: boolean = false;
 
+    const replay = ReplayApp.getInstance();
+
     function play() {
         if (!entry.metadata?.url) return;
         const url = new URL(entry.metadata.url);
-        const videoId = url.searchParams.get('v');
-        if (!videoId) return;
-        $playVideo(videoId);
+        replay.playByUrl(url);
     }
 </script>
 
