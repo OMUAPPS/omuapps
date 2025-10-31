@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.20 (2025-10-31)
+
+
+### Bug Fixes
+
+* **app-discord-overlay:** reactive互換を削除 ([8f46a65](https://github.com/OMUAPPS/omuapps/commit/8f46a65091a5b98851253ccf382ae27fb769131e))
+
+
+
+
+
 ## 0.9.19 (2025-10-29)
 
 
