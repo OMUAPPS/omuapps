@@ -84,8 +84,10 @@
         }
     }
 
-    $: updatePlayback(playback);
-    $: console.log(playback);
+    $: {
+        console.log(playback);
+        updatePlayback(playback);
+    };
 
     function toggle() {
         if (!player) return;

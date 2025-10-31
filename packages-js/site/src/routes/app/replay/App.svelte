@@ -2,7 +2,7 @@
     import AssetButton from '$lib/components/AssetButton.svelte';
     import type { Chat } from '@omujs/chat';
     import { OBSPlugin } from '@omujs/obs';
-    import { Button, TableList, Tooltip } from '@omujs/ui';
+    import { Button, TableList, Textbox, Tooltip } from '@omujs/ui';
     import { ASSET_APP } from './app';
     import Config from './components/Config.svelte';
     import Menu from './components/Menu.svelte';
@@ -15,7 +15,8 @@
     export let obs: OBSPlugin;
     export let chat: Chat;
 
-    const { replayData, omu } = ReplayApp.getInstance();
+    const replay = ReplayApp.getInstance();
+    const { replayData, omu } = replay;
 
     let search: string = '';
 
@@ -71,27 +72,39 @@
             />
         </MenuSection>
     </Menu>
-    <div class="player">
-        {#if $replayData}
-            {#if $replayData.video.type === 'youtube'}
-                <YoutubePlayer
-                    video={$replayData.video}
-                    bind:playback={$replayData.playback}
-                    bind:info={$replayData.info}
-                />
-            {:else if $replayData.video.type === 'twitch'}
-                <TwitchPlayer
-                    video={$replayData.video}
-                    bind:playback={$replayData.playback}
-                    bind:info={$replayData.info}
-                />
+    <div class="content">
+        <div class="player">
+            {#if $replayData}
+                {#if $replayData.video.type === 'youtube'}
+                    <YoutubePlayer
+                        video={$replayData.video}
+                        bind:playback={$replayData.playback}
+                        bind:info={$replayData.info}
+                    />
+                {:else if $replayData.video.type === 'twitch'}
+                    <TwitchPlayer
+                        video={$replayData.video}
+                        bind:playback={$replayData.playback}
+                        bind:info={$replayData.info}
+                    />
+                {/if}
+            {:else}
+                <div class="empty">
+                    動画を選択するとここに表示されます
+                    <i class="ti ti-video"></i>
+                </div>
             {/if}
-        {:else}
-            <div class="empty">
-                動画を選択するとここに表示されます
-                <i class="ti ti-video"></i>
-            </div>
-        {/if}
+        </div>
+        <MenuSection name="URLから" icon="ti-link">
+            <Textbox
+                placeholder="https://youtu.be/..."
+                on:input={(event) => {
+                    const url = new URL(event.detail);
+                    replay.playByUrl(url);
+                }}
+                lazy
+            />
+        </MenuSection>
     </div>
 </div>
 {#if showConfig}
@@ -153,12 +166,18 @@
         align-items: center;
     }
 
-    .player {
+    .content {
         position: relative;
         display: flex;
         flex-direction: column;
         flex: 1;
         gap: 1rem;
+    }
+
+    .player {
+        position: relative;
+        display: flex;
+        flex: 1;
     }
 
     .empty {
