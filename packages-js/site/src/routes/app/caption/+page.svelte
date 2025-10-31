@@ -20,6 +20,7 @@
         omu.permissions.require(
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
         );
         omu.start();
     }

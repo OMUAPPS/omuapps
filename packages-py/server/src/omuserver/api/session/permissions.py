@@ -14,7 +14,7 @@ SESSIONS_READ_PERMISSION = PermissionType(
             "en": "Get Running Apps",
         },
         "note": {
-            "ja": "接続されているアプリ一覧を取得するために使われます",
+            "ja": "どのアプリが接続されているかを確認するために使われます",
             "en": "Used to get a list of apps connected to the server",
         },
     },

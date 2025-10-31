@@ -11,7 +11,7 @@ I18N_SET_LOCALES_PERMISSION = PermissionType(
             "en": "Change locale settings",
         },
         "note": {
-            "ja": "言語や通貨など地域設定を変更するために使われます",
+            "ja": "言語設定を変更するために使われます",
             "en": "Used to change locale settings such as language and currency",
         },
     },
@@ -25,7 +25,7 @@ I18N_GET_LOCALES_PERMISSION = PermissionType(
             "en": "Get locale settings",
         },
         "note": {
-            "ja": "言語や通貨など地域設定を取得するために使われます",
+            "ja": "言語設定を取得するために使われます",
             "en": "Used to get locale settings such as language and currency",
         },
     },

@@ -56,7 +56,7 @@ openLinkMode.subscribe((value) => {
     } else {
         linkOpenHandler.set((href) => {
             const alphanumericHref = href.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-            const label = `webview-${alphanumericHref}-${Date.now()}`;
+            const label = `browser-${alphanumericHref}-${Date.now()}`;
             const webviewWindow = new WebviewWindow(label, {
                 url: href,
             });

@@ -23,12 +23,20 @@
             screen.handle.pop();
         }
     }
+
+    let content: HTMLElement | undefined;
+
+    $: {
+        if (content) {
+            content.focus();
+        }
+    }
 </script>
 
 <svelte:window on:keydown={onKeyPress} />
 
 <button class="container" class:windowed on:click={handleClick} bind:this={container}>
-    <div class="screen" class:windowed>
+    <div class="content" class:windowed bind:this={content} tabindex="-1">
         <slot />
     </div>
     <div class="info" class:disableClose>
@@ -43,21 +51,25 @@
         z-index: 100;
         display: flex;
         align-items: stretch;
-        overflow: hidden;
         appearance: none;
         background: color-mix(in srgb, var(--color-bg-1) 97%, transparent);
         border: none;
         top: 2rem;
-        animation: forwards 0.08621s fade;
+        overflow: hidden;
+
+        > :global(*) {
+            animation: forwards 0.08621s fade;
+        }
     }
 
-    .screen {
+    .content {
         width: 24rem;
         background: color-mix(in srgb, var(--color-bg-2) 97%, transparent);
         outline: 1px solid var(--color-outline);
         display: flex;
         flex-direction: column;
         animation: forwards 0.08621s slide;
+        z-index: 10;
     }
 
     .info {
@@ -65,6 +77,7 @@
         padding: max(4rem, 10%) max(2rem, 10%);
         overflow-y: auto;
         pointer-events: none;
+        overflow: auto;
     }
 
     .disableClose {
@@ -89,15 +102,19 @@
     @keyframes fade {
         0% {
             background: color-mix(in srgb, var(--color-bg-1) 0%, transparent);
+            transform: translateX(4px);
         }
         20% {
             background: color-mix(in srgb, var(--color-bg-1) 70%, transparent);
+            transform: translateX(3px);
         }
-        92% {
+        98% {
             background: color-mix(in srgb, var(--color-bg-1) 90%, transparent);
+            transform: translateX(-0.621px);
         }
         100% {
             background: color-mix(in srgb, var(--color-bg-1) 96%, transparent);
+            transform: translateX(0);
         }
     }
 </style>

@@ -2,9 +2,10 @@
     import AppInfo from '$lib/common/AppInfo.svelte';
     import Document from '$lib/common/Document.svelte';
     import { t } from '$lib/i18n/i18n-context.js';
+    import { devMode } from '$lib/main/settings';
     import type { PermissionRequestPacket } from '@omujs/omu/api/dashboard';
     import type { PermissionLevel } from '@omujs/omu/api/permission';
-    import { Tooltip } from '@omujs/ui';
+    import { ButtonMini, Tooltip } from '@omujs/ui';
     import PermissionEntry from './PermissionEntry.svelte';
     import Screen from './Screen.svelte';
     import about_permission from './about_permission.md?raw';
@@ -101,6 +102,16 @@
         {/if}
     </div>
     <div class="actions">
+        {#if $devMode}
+            <ButtonMini on:click={() => {
+                const keys = permissions
+                    .map(({ permission }) => permission.id.key())
+                    .join('\n');
+                navigator.clipboard.writeText(keys);
+            }}>
+                <i class="ti ti-clipboard"></i>
+            </ButtonMini>
+        {/if}
         <button on:click={reject} class="reject">
             キャンセル
             <i class="ti ti-x"></i>

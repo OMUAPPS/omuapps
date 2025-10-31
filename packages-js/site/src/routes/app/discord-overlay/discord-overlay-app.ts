@@ -241,9 +241,6 @@ export type Config = {
         spacing: number;
         scaling: boolean;
     };
-    reactive: {
-        enabled: boolean;
-    };
 };
 const DEFAULT_CONFIG: Config = {
     version: 7,
@@ -279,9 +276,6 @@ const DEFAULT_CONFIG: Config = {
         },
         spacing: 250,
         scaling: true,
-    },
-    reactive: {
-        enabled: false,
     },
 };
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
@@ -331,7 +325,6 @@ export class DiscordOverlayApp {
                 ...config,
                 version: 4,
                 align: DEFAULT_CONFIG.align,
-                reactive: DEFAULT_CONFIG.reactive,
             };
         }
         if (config.version === 4) {

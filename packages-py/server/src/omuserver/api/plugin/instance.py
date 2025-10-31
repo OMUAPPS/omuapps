@@ -19,7 +19,7 @@ from omu.app import App, AppType
 from omu.helper import asyncio_error_logger
 from omu.network.websocket_connection import WebsocketsTransport
 from omu.omu import Omu
-from omu.plugin import InstallContext, Plugin, StartContext, StopContext
+from omu.plugin import InstallContext, Plugin, StartContext, StopContext, UninstallContext
 from omu.result import Err, Ok, Result
 from omu.token import TokenProvider
 
@@ -95,27 +95,15 @@ class PluginInstance:
 
     async def notify_install(self, ctx: InstallContext):
         if self.plugin.on_install is not None:
-            arg_count = self.plugin.on_install.__code__.co_argcount
-            if arg_count == 1:
-                await self.plugin.on_install(ctx)
-            elif arg_count == 0:
-                await self.plugin.on_install()  # type: ignore
+            await self.plugin.on_install(ctx)
 
-    async def notify_uninstall(self, ctx: InstallContext):
+    async def notify_uninstall(self, ctx: UninstallContext):
         if self.plugin.on_uninstall is not None:
-            arg_count = self.plugin.on_uninstall.__code__.co_argcount
-            if arg_count == 1:
-                await self.plugin.on_uninstall(ctx)
-            elif arg_count == 0:
-                await self.plugin.on_uninstall()  # type: ignore
+            await self.plugin.on_uninstall(ctx)
 
     async def notify_update(self, ctx: InstallContext):
         if self.plugin.on_update is not None:
-            arg_count = self.plugin.on_update.__code__.co_argcount
-            if arg_count == 1:
-                await self.plugin.on_update(ctx)
-            elif arg_count == 0:
-                await self.plugin.on_update()  # type: ignore
+            await self.plugin.on_update(ctx)
 
     async def reload(self):
         deep_reload(self.module)
@@ -169,7 +157,7 @@ class PluginInstance:
             self.omu.set_loop(server.loop)
             self.omu.loop.create_task(self.omu.start(reconnect=False))
             session_connection = PluginSessionConnection(connection)
-            session = await Session.from_connection(
+            session, _ = await Session.from_connection(
                 server,
                 server.packets.packet_mapper,
                 session_connection,

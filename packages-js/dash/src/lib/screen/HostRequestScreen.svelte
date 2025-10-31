@@ -26,14 +26,13 @@
     }
 </script>
 
-<Screen {screen} title="host_request" disableClose>
+<Screen {screen} disableClose>
     <div class="content">
         <AppInfo {app} />
         <p>が<code>{request.host}</code>を要求しています</p>
         <ul>
-            <li>これを許可するとこのアプリは認証情報を使ったり無制限のアクセスが可能になります。</li>
+            <li>これを許可するとこのアプリはそのサイトの認証情報を使ったり無制限のアクセスが可能になります。</li>
             <li>信用できるアプリからの要求のみ許可してください。</li>
-            <li>設定から再び無効にすることができます</li>
         </ul>
         <div class="actions">
             <button on:click={reject} class="reject">
@@ -69,6 +68,7 @@
 
     ul {
         text-align: left;
+        padding: 0 3rem;
     }
 
     .actions {
@@ -79,8 +79,8 @@
 
     .actions {
         display: flex;
-        align-items: baseline;
-        justify-content: end;
+        margin-top: auto;
+        margin-bottom: 4rem;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
         width: 100%;
@@ -94,6 +94,7 @@
             background: var(--color-bg-1);
             cursor: pointer;
             border-radius: 4px;
+            flex: 1;
 
             &.reject {
                 color: var(--color-text);

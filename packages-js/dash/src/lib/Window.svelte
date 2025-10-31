@@ -94,7 +94,7 @@
             />
         </div>
     </div>
-    <div class="content">
+    <div class="content" tabindex="-1">
         <slot />
     </div>
     <ScreenRenderer />

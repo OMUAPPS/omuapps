@@ -35,15 +35,15 @@
         "current": "現在"
     },
     "permission_level": {
-        "low": "影響レベル: 低",
-        "low_icon": "ti ti-eye",
-        "low_hint": "この権限がPCに影響を与える可能性は低いです。",
-        "medium": "影響レベル: 中",
+        "high": "信頼できるアプリのみ: 高",
+        "high_icon": "ti ti-alert-triangle",
+        "high_hint": "この権限は信用できるアプリにのみ許可することをお勧めします。",
+        "medium": "少し注意が必要です: 中",
         "medium_icon": "ti ti-exclamation-mark",
         "medium_hint": "この権限はプライバシーに影響を与える可能性があります。",
-        "high": "影響レベル: 高",
-        "high_icon": "ti ti-alert-triangle",
-        "high_hint": "この権限は信用できるアプリにのみ許可することをお勧めします。"
+        "low": "あまり注意は必要ありません: 低",
+        "low_icon": "ti ti-eye",
+        "low_hint": "この権限がPCに影響を与える可能性は低いです。"
     },
     "date": {
         "just_now": "今",
@@ -276,6 +276,7 @@
             "logFileGenerateError": "ログファイルの生成に失敗しました: {error}",
             "cleanEnvironment": "動作環境を再構築",
             "cleaningEnvironment": "環境を削除して再起動中...",
+            "uninstall": "完全なアンインストール",
             "serverRestart": "サーバーを再起動",
             "serverRestarting": "サーバーを再起動中...",
             "serverRestarted": "サーバーを再起動しました",

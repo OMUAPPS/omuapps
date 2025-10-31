@@ -176,7 +176,7 @@
             ctx.fillStyle = hit ? 'black' : 'white';
             const fontSize = (0.3 * radius) / Math.sqrt(count);
             ctx.font = `bold ${fontSize}px "Noto Sans JP"`;
-            const name = entry.name || entry.id;
+            const name = entry.name || '';
             const textWidth = ctx.measureText(name).width;
             const textScale = Math.min(1, radius / 1.5 / textWidth);
             ctx.font = `bold ${fontSize * textScale}px "Noto Sans JP"`;

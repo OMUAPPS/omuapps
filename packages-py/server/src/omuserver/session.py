@@ -110,7 +110,7 @@ class Session:
         server: Server,
         packet_mapper: PacketMapper,
         connection: SessionConnection,
-    ) -> Session:
+    ) -> tuple[Session, InputToken]:
         decryptor = Decryptor.new()
         meta: ServerMeta = {
             "protocol": {
@@ -159,9 +159,7 @@ class Session:
             connection=connection,
             aes=aes,
         )
-        if session.kind not in {AppType.PLUGIN, AppType.DASHBOARD}:
-            await session.send(PACKET_TYPES.TOKEN, new_token)
-        return session
+        return (session, new_token)
 
     @property
     def closed(self) -> bool:
@@ -234,7 +232,9 @@ class Session:
                 logger.debug(f"Processing ready task {task} for session {self.app.key()}: {task.detail}")
                 await task.coro()
             except DisconnectReason as e:
-                logger.opt(exception=e).error(f"Disconnecting session while processing ready task {task.name}: {task.detail}")
+                logger.opt(exception=e).error(
+                    f"Disconnecting session while processing ready task {task.name}: {task.detail}"
+                )
                 await self.disconnect(e.type, e.message)
                 return
             except Exception as e:

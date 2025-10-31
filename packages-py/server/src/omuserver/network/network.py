@@ -132,7 +132,7 @@ class Network:
         ws = web.WebSocketResponse(max_msg_size=0)
         await ws.prepare(request)
         connection = WebsocketsConnection(ws)
-        session = await Session.from_connection(
+        session, new_token = await Session.from_connection(
             self.server,
             self._packet_dispatcher.packet_mapper,
             connection,
@@ -143,6 +143,9 @@ class Network:
             logger.warning(f"Verification failed for {session.app}: {verify_result.err}")
             await session.disconnect(verify_result.err.type, verify_result.err.message)
             return web.Response(status=403)
+
+        if session.kind not in {AppType.PLUGIN, AppType.DASHBOARD}:
+            await session.send(PACKET_TYPES.TOKEN, new_token)
 
         await self.server.sessions.process_new(session)
         return ws

@@ -8,7 +8,7 @@ use crate::{
     AppState,
 };
 use log::info;
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Progress {
@@ -227,6 +227,97 @@ pub async fn clean_environment(
 
     info!("Environment cleaned");
 
+    Ok(())
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum UninstallProgress {
+    Python { progress: PythonEnsureProgress },
+    PluginRemoving {},
+    AppDataRemoving { progress: Progress },
+    PythonRemoving { progress: Progress },
+    UvRemoving { progress: Progress },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum UninstallError {
+    PythonError { reason: PythonEnsureError },
+    ServerError { reason: String },
+    RemoveAppDataError { reason: String },
+    RemovePythonError { reason: String },
+    RemoveUvError { reason: String },
+}
+
+#[tauri::command]
+pub async fn uninstall(
+    window: tauri::Window,
+    state: tauri::State<'_, AppState>,
+) -> Result<(), UninstallError> {
+    let on_progress = move |progress: UninstallProgress| {
+        info!("{:?}", progress);
+        window.emit("uninstall_progress", progress).unwrap();
+    };
+
+    let options = &state.options;
+    let python = {
+        let callback = on_progress.clone();
+        Python::ensure(&options, move |progress| {
+            callback(UninstallProgress::Python { progress });
+        })
+        .map_err(|err| UninstallError::PythonError { reason: err })?
+    };
+
+    Server::stop_server(&python, &state.server_config)
+        .map_err(|err| UninstallError::ServerError { reason: err })?;
+
+    on_progress(UninstallProgress::PluginRemoving {});
+    Server::uninstall(&python, &state.server_config)
+        .map_err(|err| UninstallError::ServerError { reason: err })?;
+
+    let callback = on_progress.clone();
+    remove_dir_all(&options.workdir, |current, total| {
+        callback(UninstallProgress::AppDataRemoving {
+            progress: Progress {
+                msg: format!("Removing app data at {}", options.workdir.display()),
+                progress: current,
+                total,
+            },
+        });
+    })
+    .map_err(|err| UninstallError::RemoveAppDataError {
+        reason: err.to_string(),
+    })?;
+
+    let callback = on_progress.clone();
+    remove_dir_all(&options.python_path, |current, total| {
+        callback(UninstallProgress::PythonRemoving {
+            progress: Progress {
+                msg: format!("Removing python at {}", options.python_path.display()),
+                progress: current,
+                total,
+            },
+        });
+    })
+    .map_err(|err| UninstallError::RemovePythonError {
+        reason: err.to_string(),
+    })?;
+    let callback = on_progress.clone();
+    remove_dir_all(&options.uv_path, |current, total| {
+        callback(UninstallProgress::UvRemoving {
+            progress: Progress {
+                msg: format!("Removing uv at {}", options.uv_path.display()),
+                progress: current,
+                total,
+            },
+        });
+    })
+    .map_err(|err| UninstallError::RemoveUvError {
+        reason: err.to_string(),
+    })?;
+
+    info!("Environment cleaned");
     Ok(())
 }
 

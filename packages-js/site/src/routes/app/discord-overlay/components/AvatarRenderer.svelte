@@ -795,16 +795,6 @@
         }
         if (!userConfig.avatar) {
             try {
-                if ($config.reactive.enabled) {
-                    const avatarId = user.id;
-                    const reactiveAvatar = await getReactiveAvatar(gl, avatarId, user.id);
-                    if (reactiveAvatar) {
-                        $config.users[user.id].avatar = avatarId;
-                        const context = reactiveAvatar.create();
-                        contextCache.set(avatarId, { id: user.id, key: '', avatar: context });
-                        return context;
-                    }
-                }
                 const context = await createDefaultAvatar(gl, user);
                 contextCache.set(user.id, { id: 'default', key: '', avatar: context });
                 return context;

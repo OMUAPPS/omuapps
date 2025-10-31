@@ -29,8 +29,9 @@
             outline: 1px solid var(--color-1);
         }
 
-        &:focus {
-            outline: 1px solid var(--color-1);
+        &:focus-visible {
+            outline: 2px solid var(--color-1);
+            outline-offset: 1px;
         }
 
         &:disabled {

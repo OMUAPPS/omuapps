@@ -1,7 +1,7 @@
 <script lang="ts">
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPlugin } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         Button,
         Combobox,
@@ -117,7 +117,9 @@
             </div>
         </section>
         <h2>字幕</h2>
-        <AssetButton asset={ASSET_APP} {omu} {obs} />
+        <AssetButton asset={ASSET_APP} permissions={[
+            OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+        ]} {omu} {obs} />
     </div>
     <div class="preview">
         <h2>字幕のプレビュー</h2>

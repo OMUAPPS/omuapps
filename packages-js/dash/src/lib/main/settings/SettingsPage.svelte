@@ -19,6 +19,7 @@
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
     import PluginSettings from './PluginSettings.svelte';
+    import UninstallScreen from './UninstallScreen.svelte';
 
     export const props = {};
 
@@ -249,6 +250,17 @@
                     </Button>
                 </span>
                 <small>先にOBSを終了する必要があります</small>
+                <span class="setting">
+                    <Button primary onclick={() => {
+                        screenContext.push(
+                            UninstallScreen,
+                            undefined,
+                        );
+                    }}>
+                        {$t('settings.setting.uninstall')}
+                    </Button>
+                </span>
+                <small>アプリのデータをすべて削除し完全なアンインストールをします</small>
                 <label class="setting">
                     <p>{$t('settings.setting.betaMode')}</p>
                     <input
