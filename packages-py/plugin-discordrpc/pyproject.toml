@@ -1,11 +1,11 @@
 [project]
 name = "omuplugin_discordrpc"
-version = "0.9.19"
+version = "0.9.20"
 description = "Discord RPCの情報を取得するためのプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu_chat>=0.9.19"]
+dependencies = ["loguru>=0.7.2", "omu_chat>=0.9.20"]
 readme = "README.md"
 requires-python = ">= 3.12"
 
