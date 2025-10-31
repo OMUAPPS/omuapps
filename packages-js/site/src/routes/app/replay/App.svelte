@@ -16,7 +16,7 @@
     export let chat: Chat;
 
     const replay = ReplayApp.getInstance();
-    const { replayData, omu } = replay;
+    const { replayData, config, omu } = replay;
 
     let search: string = '';
 
@@ -70,6 +70,19 @@
                 {omu}
                 {obs}
             />
+        </MenuSection>
+        <MenuSection name="OBSの音" icon="ti ti-volume">
+            <Button primary onclick={() => {
+                $config.muted = !$config.muted;
+            }}>
+                {#if $config.muted}
+                    <i class="ti ti-volume-2"></i>
+                    ミュート解除
+                {:else}
+                    <i class="ti ti-volume-3"></i>
+                    ミュート
+                {/if}
+            </Button>
         </MenuSection>
     </Menu>
     <div class="content">

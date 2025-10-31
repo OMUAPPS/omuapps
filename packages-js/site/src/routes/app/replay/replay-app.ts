@@ -63,6 +63,7 @@ type Filter = FilterNoop | FilterPixelate | FilterBlur;
 const DEFAULT_REPLAY_CONFIG = {
     version: 1,
     playbackRate: 1,
+    muted: true,
     overlay: {
         active: false,
         align: {

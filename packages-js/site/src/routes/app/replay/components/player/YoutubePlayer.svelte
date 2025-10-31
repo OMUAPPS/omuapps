@@ -31,7 +31,10 @@
     function onReady(event: YT.PlayerEvent) {
         player = event.target;
         player.playVideo();
-        player.mute();
+        const now = Date.now();
+        const elapsed = playback.offset + (now - playback.start) / 1000;
+        player.setPlaybackRate($config.playbackRate);
+        player.seekTo(elapsed, true);
         info = {
             ...player.getVideoData(),
             duration: player.getDuration() * 1000,
@@ -39,20 +42,12 @@
     }
 
     function onPlaybackRateChange(event: YT.OnPlaybackRateChangeEvent) {
+        if (side !== 'client') return;
         $config.playbackRate = event.data;
     }
 
     function onStateChange(event: YT.OnStateChangeEvent) {
         if (!player) return;
-        const name = {
-            [-1]: 'UNSTARTED',
-            0: 'ENDED',
-            1: 'PLAYING',
-            2: 'PAUSED',
-            3: 'BUFFERING',
-            5: 'CUED',
-        }[event.data];
-        console.log(name);
         ended = event.data === YT.PlayerState.ENDED;
         if (event.data === YT.PlayerState.BUFFERING) {
             return;
@@ -75,8 +70,8 @@
         if (!player) return;
         const now = Date.now();
         const elapsed = playback.offset + (now - playback.start) / 1000;
-        player.seekTo(elapsed, true);
         player.setPlaybackRate($config.playbackRate);
+        player.seekTo(elapsed, true);
         if (playback.playing) {
             player.playVideo();
         } else {
@@ -88,6 +83,24 @@
         console.log(playback);
         updatePlayback(playback);
     };
+    $: {
+        if (player && side === 'asset') {
+            console.log($config.playbackRate);
+            player.setPlaybackRate($config.playbackRate);
+        }
+    };
+
+    $: {
+        if (player && side === 'asset') {
+            if ($config.muted) {
+                player.mute();
+                console.log('muted');
+            } else {
+                player.unMute();
+                console.log('unmuted');
+            }
+        }
+    }
 
     function toggle() {
         if (!player) return;
