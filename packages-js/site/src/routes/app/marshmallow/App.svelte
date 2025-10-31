@@ -1,8 +1,8 @@
 <script lang="ts">
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPlugin } from '@omujs/obs';
-    import type { Omu } from '@omujs/omu';
-    import { Button, Checkbox, Tooltip } from '@omujs/ui';
+    import { Omu, OmuPermissions } from '@omujs/omu';
+    import { Button, Tooltip } from '@omujs/ui';
     import Answers from './Answers.svelte';
     import { MarshmallowAPI, type Message, type User } from './api.js';
     import { ASSET_APP } from './app';
@@ -102,18 +102,12 @@
     </div>
     <div class="content">
         <MessageView {api} />
-        <div class="config">
-            <span>
-                <Checkbox bind:value={$config.showPointer} />
-                ポインターを表示
-            </span>
-            <span>
-                <Checkbox bind:value={$config.syncScroll} />
-                スクロール同期
-            </span>
-        </div>
         <div class="asset">
-            <AssetButton asset={ASSET_APP} {omu} {obs} />
+            <AssetButton asset={ASSET_APP} permissions={[
+                OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+                OmuPermissions.REGISTRY_PERMISSION_ID,
+                OmuPermissions.TABLE_PERMISSION_ID,
+            ]} {omu} {obs} />
         </div>
     </div>
 </main>
@@ -276,22 +270,5 @@
         left: 2rem;
         bottom: 2.5rem;
         color: var(--color-1);
-    }
-
-    .config {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        position: absolute;
-        left: 1.5rem;
-        bottom: 6.5rem;
-        color: var(--color-1);
-
-        > span {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-size: 0.9rem;
-        }
     }
 </style>

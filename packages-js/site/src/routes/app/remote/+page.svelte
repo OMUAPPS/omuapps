@@ -22,6 +22,7 @@
                 OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
                 OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
                 OmuPermissions.ASSET_DELETE_PERMISSION_ID,
+                OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
             );
             omu.start();
         });

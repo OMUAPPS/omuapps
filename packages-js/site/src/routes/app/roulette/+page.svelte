@@ -141,6 +141,9 @@
             <AssetButton
                 dimensions={{ width: 1080, height: 1080 }}
                 asset={ASSET_APP}
+                permissions={[
+                    'com.omuapps:chat',
+                ]}
                 {omu}
                 {obs}
             />

@@ -21,20 +21,17 @@
         <img
             src="https://media.marshmallow-qa.com/system/images/{$data.message
                 .id}.png"
-            class:async={!$config.syncScroll}
-            style:transform="translateY(-{$config.syncScroll ? $data.scroll * 100 : 0}%)"
+            style:transform="translateY(-{$data.scroll * 100}%)"
             bind:this={image}
             alt=""
         />
-        {#if image && $config.showPointer && $data.pointer}
+        {#if image && $data.pointer}
             {@const pointer = $data.pointer}
             <div
                 class="pointer-container"
                 style:width="{image.clientWidth}px"
                 style:height="{image.clientHeight}px"
-                style:transform="translateY(-{$config.syncScroll
-                    ? $data.scroll * 100
-                    : 0}%)"
+                style:transform="translateY(-{$data.scroll * 100}%)"
                 in:fade={{ duration: 1000 / 60 * 3 }}
                 out:fade={{ duration: 1000 / 60 * 1 }}
             >

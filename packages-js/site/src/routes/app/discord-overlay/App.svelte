@@ -2,7 +2,7 @@
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { Mat4 } from '$lib/math/mat4.js';
     import { OBSPlugin } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import { Spinner, Tooltip } from '@omujs/ui';
     import { ASSET_APP } from './app';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
@@ -180,7 +180,10 @@
                 <i class="ti ti-arrow-bar-to-down"></i>
             </h3>
             <section>
-                <AssetButton asset={ASSET_APP} {omu} {obs} dimensions={{ width: 1920, height: 1080 }} />
+                <AssetButton asset={ASSET_APP} permissions={[
+                    OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+                    'com.omuapps:plugin-discordrpc/vc/read',
+                ]} {omu} {obs} dimensions={{ width: 1920, height: 1080 }} />
             </section>
         </div>
     {/if}

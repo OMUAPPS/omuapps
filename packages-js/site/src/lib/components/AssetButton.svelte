@@ -3,7 +3,7 @@
     import type { OBSPlugin } from '@omujs/obs';
     import type { CreateBrowserRequest } from '@omujs/obs/types.js';
     import type { App, Omu, SessionParam } from '@omujs/omu';
-    import { BrowserTokenProvider, type IntoId } from '@omujs/omu';
+    import { BrowserTokenProvider, OmuPermissions, type IntoId } from '@omujs/omu';
     import { Spinner, Tooltip } from '@omujs/ui';
 
     export let omu: Omu;
@@ -44,7 +44,12 @@
         }
         const result = await omu.sessions.generateToken({
             app,
-            permissions,
+            permissions: [
+                OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+                OmuPermissions.REGISTRY_PERMISSION_ID,
+                OmuPermissions.TABLE_PERMISSION_ID,
+                ...permissions,
+            ],
         });
         if (result.type === 'error') {
             throw new Error(result.message);

@@ -77,7 +77,10 @@
                 <i class="ti ti-arrow-bar-to-down"></i>
             </h2>
             <section>
-                <AssetButton asset={ASSET_APP} {omu} {obs} />
+                <AssetButton asset={ASSET_APP} permissions={[
+                    ChatPermissions.CHAT_PERMISSION_ID,
+                    ChatPermissions.CHAT_REACTION_PERMISSION_ID,
+                ]} {omu} {obs} />
             </section>
             <h2>
                 試してみる

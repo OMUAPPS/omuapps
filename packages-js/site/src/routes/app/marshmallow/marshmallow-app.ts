@@ -15,16 +15,12 @@ export type User = {
 
 export type MarshmallowConfig = {
     user: string | null;
-    syncScroll: boolean;
-    showPointer: boolean;
 };
 
 const MARSHMALLOW_CONFIG_REGISTRY_TYPE = RegistryType.createJson<MarshmallowConfig>(APP_ID, {
     name: 'config',
     defaultValue: {
         user: null,
-        syncScroll: true,
-        showPointer: true,
     },
 });
 

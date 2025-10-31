@@ -12,6 +12,10 @@ from typing import Any, TypedDict
 
 import psutil
 from loguru import logger
+from omu.api.i18n.extension import I18N_GET_LOCALES_PERMISSION_ID
+from omu.api.logger.extension import LOGGER_LOG_PERMISSION_ID
+from omu.api.registry.extension import REGISTRY_PERMISSION_ID
+from omu.api.table.extension import TABLE_PERMISSION_ID
 from omu.result import Err, Ok, Result
 from omu.token import JsonTokenProvider
 from omuserver.helper import LOG_DIRECTORY
@@ -247,7 +251,15 @@ def update_config(server: Server):
     token_path = get_token_path()
     tokens = json.loads(token_path.read_text(encoding="utf-8"))
     token_key = JsonTokenProvider.get_store_key(server.address, APP)
-    _, new_token = server.security.generate_app_token(APP)
+    permissions, new_token = server.security.generate_app_token(APP)
+    permissions.grant_all(
+        [
+            REGISTRY_PERMISSION_ID,
+            I18N_GET_LOCALES_PERMISSION_ID,
+            TABLE_PERMISSION_ID,
+            LOGGER_LOG_PERMISSION_ID,
+        ]
+    )
     tokens[token_key] = new_token
     token_path.write_text(json.dumps(tokens, ensure_ascii=False), encoding="utf-8")
 
