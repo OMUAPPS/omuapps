@@ -18,9 +18,11 @@
 
     client.subscribe(async (omu) => {
         if (!omu) return;
-        await new Promise<void>((resolve) => {
-            omu.event.started.listen(() => resolve());
-        });
+        if (!omu.running) {
+            await new Promise<void>((resolve) => {
+                omu.event.started.listen(() => resolve());
+            });
+        }
         omu.onReady(() => {
             state = { type: 'ready' };
         });
