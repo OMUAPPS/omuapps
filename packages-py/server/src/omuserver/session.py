@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 class SessionConnection(abc.ABC):
     @abc.abstractmethod
-    async def send(self, packet: Packet, packet_mapper: PacketMapper) -> None: ...
+    async def send(self, packet: Packet, packet_mapper: PacketMapper) -> Result[..., str]: ...
 
     @abc.abstractmethod
     async def receive(self, packet_mapper: PacketMapper) -> Result[Packet, ReceiveError]: ...
@@ -110,7 +110,7 @@ class Session:
         server: Server,
         packet_mapper: PacketMapper,
         connection: SessionConnection,
-    ) -> tuple[Session, InputToken]:
+    ) -> Result[tuple[Session, InputToken], str]:
         decryptor = Decryptor.new()
         meta: ServerMeta = {
             "protocol": {
@@ -131,13 +131,12 @@ class Session:
                 packet_mapper,
             )
             await connection.close()
-            raise RuntimeError(f"Invalid packet received while connecting: {received.err}")
+            return Err(f"Invalid packet received while connecting: {received.err}")
         else:
             packet = received.value
         aes: AES | None = None
         token = packet.token
         if packet.encryption:
-            # encryptor = Encryptor.new(packet.encryption["rsa"])
             aes = AES.deserialize(packet.encryption["aes"], decryptor)
             if token:
                 token = decryptor.decrypt_string(token)
@@ -148,7 +147,7 @@ class Session:
                 packet_mapper,
             )
             await connection.close()
-            raise RuntimeError(f"Invalid token for {packet.app}: {verify_result.err}")
+            return Err(f"Invalid token for {packet.app}: {verify_result.err}")
         permission_handle, new_token = verify_result.value
         session = Session(
             server=server,
@@ -159,7 +158,7 @@ class Session:
             connection=connection,
             aes=aes,
         )
-        return (session, new_token)
+        return Ok((session, new_token))
 
     @property
     def closed(self) -> bool:

@@ -51,11 +51,12 @@ class WebsocketsConnection(SessionConnection):
             logger.warning(f"Error closing socket: {e}")
             logger.error(e)
 
-    async def send(self, packet: Packet, packet_mapper: PacketMapper) -> None:
+    async def send(self, packet: Packet, packet_mapper: PacketMapper) -> Result[..., str]:
         if self.closed:
-            raise ValueError("Socket is closed")
+            return Err("Socket is closed")
         packet_data = packet_mapper.serialize(packet)
         writer = ByteWriter()
         writer.write_string(packet_data.type)
         writer.write_uint8_array(packet_data.data)
         await self.socket.send_bytes(writer.finish())
+        return Ok(...)

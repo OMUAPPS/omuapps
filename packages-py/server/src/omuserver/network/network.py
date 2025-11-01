@@ -128,15 +128,19 @@ class Network:
         origin_verified = await self._verify_origin(request, session)
         return ip_verified and origin_verified
 
-    async def websocket_handler(self, request: web.Request):
+    async def websocket_handler(self, request: web.Request) -> web.StreamResponse:
         ws = web.WebSocketResponse(max_msg_size=0)
         await ws.prepare(request)
         connection = WebsocketsConnection(ws)
-        session, new_token = await Session.from_connection(
+        session_result = await Session.from_connection(
             self.server,
             self._packet_dispatcher.packet_mapper,
             connection,
         )
+        if session_result.is_err is True:
+            logger.warning(f"Connection failed: {session_result.err}")
+            return web.Response(status=403)
+        session, new_token = session_result.value
 
         verify_result = await self._verify(session, request)
         if is_err(verify_result):
