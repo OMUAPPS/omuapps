@@ -35,18 +35,13 @@ def check_port_in_use(port: int) -> Result[..., list[psutil.Process]]:
     return Err(processes)
 
 
-def check_ports():
-    ports = {
-        26420: "dashboard",
-        5173: "site",
-    }
-    for port, name in ports.items():
-        used = check_port_in_use(port)
-        if used.is_ok is True:
-            continue
-        print(f"Port {port} ({name}) is used by: {", ".join([f"{p.name()} ({p.pid})" for p in used.err])}")
-        for process in used.err:
-            kill_process(process).unwrap()
+def check_port(port: int, name: str):
+    used = check_port_in_use(port)
+    if used.is_ok is True:
+        return
+    print(f"Port {port} ({name}) is used by: {", ".join([f"{p.name()} ({p.pid})" for p in used.err])}")
+    for process in used.err:
+        kill_process(process).unwrap()
 
 
 def kill_process(process: psutil.Process) -> Result[..., str]:
@@ -93,25 +88,31 @@ async def build_packages():
 
 
 @click.command()
-@click.option("--skip-dash", is_flag=True, default=False, help="Skip building and watching the dashboard")
-def main(skip_dash: bool = False):
+@click.option("--dash", is_flag=True, default=False, help="Building and watching the dashboard")
+@click.option("--apps", is_flag=True, default=False, help="Building and watching the apps")
+def main(dash: bool = False, apps: bool = False):
     async def run():
-        check_ports()
         await build_packages()
         loop = asyncio.get_event_loop()
-        commands = [
-            "bun run --cwd packages-js/dash ui:dev",
-            "bun run --cwd packages-js/site dev",
-            "bun run --cwd packages-js/dash ui:check-watch",
-            "bun run --cwd packages-js/site check:watch",
-            "bun run --cwd packages-js/ui watch",
-            "bun run --cwd packages-js/i18n watch",
-            "bun run --cwd packages-js/omu watch",
-            "bun run --cwd packages-js/chat watch",
-            "bun run --cwd packages-js/plugin-obs watch",
-        ]
-        if not skip_dash:
-            commands.append("bun run --cwd packages-js/dash dev")
+        commands: list[str] = []
+        if dash:
+            commands = [*commands, "bun run --cwd packages-js/dash ui:dev", "bun run --cwd packages-js/dash dev"]
+            check_port(26420, "dashboard")
+        if apps:
+            commands = [
+                *commands,
+                "bun run --cwd packages-js/dash ui:dev",
+                "bun run --cwd packages-js/site dev",
+                "bun run --cwd packages-js/dash ui:check-watch",
+                "bun run --cwd packages-js/site check:watch",
+                "bun run --cwd packages-js/ui watch",
+                "bun run --cwd packages-js/i18n watch",
+                "bun run --cwd packages-js/omu watch",
+                "bun run --cwd packages-js/chat watch",
+                "bun run --cwd packages-js/plugin-obs watch",
+            ]
+            check_port(5173, "site")
+
         tasks = [loop.create_task(start_process(command)) for command in commands]
         await asyncio.gather(*tasks)
 

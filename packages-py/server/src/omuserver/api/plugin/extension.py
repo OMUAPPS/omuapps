@@ -47,7 +47,10 @@ class PluginExtension:
         self.loader = PluginLoader(server, self.dependency_resolver)
 
     async def on_network_start(self) -> None:
-        await self.loader.run_plugins()
+        await self.loader.load_plugins()
+
+        for instance in self.loader.instances.values():
+            await instance.start(self.server)
 
     async def on_stop(self) -> None:
         try:
@@ -136,6 +139,7 @@ class PluginExtension:
         }
 
     async def uninstall(self):
+        await self.loader.load_plugins()
         for instance in self.loader.instances.values():
             ctx = UninstallContext(
                 self.server,

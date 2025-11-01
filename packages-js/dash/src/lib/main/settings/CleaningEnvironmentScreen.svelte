@@ -115,42 +115,6 @@
 </Screen>
 
 <style lang="scss">
-    .debug {
-        position: absolute;
-        bottom: 2rem;
-        font-weight: 600;
-        font-size: 0.72rem;
-        color: var(--color-text);
-        opacity: 0.5;
-        user-select: all;
-        cursor: text;
-    }
-
-    .progress {
-        margin-top: 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        font-weight: 600;
-        color: var(--color-text);
-    }
-
-    progress {
-        margin-bottom: 1rem;
-        appearance: none;
-        width: 100%;
-        height: 2px;
-        border: none;
-
-        &::-webkit-progress-bar {
-            background: var(--color-outline);
-        }
-
-        &::-webkit-progress-value {
-            background: var(--color-1);
-        }
-    }
-
     .screen {
         position: absolute;
         inset: 0;

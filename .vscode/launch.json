@@ -3,19 +3,15 @@
     "configurations": [
         {
             "name": "Dashboard",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost:5173",
-            "webRoot": "${workspaceFolder}",
-            "preLaunchTask": "prepare"
+            "preLaunchTask": "dash"
         },
         {
-            "name": "AppsOnly",
+            "name": "Apps",
             "type": "chrome",
             "request": "launch",
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}",
-            "preLaunchTask": "prepare-without-dash"
+            "preLaunchTask": "apps"
         },
         {
             "name": "Server",
@@ -35,6 +31,19 @@
             "justMyCode": true,
         },
         {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Dashboard Debug",
+            "cwd": "${workspaceFolder}/packages-js/dash/src-tauri",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--manifest-path=./packages-js/dash/src-tauri/Cargo.toml",
+                    "--no-default-features"
+                ]
+            },
+        },
+        {
             "name": "Server (stop)",
             "type": "debugpy",
             "request": "launch",
@@ -46,35 +55,62 @@
             "justMyCode": true,
         },
         {
+            "name": "Server (uninstall)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "omuserver",
+            "args": [
+                "--uninstall",
+            ],
+            "cwd": "${workspaceFolder}/appdata",
+            "justMyCode": true,
+        },
+        {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
         },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Tauri Development Debug",
-            "cwd": "${workspaceFolder}/packages-js/dash/src-tauri",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--manifest-path=./packages-js/dash/src-tauri/Cargo.toml",
-                    "--no-default-features"
-                ]
-            },
-        },
     ],
     "compounds": [
         {
-            "name": "Server/Dashboard",
+            "name": "Dashboard and Server Debugging",
             "configurations": [
-                "Server",
-                "Dashboard"
+                "Apps",
+                "Dashboard Debug",
+                "Server"
             ],
             "preLaunchTask": "prelaunch",
-            "stopAll": true
-        }
+            "stopAll": true,
+            "presentation": {
+                "order": 1
+            },
+        },
+        {
+            "name": "Dashboard Debugging",
+            "configurations": [
+                "Apps",
+                "Dashboard Debug",
+            ],
+            "preLaunchTask": "prelaunch",
+            "stopAll": true,
+            "presentation": {
+                "order": 2
+            },
+        },
+        {
+            "name": "All",
+            "configurations": [
+                "Server",
+                "Apps",
+                "Dashboard",
+            ],
+            "preLaunchTask": "prelaunch",
+            "stopAll": true,
+            "presentation": {
+                "order": 3
+            },
+        },
     ],
 }

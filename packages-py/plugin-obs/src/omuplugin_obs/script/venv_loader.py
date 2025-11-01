@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from omuplugin_obs.script.config import Config
+    from ..config import ConfigJSON
 
 
 def get_config_path() -> Path:
@@ -16,24 +16,26 @@ def get_config_path() -> Path:
     return config
 
 
-def get_config() -> Config:
+def get_config() -> ConfigJSON | None:
     path = get_config_path()
     if not path.exists():
-        return {}
+        return None
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         print(f"Config file not found at {path}")
     except json.JSONDecodeError:
         print(f"Config file at {path} is not valid JSON")
-    return {}
+    return None
 
 
 def get_python_path() -> Path | None:
     config = get_config()
+    if config is None:
+        return
     python_path = config.get("python_path")
     if not python_path or not Path(python_path).exists():
-        return None
+        return
     return Path(python_path)
 
 
@@ -49,10 +51,10 @@ def find_venv() -> Path | None:
 def try_load():
     python_path = get_python_path()
     venv_path = find_venv()
-    if python_path:
-        load_site_packages(python_path / "Lib" / "site-packages")
     if venv_path:
         load_site_packages(venv_path / "Lib" / "site-packages")
+    if python_path:
+        load_site_packages(python_path / "Lib" / "site-packages")
     print(f"[+], {"\n".join(sys.path)}")
 
 

@@ -224,8 +224,4 @@
             font-size: 1.621rem;
         }
     }
-
-    .thumbnail-overlay.show {
-        display: flex;
-    }
 </style>

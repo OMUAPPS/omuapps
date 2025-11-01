@@ -30,7 +30,11 @@
 
     function onReady(event: YT.PlayerEvent) {
         player = event.target;
-        player.playVideo();
+        if (playback.playing) {
+            player.playVideo();
+        } else {
+            player.pauseVideo();
+        }
         const now = Date.now();
         const elapsed = playback.offset + (now - playback.start) / 1000;
         player.setPlaybackRate($config.playbackRate);
@@ -53,15 +57,21 @@
             return;
         }
         if (event.data === YT.PlayerState.UNSTARTED) {
-            player.playVideo();
+            if (playback.playing) {
+                player.playVideo();
+            }
             return;
+        }
+        const playing = event.data === YT.PlayerState.PLAYING;
+        if (side === 'asset' && playing && !playback.playing) {
+            player.pauseVideo();
         }
         if (side === 'asset') return;
         const time = player.getCurrentTime();
         playback = {
             offset: time,
             start: Date.now(),
-            playing: event.data === YT.PlayerState.PLAYING,
+            playing,
         };
     }
 
