@@ -286,9 +286,9 @@ def update_config(server: Server):
 
 
 def install(server: Server):
-    update_config(server)
-
     try:
+        update_config(server)
+
         installed = check_installed()
         if installed.is_ok is True:
             logger.info("OBS plugin is already installed")
