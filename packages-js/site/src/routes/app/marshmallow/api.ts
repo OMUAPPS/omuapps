@@ -235,9 +235,11 @@ export class MarshmallowAPI {
     ) {}
 
     public static new(omu: Omu, session: MarshmallowSession) {
-        return new MarshmallowAPI((input, init) => omu.http.fetch(input, init), session, {
-            cookie: session.getCookie(),
-        });
+        return new MarshmallowAPI(
+            (input, init) => omu.http.fetch(input, init),
+            session,
+            { cookie: session.getCookie() },
+        );
     }
 
     public async user(): Promise<User> {

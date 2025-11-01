@@ -34,6 +34,8 @@
         }
     });
     let detail: {
+        type: 'initializing';
+    } | {
         type: 'fetching';
         id: string;
     } | {
@@ -44,28 +46,25 @@
         id: string;
         answer: MessageAction | undefined;
         actions: MessageAction[];
-    } | undefined = undefined;
+        tweetURL: string;
+    } = { type: 'initializing' };
 
-    async function updateActions(message: Message | null) {
-        if (!message) {
-            detail = undefined;
-            return;
-        }
-        if (detail?.type === 'fetching') return;
-        if (detail && detail.id !== message.id) {
-            detail = undefined;
-        }
-        if (detail) return;
+    async function updateActions() {
+        if (detail.type !== 'initializing') return;
         detail = { type: 'fetching', id: message.id };
         try {
             const newActions = await api.messageActions({ id: message.id });
             const answer = newActions.find(action => action.action === 'answers');
             const actions = newActions.filter(action => action.action !== 'answers');
+            const tweetURL = new URL('https://x.com/intent/tweet');
+            tweetURL.searchParams.set('related', 'marshmallow_qa,diver_down_llc');
+            tweetURL.searchParams.set('text', `${reply.value}\n#マシュマロを投げ合おう https://marshmallow-qa.com/messages/${message.id}?utm_medium=twitter&utm_source=answer`);
             detail = {
                 type: 'ok',
                 id: message.id,
                 answer,
                 actions,
+                tweetURL: tweetURL.toString(),
             };
         } catch (e) {
             console.error(e);
@@ -73,9 +72,12 @@
         }
     }
 
-    $: {
-        updateActions(message);
+    async function refresh() {
+        detail = { type: 'initializing' };
+        await updateActions();
     }
+
+    updateActions();
 
     let reply = {
         value: '',
@@ -133,6 +135,7 @@
             remove: true,
         };
     }
+
     $: replyEnable = !detail || !!message.reply || detail?.type !== 'ok' || !detail.answer;
 </script>
 
@@ -153,77 +156,83 @@
         </div>
     </div>
     <div class="actions">
-        {#if detail}
-            {#if detail.type === 'ok'}
-                {#each detail.actions as action, index(index)}
-                    {@const { name, icon, remove } = getActionTranslation(action)}
-                    <Button primary={remove} onclick={async () => {
-                        await action.submit(api, {});
-                        detail = undefined;
-                        updateActions(message);
-                    }} let:promise>
-                        {#if promise}
-                            <Spinner />
-                        {:else}
-                            <i class="ti {icon}"></i>
-                            {#if icon}
-                                <Tooltip>
-                                    {name}
-                                </Tooltip>
-                            {:else}
+        {#if detail.type === 'ok'}
+            {#each detail.actions as action, index(index)}
+                {@const { name, icon, remove } = getActionTranslation(action)}
+                <Button primary={remove} onclick={async () => {
+                    await action.submit(api, {});
+                    refresh();
+                }} let:promise>
+                    {#if promise}
+                        <Spinner />
+                    {:else}
+                        <i class="ti {icon}"></i>
+                        {#if icon}
+                            <Tooltip>
                                 {name}
-                            {/if}
+                            </Tooltip>
+                        {:else}
+                            {name}
                         {/if}
-                    </Button>
-                {/each}
-            {/if}
-        {/if}
-        <Button primary={!recognizing} disabled={replyEnable || !$hasPremium} onclick={() => {
-            recognizing = !recognizing;
-            omu.dashboard.speechRecognitionStart();
-        }}>
-            {#if $hasPremium}
-                {#if recognizing}
-                    音声認識を停止
+                    {/if}
+                </Button>
+            {/each}
+            <Button primary={!recognizing} disabled={replyEnable || !$hasPremium} onclick={() => {
+                recognizing = !recognizing;
+                omu.dashboard.speechRecognitionStart();
+            }}>
+                {#if $hasPremium}
+                    {#if recognizing}
+                        音声認識を停止
+                    {:else}
+                        音声認識を開始
+                    {/if}
                 {:else}
-                    音声認識を開始
+                    <Tooltip>
+                        マシュマロのプレミアムに加入することで音声認識で入力することできます
+                    </Tooltip>
                 {/if}
+                {#if recognizing}
+                    <i class="ti ti-player-pause"></i>
+                {:else}
+                    <i class="ti ti-bubble-text"></i>
+                {/if}
+            </Button>
+            {#if message.reply}
+                <a href={detail.tweetURL} target="_blank">
+                    Xで投稿
+                    <i class="ti ti-external-link"></i>
+                </a>
             {:else}
-                <Tooltip>
-                    マシュマロのプレミアムに加入することで音声認識で入力することできます
-                </Tooltip>
+                <Button primary disabled={!reply.value || replyEnable} onclick={async () => {
+                    recognizing = false;
+                    if (!message) throw new Error('No message selected');
+                    if (detail?.type !== 'ok') throw new Error('No answer action available');
+                    if (!detail?.answer) throw new Error('No answer action available');
+                    await detail.answer.submit(api, {
+                        'answer[content]': reply.value,
+                        'answer[skip_tweet_confirmation]': 'on',
+                        'answer[publish_method]': 'web_share_api',
+                    });
+                    message.reply = { type: 'text', body: reply.value };
+                    delete REPLY_CACHE[reply.id];
+                }}>
+                    {#if !!message.reply}
+                        <Tooltip>すでに返信しています</Tooltip>
+                    {:else if !reply.value}
+                        <Tooltip>返信内容を入力してください</Tooltip>
+                    {:else if detail?.type !== 'ok'}
+                        <Tooltip>アクションを取得中...</Tooltip>
+                    {:else if !detail?.answer}
+                        <Tooltip>返信アクションが利用できません</Tooltip>
+                    {/if}
+                    返信
+                    <i class="ti ti-message-circle"></i>
+                </Button>
             {/if}
-            {#if recognizing}
-                <i class="ti ti-player-pause"></i>
-            {:else}
-                <i class="ti ti-bubble-text"></i>
-            {/if}
-        </Button>
-        <Button primary disabled={!reply.value || replyEnable} onclick={async () => {
-            recognizing = false;
-            if (!message) throw new Error('No message selected');
-            if (detail?.type !== 'ok') throw new Error('No answer action available');
-            if (!detail?.answer) throw new Error('No answer action available');
-            await detail.answer.submit(api, {
-                'answer[content]': reply.value,
-                'answer[skip_tweet_confirmation]': 'on',
-                'answer[publish_method]': 'web_share_api',
-            });
-            message.reply = { type: 'text', body: reply.value };
-            delete REPLY_CACHE[reply.id];
-        }}>
-            {#if !!message.reply}
-                <Tooltip>すでに返信しています</Tooltip>
-            {:else if !reply.value}
-                <Tooltip>返信内容を入力してください</Tooltip>
-            {:else if detail?.type !== 'ok'}
-                <Tooltip>アクションを取得中...</Tooltip>
-            {:else if !detail?.answer}
-                <Tooltip>返信アクションが利用できません</Tooltip>
-            {/if}
-            返信
-            <i class="ti ti-message-circle"></i>
-        </Button>
+        {:else if detail.type === 'fetching'}
+            <Button disabled><Spinner /></Button>
+        {/if}
     </div>
 </div>
 
@@ -246,6 +255,22 @@
         align-items: stretch;
         justify-content: flex-end;
         gap: 0.75rem;
+        height: 2.5rem;
+
+        > a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            height: 2.25rem;
+            text-decoration: none;
+            padding: 0 0.75rem;
+            white-space: nowrap;
+            background: var(--color-1);
+            color: var(--color-bg-1);
+            font-size: 0.8rem;
+            border-radius: 2px;
+        }
     }
 
     .textarea {
