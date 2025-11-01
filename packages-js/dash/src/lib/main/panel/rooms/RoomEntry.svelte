@@ -178,10 +178,6 @@
                 font-size: 0.8rem;
             }
         }
-
-        > button:hover > .overlay {
-            opacity: 1;
-        }
     }
 
     .room-thumbnail-preview {

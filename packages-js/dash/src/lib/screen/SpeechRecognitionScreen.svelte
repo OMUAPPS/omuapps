@@ -22,7 +22,7 @@
     }
 </script>
 
-<Screen {screen} title="speechrecognition_request">
+<Screen {screen}>
     <div class="screen">
         <h2>音声認識を使用します</h2>
         <small>
@@ -47,9 +47,9 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: space-between;
+        justify-content: center;
         gap: 2rem;
-        padding: 7rem 0;
+        padding: 7rem 2.5rem;
         color: var(--color-text);
         font-weight: 600;
         font-size: 1rem;

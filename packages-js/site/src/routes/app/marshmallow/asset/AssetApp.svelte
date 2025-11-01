@@ -81,10 +81,4 @@
         font-size: 2.6rem;
         text-shadow: rgba(0, 0, 0, 0.5) 2px 2px 5px;
     }
-
-    .async {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
 </style>
