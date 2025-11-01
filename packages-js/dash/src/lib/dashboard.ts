@@ -114,6 +114,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async handlePermissionRequest(request: PermissionRequestPacket): Promise<boolean> {
+        await appWindow.show();
         await appWindow.setFocus();
         return new Promise<boolean>((resolve) => {
             screenContext.push(PermissionRequestScreen, {
@@ -124,6 +125,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async handlePluginRequest(request: PluginRequestPacket): Promise<boolean> {
+        await appWindow.show();
         await appWindow.setFocus();
         return new Promise<boolean>((resolve) => {
             screenContext.push(PluginRequestScreen, {
@@ -134,6 +136,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async handleInstallApp(request: AppInstallRequest): Promise<boolean> {
+        await appWindow.show();
         await appWindow.setFocus();
         return new Promise<boolean>((resolve) => {
             screenContext.push(AppInstallRequestScreen, {
@@ -144,6 +147,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async handleUpdateApp(request: AppUpdateRequest): Promise<boolean> {
+        await appWindow.show();
         await appWindow.setFocus();
         return new Promise<boolean>((resolve) => {
             screenContext.push(AppUpdateRequestScreen, {
@@ -197,6 +201,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async hostRequested(request: HostRequest, params: InvokedParams): Promise<UserResponse> {
+        await appWindow.show();
         await appWindow.setFocus();
         const app = await this.apps.get(params.caller.key());
         if (!app) {
