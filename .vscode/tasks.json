@@ -9,22 +9,25 @@
             "problemMatcher": "$vite",
         },
         {
-            "label": "dev",
+            "label": "dash",
             "type": "shell",
             "isBackground": true,
-            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py",
+            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py --dash",
+            "dependsOn": ["prelaunch", "dev-package-index"],
         },
         {
-            "label": "dev-without-dash",
+            "label": "apps",
             "type": "shell",
             "isBackground": true,
-            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py --skip-dash",
+            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py --apps",
+            "dependsOn": ["prelaunch", "dev-package-index"],
         },
         {
             "label": "dev-package-index",
             "type": "shell",
             "isBackground": true,
             "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-upload-dev-index.py",
+            "dependsOn": ["prelaunch"],
         },
         {
             "label": "prepare",
@@ -32,7 +35,7 @@
         },
         {
             "label": "prepare-without-dash",
-            "dependsOn": ["prelaunch", "dev-package-index", "dev-without-dash"],
+            "dependsOn": ["prelaunch", "dev-package-index", "apps"],
         }
     ]
 }
