@@ -64,7 +64,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Tauri Development Debug",
+            "name": "DashboardDebug",
             "cwd": "${workspaceFolder}/packages-js/dash/src-tauri",
             "cargo": {
                 "args": [
@@ -77,28 +77,41 @@
     ],
     "compounds": [
         {
-            "name": "Debugging Dash/Apps",
+            "name": "Dashboard Debugging",
             "configurations": [
-                "Dashboard",
+                "Server",
                 "Apps",
+                "DashboardDebug",
             ],
             "preLaunchTask": "prelaunch",
             "presentation": {
                 "group": "Main",
-                "order": 1
+                "order": 0,
             },
         },
         {
-            "name": "Debugging Dash/Apps/Server",
+            "name": "Dashboard and Sever Debugging",
             "configurations": [
-                "Server",
-                "Dashboard",
                 "Apps",
+                "DashboardDebug",
             ],
             "preLaunchTask": "prelaunch",
             "presentation": {
                 "group": "Main",
-                "order": 1
+                "order": 1,
+            },
+        },
+        {
+            "name": "All",
+            "configurations": [
+                "Server",
+                "Apps",
+                "Dashboard",
+            ],
+            "preLaunchTask": "prelaunch",
+            "presentation": {
+                "group": "Main",
+                "order": 2,
             },
         },
     ],
