@@ -191,7 +191,8 @@ class Session:
         packet = Packet(packet_type, data)
         if self.aes:
             packet = self.aes.encrypt(self.packet_mapper.serialize(packet))
-        await self.connection.send(packet, self.packet_mapper)
+        result = await self.connection.send(packet, self.packet_mapper)
+        result.unwrap()
 
     def add_task(
         self,
