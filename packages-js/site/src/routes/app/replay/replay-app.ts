@@ -36,6 +36,14 @@ type ReplayData = {
 const REPLAY_DATA_REGISTRY_TYPE = RegistryType.createJson<ReplayData | null>(APP_ID, {
     name: 'replay',
     defaultValue: null,
+    serializer: Serializer.transform<ReplayData | null>((data) => {
+        if (data && (
+            !data.video ||
+            !data.info ||
+            !data.playback
+        )) return null;
+        return data;
+    }),
 });
 
 type FilterNoop = {
@@ -61,7 +69,7 @@ export const DEFAULT_FILTER_BLUR: FilterBlur = { type: 'blur', radius: 50 } as c
 type Filter = FilterNoop | FilterPixelate | FilterBlur;
 
 const DEFAULT_REPLAY_CONFIG = {
-    version: 1,
+    version: 2,
     playbackRate: 1,
     muted: true,
     overlay: {
