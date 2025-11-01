@@ -3,7 +3,9 @@
     "configurations": [
         {
             "name": "Dashboard",
-            "preLaunchTask": "dash"
+            "type": "chrome",
+            "request": "launch",
+            "preLaunchTask": "dev-dash"
         },
         {
             "name": "Apps",
@@ -11,7 +13,7 @@
             "request": "launch",
             "url": "http://localhost:5173",
             "webRoot": "${workspaceFolder}",
-            "preLaunchTask": "apps"
+            "preLaunchTask": "dev-apps"
         },
         {
             "name": "Server",
@@ -29,19 +31,6 @@
             ],
             "cwd": "${workspaceFolder}/appdata",
             "justMyCode": true,
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Dashboard Debug",
-            "cwd": "${workspaceFolder}/packages-js/dash/src-tauri",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--manifest-path=./packages-js/dash/src-tauri/Cargo.toml",
-                    "--no-default-features"
-                ]
-            },
         },
         {
             "name": "Server (stop)",
@@ -72,44 +61,43 @@
             "program": "${file}",
             "console": "integratedTerminal"
         },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Tauri Development Debug",
+            "cwd": "${workspaceFolder}/packages-js/dash/src-tauri",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--manifest-path=./packages-js/dash/src-tauri/Cargo.toml",
+                    "--no-default-features"
+                ]
+            },
+        },
     ],
     "compounds": [
         {
-            "name": "Dashboard and Server Debugging",
+            "name": "Debugging Server Dash/Apps",
             "configurations": [
+                "Dashboard",
                 "Apps",
-                "Dashboard Debug",
-                "Server"
             ],
-            "preLaunchTask": "prelaunch",
-            "stopAll": true,
             "presentation": {
+                "group": "Main",
                 "order": 1
             },
         },
         {
-            "name": "Dashboard Debugging",
-            "configurations": [
-                "Apps",
-                "Dashboard Debug",
-            ],
-            "preLaunchTask": "prelaunch",
-            "stopAll": true,
-            "presentation": {
-                "order": 2
-            },
-        },
-        {
-            "name": "All",
+            "name": "Debugging Dash/Apps/Server",
             "configurations": [
                 "Server",
-                "Apps",
                 "Dashboard",
+                "Apps",
             ],
             "preLaunchTask": "prelaunch",
-            "stopAll": true,
             "presentation": {
-                "order": 3
+                "group": "Main",
+                "order": 1
             },
         },
     ],
