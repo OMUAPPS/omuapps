@@ -1,48 +1,51 @@
 <script lang="ts">
+    import { lerp01 } from '$lib/math/math';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
-    import { fade } from 'svelte/transition';
     import { MarshmallowApp } from '../marshmallow-app';
 
     export let omu: Omu;
 
     const marshmallow = new MarshmallowApp(omu);
-    const { config, data } = marshmallow;
-
-    let image: HTMLImageElement;
+    const { data } = marshmallow;
 
     if (BROWSER) {
         omu.start();
     }
+
+    const PADDING = 100;
+    let image: HTMLImageElement;
+    let width = 1;
+    let height = 1;
+    let windowWidth = 1;
+    let windowHeight = 1;
 </script>
+
+<svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
 
 <main>
     {#if $data.message}
-        <img
-            src="https://media.marshmallow-qa.com/system/images/{$data.message
-                .id}.png"
-            style:transform="translateY(-{$data.scroll * 100}%)"
-            bind:this={image}
-            alt=""
-        />
-        {#if image && $data.pointer}
-            {@const pointer = $data.pointer}
-            <div
-                class="pointer-container"
-                style:width="{image.clientWidth}px"
-                style:height="{image.clientHeight}px"
-                style:transform="translateY(-{$data.scroll * 100}%)"
-                in:fade={{ duration: 1000 / 60 * 3 }}
-                out:fade={{ duration: 1000 / 60 * 1 }}
-            >
+        <div class="container" class:hide={!image || image.width <= 0} style="transform: translateY({lerp01(PADDING, Math.min(PADDING, windowHeight - height - PADDING), $data.scroll)}px); left: {(windowWidth - width) / 2}px;">
+            {#key $data.message.id}
+                <div class="image-container" bind:clientWidth={width} bind:clientHeight={height}>
+                    <img
+                        src="https://media.marshmallow-qa.com/system/images/{$data.message
+                            .id}.png"
+                        alt=""
+                        bind:this={image}
+                    />
+                </div>
+            {/key}
+            {#if $data.pointer}
+                {@const pointer = $data.pointer}
                 <i
                     class="pointer ti ti-pointer-filled"
-                    style:left="{pointer.x * image.clientWidth}px"
-                    style:top="{pointer.y * image.clientHeight}px"
+                    style:left="{pointer.x * width}px"
+                    style:top="{pointer.y * height}px"
                 >
                 </i>
-            </div>
-        {/if}
+            {/if}
+        </div>
     {/if}
 </main>
 
@@ -62,13 +65,19 @@
         overflow: hidden;
     }
 
-    img {
+    .container {
         position: absolute;
-        box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.1);
+        inset: 0;
+
+        &.hide {
+            visibility: hidden;
+        }
     }
 
-    .pointer-container {
+    .image-container {
         position: absolute;
+        top: 0;
+        left: 0;
     }
 
     .pointer {

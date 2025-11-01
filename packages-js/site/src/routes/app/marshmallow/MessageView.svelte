@@ -25,7 +25,9 @@
 <div
     class="container omu-scroll"
     on:scroll={({ currentTarget }) => {
-        $data.scroll = currentTarget.scrollTop / currentTarget.scrollHeight;
+        const imageRect = imageContainer.getBoundingClientRect();
+        const containerRect = currentTarget.getBoundingClientRect();
+        $data.scroll = invLerp(containerRect.top, containerRect.bottom - imageRect.height, imageRect.top);
         if (!$data.pointer) return;
         updatePointer();
     }}
