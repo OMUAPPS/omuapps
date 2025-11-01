@@ -1,11 +1,11 @@
 [project]
 name = "omuplugin_translator"
-version = "0.9.20"
+version = "0.9.21"
 description = "メッセージの翻訳を行うためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "edgetrans>=0.2.3", "omu_chat>=0.9.20"]
+dependencies = ["loguru>=0.7.2", "edgetrans>=0.2.3", "omu_chat>=0.9.21"]
 readme = "README.md"
 requires-python = ">= 3.12"
 
