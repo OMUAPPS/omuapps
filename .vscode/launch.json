@@ -77,11 +77,12 @@
     ],
     "compounds": [
         {
-            "name": "Debugging Server Dash/Apps",
+            "name": "Debugging Dash/Apps",
             "configurations": [
                 "Dashboard",
                 "Apps",
             ],
+            "preLaunchTask": "prelaunch",
             "presentation": {
                 "group": "Main",
                 "order": 1
