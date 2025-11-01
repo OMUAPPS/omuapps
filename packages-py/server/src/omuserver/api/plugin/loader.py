@@ -253,11 +253,11 @@ class PluginLoader:
         self.instances: dict[str, PluginInstance] = {}
         self.resolver = resolver
 
-    async def run_plugins(self):
+    async def load_plugins(self):
         ordered_entries = self.resolver.solve_dependency_order(PluginEntry.retrieve_plugin_entries())
         for package, entry in ordered_entries:
             if package in self.instances:
-                logger.warning(f"Duplicate plugin {package}: {entry}")
+                logger.warning(f"Skip loading plugin: {package}({entry})")
                 continue
             match PluginInstance.try_load(entry):
                 case Ok(instance):
@@ -266,9 +266,6 @@ class PluginLoader:
                     logger.warning(f"Failed to load plugin {entry.name}: {message}")
 
         logger.info(f"Loaded plugins: {', '.join(self.instances.keys())}")
-
-        for instance in self.instances.values():
-            await instance.start(self._server)
 
     async def update_plugins(self, resolve_result: ResolveResult):
         new_entries: dict[str, PluginEntry] = {}

@@ -5,10 +5,11 @@ import threading
 from pathlib import Path
 
 from loguru import logger
-from omu.address import Address
 from omu.helper import map_optional
 from omu.omu import Omu
 from omu.token import JsonTokenProvider
+from omuplugin_obs.config import Config
+from omuplugin_obs.const import PLUGIN_APP
 from omuplugin_obs.version import VERSION
 
 from ..obs.data import OBSData
@@ -66,15 +67,19 @@ from ..types import (
     TextSourceData,
     UpdateResponse,
 )
-from .config import APP, get_config, get_token_path
+
+config_result = Config.load()
+if config_result.is_err is True:
+    raise Exception(f"Loading config failed: {config_result.err}")
+config = config_result.value
 
 global loop
 loop = asyncio.new_event_loop()
 omu = Omu(
-    APP,
+    PLUGIN_APP,
     loop=loop,
-    address=Address(**get_config()["server"]),
-    token=JsonTokenProvider(get_token_path()),
+    address=config.get_server_address(),
+    token=JsonTokenProvider(config.get_token_path()),
 )
 
 

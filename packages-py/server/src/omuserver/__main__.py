@@ -118,6 +118,7 @@ def main(
 
     if uninstall:
         asyncio.run(server.plugins.uninstall())
+        logger.info("Successfully uninstalled plugins!")
         return
 
     migrate(server)

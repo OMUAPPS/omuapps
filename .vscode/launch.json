@@ -55,6 +55,17 @@
             "justMyCode": true,
         },
         {
+            "name": "Server (uninstall)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "omuserver",
+            "args": [
+                "--uninstall",
+            ],
+            "cwd": "${workspaceFolder}/appdata",
+            "justMyCode": true,
+        },
+        {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",

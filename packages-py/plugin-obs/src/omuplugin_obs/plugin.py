@@ -16,13 +16,21 @@ from omu.api.i18n.extension import I18N_GET_LOCALES_PERMISSION_ID
 from omu.api.logger.extension import LOGGER_LOG_PERMISSION_ID
 from omu.api.registry.extension import REGISTRY_PERMISSION_ID
 from omu.api.table.extension import TABLE_PERMISSION_ID
+from omu.plugin import UninstallContext
 from omu.result import Err, Ok, Result
 from omu.token import JsonTokenProvider
 from omuserver.helper import LOG_DIRECTORY
 from omuserver.server import Server
 
+from omuplugin_obs.const import PLUGIN_APP
+
 from . import obsconfig
-from .script.config import APP, LaunchCommand, get_config, get_config_path, get_token_path, save_config
+from .config import (
+    Config,
+    ConfigJSON,
+    LaunchCommand,
+    ServerAddress,
+)
 
 
 class obs:
@@ -150,7 +158,7 @@ class SceneJson(TypedDict):
 
 
 def check_installed() -> Result[..., str]:
-    config_path = get_config_path()
+    config_path = Config.get_config_path()
     if not config_path.exists():
         return Err(f"Config file not found: {config_path}")
 
@@ -178,8 +186,8 @@ def check_installed() -> Result[..., str]:
 
     python_path = get_python_directory()
     path = obs_path / "user.ini"
-    config = obsconfig.load_configuration(path)
-    python = config.get("Python", {})
+    obs_config = obsconfig.load_configuration(path)
+    python = obs_config.get("Python", {})
     is_python_set = python.get("Path32bit") == python.get("Path64bit") == python_path
     if not is_python_set:
         return Err(f"Python path is not set correctly in user.ini: {python_path} != {python}")
@@ -238,20 +246,33 @@ def relaunch_obs():
 
 
 def update_config(server: Server):
-    config = get_config()
-    dashboard = server.directories.dashboard
-    if dashboard:
-        config["launch"] = LaunchCommand(args=[dashboard.resolve().as_posix(), "--background"])
-    config["python_path"] = get_python_directory()
-    config["log_path"] = LOG_DIRECTORY.resolve().as_posix()
-    config["server"] = {"host": server.address.host, "port": server.address.port, "hash": server.address.hash}
-    logger.info(f"Updated config: {config}")
-    save_config(config)
+    launch = None
+    if server.directories.dashboard:
+        launch = LaunchCommand(args=[server.directories.dashboard.resolve().as_posix(), "--background"])
+    python_path = get_python_directory()
+    log_path = LOG_DIRECTORY.resolve().as_posix()
+    server_address = ServerAddress(
+        {"host": server.address.host, "port": server.address.port, "hash": server.address.hash}
+    )
+    config_json = ConfigJSON(
+        log_path=log_path,
+        launch=launch,
+        python_path=python_path,
+        server=server_address,
+    )
+    logger.info(f"Updated config: {config_json}")
+    config = Config(
+        path=Config.get_config_path(),
+        json=config_json,
+    )
+    config.store()
 
-    token_path = get_token_path()
-    tokens = json.loads(token_path.read_text(encoding="utf-8"))
-    token_key = JsonTokenProvider.get_store_key(server.address, APP)
-    permissions, new_token = server.security.generate_app_token(APP)
+    token_path = Config.get_token_path()
+    tokens: dict[str, str] = {}
+    if token_path.exists():
+        tokens |= json.loads(token_path.read_text(encoding="utf-8"))
+    token_key = JsonTokenProvider.get_store_key(server.address, PLUGIN_APP)
+    permissions, new_token = server.security.generate_app_token(PLUGIN_APP)
     permissions.grant_all(
         [
             REGISTRY_PERMISSION_ID,
@@ -289,3 +310,81 @@ def install(server: Server):
         raise e
     else:
         logger.info("Successfully installed OBS plugin")
+
+
+def remove_dir_all(path: Path):
+    if path.is_file():
+        path.unlink(missing_ok=True)
+        return
+    for file in path.glob("**/*"):
+        try:
+            if not file.is_file():
+                continue
+            file.unlink()
+        except (FileNotFoundError, IsADirectoryError):
+            pass
+        except PermissionError:
+            logger.warning(f"Permission denied to delete log file {file}")
+        except Exception as e:
+            logger.opt(exception=e).error(f"Error deleting log file {file}")
+
+
+def unset_python_path():
+    path = get_obs_path() / "user.ini"
+
+    config = obsconfig.load_configuration(path)
+    config["Python"] = {
+        **config.get("Python", {}),
+        "Path64bit": "",
+        "Path32bit": "",
+    }
+    obsconfig.save_configuration(path, config)
+
+
+def uninstall_script(script_path: Path, scene: Path):
+    data = SceneJson(**json.loads(scene.read_text(encoding="utf-8")))
+    scripts = data.get("modules", {}).get("scripts-tool", [])
+    filtered_scripts: list[ScriptToolJson] = []
+    for script in scripts:
+        path_text = script.get("path")
+        if not path_text:
+            continue
+        path = Path(path_text)
+        if not path.exists():
+            continue
+        if path.name == script_path.name:
+            continue
+        if path.samefile(script_path):
+            continue
+        filtered_scripts.append(script)
+
+    # filtered_scripts = list(filter(lambda script: Path(script["path"]) != script_path, filtered_scripts))
+    data["modules"]["scripts-tool"] = filtered_scripts
+    scene.write_text(json.dumps(data), encoding="utf-8")
+
+
+def uninstall_all_scene():
+    script_path = Path(__file__).parent / "script"
+    launcher_path = script_path / "omuapps_plugin.py"
+
+    scenes_path = get_obs_path() / "basic" / "scenes"
+    for scene in scenes_path.glob("*.json"):
+        uninstall_script(launcher_path, scene)
+
+
+async def uninstall(ctx: UninstallContext):
+    logger.info("Uninstalling OBS Plugin...")
+
+    match ensure_obs_stopped():
+        case Ok(_):
+            logger.info("OBS stopped successfully")
+        case Err(err):
+            logger.error(f"Failed to stop OBS: {err}")
+            return
+
+    ctx.server.security.remove_app(PLUGIN_APP.id)
+    uninstall_all_scene()
+    remove_dir_all(Config.get_config_path())
+    remove_dir_all(Config.get_token_path())
+
+    relaunch_obs()

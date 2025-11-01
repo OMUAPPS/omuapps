@@ -208,6 +208,12 @@ class PermissionManager:
         self.store()
         return (ParentPermissionHandle(self, app.id, hashed_token), input_token)
 
+    def remove_app(self, id: Identifier):
+        if id not in self.apps:
+            return
+        del self.apps[id]
+        self.store()
+
     def match_token(self, entry: AppEntry, token: InputToken) -> Result[HashedToken, str]:
         expected_token = entry["token"]
         hash_obj = hashlib.sha256()

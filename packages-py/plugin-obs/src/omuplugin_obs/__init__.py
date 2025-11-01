@@ -5,7 +5,7 @@ from omu.plugin import InstallContext, Plugin, StartContext
 from omuserver.server import Server
 
 from .permissions import PERMISSION_TYPES
-from .plugin import install
+from .plugin import install, uninstall
 from .version import VERSION
 
 __version__ = VERSION
@@ -35,5 +35,6 @@ async def plugin_install(ctx: StartContext | InstallContext) -> None:
 plugin = Plugin(
     on_start=plugin_install,
     on_install=plugin_install,
+    on_uninstall=uninstall,
     isolated=False,
 )
