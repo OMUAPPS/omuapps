@@ -25,7 +25,7 @@
 
 <main>
     {#if $data.message}
-        <div class="container" class:hide={!image || image.width <= 0} style="transform: translateY({lerp01(PADDING, Math.min(PADDING, windowHeight - height - PADDING), $data.scroll)}px); left: {(windowWidth - width) / 2}px;">
+        <div class="container" class:hide={!image || width <= 0} style="transform: translateY({lerp01(PADDING, Math.min(PADDING, windowHeight - height - PADDING), $data.scroll)}px); left: {(windowWidth - width) / 2}px;">
             {#key $data.message.id}
                 <div class="image-container" bind:clientWidth={width} bind:clientHeight={height}>
                     <img
