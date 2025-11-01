@@ -72,17 +72,31 @@
             />
         </MenuSection>
         <MenuSection name="OBSの音" icon="ti ti-volume">
-            <Button primary onclick={() => {
-                $config.muted = !$config.muted;
-            }}>
-                {#if $config.muted}
-                    <i class="ti ti-volume-2"></i>
-                    ミュート解除
-                {:else}
-                    <i class="ti ti-volume-3"></i>
-                    ミュート
-                {/if}
-            </Button>
+            <div class="audio">
+                <Button primary={$config.muted} onclick={() => {
+                    $config.muted = !$config.muted;
+                }}>
+                    {#if $config.muted}
+                        <i class="ti ti-volume-2"></i>
+                        ミュート解除
+                    {:else}
+                        <i class="ti ti-volume-3"></i>
+                        ミュート
+                    {/if}
+                </Button>
+                <div class="hint">
+                    <i class="ti ti-info-circle"></i> OBSに音を取り込むには
+                    <Tooltip>
+                        <div class="tooltip">
+                            <p>音を流すには</p>
+                            <ol>
+                                <li>ブラウザソースのプロパティから「OBSで音声を制御する」を有効にする</li>
+                                <li>OBS内のミキサーを使って調節</li>
+                            </ol>
+                        </div>
+                    </Tooltip>
+                </div>
+            </div>
         </MenuSection>
     </Menu>
     <div class="content">
@@ -183,6 +197,7 @@
         position: relative;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         flex: 1;
         gap: 1rem;
     }
@@ -190,18 +205,39 @@
     .player {
         position: relative;
         display: flex;
+        align-items: stretch;
         flex: 1;
     }
 
     .empty {
+        position: absolute;
+        inset: 0;
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 1rem;
-        height: 100%;
         outline: 1px dashed var(--color-outline);
         background: var(--color-bg-2);
         color: #666;
+    }
+
+    .audio {
+        display: flex;
+        align-items: baseline;
+        gap: 1rem;
+
+        > .hint {
+            text-decoration: underline;
+        }
+    }
+
+    .tooltip {
+        padding: 0.5rem 1rem;
+        text-align: left;
+
+        > ol {
+            margin-top: 0.5rem;
+        }
     }
 
     @container (width < 800px) {
