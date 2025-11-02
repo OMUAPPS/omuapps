@@ -6,36 +6,77 @@
             "type": "shell",
             "command": "rye run prelaunch",
             "isBackground": false,
-            "problemMatcher": "$vite",
+            "problemMatcher": [],
         },
         {
-            "label": "dash",
+            "label": "dev-dash",
             "type": "shell",
             "isBackground": true,
-            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py --dash",
-            "dependsOn": ["prelaunch", "dev-package-index"],
+            "command": "${workspaceFolder}/.venv/Scripts/python",
+            "args": [
+                "./scripts/py-dev.py",
+                "--dash"
+            ],
+            "dependsOn": [
+                "prelaunch",
+                "dev-package-index"
+            ],
+            "problemMatcher": [
+                {
+                    "applyTo": "allDocuments",
+                    "pattern": {
+                        "regexp": "Starting",
+                    },
+                    "background": {
+                        "beginsPattern": "Starting",
+                        "endsPattern": "Starting"
+                    },
+                },
+            ],
         },
         {
-            "label": "apps",
+            "label": "dev-apps",
             "type": "shell",
             "isBackground": true,
-            "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-dev.py --apps",
-            "dependsOn": ["prelaunch", "dev-package-index"],
+            "command": "${workspaceFolder}/.venv/Scripts/python",
+            "args": [
+                "./scripts/py-dev.py",
+                "--apps"
+            ],
+            "dependsOn": [
+                "prelaunch",
+                "dev-package-index"
+            ],
+            "problemMatcher": [
+                {
+                    "applyTo": "allDocuments",
+                    "pattern": {
+                        "regexp": "Starting",
+                    },
+                    "background": {
+                        "beginsPattern": "Starting",
+                        "endsPattern": "Starting"
+                    },
+                },
+            ],
         },
         {
             "label": "dev-package-index",
             "type": "shell",
             "isBackground": true,
             "command": "${workspaceFolder}/.venv/Scripts/python ./scripts/py-upload-dev-index.py",
-            "dependsOn": ["prelaunch"],
+            "problemMatcher": [
+                {
+                    "applyTo": "allDocuments",
+                    "pattern": {
+                        "regexp": "starting",
+                    },
+                    "background": {
+                        "beginsPattern": "starting",
+                        "endsPattern": "Listening"
+                    }
+                }
+            ]
         },
-        {
-            "label": "prepare",
-            "dependsOn": ["prelaunch", "dev-package-index", "dev"],
-        },
-        {
-            "label": "prepare-without-dash",
-            "dependsOn": ["prelaunch", "dev-package-index", "apps"],
-        }
     ]
 }

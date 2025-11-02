@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 from asyncio import Future
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 from venv import logger
 
@@ -129,6 +130,7 @@ class DashboardExtension:
         server.endpoints.bind(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, self.handle_drag_drop_request)
         server.endpoints.bind(DASHBOARD_DRAG_DROP_READ_ENDPOINT, self.handle_drag_drop_read)
         self.apps = server.tables.register(DASHBOARD_APP_TABLE_TYPE)
+        self.apps.event.remove += self._handle_app_remove
         self.allowed_hosts = server.tables.register(DASHBOARD_ALLOWED_HOSTS)
         self.speech_recognition = server.registries.register(DASHBOARD_SPEECH_RECOGNITION)
         self.dashboard_session: Session | None = None
@@ -142,6 +144,10 @@ class DashboardExtension:
         self.drag_drop_states: dict[str, Session] = {}
         self.drag_drop_read_requests: dict[str, Future[DragDropReadResponse]] = {}
         self.request_id = 0
+
+    async def _handle_app_remove(self, apps: Mapping[str, App]):
+        for app in apps.values():
+            self.server.security.remove_app(app.id)
 
     async def wait_dashboard_ready(self) -> Session:
         if self.dashboard_session:

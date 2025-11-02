@@ -91,6 +91,8 @@ async def build_packages():
 @click.option("--dash", is_flag=True, default=False, help="Building and watching the dashboard")
 @click.option("--apps", is_flag=True, default=False, help="Building and watching the apps")
 def main(dash: bool = False, apps: bool = False):
+    print("Starting...")
+
     async def run():
         await build_packages()
         loop = asyncio.get_event_loop()

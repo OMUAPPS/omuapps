@@ -1,5 +1,11 @@
+export const TAU = Math.PI * 2;
+
 export function lerp(a: number, b: number, t: number): number {
     return a + (b - a) * t;
+}
+
+export function lerp01(a: number, b: number, t: number): number {
+    return a + (b - a) * clamp(t, 0, 1);
 }
 
 export function invLerp(a: number, b: number, x: number): number {

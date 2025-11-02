@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Vec2 } from '$lib/math/vec2.js';
     import { Button, FileDrop, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import { APP_ID } from '../app.js';
@@ -19,9 +20,11 @@
         const avatarConfig = $config.avatars[$selectedAvatar];
         if (!avatarConfig) return;
         const [x, y] = avatarConfig.offset;
-        const dx = event.clientX - lastMouse.x;
-        const dy = event.clientY - lastMouse.y;
-        avatarConfig.offset = [x + dx / $scaleFactor, y + dy / $scaleFactor];
+        const last = new Vec2(lastMouse.x, lastMouse.y);
+        const pos = new Vec2(event.clientX, event.clientY);
+        const delta = pos.sub(last).scale($scaleFactor);
+
+        avatarConfig.offset = [x + delta.x, y + delta.y];
         lastMouse = { x: event.clientX, y: event.clientY };
     }
 
@@ -64,7 +67,7 @@
 
     async function getSourceUrl(source: Source): Promise<string> {
         const buffer = await overlayApp.getSource(source);
-        return URL.createObjectURL(new Blob([buffer]));
+        return URL.createObjectURL(new Blob([buffer as Uint8Array<ArrayBuffer>]));
     }
 
 </script>

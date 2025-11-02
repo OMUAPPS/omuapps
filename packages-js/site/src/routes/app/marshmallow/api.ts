@@ -235,9 +235,11 @@ export class MarshmallowAPI {
     ) {}
 
     public static new(omu: Omu, session: MarshmallowSession) {
-        return new MarshmallowAPI((input, init) => omu.http.fetch(input, init), session, {
-            cookie: session.getCookie(),
-        });
+        return new MarshmallowAPI(
+            (input, init) => omu.http.fetch(input, init),
+            session,
+            { cookie: session.getCookie() },
+        );
     }
 
     public async user(): Promise<User> {
@@ -353,7 +355,7 @@ export class MarshmallowAPI {
             .toISOString()
             .replace('T', ' ')
             .replace('Z', '');
-        const resp = await this.fetch(`https://marshmallow-qa.com/users/${this.session.displayId}/answers?before=${timestamp}`, {
+        const resp = await this.fetch(`https://marshmallow-qa.com/users/${this.session.id}/answers?before=${timestamp}`, {
             headers: {
                 ...this.headers,
                 accept: 'application/json',
@@ -361,7 +363,10 @@ export class MarshmallowAPI {
             body: null,
             method: 'GET',
         });
-        if (!resp.ok) return [];
+        if (!resp.ok) {
+            console.warn(`Failed to get answers by user ${this.session.id}: ${resp.status} ${resp.statusText}`);
+            return [];
+        }
         const data: {
             id: number;
             fragment: string;

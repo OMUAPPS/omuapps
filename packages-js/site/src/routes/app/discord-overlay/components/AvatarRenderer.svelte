@@ -1,28 +1,25 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
-    import { Gizmo } from '$lib/components/canvas/gizmo.js';
-    import { GlProgram, type GlContext } from '$lib/components/canvas/glcontext.js';
-    import { AABB2 } from '$lib/math/aabb2.js';
-    import { Axis } from '$lib/math/axis.js';
-    import { Mat4 } from '$lib/math/mat4.js';
-    import { MatrixStack } from '$lib/math/matrix-stack.js';
-    import { Vec2 } from '$lib/math/vec2.js';
-    import { PALETTE_HEX, PALETTE_RGB } from '../consts.js';
-    import { createUserConfig, DiscordOverlayApp, type AvatarConfig, type Config, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
+    import { Draw } from '$lib/components/canvas/draw.js';
+    import { type GlContext } from '$lib/components/canvas/glcontext.js';
+    import { Matrices } from '$lib/components/canvas/matrices.js';
+    import { comparator } from '$lib/helper.js';
+    import { TAU } from '$lib/math/math.js';
+    import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
+    import { Vec4 } from '$lib/math/vec4.js';
+    import { Timer } from '$lib/timer.js';
+    import { PALETTE_RGB } from '../consts.js';
+    import { DiscordOverlayApp, type AvatarConfig, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
     import { createShadowEffect } from '../effects/shadow.js';
     import { createSpeechEffect } from '../effects/speech.js';
-    import type { Avatar, AvatarAction, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
+    import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
     import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
-    import { ReactiveAPI } from '../pngtuber/reactive.js';
-    import { GRID_FRAGMENT_SHADER, GRID_VERTEX_SHADER } from '../shaders.js';
-    import { dragPosition, dragUser, isDraggingFinished, scaleFactor, selectedAvatar } from '../states.js';
+    import { dragState, scaleFactor, selectedAvatar, view } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
-    export let message: { type: 'loading' | 'failed'; text: string } | null = null;
-    export let showGrid = false;
     export let dimensions = {
         width: 1920,
         height: 1080,
@@ -33,833 +30,395 @@
             bottom: 80,
         },
     };
-    export let view: Mat4 = Mat4.IDENTITY;
     const { voiceState, speakingState, config } = overlayApp;
 
-    const DEFAULT_AVATAR_ACTION: AvatarAction = {
-        id: 'held',
-        talking: false,
-        mute: false,
-        deaf: false,
-        self_mute: false,
-        self_deaf: false,
-        suppress: false,
-        ...createUserConfig(),
-    };
+    let context: GlContext;
+    let matrices = new Matrices();
+    let draw: Draw;
+    let timer = new Timer();
 
-    let gridProgram: GlProgram;
+    async function resize() {
+        $view = matrices.get();
+    }
+
     let shadowEffect: Effect;
     let backlightEffect: Effect;
     let bloomEffect: Effect;
     let speechEffect: Effect;
-    let gizmo: Gizmo;
 
-    async function resize(context: GlContext) {
-        const { gl } = context;
-        const matrices = new MatrixStack();
-        setupViewMatrix(matrices, gl.canvas.width, gl.canvas.height);
-        view = matrices.get();
-        $scaleFactor = getScaleFactor(gl.canvas.width, gl.canvas.height);
-    }
-
-    async function init(context: GlContext) {
-        const vertexShader = context.createShader({ source: GRID_VERTEX_SHADER, type: 'vertex' });
-        const fragmentShader = context.createShader({ source: GRID_FRAGMENT_SHADER, type: 'fragment' });
-        gridProgram = context.createProgram([vertexShader, fragmentShader]);
-        const entries = Object.entries($voiceState);
-        for (const [, state] of entries) {
-            await getAvatarByUser(context, state.user);
-        }
+    async function init(ctx: GlContext) {
+        context = ctx;
+        matrices = new Matrices();
+        draw = new Draw(matrices, ctx);
         speechEffect = await createSpeechEffect(context, () => $config.effects.speech);
         shadowEffect = await createShadowEffect(context, () => $config.effects.shadow);
         backlightEffect = await createBackLightEffect(context);
         bloomEffect = await createBloomEffect(context);
-        gizmo = new Gizmo(context);
+    }
+
+    function setupMatrices() {
+        const { gl } = context;
+        const { width, height } = gl.canvas;
+        matrices.identity();
+        matrices.projection.orthographic(0, 0, width, height, -1, 1);
+        if (overlayApp.isOnAsset()) {
+            return;
+        }
+        const start = new Vec2(50, 150);
+        const end = new Vec2(50, 150);
+        const screen = new Vec2(width, height);
+        const target = new Vec2(dimensions.width, dimensions.height);
+        const inner = screen.sub(start).sub(end);
+        const scaleVector = inner.div(target);
+        const scaleFactor = Math.min(scaleVector.x, scaleVector.y);
+        matrices.view.translate(start.x, start.y, 0);
+        const space = inner.sub(target.scale(scaleFactor)).scale(0.5);
+        matrices.view.translate(space.x, space.y, 0);
+        matrices.view.scale(scaleFactor, scaleFactor, scaleFactor);
     }
 
     async function render(context: GlContext) {
-        const entries = Object.entries($voiceState);
-
         const { gl } = context;
+        const { width, height } = gl.canvas;
         gl.colorMask(true, true, true, true);
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
         gl.enable(gl.BLEND);
+        gl.clearColor(1, 1, 1, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-        const matrices = new MatrixStack();
-        setupViewMatrix(matrices, gl.canvas.width, gl.canvas.height);
-        if (!view.equals(matrices.get())) {
-            view = matrices.get();
+        gl.viewport(0, 0, width, height);
+
+        setupMatrices();
+        $view = matrices.get();
+
+        if (overlayApp.isOnClient()) {
+            draw.rectangle(0, 0, dimensions.width, dimensions.height, new Vec4(1, 1, 1, 1));
         }
+        await drawAvatars();
+        await drawScreen();
+        timer.reset();
+    }
 
-        if (showGrid) {
-            const vertexBuffer = context.createBuffer();
-            vertexBuffer.bind(() => {
-                vertexBuffer.setData(new Float32Array([
-                    -1, -1, 0,
-                    1, -1, 0,
-                    -1, 1, 0,
-                    -1, 1, 0,
-                    1, -1, 0,
-                    1, 1, 0,
-                ]), 'static');
-            });
-            const uvBuffer = context.createBuffer();
-            uvBuffer.bind(() => {
-                uvBuffer.setData(new Float32Array([
-                    0, 0,
-                    1, 0,
-                    0, 1,
-                    0, 1,
-                    1, 0,
-                    1, 1,
-                ]), 'static');
-            });
+    type ModelState = {
+        type: 'unloaded';
+    } | {
+        type: 'loading';
+    } | {
+        type: 'loaded';
+        cacheKey: string;
+        avatar: Avatar;
+        getConfig(): AvatarConfig | undefined;
+    } | {
+        type: 'failed';
+        reason: {
+            type: 'not_found';
+            id: string;
+        };
+    };
+    type AvatarState = {
+        type: 'unloaded';
+    } | {
+        type: 'loading';
+    } | {
+        type: 'loaded';
+        context: AvatarContext;
+        prevPos: Vec2Like;
+        cacheKey: string;
+        getConfig(): AvatarConfig | undefined;
+    } | {
+        type: 'failed';
+        reason: {
+            type: 'no_user_found';
+            id: string;
+        };
+    } | {
+        type: 'no_avatar';
+    };
 
-            gridProgram.use(() => {
-                const transformUniform = gridProgram.getUniform('u_transform').asMat4();
-                const matrix = matrices.get().inverse();
-                transformUniform.set(matrix);
-                const gridColorUniform = gridProgram.getUniform('u_gridColor').asVec4();
-                gridColorUniform.set(PALETTE_RGB.OUTLINE_1);
-                const gridBackgroundUniform = gridProgram.getUniform('u_backgroundColor').asVec4();
-                gridBackgroundUniform.set(PALETTE_RGB.BACKGROUND_1);
-                const positionAttribute = gridProgram.getAttribute('a_position');
-                positionAttribute.set(vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = gridProgram.getAttribute('a_texcoord');
-                uvAttribute.set(uvBuffer, 2, gl.FLOAT, false, 0, 0);
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
-            });
+    let models: Record<string, ModelState> = {};
 
-            gizmo.rect(matrices.get(),
-                -dimensions.width / 2,
-                -dimensions.height / 2,
-                dimensions.width / 2,
-                dimensions.height / 2,
-                PALETTE_RGB.BACKGROUND_3);
-            gizmo.rectOutline(matrices.get(),
-                -dimensions.width / 2,
-                -dimensions.height / 2,
-                dimensions.width / 2,
-                dimensions.height / 2,
-                PALETTE_RGB.OUTLINE_1);
+    async function loadAvatarModelByConfig(avatar: AvatarConfig): Promise<Avatar> {
+        let parsedData: PNGTuberData;
+        if (avatar.type === 'pngtuber') {
+            const buffer = await overlayApp.getSource(avatar.source);
+            parsedData = JSON.parse(new TextDecoder().decode(buffer));
+            const model = await PNGTuber.load(context, parsedData);
+            return model;
+        } else if (avatar.type === 'png') {
+            const base = await overlayApp.getSource(avatar.base);
+            const active = avatar.active && await overlayApp.getSource(avatar.active);
+            const deafened = avatar.deafened && await overlayApp.getSource(avatar.deafened);
+            const muted = avatar.muted && await overlayApp.getSource(avatar.muted);
+            const model = await PNGAvatar.load(context, {
+                base,
+                active,
+                deafened,
+                muted,
+            });
+            return model;
+        } else {
+            throw new Error(`Unknown avatar type ${JSON.stringify(avatar)}`);
         }
+    }
 
+    function loadAvatarModelById(id: string): ModelState {
+        let state = models[id] ?? { type: 'unloaded' };
+        const avatar = $config.avatars[id];
+        if (!avatar) return {
+            type: 'failed',
+            reason: { type: 'not_found', id },
+        };
+        const cacheKey = `avatar:${id}-${avatar.type}-${avatar.key}`;
+        if (state.type === 'loaded') {
+            if (state.cacheKey !== cacheKey) {
+                state = { type: 'unloaded' };
+            }
+        }
+        if (state.type === 'unloaded') {
+            state = {
+                type: 'loading',
+            };
+            loadAvatarModelByConfig(avatar).then((model) => {
+                models[id] = {
+                    type: 'loaded',
+                    cacheKey,
+                    avatar: model,
+                    getConfig: () => $config.avatars[id],
+                };
+            });
+        }
+        models[id] = state;
+        return state;
+    }
+
+    let avatars: Record<string, AvatarState> = {};
+
+    async function createDefaultAvatar(url: string) {
+        const base = await overlayApp.getSource({ type: 'url', url });
+        const model = await PNGAvatar.load(context, {
+            base,
+        });
+        return model;
+    }
+
+    type AvatarCacheKey<T extends string = string, K extends string = string> = `${T}:${K}`;
+
+    function getAvatarCacheKeyByVoiceState(config: UserConfig, user: VoiceStateUser): AvatarCacheKey {
+        if (!config.avatar) {
+            return user.avatar ? `discord:${user.id}/${user.avatar}` : 'discord:default';
+        }
+        const avatar = $config.avatars[config.avatar];
+        return avatar ? `avatar:${config.avatar}-${avatar.type}-${avatar.key}` : 'avatar:not_found';
+    }
+
+    function loadAvatarByVoiceState(id: string, voiceState: VoiceStateItem): AvatarState {
+        const userConfig = $config.users[id];
+        if (!userConfig) return {
+            type: 'failed',
+            reason: { type: 'no_user_found', id },
+        };
+        let state: AvatarState = avatars[id] ?? { type: 'unloaded' };
+        if (state.type === 'loaded') {
+            const cacheKey = getAvatarCacheKeyByVoiceState(userConfig, voiceState.user);
+            if (state.cacheKey === cacheKey) return state;
+            state = { type: 'unloaded' };
+        }
+        if (state.type === 'unloaded') {
+            if (!userConfig.avatar) {
+                const { user } = voiceState;
+                const avatarUrl = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
+                createDefaultAvatar(avatarUrl).then((avatar) => {
+                    avatars[id] = {
+                        type: 'loaded',
+                        context: avatar.create(),
+                        prevPos: userConfig.position,
+                        cacheKey: getAvatarCacheKeyByVoiceState(userConfig, voiceState.user),
+                        getConfig: () => undefined,
+                    };
+                });
+                return avatars[id] = {
+                    type: 'loading',
+                };
+            }
+            const model = loadAvatarModelById(userConfig.avatar);
+            if (model.type === 'loaded') {
+                return avatars[id] = {
+                    type: 'loaded',
+                    context: model.avatar.create(),
+                    cacheKey: model.cacheKey,
+                    prevPos: userConfig.position,
+                    getConfig: model.getConfig,
+                };
+            }
+        }
+        return state;
+    }
+
+    const AVATAR_FACE_RADIUS = 150;
+    const POSITION_OFFSET = AVATAR_FACE_RADIUS / 2;
+
+    function applyAvatarScale(scale: number) {
+        matrices.model.translate(0, AVATAR_FACE_RADIUS, 0);
+        matrices.model.scale(scale, scale, 0);
+        matrices.model.translate(0, -AVATAR_FACE_RADIUS, 0);
+    }
+
+    function applyAvatarTransform(config: AvatarConfig) {
+        matrices.model.scale(config.scale, config.scale, 0);
+        matrices.model.translate(config.offset[0], config.offset[1], 0);
+        if (config.type === 'pngtuber') {
+            matrices.model.scale(
+                config.flipHorizontal ? -1 : 1,
+                config.flipVertical ? -1 : 1,
+                1,
+            );
+        }
+    }
+
+    const avatarPositions: Record<string, Vec2> = {};
+    function applyUserTransform(id: string, user: UserConfig) {
+        const last = Vec2.from(avatarPositions[id] ?? user.position);
+        const pos = user.position;
+        const deltaTime = timer.getElapsedMS() / 1000;
+        const newPos = last.lerp(pos, 1 - Math.exp(-deltaTime * 16));
+        matrices.model.translate(newPos.x, newPos.y, 0);
+        avatarPositions[id] = newPos;
+    }
+
+    async function drawAvatars() {
         const effects: Effect[] = [
             $config.effects.speech.active && speechEffect,
             $config.effects.shadow.active && shadowEffect,
             $config.effects.backlightEffect.active && backlightEffect,
-            $config.effects.bloom.active && bloomEffect,
+            $config.effects.backlightEffect.active && bloomEffect,
         ].filter((it): it is Effect => !!it);
         const renderOptions: RenderOptions = {
             effects,
         };
 
-        const toRender: { id: string; state: VoiceStateItem; user: UserConfig; avatar: AvatarContext }[] = [];
-        for (const [id, state] of entries) {
-            if (!$config.users[id] || !$config.users[id].show) continue;
-            const user = getUser(id);
-            const avatar = await getAvatarByUser(context, state.user);
-            toRender.push({ id, state, user, avatar });
-        }
-        toRender
-            .sort((a, b) => {
-                const axis = $config.align.direction === 'horizontal' ? 0 : 1;
-                const xDiff = a.user.position[axis] - b.user.position[axis];
-                const isCenter = $config.align.horizontal === 'middle' && $config.align.vertical === 'middle';
-                const dir = $config.align.direction === 'horizontal' ? {
-                    start: -1,
-                    middle: -1,
-                    end: 1,
-                }[$config.align.horizontal] : {
-                    start: -1,
-                    middle: -1,
-                    end: 1,
-                }[$config.align.vertical];
-                return xDiff * (isCenter ? -1 : 1) * dir;
-            })
-            .map(({ id, state, user, avatar }, index) => {
-                const speakState = $speakingState[id];
-                const position = getPosition($config, id, user, toRender.length, toRender.length - index - 1);
-                if (showGrid && (user.position[0] !== position[0] || user.position[1] !== position[1])) {
-                    $config.users[id].position = position;
+        const entries = Object.entries($voiceState).toSorted(comparator(([id]) => {
+            const user = $config.users[id];
+            return user.lastDraggedAt;
+        }));
+        for (const [id, voiceState] of entries) {
+            const user = $config.users[id];
+            if (!voiceState) continue;
+            const speakState = $speakingState[id] ?? {
+                speaking: false,
+                speaking_start: 0,
+                speaking_stop: 0,
+            };
+            const avatar = loadAvatarByVoiceState(id, voiceState);
+            if (avatar.type === 'loaded') {
+                matrices.model.push();
+                applyUserTransform(id, user);
+                const config = avatar.getConfig();
+                matrices.model.translate(0, -POSITION_OFFSET, 0);
+                applyAvatarScale(user.scale);
+                if (config) {
+                    applyAvatarTransform(config);
                 }
-                matrices.push();
-                const flipDirection = getFlipDirection();
-                const renderPosition = getRenderPosition(id, position);
-                matrices.translate(renderPosition.x, renderPosition.y, 0);
-                const scaleOffset = flipDirection.y > 0 ? $config.align.padding.bottom : -$config.align.padding.top;
-                matrices.translate(0, scaleOffset, 0);
-                matrices.scale(user.scale, user.scale, 1);
-                matrices.scale(0.75, 0.75, 1);
-                if ($config.align.scaling) {
-                    const scaleFactor = Math.min(1, 4 / toRender.length);
-                    matrices.scale(scaleFactor, scaleFactor, 1);
-                }
-                matrices.translate(0, -scaleOffset * 2, 0);
-                const avatarConfig = user.avatar && $config.avatars[user.avatar] || null;
-                setupAvatarTransform(matrices, flipDirection, avatarConfig);
-                setupFlipTransform(matrices, flipDirection, avatarConfig);
-                avatar.render(matrices, {
-                    id: state.user.id,
-                    talking: speakState?.speaking || false,
-                    ...state.voice_state,
+                const bounds = avatar.context.bounds();
+                const avatarMatrix = matrices.model.get();
+                avatar.context.render(matrices, {
+                    id,
+                    talking: speakState.speaking,
+                    mute: voiceState.voice_state.mute,
+                    deaf: voiceState.voice_state.deaf,
+                    self_mute: voiceState.voice_state.self_mute,
+                    self_deaf: voiceState.voice_state.self_deaf,
+                    suppress: voiceState.voice_state.suppress,
                     config: user.config,
                 }, renderOptions);
-                matrices.pop();
+                matrices.model.pop();
+                const { min, max } = matrices.model.get()
+                    .inverse()
+                    .transformAABB2(avatarMatrix.transformAABB2(bounds))
+                    .expand({ x: 40, y: 40 });
+                if ($dragState?.type === 'user' && $dragState.id === id) {
+                    draw.roundedRect(min, max, 40, PALETTE_RGB.BACKGROUND_3, 1);
+                    draw.roundedRect(min, max, 40, PALETTE_RGB.ACCENT, 5);
+                }
+                if (!$config.show_name_tags) continue;
+                draw.fontSize = overlayApp.isOnAsset() ? 36 : 26;
+                const offsetScale = overlayApp.isOnAsset() ? 4 : 2;
+                draw.fontWeight = '600';
+                const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
+                for (let index = 0; index < 8; index++) {
+                    const offset = {
+                        x: Math.cos(index / 8 * TAU) * offsetScale,
+                        y: Math.sin(index / 8 * TAU) * offsetScale,
+                    };
+                    await draw.textAlign(
+                        Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }).add(offset),
+                        name,
+                        { x: 0.5, y: 1 },
+                        { x: 0, y: 0, z: 0, w: 1 },
+                    );
+                }
+                await draw.textAlign(
+                    Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }),
+                    name,
+                    { x: 0.5, y: 1 },
+                    { x: 1, y: 1, z: 1, w: 1 },
+                );
+            }
+        }
+    }
+
+    async function drawScreen() {
+        if (!$selectedAvatar) return;
+        const config = $config.avatars[$selectedAvatar];
+        if (!config) return;
+        const avatarStatus = loadAvatarModelById($selectedAvatar);
+        if (avatarStatus.type == 'loaded') {
+            matrices.view.push();
+            const { gl } = context;
+            const { width, height } = gl.canvas;
+            matrices.view.identity();
+            draw.rectangle(0, 0, width, height, PALETTE_RGB.BACKGROUND_1_TRANSPARENT);
+            matrices.view.translate(width / 2, height / 2 + 60, 0);
+            const scaleFactor = 1 / Math.min(1920 / width, 1080 / height);
+            $scaleFactor = 1 / scaleFactor / config.scale;
+            matrices.view.scale(scaleFactor, scaleFactor, 0);
+            matrices.model.push();
+            applyAvatarTransform(config);
+            const avatarContext = avatarStatus.avatar.create();
+            avatarContext.render(matrices, {
+                id: $selectedAvatar,
+                talking: false,
+                mute: false,
+                deaf: false,
+                self_mute: false,
+                self_deaf: false,
+                suppress: false,
+                config: {
+                    pngtuber: {
+                        layer: 0,
+                    },
+                },
+            }, {
+                effects: [],
             });
-
-        await renderHeldAvatar(matrices, context);
-    }
-
-    async function renderHeldAvatar(matrices: MatrixStack, context: GlContext) {
-        const { gl } = context;
-        if ($selectedAvatar && $config.avatars[$selectedAvatar]) {
-            matrices.push();
-            matrices.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
-            matrices.translate(gl.canvas.width / 2, gl.canvas.height / 2, 0);
-            const scaleFactor = getScaleFactor(gl.canvas.width, gl.canvas.height);
-            matrices.scale(scaleFactor, scaleFactor, 1);
-            const faceSize = 400;
-            const avatarConfig = $config.avatars[$selectedAvatar];
-            gizmo.rect(Mat4.IDENTITY, -1, -1, 1, 1, PALETTE_RGB.BACKGROUND_1_TRANSPARENT);
-            gizmo.circle(matrices.get(), 0, 0, faceSize / 2, PALETTE_RGB.BACKGROUND_1_TRANSPARENT, 32);
-            const { avatar } = await getAvatarById(context, $selectedAvatar);
-            const avatarContext = heldAvatarContext || avatar.create();
-            heldAvatarContext = avatarContext;
-            matrices.push();
-            setupAvatarTransform(matrices, Vec2.ONE, avatarConfig);
-            avatarContext.render(matrices, DEFAULT_AVATAR_ACTION, { effects: [] });
-            matrices.pop();
-            renderCross(matrices, 0, 0, 16, 2);
-            gizmo.circleOutline(matrices.get(), 0, 0, faceSize / 2, PALETTE_RGB.BACKGROUND_2_TRANSPARENT, 6, 32);
-            gizmo.circleOutline(matrices.get(), 0, 0, faceSize / 2, PALETTE_RGB.ACCENT, 3, 32);
-            const stroke = 2;
-            gizmo.triangle(matrices.get(), -faceSize / 2 - 100 - stroke, 0, -faceSize / 2 - 80 + stroke, -20 - stroke * 2, -faceSize / 2 - 80 + stroke, 20 + stroke * 2, PALETTE_RGB.BACKGROUND_1);
-            gizmo.rect(matrices.get(), -faceSize / 2 - 80 - stroke, -3 - stroke, -faceSize / 2 - 20 + stroke, 3 + stroke, PALETTE_RGB.BACKGROUND_2);
-            gizmo.triangle(matrices.get(), -faceSize / 2 - 100, 0, -faceSize / 2 - 80, -20, -faceSize / 2 - 80, 20, PALETTE_RGB.ACCENT);
-            gizmo.rect(matrices.get(), -faceSize / 2 - 80, -3, -faceSize / 2 - 20, 3, PALETTE_RGB.ACCENT);
-
-            const groundY = $config.align.vertical === 'end' ?
-                $config.align.padding.bottom * 2 : $config.align.vertical === 'middle' ? 0 : $config.align.padding.top * 2;
-            gizmo.rect(matrices.get(), -200 - stroke, groundY - 3 - stroke, 200 + stroke, groundY + 3 + stroke, PALETTE_RGB.BACKGROUND_2);
-            gizmo.rect(matrices.get(), -200, groundY - 3, 200, groundY + 3, PALETTE_RGB.OUTLINE_2);
-            matrices.pop();
-        } else {
-            heldAvatarContext = null;
-        }
-    }
-
-    function setupFlipTransform(matrices: MatrixStack, flipDirection: Vec2, avatarConfig: AvatarConfig | null) {
-        if (!$config.align.flip) return;
-
-        if ($config.align.direction === 'vertical') {
-            const rotation = {
-                start: -90,
-                middle: 0,
-                end: -90,
-            }[$config.align.horizontal];
-            matrices.rotate(Axis.Z_POS.rotateDeg(avatarConfig?.type === 'pngtuber' ? rotation : -rotation));
-            matrices.scale(1, {
-                start: -1,
-                middle: 1,
-                end: 1,
-            }[$config.align.vertical], 1);
-        }
-        matrices.scale(flipDirection.x, flipDirection.y, 1);
-    }
-
-    function setupAvatarTransform(matrices: MatrixStack, flipDirection: Vec2, avatarConfig: AvatarConfig | null) {
-        if (avatarConfig) {
-            const position = Vec2.fromArray(avatarConfig.offset);
-            matrices.translate(position.x, flipDirection.y * position.y, 0);
-            matrices.scale(avatarConfig.scale, avatarConfig.scale, 1);
-            if (avatarConfig.type === 'pngtuber') {
-                if (avatarConfig.flipHorizontal) {
-                    matrices.scale(-1, 1, 1);
-                }
-                if (avatarConfig.flipVertical) {
-                    matrices.scale(1, -1, 1);
-                }
+            matrices.model.pop();
+            for (const { line, color } of [{ line: 3, color: PALETTE_RGB.BACKGROUND_2_TRANSPARENT }, { line: 2, color: PALETTE_RGB.ACCENT }]) {
+                draw.circle(0, 0, AVATAR_FACE_RADIUS - line * 2, AVATAR_FACE_RADIUS + line * 2, color);
+                draw.rectangle(-AVATAR_FACE_RADIUS - 150, -line, -AVATAR_FACE_RADIUS - 50, line, PALETTE_RGB.ACCENT);
+                const triangleSize = 20;
+                draw.triangle(
+                    { x: -AVATAR_FACE_RADIUS - 150, y: -triangleSize - line },
+                    { x: -AVATAR_FACE_RADIUS - 150 - triangleSize, y: 0 },
+                    { x: -AVATAR_FACE_RADIUS - 150, y: triangleSize + line },
+                    color,
+                );
             }
+            matrices.view.pop();
         }
     }
-
-    function renderCross(matrices: MatrixStack, x: number, y: number, size: number, outline: number) {
-        gizmo.rect(matrices.get(), -size - outline, -outline * 2, size + outline, outline * 2, PALETTE_RGB.BACKGROUND_2);
-        gizmo.rect(matrices.get(), -outline * 2, -size - outline, outline * 2, size + outline, PALETTE_RGB.BACKGROUND_2);
-        gizmo.rect(matrices.get(), -size, -outline, size, outline, PALETTE_RGB.ACCENT);
-        gizmo.rect(matrices.get(), -outline, -size, outline, size, PALETTE_RGB.ACCENT);
-    }
-
-    function worldToScreen(view: Mat4, point: Vec2, width: number, height: number) {
-        const screen = view.transform2(point);
-        const zeroToOne = screen.mul({ x: 0.5, y: -0.5 }).add({ x: 0.5, y: 0.5 });
-        const screenSpace = zeroToOne.mul({ x: width, y: height });
-        return screenSpace;
-    }
-
-    function renderTooltip(context: CanvasRenderingContext2D, text: string, position: Vec2) {
-        const size = context.measureText(text);
-        context.fillStyle = PALETTE_HEX.TOOLTIP_BACKGROUND;
-        const padding = 10;
-        const bgLeft = {
-            center: position.x - size.width / 2,
-            left: position.x,
-            start: position.x,
-            end: position.x - size.width,
-            right: position.x - size.width,
-        }[context.textAlign];
-        context.fillRect(bgLeft - padding, position.y - padding, size.width + padding * 2, 12 + padding);
-        context.fillStyle = PALETTE_HEX.TOOLTIP_TEXT;
-        context.fillText(text, position.x, position.y + 2);
-    }
-
-    async function render2D(context: CanvasRenderingContext2D) {
-        if ($selectedAvatar) return;
-        renderNametags(context);
-        if (showGrid) {
-            if ($config.align.auto) {
-                renderAlignHint(context);
-            } else {
-                renderAlignHintAuto(context);
-            }
-            renderHideAreaHint(context);
-        }
-        context.globalAlpha = 1;
-        if ($isDraggingFinished) {
-            $isDraggingFinished = false;
-            $dragPosition = null;
-        }
-    }
-
-    function renderAlignHint(context: CanvasRenderingContext2D) {
-        if (!$dragPosition) return;
-        const matrices = new MatrixStack();
-        setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
-        const view = matrices.get();
-        const worldBounds = AABB2.from({
-            min: { x: -dimensions.width / 2, y: -dimensions.height / 2 },
-            max: { x: dimensions.width / 2, y: dimensions.height / 2 },
-        });
-        const screenBounds = AABB2.from({
-            min: worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
-            max: worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
-        });
-        const visibleBounds = AABB2.from({
-            min: { x: 60, y: dimensions.margin.top },
-            max: { x: context.canvas.width - dimensions.margin.right, y: context.canvas.height - dimensions.margin.bottom },
-        });
-        const a = 20;
-        const c = 100;
-        const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
-        const color = PALETTE_HEX.OUTLINE_2;
-        const directions: { origin: Vec2; direction: Vec2; name: string }[] = [
-            { origin: bounds.min, direction: new Vec2(-1, -1), name: '左上' },
-            { origin: new Vec2(bounds.min.x, bounds.max.y), direction: new Vec2(-1, 1), name: '左下' },
-            { origin: bounds.max, direction: new Vec2(1, 1), name: '右下' },
-            { origin: new Vec2(bounds.max.x, bounds.min.y), direction: new Vec2(1, -1), name: '右上' },
-        ];
-        for (const { origin, direction, name } of directions) {
-            const dirFromCenter = bounds.center().sub($dragPosition).normalize();
-            const dotFromCenter = dirFromCenter.dot(direction);
-            const offset = origin.sub($dragPosition).normalize();
-            const offsetRotatedToDirection = offset.mul(direction.scale(-1));
-            const dot = offsetRotatedToDirection.dot(Vec2.ONE);
-            const inDirection = dot > -1;
-            const left = new Vec2(-direction.y, direction.x);
-            const dir = offsetRotatedToDirection.x < offsetRotatedToDirection.y ? 'horizontal' : 'vertical';
-            context.globalAlpha = inDirection && dotFromCenter <= -1 ? 1 : 0.3;
-            const b = 4;
-            context.fillStyle = dir === 'vertical' && inDirection && dotFromCenter <= -1 ? PALETTE_HEX.ACCENT : color;
-            context.fillRect(origin.x - b / 2, origin.y - b * direction.y, b, -c * direction.y);
-            const verticalStartX = origin.x - b / 2 + b - 1.5;
-            const verticalStartY = origin.y - b * direction.y - (c + 10) * direction.y;
-
-            context.beginPath();
-            context.moveTo(verticalStartX, verticalStartY);
-            context.lineTo(verticalStartX + 10 * left.x, verticalStartY + 10 * direction.y);
-            context.lineTo(verticalStartX - 10 * left.x, verticalStartY + 10 * direction.y);
-            context.fill();
-            context.closePath();
-            context.fillStyle = dir === 'horizontal' && inDirection && dotFromCenter <= -1 ? PALETTE_HEX.ACCENT : color;
-            context.fillRect(origin.x - b * direction.x, origin.y - b / 2, -c * direction.x, b);
-            const horizontalStartX = origin.x - b * direction.x - (c + 10) * direction.x;
-            const horizontalStartY = origin.y - b / 2 + b - 1.5;
-            context.beginPath();
-            context.moveTo(horizontalStartX, horizontalStartY);
-            context.lineTo(horizontalStartX + 10 * direction.x, horizontalStartY + 10 * left.y);
-            context.lineTo(horizontalStartX + 10 * direction.x, horizontalStartY - 10 * left.y);
-            context.fill();
-            context.closePath();
-            context.globalAlpha = 1;
-            if (dotFromCenter > -1) continue;
-            if (!inDirection) continue;
-            context.fillStyle = PALETTE_HEX.ACCENT;
-            context.font = 'bold 12px "Noto Sans JP"';
-            context.textAlign = direction.x === 0 ? 'center' : direction.x > 0 ? 'end' : 'start';
-            context.textBaseline = 'middle';
-            const text = `${name} から ${dir === 'vertical' ? '縦' : '横'} に揃える`;
-            renderTooltip(context, text, origin.add(Vec2.UP.scale((direction.y || -1) * 20)));
-            if (!$isDraggingFinished) continue;
-            $config.align.horizontal = direction.x > 0 ? 'end' : 'start';
-            $config.align.vertical = direction.y > 0 ? 'end' : 'start';
-            $config.align.direction = dir;
-            $dragPosition = null;
-            return;
-        }
-    }
-
-    function renderAlignHintAuto(context: CanvasRenderingContext2D) {
-        if (!$dragPosition) return;
-        const matrices = new MatrixStack();
-        setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
-        const view = matrices.get();
-        const worldBounds = AABB2.from({
-            min: { x: -dimensions.width / 2, y: -dimensions.height / 2 },
-            max: { x: dimensions.width / 2, y: dimensions.height / 2 },
-        });
-        const screenBounds = AABB2.from({
-            min: worldToScreen(view, worldBounds.min, context.canvas.width, context.canvas.height),
-            max: worldToScreen(view, worldBounds.max, context.canvas.width, context.canvas.height),
-        });
-        const visibleBounds = AABB2.from({
-            min: { x: 60, y: dimensions.margin.top },
-            max: { x: context.canvas.width - dimensions.margin.right, y: context.canvas.height - dimensions.margin.bottom },
-        });
-        const a = 20;
-        const bounds = screenBounds.overlap(visibleBounds).expand(Vec2.ONE.scale(a + 10));
-        const center = bounds.center();
-        const directions = [
-            { origin: new Vec2(center.x, bounds.min.y), direction: Vec2.DOWN, name: '上' },
-            { origin: new Vec2(center.x, bounds.max.y), direction: Vec2.UP, name: '下' },
-            { origin: new Vec2(bounds.min.x, center.y), direction: Vec2.LEFT, name: '左' },
-            { origin: new Vec2(bounds.max.x, center.y), direction: Vec2.RIGHT, name: '右' },
-        ];
-        for (const { origin, direction, name } of directions) {
-            const offset = origin.sub($dragPosition).normalize();
-            const inDirection = offset.dot(direction) < 0;
-            const directionLeft = direction.turnLeft();
-            const lineStart = origin.add(directionLeft.scale(10));
-            const lineEnd = origin.add(directionLeft.scale(-10));
-            context.strokeStyle = inDirection ? PALETTE_HEX.ACCENT : PALETTE_HEX.OUTLINE_1;
-            context.beginPath();
-            context.moveTo(lineStart.x, lineStart.y);
-            context.lineTo(lineEnd.x, lineEnd.y);
-            context.moveTo(origin.x - direction.x * 10, origin.y - direction.y * 10);
-            context.lineTo(origin.x - direction.x * 20, origin.y - direction.y * 20);
-            context.stroke();
-            context.closePath();
-            if (!inDirection) continue;
-
-            context.fillStyle = PALETTE_HEX.ACCENT;
-            context.font = 'bold 14px "Noto Sans JP"';
-            context.textAlign = 'center';
-            context.textBaseline = 'middle';
-            const text = `${name} に揃える`;
-            renderTooltip(context, text, origin.add(Vec2.UP.scale((direction.y || -1) * 20)));
-            if (!$isDraggingFinished) continue;
-            $config.align.horizontal = direction.x === 0 ? 'middle' : direction.x > 0 ? 'end' : 'start';
-            $config.align.vertical = direction.y === 0 ? 'middle' : direction.y > 0 ? 'end' : 'start';
-            $config.align.direction = direction.y === 0 ? 'vertical' : 'horizontal';
-            $dragPosition = null;
-            return;
-        }
-    }
-
-    function renderHideAreaHint(context: CanvasRenderingContext2D) {
-        const { width, height } = context.canvas;
-        const margin = 10;
-        const hideAreaBounds = new AABB2(
-            new Vec2(width - 240 + margin, margin),
-            new Vec2(width - margin, height - margin),
-        );
-        const hideAreaCenter = hideAreaBounds.center();
-        const isInHideArea = $dragPosition && hideAreaBounds.contains($dragPosition);
-        const hasHideUser = Object.keys($speakingState).some(id => !$config.users[id]?.show);
-        context.globalAlpha = hasHideUser || $dragPosition ? 1 : 0.6;
-        context.fillStyle = $dragPosition ? PALETTE_HEX.BACKGROUND_2 : PALETTE_HEX.BACKGROUND_2_TRANSPARENT;
-        context.fillRect(width - 240, margin, 240 - margin, height - margin * 2);
-        if ($dragUser) {
-            context.strokeStyle = isInHideArea ? PALETTE_HEX.ACCENT : PALETTE_HEX.OUTLINE_1;
-            const offset = 4;
-            context.lineWidth = 2;
-            context.strokeRect(width - 240 + offset, margin + offset, 240 - margin - offset * 2, height - margin * 2 - offset * 2);
-        }
-        if ($dragUser) {
-            context.fillStyle = PALETTE_HEX.ACCENT;
-            context.strokeStyle = 'white';
-            context.lineWidth = 2;
-            context.font = 'bold 14px "Noto Sans JP"';
-            context.textAlign = 'center';
-            context.textBaseline = 'middle';
-            context.fillText('ここにドラッグして非表示', hideAreaCenter.x, hideAreaCenter.y);
-        }
-        context.globalAlpha = 1;
-    }
-
-    function renderNametags(context: CanvasRenderingContext2D) {
-        if (!$config.show_name_tags) return;
-        const matrices = new MatrixStack();
-        setupViewMatrix(matrices, context.canvas.width, context.canvas.height);
-        const view = matrices.get();
-        const entries = Object.entries($voiceState);
-        const scaleFactor = getScaleFactor(context.canvas.width, context.canvas.height);
-        for (const [id, state] of entries) {
-            const user = getUser(id);
-            if (!user.show) {
-                continue;
-            }
-            const position = lastPositions.get(id) || new Vec2(0, 0);
-            const renderPosition = view.transform2(position);
-            const fontSize = 28 * scaleFactor;
-            const offset = $config.align.vertical === 'start' ? -44 : 74 * scaleFactor;
-            context.font = `bold ${fontSize}px "Noto Sans JP"`;
-            context.fillStyle = 'white';
-            context.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-            context.lineWidth = 6 * scaleFactor;
-            context.lineJoin = 'round';
-            context.textAlign = 'center';
-            context.textBaseline = 'top';
-            const size = context.measureText(state.nick);
-            const maxWidth = 200 * scaleFactor;
-            const scale = Math.min(1, maxWidth / size.width);
-            context.font = `bold ${fontSize * scale}px "Noto Sans JP"`;
-            context.strokeText(
-                state.nick,
-                renderPosition.x * 0.5 * context.canvas.width + context.canvas.width / 2,
-                context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset,
-            );
-            context.fillText(
-                state.nick,
-                renderPosition.x * 0.5 * context.canvas.width + context.canvas.width / 2,
-                context.canvas.height / 2 - renderPosition.y * 0.5 * context.canvas.height + offset,
-            );
-        }
-    }
-
-    let heldAvatarContext: AvatarContext | null = null;
-    const lastPositions = new Map<string, Vec2>();
-
-    function getScaleFactor(width: number, height: number): number {
-        const MIN_SCALE_FACTOR = 1 / 3;
-        if (showGrid) {
-            if ($config.align.auto) {
-                const widthScale = (width - (dimensions.margin.left + dimensions.margin.right)) / dimensions.width;
-                const heightScale = (height - (dimensions.margin.top + dimensions.margin.bottom)) / dimensions.height;
-                return Math.max(MIN_SCALE_FACTOR, Math.min(widthScale, heightScale));
-            }
-            const { margin } = dimensions;
-            return Math.max(MIN_SCALE_FACTOR, Math.min(
-                (width - (margin.left + margin.right) / 2) / dimensions.width,
-                (height - (margin.top + margin.bottom) / 2) / dimensions.height,
-            ));
-        }
-        return 1;
-    }
-
-    function setupViewMatrix(matrices: MatrixStack, width: number, height: number) {
-        matrices.orthographic(0, width, height, 0, -1, 1);
-        if (!showGrid) {
-            matrices.translate(width / 2, height / 2, 0);
-            return;
-        }
-        const { width: w, height: h, margin } = dimensions;
-        const align: {
-            horizontal: 'start' | 'middle' | 'end';
-            vertical: 'start' | 'middle' | 'end';
-        } = $config.align.auto ? $config.align : {
-            horizontal: 'middle',
-            vertical: 'middle',
-        };
-        const offset = new Vec2(
-            {
-                start: w / 2 + margin.left,
-                middle: width / 2,
-                end: width - w / 2 - margin.right,
-            }[align.horizontal],
-            {
-                start: h / 2 + h / 4 + margin.top,
-                middle: height / 2,
-                end: height - h / 2 - h / 4 - margin.bottom,
-            }[align.vertical],
-        );
-        const scaleOrigin = new Vec2(
-            {
-                start: margin.left,
-                middle: width / 2,
-                end: width - margin.right,
-            }[align.horizontal],
-            {
-                start: Math.max(margin.top, height / 2 - h / 4),
-                middle: height / 2,
-                end: Math.min(height - margin.bottom, height / 2 + h / 4),
-            }[align.vertical],
-        );
-        const scaleFactor = getScaleFactor(width, height);
-        matrices.translate(scaleOrigin.x, scaleOrigin.y, 0);
-        matrices.scale(scaleFactor, scaleFactor, 1);
-        matrices.translate(-scaleOrigin.x, -scaleOrigin.y, 0);
-        matrices.translate(offset.x, offset.y, 0);
-    }
-
-    function getPosition(config: Config, id: string, user: UserConfig, length: number, index: number): [number, number] {
-        if (!config.align.auto || $dragUser === id) {
-            return user.position;
-        }
-        const { align: { horizontal, vertical, padding, spacing, scaling, direction } } = config;
-        const bounds = AABB2.from({
-            min: new Vec2(-dimensions.width / 2, -dimensions.height / 2).add({ x: padding.left, y: padding.top }),
-            max: new Vec2(dimensions.width / 2, dimensions.height / 2).add({ x: -padding.right, y: -padding.bottom }),
-        });
-        const ALIGN = {
-            start: 0,
-            middle: 0.5,
-            end: 1,
-        };
-        const uv = new Vec2(
-            ALIGN[horizontal],
-            ALIGN[vertical],
-        );
-        const start = bounds.at(uv);
-        const center = horizontal == 'middle' && vertical == 'middle';
-        const offsetDirection = new Vec2(
-            direction === 'horizontal' ? 1 : 0,
-            direction === 'vertical' ? 1 : 0,
-        ).mul(center ? Vec2.ONE : {
-            x: {
-                start: 1,
-                middle: 1,
-                end: -1,
-            }[horizontal],
-            y: {
-                start: 1,
-                middle: 1,
-                end: -1,
-            }[vertical],
-        });
-        const scale = scaling ? Math.min(1, 4 / length) : 1;
-        const offset = offsetDirection.scale(spacing * scale);
-        const position = start
-            .add(offset.scale(horizontal === 'middle' || vertical === 'middle' ? index - (length - 1) / 2 : index))
-            .toArray();
-        return position;
-    }
-
-    function getRenderPosition(id: string, position: [number, number]) {
-        const last = lastPositions.get(id) || new Vec2(position[0], position[1]);
-        const renderPosition = new Vec2(position[0], position[1]).lerp(last, 0.7);
-        lastPositions.set(id, renderPosition);
-        return renderPosition;
-    }
-
-    function getFlipDirection(): Vec2 {
-        const { align: { horizontal, vertical } } = $config;
-        const flipHorizontal = horizontal === 'start';
-        const flipVertical = vertical === 'start';
-        return new Vec2(
-            flipHorizontal ? -1 : 1,
-            flipVertical ? -1 : 1,
-        );
-    }
-
-    const avatarCache = new Map<string, { key: string; avatar: Avatar }>();
-    const contextCache = new Map<string, { id: string; key: string; avatar: AvatarContext }>();
-
-    async function getAvatarById(gl: GlContext, avatarId: string): Promise<{ key: string; avatar: Avatar }> {
-        const avatarConfig = $config.avatars[avatarId];
-        if (!avatarConfig) {
-            throw new Error(`Avatar not found: ${avatarId}`);
-        }
-        const existing = avatarCache.get(avatarId);
-        if (existing && existing.key === avatarConfig.key) {
-            return existing;
-        }
-        let parsedData: PNGTuberData;
-        const avatarType = avatarConfig.type;
-        if (avatarType === 'pngtuber') {
-            try {
-                const buffer = await overlayApp.getSource(avatarConfig.source);
-                parsedData = JSON.parse(new TextDecoder().decode(buffer));
-                const avatar = await PNGTuber.load(gl, parsedData);
-                avatarCache.set(avatarId, { key: avatarConfig.key, avatar });
-                return { key: avatarConfig.key, avatar };
-            } catch (e) {
-                console.error(e);
-                throw new Error(`Failed to load avatar: ${e}`);
-            }
-        } else if (avatarType === 'png') {
-            try {
-                const base = await overlayApp.getSource(avatarConfig.base);
-                const active = avatarConfig.active && await overlayApp.getSource(avatarConfig.active);
-                const deafened = avatarConfig.deafened && await overlayApp.getSource(avatarConfig.deafened);
-                const muted = avatarConfig.muted && await overlayApp.getSource(avatarConfig.muted);
-                const avatar = await PNGAvatar.load(gl, {
-                    base,
-                    active,
-                    deafened,
-                    muted,
-                });
-                avatarCache.set(avatarId, { key: avatarConfig.key, avatar });
-                return { key: avatarConfig.key, avatar };
-            } catch (e) {
-                console.error(e);
-                throw new Error(`Failed to load avatar: ${e}`);
-            }
-        } else {
-            throw new Error(`Unknown avatar type: ${avatarType}`);
-        }
-    }
-
-    async function getReactiveAvatar(gl: GlContext, avatarId: string, userId: string): Promise<Avatar | null> {
-        if (!$config.user_id) {
-            throw new Error('User ID is not set');
-        }
-
-        async function proxy(url: string) {
-            try {
-                const proxyUrl = overlayApp.omu.assets.proxy(url);
-                return await window.fetch(proxyUrl);
-            } catch (e) {
-                console.error(e);
-                throw e;
-            }
-        }
-
-        const api = new ReactiveAPI($config.user_id, (url: string) => proxy(url));
-        const user = await api.user(userId);
-        const model = user.activeModelID !== 'always' && await api.model(user.activeModelID);
-        const override = await api.override(userId);
-        const modelData = {
-            ...model,
-            ...override,
-        };
-        if (!modelData.inactive) {
-            return null;
-        }
-        $config.avatars[avatarId] = {
-            type: 'png',
-            key: '',
-            offset: [0, 0],
-            scale: 1,
-            base: {
-                type: 'url',
-                url: modelData.inactive,
-            },
-            active: modelData.speaking ? {
-                type: 'url',
-                url: modelData.speaking,
-            } : undefined,
-            deafened: modelData.deafened ? {
-                type: 'url',
-                url: modelData.deafened,
-            } : undefined,
-            muted: modelData.muted ? {
-                type: 'url',
-                url: modelData.muted,
-            } : undefined,
-        };
-        const base = await proxy(modelData.inactive).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const active = await proxy(modelData.speaking).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const deafened = await proxy(modelData.deafened).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const muted = await proxy(modelData.muted).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const avatar = await PNGAvatar.load(gl, {
-            base,
-            active,
-            deafened,
-            muted,
-        });
-        return avatar;
-    }
-
-    async function createDefaultAvatar(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
-        const url = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
-        const source = await window.fetch(url).then(res => res.arrayBuffer()).then(buffer => new Uint8Array(buffer));
-        const avatar = await PNGAvatar.load(gl, {
-            base: source,
-        });
-        return avatar.create();
-    }
-
-    async function getAvatarByUser(gl: GlContext, user: VoiceStateUser): Promise<AvatarContext> {
-        const existing = contextCache.get(user.id);
-        const userConfig = getUser(user.id);
-        const avatarConfig = userConfig.avatar && $config.avatars[userConfig.avatar];
-        if (existing && existing.id === userConfig.avatar && avatarConfig && existing.key === avatarConfig.key) {
-            return existing.avatar;
-        }
-        if (existing && existing.id === 'default' && !userConfig.avatar) {
-            return existing.avatar;
-        }
-        if (!userConfig.avatar) {
-            try {
-                const context = await createDefaultAvatar(gl, user);
-                contextCache.set(user.id, { id: 'default', key: '', avatar: context });
-                return context;
-            } catch (e) {
-                console.error(e);
-                const context = await createDefaultAvatar(gl, user);
-                contextCache.set(user.id, { id: 'default', key: '', avatar: context });
-                return context;
-            }
-        }
-        message = {
-            type: 'loading',
-            text: `${user.username}のアバターを読み込み中...`,
-        };
-        try {
-            const { key, avatar } = await getAvatarById(gl, userConfig.avatar);
-            message = null;
-            const context = avatar.create();
-            contextCache.set(user.id, { id: userConfig.avatar, key, avatar: context });
-            return context;
-        } catch (e) {
-            console.error(e);
-            message = {
-                type: 'failed',
-                text: `${user.username}のアバターの読み込みに失敗しました: ${e}`,
-            };
-            setTimeout(() => {
-                message = null;
-            }, 5000);
-        }
-        const context = await createDefaultAvatar(gl, user);
-        contextCache.set(user.id, { id: 'default', key: '', avatar: context });
-        return context;
-    }
-
-    function invalidateAvatarCache(config: Config) {
-        for (const [id, user] of Object.entries(config.users)) {
-            if (!user.avatar) {
-                avatarCache.delete(id);
-            }
-            if (!user.show) {
-                lastPositions.delete(id);
-            }
-        }
-    }
-
-    $: {
-        invalidateAvatarCache($config);
-    }
-
-    function getUser(id: string) {
-        let user = $config.users[id];
-        if (!user) {
-            $config.users[id] = createUserConfig();
-        }
-        return user;
-    }
-
-    $: Object.keys($voiceState).forEach(id => {
-        getUser(id);
-    });
 </script>
 
 <div class="canvas">
-    <Canvas {init} {render} {render2D} {resize} />
+    <Canvas {init} {render} {resize} />
 </div>
 
 <style lang="scss">

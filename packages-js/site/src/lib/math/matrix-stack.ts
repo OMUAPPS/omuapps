@@ -43,7 +43,7 @@ export class MatrixStack {
         pose.pose = Mat4.IDENTITY;
     }
 
-    public orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number): void {
+    public orthographic(left: number, top: number, right: number, bottom: number, near: number, far: number): void {
         const pose = this.stack[this.stack.length - 1];
         pose.pose = Mat4.orthographic(left, right, bottom, top, near, far);
     }

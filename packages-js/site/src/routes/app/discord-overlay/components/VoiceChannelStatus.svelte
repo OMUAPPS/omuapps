@@ -1,10 +1,9 @@
 <script lang="ts">
     import { Spinner, Tooltip } from '@omujs/ui';
-    import type { DiscordOverlayApp } from '../discord-overlay-app.js';
+    import { DiscordOverlayApp } from '../discord-overlay-app.js';
 
-    export let overlayApp: DiscordOverlayApp;
-    export let state: 'wait-for-ready' | 'connecting-vc' | null;
-    const { selectedVoiceChannel } = overlayApp;
+    let state: 'wait-for-ready' | 'connecting-vc' | null = null;
+    const { selectedVoiceChannel } = DiscordOverlayApp.getInstance();
 
     const CHANNEL_TYPE = {
         GUILD_TEXT: 0,

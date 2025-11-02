@@ -253,3 +253,16 @@ export function getSetting<T>(id: IntoId, defaultValue: T): Writable<T> {
         },
     };
 }
+
+export function isElementContains(element: HTMLElement, target: EventTarget | null) {
+    if (!target) return;
+    if (!(target instanceof HTMLElement)) return;
+    let parent: HTMLElement | null = target;
+    while (parent) {
+        if (parent === element) {
+            return true;
+        }
+        parent = parent.parentElement;
+    }
+    return false;
+}

@@ -25,7 +25,9 @@
 <div
     class="container omu-scroll"
     on:scroll={({ currentTarget }) => {
-        $data.scroll = currentTarget.scrollTop / currentTarget.scrollHeight;
+        const imageRect = imageContainer.getBoundingClientRect();
+        const containerRect = currentTarget.getBoundingClientRect();
+        $data.scroll = invLerp(containerRect.top, containerRect.bottom - imageRect.height, imageRect.top);
         if (!$data.pointer) return;
         updatePointer();
     }}
@@ -59,7 +61,9 @@
             </ExternalLink>
         </div>
         {#if $data.message}
-            <MessageActions {api} message={$data.message} />
+            {#key $data.message.id}
+                <MessageActions {api} message={$data.message} />
+            {/key}
         {/if}
     {:else}
         <p>メッセージを選択するとここに表示されます</p>

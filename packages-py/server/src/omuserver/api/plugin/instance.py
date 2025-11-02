@@ -137,37 +137,45 @@ class PluginInstance:
             token = server.security.generate_plugin_token()
             if self.plugin.isolated:
                 stage = "starting isolated"
-                self._start_isolated(server, token)
+                result = self._start_isolated(server, token)
             else:
                 stage = "starting internally"
-                await self._start_internally(server, token)
+                result = await self._start_internally(server, token)
+            if result.is_err is True:
+                logger.warning(f"Plugin start failed: {result.err}")
         except Exception as e:
             logger.opt(exception=e).error(f"Error while {stage} plugin {self.entry.name}")
 
-    async def _start_internally(self, server: Server, token: str):
+    async def _start_internally(self, server: Server, token: str) -> Result[..., str]:
         if self.omu:
-            raise ValueError(f'Plugin "{self.plugin}" already started')
-        if self.plugin.get_client is not None:
-            connection = PluginConnection()
-            self.omu = self.plugin.get_client()
-            if self.omu.app.type != AppType.PLUGIN:
-                raise ValueError(f"Invalid plugin: {self.omu.app} is not a plugin")
-            self.omu.network.set_connection(connection)
-            self.omu.network.set_token_provider(PluginTokenProvider(token))
-            self.omu.set_loop(server.loop)
-            self.omu.loop.create_task(self.omu.start(reconnect=False))
-            session_connection = PluginSessionConnection(connection)
-            session, _ = await Session.from_connection(
-                server,
-                server.packets.packet_mapper,
-                session_connection,
-            )
-            server.loop.create_task(server.sessions.process_new(session))
+            return Err(f'Plugin "{self.entry.key}" already started')
+        if self.plugin.get_client is None:
+            logger.warning(f'Plugin "{self.entry.key}" has no client')
+            return Ok(...)
+        connection = PluginConnection()
+        self.omu = self.plugin.get_client()
+        if self.omu.app.type != AppType.PLUGIN:
+            return Err(f"Invalid plugin: {self.omu.app} is not a plugin")
+        self.omu.network.set_connection(connection)
+        self.omu.network.set_token_provider(PluginTokenProvider(token))
+        self.omu.set_loop(server.loop)
+        self.omu.loop.create_task(self.omu.start(reconnect=False))
+        session_connection = PluginSessionConnection(connection)
+        session_result = await Session.from_connection(
+            server,
+            server.packets.packet_mapper,
+            session_connection,
+        )
+        if session_result.is_err is True:
+            return Err(f"Creating internal plugin session failed for {self.entry.key}: {session_result.err}")
+        session, _ = session_result.value
+        server.loop.create_task(server.sessions.process_new(session))
+        return Ok(...)
 
-    def _start_isolated(self, server: Server, token: str):
+    def _start_isolated(self, server: Server, token: str) -> Result[..., str]:
         pid = os.getpid()
         if self.process:
-            raise ValueError(f'Plugin "{self.plugin}" already started')
+            return Err(f'Plugin "{self.plugin}" already started')
         process = Process(
             target=run_plugin_isolated,
             args=(
@@ -181,6 +189,7 @@ class PluginInstance:
         )
         process.start()
         self.process = process
+        return Ok(...)
 
 
 def run_plugin_isolated(

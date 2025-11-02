@@ -1,8 +1,10 @@
 import { makeRegistryWritable } from '$lib/helper.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { VERSION } from '$lib/version.js';
-import { Identifier, type Omu } from '@omujs/omu';
+import { Identifier, Serializer, type Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/api/endpoint';
 import { RegistryType } from '@omujs/omu/api/registry';
+import { BROWSER } from 'esm-env';
 import type { Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 import { DEFAULT_SHADOW_EFFECT_OPTIONS } from './effects/shadow.js';
@@ -159,15 +161,15 @@ export type UserAvatarConfig = {
     };
 };
 export type UserConfig = {
-    show: boolean;
-    position: [number, number];
+    lastDraggedAt: number;
+    position: Vec2Like;
     scale: number;
     avatar: string | null;
     config: UserAvatarConfig;
 };
 export const DEFAULT_USER_CONFIG: UserConfig = {
-    show: true,
-    position: [0, 0],
+    lastDraggedAt: 0,
+    position: Vec2.ZERO,
     scale: 1,
     avatar: null,
     config: {
@@ -202,6 +204,10 @@ export type PngAvatarConfig = {
 
 export type AvatarConfig = PngTuberAvatarConfig | PngAvatarConfig;
 
+export type GameObject = {
+    type: 'image';
+};
+
 export type Config = {
     version?: number;
     users: {
@@ -216,34 +222,12 @@ export type Config = {
         backlightEffect: {
             active: boolean;
         };
-        bloom: {
-            active: boolean;
-        };
     };
     user_id: string | null;
-    guild_id: string | null;
-    channel_id: string | null;
-    zoom_level: number;
-    camera_position: [number, number];
     show_name_tags: boolean;
-    align: {
-        horizontal: Align;
-        vertical: Align;
-        direction: 'horizontal' | 'vertical';
-        auto: boolean;
-        flip: boolean;
-        padding: {
-            left: number;
-            top: number;
-            right: number;
-            bottom: number;
-        };
-        spacing: number;
-        scaling: boolean;
-    };
 };
-const DEFAULT_CONFIG: Config = {
-    version: 7,
+export const DEFAULT_CONFIG: Config = {
+    version: 10,
     users: {},
     avatars: {},
     effects: {
@@ -252,44 +236,34 @@ const DEFAULT_CONFIG: Config = {
         backlightEffect: {
             active: false,
         },
-        bloom: {
-            active: false,
-        },
     },
     user_id: null,
-    guild_id: null,
-    channel_id: null,
-    zoom_level: 1,
-    camera_position: [0, 0],
     show_name_tags: true,
-    align: {
-        auto: true,
-        horizontal: 'end',
-        vertical: 'end',
-        direction: 'horizontal',
-        flip: true,
-        padding: {
-            left: 150,
-            top: 150,
-            right: 150,
-            bottom: 150,
-        },
-        spacing: 250,
-        scaling: true,
-    },
 };
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
     defaultValue: DEFAULT_CONFIG,
+    serializer: Serializer.transform((config: Config) => {
+        if (!config.version || config.version < 10) {
+            config = DEFAULT_CONFIG;
+        }
+        return config;
+    }),
 });
 
+type AppSide = 'client' | 'asset';
+
 export class DiscordOverlayApp {
-    public readonly voiceState: Writable<Record<string, VoiceStateItem>>;
-    public readonly speakingState: Writable<Record<string, SpeakState>>;
+    private static INSTANCE: DiscordOverlayApp;
+    public readonly voiceState: Writable<Record<string, VoiceStateItem | undefined>>;
+    public readonly speakingState: Writable<Record<string, SpeakState | undefined>>;
     public readonly selectedVoiceChannel: Writable<SelectedVoiceChannel | null>;
     public readonly config: Writable<Config>;
 
-    constructor(public readonly omu: Omu) {
+    private constructor(
+        public readonly omu: Omu,
+        private readonly side: AppSide,
+    ) {
         omu.plugins.require({
             omuplugin_discordrpc: `>=${VERSION}`,
         });
@@ -299,92 +273,33 @@ export class DiscordOverlayApp {
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
     }
 
-    public resetConfig(): void {
-        this.config.set(DEFAULT_CONFIG);
+    public static getInstance(): DiscordOverlayApp {
+        if (!DiscordOverlayApp.INSTANCE) {
+            if (BROWSER) {
+                throw new Error('DiscordOverlayApp not initialized');
+            }
+            return DiscordOverlayApp.INSTANCE;
+        }
+        return DiscordOverlayApp.INSTANCE;
     }
 
-    public migrateConfig(config: Config): Config {
-        if (!config.version || config.version < 1) {
-            config = DEFAULT_CONFIG;
+    public static create(omu: Omu, side: AppSide) {
+        if (DiscordOverlayApp.INSTANCE) {
+            if (BROWSER) {
+                throw new Error('DiscordOverlayApp instance already initialized');
+            }
         }
-        if (config.version === 1) {
-            config = {
-                ...config,
-                version: 2,
-            };
-        }
-        if (config.version === 2) {
-            config = {
-                ...config,
-                version: 3,
-                effects: DEFAULT_CONFIG.effects,
-            };
-        }
-        if (config.version === 3) {
-            config = {
-                ...config,
-                version: 4,
-                align: DEFAULT_CONFIG.align,
-            };
-        }
-        if (config.version === 4) {
-            config = {
-                ...config,
-                version: 5,
-                avatars: DEFAULT_CONFIG.avatars,
-            };
-        }
-        if (config.version === 5) {
-            config = {
-                ...config,
-                version: 6,
-                effects: {
-                    ...config.effects,
-                    speech: DEFAULT_SPEECH_EFFECT_OPTIONS,
-                },
-            };
-        }
-        if (config.version === 6) {
-            config = {
-                ...config,
-                version: 7,
-                show_name_tags: true,
-            };
-        }
-        if (config.version === 7) {
-            config = {
-                ...config,
-                version: 8,
-                align: {
-                    ...config.align,
-                    direction: 'horizontal',
-                },
-            };
-        }
-        if (config.version === 8) {
-            config = {
-                ...config,
-                version: 9,
-                users: Object.fromEntries(Object.entries(config.users).map(([key, user]) => {
-                    return [key, {
-                        ...user,
-                        config: createUserConfig().config,
-                    }];
-                })),
-            };
-        }
-        config = {
-            ...config,
-            version: 9,
-            users: Object.fromEntries(Object.entries(config.users).map(([key, user]) => {
-                return [key, {
-                    ...DEFAULT_USER_CONFIG,
-                    ...user,
-                    config: createUserConfig().config,
-                }];
-            })),
-        };
-        return config;
+        const overlay = new DiscordOverlayApp(omu, side);
+        DiscordOverlayApp.INSTANCE = overlay;
+        return overlay;
+    }
+
+    public isOnAsset() {
+        return this.side === 'asset';
+    }
+
+    public isOnClient() {
+        return this.side === 'client';
     }
 
     public async getSource(source: Source): Promise<Uint8Array> {
@@ -399,6 +314,10 @@ export class DiscordOverlayApp {
             return buffer;
         }
         throw new Error(`Invalid source type: ${type}`);
+    }
+
+    public resetConfig(): void {
+        this.config.set(DEFAULT_CONFIG);
     }
 
     public async getGuilds(user_id: string): Promise<GetGuildsResponseData> {

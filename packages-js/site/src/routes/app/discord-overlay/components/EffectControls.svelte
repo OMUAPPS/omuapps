@@ -99,22 +99,6 @@
         </span>
     </div>
 {/if}
-<span>
-    <button on:click={() => {
-        effects.backlightEffect.active = !effects.backlightEffect.active;
-    }} class:active={effects.backlightEffect.active} class="effect">
-        <i class="ti ti-blur"></i>
-        逆光効果
-    </button>
-</span>
-<span>
-    <button on:click={() => {
-        effects.bloom.active = !effects.bloom.active;
-    }} class:active={effects.bloom.active} class="effect">
-        <i class="ti ti-sun"></i>
-        ブルーム
-    </button>
-</span>
 
 <style lang="scss">
     span {

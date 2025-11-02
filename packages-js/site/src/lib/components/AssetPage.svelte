@@ -50,7 +50,7 @@
                 reason,
             };
         });
-    } else if (!BROWSER) {
+    } else if (BROWSER) {
         state = { type: 'invalid_id' };
     }
 </script>
