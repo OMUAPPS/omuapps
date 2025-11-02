@@ -14,7 +14,7 @@
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
-    const overlayApp = new DiscordOverlayApp(omu);
+    const overlayApp = DiscordOverlayApp.create(omu, 'client');
     setClient(omu);
 
     if (BROWSER) {
@@ -23,6 +23,7 @@
             OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
             OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
+            OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
         omu.sessions.require(PLUGIN_ID);

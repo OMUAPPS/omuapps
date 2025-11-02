@@ -5,7 +5,7 @@
     import { DiscordOverlayApp, DISCORDRPC_PERMISSIONS } from '../discord-overlay-app';
 
     export let omu: Omu;
-    const overlayApp = new DiscordOverlayApp(omu);
+    const overlayApp = DiscordOverlayApp.create(omu, 'asset');
 
     if (BROWSER) {
         omu.permissions.require(

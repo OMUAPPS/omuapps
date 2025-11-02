@@ -1,8 +1,8 @@
 import { GlBuffer, GlContext, GlFramebuffer, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
+import type { Matrices } from '$lib/components/canvas/matrices.js';
 import { BetterMath } from '$lib/math.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
-import { MatrixStack } from '$lib/math/matrix-stack.js';
 import { Node2D } from '$lib/math/node2d.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Timer } from '$lib/timer.js';
@@ -293,7 +293,7 @@ export class PNGTuber implements Avatar {
             showOnTalk: 0,
             showOnBlink: 0,
         };
-        const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
+        const render = (matrices: Matrices, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
         const bounds = () => this.getBoundingBox(context);
         return {
             render,
@@ -392,7 +392,7 @@ export class PNGTuber implements Avatar {
         return new PNGTuber(glContext, layerData);
     }
 
-    public render(matrices: MatrixStack, context: PNGTuberContext, action: AvatarAction, options: RenderOptions): void {
+    public render(matrices: Matrices, context: PNGTuberContext, action: AvatarAction, options: RenderOptions): void {
         const { gl } = this.glContext;
         const time = context.timer.getElapsedMS() / 500;
         context.blinking = action.self_mute || Math.sin(time) > 0.995;
@@ -485,7 +485,7 @@ export class PNGTuber implements Avatar {
         });
     }
 
-    private renderLayer(context: PNGTuberContext, matrices: MatrixStack, sprite: SpriteGroup, pass: number) {
+    private renderLayer(context: PNGTuberContext, matrices: Matrices, sprite: SpriteGroup, pass: number) {
         const { layerData } = sprite;
         if (layerData.showBlink !== 0) {
             if (context.blinking && layerData.showBlink === 1) {

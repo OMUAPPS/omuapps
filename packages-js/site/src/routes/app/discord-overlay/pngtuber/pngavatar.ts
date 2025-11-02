@@ -1,7 +1,9 @@
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlTexture } from '$lib/components/canvas/glcontext.js';
+import type { Matrices } from '$lib/components/canvas/matrices.js';
+import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
-import type { MatrixStack } from '$lib/math/matrix-stack.js';
 import { Vec2 } from '$lib/math/vec2.js';
+import { Timer } from '$lib/timer.js';
 import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
 import { MVP_VERTEX_SHADER, TEXTURE_FRAGMENT_SHADER } from './shaders.js';
 
@@ -42,7 +44,7 @@ function getFileType(source: Uint8Array): string {
 
 async function createImage(source: Uint8Array): Promise<{ width: number; height: number; image: HTMLImageElement }> {
     const type = getFileType(source);
-    const blob = new Blob([source], { type });
+    const blob = new Blob([source as ArrayBufferView<ArrayBuffer>], { type });
     const url = URL.createObjectURL(blob);
     const image = document.createElement('img');
     image.src = url;
@@ -182,12 +184,12 @@ export class PNGAvatar implements Avatar {
         const vertices = context.createBuffer();
         vertices.bind(() => {
             vertices.setData(new Float32Array([
-                0, 0, 0,
-                1, 0, 0,
-                1, 1, 0,
-                0, 0, 0,
-                1, 1, 0,
-                0, 1, 0,
+                0, -0.5, 0,
+                1, -0.5, 0,
+                1, 0.5, 0,
+                0, -0.5, 0,
+                1, 0.5, 0,
+                0, 0.5, 0,
             ]), 'static');
         });
         const texCoords = context.createBuffer();
@@ -244,21 +246,25 @@ export class PNGAvatar implements Avatar {
     public create(): AvatarContext {
         const context = {
             y: 0,
+            tickTimer: new Timer(),
             bounceVelocity: 0,
             bounceTick: 0,
         };
 
-        const render = (matrices: MatrixStack, action: AvatarAction, options: RenderOptions) => {
+        const render = (matrices: Matrices, action: AvatarAction, options: RenderOptions) => {
             const { gl } = this.glContext;
 
-            if (action.talking && context.y >= 0 && context.bounceVelocity === 0) {
-                context.bounceVelocity = 250;
-                context.bounceTick += 1;
-            }
-            context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
-            context.y = Math.min(0, context.y - context.bounceVelocity * 0.0166);
-            if (!action.talking && context.y >= -1) {
-                context.bounceVelocity = 0;
+            const ticks = context.tickTimer.tick(1000 / 60);
+            for (let tick = 0; tick < ticks; tick++) {
+                if (action.talking && context.y >= 0 && context.bounceVelocity === 0) {
+                    context.bounceVelocity = 250;
+                    context.bounceTick += 1;
+                }
+                context.bounceVelocity = context.bounceVelocity - 1000 * 0.0166;
+                context.y = Math.min(0, context.y - context.bounceVelocity * 0.0166);
+                if (!action.talking && context.y >= -1) {
+                    context.bounceVelocity = 0;
+                }
             }
 
             this.frameBufferTexture.use(() => {
@@ -344,10 +350,10 @@ export class PNGAvatar implements Avatar {
         };
         const bounds = () => {
             const { width, height } = this.base.source;
-            return {
-                min: new Vec2(-126 * 2.5 / 2, -126 * 2.5 / 2 * height / width),
-                max: new Vec2(126 * 2.5 / 2, 126 * 2.5 / 2 * height / width),
-            };
+            return new AABB2(
+                new Vec2(-126 * 2.5 / 2, 0 * height / width),
+                new Vec2(126 * 2.5 / 2, 126 * 2.5 * height / width),
+            );
         };
         return {
             render,

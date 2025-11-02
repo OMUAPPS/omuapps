@@ -2,6 +2,7 @@
     import type { App } from '@omujs/omu';
     import { Button, Localized, Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
+    import { onMount } from 'svelte';
     import { omu } from '../client.js';
     import { appTable } from './apps.js';
     import { REGISTRIES } from './category.js';
@@ -24,6 +25,12 @@
         alreadyAdded = await appTable.has(app.id.key());
         console.log(`App ${app.id.key()} already added: ${alreadyAdded}`);
     });
+
+    onMount(() => appTable.event.remove.listen((items) => {
+        if (items.values().some((app) => app.id.isEqual(app.id))) {
+            alreadyAdded = false;
+        }
+    }));
 
     $: tags =
         app.metadata?.tags?.map((tag) => {

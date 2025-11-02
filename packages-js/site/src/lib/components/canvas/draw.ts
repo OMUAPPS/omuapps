@@ -101,7 +101,7 @@ out vec4 fragColor;
 
 void main() {
     vec2 offset = vec2(u_outlineWidth) / u_resolution;
-    float alphaLeft = texture(u_texture, v_texcoord + vec2(-offset.x, 0.0)).a;
+    float alphaLeft = texture(u_texture, v_texcoord + vec2(-offset.y, 0.0)).a;
     float alphaRight = texture(u_texture, v_texcoord + vec2(offset.x, 0.0)).a;
     float alphaTop = texture(u_texture, v_texcoord + vec2(0.0, offset.y)).a;
     float alphaBottom = texture(u_texture, v_texcoord + vec2(0.0, -offset.y)).a;
@@ -366,6 +366,65 @@ void main() {
 }
 `;
 
+const ROUNDED_RECT_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec4 u_color;
+uniform vec2 u_resolution;
+uniform float u_width;
+uniform float u_radius;
+uniform float u_smoothness;
+uniform sampler2D u_texture;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+#define linearstep(edge0, edge1, x) min(max(((x) - (edge0)) / ((edge1) - (edge0)), 0.0), 1.0)
+
+float roundedRect(vec2 start, vec2 end, vec2 point, float roundness) {
+    float yDiff = max(start.y - point.y + roundness, point.y - end.y + roundness);
+    float xDiff = max(start.x - point.x + roundness, point.x - end.x + roundness);
+    return linearstep(u_smoothness, -u_smoothness, (length(vec2(max(xDiff, 0.0), max(yDiff, 0.0))) - roundness));
+}
+
+void main() {
+    vec2 fragCoord = v_texcoord * u_resolution;
+    float inner = 1.0 - roundedRect(vec2(0.0) + u_width, u_resolution - u_width, fragCoord, u_radius - u_width);
+    float outer = roundedRect(vec2(0.0), u_resolution, fragCoord, u_radius);
+    float alpha = outer * inner;
+    fragColor = vec4(u_color.rgb, u_color.a * alpha);
+}`;
+
+const ROUNDED_RECT_TEXTURE_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec4 u_color;
+uniform vec2 u_resolution;
+uniform float u_radius;
+uniform float u_smoothness;
+uniform sampler2D u_texture;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+#define linearstep(edge0, edge1, x) min(max(((x) - (edge0)) / ((edge1) - (edge0)), 0.0), 1.0)
+
+float roundedRect(vec2 start, vec2 end, vec2 point, float roundness) {
+    float yDiff = max(start.y - point.y + roundness, point.y - end.y + roundness);
+    float xDiff = max(start.x - point.x + roundness, point.x - end.x + roundness);
+    return length(vec2(max(xDiff, 0.0), max(yDiff, 0.0))) - roundness;
+}
+
+void main() {
+    vec2 fragCoord = v_texcoord * u_resolution;
+    float dist = roundedRect(vec2(0.0), u_resolution, fragCoord, u_radius);
+    float alpha = linearstep(u_smoothness, -u_smoothness, dist);
+    vec4 color = texture(u_texture, v_texcoord);
+    fragColor = vec4(color.rgb * u_color.rgb, color.a * u_color.a * alpha);
+}`;
+
 type TextTexture = {
     texture: GlTexture;
     width: number;
@@ -383,6 +442,8 @@ export class Draw {
     private readonly bezierProgram: GlProgram;
     private readonly circleProgram: GlProgram;
     private readonly circleTextureProgram: GlProgram;
+    private readonly roundedRectProgram: GlProgram;
+    private readonly roundedRectTextureProgram: GlProgram;
     public readonly vertexBuffer: GlBuffer;
     public readonly texcoordBuffer: GlBuffer;
     private readonly frameBuffer: GlFramebuffer;
@@ -409,6 +470,8 @@ export class Draw {
         this.bezierProgram = this.createProgram(QUADRATIC_BEZIER_FRAGMENT_SHADER);
         this.circleProgram = this.createProgram(CIRCLE_FRAGMENT_SHADER);
         this.circleTextureProgram = this.createProgram(CIRCLE_TEXTURE_FRAGMENT_SHADER);
+        this.roundedRectProgram = this.createProgram(ROUNDED_RECT_FRAGMENT_SHADER);
+        this.roundedRectTextureProgram = this.createProgram(ROUNDED_RECT_TEXTURE_FRAGMENT_SHADER);
         this.vertexBuffer = glContext.createBuffer();
         this.texcoordBuffer = glContext.createBuffer();
         this.frameBuffer = glContext.createFramebuffer();
@@ -510,7 +573,7 @@ export class Draw {
         return true;
     }
 
-    public async textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color: Vec4): Promise<boolean> {
+    public async textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color?: Vec4Like): Promise<boolean> {
         this.textContext.font = this.font;
         const textTexture = await this.generateTextTexture(text);
         if (!textTexture) {
@@ -518,7 +581,9 @@ export class Draw {
         }
         const { width, height, texture } = textTexture;
         const pos = Vec2.from(anchor).sub({ x: width * align.x, y: height * align.y });
-        this.texture(pos.x, pos.y, pos.x + width, pos.y + height, texture, color);
+        if (color) {
+            this.texture(pos.x, pos.y, pos.x + width, pos.y + height, texture, color);
+        }
         return true;
     }
 
@@ -624,7 +689,7 @@ export class Draw {
         });
     }
 
-    public texture(left: number, top: number, right: number, bottom: number, texture: GlTexture, color = Vec4.ONE): void {
+    public texture(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4Like = Vec4.ONE): void {
         const { gl } = this.glContext;
 
         this.textureProgram.use(() => {
@@ -706,7 +771,7 @@ export class Draw {
         });
     }
 
-    public textureOutline(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4, outlineWidth: number): void {
+    public textureOutline(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4Like, outlineWidth: number): void {
         const { gl } = this.glContext;
 
         const width = right - left;
@@ -821,8 +886,8 @@ export class Draw {
 
             this.circleProgram.getUniform('u_resolution').asVec2().set({ x: radiusOuter * 2, y: radiusOuter * 2 });
             this.circleProgram.getUniform('u_color').asVec4().set(color);
-            this.circleProgram.getUniform('u_radiusInner').asFloat().set(radiusInner / 2);
-            this.circleProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter / 2);
+            this.circleProgram.getUniform('u_radiusInner').asFloat().set(radiusInner);
+            this.circleProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter);
             this.circleProgram.getUniform('u_smoothness').asFloat().set(smoothness);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
@@ -865,6 +930,77 @@ export class Draw {
             this.circleTextureProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter / 2);
             this.circleTextureProgram.getUniform('u_smoothness').asFloat().set(smoothness);
             this.circleTextureProgram.getUniform('u_texture').asSampler2D().set(texture);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public roundedRectTexture(
+        start: Vec2,
+        end: Vec2,
+        radius: number,
+        texture: GlTexture,
+        color: Vec4 = Vec4.ONE,
+        smoothness: number = 1.0,
+    ): void {
+        const { gl } = this.glContext;
+
+        this.roundedRectTextureProgram.use(() => {
+            this.setMesh(this.roundedRectTextureProgram, new Float32Array([
+                start.x, start.y, 0,
+                end.x, start.y, 0,
+                end.x, end.y, 0,
+                start.x, start.y, 0,
+                end.x, end.y, 0,
+                start.x, end.y, 0,
+            ]));
+            this.setMatrices(this.roundedRectTextureProgram);
+            this.roundedRectTextureProgram.getUniform('u_color').asVec4().set(color);
+            this.roundedRectTextureProgram.getUniform('u_resolution').asVec2().set(end.sub(start));
+            this.roundedRectTextureProgram.getUniform('u_radius').asFloat().set(radius);
+            this.roundedRectTextureProgram.getUniform('u_smoothness').asFloat().set(smoothness);
+            this.roundedRectTextureProgram.getUniform('u_texture').asSampler2D().set(texture);
+
+            const position = this.roundedRectTextureProgram.getAttribute('a_position');
+            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public roundedRect(
+        start: Vec2,
+        end: Vec2,
+        radius: number,
+        color: Vec4 = Vec4.ONE,
+        width?: number,
+        smoothness: number = 1.0,
+    ): void {
+        const { gl } = this.glContext;
+
+        this.roundedRectProgram.use(() => {
+            this.setMesh(this.roundedRectProgram, new Float32Array([
+                start.x, start.y, 0,
+                end.x, start.y, 0,
+                end.x, end.y, 0,
+                start.x, start.y, 0,
+                end.x, end.y, 0,
+                start.x, end.y, 0,
+            ]), new Float32Array([
+                0, 0,
+                1, 0,
+                1, 1,
+                0, 0,
+                1, 1,
+                0, 1,
+            ]));
+            this.setMatrices(this.roundedRectProgram);
+            this.roundedRectProgram.getUniform('u_color').asVec4().set(color);
+            this.roundedRectProgram.getUniform('u_resolution').asVec2().set(end.sub(start));
+            this.roundedRectProgram.getUniform('u_width').asFloat().set(width ?? Math.max(end.x - start.x, end.y - start.y));
+            this.roundedRectProgram.getUniform('u_radius').asFloat().set(radius);
+            this.roundedRectProgram.getUniform('u_smoothness').asFloat().set(smoothness);
+
+            const position = this.roundedRectProgram.getAttribute('a_position');
+            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }

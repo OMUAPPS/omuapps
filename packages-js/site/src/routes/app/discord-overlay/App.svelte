@@ -1,18 +1,16 @@
 <script lang="ts">
     import AssetButton from '$lib/components/AssetButton.svelte';
-    import { Mat4 } from '$lib/math/mat4.js';
     import { OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { Spinner, Tooltip } from '@omujs/ui';
+    import { Tooltip } from '@omujs/ui';
     import { ASSET_APP } from './app';
+    import AccountSwitcher from './components/AccountSwitcher.svelte';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
-    import VCConfig from './components/VCConfig.svelte';
     import VisualConfig from './components/VisualConfig.svelte';
-    import VoiceChannelStatus from './components/VoiceChannelStatus.svelte';
-    import { createUserConfig, DiscordOverlayApp, type AuthenticateUser, type Channel, type Guild } from './discord-overlay-app.js';
-    import { dragUser, heldUser, selectedAvatar } from './states.js';
+    import { createUserConfig, DiscordOverlayApp, type AuthenticateUser } from './discord-overlay-app.js';
+    import { dragState, selectedAvatar } from './states.js';
 
     export let omu: Omu;
     export let obs: OBSPlugin;
@@ -32,159 +30,107 @@
         getUser(id);
     });
 
-    let message: { type: 'loading' | 'failed'; text: string } | null = null;
     let dimentions: { width: number; height: number } = { width: 0, height: 0 };
 
-    let state: 'wait-for-ready' | 'connecting-vc' | null = 'wait-for-ready';
     let clients: Record<string, AuthenticateUser> = {};
-    let guilds: Guild[] = [];
-    let channels: Channel[] = [];
     let ready = false;
 
     omu.onReady(async () => {
         await overlayApp.waitForReady();
         clients = await overlayApp.getClients();
-        state = null;
         ready = true;
-        config.update((config) => overlayApp.migrateConfig(config));
     });
-
-    let last_user_id: string | null = null;
-    let last_guild_id: string | null = null;
-    let last_channel_id: string | null = null;
-    async function update(user_id: string | null, guild_id: string | null, channel_id: string | null) {
-        if (user_id === last_user_id && guild_id === last_guild_id && channel_id === last_channel_id) {
-            return;
-        }
-        last_user_id = user_id;
-        last_guild_id = guild_id;
-        last_channel_id = channel_id;
-        if (user_id) {
-            guilds = (await overlayApp.getGuilds(user_id)).guilds;
-        }
-        if (user_id && guild_id) {
-            channels = (await overlayApp.getChannels(user_id, guild_id)).channels.filter((channel) => channel.type === 2);
-        } else {
-            channels = [];
-        }
-        if (user_id) {
-            state = 'connecting-vc';
-            await overlayApp.setVC({
-                user_id,
-                guild_id,
-                channel_id,
-            });
-            state = null;
-        }
-    }
 
     $: {
         const userFound = $config.user_id && clients[$config.user_id] || null;
         if (Object.keys(clients).length > 0 && !userFound) {
             $config.user_id = Object.keys(clients)[0];
         }
-        if ($config.user_id && clients[$config.user_id]) {
-            update($config.user_id, $config.guild_id, $config.channel_id);
-        }
     }
 
-    let tab: 'visual' | 'config' | null = null;
-    let view: Mat4 = Mat4.IDENTITY;
-    $: {
-        if ($selectedAvatar || $heldUser || $dragUser) {
-            tab = null;
-        }
-    }
+    let settingsOpen = false;
 </script>
 
 <main>
     {#if ready}
         <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
-            <AvatarRenderer overlayApp={overlayApp} bind:message bind:view showGrid />
+            <AvatarRenderer overlayApp={overlayApp} />
             {#if $selectedAvatar && $config.avatars[$selectedAvatar]}
                 <AvatarAdjustModal overlayApp={overlayApp} bind:avatarConfig={$config.avatars[$selectedAvatar]} />
             {:else}
-                {#if dimentions && view}
+                {#if dimentions}
                     {#each Object.entries($voiceState)
-                        .sort(([a], [b]) => $config.users[a].position[0] - $config.users[b].position[0]) as [id, state] (id)}
-                        <UserDragControl {view} {dimentions} {overlayApp} {id} {state} bind:user={$config.users[id]} />
+                        .sort(([a], [b]) => $config.users[a].position.x - $config.users[b].position.x) as [id, state] (id)}
+                        {#if state}
+                            <UserDragControl {dimentions} {overlayApp} {id} {state} bind:user={$config.users[id]} />
+                        {/if}
                     {/each}
                 {/if}
             {/if}
-            {#if !$dragUser && !$selectedAvatar}
-                <div class="actions">
-                    <label>
-                        自動で整列
-                        <input type="checkbox" bind:checked={$config.align.auto} />
-                    </label>
-                </div>
-            {/if}
-            {#if message}
-                <div class="message">
-                    {#if message.type === 'loading'}
-                        <p>
-                            {message.text}
-                            <Spinner />
-                        </p>
-                    {/if}
-                </div>
-            {/if}
         </div>
     {/if}
-    {#if !$dragUser && !$selectedAvatar}
+    {#if !$dragState && !$selectedAvatar}
         <div class="menu">
-            <VoiceChannelStatus {overlayApp} {state} />
-            <div class="tabs">
-                <button class:active={tab === 'config'} on:click={() => (tab = tab === 'config' ? null : 'config')}>
-                    <Tooltip>
-                        {#if $config.user_id && clients[$config.user_id]}
-                            {@const user = clients[$config.user_id]}
-                            <div class="logged-user">
-                                {#if user.avatar}
-                                    <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar" />
-                                {:else}
-                                    <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
-                                {/if}
-                                <span>{user.global_name}</span>
-                                <small>にログイン中</small>
-                            </div>
-                        {:else}
-                            ユーザーを選択
-                        {/if}
-                    </Tooltip>
-                    <i class="ti ti-settings"></i>
-                    設定
-                    <i class="ti ti-chevron-{tab === 'config' ? 'up' : 'down'}"></i>
-                </button>
-                <button class:active={tab === 'visual'} on:click={() => (tab = tab === 'visual' ? null : 'visual')}>
-                    <i class="ti ti-eye-check"></i>
-                    見た目の調整
-                    <i class="ti ti-chevron-{tab === 'visual' ? 'up' : 'down'}"></i>
-                </button>
-            </div>
-            {#if tab}
-                <div class="tab">
-                    {#if tab === 'config'}
-                        <h3>
-                            接続設定
-                            <i class="ti ti-user"></i>
-                        </h3>
-                        <VCConfig {overlayApp} bind:clients bind:guilds bind:channels />
-                    {:else if tab === 'visual'}
-                        <VisualConfig {overlayApp} />
-                    {/if}
-                </div>
-            {/if}
-            <h3 style="margin-top: auto;">
+            <h4>
                 配信ソフトに追加する
                 <i class="ti ti-arrow-bar-to-down"></i>
-            </h3>
-            <section>
+            </h4>
+            <section style="margin-bottom: auto;">
                 <AssetButton asset={ASSET_APP} permissions={[
                     OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
                     'com.omuapps:plugin-discordrpc/vc/read',
                 ]} {omu} {obs} dimensions={{ width: 1920, height: 1080 }} />
             </section>
+            <AccountSwitcher bind:clients />
+        </div>
+        <div class="config">
+            <button on:click={() => {
+                $config.effects.backlightEffect.active = !$config.effects.backlightEffect.active;
+            }} class:active={$config.effects.backlightEffect.active}>
+                <Tooltip>
+                    注意！高GPU使用率
+                </Tooltip>
+                <i class="ti ti-sun"></i>
+                逆光効果
+            </button>
+            <button on:click={() => {
+                $config.effects.shadow.active = !$config.effects.shadow.active;
+            }} class:active={$config.effects.shadow.active}>
+                <Tooltip>
+                    影をつけて見やすくします
+                </Tooltip>
+                <i class="ti ti-ghost-3"></i>
+                アバターの影
+            </button>
+            <button on:click={() => {
+                $config.effects.speech.active = !$config.effects.speech.active;
+            }} class:active={$config.effects.speech.active}>
+                <Tooltip>
+                    喋ってないときに暗くなり、喋ると明るくなります
+                </Tooltip>
+                <i class="ti ti-ghost-3"></i>
+                明るさ調整
+            </button>
+            <button on:click={() => {
+                $config.show_name_tags = !$config.show_name_tags;
+            }} class:active={$config.show_name_tags}>
+                <i class="ti ti-label"></i>
+                名前を表示
+            </button>
+        </div>
+        <div class="settings">
+            <button on:click={() => {settingsOpen = !settingsOpen;}}>
+                <i class="ti ti-settings"></i>
+                詳細設定
+                {#if settingsOpen}
+                    <i class="ti ti-chevron-up"></i>
+                {:else}
+                    <i class="ti ti-chevron-down"></i>
+                {/if}
+            </button>
+            {#if settingsOpen}
+                <VisualConfig {overlayApp} />
+            {/if}
         </div>
     {/if}
 </main>
@@ -213,52 +159,83 @@
         outline: 1px solid var(--color-outline);
     }
 
-    .actions {
-        position: absolute;
-        bottom: 1rem;
-        right: 16rem;
-        display: flex;
-        gap: 1rem;
-
-        > label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-            font-size: 1rem;
-            color: var(--color-1);
-            cursor: pointer;
-
-            > input {
-                width: 1.25rem;
-                height: 1.25rem;
-                cursor: pointer;
-                border: 1px solid var(--color-outline);
-                border-radius: 2px;
-                accent-color: var(--color-1);
-                outline: none;
-                cursor: pointer;
-
-                &:checked {
-                    background: var(--color-1);
-                }
-            }
-        }
-    }
-
     .menu {
         position: absolute;
         top: 0;
         bottom: 0;
-        display: flex;
         gap: 1rem;
         padding: 0.5rem;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         z-index: 1;
         width: 20rem;
         margin: 1rem;
         animation: slide-in 0.0621s ease;
+    }
+
+    .config {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: auto;
+        gap: 1rem;
+        padding: 0.5rem;
+        display: flex;
+        align-items: stretch;
+        z-index: 1;
+        margin: 1rem;
+        margin-left: 24rem;
+        animation: slide-in 0.0621s ease;
+
+        > button {
+            border: none;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            outline: 1px solid var(--color-1);
+            outline-offset: -1px;
+            cursor: pointer;
+            border-radius: 2px;
+            white-space: nowrap;
+
+            > i {
+                margin-right: 0.75rem;
+            }
+
+            &.active {
+                background: var(--color-1);
+                color: var(--color-bg-1);
+            }
+        }
+    }
+
+    .settings {
+        position: absolute;
+        top: 5rem;
+        right: 0;
+        gap: 1rem;
+        padding: 0.5rem;
+        display: flex;
+        width: 20rem;
+        flex-direction: column;
+        align-items: flex-end;
+        z-index: 1;
+        margin: 1rem;
+        animation: slide-in 0.0621s ease;
+
+        > button {
+            border: none;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: var(--color-1);
+            color: var(--color-bg-1);
+            cursor: pointer;
+            border-radius: 2px;
+        }
     }
 
     @keyframes slide-in {
@@ -270,93 +247,5 @@
             transform: translateX(0);
             opacity: 1;
         }
-    }
-
-    .tab {
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        gap: 0.5rem;
-        padding: 2rem 0.75rem;
-        padding-top: 1rem;
-        overflow-y: auto;
-        max-height: fit-content;
-        background: var(--color-bg-2);
-        outline: 1px solid var(--color-outline);
-
-        > h3 {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--color-1);
-            border-bottom: 1px solid var(--color-outline);
-            padding-bottom: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-    }
-
-    .tabs {
-        display: flex;
-        flex-direction: column;
-        align-items: start;
-        gap: 0.25rem;
-
-        > button {
-            background: var(--color-bg-2);
-            color: var(--color-1);
-            border: none;
-            padding: 0.5rem 1rem;
-            width: 100%;
-            border-radius: 2px;
-            white-space: nowrap;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: baseline;
-            justify-content: start;
-            gap: 0.5rem;
-            cursor: pointer;
-
-            &:hover {
-                background: var(--color-bg-2);
-                color: var(--color-1);
-                outline: 1px solid var(--color-1);
-                outline-offset: -1px;
-            }
-
-            &.active {
-                background: var(--color-1);
-                color: var(--color-bg-2);
-            }
-
-            > .ti-chevron-up, > .ti-chevron-down {
-                margin-left: auto;
-            }
-        }
-    }
-
-    .logged-user {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.25rem;
-
-        > .avatar {
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 100%;
-        }
-    }
-
-    .message {
-        position: absolute;
-        top: 10rem;
-        padding: 0.5rem 2rem;
-        background: var(--color-bg-2);
-        color: var(--color-1);
-        font-weight: 600;
-        font-size: 1rem;
     }
 </style>

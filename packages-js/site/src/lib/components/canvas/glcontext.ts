@@ -197,7 +197,7 @@ export class ProgramUniform {
         });
     }
 
-    public asFloatArray(): Uniform<Iterable<GLfloat>> {
+    public asFloatArray(): Uniform<Float32List> {
         return this.as('float', (value) => {
             this.gl.uniform1fv(this.location, value);
         });
@@ -664,11 +664,30 @@ export class GlFramebuffer {
     }
 }
 
+type TaskCallback<T> = () => T;
+
 export class GlContext {
     public readonly stateManager: GLStateManager;
+    private readonly tasks: (() => void)[];
 
     constructor(public readonly gl: WebGL2RenderingContext) {
         this.stateManager = new GLStateManager(gl);
+        this.tasks = [];
+    }
+
+    public schedule<T>(task: TaskCallback<T>): Promise<T> {
+        return new Promise<T>((resolve) => {
+            this.tasks.push(() => {
+                const result = task();
+                resolve(result);
+            });
+        });
+    }
+
+    public dispatchTasks() {
+        for (const task of this.tasks) {
+            task();
+        }
     }
 
     public destroy(): void {}
