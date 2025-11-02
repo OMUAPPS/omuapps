@@ -1,5 +1,6 @@
 <script lang="ts">
     import AssetButton from '$lib/components/AssetButton.svelte';
+    import { comparator } from '$lib/helper';
     import { OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
@@ -60,7 +61,10 @@
             {:else}
                 {#if dimentions}
                     {#each Object.entries($voiceState)
-                        .sort(([a], [b]) => $config.users[a].position.x - $config.users[b].position.x) as [id, state] (id)}
+                        .sort(comparator(([id]) => {
+                            const user = $config.users[id];
+                            return user.lastDraggedAt;
+                        })) as [id, state] (id)}
                         {#if state}
                             <UserDragControl {dimentions} {overlayApp} {id} {state} bind:user={$config.users[id]} />
                         {/if}

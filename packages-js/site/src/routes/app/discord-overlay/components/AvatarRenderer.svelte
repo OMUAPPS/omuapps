@@ -254,7 +254,7 @@
         return state;
     }
 
-    const AVATAR_FACE_RADIUS = 200;
+    const AVATAR_FACE_RADIUS = 150;
     const POSITION_OFFSET = AVATAR_FACE_RADIUS / 2;
 
     function applyAvatarScale(scale: number) {
@@ -343,6 +343,7 @@
                 draw.fontSize = overlayApp.isOnAsset() ? 36 : 26;
                 const offsetScale = overlayApp.isOnAsset() ? 4 : 2;
                 draw.fontWeight = '600';
+                const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
                 for (let index = 0; index < 8; index++) {
                     const offset = {
                         x: Math.cos(index / 8 * TAU) * offsetScale,
@@ -350,14 +351,14 @@
                     };
                     await draw.textAlign(
                         Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }).add(offset),
-                        voiceState.user.global_name ?? voiceState.user.username,
+                        name,
                         { x: 0.5, y: 1 },
                         { x: 0, y: 0, z: 0, w: 1 },
                     );
                 }
                 await draw.textAlign(
                     Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }),
-                    voiceState.user.global_name ?? voiceState.user.username,
+                    name,
                     { x: 0.5, y: 1 },
                     { x: 1, y: 1, z: 1, w: 1 },
                 );
@@ -377,7 +378,7 @@
             matrices.view.identity();
             draw.rectangle(0, 0, width, height, PALETTE_RGB.BACKGROUND_1_TRANSPARENT);
             matrices.view.translate(width / 2, height / 2 + 60, 0);
-            const scaleFactor = 1 / Math.min(1920 / width, 1080 / height) * 0.5;
+            const scaleFactor = 1 / Math.min(1920 / width, 1080 / height);
             $scaleFactor = 1 / scaleFactor / config.scale;
             matrices.view.scale(scaleFactor, scaleFactor, 0);
             matrices.model.push();

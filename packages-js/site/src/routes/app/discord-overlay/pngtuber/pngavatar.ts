@@ -351,8 +351,8 @@ export class PNGAvatar implements Avatar {
         const bounds = () => {
             const { width, height } = this.base.source;
             return new AABB2(
-                new Vec2(-200, -200 * height / width),
-                new Vec2(200, 200 * height / width),
+                new Vec2(-150, -150 * height / width),
+                new Vec2(150, 150 * height / width),
             );
         };
         return {
