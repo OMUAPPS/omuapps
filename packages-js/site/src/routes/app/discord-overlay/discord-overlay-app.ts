@@ -226,7 +226,7 @@ export type Config = {
     user_id: string | null;
     show_name_tags: boolean;
 };
-const DEFAULT_CONFIG: Config = {
+export const DEFAULT_CONFIG: Config = {
     version: 10,
     users: {},
     avatars: {},

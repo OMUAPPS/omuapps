@@ -184,12 +184,12 @@ export class PNGAvatar implements Avatar {
         const vertices = context.createBuffer();
         vertices.bind(() => {
             vertices.setData(new Float32Array([
-                0, -0.5, 0,
-                1, -0.5, 0,
-                1, 0.5, 0,
-                0, -0.5, 0,
-                1, 0.5, 0,
-                0, 0.5, 0,
+                0, 0, 0,
+                1, 0, 0,
+                1, 1, 0,
+                0, 0, 0,
+                1, 1, 0,
+                0, 1, 0,
             ]), 'static');
         });
         const texCoords = context.createBuffer();
@@ -286,7 +286,7 @@ export class PNGAvatar implements Avatar {
                     projection.set(Mat4.IDENTITY);
                     const model = this.program.getUniform('u_model').asMat4();
                     const { width, height } = textureMesh.texture;
-                    const targetWidth = 126 * 2.5;
+                    const targetWidth = 300;
                     const widthToHeightRatio = height / width;
                     model.set(Mat4.IDENTITY
                         .translate(-targetWidth / 2, -targetWidth / 2 * widthToHeightRatio, 0)
@@ -351,8 +351,8 @@ export class PNGAvatar implements Avatar {
         const bounds = () => {
             const { width, height } = this.base.source;
             return new AABB2(
-                new Vec2(-126 * 2.5 / 2, 0 * height / width),
-                new Vec2(126 * 2.5 / 2, 126 * 2.5 * height / width),
+                new Vec2(-200, -200 * height / width),
+                new Vec2(200, 200 * height / width),
             );
         };
         return {

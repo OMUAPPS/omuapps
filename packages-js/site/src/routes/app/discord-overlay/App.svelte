@@ -202,7 +202,7 @@
             white-space: nowrap;
 
             > i {
-                margin-right: 0.75rem;
+                margin-right: 0.25rem;
             }
 
             &.active {

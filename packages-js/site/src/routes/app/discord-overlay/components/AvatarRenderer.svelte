@@ -254,7 +254,7 @@
         return state;
     }
 
-    const AVATAR_FACE_RADIUS = 300;
+    const AVATAR_FACE_RADIUS = 200;
     const POSITION_OFFSET = AVATAR_FACE_RADIUS / 2;
 
     function applyAvatarScale(scale: number) {
@@ -342,21 +342,21 @@
                 if (!$config.show_name_tags) continue;
                 draw.fontSize = overlayApp.isOnAsset() ? 36 : 26;
                 const offsetScale = overlayApp.isOnAsset() ? 4 : 2;
-                draw.fontWeight = '500';
+                draw.fontWeight = '600';
                 for (let index = 0; index < 8; index++) {
                     const offset = {
                         x: Math.cos(index / 8 * TAU) * offsetScale,
                         y: Math.sin(index / 8 * TAU) * offsetScale,
                     };
                     await draw.textAlign(
-                        Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET - 15 }).add(offset),
+                        Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }).add(offset),
                         voiceState.user.global_name ?? voiceState.user.username,
                         { x: 0.5, y: 1 },
                         { x: 0, y: 0, z: 0, w: 1 },
                     );
                 }
                 await draw.textAlign(
-                    Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET - 15 }),
+                    Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }),
                     voiceState.user.global_name ?? voiceState.user.username,
                     { x: 0.5, y: 1 },
                     { x: 1, y: 1, z: 1, w: 1 },

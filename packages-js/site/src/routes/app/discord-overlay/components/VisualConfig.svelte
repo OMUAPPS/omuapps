@@ -1,5 +1,7 @@
 <script lang="ts">
-    import type { DiscordOverlayApp } from '../discord-overlay-app.js';
+    import { Button } from '@omujs/ui';
+    import { DEV } from 'esm-env';
+    import { DEFAULT_CONFIG, type DiscordOverlayApp } from '../discord-overlay-app.js';
     import EffectControls from './EffectControls.svelte';
 
     export let overlayApp: DiscordOverlayApp;
@@ -13,6 +15,14 @@
 <section>
     <EffectControls bind:effects={$config.effects} />
 </section>
+{#if DEV}
+    <Button onclick={() => {
+        $config = DEFAULT_CONFIG;
+        location.reload();
+    }} primary>
+        設定をリセット
+    </Button>
+{/if}
 
 <style lang="scss">
 
