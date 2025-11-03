@@ -79,7 +79,6 @@
         {
             "name": "Dashboard Debugging",
             "configurations": [
-                "Server",
                 "Apps",
                 "DashboardDebug",
             ],
@@ -92,6 +91,7 @@
         {
             "name": "Dashboard and Sever Debugging",
             "configurations": [
+                "Server",
                 "Apps",
                 "DashboardDebug",
             ],
