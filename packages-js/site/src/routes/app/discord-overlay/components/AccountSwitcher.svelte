@@ -27,6 +27,8 @@
     let open = false;
     let switcherElement: HTMLElement | undefined;
     let userElement: HTMLElement | undefined;
+
+    $: console.log(state);
 </script>
 
 <svelte:window on:click={(event) => {
@@ -46,10 +48,6 @@
                 起動しているDiscordが見つかりませんでした
                 <i class="ti ti-info-circle"></i>
             </small>
-        {/if}
-    {/if}
-    {#if open && state.type === 'result'}
-        <div class="switcher" bind:this={switcherElement}>
             <button class="entry refresh" on:click={refresh}>
                 <Tooltip>
                     <p>ここに表示されていないアカウントがある場合お試しください。</p>
@@ -58,51 +56,65 @@
                 Discordを再検出
                 <i class="ti ti-refresh"></i>
             </button>
-            {#each Object.values(clients).filter((client) => client.id !== $config.user_id) as client, index (index)}
-                <button class="entry" on:click={() => {
-                    $config.user_id = client.id;
-                    open = false;
-                }}>
-                    <Tooltip>
-                        {client.global_name ?? client.id}に切り替える
-                    </Tooltip>
-                    {#if client.avatar}
-                        <img src="https://cdn.discordapp.com/avatars/{client.id}/{client.avatar}.png" alt="" class="avatar" />
+        {:else}
+            {#if !open}
+                <VoiceChannelStatus />
+            {/if}
+            {#if open && Object.keys(clients).length > 0}
+                <div class="switcher" bind:this={switcherElement}>
+                    <button class="entry refresh" on:click={refresh}>
+                        <Tooltip>
+                            <p>ここに表示されていないアカウントがある場合お試しください。</p>
+                            <p>連続で再検出を行うと検出できなくなる可能性があります。</p>
+                        </Tooltip>
+                        Discordを再検出
+                        <i class="ti ti-refresh"></i>
+                    </button>
+                    {#each Object.values(clients).filter((client) => client.id !== $config.user_id) as client, index (index)}
+                        <button class="entry" on:click={() => {
+                            $config.user_id = client.id;
+                            open = false;
+                        }}>
+                            <Tooltip>
+                                {client.global_name ?? client.id}に切り替える
+                            </Tooltip>
+                            {#if client.avatar}
+                                <img src="https://cdn.discordapp.com/avatars/{client.id}/{client.avatar}.png" alt="" class="avatar" />
+                            {:else}
+                                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
+                            {/if}
+                            <small>
+                                {client.global_name ?? client.id}
+                            </small>
+                        </button>
+                    {/each}
+                </div>
+            {/if}
+            {#if $config.user_id && clients[$config.user_id]}
+                {@const user = clients[$config.user_id]}
+                <button class="entry" on:click={() => {open = !open;}} bind:this={userElement}>
+                    {#if !open}
+                        <Tooltip>
+                            アカウントを切り替える
+                        </Tooltip>
+                    {/if}
+                    {#if user.avatar}
+                        <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar" />
                     {:else}
                         <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
                     {/if}
                     <small>
-                        {client.global_name ?? client.id}
+                        {user.global_name ?? user.id}
                     </small>
+                    <i class="ti ti-chevron-up"></i>
                 </button>
-            {/each}
-        </div>
-    {:else}
-        <VoiceChannelStatus />
-    {/if}
-    {#if state.type === 'refreshing'}
+            {/if}
+        {/if}
+    {:else if state.type === 'refreshing'}
         <div class="entry refresh">
             Discordを検出中
             <Spinner />
         </div>
-    {:else if $config.user_id && clients[$config.user_id]}
-        {@const user = clients[$config.user_id]}
-        <button class="entry" on:click={() => {open = !open;}} bind:this={userElement}>
-            {#if !open}
-                <Tooltip>
-                    アカウントを切り替える
-                </Tooltip>
-            {/if}
-            {#if user.avatar}
-                <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar" />
-            {:else}
-                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
-            {/if}
-            <small>
-                {user.global_name ?? user.id}
-            </small>
-            <i class="ti ti-chevron-up"></i>
-        </button>
     {/if}
 </div>
 
