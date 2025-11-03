@@ -1,8 +1,8 @@
 <script lang="ts">
     import { page } from '$app/stores';
-    import { Omu, type App, type DisconnectReason } from '@omujs/omu';
+    import { BrowserTokenProvider, Omu, type App, type DisconnectReason } from '@omujs/omu';
     import { DisconnectType } from '@omujs/omu/network/packet';
-    import { client, setClient, Spinner } from '@omujs/ui';
+    import { setClient, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
 
     export let asset: App;
@@ -29,7 +29,7 @@
     } = { type: 'initializing', browser: BROWSER };
 
     const id = BROWSER && $page.url.searchParams.get('id');
-
+    const isSessionPresent = BROWSER && $page.url.searchParams.get(BrowserTokenProvider.TOKEN_PARAM_KEY);
     if (id) {
         const omu = new Omu(single ? asset : asset.join(id));
         setClient(omu);
@@ -66,81 +66,109 @@
 {/if}
 {#if state.type === 'connecting'}
     <slot name="connecting">
-        <div class="modal">
+        <div class="loading">
             <Spinner />
         </div>
     </slot>
 {:else if state.type === 'disconnected'}
-    {#if !state.reason}
+    {@const { omu: { app: { metadata }, i18n } } = state}
+    <div class="container">
         <div class="modal">
-            <div class="info">
+            {#if metadata}
+                <div class="info">
+                    {#if metadata.name}
+                        {i18n.translate(metadata.name)}
+                    {/if}
+                </div>
+            {/if}
+            {#if !state.reason}
                 <h1>切断されました</h1>
-                <small>id={$client.app.id.path.join('.')}</small>
-            </div>
-        </div>
-    {:else if state.reason.type === DisconnectType.ANOTHER_CONNECTION}
-        <div class="modal">
-            <div class="info">
-                <h1>同じアセットIDを持つアセットが接続されました</h1>
-                <h2>これを使うにはどちらかを閉じて再読込してください</h2>
-                <small>id={$client.app.id.path.join('.')}</small>
-            </div>
-        </div>
-    {:else if state.reason.type === DisconnectType.PERMISSION_DENIED}
-        <div class="modal">
-            <div class="info">
+            {:else if state.reason.type === DisconnectType.ANOTHER_CONNECTION}
+                <h1>同じIDを持つアセットが接続されました</h1>
+                <small>ソースは複製できません。どちらかを閉じて再読込してください</small>
+            {:else if state.reason.type === DisconnectType.PERMISSION_DENIED}
                 <h1>権限が拒否されました</h1>
-                <small>id={$client.app.id.path.join('.')}</small>
-            </div>
-        </div>
-    {:else}
-        <div class="modal">
-            <div class="info">
+                <small>このソースを再読み込みしてください</small>
+            {:else if state.reason.type === DisconnectType.INVALID_TOKEN}
+                {#if isSessionPresent}
+                    <h1>認証に失敗しました</h1>
+                {:else}
+                    <h1>認証情報がありません</h1>
+                {/if}
+                <small>このブラウザソースを削除し、もう一度追加し直してください</small>
+            {:else}
                 <h1>切断されました</h1>
-                <h2>{state.reason.message}</h2>
-                <small>id={$client.app.id.path.join('.')}</small>
-            </div>
+            {/if}
         </div>
-    {/if}
+        {#if state.reason}
+            <div class="error">
+                <h2>エラーコード</h2>
+                <pre>{state.reason.type}: {state.reason.message}</pre>
+            </div>
+        {/if}
+    </div>
 {/if}
 
 <style lang="scss">
-    .modal {
+    .loading {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        color: var(--color-1);
+        inset: 0;
+        color: var(--color-bg-2);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
+        font-size: 4rem;
+    }
 
-        &:before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--color-bg-2);
-            opacity: 0.9;
+    .container {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .modal {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        background: #444;
+        color: #eee;
+        padding: 2rem 2rem;
+
+        > h1 {
+            border-bottom: 0.25rem solid #eee;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        > small {
+            font-size: 1.5rem;
         }
     }
 
     .info {
-        position: fixed;
-        display: flex;
-        flex-direction: column;
-        align-items: start;
-        justify-content: center;
-        background: var(--color-bg-1);
+        background: #eee;
+        color: #444;
+        font-size: 1.5rem;
+        padding: 0.5rem 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .error {
+        background: #444;
+        color: #eee;
+        margin-top: auto;
         padding: 1rem 2rem;
     }
 
-    small {
-        margin-top: 1rem;
-        font-size: 0.75rem;
+    pre {
+        padding: 1rem 2rem;
+        font-size: 1.5rem;
+        line-break: anywhere;
+        white-space: wrap;
+        color: #ccc;
     }
 </style>

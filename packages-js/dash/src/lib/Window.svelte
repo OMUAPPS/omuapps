@@ -14,16 +14,13 @@
     let maximized = false;
 
     const destroy = listen('single-instance', async ({ payload }) => {
-        console.log(`single-instance: ${payload}`);
-        const background =
-            payload.args.includes('--background') ||
-                payload.args.includes('-b');
+        console.log(`single-instance: ${JSON.stringify(payload, null, 2)}`);
+        const background = payload.args.includes('--background') || payload.args.includes('-b');
         if (background) {
             return;
         }
         await appWindow.show();
         await appWindow.setFocus();
-        window.location.reload();
     });
 
     onMount(async () => {

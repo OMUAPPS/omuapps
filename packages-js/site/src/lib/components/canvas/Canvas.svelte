@@ -2,10 +2,7 @@
     import { onDestroy, onMount } from 'svelte';
     import { GlContext } from './glcontext.js';
 
-    export let glContext: GlContext | undefined = undefined;
     export let canvas: HTMLCanvasElement | undefined = undefined;
-    export let canvasWidth: number = 0;
-    export let canvasHeight: number = 0;
     export let width: number = 0;
     export let height: number = 0;
     export let fps: number = 60;
@@ -17,6 +14,7 @@
     export let enter: (gl: GlContext) => Promise<void> | void = () => {};
     export let leave: (gl: GlContext) => Promise<void> | void = () => {};
     export let resize: (gl: GlContext) => void = () => {};
+    let glContext: GlContext;
 
     let context: CanvasRenderingContext2D | null = null;
     let offscreen: OffscreenCanvas | null = null;
@@ -36,6 +34,12 @@
 
     let lastTime = performance.now();
     let resolveFrameBlock: () => void = () => {};
+
+    function create() {
+        offscreen = new OffscreenCanvas(width, height);
+        context = canvas!.getContext('2d');
+        glContext = GlContext.create(offscreen);
+    }
 
     async function renderInternal() {
         while (true) {
@@ -78,7 +82,7 @@
 
     function renderLoop() {
         requestId = requestAnimationFrame(renderLoop);
-        if (!canvas || !glContext || !context || !offscreen || offscreen.width === 0 || offscreen.height === 0) {
+        if (!canvas || !glContext || !context || !offscreen) {
             return;
         }
         resolveFrameBlock();
@@ -86,9 +90,7 @@
 
     onMount(() => {
         if (!canvas) return;
-        offscreen = new OffscreenCanvas(width, height);
-        context = canvas.getContext('2d');
-        glContext = GlContext.create(offscreen);
+        create();
         resized = true;
         handleResize();
         init(glContext).then(() => {
@@ -124,8 +126,6 @@
 />
 <canvas
     bind:this={canvas}
-    bind:clientWidth={canvasWidth}
-    bind:clientHeight={canvasHeight}
     on:contextmenu={(event) => {
         event.preventDefault();
         event.stopPropagation();
