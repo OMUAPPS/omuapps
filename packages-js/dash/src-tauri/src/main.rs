@@ -131,20 +131,18 @@ fn main() {
             _ => {}
         })
         .setup(move |app| {
-            *app_handle.lock().unwrap() = Some(app.handle().clone());
-
             match app.cli().matches() {
                 Ok(matches) => {
                     if Some(Value::Bool(true))
                         == matches.args.get("background").map(|arg| arg.value.clone())
                     {
-                        let main_window = app.get_webview_window("main").unwrap();
-                        main_window.hide().unwrap();
+                        info!("Running dashboard in background.")
                     }
                 }
                 Err(_) => {}
             }
 
+            *app_handle.lock().unwrap() = Some(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())

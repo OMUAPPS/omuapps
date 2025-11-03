@@ -287,6 +287,7 @@ export const stopProgress = writable<StopProgress | undefined>();
 export const cleanProgress = writable<CleanProgress | undefined>();
 export const uninstallProgress = writable<UninstallProgress | undefined>();
 export const serverState = writable<ServerState | undefined>();
+export const backgroundRequested = writable(false);
 
 async function load() {
     if (!checkOnTauri()) {
@@ -296,6 +297,12 @@ async function load() {
         throw new Error('Tauri already loaded');
     }
     loaded = true;
+    console.log('Initializing Tauri...');
+    const matches = await getMatches();
+    console.log('arguments', JSON.stringify(matches, null, 2));
+    if (matches.args.background?.value) {
+        backgroundRequested.set(true);
+    }
 
     const [{ invoke }] = await Promise.all([
         import('@tauri-apps/api/core'),
@@ -404,6 +411,7 @@ export async function applyUpdate(update: Update, progress: (event: UpdateEvent)
 import { defaultWindowIcon } from '@tauri-apps/api/app';
 import { Menu } from '@tauri-apps/api/menu/menu';
 import { TrayIcon } from '@tauri-apps/api/tray';
+import { getMatches } from '@tauri-apps/plugin-cli';
 import { exit } from '@tauri-apps/plugin-process';
 import { get, writable } from 'svelte/store';
 import { initDragDrop } from './dragdrop.js';

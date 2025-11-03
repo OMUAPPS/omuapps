@@ -1,4 +1,8 @@
 <script lang="ts">
+    import { keepOpenOnBackground } from '$lib/main/settings';
+    import { backgroundRequested } from '$lib/tauri';
+    import { Checkbox } from '@omujs/ui';
+
 </script>
 
 <div class="content">
@@ -7,6 +11,16 @@
     </div>
     <div class="hint">
         <slot name="hint" />
+    </div>
+    <div class="notification">
+        {#if $backgroundRequested}
+            起動後にこのウィンドウは閉じられます
+            <!-- svelte-ignore a11y-label-has-associated-control -->
+            <label>
+                開いたままにする
+                <Checkbox bind:value={$keepOpenOnBackground} />
+            </label>
+        {/if}
     </div>
 </div>
 
@@ -19,6 +33,24 @@
     }
 
     $padding-vertically: max(8rem, 12%);
+
+    .notification {
+        position: absolute;
+        right: 0;
+        top: 0;
+        margin: 2rem;
+        display: flex;
+        flex-direction: column;
+        border-bottom: 2px solid var(--color-1);
+        color: var(--color-1);
+
+        > label {
+            display: flex;
+            align-items: center;
+            color: var(--color-text);
+            font-size: 0.8rem;
+        }
+    }
 
     .main {
         position: relative;

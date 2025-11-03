@@ -2,8 +2,8 @@
     import { omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
     import MainWindow from '$lib/main/MainWindow.svelte';
-    import { installed } from '$lib/main/settings';
-    import { appWindow, checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
+    import { installed, keepOpenOnBackground } from '$lib/main/settings';
+    import { appWindow, backgroundRequested, checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Button, Spinner } from '@omujs/ui';
     import { error } from '@tauri-apps/plugin-log';
@@ -87,6 +87,10 @@
             }
             $state = { type: 'ready' };
             $installed = true;
+            if ($backgroundRequested && !$keepOpenOnBackground) {
+                console.log('Hiding window');
+                await appWindow.hide();
+            }
         } catch (e) {
             console.error('Error during start:', e);
             $state = { type: 'restore', message: JSON.stringify(e, null, 2) };

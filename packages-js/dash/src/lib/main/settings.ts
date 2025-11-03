@@ -48,6 +48,7 @@ export const installed = createSetting('installed', false);
 export const menuOpen = createSetting('menuOpen', false);
 export const speechRecognition = createSetting('speechRecognition', false);
 export type OpenLinkMode = 'browser' | 'window';
+export const keepOpenOnBackground = createSetting('keepOpenOnBackground', false);
 export const openLinkMode = createSetting<OpenLinkMode>('openLink', 'browser');
 
 openLinkMode.subscribe((value) => {
