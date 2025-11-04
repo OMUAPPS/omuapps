@@ -2,6 +2,7 @@
     import { Align, Button, Checkbox, Combobox, Slider } from '@omujs/ui';
     import {
         DEFAULT_FILTER_BLUR,
+        DEFAULT_FILTER_COLOR_KEY,
         DEFAULT_FILTER_NOOP,
         DEFAULT_FILTER_PIXELATE,
         ReplayApp,
@@ -40,12 +41,72 @@
                         label: 'ぼかし',
                         value: DEFAULT_FILTER_BLUR,
                     },
+                    color_key: {
+                        label: '色削除',
+                        value: DEFAULT_FILTER_COLOR_KEY,
+                    },
                 }}
                 bind:value={$config.filter}
                 key={$config.filter.type}
             />
         </Setting>
-        {#if $config.filter.type !== 'noop'}
+        {#if $config.filter.type === 'noop'}
+            <Setting name="強さ">
+                設定無し
+            </Setting>
+        {:else if $config.filter.type === 'color_key'}
+            <Setting name="色">
+                <Button primary onclick={() => {
+                    if ($config.filter.type !== 'color_key') return;
+                    $config.filter.color = {
+                        x: 0,
+                        y: 1,
+                        z: 0,
+                        w: 1,
+                    };
+                }}>
+                    緑(G)
+                </Button>
+                <Button primary onclick={() => {
+                    if ($config.filter.type !== 'color_key') return;
+                    $config.filter.color = {
+                        x: 0,
+                        y: 0,
+                        z: 1,
+                        w: 1,
+                    };
+                }}>
+                    青(B)
+                </Button>
+                <Button primary onclick={() => {
+                    if ($config.filter.type !== 'color_key') return;
+                    $config.filter.color = {
+                        x: 1,
+                        y: 0,
+                        z: 0,
+                        w: 1,
+                    };
+                }}>
+                    赤(R)
+                </Button>
+            </Setting>
+            <Setting name="強さ">
+                <Slider
+                    bind:value={$config.filter.sub}
+                    min={1}
+                    max={100}
+                    step={1}
+                />
+            </Setting>
+            <Setting name="拡張">
+                <Slider
+                    bind:value={$config.filter.add}
+                    min={1 - $config.filter.sub}
+                    max={100}
+                    step={1}
+                />
+            </Setting>
+        {:else}
             <Setting name="強さ">
                 <Slider
                     bind:value={$config.filter.radius}

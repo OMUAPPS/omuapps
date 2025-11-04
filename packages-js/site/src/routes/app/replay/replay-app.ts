@@ -1,4 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
+import { type Vec4Like } from '$lib/math/vec4.js';
 import { Serializer, type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
@@ -66,7 +67,16 @@ type FilterBlur = {
 
 export const DEFAULT_FILTER_BLUR: FilterBlur = { type: 'blur', radius: 50 } as const;
 
-type Filter = FilterNoop | FilterPixelate | FilterBlur;
+type FilterColorKey = {
+    type: 'color_key';
+    color: Vec4Like;
+    add: number;
+    sub: number;
+};
+
+export const DEFAULT_FILTER_COLOR_KEY: FilterColorKey = { type: 'color_key', color: { x: 0, y: 1, z: 0, w: 1 }, sub: 20, add: 20 } as const;
+
+type Filter = FilterNoop | FilterPixelate | FilterBlur | FilterColorKey;
 
 const DEFAULT_REPLAY_CONFIG = {
     version: 2,

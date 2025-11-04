@@ -134,6 +134,16 @@
             },
         });
     };
+
+    function mapColorKeyValue(value: number) {
+        if ($config.filter.type !== 'color_key') return 0.5 - value;
+        value = 0.5 - value;
+        const { add, sub } = $config.filter;
+        if (value > 0) {
+            return (sub + add) * value;
+        }
+        return sub * value;
+    }
 </script>
 
 <svelte:window
@@ -182,7 +192,8 @@
             <feMorphology operator="dilate" radius={$config.filter.radius} />
             <feColorMatrix
                 type="matrix"
-                values="1 0 0 0 0
+                values="
+                    1 0 0 0 0
                     0 1 0 0 0
                     0 0 1 0 0
                     0 0 0 0 1"
@@ -195,10 +206,23 @@
             />
             <feColorMatrix
                 type="matrix"
-                values="1 0 0 0 0
+                values="
+                    1 0 0 0 0
                     0 1 0 0 0
                     0 0 1 0 0
                     0 0 0 0 1"
+            />
+        {:else if $config.filter.type === 'color_key'}
+            {@const { x, y, z } = $config.filter.color}
+            <feColorMatrix
+                in="SourceGraphic"
+                result="mask1"
+                type="matrix"
+                values="
+                    1 0 0 0 0
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    {mapColorKeyValue(x)} {mapColorKeyValue(y)} {mapColorKeyValue(z)} 1 0"
             />
         {/if}
     </filter>

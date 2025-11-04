@@ -17,6 +17,10 @@ export class Vec3 {
         return new Vec3(this.x + other.x, this.y + other.y, this.z + other.z);
     }
 
+    public scale(scalar: number): Vec3 {
+        return new Vec3(this.x * scalar, this.y * scalar, this.z * scalar);
+    }
+
     public min(other: Vec3): Vec3 {
         return new Vec3(Math.min(this.x, other.x), Math.min(this.y, other.y), Math.min(this.z, other.z));
     }
