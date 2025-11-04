@@ -70,7 +70,7 @@
             <Spinner />
         </div>
     </slot>
-{:else if state.type === 'disconnected'}
+{:else if state.type === 'disconnected' && state.reason?.type !== DisconnectType.SERVER_RESTART}
     {@const { omu: { app: { metadata }, i18n } } = state}
     <div class="container">
         <div class="modal">
