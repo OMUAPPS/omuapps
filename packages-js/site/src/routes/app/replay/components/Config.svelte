@@ -51,9 +51,7 @@
             />
         </Setting>
         {#if $config.filter.type === 'noop'}
-            <Setting name="強さ">
-                設定無し
-            </Setting>
+            <small>フィルターを使うとモザイクや色削除ができます</small>
         {:else if $config.filter.type === 'color_key'}
             <Setting name="色">
                 <Button primary onclick={() => {
