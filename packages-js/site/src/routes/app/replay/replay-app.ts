@@ -74,7 +74,7 @@ type FilterColorKey = {
     sub: number;
 };
 
-export const DEFAULT_FILTER_COLOR_KEY: FilterColorKey = { type: 'color_key', color: { x: 0, y: 1, z: 0, w: 1 }, sub: 20, add: 20 } as const;
+export const DEFAULT_FILTER_COLOR_KEY: FilterColorKey = { type: 'color_key', color: { x: 0, y: 1, z: 0, w: 1 }, sub: 100, add: -20 } as const;
 
 type Filter = FilterNoop | FilterPixelate | FilterBlur | FilterColorKey;
 
