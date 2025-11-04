@@ -42,7 +42,19 @@
         ready = true;
     });
 
+    let lsatUser: string | null = null;
+    async function update(userId: string | null) {
+        if (lsatUser === userId) return;
+        lsatUser = $config.user_id;
+        if (!userId) return;
+        await overlayApp.setVC({
+            user_id: userId,
+            channel_id: null,
+            guild_id: null,
+        });
+    }
     $: {
+        update($config.user_id);
         const userFound = $config.user_id && clients[$config.user_id] || null;
         if (Object.keys(clients).length > 0 && !userFound) {
             $config.user_id = Object.keys(clients)[0];
