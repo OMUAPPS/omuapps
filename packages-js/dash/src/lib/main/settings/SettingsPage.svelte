@@ -32,6 +32,7 @@
         if (omu.running) {
             omu.stop();
         }
+        omu.start();
         await new Promise<void>((resolve) => omu.onReady(resolve));
         window.location.reload();
     }
