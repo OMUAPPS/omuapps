@@ -213,6 +213,7 @@
         flex-direction: row;
         gap: 1rem;
         padding-bottom: 8rem;
+        padding-right: 8rem;
     }
 
     .options {
@@ -229,6 +230,7 @@
         flex-direction: column;
         flex-wrap: wrap;
         gap: 0.5rem;
+        margin-left: 2rem;
     }
 
     .apps {
