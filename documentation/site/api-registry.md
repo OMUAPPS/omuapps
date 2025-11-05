@@ -1,5 +1,5 @@
 ---
-index: 2
+index: 20
 icon: database
 title: レジストリ
 group: API

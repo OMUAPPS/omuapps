@@ -3,6 +3,6 @@
     import { BROWSER } from 'esm-env';
 
     if (BROWSER) {
-        goto('/docs/0-index');
+        goto('/docs/index');
     }
 </script>

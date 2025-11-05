@@ -8,7 +8,8 @@
 
     export let always = false;
 
-    let onTop = BROWSER && window.scrollY < 1;
+    $: path = $page.url.pathname;
+    let onTop = BROWSER && (!$page.url.pathname.startsWith('/docs') && window.scrollY < 1);
 
     function onScroll() {
         onTop = window.scrollY < 1;
@@ -21,8 +22,6 @@
             window.removeEventListener('scroll', onScroll);
         };
     });
-
-    $: path = $page.url.pathname;
 </script>
 
 <header class:ontop={!always && onTop}>
@@ -43,16 +42,16 @@
                         ダウンロード
                     </li>
                 </a>
-                <a href="/docs/1-guide-0-index">
-                    <li aria-current={path.startsWith('/docs/1-guide') ? 'page' : undefined}>
+                <a href="/docs/guide-index">
+                    <li aria-current={path.startsWith('/docs/guide') ? 'page' : undefined}>
                         <Tooltip>アプリの導入から使い方を知る</Tooltip>
                         <i class="ti ti-book"></i>
                         導入ガイド
                     </li>
                 </a>
-                <a href="/docs/0-index">
+                <a href="/docs/index">
                     <li
-                        aria-current={path.startsWith('/docs') && !path.startsWith('/docs/1-guide')
+                        aria-current={path.startsWith('/docs') && !path.startsWith('/docs/guide')
                             ? 'page'
                             : undefined}
                     >
@@ -68,6 +67,7 @@
 
 <style lang="scss">
     header {
+        container-type: inline-size;
         position: fixed;
         top: 0;
         right: 0;
@@ -76,7 +76,7 @@
         display: flex;
         width: 100%;
         height: fit-content;
-        padding: 1rem;
+        padding: 1rem 0;
         transition: background 0.0621s;
 
         &:not(.ontop) {
@@ -86,7 +86,6 @@
     }
 
     nav {
-        container-type: inline-size;
         position: sticky;
         top: 0.5rem;
         right: 0;
@@ -99,6 +98,7 @@
         max-width: 64rem;
         height: 3em;
         margin: 0 auto;
+        color: var(--color-1);
     }
 
     li {
@@ -110,7 +110,6 @@
         gap: 0.25rem;
         font-size: 0;
         font-weight: 800;
-        color: var(--color-1);
         text-decoration: none;
         text-transform: uppercase;
         letter-spacing: 0.1em;
@@ -118,14 +117,12 @@
 
         &:hover {
             background: var(--color-bg-2);
-            color: var(--color-1);
             padding-bottom: 1rem;
             transition: padding 0.0621s;
         }
 
         &[aria-current='page'] {
             background: var(--color-bg-2);
-            color: var(--color-1);
             border-bottom: 2px solid var(--color-1);
             padding-bottom: 1rem;
             font-weight: 800;

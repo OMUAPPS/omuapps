@@ -10,10 +10,10 @@ description: このドキュメントの目次
 
 ## 導入
 
-[導入ガイド](%DOCS_ROOT%/1-guide-0-index?_style=large)
+[導入ガイド](%DOCS_ROOT%/guide-index?_style=large)
 
 ## アプリ
 
 ## 開発者向け
 
-[アプリを作成する準備](%DOCS_ROOT%/3-api-0-index?_style=large)
+[アプリを作成する準備](%DOCS_ROOT%/api-index?_style=large)

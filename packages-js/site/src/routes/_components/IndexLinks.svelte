@@ -7,12 +7,12 @@
         <p>OMUAPPSのソースコード</p>
     </Tooltip>
     <i class="ti ti-brand-github"></i>
-    <p>オープンソース</p>
+    <p>ソースコード</p>
     <i class="ti ti-external-link"></i>
 </a>
 <a class="card" href="https://discord.gg/MZKvbPpsuK">
     <Tooltip>
-        <p>OMUAPPSのDiscordコミュニティ</p>
+        <p>OMUAPPSのDiscordサーバー</p>
     </Tooltip>
     <i class="ti ti-brand-discord"></i>
     <p>コミュニティ</p>

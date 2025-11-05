@@ -1,5 +1,5 @@
 ---
-index: 1
+index: 3
 icon: shape
 title: アプリを作成する準備
 group: API
