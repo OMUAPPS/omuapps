@@ -251,6 +251,10 @@ export const DEFAULT_CONFIG: Config = {
     user_id: null,
     show_name_tags: true,
     align: {
+        alignSide: {
+            align: { x: 0, y: 1 },
+            side: 'end',
+        },
         margin: 100,
     },
 };
