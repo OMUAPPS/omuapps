@@ -77,12 +77,14 @@ class ParentPermissionHandle(PermissionHandle):
             return
         permissions.add(permission_id.key())
         self.manager.apps[self.id]["permissions"] = list(permissions)
+        self.manager.store()
 
     def revoke(self, permission_id: Identifier) -> None:
         permissions = self.manager.apps[self.id]["permissions"]
         if permission_id.key() not in permissions:
             return
         permissions.remove(permission_id.key())
+        self.manager.store()
 
     def has(self, permission_id: Identifier) -> bool:
         permissions = self.manager.apps[self.id]["permissions"]
@@ -102,12 +104,14 @@ class ChildPermissionHandle(PermissionHandle):
             return
         permissions.add(permission_id.key())
         self.manager.apps[self.id]["permissions"] = list(permissions)
+        self.manager.store()
 
     def revoke(self, permission_id: Identifier) -> None:
         permissions = self.manager.apps[self.id]["permissions"]
         if permission_id.key() not in permissions:
             return
         permissions.remove(permission_id.key())
+        self.manager.store()
 
     def has(self, permission_id: Identifier) -> bool:
         permissions = self.manager.apps[self.id]["permissions"]

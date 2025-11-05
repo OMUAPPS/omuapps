@@ -156,13 +156,13 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         action: BehaviorAction<'container'>,
         args: { bufferBounds: AABB2; childRenders: Record<string, ItemRender> },
     ) {
-        const { item, behavior } = action;
+        const { item, behavior, context } = action;
         const { bufferBounds } = args;
         const dimentions = bufferBounds.dimensions();
         this.childrenBufferTexture.use(() => {
             this.childrenBufferTexture.ensureSize(dimentions.x, dimentions.y);
         });
-        if (behavior.overlay) {
+        if (behavior.overlay && context.hovering !== item.id) {
             matrices.model.push();
             const transform = transformToMatrix(behavior.overlay.transform);
             matrices.model.multiply(transform);

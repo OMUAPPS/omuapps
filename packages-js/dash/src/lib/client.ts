@@ -48,10 +48,10 @@ const dashboard = new Dashboard(omu);
 setClient(omu);
 setChat(chat);
 omu.plugins.require({
-    omu_chat: `==${VERSION}`,
-    omu_chat_youtube: `==${VERSION}`,
-    omu_chat_twitch: `==${VERSION}`,
-    omu_chatprovider: `==${VERSION}`,
+    omu_chat: `>=${VERSION}`,
+    omu_chat_youtube: `>=${VERSION}`,
+    omu_chat_twitch: `>=${VERSION}`,
+    omu_chatprovider: `>=${VERSION}`,
 });
 omu.permissions.require(
     ChatPermissions.CHAT_CHANNEL_TREE_PERMISSION_ID,

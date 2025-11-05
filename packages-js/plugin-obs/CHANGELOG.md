@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.23 (2025-11-04)
+
+**Note:** Version bump only for package @omujs/obs
+
+
+
+
+
+## 0.9.22 (2025-11-03)
+
+
+### Bug Fixes
+
+* **site:** アセットの接続エラーの説明を分かりやすくする ([2f8cced](https://github.com/OMUAPPS/omuapps/commit/2f8cced2e5813bc5d3cbe14d9d811242a279c257))
+
+
+
+
+
 ## 0.9.21 (2025-11-01)
 
 **Note:** Version bump only for package @omujs/obs

@@ -274,5 +274,4 @@ jobs:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
-            bun wrangler whoami
-            bun ./scripts/js-upload-to-r2.ts --version ${{ needs.publish-npm.outputs.VERSION }} --beta true
+            bun ./scripts/js-upload-to-r2.ts --version ${{ needs.publish-npm.outputs.VERSION }} --channel beta --upload

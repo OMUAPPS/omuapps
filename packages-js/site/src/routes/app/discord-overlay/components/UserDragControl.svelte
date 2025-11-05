@@ -4,7 +4,7 @@
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
     import { type Config, type DiscordOverlayApp, type UserConfig, type VoiceStateItem } from '../discord-overlay-app.js';
-    import { dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
+    import { alignSide, dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
     export let dimentions: { width: number; height: number };
@@ -41,18 +41,27 @@
         lastMouse = [x, y];
         const screen = worldToScreen(user.position);
         const world = screenToWorld(screen.x + dx, screen.y - dy);
+        $dragPosition = screenToWorld(x, dimentions.height - y);
         user.position = world;
-        $dragPosition = new Vec2(x, y);
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         $config = { ...$config };
         lastUpdate = now;
+        user.align = false;
     }
 
     function handleMouseUp() {
-        $config = { ...$config };
         lastMouse = null;
         $dragState = null;
         $isDraggingFinished = true;
+        $config = { ...$config };
+        if ($alignSide) {
+            $config.align.alignSide = $alignSide;
+            $alignSide = undefined;
+            $config.users = Object.fromEntries(Object.entries($config.users).map(([id, user]) => {
+                user.align = true;
+                return [id, user];
+            }));
+        }
     }
 
     function handleMouseDown(x: number, y: number) {
@@ -65,10 +74,16 @@
         user.position = world;
 
         lastMouse = [x, y];
-        $dragState = { type: 'user', id, x, y };
+        $dragState = {
+            type: 'user',
+            id,
+            time: performance.now(),
+            x,
+            y,
+        };
         clickTime = performance.now();
         clickDistance = 0;
-        $config.users[id].lastDraggedAt = Date.now();
+        user.lastDraggedAt = Date.now();
     }
 
     function getPosition(rect: { width: number; height: number }, offset: [number, number] = [0, OFFSET]): [number, number] {

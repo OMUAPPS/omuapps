@@ -27,7 +27,7 @@
     onMount(async () => {
         try {
             const res = await fetch(
-                `https://obj.omuapps.com/app/version${IS_BETA || DEV ? '-beta' : ''}.json`,
+                `https://obj.omuapps.com/app/version-${IS_BETA || DEV ? 'beta' : 'stable'}.json`,
                 {
                     method: 'GET',
                     headers: {

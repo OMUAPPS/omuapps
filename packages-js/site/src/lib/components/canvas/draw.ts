@@ -1,5 +1,6 @@
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Bezier } from '$lib/math/bezier.js';
+import { TAU } from '$lib/math/math.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlShader, GlTexture } from './glcontext.js';
@@ -573,7 +574,7 @@ export class Draw {
         return true;
     }
 
-    public async textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color?: Vec4Like): Promise<boolean> {
+    public async textAlign(anchor: Vec2Like, text: string, align: Vec2Like, color?: Vec4Like, stroke?: { width: number; color: Vec4 }): Promise<boolean> {
         this.textContext.font = this.font;
         const textTexture = await this.generateTextTexture(text);
         if (!textTexture) {
@@ -581,6 +582,20 @@ export class Draw {
         }
         const { width, height, texture } = textTexture;
         const pos = Vec2.from(anchor).sub({ x: width * align.x, y: height * align.y });
+        if (stroke) {
+            for (let index = 0; index < 8; index++) {
+                const dx = Math.cos(index / 8 * TAU) * stroke.width;
+                const dy = Math.sin(index / 8 * TAU) * stroke.width;
+                this.texture(
+                    pos.x + dx,
+                    pos.y + dy,
+                    pos.x + dx + width,
+                    pos.y + dy + height,
+                    texture,
+                    stroke.color,
+                );
+            }
+        }
         if (color) {
             this.texture(pos.x, pos.y, pos.x + width, pos.y + height, texture, color);
         }

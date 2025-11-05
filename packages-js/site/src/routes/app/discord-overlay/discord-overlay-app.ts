@@ -166,6 +166,7 @@ export type UserConfig = {
     scale: number;
     avatar: string | null;
     config: UserAvatarConfig;
+    align: boolean;
 };
 export const DEFAULT_USER_CONFIG: UserConfig = {
     lastDraggedAt: 0,
@@ -177,6 +178,7 @@ export const DEFAULT_USER_CONFIG: UserConfig = {
             layer: 0,
         },
     },
+    align: true,
 };
 export function createUserConfig(): UserConfig {
     return JSON.parse(JSON.stringify(DEFAULT_USER_CONFIG));
@@ -208,6 +210,11 @@ export type GameObject = {
     type: 'image';
 };
 
+export type AlignSide = {
+    align: Vec2Like;
+    side: 'start' | 'middle' | 'end';
+};
+
 export type Config = {
     version?: number;
     users: {
@@ -225,9 +232,13 @@ export type Config = {
     };
     user_id: string | null;
     show_name_tags: boolean;
+    align: {
+        alignSide?: AlignSide;
+        margin: number;
+    };
 };
 export const DEFAULT_CONFIG: Config = {
-    version: 10,
+    version: 11,
     users: {},
     avatars: {},
     effects: {
@@ -239,6 +250,13 @@ export const DEFAULT_CONFIG: Config = {
     },
     user_id: null,
     show_name_tags: true,
+    align: {
+        alignSide: {
+            align: { x: 0, y: 1 },
+            side: 'end',
+        },
+        margin: 100,
+    },
 };
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     name: 'config',
@@ -246,6 +264,11 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
     serializer: Serializer.transform((config: Config) => {
         if (!config.version || config.version < 10) {
             config = DEFAULT_CONFIG;
+        } else if (config.version === 10) {
+            config.version = 11;
+            config.align = {
+                margin: 100,
+            };
         }
         return config;
     }),
