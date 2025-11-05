@@ -52,7 +52,7 @@
             const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: dimensions.width / 2, y: dimensions.height / 2 }).add({ x: 0, y: 0 });
             const offset = align01.sub($dragPosition);
             const dist = offset.dot(align);
-            user.align = dist > 0 && dist < 300;
+            user.align = dist > -150 && dist < 300;
         }
     }
 
