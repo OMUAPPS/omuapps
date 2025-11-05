@@ -510,7 +510,7 @@
 
         const drawTooltip = (pos: Vec2, closest: NonNullable<ClosestInfo>): void => {
             const arrowScale = 5;
-            let text = `${closest.align.name}に整列${closest.side}`;
+            let text = `${closest.align.name}に整列${{ start: '初め', middle: '真ん中', end: '最後' }[closest.side]}`;
             const anchor = pos.add({ x: 0, y: RADIUS * 2 + arrowScale + OUTLINE });
             const bounds = draw.measureTextActual(text)
                 .setAt({ x: 0.5, y: 1 }, Vec2.ZERO)
@@ -527,6 +527,9 @@
                 PALETTE_RGB.TOOLTIP_BACKGROUND,
             );
 
+            draw.fontFamily = 'Noto Sans JP';
+            draw.fontSize = 16;
+            draw.fontWeight = '600';
             draw.textAlign(anchor, text, { x: 0.5, y: 1 }, PALETTE_RGB.TOOLTIP_TEXT);
         };
 
