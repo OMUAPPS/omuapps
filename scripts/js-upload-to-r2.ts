@@ -9,7 +9,7 @@ const CONFIG = {
 } as const;
 
 const { values: options } = parseArgs({
-    args: Bun.argv,
+    args: Bun.argv.slice(2),
     options: {
         version: {
             type: 'string',
