@@ -326,7 +326,7 @@ export class Paint {
         matrices.scope(() => {
             matrices.view.identity();
             matrices.projection.identity();
-            matrices.projection.orthographic(0, width, height, 0, -1, 1);
+            matrices.projection.orthographic(0, 0, width, height, -1, 1);
             this.framebuffer.use(() => {
                 this.ctx.stateManager.pushViewport({ x: width, y: height });
                 for (const event of queue) {

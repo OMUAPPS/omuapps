@@ -233,14 +233,14 @@ export async function init(ctx: GlContext) {
 
 function setupBackgroundProjection() {
     const { gl } = glContext;
-    matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+    matrices.projection.orthographic(0, 0, gl.canvas.width, gl.canvas.height, -1, 1);
     matrices.view.identity();
 }
 
 function setupCounterProjection() {
     const { gl } = glContext;
 
-    matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+    matrices.projection.orthographic(0, 0, gl.canvas.width, gl.canvas.height, -1, 1);
     matrices.view.identity();
     matrices.view.translate(0, gl.canvas.height / 2 - 100, 0);
     matrices.view.scale(scaleFactor, scaleFactor, 1);
@@ -249,14 +249,14 @@ function setupCounterProjection() {
 function setupHUDProjection() {
     const { gl } = glContext;
 
-    matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+    matrices.projection.orthographic(0, 0, gl.canvas.width, gl.canvas.height, -1, 1);
     matrices.view.identity();
 }
 
 function setupCustomerProjection() {
     const { gl } = glContext;
 
-    matrices.projection.orthographic(0, gl.canvas.width, gl.canvas.height, 0, -1, 1);
+    matrices.projection.orthographic(0, 0, gl.canvas.width, gl.canvas.height, -1, 1);
     matrices.view.identity();
     matrices.view.scale(scaleFactor, scaleFactor, 1);
 }
@@ -341,7 +341,7 @@ import { Axis } from '$lib/math/axis.js';
 import { Bezier } from '$lib/math/bezier.js';
 import { createAudioContext, updateAudioClips } from '../asset/audioclip.js';
 import { createAction } from '../item/behaviors/action.js';
-import { renderBackground, renderEffect, renderOverlay, renderOverlay2 } from './renderer/background.js';
+import { renderBackground, renderEffect, renderOverlay } from './renderer/background.js';
 import { renderCursor } from './renderer/cursor.js';
 import { Time } from './time.js';
 
@@ -802,7 +802,6 @@ export async function renderClientSide() {
         setupHUDProjection();
         await renderOverlay();
         setupCounterProjection();
-        await renderOverlay2();
     });
 
     setupHUDProjection();
@@ -863,7 +862,6 @@ export async function renderOverlaySide() {
         setupCustomerProjection();
         await renderCustomersAsset(new Vec2(1920 * 2 - 1200, 1200));
         setupHUDProjection();
-        await renderOverlay2();
     });
 
     setupHUDProjection();
@@ -888,8 +886,8 @@ export async function renderOverlaySide() {
             matrices.view.translate(0, 50 * (1 - t), 0);
             gl.disable(gl.BLEND);
             draw.texture(
-                0, matrices.height,
-                matrices.width, 0,
+                0, 0,
+                matrices.width, matrices.height,
                 frameBufferTexture,
                 new Vec4(1, 1, 1, t),
             );

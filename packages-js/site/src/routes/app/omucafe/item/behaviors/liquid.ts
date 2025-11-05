@@ -264,7 +264,7 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
             glContext.stateManager.pushViewport(dimentions);
             matrices.push();
             matrices.identity();
-            matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.x, bufferBounds.min.y, bufferBounds.max.y, -1, 1);
+            matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.y, bufferBounds.max.x, bufferBounds.min.y, -1, 1);
             const transform = transformToMatrix(behavior.transform);
             matrices.model.push();
             matrices.model.multiply(transform);
@@ -315,7 +315,7 @@ export class LiquidHandler implements BehaviorHandler<'liquid'> {
                 glContext.stateManager.pushViewport(dimentions);
                 matrices.push();
                 matrices.identity();
-                matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.x, bufferBounds.min.y, bufferBounds.max.y, -1, 1);
+                matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.y, bufferBounds.max.x, bufferBounds.min.y, -1, 1);
                 matrices.model.multiply(transform);
                 draw.texture(0, 0, width, height, tex);
                 matrices.pop();
