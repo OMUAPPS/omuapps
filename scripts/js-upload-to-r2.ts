@@ -75,19 +75,6 @@ type UpdateManifest = {
     platforms: Record<PlatformKey, ManifestPlatform>;
 };
 
-const original = await fs.readFile('./release-assets/latest.json', 'utf-8');
-const ORIGINAL_LATEST: UpdateManifest = JSON.parse(original);
-
-async function downloadToFile(url: string, filePath: string) {
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`Failed to download ${url} to ${filePath}: ${response.statusText}`);
-    }
-    const buffer = await response.arrayBuffer();
-    await fs.writeFile(filePath, Buffer.from(buffer));
-    console.log(`Downloaded ${url} to ${filePath}`);
-}
-
 async function downloadRelease() {
     const { data: assets } = await github.rest.repos.listReleaseAssets({
         owner,
@@ -101,6 +88,20 @@ async function downloadRelease() {
         const name = asset.name;
         await downloadToFile(url, `./release-assets/${name}`);
     }
+}
+
+await downloadRelease();
+const original = await fs.readFile('./release-assets/latest.json', 'utf-8');
+const ORIGINAL_LATEST: UpdateManifest = JSON.parse(original);
+
+async function downloadToFile(url: string, filePath: string) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to download ${url} to ${filePath}: ${response.statusText}`);
+    }
+    const buffer = await response.arrayBuffer();
+    await fs.writeFile(filePath, Buffer.from(buffer));
+    console.log(`Downloaded ${url} to ${filePath}`);
 }
 
 async function uploadToR2(file: string, path: string): Promise<string> {
@@ -214,6 +215,5 @@ async function uploadManifest(platform: Platform[], target: UpdateTarget, channe
     );
 }
 
-await downloadRelease();
 await uploadManifest(DOWNLOAD_PLATFORMS, 'version', CHANNEL);
 await uploadManifest(UPDATER_PLATFORMS, 'latest', CHANNEL);
