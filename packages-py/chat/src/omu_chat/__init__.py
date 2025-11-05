@@ -144,4 +144,5 @@ plugin = Plugin(
     get_client,
     on_start=install,
     on_install=install,
+    isolated=False,
 )
