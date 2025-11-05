@@ -76,7 +76,7 @@
                             open = false;
                         }}>
                             <Tooltip>
-                                {client.global_name ?? client.id}に切り替える
+                                {client.global_name ?? client.username}に切り替える
                             </Tooltip>
                             {#if client.avatar}
                                 <img src="https://cdn.discordapp.com/avatars/{client.id}/{client.avatar}.png" alt="" class="avatar" />
@@ -84,7 +84,7 @@
                                 <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
                             {/if}
                             <small>
-                                {client.global_name ?? client.id}
+                                {client.global_name ?? client.username}
                             </small>
                         </button>
                     {/each}

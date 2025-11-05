@@ -5,7 +5,7 @@
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
     import { type Config, type DiscordOverlayApp, type UserConfig, type VoiceStateItem } from '../discord-overlay-app.js';
-    import { alignSide, dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
+    import { alignSide, avatarPositions, dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
     export let resolution: { width: number; height: number };
@@ -18,7 +18,7 @@
         height: 1080,
     };
 
-    const { config } = overlayApp;
+    const { config, voiceState } = overlayApp;
 
     let lastMouse: [number, number] | null = null;
     let clickTime = 0;
@@ -34,6 +34,13 @@
     }
 
     const OFFSET = 150;
+
+    function anyAligned(): boolean {
+        return Object.entries($voiceState).some(([id]) => {
+            const user = $config.users[id];
+            return user?.align;
+        });
+    }
 
     function handleMouseMove(x: number, y: number) {
         if (!lastMouse) return;
@@ -51,16 +58,19 @@
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         $config = { ...$config };
         lastUpdate = now;
-        if ($config.align.alignSide) {
-            const { align } = $config.align.alignSide;
-            const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: dimensions.width / 2, y: dimensions.height / 2 });
-            const offset = align01.sub($dragPosition);
-            const dist = Math.max(
-                offset.dot(align),
-                new AABB2(Vec2.ZERO, new Vec2(dimensions.width, dimensions.height)).distance($dragPosition),
-            );
-            user.align = dist > -150 && dist < 300;
+        if (!anyAligned()) {
+            $config.align.alignSide = undefined;
         }
+        if (!$config.align.alignSide) return;
+        const { align } = $config.align.alignSide;
+        const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: dimensions.width / 2, y: dimensions.height / 2 });
+        const offset = align01.sub($dragPosition);
+        const dist = Math.max(
+            offset.dot(align),
+            new AABB2(Vec2.ZERO, new Vec2(dimensions.width, dimensions.height)).distance($dragPosition),
+            avatarPositions[id] ? Vec2.from(avatarPositions[id].targetPos).distance(user.position) / 1.5 : 0,
+        );
+        user.align = dist > -150 && dist < 300;
     }
 
     function handleMouseUp() {
@@ -68,23 +78,25 @@
         $dragState = null;
         $isDraggingFinished = true;
         $config = { ...$config };
-        if ($alignSide) {
-            $config.align.alignSide = $alignSide;
-            $alignSide = undefined;
-            user.align = true;
-            $config.users = Object.fromEntries(Object.entries($config.users).map(([id, user]) => {
-                const { position } = user;
-                if (
-                    position.x > -150 &&
-                    position.y > -150 &&
-                    position.x < dimensions.width + 150 &&
-                    position.y < dimensions.height + 150
-                ) {
-                    user.align = true;
-                };
-                return [id, user];
-            }));
+        if (!anyAligned()) {
+            $config.align.alignSide = undefined;
         }
+        if (!$alignSide) return;
+        $config.align.alignSide = $alignSide;
+        $alignSide = undefined;
+        user.align = true;
+        $config.users = Object.fromEntries(Object.entries($config.users).map(([id, user]) => {
+            const { position } = user;
+            if (
+                position.x > -150 &&
+                position.y > -150 &&
+                position.x < dimensions.width + 150 &&
+                position.y < dimensions.height + 150
+            ) {
+                user.align = true;
+            };
+            return [id, user];
+        }));
     }
 
     function handleMouseDown(x: number, y: number) {
@@ -392,8 +404,8 @@
             border: none;
             outline: 2px solid var(--color-1);
             outline-width: 2px;
+            border: 1px solid var(--color-1);
             box-shadow: 0 0.3rem 0 0 color-mix(in srgb, var(--color-2) 100%, transparent 0%);
-            margin-bottom: 1px;
             margin-left: 1px;
             transition: margin-bottom, outline-width, box-shadow 0.0621s;
             z-index: 3;

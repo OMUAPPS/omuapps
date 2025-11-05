@@ -9,6 +9,7 @@ export type AABB2Like = {
 export class AABB2 {
     public static readonly ZEROZERO = new AABB2(Vec2.ZERO, Vec2.ZERO);
     public static readonly ONEONE = new AABB2(Vec2.ONE, Vec2.ONE);
+    public static readonly ZEROONE = new AABB2(Vec2.ONE, Vec2.ONE);
 
     constructor(
         public readonly min: Vec2,
