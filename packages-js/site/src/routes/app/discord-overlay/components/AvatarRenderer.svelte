@@ -26,12 +26,6 @@
     export let dimensions = {
         width: 1920,
         height: 1080,
-        margin: {
-            left: 400,
-            right: 340,
-            top: 80,
-            bottom: 80,
-        },
     };
     const { voiceState, speakingState, config } = overlayApp;
 
@@ -401,6 +395,7 @@
             if (avatar.type === 'loaded') {
                 matrices.model.push();
                 applyUserTransform(id, user, user.align && $config.align.alignSide || undefined, alignIndexes[id], alignTotal);
+                const screenPos = matrices.model.get().transform2({ x: 0, y: POSITION_OFFSET });
                 matrices.model.translate(0, -POSITION_OFFSET, 0);
                 const config = avatar.getConfig();
                 applyAvatarScale(user.scale);
@@ -434,7 +429,7 @@
                 draw.fontWeight = '600';
                 const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
                 await draw.textAlign(
-                    Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }),
+                    screenPos,
                     name,
                     { x: 0.5, y: 1 },
                     { x: 1, y: 1, z: 1, w: 1 },

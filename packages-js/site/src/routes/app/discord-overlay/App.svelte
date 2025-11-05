@@ -31,7 +31,7 @@
         getUser(id);
     });
 
-    let dimentions: { width: number; height: number } = { width: 0, height: 0 };
+    let resolution: { width: number; height: number } = { width: 0, height: 0 };
 
     let clients: Record<string, AuthenticateUser> = {};
     let ready = false;
@@ -66,19 +66,19 @@
 
 <main>
     {#if ready}
-        <div class="canvas" bind:clientWidth={dimentions.width} bind:clientHeight={dimentions.height}>
+        <div class="canvas" bind:clientWidth={resolution.width} bind:clientHeight={resolution.height}>
             <AvatarRenderer overlayApp={overlayApp} />
             {#if $selectedAvatar && $config.avatars[$selectedAvatar]}
                 <AvatarAdjustModal overlayApp={overlayApp} bind:avatarConfig={$config.avatars[$selectedAvatar]} />
             {:else}
-                {#if dimentions}
+                {#if resolution}
                     {#each Object.entries($voiceState)
                         .sort(comparator(([id]) => {
                             const user = $config.users[id];
                             return user.lastDraggedAt;
                         })) as [id, state] (id)}
                         {#if state}
-                            <UserDragControl {dimentions} {overlayApp} {id} {state} bind:user={$config.users[id]} />
+                            <UserDragControl {resolution} {overlayApp} {id} {state} bind:user={$config.users[id]} />
                         {/if}
                     {/each}
                 {/if}
