@@ -46,7 +46,14 @@
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         $config = { ...$config };
         lastUpdate = now;
-        user.align = false;
+        if ($config.align.alignSide) {
+            const { align } = $config.align.alignSide;
+            const dimensions = { width: 1920, height: 1080 };
+            const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: dimensions.width / 2, y: dimensions.height / 2 }).add({ x: 0, y: 0 });
+            const offset = align01.sub($dragPosition);
+            const dist = offset.dot(align);
+            user.align = dist > 0 && dist < 300;
+        }
     }
 
     function handleMouseUp() {

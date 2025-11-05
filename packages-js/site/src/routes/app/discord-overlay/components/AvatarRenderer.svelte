@@ -320,6 +320,8 @@
             scale: Vec2.ONE,
         };
         const transform = { ...last };
+        const deltaTime = timer.getElapsedMS() / 1000;
+        const t = 1 - Math.exp(-deltaTime * 16);
         if (alignSide) {
             const { align, side } = alignSide;
             transform.pos = calculateAlignPosition(alignSide, index, total);
@@ -333,15 +335,15 @@
                 flipY ? -1 : 1,
             );
             transform.rot = horizontal ? TAU / 4 : 0;
-            user.position = transform.pos;
+            if (id !== $dragState?.id) {
+                user.position = Vec2.from(user.position).lerp(transform.pos, t);
+            }
         } else {
             transform.pos = user.position;
             transform.scale = Vec2.ONE;
             transform.rot = 0;
         }
 
-        const deltaTime = timer.getElapsedMS() / 1000;
-        const t = 1 - Math.exp(-deltaTime * 16);
         const newTransform = {
             pos: Vec2.from(last.pos).lerp(transform.pos, t),
             rot: BetterMath.lerpAngle(last.rot, transform.rot, t),
@@ -380,7 +382,7 @@
                 continue;
             }
             const dir = calculateAlignDir($config.align.alignSide);
-            alignIndexes[id] = dir.dot(user.position);
+            alignIndexes[id] = dir.dot(id === $dragState?.id ? $dragPosition ?? user.position : user.position);
         }
         alignIndexes = Object.fromEntries(
             Object.entries(alignIndexes)
@@ -462,7 +464,6 @@
         setupWorldMatrices();
         const worldView = matrices.view.get();
         const worldViewInv = worldView.inverse();
-        const { gl } = context;
         matrices.view.identity();
 
         type Align = {
