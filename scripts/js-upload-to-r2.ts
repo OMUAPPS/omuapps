@@ -59,8 +59,6 @@ if (!release) {
     console.log(`Release found ${release.tag_name}: ${release.body}`);
 }
 
-const fileToUrl = await uploadVersion();
-
 type ManifestPlatform = {
     signature: string;
     url: string;
@@ -209,11 +207,14 @@ async function uploadManifest(platform: Platform[], target: UpdateTarget, channe
         })),
     };
 
+    const path = `./release-assets/${target}-${channel}.json`;
     await fs.writeFile(
-        `./release-assets/${target}-${channel}.json`,
+        path,
         JSON.stringify(releaseData, null, 4),
     );
+    await uploadToR2(path, `app/${target}-${channel}.json`);
 }
 
+const fileToUrl = await uploadVersion();
 await uploadManifest(DOWNLOAD_PLATFORMS, 'version', CHANNEL);
 await uploadManifest(UPDATER_PLATFORMS, 'latest', CHANNEL);

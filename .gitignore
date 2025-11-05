@@ -2,6 +2,9 @@
 **/__pycache__/**
 /dist
 
+# Github Actions
+release-assets
+
 # pytest
 .coverage
 coverage.xml
