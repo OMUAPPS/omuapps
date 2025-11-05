@@ -30,7 +30,7 @@ const myData = omu.registries.create<MyData>('my_data', {
 });
 ```
 
-[serializer](%DOCS_ROOT%/4-core-1-serializer) を指定することでデータのシリアライズをカスタマイズすることができます。
+[serializer](%DOCS_ROOT%/core-serializer) を指定することでデータのシリアライズをカスタマイズすることができます。
 
 ```typescript
 // レジストリの定義
