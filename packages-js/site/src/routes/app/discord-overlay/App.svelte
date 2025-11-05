@@ -3,7 +3,7 @@
     import { comparator } from '$lib/helper';
     import { OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { Tooltip } from '@omujs/ui';
+    import { Slider, Tooltip } from '@omujs/ui';
     import { ASSET_APP } from './app';
     import AccountSwitcher from './components/AccountSwitcher.svelte';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
@@ -147,6 +147,7 @@
             {#if settingsOpen}
                 <VisualConfig {overlayApp} />
             {/if}
+            <Slider bind:value={$config.align.margin} min={0} max={100} step={1} />
         </div>
     {/if}
 </main>

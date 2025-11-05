@@ -4,12 +4,15 @@
     import { type GlContext } from '$lib/components/canvas/glcontext.js';
     import { Matrices } from '$lib/components/canvas/matrices.js';
     import { comparator } from '$lib/helper.js';
+    import { BetterMath } from '$lib/math.js';
+    import { AABB2 } from '$lib/math/aabb2.js';
+    import { Axis } from '$lib/math/axis.js';
     import { TAU } from '$lib/math/math.js';
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
     import { Timer } from '$lib/timer.js';
     import { PALETTE_RGB } from '../consts.js';
-    import { DiscordOverlayApp, type AvatarConfig, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
+    import { DiscordOverlayApp, type AlignSide, type AvatarConfig, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
     import { createShadowEffect } from '../effects/shadow.js';
@@ -17,7 +20,7 @@
     import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
     import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
-    import { dragState, scaleFactor, selectedAvatar, view } from '../states.js';
+    import { alignSide, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let dimensions = {
@@ -56,7 +59,7 @@
         bloomEffect = await createBloomEffect(context);
     }
 
-    function setupMatrices() {
+    function setupWorldMatrices() {
         const { gl } = context;
         const { width, height } = gl.canvas;
         matrices.identity();
@@ -88,13 +91,14 @@
 
         gl.viewport(0, 0, width, height);
 
-        setupMatrices();
+        setupWorldMatrices();
         $view = matrices.get();
 
         if (overlayApp.isOnClient()) {
             draw.rectangle(0, 0, dimensions.width, dimensions.height, new Vec4(1, 1, 1, 1));
         }
         await drawAvatars();
+        await drawHeldTips();
         await drawScreen();
         timer.reset();
     }
@@ -275,14 +279,78 @@
         }
     }
 
-    const avatarPositions: Record<string, Vec2> = {};
-    function applyUserTransform(id: string, user: UserConfig) {
-        const last = Vec2.from(avatarPositions[id] ?? user.position);
-        const pos = user.position;
+    function calculateAlignDir(alignSide: AlignSide): Vec2 {
+        const { align, side } = alignSide;
+        const horizontal = align.y === 0;
+        return new Vec2(
+            horizontal ? 0 : (side === 'start' ? 1 : -1),
+            horizontal ? (side === 'end' ? -1 : 1) : 0,
+        );
+    }
+
+    function calculateAlignPosition(alignSide: AlignSide, index: number, total: number): Vec2 {
+        const MARGIN = $config.align.margin;
+        const { align, side } = alignSide;
+        const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: dimensions.width / 2 - MARGIN, y: dimensions.height / 2 - MARGIN }).add({ x: MARGIN, y: MARGIN });
+        const dirPerp = getAlignPerpendicularOffset(align);
+        const sideScalar = { start: -1, middle: 0, end: 1 }[side];
+        const origin = align01.add(dirPerp.scale(Math.abs(align.x) > Math.abs(align.y) ? dimensions.height / 2 : dimensions.width / 2).scale(sideScalar));
+
+        let offsetScale = index * 300 + MARGIN * 2;
+        if (side === 'middle') {
+            offsetScale = (index - (total - 1) / 2) * 300;
+        } else {
+            offsetScale = offsetScale;
+        }
+        const offsetDir = calculateAlignDir(alignSide);
+        const offset = offsetDir.scale(offsetScale);
+        return origin.add(offset);
+    }
+
+    const avatarPositions: Record<string, {
+        pos: Vec2Like;
+        rot: number;
+        scale: Vec2;
+    }> = {};
+
+    function applyUserTransform(id: string, user: UserConfig, alignSide: AlignSide | undefined, index: number, total: number) {
+        const last = avatarPositions[id] ?? {
+            pos: user.position,
+            rot: 0,
+            scale: Vec2.ONE,
+        };
+        const transform = { ...last };
+        if (alignSide) {
+            const { align, side } = alignSide;
+            transform.pos = calculateAlignPosition(alignSide, index, total);
+
+            const horizontal = align.y === 0;
+
+            let flipX = horizontal ? align.x > 0 : side === 'start';
+            let flipY = horizontal ? true : align.y < 0;
+            transform.scale = new Vec2(
+                flipX ? -1 : 1,
+                flipY ? -1 : 1,
+            );
+            transform.rot = horizontal ? TAU / 4 : 0;
+            user.position = transform.pos;
+        } else {
+            transform.pos = user.position;
+            transform.scale = Vec2.ONE;
+            transform.rot = 0;
+        }
+
         const deltaTime = timer.getElapsedMS() / 1000;
-        const newPos = last.lerp(pos, 1 - Math.exp(-deltaTime * 16));
-        matrices.model.translate(newPos.x, newPos.y, 0);
-        avatarPositions[id] = newPos;
+        const t = 1 - Math.exp(-deltaTime * 16);
+        const newTransform = {
+            pos: Vec2.from(last.pos).lerp(transform.pos, t),
+            rot: BetterMath.lerpAngle(last.rot, transform.rot, t),
+            scale: Vec2.from(last.scale).lerp(transform.scale, t),
+        };
+        avatarPositions[id] = newTransform;
+        matrices.model.translate(newTransform.pos.x, newTransform.pos.y, 0);
+        matrices.model.scale(newTransform.scale.x, newTransform.scale.y, 0);
+        matrices.model.rotate(Axis.Z_POS.rotate(newTransform.rot));
     }
 
     async function drawAvatars() {
@@ -300,6 +368,25 @@
             const user = $config.users[id];
             return user.lastDraggedAt;
         }));
+        let alignTotal = 0;
+        let alignIndexes: Record<string, number> = {};
+        for (const [id, voiceState] of entries) {
+            if (!voiceState) continue;
+            const user = $config.users[id];
+            if (!user.align) continue;
+            alignTotal++;
+            if (!$config.align.alignSide) {
+                alignIndexes[id] = 0;
+                continue;
+            }
+            const dir = calculateAlignDir($config.align.alignSide);
+            alignIndexes[id] = dir.dot(user.position);
+        }
+        alignIndexes = Object.fromEntries(
+            Object.entries(alignIndexes)
+                .sort(comparator(([, offset]) => offset))
+                .map(([id], index) => [id, index]),
+        );
         for (const [id, voiceState] of entries) {
             const user = $config.users[id];
             if (!voiceState) continue;
@@ -311,9 +398,9 @@
             const avatar = loadAvatarByVoiceState(id, voiceState);
             if (avatar.type === 'loaded') {
                 matrices.model.push();
-                applyUserTransform(id, user);
-                const config = avatar.getConfig();
+                applyUserTransform(id, user, user.align && $config.align.alignSide || undefined, alignIndexes[id], alignTotal);
                 matrices.model.translate(0, -POSITION_OFFSET, 0);
+                const config = avatar.getConfig();
                 applyAvatarScale(user.scale);
                 if (config) {
                     applyAvatarTransform(config);
@@ -344,26 +431,169 @@
                 const offsetScale = overlayApp.isOnAsset() ? 4 : 2;
                 draw.fontWeight = '600';
                 const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
-                for (let index = 0; index < 8; index++) {
-                    const offset = {
-                        x: Math.cos(index / 8 * TAU) * offsetScale,
-                        y: Math.sin(index / 8 * TAU) * offsetScale,
-                    };
-                    await draw.textAlign(
-                        Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }).add(offset),
-                        name,
-                        { x: 0.5, y: 1 },
-                        { x: 0, y: 0, z: 0, w: 1 },
-                    );
-                }
                 await draw.textAlign(
                     Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }),
                     name,
                     { x: 0.5, y: 1 },
                     { x: 1, y: 1, z: 1, w: 1 },
+                    {
+                        width: offsetScale,
+                        color: new Vec4(0, 0, 0, 1),
+                    },
                 );
             }
         }
+    }
+
+    let hoveredAlign: string | undefined = undefined;
+
+    const RADIUS = 24;
+    const RADIUS_VEC = new Vec2(RADIUS, RADIUS);
+    const getAlignPerpendicularOffset = (align: Vec2Like): Vec2 => {
+        return Vec2.from(align).turnRight().scale(align.x > 0 || align.y < 0 ? -1 : 1);
+    };
+
+    async function drawHeldTips() {
+        if (!$dragState) return;
+        $alignSide = undefined;
+        const dragTime = performance.now() - $dragState.time;
+        const dragT = (1 - 1 / (dragTime + 1));
+        matrices.push();
+        setupWorldMatrices();
+        const worldView = matrices.view.get();
+        const worldViewInv = worldView.inverse();
+        const { gl } = context;
+        matrices.view.identity();
+
+        type Align = {
+            dir: Vec2;
+            name: string;
+            icon: string;
+            iconStart: string;
+            iconEnd: string;
+        };
+
+        type Side = 'start' | 'middle' | 'end';
+        type ClosestInfo = {
+            align: Align;
+            side: Side;
+            icon: string;
+            dist: number;
+            pos: Vec2;
+        } | undefined;
+
+        const ALIGNS: Align[] = [
+            { dir: Vec2.LEFT, name: '左', icon: '\uec89', iconStart: '\uec8b', iconEnd: '\uec88' },
+            { dir: Vec2.RIGHT, name: '右', icon: '\uec8a', iconStart: '\uec8b', iconEnd: '\uec88' },
+            { dir: Vec2.DOWN, name: '上', icon: '\uec8b', iconStart: '\uec89', iconEnd: '\uec8a' },
+            { dir: Vec2.UP, name: '下', icon: '\uec88', iconStart: '\uec89', iconEnd: '\uec8a' },
+        ];
+
+        const MARGIN = 100;
+        const OUTLINE = 2;
+
+        let closest: ClosestInfo = undefined;
+        let anyHovered = false;
+
+        // Helper functions
+        const getWorldPoint = (align: Align, dimensions: { width: number; height: number }): Vec2 => {
+            const dir01 = align.dir.add(Vec2.ONE).scale(0.5);
+            return align.dir.scale(MARGIN * dragT).add(dir01.mul({ x: dimensions.width, y: dimensions.height }));
+        };
+
+        const drawAlignIcon = async (point: Vec2, icon: string, color = PALETTE_RGB.ACCENT): Promise<void> => {
+            draw.fontFamily = 'tabler-icons';
+            draw.fontSize = 16;
+            draw.fontWeight = 'normal';
+            await draw.textAlign(point, icon, Vec2.ONE.scale(0.4), color);
+        };
+
+        const drawTooltip = (pos: Vec2, closest: NonNullable<ClosestInfo>): void => {
+            const arrowScale = 5;
+            let text = `${closest.align.name}に整列${closest.side}`;
+            const anchor = pos.add({ x: 0, y: RADIUS * 2 + arrowScale + OUTLINE });
+            const bounds = draw.measureTextActual(text)
+                .setAt({ x: 0.5, y: 1 }, Vec2.ZERO)
+                .offset(anchor)
+                .expand({ x: 14, y: 8 });
+
+            const center = bounds.center();
+            draw.rectangle(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, PALETTE_RGB.TOOLTIP_BACKGROUND);
+
+            draw.triangle(
+                { x: center.x - arrowScale, y: bounds.min.y },
+                { x: center.x, y: bounds.min.y - arrowScale },
+                { x: center.x + arrowScale, y: bounds.min.y },
+                PALETTE_RGB.TOOLTIP_BACKGROUND,
+            );
+
+            draw.textAlign(anchor, text, { x: 0.5, y: 1 }, PALETTE_RGB.TOOLTIP_TEXT);
+        };
+
+        // Main loop
+        for (const align of ALIGNS) {
+            const pointWorld = getWorldPoint(align, dimensions);
+            const point = worldView.transform2(pointWorld);
+            const hovered = hoveredAlign === align.icon;
+            const scale = hovered ? 2 : 0;
+            const dirPerp = getAlignPerpendicularOffset(align.dir)
+                .scale(RADIUS)
+                .scale(scale);
+
+            const bounds = new AABB2(
+                point.sub(RADIUS_VEC).sub(dirPerp),
+                point.add(RADIUS_VEC).add(dirPerp),
+            );
+
+            const renderBounds = worldViewInv.transformAABB2(bounds);
+            const isInBound = $dragPosition && renderBounds.distance($dragPosition) < 1;
+
+            draw.roundedRect(bounds.min, bounds.max, RADIUS, PALETTE_RGB.BACKGROUND_1_TRANSPARENT);
+            draw.roundedRect(bounds.min, bounds.max, RADIUS, PALETTE_RGB.ACCENT, OUTLINE);
+
+            if (isInBound) {
+                anyHovered = true;
+                hoveredAlign = align.icon;
+
+                const sides = [
+                    { side: 'start' as Side, pos: point.sub(dirPerp), icon: align.iconStart },
+                    { side: 'middle' as Side, pos: point, icon: align.icon },
+                    { side: 'end' as Side, pos: point.add(dirPerp), icon: align.iconEnd },
+                ];
+
+                draw.fontSize = 16;
+                draw.fontFamily = 'Noto Sans JP';
+
+                for (const { side, pos, icon } of sides) {
+                    await drawAlignIcon(pos, icon);
+
+                    const posWorld = worldViewInv.transform2(pos);
+                    const dist = $dragPosition?.distance(posWorld);
+
+                    if (dist && (!closest || dist < closest.dist)) {
+                        closest = { align, side, icon, dist, pos };
+                    }
+                }
+            } else {
+                await drawAlignIcon(point, align.icon);
+            }
+        }
+
+        if (!anyHovered) {
+            closest = undefined;
+            hoveredAlign = undefined;
+        }
+
+        if (closest) {
+            const pos = closest.pos.sub(closest.align.dir.scale(RADIUS * 4));
+            drawTooltip(pos, closest);
+            draw.circle(pos.x, pos.y, 0, RADIUS, PALETTE_RGB.ACCENT);
+            await drawAlignIcon(pos, closest.icon, PALETTE_RGB.BACKGROUND_1);
+            await drawAlignIcon(pos, closest.icon, PALETTE_RGB.BACKGROUND_1);
+            $alignSide = { align: closest.align.dir, side: closest.side };
+        }
+
+        matrices.pop();
     }
 
     async function drawScreen() {

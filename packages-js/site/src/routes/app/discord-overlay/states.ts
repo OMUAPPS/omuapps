@@ -1,10 +1,12 @@
 import { Mat4 } from '$lib/math/mat4';
 import { Vec2 } from '$lib/math/vec2.js';
 import { writable } from 'svelte/store';
+import type { AlignSide } from './discord-overlay-app';
 
 type DragState = {
     type: 'user';
     id: string;
+    time: number;
     x: number;
     y: number;
 };
@@ -16,3 +18,4 @@ export const heldUser = writable<string | null>(null);
 export const isDraggingFinished = writable<boolean>(false);
 export const scaleFactor = writable<number>(1);
 export const view = writable<Mat4>(Mat4.IDENTITY);
+export const alignSide = writable<AlignSide | undefined>();

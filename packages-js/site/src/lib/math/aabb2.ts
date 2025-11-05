@@ -98,6 +98,11 @@ export class AABB2 {
         return new AABB2(this.min.sub(centerOffset), this.max.sub(centerOffset));
     }
 
+    public distance(point: Vec2Like): number {
+        const p = this.min.max(point).min(this.max);
+        return p.distance(point);
+    }
+
     public dimensions(): Vec2 {
         return this.max.sub(this.min);
     }

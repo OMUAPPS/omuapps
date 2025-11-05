@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Vec2 } from '$lib/math/vec2.js';
     import { Button, FileDrop, Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
     import { DEFAULT_USER_CONFIG, type DiscordOverlayApp, type PngAvatarConfig, type VoiceStateItem } from '../discord-overlay-app.js';
@@ -161,6 +162,17 @@
                 <i class="ti ti-settings"></i>
             </Button>
         {/if}
+        <Button onclick={() => {
+            $config.users[id] = {
+                ...$config.users[id],
+                scale: 1,
+                position: Vec2.ZERO,
+                align: false,
+            };
+        }}>
+            位置をリセット
+            <i class="ti ti-settings"></i>
+        </Button>
     </div>
     {#if avatar && $config.avatars[avatar]?.type === 'pngtuber'}
         <button on:click={() => {configOpen = !configOpen;}} class="config-toggle">
