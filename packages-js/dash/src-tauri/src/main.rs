@@ -64,7 +64,7 @@ fn main() {
             std::process::exit(1);
         })
         .unwrap();
-    let mut app_config = AppConfig::ensure(&options);
+    let app_config = AppConfig::ensure(&options);
     let mut server_config = ServerConfig::ensure(&options);
     server_config.workdir = options.workdir.clone();
     let app_handle = Arc::new(Mutex::new(None));
@@ -131,6 +131,8 @@ fn main() {
             _ => {}
         })
         .setup(move |app| {
+            *app_handle.lock().unwrap() = Some(app.handle().clone());
+
             match app.cli().matches() {
                 Ok(matches) => {
                     if Some(Value::Bool(true))
@@ -142,7 +144,6 @@ fn main() {
                 Err(_) => {}
             }
 
-            *app_handle.lock().unwrap() = Some(app.handle().clone());
             Ok(())
         })
         .run(tauri::generate_context!())
