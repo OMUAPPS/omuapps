@@ -1,11 +1,11 @@
 [project]
 name = "omuplugin_obs"
-version = "0.9.23"
+version = "0.9.24"
 description = "OBS Studioの操作を行うためのOMUAPPSプラグイン"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu_chat>=0.9.23", "psutil>=6.0.0", "pywin32>=306; sys_platform == \"win32\""]
+dependencies = ["loguru>=0.7.2", "omu_chat>=0.9.24", "psutil>=6.0.0", "pywin32>=306; sys_platform == \"win32\""]
 readme = "README.md"
 requires-python = ">= 3.12"
 
