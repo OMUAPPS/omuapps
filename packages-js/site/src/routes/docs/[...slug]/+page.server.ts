@@ -1,4 +1,4 @@
-import { getDocsData } from '$lib/server/docs';
+import { getDocsData, normalizeSlug } from '$lib/server/docs';
 import { error } from '@sveltejs/kit';
 import type { EntryGenerator } from './$types.js';
 
@@ -12,7 +12,8 @@ export const entries: EntryGenerator = async () => {
 export async function load({ params }: { params: { slug: string } }) {
     const docsData = await getDocsData();
 
-    const doc = docsData.find((doc) => doc.slug === params.slug);
+    const slug = normalizeSlug(params.slug);
+    const doc = docsData.find((doc) => doc.slug === slug);
 
     if (!doc) {
         error(404, 'Not found');

@@ -2,7 +2,6 @@
 index: 1
 icon: box
 title: アプリを作成する
-group: API
 description: APIの機能を利用するためのアプリを作成する
 ---
 

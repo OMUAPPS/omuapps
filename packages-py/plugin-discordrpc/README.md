@@ -1,3 +1,3 @@
-# plugin-chat
+# omuplugin_discordrpc
 
-Describe your project here.
+OMUAPPSにDiscord RPCの機能を提供するプラグインです。

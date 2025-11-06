@@ -2,7 +2,6 @@
 index: 20
 icon: bell
 title: シグナル
-group: API
 description: シグナルを使って他のセッションに通知する
 ---
 

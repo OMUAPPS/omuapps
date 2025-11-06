@@ -1,3 +1,4 @@
+*.md -diff -text
 *.svg -diff -text
 *.psd -diff -text
 *.ai -diff -text

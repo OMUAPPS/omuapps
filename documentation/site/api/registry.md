@@ -2,7 +2,6 @@
 index: 20
 icon: database
 title: レジストリ
-group: API
 description: データを保持するためのAPI
 ---
 
@@ -30,7 +29,7 @@ const myData = omu.registries.create<MyData>('my_data', {
 });
 ```
 
-[serializer](%DOCS_ROOT%/core-serializer) を指定することでデータのシリアライズをカスタマイズすることができます。
+[serializer](%DOCS_ROOT%/api/serializer) を指定することでデータのシリアライズをカスタマイズすることができます。
 
 ```typescript
 // レジストリの定義

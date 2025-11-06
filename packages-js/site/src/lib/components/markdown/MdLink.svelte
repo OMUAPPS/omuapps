@@ -31,7 +31,8 @@
     .large {
         padding: 0.75rem 2rem;
         border-radius: 2px;
-        outline: 2px solid var(--color-outline);
+        background: var(--color-1);
+        color: var(--color-bg-2);
         font-size: 1rem;
         margin-top: 1rem;
     }

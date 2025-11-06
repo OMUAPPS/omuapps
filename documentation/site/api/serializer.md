@@ -2,7 +2,6 @@
 index: 1
 icon: adjustments-bolt
 title: Serializer
-group: オブジェクト
 description: シリアライザを使ってオブジェクトをバイト列に変換する
 ---
 

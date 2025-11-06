@@ -12,7 +12,7 @@
         if (!BROWSER) return true;
         if (!element) return false;
         const rect = element.getBoundingClientRect();
-        return rect.top + 100 < window.innerHeight * 0.75;
+        return rect.top + 100 < window.innerHeight;
     }
 
     let card0, card1, card2;
@@ -47,7 +47,7 @@
         <i class="ti ti-package"></i>
         <div class="info">
             <h3>使いやすさ</h3>
-            <p>難しいことを可能な限り排除することを第一に考えています。</p>
+            <p>難しいことを可能な限り排除することを安全の次に考えています。</p>
         </div>
     </div>
 </div>

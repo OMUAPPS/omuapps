@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { DocsMeta } from '$lib/server/docs';
+    import { Tooltip } from '@omujs/ui';
 
     export let section:
         | Readonly<{
@@ -27,6 +28,9 @@
         <span>
             {#if prev}
                 <a href={`/docs/${prev.slug}`}>
+                    <Tooltip>
+                        {prev.meta.description}
+                    </Tooltip>
                     <i class="ti ti-chevron-left"></i>
                     {prev.meta.title}
                     <i class="ti ti-{prev.meta.icon || 'pencil'}"></i>
@@ -36,6 +40,9 @@
         <span>
             {#if next}
                 <a href={`/docs/${next.slug}`}>
+                    <Tooltip>
+                        {next.meta.description}
+                    </Tooltip>
                     <i class="ti ti-{next.meta.icon || 'pencil'}"></i>
                     {next.meta.title}
                     <i class="ti ti-chevron-right"></i>

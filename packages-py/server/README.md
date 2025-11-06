@@ -1,3 +1,3 @@
-# server
+# omuserver
 
-omuプロトコルのサーバー実装
+OMUAPPSのAPIサーバーです。
