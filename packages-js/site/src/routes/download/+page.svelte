@@ -6,46 +6,49 @@
     import { onMount } from 'svelte';
     import { getPlatform, type Platform, type VersionManifest } from './download.js';
 
-    let manifest: VersionManifest | null = null;
+    let state: {
+        type: 'loading';
+    } | {
+        type: 'not_supported';
+    } | {
+        type: 'found';
+        manifest: VersionManifest;
+        version: Platform & { platform: string };
+    } = { type: 'loading' };
 
-    let downloading = false;
-    let showExtra = false;
-    let loading = true;
-
-    function getVersion(manifest: VersionManifest): (Platform & { platform: string }) | undefined {
+    onMount(async () => {
+        const res = await fetch(
+            `https://obj.omuapps.com/app/version-${IS_BETA || DEV ? 'beta' : 'stable'}.json`,
+            {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                redirect: 'follow',
+                mode: 'cors',
+            },
+        );
+        if (!res.ok) {
+            console.error('Failed to fetch version manifest.');
+        }
+        const manifest = await res.json();
         const platform = getPlatform();
         if (manifest.platforms[platform] === undefined) {
             console.error(`Platform ${platform} is not supported.`);
+            state = {
+                type: 'not_supported',
+            };
             return;
         }
-        return { ...manifest.platforms[platform], platform };
-    }
-
-    $: version = manifest ? getVersion(manifest) : undefined;
-    $: daysAgo = manifest && Math.floor((Date.now() - new Date(manifest.pub_date).getTime()) / (1000 * 60 * 60 * 24));
-
-    onMount(async () => {
-        try {
-            const res = await fetch(
-                `https://obj.omuapps.com/app/version-${IS_BETA || DEV ? 'beta' : 'stable'}.json`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    redirect: 'follow',
-                    mode: 'cors',
-                },
-            );
-            if (res.ok) {
-                manifest = await res.json();
-            } else {
-                console.error('Failed to fetch version manifest.');
-            }
-        } finally {
-            loading = false;
-        }
+        state = {
+            type: 'found',
+            manifest,
+            version: { ...manifest.platforms[platform], platform },
+        };
     });
+
+    let downloading = false;
+    let showExtra = false;
 </script>
 
 <svelte:head>
@@ -63,23 +66,24 @@
     </header>
     <main slot="content">
         <div class="warning">
-            <p>現在は<b>ベータ版です。</b></p>
+            <h2>現在はベータ版です。</h2>
             <p>バグや不具合が発生し、PCへの影響がある可能性があります。ご利用の際は、自己責任でお願いします。</p>
-            <p>
-                また、不具合の報告などは
+            <small>
+                お手数ですが不具合などを発見した際は
                 <b>
-                    <a href="http://discord.gg/MZKvbPpsuK">
+                    <a href="/redirect/discord">
                         discord
                         <i class="ti ti-external-link"></i>
                     </a>
                 </b>
-                にお問い合わせいただけると幸いです。
-            </p>
+                にお問い合わせいただけると大変開発の助けになります。
+            </small>
         </div>
-        <div>
-            {#if loading}
+        <div class="state">
+            {#if state.type === 'loading'}
                 <small> 読み込み中... </small>
-            {:else if manifest && version}
+            {:else if state.type === 'found'}
+                {@const { manifest, version } = state}
                 <a href="/legal/terms" class="legal-link">
                     <p>
                         利用規約
@@ -119,10 +123,7 @@
                         <i class="ti ti-download"></i>
                     </a>
                     <button on:click={() => (showExtra = !showExtra)} class="extra">
-                        <small>
-                            別のインストール方法
-                            <i class="ti ti-chevron-{showExtra ? 'up' : 'down'}"></i>
-                        </small>
+                        <i class="ti ti-chevron-{showExtra ? 'up' : 'down'}"></i>
                     </button>
                 </div>
                 {#if showExtra}
@@ -142,24 +143,18 @@
                     </ul>
                 {/if}
                 <div class="version-info">
-                    <p class="version">
+                    <small class="version">
                         バージョン
                         {manifest.version}
-                    </p>
-                    <p>
+                    </small>
+                    <small>
                         リリース日
                         {date.toLocaleDateString()}
                         {date.toLocaleTimeString()}
-                    </p>
-                    {#if daysAgo && daysAgo > 0}
-                        <small>
-                            {daysAgo}
-                            日前
-                        </small>
-                    {/if}
+                    </small>
                 </div>
-            {:else}
-                <small> お使いのプラットフォームはサポートされていませんでした… </small>
+            {:else if state.type === 'not_supported'}
+                <small>お使いのプラットフォームはサポートされていませんでした</small>
             {/if}
         </div>
     </main>
@@ -175,41 +170,53 @@
 
     main {
         display: flex;
-        flex-direction: row;
-        align-items: start;
-        gap: 2rem;
+        gap: 4rem;
+    }
+
+    @container (width < 400px) {
+        main {
+            flex-direction: column;
+        }
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        color: var(--color-1);
+        border-bottom: 2px solid var(--color-1);
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
     }
 
     .warning {
-        background: var(--color-bg-1);
-        color: var(--color-text);
-        padding: 1rem 2rem;
-        margin-bottom: 4rem;
-        border-radius: 2px;
-        font-size: 0.8rem;
-        font-weight: 600;
-
-        > p {
-            line-height: 2;
-        }
-
-        > p > b {
-            color: var(--color-1);
-            margin: 0 0.25rem;
-            font-size: 1rem;
-        }
+        flex: 1;
     }
 
-    .version-info {
-        display: flex;
-        gap: 1rem;
-        font-size: 0.9rem;
-        color: var(--color-1);
-        white-space: nowrap;
+    .state {
+        flex: 1;
+    }
 
-        > .version {
-            font-weight: 600;
-        }
+    .download {
+        display: inline-block;
+        background: var(--color-1);
+        color: var(--color-bg-2);
+        padding: 0.75rem 1rem;
+        margin: 0.5rem 0;
+        border-radius: 2px;
+        text-decoration: none;
+    }
+
+    .extra {
+        display: inline-block;
+        background: var(--color-bg-1);
+        outline: 1px solid var(--color-1);
+        outline-offset: -1px;
+        color: var(--color-1);
+        padding: 0.75rem 1rem;
+        margin: 0.5rem 0;
+        border-radius: 2px;
+        text-decoration: none;
+        border: none;
+        margin-left: auto;
     }
 
     .legal-link {
@@ -236,81 +243,6 @@
     }
 
     .legal {
-        font-size: 0.8rem;
-        background: var(--color-bg-1);
-        color: var(--color-1);
         margin-top: 1rem;
-        margin-bottom: 1.5rem;
-        padding: 0.5rem;
-        width: fit-content;
-    }
-
-    .download {
-        display: inline-flex;
-        gap: 0.2rem;
-        align-items: center;
-        padding: 0.6rem 1rem;
-        margin-right: 1rem;
-        margin-bottom: 1rem;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--color-bg-2);
-        background: var(--color-1);
-        border-radius: 2px;
-        white-space: nowrap;
-
-        &:hover {
-            color: var(--color-1);
-            text-decoration: none;
-            background: var(--color-bg-2);
-            outline: 1px solid var(--color-1);
-        }
-    }
-
-    .extra {
-        display: inline-flex;
-        gap: 0.2rem;
-        align-items: center;
-        padding: 0.6rem 1rem;
-        margin-right: 1rem;
-        margin-bottom: 1rem;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--color-1);
-        background: var(--color-bg-1);
-        outline: 1px solid var(--color-1);
-        outline-offset: -1px;
-        border: none;
-        border-radius: 2px;
-        white-space: nowrap;
-
-        &:hover {
-            color: var(--color-1);
-            text-decoration: none;
-            background: var(--color-bg-2);
-            outline: 1px solid var(--color-1);
-        }
-    }
-
-    @container (max-width: 480px) {
-        section {
-            padding: 0 0.5rem;
-        }
-
-        header {
-            margin-top: 5rem;
-        }
-
-        p {
-            margin-top: 5rem;
-
-            a {
-                font-size: 0.8rem;
-            }
-        }
-
-        button {
-            font-size: 0.8rem;
-        }
     }
 </style>

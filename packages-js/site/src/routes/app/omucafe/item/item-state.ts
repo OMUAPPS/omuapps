@@ -425,7 +425,7 @@ export async function getItemStateRender(itemState: ItemState): Promise<ItemRend
         glContext.stateManager.pushViewport(dimentions);
         matrices.push();
         matrices.identity();
-        matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.x, bufferBounds.min.y, bufferBounds.max.y, -1, 1);
+        matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.y, bufferBounds.max.x, bufferBounds.min.y, -1, 1);
         if (item.image) {
             const texture = await getTextureByAsset(item.image);
             const { tex, width, height } = texture;
@@ -665,7 +665,7 @@ export async function renderHoveredItem() {
         const pos = matrices.unprojectPoint(screenPos);
         matrices.push();
         matrices.identity();
-        matrices.projection.orthographic(0, matrices.width, matrices.height, 0, -1, 1);
+        matrices.projection.orthographic(0, 0, matrices.width, matrices.height, -1, 1);
         const metrics = draw.measureTextActual(action.name).expand({ x: 10, y: 8 });
         matrices.model.translate(pos.x - (metrics.min.x + metrics.max.x) / 2, pos.y + 20, 0);
         const center = metrics.min.add({ x: (metrics.min.x + metrics.max.x) / 2 + 10, y: 0 });

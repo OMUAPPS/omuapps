@@ -1,5 +1,5 @@
 ---
-index: 2
+index: 20
 icon: bell
 title: シグナル
 group: API

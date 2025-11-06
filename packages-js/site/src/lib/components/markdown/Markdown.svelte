@@ -27,6 +27,7 @@
         text-wrap: wrap;
         font-size: 0.9rem;
         width: 100%;
+        user-select: text;
 
         :global(h1) {
             font-size: 2rem;
@@ -35,15 +36,31 @@
 
         :global(h2) {
             font-size: 1.5rem;
-            margin: 2.5rem 0 1.5rem;
+            margin: 4rem 0 1rem;
             color: var(--color-1);
-            border-left: 2px solid var(--color-1);
+            border-left: 4px solid var(--color-1);
             padding-left: 1rem;
         }
 
         :global(h3) {
             font-size: 1.25rem;
             margin: 1.25rem 0 0.5rem;
+        }
+
+        :global(ul),
+        :global(ol) {
+            margin: 1.25rem 1.5rem 0.5rem;
+        }
+
+        :global(p) {
+            margin-top: 1rem;
+        }
+
+        :global(strong) {
+            background: var(--color-1);
+            color: var(--color-bg-2);
+            padding: 0 0.25rem;
+            margin: 0 0.25rem;
         }
     }
 </style>

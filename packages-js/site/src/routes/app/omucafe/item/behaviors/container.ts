@@ -108,7 +108,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
             glContext.stateManager.pushViewport(dimentions);
             matrices.push();
             matrices.identity();
-            matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.x, bufferBounds.min.y, bufferBounds.max.y, -1, 1);
+            matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.y, bufferBounds.max.x, bufferBounds.min.y, -1, 1);
             for (const child of item.children
                 .map((id): ItemState | undefined => context.items[id])
                 .filter((entry): entry is ItemState => !!entry)
@@ -140,7 +140,7 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
                 glContext.stateManager.pushViewport(dimentions);
                 matrices.push();
                 matrices.identity();
-                matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.x, bufferBounds.min.y, bufferBounds.max.y, -1, 1);
+                matrices.projection.orthographic(bufferBounds.min.x, bufferBounds.max.y, bufferBounds.max.x, bufferBounds.min.y, -1, 1);
                 matrices.model.multiply(transform);
                 draw.texture(0, 0, width, height, tex);
                 matrices.pop();

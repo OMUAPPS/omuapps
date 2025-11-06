@@ -1,5 +1,5 @@
 import { Mat4 } from '$lib/math/mat4';
-import { Vec2 } from '$lib/math/vec2.js';
+import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { writable } from 'svelte/store';
 import type { AlignSide } from './discord-overlay-app';
 
@@ -19,3 +19,10 @@ export const isDraggingFinished = writable<boolean>(false);
 export const scaleFactor = writable<number>(1);
 export const view = writable<Mat4>(Mat4.IDENTITY);
 export const alignSide = writable<AlignSide | undefined>();
+
+export const avatarPositions: Record<string, {
+    targetPos: Vec2Like;
+    pos: Vec2Like;
+    rot: number;
+    scale: Vec2;
+}> = {};

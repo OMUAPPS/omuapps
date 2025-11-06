@@ -1,6 +1,7 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs';
+    import { BROWSER } from 'esm-env';
     import github from 'svelte-highlight/styles/github';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
@@ -18,6 +19,14 @@
         Object.entries(sections).find(([, entries]) =>
             entries.includes(section),
         );
+
+    let menuOpen = BROWSER && localStorage.getItem('site/docs/menu_open') === 'true';
+
+    $: {
+        if (BROWSER) {
+            localStorage.setItem('site/docs/menu_open', menuOpen ? 'true' : 'false');
+        }
+    };
 </script>
 
 <svelte:head>
@@ -57,54 +66,64 @@
                 <DocsFooter {section} />
             {/if}
         </div>
-        <div class="groups">
-            {#each Object.entries(sections) as [group, entries] (group)}
-                <h3>{group}</h3>
-                <div class="sections">
-                    {#each entries as section (section.slug)}
-                        <a
-                            href={`/docs/${section.slug}`}
-                            class:selected={section.slug === $docs?.slug}
+        <div class="groups omu-scroll" class:open={menuOpen}>
+            <button on:click={() => (menuOpen = !menuOpen)}>
+                {#if menuOpen}
+                    閉じる
+                {:else}
+                    開く
+                {/if}
+                <i class="ti ti-menu"></i>
+            </button>
+            {#if menuOpen}
+                {#each Object.entries(sections) as [group, entries] (group)}
+                    <h3>{group}</h3>
+                    <div class="sections">
+                        {#each entries as section (section.slug)}
+                            <a
+                                href={`/docs/${section.slug}`}
+                                class:selected={section.slug === $docs?.slug}
+                            >
+                                {section.meta.title}
+                                <i class="ti ti-chevron-right"></i>
+                            </a>
+                        {/each}
+                    </div>
+                {/each}
+                <div class="config">
+                    使用するパッケージマネージャー
+                    <div class="package-manager">
+                        <button
+                            on:click={() => ($config.PACKAGE_MANAGER = 'npm')}
+                            class:selected={$config.PACKAGE_MANAGER === 'npm'}
                         >
-                            {section.meta.title}
-                            <i class="ti ti-chevron-right"></i>
-                        </a>
-                    {/each}
+                            npm
+                            <i class="ti ti-brand-npm"></i>
+                        </button>
+                        <button
+                            on:click={() => ($config.PACKAGE_MANAGER = 'yarn')}
+                            class:selected={$config.PACKAGE_MANAGER === 'yarn'}
+                        >
+                            yarn
+                            <i class="ti ti-brand-yarn"></i>
+                        </button>
+                        <button
+                            on:click={() => ($config.PACKAGE_MANAGER = 'pnpm')}
+                            class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
+                        >
+                            pnpm
+                            <i class="ti ti-brand-pnpm"></i>
+                        </button>
+                        <button
+                            on:click={() => ($config.PACKAGE_MANAGER = 'bun')}
+                            class:selected={$config.PACKAGE_MANAGER === 'bun'}
+                        >
+                            bun
+                            <i class="ti ti-package"></i>
+                        </button>
+                    </div>
                 </div>
-            {/each}
-            <div class="config">
-                使用するパッケージマネージャー
-                <div class="package-manager">
-                    <button
-                        on:click={() => ($config.PACKAGE_MANAGER = 'npm')}
-                        class:selected={$config.PACKAGE_MANAGER === 'npm'}
-                    >
-                        npm
-                        <i class="ti ti-brand-npm"></i>
-                    </button>
-                    <button
-                        on:click={() => ($config.PACKAGE_MANAGER = 'yarn')}
-                        class:selected={$config.PACKAGE_MANAGER === 'yarn'}
-                    >
-                        yarn
-                        <i class="ti ti-brand-yarn"></i>
-                    </button>
-                    <button
-                        on:click={() => ($config.PACKAGE_MANAGER = 'pnpm')}
-                        class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
-                    >
-                        pnpm
-                        <i class="ti ti-brand-pnpm"></i>
-                    </button>
-                    <button
-                        on:click={() => ($config.PACKAGE_MANAGER = 'bun')}
-                        class:selected={$config.PACKAGE_MANAGER === 'bun'}
-                    >
-                        bun
-                        <i class="ti ti-package"></i>
-                    </button>
-                </div>
-            </div>
+            {/if}
         </div>
     </main>
 </Page>
@@ -140,9 +159,9 @@
     .warning {
         display: flex;
         align-items: center;
-        padding: 1rem 0;
+        padding: 1rem;
         gap: 1rem;
-        border-bottom: 1px solid var(--color-1);
+        background: var(--color-bg-1);
         color: var(--color-1);
 
         > i {
@@ -163,13 +182,13 @@
     }
 
     .groups {
+        z-index: 100;
         position: fixed;
-        padding: 2rem;
-        padding-top: 8rem;
+        padding: 0 2rem;
         padding-right: 2rem;
         top: 0;
-        bottom: 0;
         right: 0;
+        height: 5rem;
         border-left: 1px solid var(--color-outline);
         background: var(--color-bg-2);
         display: flex;
@@ -179,19 +198,21 @@
         min-width: 14rem;
         overflow-y: auto;
 
-        &::-webkit-scrollbar {
-            width: 8px;
+        &.open {
+            padding-top: 8rem;
+            bottom: 0;
+            height: 100%;
         }
 
-        &::-webkit-scrollbar-track {
+        > button {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: 5rem;
+            border: none;
             background: var(--color-bg-2);
-            border-radius: 1px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: color-mix(in srgb, var(--color-1) 10%, transparent 0%);
-            border: 1px solid var(--color-bg-2);
-            border-radius: 1px;
+            outline: 1px solid var(--color-outline);
         }
 
         > h3 {

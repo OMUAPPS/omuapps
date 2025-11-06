@@ -11,6 +11,7 @@
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
     import { Timer } from '$lib/timer.js';
+    import { DEV } from 'esm-env';
     import { PALETTE_RGB } from '../consts.js';
     import { DiscordOverlayApp, type AlignSide, type AvatarConfig, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
@@ -20,18 +21,12 @@
     import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
     import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
-    import { alignSide, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
+    import { alignSide, avatarPositions, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let dimensions = {
         width: 1920,
         height: 1080,
-        margin: {
-            left: 400,
-            right: 340,
-            top: 80,
-            bottom: 80,
-        },
     };
     const { voiceState, speakingState, config } = overlayApp;
 
@@ -80,6 +75,9 @@
         matrices.view.scale(scaleFactor, scaleFactor, scaleFactor);
     }
 
+    let fpsTimer = new Timer();
+    let frameCount = 0;
+    let fps = 0;
     async function render(context: GlContext) {
         const { gl } = context;
         const { width, height } = gl.canvas;
@@ -101,6 +99,18 @@
         await drawHeldTips();
         await drawScreen();
         timer.reset();
+        if (DEV) {
+            if (fpsTimer.getElapsedMS() > 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                fpsTimer.reset();
+            }
+            matrices.view.identity();
+            matrices.model.identity();
+            draw.fontSize = 16;
+            await draw.textAlign(Vec2.ZERO, fps.toFixed(0), Vec2.ZERO, PALETTE_RGB.ACCENT);
+            frameCount ++;
+        }
     }
 
     type ModelState = {
@@ -307,20 +317,17 @@
         return origin.add(offset);
     }
 
-    const avatarPositions: Record<string, {
-        pos: Vec2Like;
-        rot: number;
-        scale: Vec2;
-    }> = {};
-
     function applyUserTransform(id: string, user: UserConfig, alignSide: AlignSide | undefined, index: number, total: number) {
         const last = avatarPositions[id] ?? {
+            targetPos: user.position,
             pos: user.position,
             rot: 0,
             scale: Vec2.ONE,
         };
         const transform = { ...last };
-        if (alignSide) {
+        const deltaTime = timer.getElapsedMS() / 1000;
+        const t = 1 - Math.exp(-deltaTime * 16);
+        if (alignSide && user.align) {
             const { align, side } = alignSide;
             transform.pos = calculateAlignPosition(alignSide, index, total);
 
@@ -333,16 +340,30 @@
                 flipY ? -1 : 1,
             );
             transform.rot = horizontal ? TAU / 4 : 0;
-            user.position = transform.pos;
+            if (id !== $dragState?.id) {
+                user.position = Vec2.from(user.position).lerp(transform.pos, t);
+            }
         } else {
+            if (alignSide) {
+                const dir = calculateAlignDir(alignSide);
+                const newDistances = {
+                    ...alignDistanceCache,
+                    [id]: dir.dot(id === $dragState?.id ? $dragPosition ?? user.position : user.position),
+                };
+                const alignIndexes = Object.fromEntries(
+                    Object.entries(newDistances)
+                        .sort(comparator(([, offset]) => offset))
+                        .map(([id], index) => [id, index]),
+                );
+                transform.targetPos = calculateAlignPosition(alignSide, alignIndexes[id], total);
+            }
             transform.pos = user.position;
             transform.scale = Vec2.ONE;
             transform.rot = 0;
         }
 
-        const deltaTime = timer.getElapsedMS() / 1000;
-        const t = 1 - Math.exp(-deltaTime * 16);
         const newTransform = {
+            targetPos: transform.targetPos,
             pos: Vec2.from(last.pos).lerp(transform.pos, t),
             rot: BetterMath.lerpAngle(last.rot, transform.rot, t),
             scale: Vec2.from(last.scale).lerp(transform.scale, t),
@@ -353,40 +374,75 @@
         matrices.model.rotate(Axis.Z_POS.rotate(newTransform.rot));
     }
 
-    async function drawAvatars() {
+    let alignDistanceCache: Record<string, number> = {};
+
+    function getRenderOptions(): RenderOptions {
         const effects: Effect[] = [
             $config.effects.speech.active && speechEffect,
             $config.effects.shadow.active && shadowEffect,
             $config.effects.backlightEffect.active && backlightEffect,
             $config.effects.backlightEffect.active && bloomEffect,
         ].filter((it): it is Effect => !!it);
-        const renderOptions: RenderOptions = {
-            effects,
-        };
 
-        const entries = Object.entries($voiceState).toSorted(comparator(([id]) => {
-            const user = $config.users[id];
-            return user.lastDraggedAt;
-        }));
+        return { effects };
+    }
+
+    function getSortedVoiceEntries(): [string, VoiceStateItem][] {
+        return Object.entries($voiceState)
+            .filter((entry): entry is [string, VoiceStateItem] => !!entry[1])
+            .filter(([id]) => $config.users[id])
+            .toSorted(comparator(([id]) => $config.users[id].lastDraggedAt));
+    }
+
+    function calculateAlignments(entries: [string, VoiceStateItem][]): number {
         let alignTotal = 0;
-        let alignIndexes: Record<string, number> = {};
+        alignDistanceCache = {};
+
         for (const [id, voiceState] of entries) {
             if (!voiceState) continue;
             const user = $config.users[id];
             if (!user.align) continue;
+
             alignTotal++;
-            if (!$config.align.alignSide) {
-                alignIndexes[id] = 0;
-                continue;
-            }
-            const dir = calculateAlignDir($config.align.alignSide);
-            alignIndexes[id] = dir.dot(user.position);
+            alignDistanceCache[id] = $config.align.alignSide
+                ? calculateAlignOffset(id, user)
+                : 0;
         }
-        alignIndexes = Object.fromEntries(
-            Object.entries(alignIndexes)
+        return alignTotal;
+    }
+
+    function calculateAlignOffset(id: string, user: UserConfig): number {
+        const dir = calculateAlignDir($config.align.alignSide!);
+        const position = id === $dragState?.id ? $dragPosition ?? user.position : user.position;
+        return dir.dot(position);
+    }
+
+    function getWorldSpaceScreenBounds() {
+        const { gl } = context;
+        const { width, height } = gl.canvas;
+        return matrices.view.get().inverse().transformAABB2(new AABB2(Vec2.ZERO, new Vec2(width, height)));
+    }
+
+    function getAlignIndexes(): Record<string, number> {
+        return Object.fromEntries(
+            Object.entries(alignDistanceCache)
                 .sort(comparator(([, offset]) => offset))
                 .map(([id], index) => [id, index]),
         );
+    }
+
+    async function drawAvatars() {
+        const renderOptions = getRenderOptions();
+
+        const entries = getSortedVoiceEntries();
+        let alignTotal = calculateAlignments(entries);
+        const alignIndexes = getAlignIndexes();
+        const names: Array<{
+            user: UserConfig;
+            pos: Vec2;
+            name: string;
+        }> = [];
+        const screenBounds = getWorldSpaceScreenBounds();
         for (const [id, voiceState] of entries) {
             const user = $config.users[id];
             if (!voiceState) continue;
@@ -396,52 +452,71 @@
                 speaking_stop: 0,
             };
             const avatar = loadAvatarByVoiceState(id, voiceState);
-            if (avatar.type === 'loaded') {
-                matrices.model.push();
-                applyUserTransform(id, user, user.align && $config.align.alignSide || undefined, alignIndexes[id], alignTotal);
-                matrices.model.translate(0, -POSITION_OFFSET, 0);
-                const config = avatar.getConfig();
-                applyAvatarScale(user.scale);
-                if (config) {
-                    applyAvatarTransform(config);
-                }
-                const bounds = avatar.context.bounds();
-                const avatarMatrix = matrices.model.get();
-                avatar.context.render(matrices, {
-                    id,
-                    talking: speakState.speaking,
-                    mute: voiceState.voice_state.mute,
-                    deaf: voiceState.voice_state.deaf,
-                    self_mute: voiceState.voice_state.self_mute,
-                    self_deaf: voiceState.voice_state.self_deaf,
-                    suppress: voiceState.voice_state.suppress,
-                    config: user.config,
-                }, renderOptions);
-                matrices.model.pop();
-                const { min, max } = matrices.model.get()
-                    .inverse()
-                    .transformAABB2(avatarMatrix.transformAABB2(bounds))
-                    .expand({ x: 40, y: 40 });
-                if ($dragState?.type === 'user' && $dragState.id === id) {
-                    draw.roundedRect(min, max, 40, PALETTE_RGB.BACKGROUND_3, 1);
-                    draw.roundedRect(min, max, 40, PALETTE_RGB.ACCENT, 5);
-                }
-                if (!$config.show_name_tags) continue;
-                draw.fontSize = overlayApp.isOnAsset() ? 36 : 26;
-                const offsetScale = overlayApp.isOnAsset() ? 4 : 2;
-                draw.fontWeight = '600';
-                const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
-                await draw.textAlign(
-                    Vec2.from(user.position).add({ x: 0, y: POSITION_OFFSET }),
-                    name,
-                    { x: 0.5, y: 1 },
-                    { x: 1, y: 1, z: 1, w: 1 },
-                    {
-                        width: offsetScale,
-                        color: new Vec4(0, 0, 0, 1),
-                    },
-                );
+            if (avatar.type !== 'loaded') return;
+            matrices.model.push();
+
+            applyUserTransform(id, user, $config.align.alignSide, alignIndexes[id], alignTotal);
+            const screenPos = matrices.model.get().transform2({ x: 0, y: POSITION_OFFSET });
+            matrices.model.translate(0, -POSITION_OFFSET, 0);
+
+            const config = avatar.getConfig();
+            applyAvatarScale(user.scale);
+            if (config) {
+                applyAvatarTransform(config);
             }
+
+            const bounds = avatar.context.bounds();
+            const avatarMatrix = matrices.model.get();
+            const worldBounds = avatarMatrix.transformAABB2(bounds).expand({ x: 40, y: 40 });
+
+            if (!screenBounds.intersects(worldBounds)) {
+                matrices.model.pop();
+                continue;
+            }
+
+            avatar.context.render(matrices, {
+                id,
+                talking: speakState.speaking,
+                mute: voiceState.voice_state.mute,
+                deaf: voiceState.voice_state.deaf,
+                self_mute: voiceState.voice_state.self_mute,
+                self_deaf: voiceState.voice_state.self_deaf,
+                suppress: voiceState.voice_state.suppress,
+                config: user.config,
+            }, renderOptions);
+
+            matrices.model.pop();
+            const { min, max } = worldBounds;
+            if ($dragState?.type === 'user' && $dragState.id === id) {
+                draw.roundedRect(min, max, 40, PALETTE_RGB.BACKGROUND_3, 1);
+                draw.roundedRect(min, max, 40, PALETTE_RGB.ACCENT, 5);
+            }
+            if (!$config.show_name_tags) continue;
+            const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
+            names.push({
+                user,
+                pos: screenPos,
+                name,
+            });
+        }
+        const offsetScale = overlayApp.isOnAsset() ? 4 : 2;
+        const alignSide = $config.align.alignSide;
+        const horizontal = alignSide && alignSide.align.y === 0;
+        draw.fontSize = overlayApp.isOnAsset() ? 36 : 26;
+        draw.fontWeight = '600';
+        for (const entry of names) {
+            const { pos, name, user } = entry;
+            const align = user.align ? alignSide?.align : undefined;
+            await draw.textAlign(
+                horizontal ? pos.add({ x: 0, y: align ? POSITION_OFFSET * 2 : 0 }) : pos,
+                name,
+                { x: align ? (align.x + 1) / 2 : 0.5, y: 1 },
+                { x: 1, y: 1, z: 1, w: 1 },
+                {
+                    width: offsetScale,
+                    color: new Vec4(0, 0, 0, 1),
+                },
+            );
         }
     }
 
@@ -462,7 +537,6 @@
         setupWorldMatrices();
         const worldView = matrices.view.get();
         const worldViewInv = worldView.inverse();
-        const { gl } = context;
         matrices.view.identity();
 
         type Align = {

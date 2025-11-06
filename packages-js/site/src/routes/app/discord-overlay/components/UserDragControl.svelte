@@ -1,19 +1,24 @@
 <script lang="ts">
     import { BetterMath } from '$lib/math.js';
+    import { AABB2 } from '$lib/math/aabb2.js';
     import type { Mat4 } from '$lib/math/mat4.js';
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
     import { type Config, type DiscordOverlayApp, type UserConfig, type VoiceStateItem } from '../discord-overlay-app.js';
-    import { alignSide, dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
+    import { alignSide, avatarPositions, dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
-    export let dimentions: { width: number; height: number };
+    export let resolution: { width: number; height: number };
     export let overlayApp: DiscordOverlayApp;
     export let id: string;
     export let state: VoiceStateItem;
     export let user: UserConfig;
+    export let dimensions = {
+        width: 1920,
+        height: 1080,
+    };
 
-    const { config } = overlayApp;
+    const { config, voiceState } = overlayApp;
 
     let lastMouse: [number, number] | null = null;
     let clickTime = 0;
@@ -30,6 +35,13 @@
 
     const OFFSET = 150;
 
+    function anyAligned(): boolean {
+        return Object.entries($voiceState).some(([id]) => {
+            const user = $config.users[id];
+            return user?.align;
+        });
+    }
+
     function handleMouseMove(x: number, y: number) {
         if (!lastMouse) return;
         const now = performance.now();
@@ -41,12 +53,24 @@
         lastMouse = [x, y];
         const screen = worldToScreen(user.position);
         const world = screenToWorld(screen.x + dx, screen.y - dy);
-        $dragPosition = screenToWorld(x, dimentions.height - y);
+        $dragPosition = screenToWorld(x, resolution.height - y);
         user.position = world;
         clickDistance += Math.sqrt(dx ** 2 + dy ** 2);
         $config = { ...$config };
         lastUpdate = now;
-        user.align = false;
+        if (!anyAligned()) {
+            $config.align.alignSide = undefined;
+        }
+        if (!$config.align.alignSide) return;
+        const { align } = $config.align.alignSide;
+        const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: dimensions.width / 2, y: dimensions.height / 2 });
+        const offset = align01.sub($dragPosition);
+        const dist = Math.max(
+            offset.dot(align),
+            new AABB2(Vec2.ZERO, new Vec2(dimensions.width, dimensions.height)).distance($dragPosition),
+            avatarPositions[id] ? Vec2.from(avatarPositions[id].targetPos).distance(user.position) / 1.5 : 0,
+        );
+        user.align = dist > -150 && dist < 300;
     }
 
     function handleMouseUp() {
@@ -54,21 +78,32 @@
         $dragState = null;
         $isDraggingFinished = true;
         $config = { ...$config };
-        if ($alignSide) {
-            $config.align.alignSide = $alignSide;
-            $alignSide = undefined;
-            $config.users = Object.fromEntries(Object.entries($config.users).map(([id, user]) => {
-                user.align = true;
-                return [id, user];
-            }));
+        if (!anyAligned()) {
+            $config.align.alignSide = undefined;
         }
+        if (!$alignSide) return;
+        $config.align.alignSide = $alignSide;
+        $alignSide = undefined;
+        user.align = true;
+        $config.users = Object.fromEntries(Object.entries($config.users).map(([id, user]) => {
+            const { position } = user;
+            if (
+                position.x > -150 &&
+                position.y > -150 &&
+                position.x < dimensions.width + 150 &&
+                position.y < dimensions.height + 150
+            ) {
+                user.align = true;
+            };
+            return [id, user];
+        }));
     }
 
     function handleMouseDown(x: number, y: number) {
         const screen = worldToScreen(user.position)
             .add({ x: 0, y: -OFFSET / 2 })
             .max(Vec2.ZERO)
-            .min({ x: dimentions.width, y: dimentions.height })
+            .min({ x: resolution.width, y: resolution.height })
             .add({ x: 0, y: OFFSET / 2 });
         const world = screenToWorld(screen.x, screen.y);
         user.position = world;
@@ -81,6 +116,7 @@
             x,
             y,
         };
+        $dragPosition = screenToWorld(x, resolution.height - y);
         clickTime = performance.now();
         clickDistance = 0;
         user.lastDraggedAt = Date.now();
@@ -93,7 +129,7 @@
         const clamped = screen
             .add({ x: -rect.width / 2, y: -rect.height })
             .max({ x: margin, y: margin })
-            .min({ x: dimentions.width - rect.width - margin, y: dimentions.height - rect.height - margin });
+            .min({ x: resolution.width - rect.width - margin, y: resolution.height - rect.height - margin });
         return [clamped.x, clamped.y];
     }
 
@@ -114,12 +150,12 @@
     function worldToScreen(position: Vec2Like) {
         const screen = $view.transform2(position);
         const zeroToOne = screen.scale(0.5).add({ x: 0.5, y: 0.5 });
-        const screenSpace = zeroToOne.mul({ x: dimentions.width, y: dimentions.height });
+        const screenSpace = zeroToOne.mul({ x: resolution.width, y: resolution.height });
         return screenSpace;
     }
 
     function screenToWorld(x: number, y: number) {
-        const zeroToOne = new Vec2(x, y).mul({ x: 1 / dimentions.width, y: 1 / dimentions.height });
+        const zeroToOne = new Vec2(x, y).mul({ x: 1 / resolution.width, y: 1 / resolution.height });
         const screen = zeroToOne.sub({ x: 0.5, y: 0.5 }).scale(2);
         const world = $view.inverse().transform2(screen);
         return world;
@@ -133,7 +169,7 @@
             ArrowRight: [1, 0],
         };
         if (e.key === 'r') {
-            user.position = new Vec2(dimentions.width / 2, dimentions.height / 2);
+            user.position = new Vec2(resolution.width / 2, resolution.height / 2);
             $config = { ...$config };
         }
         const found = Object.entries(KEY_MAP).find(([key]) => key === e.key);
@@ -185,7 +221,7 @@
     class="control"
     class:dragging={lastMouse || ($dragState?.type === 'user' && $dragState.id == id)}
     bind:this={element}
-    style={getStyle(rect, $config, $view, dimentions)}
+    style={getStyle(rect, $config, $view, resolution)}
     on:mousedown={(event) => handleMouseDown(event.clientX, event.clientY)}
     on:touchstart={(event) => {
         event.preventDefault();
@@ -245,7 +281,7 @@
 {#if $heldUser == id}
     <div
         class="settings"
-        style={getStyle(rect, $config, $view, dimentions, [0, 100])}
+        style={getStyle(rect, $config, $view, resolution, [0, 100])}
         style:opacity={$heldUser && $heldUser != id ? 0.2 : 1}
         class:side-right={user.position.x > 0}
     >
@@ -368,8 +404,8 @@
             border: none;
             outline: 2px solid var(--color-1);
             outline-width: 2px;
+            border: 1px solid var(--color-1);
             box-shadow: 0 0.3rem 0 0 color-mix(in srgb, var(--color-2) 100%, transparent 0%);
-            margin-bottom: 1px;
             margin-left: 1px;
             transition: margin-bottom, outline-width, box-shadow 0.0621s;
             z-index: 3;
