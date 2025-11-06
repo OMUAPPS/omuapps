@@ -11,6 +11,8 @@ on:
 permissions:
     contents: read
 
+run-name: Graduate ${{github.event.inputs.version}}
+
 jobs:
     upload-to-r2:
         runs-on: ubuntu-latest
