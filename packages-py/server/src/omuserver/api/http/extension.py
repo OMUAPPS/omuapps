@@ -18,6 +18,7 @@ from omu.api.http.extension import (
     WEBSOCKET_CLOSE,
     WEBSOCKET_CREATE,
     WEBSOCKET_DATA,
+    WEBSOCKET_ERROR,
     WEBSOCKET_OPEN,
     DataChunk,
     HttpRequest,
@@ -76,6 +77,7 @@ class HttpExtension:
             WEBSOCKET_OPEN,
             WEBSOCKET_CLOSE,
             WEBSOCKET_DATA,
+            WEBSOCKET_ERROR,
         )
         server.network.add_packet_handler(HTTP_REQUEST_CREATE, self.handle_http_request_create)
         server.network.add_packet_handler(HTTP_REQUEST_SEND, self.handle_http_request_send)
@@ -166,12 +168,15 @@ class HttpExtension:
                         WEBSOCKET_OPEN,
                         {"id": packet["id"], "protocol": socket.protocol, "url": str(socket._response.url)},
                     )
-                    while True:
+                    while not socket.closed:
                         received = await socket.receive()
                         if received.type in {WSMsgType.TEXT, WSMsgType.BINARY}:
                             data = received.data
                             if isinstance(data, str):
                                 data = data.encode(encoding="utf-8")
+                            if session.closed:
+                                await socket.close()
+                                break
                             await session.send(
                                 WEBSOCKET_DATA,
                                 DataChunk(
@@ -185,6 +190,13 @@ class HttpExtension:
                                 WEBSOCKET_CLOSE,
                                 {"id": packet["id"], "code": close, "reason": received.extra},
                             )
+                        else:
+                            pass
+        except aiohttp.ClientConnectorError:
+            await session.send(
+                WEBSOCKET_ERROR,
+                {"id": packet["id"], "type": "ConnectionRefused", "reason": ""},
+            )
         finally:
             del self.ws_handles[packet["id"]]
 

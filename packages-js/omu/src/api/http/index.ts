@@ -1,2 +1,2 @@
-export { HTTP_REQUEST_PERMISSION_ID } from './extension';
+export { HTTP_REQUEST_PERMISSION_ID, OmuWS, type WSMsg } from './extension';
 

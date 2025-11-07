@@ -156,6 +156,17 @@ WEBSOCKET_CLOSE = PacketType[WebSocketClose].create_json(
 )
 
 
+class WebSocketError(RequestHandle):
+    type: Literal["ConnectionRefused"]
+    reason: NotRequired[str] | None
+
+
+WEBSOCKET_ERROR = PacketType[WebSocketError].create_json(
+    HTTP_EXTENSION_TYPE,
+    name="ws_error",
+)
+
+
 class HttpExtension(Extension):
     @property
     def type(self):

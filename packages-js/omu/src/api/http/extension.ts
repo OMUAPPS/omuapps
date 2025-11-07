@@ -132,10 +132,11 @@ type WebSocketClose = RequestHandle & {
 };
 
 type WebSocketHandle = {
-    ws: OmuWebSocket;
+    ws: OmuWS;
     open: (response: WebSocketOpen) => void;
     dispatch: (data: DataChunk<WSDataMeta>) => void;
     close: (response: WebSocketClose) => void;
+    error: (response: WebSocketError) => void;
 };
 
 type WSDataMeta = {
@@ -167,6 +168,15 @@ const WEBSOCKET_DATA = PacketType.createSerialized<DataChunk<WSDataMeta>>(HTTP_E
 
 const WEBSOCKET_CLOSE = PacketType.createJson<WebSocketClose>(HTTP_EXTENSION_TYPE, {
     name: 'ws_close',
+});
+
+type WebSocketError = RequestHandle & {
+    type: 'ConnectionRefused';
+    reason?: string | null;
+};
+
+const WEBSOCKET_ERROR = PacketType.createJson<WebSocketError>(HTTP_EXTENSION_TYPE, {
+    name: 'ws_error',
 });
 
 function createFuture<T>(): {
@@ -216,6 +226,7 @@ export class HttpExtension implements Extension {
             WEBSOCKET_CREATE,
             WEBSOCKET_DATA,
             WEBSOCKET_OPEN,
+            WEBSOCKET_ERROR,
         );
         omu.network.addPacketHandler(RESPONSE_CREATE, (packet) => {
             const handle = this.httpHandles[packet.id];
@@ -286,6 +297,15 @@ export class HttpExtension implements Extension {
                 return;
             }
             handle.handle.close(packet);
+            delete this.httpHandles[packet.id];
+        });
+        omu.network.addPacketHandler(WEBSOCKET_ERROR, (packet) => {
+            const handle = this.wsHandles[packet.id];
+            if (!handle) {
+                console.warn('Received response for unknown socket', packet.id);
+                return;
+            }
+            handle.handle.error(packet);
             delete this.httpHandles[packet.id];
         });
         omu.event.ready.listen(() => {
@@ -428,17 +448,10 @@ export class HttpExtension implements Extension {
         autoping?: boolean;
         params?: Record<string, string>;
         headers?: Record<string, string>;
-    }): Promise<OmuWebSocket> {
+    }): Promise<OmuWS> {
         const request = new Request(input, options);
         const id = this.generateId();
-        this.omu.send(WEBSOCKET_CREATE, {
-            id: id.key(),
-            header: this.generateHeaders(request, options),
-            method: request.method,
-            redirect: request.redirect,
-            url: request.url,
-        });
-        const handle = OmuWebSocket.create(
+        const handle = OmuWS.create(
             this.omu,
             id,
             (data) => {
@@ -456,6 +469,13 @@ export class HttpExtension implements Extension {
             type: 'created',
             handle,
         };
+        this.omu.send(WEBSOCKET_CREATE, {
+            id: id.key(),
+            header: this.generateHeaders(request, options),
+            method: request.method,
+            redirect: request.redirect,
+            url: request.url,
+        });
         return handle.ws;
     }
 }
@@ -510,76 +530,120 @@ type EventListenerMap<T> = {
     [K in keyof T]: ((event: T[K]) => unknown)[]
 };
 
-class OmuWebSocket implements WebSocket {
-    private constructor(
-        private readonly omu: Omu,
-        private readonly id: Identifier,
-        private readonly addQueue: (data: WSData) => void,
-        private readonly dispose: () => void,
-        private readonly eventListeners: EventListenerMap<WebSocketEventMap> = {
-            close: [],
-            error: [],
-            message: [],
-            open: [],
-        },
+export type WSMsg = {
+    type: 'open';
+    data: WebSocketOpen;
+} | {
+    type: 'error';
+    data: WebSocketError;
+} | {
+    type: 'text';
+    data: string;
+} | {
+    type: 'binary';
+    data: Uint8Array;
+} | {
+    type: 'close';
+    data: WebSocketClose;
+};
+
+export class OmuWS {
+    constructor(
+        protected readonly omu: Omu,
+        protected readonly id: Identifier,
+        protected readonly addQueue: (data: WSData) => void,
+        protected readonly dispose: () => void,
+        protected readonly receiveQueue: WSMsg[] = [],
+        private receiveResolve: (() => void) | undefined = undefined,
+        private status: 'connecting' | 'open' | 'closed' = 'connecting',
     ) { }
 
     public static create(omu: Omu, id: Identifier, addQueue: (data: WSData) => void, dispose: () => void): WebSocketHandle {
-        const ws = new OmuWebSocket(omu, id, addQueue, dispose);
+        const ws = new OmuWS(omu, id, addQueue, dispose);
         return {
             ws,
             open: (response) => {
-                ws.url = response.url;
-                ws.protocol = response.protocol ?? '';
-                ws.readyState = WebSocket.OPEN;
-                ws.dispatchEvent(new Event('open'));
+                ws.receiveQueue.push({
+                    type: 'open',
+                    data: response,
+                });
+                ws.receiveResolve?.();
             },
-            dispatch: (data: DataChunk<WSDataMeta>): void => ws.dispatch(data),
+            dispatch: (data: DataChunk<WSDataMeta>): void => {
+                if (data.meta.type === WSMsgType.BINARY) {
+                    ws.receiveQueue.push({
+                        type: 'binary',
+                        data: data.body,
+                    });
+                } else {
+                    ws.receiveQueue.push({
+                        type: 'text',
+                        data: textDecoder.decode(data.body),
+                    });
+                }
+                ws.receiveResolve?.();
+            },
             close: (response) => {
-                ws.readyState = WebSocket.CLOSED;
-                ws.dispatchEvent(new CloseEvent('close', {
-                    code: response.code,
-                    reason: response.reason ?? undefined,
-                }));
+                ws.receiveQueue.push({
+                    type: 'close',
+                    data: response,
+                });
+                ws.receiveResolve?.();
+            },
+            error: (response) => {
+                ws.receiveQueue.push({
+                    type: 'error',
+                    data: response,
+                });
+                ws.receiveResolve?.();
             },
         };
     }
 
-    private toEvent(data: DataChunk<WSDataMeta>): MessageEvent | undefined {
-        const { type } = data.meta;
-        switch (type) {
-            case WSMsgType.PING:
-            case WSMsgType.PONG:
-                return;
-            case WSMsgType.TEXT: {
-                return new MessageEvent('message', {
-                    data: textDecoder.decode(data.body),
-                });
-            }
-            case WSMsgType.BINARY: {
-                return new MessageEvent('message', {
-                    data: data.body,
-                });
-            }
-        }
+    public send(data: WSData): void {
+        this.addQueue(data);
     }
 
-    private dispatch(data: DataChunk<WSDataMeta>) {
-        const event = this.toEvent(data);
-        if (!event) return;
-        this.dispatchEvent(event);
-        if (event.type === 'message') {
-            this.onmessage?.(event as MessageEvent);
-        }
+    public close(code?: number, reason?: string): void {
+        this.omu.send(WEBSOCKET_CLOSE, {
+            id: this.id.key(),
+            code,
+            reason,
+        });
+        this.dispose();
     }
 
-    dispatchEvent(event: Event): boolean {
-        const listeners = this.eventListeners[event.type];
-        for (const listener of listeners) {
-            listener(event);
+    public async receive(): Promise<WSMsg> {
+        if (this.receiveResolve) {
+            throw new Error('Already receiving from another async call');
         }
-        return true;
+        while (this.status !== 'closed') {
+            const data = this.receiveQueue.shift();
+            if (!data) {
+                await new Promise<void>((resolve) => this.receiveResolve = resolve);
+                continue;
+            }
+            if (data.type === 'close') {
+                this.status = 'closed';
+            }
+            if (data.type === 'open') {
+                this.status = 'open';
+            }
+            this.receiveResolve = undefined;
+            return data;
+        }
+        throw new Error('Receiving on already closed socket');
     }
+
+    protocol: string = '';
+    url: string = '';
+}
+
+export class OmuWebSocket implements WebSocket {
+    public CONNECTING = 0 as const;
+    public OPEN = 1 as const;
+    public CLOSING = 2 as const;
+    public CLOSED = 3 as const;
 
     binaryType: BinaryType = 'blob';
     bufferedAmount: number = 0;
@@ -591,25 +655,82 @@ class OmuWebSocket implements WebSocket {
     protocol: string = '';
     readyState: 0 | 2 | 1 | 3 = 0;
     url: string = '';
+
+    constructor(
+        protected readonly ws: OmuWS,
+        private readonly eventListeners: EventListenerMap<WebSocketEventMap> = {
+            close: [],
+            error: [],
+            message: [],
+            open: [],
+        },
+    ) {
+        this.receiveLoop();
+    }
+
+    private async receiveLoop() {
+        while (this.readyState === WebSocket.CLOSED) {
+            const { data, type } = await this.ws.receive();
+            switch (type) {
+                case 'close':
+                    this.dispatchEvent(new CloseEvent('close', {
+                        code: data.code,
+                        reason: data.reason ?? undefined,
+                    }));
+                    break;
+                case 'open':
+                    this.url = data.url;
+                    this.protocol = data.protocol ?? '';
+                    this.dispatchEvent(new Event('open', {}));
+                    break;
+                case 'error':
+                    this.dispatchEvent(new ErrorEvent('error', {
+                        error: data.type,
+                        message: data.reason ?? undefined,
+                    }));
+                    break;
+                case 'text':
+                case 'binary':
+                    this.dispatchEvent(new MessageEvent('message', {
+                        data,
+                    }));
+                    break;
+            }
+        }
+    }
+
+    dispatchEvent(event: Event): boolean {
+        const listeners = this.eventListeners[event.type];
+        for (const listener of listeners) {
+            listener(event);
+        }
+        if (event.type === 'open') {
+            this.onopen?.(event as MessageEvent);
+        }
+        if (event.type === 'error') {
+            this.onerror?.(event);
+        }
+        if (event.type === 'message') {
+            this.onmessage?.(event as MessageEvent);
+        }
+        if (event.type === 'close') {
+            this.onclose?.(event as CloseEvent);
+        }
+        return true;
+    }
+
+    send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
+        this.ws.send(data);
+    }
+
     close(code?: number, reason?: string): void {
-        this.omu.send(WEBSOCKET_CLOSE, {
-            id: this.id.key(),
-            code,
-            reason,
-        });
-        this.dispatchEvent(new CloseEvent('close', { code, reason }));
-        this.dispose();
+        this.ws.close(code, reason);
     }
-    send(data: WSData): void {
-        this.addQueue(data);
-    }
-    public CONNECTING = 0 as const;
-    public OPEN = 1 as const;
-    public CLOSING = 2 as const;
-    public CLOSED = 3 as const;
+
     addEventListener<K extends keyof WebSocketEventMap>(type: K, listener: (this: WebSocket, ev: WebSocketEventMap[K]) => any): void {
         this.eventListeners[type].push(listener);
     }
+
     removeEventListener<K extends keyof WebSocketEventMap>(type: K, listener: (this: WebSocket, ev: WebSocketEventMap[K]) => any): void {
         const listeners = this.eventListeners[type];
         const index = listeners.indexOf(listener);
