@@ -119,7 +119,7 @@ class HttpExtension:
             del self.http_handles[packet["id"]]
 
     async def handle_http_request_send(self, session: Session, packet: DataChunk[RequestHandle]):
-        if packet.meta["id"] not in self.ws_handles:
+        if packet.meta["id"] not in self.http_handles:
             raise Exception(f"Request handle {packet.meta['id']} does not exist")
         handle = self.http_handles[packet.meta["id"]]
         if handle.session != session:
@@ -127,7 +127,7 @@ class HttpExtension:
         handle.buffer.write(packet.data)
 
     async def handle_http_request_close(self, session: Session, packet: RequestHandle):
-        if packet["id"] not in self.ws_handles:
+        if packet["id"] not in self.http_handles:
             raise Exception(f"Request handle {packet['id']} does not exist")
         handle = self.http_handles[packet["id"]]
         if handle.session != session:
