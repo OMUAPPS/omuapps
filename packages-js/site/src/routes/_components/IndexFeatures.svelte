@@ -32,7 +32,7 @@
         </div>
         <i class="ti ti-chevron-right"></i>
     </a>
-    <a class="card" href="/docs/security-index" bind:this={card1} class:visible={isVisible(card1, scroll)}>
+    <a class="card" href="/docs/guide/security" bind:this={card1} class:visible={isVisible(card1, scroll)}>
         <Tooltip>
             OMUAPPSが取り組んでいるセキュリティについて
         </Tooltip>
