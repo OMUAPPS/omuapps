@@ -11,7 +11,6 @@
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
     import { Timer } from '$lib/timer.js';
-    import { DEV } from 'esm-env';
     import { PALETTE_RGB } from '../consts.js';
     import { DiscordOverlayApp, type AlignSide, type AvatarConfig, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
     import { createBackLightEffect } from '../effects/backlight.js';
@@ -75,9 +74,6 @@
         matrices.view.scale(scaleFactor, scaleFactor, scaleFactor);
     }
 
-    let fpsTimer = new Timer();
-    let frameCount = 0;
-    let fps = 0;
     async function render(context: GlContext) {
         const { gl } = context;
         const { width, height } = gl.canvas;
@@ -99,18 +95,6 @@
         await drawHeldTips();
         await drawScreen();
         timer.reset();
-        if (DEV) {
-            if (fpsTimer.getElapsedMS() > 1000) {
-                fps = frameCount;
-                frameCount = 0;
-                fpsTimer.reset();
-            }
-            matrices.view.identity();
-            matrices.model.identity();
-            draw.fontSize = 16;
-            await draw.textAlign(Vec2.ZERO, fps.toFixed(0), Vec2.ZERO, PALETTE_RGB.ACCENT);
-            frameCount ++;
-        }
     }
 
     type ModelState = {
@@ -563,9 +547,11 @@
             { dir: Vec2.UP, name: '下', icon: '\uec88', iconStart: '\uec89', iconEnd: '\uec8a' },
         ];
 
-        const MARGIN = 100;
+        const MARGIN = 300;
         const OUTLINE = 2;
 
+        const { width, height } = context.gl.canvas;
+        const marginMounds = new AABB2(Vec2.ZERO, new Vec2(width, height)).shrink({ x: 40, y: 40 });
         let closest: ClosestInfo = undefined;
         let anyHovered = false;
 
@@ -610,7 +596,7 @@
         // Main loop
         for (const align of ALIGNS) {
             const pointWorld = getWorldPoint(align, dimensions);
-            const point = worldView.transform2(pointWorld);
+            const point = marginMounds.closest(worldView.transform2(pointWorld));
             const hovered = hoveredAlign === align.icon;
             const scale = hovered ? 2 : 0;
             const dirPerp = getAlignPerpendicularOffset(align.dir)

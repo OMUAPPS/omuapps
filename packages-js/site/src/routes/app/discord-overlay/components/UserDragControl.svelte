@@ -68,7 +68,7 @@
         const dist = Math.max(
             offset.dot(align),
             new AABB2(Vec2.ZERO, new Vec2(dimensions.width, dimensions.height)).distance($dragPosition),
-            avatarPositions[id] ? Vec2.from(avatarPositions[id].targetPos).distance(user.position) / 1.5 : 0,
+            avatarPositions[id] ? Vec2.from(avatarPositions[id].targetPos).distance(user.position) * 1.5 : 0,
         );
         user.align = dist > -150 && dist < 300;
     }
