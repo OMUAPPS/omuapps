@@ -21,7 +21,7 @@
 <svelte:window on:scroll={onScroll} />
 
 <div class="features">
-    <a class="card" href="/docs/guide-index" bind:this={card0} class:visible={isVisible(card0, scroll)}>
+    <a class="card" href="/docs/guide" bind:this={card0} class:visible={isVisible(card0, scroll)}>
         <Tooltip>
             アプリを入れるには
         </Tooltip>
