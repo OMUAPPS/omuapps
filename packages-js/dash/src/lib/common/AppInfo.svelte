@@ -16,12 +16,14 @@
         <b>{namespace}</b> <small>によって提供されるアプリケーション</small>
     </Tooltip>
     <div class="icon">
-        {#if !icon}
-            <i class="ti ti-package"></i>
-        {:else if icon.startsWith('ti-')}
-            <i class="ti {icon}" />
+        {#if icon}
+            {#if icon.startsWith('ti')}
+                <i class="ti {icon}"></i>
+            {:else}
+                <img src={icon} alt="" />
+            {/if}
         {:else}
-            <img src={icon} alt="" />
+            <i class="ti ti-package"></i>
         {/if}
     </div>
     <div class="content">
@@ -84,7 +86,9 @@
     }
 
     .icon {
+        min-width: 3rem;
         width: 3rem;
+        min-height: 3rem;
         height: 3rem;
         display: flex;
         align-items: center;
@@ -105,6 +109,10 @@
     .description {
         color: var(--color-text);
         text-align: left;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        flex: 1;
     }
 
     p {

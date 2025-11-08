@@ -12,11 +12,13 @@ export const SERVER_EXTENSION_TYPE: ExtensionType<ServerExtension> = new Extensi
 );
 
 export const SERVER_APPS_READ_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('apps', 'read');
+export const SERVER_APPS_WRITE_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE.join('apps', 'write');
 const APP_TABLE_TYPE = TableType.createJson(SERVER_EXTENSION_TYPE, {
     name: 'apps',
     serializer: App,
     key: (app) => app.id.key(),
     permissions: {
+        all: SERVER_APPS_WRITE_PERMISSION_ID,
         read: SERVER_APPS_READ_PERMISSION_ID,
     },
 });

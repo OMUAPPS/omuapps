@@ -5,7 +5,6 @@ import time
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from omu.api.dashboard.packets import PluginRequestPacket
 from omu.api.plugin import PackageInfo
 from omu.api.plugin.extension import (
     PLUGIN_ALLOWED_PACKAGE_TABLE,
@@ -73,12 +72,7 @@ class PluginExtension:
             await self.allowed_packages.add(package_info)
         if len(to_request) == 0:
             return
-        request = PluginRequestPacket(
-            request_id=self._get_next_request_id(),
-            app=session.app,
-            packages=to_request,
-        )
-        accepted = await self.server.dashboard.request_plugins(request)
+        accepted = await self.server.dashboard.request_plugins(app=session.app, packages=to_request)
         if not accepted:
             raise PermissionDenied("Plugin request was denied by the dashboard")
 

@@ -22,7 +22,6 @@ export class I18nExtension implements Extension {
     public defaultLocales?: Locale[];
 
     constructor(private readonly omu: Omu) {
-        omu.permissions.require(I18N_GET_LOCALES_PERMISSION_ID);
         this.localesRegistry = omu.registries.get(I18N_LOCALES_REGISTRY_TYPE);
         this.localesRegistry.listen((locale) => {
             this.locales = locale;

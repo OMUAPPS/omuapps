@@ -1,7 +1,7 @@
 <script lang="ts">
     import { dashboard, omu } from '$lib/client.js';
     import { tauriWindow } from '$lib/tauri.js';
-    import { PermissionType } from '@omujs/omu/api/permission';
+    import { App } from '@omujs/omu';
     import type { Registry } from '@omujs/omu/api/registry';
     import { LogicalSize } from '@tauri-apps/api/window';
     import type { Writable } from 'svelte/store';
@@ -79,17 +79,18 @@
     <button
         on:click={() => {
             dashboard.handlePermissionRequest({
-                app: omu.app,
+                kind: 'app/permissions',
+                app: App.serialize(omu.app),
                 permissions: [
-                    PermissionType.deserialize({
+                    {
                         id: 'test:test',
                         metadata: {
                             level: 'high',
                             name: 'Test Permission',
                         },
-                    }),
+                    },
                 ],
-                requestId: 'test',
+                id: 'test',
             });
         }}
     >

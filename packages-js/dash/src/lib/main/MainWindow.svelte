@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { chat, dashboard } from '$lib/client.js';
+    import { chat, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
     import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
@@ -79,14 +79,8 @@
     let onlineChats = 0;
 
     onMount(async () => {
-        dashboard.apps.event.remove.listen((removedItems) => {
+        omu.server.apps.event.remove.listen((removedItems) => {
             removedItems.forEach((item) => {
-                delete $pages[`app-${item.id.key()}`];
-                unregisterPage(`app-${item.id.key()}`);
-            });
-        });
-        dashboard.apps.event.update.listen((updatedItems) => {
-            updatedItems.forEach((item) => {
                 delete $pages[`app-${item.id.key()}`];
                 unregisterPage(`app-${item.id.key()}`);
             });
@@ -103,6 +97,7 @@
         });
         updateOnlineChats();
     });
+    $: console.log($pages);
 </script>
 
 <main class:open={$menuOpen}>
@@ -148,7 +143,7 @@
             </div>
         </section>
         <div class="list">
-            <TableList table={dashboard.apps} component={AppEntry}>
+            <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId} component={AppEntry}>
                 <button
                     on:click={() => ($currentPage = EXPLORE_PAGE.id)}
                     slot="empty"

@@ -1,13 +1,10 @@
 from omu.api.dashboard import (
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
-    DASHBOARD_APP_UPDATE_PERMISSION_ID,
     DASHBOARD_DRAG_DROP_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHBOARD_SET_PERMISSION_ID,
     DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
     DASHBOARD_WEBVIEW_PERMISSION_ID,
-    DASHOBARD_APP_EDIT_PERMISSION_ID,
-    DASHOBARD_APP_READ_PERMISSION_ID,
 )
 from omu.api.permission import PermissionType
 
@@ -16,7 +13,7 @@ DASHBOARD_SET_PERMISSION = PermissionType(
     {
         "level": "low",
         "name": {
-            "ja": "全体を管理する権限",
+            "ja": "管理者権限",
             "en": "Manage the dashboard",
         },
         "note": {
@@ -39,34 +36,6 @@ DASHBOARD_OPEN_APP_PERMISSION = PermissionType(
         },
     },
 )
-DASHOBARD_APP_READ_PERMISSION = PermissionType(
-    DASHOBARD_APP_READ_PERMISSION_ID,
-    {
-        "level": "low",
-        "name": {
-            "ja": "インストールされたアプリの情報を取得",
-            "en": "Get Installed App Information",
-        },
-        "note": {
-            "ja": "すでにインストールされているアプリの情報を取得するために使われます",
-            "en": "Used to get information about already installed apps",
-        },
-    },
-)
-DASHOBARD_APP_EDIT_PERMISSION = PermissionType(
-    DASHOBARD_APP_EDIT_PERMISSION_ID,
-    {
-        "level": "high",
-        "name": {
-            "ja": "インストールされたアプリ情報を編集",
-            "en": "Edit Installed App Information",
-        },
-        "note": {
-            "ja": "インストールされたアプリの情報を編集するために使われます",
-            "en": "Used to edit information about installed apps",
-        },
-    },
-)
 DASHBOARD_APP_INSTALL_PERMISSION = PermissionType(
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
     {
@@ -78,20 +47,6 @@ DASHBOARD_APP_INSTALL_PERMISSION = PermissionType(
         "note": {
             "ja": "新しくアプリを追加するために使われます",
             "en": "Used to install an app",
-        },
-    },
-)
-DASHBOARD_APP_UPDATE_PERMISSION = PermissionType(
-    DASHBOARD_APP_UPDATE_PERMISSION_ID,
-    {
-        "level": "high",
-        "name": {
-            "ja": "アプリ情報を更新",
-            "en": "Update an app",
-        },
-        "note": {
-            "ja": "アプリの情報を更新するために使われます",
-            "en": "Used to update an app",
         },
     },
 )

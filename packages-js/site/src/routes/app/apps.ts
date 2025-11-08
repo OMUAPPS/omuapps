@@ -50,5 +50,5 @@ if (BROWSER) {
     }
 }
 
-export const appTable = omu.dashboard.apps;
+export const appTable = omu.server.apps;
 omu.onReady(() => appTable.fetchAll());

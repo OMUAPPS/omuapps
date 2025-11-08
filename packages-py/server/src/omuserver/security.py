@@ -208,6 +208,8 @@ class PermissionManager:
         existing = self.apps.get(app.id)
         if existing is not None:
             entry["permissions"] = existing["permissions"]
+            if app.metadata is None:
+                entry["app_json"]["metadata"] = existing["app_json"]["metadata"]
         self.apps[app.id] = entry
         self.store()
         return (ParentPermissionHandle(self, app.id, hashed_token), input_token)
@@ -247,7 +249,7 @@ class PermissionManager:
             return Err(InvalidOrigin("Invalid frame token"))
         return Ok(None)
 
-    def verify_app(self, app: App, token: InputToken) -> Result[tuple[PermissionHandle, InputToken], str]:
+    async def verify_app(self, app: App, token: InputToken) -> Result[tuple[PermissionHandle, InputToken], str]:
         if app.type == AppType.DASHBOARD:
             token_matched = self.server.config.dashboard_token == token
             if not token_matched:
@@ -258,9 +260,9 @@ class PermissionManager:
             if not token_matched:
                 return Err("Invalid token")
             return Ok((FullPermissionHandle(), token))
-        return self.verify_generic_app(app, token)
+        return await self.verify_generic_app(app, token)
 
-    def verify_generic_app(self, app: App, token: InputToken) -> Result[tuple[PermissionHandle, InputToken], str]:
+    async def verify_generic_app(self, app: App, token: InputToken) -> Result[tuple[PermissionHandle, InputToken], str]:
         found_entry = self.apps.get(app.id)
         if found_entry is None:
             return Err(f"App {app.id} not found")
@@ -270,7 +272,15 @@ class PermissionManager:
 
         match_result = self.match_app(found_entry["app_json"], app)
         if match_result.is_err is True:
-            return Err(f"App data mismatch for app {app.id}: {match_result.err}")
+            if found_entry["app_json"]["metadata"] is not None:
+                accepted = await self.server.dashboard.notify_update_app(
+                    old_app=App.from_json(found_entry["app_json"]),
+                    new_app=app,
+                )
+                if not accepted:
+                    return Err(f"App data mismatch for app {app.id}: {match_result.err}")
+            self.apps[app.id]["app_json"] = app.to_json()
+            self.store()
 
         if app.parent_id:
             parent_entry = self.apps.get(app.parent_id)
@@ -294,4 +304,6 @@ class PermissionManager:
             return Err("App URL does not match")
         if a.get("type") != b.type.value:
             return Err("App type does not match")
+        if json.dumps(a.get("metadata")) != json.dumps(b.metadata):
+            return Err("App metadata does not match")
         return Ok(...)

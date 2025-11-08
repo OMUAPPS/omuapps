@@ -67,7 +67,7 @@ class App(Keyable, Model[AppJson]):
             parent_id=map_optional(json.get("parent_id"), Identifier.from_key),
             version=json.get("version"),
             url=json.get("url"),
-            type=AppType(json["type"]),
+            type=AppType(json.get("type", None) or "app"),
             metadata=json.get("metadata"),
         )
 

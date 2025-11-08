@@ -5,16 +5,17 @@ import { appWindow, invoke, tauriFs, tauriPath, type Cookie } from '$lib/tauri.j
 import { App, Identifier, IdentifierMap, Omu } from '@omujs/omu';
 import {
     DragDropReadResponse,
-    type AppInstallRequest,
-    type AppUpdateRequest,
     type DashboardHandler,
     type DragDropReadRequestDashboard,
     type DragDropRequestDashboard,
     type FileData,
     type GetCookiesRequest,
     type HostRequest,
-    type PermissionRequestPacket,
-    type PluginRequestPacket,
+    type PromptRequestAppInstall,
+    type PromptRequestAppPermissions,
+    type PromptRequestAppPlugins,
+    type PromptRequestAppUpdate,
+    type PromptResult,
     type SpeechRecognitionStart,
     type TranscriptSegment,
     type UserResponse,
@@ -23,7 +24,6 @@ import {
     type WebviewRequest,
 } from '@omujs/omu/api/dashboard';
 import type { InvokedParams } from '@omujs/omu/api/endpoint';
-import type { Table } from '@omujs/omu/api/table';
 import type { Locale } from '@omujs/omu/localization';
 import { Webview } from '@tauri-apps/api/webview';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -40,7 +40,6 @@ export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 
 export class Dashboard implements DashboardHandler {
     public currentApp: App | null = null;
-    readonly apps: Table<App>;
     readonly webviewHandles: IdentifierMap<{
         id: Identifier;
         close: () => void;
@@ -48,13 +47,9 @@ export class Dashboard implements DashboardHandler {
     private recognition: SpeechRecognition | undefined;
 
     constructor(private readonly omu: Omu) {
-        this.apps = omu.dashboard.apps;
         omu.dashboard.set(this);
         omu.onReady(() => {
             omu.i18n.setLocale(window.navigator.languages as Locale[]);
-        });
-        this.apps.event.add.listen(() => {
-            appWindow.setFocus();
         });
     }
 
@@ -113,46 +108,46 @@ export class Dashboard implements DashboardHandler {
         };
     }
 
-    async handlePermissionRequest(request: PermissionRequestPacket): Promise<boolean> {
+    async handlePermissionRequest(request: PromptRequestAppPermissions): Promise<PromptResult> {
         await appWindow.show();
         await appWindow.setFocus();
-        return new Promise<boolean>((resolve) => {
+        return new Promise<PromptResult>((resolve) => {
             screenContext.push(PermissionRequestScreen, {
                 request,
-                resolve: (accept: boolean) => resolve(accept),
+                resolve: (result: PromptResult) => resolve(result),
             });
         });
     }
 
-    async handlePluginRequest(request: PluginRequestPacket): Promise<boolean> {
+    async handlePluginRequest(request: PromptRequestAppPlugins): Promise<PromptResult> {
         await appWindow.show();
         await appWindow.setFocus();
-        return new Promise<boolean>((resolve) => {
+        return new Promise<PromptResult>((resolve) => {
             screenContext.push(PluginRequestScreen, {
                 request,
-                resolve: (accept: boolean) => resolve(accept),
+                resolve: (result: PromptResult) => resolve(result),
             });
         });
     }
 
-    async handleInstallApp(request: AppInstallRequest): Promise<boolean> {
+    async handleInstallApp(request: PromptRequestAppInstall): Promise<PromptResult> {
         await appWindow.show();
         await appWindow.setFocus();
-        return new Promise<boolean>((resolve) => {
+        return new Promise<PromptResult>((resolve) => {
             screenContext.push(AppInstallRequestScreen, {
                 request,
-                resolve: (accept: boolean) => resolve(accept),
+                resolve: (result: PromptResult) => resolve(result),
             });
         });
     }
 
-    async handleUpdateApp(request: AppUpdateRequest): Promise<boolean> {
+    async handleUpdateApp(request: PromptRequestAppUpdate): Promise<PromptResult> {
         await appWindow.show();
         await appWindow.setFocus();
-        return new Promise<boolean>((resolve) => {
+        return new Promise<PromptResult>((resolve) => {
             screenContext.push(AppUpdateRequestScreen, {
                 request,
-                resolve: (accept: boolean) => resolve(accept),
+                resolve: (result: PromptResult) => resolve(result),
             });
         });
     }
@@ -203,7 +198,7 @@ export class Dashboard implements DashboardHandler {
     async hostRequested(request: HostRequest, params: InvokedParams): Promise<UserResponse> {
         await appWindow.show();
         await appWindow.setFocus();
-        const app = await this.apps.get(params.caller.key());
+        const app = await this.omu.server.apps.get(params.caller.key());
         if (!app) {
             console.warn('App not found for host request', params.caller);
             return { type: 'cancelled' };

@@ -140,7 +140,7 @@ class Session:
             aes = AES.deserialize(packet.encryption["aes"], decryptor)
             if token:
                 token = decryptor.decrypt_string(token)
-        verify_result = server.security.verify_app(packet.app, InputToken(token))
+        verify_result = await server.security.verify_app(packet.app, InputToken(token))
         if verify_result.is_err is True:
             await connection.send(
                 PACKET_TYPES.DISCONNECT.new(DisconnectPacket(DisconnectType.INVALID_TOKEN, verify_result.err)),

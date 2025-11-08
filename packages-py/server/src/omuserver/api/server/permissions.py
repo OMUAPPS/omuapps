@@ -3,7 +3,7 @@ from omu.api.server import (
     SERVER_APPS_READ_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
 )
-from omu.api.server.extension import TRUSTED_ORIGINS_GET_PERMISSION_ID
+from omu.api.server.extension import SERVER_APPS_WRITE_PERMISSION_ID, TRUSTED_ORIGINS_GET_PERMISSION_ID
 
 SERVER_SHUTDOWN_PERMISSION = PermissionType(
     id=SERVER_SHUTDOWN_PERMISSION_ID,
@@ -28,8 +28,22 @@ SERVER_APPS_READ_PERMISSION = PermissionType(
             "en": "Get Running Apps",
         },
         "note": {
-            "ja": "すべてのアプリ一覧を取得するために使われます",
-            "en": "Used to get a list of apps connected to the server",
+            "ja": "すべてのおむアプリ一覧を取得するために使われます",
+            "en": "Used to get a list of omu-apps connected to the server",
+        },
+    },
+)
+SERVER_APPS_WRITE_PERMISSION = PermissionType(
+    id=SERVER_APPS_WRITE_PERMISSION_ID,
+    metadata={
+        "level": "high",
+        "name": {
+            "ja": "アプリを管理",
+            "en": "Manage",
+        },
+        "note": {
+            "ja": "インストールされているおむアプリを管理します",
+            "en": "Used to manage list of omu-apps installed to the server",
         },
     },
 )

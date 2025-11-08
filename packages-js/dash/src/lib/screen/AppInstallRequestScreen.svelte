@@ -2,7 +2,8 @@
     import { omu } from '$lib/client';
     import AppInfo from '$lib/common/AppInfo.svelte';
     import { t } from '$lib/i18n/i18n-context';
-    import type { AppInstallRequest } from '@omujs/omu/api/dashboard';
+    import { App } from '@omujs/omu';
+    import type { PromptRequestAppInstall, PromptResult } from '@omujs/omu/api/dashboard';
     import { ExternalLink } from '@omujs/ui';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
@@ -10,8 +11,8 @@
     export let screen: {
         handle: ScreenHandle;
         props: {
-            request: AppInstallRequest;
-            resolve: (accept: boolean) => void;
+            request: PromptRequestAppInstall;
+            resolve: (accept: PromptResult) => void;
         };
     };
     const {
@@ -20,19 +21,19 @@
     } = screen.props;
 
     function accept() {
-        resolve(true);
+        resolve('accept');
         screen.handle.pop();
     }
 
     function reject() {
-        resolve(false);
+        resolve('deny');
         screen.handle.pop();
     }
 </script>
 
 <Screen {screen} disableClose>
     <div class="header">
-        <AppInfo app={app} />
+        <AppInfo app={App.deserialize(app)} />
         <p>を追加しますか？</p>
     </div>
     <div class="info">

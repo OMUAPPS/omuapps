@@ -1,10 +1,5 @@
 import { VERSION } from '$lib/version.js';
-import { App, Identifier, Omu } from '@omujs/omu';
-import {
-    DASHBOARD_APP_INSTALL_PERMISSION_ID,
-    DASHBOARD_OPEN_APP_PERMISSION_ID,
-    DASHOBARD_APP_READ_PERMISSION_ID,
-} from '@omujs/omu/api/dashboard';
+import { App, Identifier, Omu, OmuPermissions } from '@omujs/omu';
 import { setClient } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { NAMESPACE } from './app/origin.js';
@@ -23,9 +18,10 @@ const app = new App(APP, {
 export const omu = new Omu(app);
 setClient(omu);
 omu.permissions.require(
-    DASHOBARD_APP_READ_PERMISSION_ID,
-    DASHBOARD_APP_INSTALL_PERMISSION_ID,
-    DASHBOARD_OPEN_APP_PERMISSION_ID,
+    OmuPermissions.DASHOBARD_APP_READ_PERMISSION_ID,
+    OmuPermissions.DASHBOARD_APP_INSTALL_PERMISSION_ID,
+    OmuPermissions.DASHBOARD_OPEN_APP_PERMISSION_ID,
+    OmuPermissions.SERVER_APPS_READ_PERMISSION_ID,
 );
 
 if (BROWSER) {

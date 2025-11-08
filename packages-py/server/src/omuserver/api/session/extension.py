@@ -167,6 +167,7 @@ class SessionExtension:
             )
         self.sessions[session.app.id] = session
         session.event.disconnected += self.handle_disconnection
+        await self.server.server.apps.update(session.app)
         await self.session_table.add(session.app)
         unlisten = session.event.ready.listen(self.on_session_ready)
         session.event.disconnected.listen(lambda _: unlisten())

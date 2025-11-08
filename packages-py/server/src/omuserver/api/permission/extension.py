@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from omu.api.dashboard.packets import PermissionRequestPacket
 from omu.api.permission import PermissionType
 from omu.api.permission.extension import (
     PERMISSION_GRANT_PACKET,
@@ -56,8 +55,7 @@ class PermissionExtension:
             if session.kind in {AppType.PLUGIN, AppType.DASHBOARD}:
                 return
             request_id = self._get_next_request_key()
-            request = PermissionRequestPacket(request_id, session.app, permissions)
-            accepted = await self.server.dashboard.request_permissions(request)
+            accepted = await self.server.dashboard.request_permissions(app=session.app, permissions=permissions)
             if not accepted:
                 msg = f"Permission request denied (id={request_id})"
                 raise PermissionDenied(msg)

@@ -24,7 +24,6 @@ export class RegistryExtension implements Extension {
     }
 
     private createRegistry<T>(registryType: RegistryType<T>): Registry<T> {
-        this.omu.permissions.require(REGISTRY_PERMISSION_ID);
         if (this.registries.has(registryType.id)) {
             throw new Error(`Registry with identifier '${registryType.id}' already exists`);
         }

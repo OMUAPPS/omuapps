@@ -89,6 +89,9 @@
             {:else if state.reason.type === DisconnectType.PERMISSION_DENIED}
                 <h1>権限が拒否されました</h1>
                 <small>このソースを再読み込みしてください</small>
+            {:else if state.reason.type === DisconnectType.APP_REMOVED}
+                <h1>アプリが削除されました</h1>
+                <small>このソースを削除することができます</small>
             {:else if state.reason.type === DisconnectType.INVALID_TOKEN}
                 {#if isSessionPresent}
                     <h1>認証に失敗しました</h1>

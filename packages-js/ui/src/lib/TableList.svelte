@@ -1,10 +1,7 @@
 <script lang="ts" generics="T">
-
     import { client } from './stores.js';
-
-    import VirtualList from './VirtualList.svelte';
-
     import TableListEntry from './TableListEntry.svelte';
+    import VirtualList from './VirtualList.svelte';
 
     import type { Table } from '@omujs/omu/api/table';
     import {
@@ -59,7 +56,7 @@
             .then((items) => {
                 last = [...items.keys()].at(-1);
                 updateCache(items);
-                update();
+                update(filter, sort, reverse);
                 return (
                     [...items.keys()].filter((key) => !entries.has(key))
                         .length > 0
@@ -101,7 +98,7 @@
             }
         }
         if (changed) {
-            update();
+            update(filter, sort, reverse);
         }
     }
 
@@ -118,7 +115,7 @@
             changed = true;
         }
         if (changed) {
-            update();
+            update(filter, sort, reverse);
         }
     }
     function onAdd(items: Map<string, T>) {
@@ -168,7 +165,8 @@
     ) {
         let items = Array.from(entries.entries());
         if (filter) {
-            items = items.filter(([key, entry]) => filter(key, entry));
+            const filtered = items.filter(([key, entry]) => filter(key, entry));
+            items = filtered;
         }
         if (sort) {
             items = items.sort(([, entryA], [, entryB]) => sort(entryA) - sort(entryB));

@@ -1,6 +1,6 @@
 import type { Address } from '../address.js';
 import {
-    AnotherConnection, DisconnectReason, InternalError,
+    AnotherConnection, AppRemoved, DisconnectReason, InternalError,
     InvalidOrigin,
     InvalidPacket,
     InvalidToken,
@@ -83,6 +83,7 @@ export class Network {
             const ERROR_MAP = {
                 [DisconnectType.ANOTHER_CONNECTION]: AnotherConnection,
                 [DisconnectType.PERMISSION_DENIED]: PermissionDenied,
+                [DisconnectType.APP_REMOVED]: AppRemoved,
                 [DisconnectType.INVALID_TOKEN]: InvalidToken,
                 [DisconnectType.INVALID_ORIGIN]: InvalidOrigin,
                 [DisconnectType.INVALID_VERSION]: InvalidVersion,

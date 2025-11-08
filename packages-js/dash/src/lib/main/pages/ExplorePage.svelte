@@ -43,6 +43,11 @@
                 OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
                 OmuPermissions.REGISTRY_PERMISSION_ID,
                 OmuPermissions.TABLE_PERMISSION_ID,
+                OmuPermissions.DASHBOARD_APP_INSTALL_PERMISSION_ID,
+                OmuPermissions.DASHBOARD_OPEN_APP_PERMISSION_ID,
+                OmuPermissions.SERVER_APPS_READ_PERMISSION_ID,
+                OmuPermissions.DASHOBARD_APP_READ_PERMISSION_ID,
+                OmuPermissions.TABLE_PERMISSION_ID,
             ],
         });
         if (tokenResult.type === 'error') {

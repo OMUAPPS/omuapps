@@ -10,11 +10,13 @@ from omu.omu import Omu
 SERVER_EXTENSION_TYPE = ExtensionType("server", lambda client: ServerExtension(client))
 
 SERVER_APPS_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE / "apps" / "read"
+SERVER_APPS_WRITE_PERMISSION_ID = SERVER_EXTENSION_TYPE / "apps" / "write"
 SERVER_APP_TABLE_TYPE = TableType.create_model(
     SERVER_EXTENSION_TYPE,
     "apps",
     App,
     permissions=TablePermissions(
+        all=SERVER_APPS_READ_PERMISSION_ID,
         read=SERVER_APPS_READ_PERMISSION_ID,
     ),
 )

@@ -1,15 +1,15 @@
 import type { App } from '../../app.js';
 import { Identifier } from '../../identifier';
 import { InvokedParams } from '../endpoint/packets.js';
-import { Cookie, GetCookiesRequest, HostRequest, SpeechRecognitionStart, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from './extension.js';
+import { Cookie, GetCookiesRequest, HostRequest, PromptRequestAppInstall, PromptRequestAppPermissions, PromptRequestAppPlugins, PromptRequestAppUpdate, PromptResult, SpeechRecognitionStart, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from './extension.js';
 
-import type { AppInstallRequest, AppUpdateRequest, DragDropReadRequestDashboard, DragDropReadResponse, DragDropRequestDashboard, PermissionRequestPacket, PluginRequestPacket } from './packets.js';
+import type { DragDropReadRequestDashboard, DragDropReadResponse, DragDropRequestDashboard } from './packets.js';
 
 export interface DashboardHandler {
-    handlePermissionRequest(request: PermissionRequestPacket): Promise<boolean>;
-    handlePluginRequest(request: PluginRequestPacket): Promise<boolean>;
-    handleInstallApp(request: AppInstallRequest): Promise<boolean>;
-    handleUpdateApp(request: AppUpdateRequest): Promise<boolean>;
+    handlePermissionRequest(request: PromptRequestAppPermissions): Promise<PromptResult>;
+    handlePluginRequest(request: PromptRequestAppPlugins): Promise<PromptResult>;
+    handleInstallApp(request: PromptRequestAppInstall): Promise<PromptResult>;
+    handleUpdateApp(request: PromptRequestAppUpdate): Promise<PromptResult>;
     handleOpenApp(app: App): Promise<void>;
     handleDragDropRequest(request: DragDropRequestDashboard): Promise<boolean>;
     handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<DragDropReadResponse>;
