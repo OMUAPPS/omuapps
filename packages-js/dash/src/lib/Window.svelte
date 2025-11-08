@@ -51,7 +51,6 @@
 
     async function close() {
         await appWindow.hide();
-        location.reload();
     }
 </script>
 
