@@ -27,8 +27,6 @@
     let open = false;
     let switcherElement: HTMLElement | undefined;
     let userElement: HTMLElement | undefined;
-
-    $: console.log(state);
 </script>
 
 <svelte:window on:click={(event) => {

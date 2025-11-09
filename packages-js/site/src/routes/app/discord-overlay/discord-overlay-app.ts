@@ -1,5 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
+import { type Vec2Like } from '$lib/math/vec2.js';
 import { VERSION } from '$lib/version.js';
 import { Identifier, Serializer, type Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/api/endpoint';
@@ -170,7 +170,7 @@ export type UserConfig = {
 };
 export const DEFAULT_USER_CONFIG: UserConfig = {
     lastDraggedAt: 0,
-    position: Vec2.ZERO,
+    position: { x: 1920 / 2, y: 1080 / 2 },
     scale: 1,
     avatar: null,
     config: {

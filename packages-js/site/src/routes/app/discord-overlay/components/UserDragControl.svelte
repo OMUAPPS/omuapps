@@ -5,7 +5,7 @@
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Tooltip } from '@omujs/ui';
     import { type Config, type DiscordOverlayApp, type UserConfig, type VoiceStateItem } from '../discord-overlay-app.js';
-    import { alignSide, avatarPositions, dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
+    import { alignClear, alignSide, avatarPositions, dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
     export let resolution: { width: number; height: number };
@@ -61,14 +61,22 @@
         if (!anyAligned()) {
             $config.align.alignSide = undefined;
         }
+        $dragState = {
+            type: 'user',
+            id,
+            time: $dragState ? clickTime : clickTime = performance.now(),
+            x,
+            y,
+        };
+        $dragPosition = screenToWorld(x, resolution.height - y);
         if (!$config.align.alignSide) return;
         const { align } = $config.align.alignSide;
         const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: dimensions.width / 2, y: dimensions.height / 2 });
         const offset = align01.sub($dragPosition);
         const dist = Math.max(
-            offset.dot(align),
+            offset.dot(align) * 2,
             new AABB2(Vec2.ZERO, new Vec2(dimensions.width, dimensions.height)).distance($dragPosition),
-            avatarPositions[id] ? Vec2.from(avatarPositions[id].targetPos).distance(user.position) * 1.5 : 0,
+            avatarPositions[id] ? Vec2.from(avatarPositions[id].targetPos).sub(user.position).mul({ x: align.y, y: align.x }).length() - 150 : 0,
         );
         user.align = dist > -150 && dist < 300;
     }
@@ -78,6 +86,18 @@
         $dragState = null;
         $isDraggingFinished = true;
         $config = { ...$config };
+        if ($alignClear) {
+            $config.align.alignSide = undefined;
+            user.align = false;
+            $config.users = Object.fromEntries(Object.entries($config.users).map(([id, user]) => {
+                if (user.align) {
+                    user.position.y -= 40;
+                    user.align = false;
+                }
+                return [id, user];
+            }));
+            return;
+        }
         if (!anyAligned()) {
             $config.align.alignSide = undefined;
         }
@@ -109,14 +129,6 @@
         user.position = world;
 
         lastMouse = [x, y];
-        $dragState = {
-            type: 'user',
-            id,
-            time: performance.now(),
-            x,
-            y,
-        };
-        $dragPosition = screenToWorld(x, resolution.height - y);
         clickTime = performance.now();
         clickDistance = 0;
         user.lastDraggedAt = Date.now();

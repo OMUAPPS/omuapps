@@ -20,7 +20,7 @@
     import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
     import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
-    import { alignSide, avatarPositions, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
+    import { alignClear, alignSide, avatarPositions, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let dimensions = {
@@ -282,6 +282,15 @@
         );
     }
 
+    const AVATAR_DEFAULT_SPACING = 300;
+
+    function getFitScaleFactor(): number {
+        const MARGIN = $config.align.margin;
+        const total = Object.keys(alignDistanceCache).length;
+        const spacing = AVATAR_DEFAULT_SPACING / Math.min(AVATAR_DEFAULT_SPACING, (dimensions.width - MARGIN * 2) / total);
+        return spacing;
+    }
+
     function calculateAlignPosition(alignSide: AlignSide, index: number, total: number): Vec2 {
         const MARGIN = $config.align.margin;
         const { align, side } = alignSide;
@@ -290,9 +299,10 @@
         const sideScalar = { start: -1, middle: 0, end: 1 }[side];
         const origin = align01.add(dirPerp.scale(Math.abs(align.x) > Math.abs(align.y) ? dimensions.height / 2 : dimensions.width / 2).scale(sideScalar));
 
-        let offsetScale = index * 300 + MARGIN * 2;
+        const spacing = Math.min(AVATAR_DEFAULT_SPACING, (dimensions.width - MARGIN * 2) / total);
+        let offsetScale = index * spacing + MARGIN * 2;
         if (side === 'middle') {
-            offsetScale = (index - (total - 1) / 2) * 300;
+            offsetScale = (index - (total - 1) / 2) * spacing;
         } else {
             offsetScale = offsetScale;
         }
@@ -301,19 +311,20 @@
         return origin.add(offset);
     }
 
-    function applyUserTransform(id: string, user: UserConfig, alignSide: AlignSide | undefined, index: number, total: number) {
-        const last = avatarPositions[id] ?? {
+    function applyUserTransform(id: string, user: UserConfig, alignSide: AlignSide | undefined, index: number, total: number): { target: Vec2Like; current: Vec2Like } {
+        const last = avatarPositions[id];
+        const transform = { ...last ?? {
             targetPos: user.position,
             pos: user.position,
             rot: 0,
             scale: Vec2.ONE,
-        };
-        const transform = { ...last };
+        } };
         const deltaTime = timer.getElapsedMS() / 1000;
         const t = 1 - Math.exp(-deltaTime * 16);
         if (alignSide && user.align) {
             const { align, side } = alignSide;
             transform.pos = calculateAlignPosition(alignSide, index, total);
+            transform.targetPos = transform.pos;
 
             const horizontal = align.y === 0;
 
@@ -326,6 +337,7 @@
             transform.rot = horizontal ? TAU / 4 : 0;
             if (id !== $dragState?.id) {
                 user.position = Vec2.from(user.position).lerp(transform.pos, t);
+                transform.targetPos = user.position;
             }
         } else {
             if (alignSide) {
@@ -348,14 +360,18 @@
 
         const newTransform = {
             targetPos: transform.targetPos,
-            pos: Vec2.from(last.pos).lerp(transform.pos, t),
-            rot: BetterMath.lerpAngle(last.rot, transform.rot, t),
-            scale: Vec2.from(last.scale).lerp(transform.scale, t),
+            pos: Vec2.from(last?.pos ?? transform.pos).lerp(transform.pos, t),
+            rot: BetterMath.lerpAngle(last?.rot ?? 0, transform.rot, t),
+            scale: Vec2.from(last?.scale ?? Vec2.ONE).lerp(transform.scale, t),
         };
         avatarPositions[id] = newTransform;
         matrices.model.translate(newTransform.pos.x, newTransform.pos.y, 0);
         matrices.model.scale(newTransform.scale.x, newTransform.scale.y, 0);
         matrices.model.rotate(Axis.Z_POS.rotate(newTransform.rot));
+        return {
+            target: user.align ? newTransform.targetPos : newTransform.pos,
+            current: newTransform.pos,
+        };
     }
 
     let alignDistanceCache: Record<string, number> = {};
@@ -381,11 +397,13 @@
     function calculateAlignments(entries: [string, VoiceStateItem][]): number {
         let alignTotal = 0;
         alignDistanceCache = {};
-
+        const draggingUser = $dragState?.id && $config.users[$dragState.id];
+        const includeDragging = draggingUser && draggingUser.align;
         for (const [id, voiceState] of entries) {
             if (!voiceState) continue;
             const user = $config.users[id];
-            if (!user.align) continue;
+            const isDraggingUser = $dragState?.id === id;
+            if (!user.align && (!includeDragging || !isDraggingUser)) continue;
 
             alignTotal++;
             alignDistanceCache[id] = $config.align.alignSide
@@ -427,6 +445,7 @@
             name: string;
         }> = [];
         const screenBounds = getWorldSpaceScreenBounds();
+        const align = $config.align.alignSide && alignTotal > 0;
         for (const [id, voiceState] of entries) {
             const user = $config.users[id];
             if (!voiceState) continue;
@@ -439,12 +458,13 @@
             if (avatar.type !== 'loaded') return;
             matrices.model.push();
 
-            applyUserTransform(id, user, $config.align.alignSide, alignIndexes[id], alignTotal);
+            const { target, current } = applyUserTransform(id, user, $config.align.alignSide, alignIndexes[id], alignTotal);
             const screenPos = matrices.model.get().transform2({ x: 0, y: POSITION_OFFSET });
             matrices.model.translate(0, -POSITION_OFFSET, 0);
 
             const config = avatar.getConfig();
-            applyAvatarScale(user.scale);
+            const spacingFactor = getFitScaleFactor();
+            applyAvatarScale(user.scale / spacingFactor);
             if (config) {
                 applyAvatarTransform(config);
             }
@@ -452,6 +472,9 @@
             const bounds = avatar.context.bounds();
             const avatarMatrix = matrices.model.get();
             const worldBounds = avatarMatrix.transformAABB2(bounds).expand({ x: 40, y: 40 });
+            const alignedWorldBounds = worldBounds
+                .offset(Vec2.from(current).scale(-1))
+                .offset(target);
 
             if (!screenBounds.intersects(worldBounds)) {
                 matrices.model.pop();
@@ -470,10 +493,23 @@
             }, renderOptions);
 
             matrices.model.pop();
-            const { min, max } = worldBounds;
-            if ($dragState?.type === 'user' && $dragState.id === id) {
+            if (align && user.align && $dragState?.id === id) {
+                const { min, max } = alignedWorldBounds;
+                const center = alignedWorldBounds.center();
                 draw.roundedRect(min, max, 40, PALETTE_RGB.BACKGROUND_3, 1);
                 draw.roundedRect(min, max, 40, PALETTE_RGB.ACCENT, 5);
+                draw.fontSize = 24;
+                draw.fontWeight = '600';
+                await draw.textAlign(
+                    { x: center.x, y: max.y + 20 },
+                    'ここに整列',
+                    Vec2.ONE.scale(0.5),
+                    PALETTE_RGB.ACCENT,
+                    { color: PALETTE_RGB.BACKGROUND_3, width: 3 },
+                );
+            } else if ($dragState?.id === id) {
+                const { min, max } = worldBounds;
+                draw.roundedRect(min, max, 40, PALETTE_RGB.OUTLINE_1, 5);
             }
             if (!$config.show_name_tags) continue;
             const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
@@ -517,6 +553,7 @@
         $alignSide = undefined;
         const dragTime = performance.now() - $dragState.time;
         const dragT = (1 - 1 / (dragTime + 1));
+        const screen = new Vec2(dimensions.width, dimensions.height);
         matrices.push();
         setupWorldMatrices();
         const worldView = matrices.view.get();
@@ -556,9 +593,9 @@
         let anyHovered = false;
 
         // Helper functions
-        const getWorldPoint = (align: Align, dimensions: { width: number; height: number }): Vec2 => {
+        const getWorldPoint = (align: Align): Vec2 => {
             const dir01 = align.dir.add(Vec2.ONE).scale(0.5);
-            return align.dir.scale(MARGIN * dragT).add(dir01.mul({ x: dimensions.width, y: dimensions.height }));
+            return align.dir.scale(MARGIN * dragT).add(dir01.mul(screen));
         };
 
         const drawAlignIcon = async (point: Vec2, icon: string, color = PALETTE_RGB.ACCENT): Promise<void> => {
@@ -595,7 +632,7 @@
 
         // Main loop
         for (const align of ALIGNS) {
-            const pointWorld = getWorldPoint(align, dimensions);
+            const pointWorld = getWorldPoint(align);
             const point = marginMounds.closest(worldView.transform2(pointWorld));
             const hovered = hoveredAlign === align.icon;
             const scale = hovered ? 2 : 0;
@@ -647,11 +684,29 @@
             hoveredAlign = undefined;
         }
 
+        if ($config.align.alignSide) {
+            const center = worldView.transform2(screen.scale(0.5));
+            const bounds = draw.measureTextActual('整列を解除').centered(Vec2.ONE.scale(0.5)).offset(center).expand(Vec2.ONE.scale(RADIUS / 1.5));
+            const boundsOutline = bounds.expand(Vec2.ONE.scale(2));
+            const worldBounds = worldViewInv.transformAABB2(boundsOutline);
+            const hovered = $dragPosition ? worldBounds.contains($dragPosition) : false;
+            $alignClear = hovered;
+            if (hovered) {
+                draw.roundedRect(boundsOutline.min, boundsOutline.max, RADIUS + 2, PALETTE_RGB.ACCENT);
+                await draw.textAlign(center, '整列を解除', Vec2.ONE.scale(0.5), PALETTE_RGB.BACKGROUND_1);
+            } else {
+                draw.roundedRect(boundsOutline.min, boundsOutline.max, RADIUS + 2, PALETTE_RGB.ACCENT);
+                draw.roundedRect(bounds.min, bounds.max, RADIUS, PALETTE_RGB.BACKGROUND_1);
+                await draw.textAlign(center, '整列を解除', Vec2.ONE.scale(0.5), PALETTE_RGB.ACCENT);
+            }
+        } else {
+            $alignClear = false;
+        }
+
         if (closest) {
             const pos = closest.pos.sub(closest.align.dir.scale(RADIUS * 4));
             drawTooltip(pos, closest);
             draw.circle(pos.x, pos.y, 0, RADIUS, PALETTE_RGB.ACCENT);
-            await drawAlignIcon(pos, closest.icon, PALETTE_RGB.BACKGROUND_1);
             await drawAlignIcon(pos, closest.icon, PALETTE_RGB.BACKGROUND_1);
             $alignSide = { align: closest.align.dir, side: closest.side };
         }
