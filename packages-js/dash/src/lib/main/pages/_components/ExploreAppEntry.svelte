@@ -23,7 +23,6 @@
 
     omu.onReady(async () => {
         alreadyAdded = await omu.server.apps.has(app.id.key());
-        console.log(`App ${app.id.key()} already added: ${alreadyAdded}`);
     });
 
     onMount(() => omu.server.apps.event.remove.listen((items) => {

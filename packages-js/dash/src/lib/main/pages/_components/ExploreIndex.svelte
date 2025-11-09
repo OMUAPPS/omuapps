@@ -3,17 +3,40 @@
     import type { App } from '@omujs/omu';
     import { AppIndexRegistry, type AppIndexEntry } from '@omujs/omu/api/server';
     import type { LocalizedText } from '@omujs/omu/localization';
-    import { Tooltip } from '@omujs/ui';
+    import { Spinner, Tooltip } from '@omujs/ui';
+    import { onMount } from 'svelte';
     import { filter } from '../explore';
     import ExploreAppEntry from './ExploreAppEntry.svelte';
 
+    export let id: string;
     export let entry: AppIndexEntry;
 
-    async function fetchIndex(entry: AppIndexEntry) {
-        const resp = await fetch(entry.url);
-        const index = AppIndexRegistry.fromJSON(await resp.json());
-        return index;
+    let state: {
+        type: 'loading';
+    } | {
+        type: 'failed';
+        message: string;
+    } | {
+        type: 'result';
+        index: AppIndexRegistry;
+    } = { type: 'loading' };
+
+    function formatError(error: unknown) {
+        if (error instanceof Error) {
+            return error.message;
+        }
+        return JSON.stringify(error);
     }
+
+    onMount(async () => {
+        try {
+            const resp = await fetch(entry.url);
+            const index = AppIndexRegistry.fromJSON(await resp.json());
+            state = { type: 'result', index };
+        } catch (err) {
+            state = { type: 'failed', message: formatError(err) };
+        }
+    });
 
     $: url = new URL(entry.url);
 
@@ -46,19 +69,28 @@
     <Tooltip>
         {url.host}によって提供されているアプリ
     </Tooltip>
-    {url.host}
+    {id.split('.').reverse().join('.')}
 </h2>
-<div class="apps">
-    {#await fetchIndex(entry) then index}
-        {#each filterApps([...index.apps.values()], $filter) as app (app.id.key())}
+{#if state.type === 'loading'}
+    <Spinner />
+{:else if state.type === 'failed'}
+    <div class="apps">
+        <p>
+            読み込みに失敗しました
+            <small>
+                {state.message}
+            </small>
+        </p>
+    </div>
+{:else if state.type === 'result'}
+    <div class="apps">
+        {#each filterApps([...state.index.apps.values()], $filter) as app (app.id.key())}
             <ExploreAppEntry {app} />
         {:else}
             <p>No apps found</p>
         {/each}
-    {:catch error}
-        <p>Error occurred: {error}</p>
-    {/await}
-</div>
+    </div>
+{/if}
 
 <style lang="scss">
     .apps {

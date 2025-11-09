@@ -18,6 +18,11 @@
                     url: 'http://localhost:5173/apps.json',
                     added_at: new Date().toISOString(),
                 };
+            } else {
+                indexes['com.omuapps'] = {
+                    url: 'https://omuapps.com/apps.json',
+                    added_at: new Date().toISOString(),
+                };
             }
             if ($isBetaEnabled) {
                 indexes['com.omuapps.beta'] = {
@@ -25,10 +30,6 @@
                     added_at: new Date().toISOString(),
                 };
             }
-            indexes['com.omuapps'] = {
-                url: 'https://omuapps.com/apps.json',
-                added_at: new Date().toISOString(),
-            };
             return index;
         });
     }
@@ -71,7 +72,7 @@
                     <Spinner />
                 {:else if state.type === 'loaded'}
                     {#each Object.entries(state.indexes) as [id, entry] (id)}
-                        <ExploreIndex {entry} />
+                        <ExploreIndex {id} {entry} />
                     {:else}
                         <p>No indexes</p>
                     {/each}
