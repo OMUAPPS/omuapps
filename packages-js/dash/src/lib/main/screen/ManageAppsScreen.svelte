@@ -5,7 +5,7 @@
     import Screen from '$lib/screen/Screen.svelte';
     import type { ScreenHandle } from '$lib/screen/screen.js';
     import { App } from '@omujs/omu';
-    import { Button, TableList } from '@omujs/ui';
+    import { Button, TableList, Tooltip } from '@omujs/ui';
     import AppEntry from './AppEntry.svelte';
     import { selectedApp } from './stores';
 
@@ -71,7 +71,19 @@
                             </Button>
                         </h2>
                         {#each children as [id, app] (id)}
-                            <div class="entry"><AppInfo {app} /></div>
+                            <div class="entry">
+                                <AppInfo {app} />
+                                <Button primary onclick={() => {
+                                    omu.server.apps.remove(app);
+                                    $selectedApp = $selectedApp;
+                                }}>
+                                    <Tooltip>
+                                        削除
+                                    </Tooltip>
+                                    削除
+                                    <i class="ti ti-x"></i>
+                                </Button>
+                            </div>
                         {/each}
                     </div>
                 {/if}
@@ -118,8 +130,12 @@
         overflow: hidden;
 
         > .entry {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             background: var(--color-bg-2);
             padding: 0 1rem;
+            padding-right: 1.25rem;
             margin-bottom: 0.25rem;
         }
     }
