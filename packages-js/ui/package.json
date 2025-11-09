@@ -14,7 +14,7 @@
         "build": "bun run package",
         "build-storybook": "storybook build",
         "check": "bun x --bun svelte-check --tsconfig ./tsconfig.json",
-        "check:watch": "bun x --bun svelte-check --tsconfig ./tsconfig.json --watch",
+        "check:watch": "nodemon --verbose --watch src --ext \"ts,svelte\" --exec \"bun x --bun svelte-check --tsconfig ./tsconfig.json\"",
         "chromatic": "chromatic",
         "dev": "bun x --bun vite dev --port 5174",
         "package": "bun x --bun svelte-package && bun x --bun publint",
@@ -54,7 +54,7 @@
         "sass": "^1.86.0",
         "storybook": "^8.2.8",
         "svelte": "^4.2.18",
-        "svelte-check": "^3.8.5",
+        "svelte-check": "^4.3.3",
         "tslib": "^2.6.3",
         "vite": "^5.4.0",
         "vitest": "^2.0.5"
