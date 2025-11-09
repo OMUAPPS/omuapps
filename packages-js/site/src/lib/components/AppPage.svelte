@@ -40,7 +40,11 @@
 <main>
     <slot />
 </main>
-{#if state.type === 'connecting'}
+{#if state.type === 'not_running'}
+    <div class="modal">
+        <Spinner />
+    </div>
+{:else if state.type === 'connecting'}
     <div class="modal">
         <Spinner />
         {#if state.status.type === 'connecting'}
