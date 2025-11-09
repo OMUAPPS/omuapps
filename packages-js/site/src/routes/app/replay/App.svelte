@@ -71,6 +71,40 @@
                 {obs}
             />
         </MenuSection>
+        <MenuSection name="URLから" icon="ti-link">
+            <Textbox
+                placeholder="https://youtu.be/..."
+                on:input={(event) => {
+                    const url = new URL(event.detail);
+                    replay.playByUrl(url);
+                }}
+                lazy
+            />
+        </MenuSection>
+    </Menu>
+    <div class="content">
+        <div class="player">
+            {#if $replayData}
+                {#if $replayData.video.type === 'youtube'}
+                    <YoutubePlayer
+                        video={$replayData.video}
+                        bind:playback={$replayData.playback}
+                        bind:info={$replayData.info}
+                    />
+                {:else if $replayData.video.type === 'twitch'}
+                    <TwitchPlayer
+                        video={$replayData.video}
+                        bind:playback={$replayData.playback}
+                        bind:info={$replayData.info}
+                    />
+                {/if}
+            {:else}
+                <div class="empty">
+                    動画を選択するとここに表示されます
+                    <i class="ti ti-video"></i>
+                </div>
+            {/if}
+        </div>
         <MenuSection name="OBSの音" icon="ti ti-volume">
             <div class="audio">
                 <Button primary={$config.muted} onclick={() => {
@@ -97,40 +131,6 @@
                     </Tooltip>
                 </div>
             </div>
-        </MenuSection>
-    </Menu>
-    <div class="content">
-        <div class="player">
-            {#if $replayData}
-                {#if $replayData.video.type === 'youtube'}
-                    <YoutubePlayer
-                        video={$replayData.video}
-                        bind:playback={$replayData.playback}
-                        bind:info={$replayData.info}
-                    />
-                {:else if $replayData.video.type === 'twitch'}
-                    <TwitchPlayer
-                        video={$replayData.video}
-                        bind:playback={$replayData.playback}
-                        bind:info={$replayData.info}
-                    />
-                {/if}
-            {:else}
-                <div class="empty">
-                    動画を選択するとここに表示されます
-                    <i class="ti ti-video"></i>
-                </div>
-            {/if}
-        </div>
-        <MenuSection name="URLから" icon="ti-link">
-            <Textbox
-                placeholder="https://youtu.be/..."
-                on:input={(event) => {
-                    const url = new URL(event.detail);
-                    replay.playByUrl(url);
-                }}
-                lazy
-            />
         </MenuSection>
     </div>
 </div>
