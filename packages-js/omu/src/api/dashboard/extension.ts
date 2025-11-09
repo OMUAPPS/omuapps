@@ -280,13 +280,22 @@ export interface PromptRequestAppPlugins extends PromptRequestBase<'app/plugins'
 export interface PromptRequestAppInstall extends PromptRequestBase<'app/install'> {
     app: AppJson;
 }
+
 export interface PromptRequestAppUpdate extends PromptRequestBase<'app/update'> {
     old_app: AppJson;
     new_app: AppJson;
 }
 
+export interface PromptRequestIndexInstall extends PromptRequestBase<'index/install'> {
+    index_url: string;
+}
+
 export type PromptRequest = (
-    PromptRequestAppPermissions | PromptRequestAppPlugins | PromptRequestAppInstall | PromptRequestAppUpdate
+    PromptRequestAppPermissions
+    | PromptRequestAppPlugins
+    | PromptRequestAppInstall
+    | PromptRequestAppUpdate
+    | PromptRequestIndexInstall
 );
 
 const DASHBOARD_PROMPT_REQUEST = PacketType.createJson<PromptRequest>(DASHBOARD_EXTENSION_TYPE, {
@@ -383,6 +392,10 @@ export class DashboardExtension {
                 return await dashboard.handleInstallApp(request);
             case 'app/update':
                 return await dashboard.handleUpdateApp(request);
+            case 'index/install':
+                return await dashboard.handleIndexInstall(request);
+            default:
+                throw new Error(`Unknown prompt requested: ${JSON.stringify(request)}`);
         }
     }
 

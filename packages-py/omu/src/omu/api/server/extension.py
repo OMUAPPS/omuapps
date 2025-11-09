@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TypedDict
+
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
 from omu.api.registry import RegistryPermissions, RegistryType
@@ -9,14 +11,34 @@ from omu.omu import Omu
 
 SERVER_EXTENSION_TYPE = ExtensionType("server", lambda client: ServerExtension(client))
 
-SERVER_APPS_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE / "apps" / "read"
+
+class AppIndexEntry(TypedDict):
+    url: str
+    added_at: str
+
+
+class AppIndex(TypedDict):
+    indexes: dict[str, AppIndexEntry]
+
+
 SERVER_APPS_WRITE_PERMISSION_ID = SERVER_EXTENSION_TYPE / "apps" / "write"
+SERVER_APPS_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE / "apps" / "read"
+SERVER_INDEX_READ_PERMISSION_ID = SERVER_EXTENSION_TYPE / "index" / "read"
+SERVER_INDEX_REGISTRY_TYPE = RegistryType[AppIndex].create_json(
+    SERVER_EXTENSION_TYPE,
+    "index",
+    default_value={"indexes": {}},
+    permissions=RegistryPermissions(
+        write=SERVER_APPS_WRITE_PERMISSION_ID,
+        read=SERVER_INDEX_READ_PERMISSION_ID,
+    ),
+)
 SERVER_APP_TABLE_TYPE = TableType.create_model(
     SERVER_EXTENSION_TYPE,
     "apps",
     App,
     permissions=TablePermissions(
-        all=SERVER_APPS_READ_PERMISSION_ID,
+        all=SERVER_APPS_WRITE_PERMISSION_ID,
         read=SERVER_APPS_READ_PERMISSION_ID,
     ),
 )
@@ -47,6 +69,7 @@ class ServerExtension(Extension):
     def __init__(self, omu: Omu) -> None:
         self._client = omu
         self.apps = omu.tables.get(SERVER_APP_TABLE_TYPE)
+        self.index = omu.registries.get(SERVER_INDEX_REGISTRY_TYPE)
         self.sessions = omu.tables.get(SERVER_APP_TABLE_TYPE)
         self.trusted_origins = omu.registries.get(TRUSTED_ORIGINS_REGISTRY_TYPE)
 

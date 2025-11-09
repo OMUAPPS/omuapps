@@ -126,6 +126,10 @@ export class Identifier {
         return this.key() === other.key();
     }
 
+    public isNamespaceEqual(other: Identifier): boolean {
+        return this.namespace === other.namespace;
+    }
+
     public isSubpathOf(other: Identifier): boolean {
         if (this.namespace !== other.namespace) {
             return false;

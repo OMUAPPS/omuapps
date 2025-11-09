@@ -73,7 +73,7 @@ class RegistryExtension:
     async def handle_update(self, session: Session, packet: RegistryPacket) -> None:
         await session.wait_ready()
         registry = await self.get_with_perm(packet.id, session, lambda perms: [perms.all, perms.write])
-        await registry.store(packet.value)
+        registry.store(packet.value)
         await registry.notify(session)
 
     async def handle_get(self, session: Session, id: Identifier) -> RegistryPacket:

@@ -1,7 +1,7 @@
 import type { App } from '../../app.js';
 import { Identifier } from '../../identifier';
 import { InvokedParams } from '../endpoint/packets.js';
-import { Cookie, GetCookiesRequest, HostRequest, PromptRequestAppInstall, PromptRequestAppPermissions, PromptRequestAppPlugins, PromptRequestAppUpdate, PromptResult, SpeechRecognitionStart, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from './extension.js';
+import { Cookie, GetCookiesRequest, HostRequest, PromptRequestAppInstall, PromptRequestAppPermissions, PromptRequestAppPlugins, PromptRequestAppUpdate, PromptRequestIndexInstall, PromptResult, SpeechRecognitionStart, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from './extension.js';
 
 import type { DragDropReadRequestDashboard, DragDropReadResponse, DragDropRequestDashboard } from './packets.js';
 
@@ -10,6 +10,7 @@ export interface DashboardHandler {
     handlePluginRequest(request: PromptRequestAppPlugins): Promise<PromptResult>;
     handleInstallApp(request: PromptRequestAppInstall): Promise<PromptResult>;
     handleUpdateApp(request: PromptRequestAppUpdate): Promise<PromptResult>;
+    handleIndexInstall(request: PromptRequestIndexInstall): Promise<PromptResult>;
     handleOpenApp(app: App): Promise<void>;
     handleDragDropRequest(request: DragDropRequestDashboard): Promise<boolean>;
     handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<DragDropReadResponse>;

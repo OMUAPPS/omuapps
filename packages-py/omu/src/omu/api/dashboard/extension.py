@@ -256,8 +256,16 @@ class PromptRequestAppUpdate(PromptRequestBase[Literal["app/update"]]):
     new_app: AppJson
 
 
+class PromptRequestIndexInstall(PromptRequestBase[Literal["index/install"]]):
+    index_url: str
+
+
 type PromptRequest = (
-    PromptRequestAppPermissions | PromptRequestAppPlugins | PromptRequestAppInstall | PromptRequestAppUpdate
+    PromptRequestAppPermissions
+    | PromptRequestAppPlugins
+    | PromptRequestAppInstall
+    | PromptRequestAppUpdate
+    | PromptRequestIndexInstall
 )
 
 DASHBOARD_PROMPT_REQUEST = PacketType[PromptRequest].create_json(

@@ -95,8 +95,11 @@ class Network:
     ) -> None:
         self._packet_dispatcher.bind(packet_type, coro)
 
-    def add_http_route(self, path: str, handle: Coro[[web.Request], web.StreamResponse]) -> None:
+    def route_get(self, path: str, handle: Coro[[web.Request], web.StreamResponse]) -> None:
         self._app.router.add_get(path, handle)
+
+    def route_post(self, path: str, handle: Coro[[web.Request], web.StreamResponse]) -> None:
+        self._app.router.add_post(path, handle)
 
     def _verify_remote_ip(self, request: web.Request, session: Session) -> Result[None, DisconnectReason]:
         if request.remote not in {self.local_ip, "127.0.0.1"}:
@@ -114,7 +117,7 @@ class Network:
             return Ok(None)
         if origin_namespace in self.server.config.extra_trusted_origins:
             return Ok(None)
-        trusted_origins = await self.server.server.trusted_origins.get()
+        trusted_origins = self.server.server.trusted_origins.get()
         if origin_namespace in trusted_origins:
             return Ok(None)
         return Err(InvalidOrigin(f"Invalid origin: {origin_namespace} != {session_namespace}"))

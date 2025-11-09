@@ -37,7 +37,7 @@ class ServerRegistry:
         if self._path.exists():
             self.value = self._path.read_bytes()
 
-    async def store(self, value: bytes | None) -> None:
+    def store(self, value: bytes | None) -> None:
         self.value = value
         self._changed = True
         if self.save_task is None:
@@ -100,10 +100,10 @@ class Registry[T]:
         self._default_value = default_value
         self._serializer = serializer
 
-    async def get(self) -> T:
+    def get(self) -> T:
         if self._registry.value is None:
             return self._default_value
         return self._serializer.deserialize(self._registry.value)
 
-    async def set(self, value: T) -> None:
-        await self._registry.store(self._serializer.serialize(value))
+    def set(self, value: T) -> None:
+        self._registry.store(self._serializer.serialize(value))

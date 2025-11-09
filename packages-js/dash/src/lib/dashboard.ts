@@ -15,6 +15,7 @@ import {
     type PromptRequestAppPermissions,
     type PromptRequestAppPlugins,
     type PromptRequestAppUpdate,
+    type PromptRequestIndexInstall,
     type PromptResult,
     type SpeechRecognitionStart,
     type TranscriptSegment,
@@ -34,6 +35,7 @@ import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
 import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';
 import HostRequestScreen from './screen/HostRequestScreen.svelte';
 import { screenContext } from './screen/screen.js';
+import ScreenRequestIndexInstall from './screen/ScreenRequestIndexInstall.svelte';
 import SpeechRecognitionScreen from './screen/SpeechRecognitionScreen.svelte';
 
 export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
@@ -146,6 +148,17 @@ export class Dashboard implements DashboardHandler {
         await appWindow.setFocus();
         return new Promise<PromptResult>((resolve) => {
             screenContext.push(AppUpdateRequestScreen, {
+                request,
+                resolve: (result: PromptResult) => resolve(result),
+            });
+        });
+    }
+
+    async handleIndexInstall(request: PromptRequestIndexInstall): Promise<PromptResult> {
+        await appWindow.show();
+        await appWindow.setFocus();
+        return new Promise<PromptResult>((resolve) => {
+            screenContext.push(ScreenRequestIndexInstall, {
                 request,
                 resolve: (result: PromptResult) => resolve(result),
             });

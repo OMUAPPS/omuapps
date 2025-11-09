@@ -5,12 +5,18 @@ import json
 import os
 import subprocess
 import sys
+import urllib
+import urllib.parse
+from dataclasses import dataclass
+from datetime import datetime
+from typing import TypedDict
 from urllib.parse import urlencode
 
 import aiohttp
 from aiohttp import web
 from loguru import logger
 from omu import Identifier
+from omu.app import App, AppJson
 from omu.event_emitter import EventEmitter
 from omu.helper import asyncio_error_logger
 from omu.network.packet.packet_types import DisconnectType
@@ -55,11 +61,12 @@ class Server:
         self.directories.mkdir()
         self.packets = ServerPacketDispatcher()
         self.network = Network(self, self.packets)
-        self.network.add_http_route("/", self._handle_index)
-        self.network.add_http_route("/version", self._handle_version)
-        self.network.add_http_route("/frame", self._handle_frame)
-        self.network.add_http_route("/proxy", self._handle_proxy)
-        self.network.add_http_route("/asset", self._handle_assets)
+        self.network.route_get("/", self._handle_index)
+        self.network.route_get("/version", self._handle_version)
+        self.network.route_get("/frame", self._handle_frame)
+        self.network.route_get("/proxy", self._handle_proxy)
+        self.network.route_get("/asset", self._handle_assets)
+        self.network.route_post("/index_install", self._handle_index_install)
         self.security = PermissionManager.load(self)
         self.running = False
         self.endpoints = EndpointExtension(self)
@@ -159,6 +166,72 @@ class Server:
             logger.error(e)
             return web.Response(status=500)
 
+    async def _handle_index_install(self, request: web.Request) -> web.StreamResponse:
+        install_request: InstallRequest = await request.json()
+        index_url = install_request["index"]
+        parsed_url = urllib.parse.urlparse(index_url)
+        is_host_trusted = parsed_url.netloc in self.config.extra_trusted_origins
+        needs_check = not is_host_trusted
+        provided_index_namespace = Identifier.namespace_from_url(index_url)
+
+        try:
+            resp = await self.client.get(
+                index_url,
+                headers={"Content-Type": "application/json"},
+            )
+            resp.raise_for_status()
+        except aiohttp.ClientError as e:
+            return web.json_response(
+                {"type": "error", "message": f"Failed to fetch index: {str(e)}"},
+                status=400,
+                reason=f"Failed to fetch index: {str(e)}",
+            )
+
+        try:
+            index = AppIndexRegistry.from_json(await resp.json())
+        except Exception as e:
+            return web.json_response(
+                {"type": "error", "message": f"Invalid app index: {str(e)}"},
+                status=400,
+                reason=f"Invalid app index: {str(e)}",
+            )
+
+        index_id = index.id
+        if needs_check and index_id.namespace != provided_index_namespace:
+            return web.json_response(
+                {"type": "error", "message": "Namespace mismatch"},
+                status=400,
+                reason="Provided index ID does not match the namespace ID in the index URL.",
+            )
+
+        if needs_check and not index_id.is_namepath_equal(index.id):
+            return web.json_response(
+                {"type": "error", "message": "Trust issue"},
+                status=400,
+                reason="Provided index ID does not match the namespace ID in the index URL.",
+            )
+
+        accepted = await self.dashboard.notify_index_install(index_url)
+
+        if not accepted:
+            return web.json_response(
+                {"type": "error", "message": "Installation denied by the user."},
+                status=403,
+                reason="Installation denied by the user.",
+            )
+
+        server_index = self.server.index.get()
+        server_index["indexes"][index.id.key()] = {
+            "added_at": datetime.now().isoformat(),
+            "url": index_url,
+        }
+        self.server.index.set(server_index)
+
+        return web.json_response(
+            {"type": "installed"},
+            status=200,
+        )
+
     def run(self) -> None:
         async def _run():
             await self.start()
@@ -209,3 +282,34 @@ class ServerEvents:
     def __init__(self) -> None:
         self.start = EventEmitter[[]]()
         self.stop = EventEmitter[[]]()
+
+
+class InstallRequest(TypedDict):
+    index: str
+    id: str
+
+
+class AppIndexRegistryJSON(TypedDict):
+    id: str
+    apps: dict[str, AppJson]
+
+
+@dataclass(frozen=True, slots=True)
+class AppIndexRegistry:
+    id: Identifier
+    apps: dict[Identifier, App]
+
+    @staticmethod
+    def from_json(json: AppIndexRegistryJSON) -> AppIndexRegistry:
+        id = Identifier.from_key(json["id"])
+        apps: dict[Identifier, App] = {}
+        for id_str, app_json in json["apps"].items():
+            id = Identifier.from_key(id_str)
+            app = App.from_json(app_json)
+            if not id.is_namepath_equal(app.id):
+                raise AssertionError(f"App ID does not match the ID in the index. {app.id} != {id}")
+            apps[id] = app
+        return AppIndexRegistry(
+            id=id,
+            apps=apps,
+        )

@@ -129,6 +129,11 @@ class DashboardExtension:
             raise PermissionDenied("Session does not have permission to open apps")
         await self.dashboard_session.send(DASHBOARD_OPEN_APP_PACKET, app)
 
+    async def open_app(self, app: App) -> None:
+        if self.dashboard_session is None:
+            raise ValueError("Dashboard session not set")
+        await self.dashboard_session.send(DASHBOARD_OPEN_APP_PACKET, app)
+
     async def handle_dashboard_set(self, session: Session, identifier: Identifier) -> DashboardSetResponse:
         if session.kind != AppType.DASHBOARD:
             raise PermissionDenied("Session is not a dashboard")
@@ -183,7 +188,7 @@ class DashboardExtension:
         return await self.request_prompt(
             {
                 "kind": "app/permissions",
-                "id": self.gen_next_request_id(),
+                "id": self.get_next_request_id(),
                 "app": app.to_json(),
                 "permissions": list(map(PermissionType.to_json, permissions)),
             }
@@ -193,9 +198,18 @@ class DashboardExtension:
         return await self.request_prompt(
             {
                 "kind": "app/plugins",
-                "id": self.gen_next_request_id(),
+                "id": self.get_next_request_id(),
                 "app": app.to_json(),
                 "packages": packages,
+            }
+        )
+
+    async def request_install(self, app: App) -> bool:
+        return await self.request_prompt(
+            {
+                "kind": "app/install",
+                "id": self.get_next_request_id(),
+                "app": app.to_json(),
             }
         )
 
@@ -205,7 +219,7 @@ class DashboardExtension:
         accepted = await self.request_prompt(
             {
                 "kind": "app/install",
-                "id": self.gen_next_request_id(),
+                "id": self.get_next_request_id(),
                 "app": app.to_json(),
             }
         )
@@ -217,9 +231,18 @@ class DashboardExtension:
         return await self.request_prompt(
             {
                 "kind": "app/update",
-                "id": self.gen_next_request_id(),
+                "id": self.get_next_request_id(),
                 "old_app": old_app.to_json(),
                 "new_app": new_app.to_json(),
+            }
+        )
+
+    async def notify_index_install(self, index_url: str) -> bool:
+        return await self.request_prompt(
+            {
+                "kind": "index/install",
+                "id": self.get_next_request_id(),
+                "index_url": index_url,
             }
         )
 
@@ -249,7 +272,7 @@ class DashboardExtension:
 
     async def handle_drag_drop_request(self, session: Session, request: DragDropRequest) -> DragDropRequestResponse:
         dashboard = await self.wait_dashboard_ready()
-        request_id = self.gen_next_request_id()
+        request_id = self.get_next_request_id()
         request = DragDropRequestDashboard(
             request_id=request_id,
             app=session.app.to_json(),
@@ -269,7 +292,7 @@ class DashboardExtension:
             msg = f"Session {session} tried to read invalid drag drop file"
             logger.warning(msg)
             raise PermissionDenied(msg)
-        request_id = self.gen_next_request_id()
+        request_id = self.get_next_request_id()
         await dashboard.send(
             DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
             {"drag_id": request["drag_id"], "request_id": request_id},
@@ -290,6 +313,6 @@ class DashboardExtension:
             return
         await target.send(DASHBOARD_WEBVIEW_EVENT_PACKET, packet)
 
-    def gen_next_request_id(self) -> str:
+    def get_next_request_id(self) -> str:
         self.request_id += 1
         return f"{self.request_id}-{time.time_ns()}"

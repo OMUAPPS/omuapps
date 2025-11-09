@@ -3,7 +3,11 @@ from omu.api.server import (
     SERVER_APPS_READ_PERMISSION_ID,
     SERVER_SHUTDOWN_PERMISSION_ID,
 )
-from omu.api.server.extension import SERVER_APPS_WRITE_PERMISSION_ID, TRUSTED_ORIGINS_GET_PERMISSION_ID
+from omu.api.server.extension import (
+    SERVER_APPS_WRITE_PERMISSION_ID,
+    SERVER_INDEX_READ_PERMISSION_ID,
+    TRUSTED_ORIGINS_GET_PERMISSION_ID,
+)
 
 SERVER_SHUTDOWN_PERMISSION = PermissionType(
     id=SERVER_SHUTDOWN_PERMISSION_ID,
@@ -16,6 +20,20 @@ SERVER_SHUTDOWN_PERMISSION = PermissionType(
         "note": {
             "ja": "アプリが内部のAPIサーバーをシャットダウンするために使われます",
             "en": "Used by apps to shut down the internal API server",
+        },
+    },
+)
+SERVER_INDEX_READ_PERMISSION = PermissionType(
+    id=SERVER_INDEX_READ_PERMISSION_ID,
+    metadata={
+        "level": "low",
+        "name": {
+            "ja": "アプリ提供元を取得",
+            "en": "Get Running Apps",
+        },
+        "note": {
+            "ja": "おむアプリの提供元を取得するために使われます",
+            "en": "Used to get a list of omu-apps app index",
         },
     },
 )

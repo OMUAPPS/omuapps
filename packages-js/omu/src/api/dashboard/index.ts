@@ -18,6 +18,7 @@ export {
     type PromptRequestAppPermissions,
     type PromptRequestAppPlugins,
     type PromptRequestAppUpdate,
+    type PromptRequestIndexInstall,
     type PromptResult,
     type SpeechRecognitionStart,
     type TranscriptSegment,

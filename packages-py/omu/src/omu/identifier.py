@@ -23,14 +23,14 @@ class Identifier(Model[str], Keyable):
     @classmethod
     def validate(cls, namespace: str, *path: str) -> None:
         if not namespace:
-            raise Exception("Invalid namespace: Namespace cannot be empty")
+            raise AssertionError("Invalid namespace: Namespace cannot be empty")
         if len(path) == 0:
-            raise Exception("Invalid path: Path must have at least one name")
+            raise AssertionError("Invalid path: Path must have at least one name")
         if not NAMESPACE_REGEX.match(namespace):
-            raise Exception(f"Invalid namespace: Namespace must match {NAMESPACE_REGEX.pattern}")
+            raise AssertionError(f"Invalid namespace: Namespace must match {NAMESPACE_REGEX.pattern}")
         for name in path:
             if not NAME_REGEX.match(name):
-                raise Exception(f"Invalid name: Name must match {NAME_REGEX.pattern}")
+                raise AssertionError(f"Invalid name: Name must match {NAME_REGEX.pattern}")
 
     @classmethod
     def format(cls, namespace: str, *path: str) -> str:
@@ -41,12 +41,12 @@ class Identifier(Model[str], Keyable):
     def from_key(cls, key: str) -> Identifier:
         separator = key.find(":")
         if separator == -1:
-            raise Exception(f"Invalid key: No separator found in {key}")
+            raise AssertionError(f"Invalid key: No separator found in {key}")
         if key.find(":", separator + 1) != -1:
-            raise Exception(f"Invalid key: Multiple separators found in {key}")
+            raise AssertionError(f"Invalid key: Multiple separators found in {key}")
         namespace, path = key[:separator], key[separator + 1 :]
         if not namespace or not path:
-            raise Exception("Invalid key: Namespace and path cannot be empty")
+            raise AssertionError("Invalid key: Namespace and path cannot be empty")
         return cls(namespace, *path.split("/"))
 
     @classmethod

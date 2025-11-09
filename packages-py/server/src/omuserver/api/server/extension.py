@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from omu.api.server.extension import (
     SERVER_APP_TABLE_TYPE,
+    SERVER_INDEX_REGISTRY_TYPE,
     SHUTDOWN_ENDPOINT_TYPE,
     TRUSTED_ORIGINS_REGISTRY_TYPE,
 )
@@ -17,6 +18,7 @@ from omuserver.session import Session
 from .permissions import (
     SERVER_APPS_READ_PERMISSION,
     SERVER_APPS_WRITE_PERMISSION,
+    SERVER_INDEX_READ_PERMISSION,
     SERVER_SHUTDOWN_PERMISSION,
     SERVER_TRUSTED_ORIGINS_GET_PERMISSION,
 )
@@ -43,11 +45,13 @@ class ServerExtension:
         self._server = server
         server.security.register_permission(
             SERVER_SHUTDOWN_PERMISSION,
+            SERVER_INDEX_READ_PERMISSION,
             SERVER_APPS_READ_PERMISSION,
             SERVER_APPS_WRITE_PERMISSION,
             SERVER_TRUSTED_ORIGINS_GET_PERMISSION,
         )
         server.endpoints.bind(SHUTDOWN_ENDPOINT_TYPE, self.handle_shutdown)
+        self.index = self._server.registries.register(SERVER_INDEX_REGISTRY_TYPE)
         self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
         self.apps.event.remove += self.on_remove_app
         self.trusted_origins = self._server.registries.register(TRUSTED_ORIGINS_REGISTRY_TYPE)
