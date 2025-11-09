@@ -1,5 +1,5 @@
 import { makeRegistryWritable } from '$lib/helper.js';
-import { Omu } from '@omujs/omu';
+import { Omu, Serializer } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import { type Writable } from 'svelte/store';
 import type { Message } from './api.js';
@@ -15,13 +15,19 @@ export type User = {
 
 export type MarshmallowConfig = {
     user: string | null;
+    scale: number;
 };
 
 const MARSHMALLOW_CONFIG_REGISTRY_TYPE = RegistryType.createJson<MarshmallowConfig>(APP_ID, {
     name: 'config',
     defaultValue: {
         user: null,
+        scale: 1,
     },
+    serializer: Serializer.transform<MarshmallowConfig>((config) => {
+        config.scale ??= 0;
+        return config;
+    }),
 });
 
 export type MarshmallowData = {

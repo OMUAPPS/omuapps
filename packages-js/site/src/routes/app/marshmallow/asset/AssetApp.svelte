@@ -7,7 +7,7 @@
     export let omu: Omu;
 
     const marshmallow = new MarshmallowApp(omu);
-    const { data } = marshmallow;
+    const { config, data } = marshmallow;
 
     if (BROWSER) {
         omu.start();
@@ -15,10 +15,13 @@
 
     const PADDING = 100;
     let image: HTMLImageElement;
-    let width = 1;
-    let height = 1;
+    let imageWidth = 1;
+    let imageHeight = 1;
     let windowWidth = 1;
     let windowHeight = 1;
+    $: scale = Math.exp($config.scale * 0.5);
+    $: width = imageWidth * scale;
+    $: height = imageHeight * scale;
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
@@ -27,11 +30,20 @@
     {#if $data.message}
         <div class="container" class:hide={!image || width <= 0} style="transform: translateY({lerp01(PADDING, Math.min(PADDING, windowHeight - height - PADDING), $data.scroll)}px); left: {(windowWidth - width) / 2}px;">
             {#key $data.message.id}
-                <div class="image-container" bind:clientWidth={width} bind:clientHeight={height}>
+                <div class="image-container" bind:clientWidth={imageWidth} bind:clientHeight={imageHeight}>
                     <img
                         src="https://media.marshmallow-qa.com/system/images/{$data.message
                             .id}.png"
                         alt=""
+                        class="hide"
+                        bind:this={image}
+                    />
+                    <img
+                        src="https://media.marshmallow-qa.com/system/images/{$data.message
+                            .id}.png"
+                        alt=""
+                        class="display"
+                        style="scale: {scale};"
                         bind:this={image}
                     />
                 </div>
@@ -49,7 +61,7 @@
     {/if}
 </main>
 
-<style>
+<style lang="scss">
     :global(body) {
         background: transparent !important;
     }
@@ -78,6 +90,17 @@
         position: absolute;
         top: 0;
         left: 0;
+
+        > .hide {
+            visibility: hidden;
+        }
+
+        > .display {
+            position: absolute;
+            left: 0;
+            top: 0;
+            transform-origin: left top;
+        }
     }
 
     .pointer {
