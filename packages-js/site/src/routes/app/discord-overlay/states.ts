@@ -19,6 +19,7 @@ export const isDraggingFinished = writable<boolean>(false);
 export const scaleFactor = writable<number>(1);
 export const view = writable<Mat4>(Mat4.IDENTITY);
 export const alignSide = writable<AlignSide | undefined>();
+export const alignClear = writable<boolean>(false);
 
 export const avatarPositions: Record<string, {
     targetPos: Vec2Like;
