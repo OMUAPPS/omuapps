@@ -249,6 +249,7 @@ class PromptRequestAppPlugins(PromptRequestBase[Literal["app/plugins"]]):
 
 class PromptRequestAppInstall(PromptRequestBase[Literal["app/install"]]):
     app: AppJson
+    dependencies: dict[str, AppJson]
 
 
 class PromptRequestAppUpdate(PromptRequestBase[Literal["app/update"]]):

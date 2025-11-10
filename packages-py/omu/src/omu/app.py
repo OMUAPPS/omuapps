@@ -25,18 +25,25 @@ class AppMetadata(TypedDict):
 
 class AppType(Enum):
     APP = "app"
+    SERVICE = "service"
     REMOTE = "remote"
     PLUGIN = "plugin"
     DASHBOARD = "dashboard"
 
 
+class DependencySpecifier(TypedDict):
+    version: str
+    index: NotRequired[str] | None
+
+
 class AppJson(TypedDict):
     id: str
     type: str
-    parent_id: NotRequired[str] | None
-    version: NotRequired[str] | None
-    url: NotRequired[str] | None
-    metadata: NotRequired[AppMetadata] | None
+    parent_id: NotRequired[str | None]
+    version: NotRequired[str | None]
+    url: NotRequired[str | None]
+    metadata: NotRequired[AppMetadata | None]
+    dependencies: NotRequired[dict[str, DependencySpecifier | str] | None]
 
 
 class App(Keyable, Model[AppJson]):
@@ -49,6 +56,7 @@ class App(Keyable, Model[AppJson]):
         type: AppType = AppType.APP,
         parent_id: Identifier | None = None,
         metadata: AppMetadata | None = None,
+        dependencies: dict[str, DependencySpecifier | str] | None = None,
     ) -> None:
         if isinstance(id, str):
             id = Identifier.from_key(id)
@@ -58,6 +66,7 @@ class App(Keyable, Model[AppJson]):
         self.url = url
         self.type = type
         self.metadata = metadata
+        self.dependencies = dependencies
 
     @classmethod
     def from_json(cls, json: AppJson) -> App:
@@ -69,6 +78,7 @@ class App(Keyable, Model[AppJson]):
             url=json.get("url"),
             type=AppType(json.get("type", None) or "app"),
             metadata=json.get("metadata"),
+            dependencies=json.get("dependencies"),
         )
 
     def to_json(self) -> AppJson:
@@ -79,6 +89,7 @@ class App(Keyable, Model[AppJson]):
             url=self.url,
             type=self.type.value,
             metadata=self.metadata,
+            dependencies=self.dependencies,
         )
 
     def key(self) -> str:

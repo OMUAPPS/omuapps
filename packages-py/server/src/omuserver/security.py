@@ -209,7 +209,7 @@ class PermissionManager:
         if existing is not None:
             entry["permissions"] = existing["permissions"]
             if app.metadata is None:
-                entry["app_json"]["metadata"] = existing["app_json"]["metadata"]
+                entry["app_json"]["metadata"] = existing["app_json"].get("metadata")
         self.apps[app.id] = entry
         self.store()
         return (ParentPermissionHandle(self, app.id, hashed_token), input_token)
@@ -272,7 +272,7 @@ class PermissionManager:
 
         match_result = self.match_app(found_entry["app_json"], app)
         if match_result.is_err is True:
-            if found_entry["app_json"]["metadata"] is not None:
+            if found_entry["app_json"].get("metadata") is not None:
                 accepted = await self.server.dashboard.notify_update_app(
                     old_app=App.from_json(found_entry["app_json"]),
                     new_app=app,
@@ -286,7 +286,7 @@ class PermissionManager:
             parent_entry = self.apps.get(app.parent_id)
             if parent_entry is None:
                 return Err(f"Parent app {app.parent_id} not found")
-            if parent_entry["app_json"]["parent_id"]:
+            if parent_entry["app_json"].get("parent_id"):
                 return Err("Child apps cannot have children")
             parent = ParentPermissionHandle(self, app.id, parent_entry["token"])
             child = ChildPermissionHandle(self, app.id, token_result.value, parent)

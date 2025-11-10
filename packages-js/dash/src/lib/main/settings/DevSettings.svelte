@@ -3,6 +3,7 @@
     import { tauriWindow } from '$lib/tauri.js';
     import { App } from '@omujs/omu';
     import type { Registry } from '@omujs/omu/api/registry';
+    import { Button, Textbox } from '@omujs/ui';
     import { LogicalSize } from '@tauri-apps/api/window';
     import type { Writable } from 'svelte/store';
     const appWindow = tauriWindow.getCurrentWindow();
@@ -23,44 +24,32 @@
         };
     }
 
-    const trustedOrigins = makeRegistryWritable(omu.server.trustedOrigins);
-    let newOrigin = '';
+    const trustedHosts = makeRegistryWritable(omu.server.trustedHosts);
+    let srcHost = '';
+    let dstHost = '';
 
     function resetWindowSize() {
         appWindow.setSize(new LogicalSize(1280, 720));
     }
 </script>
 
-<h3>Trusted Origins</h3>
+<h3>Trusted Hosts</h3>
 <section>
-    {JSON.stringify($trustedOrigins)}
-    {#each $trustedOrigins as origin, i (i)}
-        <div class="origin">
-            <input type="text" bind:value={origin} />
-            <button
-                on:click={() =>
-                    trustedOrigins.update((origins) =>
-                        origins.filter((o) => o !== origin),
-                    )}
-                aria-label="Remove origin"
-            >
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-    {/each}
-    <div class="origin">
-        <input type="text" bind:value={newOrigin} />
-        <button
-            on:click={() => {
-                $trustedOrigins = [...$trustedOrigins, newOrigin];
-                newOrigin = '';
-            }}
-            class="add"
-            aria-label="Add origin"
-        >
-            <i class="ti ti-plus"></i>
-        </button>
-    </div>
+    {JSON.stringify($trustedHosts)}
+    <span>
+        src
+        <Textbox bind:value={srcHost} />
+    </span>
+    <span>
+        dst
+        <Textbox bind:value={dstHost} />
+    </span>
+    <Button onclick={() => {
+        $trustedHosts[srcHost] = dstHost;
+    }}>
+        追加
+        <i class="ti ti-plus"></i>
+    </Button>
 </section>
 
 <h3>Settings</h3>

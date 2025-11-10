@@ -83,7 +83,7 @@ class SessionExtension:
         session.add_task(
             task,
             name="session_require",
-            detail=f"Requiring sessions: {app_ids}",
+            detail=f"Requiring sessions: {', '.join(map(Identifier.key, app_ids))}",
             priority=TaskPriority.AFTER_PLUGIN,
         )
 
@@ -199,6 +199,7 @@ class SessionExtension:
                 waiter.ids.remove(session.app.id)
             if len(waiter.ids) == 0:
                 waiter.future.set_result(True)
+                self.session_waiters.pop(session.app.id)
         for observer in self.session_observers.get(session.app.id, []):
             await observer.send(
                 SESSION_CONNECTED_PACKET_TYPE,

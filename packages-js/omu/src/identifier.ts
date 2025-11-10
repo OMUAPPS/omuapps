@@ -152,6 +152,14 @@ export class Identifier {
 
 export class IdentifierMap<T> {
     private readonly map: Map<string, T> = new Map();
+    constructor(
+        entries?: Iterable<[Identifier, T]>,
+    ) {
+        if (!entries) return;
+        for (const [id, value] of entries) {
+            this.map.set(id.key(), value);
+        }
+    }
 
     public get size(): number {
         return this.map.size;

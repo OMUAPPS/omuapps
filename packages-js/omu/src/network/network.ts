@@ -71,9 +71,6 @@ export class Network {
             PACKET_TYPES.READY,
             PACKET_TYPES.ENCRYPTED_PACKET,
         );
-        this.addPacketHandler(PACKET_TYPES.TOKEN, async (token: string) => {
-            await this.tokenProvider.set(this.address, this.omu.app, token);
-        });
         this.addPacketHandler(PACKET_TYPES.DISCONNECT, async (reason) => {
             if (reason.type === DisconnectType.SHUTDOWN
                 || reason.type === DisconnectType.CLOSE) {

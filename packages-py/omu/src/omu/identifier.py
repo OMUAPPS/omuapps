@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import re
-import urllib.parse
 from pathlib import Path
 from typing import Final
+
+from yarl import URL
 
 from omu.helper import generate_md5_hash, sanitize_filename
 from omu.model import Model
@@ -50,16 +51,25 @@ class Identifier(Model[str], Keyable):
         return cls(namespace, *path.split("/"))
 
     @classmethod
-    def from_url(cls, url: str) -> Identifier:
-        parsed = urllib.parse.urlparse(url)
+    def from_url(cls, url: URL) -> Identifier:
         namespace = cls.namespace_from_url(url)
-        path = parsed.path.split("/")[1:]
+        path = url.path.split("/")[1:]
         return cls(namespace, *path)
 
+    def into_url(self) -> URL:
+        host = ".".join(reversed(self.namespace.split(".")))
+        return URL.build(
+            scheme="http",
+            host=host,
+            path="/".join(self.path),
+        )
+
     @classmethod
-    def namespace_from_url(cls, url: str) -> str:
-        parsed = urllib.parse.urlparse(url)
-        return ".".join(reversed(parsed.netloc.split(".")))
+    def namespace_from_url(cls, url: URL) -> str:
+        parsed = URL(url)
+        if parsed.host is None:
+            raise AssertionError("Invalid host name")
+        return ".".join(reversed(parsed.host.split(".")))
 
     def to_json(self) -> str:
         return self.key()

@@ -42,6 +42,7 @@
 
     function filterApps(apps: App[], filter: typeof $filter) {
         return apps.filter((app) => {
+            if (app.type !== 'app') return false;
             if (
                 !filter.showIndev
                 && app.metadata?.tags?.includes('underdevelopment')

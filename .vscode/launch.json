@@ -26,8 +26,8 @@
                 "${workspaceFolder}/appdata/token.txt",
                 "--hash",
                 "dev",
-                "--extra-trusted-origin",
-                "localhost:5173"
+                "--trusted-host",
+                "localhost:5173=omuapps.com"
             ],
             "cwd": "${workspaceFolder}/appdata",
             "justMyCode": true,

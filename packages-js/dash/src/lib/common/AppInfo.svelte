@@ -5,7 +5,7 @@
 
     export let app: App;
 
-    $: namespace = app.id.namespace.split('.').reverse().join('.');
+    $: host = app.id.namespace.split('.').reverse().join('.');
     $: path = app.id.path.join('.');
     $: metadata = app.metadata;
     $: icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
@@ -13,7 +13,7 @@
 
 <div class="info">
     <Tooltip>
-        <b>{namespace}</b> <small>によって提供されるアプリケーション</small>
+        <b>{host}</b> <small>によって提供されるアプリケーション</small>
     </Tooltip>
     <div class="icon">
         {#if icon}
@@ -27,21 +27,8 @@
         {/if}
     </div>
     <div class="content">
-        <p>
-            <span class="name">
-                <Localized text={app.metadata?.name} />
-            </span>
-            <small class="id">
-                {namespace}
-                <i class="ti ti-slash"></i>
-                {path}
-                {#if app.version}
-                    <small class="version">
-                        v{app.version}
-                    </small>
-                {/if}
-            </small>
-        </p>
+        <small class="host">{host}</small>
+        <p><Localized text={app.metadata?.name} /></p>
         <small class="description">
             <Localized text={app.metadata?.description} />
         </small>
@@ -83,6 +70,10 @@
         display: flex;
         align-items: flex-start;
         flex-direction: column;
+
+        > .host {
+            color: var(--color-text);
+        }
     }
 
     .icon {

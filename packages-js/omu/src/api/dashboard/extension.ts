@@ -279,6 +279,7 @@ export interface PromptRequestAppPlugins extends PromptRequestBase<'app/plugins'
 
 export interface PromptRequestAppInstall extends PromptRequestBase<'app/install'> {
     app: AppJson;
+    dependencies: Record<string, AppJson>;
 }
 
 export interface PromptRequestAppUpdate extends PromptRequestBase<'app/update'> {

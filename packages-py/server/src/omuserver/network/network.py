@@ -21,6 +21,7 @@ from omu.network.packet import PACKET_TYPES, PacketType
 from omu.network.packet.packet_types import DisconnectPacket, DisconnectType
 from omu.result import Err, Ok, Result, is_err
 from psutil import Process
+from yarl import URL
 
 from omuserver.helper import find_processes_by_executable, find_processes_by_port, get_parent_pids
 from omuserver.network.aiohttp_connection import WebsocketsConnection
@@ -107,18 +108,33 @@ class Network:
             return Err(InvalidOrigin("Invalid remote ip (see logs)"))
         return Ok(None)
 
+    def get_mapped_host(self, host: str) -> str:
+        hosts = {
+            **self.server.server.trusted_hosts.get(),
+            **self.server.config.extra_trusted_hosts,
+        }
+        return hosts.get(host) or host
+
+    def get_mapped_url(self, url: URL) -> URL:
+        parsed = URL(url)
+        authority = self.get_mapped_host(parsed.authority)
+        return URL.build(
+            scheme=url.scheme,
+            authority=authority,
+            path=url.path,
+            query=url.query,
+            query_string=url.query_string,
+            fragment=url.fragment,
+        )
+
     async def _verify_origin(self, request: web.Request, session: Session) -> Result[None, DisconnectReason]:
         origin = request.headers.get("Origin")
         if origin is None:
             return Ok(None)
-        origin_namespace = Identifier.namespace_from_url(origin)
+        origin_url = self.get_mapped_url(URL(origin))
+        origin_namespace = Identifier.namespace_from_url(origin_url)
         session_namespace = session.app.id.namespace
         if origin_namespace == session_namespace:
-            return Ok(None)
-        if origin_namespace in self.server.config.extra_trusted_origins:
-            return Ok(None)
-        trusted_origins = self.server.server.trusted_origins.get()
-        if origin_namespace in trusted_origins:
             return Ok(None)
         return Err(InvalidOrigin(f"Invalid origin: {origin_namespace} != {session_namespace}"))
 

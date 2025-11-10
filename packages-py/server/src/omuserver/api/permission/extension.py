@@ -66,7 +66,7 @@ class PermissionExtension:
         session.add_task(
             task,
             name="permission_require",
-            detail=f"Requiring permissions: {permission_ids}",
+            detail=f"Requiring permissions: {', '.join(map(Identifier.key, permission_ids))}",
             priority=TaskPriority.AFTER_SESSION,
         )
 

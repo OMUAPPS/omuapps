@@ -8,7 +8,7 @@ from omu.api.server.extension import (
     SERVER_APP_TABLE_TYPE,
     SERVER_INDEX_REGISTRY_TYPE,
     SHUTDOWN_ENDPOINT_TYPE,
-    TRUSTED_ORIGINS_REGISTRY_TYPE,
+    TRUSTED_HOSTS_REGISTRY_TYPE,
 )
 from omu.app import App
 from omu.network.packet.packet_types import DisconnectType
@@ -54,7 +54,7 @@ class ServerExtension:
         self.index = self._server.registries.register(SERVER_INDEX_REGISTRY_TYPE)
         self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
         self.apps.event.remove += self.on_remove_app
-        self.trusted_origins = self._server.registries.register(TRUSTED_ORIGINS_REGISTRY_TYPE)
+        self.trusted_hosts = self._server.registries.register(TRUSTED_HOSTS_REGISTRY_TYPE)
 
     async def on_remove_app(self, items: Mapping[str, App]):
         for app in items.values():

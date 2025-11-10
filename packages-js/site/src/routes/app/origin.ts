@@ -6,6 +6,7 @@ import { DEV } from 'esm-env';
 
 const CF_PAGES_URL = IS_BETA ? 'https://beta.omuapps.com' : 'https://omuapps.com';
 export const ORIGIN = DEV ? 'http://localhost:5173' : new URL(CF_PAGES_URL).origin;
+export const APP_INDEX = ORIGIN + '/apps.json';
 export const CHANNEL = IS_BETA ? ' (開発版)' : '';
 
 export function getUrl(path: string): string {

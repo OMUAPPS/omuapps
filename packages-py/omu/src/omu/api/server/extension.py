@@ -50,10 +50,10 @@ SHUTDOWN_ENDPOINT_TYPE = EndpointType[bool, bool].create_json(
 )
 TRUSTED_ORIGINS_GET_PERMISSION_ID = SERVER_EXTENSION_TYPE / "trusted_origins" / "get"
 TRUSTED_ORIGINS_SET_PERMISSION_ID = SERVER_EXTENSION_TYPE / "trusted_origins" / "set"
-TRUSTED_ORIGINS_REGISTRY_TYPE = RegistryType[list[str]].create_json(
+TRUSTED_HOSTS_REGISTRY_TYPE = RegistryType[dict[str, str]].create_json(
     SERVER_EXTENSION_TYPE,
-    "trusted_origins",
-    default_value=[],
+    "trusted_hosts",
+    default_value={},
     permissions=RegistryPermissions(
         read=TRUSTED_ORIGINS_GET_PERMISSION_ID,
         write=TRUSTED_ORIGINS_SET_PERMISSION_ID,
@@ -71,7 +71,7 @@ class ServerExtension(Extension):
         self.apps = omu.tables.get(SERVER_APP_TABLE_TYPE)
         self.index = omu.registries.get(SERVER_INDEX_REGISTRY_TYPE)
         self.sessions = omu.tables.get(SERVER_APP_TABLE_TYPE)
-        self.trusted_origins = omu.registries.get(TRUSTED_ORIGINS_REGISTRY_TYPE)
+        self.trusted_origins = omu.registries.get(TRUSTED_HOSTS_REGISTRY_TYPE)
 
     async def shutdown(self, restart: bool = False) -> bool:
         return await self._client.endpoints.call(SHUTDOWN_ENDPOINT_TYPE, restart)

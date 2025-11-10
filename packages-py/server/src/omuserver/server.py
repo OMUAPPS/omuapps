@@ -5,21 +5,17 @@ import json
 import os
 import subprocess
 import sys
-import urllib
-import urllib.parse
-from dataclasses import dataclass
 from datetime import datetime
-from typing import TypedDict
 from urllib.parse import urlencode
 
 import aiohttp
 from aiohttp import web
 from loguru import logger
 from omu import Identifier
-from omu.app import App, AppJson
 from omu.event_emitter import EventEmitter
 from omu.helper import asyncio_error_logger
 from omu.network.packet.packet_types import DisconnectType
+from omu.result import Err, Ok
 from yarl import URL
 
 from omuserver.api.asset import AssetExtension
@@ -36,6 +32,7 @@ from omuserver.api.session import SessionExtension
 from omuserver.api.signal import SignalExtension
 from omuserver.api.table import TableExtension
 from omuserver.config import Config
+from omuserver.dependency import AppIndexRegistry, InstallRequest
 from omuserver.helper import safe_path_join
 from omuserver.network import Network
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
@@ -168,43 +165,28 @@ class Server:
 
     async def _handle_index_install(self, request: web.Request) -> web.StreamResponse:
         install_request: InstallRequest = await request.json()
-        index_url = install_request["index"]
-        parsed_url = urllib.parse.urlparse(index_url)
-        is_host_trusted = parsed_url.netloc in self.config.extra_trusted_origins
-        needs_check = not is_host_trusted
+        index_url = self.network.get_mapped_url(URL(install_request["index"]))
         provided_index_namespace = Identifier.namespace_from_url(index_url)
 
-        try:
-            resp = await self.client.get(
-                index_url,
-                headers={"Content-Type": "application/json"},
-            )
-            resp.raise_for_status()
-        except aiohttp.ClientError as e:
-            return web.json_response(
-                {"type": "error", "message": f"Failed to fetch index: {str(e)}"},
-                status=400,
-                reason=f"Failed to fetch index: {str(e)}",
-            )
-
-        try:
-            index = AppIndexRegistry.from_json(await resp.json())
-        except Exception as e:
-            return web.json_response(
-                {"type": "error", "message": f"Invalid app index: {str(e)}"},
-                status=400,
-                reason=f"Invalid app index: {str(e)}",
-            )
+        match await AppIndexRegistry.try_fetch(index_url):
+            case Err(err):
+                return web.json_response(
+                    {"type": "error", "message": f"Failed to fetch index: {err}"},
+                    status=400,
+                    reason=f"Failed to fetch index: {err}",
+                )
+            case Ok(index):
+                ...
 
         index_id = index.id
-        if needs_check and index_id.namespace != provided_index_namespace:
+        if index_id.namespace != provided_index_namespace:
             return web.json_response(
                 {"type": "error", "message": "Namespace mismatch"},
                 status=400,
                 reason="Provided index ID does not match the namespace ID in the index URL.",
             )
 
-        if needs_check and not index_id.is_namepath_equal(index.id):
+        if not index_id.is_namepath_equal(index.id):
             return web.json_response(
                 {"type": "error", "message": "Trust issue"},
                 status=400,
@@ -223,7 +205,7 @@ class Server:
         server_index = self.server.index.get()
         server_index["indexes"][index.id.key()] = {
             "added_at": datetime.now().isoformat(),
-            "url": index_url,
+            "url": str(index_url),
         }
         self.server.index.set(server_index)
 
@@ -282,34 +264,3 @@ class ServerEvents:
     def __init__(self) -> None:
         self.start = EventEmitter[[]]()
         self.stop = EventEmitter[[]]()
-
-
-class InstallRequest(TypedDict):
-    index: str
-    id: str
-
-
-class AppIndexRegistryJSON(TypedDict):
-    id: str
-    apps: dict[str, AppJson]
-
-
-@dataclass(frozen=True, slots=True)
-class AppIndexRegistry:
-    id: Identifier
-    apps: dict[Identifier, App]
-
-    @staticmethod
-    def from_json(json: AppIndexRegistryJSON) -> AppIndexRegistry:
-        id = Identifier.from_key(json["id"])
-        apps: dict[Identifier, App] = {}
-        for id_str, app_json in json["apps"].items():
-            id = Identifier.from_key(id_str)
-            app = App.from_json(app_json)
-            if not id.is_namepath_equal(app.id):
-                raise AssertionError(f"App ID does not match the ID in the index. {app.id} != {id}")
-            apps[id] = app
-        return AppIndexRegistry(
-            id=id,
-            apps=apps,
-        )

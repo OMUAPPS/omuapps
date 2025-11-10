@@ -47,7 +47,10 @@ from omu.api.plugin.package_info import PackageInfo
 from omu.app import App, AppType
 from omu.errors import PermissionDenied
 from omu.identifier import Identifier
+from omu.result import Err, Ok
+from yarl import URL
 
+from omuserver.dependency import AppIndexRegistry
 from omuserver.session import Session
 
 from .permission import (
@@ -204,27 +207,45 @@ class DashboardExtension:
             }
         )
 
-    async def request_install(self, app: App) -> bool:
+    async def request_install(self, app: App, dependencies: dict[Identifier, App]) -> bool:
         return await self.request_prompt(
             {
                 "kind": "app/install",
                 "id": self.get_next_request_id(),
                 "app": app.to_json(),
+                "dependencies": {k.key(): v.to_json() for k, v in dependencies.items()},
             }
         )
 
     async def handle_dashboard_app_install(self, session: Session, app: App) -> AppInstallResponse:
         if not session.permissions.has(DASHBOARD_APP_INSTALL_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to install apps")
-        accepted = await self.request_prompt(
-            {
-                "kind": "app/install",
-                "id": self.get_next_request_id(),
-                "app": app.to_json(),
-            }
+        indexes: dict[URL, AppIndexRegistry] = {}
+        dependencies: dict[Identifier, App] = {}
+        for dep_id_str, dep_specifier in (app.dependencies or {}).items():
+            dep_id = Identifier.from_key(dep_id_str)
+            match AppIndexRegistry.resolve_index_by_specifier(self.server, dep_id, dep_specifier):
+                case Err(err):
+                    raise Exception(f"Failed to resolve index url: {err}")
+                case Ok(index_url):
+                    ...
+
+            if index_url not in indexes:
+                match await AppIndexRegistry.try_fetch(index_url):
+                    case Err(err):
+                        raise Exception(f"Failed to fetch index: {err}")
+                    case Ok(index):
+                        indexes[index_url] = index
+            index = indexes[index_url]
+            if dep_id not in index.apps:
+                raise Exception(f"Couldn't find dependency {dep_id} at index {index_url}")
+            dependencies[dep_id] = index.apps[dep_id]
+        accepted = await self.request_install(
+            app=app,
+            dependencies=dependencies,
         )
         if accepted:
-            await self.server.server.apps.add(app)
+            await self.server.server.apps.add(app, *dependencies.values())
         return AppInstallResponse(accepted=accepted)
 
     async def notify_update_app(self, old_app: App, new_app: App) -> bool:
@@ -237,12 +258,12 @@ class DashboardExtension:
             }
         )
 
-    async def notify_index_install(self, index_url: str) -> bool:
+    async def notify_index_install(self, index_url: URL) -> bool:
         return await self.request_prompt(
             {
                 "kind": "index/install",
                 "id": self.get_next_request_id(),
-                "index_url": index_url,
+                "index_url": str(index_url),
             }
         )
 
