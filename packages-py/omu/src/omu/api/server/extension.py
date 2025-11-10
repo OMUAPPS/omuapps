@@ -4,7 +4,8 @@ from typing import TypedDict
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
-from omu.api.registry import RegistryPermissions, RegistryType
+from omu.api.registry import RegistryType
+from omu.api.registry.registry import RegistryPermissions
 from omu.api.table import TablePermissions, TableType
 from omu.app import App
 from omu.omu import Omu

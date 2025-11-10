@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TypedDict
 
 from omu.bytebuffer import ByteReader, ByteWriter
 from omu.identifier import Identifier
 
-from .signal import SignalPermissions
+from .signal import SignalPermissions, SignalPermissionsJSON
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,21 +29,26 @@ class SignalPacket:
         return SignalPacket(id=key, body=body)
 
 
+class SignalRegisterPacketJSON(TypedDict):
+    id: str
+    permissions: SignalPermissionsJSON
+
+
 @dataclass(frozen=True, slots=True)
 class SignalRegisterPacket:
     id: Identifier
     permissions: SignalPermissions
 
     @classmethod
-    def serialize(cls, item: SignalRegisterPacket) -> bytes:
-        writer = ByteWriter()
-        writer.write_string(item.id.key())
-        item.permissions.serialize(writer)
-        return writer.finish()
+    def serialize(cls, item: SignalRegisterPacket) -> SignalRegisterPacketJSON:
+        return {
+            "id": item.id.key(),
+            "permissions": item.permissions.to_json(),
+        }
 
     @classmethod
-    def deserialize(cls, item: bytes) -> SignalRegisterPacket:
-        with ByteReader(item) as reader:
-            key = Identifier.from_key(reader.read_string())
-            permissions = SignalPermissions.deserialize(reader)
-        return SignalRegisterPacket(id=key, permissions=permissions)
+    def deserialize(cls, item: SignalRegisterPacketJSON) -> SignalRegisterPacket:
+        return SignalRegisterPacket(
+            id=Identifier.from_key(item["id"]),
+            permissions=SignalPermissions.from_json(item["permissions"]),
+        )

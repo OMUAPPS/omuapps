@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 from omu import Identifier
+from omu.api.registry import RegistryPermissions
 from omu.api.registry.extension import REGISTRY_UPDATE_PACKET, RegistryPacket
-from omu.api.registry.packets import RegistryPermissions
 from omu.event_emitter import Unlisten
 from omu.serializer import Serializable
 

@@ -70,10 +70,9 @@ export class Omu {
             const token = options?.token;
             this.token = {
                 get: () => Promise.resolve(token),
-                set: () => Promise.resolve(),
             };
         } else {
-            this.token = options?.token ?? new BrowserTokenProvider('omu-token');
+            this.token = options?.token ?? new BrowserTokenProvider();
         }
         this.address = options?.address ?? {
             host: '127.0.0.1',

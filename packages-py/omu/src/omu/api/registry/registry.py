@@ -3,13 +3,18 @@ from __future__ import annotations
 import abc
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
-from omu.bytebuffer import ByteReader, ByteWriter, Flags
 from omu.event_emitter import Unlisten
 from omu.helper import Coro, map_optional
 from omu.identifier import Identifier
 from omu.serializer import Serializable, Serializer
+
+
+class RegistryPermissionsJSON(TypedDict):
+    all: NotRequired[str | None]
+    read: NotRequired[str | None]
+    write: NotRequired[str | None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -18,29 +23,19 @@ class RegistryPermissions:
     read: Identifier | None = None
     write: Identifier | None = None
 
-    def serialize(self, writer: ByteWriter) -> None:
-        flags = Flags(0, 3)
-        flags.set(0, self.all is not None)
-        flags.set(1, self.read is not None)
-        flags.set(2, self.write is not None)
-        writer.write_flags(flags)
-        if self.all is not None:
-            writer.write_string(self.all.key())
-        if self.read is not None:
-            writer.write_string(self.read.key())
-        if self.write is not None:
-            writer.write_string(self.write.key())
-
     @classmethod
-    def deserialize(cls, reader: ByteReader) -> RegistryPermissions:
-        flags = reader.read_flags(3)
-        all_id = reader.read_string() if flags.has(0) else None
-        read_id = reader.read_string() if flags.has(1) else None
-        write_id = reader.read_string() if flags.has(2) else None
+    def from_json(cls, data: RegistryPermissionsJSON) -> RegistryPermissions:
         return RegistryPermissions(
-            map_optional(all_id, Identifier.from_key),
-            map_optional(read_id, Identifier.from_key),
-            map_optional(write_id, Identifier.from_key),
+            map_optional(data.get("all"), Identifier.from_key),
+            map_optional(data.get("read"), Identifier.from_key),
+            map_optional(data.get("write"), Identifier.from_key),
+        )
+
+    def to_json(self) -> RegistryPermissionsJSON:
+        return RegistryPermissionsJSON(
+            all=map_optional(self.all, Identifier.key),
+            read=map_optional(self.read, Identifier.key),
+            write=map_optional(self.write, Identifier.key),
         )
 
 

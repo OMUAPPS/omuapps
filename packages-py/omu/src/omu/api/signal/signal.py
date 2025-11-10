@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
-from omu.bytebuffer import ByteReader, ByteWriter, Flags
 from omu.event_emitter import Unlisten
-from omu.helper import Coro
+from omu.helper import Coro, map_optional
 from omu.identifier import Identifier
 from omu.serializer import Serializable, Serializer
+
+
+class SignalPermissionsJSON(TypedDict):
+    all: NotRequired[str | None]
+    listen: NotRequired[str | None]
+    notify: NotRequired[str | None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,26 +22,20 @@ class SignalPermissions:
     listen: Identifier | None = None
     notify: Identifier | None = None
 
-    def serialize(self, writer: ByteWriter) -> None:
-        flags = Flags(length=3)
-        flags.set(0, self.all is not None)
-        flags.set(1, self.listen is not None)
-        flags.set(2, self.notify is not None)
-        writer.write_uint8(flags.value)
-        if self.all is not None:
-            writer.write_string(self.all.key())
-        if self.listen is not None:
-            writer.write_string(self.listen.key())
-        if self.notify is not None:
-            writer.write_string(self.notify.key())
+    def to_json(self) -> SignalPermissionsJSON:
+        return {
+            "all": map_optional(self.all, Identifier.key),
+            "listen": map_optional(self.listen, Identifier.key),
+            "notify": map_optional(self.notify, Identifier.key),
+        }
 
     @classmethod
-    def deserialize(cls, reader: ByteReader) -> SignalPermissions:
-        flags = Flags(reader.read_uint8())
-        all = flags.if_set(0, lambda: Identifier.from_key(reader.read_string()))
-        listen = flags.if_set(1, lambda: Identifier.from_key(reader.read_string()))
-        send = flags.if_set(2, lambda: Identifier.from_key(reader.read_string()))
-        return SignalPermissions(all=all, listen=listen, notify=send)
+    def from_json(cls, item: SignalPermissionsJSON) -> SignalPermissions:
+        return SignalPermissions(
+            all=map_optional(item.get("all"), Identifier.from_key),
+            listen=map_optional(item.get("listen"), Identifier.from_key),
+            notify=map_optional(item.get("notify"), Identifier.from_key),
+        )
 
 
 @dataclass(frozen=True, slots=True)

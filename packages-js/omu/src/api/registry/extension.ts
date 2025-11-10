@@ -8,7 +8,7 @@ import { JsonType, Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { type Extension, ExtensionType } from '../extension.js';
 
-import { RegistryPacket, RegistryRegisterPacket } from './packets.js';
+import { RegisterPacket, RegistryPacket } from './packets.js';
 import { type Registry, RegistryType } from './registry.js';
 
 export class RegistryExtension implements Extension {
@@ -169,13 +169,10 @@ export const REGISTRY_EXTENSION_TYPE: ExtensionType<RegistryExtension> = new Ext
     (omu: Omu) => new RegistryExtension(omu),
 );
 export const REGISTRY_PERMISSION_ID: Identifier = REGISTRY_EXTENSION_TYPE.join('permission');
-const REGISTRY_REGISTER_PACKET = PacketType.createSerialized<RegistryRegisterPacket>(
-    REGISTRY_EXTENSION_TYPE,
-    {
-        name: 'register',
-        serializer: RegistryRegisterPacket,
-    },
-);
+const REGISTRY_REGISTER_PACKET = PacketType.createJson<RegisterPacket>(REGISTRY_EXTENSION_TYPE, {
+    name: 'register',
+    serializer: RegisterPacket,
+});
 const REGISTRY_UPDATE_PACKET = PacketType.createSerialized<RegistryPacket>(
     REGISTRY_EXTENSION_TYPE,
     {

@@ -133,6 +133,12 @@ fn main() {
         .setup(move |app| {
             *app_handle.lock().unwrap() = Some(app.handle().clone());
 
+            #[cfg(debug_assertions)]
+            {
+                let window = app.get_webview_window("main").unwrap();
+                window.open_devtools();
+            }
+
             match app.cli().matches() {
                 Ok(matches) => {
                     if Some(Value::Bool(true))

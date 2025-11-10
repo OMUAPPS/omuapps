@@ -3,7 +3,7 @@ import { Identifier, IdentifierMap } from '../../identifier';
 import { Omu } from '../../omu.js';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType, type Extension } from '../extension.js';
-import { Registry, RegistryPermissions, RegistryType } from '../registry';
+import { Registry, RegistryType } from '../registry';
 import { TableType, type Table } from '../table';
 
 export const SERVER_EXTENSION_TYPE: ExtensionType<ServerExtension> = new ExtensionType(
@@ -26,10 +26,10 @@ export const SERVER_INDEX_READ_PERMISSION_ID: Identifier = SERVER_EXTENSION_TYPE
 export const SERVER_INDEX_REGISTRY_TYPE: RegistryType<AppIndex> = RegistryType.createJson<AppIndex>(SERVER_EXTENSION_TYPE, {
     name: 'index',
     defaultValue: { 'indexes': {} },
-    permissions: RegistryPermissions.of({
+    permissions: {
         write: SERVER_APPS_WRITE_PERMISSION_ID,
         read: SERVER_INDEX_READ_PERMISSION_ID,
-    }),
+    },
 });
 const APP_TABLE_TYPE = TableType.createJson(SERVER_EXTENSION_TYPE, {
     name: 'apps',
@@ -51,10 +51,10 @@ export const TRUSTED_ORIGINS_SET_PERMISSION_ID: Identifier = SERVER_EXTENSION_TY
 const TRUSTED_HOSTS_REGISTRY_TYPE = RegistryType.createJson<Record<string, string>>(SERVER_EXTENSION_TYPE, {
     name: 'trusted_hosts',
     defaultValue: {},
-    permissions: new RegistryPermissions(
-        TRUSTED_ORIGINS_GET_PERMISSION_ID,
-        TRUSTED_ORIGINS_SET_PERMISSION_ID,
-    ),
+    permissions: {
+        read: TRUSTED_ORIGINS_GET_PERMISSION_ID,
+        write: TRUSTED_ORIGINS_SET_PERMISSION_ID,
+    },
 });
 
 export class ServerExtension implements Extension {

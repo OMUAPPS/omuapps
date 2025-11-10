@@ -7,7 +7,7 @@ import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
 import { PermissionTypeJson } from '../permission/permission.js';
 import { PackageInfo } from '../plugin/package-info.js';
-import { Registry, RegistryPermissions, RegistryType } from '../registry/registry.js';
+import { Registry, RegistryType } from '../registry/registry.js';
 import type { Table } from '../table/table.js';
 import { TableType } from '../table/table.js';
 
@@ -247,10 +247,10 @@ export type TranscriptStatus = {
 const DASHBOARD_SPEECH_RECOGNITION = RegistryType.createJson<TranscriptStatus>(DASHBOARD_EXTENSION_TYPE, {
     name: 'speech_recognition',
     defaultValue: { type: 'idle' },
-    permissions: RegistryPermissions.of({
+    permissions: {
         read: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         write: DASHBOARD_SET_PERMISSION_ID,
-    }),
+    },
 });
 
 export type SpeechRecognitionStart = {
