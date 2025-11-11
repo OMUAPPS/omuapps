@@ -2,7 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
-    import { Omu } from '@omujs/omu';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import { AppHeader, Button, setClient } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, ASSET_APP } from './app.js';
@@ -22,6 +22,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );
         omu.start();

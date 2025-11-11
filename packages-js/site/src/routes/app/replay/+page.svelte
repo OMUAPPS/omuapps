@@ -16,7 +16,11 @@
     setClient(omu);
 
     if (BROWSER) {
-        omu.permissions.require(OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID, OmuPermissions.GENERATE_TOKEN_PERMISSION_ID);
+        omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>

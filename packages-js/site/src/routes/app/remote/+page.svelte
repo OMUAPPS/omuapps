@@ -18,6 +18,7 @@
         onMount(() => {
             omu.permissions.require(
                 OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+                OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
                 OmuPermissions.REMOTE_APP_REQUEST_PERMISSION_ID,
                 OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
                 OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,

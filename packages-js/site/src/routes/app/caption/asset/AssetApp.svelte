@@ -10,6 +10,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         );
         omu.start();
