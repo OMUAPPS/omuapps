@@ -18,7 +18,7 @@
     import ConnectPage from './pages/ConnectPage.svelte';
     import ExplorePage from './pages/ExplorePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
-    import { currentPage, menuOpen } from './settings.js';
+    import { currentPage, devMode, menuOpen } from './settings.js';
     import SettingsPage from './settings/SettingsPage.svelte';
     import TabEntry from './TabEntry.svelte';
 
@@ -166,7 +166,7 @@
             </div>
         </section>
         <div class="list">
-            <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && app.type === 'app'} component={AppEntry}>
+            <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && ($devMode || app.type === 'app')} component={AppEntry}>
                 <button
                     on:click={() => ($currentPage = EXPLORE_PAGE.id)}
                     slot="empty"
