@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.26 (2025-11-11)
+
+
+### Bug Fixes
+
+* OBSプラグイン動かないからPythonを3.12.3に戻す ([bffa038](https://github.com/OMUAPPS/omuapps/commit/bffa038fb2bbfd379fa3d9380bca1b9365ca0224))
+
+
+
+
+
 ## 0.9.25 (2025-11-11)
 
 **Note:** Version bump only for package @omujs/omu
