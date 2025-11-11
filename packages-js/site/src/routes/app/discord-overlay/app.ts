@@ -20,7 +20,7 @@ export const ASSET_APP = new App(APP_ID.join('asset'), {
         icon: 'ti-brand-discord',
     }),
 });
-export const DISCORD_PLUGIN_APP = new App('com.omuapps:plugin-discordrpc', {
+export const DISCORD_PLUGIN_APP = new App(new Identifier(NAMESPACE, 'plugin-discordrpc'), {
     url: getUrl('/app/discord-overlay/plugin'),
     type: 'service',
     metadata: buildMetadata({
