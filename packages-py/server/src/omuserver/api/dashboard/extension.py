@@ -220,32 +220,39 @@ class DashboardExtension:
     async def handle_dashboard_app_install(self, session: Session, app: App) -> AppInstallResponse:
         if not session.permissions.has(DASHBOARD_APP_INSTALL_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to install apps")
+
         indexes: dict[URL, AppIndexRegistry] = {}
         dependencies: dict[Identifier, App] = {}
+
         for dep_id_str, dep_specifier in (app.dependencies or {}).items():
             dep_id = Identifier.from_key(dep_id_str)
+
             match AppIndexRegistry.resolve_index_by_specifier(self.server, dep_id, dep_specifier):
                 case Err(err):
-                    raise Exception(f"Failed to resolve index url: {err}")
+                    raise Exception(f"Failed to resolve index URL for {dep_id}: {err}")
                 case Ok(index_url):
-                    ...
+                    pass
 
             if index_url not in indexes:
                 match await AppIndexRegistry.try_fetch(index_url):
                     case Err(err):
-                        raise Exception(f"Failed to fetch index: {err}")
+                        raise Exception(f"Failed to fetch index from {index_url}: {err}")
                     case Ok(index):
                         indexes[index_url] = index
+
             index = indexes[index_url]
             if dep_id not in index.apps:
-                raise Exception(f"Couldn't find dependency {dep_id} at index {index_url}")
+                raise Exception(f"Dependency {dep_id} not found in index {index_url}")
             dependencies[dep_id] = index.apps[dep_id]
-        accepted = await self.request_install(
-            app=app,
-            dependencies=dependencies,
-        )
+
+        if app.type == AppType.SERVICE and dependencies:
+            raise Exception("Service apps cannot have dependencies")
+
+        accepted = await self.request_install(app=app, dependencies=dependencies)
+
         if accepted:
             await self.server.server.apps.add(app, *dependencies.values())
+
         return AppInstallResponse(accepted=accepted)
 
     async def notify_update_app(self, old_app: App, new_app: App) -> bool:
