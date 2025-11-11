@@ -17,11 +17,12 @@ from omu.app import AppType
 from omu.errors import PermissionDenied
 from omu.network.packet.packet_types import DisconnectType
 from omu.plugin import UninstallContext
+from omu.result import Err
 from packaging.specifiers import SpecifierSet
 
-from omuserver.session import Session, TaskPriority
+from omuserver.session import Session
 
-from .loader import DependencyResolver, PluginLoader, RequiredVersionTooOld
+from .loader import DependencyResolver, PluginLoader
 from .permissions import PLUGIN_MANAGE_PERMISSION, PLUGIN_READ_PERMISSION
 
 if TYPE_CHECKING:
@@ -79,61 +80,37 @@ class PluginExtension:
     async def handle_require(self, session: Session, requirements: dict[str, str | None]) -> None:
         if not requirements:
             return
-        satisfied = self.dependency_resolver.is_requirements_satisfied(
+
+        match self.dependency_resolver.is_requirements_satisfied(
             {k: SpecifierSet(v) if v else None for k, v in requirements.items()}
-        )
-        if satisfied:
-            return
+        ):
+            case Err(err):
+                await session.disconnect(
+                    DisconnectType.INVALID_VERSION, f"Required plugin versions are not installed: {err}"
+                )
+                return
+
         if session.kind == AppType.REMOTE:
-            await session.disconnect(DisconnectType.PERMISSION_DENIED, "Remote apps cannot require plugins")
+            await session.disconnect(DisconnectType.PERMISSION_DENIED, "Remote applications cannot require plugins")
             return
-
-        async def task():
-            if session.kind != AppType.DASHBOARD:
-                await self.open_request_plugin_dialog(session, requirements)
-
-            self.dependency_resolver.find_packages_distributions()
-            try:
-                changed = await self.dependency_resolver.add_dependencies(requirements)
-            except RequiredVersionTooOld as e:
-                await session.disconnect(DisconnectType.INVALID_VERSION, str(e))
-                return
-
-            if not changed:
-                return
-
-            async with self.lock:
-                resolve_result = await self.dependency_resolver.resolve()
-                if resolve_result.is_err is True:
-                    await session.disconnect(DisconnectType.INVALID_VERSION, resolve_result.err)
-                    return
-                if RESTART:
-                    await self.server.restart()
-                else:
-                    await self.loader.update_plugins(resolve_result.value)
-
-        session.add_task(
-            task,
-            name="plugin_require",
-            detail=f"Requiring plugins: {list(requirements.keys())}",
-            priority=TaskPriority.AFTER_CONNECTED,
-        )
 
     async def handle_reload(self, session: Session, options: ReloadOptions) -> ReloadResult:
         instances = self.loader.instances
+
         if options.get("packages") is not None:
             filters = options["packages"] or []
             instances = {name: version for name, version in instances.items() if name in filters}
+
         for instance in instances.values():
             await instance.terminate(self.server)
             await instance.reload()
             await instance.start(self.server)
-        return {
-            "packages": {},
-        }
+
+        return {"packages": {}}
 
     async def uninstall(self):
         await self.loader.load_plugins()
+
         for instance in self.loader.instances.values():
             ctx = UninstallContext(
                 self.server,
