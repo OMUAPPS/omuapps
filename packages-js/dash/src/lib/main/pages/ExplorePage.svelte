@@ -85,7 +85,7 @@
                 </div>
                 <!-- svelte-ignore a11y-label-has-associated-control -->
                 <label class="filter">
-                    <p>開発中のベータ段階のアプリを含む</p>
+                    <p>開発段階のアプリを含む</p>
                     <Checkbox bind:value={$filter.showIndev} />
                 </label>
             </div>

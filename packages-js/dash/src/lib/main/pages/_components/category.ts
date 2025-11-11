@@ -35,7 +35,7 @@ export const TAG_REGISTRY = {
             ja: 'ゲーム',
         },
         description: {
-            ja: 'ひとりじゃないゲームで遊べるアプリ',
+            ja: 'みんなで遊べるゲームでアプリ',
             en: 'Play games with others',
         },
         icon: 'ti ti-device-gamepad',
