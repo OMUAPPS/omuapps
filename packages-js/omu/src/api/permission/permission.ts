@@ -26,15 +26,13 @@ export class PermissionType {
     public static create(
         identifier: IntoId,
         {
-            name,
             metadata,
         }: {
-            name: string;
             metadata: PermissionMetadata;
         },
     ): PermissionType {
         return new PermissionType({
-            id: Identifier.from(identifier).join(name),
+            id: Identifier.from(identifier),
             metadata: metadata,
         });
     }
