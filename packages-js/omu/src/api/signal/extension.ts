@@ -14,6 +14,7 @@ export const SIGNAL_EXTENSION_TYPE: ExtensionType<SignalExtension> = new Extensi
 
 const SIGNAL_REGISTER_PACKET = PacketType.createJson<SignalRegisterPacket>(SIGNAL_EXTENSION_TYPE, {
     name: 'register',
+    serializer: SignalRegisterPacket,
 });
 const SIGNAL_LISTEN_PACKET = PacketType.createJson<Identifier>(SIGNAL_EXTENSION_TYPE, {
     name: 'listen',

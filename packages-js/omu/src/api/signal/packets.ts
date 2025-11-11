@@ -1,7 +1,7 @@
 import { Identifier } from '../../identifier';
 import { ByteReader, ByteWriter } from '../../serialize';
 
-import { SignalPermissions } from './signal.js';
+import { SignalPermissions, SignalPermissionsJSON } from './signal.js';
 
 export class SignalPacket {
     constructor(
@@ -24,7 +24,38 @@ export class SignalPacket {
     }
 }
 
-export interface SignalRegisterPacket {
-    id: Identifier;
-    permissions: SignalPermissions;
+interface SignalRegisterPacketJSON {
+    id: string;
+    permissions: SignalPermissionsJSON;
+}
+
+export class SignalRegisterPacket {
+    constructor(
+        public readonly id: Identifier,
+        public readonly permissions: SignalPermissions,
+    ) {}
+
+    public static serialize(packet: SignalRegisterPacket): SignalRegisterPacketJSON {
+        const { permissions: perms } = packet;
+        return {
+            id: packet.id.key(),
+            permissions: {
+                all: perms.all ? Identifier.from(perms.all).key() : undefined,
+                listen: perms.listen ? Identifier.from(perms.listen).key() : undefined,
+                send: perms.send ? Identifier.from(perms.send).key() : undefined,
+            },
+        };
+    }
+
+    public static deserialize(data: SignalRegisterPacketJSON): SignalRegisterPacket {
+        const { permissions: perms } = data;
+        return new SignalRegisterPacket(
+            Identifier.fromKey(data.id),
+            {
+                all: perms.all ? Identifier.fromKey(perms.all) : undefined,
+                listen: perms.listen ? Identifier.fromKey(perms.listen) : undefined,
+                send: perms.send ? Identifier.fromKey(perms.send) : undefined,
+            },
+        );
+    }
 }

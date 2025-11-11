@@ -3,10 +3,16 @@ import { Identifier, IntoId } from '../../identifier';
 import type { Serializable } from '../../serialize';
 import { Serializer } from '../../serialize';
 
+export interface SignalPermissionsJSON {
+    all?: string;
+    listen?: string;
+    send?: string;
+}
+
 export interface SignalPermissions {
-    all?: Identifier | undefined;
-    listen?: Identifier | undefined;
-    send?: Identifier | undefined;
+    all?: IntoId | undefined;
+    listen?: IntoId | undefined;
+    send?: IntoId | undefined;
 }
 
 export class SignalType<T> {
