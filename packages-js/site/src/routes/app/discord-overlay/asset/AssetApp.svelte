@@ -22,7 +22,11 @@
 
 <main>
     {#await omu.waitForReady() then}
-        {#if port}
+        {#if port
+            && $sessions[port]
+            && $speakingStates[port]
+            && $voiceStates[port]
+        }
             <AvatarRenderer
                 {overlayApp}
                 speakingState={$speakingStates[port]}

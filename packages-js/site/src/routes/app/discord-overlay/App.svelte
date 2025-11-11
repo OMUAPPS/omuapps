@@ -26,7 +26,11 @@
 </script>
 
 <main>
-    {#if port}
+    {#if port
+        && $sessions[port]
+        && $speakingStates[port]
+        && $voiceStates[port]
+    }
         <AppUser
             {overlayApp}
             session={$sessions[port]}

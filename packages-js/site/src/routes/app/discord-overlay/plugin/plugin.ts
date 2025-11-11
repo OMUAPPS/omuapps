@@ -81,6 +81,7 @@ export class DiscordRPCService {
             };
         });
         omu.onReady(async () => {
+            await this.refresh();
         });
     }
 
