@@ -335,6 +335,68 @@ impl Uv {
 
         Ok(())
     }
+
+    pub fn uninstall_requirements(
+        &self,
+        requirements: &str,
+        on_progress: &(impl Fn(UvEnsureProgress) + Send + 'static),
+    ) -> Result<(), UvEnsureError> {
+        debug!("Package Index URL: {}", self.index_url);
+        on_progress(UvEnsureProgress::UpdateRequirements {
+            msg: format!(
+                "Uninstalling requirements {} at {}",
+                requirements,
+                self.python_bin.display()
+            ),
+        });
+
+        let mut req_file =
+            NamedTempFile::new().map_err(|err| UvEnsureError::UpdateRequirementsFailed {
+                msg: format!(
+                    "unable to create temporary requirements file at {}: {}",
+                    self.workdir.display(),
+                    err
+                ),
+            })?;
+        writeln!(req_file, "{}", requirements).map_err(|err| {
+            UvEnsureError::UpdateRequirementsFailed {
+                msg: format!(
+                    "unable to write to temporary requirements file at {}: {}",
+                    self.workdir.display(),
+                    err
+                ),
+            }
+        })?;
+
+        let mut cmd = self.cmd();
+        cmd.arg("pip")
+            .arg("uninstall")
+            .arg("-r")
+            .arg(req_file.path())
+            .arg("--python")
+            .arg(make_project_root_fragment(&self.python_bin));
+        let output = cmd
+            .output()
+            .map_err(|err| UvEnsureError::UpdateRequirementsFailed {
+                msg: format!(
+                    "unable to update requirements at {}: {}",
+                    self.workdir.display(),
+                    err
+                ),
+            })?;
+
+        if !output.status.success() {
+            Err(UvEnsureError::UpdateRequirementsFailed {
+                msg: format!(
+                    "Failed to update requirements at {}: {}",
+                    self.workdir.display(),
+                    String::from_utf8_lossy(&output.stderr)
+                ),
+            })?;
+        }
+
+        Ok(())
+    }
 }
 
 pub fn make_project_root_fragment(root: &Path) -> String {

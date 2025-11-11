@@ -68,6 +68,7 @@ pub async fn start_server(
         };
     }
 
+    let config = state.config.lock().unwrap().clone();
     let callback = on_progress.clone();
     let python = Python::ensure(&state.options, move |progress: PythonEnsureProgress| {
         callback(StartProgress::Python { progress: progress });

@@ -1,7 +1,4 @@
-use std::{
-    path::{self, PathBuf},
-    process::Command,
-};
+use std::{path::PathBuf, process::Command};
 
 use crate::{
     options::AppOptions,

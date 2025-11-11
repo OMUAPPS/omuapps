@@ -11,8 +11,8 @@ static PYTHON_VERSION: PythonVersionRequest = PythonVersionRequest {
     arch: None,
     os: None,
     major: 3,
-    minor: Some(13),
-    patch: Some(2),
+    minor: Some(12),
+    patch: Some(3),
     suffix: None,
 };
 

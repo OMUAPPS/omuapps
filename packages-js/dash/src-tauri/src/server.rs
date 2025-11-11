@@ -29,6 +29,13 @@ omu_chat_twitch=={VERSION}
 omu_chatprovider=={VERSION}"
     )
 });
+static DEPRECATED_REQUIREMENTS: Lazy<String> = Lazy::new(|| {
+    format!(
+        "
+omuplugin_discordrpc=={VERSION}
+    "
+    )
+});
 
 const RESTART_CODE: i32 = 100;
 
@@ -151,6 +158,13 @@ impl Server {
         let needs_update = version.as_deref() != Some(VERSION);
         if already_started && needs_update {
             let callback = on_progress.clone();
+            uv.uninstall_requirements(DEPRECATED_REQUIREMENTS.as_str(), &move |progress| {
+                callback(ServerEnsureProgress::UpdatingDependencies { progress });
+            })
+            .map_err(|err: UvEnsureError| {
+                ServerEnsureError::UpdateDependenciesFailed { reason: err }
+            })?;
+            let callback = on_progress.clone();
             uv.update(LATEST_PIP, REQUIREMENTS.as_str(), move |progress| {
                 callback(ServerEnsureProgress::UpdatingDependencies { progress });
             })
@@ -174,6 +188,19 @@ impl Server {
             Self::generate_token(&config)?
         };
 
+        let callback = on_progress.clone();
+        uv.uninstall_requirements(DEPRECATED_REQUIREMENTS.as_str(), &move |progress| {
+            callback(ServerEnsureProgress::UpdatingDependencies { progress });
+        })
+        .map_err(
+            |err: UvEnsureError| ServerEnsureError::UpdateDependenciesFailed { reason: err },
+        )?;
+        let callback = on_progress.clone();
+        uv.update(LATEST_PIP, REQUIREMENTS.as_str(), move |progress| {
+            callback(ServerEnsureProgress::UpdatingDependencies { progress });
+        })
+        .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
+
         let server = Self {
             config: config.clone(),
             python,
@@ -196,13 +223,6 @@ impl Server {
             })?;
         }
 
-        let callback = on_progress.clone();
-        server
-            .uv
-            .update(LATEST_PIP, REQUIREMENTS.as_str(), move |progress| {
-                callback(ServerEnsureProgress::UpdatingDependencies { progress });
-            })
-            .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
         Ok(server)
     }
 
