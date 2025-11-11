@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.25 (2025-11-11)
+
+**Note:** Version bump only for package @omujs/omu
+
+
+
+
+
 ## 0.9.24 (2025-11-06)
 
 **Note:** Version bump only for package @omujs/omu
