@@ -6,6 +6,7 @@
     import type { ScreenHandle } from '$lib/screen/screen.js';
     import { App } from '@omujs/omu';
     import { Button, TableList, Tooltip } from '@omujs/ui';
+    import { devMode } from '../settings';
     import AppEntry from './AppEntry.svelte';
     import { selectedApp } from './stores';
 
@@ -14,8 +15,6 @@
         props: undefined;
     };
 
-    let app = false;
-    let plugin = false;
 </script>
 
 <Screen {screen}>
@@ -35,7 +34,7 @@
                 table={omu.server.apps}
                 filter={(_, app) => !app.parentId && (
                     (app && (app.type === 'app' || app.type === 'remote'))
-                    || (plugin && app.type === 'plugin')
+                    || ($devMode && app.type === 'plugin' || app.type === 'service')
                 )}
                 component={AppEntry}
             />

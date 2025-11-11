@@ -7,7 +7,7 @@
     export let text: LocalizedText | undefined;
 
     let displayText: string | undefined = undefined;
-    if (BROWSER && text) {
+    $: if (BROWSER && text) {
         if ($client.ready) {
             displayText = $client.i18n.translate(text);
         } else {

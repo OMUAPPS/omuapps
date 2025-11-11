@@ -33,15 +33,11 @@ class TokenProvider extends BrowserTokenProvider {
         }
         return super.get(serverAddress, app);
     }
-
-    async set(serverAddress: Address, app: App, token: string): Promise<void> {
-        return super.set(serverAddress, app, token);
-    }
 }
 
 const omu = new Omu(app, {
     address,
-    token: new TokenProvider('omu-token'),
+    token: new TokenProvider(),
 });
 const chat = Chat.create(omu);
 const dashboard = new Dashboard(omu);
