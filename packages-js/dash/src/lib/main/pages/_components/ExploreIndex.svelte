@@ -30,11 +30,12 @@
 
     onMount(async () => {
         try {
-            const resp = await fetch(entry.url);
+            const resp = await omu.http.fetch(entry.url);
             const index = AppIndexRegistry.fromJSON(await resp.json());
             state = { type: 'result', index };
         } catch (err) {
             state = { type: 'failed', message: formatError(err) };
+            console.error(err);
         }
     });
 

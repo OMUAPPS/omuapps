@@ -8,7 +8,7 @@ export const prerender = true;
 
 export const GET: RequestHandler = () => {
     return json({
-        id: new Identifier(NAMESPACE, 'apps'),
+        id: new Identifier(NAMESPACE, 'apps').key(),
         apps: Object.fromEntries(apps.map((app) => [app.id.key(), App.serialize(app)])),
     });
 };
