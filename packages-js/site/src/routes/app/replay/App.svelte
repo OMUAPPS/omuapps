@@ -34,6 +34,14 @@
             設定
             <i class="ti ti-settings"></i>
         </Button>
+        <MenuSection name="配信ソフトに追加する" icon="ti-arrow-bar-to-down">
+            <AssetButton
+                asset={ASSET_APP}
+                dimensions={{ width: '50:%', height: '50:%' }}
+                {omu}
+                {obs}
+            />
+        </MenuSection>
         <MenuSection name="最近の配信から" icon="ti-video" flex={1}>
             <div class="search" slot="actions">
                 <Tooltip>過去の配信から検索</Tooltip>
@@ -62,14 +70,6 @@
                     配信が追加されるとここに表示されます
                 </p>
             </TableList>
-        </MenuSection>
-        <MenuSection name="配信ソフトに追加する" icon="ti-arrow-bar-to-down">
-            <AssetButton
-                asset={ASSET_APP}
-                dimensions={{ width: '50:%', height: '50:%' }}
-                {omu}
-                {obs}
-            />
         </MenuSection>
         <MenuSection name="URLから" icon="ti-link">
             <Textbox
