@@ -1,27 +1,36 @@
 <script lang="ts">
     import { isElementContains } from '$lib/helper';
     import { Spinner, Tooltip } from '@omujs/ui';
-    import { DiscordOverlayApp, type AuthenticateUser } from '../discord-overlay-app';
+    import { DiscordOverlayApp } from '../discord-overlay-app';
+    import type { RPCSession } from '../discord/discord';
     import VoiceChannelStatus from './VoiceChannelStatus.svelte';
 
-    export let clients: Record<string, AuthenticateUser> = {};
-
+    export let session: RPCSession | undefined;
     const overlayApp = DiscordOverlayApp.getInstance();
-    const { config } = overlayApp;
+    const { config, discord } = overlayApp;
+    const { sessions } = discord;
 
     let state: {
         type: 'refreshing';
     } | {
         type: 'result';
-        clients: Record<string, AuthenticateUser>;
-    } = { type: 'result', clients };
+        sessions: Record<string, RPCSession>;
+    } = {
+        type: 'result',
+        sessions: Object.fromEntries(Object.entries($sessions).map(([id, session]) => {
+            return [session.user.id, session];
+        })),
+    };
 
     async function refresh() {
-        if (state.type === 'refreshing') return;
         state = { type: 'refreshing' };
-        await overlayApp.refresh();
-        clients = await overlayApp.getClients();
-        state = { type: 'result', clients };
+        await discord.refresh();
+        state = {
+            type: 'result',
+            sessions: Object.fromEntries(Object.entries($sessions).map(([id, session]) => {
+                return [session.user.id, session];
+            })),
+        };
     }
 
     let open = false;
@@ -41,7 +50,7 @@
 
 <div class="container">
     {#if state.type === 'result'}
-        {#if Object.keys(clients).length === 0}
+        {#if Object.keys(state.sessions).length === 0}
             <small class="message">
                 起動しているDiscordが見つかりませんでした
                 <i class="ti ti-info-circle"></i>
@@ -55,10 +64,10 @@
                 <i class="ti ti-refresh"></i>
             </button>
         {:else}
-            {#if !open}
-                <VoiceChannelStatus />
+            {#if !open && session}
+                <VoiceChannelStatus {session} />
             {/if}
-            {#if open && Object.keys(clients).length > 0}
+            {#if open && Object.keys(state.sessions).length > 0}
                 <div class="switcher" bind:this={switcherElement}>
                     <button class="entry refresh" on:click={refresh}>
                         <Tooltip>
@@ -68,28 +77,29 @@
                         Discordを再検出
                         <i class="ti ti-refresh"></i>
                     </button>
-                    {#each Object.values(clients).filter((client) => client.id !== $config.user_id) as client, index (index)}
+                    {#each Object.values(state.sessions).filter((session) => session.user.id !== $config.user_id) as session, index (index)}
+                        {@const { user } = session}
                         <button class="entry" on:click={() => {
-                            $config.user_id = client.id;
+                            $config.user_id = user.id;
                             open = false;
                         }}>
                             <Tooltip>
-                                {client.global_name ?? client.username}に切り替える
+                                {user.global_name ?? user.username}に切り替える
                             </Tooltip>
-                            {#if client.avatar}
-                                <img src="https://cdn.discordapp.com/avatars/{client.id}/{client.avatar}.png" alt="" class="avatar" />
+                            {#if user.avatar}
+                                <img src="https://cdn.discordapp.com/avatars/{user.id}/{user.avatar}.png" alt="" class="avatar" />
                             {:else}
                                 <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt="" class="avatar" />
                             {/if}
                             <small>
-                                {client.global_name ?? client.username}
+                                {user.global_name ?? user.username}
                             </small>
                         </button>
                     {/each}
                 </div>
             {/if}
-            {#if $config.user_id && clients[$config.user_id]}
-                {@const user = clients[$config.user_id]}
+            {#if $config.user_id && state.sessions[$config.user_id]}
+                {@const { user } = state.sessions[$config.user_id]}
                 <button class="entry" on:click={() => {open = !open;}} bind:this={userElement}>
                     {#if !open}
                         <Tooltip>

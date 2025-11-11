@@ -1,151 +1,13 @@
 import { makeRegistryWritable } from '$lib/helper.js';
 import { type Vec2Like } from '$lib/math/vec2.js';
-import { VERSION } from '$lib/version.js';
 import { Identifier, Serializer, type Omu } from '@omujs/omu';
-import { EndpointType } from '@omujs/omu/api/endpoint';
 import { RegistryType } from '@omujs/omu/api/registry';
 import { BROWSER } from 'esm-env';
-import type { Writable } from 'svelte/store';
+import { type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
 import { DEFAULT_SHADOW_EFFECT_OPTIONS } from './effects/shadow.js';
 import { DEFAULT_SPEECH_EFFECT_OPTIONS } from './effects/speech.js';
-
-export const PLUGIN_ID = Identifier.fromKey('com.omuapps:plugin-discordrpc');
-const DISCORDRPC_VC_READ_PERMISSION_ID = PLUGIN_ID.join('vc', 'read');
-const DISCORDRPC_VC_SET_PERMISSION_ID = PLUGIN_ID.join('vc', 'set');
-const DISCORDRPC_CHANNELS_READ_PERMISSION_ID = PLUGIN_ID.join('channels', 'read');
-
-export const DISCORDRPC_PERMISSIONS = {
-    DISCORDRPC_VC_READ_PERMISSION_ID,
-    DISCORDRPC_VC_SET_PERMISSION_ID,
-    DISCORDRPC_CHANNELS_READ_PERMISSION_ID,
-};
-
-type Pan = {
-    left: number;
-    right: number;
-};
-
-type VoiceState = {
-    mute: boolean;
-    deaf: boolean;
-    self_mute: boolean;
-    self_deaf: boolean;
-    suppress: boolean;
-};
-
-export type VoiceStateUser = {
-    id: string;
-    username: string;
-    discriminator: string;
-    avatar: string | null;
-    avatar_decoration_data: null;
-    flags: number;
-    global_name: string;
-    bot: boolean;
-    premium_type: number;
-};
-
-export type VoiceStateItem = {
-    nick: string;
-    mute: boolean;
-    volume: number;
-    pan: Pan;
-    voice_state: VoiceState;
-    user: VoiceStateUser;
-};
-
-const VOICE_STATE_REGISTRY_TYPE = RegistryType.createJson<Record<string, VoiceStateItem>>(PLUGIN_ID, {
-    name: 'voice_states',
-    defaultValue: {},
-});
-
-type SpeakState = {
-    speaking: boolean;
-    speaking_start: number;
-    speaking_stop: number;
-};
-
-const SPEAKING_STATE_REGISTRY_TYPE = RegistryType.createJson<Record<string, SpeakState>>(PLUGIN_ID, {
-    name: 'speaking_states',
-    defaultValue: {},
-});
-
-export type SelectedVoiceChannel = {
-    guild: {
-        id: string;
-        name: string;
-        icon_url: string | null;
-        members: [];
-        vanity_url_code: string | null;
-    } | null;
-    channel: {
-        id: string;
-        name: string;
-        type: number;
-        topic: string;
-        bitrate: number;
-        user_limit: number;
-        guild_id: string;
-        position: number;
-        messages: [];
-        voice_states: [];
-    };
-};
-
-const SELECTED_VOICE_CHANNEL_REGISTRY_TYPE = RegistryType.createJson<SelectedVoiceChannel | null>(PLUGIN_ID, {
-    name: 'selected_voice_channel',
-    defaultValue: null,
-});
-
-export type AuthenticateUser = {
-    id: string;
-    username: string;
-    discriminator: string;
-    avatar: string | null;
-    avatar_decoration_data: null;
-    flags: number;
-    global_name: string | null;
-    public_flags: number;
-    banner: null;
-    accent_color: number;
-    banner_color: string;
-    clan: null;
-};
-const GET_CLIENTS_ENDPOINT_TYPE = EndpointType.createJson<null, Record<string, AuthenticateUser>>(PLUGIN_ID, {
-    name: 'get_clients',
-});
-export type Guild = {
-    id: string;
-    name: string;
-    icon_url?: string;
-};
-type GetGuildsResponseData = {
-    guilds: Guild[];
-};
-const GET_GUILDS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string }, GetGuildsResponseData>(PLUGIN_ID, {
-    name: 'get_guilds',
-});
-export type Channel = {
-    id: string;
-    name: string;
-    type: number;
-};
-type GetChannelsResponseData = {
-    channels: Channel[];
-};
-const GET_CHANNELS_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string; guild_id: string }, GetChannelsResponseData>(PLUGIN_ID, {
-    name: 'get_channels',
-});
-const SET_VC_ENDPOINT_TYPE = EndpointType.createJson<{ user_id: string; guild_id: string | null; channel_id: string | null }, null>(PLUGIN_ID, {
-    name: 'set_vc',
-});
-const WAIT_FOR_READY_ENDPOINT_TYPE = EndpointType.createJson<null, null>(PLUGIN_ID, {
-    name: 'wait_for_ready',
-});
-const REFRESH_ENDPOINT_TYPE = EndpointType.createJson<null, null>(PLUGIN_ID, {
-    name: 'refresh',
-});
+import { DiscordRPCAPI } from './plugin/plugin.js';
 
 export type Align = 'start' | 'middle' | 'end';
 export type Source = {
@@ -278,21 +140,14 @@ type AppSide = 'client' | 'asset';
 
 export class DiscordOverlayApp {
     private static INSTANCE: DiscordOverlayApp;
-    public readonly voiceState: Writable<Record<string, VoiceStateItem | undefined>>;
-    public readonly speakingState: Writable<Record<string, SpeakState | undefined>>;
-    public readonly selectedVoiceChannel: Writable<SelectedVoiceChannel | null>;
+    public readonly discord: DiscordRPCAPI;
     public readonly config: Writable<Config>;
 
     private constructor(
         public readonly omu: Omu,
         private readonly side: AppSide,
     ) {
-        omu.plugins.require({
-            omuplugin_discordrpc: `>=${VERSION}`,
-        });
-        this.voiceState = makeRegistryWritable(omu.registries.get(VOICE_STATE_REGISTRY_TYPE));
-        this.speakingState = makeRegistryWritable(omu.registries.get(SPEAKING_STATE_REGISTRY_TYPE));
-        this.selectedVoiceChannel = makeRegistryWritable(omu.registries.get(SELECTED_VOICE_CHANNEL_REGISTRY_TYPE));
+        this.discord = new DiscordRPCAPI(omu);
         this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
     }
 
@@ -341,31 +196,5 @@ export class DiscordOverlayApp {
 
     public resetConfig(): void {
         this.config.set(DEFAULT_CONFIG);
-    }
-
-    public async getGuilds(user_id: string): Promise<GetGuildsResponseData> {
-        return await this.omu.endpoints.call(GET_GUILDS_ENDPOINT_TYPE, { user_id });
-    }
-
-    public async getChannels(user_id: string, guild_id: string): Promise<GetChannelsResponseData> {
-        return await this.omu.endpoints.call(GET_CHANNELS_ENDPOINT_TYPE, { user_id, guild_id });
-    }
-
-    public async setVC(args: {
-        user_id: string; guild_id: string | null; channel_id: string | null;
-    }): Promise<void> {
-        await this.omu.endpoints.call(SET_VC_ENDPOINT_TYPE, args);
-    }
-
-    public async getClients(): Promise<Record<string, AuthenticateUser>> {
-        return await this.omu.endpoints.call(GET_CLIENTS_ENDPOINT_TYPE, null);
-    }
-
-    public async waitForReady(): Promise<void> {
-        await this.omu.endpoints.call(WAIT_FOR_READY_ENDPOINT_TYPE, null);
-    }
-
-    public async refresh(): Promise<void> {
-        await this.omu.endpoints.call(REFRESH_ENDPOINT_TYPE, null);
     }
 }

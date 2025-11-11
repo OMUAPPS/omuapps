@@ -12,7 +12,9 @@
     import { Vec4 } from '$lib/math/vec4.js';
     import { Timer } from '$lib/timer.js';
     import { PALETTE_RGB } from '../consts.js';
-    import { DiscordOverlayApp, type AlignSide, type AvatarConfig, type UserConfig, type VoiceStateItem, type VoiceStateUser } from '../discord-overlay-app.js';
+    import { DiscordOverlayApp, type AlignSide, type AvatarConfig, type UserConfig } from '../discord-overlay-app.js';
+    import type { RPCSpeakingStates, RPCVoiceStates } from '../discord/discord.js';
+    import type { User, VoiceStateItem } from '../discord/type.js';
     import { createBackLightEffect } from '../effects/backlight.js';
     import { createBloomEffect } from '../effects/bloom.js';
     import { createShadowEffect } from '../effects/shadow.js';
@@ -20,14 +22,16 @@
     import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
     import { PNGAvatar } from '../pngtuber/pngavatar.js';
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
-    import { alignClear, alignSide, avatarPositions, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
+    import { alignClear, alignIndexes, alignSide, avatarPositions, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
+    export let voiceState: RPCVoiceStates;
+    export let speakingState: RPCSpeakingStates;
     export let dimensions = {
         width: 1920,
         height: 1080,
     };
-    const { voiceState, speakingState, config } = overlayApp;
+    const { config } = overlayApp;
 
     let context: GlContext;
     let matrices = new Matrices();
@@ -201,7 +205,7 @@
 
     type AvatarCacheKey<T extends string = string, K extends string = string> = `${T}:${K}`;
 
-    function getAvatarCacheKeyByVoiceState(config: UserConfig, user: VoiceStateUser): AvatarCacheKey {
+    function getAvatarCacheKeyByVoiceState(config: UserConfig, user: User): AvatarCacheKey {
         if (!config.avatar) {
             return user.avatar ? `discord:${user.id}/${user.avatar}` : 'discord:default';
         }
@@ -388,7 +392,7 @@
     }
 
     function getSortedVoiceEntries(): [string, VoiceStateItem][] {
-        return Object.entries($voiceState)
+        return Object.entries(voiceState.states)
             .filter((entry): entry is [string, VoiceStateItem] => !!entry[1])
             .filter(([id]) => $config.users[id])
             .toSorted(comparator(([id]) => $config.users[id].lastDraggedAt));
@@ -438,7 +442,7 @@
 
         const entries = getSortedVoiceEntries();
         let alignTotal = calculateAlignments(entries);
-        const alignIndexes = getAlignIndexes();
+        $alignIndexes = getAlignIndexes();
         const names: Array<{
             user: UserConfig;
             pos: Vec2;
@@ -449,7 +453,7 @@
         for (const [id, voiceState] of entries) {
             const user = $config.users[id];
             if (!voiceState) continue;
-            const speakState = $speakingState[id] ?? {
+            const speakState = speakingState.states[id] ?? {
                 speaking: false,
                 speaking_start: 0,
                 speaking_stop: 0,
@@ -458,7 +462,7 @@
             if (avatar.type !== 'loaded') return;
             matrices.model.push();
 
-            const { target, current } = applyUserTransform(id, user, $config.align.alignSide, alignIndexes[id], alignTotal);
+            const { target, current } = applyUserTransform(id, user, $config.align.alignSide, $alignIndexes[id], alignTotal);
             const screenPos = matrices.model.get().transform2({ x: 0, y: POSITION_OFFSET });
             matrices.model.translate(0, -POSITION_OFFSET, 0);
 
@@ -547,6 +551,13 @@
     const getAlignPerpendicularOffset = (align: Vec2Like): Vec2 => {
         return Vec2.from(align).turnRight().scale(align.x > 0 || align.y < 0 ? -1 : 1);
     };
+
+    function alignedCount(): number {
+        return Object.entries(voiceState.states).filter(([userId]) => {
+            const user = $config.users[userId];
+            return user?.align;
+        }).length;
+    }
 
     async function drawHeldTips() {
         if (!$dragState) return;
@@ -684,9 +695,9 @@
             hoveredAlign = undefined;
         }
 
-        if ($config.align.alignSide) {
+        if ($config.align.alignSide && alignedCount() > 2) {
             const center = worldView.transform2(screen.scale(0.5));
-            const bounds = draw.measureTextActual('整列を解除').centered(Vec2.ONE.scale(0.5)).offset(center).expand(Vec2.ONE.scale(RADIUS / 1.5));
+            const bounds = draw.measureTextActual('整列を解除').centered(Vec2.ONE.scale(0.5)).offset(center).expand({ x: 150, y: 50 });
             const boundsOutline = bounds.expand(Vec2.ONE.scale(2));
             const worldBounds = worldViewInv.transformAABB2(boundsOutline);
             const hovered = $dragPosition ? worldBounds.contains($dragPosition) : false;
@@ -695,8 +706,7 @@
                 draw.roundedRect(boundsOutline.min, boundsOutline.max, RADIUS + 2, PALETTE_RGB.ACCENT);
                 await draw.textAlign(center, '整列を解除', Vec2.ONE.scale(0.5), PALETTE_RGB.BACKGROUND_1);
             } else {
-                draw.roundedRect(boundsOutline.min, boundsOutline.max, RADIUS + 2, PALETTE_RGB.ACCENT);
-                draw.roundedRect(bounds.min, bounds.max, RADIUS, PALETTE_RGB.BACKGROUND_1);
+                draw.roundedRect(boundsOutline.min, boundsOutline.max, RADIUS + 2, PALETTE_RGB.ACCENT, 2);
                 await draw.textAlign(center, '整列を解除', Vec2.ONE.scale(0.5), PALETTE_RGB.ACCENT);
             }
         } else {

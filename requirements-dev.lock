@@ -11,7 +11,6 @@
 
 -e file:packages-py/chat
     # via omu-chatprovider
-    # via omuplugin-discordrpc
     # via omuplugin-obs
 -e file:packages-py/chat-provider
     # via omu-chat-twitch
@@ -21,7 +20,6 @@
 -e file:packages-py/omu
     # via omu-chat
     # via omuserver
--e file:packages-py/plugin-discordrpc
 -e file:packages-py/plugin-obs
 -e file:packages-py/server
 aiohappyeyeballs==2.4.0
@@ -71,7 +69,6 @@ loguru==0.7.2
     # via omu-chat-twitch
     # via omu-chat-youtube
     # via omu-chatprovider
-    # via omuplugin-discordrpc
     # via omuplugin-obs
     # via omuserver
 lxml==5.3.0

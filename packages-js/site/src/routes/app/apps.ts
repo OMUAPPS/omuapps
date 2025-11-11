@@ -6,7 +6,7 @@ import { APP as breaktimer } from './break-timer/app.js';
 import { APP as caption } from './caption/app.js';
 import { APP as chatSubtitle } from './chatsubtitle/app.js';
 import { APP as clock } from './clock/app.js';
-import { APP as discordOverlay } from './discord-overlay/app.js';
+import { DISCORD_PLUGIN_APP, APP as discordOverlay } from './discord-overlay/app.js';
 import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
 import { APP as omucafe } from './omucafe/app.js';
@@ -25,6 +25,7 @@ export const apps = [
     timer,
     roulette,
     omucafe,
+    DISCORD_PLUGIN_APP,
 ] satisfies App[];
 
 if (DEV) {

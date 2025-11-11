@@ -4,12 +4,15 @@
     import { onDestroy } from 'svelte';
     import { APP_ID } from '../app.js';
     import type { AvatarConfig, DiscordOverlayApp, Source } from '../discord-overlay-app.js';
+    import type { RPCSpeakingStates, RPCVoiceStates } from '../discord/discord.js';
     import { scaleFactor, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;
     export let avatarConfig: AvatarConfig;
+    export let voiceState: RPCVoiceStates;
+    export let speakingState: RPCSpeakingStates;
 
-    const { config, voiceState, speakingState } = overlayApp;
+    const { config } = overlayApp;
 
     let lastMouse: { x: number; y: number } | null = null;
     let dragger: HTMLElement | null = null;
@@ -146,8 +149,8 @@
     {#if avatarConfig}
         <div class="png-settings">
             {#if avatarConfig.type === 'png'}
-                {@const stateVoice = $config.user_id && $voiceState[$config.user_id]?.voice_state}
-                {@const stateSpeaking = $config.user_id && $speakingState[$config.user_id]?.speaking}
+                {@const stateVoice = $config.user_id && voiceState.states[$config.user_id]?.voice_state}
+                {@const stateSpeaking = $config.user_id && speakingState.states[$config.user_id]?.speaking}
                 {@const stateType =
                     stateVoice && (stateVoice.self_deaf || stateVoice.deaf) ? 'deafened' :
                         stateVoice && (stateVoice.self_mute || stateVoice.mute) ? 'muted' :
