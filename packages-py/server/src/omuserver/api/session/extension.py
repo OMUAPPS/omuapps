@@ -115,7 +115,7 @@ class SessionExtension:
             missing_permissions = [p for p in permissions if not session.permissions.has(p)]
             return {
                 "type": "error",
-                "message": "You don't have permission to grant some of the requested permissions"
+                "message": "You don't have permission to grant some of the requested permissions "
                 + ", ".join(map(str, missing_permissions)),
             }
         handle, token = self.server.security.generate_app_token(requested_app)
@@ -145,7 +145,7 @@ class SessionExtension:
             missing_permissions = [p for p in permissions if not session.permissions.has(p)]
             return {
                 "type": "error",
-                "message": "You don't have permission to grant some of the requested permissions"
+                "message": "You don't have permission to grant some of the requested permissions "
                 + ", ".join(map(str, missing_permissions)),
             }
         handle, token = self.server.security.generate_app_token(requested_app)
