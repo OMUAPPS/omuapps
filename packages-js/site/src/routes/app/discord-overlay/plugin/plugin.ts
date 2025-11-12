@@ -118,8 +118,8 @@ export class DiscordRPCService {
 
     public static createPlugin(omu: Omu) {
         omu.permissions.require(
-            OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
         );
         return new DiscordRPCService(omu);

@@ -22,6 +22,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
         );

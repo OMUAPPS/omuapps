@@ -12,6 +12,7 @@
     if (BROWSER) {
         omu.permissions.require(
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             ChatPermissions.CHAT_REACTION_PERMISSION_ID,
         );
         omu.start();

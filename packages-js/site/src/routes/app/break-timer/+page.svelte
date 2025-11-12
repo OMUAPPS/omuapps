@@ -12,6 +12,7 @@
     const obs = OBSPlugin.create(omu);
     omu.permissions.require(
         OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+        OmuPermissions.REGISTRY_PERMISSION_ID,
         OBSPermissions.OBS_SCENE_SET_CURRENT_PERMISSION_ID,
         OBSPermissions.OBS_SCENE_READ_PERMISSION_ID,
         OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
