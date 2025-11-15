@@ -68,7 +68,7 @@
 <style lang="scss">
     .input {
         width: 100%;
-        height: 2.5rem;
+        min-height: 2.5rem;
         padding: 0.5rem 0.75rem;
         background: var(--color-bg-2);
         border: none;

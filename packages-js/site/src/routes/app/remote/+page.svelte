@@ -2,7 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, setClient } from '@omujs/ui';
+    import { AppHeader, setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import { APP } from './app.js';
@@ -12,7 +12,7 @@
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const remote = new RemoteApp(omu, 'app');
-    setClient(omu);
+    setGlobal({ omu, obs });
 
     if (BROWSER) {
         onMount(() => {

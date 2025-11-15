@@ -2,6 +2,7 @@
 export { default as Align } from './Align.svelte';
 export type { AlignType } from './Align.svelte';
 export { default as AppHeader } from './AppHeader.svelte';
+export { default as AssetButton } from './AssetButton.svelte';
 export { default as Button } from './Button.svelte';
 export { default as ButtonLink } from './ButtonLink.svelte';
 export { default as ButtonMini } from './ButtonMini.svelte';
@@ -23,7 +24,7 @@ export { default as RelativeDate } from './RelativeDate.svelte';
 export { default as Role } from './Role.svelte';
 export { default as Slider } from './Slider.svelte';
 export { default as Spinner } from './Spinner.svelte';
-export { chat, client, linkOpenHandler, setChat, setClient, theme, translate } from './stores.js';
+export { chat, linkOpenHandler, obs, omu, setGlobal, theme, translate } from './stores.js';
 export { default as TableList } from './TableList.svelte';
 export { default as Textbox } from './Textbox.svelte';
 export { default as Theme } from './Theme.svelte';

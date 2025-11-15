@@ -2,7 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { setClient } from '@omujs/ui';
+    import { setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, DISCORD_PLUGIN_APP } from './app.js';
     import App from './App.svelte';
@@ -14,7 +14,7 @@
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const overlayApp = DiscordOverlayApp.create(omu, 'client');
-    setClient(omu);
+    setGlobal({ omu, obs });
 
     if (BROWSER) {
         omu.permissions.require(

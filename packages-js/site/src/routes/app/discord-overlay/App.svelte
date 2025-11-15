@@ -1,7 +1,7 @@
 <script lang="ts">
-    import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
+    import { AssetButton } from '@omujs/ui';
     import { onMount } from 'svelte';
     import { ASSET_APP } from './app';
     import AppUser from './AppUser.svelte';
@@ -45,10 +45,14 @@
                 <i class="ti ti-arrow-bar-to-down"></i>
             </h4>
             <section style="margin-bottom: auto;">
-                <AssetButton asset={ASSET_APP} permissions={[
-                    OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
-                    VOICE_CHAT_PERMISSION_ID,
-                ]} {omu} {obs} dimensions={{ width: 1920, height: 1080 }} />
+                <AssetButton
+                    asset={ASSET_APP}
+                    permissions={[
+                        OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+                        VOICE_CHAT_PERMISSION_ID,
+                    ]}
+                    dimensions={{ width: 1920, height: 1080 }}
+                />
             </section>
             <AccountSwitcher session={port ? $sessions[port] : undefined} />
         </div>

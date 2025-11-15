@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Content } from '@omujs/chat/models';
     import LinkableText from './LinkableText.svelte';
-    import { client } from './stores.js';
+    import { omu } from './stores.js';
     import Tooltip from './Tooltip.svelte';
 
     export let component: Content.Component;
@@ -32,7 +32,7 @@
 {:else if component.type === 'asset'}
     {@const { id } = component.data}
     <span>
-        <img src={$client.assets.url(id)} alt={id} />
+        <img src={$omu.assets.url(id)} alt={id} />
     </span>
 {:else if component.type === 'link'}
     {@const { children, url } = component.data}

@@ -5,7 +5,7 @@
 
     const items = Array.from({ length }, (_, i) => [`Item ${i}`, `Item ${i}`] as [string, string]);
 
-    let viewport: HTMLDivElement;
+    let viewport: HTMLDivElement | undefined;
 </script>
 
 <div>

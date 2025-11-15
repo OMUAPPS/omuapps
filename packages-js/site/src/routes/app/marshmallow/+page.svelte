@@ -3,7 +3,7 @@
     import { getSetting } from '$lib/helper.js';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, Button, ExternalLink, setClient, Spinner } from '@omujs/ui';
+    import { AppHeader, Button, ExternalLink, setGlobal, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { MarshmallowAPI, MarshmallowSession } from './api.js';
     import { APP } from './app.js';
@@ -13,7 +13,7 @@
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const marshmallow = new MarshmallowApp(omu);
-    setClient(omu);
+    setGlobal({ omu, obs });
 
     const agreed = getSetting(APP.join('agreed'), false);
 

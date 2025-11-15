@@ -1,8 +1,7 @@
 <script lang="ts">
-    import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { Button, Slider, Tooltip } from '@omujs/ui';
+    import { AssetButton, Button, Slider, Tooltip } from '@omujs/ui';
     import Answers from './Answers.svelte';
     import { MarshmallowAPI, type Message, type User } from './api.js';
     import { ASSET_APP } from './app';
@@ -105,11 +104,14 @@
         <div class="asset">
             <small>ズーム</small>
             <Slider bind:value={$config.scale} min={-1} max={1} step={1 / 8} />
-            <AssetButton asset={ASSET_APP} permissions={[
-                OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
-                OmuPermissions.REGISTRY_PERMISSION_ID,
-                OmuPermissions.TABLE_PERMISSION_ID,
-            ]} {omu} {obs} />
+            <AssetButton
+                asset={ASSET_APP}
+                permissions={[
+                    OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+                    OmuPermissions.REGISTRY_PERMISSION_ID,
+                    OmuPermissions.TABLE_PERMISSION_ID,
+                ]}
+            />
         </div>
     </div>
 </main>

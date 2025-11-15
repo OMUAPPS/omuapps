@@ -1,22 +1,18 @@
 <script lang="ts">
-    import { page } from '$app/stores';
-    import type { OBSPlugin } from '@omujs/obs';
     import type { CreateBrowserRequest } from '@omujs/obs/types.js';
-    import type { App, Omu, SessionParam } from '@omujs/omu';
+    import type { App, SessionParam } from '@omujs/omu';
     import { BrowserTokenProvider, OmuPermissions, type IntoId } from '@omujs/omu';
-    import { Spinner, Tooltip } from '@omujs/ui';
+    import { obs, omu, Spinner, Tooltip } from '@omujs/ui';
 
-    export let omu: Omu;
     export let asset: App;
-    export let obs: OBSPlugin;
     export let multiple = true;
     export let dimensions: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined = undefined;
     export let permissions: IntoId[] = [];
 
     async function create() {
-        const name = omu.app.metadata?.name ? omu.i18n.translate(omu.app.metadata?.name) : 'Asset';
+        const name = $omu.app.metadata?.name ? $omu.i18n.translate($omu.app.metadata?.name) : 'Asset';
         const url = await generateURL();
-        await obs.browserAdd({
+        await $obs.browserAdd({
             name: name,
             url: url.toString(),
             blend_properties: {
@@ -30,19 +26,19 @@
     }
 
     let obsConnected = false;
-    obs.on('connected', () => (obsConnected = true));
-    obs.on('disconnected', () => (obsConnected = false));
-    obsConnected = obs.isConnected();
+    $obs.on('connected', () => (obsConnected = true));
+    $obs.on('disconnected', () => (obsConnected = false));
+    obsConnected = $obs.isConnected();
 
     async function generateURL() {
-        const url = new URL(asset.url ?? $page.url);
+        const url = new URL(asset.url ?? location.href);
         const timestamp = Date.now().toString(36);
         let app = asset;
         if (multiple) {
             url.searchParams.set('id', timestamp);
             app = app.join(timestamp);
         }
-        const result = await omu.sessions.generateToken({
+        const result = await $omu.sessions.generateToken({
             app,
             permissions: [
                 OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
@@ -57,7 +53,7 @@
         const { token } = result;
         const tokenJson: SessionParam = {
             token,
-            address: omu.address,
+            address: $omu.address,
         };
         url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(tokenJson));
         return url;

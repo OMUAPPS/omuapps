@@ -3,7 +3,7 @@
     import { Chat } from '@omujs/chat';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, setClient } from '@omujs/ui';
+    import { AppHeader, setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import App from './App.svelte';
@@ -13,7 +13,7 @@
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
     ReplayApp.create(omu, 'client');
-    setClient(omu);
+    setGlobal({ omu, chat, obs });
 
     if (BROWSER) {
         omu.permissions.require(

@@ -4,7 +4,7 @@
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
-        setClient,
+        setGlobal,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import App from './App.svelte';
@@ -14,7 +14,7 @@
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const captionApp = new CaptionApp(omu);
-    setClient(omu);
+    setGlobal({ omu, obs });
 
     if (BROWSER) {
         omu.permissions.require(

@@ -2,7 +2,7 @@
     import { page } from '$app/stores';
     import { BrowserTokenProvider, Omu, type App, type DisconnectReason } from '@omujs/omu';
     import { DisconnectType } from '@omujs/omu/network/packet';
-    import { setClient, Spinner } from '@omujs/ui';
+    import { Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
 
     export let asset: App;
@@ -32,7 +32,6 @@
     const isSessionPresent = BROWSER && $page.url.searchParams.get(BrowserTokenProvider.TOKEN_PARAM_KEY);
     if (id) {
         const omu = new Omu(single ? asset : asset.join(id));
-        setClient(omu);
         state = { type: 'initialized', omu };
 
         omu.onReady(() => {

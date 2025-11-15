@@ -7,14 +7,14 @@
     export let fileDrop: HTMLInputElement | null = null;
 
     export const open = (): Promise<FileList> => {
-        if (!fileDrop) return;
+        if (!fileDrop) return Promise.resolve(new FileList());
         fileDrop.click();
         return new Promise<FileList>((resolve) => {
             resolveOpen = resolve;
         });
     };
 
-    let resolveOpen: (files: FileList) => void | null = null;
+    let resolveOpen: ((files: FileList) => void) | null = null;
 
     function handleChange(event: Event): void {
         files = (event.target as HTMLInputElement).files;

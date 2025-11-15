@@ -12,7 +12,7 @@
     // read-only, but visible to consumers via bind:start
     export let start = 0;
     export let end = 0;
-    export let viewport: HTMLDivElement | null = null;
+    export let viewport: HTMLDivElement | undefined = undefined;
     export let limit: number | undefined = undefined;
 
     // local state

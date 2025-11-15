@@ -2,7 +2,7 @@
     import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, setClient } from '@omujs/ui';
+    import { AppHeader, setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import App from './App.svelte';
@@ -18,7 +18,7 @@
         OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
     );
     const breakTimer = new BreakTimerApp(omu, obs);
-    setClient(omu);
+    setGlobal({ omu, obs });
 
     const waitReady = new Promise<void>((resolve) => omu.onReady(resolve));
 

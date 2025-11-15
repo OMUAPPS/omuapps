@@ -1,6 +1,6 @@
 import type { Chat } from '@omujs/chat';
-import { App, Omu } from '@omujs/omu';
-import type { Locale } from '@omujs/omu/localization';
+import type { OBSPlugin } from '@omujs/obs';
+import { Omu } from '@omujs/omu';
 import { BROWSER } from 'esm-env';
 import { type Writable, writable } from 'svelte/store';
 
@@ -12,30 +12,24 @@ export const translate: Writable<TranslateFunction> = writable(
     },
 );
 
-export const client: Writable<Omu> = writable();
+export const omu: Writable<Omu> = writable();
 export const chat: Writable<Chat> = writable();
-export function setClient(newClient: Omu): Omu {
-    if (!BROWSER) {
-        const DUMMY_CLIENT = new Omu(new App('com.omuapps:dummy', { version: '0.0.0' }));
-        const newClient = DUMMY_CLIENT;
-        client.set(newClient);
-        return newClient;
-    };
-    client.update((oldClient) => {
-        if (oldClient) {
-            // throw new Error('Client already set');
-            console.warn('HMR detected. reloading...');
-            window.location.reload();
-            return oldClient;
-        }
-        return newClient;
-    });
-    newClient.i18n.defaultLocales = window.navigator.languages as Locale[];
-    return newClient;
-}
-export function setChat<T extends Chat>(newChat: T): T {
-    chat.set(newChat);
-    return newChat;
+export const obs: Writable<OBSPlugin> = writable();
+
+export function setGlobal(values: {
+    omu?: Omu;
+    chat?: Chat;
+    obs?: OBSPlugin;
+}) {
+    if (values.omu) {
+        omu.set(values.omu);
+    }
+    if (values.chat) {
+        chat.set(values.chat);
+    }
+    if (values.obs) {
+        obs.set(values.obs);
+    }
 }
 
 export type Color = {

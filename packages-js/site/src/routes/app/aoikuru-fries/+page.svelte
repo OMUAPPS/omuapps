@@ -1,9 +1,8 @@
 <script lang="ts">
     import AppPage from '$lib/components/AppPage.svelte';
-    import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, Button, setClient } from '@omujs/ui';
+    import { AppHeader, AssetButton, Button, setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, ASSET_APP } from './app.js';
     import { FriesApp } from './fries-app.js';
@@ -12,7 +11,7 @@
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
-    setClient(omu);
+    setGlobal({ omu, obs });
     const friesApp = new FriesApp(omu);
     const { testSignal, config, state } = friesApp;
 
@@ -48,7 +47,7 @@
     </header>
     <main>
         <section class="asset">
-            <AssetButton asset={ASSET_APP} {omu} {obs} />
+            <AssetButton asset={ASSET_APP} />
         </section>
         <h3>試しに投げてみる</h3>
         <section>

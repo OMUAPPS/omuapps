@@ -1,5 +1,6 @@
 <script lang="ts" generics="T">
-    import { client } from './stores.js';
+    import { omu } from './stores';
+
     import TableListEntry from './TableListEntry.svelte';
     import VirtualList from './VirtualList.svelte';
 
@@ -129,12 +130,12 @@
     }
 
     const unlisten = [
-        $client.onReady(() => {
+        $omu.onReady(() => {
             entries.clear();
             last = undefined;
             fetch();
         }),
-        $client.network.event.disconnected.listen(() => {
+        $omu.network.event.disconnected.listen(() => {
             entries.clear();
             last = undefined;
         }),

@@ -17,6 +17,7 @@
     }
 
     async function handleDragStart(event: DragEvent) {
+        if (!event.dataTransfer) return;
         event.dataTransfer.setDragImage(preview, 0, 0);
         const url = await resolveUrl(href);
         event.dataTransfer.setData('text/uri-list', url);

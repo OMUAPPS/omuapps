@@ -2,7 +2,7 @@
     import { DisconnectReason } from '@omujs/omu';
     import { type NetworkStatus } from '@omujs/omu/network';
     import { DisconnectType } from '@omujs/omu/network/packet';
-    import { Button, client, Spinner } from '@omujs/ui';
+    import { Button, omu, Spinner } from '@omujs/ui';
 
     let state: {
         type: 'not_running';
@@ -16,7 +16,7 @@
         reason?: DisconnectReason;
     } = { type: 'not_running' };
 
-    client.subscribe(async (omu) => {
+    omu.subscribe(async (omu) => {
         if (!omu) return;
         if (!omu.running) {
             await new Promise<void>((resolve) => {
