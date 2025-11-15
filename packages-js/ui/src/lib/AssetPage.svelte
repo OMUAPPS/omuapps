@@ -29,8 +29,8 @@
 
     const id = BROWSER && new URLSearchParams(location.search).get('id');
     const isSessionPresent = BROWSER && new URLSearchParams(location.search).get(BrowserTokenProvider.TOKEN_PARAM_KEY);
-    if (id) {
-        const omu = new Omu(single ? asset : asset.join(id));
+
+    function init(omu: Omu) {
         state = { type: 'initialized', omu };
 
         omu.onReady(() => {
@@ -48,6 +48,13 @@
                 reason,
             };
         });
+    }
+    if (single) {
+        const omu = new Omu(asset);
+        init(omu);
+    } else if (id) {
+        const omu = new Omu(asset.join(id));
+        init(omu);
     } else if (BROWSER) {
         state = { type: 'invalid_id' };
     }
