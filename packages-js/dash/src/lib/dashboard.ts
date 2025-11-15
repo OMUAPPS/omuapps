@@ -25,7 +25,6 @@ import {
     type WebviewRequest,
 } from '@omujs/omu/api/dashboard';
 import type { InvokedParams } from '@omujs/omu/api/endpoint';
-import type { Locale } from '@omujs/omu/localization';
 import { Webview } from '@tauri-apps/api/webview';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { Window } from '@tauri-apps/api/window';
@@ -50,9 +49,6 @@ export class Dashboard implements DashboardHandler {
 
     constructor(private readonly omu: Omu) {
         omu.dashboard.set(this);
-        omu.onReady(() => {
-            omu.i18n.setLocale(window.navigator.languages as Locale[]);
-        });
     }
 
     async speechRecognitionStart(request: SpeechRecognitionStart, params: InvokedParams): Promise<UserResponse<undefined>> {
