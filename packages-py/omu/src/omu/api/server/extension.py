@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
@@ -8,13 +8,20 @@ from omu.api.registry import RegistryType
 from omu.api.registry.registry import RegistryPermissions
 from omu.api.table import TablePermissions, TableType
 from omu.app import App
+from omu.localization.localization import LocalizedText
 from omu.omu import Omu
 
 SERVER_EXTENSION_TYPE = ExtensionType("server", lambda client: ServerExtension(client))
 
 
+class AppIndexRegistryMeta(TypedDict):
+    name: LocalizedText
+    note: LocalizedText
+
+
 class AppIndexEntry(TypedDict):
     url: str
+    meta: NotRequired[AppIndexRegistryMeta]
     added_at: str
 
 

@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { omu } from '$lib/client';
     import Document from '$lib/common/Document.svelte';
     import type { PromptRequestIndexInstall, PromptResult } from '@omujs/omu/api/dashboard';
+    import { ExternalLink } from '@omujs/ui';
     import Screen from './Screen.svelte';
-    import about_permission from './about_permission.md?raw';
+    import about_index from './about_index.md?raw';
     import type { ScreenHandle } from './screen.js';
 
     export let screen: {
@@ -13,6 +15,7 @@
         };
     };
     const { request, resolve } = screen.props;
+    const url = new URL(request.index_url);
 
     function accept() {
         resolve('accept');
@@ -27,9 +30,19 @@
 
 <Screen {screen} disableClose>
     <div class="header">
-        <p>{request.index_url}</p>
+        <h2>アプリ提供元の追加をします</h2>
     </div>
-    <div class="permissions">
+    <div class="info">
+        <div class="provider">
+            <p><ExternalLink href={url.hostname}>{url.hostname}</ExternalLink></p>
+            <p>によって提供されています</p>
+        </div>
+        <div class="meta">
+            {#if request.meta}
+                <h2>{omu.i18n.translate(request.meta.name)}</h2>
+                <p>{omu.i18n.translate(request.meta.note)}</p>
+            {/if}
+        </div>
     </div>
     <div class="actions">
         <button on:click={reject} class="reject">
@@ -41,7 +54,7 @@
             <i class="ti ti-check"></i>
         </button>
     </div>
-    <Document source={about_permission} slot="info" />
+    <Document source={about_index} slot="info" />
 </Screen>
 
 <style lang="scss">
@@ -59,27 +72,15 @@
         gap: 0.5rem;
     }
 
-    .level {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
+    h2 {
         font-weight: 600;
-        font-size: 1rem;
-        color: var(--color-1);
-        padding: 0.5rem 0.25rem;
-        margin: 0 1rem;
-        text-align: left;
-        margin-top: 2rem;
-        margin-bottom: 0.5rem;
-        border-bottom: 1px solid var(--color-outline);
-
-        > small {
-            font-size: 0.6rem;
-            color: var(--color-text);
-        }
     }
 
-    .permissions {
+    h3 {
+        color: var(--color-1);
+    }
+
+    .info {
         position: relative;
         flex: 1;
         width: 100%;
@@ -87,8 +88,11 @@
         padding-bottom: 1rem;
         display: flex;
         flex-direction: column;
+        gap: 0.5rem;
         overflow-y: auto;
         overflow-x: hidden;
+        text-align: left;
+        padding: 1rem 1rem;
         -webkit-overflow-scrolling: touch;
 
         &::-webkit-scrollbar {
@@ -121,6 +125,15 @@
                 scrollbar-color: var(--color-1) var(--color-bg-2);
             }
         }
+    }
+
+    .meta {
+        padding: 1rem;
+        background: var(--color-bg-1);
+    }
+
+    h2 {
+        color: var(--color-1);
     }
 
     .actions {

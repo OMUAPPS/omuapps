@@ -3,7 +3,7 @@
     import type { App } from '@omujs/omu';
     import { AppIndexRegistry, type AppIndexEntry } from '@omujs/omu/api/server';
     import type { LocalizedText } from '@omujs/omu/localization';
-    import { Spinner, Tooltip } from '@omujs/ui';
+    import { Button, Spinner, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import { filter } from '../explore';
     import ExploreAppEntry from './ExploreAppEntry.svelte';
@@ -67,12 +67,37 @@
     }
 </script>
 
-<h2>
+<div class="info">
     <Tooltip>
         {url.host}によって提供されているアプリ
     </Tooltip>
-    {id.split('.').reverse().join('.')}
-</h2>
+    <div class="body">
+        <h2>
+            {#if entry.meta}
+                {omu.i18n.translate(entry.meta.name)}
+            {:else}
+                <p class="id">{id.split('.').reverse().join('.')}</p>
+            {/if}
+        </h2>
+        {#if entry.meta}
+            <small>{omu.i18n.translate(entry.meta.note)}</small>
+        {/if}
+    </div>
+    <div class="actions">
+        <Button onclick={() => {
+            omu.server.index.modify((index) => {
+                delete index.indexes[id];
+                return index;
+            });
+        }}>
+            <Tooltip>
+                この提供元を削除
+            </Tooltip>
+            削除
+            <i class="ti ti-x"></i>
+        </Button>
+    </div>
+</div>
 {#if state.type === 'loading'}
     <Spinner />
 {:else if state.type === 'failed'}
@@ -100,14 +125,31 @@
         flex-direction: column;
         gap: 1rem;
         width: min(40rem, 100%);
-        margin-bottom: 3rem;
         padding-bottom: 3rem;
         &:not(&:last-child) {
             border-bottom: 1px solid var(--color-outline);
         }
     }
 
-    h2 {
+    .info {
+        display: flex;
+        justify-content: space-between;
         margin-bottom: 2rem;
+
+        &:hover {
+            outline: 1px solid var(--color-outline);
+            outline-offset: 1rem;
+        }
+    }
+
+    h2 {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        color: var(--color-1);
+
+        > p {
+            font-size: 1rem;
+        }
     }
 </style>

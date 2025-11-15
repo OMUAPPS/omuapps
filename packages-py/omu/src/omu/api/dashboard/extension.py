@@ -9,6 +9,7 @@ from omu.api.endpoint import EndpointType
 from omu.api.permission.permission import PermissionTypeJson
 from omu.api.plugin.package_info import PackageInfo
 from omu.api.registry.registry import RegistryPermissions, RegistryType
+from omu.api.server.extension import AppIndexRegistryMeta
 from omu.api.table import TablePermissions, TableType
 from omu.app import App, AppJson
 from omu.bytebuffer import ByteReader, ByteWriter
@@ -259,6 +260,7 @@ class PromptRequestAppUpdate(PromptRequestBase[Literal["app/update"]]):
 
 class PromptRequestIndexInstall(PromptRequestBase[Literal["index/install"]]):
     index_url: str
+    meta: AppIndexRegistryMeta
 
 
 type PromptRequest = (

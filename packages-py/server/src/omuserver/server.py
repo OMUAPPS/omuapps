@@ -194,7 +194,7 @@ class Server:
                 reason="Provided index ID does not match the namespace ID in the index URL.",
             )
 
-        accepted = await self.dashboard.notify_index_install(mapped_index_url)
+        accepted = await self.dashboard.notify_index_install(mapped_index_url, index.meta)
 
         if not accepted:
             return web.json_response(
@@ -206,6 +206,7 @@ class Server:
         server_index = self.server.index.get()
         server_index["indexes"][index.id.key()] = {
             "added_at": datetime.now().isoformat(),
+            "meta": index.meta,
             "url": str(raw_index_url),
         }
         self.server.index.set(server_index)

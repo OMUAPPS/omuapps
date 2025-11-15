@@ -8,6 +8,7 @@ import { ExtensionType } from '../extension.js';
 import { PermissionTypeJson } from '../permission/permission.js';
 import { PackageInfo } from '../plugin/package-info.js';
 import { Registry, RegistryType } from '../registry/registry.js';
+import { AppIndexRegistryMeta } from '../server/extension.js';
 import type { Table } from '../table/table.js';
 import { TableType } from '../table/table.js';
 
@@ -289,6 +290,7 @@ export interface PromptRequestAppUpdate extends PromptRequestBase<'app/update'> 
 
 export interface PromptRequestIndexInstall extends PromptRequestBase<'index/install'> {
     index_url: string;
+    meta?: AppIndexRegistryMeta;
 }
 
 export type PromptRequest = (

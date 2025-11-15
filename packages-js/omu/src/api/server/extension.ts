@@ -1,5 +1,6 @@
 import { App, AppJson } from '../../app.js';
 import { Identifier, IdentifierMap } from '../../identifier';
+import { LocalizedText } from '../../localization/localization.js';
 import { Omu } from '../../omu.js';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType, type Extension } from '../extension.js';
@@ -13,6 +14,7 @@ export const SERVER_EXTENSION_TYPE: ExtensionType<ServerExtension> = new Extensi
 
 export interface AppIndexEntry {
     url: string;
+    meta?: AppIndexRegistryMeta;
     added_at: string;
 };
 
@@ -96,8 +98,14 @@ export class SessionObserver {
     }
 }
 
+export type AppIndexRegistryMeta = {
+    name: LocalizedText;
+    note: LocalizedText;
+};
+
 export interface AppIndexRegistryJSON {
     id: string;
+    meta?: AppIndexRegistryMeta;
     apps: Record<string, AppJson>;
 }
 
@@ -105,6 +113,7 @@ export class AppIndexRegistry {
     constructor(
         public id: Identifier,
         public apps: IdentifierMap<App>,
+        public meta: AppIndexRegistryMeta | undefined,
     ) { }
 
     public static fromJSON(json: AppIndexRegistryJSON): AppIndexRegistry {
@@ -121,6 +130,7 @@ export class AppIndexRegistry {
         return new AppIndexRegistry(
             id,
             apps,
+            json.meta,
         );
     }
 }

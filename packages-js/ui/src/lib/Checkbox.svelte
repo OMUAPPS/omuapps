@@ -38,7 +38,6 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.5rem;
         cursor: pointer;
         user-select: none;
 
@@ -66,7 +65,7 @@
 
         i {
             position: absolute;
-            left: 0.75rem;
+            left: 0.25rem;
             display: flex;
             align-items: center;
             justify-content: center;

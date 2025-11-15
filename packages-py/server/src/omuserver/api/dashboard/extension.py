@@ -44,6 +44,7 @@ from omu.api.dashboard.packets import (
 )
 from omu.api.permission.permission import PermissionType
 from omu.api.plugin.package_info import PackageInfo
+from omu.api.server.extension import AppIndexRegistryMeta
 from omu.app import App, AppType
 from omu.errors import PermissionDenied
 from omu.identifier import Identifier
@@ -265,12 +266,13 @@ class DashboardExtension:
             }
         )
 
-    async def notify_index_install(self, index_url: URL) -> bool:
+    async def notify_index_install(self, index_url: URL, meta: AppIndexRegistryMeta) -> bool:
         return await self.request_prompt(
             {
                 "kind": "index/install",
                 "id": self.get_next_request_id(),
                 "index_url": str(index_url),
+                "meta": meta,
             }
         )
 

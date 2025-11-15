@@ -10,24 +10,45 @@
 
     export const props = {};
 
-    function setIndex() {
-        omu.server.index.modify((index) => {
+    async function setIndex() {
+        await omu.server.index.modify((index) => {
             const { indexes } = index;
             if (DEV) {
                 indexes['com.omuapps'] = {
                     url: 'http://localhost:5173/apps.json',
-                    added_at: new Date().toISOString(),
+                    meta: {
+                        name: 'OMUAPPS',
+                        note: {
+                            ja: 'OMUAPPS公式アプリ',
+                            en: 'Official OMUAPPS',
+                        },
+                    },
+                    added_at: indexes['com.omuapps'].added_at ?? new Date().toISOString(),
                 };
             } else {
                 indexes['com.omuapps'] = {
                     url: 'https://omuapps.com/apps.json',
-                    added_at: new Date().toISOString(),
+                    meta: {
+                        name: 'OMUAPPS - Beta',
+                        note: {
+                            ja: 'OMUAPPS公式アプリ',
+                            en: 'Official OMUAPPS',
+                        },
+                    },
+                    added_at: indexes['com.omuapps'].added_at ?? new Date().toISOString(),
                 };
             }
             if ($isBetaEnabled) {
                 indexes['com.omuapps.beta'] = {
                     url: 'https://beta.omuapps.com/apps.json',
-                    added_at: new Date().toISOString(),
+                    meta: {
+                        name: 'OMUAPPS',
+                        note: {
+                            ja: 'ベータ版OMUAPPS公式アプリ',
+                            en: 'Official Beta Channel OMUAPPS',
+                        },
+                    },
+                    added_at: indexes['com.omuapps.beta'].added_at ?? new Date().toISOString(),
                 };
             }
             return index;
@@ -35,16 +56,20 @@
     }
 
     async function load() {
+        await setIndex();
+
         const { indexes } = await omu.server.index.get();
         state = {
             type: 'loaded',
-            indexes,
+            indexes: Object.fromEntries(Object.entries(indexes).sort(([,a], [,b]) => new Date(a.added_at).getTime() - new Date(b.added_at).getTime())),
         };
     }
 
     onMount(() => {
-        setIndex();
         load();
+        return omu.server.index.listen(() => {
+            load();
+        });
     });
 
     let state: {
@@ -53,6 +78,8 @@
         type: 'loaded';
         indexes: Record<string, AppIndexEntry>;
     } = { type: 'loading' };
+
+    let elements: Record<string, HTMLElement> = {};
 </script>
 
 <div class="container omu-scroll">
@@ -72,7 +99,9 @@
                     <Spinner />
                 {:else if state.type === 'loaded'}
                     {#each Object.entries(state.indexes) as [id, entry] (id)}
-                        <ExploreIndex {id} {entry} />
+                        <div class="entry" bind:this={elements[id]}>
+                            <ExploreIndex {id} {entry} />
+                        </div>
                     {:else}
                         <p>No indexes</p>
                     {/each}
@@ -88,6 +117,25 @@
                     <p>開発段階のアプリを含む</p>
                     <Checkbox bind:value={$filter.showIndev} />
                 </label>
+                {#if state.type === 'loaded'}
+                    <h3>提供元</h3>
+                    <div class="providers">
+                        {#each Object.entries(state.indexes).filter(([, entry]) => !!entry) as [id, entry] (id)}
+                            <button on:click={() => {
+                                elements[id]?.scrollIntoView({
+                                    behavior: 'smooth',
+                                });
+                            }}>
+                                {#if entry.meta}
+                                    {omu.i18n.translate(entry.meta.name)}
+                                {:else}
+                                    {id.split('.').reverse().join('.').split(':').reverse().join('/')}
+                                {/if}
+                                <i class="ti ti-chevron-right"></i>
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
             </div>
         </div>
     </div>
@@ -146,10 +194,15 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            gap: 3rem;
+            padding-bottom: 6rem;
             width: min(40rem, 100%);
         }
 
         > .filters {
+            position: sticky;
+            top: 4rem;
+            height: fit-content;
             border-left: 1px solid var(--color-outline);
             padding-left: 4rem;
             margin-left: 2rem;
@@ -170,6 +223,33 @@
 
         > p {
             margin-bottom: 1rem;
+        }
+    }
+
+    .providers {
+        display: flex;
+        flex-direction: column;
+
+        > button {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 1rem 0;
+            background: var(--color-bg-2);
+            border: none;
+            border-bottom: 1px solid var(--color-outline);
+            cursor: pointer;
+            > .ti-chevron-right {
+                visibility: hidden;
+            }
+
+            &:hover {
+                background: var(--color-bg-2);
+
+                > .ti-chevron-right {
+                    visibility: visible;
+                }
+            }
         }
     }
 </style>
