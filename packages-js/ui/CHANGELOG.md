@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.28 (2025-11-15)
+
+
+### Bug Fixes
+
+* **server:** mapped hostで提供元追加できない問題を修正 ([908c75d](https://github.com/OMUAPPS/omuapps/commit/908c75daadcb32e6a9233d628446114844ea308e))
+
+
+
+
+
 ## 0.9.27 (2025-11-15)
 
 **Note:** Version bump only for package @omujs/ui
