@@ -165,10 +165,11 @@ class Server:
 
     async def _handle_index_install(self, request: web.Request) -> web.StreamResponse:
         install_request: InstallRequest = await request.json()
-        index_url = self.network.get_mapped_url(URL(install_request["index"]))
-        provided_index_namespace = Identifier.namespace_from_url(index_url)
+        raw_index_url = URL(install_request["index"])
+        mapped_index_url = self.network.get_mapped_url(raw_index_url)
+        provided_index_namespace = Identifier.namespace_from_url(mapped_index_url)
 
-        match await AppIndexRegistry.try_fetch(index_url):
+        match await AppIndexRegistry.try_fetch(raw_index_url):
             case Err(err):
                 return web.json_response(
                     {"type": "error", "message": f"Failed to fetch index: {err}"},
@@ -193,7 +194,7 @@ class Server:
                 reason="Provided index ID does not match the namespace ID in the index URL.",
             )
 
-        accepted = await self.dashboard.notify_index_install(index_url)
+        accepted = await self.dashboard.notify_index_install(mapped_index_url)
 
         if not accepted:
             return web.json_response(
@@ -205,7 +206,7 @@ class Server:
         server_index = self.server.index.get()
         server_index["indexes"][index.id.key()] = {
             "added_at": datetime.now().isoformat(),
-            "url": str(index_url),
+            "url": str(raw_index_url),
         }
         self.server.index.set(server_index)
 

@@ -33,10 +33,10 @@ class AppIndexRegistry:
         id = Identifier.from_key(json["id"])
         apps: dict[Identifier, App] = {}
         for id_str, app_json in json["apps"].items():
-            id = Identifier.from_key(id_str)
+            app_id = Identifier.from_key(id_str)
             app = App.from_json(app_json)
-            if not id.is_namepath_equal(app.id, 0):
-                raise AssertionError(f"App ID does not match the ID in the index. {app.id} != {id}")
+            if not app_id.is_namepath_equal(app.id, 0):
+                raise AssertionError(f"App ID does not match the ID in the index. {app.id} != {app_id}")
             apps[id] = app
         return AppIndexRegistry(
             id=id,
