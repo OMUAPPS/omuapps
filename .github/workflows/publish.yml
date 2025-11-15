@@ -65,12 +65,12 @@ jobs:
 
             - name: Build
               if: ${{ github.event.inputs.npm == 'true' }}
-              run: npx lerna run build
+              run: bunx lerna run build
 
             - name: Get version
               id: get_version
               run: |
-                  echo "VERSION=$(npx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
+                  echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
             - name: Push
               run: |
