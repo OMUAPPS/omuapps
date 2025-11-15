@@ -55,5 +55,6 @@ jobs:
 
             - name: Push
               run: |
+                  git pull
                   git push --follow-tags
                   echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
