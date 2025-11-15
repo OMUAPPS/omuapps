@@ -2,27 +2,6 @@ name: Version
 
 on:
     workflow_dispatch:
-        inputs:
-            npm:
-                description: 'Publish to NPM'
-                required: true
-                default: true
-                type: boolean
-            pypi:
-                description: 'Publish to PyPI'
-                required: true
-                default: true
-                type: boolean
-            tauri:
-                description: 'Publish to Tauri'
-                required: true
-                default: true
-                type: boolean
-            upload:
-                description: 'Upload to Cloudflare R2'
-                required: true
-                default: true
-                type: boolean
 
 permissions:
     contents: write # for checkout and tag
@@ -56,11 +35,9 @@ jobs:
               run: bun install --frozen-lockfile
 
             - name: Build
-              if: ${{ github.event.inputs.npm == 'true' }}
               run: bunx lerna run build
 
             - name: Version
-              if: ${{ github.event.inputs.npm == 'true' }}
               run: bunx lerna version --yes
 
             - name: Get version
