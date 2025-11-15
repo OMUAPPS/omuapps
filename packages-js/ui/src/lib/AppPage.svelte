@@ -1,6 +1,6 @@
 <script lang="ts">
     import { DisconnectReason } from '@omujs/omu';
-    import { type NetworkStatus } from '@omujs/omu/network';
+    import type { NetworkStatus } from '@omujs/omu/network';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Button, omu, Spinner } from '@omujs/ui';
 
