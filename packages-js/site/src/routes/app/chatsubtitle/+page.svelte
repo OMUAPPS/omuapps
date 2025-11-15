@@ -1,9 +1,8 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { Chat, ChatEvents } from '@omujs/chat';
     import type { Room } from '@omujs/chat/models';
     import { Identifier, Omu } from '@omujs/omu';
-    import { AppHeader, setGlobal, TableList } from '@omujs/ui';
+    import { AppHeader, AppPage, setGlobal, TableList } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import { ChatSubtitleApp } from './chatsubtitle-app.js';

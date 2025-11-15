@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { page } from '$app/stores';
     import { BrowserTokenProvider, Omu, type App, type DisconnectReason } from '@omujs/omu';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Spinner } from '@omujs/ui';
@@ -28,8 +27,8 @@
         reason?: DisconnectReason;
     } = { type: 'initializing', browser: BROWSER };
 
-    const id = BROWSER && $page.url.searchParams.get('id');
-    const isSessionPresent = BROWSER && $page.url.searchParams.get(BrowserTokenProvider.TOKEN_PARAM_KEY);
+    const id = BROWSER && new URLSearchParams(location.search).get('id');
+    const isSessionPresent = BROWSER && new URLSearchParams(location.search).get(BrowserTokenProvider.TOKEN_PARAM_KEY);
     if (id) {
         const omu = new Omu(single ? asset : asset.join(id));
         state = { type: 'initialized', omu };

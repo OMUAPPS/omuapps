@@ -1,11 +1,11 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { Chat, ChatEvents, ChatPermissions } from '@omujs/chat';
     import { Message } from '@omujs/chat/models';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
+        AppPage,
         AssetButton,
         ComponentRenderer,
         setGlobal,

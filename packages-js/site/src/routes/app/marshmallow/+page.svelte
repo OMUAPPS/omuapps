@@ -1,9 +1,8 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { getSetting } from '$lib/helper.js';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, Button, ExternalLink, setGlobal, Spinner } from '@omujs/ui';
+    import { AppHeader, AppPage, Button, ExternalLink, setGlobal, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { MarshmallowAPI, MarshmallowSession } from './api.js';
     import { APP } from './app.js';

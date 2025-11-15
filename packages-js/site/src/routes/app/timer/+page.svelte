@@ -1,10 +1,10 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         Align,
         AppHeader,
+        AppPage,
         AssetButton,
         setGlobal,
         Textbox,

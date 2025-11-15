@@ -1,8 +1,7 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { setGlobal } from '@omujs/ui';
+    import { AppPage, setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, DISCORD_PLUGIN_APP } from './app.js';
     import App from './App.svelte';

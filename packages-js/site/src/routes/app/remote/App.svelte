@@ -1,5 +1,4 @@
 <script lang="ts">
-    import type { OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
     import { AssetButton, Button } from '@omujs/ui';
     import ConnectScreen from './_components/ConnectScreen.svelte';
@@ -11,7 +10,6 @@
 
     export let remote: RemoteApp;
     export let omu: Omu;
-    export let obs: OBSPlugin;
 
     let screen: 'connect' | null = null;
 

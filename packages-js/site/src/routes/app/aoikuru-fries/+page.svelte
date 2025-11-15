@@ -1,8 +1,7 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, AssetButton, Button, setGlobal } from '@omujs/ui';
+    import { AppHeader, AppPage, AssetButton, Button, setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, ASSET_APP } from './app.js';
     import { FriesApp } from './fries-app.js';

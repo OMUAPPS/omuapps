@@ -27,7 +27,6 @@ export const apps = [
     roulette,
     omucafe,
     reaction,
-    QUIZ_APP,
     DISCORD_PLUGIN_APP,
 ] satisfies App[];
 
@@ -40,6 +39,7 @@ if (DEV) {
         breaktimer,
         clock,
         remote,
+        QUIZ_APP,
     );
 }
 

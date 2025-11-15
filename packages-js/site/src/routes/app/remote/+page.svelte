@@ -1,8 +1,7 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, setGlobal } from '@omujs/ui';
+    import { AppHeader, AppPage, setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import { APP } from './app.js';
@@ -44,7 +43,7 @@
     {#await promise}
         <p>loading...</p>
     {:then}
-        <App {omu} {obs} {remote} />
+        <App {omu} {remote} />
     {/await}
 </AppPage>
 

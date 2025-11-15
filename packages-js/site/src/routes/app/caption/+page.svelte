@@ -1,9 +1,9 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
+        AppPage,
         setGlobal,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';

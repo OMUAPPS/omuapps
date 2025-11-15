@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { Chat } from '@omujs/chat';
-    import { OBSPlugin } from '@omujs/obs';
     import { AssetButton, Button, TableList, Textbox, Tooltip } from '@omujs/ui';
     import { ASSET_APP } from './app';
     import Config from './components/Config.svelte';
@@ -11,11 +10,10 @@
     import RoomEntry from './components/RoomEntry.svelte';
     import { ReplayApp } from './replay-app.js';
 
-    export let obs: OBSPlugin;
     export let chat: Chat;
 
     const replay = ReplayApp.getInstance();
-    const { replayData, config, omu } = replay;
+    const { replayData, config } = replay;
 
     let search: string = '';
 
