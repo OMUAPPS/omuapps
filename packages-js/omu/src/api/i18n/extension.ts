@@ -18,28 +18,13 @@ const I18N_LOCALES_REGISTRY_TYPE = RegistryType.createJson<Locale[]>(I18N_EXTENS
 export class I18nExtension implements Extension {
     public readonly type: ExtensionType<I18nExtension> = I18N_EXTENSION_TYPE;
     public readonly localesRegistry: Registry<Locale[]>;
-    private locales?: Locale[];
-    public defaultLocales?: Locale[];
 
     constructor(private readonly omu: Omu) {
         this.localesRegistry = omu.registries.get(I18N_LOCALES_REGISTRY_TYPE);
-        this.localesRegistry.listen((locale) => {
-            this.locales = locale;
-        });
-    }
-
-    public getLocales(): readonly Locale[] {
-        if (this.locales && this.locales.length > 0) {
-            return this.locales;
-        }
-        if (!this.defaultLocales || this.defaultLocales.length === 0) {
-            throw new Error('Default locales are not set');
-        }
-        return this.defaultLocales;
     }
 
     public translate(localizedText: LocalizedText): string {
-        const locales = this.getLocales();
+        const locales = this.localesRegistry.value;
         if (typeof localizedText === 'string') {
             return localizedText;
         }
