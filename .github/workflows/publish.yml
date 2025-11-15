@@ -67,14 +67,6 @@ jobs:
               if: ${{ github.event.inputs.npm == 'true' }}
               run: npx lerna run build
 
-            - name: Version
-              if: ${{ github.event.inputs.npm == 'true' }}
-              run: npx lerna version --yes
-
-            - name: Setup npmrc
-              if: ${{ github.event.inputs.npm == 'true' }}
-              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
-
             - name: Get version
               id: get_version
               run: |
@@ -82,8 +74,11 @@ jobs:
 
             - name: Push
               run: |
-                  git push --follow-tags
                   echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+
+            - name: Setup npmrc
+              if: ${{ github.event.inputs.npm == 'true' }}
+              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
 
             - name: Publish
               if: ${{ github.event.inputs.npm == 'true' }}
