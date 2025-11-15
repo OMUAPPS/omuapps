@@ -9,7 +9,7 @@ permissions:
     packages: write # for publish
 
 jobs:
-    publish-npm:
+    version:
         runs-on: ubuntu-latest
         env:
             NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
