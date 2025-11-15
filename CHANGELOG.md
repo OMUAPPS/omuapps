@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.27 (2025-11-15)
+
+**Note:** Version bump only for package omuapps
+
+
+
+
+
 ## 0.9.26 (2025-11-11)
 
 

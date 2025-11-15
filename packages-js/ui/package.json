@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/ui",
-    "version": "0.9.26",
+    "version": "0.9.27",
     "svelte": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
@@ -57,12 +57,12 @@
         "vitest": "^2.0.5"
     },
     "peerDependencies": {
-        "@sveltejs/kit": "^2.5.4",
-        "svelte": "^4.0.0",
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
+        "@omujs/obs": "workspace:*",
         "@omujs/omu": "workspace:*",
-        "@omujs/obs": "workspace:*"
+        "@sveltejs/kit": "^2.5.4",
+        "svelte": "^4.0.0"
     },
     "files": [
         "dist",
