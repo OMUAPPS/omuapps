@@ -68,10 +68,10 @@
 </script>
 
 <div class="info">
-    <Tooltip>
-        {url.host}によって提供されているアプリ
-    </Tooltip>
     <div class="body">
+        <Tooltip>
+            {url.host}によって提供されているアプリ
+        </Tooltip>
         <h2>
             {#if entry.meta}
                 {omu.i18n.translate(entry.meta.name)}
@@ -84,8 +84,8 @@
         {/if}
     </div>
     <div class="actions">
-        <Button onclick={() => {
-            omu.server.index.modify((index) => {
+        <Button onclick={async () => {
+            await omu.server.index.update((index) => {
                 delete index.indexes[id];
                 return index;
             });
@@ -139,6 +139,10 @@
         &:hover {
             outline: 1px solid var(--color-outline);
             outline-offset: 1rem;
+        }
+
+        > .body {
+            flex: 1;
         }
     }
 

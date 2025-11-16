@@ -9,7 +9,7 @@ import { EndpointType } from '../endpoint/endpoint.js';
 import { type Extension, ExtensionType } from '../extension.js';
 
 import { RegisterPacket, RegistryPacket } from './packets.js';
-import { type Registry, RegistryType } from './registry.js';
+import { type Registry, RegistryType, Writable } from './registry.js';
 
 export class RegistryExtension implements Extension {
     public readonly type: ExtensionType<RegistryExtension> = REGISTRY_EXTENSION_TYPE;
@@ -161,6 +161,51 @@ class RegistryImpl<T> implements Registry<T> {
             id: this.type.id,
             permissions: this.type.permissions,
         });
+    }
+
+    public compatSvelte(): Writable<T> {
+        let ready = false;
+        let value: T = this.value;
+        const listeners = new Set<(value: T) => void>();
+        this.listen((newValue) => {
+            ready = true;
+            value = newValue;
+            listeners.forEach((run) => {
+                run(value);
+            });
+        });
+        return {
+            set: (value: T) => {
+                if (!ready) {
+                    throw new Error(`Registry ${this.type.id.key()} is not ready`);
+                }
+                this.set(value);
+            },
+            subscribe: (run) => {
+                listeners.add(run);
+                run(value);
+                return () => {
+                    listeners.delete(run);
+                };
+            },
+            update: (fn) => {
+                if (!ready) {
+                    throw new Error(`Registry ${this.type.id.key()} is not ready`);
+                }
+                this.update(fn);
+            },
+            wait: () => {
+                return new Promise<T>((resolve) => {
+                    if (ready) {
+                        resolve(value);
+                    } else {
+                        listeners.add(() => {
+                            resolve(value);
+                        });
+                    }
+                });
+            },
+        };
     }
 }
 

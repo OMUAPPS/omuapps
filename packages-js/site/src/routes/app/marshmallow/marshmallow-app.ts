@@ -13,9 +13,42 @@ export type User = {
     premium: boolean;
 };
 
+export type Asset = {
+    type: 'url';
+    url: string;
+} | {
+    type: 'asset';
+    id: string;
+};
+
+export type MarshmallowSkin = {
+    meta: {
+        name: string;
+        note: string;
+    };
+    watermark: {
+        side: 'left-top' | 'middle-top' | 'right-top'
+            | 'left-middle' | 'middle-middle' | 'right-middle'
+            | 'left-bottom' | 'middle-bottom' | 'right-bottom';
+        margin: {
+            horizontal: number;
+            vertical: number;
+        };
+    };
+    textures: {
+        top: Asset;
+        middle: Asset;
+        bottom: Asset;
+    };
+    transition: {
+        type: 'drop' | 'ghost' | 'paper' | 'glow';
+    };
+};
+
 export type MarshmallowConfig = {
     user: string | null;
     scale: number;
+    skins: Record<string, MarshmallowSkin>;
 };
 
 const MARSHMALLOW_CONFIG_REGISTRY_TYPE = RegistryType.createJson<MarshmallowConfig>(APP_ID, {
@@ -23,6 +56,7 @@ const MARSHMALLOW_CONFIG_REGISTRY_TYPE = RegistryType.createJson<MarshmallowConf
     defaultValue: {
         user: null,
         scale: 1,
+        skins: {},
     },
     serializer: Serializer.transform<MarshmallowConfig>((config) => {
         config.scale ??= 0;

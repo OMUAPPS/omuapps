@@ -54,7 +54,7 @@ class ServerRegistry:
             await asyncio.sleep(1)
         self.save_task = None
 
-    async def notify(self, session: Session) -> None:
+    async def notify(self, session: Session | None) -> None:
         async with asyncio.TaskGroup() as tg:
             for listener, _ in self._listeners.values():
                 if listener == session:
@@ -107,3 +107,4 @@ class Registry[T]:
 
     def set(self, value: T) -> None:
         self._registry.store(self._serializer.serialize(value))
+        asyncio.create_task(self._registry.notify(None))

@@ -1,76 +1,66 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
-    import type { AppIndexEntry } from '@omujs/omu/api/server';
+    import type { AppIndex, AppIndexEntry } from '@omujs/omu/api/server';
     import { Checkbox, Spinner, Textbox } from '@omujs/ui';
     import { DEV } from 'esm-env';
-    import { onMount } from 'svelte';
     import { isBetaEnabled } from '../settings.js';
     import ExploreIndex from './_components/ExploreIndex.svelte';
     import { filter } from './explore.js';
 
     export const props = {};
+    const index = omu.server.index.compatSvelte();
 
     async function setIndex() {
-        await omu.server.index.modify((index) => {
-            const { indexes } = index;
-            if (DEV) {
-                indexes['com.omuapps'] = {
-                    url: 'http://localhost:5173/apps.json',
-                    meta: {
-                        name: 'OMUAPPS',
-                        note: {
-                            ja: 'OMUAPPS公式アプリ',
-                            en: 'Official OMUAPPS',
-                        },
+        const { indexes } = $index;
+        if (DEV && !$index.indexes['com.omuapps']) {
+            $index.indexes['com.omuapps'] ??= {
+                url: 'http://localhost:5173/apps.json',
+                meta: {
+                    name: 'OMUAPPS',
+                    note: {
+                        ja: 'OMUAPPS公式アプリ',
+                        en: 'Official OMUAPPS',
                     },
-                    added_at: indexes['com.omuapps'].added_at ?? new Date().toISOString(),
-                };
-            } else {
-                indexes['com.omuapps'] = {
-                    url: 'https://omuapps.com/apps.json',
-                    meta: {
-                        name: 'OMUAPPS - Beta',
-                        note: {
-                            ja: 'OMUAPPS公式アプリ',
-                            en: 'Official OMUAPPS',
-                        },
+                },
+                added_at: new Date().toISOString(),
+            };
+        } else if (!$index.indexes['com.omuapps']) {
+            $index.indexes['com.omuapps'] ??= {
+                url: 'https://omuapps.com/apps.json',
+                meta: {
+                    name: 'OMUAPPS - Beta',
+                    note: {
+                        ja: 'OMUAPPS公式アプリ',
+                        en: 'Official OMUAPPS',
                     },
-                    added_at: indexes['com.omuapps'].added_at ?? new Date().toISOString(),
-                };
-            }
-            if ($isBetaEnabled) {
-                indexes['com.omuapps.beta'] = {
-                    url: 'https://beta.omuapps.com/apps.json',
-                    meta: {
-                        name: 'OMUAPPS',
-                        note: {
-                            ja: 'ベータ版OMUAPPS公式アプリ',
-                            en: 'Official Beta Channel OMUAPPS',
-                        },
+                },
+                added_at: new Date().toISOString(),
+            };
+        }
+        if ($isBetaEnabled && !$index.indexes['com.omuapps.beta']) {
+            $index.indexes['com.omuapps.beta'] ??= {
+                url: 'https://beta.omuapps.com/apps.json',
+                meta: {
+                    name: 'OMUAPPS',
+                    note: {
+                        ja: 'ベータ版OMUAPPS公式アプリ',
+                        en: 'Official Beta Channel OMUAPPS',
                     },
-                    added_at: indexes['com.omuapps.beta'].added_at ?? new Date().toISOString(),
-                };
-            }
-            return index;
-        });
+                },
+                added_at: new Date().toISOString(),
+            };
+        }
     }
 
-    async function load() {
+    async function load({ indexes }: AppIndex) {
         await setIndex();
-
-        const { indexes } = await omu.server.index.get();
         state = {
             type: 'loaded',
-            indexes: Object.fromEntries(Object.entries(indexes).sort(([,a], [,b]) => new Date(a.added_at).getTime() - new Date(b.added_at).getTime())),
+            indexes: Object.fromEntries(Object.entries(indexes).sort(([,a], [,b]) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime())),
         };
     }
 
-    onMount(() => {
-        load();
-        return omu.server.index.listen(() => {
-            load();
-        });
-    });
+    $: index.wait().then(() => load($index));
 
     let state: {
         type: 'loading';
@@ -194,7 +184,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 3rem;
+            gap: 1.5rem;
             padding-bottom: 6rem;
             width: min(40rem, 100%);
         }
