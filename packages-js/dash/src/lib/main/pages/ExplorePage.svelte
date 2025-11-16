@@ -11,26 +11,14 @@
     const index = omu.server.index.compatSvelte();
 
     async function setIndex() {
-        if (DEV && !$index.indexes['com.omuapps']) {
+        if (!$index.indexes['com.omuapps']) {
             $index.indexes['com.omuapps'] ??= {
-                url: 'http://localhost:5173/apps.json',
+                url: DEV ? 'http://localhost:5173/apps.json' : 'https://omuapps.com/apps.json',
                 meta: {
                     name: 'OMUAPPS',
                     note: {
                         ja: 'OMUAPPS公式アプリ',
                         en: 'Official OMUAPPS',
-                    },
-                },
-                added_at: new Date().toISOString(),
-            };
-        } else if (!$index.indexes['com.omuapps']) {
-            $index.indexes['com.omuapps'] ??= {
-                url: 'https://omuapps.com/apps.json',
-                meta: {
-                    name: 'OMUAPPS - Beta',
-                    note: {
-                        ja: 'ベータ版OMUAPPS公式アプリ',
-                        en: 'Official Beta Channel OMUAPPS',
                     },
                 },
                 added_at: new Date().toISOString(),
@@ -40,10 +28,10 @@
             $index.indexes['com.omuapps.beta'] ??= {
                 url: 'https://beta.omuapps.com/apps.json',
                 meta: {
-                    name: 'OMUAPPS',
+                    name: 'OMUAPPS - Beta',
                     note: {
-                        ja: 'OMUAPPS公式アプリ',
-                        en: 'Official OMUAPPS',
+                        ja: 'ベータ版OMUAPPS公式アプリ',
+                        en: 'Official Beta Channel OMUAPPS',
                     },
                 },
                 added_at: new Date().toISOString(),
