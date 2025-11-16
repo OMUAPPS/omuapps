@@ -11,7 +11,6 @@
     const index = omu.server.index.compatSvelte();
 
     async function setIndex() {
-        const { indexes } = $index;
         if (DEV && !$index.indexes['com.omuapps']) {
             $index.indexes['com.omuapps'] ??= {
                 url: 'http://localhost:5173/apps.json',
@@ -30,8 +29,8 @@
                 meta: {
                     name: 'OMUAPPS - Beta',
                     note: {
-                        ja: 'OMUAPPS公式アプリ',
-                        en: 'Official OMUAPPS',
+                        ja: 'ベータ版OMUAPPS公式アプリ',
+                        en: 'Official Beta Channel OMUAPPS',
                     },
                 },
                 added_at: new Date().toISOString(),
@@ -43,8 +42,8 @@
                 meta: {
                     name: 'OMUAPPS',
                     note: {
-                        ja: 'ベータ版OMUAPPS公式アプリ',
-                        en: 'Official Beta Channel OMUAPPS',
+                        ja: 'OMUAPPS公式アプリ',
+                        en: 'Official OMUAPPS',
                     },
                 },
                 added_at: new Date().toISOString(),

@@ -308,10 +308,10 @@
                 "Extracting": "Uvを展開中...",
                 "UvCleanupOldVersions": "古いバージョンをクリーンアップ中...",
                 "UvUpdatePip": "pipを更新中...",
-                "UpdateRequirements": "パッケージの更新を確認中..."
+                "UpdateRequirements": "依存関係を更新中..."
             },
             "Server": {
-                "UpdateRequirements": "パッケージの更新を確認中...",
+                "UpdatingDependencies": "依存関係を更新中...",
                 "ServerStopping": "サーバーを停止中..."
             }
         },
