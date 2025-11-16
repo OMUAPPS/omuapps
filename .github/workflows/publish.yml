@@ -236,7 +236,7 @@ jobs:
                   tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
                   projectPath: ./packages-js/dash
                   releaseName: 'App v__VERSION__'
-                  releaseBody: 'See the assets to download this version and install.'
+                  releaseBody: ''
                   releaseDraft: false
                   prerelease: true
                   updaterJsonPreferNsis: true
