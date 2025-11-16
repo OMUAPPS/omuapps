@@ -30,7 +30,7 @@
 
 <Screen {screen} disableClose>
     <div class="header">
-        <h2>アプリ提供元の追加をします</h2>
+        <h2>アプリ提供元を追加</h2>
     </div>
     <div class="info">
         <div class="provider">
