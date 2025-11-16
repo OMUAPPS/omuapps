@@ -70,11 +70,7 @@ jobs:
             - name: Get version
               id: get_version
               run: |
-                  echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
-
-            - name: Push
-              run: |
-                  echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
+                  echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_ENV"
 
             - name: Setup npmrc
               if: ${{ github.event.inputs.npm == 'true' }}
