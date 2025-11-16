@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { OBSPlugin } from '@omujs/obs';
-    import { Omu, OmuPermissions } from '@omujs/omu';
+    import { OmuPermissions } from '@omujs/omu';
     import { AssetButton } from '@omujs/ui';
     import { onMount } from 'svelte';
     import { ASSET_APP } from './app';
@@ -10,8 +9,6 @@
     import { VOICE_CHAT_PERMISSION_ID } from './plugin/plugin';
     import { dragState, selectedAvatar } from './states.js';
 
-    export let omu: Omu;
-    export let obs: OBSPlugin;
     export let overlayApp: DiscordOverlayApp;
     const { config, discord: { sessions, speakingStates, voiceStates } } = overlayApp;
 

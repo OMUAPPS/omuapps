@@ -300,8 +300,8 @@
     "setup": {
         "progress": {
             "Python": {
-                "Downloading": "Pythonをダウンロード中...",
-                "Extracting": "Pythonを展開中..."
+                "Downloading": "サーバーをダウンロード中...",
+                "Extracting": "サーバーを展開中..."
             },
             "Uv": {
                 "Downloading": "Uvをダウンロード中...",

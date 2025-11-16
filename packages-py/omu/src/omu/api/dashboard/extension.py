@@ -276,7 +276,7 @@ DASHBOARD_PROMPT_REQUEST = PacketType[PromptRequest].create_json(
     "prompt_request",
 )
 
-type PromptResult = Literal["accept", "deny"]
+type PromptResult = Literal["accept", "deny", "block"]
 
 
 class PromptResponse(TypedDict):
@@ -288,6 +288,12 @@ class PromptResponse(TypedDict):
 DASHBOARD_PROMPT_RESPONSE = PacketType[PromptResponse].create_json(
     DASHBOARD_EXTENSION_TYPE,
     "prompt_response",
+)
+
+DASHBOARD_PROMPT_CLEAR_BLOCKED = EndpointType[None, None].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "prompt_clear_blocked",
+    permission_id=DASHBOARD_SET_PERMISSION_ID,
 )
 
 DASHBOARD_WEBVIEW_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "webview"

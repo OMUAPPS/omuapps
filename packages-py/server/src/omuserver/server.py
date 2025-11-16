@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime
 from urllib.parse import urlencode
 
@@ -84,6 +85,7 @@ class Server:
             headers=USER_AGENT_HEADERS,
             timeout=aiohttp.ClientTimeout(total=10),
         )
+        self.last_prompt_timestamp: dict[str, float] = {}
 
     def _set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
         loop = asyncio.new_event_loop()
@@ -164,6 +166,19 @@ class Server:
             return web.Response(status=500)
 
     async def _handle_index_install(self, request: web.Request) -> web.StreamResponse:
+        key = request.host
+        elapsed = time.time() - self.last_prompt_timestamp.get(key, 0)
+        remaining = 15 - elapsed
+        if remaining > 0:
+            return web.json_response(
+                {
+                    "type": "error",
+                    "message": f"An installation is already in progress. You can try again in {remaining:.1f} seconds.",
+                },
+                status=400,
+                reason=f"An installation is already in progress. You can try again in {remaining:.1f} seconds.",
+            )
+        self.last_prompt_timestamp[key] = time.time()
         install_request: InstallRequest = await request.json()
         raw_index_url = URL(install_request["index"])
         mapped_index_url = self.network.get_mapped_url(raw_index_url)

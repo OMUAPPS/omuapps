@@ -22,6 +22,7 @@ from omu.api.dashboard.extension import (
     DASHBOARD_OPEN_APP_ENDPOINT,
     DASHBOARD_OPEN_APP_PACKET,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
+    DASHBOARD_PROMPT_CLEAR_BLOCKED,
     DASHBOARD_PROMPT_REQUEST,
     DASHBOARD_PROMPT_RESPONSE,
     DASHBOARD_SET_ENDPOINT,
@@ -98,6 +99,7 @@ class DashboardExtension:
         server.packets.bind(DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET, self.handle_drag_drop_read_response)
         server.packets.bind(DASHBOARD_WEBVIEW_EVENT_PACKET, self.handle_webview_event)
         server.packets.bind(DASHBOARD_PROMPT_RESPONSE, self.handle_prompt_response)
+        server.endpoints.bind(DASHBOARD_PROMPT_CLEAR_BLOCKED, self.clear_blocked_prompts)
         server.endpoints.bind(DASHBOARD_SET_ENDPOINT, self.handle_dashboard_set)
         server.endpoints.bind(DASHBOARD_OPEN_APP_ENDPOINT, self.handle_dashboard_open_app)
         server.endpoints.bind(DASHBOARD_APP_INSTALL_ENDPOINT, self.handle_dashboard_app_install)
@@ -108,6 +110,7 @@ class DashboardExtension:
         self.dashboard_session: Session | None = None
         self.dashboard_wait_future: Future[Session] | None = None
         self.prompt_requests: dict[str, PromptHandle] = {}
+        self.blocked_prompts: set[str] = set()
         self.drag_drop_requests: dict[str, Future[DragDropRequestResponse]] = {}
         self.drag_drop_sessions: dict[str, Session] = {}
         self.drag_drop_states: dict[str, Session] = {}
@@ -173,7 +176,12 @@ class DashboardExtension:
 
         handle.future.set_result(response["result"])
 
-    async def request_prompt(self, prompt: PromptRequest) -> bool:
+    async def clear_blocked_prompts(self, session: Session, arg: None) -> None:
+        self.blocked_prompts.clear()
+
+    async def request_prompt(self, key: str, prompt: PromptRequest) -> bool:
+        if f"{prompt['kind']}-{key}" in self.blocked_prompts:
+            return False
         dashboard = await self.wait_dashboard_ready()
         if prompt["id"] in self.prompt_requests:
             raise ValueError(f"Permission request with id {prompt['id']} already exists")
@@ -186,36 +194,42 @@ class DashboardExtension:
             prompt,
         )
 
-        return await future == "accept"
+        result = await future
+        if result == "block":
+            self.blocked_prompts.add(f"{prompt['kind']}-{key}")
+        return result == "accept"
 
     async def request_permissions(self, app: App, permissions: list[PermissionType]) -> bool:
         return await self.request_prompt(
+            app.id.key(),
             {
                 "kind": "app/permissions",
                 "id": self.get_next_request_id(),
                 "app": app.to_json(),
                 "permissions": list(map(PermissionType.to_json, permissions)),
-            }
+            },
         )
 
     async def request_plugins(self, app: App, packages: list[PackageInfo]) -> bool:
         return await self.request_prompt(
+            app.id.key(),
             {
                 "kind": "app/plugins",
                 "id": self.get_next_request_id(),
                 "app": app.to_json(),
                 "packages": packages,
-            }
+            },
         )
 
     async def request_install(self, app: App, dependencies: dict[Identifier, App]) -> bool:
         return await self.request_prompt(
+            app.id.key(),
             {
                 "kind": "app/install",
                 "id": self.get_next_request_id(),
                 "app": app.to_json(),
                 "dependencies": {k.key(): v.to_json() for k, v in dependencies.items()},
-            }
+            },
         )
 
     async def handle_dashboard_app_install(self, session: Session, app: App) -> AppInstallResponse:
@@ -258,22 +272,24 @@ class DashboardExtension:
 
     async def notify_update_app(self, old_app: App, new_app: App) -> bool:
         return await self.request_prompt(
+            old_app.id.key(),
             {
                 "kind": "app/update",
                 "id": self.get_next_request_id(),
                 "old_app": old_app.to_json(),
                 "new_app": new_app.to_json(),
-            }
+            },
         )
 
     async def notify_index_install(self, index_url: URL, meta: AppIndexRegistryMeta) -> bool:
         return await self.request_prompt(
+            index_url.host or index_url.authority,
             {
                 "kind": "index/install",
                 "id": self.get_next_request_id(),
                 "index_url": str(index_url),
                 "meta": meta,
-            }
+            },
         )
 
     async def handle_drag_drop_state(self, session: Session, packet: FileDragPacket):

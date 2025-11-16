@@ -305,7 +305,7 @@ const DASHBOARD_PROMPT_REQUEST = PacketType.createJson<PromptRequest>(DASHBOARD_
     name: 'prompt_request',
 });
 
-export type PromptResult = 'accept' | 'deny';
+export type PromptResult = 'accept' | 'deny' | 'block';
 
 interface PromptResponse {
     id: string;
@@ -315,6 +315,10 @@ interface PromptResponse {
 
 const DASHBOARD_PROMPT_RESPONSE = PacketType.createJson<PromptResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'prompt_response',
+});
+
+const DASHBOARD_PROMPT_CLEAR_BLOCKED = EndpointType.createJson<null, null>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'prompt_clear_blocked',
 });
 
 export class DashboardExtension {
@@ -590,6 +594,10 @@ export class DashboardExtension {
 
     public async installApp(app: App): Promise<AppInstallResponse> {
         return await this.omu.endpoints.call(DASHBOARD_APP_INSTALL_ENDPOINT, app);
+    }
+
+    public async clearBlockedPrompts(): Promise<null> {
+        return await this.omu.endpoints.call(DASHBOARD_PROMPT_CLEAR_BLOCKED, null);
     }
 
     public async requireDragDrop(): Promise<DragDropHandler> {

@@ -2,7 +2,7 @@
     import { omu } from '$lib/client';
     import Document from '$lib/common/Document.svelte';
     import type { PromptRequestIndexInstall, PromptResult } from '@omujs/omu/api/dashboard';
-    import { ExternalLink } from '@omujs/ui';
+    import { ExternalLink, Tooltip } from '@omujs/ui';
     import Screen from './Screen.svelte';
     import about_index from './about_index.md?raw';
     import type { ScreenHandle } from './screen.js';
@@ -26,6 +26,11 @@
         resolve('deny');
         screen.handle.pop();
     }
+
+    function block() {
+        resolve('block');
+        screen.handle.pop();
+    }
 </script>
 
 <Screen {screen} disableClose>
@@ -45,12 +50,19 @@
         </div>
     </div>
     <div class="actions">
+        <button on:click={block} class="reject">
+            <Tooltip>
+                <p>この提供元の要求を拒否する</p>
+            </Tooltip>
+            禁止する
+            <i class="ti ti-forbid-2"></i>
+        </button>
         <button on:click={reject} class="reject">
             キャンセル
             <i class="ti ti-x"></i>
         </button>
         <button on:click={accept} class="accept">
-            許可
+            追加
             <i class="ti ti-check"></i>
         </button>
     </div>
@@ -147,7 +159,7 @@
 
         > button {
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0rem;
             font-weight: 600;
             color: var(--color-1);
             background: var(--color-bg-1);

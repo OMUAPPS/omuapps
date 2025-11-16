@@ -205,6 +205,14 @@
                         <input type="checkbox" bind:checked={$devMode} />
                     </label>
                 {/if}
+                <span class="setting">
+                    拒否した確認をリセット
+                    <Button onclick={async () => {
+                        await omu.dashboard.clearBlockedPrompts();
+                    }} primary>
+                        リセット
+                    </Button>
+                </span>
                 <h3>
                     {$t('settings.setting.debug')}
                 </h3>
@@ -240,6 +248,7 @@
                         {/if}
                     </Button>
                 </span>
+                <small>先にOBSを終了する必要があります</small>
                 <span class="setting clean-environment">
                     <Button primary onclick={() => {
                         screenContext.push(
@@ -250,7 +259,7 @@
                         {$t('settings.setting.cleanEnvironment')}
                     </Button>
                 </span>
-                <small>先にOBSを終了する必要があります</small>
+                <small>アプリのデータをすべて削除し完全なアンインストールをします</small>
                 <span class="setting">
                     <Button primary onclick={() => {
                         screenContext.push(
@@ -261,7 +270,9 @@
                         {$t('settings.setting.uninstall')}
                     </Button>
                 </span>
-                <small>アプリのデータをすべて削除し完全なアンインストールをします</small>
+                <small>
+                    {$t('settings.setting.betaModeDescription')}
+                </small>
                 <label class="setting">
                     <p>{$t('settings.setting.betaMode')}</p>
                     <input
@@ -270,9 +281,6 @@
                         on:change={async () => updateConfig()}
                     />
                 </label>
-                <small>
-                    {$t('settings.setting.betaModeDescription')}
-                </small>
             {:else if $currentSettingsCategory === 'plugins'}
                 <PluginSettings />
             {:else if $currentSettingsCategory === 'about'}
@@ -387,12 +395,11 @@
 
     .settings > small {
         color: var(--color-text);
-        font-size: 0.7rem;
-        margin-bottom: 2rem;
-        border-top: 1px solid var(--color-outline);
+        font-size: 0.8rem;
+        border-bottom: 1px solid var(--color-outline);
+        margin-top: 0.5rem;
+        margin-left: 1rem;
         width: fit-content;
-        padding-top: 0.125rem;
-        margin-top: 0.125rem;
     }
 
     .update {
@@ -426,13 +433,16 @@
 
     .setting {
         display: flex;
+        flex-wrap: wrap;
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
-        max-width: 20rem;
-        margin-bottom: 0.25rem;
-        margin-top: 0.5rem;
-        color: var(--color-1);
+        width: min(26rem, 100%);
+        padding: 0.75rem;
+
+        &:hover {
+            background: var(--color-bg-1);
+        }
 
         > input {
             width: 1.25rem;
