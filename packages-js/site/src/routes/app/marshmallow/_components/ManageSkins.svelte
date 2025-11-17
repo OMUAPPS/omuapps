@@ -1,29 +1,29 @@
 <script lang="ts">
     import { Button, ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
-    import { DEFAULT_SKIN, MarshmallowApp, type MarshmallowScreen } from '../marshmallow-app';
+    import { createSkin, MarshmallowApp, type MarshmallowScreen } from '../marshmallow-app';
     import EditSkin from './EditSkin.svelte';
 
     const marshmallowApp = MarshmallowApp.getInstance();
     const { config } = marshmallowApp;
 
-    export let screen: Extract<MarshmallowScreen, { type: 'skins' }>;
     export let state: Extract<MarshmallowScreen, { type: 'skins' }>['state'];
 
-    $: if (state.type === 'list' && Object.keys($config.skins).length === 0) {
-        state = { type: 'create_or_upload' };
+    $: {
+        if (state.type === 'list' && Object.keys($config.skins).length === 0) {
+            state = { type: 'create_or_upload' };
+        } else if (state.type === 'create_or_upload' && Object.keys($config.skins).length !== 0) {
+            state = { type: 'list' };
+        }
     }
 </script>
 
 {#if state.type === 'list'}
-    <h3>追加</h3>
     <div class="card">
         <div class="actions">
             <Button onclick={() => {
-                const skin = JSON.parse(JSON.stringify(DEFAULT_SKIN));
-                skin.id = Date.now();
                 state = {
                     type: 'edit',
-                    skin,
+                    skin: createSkin(),
                 };
             }}>
                 作る
@@ -31,9 +31,12 @@
             </Button>
             <FileDrop handle={async (files) => {
                 const skin = await marshmallowApp.loadSkin(files[0]);
-                $config.skins[skin.id] = skin;
+                $config.skins = {
+                    ...$config.skins,
+                    [skin.id]: skin,
+                };
             }} primary accept=".marshmallow">
-                アップロード
+                読み込む
                 <i class="ti ti-upload"></i>
             </FileDrop>
         </div>
@@ -83,10 +86,17 @@
     <h4>着せ替え</h4>
     <small>マシュマロを好きな見た目に</small>
     <div class="card">
-        <Button primary>
+        <FileDrop handle={async (files) => {
+            const skin = await marshmallowApp.loadSkin(files[0]);
+            $config.skins = {
+                ...$config.skins,
+                [skin.id]: skin,
+            };
+        }} primary accept=".marshmallow">
             読み込む
-        </Button>
-        <Button primary onclick={() => state = { type: 'edit', skin: DEFAULT_SKIN }}>
+            <i class="ti ti-upload"></i>
+        </FileDrop>
+        <Button primary onclick={() => state = { type: 'edit', skin: createSkin() }}>
             作る
         </Button>
     </div>

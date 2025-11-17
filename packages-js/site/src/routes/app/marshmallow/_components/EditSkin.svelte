@@ -25,10 +25,11 @@
 
     function download() {
         if (!buffer) return;
+
         downloadFile({
             filename: `${skin.meta.name}.marshmallow`,
             content: buffer,
-            type: '',
+            type: '.marshmallow',
         });
     }
 

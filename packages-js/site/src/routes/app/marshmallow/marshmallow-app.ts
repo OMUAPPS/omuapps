@@ -63,7 +63,7 @@ import bottom from './skins/bottom.svg';
 import cursor from './skins/cursor.png';
 import middle from './skins/middle.svg';
 import top from './skins/top.svg';
-export const DEFAULT_SKIN: MarshmallowSkin = {
+const DEFAULT_SKIN: MarshmallowSkin = {
     id: 'default',
     version: 1,
     meta: {
@@ -91,6 +91,12 @@ export const DEFAULT_SKIN: MarshmallowSkin = {
         scale: 1,
     },
 };
+
+export function createSkin(): MarshmallowSkin {
+    const newSkin = JSON.parse(JSON.stringify(DEFAULT_SKIN));
+    newSkin.id = Date.now();
+    return newSkin;
+}
 
 export type MarshmallowConfig = {
     user: string | null;

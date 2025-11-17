@@ -34,6 +34,8 @@
             const bottom = await marshmallowApp.getAssetUrl(skin.textures.bottom);
             const cursor = skin.cursor.asset && await marshmallowApp.getAssetUrl(skin.cursor.asset);
             loadedSkin = { top, middle, bottom, cursor };
+        } else {
+            loadedSkin = undefined;
         }
         await tick();
         const rect = element.getBoundingClientRect();

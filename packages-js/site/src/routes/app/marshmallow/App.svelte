@@ -1,7 +1,6 @@
 <script lang="ts">
     import { OmuPermissions } from '@omujs/omu';
     import { AssetButton, ButtonMini, Slider, Tooltip } from '@omujs/ui';
-    import { onMount } from 'svelte';
     import Answers from './_components/Answers.svelte';
     import ManageSkins from './_components/ManageSkins.svelte';
     import Messages from './_components/Messages.svelte';
@@ -24,6 +23,9 @@
     async function fetchUser() {
         user = await api.user();
         $hasPremium = user.premium;
+        if (!$hasPremium) {
+            $config.active_skins = {};
+        }
     }
 
     $: {
@@ -34,13 +36,6 @@
 
     let refreshMessages: () => void;
     let refreshAnswers: () => void;
-
-    onMount(async () => {
-    // const handler = await omu.dashboard.requireDragDrop();
-        // handler.onDrop(() => {
-
-        // });
-    });
 </script>
 
 <main>
@@ -63,16 +58,18 @@
             <button on:click={() => ($screen = { type: 'answers' })} disabled={$screen.type === 'answers'}>
                 過去の回答
             </button>
-            <button on:click={() => ($screen = { type: 'skins', state: { type: 'list' } })} disabled={$screen.type === 'skins'}>
-                <Tooltip>
-                    着せ替える
-                </Tooltip>
-                <i class="ti ti-cards"></i>
-            </button>
+            {#if $hasPremium}
+                <button on:click={() => ($screen = { type: 'skins', state: { type: 'list' } })} disabled={$screen.type === 'skins'}>
+                    <Tooltip>
+                        着せ替える
+                    </Tooltip>
+                    <i class="ti ti-cards"></i>
+                </button>
+            {/if}
         </div>
         {#if $screen.type === 'skins'}
             <div class="skins omu-scroll">
-                <ManageSkins bind:screen={$screen} bind:state={$screen.state} />
+                <ManageSkins bind:state={$screen.state} />
             </div>
         {:else}
             <div class="bottom">
