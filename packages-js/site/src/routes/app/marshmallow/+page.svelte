@@ -95,6 +95,8 @@
     if (BROWSER) {
         omu.permissions.require(
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             OmuPermissions.DASHBOARD_WEBVIEW_PERMISSION_ID,
@@ -106,6 +108,11 @@
         init();
     }
 </script>
+
+<svelte:head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+</svelte:head>
 
 <AppPage>
     <header slot="header">
@@ -143,7 +150,7 @@
             <Spinner />
         </div>
     {:else if state.type === 'ready'}
-        <App {omu} {marshmallow} {obs} api={state.api} logout={logout} />
+        <App api={state.api} logout={logout} />
     {:else if state.type === 'failed'}
         <div class="screen">
             {#if state.kind === 'host'}

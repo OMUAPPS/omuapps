@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button, Spinner } from '@omujs/ui';
-    import { DOM, type MarshmallowAPI, type Message } from './api';
+    import { DOM, type MarshmallowAPI, type Message } from '../api';
     import MessageEntry from './MessageEntry.svelte';
 
     export let api: MarshmallowAPI;

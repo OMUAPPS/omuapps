@@ -3,9 +3,9 @@
 </script>
 <script lang="ts">
     import { Button, Spinner, Tooltip } from '@omujs/ui';
-    import { DOM, type MarshmallowAPI, type Message, type MessageAction } from './api';
-    import { MarshmallowApp } from './marshmallow-app';
-    import { hasPremium } from './stores';
+    import { DOM, type MarshmallowAPI, type Message, type MessageAction } from '../api';
+    import { MarshmallowApp } from '../marshmallow-app';
+    import { hasPremium } from '../stores';
 
     export let api: MarshmallowAPI;
     export let message: Message;

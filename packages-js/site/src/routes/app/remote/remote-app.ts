@@ -1,4 +1,4 @@
-import { makeRegistryWritable, md5 } from '$lib/helper.js';
+import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
@@ -126,7 +126,7 @@ export class RemoteApp {
     public async upload(...files: File[]) {
         const buffers = await Promise.all(files.map(async (file) => {
             const bytes = new Uint8Array(await file.arrayBuffer());
-            const hash = md5(bytes);
+            const hash = hash(bytes);
             const hashHex = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
             const id = APP_ID.join('resource', hashHex);
             return { identifier: id, buffer: bytes, file };
@@ -168,7 +168,7 @@ export class RemoteApp {
 
     public async createAlbum(assets: string[], filename?: string) {
         const now = Date.now();
-        const hashBytes = md5(new TextEncoder().encode([now, ...assets].join('')));
+        const hashBytes = hash(new TextEncoder().encode([now, ...assets].join('')));
         const hash = Array.from(new Uint8Array(hashBytes)).map((b) => b.toString(16).padStart(2, '0')).join('');
         const id = APP_ID.join('album', hash);
         this.resources.update((resources) => {

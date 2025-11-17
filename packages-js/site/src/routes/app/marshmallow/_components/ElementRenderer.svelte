@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { ContentBlock } from './api';
+    import type { ContentBlock } from '../api';
 
     export let block: ContentBlock | undefined;
 </script>

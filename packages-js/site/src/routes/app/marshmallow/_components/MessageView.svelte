@@ -1,36 +1,41 @@
 <script lang="ts">
     import { invLerp } from '$lib/math/math';
     import { Button, ExternalLink } from '@omujs/ui';
-    import { MarshmallowAPI } from './api';
-    import { MarshmallowApp } from './marshmallow-app';
+    import { MarshmallowAPI } from '../api';
+    import { MarshmallowApp } from '../marshmallow-app';
+    import MarshmallowRenderer from './MarshmallowRenderer.svelte';
     import MessageActions from './MessageActions.svelte';
 
     export let api: MarshmallowAPI;
 
     const { data } = MarshmallowApp.getInstance();
 
-    let imageContainer: HTMLElement;
+    let imageElement: HTMLElement;
+    let containerElement: HTMLElement;
     let mouse: { clientX: number; clientY: number } = { clientX: 0, clientY: 0 };
 
     function updatePointer() {
         const { clientX, clientY } = mouse;
-        const { left, top, right, bottom } = imageContainer.getBoundingClientRect();
+        const { left, top, right, bottom } = imageElement.getBoundingClientRect();
         $data.pointer = {
             x: invLerp(left, right, clientX),
             y: invLerp(top, bottom, clientY),
         };
     }
-</script>
 
-<div
-    class="container omu-scroll"
-    on:scroll={({ currentTarget }) => {
-        const imageRect = imageContainer.getBoundingClientRect();
-        const containerRect = currentTarget.getBoundingClientRect();
+    async function handleScroll() {
+        const imageRect = imageElement.getBoundingClientRect();
+        const containerRect = containerElement.getBoundingClientRect();
         $data.scroll = invLerp(containerRect.top, containerRect.bottom - imageRect.height, imageRect.top);
         if (!$data.pointer) return;
         updatePointer();
-    }}
+    }
+</script>
+
+<div
+    bind:this={containerElement}
+    class="container omu-scroll"
+    on:scroll={handleScroll}
 >
     {#if $data.message}
         <div class="close">
@@ -49,11 +54,8 @@
                 on:mouseleave={() => {
                     $data.pointer = null;
                 }}
-                bind:this={imageContainer}>
-                <img
-                    src="https://media.marshmallow-qa.com/system/images/{$data.message.id}.png"
-                    alt=""
-                />
+                bind:this={imageElement}>
+                <MarshmallowRenderer message={$data.message} targetWidth={400} pointer={$data.pointer} />
             </div>
             <ExternalLink href={`https://marshmallow-qa.com/messages/${$data.message.id}`}>
                 ブラウザーで開く
@@ -98,15 +100,5 @@
         align-items: center;
         gap: 2rem;
         margin-bottom: 6rem;
-    }
-
-    .image {
-        width: max(24rem, 70.21%);
-        object-fit: contain;
-    }
-
-    img {
-        width: 100%;
-        height: 100%;
     }
 </style>

@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Tooltip } from '@omujs/ui';
-    import type { Message } from './api';
+    import type { Message } from '../api';
+    import { MarshmallowApp } from '../marshmallow-app';
     import ElementRenderer from './ElementRenderer.svelte';
-    import { MarshmallowApp } from './marshmallow-app';
     const { data } = MarshmallowApp.getInstance();
 
     export let message: Message;
