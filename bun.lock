@@ -29,8 +29,8 @@
     },
     "packages-js/chat": {
       "name": "@omujs/chat",
-      "version": "0.9.26",
-      "dependencies": {
+      "version": "0.9.31",
+      "peerDependencies": {
         "@omujs/omu": "workspace:*",
       },
     },
@@ -71,16 +71,16 @@
     },
     "packages-js/i18n": {
       "name": "@omujs/i18n",
-      "version": "0.9.26",
+      "version": "0.9.31",
     },
     "packages-js/omu": {
       "name": "@omujs/omu",
-      "version": "0.9.26",
+      "version": "0.9.31",
     },
     "packages-js/plugin-obs": {
       "name": "@omujs/obs",
-      "version": "0.9.26",
-      "dependencies": {
+      "version": "0.9.31",
+      "peerDependencies": {
         "@omujs/omu": "workspace:*",
       },
     },
@@ -124,7 +124,7 @@
     },
     "packages-js/ui": {
       "name": "@omujs/ui",
-      "version": "0.9.26",
+      "version": "0.9.31",
       "devDependencies": {
         "@chromatic-com/storybook": "1.6.1",
         "@fontsource/noto-sans-jp": "^5.0.19",
