@@ -24,11 +24,14 @@ async def main():
     while True:
         command, *args = input("").split(" ")
         if command in {"build", "b"}:
+            for file in packages_path.iterdir():
+                if not file.is_file():
+                    continue
+                file.unlink()
             if not args:
                 build = await asyncio.create_subprocess_exec(
                     "uv",
                     "build",
-                    "--clean",
                     "--all-packages",
                     "--out-dir",
                     str(packages_path),
