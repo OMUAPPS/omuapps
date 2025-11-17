@@ -285,11 +285,9 @@ class TwitchPubSub:
         if self.handle_future is not None:
             await self.handle_future
 
-    async def handle_pong(self, packet: S2CPong):
-        logger.info("Received PONG")
+    async def handle_pong(self, packet: S2CPong): ...
 
-    async def handle_response(self, packet: S2CResponse):
-        logger.info(f"Received RESPONSE: {packet}")
+    async def handle_response(self, packet: S2CResponse): ...
 
     async def handle_message(self, packet: S2CMessage):
         logger.info(f"Received MESSAGE: {packet}")
