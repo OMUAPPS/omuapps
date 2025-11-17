@@ -36,17 +36,16 @@ This procedure assumes the use of vscode.
 
 Please install the following.
 
-- Install [Rust](https://www.rust-lang.org/ja)
-- Install [Nodejs](https://nodejs.org/)
+- Install [Rust](https://www.rust-lang.org/)
 - Install [bun](https://bun.sh/)
-- Install [rye](https://rye.astral.sh/)
+- Install [uv](https://docs.astral.sh/uv/)
 
 ### Setup
 
-Run `rye sync` `bun i`.
+Run `uv sync` `bun i`.
 
 ```bash
-rye sync
+uv sync
 bun i
 ```
 

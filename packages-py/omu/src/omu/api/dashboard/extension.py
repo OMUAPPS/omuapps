@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, LiteralString, TypedDict
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
+from omu.api.permission.permission import PermissionTypeJson
+from omu.api.plugin.package_info import PackageInfo
 from omu.api.registry.registry import RegistryPermissions, RegistryType
+from omu.api.server.extension import AppIndexRegistryMeta
 from omu.api.table import TablePermissions, TableType
 from omu.app import App, AppJson
 from omu.bytebuffer import ByteReader, ByteWriter
@@ -19,9 +22,6 @@ from .packets import (
     AppInstallRequestPacket,
     AppInstallResponse,
     AppUpdateRequestPacket,
-    AppUpdateResponse,
-    PermissionRequestPacket,
-    PluginRequestPacket,
 )
 
 if TYPE_CHECKING:
@@ -41,32 +41,6 @@ DASHBOARD_SET_ENDPOINT = EndpointType[Identifier, DashboardSetResponse].create_j
     request_serializer=Serializer.model(Identifier),
     permission_id=DASHBOARD_SET_PERMISSION_ID,
 )
-DASHBOARD_PERMISSION_REQUEST_PACKET = PacketType[PermissionRequestPacket].create_serialized(
-    DASHBOARD_EXTENSION_TYPE,
-    "permission_request",
-    serializer=PermissionRequestPacket,
-)
-DASHBOARD_PERMISSION_ACCEPT_PACKET = PacketType[str].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "permission_accept",
-)
-DASHBOARD_PERMISSION_DENY_PACKET = PacketType[str].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "permission_deny",
-)
-DASHBOARD_PLUGIN_REQUEST_PACKET = PacketType[PluginRequestPacket].create_serialized(
-    DASHBOARD_EXTENSION_TYPE,
-    "plugin_request",
-    serializer=PluginRequestPacket,
-)
-DASHBOARD_PLUGIN_ACCEPT_PACKET = PacketType[str].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "plugin_accept",
-)
-DASHBOARD_PLUGIN_DENY_PACKET = PacketType[str].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "plugin_deny",
-)
 DASHBOARD_OPEN_APP_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "open"
 DASHBOARD_OPEN_APP_ENDPOINT = EndpointType[App, None].create_json(
     DASHBOARD_EXTENSION_TYPE,
@@ -78,18 +52,6 @@ DASHBOARD_OPEN_APP_PACKET = PacketType[App].create_json(
     DASHBOARD_EXTENSION_TYPE,
     "open_app",
     Serializer.model(App),
-)
-DASHOBARD_APP_READ_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "read"
-DASHOBARD_APP_EDIT_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "edit"
-DASHBOARD_APP_TABLE_TYPE = TableType.create_model(
-    DASHBOARD_EXTENSION_TYPE,
-    "apps",
-    App,
-    permissions=TablePermissions(
-        read=DASHOBARD_APP_READ_PERMISSION_ID,
-        write=DASHOBARD_APP_EDIT_PERMISSION_ID,
-        remove=DASHOBARD_APP_EDIT_PERMISSION_ID,
-    ),
 )
 DASHBOARD_APP_INSTALL_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "install"
 DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType[App, AppInstallResponse].create_json(
@@ -103,33 +65,10 @@ DASHBOARD_APP_INSTALL_PACKET = PacketType[AppInstallRequestPacket].create_serial
     "install_app",
     AppInstallRequestPacket,
 )
-DASHBOARD_APP_INSTALL_ACCEPT_PACKET = PacketType[str].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "install_app_accept",
-)
-DASHBOARD_APP_INSTALL_DENY_PACKET = PacketType[str].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "install_app_deny",
-)
-DASHBOARD_APP_UPDATE_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "update"
-DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType[App, AppUpdateResponse].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "update_app",
-    request_serializer=Serializer.model(App),
-    permission_id=DASHBOARD_APP_UPDATE_PERMISSION_ID,
-)
 DASHBOARD_APP_UPDATE_PACKET = PacketType[AppUpdateRequestPacket].create_serialized(
     DASHBOARD_EXTENSION_TYPE,
     "update_app",
     AppUpdateRequestPacket,
-)
-DASHBOARD_APP_UPDATE_ACCEPT_PACKET = PacketType[str].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "update_app_accept",
-)
-DASHBOARD_APP_UPDATE_DENY_PACKET = PacketType[str].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "update_app_deny",
 )
 
 DASHBOARD_DRAG_DROP_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "drag_drop"
@@ -292,9 +231,69 @@ DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT = EndpointType[DragDropRequest, DragDropReq
 DASHBOARD_DRAG_DROP_REQUEST_PACKET = PacketType[DragDropRequestDashboard].create_json(
     DASHBOARD_EXTENSION_TYPE, "drag_drop_request"
 )
-DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET = PacketType[DragDropRequestResponse].create_json(
+
+
+class PromptRequestBase[T: LiteralString](TypedDict):
+    kind: T
+    id: str
+
+
+class PromptRequestAppPermissions(PromptRequestBase[Literal["app/permissions"]]):
+    app: AppJson
+    permissions: list[PermissionTypeJson]
+
+
+class PromptRequestAppPlugins(PromptRequestBase[Literal["app/plugins"]]):
+    app: AppJson
+    packages: list[PackageInfo]
+
+
+class PromptRequestAppInstall(PromptRequestBase[Literal["app/install"]]):
+    app: AppJson
+    dependencies: dict[str, AppJson]
+
+
+class PromptRequestAppUpdate(PromptRequestBase[Literal["app/update"]]):
+    old_app: AppJson
+    new_app: AppJson
+
+
+class PromptRequestIndexInstall(PromptRequestBase[Literal["index/install"]]):
+    index_url: str
+    meta: AppIndexRegistryMeta
+
+
+type PromptRequest = (
+    PromptRequestAppPermissions
+    | PromptRequestAppPlugins
+    | PromptRequestAppInstall
+    | PromptRequestAppUpdate
+    | PromptRequestIndexInstall
+)
+
+DASHBOARD_PROMPT_REQUEST = PacketType[PromptRequest].create_json(
     DASHBOARD_EXTENSION_TYPE,
-    "drag_drop_request_approval",
+    "prompt_request",
+)
+
+type PromptResult = Literal["accept", "deny", "block"]
+
+
+class PromptResponse(TypedDict):
+    id: str
+    kind: str
+    result: PromptResult
+
+
+DASHBOARD_PROMPT_RESPONSE = PacketType[PromptResponse].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "prompt_response",
+)
+
+DASHBOARD_PROMPT_CLEAR_BLOCKED = EndpointType[None, None].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "prompt_clear_blocked",
+    permission_id=DASHBOARD_SET_PERMISSION_ID,
 )
 
 DASHBOARD_WEBVIEW_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "webview"
@@ -414,26 +413,14 @@ class DashboardExtension(Extension):
     def __init__(self, omu: Omu):
         self.omu = omu
         self.omu.network.register_packet(
-            DASHBOARD_PERMISSION_REQUEST_PACKET,
-            DASHBOARD_PERMISSION_ACCEPT_PACKET,
-            DASHBOARD_PERMISSION_DENY_PACKET,
-            DASHBOARD_PLUGIN_REQUEST_PACKET,
-            DASHBOARD_PLUGIN_ACCEPT_PACKET,
-            DASHBOARD_PLUGIN_DENY_PACKET,
             DASHBOARD_OPEN_APP_PACKET,
             DASHBOARD_APP_INSTALL_PACKET,
-            DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
-            DASHBOARD_APP_INSTALL_DENY_PACKET,
             DASHBOARD_APP_UPDATE_PACKET,
-            DASHBOARD_APP_UPDATE_ACCEPT_PACKET,
-            DASHBOARD_APP_UPDATE_DENY_PACKET,
             DASHBOARD_DRAG_DROP_STATE_PACKET,
             DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
             DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
             DASHBOARD_DRAG_DROP_REQUEST_PACKET,
-            DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET,
         )
-        self.apps = omu.tables.get(DASHBOARD_APP_TABLE_TYPE)
 
     async def open_app(self, app: App) -> None:
         if not self.omu.permissions.has(DASHBOARD_OPEN_APP_PERMISSION_ID):

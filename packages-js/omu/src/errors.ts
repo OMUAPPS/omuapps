@@ -33,6 +33,12 @@ export class PermissionDenied extends DisconnectReason {
     }
 }
 
+export class AppRemoved extends DisconnectReason {
+    constructor(message: string) {
+        super(DisconnectType.APP_REMOVED, message);
+    }
+}
+
 export class InvalidToken extends DisconnectReason {
     constructor(message: string) {
         super(DisconnectType.INVALID_TOKEN, message);

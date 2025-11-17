@@ -1,8 +1,6 @@
 <script lang="ts">
-    import AssetButton from '$lib/components/AssetButton.svelte';
     import type { Chat } from '@omujs/chat';
-    import { OBSPlugin } from '@omujs/obs';
-    import { Button, TableList, Textbox, Tooltip } from '@omujs/ui';
+    import { AssetButton, Button, TableList, Textbox, Tooltip } from '@omujs/ui';
     import { ASSET_APP } from './app';
     import Config from './components/Config.svelte';
     import Menu from './components/Menu.svelte';
@@ -12,11 +10,10 @@
     import RoomEntry from './components/RoomEntry.svelte';
     import { ReplayApp } from './replay-app.js';
 
-    export let obs: OBSPlugin;
     export let chat: Chat;
 
     const replay = ReplayApp.getInstance();
-    const { replayData, config, omu } = replay;
+    const { replayData, config } = replay;
 
     let search: string = '';
 
@@ -34,6 +31,12 @@
             設定
             <i class="ti ti-settings"></i>
         </Button>
+        <MenuSection name="配信ソフトに追加する" icon="ti-arrow-bar-to-down">
+            <AssetButton
+                asset={ASSET_APP}
+                dimensions={{ width: '50:%', height: '50:%' }}
+            />
+        </MenuSection>
         <MenuSection name="最近の配信から" icon="ti-video" flex={1}>
             <div class="search" slot="actions">
                 <Tooltip>過去の配信から検索</Tooltip>
@@ -63,14 +66,40 @@
                 </p>
             </TableList>
         </MenuSection>
-        <MenuSection name="配信ソフトに追加する" icon="ti-arrow-bar-to-down">
-            <AssetButton
-                asset={ASSET_APP}
-                dimensions={{ width: '50:%', height: '50:%' }}
-                {omu}
-                {obs}
+        <MenuSection name="URLから" icon="ti-link">
+            <Textbox
+                placeholder="https://youtu.be/..."
+                on:input={(event) => {
+                    const url = new URL(event.detail);
+                    replay.playByUrl(url);
+                }}
+                lazy
             />
         </MenuSection>
+    </Menu>
+    <div class="content">
+        <div class="player">
+            {#if $replayData}
+                {#if $replayData.video.type === 'youtube'}
+                    <YoutubePlayer
+                        video={$replayData.video}
+                        bind:playback={$replayData.playback}
+                        bind:info={$replayData.info}
+                    />
+                {:else if $replayData.video.type === 'twitch'}
+                    <TwitchPlayer
+                        video={$replayData.video}
+                        bind:playback={$replayData.playback}
+                        bind:info={$replayData.info}
+                    />
+                {/if}
+            {:else}
+                <div class="empty">
+                    動画を選択するとここに表示されます
+                    <i class="ti ti-video"></i>
+                </div>
+            {/if}
+        </div>
         <MenuSection name="OBSの音" icon="ti ti-volume">
             <div class="audio">
                 <Button primary={$config.muted} onclick={() => {
@@ -97,40 +126,6 @@
                     </Tooltip>
                 </div>
             </div>
-        </MenuSection>
-    </Menu>
-    <div class="content">
-        <div class="player">
-            {#if $replayData}
-                {#if $replayData.video.type === 'youtube'}
-                    <YoutubePlayer
-                        video={$replayData.video}
-                        bind:playback={$replayData.playback}
-                        bind:info={$replayData.info}
-                    />
-                {:else if $replayData.video.type === 'twitch'}
-                    <TwitchPlayer
-                        video={$replayData.video}
-                        bind:playback={$replayData.playback}
-                        bind:info={$replayData.info}
-                    />
-                {/if}
-            {:else}
-                <div class="empty">
-                    動画を選択するとここに表示されます
-                    <i class="ti ti-video"></i>
-                </div>
-            {/if}
-        </div>
-        <MenuSection name="URLから" icon="ti-link">
-            <Textbox
-                placeholder="https://youtu.be/..."
-                on:input={(event) => {
-                    const url = new URL(event.detail);
-                    replay.playByUrl(url);
-                }}
-                lazy
-            />
         </MenuSection>
     </div>
 </div>

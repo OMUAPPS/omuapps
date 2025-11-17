@@ -1,51 +1,18 @@
 import type { Unlisten } from '../../event';
 import { Identifier, IntoId } from '../../identifier';
-import type { ByteReader, ByteWriter, JsonType, Serializable } from '../../serialize';
-import { Flags, Serializer } from '../../serialize';
+import type { JsonType, Serializable } from '../../serialize';
+import { Serializer } from '../../serialize';
 
-export class RegistryPermissions {
-    constructor(
-        public readonly all?: Identifier | undefined,
-        public readonly read?: Identifier | undefined,
-        public readonly write?: Identifier | undefined,
-    ) { }
+export interface RegistryPermissionsJSON {
+    all?: string;
+    read?: string;
+    write?: string;
+}
 
-    public static of(permissions: {
-        all?: Identifier;
-        read?: Identifier;
-        write?: Identifier;
-    }): RegistryPermissions {
-        return new RegistryPermissions(permissions.all, permissions.read, permissions.write);
-    }
-
-    public serialize(writer: ByteWriter): void {
-        const flags = new Flags({ length: 3 });
-        flags.set(0, this.all !== undefined);
-        flags.set(1, this.read !== undefined);
-        flags.set(2, this.write !== undefined);
-        writer.writeFlags(flags);
-        if (this.all !== undefined) {
-            writer.writeString(this.all.key());
-        }
-        if (this.read !== undefined) {
-            writer.writeString(this.read.key());
-        }
-        if (this.write !== undefined) {
-            writer.writeString(this.write.key());
-        }
-    }
-
-    public static deserialize(reader: ByteReader): RegistryPermissions {
-        const flags = reader.readFlags(3);
-        const all = flags.has(0) ? Identifier.fromKey(reader.readString()) : undefined;
-        const read = flags.has(1) ? Identifier.fromKey(reader.readString()) : undefined;
-        const write = flags.has(2) ? Identifier.fromKey(reader.readString()) : undefined;
-        return new RegistryPermissions(
-            all,
-            read,
-            write,
-        );
-    }
+export interface RegistryPermissions {
+    all?: IntoId;
+    read?: IntoId;
+    write?: IntoId;
 }
 
 export class RegistryType<T> {
@@ -71,7 +38,7 @@ export class RegistryType<T> {
             Identifier.from(identifier).join(name),
             defaultValue,
             Serializer.pipe<T, D, Uint8Array>(serializer ?? Serializer.noop(), Serializer.json()),
-            permissions ?? new RegistryPermissions(),
+            permissions ?? {},
         );
     }
 
@@ -90,7 +57,7 @@ export class RegistryType<T> {
             Identifier.from(identifier).join(name),
             defaultValue,
             serializer,
-            permissions ?? new RegistryPermissions(),
+            permissions ?? {},
         );
     }
 }
@@ -103,4 +70,27 @@ export interface Registry<T> {
     update(fn: (value: T) => PromiseLike<T> | T): Promise<T>;
     modify(fn: (value: T) => PromiseLike<T> | T): Promise<T>;
     listen(fn: (value: T) => void): Unlisten;
+
+    compatSvelte(): Writable<T>;
+}
+
+export type Subscriber<T> = (value: T) => void;
+
+export type Unsubscriber = () => void;
+
+export type Updater<T> = (value: T) => T;
+
+export type StartStopNotifier<T> = (
+    set: (value: T) => void,
+    update: (fn: Updater<T>) => void
+) => void | (() => void);
+
+export interface Readable<T> {
+    subscribe(this: void, run: Subscriber<T>): Unsubscriber;
+}
+
+export interface Writable<T> extends Readable<T> {
+    set(this: void, value: T): void;
+    update(this: void, updater: Updater<T>): void;
+    wait(): Promise<T>;
 }

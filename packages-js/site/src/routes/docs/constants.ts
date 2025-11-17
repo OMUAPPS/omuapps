@@ -25,3 +25,10 @@ export function replaceConstants(content: string, config: typeof DEFAULT_CONFIG)
         return value;
     });
 }
+
+export const GROUP_NAMES: Record<string, string | undefined> = {
+    index: '',
+    guide: '導入方法',
+    app: 'アプリ',
+    api: 'API',
+};

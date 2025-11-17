@@ -83,7 +83,7 @@ class SessionExtension:
         session.add_task(
             task,
             name="session_require",
-            detail=f"Requiring sessions: {app_ids}",
+            detail=f"Requiring sessions: {', '.join(map(Identifier.key, app_ids))}",
             priority=TaskPriority.AFTER_PLUGIN,
         )
 
@@ -115,7 +115,7 @@ class SessionExtension:
             missing_permissions = [p for p in permissions if not session.permissions.has(p)]
             return {
                 "type": "error",
-                "message": "You don't have permission to grant some of the requested permissions"
+                "message": "You don't have permission to grant some of the requested permissions "
                 + ", ".join(map(str, missing_permissions)),
             }
         handle, token = self.server.security.generate_app_token(requested_app)
@@ -145,7 +145,7 @@ class SessionExtension:
             missing_permissions = [p for p in permissions if not session.permissions.has(p)]
             return {
                 "type": "error",
-                "message": "You don't have permission to grant some of the requested permissions"
+                "message": "You don't have permission to grant some of the requested permissions "
                 + ", ".join(map(str, missing_permissions)),
             }
         handle, token = self.server.security.generate_app_token(requested_app)
@@ -167,6 +167,7 @@ class SessionExtension:
             )
         self.sessions[session.app.id] = session
         session.event.disconnected += self.handle_disconnection
+        await self.server.server.apps.update(session.app)
         await self.session_table.add(session.app)
         unlisten = session.event.ready.listen(self.on_session_ready)
         session.event.disconnected.listen(lambda _: unlisten())
@@ -198,6 +199,7 @@ class SessionExtension:
                 waiter.ids.remove(session.app.id)
             if len(waiter.ids) == 0:
                 waiter.future.set_result(True)
+                self.session_waiters.pop(session.app.id)
         for observer in self.session_observers.get(session.app.id, []):
             await observer.send(
                 SESSION_CONNECTED_PACKET_TYPE,

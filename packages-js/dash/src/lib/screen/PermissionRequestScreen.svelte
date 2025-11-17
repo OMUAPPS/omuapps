@@ -3,8 +3,9 @@
     import Document from '$lib/common/Document.svelte';
     import { t } from '$lib/i18n/i18n-context.js';
     import { devMode } from '$lib/main/settings';
-    import type { PermissionRequestPacket } from '@omujs/omu/api/dashboard';
-    import type { PermissionLevel } from '@omujs/omu/api/permission';
+    import { App } from '@omujs/omu';
+    import type { PromptRequestAppPermissions, PromptResult } from '@omujs/omu/api/dashboard';
+    import { PermissionType, type PermissionLevel } from '@omujs/omu/api/permission';
     import { ButtonMini, Tooltip } from '@omujs/ui';
     import PermissionEntry from './PermissionEntry.svelte';
     import Screen from './Screen.svelte';
@@ -14,19 +15,19 @@
     export let screen: {
         handle: ScreenHandle;
         props: {
-            request: PermissionRequestPacket;
-            resolve: (accept: boolean) => void;
+            request: PromptRequestAppPermissions;
+            resolve: (accept: PromptResult) => void;
         };
     };
     const { request, resolve } = screen.props;
 
     function accept() {
-        resolve(true);
+        resolve('accept');
         screen.handle.pop();
     }
 
     function reject() {
-        resolve(false);
+        resolve('deny');
         screen.handle.pop();
     }
 
@@ -40,14 +41,14 @@
         .sort((a, b) => LEVELS[a.metadata.level] - LEVELS[b.metadata.level])
         .reverse()
         .map((permission) => ({
-            permission,
+            permission: PermissionType.deserialize(permission),
             accepted: permission.metadata.level === 'low',
         }));
 </script>
 
 <Screen {screen} disableClose>
     <div class="header">
-        <AppInfo app={request.app} />
+        <AppInfo app={App.deserialize(request.app)} />
         <p>は権限を要求しています</p>
     </div>
     <div class="permissions">

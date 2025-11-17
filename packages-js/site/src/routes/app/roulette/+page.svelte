@@ -1,14 +1,14 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
-    import AssetButton from '$lib/components/AssetButton.svelte';
     import { Chat, ChatEvents, ChatPermissions } from '@omujs/chat';
     import { Message } from '@omujs/chat/models';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
+        AppPage,
+        AssetButton,
         ComponentRenderer,
-        setClient,
+        setGlobal,
         Tooltip,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -19,10 +19,10 @@
     import { RouletteApp } from './roulette-app.js';
 
     const omu = new Omu(APP);
-    setClient(omu);
 
     const chat = Chat.create(omu);
     const obs = OBSPlugin.create(omu);
+    setGlobal({ omu, chat, obs });
     const roulette = new RouletteApp(omu);
     const { entries, state, config } = roulette;
 
@@ -49,6 +49,8 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
         );
@@ -144,8 +146,6 @@
                 permissions={[
                     ChatPermissions.CHAT_PERMISSION_ID,
                 ]}
-                {omu}
-                {obs}
             />
         </div>
         <div class="right" class:end={$state.type === 'spin-result'}>

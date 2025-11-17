@@ -8,7 +8,7 @@
     import RelativeDate from './RelativeDate.svelte';
     import Role from './Role.svelte';
     import Tooltip from './Tooltip.svelte';
-    import { client, dateTimeFormats, translate } from './stores.js';
+    import { dateTimeFormats, omu, translate } from './stores.js';
     import { applyOpacity } from './utils/class-helper.js';
 
     export let paid: Models.Paid | undefined = undefined;
@@ -71,10 +71,10 @@
         : undefined}
 >
     {#if author && author.avatarUrl}
-        {@const proxyUrl = $client.assets.proxy(author.avatarUrl)}
+        {@const proxyUrl = $omu.assets.proxy(author.avatarUrl)}
         <div class="avatar">
             <Tooltip noBackground>
-                {@const fullProxyUrl = $client.assets.proxy(author.metadata.avatar_url ?? author.avatarUrl)}
+                {@const fullProxyUrl = $omu.assets.proxy(author.metadata.avatar_url ?? author.avatarUrl)}
                 <img src={fullProxyUrl} alt="avatar" class="avatar-preview" />
             </Tooltip>
             {#if author.metadata?.url}

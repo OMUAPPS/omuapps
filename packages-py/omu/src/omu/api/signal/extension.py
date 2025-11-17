@@ -14,7 +14,7 @@ from .signal import Signal, SignalType
 SIGNAL_EXTENSION_TYPE = ExtensionType("signal", lambda client: SignalExtension(client))
 
 
-SIGNAL_REGISTER_PACKET = PacketType[SignalRegisterPacket].create_serialized(
+SIGNAL_REGISTER_PACKET = PacketType[SignalRegisterPacket].create_json(
     SIGNAL_EXTENSION_TYPE,
     "register",
     SignalRegisterPacket,

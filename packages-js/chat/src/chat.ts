@@ -2,7 +2,7 @@ import type { Omu } from '@omujs/omu';
 import { Serializer } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/api/endpoint';
 import type { Signal } from '@omujs/omu/api/signal';
-import { SignalPermissions, SignalType } from '@omujs/omu/api/signal';
+import { SignalType } from '@omujs/omu/api/signal';
 import type { Table } from '@omujs/omu/api/table';
 import { TableType } from '@omujs/omu/api/table';
 
@@ -86,7 +86,7 @@ const CREATE_CHANNEL_TREE_ENDPOINT = EndpointType.createJson(PLUGIN_ID, {
 const REACTION_SIGNAL = SignalType.createJson(PLUGIN_ID, {
     name: 'reaction',
     serializer: Reaction,
-    permissions: new SignalPermissions(CHAT_PERMISSION_ID),
+    permissions: { all: CHAT_PERMISSION_ID },
 });
 
 export class Chat {

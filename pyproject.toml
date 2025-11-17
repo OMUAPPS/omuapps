@@ -13,11 +13,13 @@ requires-python = ">= 3.11.5"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
-virtual = true
+[tool.uv]
+package = false
 managed = true
-universal = true
-dev-dependencies = [
+pip.universal = true
+
+[dependency-groups]
+dev = [
     "loguru>=0.7.2",
     "ruff>=0.1.6",
     "pytest-asyncio>=0.24",
@@ -25,15 +27,27 @@ dev-dependencies = [
     "pyright>=1.1.397",
     "tomlkit>=0.13.2",
     "pypiserver[passlib]>=2.4.0",
+
+    "omu",
+    "omu-chatprovider",
+    "omu-chat",
+    "omu-chat-twitch",
+    "omu-chat-youtube",
+    "omuplugin_obs",
+    "omuserver",
 ]
 
-[tool.rye.scripts]
-clean = "python ./scripts/py-clean.py"
-gen_version = "python ./scripts/py-generate_version.py"
-prelaunch = "python ./scripts/py-prelaunch.py"
-
-[tool.rye.workspace]
+[tool.uv.workspace]
 members = ["packages-py/*"]
+
+[tool.uv.sources]
+omu = { workspace = true }
+omu-chatprovider = { workspace = true }
+omu-chat = { workspace = true }
+omu-chat-twitch = { workspace = true }
+omu-chat-youtube = { workspace = true }
+omuplugin_obs = { workspace = true }
+omuserver = { workspace = true }
 
 [tool.hatch.metadata]
 allow-direct-references = true

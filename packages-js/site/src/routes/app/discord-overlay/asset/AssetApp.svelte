@@ -2,24 +2,39 @@
     import { Omu, OmuPermissions } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
     import AvatarRenderer from '../components/AvatarRenderer.svelte';
-    import { DiscordOverlayApp, DISCORDRPC_PERMISSIONS } from '../discord-overlay-app';
+    import { DiscordOverlayApp } from '../discord-overlay-app';
+    import { VOICE_CHAT_PERMISSION_ID } from '../plugin/plugin';
 
     export let omu: Omu;
     const overlayApp = DiscordOverlayApp.create(omu, 'asset');
+    const { config, discord: { speakingStates, voiceStates, sessions } } = overlayApp;
 
     if (BROWSER) {
         omu.permissions.require(
-            DISCORDRPC_PERMISSIONS.DISCORDRPC_VC_READ_PERMISSION_ID,
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
+            VOICE_CHAT_PERMISSION_ID,
             OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
         );
         omu.start();
     }
 
+    $: port = Object.entries($sessions).find(([, session]) => session.user.id === $config.user_id)?.[0];
 </script>
 
 <main>
     {#await omu.waitForReady() then}
-        <AvatarRenderer {overlayApp} />
+        {#if port
+            && $sessions[port]
+            && $speakingStates[port]
+            && $voiceStates[port]
+        }
+            <AvatarRenderer
+                {overlayApp}
+                speakingState={$speakingStates[port]}
+                voiceState={$voiceStates[port]}
+            />
+        {/if}
     {/await}
 </main>
 

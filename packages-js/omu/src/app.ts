@@ -15,7 +15,12 @@ export type AppMetadata = {
     tags?: string[];
 };
 
-export type AppType = 'app' | 'remote' | 'plugin' | 'dashboard';
+export type AppType = 'app' | 'service' | 'remote' | 'plugin' | 'dashboard';
+
+export type DependencySpecifier = {
+    version: string;
+    index?: string;
+};
 
 export type AppJson = {
     id: string;
@@ -24,6 +29,7 @@ export type AppJson = {
     version?: string;
     url?: string;
     metadata?: AppMetadata;
+    dependencies?: Record<string, DependencySpecifier | string>;
 };
 
 export class App {
@@ -33,6 +39,7 @@ export class App {
     public readonly version?: string;
     public readonly url?: string;
     public readonly metadata?: AppMetadata;
+    public readonly dependencies: Record<string, DependencySpecifier | string>;
 
     constructor(id: IntoId, options: {
         type?: AppType;
@@ -40,6 +47,7 @@ export class App {
         version?: string;
         url?: string;
         metadata?: AppMetadata;
+        dependencies?: Record<string, DependencySpecifier | string>;
     }) {
         this.id = Identifier.from(id);
         this.parentId = Identifier.fromOptional(options.parentId);
@@ -47,6 +55,7 @@ export class App {
         this.url = options.url;
         this.metadata = options.metadata;
         this.type = options.type ?? 'app';
+        this.dependencies = options.dependencies ?? {};
     }
 
     public static deserialize(info: AppJson): App {
@@ -57,6 +66,7 @@ export class App {
             url: info.url,
             type: info.type,
             metadata: info.metadata,
+            dependencies: info.dependencies ?? {},
         });
     }
 
@@ -68,6 +78,7 @@ export class App {
             version: data.version,
             url: data.url,
             metadata: data.metadata,
+            dependencies: data.dependencies,
         };
     }
 
@@ -78,6 +89,7 @@ export class App {
             url: this.url,
             type: this.type,
             metadata: this.metadata,
+            dependencies: this.dependencies,
         });
     }
 }

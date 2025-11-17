@@ -1,5 +1,5 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
+    import { AppPage } from '@omujs/ui';
     import { APP } from './app.js';
     import App from './App.svelte';
     import { createGame } from './omucafe-app.js';

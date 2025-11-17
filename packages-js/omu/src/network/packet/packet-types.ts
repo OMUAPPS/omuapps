@@ -86,6 +86,7 @@ export enum DisconnectType {
     INTERNAL_ERROR = 'internal_error',
     ANOTHER_CONNECTION = 'another_connection',
     PERMISSION_DENIED = 'permission_denied',
+    APP_REMOVED = 'app_removed',
     SERVER_RESTART = 'server_restart',
     SHUTDOWN = 'shutdown',
     CLOSE = 'close',

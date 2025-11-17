@@ -1,9 +1,8 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { getSetting } from '$lib/helper.js';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, Button, ExternalLink, setClient, Spinner } from '@omujs/ui';
+    import { AppHeader, AppPage, Button, ExternalLink, setGlobal, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { MarshmallowAPI, MarshmallowSession } from './api.js';
     import { APP } from './app.js';
@@ -13,7 +12,7 @@
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const marshmallow = new MarshmallowApp(omu);
-    setClient(omu);
+    setGlobal({ omu, obs });
 
     const agreed = getSetting(APP.join('agreed'), false);
 
@@ -95,6 +94,10 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             OmuPermissions.DASHBOARD_WEBVIEW_PERMISSION_ID,
             OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
@@ -106,43 +109,66 @@
     }
 </script>
 
+<svelte:head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+</svelte:head>
+
 <AppPage>
     <header slot="header">
         <AppHeader app={APP} />
     </header>
     {#if state.type === 'agreements'}
         <div class="screen">
-            <h2>このアプリはマシュマロの非公式クライアントです</h2>
-            <p>
-                このアプリは株式会社Diver Downが提供している
-                <ExternalLink href="https://marshmallow-qa.com/">
-                    マシュマロ
-                    <i class="ti ti-external-link"></i>
-                </ExternalLink>
-                の公式アプリケーションではなく、非公式に開発されたクライアントアプリです。利用にあたっては、マシュマロの利用規約およびプライバシーポリシーを遵守してください。
-            </p>
-            <p>
-                また、このアプリはOMUAPPSコミュニティによって開発・保守されています。マシュマロの公式サポート対象外であることを理解した上で利用してください。
-            </p>
-            <small>
-                不具合などが発生した場合はマシュマロではなく
-                <ExternalLink href="https://omuapps.com/redirect/discord">
-                    OMUAPPSのサポート
-                    <i class="ti ti-external-link"></i>
-                </ExternalLink>
-                までご報告をお願いいたします。
-            </small>
-            <Button primary onclick={state.accept}>
-                同意する
-                <i class="ti ti-check"></i>
-            </Button>
+            <div class="content">
+                <h2>このアプリについて</h2>
+                <p>本アプリは、株式会社Diver Downが提供するサービス</p>
+                <p>
+                    <ExternalLink href="https://marshmallow-qa.com/">
+                        マシュマロ
+                        <i class="ti ti-external-link"></i>
+                    </ExternalLink>
+                    の<b>非公式クライアントアプリ</b>です。公式アプリケーションではありませんので、ご注意ください。
+                </p>
+                <p>
+                    ご利用に際しては、
+                    <ExternalLink href="https://marshmallow-qa.com/terms/service">
+                        マシュマロの利用規約
+                        <i class="ti ti-external-link"></i>
+                    </ExternalLink>
+                    および
+                    <ExternalLink href="https://marshmallow-qa.com/terms/privacy">
+                        プライバシーポリシー
+                        <i class="ti ti-external-link"></i>
+                    </ExternalLink>
+                    に従ってご利用ください。
+                </p>
+                <p>
+                    本アプリはOMUAPPS開発貢献者が開発・保守を行っています。マシュマロの公式サポート対象外であることをあらかじめご了承の上、ご利用ください。
+                </p>
+                <small>
+                    不具合のお問い合わせは、マシュマロではなく、
+                    <ExternalLink href="https://omuapps.com/redirect/discord">
+                        OMUAPPSのサポート
+                        <i class="ti ti-external-link"></i>
+                    </ExternalLink>
+                    までお願いいたします。
+                </small>
+                <small>
+                    また、株式会社Diver Downの提供するマシュマロに同等の機能が追加された場合、本アプリからは予告なくその機能を削除する可能性があります。
+                </small>
+                <Button primary onclick={state.accept}>
+                    同意する
+                    <i class="ti ti-check"></i>
+                </Button>
+            </div>
         </div>
     {:else if state.type === 'loading'}
         <div class="screen">
             <Spinner />
         </div>
     {:else if state.type === 'ready'}
-        <App {omu} {marshmallow} {obs} api={state.api} logout={logout} />
+        <App api={state.api} logout={logout} />
     {:else if state.type === 'failed'}
         <div class="screen">
             {#if state.kind === 'host'}
@@ -163,13 +189,31 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 1.5rem;
         padding: 2rem;
-        text-align: center;
+        text-align: left;
+    }
+
+    .content {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 2rem;
+        text-align: left;
+    }
+
+    small, p {
+        display: block;
+        max-width: 48rem;
+        text-align: left;
+        line-break: anywhere;
     }
 
     p {
-        max-width: 40rem;
+        padding-bottom: 0.5rem;
+    }
+    small {
+        padding-bottom: 1rem;
     }
 
     h2 {

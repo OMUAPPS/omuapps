@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Models } from '@omujs/chat';
     import Tooltip from './Tooltip.svelte';
-    import { client } from './stores.js';
+    import { omu } from './stores.js';
 
     export let gift: Models.Gift;
 </script>
@@ -16,7 +16,7 @@
     </Tooltip>
     <div class="image">
         {#if gift.imageUrl}
-            <img src={$client.assets.proxy(gift.imageUrl)} alt="gift" width="32" height="32" />
+            <img src={$omu.assets.proxy(gift.imageUrl)} alt="gift" width="32" height="32" />
         {:else}
             {gift.name}
         {/if}

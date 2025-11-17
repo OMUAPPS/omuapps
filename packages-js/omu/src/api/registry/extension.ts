@@ -8,8 +8,8 @@ import { JsonType, Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { type Extension, ExtensionType } from '../extension.js';
 
-import { RegistryPacket, RegistryRegisterPacket } from './packets.js';
-import { type Registry, RegistryType } from './registry.js';
+import { RegisterPacket, RegistryPacket } from './packets.js';
+import { type Registry, RegistryType, Writable } from './registry.js';
 
 export class RegistryExtension implements Extension {
     public readonly type: ExtensionType<RegistryExtension> = REGISTRY_EXTENSION_TYPE;
@@ -24,7 +24,6 @@ export class RegistryExtension implements Extension {
     }
 
     private createRegistry<T>(registryType: RegistryType<T>): Registry<T> {
-        this.omu.permissions.require(REGISTRY_PERMISSION_ID);
         if (this.registries.has(registryType.id)) {
             throw new Error(`Registry with identifier '${registryType.id}' already exists`);
         }
@@ -163,6 +162,51 @@ class RegistryImpl<T> implements Registry<T> {
             permissions: this.type.permissions,
         });
     }
+
+    public compatSvelte(): Writable<T> {
+        let ready = false;
+        let value: T = this.value;
+        const listeners = new Set<(value: T) => void>();
+        this.listen((newValue) => {
+            ready = true;
+            value = newValue;
+            listeners.forEach((run) => {
+                run(value);
+            });
+        });
+        return {
+            set: (value: T) => {
+                if (!ready) {
+                    throw new Error(`Registry ${this.type.id.key()} is not ready`);
+                }
+                this.set(value);
+            },
+            subscribe: (run) => {
+                listeners.add(run);
+                run(value);
+                return () => {
+                    listeners.delete(run);
+                };
+            },
+            update: (fn) => {
+                if (!ready) {
+                    throw new Error(`Registry ${this.type.id.key()} is not ready`);
+                }
+                this.update(fn);
+            },
+            wait: () => {
+                return new Promise<T>((resolve) => {
+                    if (ready) {
+                        resolve(value);
+                    } else {
+                        listeners.add(() => {
+                            resolve(value);
+                        });
+                    }
+                });
+            },
+        };
+    }
 }
 
 export const REGISTRY_EXTENSION_TYPE: ExtensionType<RegistryExtension> = new ExtensionType(
@@ -170,13 +214,10 @@ export const REGISTRY_EXTENSION_TYPE: ExtensionType<RegistryExtension> = new Ext
     (omu: Omu) => new RegistryExtension(omu),
 );
 export const REGISTRY_PERMISSION_ID: Identifier = REGISTRY_EXTENSION_TYPE.join('permission');
-const REGISTRY_REGISTER_PACKET = PacketType.createSerialized<RegistryRegisterPacket>(
-    REGISTRY_EXTENSION_TYPE,
-    {
-        name: 'register',
-        serializer: RegistryRegisterPacket,
-    },
-);
+const REGISTRY_REGISTER_PACKET = PacketType.createJson<RegisterPacket>(REGISTRY_EXTENSION_TYPE, {
+    name: 'register',
+    serializer: RegisterPacket,
+});
 const REGISTRY_UPDATE_PACKET = PacketType.createSerialized<RegistryPacket>(
     REGISTRY_EXTENSION_TYPE,
     {

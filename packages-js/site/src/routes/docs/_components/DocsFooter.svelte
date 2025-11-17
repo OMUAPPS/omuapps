@@ -7,7 +7,7 @@
 {#if section}
     <div class="footer">
         <a
-            href="https://github.com/OMUAPPS/omuapps/blob/develop/documentation/site/{section.slug}.md"
+            href={section.editUrl}
             target="_blank"
         >
             このページをGitHubで編集する

@@ -1,16 +1,19 @@
-import { App } from '../../app.js';
+import { App, AppJson } from '../../app.js';
 import { Identifier, IdentifierMap } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
 import { Omu } from '../../omu.js';
 import { Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
 import { ExtensionType } from '../extension.js';
-import { Registry, RegistryPermissions, RegistryType } from '../registry/registry.js';
+import { PermissionTypeJson } from '../permission/permission.js';
+import { PackageInfo } from '../plugin/package-info.js';
+import { Registry, RegistryType } from '../registry/registry.js';
+import { AppIndexRegistryMeta } from '../server/extension.js';
 import type { Table } from '../table/table.js';
 import { TableType } from '../table/table.js';
 
 import type { DashboardHandler } from './handler.js';
-import { AppInstallRequest, AppInstallResponse, AppUpdateRequest, AppUpdateResponse, DragDrop, DragDropReadRequest, DragDropReadRequestDashboard, DragDropReadResponse, DragDropRequest, DragDropRequestDashboard, DragDropRequestResponse, DragEnter, DragLeave, DragOver, FileDragPacket, PermissionRequestPacket, PluginRequestPacket } from './packets.js';
+import { AppInstallResponse, DragDrop, DragDropReadRequest, DragDropReadRequestDashboard, DragDropReadResponse, DragDropRequest, DragDropRequestDashboard, DragDropRequestResponse, DragEnter, DragLeave, DragOver, FileDragPacket } from './packets.js';
 
 export const DASHBOARD_EXTENSION_TYPE: ExtensionType<DashboardExtension> = new ExtensionType(
     'dashboard',
@@ -29,32 +32,6 @@ const DASHBOARD_SET_ENDPOINT = EndpointType.createJson<Identifier, DashboardSetR
         permissionId: DASHBOARD_SET_PERMISSION_ID,
     },
 );
-const DASHBOARD_PERMISSION_REQUEST_PACKET = PacketType.createSerialized<PermissionRequestPacket>(
-    DASHBOARD_EXTENSION_TYPE,
-    {
-        name: 'permission_request',
-        serializer: PermissionRequestPacket,
-    },
-);
-const DASHBOARD_PERMISSION_ACCEPT_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'permission_accept',
-});
-const DASHBOARD_PERMISSION_DENY_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'permission_deny',
-});
-const DASHBOARD_PLUGIN_REQUEST_PACKET = PacketType.createSerialized<PluginRequestPacket>(
-    DASHBOARD_EXTENSION_TYPE,
-    {
-        name: 'plugin_request',
-        serializer: PluginRequestPacket,
-    },
-);
-const DASHBOARD_PLUGIN_ACCEPT_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'plugin_accept',
-});
-const DASHBOARD_PLUGIN_DENY_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'plugin_deny',
-});
 export const DASHBOARD_OPEN_APP_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'open');
 const DASHBOARD_OPEN_APP_ENDPOINT = EndpointType.createJson<App, void>(DASHBOARD_EXTENSION_TYPE, {
     name: 'open_app',
@@ -67,47 +44,11 @@ const DASHBOARD_OPEN_APP_PACKET = PacketType.createJson<App>(DASHBOARD_EXTENSION
 });
 export const DASHOBARD_APP_READ_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'read');
 export const DASHOBARD_APP_EDIT_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'edit');
-const DASHBOARD_APP_TABLE_TYPE = TableType.createJson(DASHBOARD_EXTENSION_TYPE, {
-    name: 'apps',
-    serializer: App,
-    key: (app) => app.id.key(),
-    permissions: {
-        read: DASHOBARD_APP_READ_PERMISSION_ID,
-        write: DASHOBARD_APP_EDIT_PERMISSION_ID,
-        remove: DASHOBARD_APP_EDIT_PERMISSION_ID,
-    },
-});
 export const DASHBOARD_APP_INSTALL_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'install');
 const DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType.createJson<App, AppInstallResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'install_app',
     requestSerializer: App,
     permissionId: DASHBOARD_APP_INSTALL_PERMISSION_ID,
-});
-const DASHBOARD_APP_INSTALL_PACKET = PacketType.createSerialized<AppInstallRequest>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'install_app',
-    serializer: AppInstallRequest,
-});
-const DASHBOARD_APP_INSTALL_ACCEPT_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'install_app_accept',
-});
-const DASHBOARD_APP_INSTALL_DENY_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'install_app_deny',
-});
-const DASHBOARD_APP_UPDATE_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join('app', 'update');
-const DASHBOARD_APP_UPDATE_ENDPOINT = EndpointType.createJson<App, AppUpdateResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'update_app',
-    requestSerializer: App,
-    permissionId: DASHBOARD_APP_UPDATE_PERMISSION_ID,
-});
-const DASHBOARD_APP_UPDATE_PACKET = PacketType.createSerialized<AppUpdateRequest>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'update_app',
-    serializer: AppUpdateRequest,
-});
-const DASHBOARD_APP_UPDATE_ACCEPT_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'update_app_accept',
-});
-const DASHBOARD_APP_UPDATE_DENY_PACKET = PacketType.createJson<string>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'update_app_deny',
 });
 export const DAShBOARD_DRAG_DROP_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('drag_drop');
 const DASHBOARD_DRAG_DROP_STATE_PACKET = PacketType.createJson<FileDragPacket>(DASHBOARD_EXTENSION_TYPE, {
@@ -307,10 +248,10 @@ export type TranscriptStatus = {
 const DASHBOARD_SPEECH_RECOGNITION = RegistryType.createJson<TranscriptStatus>(DASHBOARD_EXTENSION_TYPE, {
     name: 'speech_recognition',
     defaultValue: { type: 'idle' },
-    permissions: RegistryPermissions.of({
+    permissions: {
         read: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
         write: DASHBOARD_SET_PERMISSION_ID,
-    }),
+    },
 });
 
 export type SpeechRecognitionStart = {
@@ -320,6 +261,64 @@ export type SpeechRecognitionStart = {
 const DASHBOARD_SPEECH_RECOGNITION_START = EndpointType.createJson<SpeechRecognitionStart, UserResponse<undefined>>(DASHBOARD_EXTENSION_TYPE, {
     name: 'speech_recognition_start',
     permissionId: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
+});
+
+interface PromptRequestBase<T extends string> {
+    kind: T;
+    id: string;
+}
+
+export interface PromptRequestAppPermissions extends PromptRequestBase<'app/permissions'> {
+    app: AppJson;
+    permissions: PermissionTypeJson[];
+}
+
+export interface PromptRequestAppPlugins extends PromptRequestBase<'app/plugins'> {
+    app: AppJson;
+    packages: PackageInfo[];
+}
+
+export interface PromptRequestAppInstall extends PromptRequestBase<'app/install'> {
+    app: AppJson;
+    dependencies: Record<string, AppJson>;
+}
+
+export interface PromptRequestAppUpdate extends PromptRequestBase<'app/update'> {
+    old_app: AppJson;
+    new_app: AppJson;
+}
+
+export interface PromptRequestIndexInstall extends PromptRequestBase<'index/install'> {
+    index_url: string;
+    meta?: AppIndexRegistryMeta;
+}
+
+export type PromptRequest = (
+    PromptRequestAppPermissions
+    | PromptRequestAppPlugins
+    | PromptRequestAppInstall
+    | PromptRequestAppUpdate
+    | PromptRequestIndexInstall
+);
+
+const DASHBOARD_PROMPT_REQUEST = PacketType.createJson<PromptRequest>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'prompt_request',
+});
+
+export type PromptResult = 'accept' | 'deny' | 'block';
+
+interface PromptResponse {
+    id: string;
+    kind: string;
+    result: PromptResult;
+}
+
+const DASHBOARD_PROMPT_RESPONSE = PacketType.createJson<PromptResponse>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'prompt_response',
+});
+
+const DASHBOARD_PROMPT_CLEAR_BLOCKED = EndpointType.createJson<null, null>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'prompt_clear_blocked',
 });
 
 export class DashboardExtension {
@@ -332,45 +331,25 @@ export class DashboardExtension {
         drop: [] as Array<(state: DragDrop) => unknown>,
         leave: [] as Array<(state: DragLeave) => unknown>,
     };
-    public readonly apps: Table<App>;
     public readonly allowedHosts: Table<AllowedHost>;
     public readonly speechRecognition: Registry<TranscriptStatus>;
     private readonly webviewHandles: IdentifierMap<{ handle: WebviewHandle; emit: WebviewEventEmit }> = new IdentifierMap();
 
     constructor(private readonly omu: Omu) {
         omu.network.registerPacket(
-            DASHBOARD_PERMISSION_REQUEST_PACKET,
-            DASHBOARD_PERMISSION_ACCEPT_PACKET,
-            DASHBOARD_PERMISSION_DENY_PACKET,
-            DASHBOARD_PLUGIN_REQUEST_PACKET,
-            DASHBOARD_PLUGIN_ACCEPT_PACKET,
-            DASHBOARD_PLUGIN_DENY_PACKET,
             DASHBOARD_OPEN_APP_PACKET,
-            DASHBOARD_APP_INSTALL_PACKET,
-            DASHBOARD_APP_INSTALL_ACCEPT_PACKET,
-            DASHBOARD_APP_INSTALL_DENY_PACKET,
-            DASHBOARD_APP_UPDATE_PACKET,
-            DASHBOARD_APP_UPDATE_ACCEPT_PACKET,
-            DASHBOARD_APP_UPDATE_DENY_PACKET,
             DASHBOARD_DRAG_DROP_STATE_PACKET,
             DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
             DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
             DASHBOARD_DRAG_DROP_REQUEST_PACKET,
             DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET,
             DASHBOARD_WEBVIEW_EVENT_PACKET,
+            DASHBOARD_PROMPT_REQUEST,
+            DASHBOARD_PROMPT_RESPONSE,
         );
-        omu.network.addPacketHandler(DASHBOARD_PERMISSION_REQUEST_PACKET, (request) =>
-            this.handlePermissionRequest(request),
+        omu.network.addPacketHandler(DASHBOARD_PROMPT_REQUEST, (request) =>
+            this.handlePromptRequest(request),
         );
-        omu.network.addPacketHandler(DASHBOARD_PLUGIN_REQUEST_PACKET, (request) =>
-            this.handlePluginRequest(request),
-        );
-        omu.network.addPacketHandler(DASHBOARD_APP_INSTALL_PACKET, async (request) => {
-            this.handleInstallApp(request);
-        });
-        omu.network.addPacketHandler(DASHBOARD_APP_UPDATE_PACKET, async (request) => {
-            this.handleUpdateApp(request);
-        });
         omu.network.addPacketHandler(DASHBOARD_OPEN_APP_PACKET, (app) =>
             this.handleOpenApp(app),
         );
@@ -405,49 +384,35 @@ export class DashboardExtension {
             if (!handle) return;
             handle.emit(packet.event);
         });
-        this.apps = omu.tables.get(DASHBOARD_APP_TABLE_TYPE);
         this.allowedHosts = omu.tables.get(DASHBOARD_ALLOWED_HOSTS);
         this.speechRecognition = omu.registries.get(DASHBOARD_SPEECH_RECOGNITION);
     }
 
-    private async handlePermissionRequest(request: PermissionRequestPacket): Promise<void> {
+    private async executeRequestForDashboard(request: PromptRequest): Promise<PromptResult> {
         const dashboard = this.getDashboard();
-        const response = await dashboard.handlePermissionRequest(request);
-        if (response) {
-            this.omu.send(DASHBOARD_PERMISSION_ACCEPT_PACKET, request.requestId);
-        } else {
-            this.omu.send(DASHBOARD_PERMISSION_DENY_PACKET, request.requestId);
+        switch (request.kind) {
+            case 'app/permissions':
+                return await dashboard.handlePermissionRequest(request);
+            case 'app/plugins':
+                return await dashboard.handlePluginRequest(request);
+            case 'app/install':
+                return await dashboard.handleInstallApp(request);
+            case 'app/update':
+                return await dashboard.handleUpdateApp(request);
+            case 'index/install':
+                return await dashboard.handleIndexInstall(request);
+            default:
+                throw new Error(`Unknown prompt requested: ${JSON.stringify(request)}`);
         }
     }
 
-    private async handlePluginRequest(request: PluginRequestPacket): Promise<void> {
-        const dashboard = this.getDashboard();
-        const response = await dashboard.handlePluginRequest(request);
-        if (response) {
-            this.omu.send(DASHBOARD_PLUGIN_ACCEPT_PACKET, request.requestId);
-        } else {
-            this.omu.send(DASHBOARD_PLUGIN_DENY_PACKET, request.requestId);
-        }
-    }
-
-    private async handleInstallApp(request: AppInstallRequest): Promise<void> {
-        const dashboard = this.getDashboard();
-        const response = await dashboard.handleInstallApp(request);
-        if (response) {
-            this.omu.send(DASHBOARD_APP_INSTALL_ACCEPT_PACKET, request.requestId);
-        } else {
-            this.omu.send(DASHBOARD_APP_INSTALL_DENY_PACKET, request.requestId);
-        }
-    }
-
-    private async handleUpdateApp(request: AppUpdateRequest): Promise<void> {
-        const dashboard = this.getDashboard();
-        const response = await dashboard.handleUpdateApp(request);
-        if (response) {
-            this.omu.send(DASHBOARD_APP_UPDATE_ACCEPT_PACKET, request.requestId);
-        } else {
-            this.omu.send(DASHBOARD_APP_UPDATE_DENY_PACKET, request.requestId);
-        }
+    private async handlePromptRequest(request: PromptRequest): Promise<void> {
+        const response = await this.executeRequestForDashboard(request);
+        this.omu.send(DASHBOARD_PROMPT_RESPONSE, {
+            id: request.id,
+            kind: request.kind,
+            result: response,
+        });
     }
 
     private async handleOpenApp(app: App): Promise<void> {
@@ -631,8 +596,8 @@ export class DashboardExtension {
         return await this.omu.endpoints.call(DASHBOARD_APP_INSTALL_ENDPOINT, app);
     }
 
-    public async updateApp(app: App): Promise<AppUpdateResponse> {
-        return await this.omu.endpoints.call(DASHBOARD_APP_UPDATE_ENDPOINT, app);
+    public async clearBlockedPrompts(): Promise<null> {
+        return await this.omu.endpoints.call(DASHBOARD_PROMPT_CLEAR_BLOCKED, null);
     }
 
     public async requireDragDrop(): Promise<DragDropHandler> {

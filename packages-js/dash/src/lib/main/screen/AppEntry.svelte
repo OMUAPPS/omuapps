@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { dashboard, omu } from '$lib/client.js';
+    import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import type { App } from '@omujs/omu';
     import { ButtonMini, Tooltip } from '@omujs/ui';
     import { pages } from '../page.js';
     import { currentPage } from '../settings.js';
+    import { selectedApp } from './stores.js';
 
     export let entry: App;
     $: name = entry.metadata?.name
@@ -20,7 +21,9 @@
     $: id = `app-${entry.id.key()}`;
 </script>
 
-<li>
+<button on:click={() => {
+    $selectedApp = entry;
+}}>
     {#if $currentPage === id}
         <div class="current">
             <Tooltip>
@@ -51,37 +54,48 @@
             {description || $t('general.no_description')}
         </p>
     </div>
-    <ButtonMini primary on:click={() => dashboard.apps.remove(entry)}>
-        <Tooltip>
-            <span>{$t('general.delete')}</span>
-        </Tooltip>
-        <i class="ti ti-trash"></i>
-    </ButtonMini>
-    <ButtonMini primary on:click={() => {
-        const id = `app-${entry.id.key()}`;
-        delete $pages[id];
-        $currentPage = 'explore';
-        $currentPage = id;
-    }}>
-        <Tooltip>
-            <span>{$t('general.reload')}</span>
-        </Tooltip>
-        <i class="ti ti-reload"></i>
-    </ButtonMini>
-</li>
+    <div class="actions">
+        <ButtonMini primary on:click={() => omu.server.apps.remove(entry)}>
+            <Tooltip>
+                <span>{$t('general.delete')}</span>
+            </Tooltip>
+            <i class="ti ti-trash"></i>
+        </ButtonMini>
+        <ButtonMini primary on:click={() => {
+            const id = `app-${entry.id.key()}`;
+            delete $pages[id];
+            $currentPage = 'explore';
+            $currentPage = id;
+        }}>
+            <Tooltip>
+                <span>{$t('general.reload')}</span>
+            </Tooltip>
+            <i class="ti ti-reload"></i>
+        </ButtonMini>
+    </div>
+</button>
 
 <style lang="scss">
-    li {
+    button {
         position: relative;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 1rem 0.5rem;
-        padding-left: 0.5rem;
+        padding: 1rem 1rem;
         border-bottom: 1px solid var(--color-outline);
+        margin-bottom: 4px;
+        background: var(--color-bg-1);
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        height: 4rem;
+        white-space: nowrap;
+        text-align: left;
 
         &:hover {
             background: var(--color-bg-1);
+            outline: 1px solid var(--color-1);
+            outline-offset: -3px;
             transition: padding-left 0.02621s;
         }
     }
@@ -102,7 +116,9 @@
 
     .icon {
         width: 2rem;
+        min-width: 2rem;
         height: 2rem;
+        min-height: 2rem;
         margin-right: 0.5rem;
         display: flex;
         align-items: center;
@@ -118,6 +134,13 @@
             font-size: 1.5rem;
             color: var(--color-1);
         }
+    }
+
+    .actions {
+        position: absolute;
+        right: 1rem;
+        display: flex;
+        gap: 0.5rem;
     }
 
     .info {

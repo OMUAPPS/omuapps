@@ -6,7 +6,7 @@ import time
 from asyncio import Future
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 from loguru import logger
 from yarl import URL
@@ -42,29 +42,29 @@ HTTP_REQUEST_CREATE = PacketType[HttpRequest].create_json(
 
 
 @dataclass
-class HttpChunk[T]:
+class DataChunk[T]:
     meta: T
     data: bytes
 
     @staticmethod
-    def serialize(data: HttpChunk[T]):
+    def serialize(data: DataChunk[T]):
         writer = ByteWriter()
         writer.write_json(data.meta)
         writer.write_uint8_array(data.data)
         return writer.finish()
 
     @staticmethod
-    def deserialize(data: bytes) -> HttpChunk[T]:
+    def deserialize(data: bytes) -> DataChunk[T]:
         with ByteReader(data) as reader:
             meta: T = reader.read_json()
             body = reader.read_uint8_array()
-        return HttpChunk(meta, body)
+        return DataChunk(meta, body)
 
 
-HTTP_REQUEST_SEND = PacketType[HttpChunk[RequestHandle]].create_serialized(
+HTTP_REQUEST_SEND = PacketType[DataChunk[RequestHandle]].create_serialized(
     HTTP_EXTENSION_TYPE,
     name="request_send",
-    serializer=HttpChunk,
+    serializer=DataChunk,
 )
 
 type HttpRequestClose = RequestHandle
@@ -89,10 +89,10 @@ HTTP_RESPONSE_CREATE = PacketType[HttpResponse].create_json(
     name="response_create",
 )
 
-HTTP_RESPONSE_CHUNK = PacketType[HttpChunk[RequestHandle]].create_serialized(
+HTTP_RESPONSE_CHUNK = PacketType[DataChunk[RequestHandle]].create_serialized(
     HTTP_EXTENSION_TYPE,
     name="response_chunk",
-    serializer=HttpChunk,
+    serializer=DataChunk,
 )
 
 type HttpResponseClose = RequestHandle
@@ -115,6 +115,56 @@ class HandleStateCreated(TypedDict):
 
 
 type HandleState = HandleStateCreated | HandleStateReceiving
+
+WEBSOCKET_CREATE = PacketType[HttpRequest].create_json(
+    HTTP_EXTENSION_TYPE,
+    name="ws_create",
+)
+
+
+class WebSocketOpen(RequestHandle):
+    url: str
+    protocol: str | None
+
+
+WEBSOCKET_OPEN = PacketType[WebSocketOpen].create_json(
+    HTTP_EXTENSION_TYPE,
+    name="ws_open",
+)
+
+
+class WSDataMeta(TypedDict):
+    id: str
+    type: int
+
+
+WEBSOCKET_DATA = PacketType[DataChunk[WSDataMeta]].create_serialized(
+    HTTP_EXTENSION_TYPE,
+    name="ws_data",
+    serializer=DataChunk,
+)
+
+
+class WebSocketClose(RequestHandle):
+    code: NotRequired[int]
+    reason: NotRequired[str] | None
+
+
+WEBSOCKET_CLOSE = PacketType[WebSocketClose].create_json(
+    HTTP_EXTENSION_TYPE,
+    name="ws_close",
+)
+
+
+class WebSocketError(RequestHandle):
+    type: Literal["ConnectionRefused"]
+    reason: NotRequired[str] | None
+
+
+WEBSOCKET_ERROR = PacketType[WebSocketError].create_json(
+    HTTP_EXTENSION_TYPE,
+    name="ws_error",
+)
 
 
 class HttpExtension(Extension):
@@ -148,7 +198,7 @@ class HttpExtension(Extension):
             return
         handle["setResponse"](packet)
 
-    async def handle_response_chunk(self, packet: HttpChunk[RequestHandle]):
+    async def handle_response_chunk(self, packet: DataChunk[RequestHandle]):
         handle = self.handles.get(packet.meta["id"])
         if handle is None:
             logger.warning("Received response for unknown request", packet.meta["id"])
@@ -195,14 +245,14 @@ class HttpExtension(Extension):
         )
         if body:
             if isinstance(body, bytes):
-                await self.omu.send(HTTP_REQUEST_SEND, HttpChunk[RequestHandle]({"id": id}, body))
+                await self.omu.send(HTTP_REQUEST_SEND, DataChunk[RequestHandle]({"id": id}, body))
             else:
                 while True:
                     # Read in 16MB chunks
                     chunk = body.read(1024 * 1024 * 16)
                     if not chunk:
                         break
-                    await self.omu.send(HTTP_REQUEST_SEND, HttpChunk[RequestHandle]({"id": id}, chunk))
+                    await self.omu.send(HTTP_REQUEST_SEND, DataChunk[RequestHandle]({"id": id}, chunk))
 
         await self.omu.send(HTTP_REQUEST_CLOSE, {"id": id})
         chunks: bytes = b""

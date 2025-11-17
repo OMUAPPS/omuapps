@@ -1,8 +1,7 @@
 <script lang="ts">
-    import AssetButton from '$lib/components/AssetButton.svelte';
     import type { OBSPlugin } from '@omujs/obs';
     import type { Omu } from '@omujs/omu';
-    import { RelativeDate } from '@omujs/ui';
+    import { AssetButton, RelativeDate } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import { ASSET_APP } from './app.js';
     import type { BreakTimerApp, BreakTimerConfig } from './break-timer-app.js';
@@ -54,7 +53,7 @@
         <SceneSelect {obs} bind:scene={$config.switch.scene} />
     </div>
     <div class="right">
-        <AssetButton asset={ASSET_APP} {omu} {obs} />
+        <AssetButton asset={ASSET_APP} />
         <p>
             {JSON.stringify($config)}
         </p>

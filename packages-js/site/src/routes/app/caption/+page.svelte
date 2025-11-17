@@ -1,10 +1,10 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
-        setClient,
+        AppPage,
+        setGlobal,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import App from './App.svelte';
@@ -14,10 +14,12 @@
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
     const captionApp = new CaptionApp(omu);
-    setClient(omu);
+    setGlobal({ omu, obs });
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             OmuPermissions.DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,

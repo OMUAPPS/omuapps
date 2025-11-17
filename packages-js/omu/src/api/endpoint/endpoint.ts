@@ -20,14 +20,14 @@ export class EndpointType<Req = unknown, Res = unknown> {
             name: string;
             requestSerializer?: Serializable<Req, ReqData>;
             responseSerializer?: Serializable<Res, ResData>;
-            permissionId?: Identifier;
+            permissionId?: IntoId;
         },
     ): EndpointType<Req, Res> {
         return new EndpointType<Req, Res>(
             Identifier.from(identifier).join(name),
             Serializer.pipe<Req, JsonType, Uint8Array>(requestSerializer ?? Serializer.noop(), Serializer.json()),
             Serializer.pipe<Res, JsonType, Uint8Array>(responseSerializer ?? Serializer.noop(), Serializer.json()),
-            permissionId,
+            permissionId ? Identifier.from(permissionId) : undefined,
         );
     }
 
@@ -42,14 +42,14 @@ export class EndpointType<Req = unknown, Res = unknown> {
             name: string;
             requestSerializer: Serializable<Req, Uint8Array>;
             responseSerializer: Serializable<Res, Uint8Array>;
-            permissionId?: Identifier;
+            permissionId?: IntoId;
         },
     ): EndpointType<Req, Res> {
         return new EndpointType<Req, Res>(
             Identifier.from(identifier).join(name),
             requestSerializer,
             responseSerializer,
-            permissionId,
+            permissionId ? Identifier.from(permissionId) : undefined,
         );
     }
 }

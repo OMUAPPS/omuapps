@@ -2,6 +2,7 @@
     import SvelteMarkdown from 'svelte-markdown';
     import MdCode from './MdCode.svelte';
     import MdCodeSpan from './MdCodeSpan.svelte';
+    import MdImage from './MdImage.svelte';
     import MdLink from './MdLink.svelte';
 
     export let source: string;
@@ -14,6 +15,7 @@
             code: MdCode,
             codespan: MdCodeSpan,
             link: MdLink,
+            image: MdImage,
         }}
     />
 </div>

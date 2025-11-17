@@ -1,5 +1,4 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import {
         Author,
         type Component,
@@ -7,7 +6,7 @@
         Provider,
         Room,
     } from '@omujs/chat/models';
-    import { AppHeader, MessageRenderer } from '@omujs/ui';
+    import { AppHeader, AppPage, MessageRenderer } from '@omujs/ui';
     import { APP } from './app.js';
     import { chat, omu } from './client.js';
     import ComponentEditor from './components/ComponentEditor.svelte';

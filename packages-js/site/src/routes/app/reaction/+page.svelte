@@ -1,18 +1,18 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
-    import AssetButton from '$lib/components/AssetButton.svelte';
     import { Chat, ChatPermissions } from '@omujs/chat';
     import { Reaction } from '@omujs/chat/models';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AppHeader,
+        AppPage,
+        AssetButton,
         Button,
         ButtonMini,
         FileDrop,
         Slider,
         Tooltip,
-        setClient,
+        setGlobal,
     } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP, APP_ID, ASSET_APP } from './app.js';
@@ -24,7 +24,7 @@
     const chat = Chat.create(omu);
     const reactionApp = new ReactionApp(omu, chat);
     const { config } = reactionApp;
-    setClient(omu);
+    setGlobal({ omu, chat, obs });
 
     function test() {
         const reaction = new Reaction({
@@ -54,6 +54,8 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
             OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
@@ -80,7 +82,7 @@
                 <AssetButton asset={ASSET_APP} permissions={[
                     ChatPermissions.CHAT_PERMISSION_ID,
                     ChatPermissions.CHAT_REACTION_PERMISSION_ID,
-                ]} {omu} {obs} />
+                ]} />
             </section>
             <h2>
                 試してみる

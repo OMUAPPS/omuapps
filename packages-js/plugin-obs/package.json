@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/obs",
-    "version": "0.9.24",
+    "version": "0.9.32",
     "exports": {
         ".": {
             "import": "./dist/esm/index.js",
@@ -21,7 +21,7 @@
         "type": "git",
         "url": "https://github.com/OMUAPPS/omuapps"
     },
-    "dependencies": {
+    "peerDependencies": {
         "@omujs/omu": "workspace:*"
     },
     "gitHead": "04559d5aec52117d707e0d554ee429b858da522a"

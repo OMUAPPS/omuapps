@@ -12,7 +12,7 @@
         if (!BROWSER) return true;
         if (!element) return false;
         const rect = element.getBoundingClientRect();
-        return rect.top + 100 < window.innerHeight * 0.75;
+        return rect.top + 100 < window.innerHeight;
     }
 
     let card0, card1, card2;
@@ -21,7 +21,7 @@
 <svelte:window on:scroll={onScroll} />
 
 <div class="features">
-    <a class="card" href="/docs/guide-index" bind:this={card0} class:visible={isVisible(card0, scroll)}>
+    <a class="card" href="/docs/guide" bind:this={card0} class:visible={isVisible(card0, scroll)}>
         <Tooltip>
             アプリを入れるには
         </Tooltip>
@@ -32,7 +32,7 @@
         </div>
         <i class="ti ti-chevron-right"></i>
     </a>
-    <a class="card" href="/docs/security-index" bind:this={card1} class:visible={isVisible(card1, scroll)}>
+    <a class="card" href="/docs/guide/security" bind:this={card1} class:visible={isVisible(card1, scroll)}>
         <Tooltip>
             OMUAPPSが取り組んでいるセキュリティについて
         </Tooltip>
@@ -47,7 +47,7 @@
         <i class="ti ti-package"></i>
         <div class="info">
             <h3>使いやすさ</h3>
-            <p>難しいことを可能な限り排除することを第一に考えています。</p>
+            <p>難しいことを可能な限り排除することを安全の次に考えています。</p>
         </div>
     </div>
 </div>

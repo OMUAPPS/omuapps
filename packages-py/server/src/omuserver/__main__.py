@@ -68,7 +68,7 @@ def stop_server_processes(
 @click.option("--dashboard-path", type=click.Path(), default=None)
 @click.option("--port", type=int, default=None)
 @click.option("--hash", type=str, default=None)
-@click.option("--extra-trusted-origin", type=str, multiple=True)
+@click.option("--trusted-host", type=str, multiple=True)
 @click.option("--index-url", type=str, default=None)
 def main(
     debug: bool,
@@ -79,7 +79,7 @@ def main(
     dashboard_path: str | None,
     port: int | None,
     hash: str | None,
-    extra_trusted_origin: list[str],
+    trusted_host: list[str],
     index_url: str | None,
 ):
     logger.info(f"// omuserver v{VERSION} (pid={os.getpid()}) at ({Path.cwd()}) on ({platform.platform()})")
@@ -105,9 +105,12 @@ def main(
     else:
         config.dashboard_token = None
 
-    config.extra_trusted_origins = list(extra_trusted_origin)
-    if config.extra_trusted_origins:
-        logger.info(f"Extra trusted hosts: {config.extra_trusted_origins}")
+    config.extra_trusted_hosts = {}
+    for host_entry in trusted_host:
+        src, dst = host_entry.split("=")
+        config.extra_trusted_hosts[src.strip()] = dst.strip()
+    if config.extra_trusted_hosts:
+        logger.info(f"Extra trusted hosts: {config.extra_trusted_hosts}")
 
     if debug:
         logger.warning("Debug mode enabled")

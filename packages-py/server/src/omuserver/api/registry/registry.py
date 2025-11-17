@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 from omu import Identifier
+from omu.api.registry import RegistryPermissions
 from omu.api.registry.extension import REGISTRY_UPDATE_PACKET, RegistryPacket
-from omu.api.registry.packets import RegistryPermissions
 from omu.event_emitter import Unlisten
 from omu.serializer import Serializable
 
@@ -37,7 +37,7 @@ class ServerRegistry:
         if self._path.exists():
             self.value = self._path.read_bytes()
 
-    async def store(self, value: bytes | None) -> None:
+    def store(self, value: bytes | None) -> None:
         self.value = value
         self._changed = True
         if self.save_task is None:
@@ -54,7 +54,7 @@ class ServerRegistry:
             await asyncio.sleep(1)
         self.save_task = None
 
-    async def notify(self, session: Session) -> None:
+    async def notify(self, session: Session | None) -> None:
         async with asyncio.TaskGroup() as tg:
             for listener, _ in self._listeners.values():
                 if listener == session:
@@ -100,10 +100,11 @@ class Registry[T]:
         self._default_value = default_value
         self._serializer = serializer
 
-    async def get(self) -> T:
+    def get(self) -> T:
         if self._registry.value is None:
             return self._default_value
         return self._serializer.deserialize(self._registry.value)
 
-    async def set(self, value: T) -> None:
-        await self._registry.store(self._serializer.serialize(value))
+    def set(self, value: T) -> None:
+        self._registry.store(self._serializer.serialize(value))
+        asyncio.create_task(self._registry.notify(None))

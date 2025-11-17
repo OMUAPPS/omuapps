@@ -12,35 +12,19 @@ export const I18N_SET_LOCALES_PERMISSION_ID: Identifier = I18N_EXTENSION_TYPE.jo
 export const I18N_GET_LOCALES_PERMISSION_ID: Identifier = I18N_EXTENSION_TYPE.join('locales', 'get');
 const I18N_LOCALES_REGISTRY_TYPE = RegistryType.createJson<Locale[]>(I18N_EXTENSION_TYPE, {
     name: 'locales',
-    defaultValue: [],
+    defaultValue: typeof window === 'undefined' ? [] : window.navigator.languages as Locale[],
 });
 
 export class I18nExtension implements Extension {
     public readonly type: ExtensionType<I18nExtension> = I18N_EXTENSION_TYPE;
     public readonly localesRegistry: Registry<Locale[]>;
-    private locales?: Locale[];
-    public defaultLocales?: Locale[];
 
     constructor(private readonly omu: Omu) {
-        omu.permissions.require(I18N_GET_LOCALES_PERMISSION_ID);
         this.localesRegistry = omu.registries.get(I18N_LOCALES_REGISTRY_TYPE);
-        this.localesRegistry.listen((locale) => {
-            this.locales = locale;
-        });
-    }
-
-    public getLocales(): readonly Locale[] {
-        if (this.locales && this.locales.length > 0) {
-            return this.locales;
-        }
-        if (!this.defaultLocales || this.defaultLocales.length === 0) {
-            throw new Error('Default locales are not set');
-        }
-        return this.defaultLocales;
     }
 
     public translate(localizedText: LocalizedText): string {
-        const locales = this.getLocales();
+        const locales = this.localesRegistry.value;
         if (typeof localizedText === 'string') {
             return localizedText;
         }

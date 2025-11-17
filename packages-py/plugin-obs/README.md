@@ -1,3 +1,3 @@
-# plugin-chat
+# omuplugin_obs
 
-Describe your project here.
+OBSにアクセスする機能を提供するOMUAPPSプラグインです

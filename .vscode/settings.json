@@ -64,6 +64,7 @@
         "pyproject.toml": "requirements.lock, requirements-dev.lock, .python-version",
     },
     "files.insertFinalNewline": true,
+    "files.eol": "\n",
     "rust-analyzer.linkedProjects": [
         "./packages-js/dash/src-tauri/Cargo.toml"
     ],

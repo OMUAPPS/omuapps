@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 use log::{info, warn};
+use once_cell::sync::Lazy;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use tauri::utils::platform::current_exe;
@@ -17,6 +18,25 @@ use crate::version::VERSION;
 use crate::{python::Python, uv::Uv};
 
 const LATEST_PIP: &str = "pip==23.3.2";
+static REQUIREMENTS: Lazy<String> = Lazy::new(|| {
+    format!(
+        "
+omuserver=={VERSION}
+omuplugin_obs=={VERSION}
+omu_chat=={VERSION}
+omu_chat_youtube=={VERSION}
+omu_chat_twitch=={VERSION}
+omu_chatprovider=={VERSION}"
+    )
+});
+static DEPRECATED_REQUIREMENTS: Lazy<String> = Lazy::new(|| {
+    format!(
+        "
+omuplugin_discordrpc=={VERSION}
+    "
+    )
+});
+
 const RESTART_CODE: i32 = 100;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -136,10 +156,16 @@ impl Server {
 
         let version = Self::read_version(&config)?;
         let needs_update = version.as_deref() != Some(VERSION);
-        let requirements = format!("omuserver=={}", VERSION);
         if already_started && needs_update {
             let callback = on_progress.clone();
-            uv.update(LATEST_PIP, &requirements, move |progress| {
+            uv.uninstall_requirements(DEPRECATED_REQUIREMENTS.as_str(), &move |progress| {
+                callback(ServerEnsureProgress::UpdatingDependencies { progress });
+            })
+            .map_err(|err: UvEnsureError| {
+                ServerEnsureError::UpdateDependenciesFailed { reason: err }
+            })?;
+            let callback = on_progress.clone();
+            uv.update(LATEST_PIP, REQUIREMENTS.as_str(), move |progress| {
                 callback(ServerEnsureProgress::UpdatingDependencies { progress });
             })
             .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
@@ -162,6 +188,19 @@ impl Server {
             Self::generate_token(&config)?
         };
 
+        let callback = on_progress.clone();
+        uv.uninstall_requirements(DEPRECATED_REQUIREMENTS.as_str(), &move |progress| {
+            callback(ServerEnsureProgress::UpdatingDependencies { progress });
+        })
+        .map_err(
+            |err: UvEnsureError| ServerEnsureError::UpdateDependenciesFailed { reason: err },
+        )?;
+        let callback = on_progress.clone();
+        uv.update(LATEST_PIP, REQUIREMENTS.as_str(), move |progress| {
+            callback(ServerEnsureProgress::UpdatingDependencies { progress });
+        })
+        .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
+
         let server = Self {
             config: config.clone(),
             python,
@@ -183,14 +222,6 @@ impl Server {
                 }
             })?;
         }
-
-        let callback = on_progress.clone();
-        server
-            .uv
-            .update(LATEST_PIP, &requirements, move |progress| {
-                callback(ServerEnsureProgress::UpdatingDependencies { progress });
-            })
-            .map_err(|err| ServerEnsureError::UpdateDependenciesFailed { reason: err })?;
 
         Ok(server)
     }

@@ -85,6 +85,7 @@
         align-items: center;
         margin-left: auto;
         white-space: nowrap;
+        gap: 0.25rem;
     }
 
     .channel-icon {

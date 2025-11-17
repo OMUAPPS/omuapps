@@ -3,6 +3,76 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.32 (2025-11-17)
+
+**Note:** Version bump only for package @omujs/ui
+
+
+
+
+
+## 0.9.31 (2025-11-15)
+
+**Note:** Version bump only for package @omujs/ui
+
+
+
+
+
+## 0.9.30 (2025-11-15)
+
+**Note:** Version bump only for package @omujs/ui
+
+
+
+
+
+## 0.9.29 (2025-11-15)
+
+**Note:** Version bump only for package @omujs/ui
+
+
+
+
+
+## 0.9.28 (2025-11-15)
+
+
+### Bug Fixes
+
+* **server:** mapped hostで提供元追加できない問題を修正 ([908c75d](https://github.com/OMUAPPS/omuapps/commit/908c75daadcb32e6a9233d628446114844ea308e))
+
+
+
+
+
+## 0.9.27 (2025-11-15)
+
+**Note:** Version bump only for package @omujs/ui
+
+
+
+
+
+## 0.9.26 (2025-11-11)
+
+
+### Bug Fixes
+
+* OBSプラグイン動かないからPythonを3.12.3に戻す ([bffa038](https://github.com/OMUAPPS/omuapps/commit/bffa038fb2bbfd379fa3d9380bca1b9365ca0224))
+
+
+
+
+
+## 0.9.25 (2025-11-11)
+
+**Note:** Version bump only for package @omujs/ui
+
+
+
+
+
 ## 0.9.24 (2025-11-06)
 
 **Note:** Version bump only for package @omujs/ui

@@ -1,40 +1,20 @@
 import type { Unlisten } from '../../event';
 import { Identifier, IntoId } from '../../identifier';
-import type { ByteReader, ByteWriter, Serializable } from '../../serialize';
-import { Flags, Serializer } from '../../serialize';
+import type { Serializable } from '../../serialize';
+import { Serializer } from '../../serialize';
 
-export class SignalPermissions {
-    constructor(
-        public readonly all?: Identifier | undefined,
-        public readonly listen?: Identifier | undefined,
-        public readonly send?: Identifier | undefined,
-    ) {}
-
-    public serialize(writer: ByteWriter): void {
-        const flags = new Flags({ length: 3 });
-        flags.set(0, this.all !== undefined);
-        flags.set(1, this.listen !== undefined);
-        flags.set(2, this.send !== undefined);
-        writer.writeFlags(flags);
-        if (this.all !== undefined) {
-            writer.writeString(this.all.key());
-        }
-        if (this.listen !== undefined) {
-            writer.writeString(this.listen.key());
-        }
-        if (this.send !== undefined) {
-            writer.writeString(this.send.key());
-        }
-    }
-
-    public static deserialize(reader: ByteReader): SignalPermissions {
-        const flags = reader.readFlags(3);
-        const all = flags.ifSet(0, () => Identifier.fromKey(reader.readString()));
-        const listen = flags.ifSet(1, () => Identifier.fromKey(reader.readString()));
-        const send = flags.ifSet(2, () => Identifier.fromKey(reader.readString()));
-        return new SignalPermissions(all, listen, send);
-    }
+export interface SignalPermissionsJSON {
+    all?: string;
+    listen?: string;
+    send?: string;
 }
+
+export interface SignalPermissions {
+    all?: IntoId | undefined;
+    listen?: IntoId | undefined;
+    send?: IntoId | undefined;
+}
+
 export class SignalType<T> {
     constructor(
         public readonly id: Identifier,
@@ -57,7 +37,7 @@ export class SignalType<T> {
         return new SignalType(
             Identifier.from(identifier).join(name),
             Serializer.of<T, any>(serializer ?? Serializer.noop()).toJson(),
-            permissions ?? new SignalPermissions(),
+            permissions ?? {},
         );
     }
 
@@ -76,7 +56,7 @@ export class SignalType<T> {
         return new SignalType(
             Identifier.from(identifier).join(name),
             serializer,
-            permissions ?? new SignalPermissions(),
+            permissions ?? {},
         );
     }
 }

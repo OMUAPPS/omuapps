@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Omu } from '@omujs/omu';
     import { FrameTransport } from '@omujs/omu/network';
-    import { setClient, Spinner } from '@omujs/ui';
+    import { setGlobal, Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import { REMOTE_APP } from '../app.js';
@@ -26,7 +26,7 @@
         transport: (BROWSER && new FrameTransport()) || undefined,
     });
     const remote = new RemoteApp(omu, 'remote');
-    setClient(omu);
+    setGlobal({ omu });
 
     if (BROWSER) {
         onMount(() => {

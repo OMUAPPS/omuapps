@@ -1,25 +1,20 @@
 <script lang="ts">
-    import AssetButton from '$lib/components/AssetButton.svelte';
-    import { OBSPlugin } from '@omujs/obs';
-    import { Omu, OmuPermissions } from '@omujs/omu';
-    import { Button, Tooltip } from '@omujs/ui';
-    import Answers from './Answers.svelte';
+    import { OmuPermissions } from '@omujs/omu';
+    import { AssetButton, ButtonMini, Slider, Tooltip } from '@omujs/ui';
+    import Answers from './_components/Answers.svelte';
+    import ManageSkins from './_components/ManageSkins.svelte';
+    import Messages from './_components/Messages.svelte';
+    import MessageView from './_components/MessageView.svelte';
     import { MarshmallowAPI, type Message, type User } from './api.js';
     import { ASSET_APP } from './app';
     import { MarshmallowApp } from './marshmallow-app.js';
-    import Messages from './Messages.svelte';
-    import MessageView from './MessageView.svelte';
     import { hasPremium } from './stores';
 
-    export let omu: Omu;
-    export let marshmallow: MarshmallowApp;
-    export let obs: OBSPlugin;
     export let api: MarshmallowAPI;
     export let logout: () => void;
 
-    const { config } = marshmallow;
+    const { config, screen } = MarshmallowApp.getInstance();
 
-    let tab: 'messages' | 'answers' = 'messages';
     let messages: Record<string, Message> | undefined;
     let search = '';
 
@@ -28,6 +23,9 @@
     async function fetchUser() {
         user = await api.user();
         $hasPremium = user.premium;
+        if (!$hasPremium) {
+            $config.active_skins = {};
+        }
     }
 
     $: {
@@ -42,14 +40,14 @@
 
 <main>
     <div class="menu">
-        <div class="tab" class:selected={tab === 'messages'}>
+        <div class="tab" class:selected={$screen.type === 'messages'}>
             <Messages {api} {search} bind:messages bind:refresh={refreshMessages} />
         </div>
-        <div class="tab" class:selected={tab === 'answers'}>
+        <div class="tab" class:selected={$screen.type === 'answers'}>
             <Answers {api} {search} bind:refresh={refreshAnswers} />
         </div>
         <div class="tabs">
-            <button on:click={() => (tab = 'messages')} disabled={tab === 'messages'}>
+            <button on:click={() => ($screen = { type: 'messages' })} disabled={$screen.type === 'messages'}>
                 新着
                 {#if Object.keys(messages ?? {}).length > 0}
                     <span class="messages-count">
@@ -57,57 +55,67 @@
                     </span>
                 {/if}
             </button>
-            <button on:click={() => (tab = 'answers')} disabled={tab === 'answers'}>
+            <button on:click={() => ($screen = { type: 'answers' })} disabled={$screen.type === 'answers'}>
                 過去の回答
             </button>
-            <Button primary onclick={() => {
-                if (tab === 'messages') {
-                    refreshMessages?.();
-                } else {
-                    refreshAnswers?.();
-                }
-            }}>
-                <Tooltip>再読み込み</Tooltip>
-                <i class="ti ti-reload"></i>
-            </Button>
+            {#if $hasPremium}
+                <button on:click={() => ($screen = { type: 'skins', state: { type: 'list' } })} disabled={$screen.type === 'skins'}>
+                    <Tooltip>
+                        着せ替える
+                    </Tooltip>
+                    <i class="ti ti-cards"></i>
+                </button>
+            {/if}
         </div>
-        <div class="bottom">
-            <div class="search">
-                <input bind:value={search} placeholder="検索" />
-                <i class="ti ti-search"></i>
+        {#if $screen.type === 'skins'}
+            <div class="skins omu-scroll">
+                <ManageSkins bind:state={$screen.state} />
             </div>
-            <div class="user">
-                {#if user}
-                    <img src={user.image} alt="">
-                    <span>
-                        <a href={`https://marshmallow-qa.com/${api.session.displayId}`} target="_blank">{user.nickname}</a>
-                        {#if user.premium}
-                            <Tooltip>
-                                プレミアム会員
-                            </Tooltip>
-                            <i class="ti ti-crown"></i>
-                        {/if}
-                    </span>
-                    <div class="actions">
-                        <Button onclick={logout}>
-                            <Tooltip>
-                                アカウントを切り替える
-                            </Tooltip>
-                            <i class="ti ti-switch-horizontal"></i>
-                        </Button>
-                    </div>
-                {/if}
+        {:else}
+            <div class="bottom">
+                <div class="search">
+                    <input bind:value={search} placeholder="検索" />
+                    <i class="ti ti-search"></i>
+                </div>
+                <div class="user">
+                    {#if user}
+                        <img src={user.image} alt="">
+                        <span>
+                            <a href={`https://marshmallow-qa.com/${api.session.displayId}`} target="_blank">{user.nickname}</a>
+                            {#if user.premium}
+                                <Tooltip>
+                                    プレミアム会員
+                                </Tooltip>
+                                <i class="ti ti-crown"></i>
+                            {/if}
+                        </span>
+                        <div class="actions">
+                            <ButtonMini on:click={logout}>
+                                <Tooltip>
+                                    アカウントを切り替える
+                                </Tooltip>
+                                <i class="ti ti-switch-horizontal"></i>
+                            </ButtonMini>
+                        </div>
+                    {/if}
+                </div>
             </div>
-        </div>
+        {/if}
     </div>
     <div class="content">
         <MessageView {api} />
         <div class="asset">
-            <AssetButton asset={ASSET_APP} permissions={[
-                OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
-                OmuPermissions.REGISTRY_PERMISSION_ID,
-                OmuPermissions.TABLE_PERMISSION_ID,
-            ]} {omu} {obs} />
+            <small>ズーム</small>
+            <Slider bind:value={$config.scale} min={-1} max={1} step={1 / 8} />
+            <AssetButton
+                asset={ASSET_APP}
+                permissions={[
+                    OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+                    OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+                    OmuPermissions.REGISTRY_PERMISSION_ID,
+                    OmuPermissions.TABLE_PERMISSION_ID,
+                ]}
+            />
         </div>
     </div>
 </main>
@@ -149,7 +157,6 @@
             cursor: pointer;
             color: var(--color-1);
             border-bottom: 2px solid transparent;
-            width: 100%;
 
             &:hover {
                 background: var(--color-bg-2);
@@ -183,6 +190,15 @@
         flex-direction: column;
         background: var(--color-bg-2);
         border-top: 1px solid var(--color-outline);
+    }
+
+    .skins {
+        position: absolute;
+        inset: 0;
+        top: 4rem;
+        left: 1.5rem;
+        padding-right: 1rem;
+        padding-bottom: 2rem;
     }
 
     .search {
@@ -246,6 +262,7 @@
         }
 
         > .actions {
+            display: flex;
             margin-left: auto;
         }
     }

@@ -1,8 +1,6 @@
 <script lang="ts">
-    import AssetButton from '$lib/components/AssetButton.svelte';
-    import type { OBSPlugin } from '@omujs/obs';
     import { Omu } from '@omujs/omu';
-    import { Button } from '@omujs/ui';
+    import { AssetButton, Button } from '@omujs/ui';
     import ConnectScreen from './_components/ConnectScreen.svelte';
     import Gallery from './_components/Gallery.svelte';
     import ResourceEdit from './_components/ResourceEdit.svelte';
@@ -12,7 +10,6 @@
 
     export let remote: RemoteApp;
     export let omu: Omu;
-    export let obs: OBSPlugin;
 
     let screen: 'connect' | null = null;
 
@@ -77,7 +74,10 @@
             配信に追加
             <i class="ti ti-arrow-bar-to-down"></i>
         </h2>
-        <AssetButton asset={ASSET_APP} {omu} {obs} dimensions={{ width: '50:%', height: '50:%' }} />
+        <AssetButton
+            asset={ASSET_APP}
+            dimensions={{ width: '50:%', height: '50:%' }}
+        />
     </div>
     <div class="gallery omu-scroll">
         <Gallery {omu} {remote} />

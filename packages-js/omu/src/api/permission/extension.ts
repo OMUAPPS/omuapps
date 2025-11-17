@@ -1,4 +1,4 @@
-import { Identifier, IdentifierMap, IdentifierSet } from '../../identifier';
+import { Identifier, IdentifierMap, IdentifierSet, IntoId } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
 import { Omu } from '../../omu';
 import { Serializer } from '../../serialize';
@@ -79,10 +79,8 @@ export class PermissionExtension {
         this.registeredPermissions.set(permission.id, permission);
     }
 
-    public require(...permissionIds: (Identifier | string)[]): void {
-        const ids: Identifier[] = permissionIds.map((id) =>
-            typeof id === 'string' ? Identifier.fromKey(id) : id,
-        );
+    public require(...permissionIds: IntoId[]): void {
+        const ids = permissionIds.map(Identifier.from);
         const missing = ids.filter((id) => !this.permissions.has(id));
         if (this.omu.running) {
             if (missing.length > 0) {

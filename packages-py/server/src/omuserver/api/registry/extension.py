@@ -4,7 +4,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from omu.api.permission import PermissionType
-from omu.api.registry import RegistryType
+from omu.api.registry import RegistryPermissions, RegistryType
 from omu.api.registry.extension import (
     REGISTRY_GET_ENDPOINT,
     REGISTRY_LISTEN_PACKET,
@@ -13,7 +13,7 @@ from omu.api.registry.extension import (
     REGISTRY_UPDATE_PACKET,
     RegistryPacket,
 )
-from omu.api.registry.packets import RegistryPermissions, RegistryRegisterPacket
+from omu.api.registry.packets import RegisterPacket
 from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 
@@ -58,7 +58,7 @@ class RegistryExtension:
             await registry.load()
         self._startup_registries.clear()
 
-    async def handle_register(self, session: Session, packet: RegistryRegisterPacket) -> None:
+    async def handle_register(self, session: Session, packet: RegisterPacket) -> None:
         registry = await self.get(packet.id)
         if not registry.id.is_subpath_of(session.app.id):
             msg = f"App {session.app.id=} not allowed to register {packet.id=}"
@@ -73,7 +73,7 @@ class RegistryExtension:
     async def handle_update(self, session: Session, packet: RegistryPacket) -> None:
         await session.wait_ready()
         registry = await self.get_with_perm(packet.id, session, lambda perms: [perms.all, perms.write])
-        await registry.store(packet.value)
+        registry.store(packet.value)
         await registry.notify(session)
 
     async def handle_get(self, session: Session, id: Identifier) -> RegistryPacket:

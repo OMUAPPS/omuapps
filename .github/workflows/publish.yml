@@ -41,6 +41,14 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
+            - name: Git Identity
+              run: |
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
             - name: Cache Bun dependencies
               uses: actions/cache@v4
               with:
@@ -55,41 +63,24 @@ jobs:
             - name: Install Dependencies
               run: bun install --frozen-lockfile
 
-            - name: Git Identity
-              run: |
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-                  git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
             - name: Build
               if: ${{ github.event.inputs.npm == 'true' }}
-              run: npx lerna run build
+              run: bunx lerna run build
 
-            - name: Version
-              if: ${{ github.event.inputs.npm == 'true' }}
-              run: npx lerna version --yes
+            - name: Get version
+              id: get_version
+              run: |
+                  echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
             - name: Setup npmrc
               if: ${{ github.event.inputs.npm == 'true' }}
               run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
 
-            - name: Get version
-              id: get_version
-              run: |
-                  echo "VERSION=$(npx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
-
-            - name: Push
-              run: |
-                  git push --follow-tags
-                  echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
-
-            # - name: Publish
-            #   if: ${{ github.event.inputs.npm == 'true' }}
-            #   run: bun run publish
-            #   env:
-            #       NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+            - name: Publish
+              if: ${{ github.event.inputs.npm == 'true' }}
+              run: bun run publish
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
     publish-pypi:
         needs: publish-npm
@@ -105,18 +96,13 @@ jobs:
               with:
                   python-version: '3.12'
 
-            - name: Install rye
-              if: ${{ github.event.inputs.pypi == 'true' }}
-              uses: eifinger/setup-rye@v2.5.2
-              with:
-                  enable-cache: true
-                  cache-prefix: 'rye'
+            - name: Install uv
+              uses: astral-sh/setup-uv@v6
 
             - name: Install dependencies
               if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
-                  rye config --set-bool behavior.use-uv=true
-                  rye sync --no-lock
+                  uv sync --locked
 
             - name: Git Identity
               if: ${{ github.event.inputs.pypi == 'true' }}
@@ -135,7 +121,7 @@ jobs:
             - name: Generate version file
               if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
-                  rye run gen_version
+                  uv run ./scripts/py-generate_version.py
 
             - name: Push
               if: ${{ github.event.inputs.pypi == 'true' }}
@@ -153,7 +139,7 @@ jobs:
             - name: Build
               if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
-                  rye build --all
+                  uv build --all
 
             - name: Publish a Python distribution to PyPI
               if: ${{ github.event.inputs.pypi == 'true' }}
@@ -241,7 +227,7 @@ jobs:
                   tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
                   projectPath: ./packages-js/dash
                   releaseName: 'App v__VERSION__'
-                  releaseBody: 'See the assets to download this version and install.'
+                  releaseBody: ''
                   releaseDraft: false
                   prerelease: true
                   updaterJsonPreferNsis: true

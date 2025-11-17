@@ -82,7 +82,7 @@
                 connecting = false;
             }
         });
-        const unlistenApps = omu.dashboard.apps.listen();
+        const unlistenApps = omu.server.apps.listen();
         return async () => {
             unlistenNetwork();
             unlistenApps();

@@ -126,6 +126,10 @@ export class Identifier {
         return this.key() === other.key();
     }
 
+    public isNamespaceEqual(other: Identifier): boolean {
+        return this.namespace === other.namespace;
+    }
+
     public isSubpathOf(other: Identifier): boolean {
         if (this.namespace !== other.namespace) {
             return false;
@@ -148,6 +152,14 @@ export class Identifier {
 
 export class IdentifierMap<T> {
     private readonly map: Map<string, T> = new Map();
+    constructor(
+        entries?: Iterable<[Identifier, T]>,
+    ) {
+        if (!entries) return;
+        for (const [id, value] of entries) {
+            this.map.set(id.key(), value);
+        }
+    }
 
     public get size(): number {
         return this.map.size;

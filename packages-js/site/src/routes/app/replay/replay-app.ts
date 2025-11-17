@@ -146,8 +146,25 @@ export class ReplayApp {
         return this.instance;
     }
 
+    private extractYoutubeVideoId(url: URL): string | undefined {
+        const path = url.pathname.split('/');
+        if (url.hostname === 'youtu.be') {
+            return path[1];
+        } else if (url.hostname === 'www.youtube.com') {
+            switch (path[1]) {
+                case 'watch': {
+                    return url.searchParams.get('v') || undefined;
+                }
+                case 'shorts':
+                case 'live': {
+                    return path[2];
+                }
+            }
+        }
+    }
+
     public playByUrl(url: URL) {
-        const videoId = url.searchParams.get('v');
+        const videoId = this.extractYoutubeVideoId(url);
         if (videoId) {
             this.replayData.set({
                 video: {

@@ -42,7 +42,7 @@
                         ダウンロード
                     </li>
                 </a>
-                <a href="/docs/guide-index">
+                <a href="/docs/guide">
                     <li aria-current={path.startsWith('/docs/guide') ? 'page' : undefined}>
                         <Tooltip>アプリの導入から使い方を知る</Tooltip>
                         <i class="ti ti-book"></i>

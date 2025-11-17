@@ -7,7 +7,7 @@ async def main():
     packages_path = Path(".venv/packages")
     packages_path.mkdir(parents=True, exist_ok=True)
     server = await asyncio.create_subprocess_exec(
-        "rye",
+        "uv",
         "run",
         "pypi-server",
         "run",
@@ -24,22 +24,25 @@ async def main():
     while True:
         command, *args = input("").split(" ")
         if command in {"build", "b"}:
+            for file in packages_path.iterdir():
+                if not file.is_file():
+                    continue
+                file.unlink()
             if not args:
                 build = await asyncio.create_subprocess_exec(
-                    "rye",
+                    "uv",
                     "build",
-                    "--clean",
-                    "--all",
-                    "--out",
+                    "--all-packages",
+                    "--out-dir",
                     str(packages_path),
                     stdout=sys.stdout,
                     stderr=sys.stderr,
                 )
             else:
                 build = await asyncio.create_subprocess_exec(
-                    "rye",
+                    "uv",
                     "build",
-                    "--out",
+                    "--out-dir",
                     str(packages_path),
                     "--package",
                     *args,

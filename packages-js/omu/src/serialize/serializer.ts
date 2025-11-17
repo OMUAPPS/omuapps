@@ -1,6 +1,6 @@
 import { textDecoder, textEncoder } from '../const.js';
 
-export type JsonType = string | number | boolean | null | undefined | { [key: keyof never]: JsonType } | JsonType[];
+export type JsonType = string | number | boolean | null | undefined | { [key in never]?: JsonType } | JsonType[];
 
 export interface Serializable<T, D> {
     serialize(data: T): D;

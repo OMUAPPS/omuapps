@@ -1,4 +1,4 @@
-import { setChat, setClient } from '@omujs/ui';
+import { setGlobal } from '@omujs/ui';
 import { Dashboard } from './dashboard.js';
 
 import type { Address } from '@omujs/omu/network';
@@ -33,20 +33,15 @@ class TokenProvider extends BrowserTokenProvider {
         }
         return super.get(serverAddress, app);
     }
-
-    async set(serverAddress: Address, app: App, token: string): Promise<void> {
-        return super.set(serverAddress, app, token);
-    }
 }
 
 const omu = new Omu(app, {
     address,
-    token: new TokenProvider('omu-token'),
+    token: new TokenProvider(),
 });
 const chat = Chat.create(omu);
 const dashboard = new Dashboard(omu);
-setClient(omu);
-setChat(chat);
+setGlobal({ omu, chat });
 omu.plugins.require({
     omu_chat: `>=${VERSION}`,
     omu_chat_youtube: `>=${VERSION}`,
@@ -59,10 +54,7 @@ omu.permissions.require(
     OmuPermissions.PLUGIN_READ_PACKAGE_PERMISSION_ID,
     OmuPermissions.PLUGIN_MANAGE_PACKAGE_PERMISSION_ID,
     OmuPermissions.SERVER_SHUTDOWN_PERMISSION_ID,
-    OmuPermissions.SERVER_APPS_READ_PERMISSION_ID,
     OmuPermissions.DASHBOARD_OPEN_APP_PERMISSION_ID,
-    OmuPermissions.DASHOBARD_APP_READ_PERMISSION_ID,
-    OmuPermissions.DASHOBARD_APP_EDIT_PERMISSION_ID,
     OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
     OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
     OmuPermissions.I18N_SET_LOCALES_PERMISSION_ID,

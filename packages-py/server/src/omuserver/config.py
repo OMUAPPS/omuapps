@@ -9,7 +9,7 @@ from omuserver.directories import Directories
 class Config:
     address: Address = Address.default()
     debug: bool = False
-    extra_trusted_origins: list[str] = field(default_factory=list)
+    extra_trusted_hosts: dict[str, str] = field(default_factory=dict)
     directories: Directories = field(default_factory=Directories.default)
     dashboard_token: str | None = None
     index_url: str | None = None

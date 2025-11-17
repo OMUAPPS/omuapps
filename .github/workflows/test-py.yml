@@ -14,13 +14,8 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install rye
-        uses: eifinger/setup-rye@v1
-        with:
-          enable-cache: true
-          cache-prefix: "rye"
-          version: 0.41.0
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
 
       - name: Cache dependencies
         id: cache
@@ -32,12 +27,11 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          rye config --set-bool behavior.use-uv=true
-          rye sync --no-lock
+          uv sync --locked
 
       - name: Run tests
         run: |
-          rye run pytest -v --cov=./packages-py --cov-report=xml
+          uv run pytest -v --cov=./packages-py --cov-report=xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1

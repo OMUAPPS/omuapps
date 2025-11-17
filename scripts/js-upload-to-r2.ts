@@ -171,17 +171,22 @@ const UPDATER_PLATFORMS: Platform[] = [
 async function uploadVersion(): Promise<Record<string, string>> {
     const files = await fs.readdir('./release-assets');
     console.log(files);
-    const urls: Record<string, string> = {};
-    for (const file of files) {
+
+    const uploadPromises = files.map(async (file) => {
         const path = `${R2_VERSION_DIR}/${file}`;
         if (!options.upload) {
-            urls[file] = `${CONFIG.BASE_URL}/${path}`;
-            continue;
+            return { file, url: `${CONFIG.BASE_URL}/${path}` };
         }
         const url = await uploadToR2(`./release-assets/${file}`, path);
-        urls[file] = url;
-    }
-    return urls;
+        return { file, url };
+    });
+
+    const results = await Promise.all(uploadPromises);
+
+    return results.reduce((acc, { file, url }) => {
+        acc[file] = url;
+        return acc;
+    }, {} as Record<string, string>);
 }
 
 type VersionChannel = 'stable' | 'beta';

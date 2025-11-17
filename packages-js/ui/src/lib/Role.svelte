@@ -1,8 +1,8 @@
 <script lang="ts">
     import type { Models } from '@omujs/chat';
 
+    import { omu } from './stores';
     import Tooltip from './Tooltip.svelte';
-    import { client } from './stores.js';
     import { applyOpacity } from './utils/class-helper.js';
 
     export let role: Models.Role;
@@ -20,7 +20,7 @@
                 {#if role.iconUrl}
                     <img
                         class="preview"
-                        src={$client.assets.proxy(role.iconUrl)}
+                        src={$omu.assets.proxy(role.iconUrl)}
                         alt="role icon"
                     />
                 {/if}

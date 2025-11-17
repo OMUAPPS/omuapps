@@ -5,6 +5,8 @@ import json
 import os
 import subprocess
 import sys
+import time
+from datetime import datetime
 from urllib.parse import urlencode
 
 import aiohttp
@@ -14,6 +16,7 @@ from omu import Identifier
 from omu.event_emitter import EventEmitter
 from omu.helper import asyncio_error_logger
 from omu.network.packet.packet_types import DisconnectType
+from omu.result import Err, Ok
 from yarl import URL
 
 from omuserver.api.asset import AssetExtension
@@ -30,6 +33,7 @@ from omuserver.api.session import SessionExtension
 from omuserver.api.signal import SignalExtension
 from omuserver.api.table import TableExtension
 from omuserver.config import Config
+from omuserver.dependency import AppIndexRegistry, InstallRequest
 from omuserver.helper import safe_path_join
 from omuserver.network import Network
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
@@ -55,11 +59,12 @@ class Server:
         self.directories.mkdir()
         self.packets = ServerPacketDispatcher()
         self.network = Network(self, self.packets)
-        self.network.add_http_route("/", self._handle_index)
-        self.network.add_http_route("/version", self._handle_version)
-        self.network.add_http_route("/frame", self._handle_frame)
-        self.network.add_http_route("/proxy", self._handle_proxy)
-        self.network.add_http_route("/asset", self._handle_assets)
+        self.network.route_get("/", self._handle_index)
+        self.network.route_get("/version", self._handle_version)
+        self.network.route_get("/frame", self._handle_frame)
+        self.network.route_get("/proxy", self._handle_proxy)
+        self.network.route_get("/asset", self._handle_assets)
+        self.network.route_post("/index_install", self._handle_index_install)
         self.security = PermissionManager.load(self)
         self.running = False
         self.endpoints = EndpointExtension(self)
@@ -80,6 +85,7 @@ class Server:
             headers=USER_AGENT_HEADERS,
             timeout=aiohttp.ClientTimeout(total=10),
         )
+        self.last_prompt_timestamp: dict[str, float] = {}
 
     def _set_loop(self, loop: asyncio.AbstractEventLoop) -> asyncio.AbstractEventLoop:
         loop = asyncio.new_event_loop()
@@ -158,6 +164,72 @@ class Server:
         except Exception as e:
             logger.error(e)
             return web.Response(status=500)
+
+    async def _handle_index_install(self, request: web.Request) -> web.StreamResponse:
+        key = request.host
+        elapsed = time.time() - self.last_prompt_timestamp.get(key, 0)
+        remaining = 15 - elapsed
+        if remaining > 0:
+            return web.json_response(
+                {
+                    "type": "error",
+                    "message": f"An installation is already in progress. You can try again in {remaining:.1f} seconds.",
+                },
+                status=400,
+                reason=f"An installation is already in progress. You can try again in {remaining:.1f} seconds.",
+            )
+        self.last_prompt_timestamp[key] = time.time()
+        install_request: InstallRequest = await request.json()
+        raw_index_url = URL(install_request["index"])
+        mapped_index_url = self.network.get_mapped_url(raw_index_url)
+        provided_index_namespace = Identifier.namespace_from_url(mapped_index_url)
+
+        match await AppIndexRegistry.try_fetch(raw_index_url):
+            case Err(err):
+                return web.json_response(
+                    {"type": "error", "message": f"Failed to fetch index: {err}"},
+                    status=400,
+                    reason=f"Failed to fetch index: {err}",
+                )
+            case Ok(index):
+                ...
+
+        index_id = index.id
+        if index_id.namespace != provided_index_namespace:
+            return web.json_response(
+                {"type": "error", "message": "Namespace mismatch"},
+                status=400,
+                reason="Provided index ID does not match the namespace ID in the index URL.",
+            )
+
+        if not index_id.is_namepath_equal(index.id):
+            return web.json_response(
+                {"type": "error", "message": "Trust issue"},
+                status=400,
+                reason="Provided index ID does not match the namespace ID in the index URL.",
+            )
+
+        accepted = await self.dashboard.notify_index_install(mapped_index_url, index.meta)
+
+        if not accepted:
+            return web.json_response(
+                {"type": "error", "message": "Installation denied by the user."},
+                status=403,
+                reason="Installation denied by the user.",
+            )
+
+        server_index = self.server.index.get()
+        server_index["indexes"][index.id.key()] = {
+            "added_at": datetime.now().isoformat(),
+            "meta": index.meta,
+            "url": str(raw_index_url),
+        }
+        self.server.index.set(server_index)
+
+        return web.json_response(
+            {"type": "installed"},
+            status=200,
+        )
 
     def run(self) -> None:
         async def _run():

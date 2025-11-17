@@ -1,0 +1,56 @@
+name: Version
+
+on:
+    workflow_dispatch:
+
+permissions:
+    contents: write # for checkout and tag
+    pull-requests: write # for comments
+    packages: write # for publish
+
+jobs:
+    version:
+        runs-on: ubuntu-latest
+        env:
+            NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+            NPM_TOKEN: ${{secrets.NPM_TOKEN}}
+            GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        outputs:
+            VERSION: ${{ steps.get_version.outputs.VERSION }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Git Identity
+              run: |
+                  git config --global user.name 'github-actions[bot]'
+                  git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+                  git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Cache Bun dependencies
+              uses: actions/cache@v4
+              with:
+                path: ~/.bun/install/cache
+                key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock') }}
+                restore-keys: |
+                  bun-${{ runner.os }}-
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+
+            - name: Install Dependencies
+              run: bun install --frozen-lockfile
+
+            - name: Version
+              run: bunx lerna version --yes
+
+            - name: Get version
+              id: get_version
+              run: |
+                  echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
+
+            - name: Push
+              run: |
+                  git push --follow-tags
+                  echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV

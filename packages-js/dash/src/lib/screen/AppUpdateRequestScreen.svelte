@@ -1,25 +1,26 @@
 <script lang="ts">
     import AppInfo from '$lib/common/AppInfo.svelte';
-    import type { AppUpdateRequest } from '@omujs/omu/api/dashboard';
+    import { App } from '@omujs/omu';
+    import type { PromptRequestAppUpdate, PromptResult } from '@omujs/omu/api/dashboard';
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
     export let screen: {
         handle: ScreenHandle;
         props: {
-            request: AppUpdateRequest;
-            resolve: (accept: boolean) => void;
+            request: PromptRequestAppUpdate;
+            resolve: (accept: PromptResult) => void;
         };
     };
     const { request, resolve } = screen.props;
 
     function accept() {
-        resolve(true);
+        resolve('accept');
         screen.handle.pop();
     }
 
     function reject() {
-        resolve(false);
+        resolve('deny');
         screen.handle.pop();
     }
 </script>
@@ -31,14 +32,14 @@
             <i class="ti ti-package-export"></i>
         </h3>
         <div class="app-info old">
-            <AppInfo app={request.oldApp} />
+            <AppInfo app={App.deserialize(request.old_app)} />
         </div>
         <h3>
             新しいバージョン
             <i class="ti ti-package-import"></i>
         </h3>
         <div class="app-info new">
-            <AppInfo app={request.newApp} />
+            <AppInfo app={App.deserialize(request.new_app)} />
         </div>
         <div class="actions">
             <button on:click={reject} class="reject">

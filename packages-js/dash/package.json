@@ -13,7 +13,7 @@
         "vite": "vite",
         "ui:build": "bun x --bun vite build",
         "ui:check": "bun x --bun svelte-check --tsconfig ./tsconfig.json",
-        "ui:check-watch": "bun run ui:check --watch",
+        "ui:check-watch": "nodemon --verbose --watch src --ext \"ts,svelte\" --exec \"bun x --bun svelte-check --tsconfig ./tsconfig.json\"",
         "ui:dev": "bun x --bun vite --host 0.0.0.0",
         "ui:preview": "bun x --bun vite preview"
     },
@@ -42,7 +42,7 @@
         "sass": "^1.86.0",
         "sugarss": "4.0.1",
         "svelte": "4.2.18",
-        "svelte-check": "3.8.5",
+        "svelte-check": "^4.3.3",
         "svelte-markdown": "0.4.1",
         "tslib": "2.6.3",
         "vite": "5.4.0",

@@ -1,9 +1,9 @@
 <script lang="ts">
     import { Spinner, Tooltip } from '@omujs/ui';
-    import { DiscordOverlayApp } from '../discord-overlay-app.js';
+    import type { RPCSession } from '../discord/discord.js';
 
     let state: 'wait-for-ready' | 'connecting-vc' | null = null;
-    const { selectedVoiceChannel } = DiscordOverlayApp.getInstance();
+    export let session: RPCSession;
 
     const CHANNEL_TYPE = {
         GUILD_TEXT: 0,
@@ -22,8 +22,8 @@
     };
 </script>
 
-{#if $selectedVoiceChannel && !state}
-    {@const { guild, channel } = $selectedVoiceChannel}
+{#if session.selected_voice_channel && !state}
+    {@const { guild, channel } = session.selected_voice_channel}
     <div class="server">
         {#if channel}
             {@const guildName = {
@@ -78,11 +78,11 @@
     {#if state === 'connecting-vc'}
         <div class="server">
             <Tooltip>
-                {#if $selectedVoiceChannel}
-                    {#if $selectedVoiceChannel.guild}
-                        {$selectedVoiceChannel.guild.name}の
+                {#if session.selected_voice_channel}
+                    {#if session.selected_voice_channel.guild}
+                        {session.selected_voice_channel.guild.name}の
                     {/if}
-                    {$selectedVoiceChannel.channel.name}に接続しています
+                    {session.selected_voice_channel.channel.name}に接続しています
                 {:else}
                     現在入っている通話に接続しています
                 {/if}

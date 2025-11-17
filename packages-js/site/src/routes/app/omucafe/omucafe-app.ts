@@ -6,7 +6,7 @@ import { App, Omu, OmuPermissions, Serializer } from '@omujs/omu';
 import { RegistryType, type Registry } from '@omujs/omu/api/registry';
 import { type Signal } from '@omujs/omu/api/signal';
 import { type Table } from '@omujs/omu/api/table';
-import { setChat, setClient } from '@omujs/ui';
+import { setGlobal } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { get, writable, type Writable } from 'svelte/store';
 import { APP_ID, BACKGROUND_ID, OVERLAY_ID } from './app.js';
@@ -146,8 +146,9 @@ export type GameSide = 'client' | 'background' | 'overlay';
 
 export async function createGame(app: App, side: GameSide): Promise<void> {
     const client = app.id.isEqual(APP_ID);
-    const omu = setClient(new Omu(app));
-    const chat = setChat(Chat.create(omu));
+    const omu = new Omu(app);
+    const chat = Chat.create(omu);
+    setGlobal({ omu, chat });
     const obs = OBSPlugin.create(omu);
     const gameConfigRegistry = omu.registries.get(CONFIG_REGISTRY_TYPE);
     const gameConfig = makeRegistryWritable(gameConfigRegistry);
@@ -192,6 +193,8 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     };
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
         );
         if (client) {

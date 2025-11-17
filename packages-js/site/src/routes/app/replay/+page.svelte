@@ -1,9 +1,8 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
     import { Chat } from '@omujs/chat';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { AppHeader, setClient } from '@omujs/ui';
+    import { AppHeader, AppPage, setGlobal } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { APP } from './app.js';
     import App from './App.svelte';
@@ -13,10 +12,15 @@
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
     ReplayApp.create(omu, 'client');
-    setClient(omu);
+    setGlobal({ omu, chat, obs });
 
     if (BROWSER) {
-        omu.permissions.require(OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID, OmuPermissions.GENERATE_TOKEN_PERMISSION_ID);
+        omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
+            OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
+        );
         omu.start();
     }
 </script>
@@ -27,7 +31,7 @@
     </header>
     <main>
         {#await omu.waitForReady() then}
-            <App {obs} {chat} />
+            <App {chat} />
         {/await}
     </main>
 </AppPage>

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { Vec2 } from '$lib/math/vec2.js';
     import { Button, FileDrop, Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
     import { DEFAULT_USER_CONFIG, type DiscordOverlayApp, type PngAvatarConfig, type VoiceStateItem } from '../discord-overlay-app.js';
@@ -166,7 +165,7 @@
             $config.users[id] = {
                 ...$config.users[id],
                 scale: 1,
-                position: Vec2.ZERO,
+                position: DEFAULT_USER_CONFIG.position,
                 align: false,
             };
         }}>

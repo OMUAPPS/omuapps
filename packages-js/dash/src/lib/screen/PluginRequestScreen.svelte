@@ -1,7 +1,8 @@
 <script lang="ts">
     import AppInfo from '$lib/common/AppInfo.svelte';
     import Document from '$lib/common/Document.svelte';
-    import type { PluginRequestPacket } from '@omujs/omu/api/dashboard';
+    import { App } from '@omujs/omu';
+    import type { PromptRequestAppPlugins, PromptResult } from '@omujs/omu/api/dashboard';
     import { Tooltip } from '@omujs/ui';
     import PackageEntry from './PackageEntry.svelte';
     import Screen from './Screen.svelte';
@@ -11,20 +12,20 @@
     export let screen: {
         handle: ScreenHandle;
         props: {
-            request: PluginRequestPacket;
-            resolve: (accept: boolean) => void;
+            request: PromptRequestAppPlugins;
+            resolve: (accept: PromptResult) => void;
         };
     };
 
     const { request, resolve } = screen.props;
 
     function accept() {
-        resolve(true);
+        resolve('accept');
         screen.handle.pop();
     }
 
     function reject() {
-        resolve(false);
+        resolve('deny');
         screen.handle.pop();
     }
 
@@ -63,7 +64,7 @@
 
 <Screen {screen} disableClose>
     <div class="header">
-        <AppInfo app={request.app} />
+        <AppInfo app={App.deserialize(request.app)} />
         <small>は以下のプラグインのインストールを要求しています。</small>
     </div>
     <div class="packages">

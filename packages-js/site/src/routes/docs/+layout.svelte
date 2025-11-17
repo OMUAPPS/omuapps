@@ -1,11 +1,11 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs';
-    import { BROWSER } from 'esm-env';
     import github from 'svelte-highlight/styles/github';
+    import { writable } from 'svelte/store';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
-    import { config } from './constants.js';
+    import { config, GROUP_NAMES } from './constants.js';
     import { docs } from './stores.js';
 
     export let data: { sections: Record<string, DocsSection[]> };
@@ -20,13 +20,29 @@
             entries.includes(section),
         );
 
-    let menuOpen = BROWSER && localStorage.getItem('site/docs/menu_open') === 'true';
-
-    $: {
-        if (BROWSER) {
-            localStorage.setItem('site/docs/menu_open', menuOpen ? 'true' : 'false');
+    function createSetting<T>(key: string, defaultValue: T) {
+        if (typeof localStorage === 'undefined') {
+            return writable<T>(defaultValue);
         }
-    };
+        let value = localStorage.getItem(key);
+        if (value) {
+            try {
+                value = JSON.parse(value);
+            } catch (e) {
+                console.error(e);
+                localStorage.removeItem(key);
+            }
+        }
+        const store = writable<T>(
+            localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)!) : defaultValue,
+        );
+        store.subscribe((value) => localStorage.setItem(key, JSON.stringify(value)));
+        return store;
+    }
+    let menuOpen = createSetting('site/docs/menu_open', true);
+    let openedGroups = createSetting<string[]>('site/docs/opened_groups', []);
+    let selectedGroup: string | undefined = undefined;
+    $: selectedGroup = $docs?.group;
 </script>
 
 <svelte:head>
@@ -66,29 +82,45 @@
                 <DocsFooter {section} />
             {/if}
         </div>
-        <div class="groups omu-scroll" class:open={menuOpen}>
-            <button on:click={() => (menuOpen = !menuOpen)}>
-                {#if menuOpen}
+        <div class="groups omu-scroll" class:open={$menuOpen}>
+            <button class="menu-toggle" on:click={() => ($menuOpen = !$menuOpen)}>
+                {#if $menuOpen}
                     閉じる
                 {:else}
                     開く
                 {/if}
                 <i class="ti ti-menu"></i>
             </button>
-            {#if menuOpen}
-                {#each Object.entries(sections) as [group, entries] (group)}
-                    <h3>{group}</h3>
-                    <div class="sections">
-                        {#each entries as section (section.slug)}
-                            <a
-                                href={`/docs/${section.slug}`}
-                                class:selected={section.slug === $docs?.slug}
-                            >
-                                {section.meta.title}
-                                <i class="ti ti-chevron-right"></i>
-                            </a>
-                        {/each}
-                    </div>
+            {#if $menuOpen}
+                {#each Object.entries(sections) as [group, entries], index (index)}
+                    {#if group !== 'index'}
+                        <button class="group-toggle" on:click={() => {
+                            if (selectedGroup === group) {
+                                selectedGroup = undefined;
+                            }
+                            if ($openedGroups.includes(group)) {
+                                $openedGroups = $openedGroups.filter((it) => it != group);
+                            } else {
+                                $openedGroups = [...$openedGroups, group];
+                            }
+                        }}>
+                            {GROUP_NAMES[group] ?? group}
+                            <i class="ti ti-chevron-down"></i>
+                        </button>
+                    {/if}
+                    {#if group === 'index' || $openedGroups.includes(group) || selectedGroup === group}
+                        <div class="sections">
+                            {#each entries as section, index (index)}
+                                <a
+                                    href={`/docs/${section.slug}`}
+                                    class:selected={section.slug === $docs?.slug}
+                                >
+                                    {section.meta.title}
+                                    <i class="ti ti-chevron-right"></i>
+                                </a>
+                            {/each}
+                        </div>
+                    {/if}
                 {/each}
                 <div class="config">
                     使用するパッケージマネージャー
@@ -184,8 +216,6 @@
     .groups {
         z-index: 100;
         position: fixed;
-        padding: 0 2rem;
-        padding-right: 2rem;
         top: 0;
         right: 0;
         height: 5rem;
@@ -193,19 +223,28 @@
         background: var(--color-bg-2);
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.25rem;
         font-size: 0.7rem;
-        min-width: 14rem;
+        width: 18rem;
         overflow-y: auto;
 
         &.open {
-            padding-top: 8rem;
             bottom: 0;
             height: 100%;
+
+            > .menu-toggle {
+                position: sticky;
+                left: 0;
+                right: 0;
+                top: 0;
+                padding: 2rem;
+                height: 5rem;
+                margin-bottom: 4rem;
+            }
         }
 
-        > button {
-            position: absolute;
+        > .menu-toggle {
+            position: sticky;
             left: 0;
             right: 0;
             top: 0;
@@ -215,9 +254,29 @@
             outline: 1px solid var(--color-outline);
         }
 
-        > h3 {
+        > a {
+            padding: 0 4rem;
+        }
+
+        > .group-toggle {
             font-size: 0.8rem;
             color: var(--color-1);
+            margin: 0 1rem;
+            padding: 0 0.5rem;
+            padding-bottom: 0.25rem;
+            padding-top: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 900;
+            text-align: start;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+
+            &:hover {
+                background: var(--color-bg-1);
+            }
         }
     }
 
@@ -228,6 +287,7 @@
         background: var(--color-bg-2);
         border-top: 1px solid var(--color-outline);
         padding-top: 0.5rem;
+        margin: 0 1.5rem;
 
         > a {
             display: flex;
@@ -271,6 +331,8 @@
         gap: 0.5rem;
         border-top: 1px solid var(--color-outline);
         padding-top: 0.5rem;
+        margin: 1.5rem;
+        margin-top: auto;
 
         > .package-manager {
             display: grid;

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import re
-import urllib.parse
 from pathlib import Path
 from typing import Final
+
+from yarl import URL
 
 from omu.helper import generate_md5_hash, sanitize_filename
 from omu.model import Model
@@ -23,14 +24,14 @@ class Identifier(Model[str], Keyable):
     @classmethod
     def validate(cls, namespace: str, *path: str) -> None:
         if not namespace:
-            raise Exception("Invalid namespace: Namespace cannot be empty")
+            raise AssertionError("Invalid namespace: Namespace cannot be empty")
         if len(path) == 0:
-            raise Exception("Invalid path: Path must have at least one name")
+            raise AssertionError("Invalid path: Path must have at least one name")
         if not NAMESPACE_REGEX.match(namespace):
-            raise Exception(f"Invalid namespace: Namespace must match {NAMESPACE_REGEX.pattern}")
+            raise AssertionError(f"Invalid namespace: Namespace must match {NAMESPACE_REGEX.pattern}")
         for name in path:
             if not NAME_REGEX.match(name):
-                raise Exception(f"Invalid name: Name must match {NAME_REGEX.pattern}")
+                raise AssertionError(f"Invalid name: Name must match {NAME_REGEX.pattern}")
 
     @classmethod
     def format(cls, namespace: str, *path: str) -> str:
@@ -41,25 +42,34 @@ class Identifier(Model[str], Keyable):
     def from_key(cls, key: str) -> Identifier:
         separator = key.find(":")
         if separator == -1:
-            raise Exception(f"Invalid key: No separator found in {key}")
+            raise AssertionError(f"Invalid key: No separator found in {key}")
         if key.find(":", separator + 1) != -1:
-            raise Exception(f"Invalid key: Multiple separators found in {key}")
+            raise AssertionError(f"Invalid key: Multiple separators found in {key}")
         namespace, path = key[:separator], key[separator + 1 :]
         if not namespace or not path:
-            raise Exception("Invalid key: Namespace and path cannot be empty")
+            raise AssertionError("Invalid key: Namespace and path cannot be empty")
         return cls(namespace, *path.split("/"))
 
     @classmethod
-    def from_url(cls, url: str) -> Identifier:
-        parsed = urllib.parse.urlparse(url)
+    def from_url(cls, url: URL) -> Identifier:
         namespace = cls.namespace_from_url(url)
-        path = parsed.path.split("/")[1:]
+        path = url.path.split("/")[1:]
         return cls(namespace, *path)
 
+    def into_url(self) -> URL:
+        host = ".".join(reversed(self.namespace.split(".")))
+        return URL.build(
+            scheme="http",
+            host=host,
+            path="/".join(self.path),
+        )
+
     @classmethod
-    def namespace_from_url(cls, url: str) -> str:
-        parsed = urllib.parse.urlparse(url)
-        return ".".join(reversed(parsed.netloc.split(".")))
+    def namespace_from_url(cls, url: URL) -> str:
+        parsed = URL(url)
+        if parsed.host is None:
+            raise AssertionError("Invalid host name")
+        return ".".join(reversed(parsed.host.split(".")))
 
     def to_json(self) -> str:
         return self.key()

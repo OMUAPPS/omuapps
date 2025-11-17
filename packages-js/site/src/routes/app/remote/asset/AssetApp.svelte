@@ -35,9 +35,9 @@
         const canvas = ctx.gl.canvas;
         matrices.projection.orthographic(
             0,
+            0,
             canvas.width,
             canvas.height,
-            0,
             -1,
             1,
         );

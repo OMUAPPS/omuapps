@@ -197,11 +197,12 @@ class Network:
                 await self.send(Packet(PACKET_TYPES.READY, None))
                 await self.listen_task
             except Exception as e:
+                await asyncio.sleep(1)
                 if reconnect:
                     attempts += 1
                     if attempts > 10:
-                        return
-                    if exception:
+                        await asyncio.sleep(30)
+                    elif exception:
                         logger.error("Failed to reconnect")
                     else:
                         logger.opt(exception=e).error(f"Failed to connect to {self.address.host}:{self.address.port}")
@@ -220,13 +221,14 @@ class Network:
     async def disconnect(self) -> None:
         if not self.connection:
             return
-        await self.send(
-            Packet(
-                PACKET_TYPES.DISCONNECT,
-                DisconnectPacket(DisconnectType.CLOSE, "Client disconnected"),
+        if not self.connection.closed:
+            await self.send(
+                Packet(
+                    PACKET_TYPES.DISCONNECT,
+                    DisconnectPacket(DisconnectType.CLOSE, "Client disconnected"),
+                )
             )
-        )
-        await self.connection.close()
+            await self.connection.close()
         self.connection = None
         await self._event.status.emit("disconnected")
         await self._event.disconnected.emit()

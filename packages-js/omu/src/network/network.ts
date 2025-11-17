@@ -1,6 +1,6 @@
 import type { Address } from '../address.js';
 import {
-    AnotherConnection, DisconnectReason, InternalError,
+    AnotherConnection, AppRemoved, DisconnectReason, InternalError,
     InvalidOrigin,
     InvalidPacket,
     InvalidToken,
@@ -54,6 +54,7 @@ export class Network {
     private readonly packetHandlers = new IdentifierMap<PacketHandler<unknown>>();
     private listenTask: Promise<void> | undefined = undefined;
     public reason: DisconnectReason | undefined = undefined;
+    private attempt = 0;
 
     constructor(
         private readonly omu: Omu,
@@ -71,9 +72,6 @@ export class Network {
             PACKET_TYPES.READY,
             PACKET_TYPES.ENCRYPTED_PACKET,
         );
-        this.addPacketHandler(PACKET_TYPES.TOKEN, async (token: string) => {
-            await this.tokenProvider.set(this.address, this.omu.app, token);
-        });
         this.addPacketHandler(PACKET_TYPES.DISCONNECT, async (reason) => {
             if (reason.type === DisconnectType.SHUTDOWN
                 || reason.type === DisconnectType.CLOSE) {
@@ -83,6 +81,7 @@ export class Network {
             const ERROR_MAP = {
                 [DisconnectType.ANOTHER_CONNECTION]: AnotherConnection,
                 [DisconnectType.PERMISSION_DENIED]: PermissionDenied,
+                [DisconnectType.APP_REMOVED]: AppRemoved,
                 [DisconnectType.INVALID_TOKEN]: InvalidToken,
                 [DisconnectType.INVALID_ORIGIN]: InvalidOrigin,
                 [DisconnectType.INVALID_VERSION]: InvalidVersion,
@@ -104,6 +103,7 @@ export class Network {
                 throw new Error('Received READY packet when already ready');
             }
             this.setStatus({ type: 'ready' });
+            this.attempt = 0;
         });
     }
 
@@ -160,14 +160,12 @@ export class Network {
             throw new Error('Cannot connect while already connecting');
         }
 
-        let attempt = 0;
-
+        this.attempt = 0;
         while (this.omu.running) {
-            attempt++;
+            this.attempt++;
             try {
                 this.aes = undefined;
                 this.connection = await this.transport.connect();
-                attempt = 0;
                 await this.setStatus({ type: 'connecting' });
                 const metaReceived = await this.connection.receive(this.packetMapper);
                 if (!metaReceived) {
@@ -225,7 +223,7 @@ export class Network {
             } finally {
                 this.event.disconnected.emit(this.reason);
                 if (this.status.type !== 'disconnected' && this.status.type !== 'reconnecting') {
-                    this.setStatus({ type: 'disconnected', attempt, reason: this.reason });
+                    this.setStatus({ type: 'disconnected', attempt: this.attempt, reason: this.reason });
                 }
                 this.connection?.close();
                 this.connection = undefined;
@@ -241,7 +239,7 @@ export class Network {
             if (!reconnect) {
                 break;
             }
-            const shouldReconnect = await this.scheduleReconnect(attempt);
+            const shouldReconnect = await this.scheduleReconnect(this.attempt);
             if (!shouldReconnect) {
                 break;
             }

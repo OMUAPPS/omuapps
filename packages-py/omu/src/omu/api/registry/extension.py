@@ -13,17 +13,17 @@ from omu.network.packet import PacketType
 from omu.omu import Omu
 from omu.serializer import SerializeError, Serializer
 
-from .packets import RegistryPacket, RegistryRegisterPacket
+from .packets import RegisterPacket, RegistryPacket
 from .registry import Registry, RegistryType
 
 REGISTRY_EXTENSION_TYPE = ExtensionType("registry", lambda client: RegistryExtension(client))
 
 REGISTRY_PERMISSION_ID = REGISTRY_EXTENSION_TYPE / "permission"
 
-REGISTRY_REGISTER_PACKET = PacketType[RegistryRegisterPacket].create_serialized(
+REGISTRY_REGISTER_PACKET = PacketType[RegisterPacket].create_json(
     REGISTRY_EXTENSION_TYPE,
     "register",
-    serializer=RegistryRegisterPacket,
+    serializer=RegisterPacket,
 )
 REGISTRY_UPDATE_PACKET = PacketType[RegistryPacket].create_serialized(
     REGISTRY_EXTENSION_TYPE,
@@ -160,7 +160,7 @@ class RegistryImpl[T](Registry[T]):
             await self.client.send(REGISTRY_LISTEN_PACKET, self.type.id)
         if not self.type.id.is_subpath_of(self.client.app.id):
             return
-        packet = RegistryRegisterPacket(
+        packet = RegisterPacket(
             id=self.type.id,
             permissions=self.type.permissions,
         )

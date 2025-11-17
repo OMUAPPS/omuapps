@@ -1,12 +1,12 @@
 <script lang="ts">
-    import AppPage from '$lib/components/AppPage.svelte';
-    import AssetButton from '$lib/components/AssetButton.svelte';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         Align,
         AppHeader,
-        setClient,
+        AppPage,
+        AssetButton,
+        setGlobal,
         Textbox,
         Tooltip,
     } from '@omujs/ui';
@@ -19,13 +19,14 @@
     const obs = OBSPlugin.create(omu);
     const timer = new TimerApp(omu);
     const { data, config } = timer;
-    setClient(omu);
+    setGlobal({ omu, obs });
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
-            OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
         );
         omu.start();
     }
@@ -95,7 +96,7 @@
         <div class="flex col width">
             <h3>OBSに貼り付ける</h3>
             <section>
-                <AssetButton {omu} {obs} asset={ASSET_APP} />
+                <AssetButton asset={ASSET_APP} />
             </section>
             <h3>見た目</h3>
             <section>

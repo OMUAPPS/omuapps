@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { chat, dashboard } from '$lib/client.js';
+    import { chat, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
+    import type { App } from '@omujs/omu';
     import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AppEntry from './AppEntry.svelte';
@@ -13,10 +14,11 @@
         type Page,
         type PageItem,
     } from './page.js';
+    import AppPage from './pages/AppPage.svelte';
     import ConnectPage from './pages/ConnectPage.svelte';
     import ExplorePage from './pages/ExplorePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
-    import { currentPage, menuOpen } from './settings.js';
+    import { currentPage, devMode, menuOpen } from './settings.js';
     import SettingsPage from './settings/SettingsPage.svelte';
     import TabEntry from './TabEntry.svelte';
 
@@ -76,17 +78,31 @@
         await loadPage($currentPage, pageItem);
     });
 
+    async function registerServicePages() {
+        omu.server.apps.listen();
+        const update = async (apps: Map<string, App>) => {
+            const services = [...apps.values().filter((app) => app.type === 'service')];
+            for (const service of services) {
+                const id = `app-${service.id.key()}`;
+                $pages[id] = {
+                    type: 'loaded', page: {
+                        component: AppPage,
+                        props: {
+                            app: service,
+                        },
+                    } as Page<unknown>,
+                };
+            }
+        };
+        omu.server.apps.event.cacheUpdate.listen((newApps) => update(newApps));
+        update(await omu.server.apps.fetchAll());
+    }
+
     let onlineChats = 0;
 
     onMount(async () => {
-        dashboard.apps.event.remove.listen((removedItems) => {
+        omu.server.apps.event.remove.listen((removedItems) => {
             removedItems.forEach((item) => {
-                delete $pages[`app-${item.id.key()}`];
-                unregisterPage(`app-${item.id.key()}`);
-            });
-        });
-        dashboard.apps.event.update.listen((updatedItems) => {
-            updatedItems.forEach((item) => {
                 delete $pages[`app-${item.id.key()}`];
                 unregisterPage(`app-${item.id.key()}`);
             });
@@ -102,7 +118,9 @@
             backward: true,
         });
         updateOnlineChats();
+        registerServicePages();
     });
+    $: console.log($pages);
 </script>
 
 <main class:open={$menuOpen}>
@@ -148,7 +166,7 @@
             </div>
         </section>
         <div class="list">
-            <TableList table={dashboard.apps} component={AppEntry}>
+            <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && ($devMode || app.type === 'app')} component={AppEntry}>
                 <button
                     on:click={() => ($currentPage = EXPLORE_PAGE.id)}
                     slot="empty"
