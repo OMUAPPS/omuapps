@@ -5,7 +5,7 @@
     import { obs, omu, Spinner, Tooltip } from '@omujs/ui';
 
     export let asset: App;
-    export let multiple = true;
+    export let single = false;
     export let dimensions: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined = undefined;
     export let permissions: IntoId[] = [];
 
@@ -34,7 +34,7 @@
         const url = new URL(asset.url ?? location.href);
         const timestamp = Date.now().toString(36);
         let app = asset;
-        if (multiple) {
+        if (!single) {
             url.searchParams.set('id', timestamp);
             app = app.join(timestamp);
         }
