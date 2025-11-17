@@ -16,9 +16,8 @@ plugin = "omu_chat:plugin"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
-dev-dependencies = []
 
 [tool.hatch.metadata]
 allow-direct-references = true

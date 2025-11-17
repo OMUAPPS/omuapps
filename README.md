@@ -15,17 +15,16 @@ OMUAPPSの開発環境を構築する方法です。
 
 必要なものをインストールしてください。
 
-- Install [Rust](https://www.rust-lang.org/ja)
-- Install [Nodejs](https://nodejs.org/)
+- Install [Rust](https://www.rust-lang.org/)
 - Install [bun](https://bun.sh/)
-- Install [rye](https://rye.astral.sh/)
+- Install [uv](https://docs.astral.sh/uv/)
 
 ### セットアップ
 
-`rye sync` `bun i`を実行してください。
+`uv sync` `bun i`を実行してください。
 
 ```bash
-rye sync
+uv sync
 bun i
 ```
 
