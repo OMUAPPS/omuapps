@@ -157,11 +157,11 @@
                 <small>
                     また、株式会社Diver Downの提供するマシュマロに同等の機能が追加された場合、本アプリからは予告なくその機能を削除する可能性があります。
                 </small>
-                <Button primary onclick={state.accept}>
-                    同意する
-                    <i class="ti ti-check"></i>
-                </Button>
             </div>
+            <Button primary onclick={state.accept}>
+                同意する
+                <i class="ti ti-check"></i>
+            </Button>
         </div>
     {:else if state.type === 'loading'}
         <div class="screen">
