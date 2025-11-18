@@ -40,7 +40,7 @@
         player.seekTo(elapsed, true);
         info = {
             ...player.getVideoData(),
-            duration: player.getDuration() * 1000,
+            duration: player.getDuration(),
         };
         videoLoaded = false;
     }
