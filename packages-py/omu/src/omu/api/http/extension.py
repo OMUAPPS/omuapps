@@ -11,7 +11,9 @@ from typing import Literal, NotRequired, TypedDict
 from loguru import logger
 from yarl import URL
 
+from omu.api.dashboard.extension import DASHBOARD_SET_PERMISSION_ID
 from omu.api.extension import Extension, ExtensionType
+from omu.api.table import TablePermissions, TableType
 from omu.bytebuffer import ByteReader, ByteWriter
 from omu.network.packet.packet import PacketType
 from omu.omu import Omu
@@ -164,6 +166,19 @@ class WebSocketError(RequestHandle):
 WEBSOCKET_ERROR = PacketType[WebSocketError].create_json(
     HTTP_EXTENSION_TYPE,
     name="ws_error",
+)
+
+
+class AllowedHost(TypedDict):
+    id: str
+    ports: list[int]
+
+
+HTTP_ALLOWED_PORTS = TableType[AllowedHost].create_json(
+    HTTP_EXTENSION_TYPE,
+    name="allowed_ports",
+    key=lambda entry: str(entry["id"]),
+    permissions=TablePermissions(DASHBOARD_SET_PERMISSION_ID),
 )
 
 

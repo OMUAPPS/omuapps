@@ -273,12 +273,15 @@ class PermissionManager:
         match_result = self.match_app(found_entry["app_json"], app)
         if match_result.is_err is True:
             if found_entry["app_json"].get("metadata") is not None:
+                dependencies = await self.server.dashboard.resolve_dependencies(app)
                 accepted = await self.server.dashboard.notify_update_app(
                     old_app=App.from_json(found_entry["app_json"]),
                     new_app=app,
+                    dependencies=dependencies,
                 )
                 if not accepted:
-                    return Err(f"App data mismatch for app {app.id}: {match_result.err}")
+                    return Err(f"App data mismatch for app {app.id} and not accepted this change: {match_result.err}")
+                await self.server.server.apps.add(*dependencies.values())
             self.apps[app.id]["app_json"] = app.to_json()
             self.store()
 
@@ -295,15 +298,22 @@ class PermissionManager:
             child = ParentPermissionHandle(self, app.id, token_result.value)
             return Ok((child, token))
 
-    def match_app(self, a: AppJson, b: App) -> Result[..., str]:
-        if a["id"] != b.id.key():
+    def match_app(self, existing: AppJson, new_app: App) -> Result[..., str]:
+        if existing["id"] != new_app.id.key():
             return Err("App ID does not match")
-        if a.get("parent_id") != map_optional(b.parent_id, Identifier.key):
+        if existing.get("parent_id") != map_optional(new_app.parent_id, Identifier.key):
             return Err("App parent ID does not match")
-        if a.get("url") != b.url:
+        if existing.get("url") != new_app.url:
             return Err("App URL does not match")
-        if a.get("type") != b.type.value:
+        if existing.get("type") != new_app.type.value:
             return Err("App type does not match")
-        if json.dumps(a.get("metadata")) != json.dumps(b.metadata):
+        if existing.get("dependencies") != new_app.dependencies:
+            return Err("App type does not match")
+        if json.dumps(existing.get("metadata")) != json.dumps(new_app.metadata):
             return Err("App metadata does not match")
+        needed_dependencies = list(
+            filter(lambda id: Identifier.from_key(id) not in self.apps, (new_app.dependencies or {}).keys())
+        )
+        if needed_dependencies:
+            return Err(f"App's dependencies are not satisfied: {', '.join(needed_dependencies)}")
         return Ok(...)

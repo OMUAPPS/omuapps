@@ -202,15 +202,14 @@ const DASHBOARD_WEBVIEW_EVENT_PACKET = PacketType.createJson<WebviewEventPacket>
 });
 
 type AllowedHost = {
-    host: string;
-    apps: Identifier[];
+    id: string;
+    hosts: string[];
 };
 
-const DASHBOARD_ALLOWED_HOSTS = TableType.createJson<AllowedHost>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'hosts',
-    key: (entry) => entry.host,
-    serializer: Serializer.noop<AllowedHost>()
-        .field('apps', Serializer.of(Identifier).toArray()),
+const DASHBOARD_ALLOWED_WEBVIEW_HOSTS = TableType.createJson<AllowedHost>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'allowed_webview_hosts',
+    key: (entry) => entry.id,
+    permissions: { all: DASHBOARD_SET_PERMISSION_ID },
 });
 
 const DASHBOARD_HOST_REQUEST = EndpointType.createJson<{
@@ -286,11 +285,23 @@ export interface PromptRequestAppInstall extends PromptRequestBase<'app/install'
 export interface PromptRequestAppUpdate extends PromptRequestBase<'app/update'> {
     old_app: AppJson;
     new_app: AppJson;
+    dependencies: Record<string, AppJson>;
 }
 
 export interface PromptRequestIndexInstall extends PromptRequestBase<'index/install'> {
     index_url: string;
     meta?: AppIndexRegistryMeta;
+}
+
+export interface PortProcess {
+    port: number;
+    name: string;
+    exe: string;
+}
+
+export interface PromptRequestHttpPort extends PromptRequestBase<'http/port'> {
+    app: AppJson;
+    processes: PortProcess[];
 }
 
 export type PromptRequest = (
@@ -299,6 +310,7 @@ export type PromptRequest = (
     | PromptRequestAppInstall
     | PromptRequestAppUpdate
     | PromptRequestIndexInstall
+    | PromptRequestHttpPort
 );
 
 const DASHBOARD_PROMPT_REQUEST = PacketType.createJson<PromptRequest>(DASHBOARD_EXTENSION_TYPE, {
@@ -384,7 +396,7 @@ export class DashboardExtension {
             if (!handle) return;
             handle.emit(packet.event);
         });
-        this.allowedHosts = omu.tables.get(DASHBOARD_ALLOWED_HOSTS);
+        this.allowedHosts = omu.tables.get(DASHBOARD_ALLOWED_WEBVIEW_HOSTS);
         this.speechRecognition = omu.registries.get(DASHBOARD_SPEECH_RECOGNITION);
     }
 
@@ -401,6 +413,8 @@ export class DashboardExtension {
                 return await dashboard.handleUpdateApp(request);
             case 'index/install':
                 return await dashboard.handleIndexInstall(request);
+            case 'http/port':
+                return await dashboard.handleHttpPortRequest(request);
             default:
                 throw new Error(`Unknown prompt requested: ${JSON.stringify(request)}`);
         }
@@ -451,8 +465,9 @@ export class DashboardExtension {
         this.omu.endpoints.bind(DASHBOARD_COOKIES_GET, async (request, params): Promise<UserResponse<Cookie[]>> => {
             const { url } = request;
             const { hostname } = new URL(url);
-            const allowedHost = await this.allowedHosts.get(hostname) ?? { host: hostname, apps: [] };
-            const allowed = allowedHost.apps.some((host) => host.isEqual(params.caller));
+            const id = params.caller.key();
+            const allowedHost: AllowedHost = await this.allowedHosts.get(id) ?? { id, hosts: [] };
+            const allowed = allowedHost.hosts.includes(hostname);
             if (!allowed) {
                 return {
                     type: 'cancelled',
@@ -462,8 +477,9 @@ export class DashboardExtension {
         });
         this.omu.endpoints.bind(DASHBOARD_HOST_REQUEST, async (request, params): Promise<UserResponse> => {
             const { host } = request;
-            const hostEntry = await this.allowedHosts.get(host) ?? { host, apps: [] };
-            const allowed = hostEntry.apps.some((host) => host.isEqual(params.caller));
+            const id = params.caller.key();
+            const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id, hosts: [] };
+            const allowed = hostEntry.hosts.includes(host);
             if (allowed) {
                 return {
                     type: 'ok',
@@ -472,7 +488,7 @@ export class DashboardExtension {
             }
             const result = await dashboard.hostRequested(request, params);
             if (result.type === 'ok') {
-                hostEntry.apps.push(params.caller);
+                hostEntry.hosts.push(host);
                 await this.allowedHosts.update(hostEntry);
             }
             return result;

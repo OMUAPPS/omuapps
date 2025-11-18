@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, NotRequired, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 import aiohttp
 from omu.api.server.extension import AppIndexRegistryMeta
@@ -22,14 +22,14 @@ class InstallRequest(TypedDict):
 class AppIndexRegistryJSON(TypedDict):
     id: str
     apps: dict[str, AppJson]
-    meta: NotRequired[AppIndexRegistryMeta | None]
+    meta: AppIndexRegistryMeta
 
 
 @dataclass(frozen=True, slots=True)
 class AppIndexRegistry:
     id: Identifier
     apps: dict[Identifier, App]
-    meta: AppIndexRegistryMeta | None
+    meta: AppIndexRegistryMeta
 
     @staticmethod
     def from_json(json: AppIndexRegistryJSON) -> AppIndexRegistry:
@@ -41,7 +41,7 @@ class AppIndexRegistry:
             if not app_id.is_namepath_equal(app.id, 0):
                 raise AssertionError(f"App ID does not match the ID in the index. {app.id} != {app_id}")
             apps[app_id] = app
-        return AppIndexRegistry(id=id, apps=apps, meta=json.get("meta"))
+        return AppIndexRegistry(id=id, apps=apps, meta=json["meta"])
 
     @staticmethod
     def resolve_index_by_specifier(

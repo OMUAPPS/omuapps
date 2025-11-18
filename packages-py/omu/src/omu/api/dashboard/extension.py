@@ -10,7 +10,7 @@ from omu.api.permission.permission import PermissionTypeJson
 from omu.api.plugin.package_info import PackageInfo
 from omu.api.registry.registry import RegistryPermissions, RegistryType
 from omu.api.server.extension import AppIndexRegistryMeta
-from omu.api.table import TablePermissions, TableType
+from omu.api.table.table import TablePermissions, TableType
 from omu.app import App, AppJson
 from omu.bytebuffer import ByteReader, ByteWriter
 from omu.errors import PermissionDenied
@@ -256,11 +256,23 @@ class PromptRequestAppInstall(PromptRequestBase[Literal["app/install"]]):
 class PromptRequestAppUpdate(PromptRequestBase[Literal["app/update"]]):
     old_app: AppJson
     new_app: AppJson
+    dependencies: dict[str, AppJson]
 
 
 class PromptRequestIndexInstall(PromptRequestBase[Literal["index/install"]]):
     index_url: str
     meta: AppIndexRegistryMeta
+
+
+class PortProcess(TypedDict):
+    port: int
+    name: str
+    exe: str
+
+
+class PromptRequestHttpPort(PromptRequestBase[Literal["http/port"]]):
+    app: AppJson
+    processes: list[PortProcess]
 
 
 type PromptRequest = (
@@ -269,6 +281,7 @@ type PromptRequest = (
     | PromptRequestAppInstall
     | PromptRequestAppUpdate
     | PromptRequestIndexInstall
+    | PromptRequestHttpPort
 )
 
 DASHBOARD_PROMPT_REQUEST = PacketType[PromptRequest].create_json(
@@ -330,16 +343,16 @@ DASHBOARD_WEBVIEW_EVENT_PACKET = PacketType[WebviewEventPacket].create_json(
 
 
 class AllowedHost(TypedDict):
-    host: str
+    id: str
+    hosts: list[str]
 
 
-DASHBOARD_ALLOWED_HOSTS = TableType[AllowedHost].create_json(
+DASHBOARD_ALLOWED_WEBVIEW_HOSTS = TableType[AllowedHost].create_json(
     DASHBOARD_EXTENSION_TYPE,
-    name="hosts",
-    key=lambda entry: entry["host"],
-    permissions=TablePermissions(DASHBOARD_SET_PERMISSION_ID),
+    name="allowed_webview_hosts",
+    key=lambda entry: entry["id"],
+    permissions=TablePermissions(all=DASHBOARD_SET_PERMISSION_ID),
 )
-
 DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join("speech_recognition")
 
 

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import io
+import ipaddress
+import socket
 from asyncio import Future
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import aiohttp
-from aiohttp import ClientResponse, ClientSession, WSCloseCode, WSMsgType
+from aiohttp import ClientResponse, ClientSession, ClientWebSocketResponse, WSCloseCode, WSMsgType
 from omu.api.http.extension import (
+    HTTP_ALLOWED_PORTS,
     HTTP_REQUEST_CLOSE,
     HTTP_REQUEST_CREATE,
     HTTP_REQUEST_PERMISSION_ID,
@@ -27,6 +31,7 @@ from omu.api.http.extension import (
     WebSocketClose,
     WSDataMeta,
 )
+from omu.app import App, AppType
 from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 from yarl import URL
@@ -60,7 +65,10 @@ class HttpHandle:
 @dataclass(slots=True)
 class WSHandle:
     session: Session
-    socket: aiohttp.ClientWebSocketResponse | None
+    socket: Future[aiohttp.ClientWebSocketResponse]
+
+
+class NotAllowed(Exception): ...
 
 
 class HttpExtension:
@@ -85,6 +93,36 @@ class HttpExtension:
         server.network.add_packet_handler(WEBSOCKET_CREATE, self.handle_ws_create)
         server.network.add_packet_handler(WEBSOCKET_DATA, self.handle_ws_send)
         server.network.add_packet_handler(WEBSOCKET_CLOSE, self.handle_ws_close)
+        self.allowed_ports = server.tables.register(HTTP_ALLOWED_PORTS)
+        server.server.apps.event.remove += self.on_app_removed
+
+    async def on_app_removed(self, apps: Mapping[str, App]):
+        for id in apps.keys():
+            found = await self.allowed_ports.get(id)
+            if found is None:
+                continue
+            await self.allowed_ports.remove(found)
+
+    async def verify_port_allowed(self, session: Session, url: URL):
+        if session.kind == AppType.DASHBOARD:
+            return
+        if url.host is None:
+            raise Exception("Invalid url: host is not specified")
+        ip_address = socket.gethostbyname(url.host)
+        address = ipaddress.ip_address(ip_address)
+        if address.is_global:
+            return
+        if url.port is None:
+            return
+        id = session.id.key()
+        entry = await self.allowed_ports.get(id) or {"id": id, "ports": []}
+        if url.port in entry["ports"]:
+            return
+        accepted = await self.server.dashboard.notify_http_port_request(session.app, url.port)
+        if not accepted:
+            raise NotAllowed(f"App {id} does not have permission to access port {url.port}.")
+        entry["ports"].append(url.port)
+        await self.allowed_ports.update(entry)
 
     async def handle_http_request_create(self, session: Session, packet: HttpRequest):
         if not session.permissions.has(HTTP_REQUEST_PERMISSION_ID):
@@ -97,6 +135,7 @@ class HttpExtension:
         try:
             url = URL(packet["url"])
             request = HttpHandle(session=session, buffer=io.BytesIO())
+            await self.verify_port_allowed(session, url)
             self.http_handles[packet["id"]] = request
             await request.close_future
             async with ClientSession() as client:
@@ -147,7 +186,9 @@ class HttpExtension:
 
         try:
             url = URL(packet["url"])
-            request = WSHandle(session=session, socket=None)
+            connect_future = Future[ClientWebSocketResponse]()
+            request = WSHandle(session=session, socket=connect_future)
+            await self.verify_port_allowed(session, url)
             self.ws_handles[packet["id"]] = request
             async with ClientSession() as client:
                 async with client.ws_connect(
@@ -163,7 +204,7 @@ class HttpExtension:
 
                     session.event.disconnected += _close
 
-                    request.socket = socket
+                    connect_future.set_result(socket)
                     await session.send(
                         WEBSOCKET_OPEN,
                         {"id": packet["id"], "protocol": socket.protocol, "url": str(socket._response.url)},
@@ -197,8 +238,13 @@ class HttpExtension:
                 WEBSOCKET_ERROR,
                 {"id": packet["id"], "type": "ConnectionRefused", "reason": ""},
             )
+        except NotAllowed as e:
+            await session.send(
+                WEBSOCKET_ERROR,
+                {"id": packet["id"], "type": "ConnectionRefused", "reason": str(e)},
+            )
         finally:
-            del self.ws_handles[packet["id"]]
+            self.ws_handles.pop(packet["id"], None)
 
     async def handle_ws_send(self, session: Session, packet: DataChunk[WSDataMeta]):
         if packet.meta["id"] not in self.ws_handles:
@@ -206,13 +252,12 @@ class HttpExtension:
         handle = self.ws_handles[packet.meta["id"]]
         if handle.session != session:
             raise PermissionDenied("Mismatched session on request handle")
-        if handle.socket is None:
-            raise Exception("Socket not connected")
 
+        socket = await handle.socket
         if packet.meta["type"] == WSMsgType.TEXT:
-            await handle.socket.send_str(packet.data.decode("utf-8"))
+            await socket.send_str(packet.data.decode("utf-8"))
         else:
-            await handle.socket.send_bytes(packet.data)
+            await socket.send_bytes(packet.data)
 
     async def handle_ws_close(self, session: Session, packet: WebSocketClose):
         if packet["id"] not in self.ws_handles:
@@ -220,11 +265,9 @@ class HttpExtension:
         handle = self.ws_handles[packet["id"]]
         if handle.session != session:
             raise PermissionDenied("Mismatched session on request handle")
-        if handle.socket is None:
-            raise Exception("Socket not connected")
-
+        socket = await handle.socket
         message = packet.get("reason") or ""
-        await handle.socket.close(
+        await socket.close(
             code=packet.get("code", WSCloseCode.OK),
             message=message.encode(encoding="utf-8"),
         )
