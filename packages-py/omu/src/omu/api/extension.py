@@ -33,4 +33,4 @@ class ExtensionType[T: Extension](Identifier):
         self.create = create
 
     def key(self) -> str:
-        return self.name
+        return Identifier("ext", self.name).key()

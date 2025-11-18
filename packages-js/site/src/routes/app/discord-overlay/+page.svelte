@@ -19,8 +19,7 @@
         omu.permissions.require(
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
-            OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
-            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
             OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
             OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
@@ -40,6 +39,6 @@
 
 <AppPage>
     {#await promise then}
-        <App {omu} {obs} {overlayApp} />
+        <App {overlayApp} />
     {/await}
 </AppPage>

@@ -195,12 +195,11 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
         omu.permissions.require(
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
-            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
         );
         if (client) {
             omu.permissions.require(
                 OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
-                OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
+                OmuPermissions.ASSET_PERMISSION_ID,
                 OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
                 OBSPermissions.OBS_SOURCE_UPDATE_PERMISSION_ID,
                 OBSPermissions.OBS_SOURCE_READ_PERMISSION_ID,

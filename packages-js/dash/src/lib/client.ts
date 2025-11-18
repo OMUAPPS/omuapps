@@ -56,6 +56,7 @@ omu.permissions.require(
     OmuPermissions.SERVER_SHUTDOWN_PERMISSION_ID,
     OmuPermissions.DASHBOARD_OPEN_APP_PERMISSION_ID,
     OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
+    OmuPermissions.ASSET_PERMISSION_ID,
     OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
     OmuPermissions.I18N_SET_LOCALES_PERMISSION_ID,
 );

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypedDict
+
+from yarl import URL
 
 from omu.api import Extension, ExtensionType
 from omu.api.endpoint import EndpointType
@@ -59,43 +61,52 @@ class FileArraySerializer:
         return files
 
 
-ASSET_UPLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE / "upload"
+ASSET_PERMISSION_ID = ASSET_EXTENSION_TYPE
 ASSET_UPLOAD_ENDPOINT = EndpointType[Asset, Identifier].create_serialized(
     ASSET_EXTENSION_TYPE,
     "upload",
     request_serializer=FileSerializer,
     response_serializer=Serializer.model(Identifier).to_json(),
-    permission_id=ASSET_UPLOAD_PERMISSION_ID,
+    permission_id=ASSET_PERMISSION_ID,
 )
 ASSET_UPLOAD_MANY_ENDPOINT = EndpointType[list[Asset], list[Identifier]].create_serialized(
     ASSET_EXTENSION_TYPE,
     "upload_many",
     request_serializer=FileArraySerializer,
     response_serializer=Serializer.model(Identifier).to_array().to_json(),
-    permission_id=ASSET_UPLOAD_PERMISSION_ID,
+    permission_id=ASSET_PERMISSION_ID,
 )
-ASSET_DOWNLOAD_PERMISSION_ID = ASSET_EXTENSION_TYPE / "download"
 ASSET_DOWNLOAD_ENDPOINT = EndpointType[Identifier, Asset].create_serialized(
     ASSET_EXTENSION_TYPE,
     "download",
     request_serializer=Serializer.model(Identifier).to_json(),
     response_serializer=FileSerializer,
-    permission_id=ASSET_DOWNLOAD_PERMISSION_ID,
+    permission_id=ASSET_PERMISSION_ID,
 )
 ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType[list[Identifier], list[Asset]].create_serialized(
     ASSET_EXTENSION_TYPE,
     "download_many",
     request_serializer=Serializer.model(Identifier).to_array().to_json(),
     response_serializer=FileArraySerializer,
-    permission_id=ASSET_DOWNLOAD_PERMISSION_ID,
+    permission_id=ASSET_PERMISSION_ID,
 )
-ASSET_DELETE_PERMISSION_ID = ASSET_EXTENSION_TYPE / "delete"
 ASSET_DELETE_ENDPOINT = EndpointType[Identifier, None].create_serialized(
     ASSET_EXTENSION_TYPE,
     "delete",
     request_serializer=Serializer.model(Identifier).to_json(),
     response_serializer=Serializer.json(),
-    permission_id=ASSET_DELETE_PERMISSION_ID,
+    permission_id=ASSET_PERMISSION_ID,
+)
+
+
+class GenerateAssetTokenResponse(TypedDict):
+    token: str
+
+
+ASSET_GENERATE_TOKEN_ENDPOINT = EndpointType[Any, GenerateAssetTokenResponse].create_json(
+    ASSET_EXTENSION_TYPE,
+    name="token_generate",
+    permission_id=ASSET_PERMISSION_ID,
 )
 
 
@@ -106,6 +117,13 @@ class AssetExtension(Extension):
 
     def __init__(self, omu: Omu) -> None:
         self.omu = omu
+        self.asset_token: str | None = None
+        omu.network.add_task(self._on_task)
+
+    async def _on_task(self):
+        if self.omu.permissions.has(ASSET_PERMISSION_ID):
+            result = await self.omu.endpoints.call(ASSET_GENERATE_TOKEN_ENDPOINT, {})
+            self.asset_token = result["token"]
 
     async def upload(self, file: Asset) -> Identifier:
         return await self.omu.endpoints.call(ASSET_UPLOAD_ENDPOINT, file)
@@ -123,11 +141,35 @@ class AssetExtension(Extension):
         await self.omu.endpoints.call(ASSET_DELETE_ENDPOINT, identifier)
 
     def url(self, identifier: Identifier) -> str:
+        if self.asset_token is None:
+            raise Exception("Asset token is not set")
         address = self.omu.network.address
-        protocol = "https" if address.secure else "http"
-        return f"{protocol}://{address.host}:{address.port}/asset?id={identifier.key()}"
+        return str(
+            URL.build(
+                scheme="https" if address.secure else "http",
+                host=address.host,
+                port=address.port,
+                path="/asset",
+                query={
+                    "asset_token": self.asset_token,
+                    "id": identifier.key(),
+                },
+            )
+        )
 
     def proxy(self, url: str) -> str:
+        if self.asset_token is None:
+            raise Exception("Asset token is not set")
         address = self.omu.network.address
-        protocol = "https" if address.secure else "http"
-        return f"{protocol}://{address.host}:{address.port}/proxy?url={url}"
+        return str(
+            URL.build(
+                scheme="https" if address.secure else "http",
+                host=address.host,
+                port=address.port,
+                path="/asset",
+                query={
+                    "asset_token": self.asset_token,
+                    "url": url,
+                },
+            )
+        )

@@ -45,7 +45,7 @@
                 <AssetButton
                     asset={ASSET_APP}
                     permissions={[
-                        OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+                        OmuPermissions.ASSET_PERMISSION_ID,
                         VOICE_CHAT_PERMISSION_ID,
                     ]}
                     dimensions={{ width: 1920, height: 1080 }}

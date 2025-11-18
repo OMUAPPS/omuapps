@@ -95,8 +95,7 @@
     if (BROWSER) {
         omu.permissions.require(
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
-            OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
-            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             OmuPermissions.DASHBOARD_WEBVIEW_PERMISSION_ID,

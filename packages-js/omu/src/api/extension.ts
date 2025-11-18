@@ -14,6 +14,6 @@ export class ExtensionType<T extends Extension = Extension> extends Identifier {
     }
 
     public key(): string {
-        return this.name;
+        return new Identifier('ext', this.name).key();
     }
 }

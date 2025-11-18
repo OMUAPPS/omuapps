@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { textDecoder, textEncoder } from '../../const';
+
+import { textEncoder } from '../../const';
 import { Identifier } from '../../identifier';
 import { PacketType } from '../../network/packet';
 import { Omu } from '../../omu';
-import { ByteReader, ByteWriter, JsonType } from '../../serialize';
 import { Extension, ExtensionType } from '../extension';
+import { DataChunk, HttpRequest, OmuResponse, RequestHandle } from './http';
+import { OmuWS, WebSocketClose, WebSocketError, WebSocketOpen, WSData, WSDataMeta, WSHandleState, WSMsgType } from './websocket';
 
 export const HTTP_EXTENSION_TYPE: ExtensionType<HttpExtension> = new ExtensionType(
     'http',
@@ -13,41 +14,9 @@ export const HTTP_EXTENSION_TYPE: ExtensionType<HttpExtension> = new ExtensionTy
 
 export const HTTP_REQUEST_PERMISSION_ID: Identifier = HTTP_EXTENSION_TYPE.join('request');
 
-type RequestHandle = {
-    id: string;
-};
-
-type HttpRequest = RequestHandle & {
-    header: Record<string, string>;
-    method: string;
-    redirect: RequestRedirect;
-    url: string;
-};
-
 const REQUEST_CREATE = PacketType.createJson<HttpRequest>(HTTP_EXTENSION_TYPE, {
     name: 'request_create',
 });
-
-class DataChunk<T extends JsonType> {
-    constructor(
-        public readonly meta: T,
-        public readonly body: Uint8Array,
-    ) { }
-
-    public static serialize<T extends JsonType>(data: DataChunk<T>): Uint8Array {
-        const writer = new ByteWriter();
-        writer.writeJSON(data.meta);
-        writer.writeUint8Array(data.body);
-        return writer.finish();
-    }
-
-    public static deserialize<T extends JsonType>(data: Uint8Array): DataChunk<T> {
-        const reader = ByteReader.fromUint8Array(data);
-        const meta = reader.readJSON<T>();
-        const body = reader.readUint8Array();
-        return new DataChunk(meta, body);
-    }
-}
 
 const REQUEST_SEND = PacketType.createSerialized<DataChunk<RequestHandle>>(HTTP_EXTENSION_TYPE, {
     name: 'request_send',
@@ -95,64 +64,6 @@ type HandleStateCreated = {
 
 type HandleState = HandleStateCreated | HandleStateReceiving;
 
-type WSData = string | ArrayBufferLike | Blob | ArrayBufferView;
-
-export const WSMsgType = {
-    CONTINUATION: 0x0,
-    TEXT: 0x1,
-    BINARY: 0x2,
-    PING: 0x9,
-    PONG: 0xA,
-    CLOSE: 0x8,
-} as const;
-
-export const WSCloseCode = {
-    OK: 1000,
-    GOING_AWAY: 1001,
-    PROTOCOL_ERROR: 1002,
-    UNSUPPORTED_DATA: 1003,
-    ABNORMAL_CLOSURE: 1006,
-    INVALID_TEXT: 1007,
-    POLICY_VIOLATION: 1008,
-    MESSAGE_TOO_BIG: 1009,
-    MANDATORY_EXTENSION: 1010,
-    INTERNAL_ERROR: 1011,
-    SERVICE_RESTART: 1012,
-    TRY_AGAIN_LATER: 1013,
-    BAD_GATEWAY: 1014,
-} as const;
-
-type WebSocketOpen = RequestHandle & {
-    url: string;
-    protocol?: string | null;
-};
-type WebSocketClose = RequestHandle & {
-    code?: number;
-    reason?: string | null;
-};
-
-type WebSocketHandle = {
-    ws: OmuWS;
-    open: (response: WebSocketOpen) => void;
-    dispatch: (data: DataChunk<WSDataMeta>) => void;
-    close: (response: WebSocketClose) => void;
-    error: (response: WebSocketError) => void;
-};
-
-type WSDataMeta = {
-    id: string;
-    type:
-        | typeof WSMsgType.TEXT
-        | typeof WSMsgType.BINARY
-        | typeof WSMsgType.PING
-        | typeof WSMsgType.PONG;
-};
-
-type WSHandleState = {
-    type: 'created' | 'receiving';
-    handle: WebSocketHandle;
-};
-
 const WEBSOCKET_CREATE = PacketType.createJson<HttpRequest>(HTTP_EXTENSION_TYPE, {
     name: 'ws_create',
 });
@@ -169,11 +80,6 @@ const WEBSOCKET_DATA = PacketType.createSerialized<DataChunk<WSDataMeta>>(HTTP_E
 const WEBSOCKET_CLOSE = PacketType.createJson<WebSocketClose>(HTTP_EXTENSION_TYPE, {
     name: 'ws_close',
 });
-
-type WebSocketError = RequestHandle & {
-    type: 'ConnectionRefused';
-    reason?: string | null;
-};
 
 const WEBSOCKET_ERROR = PacketType.createJson<WebSocketError>(HTTP_EXTENSION_TYPE, {
     name: 'ws_error',
@@ -451,20 +357,23 @@ export class HttpExtension implements Extension {
     }): Promise<OmuWS> {
         const request = new Request(input, options);
         const id = this.generateId();
-        const handle = OmuWS.create(
-            this.omu,
-            id,
-            (data) => {
+        const handle = OmuWS.create({
+            addQueue: (data) => {
                 this.wsSendQueue.push({
                     id: id.key(),
                     data,
                 });
                 this.wsSendWaitResolve();
             },
-            () => {
+            dispose: (options: { code?: number; reason?: string }) => {
+                this.omu.send(WEBSOCKET_CLOSE, {
+                    id: id.key(),
+                    code: options.code,
+                    reason: options.reason,
+                });
                 delete this.wsHandles[id.key()];
             },
-        );
+        });
         this.wsHandles[id.key()] = {
             type: 'created',
             handle,
@@ -477,266 +386,6 @@ export class HttpExtension implements Extension {
             url: request.url,
         });
         return handle.ws;
-    }
-}
-
-class OmuResponse implements Response {
-    constructor(
-        public readonly headers: Headers,
-        public readonly ok: boolean,
-        public readonly redirected: boolean,
-        public readonly status: number,
-        public readonly statusText: string,
-        public readonly type: ResponseType,
-        public readonly url: string,
-        public readonly body: ReadableStream<Uint8Array<ArrayBuffer>> | null,
-        public readonly bodyUsed: boolean,
-    ) {}
-
-    clone(): OmuResponse {
-        return new OmuResponse(
-            this.headers,
-            this.ok,
-            this.redirected,
-            this.status,
-            this.statusText,
-            this.type,
-            this.url,
-            this.body,
-            this.bodyUsed,
-        );
-    }
-    async arrayBuffer(): Promise<ArrayBuffer> {
-        return await new Response(this.body).arrayBuffer();
-    }
-    blob(): Promise<Blob> {
-        return new Response(this.body).blob();
-    }
-    bytes(): Promise<Uint8Array<ArrayBuffer>> {
-        return new Response(this.body).arrayBuffer().then((buf) => new Uint8Array(buf));
-    }
-    formData(): Promise<FormData> {
-        return new Response(this.body).formData();
-    }
-    json(): Promise<any> {
-        return new Response(this.body).json();
-    }
-    text(): Promise<string> {
-        return new Response(this.body).text();
-    }
-}
-
-type EventListenerMap<T> = {
-    [K in keyof T]: ((event: T[K]) => unknown)[]
-};
-
-export type WSMsg = {
-    type: 'open';
-    data: WebSocketOpen;
-} | {
-    type: 'error';
-    data: WebSocketError;
-} | {
-    type: 'text';
-    data: string;
-} | {
-    type: 'binary';
-    data: Uint8Array;
-} | {
-    type: 'close';
-    data: WebSocketClose;
-};
-
-export class OmuWS {
-    constructor(
-        protected readonly omu: Omu,
-        protected readonly id: Identifier,
-        protected readonly addQueue: (data: WSData) => void,
-        protected readonly dispose: () => void,
-        protected readonly receiveQueue: WSMsg[] = [],
-        private receiveResolve: (() => void) | undefined = undefined,
-        private status: 'connecting' | 'open' | 'closed' = 'connecting',
-    ) { }
-
-    public static create(omu: Omu, id: Identifier, addQueue: (data: WSData) => void, dispose: () => void): WebSocketHandle {
-        const ws = new OmuWS(omu, id, addQueue, dispose);
-        return {
-            ws,
-            open: (response) => {
-                ws.receiveQueue.push({
-                    type: 'open',
-                    data: response,
-                });
-                ws.receiveResolve?.();
-            },
-            dispatch: (data: DataChunk<WSDataMeta>): void => {
-                if (data.meta.type === WSMsgType.BINARY) {
-                    ws.receiveQueue.push({
-                        type: 'binary',
-                        data: data.body,
-                    });
-                } else {
-                    ws.receiveQueue.push({
-                        type: 'text',
-                        data: textDecoder.decode(data.body),
-                    });
-                }
-                ws.receiveResolve?.();
-            },
-            close: (response) => {
-                ws.receiveQueue.push({
-                    type: 'close',
-                    data: response,
-                });
-                ws.receiveResolve?.();
-            },
-            error: (response) => {
-                ws.receiveQueue.push({
-                    type: 'error',
-                    data: response,
-                });
-                ws.receiveResolve?.();
-            },
-        };
-    }
-
-    public send(data: WSData): void {
-        this.addQueue(data);
-    }
-
-    public close(code?: number, reason?: string): void {
-        this.omu.send(WEBSOCKET_CLOSE, {
-            id: this.id.key(),
-            code,
-            reason,
-        });
-        this.dispose();
-    }
-
-    public async receive(): Promise<WSMsg> {
-        if (this.receiveResolve) {
-            throw new Error('Already receiving from another async call');
-        }
-        while (this.status !== 'closed') {
-            const data = this.receiveQueue.shift();
-            if (!data) {
-                await new Promise<void>((resolve) => this.receiveResolve = resolve);
-                continue;
-            }
-            if (data.type === 'close') {
-                this.status = 'closed';
-            }
-            if (data.type === 'open') {
-                this.status = 'open';
-            }
-            this.receiveResolve = undefined;
-            return data;
-        }
-        throw new Error('Receiving on already closed socket');
-    }
-
-    protocol: string = '';
-    url: string = '';
-}
-
-export class OmuWebSocket implements WebSocket {
-    public CONNECTING = 0 as const;
-    public OPEN = 1 as const;
-    public CLOSING = 2 as const;
-    public CLOSED = 3 as const;
-
-    binaryType: BinaryType = 'blob';
-    bufferedAmount: number = 0;
-    extensions: string = '';
-    onclose: ((this: WebSocket, ev: CloseEvent) => any) | null = null;
-    onerror: ((this: WebSocket, ev: Event) => any) | null = null;
-    onmessage: ((this: WebSocket, ev: MessageEvent) => any) | null = null;
-    onopen: ((this: WebSocket, ev: Event) => any) | null = null;
-    protocol: string = '';
-    readyState: 0 | 2 | 1 | 3 = 0;
-    url: string = '';
-
-    constructor(
-        protected readonly ws: OmuWS,
-        private readonly eventListeners: EventListenerMap<WebSocketEventMap> = {
-            close: [],
-            error: [],
-            message: [],
-            open: [],
-        },
-    ) {
-        this.receiveLoop();
-    }
-
-    private async receiveLoop() {
-        while (this.readyState === WebSocket.CLOSED) {
-            const { data, type } = await this.ws.receive();
-            switch (type) {
-                case 'close':
-                    this.dispatchEvent(new CloseEvent('close', {
-                        code: data.code,
-                        reason: data.reason ?? undefined,
-                    }));
-                    break;
-                case 'open':
-                    this.url = data.url;
-                    this.protocol = data.protocol ?? '';
-                    this.dispatchEvent(new Event('open', {}));
-                    break;
-                case 'error':
-                    this.dispatchEvent(new ErrorEvent('error', {
-                        error: data.type,
-                        message: data.reason ?? undefined,
-                    }));
-                    break;
-                case 'text':
-                case 'binary':
-                    this.dispatchEvent(new MessageEvent('message', {
-                        data,
-                    }));
-                    break;
-            }
-        }
-    }
-
-    dispatchEvent(event: Event): boolean {
-        const listeners = this.eventListeners[event.type];
-        for (const listener of listeners) {
-            listener(event);
-        }
-        if (event.type === 'open') {
-            this.onopen?.(event as MessageEvent);
-        }
-        if (event.type === 'error') {
-            this.onerror?.(event);
-        }
-        if (event.type === 'message') {
-            this.onmessage?.(event as MessageEvent);
-        }
-        if (event.type === 'close') {
-            this.onclose?.(event as CloseEvent);
-        }
-        return true;
-    }
-
-    send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void {
-        this.ws.send(data);
-    }
-
-    close(code?: number, reason?: string): void {
-        this.ws.close(code, reason);
-    }
-
-    addEventListener<K extends keyof WebSocketEventMap>(type: K, listener: (this: WebSocket, ev: WebSocketEventMap[K]) => any): void {
-        this.eventListeners[type].push(listener);
-    }
-
-    removeEventListener<K extends keyof WebSocketEventMap>(type: K, listener: (this: WebSocket, ev: WebSocketEventMap[K]) => any): void {
-        const listeners = this.eventListeners[type];
-        const index = listeners.indexOf(listener);
-        if (index !== -1) {
-            listeners.splice(index, 1);
-        }
     }
 }
 

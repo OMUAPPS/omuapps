@@ -6,7 +6,7 @@ export { Omu } from './omu.js';
 export { Serializer } from './serialize';
 export type { Serializable } from './serialize';
 export { BrowserTokenProvider, type SessionParam, type TokenProvider } from './token';
-import { ASSET_DELETE_PERMISSION_ID, ASSET_DOWNLOAD_PERMISSION_ID, ASSET_UPLOAD_PERMISSION_ID } from './api/asset';
+import { ASSET_PERMISSION_ID } from './api/asset';
 import {
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
     DAShBOARD_DRAG_DROP_PERMISSION_ID,
@@ -29,7 +29,7 @@ import { Identifier } from './identifier';
 
 export const OmuPermissions: {
     // Asset API
-    readonly ASSET_DELETE_PERMISSION_ID: Identifier; readonly ASSET_DOWNLOAD_PERMISSION_ID: Identifier; readonly ASSET_UPLOAD_PERMISSION_ID: Identifier;
+    readonly ASSET_PERMISSION_ID: Identifier;
     // Dashboard API
     readonly DASHBOARD_APP_INSTALL_PERMISSION_ID: Identifier; readonly DAShBOARD_DRAG_DROP_PERMISSION_ID: Identifier; readonly DASHBOARD_OPEN_APP_PERMISSION_ID: Identifier; readonly DASHBOARD_SET_PERMISSION_ID: Identifier; readonly DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID: Identifier; readonly DASHBOARD_WEBVIEW_PERMISSION_ID: Identifier; readonly DASHOBARD_APP_EDIT_PERMISSION_ID: Identifier; readonly DASHOBARD_APP_READ_PERMISSION_ID: Identifier;
     // HTTP API
@@ -50,9 +50,7 @@ export const OmuPermissions: {
     readonly TABLE_PERMISSION_ID: Identifier;
 } = {
     // Asset API
-    ASSET_DELETE_PERMISSION_ID,
-    ASSET_DOWNLOAD_PERMISSION_ID,
-    ASSET_UPLOAD_PERMISSION_ID,
+    ASSET_PERMISSION_ID: ASSET_PERMISSION_ID,
     // Dashboard API
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
     DAShBOARD_DRAG_DROP_PERMISSION_ID,
