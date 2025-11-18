@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.33 (2025-11-18)
+
+
+### Bug Fixes
+
+* API呼び出しにUser-Agentを設定するようにする ([2c79480](https://github.com/OMUAPPS/omuapps/commit/2c794802097225deb61536f2175bc3025ee6efc1))
+
+
+
+
+
 ## 0.9.32 (2025-11-17)
 
 **Note:** Version bump only for package @omujs/i18n
