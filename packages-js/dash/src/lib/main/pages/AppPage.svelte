@@ -9,7 +9,15 @@
         app: App;
     };
 
-    let state: { type: 'generating' } | { type: 'error'; message: string } | { type: 'open'; url: URL; loading: boolean } = { type: 'generating' };
+    let state: {
+        type: 'generating';
+    } | {
+        type: 'error'; message: string;
+    } | {
+        type: 'open'; url: URL; loading: boolean;
+    } = {
+        type: 'generating',
+    };
 
     onMount(async () => {
         if (!props.app.url) {

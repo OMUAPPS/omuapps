@@ -93,7 +93,7 @@
             class="pointer"
             style:left="{pointer.x * targetWidth / scale}px"
             style:top="{pointer.y * height / scale}px"
-            style:scale={scale * (skin?.cursor.scale ?? 1)}
+            style:scale={(skin?.cursor.scale ?? 1)}
             style="transform-origin: {skin?.cursor.x ?? 0}px {skin?.cursor.y ?? 0}px;"
         >
             {#if loadedSkin?.cursor}

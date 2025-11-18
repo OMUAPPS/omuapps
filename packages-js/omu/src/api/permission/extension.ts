@@ -100,4 +100,8 @@ export class PermissionExtension {
     public has(permissionIdentifier: Identifier): boolean {
         return this.permissions.has(permissionIdentifier);
     }
+
+    public required(permissionIdentifier: Identifier): boolean {
+        return this.requiredPermissions.has(permissionIdentifier);
+    }
 }

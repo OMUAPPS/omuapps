@@ -53,14 +53,15 @@ const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
     },
 );
 
-export const ASSET_UPLOAD_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE.join('upload');
+export const ASSET_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE;
+
 const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<Asset, Identifier>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'upload',
         requestSerializer: FILE_SERIALIZER,
         responseSerializer: Serializer.of(Identifier).toJson(),
-        permissionId: ASSET_UPLOAD_PERMISSION_ID,
+        permissionId: ASSET_PERMISSION_ID,
     },
 );
 const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Asset[], Identifier[]>(
@@ -69,17 +70,16 @@ const ASSET_UPLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Asset[], Identi
         name: 'upload_many',
         requestSerializer: FILE_ARRAY_SERIALIZER,
         responseSerializer: Serializer.of(Identifier).toArray().pipe(Serializer.json()),
-        permissionId: ASSET_UPLOAD_PERMISSION_ID,
+        permissionId: ASSET_PERMISSION_ID,
     },
 );
-export const ASSET_DOWNLOAD_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE.join('download');
 const ASSET_DOWNLOAD_ENDPOINT = EndpointType.createSerialized<Identifier, Asset>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'download',
         requestSerializer: Serializer.of(Identifier).pipe(Serializer.json()),
         responseSerializer: FILE_SERIALIZER,
-        permissionId: ASSET_DOWNLOAD_PERMISSION_ID,
+        permissionId: ASSET_PERMISSION_ID,
     },
 );
 const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[], Asset[]>(
@@ -88,23 +88,40 @@ const ASSET_DOWNLOAD_MANY_ENDPOINT = EndpointType.createSerialized<Identifier[],
         name: 'download_many',
         requestSerializer: Serializer.of(Identifier).toArray().pipe(Serializer.json()),
         responseSerializer: FILE_ARRAY_SERIALIZER,
-        permissionId: ASSET_DOWNLOAD_PERMISSION_ID,
+        permissionId: ASSET_PERMISSION_ID,
     },
 );
-export const ASSET_DELETE_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE.join('delete');
 const ASSET_DELETE_ENDPOINT = EndpointType.createJson<Identifier, null>(
     ASSET_EXTENSION_TYPE,
     {
         name: 'delete',
         requestSerializer: Identifier,
-        permissionId: ASSET_DELETE_PERMISSION_ID,
+        permissionId: ASSET_PERMISSION_ID,
+    },
+);
+
+const ASSET_GENERATE_TOKEN_ENDPOINT = EndpointType.createJson<object, { token: string }>(
+    ASSET_EXTENSION_TYPE,
+    {
+        name: 'token_generate',
+        permissionId: ASSET_PERMISSION_ID,
     },
 );
 
 export class AssetExtension {
     public readonly type: ExtensionType<AssetExtension> = ASSET_EXTENSION_TYPE;
+    private assetToken: string | undefined = undefined;
 
-    constructor(private readonly omu: Omu) {}
+    constructor(private readonly omu: Omu) {
+        omu.network.event.disconnected.listen(() => {
+            this.assetToken = undefined;
+        });
+        omu.network.addTask(async () => {
+            if (omu.permissions.required(ASSET_PERMISSION_ID)) {
+                this.requestGenerateAssetToken();
+            }
+        });
+    }
 
     public async upload(identifier: IntoId, buffer: Uint8Array): Promise<Identifier> {
         const assetIdentifier = await this.omu.endpoints.call(ASSET_UPLOAD_ENDPOINT, {
@@ -138,22 +155,39 @@ export class AssetExtension {
         await this.omu.endpoints.call(ASSET_DELETE_ENDPOINT, id);
     }
 
+    private async requestGenerateAssetToken() {
+        const result = await this.omu.endpoints.call(ASSET_GENERATE_TOKEN_ENDPOINT, {});
+        this.assetToken = result.token;
+    }
+
     public url(
         id: IntoId,
         options?: { cache?: 'no-cache' },
     ): string {
+        if (!this.assetToken) {
+            throw new Error('Asset token is not set');
+        }
         const key = Identifier.from(id).key();
         const address = this.omu.network.address;
         const protocol = address.secure ? 'https' : 'http';
+        const url = new URL(`${protocol}://${address.host}:${address.port}/asset`);
+        url.searchParams.set('asset_token', this.assetToken);
+        url.searchParams.set('id', key);
         if (options?.cache === 'no-cache') {
-            return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(key)}&t=${Date.now()}`;
+            url.searchParams.set('t', Date.now().toString());
         }
-        return `${protocol}://${address.host}:${address.port}/asset?id=${encodeURIComponent(key)}`;
+        return url.toString();
     }
 
     public proxy(url: string): string {
+        if (!this.assetToken) {
+            throw new Error('Asset token is not set');
+        }
         const address = this.omu.network.address;
         const protocol = address.secure ? 'https' : 'http';
-        return `${protocol}://${address.host}:${address.port}/proxy?url=${encodeURIComponent(url)}`;
+        const proxyUrl = new URL(`${protocol}://${address.host}:${address.port}/proxy`);
+        proxyUrl.searchParams.set('asset_token', this.assetToken);
+        proxyUrl.searchParams.set('url', url);
+        return proxyUrl.toString();
     }
 }

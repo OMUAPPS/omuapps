@@ -33,14 +33,13 @@ from omuserver.api.session import SessionExtension
 from omuserver.api.signal import SignalExtension
 from omuserver.api.table import TableExtension
 from omuserver.config import Config
+from omuserver.consts import USER_AGENT_HEADERS
 from omuserver.dependency import AppIndexRegistry, InstallRequest
-from omuserver.helper import safe_path_join
 from omuserver.network import Network
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
 from omuserver.security import PermissionManager
 from omuserver.version import VERSION
 
-USER_AGENT_HEADERS = {"User-Agent": json.dumps(["omu", {"name": "omuserver", "version": VERSION}])}
 RESTART_EXIT_CODE = 100
 FRAME_TYPE_KEY = "omuapps-frame"
 
@@ -62,8 +61,6 @@ class Server:
         self.network.route_get("/", self._handle_index)
         self.network.route_get("/version", self._handle_version)
         self.network.route_get("/frame", self._handle_frame)
-        self.network.route_get("/proxy", self._handle_proxy)
-        self.network.route_get("/asset", self._handle_assets)
         self.network.route_post("/index_install", self._handle_index_install)
         self.security = PermissionManager.load(self)
         self.running = False
@@ -71,10 +68,10 @@ class Server:
         self.permissions = PermissionExtension(self)
         self.tables = TableExtension(self)
         self.sessions = SessionExtension(self)
-        self.http = HttpExtension(self)
         self.registries = RegistryExtension(self)
         self.dashboard = DashboardExtension(self)
         self.server = ServerExtension(self)
+        self.http = HttpExtension(self)
         self.signals = SignalExtension(self)
         self.plugins = PluginExtension(self)
         self.assets = AssetExtension(self)
@@ -119,51 +116,6 @@ class Server:
         }
         content = content.replace("%CONFIG%", json.dumps(config))
         return web.Response(text=content, content_type="text/html")
-
-    async def _handle_proxy(self, request: web.Request) -> web.StreamResponse:
-        url = request.query.get("url")
-        no_cache = bool(request.query.get("no_cache"))
-        if not url:
-            return web.Response(status=400)
-        try:
-            async with self.client.get(
-                url,
-            ) as resp:
-                headers = {
-                    "Cache-Control": "no-cache" if no_cache else "max-age=3600",
-                    "Content-Type": resp.content_type,
-                    "Access-Control-Allow-Origin": "*",
-                }
-                response = web.StreamResponse(status=resp.status, headers=headers)
-                await response.prepare(request)
-                async for chunk in resp.content.iter_any():
-                    await response.write(chunk)
-                return response
-        except TimeoutError:
-            return web.Response(status=504)
-        except aiohttp.ClientConnectionResetError:
-            return web.Response(status=502)
-        except aiohttp.ClientResponseError as e:
-            return web.Response(status=e.status, text=e.message)
-        except Exception:
-            logger.error("Failed to proxy request")
-            return web.Response(status=500)
-
-    async def _handle_assets(self, request: web.Request) -> web.StreamResponse:
-        id = request.query.get("id")
-        if not id:
-            return web.Response(status=400)
-        identifier = Identifier.from_key(id)
-        path = identifier.get_sanitized_path()
-        try:
-            path = safe_path_join(self.directories.assets, path)
-
-            if not path.exists():
-                return web.Response(status=404)
-            return web.FileResponse(path)
-        except Exception as e:
-            logger.error(e)
-            return web.Response(status=500)
 
     async def _handle_index_install(self, request: web.Request) -> web.StreamResponse:
         key = request.host

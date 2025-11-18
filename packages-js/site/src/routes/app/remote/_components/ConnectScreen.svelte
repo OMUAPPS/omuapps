@@ -1,12 +1,6 @@
 <script lang="ts">
-    import type { Omu } from '@omujs/omu';
-    import {
-        ASSET_DELETE_PERMISSION_ID,
-        ASSET_DOWNLOAD_PERMISSION_ID,
-        ASSET_UPLOAD_PERMISSION_ID,
-    } from '@omujs/omu/api/asset';
-    import { I18N_GET_LOCALES_PERMISSION_ID } from '@omujs/omu/api/i18n';
-    import { REGISTRY_PERMISSION_ID } from '@omujs/omu/api/registry';
+    import { OmuPermissions, type Omu } from '@omujs/omu';
+    import { } from '@omujs/omu/api/asset';
     import type { RequestRemoteAppResponse } from '@omujs/omu/api/session';
     import { Button } from '@omujs/ui';
     import { DEV } from 'esm-env';
@@ -46,11 +40,9 @@
         result = await omu.sessions.requestRemoteApp({
             app: REMOTE_APP,
             permissions: [
-                I18N_GET_LOCALES_PERMISSION_ID,
-                ASSET_UPLOAD_PERMISSION_ID,
-                ASSET_DOWNLOAD_PERMISSION_ID,
-                ASSET_DELETE_PERMISSION_ID,
-                REGISTRY_PERMISSION_ID,
+                OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+                OmuPermissions.ASSET_PERMISSION_ID,
+                OmuPermissions.REGISTRY_PERMISSION_ID,
             ],
         });
         if (result.type === 'error') {

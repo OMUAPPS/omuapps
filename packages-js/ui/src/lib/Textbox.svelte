@@ -7,6 +7,7 @@
     export let readonly: boolean = false;
     export let lazy: boolean = false;
     export let focused: boolean = false;
+    export let submit = () => {};
     $: inputValue = value;
     let timer: number | undefined;
     let input: HTMLInputElement;
@@ -61,6 +62,10 @@
     {readonly}
     bind:this={input}
     on:input={handleChange}
+    on:keydown={(event) => {
+        if (event.key !== 'Enter') return;
+        submit();
+    }}
     on:focus={() => focused = true}
     on:blur={exit}
 />

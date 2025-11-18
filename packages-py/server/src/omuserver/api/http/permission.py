@@ -4,7 +4,7 @@ from omu.api.permission.permission import PermissionType
 HTTP_REQUEST_PERMISSION = PermissionType(
     HTTP_REQUEST_PERMISSION_ID,
     {
-        "level": "medium",
+        "level": "low",
         "name": {
             "en": "HTTP Requests",
             "ja": "HTTPリクエスト",

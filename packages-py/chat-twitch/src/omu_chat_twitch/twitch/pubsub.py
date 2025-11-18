@@ -12,6 +12,7 @@ from typing import Any, Literal, LiteralString, NotRequired, TypedDict
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 from loguru import logger
 
+from ..const import BASE_HEADERS
 from .api import TwitchAPI
 
 type Coro[**P, R] = Callable[P, Awaitable[R]]
@@ -218,7 +219,7 @@ class TwitchPubSub:
         session: ClientSession | None = None,
     ) -> TwitchPubSub:
         if session is None:
-            session = ClientSession()
+            session = ClientSession(headers=BASE_HEADERS)
         return cls(
             api=api,
             session=session,

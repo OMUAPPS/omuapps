@@ -28,10 +28,14 @@
     </div>
     <div class="content">
         <small class="host">{host}</small>
-        <p><Localized text={app.metadata?.name} /></p>
-        <small class="description">
-            <Localized text={app.metadata?.description} />
-        </small>
+        {#if app.metadata}
+            <p><Localized text={app.metadata?.name} /></p>
+            <small class="description">
+                <Localized text={app.metadata?.description} />
+            </small>
+        {:else}
+            <p>{app.id.key()}</p>
+        {/if}
     </div>
 </div>
 
@@ -41,35 +45,28 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 1rem 0;
-
-        .name {
-            white-space: nowrap;
-        }
-
-        .id {
-            display: flex wrap;
-            align-items: baseline;
-            font-size: 0.7rem;
-            color: var(--color-text);
-            font-weight: 600;
-            margin-left: auto;
-            opacity: 0.8;
-        }
-
-        .version {
-            margin-left: 0.5rem;
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: var(--color-text);
-            opacity: 0.8;
-        }
+        padding: 0.5rem 0;
+        width: 18rem;
     }
 
     .content {
         display: flex;
         align-items: flex-start;
         flex-direction: column;
+        width: 100%;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+
+        > * {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        > .description {
+            white-space: wrap;
+        }
 
         > .host {
             color: var(--color-text);

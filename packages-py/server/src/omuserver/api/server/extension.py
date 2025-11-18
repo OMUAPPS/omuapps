@@ -54,6 +54,7 @@ class ServerExtension:
         self.index = self._server.registries.register(SERVER_INDEX_REGISTRY_TYPE)
         self.apps = self._server.tables.register(SERVER_APP_TABLE_TYPE)
         self.apps.event.remove += self.on_remove_app
+        self.apps.event.add += self.cleanup
         self.trusted_hosts = self._server.registries.register(TRUSTED_HOSTS_REGISTRY_TYPE)
 
     async def on_remove_app(self, items: Mapping[str, App]):
@@ -64,7 +65,7 @@ class ServerExtension:
                 await session.disconnect(DisconnectType.APP_REMOVED, f"App {app.id.key()} removed")
         await self.cleanup()
 
-    async def cleanup(self):
+    async def cleanup(self, *_):
         apps = await self.apps.fetch_all()
         unused_services = {k: app for k, app in apps.items() if app.type == AppType.SERVICE}
         for app in apps.values():

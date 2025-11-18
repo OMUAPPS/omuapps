@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from venv import logger
 
 from omu.api.dashboard.extension import (
-    DASHBOARD_ALLOWED_HOSTS,
+    DASHBOARD_ALLOWED_WEBVIEW_HOSTS,
     DASHBOARD_APP_INSTALL_ENDPOINT,
     DASHBOARD_APP_INSTALL_PACKET,
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
@@ -35,6 +35,7 @@ from omu.api.dashboard.extension import (
     DragDropRequestDashboard,
     DragDropRequestResponse,
     FileDragPacket,
+    PortProcess,
     PromptRequest,
     PromptResponse,
     PromptResult,
@@ -50,9 +51,11 @@ from omu.app import App, AppType
 from omu.errors import PermissionDenied
 from omu.identifier import Identifier
 from omu.result import Err, Ok
+from psutil import AccessDenied
 from yarl import URL
 
 from omuserver.dependency import AppIndexRegistry
+from omuserver.helper import find_processes_by_port
 from omuserver.session import Session
 
 from .permission import (
@@ -105,11 +108,12 @@ class DashboardExtension:
         server.endpoints.bind(DASHBOARD_APP_INSTALL_ENDPOINT, self.handle_dashboard_app_install)
         server.endpoints.bind(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, self.handle_drag_drop_request)
         server.endpoints.bind(DASHBOARD_DRAG_DROP_READ_ENDPOINT, self.handle_drag_drop_read)
-        self.allowed_hosts = server.tables.register(DASHBOARD_ALLOWED_HOSTS)
+        self.allowed_webview_hosts = server.tables.register(DASHBOARD_ALLOWED_WEBVIEW_HOSTS)
         self.speech_recognition = server.registries.register(DASHBOARD_SPEECH_RECOGNITION)
         self.dashboard_session: Session | None = None
         self.dashboard_wait_future: Future[Session] | None = None
         self.prompt_requests: dict[str, PromptHandle] = {}
+        self.prompt_keys: dict[str, PromptHandle] = {}
         self.blocked_prompts: set[str] = set()
         self.drag_drop_requests: dict[str, Future[DragDropRequestResponse]] = {}
         self.drag_drop_sessions: dict[str, Session] = {}
@@ -153,6 +157,7 @@ class DashboardExtension:
 
     async def _on_dashboard_disconnected(self, session: Session) -> None:
         self.dashboard_session = None
+        self.prompt_keys.clear()
 
     def ensure_dashboard_session(self, session: Session) -> bool:
         if session == self.dashboard_session:
@@ -180,24 +185,33 @@ class DashboardExtension:
         self.blocked_prompts.clear()
 
     async def request_prompt(self, key: str, prompt: PromptRequest) -> bool:
-        if f"{prompt['kind']}-{key}" in self.blocked_prompts:
+        prompt_key = f"{prompt['kind']}-{key}"
+        if prompt_key in self.blocked_prompts:
             return False
-        dashboard = await self.wait_dashboard_ready()
-        if prompt["id"] in self.prompt_requests:
-            raise ValueError(f"Permission request with id {prompt['id']} already exists")
+        if prompt_key in self.prompt_keys:
+            return await self.prompt_keys[prompt_key].future == "accept"
+        try:
+            dashboard = await self.wait_dashboard_ready()
+            if prompt["id"] in self.prompt_requests:
+                raise ValueError(f"Permission request with id {prompt['id']} already exists")
 
-        future = Future[PromptResult]()
-        self.prompt_requests[prompt["id"]] = PromptHandle(prompt["kind"], future)
+            future = Future[PromptResult]()
+            self.prompt_keys[prompt_key] = self.prompt_requests[prompt["id"]] = PromptHandle(prompt["kind"], future)
 
-        await dashboard.send(
-            DASHBOARD_PROMPT_REQUEST,
-            prompt,
-        )
+            await dashboard.send(
+                DASHBOARD_PROMPT_REQUEST,
+                prompt,
+            )
 
-        result = await future
-        if result == "block":
-            self.blocked_prompts.add(f"{prompt['kind']}-{key}")
-        return result == "accept"
+            result = await future
+            if result == "block":
+                self.blocked_prompts.add(prompt_key)
+            return result == "accept"
+        finally:
+            if prompt_key in self.prompt_keys:
+                self.prompt_keys.pop(prompt_key)
+            if prompt["id"] in self.prompt_requests:
+                self.prompt_requests.pop(prompt["id"])
 
     async def request_permissions(self, app: App, permissions: list[PermissionType]) -> bool:
         return await self.request_prompt(
@@ -236,6 +250,27 @@ class DashboardExtension:
         if not session.permissions.has(DASHBOARD_APP_INSTALL_PERMISSION_ID):
             raise PermissionDenied("Session does not have permission to install apps")
 
+        dependencies = await self.resolve_dependencies(app)
+
+        if app.type == AppType.SERVICE and dependencies:
+            raise Exception("Service apps cannot have dependencies")
+
+        existing = self.server.security.apps.get(app.id)
+        if existing:
+            accepted = await self.notify_update_app(
+                old_app=App.from_json(existing["app_json"]),
+                new_app=app,
+                dependencies=dependencies,
+            )
+        else:
+            accepted = await self.request_install(app=app, dependencies=dependencies)
+
+        if accepted:
+            await self.server.server.apps.add(app, *dependencies.values())
+
+        return AppInstallResponse(accepted=accepted)
+
+    async def resolve_dependencies(self, app: App):
         indexes: dict[URL, AppIndexRegistry] = {}
         dependencies: dict[Identifier, App] = {}
 
@@ -259,18 +294,9 @@ class DashboardExtension:
             if dep_id not in index.apps:
                 raise Exception(f"Dependency {dep_id} not found in index {index_url}")
             dependencies[dep_id] = index.apps[dep_id]
+        return dependencies
 
-        if app.type == AppType.SERVICE and dependencies:
-            raise Exception("Service apps cannot have dependencies")
-
-        accepted = await self.request_install(app=app, dependencies=dependencies)
-
-        if accepted:
-            await self.server.server.apps.add(app, *dependencies.values())
-
-        return AppInstallResponse(accepted=accepted)
-
-    async def notify_update_app(self, old_app: App, new_app: App) -> bool:
+    async def notify_update_app(self, old_app: App, new_app: App, dependencies: dict[Identifier, App]) -> bool:
         return await self.request_prompt(
             old_app.id.key(),
             {
@@ -278,6 +304,7 @@ class DashboardExtension:
                 "id": self.get_next_request_id(),
                 "old_app": old_app.to_json(),
                 "new_app": new_app.to_json(),
+                "dependencies": {k.key(): v.to_json() for k, v in dependencies.items()},
             },
         )
 
@@ -289,6 +316,25 @@ class DashboardExtension:
                 "id": self.get_next_request_id(),
                 "index_url": str(index_url),
                 "meta": meta,
+            },
+        )
+
+    async def notify_http_port_request(self, app: App, port: int) -> bool:
+        processes: list[PortProcess] = []
+        for process in find_processes_by_port(port):
+            try:
+                processes.append({"name": process.name(), "exe": process.exe(), "port": port})
+            except AccessDenied:
+                continue
+        if not processes:
+            return False
+        return await self.request_prompt(
+            f"{app.id.key()}-{port}",
+            {
+                "kind": "http/port",
+                "id": self.get_next_request_id(),
+                "app": app.to_json(),
+                "processes": processes,
             },
         )
 
@@ -309,7 +355,7 @@ class DashboardExtension:
         request = self.drag_drop_requests.pop(response["request_id"], None)
         if not request:
             msg = (
-                f"Dashboard {self.dashboard_session} tried to {"approve" if response['ok'] else "deny"} "
+                f"Dashboard {self.dashboard_session} tried to {'approve' if response['ok'] else 'deny'} "
                 f"to unknown request {response['request_id']} with"
             )
             logger.warning(msg)

@@ -34,7 +34,7 @@
                 table={omu.server.apps}
                 filter={(_, app) => !app.parentId && (
                     (app && (app.type === 'app' || app.type === 'remote'))
-                    || ($devMode && app.type === 'plugin' || app.type === 'service')
+                    || ($devMode && (app.type === 'plugin' || app.type === 'service'))
                 )}
                 component={AppEntry}
             />

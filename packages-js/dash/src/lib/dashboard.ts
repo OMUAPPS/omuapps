@@ -15,6 +15,7 @@ import {
     type PromptRequestAppPermissions,
     type PromptRequestAppPlugins,
     type PromptRequestAppUpdate,
+    type PromptRequestHttpPort,
     type PromptRequestIndexInstall,
     type PromptResult,
     type SpeechRecognitionStart,
@@ -34,6 +35,7 @@ import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
 import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';
 import HostRequestScreen from './screen/HostRequestScreen.svelte';
 import { screenContext } from './screen/screen.js';
+import ScreenRequestHttpPort from './screen/ScreenRequestHttpPort.svelte';
 import ScreenRequestIndexInstall from './screen/ScreenRequestIndexInstall.svelte';
 import SpeechRecognitionScreen from './screen/SpeechRecognitionScreen.svelte';
 
@@ -155,6 +157,17 @@ export class Dashboard implements DashboardHandler {
         await appWindow.setFocus();
         return new Promise<PromptResult>((resolve) => {
             screenContext.push(ScreenRequestIndexInstall, {
+                request,
+                resolve: (result: PromptResult) => resolve(result),
+            });
+        });
+    }
+
+    async handleHttpPortRequest(request: PromptRequestHttpPort): Promise<PromptResult> {
+        await appWindow.show();
+        await appWindow.setFocus();
+        return new Promise<PromptResult>((resolve) => {
+            screenContext.push(ScreenRequestHttpPort, {
                 request,
                 resolve: (result: PromptResult) => resolve(result),
             });

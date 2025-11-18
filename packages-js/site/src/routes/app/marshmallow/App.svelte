@@ -111,7 +111,7 @@
                 asset={ASSET_APP}
                 permissions={[
                     OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
-                    OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+                    OmuPermissions.ASSET_PERMISSION_ID,
                     OmuPermissions.REGISTRY_PERMISSION_ID,
                     OmuPermissions.TABLE_PERMISSION_ID,
                 ]}

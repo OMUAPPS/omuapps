@@ -20,9 +20,7 @@
                 OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
                 OmuPermissions.REGISTRY_PERMISSION_ID,
                 OmuPermissions.REMOTE_APP_REQUEST_PERMISSION_ID,
-                OmuPermissions.ASSET_UPLOAD_PERMISSION_ID,
-                OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
-                OmuPermissions.ASSET_DELETE_PERMISSION_ID,
+                OmuPermissions.ASSET_PERMISSION_ID,
                 OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
             );
             omu.start();

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, NotRequired, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 import aiohttp
 from omu.api.server.extension import AppIndexRegistryMeta
@@ -9,6 +9,8 @@ from omu.app import App, AppJson, DependencySpecifier
 from omu.identifier import Identifier
 from omu.result import Err, Ok, Result
 from yarl import URL
+
+from omuserver.consts import USER_AGENT_HEADERS
 
 if TYPE_CHECKING:
     from omuserver.server import Server
@@ -22,14 +24,14 @@ class InstallRequest(TypedDict):
 class AppIndexRegistryJSON(TypedDict):
     id: str
     apps: dict[str, AppJson]
-    meta: NotRequired[AppIndexRegistryMeta | None]
+    meta: AppIndexRegistryMeta
 
 
 @dataclass(frozen=True, slots=True)
 class AppIndexRegistry:
     id: Identifier
     apps: dict[Identifier, App]
-    meta: AppIndexRegistryMeta | None
+    meta: AppIndexRegistryMeta
 
     @staticmethod
     def from_json(json: AppIndexRegistryJSON) -> AppIndexRegistry:
@@ -41,7 +43,7 @@ class AppIndexRegistry:
             if not app_id.is_namepath_equal(app.id, 0):
                 raise AssertionError(f"App ID does not match the ID in the index. {app.id} != {app_id}")
             apps[app_id] = app
-        return AppIndexRegistry(id=id, apps=apps, meta=json.get("meta"))
+        return AppIndexRegistry(id=id, apps=apps, meta=json["meta"])
 
     @staticmethod
     def resolve_index_by_specifier(
@@ -61,7 +63,7 @@ class AppIndexRegistry:
 
     @classmethod
     async def try_fetch(cls, url: URL) -> Result[AppIndexRegistry, str]:
-        async with aiohttp.ClientSession() as client:
+        async with aiohttp.ClientSession(headers=USER_AGENT_HEADERS) as client:
             try:
                 async with client.get(
                     url,

@@ -12,7 +12,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
-            OmuPermissions.ASSET_DOWNLOAD_PERMISSION_ID,
+            OmuPermissions.ASSET_PERMISSION_ID,
         );
         omu.start();
     }
