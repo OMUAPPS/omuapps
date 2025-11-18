@@ -33,13 +33,13 @@ from omuserver.api.session import SessionExtension
 from omuserver.api.signal import SignalExtension
 from omuserver.api.table import TableExtension
 from omuserver.config import Config
+from omuserver.consts import USER_AGENT_HEADERS
 from omuserver.dependency import AppIndexRegistry, InstallRequest
 from omuserver.network import Network
 from omuserver.network.packet_dispatcher import ServerPacketDispatcher
 from omuserver.security import PermissionManager
 from omuserver.version import VERSION
 
-USER_AGENT_HEADERS = {"User-Agent": json.dumps(["omu", {"name": "omuserver", "version": VERSION}])}
 RESTART_EXIT_CODE = 100
 FRAME_TYPE_KEY = "omuapps-frame"
 

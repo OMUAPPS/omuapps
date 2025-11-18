@@ -7,6 +7,7 @@ from typing import Final
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 from loguru import logger
 
+from ..const import BASE_HEADERS
 from .command import Command, Commands, TwitchCommand
 
 type Coro[**P, R] = Callable[P, Awaitable[R]]
@@ -28,7 +29,7 @@ class TwitchChat:
     @classmethod
     async def create(cls, session: ClientSession | None = None) -> TwitchChat:
         if session is None:
-            session = ClientSession()
+            session = ClientSession(headers=BASE_HEADERS)
         return cls(session)
 
     async def connect(self):

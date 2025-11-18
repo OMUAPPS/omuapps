@@ -11,6 +11,7 @@ from typing import Any, Literal, LiteralString, TypedDict
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 from loguru import logger
 
+from ..const import BASE_HEADERS
 from .api import TwitchAPI
 
 type Coro[**P, R] = Callable[P, Awaitable[R]]
@@ -179,7 +180,7 @@ class TwitchHermes:
         session: ClientSession | None = None,
     ) -> TwitchHermes:
         if session is None:
-            session = ClientSession()
+            session = ClientSession(headers=BASE_HEADERS)
         res = await api.fetch_playback_access_token(login)
         channel_id = res["channel_id"]
         return cls(

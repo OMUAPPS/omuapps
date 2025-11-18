@@ -1,3 +1,4 @@
+import { VERSION } from '$lib/version';
 import type { Omu } from '@omujs/omu';
 import type { AnyNode, Element, ParentNode } from 'domhandler';
 import { DomUtils, ElementType, parseDocument } from 'htmlparser2';
@@ -235,10 +236,14 @@ export class MarshmallowAPI {
     ) {}
 
     public static new(omu: Omu, session: MarshmallowSession) {
+        const userAgent = `OMUAPPS-Marshmallow-Reader/${VERSION} (https://github.com/OMUAPPS/omuapps/) ` + navigator.userAgent;
         return new MarshmallowAPI(
             (input, init) => omu.http.fetch(input, init),
             session,
-            { cookie: session.getCookie() },
+            {
+                cookie: session.getCookie(),
+                'User-Agent': navigator.userAgent,
+            },
         );
     }
 

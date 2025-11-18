@@ -13,3 +13,4 @@ PROVIDER = Provider(
     repository_url="https://github.com/OMUAPPS/omuapps/tree/develop/packages-py/chat-twitch",
     regex=HTTP_REGEX + r"twitch\.tv\/(?P<id>[\w=-]+)",
 )
+BASE_HEADERS = {"User-Agent": f"OMUAPPS-Twitch/{VERSION}"}

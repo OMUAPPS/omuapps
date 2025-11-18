@@ -37,6 +37,7 @@ from omu.identifier import Identifier
 from yarl import URL
 
 from omuserver.api.http.permission import HTTP_REQUEST_PERMISSION
+from omuserver.consts import USER_AGENT_HEADERS
 from omuserver.session import Session
 
 if TYPE_CHECKING:
@@ -138,7 +139,7 @@ class HttpExtension:
             await self.verify_port_allowed(session, url)
             self.http_handles[packet["id"]] = request
             await request.close_future
-            async with ClientSession() as client:
+            async with ClientSession(headers=USER_AGENT_HEADERS) as client:
                 async with client.request(
                     packet["method"],
                     url,
@@ -190,7 +191,7 @@ class HttpExtension:
             request = WSHandle(session=session, socket=connect_future)
             await self.verify_port_allowed(session, url)
             self.ws_handles[packet["id"]] = request
-            async with ClientSession() as client:
+            async with ClientSession(headers=USER_AGENT_HEADERS) as client:
                 async with client.ws_connect(
                     url,
                     method=packet["method"],

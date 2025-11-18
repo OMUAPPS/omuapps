@@ -10,6 +10,8 @@ from omu.identifier import Identifier
 from omu.result import Err, Ok, Result
 from yarl import URL
 
+from omuserver.consts import USER_AGENT_HEADERS
+
 if TYPE_CHECKING:
     from omuserver.server import Server
 
@@ -61,7 +63,7 @@ class AppIndexRegistry:
 
     @classmethod
     async def try_fetch(cls, url: URL) -> Result[AppIndexRegistry, str]:
-        async with aiohttp.ClientSession() as client:
+        async with aiohttp.ClientSession(headers=USER_AGENT_HEADERS) as client:
             try:
                 async with client.get(
                     url,

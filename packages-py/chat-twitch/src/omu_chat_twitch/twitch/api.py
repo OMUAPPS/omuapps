@@ -11,6 +11,7 @@ from typing import Any, Final, TypedDict
 import bs4
 from aiohttp import ClientSession
 
+from ..const import BASE_HEADERS
 from .gql import GQLResponse
 from .types.channelroot_aboutpanel import ChannelRoot_AboutPanel, ChannelRoot_AboutPanelResponse
 from .types.models import PlaybackAccessTokenValue, StreamMetadataUser
@@ -54,7 +55,7 @@ class TwitchAPI:
     @classmethod
     async def create(cls, session: ClientSession | None = None) -> TwitchAPI:
         if session is None:
-            session = ClientSession()
+            session = ClientSession(headers=BASE_HEADERS)
         client_id = await cls.fetch_client_id(session)
         return cls(
             session=session,

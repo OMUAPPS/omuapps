@@ -21,6 +21,7 @@ from packaging.requirements import Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+from omuserver.consts import USER_AGENT_HEADERS
 from omuserver.helper import normalize_package_name
 
 from .entry import PluginEntry
@@ -50,7 +51,7 @@ class DependencyResolver:
     async def fetch_package_info(self, package: str) -> PackageInfo:
         if package in self._package_info_cache:
             return self._package_info_cache[package]
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers=USER_AGENT_HEADERS) as session:
             async with session.get(f"https://pypi.org/pypi/{package}/json") as response:
                 package_info = PackageInfo(await response.json())
                 self._package_info_cache[package] = package_info

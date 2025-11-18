@@ -10,6 +10,7 @@ from omu.address import Address
 from omu.bytebuffer import ByteReader, ByteWriter
 from omu.result import Err, Ok, Result
 from omu.serializer import Serializable
+from omu.version import VERSION
 
 from .connection import Connection, ConnectionClosed, ErrorReceiving, InvalidPacket, ReceiveError, Transport
 from .packet import Packet, PacketData
@@ -27,7 +28,7 @@ class WebsocketsTransport(Transport):
         return f"{protocol}://{host}:{port}/ws"
 
     async def connect(self) -> WebsocketsConnection:
-        session = aiohttp.ClientSession()
+        session = aiohttp.ClientSession(headers={"User-Agent": f"OMUAPPS-Client/{VERSION}"})
         socket = await session.ws_connect(self._ws_endpoint)
         return WebsocketsConnection(socket)
 
