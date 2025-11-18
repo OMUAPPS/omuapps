@@ -116,9 +116,9 @@ export class AssetExtension {
         omu.network.event.disconnected.listen(() => {
             this.assetToken = undefined;
         });
-        omu.network.addTask(async () => {
+        omu.onReady(async () => {
             if (omu.permissions.required(ASSET_PERMISSION_ID)) {
-                this.requestGenerateAssetToken();
+                await this.requestGenerateAssetToken();
             }
         });
     }

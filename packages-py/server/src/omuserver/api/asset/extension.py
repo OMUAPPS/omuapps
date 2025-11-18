@@ -4,7 +4,6 @@ import ipaddress
 import secrets
 import socket
 import sqlite3
-from asyncio import Future
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -26,7 +25,7 @@ from omu.identifier import Identifier
 from yarl import URL
 
 from omuserver.helper import safe_path_join
-from omuserver.session import Session, TaskPriority
+from omuserver.session import Session
 
 from .permissions import (
     ASSET_PERMISSION,
@@ -225,23 +224,11 @@ class AssetExtension:
         return Asset(identifier, file_path.read_bytes())
 
     async def handle_generate_token(self, session: Session, args: Any) -> GenerateAssetTokenResponse:
-        future = Future[str]()
-
-        async def task():
-            existing = self.session_asset_tokens.get(session.id)
-            if existing:
-                future.set_result(existing)
-                return
-            token = self.session_asset_tokens[session.id] = secrets.token_urlsafe()
-            self.asset_tokens.add(token)
-            future.set_result(token)
-
-        session.add_task(
-            task,
-            name="Generate asset token",
-            priority=TaskPriority.AFTER_PERMITTED,
-        )
-        token = await future
+        existing = self.session_asset_tokens.get(session.id)
+        if existing:
+            return {"token": existing}
+        token = self.session_asset_tokens[session.id] = secrets.token_urlsafe()
+        self.asset_tokens.add(token)
         return {"token": token}
 
     async def handle_upload(self, session: Session, file: Asset) -> Identifier:
