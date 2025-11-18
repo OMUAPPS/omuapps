@@ -26,16 +26,16 @@
     </div>
     <div class="actions">
         <Button onclick={async () => {
-            await quizzes.remove(entry);
-        }} primary>
-            削除
-            <i class="ti ti-x"></i>
-        </Button>
-        <Button onclick={async () => {
             quizApp.pushScene({ type: 'quiz_create', quiz: entry });
         }} primary>
             編集
             <i class="ti ti-pencil"></i>
+        </Button>
+        <Button onclick={async () => {
+            await quizzes.remove(entry);
+        }} primary>
+            削除
+            <i class="ti ti-x"></i>
         </Button>
     </div>
 </div>

@@ -66,7 +66,7 @@
             クイズを読み込む
             <i class="ti ti-download"></i>
         </FileDrop>
-        <Button onclick={extractQuizzes} disabled={exportDisabled}>
+        <Button onclick={extractQuizzes} disabled={exportDisabled} primary>
             {#if exportDisabled}
                 <Tooltip>
                     書き出すには最低一つのクイズを選択する必要があります

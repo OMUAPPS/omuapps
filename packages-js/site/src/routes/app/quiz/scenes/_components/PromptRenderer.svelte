@@ -8,7 +8,9 @@
 
 <div class="prompt" class:show={state.type === 'qustioning' || state.type === 'answering'}>
     {#if prompt.type === 'text'}
-        <h1>{prompt.body}</h1>
+        {#if state.type !== 'idle'}
+            <h1>{prompt.body}</h1>
+        {/if}
     {:else if prompt.type === 'asset'}
         <div class="assets" style:grid-template-columns="repeat({Math.min(3, prompt.assets.length)}, 1fr)">
             {#each prompt.assets as asset, index (index)}
@@ -31,6 +33,8 @@
 
     h1 {
         font-size: 2.5em;
+        background: var(--color-bg-2);
+        padding: 0.5em 1em;
     }
 
     @keyframes slide {
@@ -52,6 +56,9 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 4em;
-        width: 40em;
+    }
+
+    .asset {
+        width: 10em;
     }
 </style>

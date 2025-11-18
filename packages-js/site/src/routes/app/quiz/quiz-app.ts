@@ -114,7 +114,17 @@ const ASSETS_REGISTRY = RegistryType.createJson<Record<string, Asset>>(APP_ID, {
 });
 const QUIZZES_TABLE = TableType.createJson<Quiz>(APP_ID, {
     name: 'quizzes',
-    key: (quiz) => quiz.id,
+    key: (item) => item.id,
+});
+
+export type AnswerEntry = {
+    id: string;
+    answers: string[];
+};
+
+const ANSWERS_TABLE = TableType.createJson<AnswerEntry>(APP_ID, {
+    name: 'answers',
+    key: (item) => item.id,
 });
 
 export class QuizApp {
@@ -122,6 +132,7 @@ export class QuizApp {
     public readonly sceneCurrent: Writable<Scene>;
     public readonly sceneHistory: Writable<Scene[]>;
     public readonly quizzes: Table<Quiz>;
+    public readonly answers: Table<AnswerEntry>;
     public readonly assets: Writable<Record<string, Asset>>;
     private readonly assetCache: Record<string, Promise<string>> = {};
 
@@ -132,6 +143,7 @@ export class QuizApp {
         this.sceneHistory = omu.registries.get(SCENE_HISTORY_REGISTRY).compatSvelte();
         this.assets = omu.registries.get(ASSETS_REGISTRY).compatSvelte();
         this.quizzes = omu.tables.get(QUIZZES_TABLE);
+        this.answers = omu.tables.get(ANSWERS_TABLE);
     }
 
     public static create(omu: Omu) {

@@ -31,12 +31,14 @@
     },
 }} bind:value={answer} key={answer.type} />
 {#if answer.type === 'choices'}
-    <small>
-        ランダム化
-        <Checkbox bind:value={answer.randomize} />
-    </small>
-    <h5>選択肢</h5>
     <div class="choices">
+        <small>
+            ランダム化
+            <Checkbox bind:value={answer.randomize} />
+        </small>
+        <Button onclick={addChoice} primary>
+            追加
+        </Button>
         {#each answer.choices as choice, index (index)}
             <div class="choice">
                 <small>正解</small>
@@ -50,21 +52,14 @@
                 </Button>
             </div>
         {/each}
-        <Button onclick={addChoice} primary>
-            追加
-        </Button>
     </div>
 {/if}
 
 <style lang="scss">
-    h5 {
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-    }
-
     .choices {
         display: flex;
         flex-direction: column;
+        margin-top: 1rem;
         gap: 0.5rem;
     }
 

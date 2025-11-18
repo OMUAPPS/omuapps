@@ -9,108 +9,103 @@
     const { quizzes } = quizApp;
 
     let state: QuestionState = { type: 'idle' };
+
+    $: quizzes.update(quiz);
 </script>
 
 <main>
     <div class="header">
         <h1>クイズをつくる <i class="ti ti-pencil"></i></h1>
-        <div class="actions">
-            <Button onclick={async () => {
-                await quizzes.update(quiz);
-                quizApp.popScene();
-            }} primary>
-                保存
-            </Button>
-        </div>
     </div>
+    <div class="editor omu-scroll">
+        <h2>情報</h2>
+        <section>
 
-    <h2>情報</h2>
-    <section>
+            <p>名前</p>
+            <Textbox bind:value={quiz.info.title} />
+            <p>説明</p>
+            <Textbox bind:value={quiz.info.description} />
+        </section>
 
-        <p>名前</p>
-        <Textbox bind:value={quiz.info.title} />
-        <p>説明</p>
-        <Textbox bind:value={quiz.info.description} />
-    </section>
-
-    {#each quiz.questions as question, index (index)}
-        {@const isFirst = index === 0}
-        {@const isLast = index === quiz.questions.length - 1}
-        <div class="question">
-            <h3 class="index">{index + 1} <small>問目</small></h3>
-            <div>
-                <span class="actions">
-                    <ButtonMini disabled={isFirst} on:click={() => {
-                        const former = quiz.questions.filter((_, it) => it < index);
-                        const swap = former.pop();
-                        if (!swap) return;
-                        const latter = quiz.questions.filter((_, it) => it > index);
-                        quiz.questions = [
-                            ...former,
-                            question,
-                            swap,
-                            ...latter,
-                        ];
-                    }}>
-                        <Tooltip>順番を入れ替える</Tooltip>
-                        <i class="ti ti-chevron-up"></i>
-                    </ButtonMini>
-                    <ButtonMini disabled={isLast} on:click={() => {
-                        const former = quiz.questions.filter((_, it) => it < index);
-                        const [swap, ...latter] = quiz.questions.filter((_, it) => it > index);
-                        quiz.questions = [
-                            ...former,
-                            swap,
-                            question,
-                            ...latter,
-                        ];
-                    }}>
-                        <Tooltip>順番を入れ替える</Tooltip>
-                        <i class="ti ti-chevron-down"></i>
-                    </ButtonMini>
-                    <ButtonMini on:click={() => {
-                        quiz.questions = quiz.questions.filter((_, it) => it !== index);
-                    }}>
-                        <Tooltip>削除</Tooltip>
-                        <i class="ti ti-trash"></i>
-                    </ButtonMini>
-                </span>
-                <EditQuestion bind:question />
-            </div>
-            <div class="preview">
-                <h2>プレビュー</h2>
-                <QuestionRenderer {question} {index} {state} />
-                <div class="actions">
-                    <Button primary={state.type !== 'idle'} onclick={() => {state = { type: 'idle' };}}>
-                        待機状態
-                    </Button>
-                    <i class="ti ti-chevron-right"></i>
-                    <Button primary={state.type !== 'qustioning'} onclick={() => {state = { type: 'qustioning' };}}>
-                        出題
-                    </Button>
-                    <i class="ti ti-chevron-right"></i>
-                    <Button primary={state.type !== 'answering'} onclick={() => {state = { type: 'answering' };}}>
-                        回答
-                    </Button>
+        {#each quiz.questions as question, index (index)}
+            {@const isFirst = index === 0}
+            {@const isLast = index === quiz.questions.length - 1}
+            <div class="question">
+                <h3 class="index">{index + 1} <small>問目</small></h3>
+                <div>
+                    <span class="actions">
+                        <ButtonMini disabled={isFirst} on:click={() => {
+                            const former = quiz.questions.filter((_, it) => it < index);
+                            const swap = former.pop();
+                            if (!swap) return;
+                            const latter = quiz.questions.filter((_, it) => it > index);
+                            quiz.questions = [
+                                ...former,
+                                question,
+                                swap,
+                                ...latter,
+                            ];
+                        }}>
+                            <Tooltip>順番を入れ替える</Tooltip>
+                            <i class="ti ti-chevron-up"></i>
+                        </ButtonMini>
+                        <ButtonMini disabled={isLast} on:click={() => {
+                            const former = quiz.questions.filter((_, it) => it < index);
+                            const [swap, ...latter] = quiz.questions.filter((_, it) => it > index);
+                            quiz.questions = [
+                                ...former,
+                                swap,
+                                question,
+                                ...latter,
+                            ];
+                        }}>
+                            <Tooltip>順番を入れ替える</Tooltip>
+                            <i class="ti ti-chevron-down"></i>
+                        </ButtonMini>
+                        <ButtonMini on:click={() => {
+                            quiz.questions = quiz.questions.filter((_, it) => it !== index);
+                        }}>
+                            <Tooltip>削除</Tooltip>
+                            <i class="ti ti-trash"></i>
+                        </ButtonMini>
+                    </span>
+                    <EditQuestion bind:question />
+                </div>
+                <div class="preview">
+                    <h2>プレビュー</h2>
+                    <QuestionRenderer {question} {index} {state} />
+                    <div class="actions">
+                        <Button primary={state.type !== 'idle'} onclick={() => {state = { type: 'idle' };}}>
+                            待機状態
+                        </Button>
+                        <i class="ti ti-chevron-right"></i>
+                        <Button primary={state.type !== 'qustioning'} onclick={() => {state = { type: 'qustioning' };}}>
+                            出題
+                        </Button>
+                        <i class="ti ti-chevron-right"></i>
+                        <Button primary={state.type !== 'answering'} onclick={() => {state = { type: 'answering' };}}>
+                            回答
+                        </Button>
+                    </div>
                 </div>
             </div>
-        </div>
-    {:else}
-        <p>
-            問題がありません
-            <i class="ti ti-alert-triangle"></i>
-        </p>
-    {/each}
-    <Button onclick={() => {
-        quiz.questions = [...quiz.questions, {
-            prompt: { type: 'text', body: '' },
-            answer: { type: 'choices', choices: [], randomize: false },
-            hint: { type: 'text', body: '' },
-        }];
-    }} primary>
-        問題を追加
-        <i class="ti ti-plus"></i>
-    </Button>
+        {:else}
+            <p>
+                問題がありません
+                <i class="ti ti-alert-triangle"></i>
+            </p>
+        {/each}
+        <Button onclick={() => {
+            quiz.questions = [...quiz.questions, {
+                prompt: { type: 'text', body: '' },
+                answer: { type: 'choices', choices: [], randomize: false },
+                hint: { type: 'text', body: '' },
+            }];
+        }} primary>
+            問題を追加
+            <i class="ti ti-plus"></i>
+        </Button>
+    </div>
 </main>
 
 <style lang="scss">
@@ -119,9 +114,27 @@
         inset: 0;
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         justify-content: space-between;
-        padding: 10rem 2rem;
+    }
+
+    .header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        justify-content: space-between;
+        width: 100%;
+        background: var(--color-bg-2);
+        padding: 1rem 9rem;
+        padding-top: 1.75rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--color-outline);
+    }
+
+    .editor {
+        padding: 5rem 2rem;
+        flex: 1;
     }
 
     .question {
@@ -130,16 +143,16 @@
         justify-content: space-between;
         width: 100%;
         margin-top: 4rem;
-        padding-top: 4rem;
-        border-top: 1px solid var(--color-1);
+        background: var(--color-bg-2);
+        padding: 1rem;
 
         > .index {
             position: absolute;
-            top: 0;
-            background: var(--color-1);
-            color: var(--color-bg-2);
+            top: -3rem;
+            left: 0;
+            color: var(--color-1);
+            border-bottom: 2px solid var(--color-1);
             width: fit-content;
-            padding: 0.5rem 1rem;
             font-size: 1.3rem;
             margin-bottom: 0.5rem;
         }
@@ -150,7 +163,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--color-bg-2);
+        background: var(--color-bg-1);
+        color: #444;
+        outline: 1px solid var(--color-outline);
         margin: 2rem;
         margin-bottom: 0;
         margin-top: 0;
@@ -171,16 +186,6 @@
         }
     }
 
-    .header {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        width: min(40rem, 50%);
-        border-bottom: 2px solid var(--color-1);
-        padding-bottom: 1rem;
-        margin-bottom: 2rem;
-    }
-
     h1 {
         color: var(--color-1);
     }
@@ -196,11 +201,12 @@
     section {
         background: var(--color-bg-2);
         padding: 1.75rem 1.5rem;
+        padding-right: 2rem;
         margin-bottom: 2rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        width: min(30rem, 50%);
+        width: min(26rem, 50%);
     }
 
     .actions {
