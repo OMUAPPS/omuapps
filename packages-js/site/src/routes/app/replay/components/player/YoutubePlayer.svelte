@@ -28,13 +28,12 @@
         }
     }
 
+    let videoLoaded = false;
+
     function onReady(event: YT.PlayerEvent) {
         player = event.target;
-        if (playback.playing) {
-            player.playVideo();
-        } else {
-            player.pauseVideo();
-        }
+        player.playVideo();
+        player.mute();
         const now = Date.now();
         const elapsed = playback.offset + (now - playback.start) / 1000;
         player.setPlaybackRate($config.playbackRate);
@@ -43,6 +42,7 @@
             ...player.getVideoData(),
             duration: player.getDuration() * 1000,
         };
+        videoLoaded = false;
     }
 
     function onPlaybackRateChange(event: YT.OnPlaybackRateChangeEvent) {
@@ -61,6 +61,12 @@
                 player.playVideo();
             }
             return;
+        }
+        if (event.data === YT.PlayerState.PLAYING) {
+            if (!playback.playing && !videoLoaded) {
+                player.pauseVideo();
+                videoLoaded = true;
+            }
         }
         const playing = event.data === YT.PlayerState.PLAYING;
         if (side === 'asset' && playing && !playback.playing) {
@@ -90,7 +96,6 @@
     }
 
     $: {
-        console.log(playback);
         updatePlayback(playback);
     };
     $: {
