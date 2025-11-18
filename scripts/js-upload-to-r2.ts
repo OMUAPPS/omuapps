@@ -81,11 +81,16 @@ async function downloadRelease() {
     });
 
     await fs.mkdir('./release-assets', { recursive: true });
-    for (const asset of assets) {
-        const url = asset.browser_download_url;
-        const name = asset.name;
-        await downloadToFile(url, `./release-assets/${name}`);
-    }
+
+    const downloadPromises = assets.map(asset =>
+        downloadToFile(asset.browser_download_url, `./release-assets/${asset.name}`)
+            .catch(error => {
+                console.error(`Failed to download ${asset.name}:`, error);
+                throw error; // or handle as needed
+            }),
+    );
+
+    await Promise.all(downloadPromises);
 }
 
 await downloadRelease();
@@ -113,7 +118,10 @@ async function uploadToR2(file: string, path: string): Promise<string> {
     console.log(`Uploading ${file} (${stats.size} bytes) to ${CONFIG.BUCKET}/${path}`);
 
     for (let retry = 0; retry < 5; retry++) {
-        const result = await $`bun wrangler r2 object put ${CONFIG.BUCKET}/${path} --remote --file ${file}`.nothrow();
+        const result = await $`bun wrangler r2 object put ${CONFIG.BUCKET}/${path} --remote --file ${file}`.env({
+            ...process.env,
+            WRANGLER_LOG: 'warn',
+        }).nothrow();
         if (result.exitCode === 0) return `${CONFIG.BASE_URL}/${path}`;
 
         console.error(`Upload failed (attempt ${retry + 1}): ${result.stderr}`);
