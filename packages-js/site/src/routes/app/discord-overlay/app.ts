@@ -26,8 +26,12 @@ export const DISCORD_PLUGIN_APP = new App(new Identifier(NAMESPACE, 'plugin-disc
     metadata: buildMetadata({
         locale: 'ja',
         name: {
-            'ja-JP': 'Discord RPCプラグイン',
-            'en-US': 'Discord RPC Plugin',
+            ja: 'Discord プラグイン',
+            en: 'Discord Plugin',
+        },
+        description: {
+            ja: 'アプリをDiscord RPCから通話やユーザー情報の取得を可能にします',
+            en: 'This allows apps to use the Discord RPC to retrieve information about user and voice chat status',
         },
     }),
 });
