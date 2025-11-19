@@ -17,7 +17,7 @@ jobs:
             GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
         outputs:
             VERSION: ${{ steps.get_version.outputs.VERSION }}
-            COMMIT: ${{ steps.git_commit.outcome.COMMIT }}
+            COMMIT: ${{ steps.git_commit.outputs.COMMIT }}
         steps:
             - uses: actions/checkout@v4
 
