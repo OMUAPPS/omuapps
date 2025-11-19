@@ -63,7 +63,6 @@ jobs:
             - uses: actions/checkout@v4
 
             - name: Set up Python
-              if: ${{ github.event.inputs.pypi == 'true' }}
               uses: actions/setup-python@v5.1.0
               with:
                   python-version: '3.12'
@@ -72,12 +71,10 @@ jobs:
               uses: astral-sh/setup-uv@v6
 
             - name: Install dependencies
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   uv sync --locked
 
             - name: Git Identity
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   git config --global user.name 'github-actions[bot]'
                   git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -86,17 +83,14 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Pull
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   git pull
 
             - name: Generate version file
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   uv run ./scripts/py-generate_version.py
 
             - name: Push
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   git add .
                   git commit -m "chore: bump version"
