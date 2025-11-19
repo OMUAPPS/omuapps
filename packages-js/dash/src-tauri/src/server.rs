@@ -11,6 +11,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use tauri::utils::platform::current_exe;
 use tauri::{AppHandle, Emitter};
+use tempfile::NamedTempFile;
 
 use crate::options::AppOptions;
 use crate::uv::{UvEnsureError, UvEnsureProgress};
@@ -338,7 +339,7 @@ impl Server {
         }
         let mut cmd = self.python.cmd();
         cmd.arg("-m").arg("omuserver");
-        cmd.arg("--token").arg(self.token.clone());
+        cmd.arg("--token-file").arg(self.config.get_token_path());
         cmd.arg("--port").arg(self.config.port.to_string());
         let hash = if cfg!(dev) {
             &"dev".to_string()
