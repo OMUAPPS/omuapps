@@ -111,29 +111,37 @@
                 installing: '管理画面から提供元を追加してください',
                 failed: '追加に失敗しました',
                 installed: '追加が完了しました！',
+                already_installed: '提供元「{name}」はインストール済みです'
             }[state.type]);
             note.textContent = translate({
                 prompt: '提供元からの説明: {note}',
                 installing: '提供元「{name}」を追加します',
                 failed: '追加に失敗しました: {message}',
                 installed: 'このタブを閉じてください',
+                already_installed: '管理画面からアプリを追加することができます'
             }[state.type], {
                 message: state.message
             });
-            window.close();
         }
 
         const init = async () => {
             setConfig();
             updateState({ type: "prompt" });
+            if (config.installed) {
+                updateState({ type: "already_installed" })
+                const installButton = document.querySelector("#install");
+                installButton.remove()
+                return
+            }
         };
 
         const install = async () => {
             if (config.error) {
                 updateState({ type: "failed", message: config.error })
+                return
             }
             const installButton = document.querySelector("#install");
-            installButton.parentElement.removeChild(installButton)
+            installButton.remove()
             updateState({ type: "installing", hostname: location.hostname });
             try {
                 const resp = await fetch("/api/index/install", {
@@ -147,6 +155,7 @@
                     updateState({ type: "failed", message: resp.statusText });
                 } else {
                     updateState({ type: "installed" });
+                    window.close();
                 }
             } catch (e) {
                 updateState({
@@ -166,7 +175,7 @@
             <small id="note">
             </small>
             <button id="install" onclick="install()">
-                インストール
+                提供元を追加
             </button>
         </div>
     </main>

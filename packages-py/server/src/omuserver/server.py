@@ -143,6 +143,10 @@ class Server:
             "meta": index.meta,
             "url": str(raw_index_url),
         }
+        server_index = self.server.index.get()
+        already_installed = index.id.key() in server_index["indexes"]
+        if already_installed:
+            config["installed"] = True
         content = content.replace("%CONFIG%", json.dumps(config))
         return web.Response(text=content, content_type="text/html")
 
