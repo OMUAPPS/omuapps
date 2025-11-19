@@ -1,11 +1,11 @@
 [project]
 name = "omu_chat"
-version = "0.9.33"
+version = "0.9.36"
 description = "Add your description here"
 authors = [
     { name = "am230", email = "111672334+am230@users.noreply.github.com" },
 ]
-dependencies = ["loguru>=0.7.2", "omu>=0.9.33"]
+dependencies = ["loguru>=0.7.2", "omu>=0.9.36"]
 readme = "README.md"
 requires-python = ">= 3.12"
 
