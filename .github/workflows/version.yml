@@ -93,6 +93,10 @@ jobs:
               run: |
                   uv run ./scripts/py-generate_version.py
 
+            - name: Update lock
+              run: |
+                  uv sync
+
             - name: Push
               run: |
                   git add .
