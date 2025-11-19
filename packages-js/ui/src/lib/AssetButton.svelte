@@ -38,7 +38,7 @@
             url.searchParams.set('id', timestamp);
             app = app.join(timestamp);
         }
-        const result = await $omu.sessions.generateToken({
+        const token = await $omu.sessions.generateToken({
             app,
             permissions: [
                 OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
@@ -47,10 +47,6 @@
                 ...permissions,
             ],
         });
-        if (result.type === 'error') {
-            throw new Error(result.message);
-        }
-        const { token } = result;
         const tokenJson: SessionParam = {
             token,
             address: $omu.address,

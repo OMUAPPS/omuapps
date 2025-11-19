@@ -1,3 +1,4 @@
+export { AppIndexRegistry, type AppIndexRegistryJSON } from './api/server';
 export { App, AppMetadata } from './app.js';
 export { DisconnectReason } from './errors.js';
 export { Identifier, IdentifierMap, IdentifierSet, IntoId } from './identifier';

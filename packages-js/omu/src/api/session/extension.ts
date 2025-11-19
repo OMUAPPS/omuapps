@@ -186,11 +186,15 @@ export class SessionExtension implements Extension {
 
     public async generateToken(options: {
         app: App;
-        permissions: IntoId[];
-    }): Promise<GenerateTokenResponse> {
-        return this.omu.endpoints.call(GENERATE_TOKEN_ENDPOINT_TYPE, {
+        permissions?: IntoId[];
+    }): Promise<string> {
+        const result = await this.omu.endpoints.call(GENERATE_TOKEN_ENDPOINT_TYPE, {
             app: App.serialize(options.app),
-            permissions: options.permissions.map(id => Identifier.from(id).key()),
+            permissions: options.permissions?.map(id => Identifier.from(id).key()),
         });
+        if (result.type === 'error') {
+            throw new Error(result.message);
+        }
+        return result.token;
     }
 }

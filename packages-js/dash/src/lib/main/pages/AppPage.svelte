@@ -1,5 +1,6 @@
 <script lang="ts">
     import { omu } from '$lib/client';
+    import { tryCatch } from '$lib/result';
     import { appWindow } from '$lib/tauri';
     import { BrowserTokenProvider, type App, type SessionParam } from '@omujs/omu';
     import { Spinner } from '@omujs/ui';
@@ -24,17 +25,17 @@
             state = { type: 'error', message: 'App has no URL' };
             return;
         }
-        const tokenResult = await omu.sessions.generateToken({
+        const { data: token, error } = await tryCatch(omu.sessions.generateToken({
             app: props.app,
             permissions: [],
-        });
-        if (tokenResult.type === 'error') {
-            state = { type: 'error', message: 'Failed to generate token: ' + tokenResult.message };
+        }));
+        if (error) {
+            state = { type: 'error', message: 'Failed to generate token: ' + error };
             return;
         }
         const url = new URL(props.app.url);
         const paramJson: SessionParam = {
-            token: tokenResult.token,
+            token,
             address: omu.address,
         };
         url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(paramJson));
