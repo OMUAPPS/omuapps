@@ -57,11 +57,9 @@ jobs:
                   echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
 
             - name: Output git commit
-              if: ${{ github.event.inputs.pypi == 'true' }}
               id: git_commit
               run: |
                   echo "COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
 
     update:
         needs: version
