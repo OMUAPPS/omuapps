@@ -73,7 +73,7 @@ export class DiscordRPCService {
         this.voiceStates = omu.registries.get(VOICE_STATES_REGISTRY_TYPE);
         this.speakingStates = omu.registries.get(SPEAKING_STATES_REGISTRY_TYPE);
         this.channelMessageSignal = omu.signals.get(CHANNEL_MESSAGE);
-        omu.endpoints.bind(REFRESH, async ({ port }) => {
+        omu.endpoints.bind(REFRESH, async () => {
             await this.refresh();
             const sessions = this.discord.clients.map((client) => client.intoInfo());
             return {

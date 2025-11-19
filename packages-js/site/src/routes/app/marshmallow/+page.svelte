@@ -11,7 +11,7 @@
 
     const omu = new Omu(APP);
     const obs = OBSPlugin.create(omu);
-    const marshmallow = new MarshmallowApp(omu);
+    new MarshmallowApp(omu);
     setGlobal({ omu, obs });
 
     const agreed = getSetting(APP.join('agreed'), false);

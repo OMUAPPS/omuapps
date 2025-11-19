@@ -242,7 +242,7 @@ export class MarshmallowAPI {
             session,
             {
                 cookie: session.getCookie(),
-                'User-Agent': navigator.userAgent,
+                'User-Agent': userAgent,
             },
         );
     }

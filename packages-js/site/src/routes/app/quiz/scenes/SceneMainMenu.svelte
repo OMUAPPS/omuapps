@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { OmuPermissions } from '@omujs/omu';
     import { AssetButton } from '@omujs/ui';
     import { QUIZ_ASSET_APP } from '../app';
     import { createQuiz, QuizApp } from '../quiz-app';
@@ -17,7 +18,13 @@
             <i class="ti ti-pencil"></i>
         </button>
     </div>
-    <AssetButton asset={QUIZ_ASSET_APP} />
+    <AssetButton
+        asset={QUIZ_ASSET_APP}
+        permissions={[
+            OmuPermissions.ASSET_PERMISSION_ID,
+            OmuPermissions.TABLE_PERMISSION_ID,
+        ]}
+    />
 </main>
 
 <style lang="scss">

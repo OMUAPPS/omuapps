@@ -53,7 +53,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
     },
 );
 
-export const ASSET_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE;
+export const ASSET_PERMISSION_ID: Identifier = ASSET_EXTENSION_TYPE.join('permission');
 
 const ASSET_UPLOAD_ENDPOINT = EndpointType.createSerialized<Asset, Identifier>(
     ASSET_EXTENSION_TYPE,
@@ -116,9 +116,9 @@ export class AssetExtension {
         omu.network.event.disconnected.listen(() => {
             this.assetToken = undefined;
         });
-        omu.network.addTask(async () => {
+        omu.onReady(async () => {
             if (omu.permissions.required(ASSET_PERMISSION_ID)) {
-                this.requestGenerateAssetToken();
+                await this.requestGenerateAssetToken();
             }
         });
     }

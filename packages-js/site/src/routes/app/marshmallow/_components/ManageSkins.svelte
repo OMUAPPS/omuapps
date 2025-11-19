@@ -144,9 +144,4 @@
         display: flex;
         gap: 0.25rem;
     }
-
-    h3 {
-        margin-bottom: 0.5rem;
-        font-size: 1rem;
-    }
 </style>

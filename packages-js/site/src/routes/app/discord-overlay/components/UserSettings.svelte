@@ -1,7 +1,8 @@
 <script lang="ts">
     import { Button, FileDrop, Tooltip } from '@omujs/ui';
     import { APP_ID } from '../app.js';
-    import { DEFAULT_USER_CONFIG, type DiscordOverlayApp, type PngAvatarConfig, type VoiceStateItem } from '../discord-overlay-app.js';
+    import { DEFAULT_USER_CONFIG, type DiscordOverlayApp, type PngAvatarConfig } from '../discord-overlay-app.js';
+    import type { VoiceStateItem } from '../discord/type.js';
     import { heldUser, selectedAvatar } from '../states.js';
 
     export let overlayApp: DiscordOverlayApp;

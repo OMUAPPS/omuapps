@@ -9,6 +9,7 @@ class Directories:
     assets: pathlib.Path
     index: pathlib.Path
     frame: pathlib.Path
+    index_install: pathlib.Path
     version: pathlib.Path
     dashboard: pathlib.Path | None = None
 
@@ -20,6 +21,7 @@ class Directories:
             assets=cwd / "assets",
             index=pathlib.Path(__file__).parent / "index.html",
             frame=pathlib.Path(__file__).parent / "frame.html",
+            index_install=pathlib.Path(__file__).parent / "index_install.html",
             version=cwd / "VERSION",
         )
 

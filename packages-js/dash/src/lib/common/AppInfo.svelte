@@ -6,7 +6,6 @@
     export let app: App;
 
     $: host = app.id.namespace.split('.').reverse().join('.');
-    $: path = app.id.path.join('.');
     $: metadata = app.metadata;
     $: icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
 </script>

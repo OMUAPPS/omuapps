@@ -40,8 +40,6 @@
 
     .prompt {
         margin-bottom: 4em;
-        background: var(--color-bg-2);
-        padding: 0.5em 1em;
     }
 
     .question {

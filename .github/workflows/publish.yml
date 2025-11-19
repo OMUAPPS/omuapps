@@ -102,7 +102,7 @@ jobs:
             - name: Install dependencies
               if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
-                  uv sync --locked
+                  uv sync
 
             - name: Git Identity
               if: ${{ github.event.inputs.pypi == 'true' }}

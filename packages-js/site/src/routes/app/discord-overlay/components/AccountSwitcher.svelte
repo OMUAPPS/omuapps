@@ -17,7 +17,7 @@
         sessions: Record<string, RPCSession>;
     } = {
         type: 'result',
-        sessions: Object.fromEntries(Object.entries($sessions).map(([id, session]) => {
+        sessions: Object.fromEntries(Object.values($sessions).map((session) => {
             return [session.user.id, session];
         })),
     };
@@ -27,7 +27,7 @@
         await discord.refresh();
         state = {
             type: 'result',
-            sessions: Object.fromEntries(Object.entries($sessions).map(([id, session]) => {
+            sessions: Object.fromEntries(Object.values($sessions).map((session) => {
                 return [session.user.id, session];
             })),
         };

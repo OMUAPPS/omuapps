@@ -10,7 +10,12 @@
         {#each answer.choices as choice, index (index)}
             <div class="choice">
                 {#if state.type === 'qustioning' || state.type === 'answering'}
-                    <div class="choice-content" style:animation-delay="{0.621 + (index) * 0.0621}s">
+                    <div
+                        class="choice-content"
+                        style:animation-delay="{0.621 + (index) * 0.0621}s"
+                        style:background={state.type === 'answering' && (choice.answer ? '#e44' : '#44e') || undefined}
+                        style:color={state.type === 'answering' && 'var(--color-bg-2)' || undefined}
+                    >
                         <small>
                             <strong>{index + 1}</strong>
                             <small>と答えて回答</small>
@@ -53,8 +58,8 @@
 
     .answer {
         position: absolute;
-        right: -0.75em;
-        top: -0.75em;
+        right: -0.5em;
+        top: -0.5em;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -97,7 +102,7 @@
 
         > small {
             font-size: 0.621em;
-            border-bottom: 2px solid #000;
+            border-bottom: 2px solid currentColor;
             padding-bottom: 0.0621em;
             margin-bottom: 0.0621em;
             opacity: 0.95;

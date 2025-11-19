@@ -22,17 +22,17 @@
     }
 </script>
 
+<Combobox options={{
+    text: {
+        label: '文字',
+        value: { type: 'text', body: '' },
+    },
+    asset: {
+        label: '画像',
+        value: { type: 'asset', assets: [] },
+    },
+}} bind:value={prompt} key={prompt.type} />
 <div class="edit">
-    <Combobox options={{
-        text: {
-            label: '文字',
-            value: { type: 'text', body: '' },
-        },
-        asset: {
-            label: '画像',
-            value: { type: 'asset', assets: [] },
-        },
-    }} bind:value={prompt} key={prompt.type} />
     {#if prompt.type === 'text'}
         <Textbox bind:value={prompt.body} />
     {:else if prompt.type === 'asset'}
@@ -63,6 +63,7 @@
     .edit {
         display: flex;
         align-items: stretch;
+        margin-top: 1rem;
         gap: 1rem;
     }
 

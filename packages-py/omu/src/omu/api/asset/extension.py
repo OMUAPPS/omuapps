@@ -61,7 +61,7 @@ class FileArraySerializer:
         return files
 
 
-ASSET_PERMISSION_ID = ASSET_EXTENSION_TYPE
+ASSET_PERMISSION_ID = ASSET_EXTENSION_TYPE / "permission"
 ASSET_UPLOAD_ENDPOINT = EndpointType[Asset, Identifier].create_serialized(
     ASSET_EXTENSION_TYPE,
     "upload",

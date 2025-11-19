@@ -17,6 +17,7 @@ jobs:
             GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
         outputs:
             VERSION: ${{ steps.get_version.outputs.VERSION }}
+            COMMIT: ${{ steps.git_commit.outputs.COMMIT }}
         steps:
             - uses: actions/checkout@v4
 
@@ -55,15 +56,20 @@ jobs:
                   git push --follow-tags
                   echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
 
+            - name: Output git commit
+              id: git_commit
+              run: |
+                  echo "COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
     update:
         needs: version
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
+              with:
+                  ref: ${{ needs.version.outputs.COMMIT }}
 
             - name: Set up Python
-              if: ${{ github.event.inputs.pypi == 'true' }}
               uses: actions/setup-python@v5.1.0
               with:
                   python-version: '3.12'
@@ -72,12 +78,10 @@ jobs:
               uses: astral-sh/setup-uv@v6
 
             - name: Install dependencies
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
-                  uv sync --locked
+                  uv sync
 
             - name: Git Identity
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   git config --global user.name 'github-actions[bot]'
                   git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -85,20 +89,17 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Pull
-              if: ${{ github.event.inputs.pypi == 'true' }}
-              run: |
-                  git pull
-
             - name: Generate version file
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   uv run ./scripts/py-generate_version.py
 
+            - name: Update lock
+              run: |
+                  uv sync
+
             - name: Push
-              if: ${{ github.event.inputs.pypi == 'true' }}
               run: |
                   git add .
                   git commit -m "chore: bump version"
-                  git push
+                  git push origin HEAD:${{ github.ref_name }}
 

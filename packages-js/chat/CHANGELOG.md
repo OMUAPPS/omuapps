@@ -3,6 +3,65 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.40 (2025-11-19)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.39 (2025-11-19)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.38 (2025-11-19)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.37 (2025-11-19)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.36 (2025-11-19)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.35 (2025-11-19)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.34 (2025-11-19)
+
+
+### Bug Fixes
+
+* **server:** すでに提供元が追加されてたらインストールしないようにする ([8235f5c](https://github.com/OMUAPPS/omuapps/commit/8235f5cbc68e593f978e07351fc9445a4cf3ba8d))
+
+
+
+
+
 ## 0.9.33 (2025-11-18)
 
 

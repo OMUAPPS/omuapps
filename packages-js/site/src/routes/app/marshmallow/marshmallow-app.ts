@@ -165,13 +165,13 @@ const MARSHMALLOW_DATA_REGISTRY_TYPE = RegistryType.createJson<MarshmallowData>(
 });
 
 export class MarshmallowApp {
-    private static instance: MarshmallowApp | undefined = undefined;
+    private static INSTANCE: MarshmallowApp | undefined = undefined;
 
     public static getInstance() {
-        if (this.instance === undefined) {
+        if (this.INSTANCE === undefined) {
             throw new Error('MarshmallowApp is not initialized');
         }
-        return this.instance;
+        return this.INSTANCE;
     }
 
     public readonly config: Writable<MarshmallowConfig>;
@@ -188,7 +188,7 @@ export class MarshmallowApp {
         omu.onReady(() => {
             this.screen.set({ type: 'messages' });
         });
-        MarshmallowApp.instance = this;
+        MarshmallowApp.INSTANCE = this;
     }
 
     public async getAssetUrl(asset: Asset): Promise<string> {

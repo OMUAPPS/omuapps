@@ -27,11 +27,18 @@
     }
 
     h4 {
-        margin-top: 2rem;
         margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
         border-bottom: 2px solid var(--color-1);
         color: var(--color-1);
-        width: 25%;
+        font-size: 1.3621rem;
+        width: 100%;
+        text-align: center;
+        margin-top: 2rem;
+
+        &:not(&:first-child) {
+            margin-top: 4rem;
+        }
     }
 
     section {
