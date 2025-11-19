@@ -5,7 +5,6 @@
     import { screenContext } from '$lib/screen/screen.js';
     import { checkUpdate, invoke } from '$lib/tauri.js';
     import { Button, Combobox, Header, Tooltip } from '@omujs/ui';
-    import { relaunch } from '@tauri-apps/plugin-process';
     import UpdateScreen from '../screen/UpdateScreen.svelte';
     import {
         currentSettingsCategory,
@@ -18,7 +17,6 @@
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
-    import PluginSettings from './PluginSettings.svelte';
     import UninstallScreen from './UninstallScreen.svelte';
 
     export const props = {};
@@ -35,25 +33,6 @@
         omu.start();
         await new Promise<void>((resolve) => omu.onReady(resolve));
         window.location.reload();
-    }
-
-    async function updateConfig() {
-        await invoke('set_config', {
-            config: { enable_beta: $isBetaEnabled },
-        });
-        console.log('config', await invoke('get_config'));
-        try {
-            if (omu.ready) {
-                await omu.server.shutdown();
-            }
-        } catch (e) {
-            console.error(e);
-        }
-        await relaunch();
-    }
-
-    $: {
-        $devMode &&= $isBetaEnabled;
     }
 </script>
 
@@ -87,22 +66,6 @@
                     <i class="ti ti-chevron-right"></i>
                 </span>
             </button>
-            {#if $isBetaEnabled}
-                <button
-                    class:selected={$currentSettingsCategory == 'plugins'}
-                    on:click={() => ($currentSettingsCategory = 'plugins')}
-                >
-                    <Tooltip
-                    >{$t('settings.category.plugins.description')}</Tooltip
-                    >
-                    <span>
-                        <i class="ti {$t('settings.category.plugins.icon')}"
-                        ></i>
-                        <p>{$t('settings.category.plugins.name')}</p>
-                        <i class="ti ti-chevron-right"></i>
-                    </span>
-                </button>
-            {/if}
             {#if $devMode}
                 <button
                     class:selected={$currentSettingsCategory == 'developer'}
@@ -122,7 +85,7 @@
                 </button>
             {/if}
         </div>
-        <div class="settings">
+        <div class="settings omu-scroll">
             <h2>
                 {$t(`settings.category.${$currentSettingsCategory}.name`)}
                 <small>
@@ -199,12 +162,6 @@
                         bind:checked={$speechRecognition}
                     />
                 </label>
-                {#if $isBetaEnabled}
-                    <label class="setting">
-                        <p>{$t('settings.setting.devMode')}</p>
-                        <input type="checkbox" bind:checked={$devMode} />
-                    </label>
-                {/if}
                 <span class="setting">
                     拒否した確認をリセット
                     <Button onclick={async () => {
@@ -278,11 +235,13 @@
                     <input
                         type="checkbox"
                         bind:checked={$isBetaEnabled}
-                        on:change={async () => updateConfig()}
                     />
                 </label>
-            {:else if $currentSettingsCategory === 'plugins'}
-                <PluginSettings />
+                <small>開発者モードはアプリを開発するためにあります。必要でない場合に有効にすることは安全機能が一つ外れることを意味しますのでご注意ください</small>
+                <label class="setting">
+                    <p>{$t('settings.setting.devMode')}</p>
+                    <input type="checkbox" bind:checked={$devMode} />
+                </label>
             {:else if $currentSettingsCategory === 'about'}
                 <About />
             {:else if $currentSettingsCategory === 'developer'}
@@ -367,7 +326,6 @@
         margin: 1rem;
         padding: 2.25rem 2rem;
         flex: 1;
-        overflow-y: auto;
         display: flex;
         flex-direction: column;
 
@@ -394,10 +352,10 @@
     }
 
     .settings > small {
-        color: var(--color-text);
+        color: var(--color-1);
         font-size: 0.8rem;
         border-bottom: 1px solid var(--color-outline);
-        margin-top: 0.5rem;
+        margin-top: 1rem;
         margin-left: 1rem;
         width: fit-content;
     }
