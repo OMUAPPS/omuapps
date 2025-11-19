@@ -17,6 +17,7 @@ jobs:
             GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
         outputs:
             VERSION: ${{ steps.get_version.outputs.VERSION }}
+            COMMIT: ${{ steps.git_commit.outcome.COMMIT }}
         steps:
             - uses: actions/checkout@v4
 
@@ -55,12 +56,20 @@ jobs:
                   git push --follow-tags
                   echo "VERSION=${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_ENV
 
+            - name: Output git commit
+              if: ${{ github.event.inputs.pypi == 'true' }}
+              id: git_commit
+              run: |
+                  echo "COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
 
     update:
         needs: version
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@
+              with:
+                  ref: ${{ needs.version.outputs.COMMIT }}
 
             - name: Set up Python
               uses: actions/setup-python@v5.1.0
@@ -81,10 +90,6 @@ jobs:
                   git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/$GITHUB_REPOSITORY
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Pull
-              run: |
-                  git pull
 
             - name: Generate version file
               run: |

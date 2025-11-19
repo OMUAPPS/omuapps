@@ -24,7 +24,7 @@ import {
     SOURCE_REMOVE_BY_UUID,
     SOURCE_UPDATE,
 } from './types.js';
-import { VERSION } from './version.js';
+import { VERSION, VERSION_MINOR } from './version.js';
 export * as OBSPermissions from './permissions.js';
 
 type Events = {
@@ -42,7 +42,7 @@ export class OBSPlugin {
 
     private constructor(private readonly omu: Omu) {
         omu.plugins.require({
-            omuplugin_obs: `>=${VERSION}`,
+            omuplugin_obs: `>=${VERSION_MINOR}`,
         });
         omu.permissions.require(SESSIONS_READ_PERMISSION_ID);
         omu.sessions.observe(PLUGIN_ID, {
