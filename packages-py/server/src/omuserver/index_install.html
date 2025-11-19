@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        :root {
+            --color-bg-1: rgb(246, 242, 235);
+            --color-bg-2: rgb(255, 254, 252);
+            --color-1: rgb(11, 111, 114);
+            --color-2: rgb(53, 223, 225);
+            --color-text: rgb(68, 68, 68);
+            --color-outline: rgba(0, 0, 0, 0.1);
+            --margin: 10px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: var(--color-bg-1);
+            color: var(--color-1);
+        }
+
+        main {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--color-1);
+            font-weight: 700;
+            background: var(--color-bg-1);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--color-1);
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: var(--color-bg-2);
+            padding: 4rem 6rem;
+        }
+
+        small {
+            font-size: 1rem;
+            color: var(--color-text);
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border: none;
+            background: var(--color-1);
+            color: var(--color-bg-2);
+            font-weight: 600;
+            border-radius: 2px;
+            cursor: pointer;
+            margin-top: 2rem;
+
+            &:hover {
+                background: var(--color-bg-1);
+                outline: 1px solid var(--color-1);
+                color: var(--color-1);
+            }
+        }
+    </style>
+    <script type="application/json" id="config">
+        %CONFIG%
+    </script>
+    <script>
+        /*
+        {
+            id: string;
+            meta: {
+                name: string;
+                note: string;
+            };
+            url: string;
+            error?: string;
+        }
+        */
+        const config = {};
+        const setConfig = () => {
+            const data = JSON.parse(document.getElementById('config').textContent);
+            Object.assign(config, data);
+        };
+
+        const translate = (text, options) => {
+            const variables = {
+                ...config.meta,
+                ...options,
+            }
+            for (const key of Object.keys(variables)) {
+                text = text.replace(`{${key}}`, variables[key])
+            }
+            return text;
+        }
+
+        const updateState = (state) => {
+            const title = document.querySelector("#title");
+            const note = document.querySelector("#note");
+            title.textContent = translate({
+                prompt: '提供元「{name}」を追加しますか？',
+                installing: '管理画面から提供元を追加してください',
+                failed: '追加に失敗しました',
+                installed: '追加が完了しました！',
+            }[state.type]);
+            note.textContent = translate({
+                prompt: '提供元からの説明: {note}',
+                installing: '提供元「{name}」を追加します',
+                failed: '追加に失敗しました: {message}',
+                installed: 'このタブを閉じてください',
+            }[state.type], {
+                message: state.message
+            });
+            window.close();
+        }
+
+        const init = async () => {
+            setConfig();
+            updateState({ type: "prompt" });
+        };
+
+        const install = async () => {
+            if (config.error) {
+                updateState({ type: "failed", message: config.error })
+            }
+            const installButton = document.querySelector("#install");
+            installButton.parentElement.removeChild(installButton)
+            updateState({ type: "installing", hostname: location.hostname });
+            try {
+                const resp = await fetch("/api/index/install", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        index: config.url,
+                        id: config.id,
+                    }),
+                });
+                if (!resp.ok) {
+                    updateState({ type: "failed", message: resp.statusText });
+                } else {
+                    updateState({ type: "installed" });
+                }
+            } catch (e) {
+                updateState({
+                    type: "failed",
+                    message: "起動していない可能性があります",
+                });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</head>
+
+<body>
+    <main>
+        <div class="card">
+            <h2 id="title">管理画面から提供元を追加してください</h2>
+            <small id="note">
+            </small>
+            <button id="install" onclick="install()">
+                インストール
+            </button>
+        </div>
+    </main>
+</body>
+
+</html>

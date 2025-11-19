@@ -61,7 +61,8 @@ class Server:
         self.network.route_get("/", self._handle_index)
         self.network.route_get("/version", self._handle_version)
         self.network.route_get("/frame", self._handle_frame)
-        self.network.route_post("/index_install", self._handle_index_install)
+        self.network.route_get("/index/install", self._handle_get_index_install)
+        self.network.route_post("/api/index/install", self._handle_post_index_install)
         self.security = PermissionManager.load(self)
         self.running = False
         self.endpoints = EndpointExtension(self)
@@ -117,57 +118,81 @@ class Server:
         content = content.replace("%CONFIG%", json.dumps(config))
         return web.Response(text=content, content_type="text/html")
 
-    async def _handle_index_install(self, request: web.Request) -> web.StreamResponse:
-        key = request.host
-        elapsed = time.time() - self.last_prompt_timestamp.get(key, 0)
-        remaining = 15 - elapsed
-        if remaining > 0:
-            return web.json_response(
-                {
-                    "type": "error",
-                    "message": f"An installation is already in progress. You can try again in {remaining:.1f} seconds.",
-                },
-                status=400,
-                reason=f"An installation is already in progress. You can try again in {remaining:.1f} seconds.",
-            )
-        self.last_prompt_timestamp[key] = time.time()
+    async def _handle_get_index_install(self, request: web.Request) -> web.StreamResponse:
+        raw_index_url = request.query.get("index_url")
+        if not raw_index_url:
+            return self._error_response("inedx_url not provided")
+        raw_index_url = URL(raw_index_url)
+        match await AppIndexRegistry.try_fetch(raw_index_url):
+            case Err(err):
+                return self._error_response(f"Failed to fetch index: {err}")
+            case Ok(index):
+                ...
+        mapped_index_url = self.network.get_mapped_url(raw_index_url)
+        provided_index_namespace = Identifier.namespace_from_url(mapped_index_url)
+
+        if index.id.namespace != provided_index_namespace:
+            return self._error_response("Namespace mismatch")
+
+        if not index.id.is_namepath_equal(index.id):
+            return self._error_response("Trust issue")
+
+        content = self.directories.index_install.read_text(encoding="utf-8")
+        config = {
+            "id": index.id.key(),
+            "meta": index.meta,
+            "url": str(raw_index_url),
+        }
+        content = content.replace("%CONFIG%", json.dumps(config))
+        return web.Response(text=content, content_type="text/html")
+
+    def _error_response(self, message: str, status=400) -> web.StreamResponse:
+        return web.json_response(
+            {"type": "error", "message": message},
+            status=status,
+            reason=message,
+        )
+
+    async def _handle_post_index_install(self, request: web.Request) -> web.StreamResponse:
+        origin = request.headers.get("Origin")
+        if origin is None:
+            return self._error_response("Missing Origin header")
+        origin_url = URL(origin)
+        if origin_url.host not in {"localhost", "127.0.0.1", self.address.host}:
+            return self._error_response("Invalid Origin Host")
+        if origin_url.port not in {self.address.port}:
+            return self._error_response("Invalid Origin Port")
         install_request: InstallRequest = await request.json()
         raw_index_url = URL(install_request["index"])
+        key = Identifier.from_key(install_request["id"]).namespace
+        elapsed = time.time() - self.last_prompt_timestamp.get(key, 0)
+        remaining = 5 - elapsed
+        if remaining > 0:
+            return self._error_response(
+                f"An installation is already in progress. You can try again in {remaining:.1f} seconds."
+            )
+        self.last_prompt_timestamp[key] = time.time()
         mapped_index_url = self.network.get_mapped_url(raw_index_url)
         provided_index_namespace = Identifier.namespace_from_url(mapped_index_url)
 
         match await AppIndexRegistry.try_fetch(raw_index_url):
             case Err(err):
-                return web.json_response(
-                    {"type": "error", "message": f"Failed to fetch index: {err}"},
-                    status=400,
-                    reason=f"Failed to fetch index: {err}",
-                )
+                return self._error_response(f"Failed to fetch index: {err}")
             case Ok(index):
                 ...
 
-        index_id = index.id
-        if index_id.namespace != provided_index_namespace:
-            return web.json_response(
-                {"type": "error", "message": "Namespace mismatch"},
-                status=400,
-                reason="Provided index ID does not match the namespace ID in the index URL.",
-            )
+        if index.id.namespace != provided_index_namespace:
+            return self._error_response("Namespace mismatch")
 
-        if not index_id.is_namepath_equal(index.id):
-            return web.json_response(
-                {"type": "error", "message": "Trust issue"},
-                status=400,
-                reason="Provided index ID does not match the namespace ID in the index URL.",
-            )
+        if not index.id.is_namepath_equal(index.id):
+            return self._error_response("Trust issue")
 
         accepted = await self.dashboard.notify_index_install(mapped_index_url, index.meta)
 
         if not accepted:
-            return web.json_response(
-                {"type": "error", "message": "Installation denied by the user."},
+            return self._error_response(
+                "Installation denied by the user.",
                 status=403,
-                reason="Installation denied by the user.",
             )
 
         server_index = self.server.index.get()
