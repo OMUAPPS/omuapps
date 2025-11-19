@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/omu",
-    "version": "0.9.36",
+    "version": "0.9.37",
     "main": "./dist/esm/index.js",
     "types": "./dist/dts/index.d.ts",
     "exports": {
