@@ -5,23 +5,9 @@
 
     import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
-    import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
     export let entry: Models.Room;
     export let selected: boolean = false;
-
-    function open() {
-        if (!entry.metadata.url) return;
-        const webviewWindow = new WebviewWindow('room_preview', {
-            url: entry.metadata.url,
-            title: entry.metadata.title || 'Room Preview',
-        });
-        webviewWindow.setAutoResize(true);
-        webviewWindow.once('tauri://close-requested', () => {
-            webviewWindow.destroy();
-        });
-        webviewWindow.show();
-    }
 
     function copyViewers() {
         const viewers = entry.metadata?.viewers;
