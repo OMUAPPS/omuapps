@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 
 async function updatePkg(path: string, overrides: Record<string, unknown>) {
+    if (!await fs.exists(path)) return;
     const content = await fs.readFile(path, {
         encoding: 'utf-8',
     });
