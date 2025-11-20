@@ -175,7 +175,7 @@
         </Button>
     </div>
     {#if avatar && $config.avatars[avatar]?.type === 'pngtuber'}
-        <button on:click={() => {configOpen = !configOpen;}} class="config-toggle">
+        <button onclick={() => {configOpen = !configOpen;}} class="config-toggle">
             <Tooltip>
                 レイヤーを変更
             </Tooltip>
@@ -190,7 +190,7 @@
             <div class="pngtuber-config">
                 {#each Array.from({ length: 10 }) as _, i (i)}
                     <button
-                        on:click={() => {
+                        onclick={() => {
                             $config.users[id].config.pngtuber.layer = i;
                         }}
                         class="layer"

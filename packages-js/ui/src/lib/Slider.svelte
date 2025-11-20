@@ -76,7 +76,7 @@
 <div class="setting">
     <input type="range" id="scale" {value} {min} {max} {step}
         on:input={(e) => setValue(e.currentTarget.valueAsNumber)}
-        on:change={(e) => setValue(e.currentTarget.valueAsNumber)}
+        onchange={(e) => setValue(e.currentTarget.valueAsNumber)}
         on:keydown={(e) => {
             if (e.key === 'ArrowUp') {
                 setValue(value + step);
@@ -85,11 +85,11 @@
             }
         }} />
     <span class="label">
-        <label for="scale"><slot /></label>
+        <label for="scale">{@render children?.()}</label>
         {#if type === 'normal'}
             <input type="number" id="scale" value={toString(value)} {min} {max} {step}
                 on:input={(e) => setValue(e.currentTarget.valueAsNumber)}
-                on:change={(e) => setValue(e.currentTarget.valueAsNumber)}
+                onchange={(e) => setValue(e.currentTarget.valueAsNumber)}
             />
             {#if unit}
                 <span>{unit}</span>

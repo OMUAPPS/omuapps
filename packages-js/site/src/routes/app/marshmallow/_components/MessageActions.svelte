@@ -141,7 +141,7 @@
 
 <div class="reply">
     <div class="textarea">
-        <textarea bind:value={reply.value} on:change={saveReply} disabled={!!message.reply}></textarea>
+        <textarea bind:value={reply.value} onchange={saveReply} disabled={!!message.reply}></textarea>
         <div class="overlay">
             {#if recognizing}
                 <div class="recognizing">

@@ -1,4 +1,4 @@
-<slot />
+{@render children?.()}
 
 <style lang="scss">
     // https://github.com/fontsource/fontsource/issues/588

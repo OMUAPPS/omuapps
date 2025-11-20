@@ -188,7 +188,7 @@
 </main>
 <div class="debug">
     <button
-        on:click={() => {
+        onclick={() => {
             $scene = { type: 'loading' };
             $config = DEFAULT_CONFIG;
             $gameConfig = DEFAULT_GAME_CONFIG;
@@ -201,14 +201,14 @@
         reset
     </button>
     <button
-        on:click={() => {
+        onclick={() => {
             window.location.reload();
         }}
     >
         reload
     </button>
     <button
-        on:click={() => {
+        onclick={() => {
             const ctx = getContext();
             ctx.order = null;
         }}

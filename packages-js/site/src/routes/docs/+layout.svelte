@@ -76,7 +76,7 @@
                     現在ドキュメントは制作段階にあるため、多くの情報が不完全なものになっています
                     <i class="ti ti-alert-hexagon"></i>
                 </h2>
-                <slot />
+                {@render children?.()}
             </div>
             <DocsNav {section} {group} />
             {#if section}
@@ -84,7 +84,7 @@
             {/if}
         </div>
         <div class="groups omu-scroll" class:open={$menuOpen}>
-            <button class="menu-toggle" on:click={() => ($menuOpen = !$menuOpen)}>
+            <button class="menu-toggle" onclick={() => ($menuOpen = !$menuOpen)}>
                 {#if $menuOpen}
                     閉じる
                 {:else}
@@ -95,7 +95,7 @@
             {#if $menuOpen}
                 {#each Object.entries(sections) as [group, entries], index (index)}
                     {#if group !== 'index'}
-                        <button class="group-toggle" on:click={() => {
+                        <button class="group-toggle" onclick={() => {
                             if (selectedGroup === group) {
                                 selectedGroup = undefined;
                             }
@@ -128,28 +128,28 @@
                     使用するパッケージマネージャー
                     <div class="package-manager">
                         <button
-                            on:click={() => ($config.PACKAGE_MANAGER = 'npm')}
+                            onclick={() => ($config.PACKAGE_MANAGER = 'npm')}
                             class:selected={$config.PACKAGE_MANAGER === 'npm'}
                         >
                             npm
                             <i class="ti ti-brand-npm"></i>
                         </button>
                         <button
-                            on:click={() => ($config.PACKAGE_MANAGER = 'yarn')}
+                            onclick={() => ($config.PACKAGE_MANAGER = 'yarn')}
                             class:selected={$config.PACKAGE_MANAGER === 'yarn'}
                         >
                             yarn
                             <i class="ti ti-brand-yarn"></i>
                         </button>
                         <button
-                            on:click={() => ($config.PACKAGE_MANAGER = 'pnpm')}
+                            onclick={() => ($config.PACKAGE_MANAGER = 'pnpm')}
                             class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
                         >
                             pnpm
                             <i class="ti ti-brand-pnpm"></i>
                         </button>
                         <button
-                            on:click={() => ($config.PACKAGE_MANAGER = 'bun')}
+                            onclick={() => ($config.PACKAGE_MANAGER = 'bun')}
                             class:selected={$config.PACKAGE_MANAGER === 'bun'}
                         >
                             bun

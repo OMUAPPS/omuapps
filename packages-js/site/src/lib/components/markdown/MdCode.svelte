@@ -21,7 +21,7 @@
     >
         <LineNumbers {highlighted} --border-color="#eee" />
     </Highlight>
-    <button on:click={() => {
+    <button onclick={() => {
         navigator.clipboard.writeText(text);
     }} class="copy">
         <Tooltip>コピー</Tooltip>

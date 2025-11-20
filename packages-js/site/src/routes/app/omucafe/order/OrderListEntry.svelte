@@ -34,7 +34,7 @@
         </ul>
     {/each}
     {#if entry.status.type === 'waiting'}
-        <button on:click={async () => {
+        <button onclick={async () => {
             entry.status.type = 'cooking';
             await updateOrder(entry);
         }}>
@@ -42,7 +42,7 @@
         </button>
     {/if}
     {#if entry.status.type === 'cooking'}
-        <button on:click={async () => {
+        <button onclick={async () => {
             entry.status.type = 'done';
             await updateOrder(entry);
         }}>

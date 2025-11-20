@@ -10,7 +10,7 @@
     }
 </script>
 
-<button class="room-entry" class:selected on:click={create}>
+<button class="room-entry" class:selected onclick={create}>
     <img src={entry.metadata?.thumbnail} class="thumbnail" alt="" />
     <div class="info">
         <div class="title">{entry.metadata?.title}</div>

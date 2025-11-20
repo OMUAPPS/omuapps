@@ -3,8 +3,8 @@
     export let disabled = false;
 </script>
 
-<button type="button" on:click class:primary {disabled}>
-    <slot />
+<button type="button" onclick class:primary {disabled}>
+    {@render children?.()}
 </button>
 
 <style lang="scss">

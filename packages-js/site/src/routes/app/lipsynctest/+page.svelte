@@ -150,7 +150,7 @@
                 />
             </div>
             <button
-                on:click={() => {
+                onclick={() => {
                     vowels.set(key, spectrum);
                 }}
             >
@@ -164,7 +164,7 @@
         </div>
     {/if}
     <div>loudness: {loudness}</div>
-    <button on:click={() => copy()}>copy</button>
+    <button onclick={() => copy()}>copy</button>
 </main>
 
 <style lang="scss">

@@ -1,6 +1,8 @@
 <script lang="ts">
-    export let noBackground = false;
-    export let show = false;
+    let {
+        noBackground = false,
+        show = false,
+    } = $props();
     let target: HTMLElement;
 
     let tooltip: HTMLElement;
@@ -90,9 +92,9 @@
         }
     }
 
-    $: {
+    $effect(() => {
         update(target, tooltip);
-    }
+    });
 
     let keyboardFocus = false;
 
@@ -222,7 +224,7 @@
             style:top="{tooltipPos.y - offset.y}px"
             bind:this={tooltip}
         >
-            <slot />
+            {@render children?.()}
         </div>
         <div
             class="arrow"

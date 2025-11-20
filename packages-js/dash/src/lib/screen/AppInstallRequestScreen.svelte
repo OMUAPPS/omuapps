@@ -67,11 +67,11 @@
         {/if}
     </div>
     <div class="actions">
-        <button on:click={reject} class="reject">
+        <button onclick={reject} class="reject">
             キャンセル
             <i class="ti ti-x"></i>
         </button>
-        <button on:click={accept} class="accept" disabled={!scrolled}>
+        <button onclick={accept} class="accept" disabled={!scrolled}>
             {#if !scrolled}
                 <Tooltip>
                     最後までスクロールしてください

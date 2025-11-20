@@ -35,12 +35,12 @@
 
 <svelte:window on:keydown={onKeyPress} />
 
-<button class="container" class:windowed on:click={handleClick} bind:this={container}>
+<button class="container" class:windowed onclick={handleClick} bind:this={container}>
     <div class="content" class:windowed bind:this={content} tabindex="-1">
-        <slot />
+        {@render children?.()}
     </div>
     <div class="info" class:disableClose>
-        <slot name="info" />
+        {@render info?.()}
     </div>
 </button>
 

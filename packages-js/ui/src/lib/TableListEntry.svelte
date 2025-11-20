@@ -28,7 +28,7 @@
             tabindex="-1"
             class="inner"
         >
-            <slot />
+            {@render children?.()}
         </div>
     </div>
 {:else}
@@ -40,7 +40,7 @@
         tabindex="-1"
         class="inner"
     >
-        <slot />
+        {@render children?.()}
     </div>
 {/if}
 

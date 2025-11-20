@@ -4,7 +4,7 @@
 
 <label class="setting">
     <small>{name}</small>
-    <slot />
+    {@render children?.()}
 </label>
 
 <style lang="scss">

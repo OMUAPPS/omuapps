@@ -194,7 +194,7 @@
                     $resources.resources[id].filename = e.currentTarget.value;
                 }} />
                 {#if selected}
-                    <ButtonMini on:click={() => {
+                    <ButtonMini onclick={() => {
                         remote.deleteResource(id);
                     }}>
                         <i class="ti ti-trash"></i>
@@ -206,7 +206,7 @@
                     event.preventDefault();
                     select(false, id, 'click');
                 }}
-                on:click={(event) => {
+                onclick={(event) => {
                     select(event.shiftKey, id, 'click');
                 }}
                 on:mousemove={(event) => {
@@ -270,7 +270,7 @@
 {#if selected}
     <button
         class="preview"
-        on:click={() => {
+        onclick={() => {
             selected = null;
         }}
     >

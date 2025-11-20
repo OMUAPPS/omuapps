@@ -248,7 +248,7 @@
         const touch = event.touches[0];
         handleMouseDown(touch.clientX, touch.clientY);
     }}
-    on:click={() => {
+    onclick={() => {
         const elapsed = performance.now() - clickTime;
         if (elapsed > 200 || clickDistance > 2) {
             return;

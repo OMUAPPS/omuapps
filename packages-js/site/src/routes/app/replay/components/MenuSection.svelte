@@ -13,11 +13,11 @@
         {#if icon}
             <i class="ti {icon}"></i>
         {/if}
-        <slot name="actions" />
+        {@render actions?.()}
     </h3>
 {/if}
 <section style:flex style:min-height={min}>
-    <slot />
+    {@render children?.()}
 </section>
 
 <style lang="scss">

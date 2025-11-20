@@ -21,7 +21,7 @@
     $: id = `app-${entry.id.key()}`;
 </script>
 
-<button on:click={() => {
+<button onclick={() => {
     $selectedApp = entry;
 }}>
     {#if $currentPage === id}
@@ -55,13 +55,13 @@
         </p>
     </div>
     <div class="actions">
-        <ButtonMini primary on:click={() => omu.server.apps.remove(entry)}>
+        <ButtonMini primary onclick={() => omu.server.apps.remove(entry)}>
             <Tooltip>
                 <span>{$t('general.delete')}</span>
             </Tooltip>
             <i class="ti ti-trash"></i>
         </ButtonMini>
-        <ButtonMini primary on:click={() => {
+        <ButtonMini primary onclick={() => {
             const id = `app-${entry.id.key()}`;
             delete $pages[id];
             $currentPage = 'explore';

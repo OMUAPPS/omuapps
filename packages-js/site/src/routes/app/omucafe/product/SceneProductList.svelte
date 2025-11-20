@@ -64,7 +64,7 @@
                 .filter(([id]) => !$gameConfig.menu.items.some((it) => it.product === id)) as [id, product] (id)}
                 <div class="item">
                     <span>
-                        <ButtonMini primary on:click={() => {
+                        <ButtonMini primary onclick={() => {
                             $gameConfig.menu.items = [
                                 {
                                     product: id,
@@ -88,7 +88,7 @@
                 {@const product = $gameConfig.products[entry.product]}
                 <div class="item">
                     <span>
-                        <ButtonMini primary on:click={() => {
+                        <ButtonMini primary onclick={() => {
                             $gameConfig.menu.items = $gameConfig.menu.items.filter((_, i) => i !== index);
                         }}>
                             <Tooltip>

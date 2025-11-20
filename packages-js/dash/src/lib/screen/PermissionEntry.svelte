@@ -11,7 +11,7 @@
     $: note = permission.metadata.note && omu.i18n.translate(permission.metadata.note);
 </script>
 
-<button class:accepted on:click={() => (accepted = !accepted)} {disabled}>
+<button class:accepted onclick={() => (accepted = !accepted)} {disabled}>
     {#if note}
         <Tooltip>
             {note}

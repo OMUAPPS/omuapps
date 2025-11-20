@@ -30,7 +30,7 @@
     {#if side === 'client'}
         <div class="debug">
             <h2>
-                <button on:click={() => showDebug = !showDebug}>
+                <button onclick={() => showDebug = !showDebug}>
                     {showDebug ? 'hide' : 'show'}
                 </button>
             </h2>

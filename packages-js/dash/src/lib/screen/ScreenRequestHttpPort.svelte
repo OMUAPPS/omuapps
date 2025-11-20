@@ -48,11 +48,11 @@
             {/each}
         </div>
         <div class="actions">
-            <button on:click={reject} class="reject">
+            <button onclick={reject} class="reject">
                 キャンセル
                 <i class="ti ti-x"></i>
             </button>
-            <button on:click={accept} class="accept">
+            <button onclick={accept} class="accept">
                 許可
                 <i class="ti ti-check"></i>
             </button>

@@ -72,7 +72,7 @@
                 </span>
                 <button
                     class:recruiting={$state.type === 'recruiting'}
-                    on:click={() => roulette.toggleRecruiting()}
+                    onclick={() => roulette.toggleRecruiting()}
                 >
                     {#if $state.type === 'recruiting'}
                         募集を終了
@@ -103,13 +103,13 @@
                     <i class="ti ti-list-numbers"></i>
                 </span>
                 <span class="buttons">
-                    <button on:click={() => roulette.clearEntries()}>
+                    <button onclick={() => roulette.clearEntries()}>
                         <Tooltip>エントリーをすべて消す</Tooltip>
                         クリア
                         <i class="ti ti-trash"></i>
                     </button>
                     <button
-                        on:click={() => {
+                        onclick={() => {
                             let name = 'エントリー';
                             let i = 1;
                             while (

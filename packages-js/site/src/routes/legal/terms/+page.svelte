@@ -56,7 +56,7 @@
             <code>
                 配信者と視聴者をつなぐアプリ、OMUAPPS。https://omuapps.com
                 <button
-                    on:click={() =>
+                    onclick={() =>
                         navigator.clipboard.writeText(
                             '配信者と視聴者をつなぐアプリ、OMUAPPS。https://omuapps.com',
                         )}

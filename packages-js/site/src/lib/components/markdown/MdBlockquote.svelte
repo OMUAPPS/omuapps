@@ -2,7 +2,7 @@
 </script>
 
 <blockquote>
-    <slot />
+    {@render children?.()}
 </blockquote>
 
 <style lang="scss">

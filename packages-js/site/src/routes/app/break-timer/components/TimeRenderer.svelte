@@ -27,7 +27,7 @@
 
 <div class="timer">
     {#if now >= end}
-        <slot />
+        {@render children?.()}
     {:else}
         <h1>{hours}:{minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}</h1>
     {/if}

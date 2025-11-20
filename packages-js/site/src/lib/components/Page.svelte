@@ -18,14 +18,14 @@
 <header>
     <Content>
         <div class="header-content">
-            <slot name="header" />
+            {@render header?.()}
         </div>
     </Content>
 </header>
 <main class:no-background={noBackground}>
     <Content>
         <div class="main-content">
-            <slot name="content" />
+            {@render content?.()}
         </div>
         {#if footer}
             <Footer />

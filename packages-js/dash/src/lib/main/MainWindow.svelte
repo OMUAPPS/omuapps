@@ -126,7 +126,7 @@
 <main class:open={$menuOpen}>
     <div class="tabs" class:open={$menuOpen}>
         <section>
-            <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
+            <button class="menu" onclick={() => ($menuOpen = !$menuOpen)}>
                 {#if $menuOpen}
                     <i class="ti ti-chevron-left"></i>
                     <Tooltip>{$t('menu.collapse')}</Tooltip>
@@ -146,7 +146,7 @@
                     </span>
                     <div class="buttons">
                         <ButtonMini
-                            on:click={() =>
+                            onclick={() =>
                                 screenContext.push(ManageAppsScreen, undefined)}
                         >
                             <Tooltip>
@@ -168,7 +168,7 @@
         <div class="list">
             <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && ($devMode || app.type === 'app')} component={AppEntry}>
                 <button
-                    on:click={() => ($currentPage = EXPLORE_PAGE.id)}
+                    onclick={() => ($currentPage = EXPLORE_PAGE.id)}
                     slot="empty"
                     class="no-apps"
                 >

@@ -37,7 +37,7 @@
                 </Tooltip>
                 <FitInput bind:value={script.name} />
             </h1>
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 $scene = { type: 'product_list' };
                 delete $gameConfig.items[script.id];
             }} primary>
@@ -46,7 +46,7 @@
                 </Tooltip>
                 <i class="ti ti-trash"></i>
             </ButtonMini>
-            <ButtonMini on:click={async () => {
+            <ButtonMini onclick={async () => {
                 await navigator.clipboard.writeText(script.id);
             }} primary>
                 <Tooltip>
@@ -54,7 +54,7 @@
                 </Tooltip>
                 <i class="ti ti-copy"></i>
             </ButtonMini>
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 const ctx = globals.newContext();
                 executeExpression(ctx, script.expression);
             }} primary>
@@ -67,28 +67,28 @@
         {#if edit}
             <div class="edit">
                 <div class="types">
-                    <button on:click={() => {
+                    <button onclick={() => {
                         if (!edit) return;
                         edit.value = value.variable('');
                     }}>
                         <i class="ti ti-variable"></i>
                         variable
                     </button>
-                    <button on:click={() => {
+                    <button onclick={() => {
                         if (!edit) return;
                         edit.value = value.string('');
                     }}>
                         <i class="ti ti-text-size"></i>
                         string
                     </button>
-                    <button on:click={() => {
+                    <button onclick={() => {
                         if (!edit) return;
                         edit.value = value.invoke(value.void(), []);
                     }}>
                         <i class="ti ti-caret-right-filled"></i>
                         invoke
                     </button>
-                    <button on:click={() => {
+                    <button onclick={() => {
                         if (!edit) return;
                         edit.value = value.void();
                     }}>
@@ -112,7 +112,7 @@
                         <ul class="args">
                             {#each edit.value.args as arg, index (index)}
                                 <li>
-                                    <button on:click={() => {
+                                    <button onclick={() => {
                                         if (!edit || edit.value.type !== 'invoke') return;
                                         edit.value.args = edit.value.args.filter((_, idx) => idx !== index);
                                     }}>
@@ -122,7 +122,7 @@
                                 </li>
                             {/each}
                             <li>
-                                <button on:click={() => {
+                                <button onclick={() => {
                                     if (!edit || edit.value.type !== 'invoke') return;
                                     edit.value.args = [
                                         ...edit.value.args,
@@ -146,7 +146,7 @@
         {/if}
         <div class="actions">
             JSONとして管理
-            <ButtonMini primary on:click={() => {
+            <ButtonMini primary onclick={() => {
                 navigator.clipboard.writeText(JSON.stringify(script, null, 2));
             }}>
                 <Tooltip>

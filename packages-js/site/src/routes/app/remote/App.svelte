@@ -55,7 +55,7 @@
             </section>
         {/if}
         <h2>
-            <button class="tab" on:click={() => {showSettings = !showSettings;}}>
+            <button class="tab" onclick={() => {showSettings = !showSettings;}}>
                 表示の設定
                 <i class="ti ti-settings"></i>
                 {#if showSettings}

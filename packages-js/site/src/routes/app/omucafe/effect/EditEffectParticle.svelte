@@ -60,7 +60,7 @@
 <div class="property">
     <div class="sources">
         {#each particle.source.assets as asset, i (i)}
-            <button class="image" on:click={() => {
+            <button class="image" onclick={() => {
                 particle.source.assets = particle.source.assets.filter((_, index) => index !== i);
             }}>
                 <Tooltip>

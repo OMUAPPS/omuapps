@@ -1,6 +1,6 @@
 <script lang="ts">
-    import './styles.scss';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
+    import './styles.scss';
 </script>
 
-<slot />
+{@render children?.()}

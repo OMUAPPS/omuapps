@@ -34,7 +34,7 @@
                 <h3 class="index">{index + 1} <small>問目</small></h3>
                 <div>
                     <span class="actions">
-                        <ButtonMini disabled={isFirst} on:click={() => {
+                        <ButtonMini disabled={isFirst} onclick={() => {
                             const former = quiz.questions.filter((_, it) => it < index);
                             const swap = former.pop();
                             if (!swap) return;
@@ -49,7 +49,7 @@
                             <Tooltip>順番を入れ替える</Tooltip>
                             <i class="ti ti-chevron-up"></i>
                         </ButtonMini>
-                        <ButtonMini disabled={isLast} on:click={() => {
+                        <ButtonMini disabled={isLast} onclick={() => {
                             const former = quiz.questions.filter((_, it) => it < index);
                             const [swap, ...latter] = quiz.questions.filter((_, it) => it > index);
                             quiz.questions = [
@@ -62,7 +62,7 @@
                             <Tooltip>順番を入れ替える</Tooltip>
                             <i class="ti ti-chevron-down"></i>
                         </ButtonMini>
-                        <ButtonMini on:click={() => {
+                        <ButtonMini onclick={() => {
                             quiz.questions = quiz.questions.filter((_, it) => it !== index);
                         }}>
                             <Tooltip>削除</Tooltip>

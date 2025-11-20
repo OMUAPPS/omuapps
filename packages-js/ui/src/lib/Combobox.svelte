@@ -35,7 +35,7 @@
 <div class="combo-box">
     <select
         value={key}
-        on:change={(event) => onChange(event)}
+        onchange={(event) => onChange(event)}
         on:focus={() => dispatch('open')}
         on:blur={() => dispatch('close')}
     >

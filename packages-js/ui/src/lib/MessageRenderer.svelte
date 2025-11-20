@@ -158,7 +158,7 @@
                     <i class="ti ti-external-link"></i>
                 </ButtonLink>
             {/if}
-            <ButtonMini primary on:click={handleCopy}>
+            <ButtonMini primary onclick={handleCopy}>
                 <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
                 <i class="ti ti-files"></i>
             </ButtonMini>

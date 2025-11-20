@@ -32,10 +32,10 @@
 </script>
 
 <span>
-    <select bind:this={select} on:change={(event) => handle(event)}>
+    <select bind:this={select} onchange={(event) => handle(event)}>
         <option disabled selected>追加</option>
-        <option value="text" on:change={() => create('text')}>テキスト</option>
-        <option value="image" on:change={() => create('image')}>画像</option>
+        <option value="text" onchange={() => create('text')}>テキスト</option>
+        <option value="image" onchange={() => create('image')}>画像</option>
     </select>
 </span>
 

@@ -39,7 +39,7 @@
     </div>
     <div class="actions">
         {#if selected}
-            <ButtonMini on:click={remove}>
+            <ButtonMini onclick={remove}>
                 <Tooltip>
                     <div>{$t('panels.channels.delete')}</div>
                 </Tooltip>

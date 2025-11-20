@@ -77,11 +77,11 @@
     <main>
         <section>
             <div class="flex gap">
-                <button on:click={reset}>
+                <button onclick={reset}>
                     <i class="ti ti-reload"></i>
                     Reset
                 </button>
-                <button on:click={send}>
+                <button onclick={send}>
                     <i class="ti ti-send"></i>
                     Send
                 </button>

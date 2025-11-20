@@ -4,13 +4,13 @@
     export let primary = false;
 </script>
 
-<a {href} target="_blank" rel="noopener noreferrer" class:primary on:click={(event) => {
+<a {href} target="_blank" rel="noopener noreferrer" class:primary onclick={(event) => {
     if (!$linkOpenHandler) return;
     const prevent = $linkOpenHandler(href);
     if (!prevent) return;
     event.preventDefault();
 }}>
-    <slot />
+    {@render children?.()}
 </a>
 
 <style lang="scss">

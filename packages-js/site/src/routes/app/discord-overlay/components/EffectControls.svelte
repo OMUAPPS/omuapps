@@ -13,11 +13,11 @@
 </script>
 
 <span>
-    <button on:click={() => { effects.speech.active = !effects.speech.active; }} class:active={effects.speech.active} class="effect">
+    <button onclick={() => { effects.speech.active = !effects.speech.active; }} class:active={effects.speech.active} class="effect">
         <i class="ti ti-brightness"></i>
         明るさを調整
     </button>
-    <button class="option" on:click={() => {
+    <button class="option" onclick={() => {
         selectedEffectType = selectedEffectType === 'speech' ? null : 'speech';
     }}>
         {#if selectedEffectType === 'speech'}
@@ -54,13 +54,13 @@
     </div>
 {/if}
 <span>
-    <button on:click={() => {
+    <button onclick={() => {
         effects.shadow.active = !effects.shadow.active;
     }} class:active={effects.shadow.active} class="effect">
         <i class="ti ti-square-half"></i>
         影
     </button>
-    <button class="option" on:click={() => {
+    <button class="option" onclick={() => {
         selectedEffectType = selectedEffectType === 'shadow' ? null : 'shadow';
     }}>
         {#if selectedEffectType === 'shadow'}
@@ -80,7 +80,7 @@
     <div class="options">
         <span>
             <label for="shadow-color">色</label>
-            <input bind:this={shadowColorElement} type="color" id="shadow-color" value={rgbToHex(effects.shadow.color.r * 255, effects.shadow.color.g * 255, effects.shadow.color.b * 255)} on:change={() => {
+            <input bind:this={shadowColorElement} type="color" id="shadow-color" value={rgbToHex(effects.shadow.color.r * 255, effects.shadow.color.g * 255, effects.shadow.color.b * 255)} onchange={() => {
                 if (!shadowColorElement) {
                     return;
                 }

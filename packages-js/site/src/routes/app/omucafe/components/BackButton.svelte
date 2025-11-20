@@ -28,7 +28,7 @@
     }
 }} />
 
-<button class="back" on:click={() => {
+<button class="back" onclick={() => {
     set();
 }}>
     <Tooltip>

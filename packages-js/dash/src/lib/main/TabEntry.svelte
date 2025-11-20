@@ -14,7 +14,7 @@
 
 <button
     class="tab"
-    on:click={() => ($currentPage = entry.id)}
+    onclick={() => ($currentPage = entry.id)}
     class:active={$currentPage === entry.id}
 >
     <Tooltip>

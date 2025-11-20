@@ -17,7 +17,7 @@
     <strong>Uint8Array({value.length})</strong>
 {:else if Array.isArray(value)}
     <strong>[</strong>
-    <button on:click={() => open = !open}>
+    <button onclick={() => open = !open}>
         {#if open}
             <i class="ti ti-chevron-up"></i>
         {:else}
@@ -34,7 +34,7 @@
     <strong>]</strong>
 {:else if typeof value === 'object'}
     <strong>{'{'}</strong>
-    <button on:click={() => open = !open}>
+    <button onclick={() => open = !open}>
         {#if open}
             <i class="ti ti-chevron-up"></i>
         {:else}

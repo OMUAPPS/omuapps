@@ -2,7 +2,7 @@
 </script>
 
 <div class="menu omu-scroll">
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

@@ -49,7 +49,7 @@
             </Button>
         </h2>
         <section>
-            <Combobox options={LANGUAGES_OPTIONS} value={$config.lang} on:change={({ detail: { value } }) => {
+            <Combobox options={LANGUAGES_OPTIONS} value={$config.lang} onchange={({ detail: { value } }) => {
                 $config.lang = value;
             }} />
         </section>
@@ -67,7 +67,7 @@
                     },
                     label: name,
                 }];
-            }))} value={$config.style.fonts[0]} on:change={({ detail: { value } }) => {
+            }))} value={$config.style.fonts[0]} onchange={({ detail: { value } }) => {
                 $config.style.fonts = [value];
             }} />
             <div>

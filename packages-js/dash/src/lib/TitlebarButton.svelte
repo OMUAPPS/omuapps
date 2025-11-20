@@ -8,7 +8,7 @@
 <button
     class="button"
     type="button"
-    on:click
+    onclick
 >
     <Tooltip>{tooltip}</Tooltip>
     <i class="ti {icon}"></i>

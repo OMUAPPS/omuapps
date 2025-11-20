@@ -115,7 +115,7 @@
                 </div>
                 {#if assetId}
                     <ButtonMini
-                        on:click={() =>
+                        onclick={() =>
                             ($config.replaces = {
                                 ...$config.replaces,
                                 [key]: null,

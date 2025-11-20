@@ -12,7 +12,7 @@
 </script>
 
 {#await load()}
-    <slot />
+    {@render children?.()}
 {:then}
-    <slot />
+    {@render children?.()}
 {/await}

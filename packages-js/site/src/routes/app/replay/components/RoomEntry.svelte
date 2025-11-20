@@ -15,7 +15,7 @@
     }
 </script>
 
-<button class="entry" class:selected on:click={() => play()}>
+<button class="entry" class:selected onclick={() => play()}>
     <div class="thumbnail-container">
         <Tooltip>
             <p class="tooltip">

@@ -106,7 +106,7 @@
                 <br />
                 {@const date = new Date(manifest.pub_date)}
                 <div>
-                    <a href={version.url} class="download" on:click={() => {
+                    <a href={version.url} class="download" onclick={() => {
                         downloading = true;
                         setTimeout(() => {
                             downloading = false;
@@ -122,7 +122,7 @@
                         {/if}
                         <i class="ti ti-download"></i>
                     </a>
-                    <button on:click={() => (showExtra = !showExtra)} class="extra">
+                    <button onclick={() => (showExtra = !showExtra)} class="extra">
                         その他
                         <i class="ti ti-chevron-{showExtra ? 'up' : 'down'}"></i>
                     </button>
@@ -134,7 +134,7 @@
                                 <a
                                     href={platform.url}
                                     class="download"
-                                    on:click={() => (downloading = true)}
+                                    onclick={() => (downloading = true)}
                                 >
                                     {key}
                                     <i class="ti ti-download"></i>

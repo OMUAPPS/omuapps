@@ -30,7 +30,7 @@
         event.preventDefault();
         handleClick();
     }}
-    on:click={handleClick}
+    onclick={handleClick}
     class:primary
     disabled={disabled || !!promise}
 >

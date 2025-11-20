@@ -35,13 +35,13 @@
                 }
             }} placeholder="youtube.com/watch?v=..." class="input" />
             <div class="actions">
-                <button on:click={() => {
+                <button onclick={() => {
                     cancel();
                 }} class="back">
                     <i class="ti ti-chevron-left"></i>
                     {$t('page.connect.input_cancel')}
                 </button>
-                <button on:click={() => {
+                <button onclick={() => {
                     search(url);
                 }} disabled={!url}>
                     {$t('page.connect.input_submit')}
@@ -57,7 +57,7 @@
             <p>{$t('page.connect.search_no_results')}</p>
 
             <div class="actions left">
-                <button on:click={() => {
+                <button onclick={() => {
                     stage = { type: 'input' };
                 }}>
                     <i class="ti ti-chevron-left"></i>
@@ -68,7 +68,7 @@
             <p>{$t('page.connect.select_channel')}</p>
             <div class="channels">
                 {#each result as { channel, checked } (channel.id)}
-                    <button class="channel" class:checked={checked} on:click={() => {
+                    <button class="channel" class:checked={checked} onclick={() => {
                         checked = !checked;
                     }}>
                         {#if checked}
@@ -91,13 +91,13 @@
                 {/each}
             </div>
             <div class="actions">
-                <button class="back" on:click={() => {
+                <button class="back" onclick={() => {
                     stage = { type: 'input' };
                 }}>
                     <i class="ti ti-chevron-left"></i>
                     {$t('page.connect.search_back')}
                 </button>
-                <button on:click={() => {
+                <button onclick={() => {
                     const selected = result.filter((item) => item.checked).map((item) => item.channel);
                     chat.channels.add(...selected);
                 }} disabled={result.every((item) => !item.checked)}>

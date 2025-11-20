@@ -104,7 +104,7 @@
     </div>
     <div class="actions">
         {#if $devMode}
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 const keys = permissions
                     .map(({ permission }) => permission.id.key())
                     .join('\n');
@@ -113,12 +113,12 @@
                 <i class="ti ti-clipboard"></i>
             </ButtonMini>
         {/if}
-        <button on:click={reject} class="reject">
+        <button onclick={reject} class="reject">
             キャンセル
             <i class="ti ti-x"></i>
         </button>
         <button
-            on:click={accept}
+            onclick={accept}
             class="accept"
             disabled={!permissions.every((entry) => entry.accepted)}
         >

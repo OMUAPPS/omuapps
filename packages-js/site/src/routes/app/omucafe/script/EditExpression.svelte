@@ -9,7 +9,7 @@
 <div class="commands">
     {#each expression.commands as command, index (index)}
         <div class="item">
-            <button on:click={() => {
+            <button onclick={() => {
                 expression.commands = expression.commands.filter((_, idx) => idx !== index);
             }} class="delete">
                 <i class="ti ti-x"></i>
@@ -22,7 +22,7 @@
                     {#each command.args as arg, index (index)}
                         <EditValue bind:value={arg} />
                     {/each}
-                    <button on:click={() => {
+                    <button onclick={() => {
                         command.args = [
                             ...command.args,
                             builder.v.void(),
@@ -57,7 +57,7 @@
             label: 'Invoke',
             value: () => command.invoke(value.void(), value.void()),
         },
-    }} value={null} on:change={({ detail: { value } }) => {
+    }} value={null} onchange={({ detail: { value } }) => {
         if (!value) return;
         expression.commands = [
             ...expression.commands,

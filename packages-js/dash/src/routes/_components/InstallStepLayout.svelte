@@ -7,10 +7,10 @@
 
 <div class="content">
     <div class="main">
-        <slot />
+        {@render children?.()}
     </div>
     <div class="hint">
-        <slot name="hint" />
+        {@render hint?.()}
     </div>
     <div class="notification">
         {#if $backgroundRequested}

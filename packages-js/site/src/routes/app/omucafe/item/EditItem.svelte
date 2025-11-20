@@ -61,7 +61,7 @@
                 </Tooltip>
                 <FitInput bind:value={item.name} />
             </h1>
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 $scene = { type: 'product_list' };
                 delete $gameConfig.items[item.id];
             }} primary>
@@ -70,7 +70,7 @@
                 </Tooltip>
                 <i class="ti ti-trash"></i>
             </ButtonMini>
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 const newId = uniqueId();
                 $gameConfig.items[newId] = createItem({
                     ...item,
@@ -87,7 +87,7 @@
                 </Tooltip>
                 <i class="ti ti-drag-drop-2"></i>
             </ButtonMini>
-            <ButtonMini on:click={async () => {
+            <ButtonMini onclick={async () => {
                 await navigator.clipboard.writeText(item.id);
             }} primary>
                 <Tooltip>
@@ -116,7 +116,7 @@
         <h1>機能</h1>
         {#each Object.values(BEHAVIROS) as behavior, i (i)}
             <div class="behavior" class:active={item.behaviors[behavior.key]}>
-                <button class="behavior-info" class:active={item.behaviors[behavior.key]} on:click={() => {
+                <button class="behavior-info" class:active={item.behaviors[behavior.key]} onclick={() => {
                     if (item.behaviors[behavior.key]) {
                         item.behaviors[behavior.key] = undefined;
                     } else {

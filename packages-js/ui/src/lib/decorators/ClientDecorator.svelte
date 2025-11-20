@@ -9,4 +9,4 @@
     client.set(omu);
 </script>
 
-<slot />
+{@render children?.()}

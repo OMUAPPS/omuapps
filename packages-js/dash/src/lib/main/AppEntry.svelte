@@ -52,7 +52,7 @@
     };
 </script>
 
-<button on:click={handleClick}>
+<button onclick={handleClick}>
     <Tooltip>
         <div class="tooltip">
             {#if $menuOpen}

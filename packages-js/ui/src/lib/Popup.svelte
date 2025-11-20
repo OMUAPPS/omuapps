@@ -95,7 +95,7 @@
     }
 </script>
 
-<svelte:window on:click={handleClickOutside} />
+<svelte:window onclick={handleClickOutside} />
 <span class="wrapper" bind:this={element}>
     {#if isOpen}
         <div

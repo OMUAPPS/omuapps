@@ -20,7 +20,7 @@
     <div class="thumbnail">
         {#if entry.metadata && entry.metadata.thumbnail}
             {#if entry.metadata.url}
-                <a href={entry.metadata.url} target="_blank" rel="noopener noreferrer" on:click={(event) => {
+                <a href={entry.metadata.url} target="_blank" rel="noopener noreferrer" onclick={(event) => {
                     if (!entry.metadata.url) return;
                     if (!$linkOpenHandler) return;
                     const prevent = $linkOpenHandler(entry.metadata.url);
@@ -90,7 +90,7 @@
                 </small>
             {/if}
             {#if entry.metadata && entry.metadata.viewers}
-                <button on:click={copyViewers}>
+                <button onclick={copyViewers}>
                     <Tooltip>{$t('panels.rooms.viewers')}</Tooltip>
                     {entry.metadata.viewers}
                     <i class="ti ti-user"></i>

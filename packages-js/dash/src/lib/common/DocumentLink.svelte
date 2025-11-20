@@ -6,6 +6,6 @@
 </script>
 
 <ExternalLink {href} {title} decorated={false}>
-    <slot />
+    {@render children?.()}
     <i class="ti ti-external-link"></i>
 </ExternalLink>

@@ -1,11 +1,13 @@
 <script lang="ts">
-    export let value: boolean;
-    export let handleToggle = () => {
-        value = !value;
-    };
+    let {
+        value = $bindable(),
+        handleToggle = () => {
+            value = !value;
+        },
+    }: { value: boolean } = $props();
 </script>
 
-<button class:active={value} on:click={handleToggle}>
+<button class:active={value} onclick={handleToggle}>
     <span class="off">off</span>
     <span class="on">on</span>
 </button>

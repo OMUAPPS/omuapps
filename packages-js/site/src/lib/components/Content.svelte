@@ -1,5 +1,5 @@
 <main>
-    <slot />
+    {@render children?.()}
 </main>
 
 <style>

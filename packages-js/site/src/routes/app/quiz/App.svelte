@@ -20,7 +20,7 @@
         <SceneQuizPlay bind:state={$sceneCurrent.state} />
     {/if}
     {#if $sceneHistory.length > 0}
-        <button on:click={() => quizApp.popScene()}>
+        <button onclick={() => quizApp.popScene()}>
             <i class="ti ti-chevron-left"></i>
             戻る
         </button>

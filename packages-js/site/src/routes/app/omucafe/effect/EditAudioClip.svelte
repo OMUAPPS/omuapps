@@ -7,22 +7,22 @@
 </script>
 
 <div class="actions">
-    <button disabled={!clip} on:click={async () => {
+    <button disabled={!clip} onclick={async () => {
         clip = null;
     }}>
         無し
     </button>
-    <button disabled={clip?.type === 'clip'} on:click={async () => {
+    <button disabled={clip?.type === 'clip'} onclick={async () => {
         clip = await createClip({});
     }}>
         単音
     </button>
-    <button disabled={clip?.type === 'envelope'} on:click={async () => {
+    <button disabled={clip?.type === 'envelope'} onclick={async () => {
         clip = createEnvelopeClip({});
     }}>
         Envelope
     </button>
-    <button disabled={clip?.type === 'filter'} on:click={async () => {
+    <button disabled={clip?.type === 'filter'} onclick={async () => {
         clip = createFilter({
             clip: await createClip({}),
         });

@@ -85,7 +85,7 @@
         class="origin">
     </button>
     <div class="actions">
-        <button on:click={() => {
+        <button onclick={() => {
             if (!$selectedAvatar) return;
             if (!avatarConfig) return;
             avatarConfig.offset = [0, 0];
@@ -100,7 +100,7 @@
             <i class="ti ti-refresh"></i>
         </button>
         {#if avatarConfig.type === 'pngtuber'}
-            <button on:click={() => {
+            <button onclick={() => {
                 if (!$selectedAvatar) return;
                 if (!avatarConfig) return;
                 if (avatarConfig.type !== 'pngtuber') return;
@@ -111,7 +111,7 @@
                 左右を反転
                 <i class="ti ti-arrows-horizontal"></i>
             </button>
-            <button on:click={() => {
+            <button onclick={() => {
                 if (!$selectedAvatar) return;
                 if (!avatarConfig) return;
                 if (avatarConfig.type !== 'pngtuber') return;
@@ -133,7 +133,7 @@
             <i class="ti ti-check"></i>
         </Button>
     </div>
-    <button on:click={() => {
+    <button onclick={() => {
         $selectedAvatar = null;
     }} class="close">
         完了

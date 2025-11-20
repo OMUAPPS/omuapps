@@ -7,14 +7,19 @@
 <script lang="ts">
     import Tooltip from './Tooltip.svelte';
 
-    export let horizontal: AlignType | undefined = undefined;
-    export let vertical: AlignType | undefined = undefined;
+    let {
+        horizontal = $bindable(undefined),
+        vertical = $bindable(undefined),
+    }: {
+        horizontal: AlignType | undefined;
+        vertical: AlignType | undefined;
+    } = $props();
 </script>
 
 <div class="container" class:horizontal={horizontal} class:vertical={vertical}>
     <button
         class="vertical horizontal"
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'start';
             if (horizontal) horizontal = 'start';
         }}
@@ -27,7 +32,7 @@
     </button>
     <button
         class="vertical"
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'start';
             if (horizontal) horizontal = 'middle';
         }}
@@ -40,7 +45,7 @@
     </button>
     <button
         class="vertical horizontal"
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'start';
             if (horizontal) horizontal = 'end';
         }}
@@ -53,7 +58,7 @@
     </button>
     <button
         class="horizontal"
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'middle';
             if (horizontal) horizontal = 'start';
         }}
@@ -65,7 +70,7 @@
         <i class="ti ti-box-align-left"></i>
     </button>
     <button
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'middle';
             if (horizontal) horizontal = 'middle';
         }}
@@ -78,7 +83,7 @@
     </button>
     <button
         class="horizontal"
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'middle';
             if (horizontal) horizontal = 'end';
         }}
@@ -91,7 +96,7 @@
     </button>
     <button
         class="vertical horizontal"
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'end';
             if (horizontal) horizontal = 'start';
         }}
@@ -104,7 +109,7 @@
     </button>
     <button
         class="vertical"
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'end';
             if (horizontal) horizontal = 'middle';
         }}
@@ -117,7 +122,7 @@
     </button>
     <button
         class="vertical horizontal"
-        on:click={() => {
+        onclick={() => {
             if (vertical) vertical = 'end';
             if (horizontal) horizontal = 'end';
         }}

@@ -8,7 +8,7 @@
 </script>
 
 <div class="item-debug-info">
-    <button on:click={() => open = !open}>
+    <button onclick={() => open = !open}>
         {item.id}
     </button>
     {#if open}

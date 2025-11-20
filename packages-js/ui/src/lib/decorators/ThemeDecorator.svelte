@@ -2,5 +2,5 @@
     import Theme from '../Theme.svelte';
 </script>
 
-<slot />
+{@render children?.()}
 <Theme />

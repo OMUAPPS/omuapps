@@ -38,7 +38,7 @@
     let userElement: HTMLElement | undefined;
 </script>
 
-<svelte:window on:click={(event) => {
+<svelte:window onclick={(event) => {
     if (!switcherElement || !userElement) return;
     if (
         !isElementContains(switcherElement, event.target) &&
@@ -55,7 +55,7 @@
                 起動しているDiscordが見つかりませんでした
                 <i class="ti ti-info-circle"></i>
             </small>
-            <button class="entry refresh" on:click={refresh}>
+            <button class="entry refresh" onclick={refresh}>
                 <Tooltip>
                     <p>ここに表示されていないアカウントがある場合お試しください。</p>
                     <p>連続で再検出を行うと検出できなくなる可能性があります。</p>
@@ -69,7 +69,7 @@
             {/if}
             {#if open && Object.keys(state.sessions).length > 0}
                 <div class="switcher" bind:this={switcherElement}>
-                    <button class="entry refresh" on:click={refresh}>
+                    <button class="entry refresh" onclick={refresh}>
                         <Tooltip>
                             <p>ここに表示されていないアカウントがある場合お試しください。</p>
                             <p>連続で再検出を行うと検出できなくなる可能性があります。</p>
@@ -79,7 +79,7 @@
                     </button>
                     {#each Object.values(state.sessions).filter((session) => session.user.id !== $config.user_id) as session, index (index)}
                         {@const { user } = session}
-                        <button class="entry" on:click={() => {
+                        <button class="entry" onclick={() => {
                             $config.user_id = user.id;
                             open = false;
                         }}>
@@ -100,7 +100,7 @@
             {/if}
             {#if $config.user_id && state.sessions[$config.user_id]}
                 {@const { user } = state.sessions[$config.user_id]}
-                <button class="entry" on:click={() => {open = !open;}} bind:this={userElement}>
+                <button class="entry" onclick={() => {open = !open;}} bind:this={userElement}>
                     {#if !open}
                         <Tooltip>
                             アカウントを切り替える

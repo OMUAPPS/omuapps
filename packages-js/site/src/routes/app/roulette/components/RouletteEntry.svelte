@@ -24,7 +24,7 @@
         />
     </span>
     <button
-        on:click={() => {
+        onclick={() => {
             roulette.removeEntry(item.id);
         }}
         {disabled}

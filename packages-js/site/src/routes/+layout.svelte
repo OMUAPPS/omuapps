@@ -20,7 +20,7 @@
 </svelte:element>
 
 <div class="app">
-    <slot />
+    {@render children?.()}
 </div>
 <ProgressBar />
 

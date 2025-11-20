@@ -1,5 +1,5 @@
 <ul>
-    <slot />
+    {@render children?.()}
 </ul>
 
 <style lang="scss">

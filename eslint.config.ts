@@ -1,14 +1,18 @@
+import { includeIgnoreFile } from '@eslint/compat';
 import globals from 'globals';
+import { fileURLToPath } from 'node:url';
 
 import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
 import svelte from 'eslint-plugin-svelte';
-import svelteParser from 'svelte-eslint-parser';
 import ts from 'typescript-eslint';
 
 import type { ConfigArray } from 'typescript-eslint';
 
+const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
+
 export default [
+    includeIgnoreFile(gitignorePath),
     js.configs.recommended,
     ...ts.configs.recommended,
     ...svelte.configs.recommended,
@@ -18,20 +22,18 @@ export default [
         },
     },
     {
+        files: [
+            '**/*.svelte',
+            '**/*.svelte.ts',
+            '**/*.svelte.js',
+        ],
         languageOptions: {
-            parser: svelteParser,
             parserOptions: {
+                projectService: true,
+                extraFileExtensions: ['.svelte'],
                 parser: ts.parser,
-                svelteFeatures: {
-                    /* -- Experimental Svelte Features -- */
-                    /* It may be changed or removed in minor versions without notice. */
-                    // Whether to parse the `generics` attribute.
-                    // See https://github.com/sveltejs/rfcs/pull/38
-                    experimentalGenerics: true,
-                },
             },
         },
-        files: ['**/*.svelte'],
     },
     {
         ignores: [
@@ -73,6 +75,7 @@ export default [
                     'alignAttributesVertically': false,
                 },
             ],
+            'svelte/no-navigation-without-resolve': 'off',
 
             //#region stylistic
             '@stylistic/array-bracket-spacing': ['error', 'never'],

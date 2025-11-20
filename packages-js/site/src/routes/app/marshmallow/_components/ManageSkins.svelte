@@ -50,7 +50,7 @@
                     <small>{skin.meta.note}</small>
                 </div>
                 <div class="actions">
-                    <ButtonMini on:click={() => {
+                    <ButtonMini onclick={() => {
                         state = {
                             type: 'edit',
                             skin,
@@ -58,7 +58,7 @@
                     }}>
                         <i class="ti ti-pencil"></i>
                     </ButtonMini>
-                    <ButtonMini primary={selected} on:click={() => {
+                    <ButtonMini primary={selected} onclick={() => {
                         if (selected) {
                             const newActives = $config.active_skins;
                             delete newActives[skin.id];

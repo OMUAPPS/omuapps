@@ -255,7 +255,7 @@
         </VirtualList>
     </div>
     {#if updated}
-        <button class="update" on:click={scrollToTop}>
+        <button class="update" onclick={scrollToTop}>
             更新があります
             <i class="ti ti-chevron-up"></i>
         </button>

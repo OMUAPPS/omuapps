@@ -24,7 +24,7 @@
 {#if component}
     {@const children = Content.children(component)}
     {#if icon}
-        <button on:click={remove}>
+        <button onclick={remove}>
             <Tooltip>コンポーネントを削除</Tooltip>
             <i class={icon}></i>
         </button>

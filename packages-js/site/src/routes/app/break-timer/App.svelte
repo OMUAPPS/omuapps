@@ -42,9 +42,9 @@
         {#if $config.timer}
             <TimeEdit bind:value={$config.timer.duration} />
         {/if}
-        <input type="button" value="Start" on:click={() => breakTimer.start()} />
+        <input type="button" value="Start" onclick={() => breakTimer.start()} />
         <input type="text" bind:value={$config.message} />
-        <input type="button" value="Reset Config" on:click={() => breakTimer.resetConfig()} />
+        <input type="button" value="Reset Config" onclick={() => breakTimer.resetConfig()} />
         {#if $state.type === 'break' && $config.timer}
             {@const endTime = new Date($state.start).getTime() + $config.timer.duration * 1000}
             <RelativeDate date={new Date(endTime)} />

@@ -1,5 +1,5 @@
 <div class="wrapper">
-    <slot />
+    {@render children?.()}
 </div>
 
 <style>

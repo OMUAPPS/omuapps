@@ -9,7 +9,7 @@
     const ctx = getContext<ScriptEditorContext>(SCRIPT_EDITOR_CONTEXT);
 </script>
 
-<button on:click={(event) => {
+<button onclick={(event) => {
     ctx.editValue({
         value,
         setter: (val) => {

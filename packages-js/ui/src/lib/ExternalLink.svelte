@@ -11,7 +11,7 @@
     }
 </script>
 
-<a class:decorated {href} {title} target="_blank" rel="noopener noreferrer" on:click={(event) => {
+<a class:decorated {href} {title} target="_blank" rel="noopener noreferrer" onclick={(event) => {
     if (!$linkOpenHandler) return;
     const prevent = $linkOpenHandler(href);
     if (!prevent) return;
@@ -20,7 +20,7 @@
     <Tooltip>
         {href}
     </Tooltip>
-    <slot />
+    {@render children?.()}
 </a>
 
 <style lang="scss">

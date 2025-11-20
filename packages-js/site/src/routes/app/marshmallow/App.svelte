@@ -47,7 +47,7 @@
             <Answers {api} {search} bind:refresh={refreshAnswers} />
         </div>
         <div class="tabs">
-            <button on:click={() => ($screen = { type: 'messages' })} disabled={$screen.type === 'messages'}>
+            <button onclick={() => ($screen = { type: 'messages' })} disabled={$screen.type === 'messages'}>
                 新着
                 {#if Object.keys(messages ?? {}).length > 0}
                     <span class="messages-count">
@@ -55,11 +55,11 @@
                     </span>
                 {/if}
             </button>
-            <button on:click={() => ($screen = { type: 'answers' })} disabled={$screen.type === 'answers'}>
+            <button onclick={() => ($screen = { type: 'answers' })} disabled={$screen.type === 'answers'}>
                 過去の回答
             </button>
             {#if $hasPremium}
-                <button on:click={() => ($screen = { type: 'skins', state: { type: 'list' } })} disabled={$screen.type === 'skins'}>
+                <button onclick={() => ($screen = { type: 'skins', state: { type: 'list' } })} disabled={$screen.type === 'skins'}>
                     <Tooltip>
                         着せ替える
                     </Tooltip>
@@ -90,7 +90,7 @@
                             {/if}
                         </span>
                         <div class="actions">
-                            <ButtonMini on:click={logout}>
+                            <ButtonMini onclick={logout}>
                                 <Tooltip>
                                     アカウントを切り替える
                                 </Tooltip>

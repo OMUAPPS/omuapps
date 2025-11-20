@@ -9,11 +9,11 @@
 
 <main>
     <div class="actions">
-        <button on:click={() => quizApp.pushScene({ type: 'quiz_list' })}>
+        <button onclick={() => quizApp.pushScene({ type: 'quiz_list' })}>
             遊ぶ
             <i class="ti ti-chevron-right"></i>
         </button>
-        <button on:click={() => quizApp.pushScene({ type: 'quiz_create', quiz: createQuiz() })}>
+        <button onclick={() => quizApp.pushScene({ type: 'quiz_create', quiz: createQuiz() })}>
             作る
             <i class="ti ti-pencil"></i>
         </button>

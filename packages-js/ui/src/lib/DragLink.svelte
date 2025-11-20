@@ -26,9 +26,9 @@
 
 <div class="container" on:dragstart={handleDragStart} draggable="true" role="form">
     <div class="preview" bind:this={preview}>
-        <slot name="preview" />
+        {@render preview?.()}
     </div>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

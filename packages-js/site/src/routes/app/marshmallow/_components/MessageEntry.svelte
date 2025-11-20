@@ -8,7 +8,7 @@
     export let message: Message;
 </script>
 
-<button class="message" on:click={() => {
+<button class="message" onclick={() => {
     if ($data.message?.id === message.id) {
         $data.message = null;
     } else {

@@ -10,9 +10,9 @@
         {#if icon}
             <i class="ti ti-{icon}"></i>
         {/if}
-        <slot name="actions" />
+        {@render actions?.()}
     </h3>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

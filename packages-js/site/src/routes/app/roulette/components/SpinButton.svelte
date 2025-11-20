@@ -9,7 +9,7 @@
 <div class="spin-button" class:spinning={$state.type === 'spinning'}>
     {#if $state.type === 'idle' || $state.type === 'recruiting'}
         {@const empty = Object.keys($entries).length === 0}
-        <button on:click={() => roulette.spin()} disabled={empty}>
+        <button onclick={() => roulette.spin()} disabled={empty}>
             <Tooltip>
                 {#if empty}
                     エントリーがありません
@@ -25,13 +25,13 @@
             <i class="ti ti-rotate-360"></i>
         </button>
     {:else if $state.type === 'spin-result'}
-        <button on:click={() => roulette.stop()}>
+        <button onclick={() => roulette.stop()}>
             <Tooltip>このルーレットを終わる</Tooltip>
             終了
             <i class="ti ti-check"></i>
         </button>
     {:else}
-        <button on:click={() => roulette.stop()}>
+        <button onclick={() => roulette.stop()}>
             <Tooltip>このルーレットを強制終了させる</Tooltip>
             強制終了
             <i class="ti ti-x"></i>

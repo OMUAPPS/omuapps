@@ -29,7 +29,7 @@
         </div>
         <div class="actions">
             <TitlebarButton
-                on:click={close}
+                onclick={close}
                 icon="ti-x"
                 tooltip="Close"
             />

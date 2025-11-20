@@ -4,14 +4,14 @@
     import Header from './Header.svelte';
     import { omu } from './stores.js';
 
-    export let app: App;
+    let { app }: { app: App } = $props();
 
     let title = '';
     let icon = '';
     let description = '';
 
     let unlisten = () => {};
-    $: {
+    $effect(() => {
         if ($omu) {
             unlisten();
             unlisten = $omu.onReady(() => {
@@ -30,11 +30,11 @@
                 }
             });
         }
-    }
+    });
 
     onDestroy(unlisten);
 </script>
 
 <Header {title} {icon} subtitle={description}>
-    <slot />
+    {@render children?.()}
 </Header>

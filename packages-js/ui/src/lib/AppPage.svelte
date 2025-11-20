@@ -3,6 +3,15 @@
     import type { NetworkStatus } from '@omujs/omu/network';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Button, omu, Spinner } from '@omujs/ui';
+    import type { Snippet } from 'svelte';
+
+    let {
+        header,
+        children,
+    }: {
+        header?: Snippet<[]>;
+        children?: Snippet<[]>;
+    } = $props();
 
     let state: {
         type: 'not_running';
@@ -44,9 +53,9 @@
     </style>
 </svelte:head>
 
-<slot name="header" />
+{@render header?.()}
 <main>
-    <slot />
+    {@render children?.()}
 </main>
 {#if state.type === 'not_running'}
     <div class="modal">
@@ -114,7 +123,7 @@
     {:else if state.reason.type === DisconnectType.CLOSE}
         <div class="modal">
             <p>接続が切断されました</p>
-            <button on:click={() => location.reload()}>再接続</button>
+            <button onclick={() => location.reload()}>再接続</button>
         </div>
     {:else}
         <div class="modal">

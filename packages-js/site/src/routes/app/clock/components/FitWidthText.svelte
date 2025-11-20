@@ -6,9 +6,9 @@
 
 <div bind:clientWidth={containerWidth} style="position: relative; width: 100%;">
     <div bind:clientWidth={width} style="position: absolute; top: 0; left: 0; visibility: hidden;">
-        <slot />
+        {@render children?.()}
     </div>
 </div>
 <span style:font-size={Math.min(fontSize, containerWidth / width * fontSize)}px>
-    <slot />
+    {@render children?.()}
 </span>

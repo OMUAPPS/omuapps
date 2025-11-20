@@ -20,7 +20,7 @@
         <span>{label}</span>
     {/if}
     <span class="toggle">
-        <input type="checkbox" checked={!!value} {disabled} on:click={toggle} />
+        <input type="checkbox" checked={!!value} {disabled} onclick={toggle} />
         {#if value}
             <i class="ti ti-check"></i>
         {/if}

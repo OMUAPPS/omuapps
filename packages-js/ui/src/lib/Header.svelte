@@ -1,7 +1,17 @@
 <script lang="ts">
-    export let title: string;
-    export let subtitle: string | undefined = undefined;
-    export let icon: string;
+    import type { Snippet } from 'svelte';
+
+    let {
+        children,
+        title,
+        subtitle = undefined,
+        icon,
+    }: {
+        children?: Snippet<[]>;
+        title: string;
+        icon: string;
+        subtitle?: string | undefined;
+    } = $props();
 </script>
 
 <div class="header">
@@ -18,7 +28,7 @@
             {/if}
         </span>
     </div>
-    <slot />
+    {@render children?.()}
 </div>
 
 <style lang="scss">

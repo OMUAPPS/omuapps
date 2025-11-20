@@ -69,7 +69,7 @@
     {:else if state.type === 'result'}
         <div class="channels">
             {#each state.channels as { channel, added }, index (index)}
-                <button class="channel" class:checked={added} on:click={() => {
+                <button class="channel" class:checked={added} onclick={() => {
                     added = !added;
                 }}>
                     {#if added}

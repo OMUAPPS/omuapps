@@ -70,7 +70,7 @@
     </div>
     {#if !$dragState && !$selectedAvatar}
         <div class="config">
-            <button on:click={() => {
+            <button onclick={() => {
                 $config.effects.backlightEffect.active = !$config.effects.backlightEffect.active;
             }} class:active={$config.effects.backlightEffect.active}>
                 <Tooltip>
@@ -79,7 +79,7 @@
                 <i class="ti ti-sun"></i>
                 逆光効果
             </button>
-            <button on:click={() => {
+            <button onclick={() => {
                 $config.effects.shadow.active = !$config.effects.shadow.active;
             }} class:active={$config.effects.shadow.active}>
                 <Tooltip>
@@ -88,7 +88,7 @@
                 <i class="ti ti-ghost-3"></i>
                 アバターの影
             </button>
-            <button on:click={() => {
+            <button onclick={() => {
                 $config.effects.speech.active = !$config.effects.speech.active;
             }} class:active={$config.effects.speech.active}>
                 <Tooltip>
@@ -97,7 +97,7 @@
                 <i class="ti ti-ghost-3"></i>
                 明るさ調整
             </button>
-            <button on:click={() => {
+            <button onclick={() => {
                 $config.show_name_tags = !$config.show_name_tags;
             }} class:active={$config.show_name_tags}>
                 <i class="ti ti-label"></i>
@@ -105,7 +105,7 @@
             </button>
         </div>
         <div class="settings">
-            <button on:click={() => {settingsOpen = !settingsOpen;}}>
+            <button onclick={() => {settingsOpen = !settingsOpen;}}>
                 <i class="ti ti-settings"></i>
                 詳細設定
                 {#if settingsOpen}

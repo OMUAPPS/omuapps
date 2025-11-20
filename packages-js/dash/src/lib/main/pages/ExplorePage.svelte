@@ -98,7 +98,7 @@
                     <h3>提供元</h3>
                     <div class="providers">
                         {#each Object.entries(state.indexes).filter(([, entry]) => !!entry) as [id, entry] (id)}
-                            <button on:click={() => {
+                            <button onclick={() => {
                                 elements[id]?.scrollIntoView({
                                     behavior: 'smooth',
                                 });

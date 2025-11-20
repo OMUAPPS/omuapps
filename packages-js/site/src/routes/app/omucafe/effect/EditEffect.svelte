@@ -22,7 +22,7 @@
                 </Tooltip>
                 <FitInput bind:value={effect.name} />
             </h1>
-            <ButtonMini on:click={async () => {
+            <ButtonMini onclick={async () => {
                 await navigator.clipboard.writeText(effect.id);
             }} primary>
                 <Tooltip>
@@ -30,7 +30,7 @@
                 </Tooltip>
                 <i class="ti ti-copy"></i>
             </ButtonMini>
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 $scene = { type: 'product_list' };
                 delete $gameConfig.effects[effect.id];
             }} primary>

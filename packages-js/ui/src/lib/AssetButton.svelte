@@ -56,7 +56,7 @@
 
 {#if obsConnected}
     <div class="container">
-        <button on:click={() => (creating = create())} class="add-button" disabled={creating !== null}>
+        <button onclick={() => (creating = create())} class="add-button" disabled={creating !== null}>
             {#if creating}
                 作成中...
                 <Spinner />

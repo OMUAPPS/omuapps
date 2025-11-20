@@ -50,18 +50,18 @@
         </div>
     </div>
     <div class="actions">
-        <button on:click={block} class="reject">
+        <button onclick={block} class="reject">
             <Tooltip>
                 <p>この提供元の要求を拒否する</p>
             </Tooltip>
             禁止する
             <i class="ti ti-forbid-2"></i>
         </button>
-        <button on:click={reject} class="reject">
+        <button onclick={reject} class="reject">
             キャンセル
             <i class="ti ti-x"></i>
         </button>
-        <button on:click={accept} class="accept">
+        <button onclick={accept} class="accept">
             追加
             <i class="ti ti-check"></i>
         </button>

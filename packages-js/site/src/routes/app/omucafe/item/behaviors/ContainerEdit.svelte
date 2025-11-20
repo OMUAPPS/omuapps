@@ -20,7 +20,7 @@
 >
     <label class="setting">
         内容物を範囲内に収める
-        <input type="checkbox" value={!!behavior.bounded} on:change={({ currentTarget }) => {
+        <input type="checkbox" value={!!behavior.bounded} onchange={({ currentTarget }) => {
             if (!currentTarget.checked) {
                 behavior.bounded = undefined;
                 return;

@@ -35,7 +35,7 @@
                     {$t('page.connect.channels')}
                     <i class="ti ti-user"></i>
                     <div class="actions">
-                        <button on:click={() => setupOpen = true}>
+                        <button onclick={() => setupOpen = true}>
                             <Tooltip>{$t('panels.channels.setup_channel')}</Tooltip>
                             {$t('panels.channels.append_channel')}
                             <i class="ti ti-user-share"></i>

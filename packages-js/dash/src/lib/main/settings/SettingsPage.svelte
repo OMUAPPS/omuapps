@@ -46,7 +46,7 @@
         <div class="categories">
             <button
                 class:selected={$currentSettingsCategory == 'general'}
-                on:click={() => ($currentSettingsCategory = 'general')}
+                onclick={() => ($currentSettingsCategory = 'general')}
             >
                 <Tooltip>{$t('settings.category.general.description')}</Tooltip>
                 <span>
@@ -57,7 +57,7 @@
             </button>
             <button
                 class:selected={$currentSettingsCategory == 'about'}
-                on:click={() => ($currentSettingsCategory = 'about')}
+                onclick={() => ($currentSettingsCategory = 'about')}
             >
                 <Tooltip>{$t('settings.category.about.description')}</Tooltip>
                 <span>
@@ -69,7 +69,7 @@
             {#if $devMode}
                 <button
                     class:selected={$currentSettingsCategory == 'developer'}
-                    on:click={() => ($currentSettingsCategory = 'developer')}
+                    onclick={() => ($currentSettingsCategory = 'developer')}
                 >
                     <Tooltip
                     >{$t(

@@ -15,7 +15,7 @@
     {#each LICENSES as license (license.name)}
         {@const selected = selectedLicense === license.name}
         <button
-            on:click={() => (selectedLicense = selected ? undefined : license.name)}
+            onclick={() => (selectedLicense = selected ? undefined : license.name)}
             class:selected
         >
             <div class="body">
