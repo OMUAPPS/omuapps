@@ -49,7 +49,7 @@
                         導入ガイド
                     </li>
                 </a>
-                <a href="/docs/index">
+                <a href="/docs/api">
                     <li
                         aria-current={path.startsWith('/docs') && !path.startsWith('/docs/guide')
                             ? 'page'
