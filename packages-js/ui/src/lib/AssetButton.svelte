@@ -15,7 +15,7 @@
         asset,
         single = false,
         dimensions = undefined,
-        permissions = []
+        permissions = [],
     }: Props = $props();
 
     async function create() {

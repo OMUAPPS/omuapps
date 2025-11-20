@@ -11,6 +11,7 @@
     import { Vec4 } from '$lib/math/vec4.js';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
+    import { SvelteMap } from 'svelte/reactivity';
     import { RemoteApp, type Resource } from '../remote-app.js';
 
     interface Props {
@@ -47,7 +48,7 @@
         );
     }
 
-    const IMAGE_CACHE = new Map<string, GlTexture>();
+    const IMAGE_CACHE = new SvelteMap<string, GlTexture>();
 
     async function loadImage(src: string): Promise<GlTexture> {
         const exist = IMAGE_CACHE.get(src);
@@ -75,7 +76,7 @@
         return tex;
     }
 
-    const ASSET_CACHE = new Map<string, AssetRender>();
+    const ASSET_CACHE = new SvelteMap<string, AssetRender>();
 
     interface AssetRender {
         render(color?: Vec4): void;

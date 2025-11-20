@@ -4,6 +4,7 @@
     import { Identifier, Omu } from '@omujs/omu';
     import { AppHeader, AppPage, setGlobal, TableList } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
+    import { SvelteMap } from 'svelte/reactivity';
     import { APP } from './app.js';
     import { ChatSubtitleApp } from './chatsubtitle-app.js';
     import RoomEntry from './components/RoomEntry.svelte';
@@ -55,7 +56,7 @@
             left: Content;
             right: Content;
         };
-        const output = new Map<number, Line[]>();
+        const output = new SvelteMap<number, Line[]>();
 
         const lines: Line[] = [];
         const insertLine = (time: Date, ...newLines: Line[]) => {
@@ -203,7 +204,7 @@
 
 <AppPage>
     {#snippet header()}
-        <header >
+        <header>
             <AppHeader app={APP} />
         </header>
     {/snippet}

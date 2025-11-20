@@ -7,13 +7,13 @@
 
     interface Props {
         screen: {
-        handle: ScreenHandle;
-        props: {
-            request: HostRequest;
-            app: App;
-            resolve: (accept: UserResponse) => void;
+            handle: ScreenHandle;
+            props: {
+                request: HostRequest;
+                app: App;
+                resolve: (accept: UserResponse) => void;
+            };
         };
-    };
     }
 
     let { screen }: Props = $props();

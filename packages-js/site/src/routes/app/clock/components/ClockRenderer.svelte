@@ -67,7 +67,7 @@
     </div>
 </main>
 
-<svelte:element this={"style"}>
+<svelte:element this={'style'}>
     {`
     .time {
         font-size: 5rem !important;

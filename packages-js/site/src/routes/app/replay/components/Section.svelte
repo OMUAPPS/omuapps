@@ -12,7 +12,7 @@
         icon = undefined,
         flex = undefined,
         actions,
-        children
+        children,
     }: Props = $props();
 </script>
 

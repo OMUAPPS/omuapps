@@ -4,7 +4,7 @@
     import AssetApp from './AssetApp.svelte';
 </script>
 
-<AssetPage asset={ASSET_APP} >
+<AssetPage asset={ASSET_APP}>
     {#snippet children({ omu })}
         <AssetApp {omu} />
     {/snippet}

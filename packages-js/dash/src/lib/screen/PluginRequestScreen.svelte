@@ -11,12 +11,12 @@
 
     interface Props {
         screen: {
-        handle: ScreenHandle;
-        props: {
-            request: PromptRequestAppPlugins;
-            resolve: (accept: PromptResult) => void;
+            handle: ScreenHandle;
+            props: {
+                request: PromptRequestAppPlugins;
+                resolve: (accept: PromptResult) => void;
+            };
         };
-    };
     }
 
     let { screen }: Props = $props();
@@ -114,7 +114,7 @@
         </button>
     </div>
     {#snippet info()}
-        <Document source={about_plugin}  />
+        <Document source={about_plugin} />
     {/snippet}
 </Screen>
 

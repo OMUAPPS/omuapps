@@ -14,7 +14,7 @@
         flex = 0,
         min = '',
         actions,
-        children
+        children,
     }: Props = $props();
 </script>
 

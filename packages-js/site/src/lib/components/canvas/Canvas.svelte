@@ -29,7 +29,7 @@
         init = async () => {},
         enter = () => {},
         leave = () => {},
-        resize = () => {}
+        resize = () => {},
     }: Props = $props();
     let glContext: GlContext = $state();
 

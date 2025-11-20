@@ -6,7 +6,7 @@
 
 <Page>
     {#snippet header()}
-        <header >
+        <header>
             <div class="flex between center">
                 <div class="flex col">
                     <h1>
@@ -20,7 +20,7 @@
         </header>
     {/snippet}
     {#snippet content()}
-        <main >
+        <main>
             <div class="summary">
                 <h2>
                     かんたんに3行で言うと（本文はこの下）

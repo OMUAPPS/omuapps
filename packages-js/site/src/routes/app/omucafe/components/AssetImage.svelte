@@ -24,7 +24,7 @@
 </script>
 
 {#if src}
-    {#if children}{@render children({ src, })}{:else}
+    {#if children}{@render children({ src })}{:else}
         <img src={src} alt="" />
     {/if}
 {/if}

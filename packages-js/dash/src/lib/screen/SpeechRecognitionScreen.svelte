@@ -5,11 +5,11 @@
 
     interface Props {
         screen: {
-        handle: ScreenHandle;
-        props: {
-            resolve: (accept: boolean) => void;
+            handle: ScreenHandle;
+            props: {
+                resolve: (accept: boolean) => void;
+            };
         };
-    };
     }
 
     let { screen }: Props = $props();

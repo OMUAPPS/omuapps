@@ -24,9 +24,9 @@
         .find((s) => s.slug === $docs?.slug));
     let group =
         $derived(section &&
-        Object.entries(sections).find(([, entries]) =>
-            entries.includes(section),
-        ));
+            Object.entries(sections).find(([, entries]) =>
+                entries.includes(section),
+            ));
 
     function createSetting<T>(key: string, defaultValue: T) {
         if (typeof localStorage === 'undefined') {
@@ -56,7 +56,7 @@
 </script>
 
 <svelte:head>
-    <svelte:element this={"style"}>
+    <svelte:element this={'style'}>
         {github}
     </svelte:element>
     <title>{$docs?.meta.title || 'ドキュメント'} | OMUAPPS</title>
@@ -66,7 +66,7 @@
 
 <Page>
     {#snippet header()}
-        <header >
+        <header>
             {#if $docs}
                 {@const meta = $docs.meta}
                 <span>
@@ -80,7 +80,7 @@
         </header>
     {/snippet}
     {#snippet content()}
-        <main >
+        <main>
             <div class="content">
                 <DocsNav {section} {group} />
                 <div class="markdown">
@@ -108,15 +108,15 @@
                     {#each Object.entries(sections) as [group, entries], index (index)}
                         {#if group !== 'index'}
                             <button class="group-toggle" onclick={() => {
-                            if (selectedGroup === group) {
-                                selectedGroup = undefined;
-                            }
-                            if ($openedGroups.includes(group)) {
-                                $openedGroups = $openedGroups.filter((it) => it != group);
-                            } else {
-                                $openedGroups = [...$openedGroups, group];
-                            }
-                        }}>
+                                if (selectedGroup === group) {
+                                    selectedGroup = undefined;
+                                }
+                                if ($openedGroups.includes(group)) {
+                                    $openedGroups = $openedGroups.filter((it) => it != group);
+                                } else {
+                                    $openedGroups = [...$openedGroups, group];
+                                }
+                            }}>
                                 {GROUP_NAMES[group] ?? group}
                                 <i class="ti ti-chevron-down"></i>
                             </button>

@@ -17,7 +17,7 @@
         playback = $bindable(),
         info = $bindable(),
         hideOverlay = false,
-        heightToWidthRatio = 9 / 16
+        heightToWidthRatio = 9 / 16,
     }: Props = $props();
     const { config, side } = ReplayApp.getInstance();
     let player: YT.Player = $state();
@@ -109,13 +109,13 @@
 
     run(() => {
         updatePlayback(playback);
-    });;
+    }); ;
     run(() => {
         if (player && side === 'asset') {
             console.log($config.playbackRate);
             player.setPlaybackRate($config.playbackRate);
         }
-    });;
+    }); ;
 
     run(() => {
         if (player && side === 'asset') {

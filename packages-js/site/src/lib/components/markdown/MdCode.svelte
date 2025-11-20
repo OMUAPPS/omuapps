@@ -21,12 +21,12 @@
     <Highlight
         {language}
         code={text}
-        
+
     >
         {#snippet children({ highlighted })}
-                <LineNumbers {highlighted} --border-color="#eee" />
-                    {/snippet}
-        </Highlight>
+            <LineNumbers {highlighted} --border-color="#eee" />
+        {/snippet}
+    </Highlight>
     <button onclick={() => {
         navigator.clipboard.writeText(text);
     }} class="copy">

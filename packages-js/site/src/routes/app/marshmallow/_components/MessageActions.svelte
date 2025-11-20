@@ -109,7 +109,7 @@
             reply.value = DOM.blockToString(message.reply);
             reply.id = message.id;
         }
-    });;
+    }); ;
 
     type ActionTranslation = { name: string; icon?: string; remove: boolean };
     function getActionTranslation(action: MessageAction): ActionTranslation {
@@ -170,9 +170,9 @@
                 <Button primary={remove} onclick={async () => {
                     await action.submit(api, {});
                     refresh();
-                }} >
+                }}>
                     {#snippet children({ promise })}
-                                        {#if promise}
+                        {#if promise}
                             <Spinner />
                         {:else}
                             <i class="ti {icon}"></i>
@@ -184,8 +184,8 @@
                                 {name}
                             {/if}
                         {/if}
-                                                        {/snippet}
-                                </Button>
+                    {/snippet}
+                </Button>
             {/each}
             <Button primary={!recognizing} disabled={replyEnable || !$hasPremium} onclick={() => {
                 recognizing = !recognizing;

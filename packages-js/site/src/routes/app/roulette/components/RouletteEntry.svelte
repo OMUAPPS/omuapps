@@ -14,7 +14,7 @@
         index,
         item = $bindable(),
         roulette,
-        disabled
+        disabled,
     }: Props = $props();
 </script>
 

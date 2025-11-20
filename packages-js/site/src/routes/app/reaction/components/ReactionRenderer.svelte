@@ -61,7 +61,6 @@
     let canvas: HTMLCanvasElement = $state();
     let ctx: CanvasRenderingContext2D = $state();
 
-
     function resize() {
         canvas.width = canvas.clientWidth;
         canvas.height = canvas.clientHeight;
@@ -95,7 +94,6 @@
             spawnReaction(spawnQueue.shift()!);
         }
     }
-
 
     function spawnReaction(text: string) {
         const x = lerp(

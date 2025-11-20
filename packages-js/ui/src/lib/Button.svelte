@@ -12,7 +12,7 @@
         disabled = false,
         onclick = () => {},
         promise = $bindable(undefined),
-        children
+        children,
     }: Props = $props();
 
     async function handleClick() {
@@ -46,7 +46,7 @@
     disabled={disabled || !!promise}
 >
     <span>
-        {@render children?.({ promise, })}
+        {@render children?.({ promise })}
     </span>
 </button>
 

@@ -36,7 +36,7 @@
 
 <AppPage>
     {#snippet header()}
-        <header >
+        <header>
             <AppHeader app={omu.app} />
         </header>
     {/snippet}

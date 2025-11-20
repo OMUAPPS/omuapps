@@ -21,7 +21,6 @@
     <div class="notification">
         {#if $backgroundRequested}
             起動後にこのウィンドウは閉じられます
-            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>
                 開いたままにする
                 <Checkbox bind:value={$keepOpenOnBackground} />

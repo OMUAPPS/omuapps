@@ -36,9 +36,9 @@
         voiceState,
         speakingState,
         dimensions = {
-        width: 1920,
-        height: 1080,
-    }
+            width: 1920,
+            height: 1080,
+        },
     }: Props = $props();
     const { config } = overlayApp;
 

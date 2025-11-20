@@ -26,6 +26,6 @@
     });
 </script>
 
-<svelte:element this={"style"}>
+<svelte:element this={'style'}>
     {css}
 </svelte:element>

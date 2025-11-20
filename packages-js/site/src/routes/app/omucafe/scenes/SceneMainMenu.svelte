@@ -77,11 +77,11 @@
                 $scene = { type: 'gallery' };
             }}>
                 {#key index}
-                    <AssetImage asset={item.asset} >
+                    <AssetImage asset={item.asset}>
                         {#snippet children({ src })}
-                                                <img class="image" {src} alt="" />
-                                                                    {/snippet}
-                                        </AssetImage>
+                            <img class="image" {src} alt="" />
+                        {/snippet}
+                    </AssetImage>
                 {/key}
                 <div class="go-gallery">
                     写真を見返す

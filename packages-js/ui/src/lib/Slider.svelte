@@ -22,7 +22,7 @@
         type = 'normal',
         unit = '',
         handleChange = () => {},
-        children
+        children,
     }: Props = $props();
 
     function update(newValue: number) {

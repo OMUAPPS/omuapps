@@ -53,7 +53,6 @@
             const duration = photoTake.duration;
             const remaining = startTime + duration - Time.now();
             if (remaining < 0) {
-                // eslint-disable-next-line svelte/infinite-reactive-loop
                 taking = takePhoto(startTime, duration);
             }
             timer = window.setTimeout(() => {
@@ -67,7 +66,6 @@
         }
     }
 
-    // eslint-disable-next-line svelte/infinite-reactive-loop
     run(() => {
         update(photoMode.photoTake);
     });
@@ -93,7 +91,7 @@
             timestamp: new Date().toISOString(),
             order: $states.kitchen.order,
         });
-        // eslint-disable-next-line svelte/infinite-reactive-loop
+
         photoMode.photoTake = {
             type: 'taken',
             asset,

@@ -14,7 +14,7 @@
 
     let author =
         $derived(entry.info.author ||
-        entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim());
+            entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim());
 </script>
 
 <div class="entry">

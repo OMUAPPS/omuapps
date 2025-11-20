@@ -10,7 +10,7 @@
         title,
         subtitle = undefined,
         icon,
-        children
+        children,
     }: Props = $props();
 </script>
 

@@ -13,7 +13,7 @@
         href = $bindable(''),
         title = undefined,
         decorated = true,
-        children
+        children,
     }: Props = $props();
 
     if (href?.length && !href.startsWith('http')) {

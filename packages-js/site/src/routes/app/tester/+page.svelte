@@ -72,7 +72,7 @@
 
 <AppPage>
     {#snippet header()}
-        <header >
+        <header>
             <AppHeader app={APP} />
         </header>
     {/snippet}

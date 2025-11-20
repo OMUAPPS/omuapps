@@ -18,7 +18,7 @@
         overlayApp,
         avatarConfig = $bindable(),
         voiceState,
-        speakingState
+        speakingState,
     }: Props = $props();
 
     const { config } = overlayApp;

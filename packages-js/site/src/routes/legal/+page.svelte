@@ -4,7 +4,7 @@
 
 <Page>
     {#snippet header()}
-        <header >
+        <header>
             <h1>
                 法的事項
                 <i class="ti ti-file"></i>
@@ -13,7 +13,7 @@
         </header>
     {/snippet}
     {#snippet content()}
-        <main >
+        <main>
             <a href="/legal/privacy">
                 <p>
                     プライバシーポリシー

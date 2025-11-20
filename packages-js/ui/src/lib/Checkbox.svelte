@@ -11,7 +11,7 @@
         value = $bindable(),
         disabled = false,
         label = undefined,
-        handle = () => {}
+        handle = () => {},
     }: Props = $props();
 
     function toggle() {

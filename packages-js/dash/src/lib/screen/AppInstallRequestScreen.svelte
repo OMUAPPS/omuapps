@@ -9,12 +9,12 @@
 
     interface Props {
         screen: {
-        handle: ScreenHandle;
-        props: {
-            request: PromptRequestAppInstall;
-            resolve: (accept: PromptResult) => void;
+            handle: ScreenHandle;
+            props: {
+                request: PromptRequestAppInstall;
+                resolve: (accept: PromptResult) => void;
+            };
         };
-    };
     }
 
     let { screen }: Props = $props();

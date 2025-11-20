@@ -9,12 +9,12 @@
 
     interface Props {
         screen: {
-        handle: ScreenHandle;
-        props: {
-            request: PromptRequestIndexInstall;
-            resolve: (accept: PromptResult) => void;
+            handle: ScreenHandle;
+            props: {
+                request: PromptRequestIndexInstall;
+                resolve: (accept: PromptResult) => void;
+            };
         };
-    };
     }
 
     let { screen }: Props = $props();
@@ -71,7 +71,7 @@
         </button>
     </div>
     {#snippet info()}
-        <Document source={about_index}  />
+        <Document source={about_index} />
     {/snippet}
 </Screen>
 

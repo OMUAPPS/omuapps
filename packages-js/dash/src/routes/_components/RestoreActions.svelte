@@ -57,9 +57,9 @@
         </div>
         <small>報告するときは以下からログを生成してください</small>
         <div class="actions">
-            <Button onclick={() => invoke('generate_log_file')} >
+            <Button onclick={() => invoke('generate_log_file')}>
                 {#snippet children({ promise })}
-                                {#if promise}
+                    {#if promise}
                         {#await promise}
                             ログを生成中
                             <Spinner />
@@ -72,8 +72,8 @@
                         ログを生成
                         <i class="ti ti-file"></i>
                     {/if}
-                                            {/snippet}
-                        </Button>
+                {/snippet}
+            </Button>
         </div>
     {:else if restoreState.type === 'cleaning'}
         <small>

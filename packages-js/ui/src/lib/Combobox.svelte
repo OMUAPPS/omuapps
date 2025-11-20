@@ -5,11 +5,11 @@
 
     interface Props {
         options: {
-        [key: string]: {
-            value: T;
-            label: string;
+            [key: string]: {
+                value: T;
+                label: string;
+            };
         };
-    };
         value: T;
         key?: string | null | undefined;
     }

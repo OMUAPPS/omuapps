@@ -3,21 +3,21 @@
     import { Tooltip } from '@omujs/ui';
 
     interface Props {
-        section: 
-        | Readonly<{
-            meta: DocsMeta;
-            slug: string;
-        }>
-        | undefined;
-        group: 
-        | [
-            string,
-            Readonly<{
+        section:
+            | Readonly<{
                 meta: DocsMeta;
                 slug: string;
-            }>[],
-        ]
-        | undefined;
+            }>
+            | undefined;
+        group:
+            | [
+                string,
+                Readonly<{
+                    meta: DocsMeta;
+                    slug: string;
+                }>[],
+            ]
+            | undefined;
     }
 
     let { section, group }: Props = $props();

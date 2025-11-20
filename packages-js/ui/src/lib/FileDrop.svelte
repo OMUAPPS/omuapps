@@ -18,7 +18,7 @@
         handle = () => {},
         fileDrop = $bindable(null),
         button,
-        children
+        children,
     }: Props = $props();
 
     export const open = (): Promise<FileList> => {
@@ -45,7 +45,7 @@
 </script>
 
 <input type="file" bind:this={fileDrop} bind:files onchange={handleChange} {multiple} {accept} hidden />
-{#if button}{@render button({ open, })}{:else}
+{#if button}{@render button({ open })}{:else}
     <button
         class:primary
         onclick={open}

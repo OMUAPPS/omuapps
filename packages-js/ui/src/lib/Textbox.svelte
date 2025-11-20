@@ -20,7 +20,7 @@
         readonly = false,
         lazy = false,
         focused = $bindable(false),
-        submit = () => {}
+        submit = () => {},
     }: Props = $props();
     let inputValue = $derived(value);
     let timer: number | undefined;
