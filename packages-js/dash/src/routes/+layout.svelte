@@ -1,9 +1,9 @@
 <script lang="ts">
+    import AppWindow from '$lib/AppWindow.svelte';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
     import { language } from '$lib/main/settings.js';
     import { waitForTauri } from '$lib/tauri.js';
-    import Window from '$lib/Window.svelte';
     import { createI18nUnion, type I18n } from '@omujs/i18n';
     import '@omujs/ui';
     import { Theme } from '@omujs/ui';
@@ -64,9 +64,9 @@
 </svelte:head>
 
 {#if state.type === 'loaded'}
-    <Window>
+    <AppWindow>
         <slot />
-    </Window>
+    </AppWindow>
 {:else if state.type === 'failed'}
     <FatalErrorWindow message={state.message} />
 {/if}
