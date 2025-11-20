@@ -193,7 +193,7 @@ jobs:
             
     upload-to-r2:
         if: ${{ github.event.inputs.upload == 'true' }}
-        needs: [publish-npm, publish-pypi, publish-tauri]
+        needs: [publish-tauri]
         runs-on: ubuntu-latest
 
         steps:
