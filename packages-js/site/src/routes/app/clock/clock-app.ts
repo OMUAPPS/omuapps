@@ -1,4 +1,3 @@
-import { makeRegistryWritable } from '$lib/helper.js';
 import { type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { Writable } from 'svelte/store';
@@ -21,7 +20,7 @@ export class ClockApp {
     public calendar: EventCalendar;
 
     constructor(public readonly omu: Omu) {
-        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
+        this.config = omu.registries.get(CONFIG_REGISTRY_TYPE).compatSvelte();
         this.calendar = DEFAULT_EVENT_CALENDAR;
     }
 

@@ -1,4 +1,3 @@
-import { makeRegistryWritable } from '$lib/helper.js';
 import type { Chat } from '@omujs/chat';
 import { Reaction } from '@omujs/chat/models';
 import type { Omu } from '@omujs/omu';
@@ -36,7 +35,7 @@ export class ReactionApp {
         private readonly omu: Omu,
         private readonly chat: Chat,
     ) {
-        this.config = makeRegistryWritable(omu.registries.get(REACTION_REPLACE_REGISTRY_TYPE));
+        this.config = omu.registries.get(REACTION_REPLACE_REGISTRY_TYPE).compatSvelte();
         this.reactionSignal = chat.reactionSignal;
     }
 

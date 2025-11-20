@@ -1,29 +1,11 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
     import { tauriWindow } from '$lib/tauri.js';
-    import type { Registry } from '@omujs/omu/api/registry';
     import { Button, Textbox } from '@omujs/ui';
     import { LogicalSize } from '@tauri-apps/api/window';
-    import type { Writable } from 'svelte/store';
     const appWindow = tauriWindow.getCurrentWindow();
 
-    function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> {
-        return {
-            set: (value: T) => {
-                registry.set(value);
-            },
-            subscribe: (run) => {
-                const unlisten = registry.listen(run);
-                run(registry.value);
-                return unlisten;
-            },
-            update: (fn) => {
-                registry.update(fn);
-            },
-        };
-    }
-
-    const trustedHosts = makeRegistryWritable(omu.server.trustedHosts);
+    const trustedHosts = omu.server.trustedHosts.compatSvelte();
     let srcHost = '';
     let dstHost = '';
 

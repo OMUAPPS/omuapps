@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { makeRegistryWritable } from '$lib/helper';
     import { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
     import { DISCORD_PLUGIN_APP } from '../app';
@@ -7,9 +6,9 @@
 
     const omu = new Omu(DISCORD_PLUGIN_APP);
     const service = DiscordRPCService.createPlugin(omu);
-    const sessions = makeRegistryWritable(service.sessions);
-    const voiceStates = makeRegistryWritable(service.voiceStates);
-    const speakingStates = makeRegistryWritable(service.speakingStates);
+    const sessions = service.sessions.compatSvelte();
+    const voiceStates = service.voiceStates.compatSvelte();
+    const speakingStates = service.speakingStates.compatSvelte();
     if (BROWSER) {
         omu.start();
     }

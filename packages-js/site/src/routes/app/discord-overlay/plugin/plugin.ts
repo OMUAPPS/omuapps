@@ -1,4 +1,3 @@
-import { makeRegistryWritable } from '$lib/helper';
 import { OmuPermissions, type IntoId, type Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/api/endpoint';
 import { PermissionType } from '@omujs/omu/api/permission';
@@ -132,9 +131,9 @@ export class DiscordRPCAPI {
     constructor(
         private readonly omu: Omu,
     ) {
-        this.sessions = makeRegistryWritable(omu.registries.get(SESSION_REGISTRY_TYPE));
-        this.voiceStates = makeRegistryWritable(omu.registries.get(VOICE_STATES_REGISTRY_TYPE));
-        this.speakingStates = makeRegistryWritable(omu.registries.get(SPEAKING_STATES_REGISTRY_TYPE));
+        this.sessions = omu.registries.get(SESSION_REGISTRY_TYPE).compatSvelte();
+        this.voiceStates = omu.registries.get(VOICE_STATES_REGISTRY_TYPE).compatSvelte();
+        this.speakingStates = omu.registries.get(SPEAKING_STATES_REGISTRY_TYPE).compatSvelte();
         this.channelMessageSignal = omu.signals.get(CHANNEL_MESSAGE);
     }
 

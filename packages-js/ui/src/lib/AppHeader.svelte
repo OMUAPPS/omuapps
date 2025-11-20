@@ -10,21 +10,27 @@
     let icon = '';
     let description = '';
 
-    const unlisten = $omu.onReady(() => {
-        const metadata = app.metadata;
-        if (!metadata) {
-            return;
+    let unlisten = () => {};
+    $: {
+        if ($omu) {
+            unlisten();
+            unlisten = $omu.onReady(() => {
+                const metadata = app.metadata;
+                if (!metadata) {
+                    return;
+                }
+                if (metadata.name) {
+                    title = $omu.i18n.translate(metadata.name);
+                }
+                if (metadata.icon) {
+                    icon = $omu.i18n.translate(metadata.icon);
+                }
+                if (metadata.description) {
+                    description = $omu.i18n.translate(metadata.description);
+                }
+            });
         }
-        if (metadata.name) {
-            title = $omu.i18n.translate(metadata.name);
-        }
-        if (metadata.icon) {
-            icon = $omu.i18n.translate(metadata.icon);
-        }
-        if (metadata.description) {
-            description = $omu.i18n.translate(metadata.description);
-        }
-    });
+    }
 
     onDestroy(unlisten);
 </script>

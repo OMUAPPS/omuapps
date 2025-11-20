@@ -8,15 +8,19 @@
     export let unit: string = '';
     export let handleChange: (value: number) => void = () => {};
 
-    $: {
+    function update(newValue: number) {
         if (step > 0) {
-            value = round(value, step);
+            newValue = round(newValue, step);
         }
         if (clamp) {
-            value = Math.max(min, Math.min(max, value));
+            newValue = Math.max(min, Math.min(max, newValue));
         }
-        handleChange(value);
+        if (value == newValue) return;
+        value = newValue;
+        handleChange(newValue);
     }
+
+    $: update(value);
 
     function isValidNumber(value: number): boolean {
         return !isNaN(value) && isFinite(value);

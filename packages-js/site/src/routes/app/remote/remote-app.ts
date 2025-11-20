@@ -1,4 +1,4 @@
-import { makeRegistryWritable, sha256 } from '$lib/helper.js';
+import { sha256 } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
@@ -105,8 +105,8 @@ export class RemoteApp {
         private readonly omu: Omu,
         private readonly side: 'app' | 'remote' | 'asset',
     ) {
-        this.resources = makeRegistryWritable(omu.registries.get(RESOURCES_REGISTRY));
-        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
+        this.resources = omu.registries.get(RESOURCES_REGISTRY).compatSvelte();
+        this.config = omu.registries.get(CONFIG_REGISTRY).compatSvelte();
         this.connected = writable(false);
         if (side === 'app') {
             omu.sessions.observe(REMOTE_APP, {

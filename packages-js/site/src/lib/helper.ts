@@ -1,54 +1,6 @@
 import { Identifier, type IntoId } from '@omujs/omu';
-import type { Registry } from '@omujs/omu/api/registry';
 import { BROWSER } from 'esm-env';
 import { writable, type Writable } from 'svelte/store';
-
-export function makeRegistryWritable<T>(registry: Registry<T>): Writable<T> & {
-    wait: () => Promise<void>;
-} {
-    let ready = false;
-    let value: T = registry.value;
-    const listeners = new Set<(value: T) => void>();
-    registry.listen((newValue) => {
-        ready = true;
-        value = newValue;
-        listeners.forEach((run) => {
-            run(value);
-        });
-    });
-    return {
-        set: (value: T) => {
-            if (!ready) {
-                throw new Error(`Registry ${registry.type.id.key()} is not ready`);
-            }
-            registry.set(value);
-        },
-        subscribe: (run) => {
-            listeners.add(run);
-            run(value);
-            return () => {
-                listeners.delete(run);
-            };
-        },
-        update: (fn) => {
-            if (!ready) {
-                throw new Error(`Registry ${registry.type.id.key()} is not ready`);
-            }
-            registry.update(fn);
-        },
-        wait: () => {
-            return new Promise<void>((resolve) => {
-                if (ready) {
-                    resolve();
-                } else {
-                    listeners.add(() => {
-                        resolve();
-                    });
-                }
-            });
-        },
-    };
-}
 
 /**
  * DO NOT USE THIS FUNCTION FOR SECURITY

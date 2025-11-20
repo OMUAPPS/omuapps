@@ -1,4 +1,3 @@
-import { makeRegistryWritable } from '$lib/helper.js';
 import { BetterMath } from '$lib/math.js';
 import { lerp } from '$lib/math/math.js';
 import type { Omu } from '@omujs/omu';
@@ -39,9 +38,9 @@ export class RouletteApp {
     public entries: Writable<Record<string, RouletteItem>>;
 
     constructor(omu: Omu) {
-        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
-        this.state = makeRegistryWritable(omu.registries.get(STATE_REGISTRY));
-        this.entries = makeRegistryWritable(omu.registries.get(ENTRIES_REGISTRY));
+        this.config = omu.registries.get(CONFIG_REGISTRY).compatSvelte();
+        this.state = omu.registries.get(STATE_REGISTRY).compatSvelte();
+        this.entries = omu.registries.get(ENTRIES_REGISTRY).compatSvelte();
     }
 
     public addEntry(...entry: RouletteItem[]) {

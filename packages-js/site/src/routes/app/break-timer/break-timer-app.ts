@@ -1,4 +1,3 @@
-import { makeRegistryWritable } from '$lib/helper.js';
 import type { OBSPlugin } from '@omujs/obs';
 import { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
@@ -46,8 +45,8 @@ export class BreakTimerApp {
         public readonly omu: Omu,
         public readonly obs: OBSPlugin,
     ) {
-        this.config = makeRegistryWritable(omu.registries.get(BREAK_TIMER_CONFIG_REGISTRY_TYPE));
-        this.state = makeRegistryWritable(omu.registries.get(BREAK_TIMER_STATE_REGISTRY_TYPE));
+        this.config = omu.registries.get(BREAK_TIMER_CONFIG_REGISTRY_TYPE).compatSvelte();
+        this.state = omu.registries.get(BREAK_TIMER_STATE_REGISTRY_TYPE).compatSvelte();
     }
 
     public async reset(): Promise<void> {

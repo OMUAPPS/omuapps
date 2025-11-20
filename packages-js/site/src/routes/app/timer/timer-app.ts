@@ -1,4 +1,3 @@
-import { makeRegistryWritable } from '$lib/helper.js';
 import { Serializer, type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
@@ -74,8 +73,8 @@ export class TimerApp {
     public readonly config: Writable<TimerConfig>;
 
     constructor(omu: Omu) {
-        this.data = makeRegistryWritable(omu.registries.get(TIMER_REGISTRY_TYPE));
-        this.config = makeRegistryWritable(omu.registries.get(TIMER_CONFIG_REGISTRY_TYPE));
+        this.data = omu.registries.get(TIMER_REGISTRY_TYPE).compatSvelte();
+        this.config = omu.registries.get(TIMER_CONFIG_REGISTRY_TYPE).compatSvelte();
     }
 
     public toggle() {

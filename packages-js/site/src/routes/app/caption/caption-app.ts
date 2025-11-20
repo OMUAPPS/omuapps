@@ -1,4 +1,3 @@
-import { makeRegistryWritable } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import { SignalType } from '@omujs/omu/api/signal';
@@ -141,6 +140,6 @@ export class CaptionApp {
     public readonly config: Writable<Config>;
 
     constructor(public readonly omu: Omu) {
-        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY));
+        this.config = omu.registries.get(CONFIG_REGISTRY).compatSvelte();
     }
 }
