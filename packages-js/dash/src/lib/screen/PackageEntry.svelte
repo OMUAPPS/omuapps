@@ -61,10 +61,6 @@
         color: var(--color-1);
     }
 
-    .icon {
-        font-size: 1.5rem;
-    }
-
     .info {
         width: 100%;
         display: flex;

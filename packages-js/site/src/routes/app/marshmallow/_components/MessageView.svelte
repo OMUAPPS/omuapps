@@ -14,13 +14,13 @@
 
     const { data } = MarshmallowApp.getInstance();
 
-    let imageElement: HTMLElement = $state();
-    let containerElement: HTMLElement = $state();
+    let imageElement: HTMLElement | undefined = $state(undefined);
+    let containerElement: HTMLElement | undefined = $state(undefined);
     let mouse: { clientX: number; clientY: number } = $state({ clientX: 0, clientY: 0 });
 
     function updatePointer() {
         const { clientX, clientY } = mouse;
-        const { left, top, right, bottom } = imageElement.getBoundingClientRect();
+        const { left, top, right, bottom } = imageElement!.getBoundingClientRect();
         $data.pointer = {
             x: invLerp(left, right, clientX),
             y: invLerp(top, bottom, clientY),
@@ -28,8 +28,8 @@
     }
 
     async function handleScroll() {
-        const imageRect = imageElement.getBoundingClientRect();
-        const containerRect = containerElement.getBoundingClientRect();
+        const imageRect = imageElement!.getBoundingClientRect();
+        const containerRect = containerElement!.getBoundingClientRect();
         $data.scroll = invLerp(containerRect.top, containerRect.bottom - imageRect.height, imageRect.top);
         if (!$data.pointer) return;
         updatePointer();

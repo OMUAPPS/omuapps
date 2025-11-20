@@ -31,7 +31,7 @@
         leave = () => {},
         resize = () => {},
     }: Props = $props();
-    let glContext: GlContext = $state();
+    let glContext: GlContext | undefined = $state(undefined);
 
     let context: CanvasRenderingContext2D | null = null;
     let offscreen: OffscreenCanvas | null = null;
@@ -110,7 +110,7 @@
         create();
         resized = true;
         handleResize();
-        init(glContext).then(() => {
+        init(glContext!).then(() => {
             renderInternal();
             renderLoop();
         });

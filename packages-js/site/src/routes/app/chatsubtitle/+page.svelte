@@ -219,13 +219,16 @@
         {/if}
         <TableList
             table={chat.rooms}
-            component={RoomEntry}
-            filter={(key, room) =>
+            filter={(_, room) =>
                 !!(
                     room.metadata.first_message_id &&
                     room.metadata.last_message_id
                 )}
-        />
+        >
+            {#snippet component({ entry, selected })}
+                <RoomEntry {entry} {selected} />
+            {/snippet}
+        </TableList>
     </main>
 </AppPage>
 

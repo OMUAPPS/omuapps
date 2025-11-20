@@ -30,13 +30,15 @@
         {#snippet component({ entry, selected })}
             <RoomEntry {entry} {selected} />
         {/snippet}
-        <div class="empty">
-            {$t('panels.rooms.not_found_rooms')}
-            <Button onclick={openSetup}>
-                {$t('panels.rooms.question_add_channel')}
-                <i class="ti ti-external-link"></i>
-            </Button>
-        </div>
+        {#snippet empty()}
+            <div class="empty">
+                {$t('panels.rooms.not_found_rooms')}
+                <Button onclick={openSetup}>
+                    {$t('panels.rooms.question_add_channel')}
+                    <i class="ti ti-external-link"></i>
+                </Button>
+            </div>
+        {/snippet}
     </TableList>
 </div>
 

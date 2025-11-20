@@ -5,7 +5,7 @@
         asset: Asset | undefined;
     }
 
-    let { asset }: Props = $props();
+    let { asset = $bindable() }: Props = $props();
 
     let src = $derived(asset && getAsset(asset));
 </script>

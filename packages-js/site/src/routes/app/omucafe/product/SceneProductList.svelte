@@ -18,7 +18,7 @@
 
     const { scene, config, gameConfig } = getGame();
 
-    let container: HTMLElement = $state();
+    let container: HTMLElement | undefined = $state(undefined);
 
     run(() => {
         if (container) {
@@ -26,7 +26,7 @@
         }
     });
 
-    let searchElement: HTMLInputElement = $state();
+    let searchElement: HTMLInputElement | undefined = $state(undefined);
 
     onMount(() => {
         if (!searchElement) return;
@@ -42,14 +42,14 @@
 <span class="search" class:active={$config.scenes.product_list.search}>
     <input type="text" bind:this={searchElement} bind:value={$config.scenes.product_list.search} onblur={() => {
         if ($scene.type !== 'product_list') return;
-        searchElement.focus();
+        searchElement!.focus();
     }} />
     <i class="ti ti-search"></i>
 </span>
 <main>
     <div class="list omu-scroll" bind:this={container} onscroll={() => {
         if ($scene.type !== 'product_list') return;
-        $config.scenes.product_list.scroll = container.scrollTop;
+        $config.scenes.product_list.scroll = container!.scrollTop;
     }}>
         <div class="actions">
             <Button onclick={handleExport}>

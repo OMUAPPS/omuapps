@@ -21,11 +21,9 @@
     <Highlight
         {language}
         code={text}
-
+        let:highlighted
     >
-        {#snippet children({ highlighted })}
-            <LineNumbers {highlighted} --border-color="#eee" />
-        {/snippet}
+        <LineNumbers {highlighted} --border-color="#eee" />
     </Highlight>
     <button onclick={() => {
         navigator.clipboard.writeText(text);

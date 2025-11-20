@@ -76,7 +76,7 @@
         }
     });
 
-    let sceneElement: HTMLElement = $state();
+    let sceneElement: HTMLElement | undefined = $state(undefined);
 
     run(() => {
         mouse.ui = false;

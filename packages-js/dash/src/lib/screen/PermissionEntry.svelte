@@ -71,32 +71,6 @@
         }
     }
 
-    .info {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.2rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        flex: 1;
-    }
-
-    .name {
-        width: 100%;
-        display: flex;
-        align-items: baseline;
-        gap: 0.5rem;
-        font-size: 0.8rem;
-    }
-
-    .id {
-        margin-left: auto;
-        font-size: 0.7rem;
-        color: var(--color-text);
-        font-weight: 600;
-        opacity: 0.8;
-    }
-
     .check {
         display: flex;
         align-items: center;

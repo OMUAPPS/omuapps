@@ -13,9 +13,9 @@
     let { roulette }: Props = $props();
     const { rouletteState, entries } = roulette;
 
-    let canvas: HTMLCanvasElement = $state();
-    let width: number = $state();
-    let height: number = $state();
+    let canvas: HTMLCanvasElement | undefined = $state(undefined);
+    let width: number = $state(0);
+    let height: number = $state(0);
 
     function resize() {
         if (!canvas) return;

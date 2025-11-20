@@ -20,7 +20,7 @@
         heightToWidthRatio = 9 / 16,
     }: Props = $props();
     const { config, side } = ReplayApp.getInstance();
-    let player: YT.Player = $state();
+    let player: YT.Player | undefined = $state(undefined);
     let width = $state(0);
     let height = $state(0);
     let playerWidth = $state(0);

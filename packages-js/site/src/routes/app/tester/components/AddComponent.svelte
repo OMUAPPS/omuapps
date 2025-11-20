@@ -25,7 +25,7 @@
         }
     }
 
-    let select: HTMLSelectElement = $state();
+    let select: HTMLSelectElement | undefined = $state(undefined);
 
     function handle(event: Event) {
         const target = event.target as HTMLSelectElement;

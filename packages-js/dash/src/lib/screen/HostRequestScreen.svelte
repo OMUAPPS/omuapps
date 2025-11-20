@@ -6,31 +6,29 @@
     import type { ScreenHandle } from './screen.js';
 
     interface Props {
-        screen: {
-            handle: ScreenHandle;
-            props: {
-                request: HostRequest;
-                app: App;
-                resolve: (accept: UserResponse) => void;
-            };
+        handle: ScreenHandle;
+        props: {
+            request: HostRequest;
+            app: App;
+            resolve: (accept: UserResponse) => void;
         };
     }
 
-    let { screen }: Props = $props();
-    const { request, app, resolve } = screen.props;
+    let { handle, props }: Props = $props();
+    const { request, app, resolve } = props;
 
     function accept() {
         resolve({ type: 'ok', value: undefined });
-        screen.handle.pop();
+        handle.pop();
     }
 
     function reject() {
         resolve({ type: 'cancelled' });
-        screen.handle.pop();
+        handle.pop();
     }
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="content">
         <AppInfo {app} />
         <p>が<code>{request.host}</code>を要求しています</p>

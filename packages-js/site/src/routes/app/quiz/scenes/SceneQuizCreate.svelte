@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { Button, ButtonMini, Textbox, Tooltip } from '@omujs/ui';
     import { QuizApp, type QuestionState, type Quiz } from '../quiz-app';
@@ -16,7 +15,7 @@
 
     let questionState: QuestionState = $state({ type: 'idle' });
 
-    run(() => {
+    $effect(() => {
         quizzes.update(quiz);
     });
 </script>
@@ -77,7 +76,7 @@
                             <i class="ti ti-trash"></i>
                         </ButtonMini>
                     </span>
-                    <EditQuestion bind:question />
+                    <EditQuestion bind:question={quiz.questions[index]} />
                 </div>
                 <div class="preview">
                     <h2>プレビュー</h2>

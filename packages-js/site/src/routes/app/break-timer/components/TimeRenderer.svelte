@@ -9,11 +9,11 @@
     let { end, children }: Props = $props();
 
     let now = $state(Date.now());
-    let seconds = $state(Math.floor((end - now) / 1000) % 60);
-    let minutes = $state(Math.floor((end - now) / 1000 / 60) % 60);
-    let hours = $state(Math.floor((end - now) / 1000 / 60 / 60));
+    let seconds = $derived(Math.floor((end - now) / 1000) % 60);
+    let minutes = $derived(Math.floor((end - now) / 1000 / 60) % 60);
+    let hours = $derived(Math.floor((end - now) / 1000 / 60 / 60));
 
-    let timeout: number = $state();
+    let timeout: number | undefined = $state(undefined);
 
     function update(end: number) {
         now = Date.now();

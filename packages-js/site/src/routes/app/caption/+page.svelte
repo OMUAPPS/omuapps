@@ -36,6 +36,6 @@
         </header>
     {/snippet}
     {#await omu.waitForReady() then}
-        <App {omu} {obs} {captionApp} />
+        <App {omu} {captionApp} />
     {/await}
 </AppPage>

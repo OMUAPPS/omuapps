@@ -8,29 +8,27 @@
     import type { ScreenHandle } from './screen.js';
 
     interface Props {
-        screen: {
-            handle: ScreenHandle;
-            props: {
-                request: PromptRequestAppInstall;
-                resolve: (accept: PromptResult) => void;
-            };
+        handle: ScreenHandle;
+        props: {
+            request: PromptRequestAppInstall;
+            resolve: (accept: PromptResult) => void;
         };
     }
 
-    let { screen }: Props = $props();
+    let { handle, props }: Props = $props();
     const {
         request,
         resolve,
-    } = screen.props;
+    } = props;
 
     function accept() {
         resolve('accept');
-        screen.handle.pop();
+        handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        screen.handle.pop();
+        handle.pop();
     }
 
     const app = App.deserialize(request.app);
@@ -43,7 +41,7 @@
     let scrolled = $state(false);
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="header">
         <AppInfo {app} />
         <p>を追加しますか？</p>

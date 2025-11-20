@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import type { App } from '@omujs/omu';
     import { onDestroy } from 'svelte';
@@ -18,7 +17,7 @@
     let description = $state('');
 
     let unlisten = $state(() => {});
-    run(() => {
+    $effect(() => {
         if ($omu) {
             unlisten();
             unlisten = $omu.onReady(() => {
@@ -39,7 +38,7 @@
         }
     });
 
-    onDestroy(unlisten);
+    onDestroy(() => unlisten());
 </script>
 
 <Header {title} {icon} subtitle={description}>

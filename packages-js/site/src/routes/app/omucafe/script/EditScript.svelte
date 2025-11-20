@@ -118,12 +118,12 @@
                     <div class="property">
                         <span>args</span>
                         <ul class="args">
-                            {#each edit.value.args as arg, index (index)}
+                            {#each edit.value.args as _, index (index)}
                                 <li>
                                     <button onclick={() => {
                                         if (!edit || edit.value.type !== 'invoke') return;
                                         edit.value.args = edit.value.args.filter((_, idx) => idx !== index);
-                                    }}>
+                                    }} title="削除">>
                                         <i class="ti ti-x"></i>
                                     </button>
                                     <EditValue bind:value={edit.value.args[index]} />
@@ -136,7 +136,7 @@
                                         ...edit.value.args,
                                         value.void(),
                                     ];
-                                }}>
+                                }} title="追加">
                                     <i class="ti ti-plus"></i>
                                 </button>
                             </li>

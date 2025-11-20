@@ -17,7 +17,11 @@
 {#if $scene.type === 'gallery'}
     <main>
         <div class="items">
-            <TableList table={gallery} component={GalleryEntry} reverse />
+            <TableList table={gallery} reverse>
+                {#snippet component({ entry })}
+                    <GalleryEntry {entry} />
+                {/snippet}
+            </TableList>
         </div>
     </main>
 {/if}

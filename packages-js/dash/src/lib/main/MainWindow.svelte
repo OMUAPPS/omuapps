@@ -187,8 +187,8 @@
         </section>
         <div class="list">
             <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && ($devMode || app.type === 'app')}>
-                {#snippet component({ entry })}
-                    <AppEntry {entry} />
+                {#snippet component({ entry, selected })}
+                    <AppEntry {entry} {selected} />
                 {/snippet}
                 {#snippet empty()}
                     <button

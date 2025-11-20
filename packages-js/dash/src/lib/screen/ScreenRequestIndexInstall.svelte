@@ -3,41 +3,39 @@
     import Document from '$lib/common/Document.svelte';
     import type { PromptRequestIndexInstall, PromptResult } from '@omujs/omu/api/dashboard';
     import { ExternalLink, Tooltip } from '@omujs/ui';
-    import Screen from './Screen.svelte';
     import about_index from './about_index.md?raw';
     import type { ScreenHandle } from './screen.js';
+    import Screen from './Screen.svelte';
 
     interface Props {
-        screen: {
-            handle: ScreenHandle;
-            props: {
-                request: PromptRequestIndexInstall;
-                resolve: (accept: PromptResult) => void;
-            };
+        handle: ScreenHandle;
+        props: {
+            request: PromptRequestIndexInstall;
+            resolve: (accept: PromptResult) => void;
         };
     }
 
-    let { screen }: Props = $props();
-    const { request, resolve } = screen.props;
+    let { handle, props }: Props = $props();
+    const { request, resolve } = props;
     const url = new URL(request.index_url);
 
     function accept() {
         resolve('accept');
-        screen.handle.pop();
+        handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        screen.handle.pop();
+        handle.pop();
     }
 
     function block() {
         resolve('block');
-        screen.handle.pop();
+        handle.pop();
     }
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="header">
         <h2>アプリ提供元を追加</h2>
     </div>
@@ -92,10 +90,6 @@
 
     h2 {
         font-weight: 600;
-    }
-
-    h3 {
-        color: var(--color-1);
     }
 
     .info {

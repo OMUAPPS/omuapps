@@ -83,7 +83,7 @@
             console.error('No screenshot data received');
             return;
         }
-        const blob = new Blob([data], { type: 'image/png' });
+        const blob = new Blob([data.buffer as ArrayBuffer], { type: 'image/png' });
         const asset = await uploadAssetByBlob(blob);
         await gallery.add({
             id: uniqueId(),
@@ -174,6 +174,7 @@
                                 w: 255,
                             };
                         }}
+                        title="色を設定"
                     ></button>
                 {/each}
             </div>

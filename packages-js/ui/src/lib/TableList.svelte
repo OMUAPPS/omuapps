@@ -127,67 +127,6 @@
         height: 100%;
     }
 
-    .loading {
-        position: absolute;
-        right: 50%;
-        bottom: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-        color: var(--color-1);
-        visibility: hidden;
-        background: transparent;
-        border: none;
-        transform: translateX(50%);
-        animation: spin 1s linear infinite;
-
-        &.active {
-            visibility: visible;
-        }
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-    .update {
-        position: absolute;
-        top: 10px;
-        right: 50%;
-        display: flex;
-        gap: 5px;
-        align-items: baseline;
-        justify-content: center;
-        padding: 10px 14px;
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--color-bg-1);
-        text-wrap: nowrap;
-        background: var(--color-1);
-        border: none;
-        border-radius: 50px;
-        outline: none;
-        transform: translateX(50%);
-
-        i {
-            font-size: 14px;
-        }
-
-        &:hover {
-            outline: 2px solid var(--color-bg-1);
-            outline-offset: -4px;
-        }
-    }
-
     .items {
         position: absolute;
         inset: 0;

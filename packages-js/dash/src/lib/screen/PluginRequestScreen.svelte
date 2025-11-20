@@ -10,27 +10,25 @@
     import type { ScreenHandle } from './screen.js';
 
     interface Props {
-        screen: {
-            handle: ScreenHandle;
-            props: {
-                request: PromptRequestAppPlugins;
-                resolve: (accept: PromptResult) => void;
-            };
+        handle: ScreenHandle;
+        props: {
+            request: PromptRequestAppPlugins;
+            resolve: (accept: PromptResult) => void;
         };
     }
 
-    let { screen }: Props = $props();
+    let { handle, props }: Props = $props();
 
-    const { request, resolve } = screen.props;
+    const { request, resolve } = props;
 
     function accept() {
         resolve('accept');
-        screen.handle.pop();
+        handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        screen.handle.pop();
+        handle.pop();
     }
 
     const SECURELIST = [
@@ -66,7 +64,7 @@
     );
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="header">
         <AppInfo app={App.deserialize(request.app)} />
         <small>は以下のプラグインのインストールを要求しています。</small>

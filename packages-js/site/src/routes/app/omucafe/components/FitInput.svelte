@@ -7,7 +7,7 @@
 
     let { value = $bindable() }: Props = $props();
 
-    let element: HTMLElement = $state();
+    let element: HTMLElement | undefined = $state(undefined);
     let width = $state(0);
 
     function update(_: string) {

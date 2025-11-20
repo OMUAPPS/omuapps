@@ -7,26 +7,24 @@
     import type { ScreenHandle } from './screen.js';
 
     interface Props {
-        screen: {
-            handle: ScreenHandle;
-            props: {
-                request: PromptRequestAppUpdate;
-                resolve: (accept: PromptResult) => void;
-            };
+        handle: ScreenHandle;
+        props: {
+            request: PromptRequestAppUpdate;
+            resolve: (accept: PromptResult) => void;
         };
     }
 
-    let { screen }: Props = $props();
-    const { request, resolve } = screen.props;
+    let { handle, props }: Props = $props();
+    const { request, resolve } = props;
 
     function accept() {
         resolve('accept');
-        screen.handle.pop();
+        handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        screen.handle.pop();
+        handle.pop();
     }
 
     function updateScroll(element: HTMLDivElement) {
@@ -37,7 +35,7 @@
     let scrolled = $state(false);
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="screen">
         <h1>アプリの更新があります</h1>
         <div

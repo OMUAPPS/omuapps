@@ -270,10 +270,6 @@
             outline: 1px solid var(--color-outline);
         }
 
-        > a {
-            padding: 0 4rem;
-        }
-
         > .group-toggle {
             font-size: 0.8rem;
             color: var(--color-1);

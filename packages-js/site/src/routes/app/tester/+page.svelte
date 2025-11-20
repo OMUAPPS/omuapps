@@ -94,7 +94,7 @@
             Preview
         </h3>
         <section class="fill">
-            <MessageRenderer bind:content={component} />
+            <MessageRenderer content={component} />
         </section>
         <h3>
             <i class="ti ti-pencil"></i>

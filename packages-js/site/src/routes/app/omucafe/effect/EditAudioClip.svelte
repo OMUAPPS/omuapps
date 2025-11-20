@@ -1,11 +1,11 @@
 <script lang="ts">
-    import EditAudioClip from './EditAudioClip.svelte';
     import { Checkbox, Slider } from '@omujs/ui';
     import { createClip, createEnvelopeClip, createFilter, type AudioClip } from '../asset/audioclip.js';
+    import EditAudioClip from './EditAudioClip.svelte';
     import EditClip from './EditClip.svelte';
 
     interface Props {
-        clip: AudioClip | null;
+        clip: AudioClip | null | undefined;
     }
 
     let { clip = $bindable() }: Props = $props();

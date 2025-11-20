@@ -15,7 +15,9 @@
         return rect.top + 100 < window.innerHeight;
     }
 
-    let card0 = $state(), card1 = $state(), card2 = $state();
+    let card0: HTMLElement | undefined = $state(undefined);
+    let card1: HTMLElement | undefined = $state(undefined);
+    let card2: HTMLElement | undefined = $state(undefined);
 </script>
 
 <svelte:window onscroll={onScroll} />

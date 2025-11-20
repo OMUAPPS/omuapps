@@ -68,7 +68,7 @@
     .dashboard {
         position: absolute;
         top: 25%;
-        height: 100%;
+        height: fit-content;
         margin-left: max(40rem, 0%);
         object-fit: cover;
         filter: drop-shadow(-2px 4px 10px var(--color-outline));

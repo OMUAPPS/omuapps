@@ -99,7 +99,7 @@
 
     const avatarUrl = voiceState.user.avatar && `https://cdn.discordapp.com/avatars/${voiceState.user.id}/${voiceState.user.avatar}.png`;
 
-    let settingElement: HTMLElement = $state();
+    let settingElement: HTMLElement | undefined = $state(undefined);
     let configOpen = $state(false);
 
     function handleWindowClick(event: MouseEvent) {

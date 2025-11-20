@@ -159,21 +159,6 @@
         outline: 1px solid var(--color-outline);
     }
 
-    .menu {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        gap: 1rem;
-        padding: 0.5rem;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        z-index: 1;
-        width: 20rem;
-        margin: 1rem;
-        animation: slide-in 0.0621s ease;
-    }
-
     .config {
         position: absolute;
         top: 0;

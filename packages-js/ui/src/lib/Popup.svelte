@@ -20,9 +20,9 @@
 
     const eventDistacher = createEventDispatcher<{ open: void; close: void }>();
 
-    let element: HTMLElement = $state();
-    let target: HTMLElement = $state();
-    let popup: HTMLElement = $state();
+    let element: HTMLElement | undefined = $state(undefined);
+    let target: HTMLElement | undefined = $state(undefined);
+    let popup: HTMLElement | undefined = $state(undefined);
     type Rect = { x: number; y: number; width: number; height: number };
     let popupRect: Rect = $state({
         x: 0,
@@ -40,14 +40,14 @@
     let direction: 'top' | 'bottom' = $state('bottom');
 
     async function handleClick() {
-        targetRect = target.getBoundingClientRect();
+        targetRect = target!.getBoundingClientRect();
         await onOpen();
         isOpen = true;
     }
 
     function handleClickOutside(event: MouseEvent) {
         if (!isOpen) return;
-        if (element.contains(event.target as Node)) return;
+        if (element!.contains(event.target as Node)) return;
         if (event.target === target) return;
         isOpen = false;
     }
@@ -67,7 +67,7 @@
     run(() => {
         const padding = 5;
         if (target && popup) {
-            popupRect = popup.getBoundingClientRect();
+            popupRect = popup!.getBoundingClientRect();
             direction =
                 targetRect.y + targetRect.height + popupRect.height + 10 > window.innerHeight
                     ? 'top'
@@ -91,10 +91,10 @@
 
     if (BROWSER) {
         onMount(() => {
-            if (!element.parentElement) {
+            if (!element!.parentElement) {
                 throw new Error('PopupInline must be a child of another element');
             }
-            target = element.parentElement;
+            target = element!.parentElement;
             if (!target.addEventListener || !target.removeEventListener) {
                 throw new Error('target must support addEventListener and removeEventListener');
             }
@@ -102,7 +102,7 @@
         });
 
         onDestroy(() => {
-            target.removeEventListener('click', handleClick);
+            target!.removeEventListener('click', handleClick);
         });
     }
 </script>

@@ -144,7 +144,7 @@
         };
     }
 
-    let replyEnable = $derived(!detail || !!message.reply || detail?.type !== 'ok' || !detail.answer);
+    let replyEnable = $derived(!detail || !!message.reply);
 </script>
 
 <div class="reply">

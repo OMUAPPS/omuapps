@@ -24,7 +24,7 @@
     }: Props = $props();
     let inputValue = $derived(value);
     let timer: number | undefined;
-    let input: HTMLInputElement = $state();
+    let input: HTMLInputElement | undefined = $state(undefined);
 
     run(() => {
         if (input && focused) {

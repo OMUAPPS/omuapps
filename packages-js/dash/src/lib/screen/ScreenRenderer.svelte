@@ -30,6 +30,6 @@
 
 {#if current}
     {#key current.handle.id}
-        <current.screen.component screen={current} />
+        <current.screen.component handle={current.handle} props={current.props} />
     {/key}
 {/if}

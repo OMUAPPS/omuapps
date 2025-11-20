@@ -58,12 +58,12 @@
         );
     });
 
-    let canvas: HTMLCanvasElement = $state();
-    let ctx: CanvasRenderingContext2D = $state();
+    let canvas: HTMLCanvasElement | undefined = $state(undefined);
+    let ctx: CanvasRenderingContext2D | undefined = $state(undefined);
 
     function resize() {
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
+        canvas!.width = canvas!.clientWidth;
+        canvas!.height = canvas!.clientHeight;
     }
 
     function getSpawnRate() {
@@ -98,12 +98,12 @@
     function spawnReaction(text: string) {
         const x = lerp(
             reactionScale,
-            canvas.width - reactionScale - 50,
+            canvas!.width - reactionScale - 50,
             Math.random(),
         );
         const y = lerp(
             reactionScale + 300,
-            canvas.height - reactionScale,
+            canvas!.height - reactionScale,
             Math.random(),
         );
         const z = lerp(1 - ($config.depth || 0), 1, Math.random());
@@ -151,8 +151,8 @@
         const screenBounds = {
             left: -reactionScale,
             top: -reactionScale,
-            right: canvas.width + reactionScale,
-            bottom: canvas.height + reactionScale,
+            right: canvas!.width + reactionScale,
+            bottom: canvas!.height + reactionScale,
         };
 
         reactionArray = reactionArray

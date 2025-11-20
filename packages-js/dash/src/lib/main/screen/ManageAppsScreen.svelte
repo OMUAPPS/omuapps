@@ -38,11 +38,14 @@
                     (app && (app.type === 'app' || app.type === 'remote'))
                     || ($devMode && (app.type === 'plugin' || app.type === 'service'))
                 )}
-                component={AppEntry}
-            />
+            >
+                {#snippet component({ entry })}
+                    <AppEntry {entry} />
+                {/snippet}
+            </TableList>
         </ul>
         <div class="actions">
-            <Button primary onclick={() => screen.handle.pop()}>
+            <Button primary onclick={() => handle.pop()}>
                 {$t('general.close')}
                 <i class="ti ti-x"></i>
             </Button>

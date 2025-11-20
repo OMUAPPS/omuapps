@@ -1,7 +1,6 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
-    import { OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AssetButton,
@@ -15,14 +14,13 @@
 
     interface Props {
         omu: Omu;
-        obs: OBSPlugin;
         captionApp: CaptionApp;
     }
 
-    let { omu, obs, captionApp }: Props = $props();
+    let { omu, captionApp }: Props = $props();
 
     const { config } = captionApp;
-    omu.dashboard.speechRecognitionStart();
+    omu.dashboard.requestSpeechRecognition();
 
     function resetLang() {
         $config.lang = window.navigator.language as LanguageKey;

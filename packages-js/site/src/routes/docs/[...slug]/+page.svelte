@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import Markdown from '$lib/components/markdown/Markdown.svelte';
     import type { DocsData } from '$lib/server/docs';
@@ -11,9 +10,7 @@
     }
 
     let { data }: Props = $props();
-    run(() => {
-        $docs = data.page;
-    });
+    $docs = data.page;
     let source = $derived(replaceConstants($docs.content, $config));
 </script>
 
