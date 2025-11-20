@@ -1,4 +1,3 @@
-import { setGlobal } from '@omujs/ui';
 import { Dashboard } from './dashboard.js';
 
 import type { Address } from '@omujs/omu/network';
@@ -41,7 +40,6 @@ const omu = new Omu(app, {
 });
 const chat = Chat.create(omu);
 const dashboard = new Dashboard(omu);
-setGlobal({ omu, chat });
 omu.plugins.require({
     omu_chat: `>=${VERSION}`,
     omu_chat_youtube: `>=${VERSION}`,

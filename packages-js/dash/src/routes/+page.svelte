@@ -1,11 +1,13 @@
 <script lang="ts">
-    import { omu } from '$lib/client';
+    import { run } from 'svelte/legacy';
+
+    import { chat, omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
     import MainWindow from '$lib/main/MainWindow.svelte';
     import { installed, keepOpenOnBackground } from '$lib/main/settings';
     import { appWindow, backgroundRequested, checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
     import { DisconnectType } from '@omujs/omu/network/packet';
-    import { Button, Spinner } from '@omujs/ui';
+    import { Button, setGlobal, Spinner } from '@omujs/ui';
     import { error } from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
     import Agreements from './_components/Agreements.svelte';
@@ -23,16 +25,18 @@
         await start();
     });
 
-    $: {
+    setGlobal({ omu, chat });
+
+    run(() => {
         if ($serverState?.type === 'ServerStopped' && $appState.type === 'connecting') {
             $appState.reject({
                 type: 'server_start_failed',
             });
             omu.stop();
         }
-    }
+    });
 
-    $: {
+    run(() => {
         if ($netState?.type === 'reconnecting') {
             if ($netState.attempt && $netState.attempt > 2) {
                 $appState = { type: 'restore', message: omu.network.reason?.message };
@@ -44,9 +48,11 @@
                 omu.stop();
             }
         }
-    }
+    });
 
-    $: console.log('serverState', $serverState);
+    run(() => {
+        console.log('serverState', $serverState);
+    });
 
     async function start() {
         try {
@@ -125,7 +131,9 @@
                 </Button>
             </div>
 
-            <Agreements slot="hint" />
+            {#snippet hint()}
+                <Agreements />
+            {/snippet}
         </InstallStepLayout>
     {:else if $appState.type === 'starting'}
         <InstallStepLayout>
@@ -174,8 +182,12 @@
                     チャットの機能で使用するチャンネルを追加します
                 </small>
             </div>
-            <InstallStepAddChannels bind:state={$appState.state} resolve={$appState.resolve} />
-            <InstallStepAddChannelsHint bind:state={$appState.state} slot="hint" />
+            <InstallStepAddChannels bind:status={$appState.state} resolve={$appState.resolve} />
+            {#snippet hint()}
+                {#if $appState.type === 'add_channels'}
+                    <InstallStepAddChannelsHint bind:state={$appState.state} />
+                {/if}
+            {/snippet}
         </InstallStepLayout>
     {:else if $appState.type === 'update'}
         <InstallStepLayout>
@@ -185,9 +197,13 @@
             </div>
 
             <div class="actions">
-                <InstallStepUpdate bind:state={$appState} />
+                <InstallStepUpdate bind:appState={$appState} />
             </div>
-            <StepUpdateHint update={$appState.update} slot="hint" />
+            {#snippet hint()}
+                {#if $appState.type === 'update'}
+                    <StepUpdateHint update={$appState.update} />
+                {/if}
+            {/snippet}
         </InstallStepLayout>
     {:else if $appState.type === 'restore'}
         <InstallStepLayout>

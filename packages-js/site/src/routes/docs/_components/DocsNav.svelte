@@ -2,13 +2,14 @@
     import type { DocsMeta } from '$lib/server/docs';
     import { Tooltip } from '@omujs/ui';
 
-    export let section:
+    interface Props {
+        section: 
         | Readonly<{
             meta: DocsMeta;
             slug: string;
         }>
         | undefined;
-    export let group:
+        group: 
         | [
             string,
             Readonly<{
@@ -17,6 +18,9 @@
             }>[],
         ]
         | undefined;
+    }
+
+    let { section, group }: Props = $props();
 </script>
 
 {#if section && group && group[1].length > 1}

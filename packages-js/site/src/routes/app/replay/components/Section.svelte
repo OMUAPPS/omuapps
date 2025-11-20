@@ -1,7 +1,19 @@
 <script lang="ts">
-    export let name: string;
-    export let icon: string | undefined = undefined;
-    export let flex: number | undefined = undefined;
+    interface Props {
+        name: string;
+        icon?: string | undefined;
+        flex?: number | undefined;
+        actions?: import('svelte').Snippet;
+        children?: import('svelte').Snippet;
+    }
+
+    let {
+        name,
+        icon = undefined,
+        flex = undefined,
+        actions,
+        children
+    }: Props = $props();
 </script>
 
 <div class="section" style:flex>

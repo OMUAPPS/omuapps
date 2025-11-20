@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
     export type AlignType =
         | 'start'
         | 'middle'
@@ -7,13 +7,12 @@
 <script lang="ts">
     import Tooltip from './Tooltip.svelte';
 
-    let {
-        horizontal = $bindable(undefined),
-        vertical = $bindable(undefined),
-    }: {
-        horizontal: AlignType | undefined;
-        vertical: AlignType | undefined;
-    } = $props();
+    interface Props {
+        horizontal?: AlignType | undefined;
+        vertical?: AlignType | undefined;
+    }
+
+    let { horizontal = $bindable(undefined), vertical = $bindable(undefined) }: Props = $props();
 </script>
 
 <div class="container" class:horizontal={horizontal} class:vertical={vertical}>

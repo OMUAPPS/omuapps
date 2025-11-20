@@ -5,7 +5,7 @@
 
     const { omu, scene, chat, side, config } = getGame();
 
-    let messages: Message[] = [];
+    let messages: Message[] = $state([]);
     let messageQueue: Message[] = [];
     const MAX_MESSAGES = 40;
 

@@ -34,7 +34,7 @@
         });
     }
 
-    let state:
+    let networkState:
         | {
             type: 'connecting';
         }
@@ -47,25 +47,25 @@
         | {
             type: 'disconnected';
             reason?: string;
-        } = { type: 'connecting' };
+        } = $state({ type: 'connecting' });
     omu.network.event.status.listen((status) => {
         if (status.type === 'connecting') {
-            state = { type: 'connecting' };
+            networkState = { type: 'connecting' };
             logs.push(
                 `[connecting] connecting to ${omu.address.host}:${omu.address.port}`,
             );
         } else if (status.type === 'connected') {
-            state = { type: 'connected' };
+            networkState = { type: 'connected' };
             logs.push(
                 `[connected] connected to ${omu.address.host}:${omu.address.port}`,
             );
         } else if (status.type === 'reconnecting') {
-            state = { type: 'connected' };
+            networkState = { type: 'connected' };
             logs.push(
                 `[reconnecting] reconnecting to ${omu.address.host}:${omu.address.port}`,
             );
         } else if (status.type === 'disconnected') {
-            state = {
+            networkState = {
                 type: 'disconnected',
                 reason: status.reason?.message || undefined,
             };
@@ -73,12 +73,12 @@
                 `[disconnected] disconnected from ${omu.address.host}:${omu.address.port}`,
             );
         } else if (status.type === 'ready') {
-            state = { type: 'ready' };
+            networkState = { type: 'ready' };
             logs.length = 0;
         }
     });
 
-    let logs: string[] = [];
+    let logs: string[] = $state([]);
 </script>
 
 <svelte:head>
@@ -86,32 +86,32 @@
 </svelte:head>
 
 <main>
-    {#if state.type === 'ready'}
+    {#if networkState.type === 'ready'}
         <SessionApp {omu} {remote} />
     {:else}
-        {#if state.type === 'connecting'}
+        {#if networkState.type === 'connecting'}
             <div class="loading">
                 <span>
                     <Spinner />
                     <div>接続中</div>
                 </span>
             </div>
-        {:else if state.type === 'connected'}
+        {:else if networkState.type === 'connected'}
             <div class="loading">
                 <span>
                     <Spinner />
                     <div>接続中</div>
                 </span>
             </div>
-        {:else if state.type === 'disconnected'}
+        {:else if networkState.type === 'disconnected'}
             <div class="loading">
                 <span>
                     <Spinner />
                     <div>接続が切断されました</div>
                 </span>
-                {#if state.reason}
+                {#if networkState.reason}
                     <small>
-                        {state.reason}
+                        {networkState.reason}
                     </small>
                 {/if}
             </div>

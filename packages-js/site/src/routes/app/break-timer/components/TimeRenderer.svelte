@@ -1,12 +1,19 @@
 <script lang="ts">
-    export let end: number;
+    import { run } from 'svelte/legacy';
 
-    let now = Date.now();
-    let seconds = Math.floor((end - now) / 1000) % 60;
-    let minutes = Math.floor((end - now) / 1000 / 60) % 60;
-    let hours = Math.floor((end - now) / 1000 / 60 / 60);
+    interface Props {
+        end: number;
+        children?: import('svelte').Snippet;
+    }
 
-    let timeout: number;
+    let { end, children }: Props = $props();
+
+    let now = $state(Date.now());
+    let seconds = $state(Math.floor((end - now) / 1000) % 60);
+    let minutes = $state(Math.floor((end - now) / 1000 / 60) % 60);
+    let hours = $state(Math.floor((end - now) / 1000 / 60 / 60));
+
+    let timeout: number = $state();
 
     function update(end: number) {
         now = Date.now();
@@ -19,10 +26,10 @@
         }
     }
 
-    $: {
+    run(() => {
         clearTimeout(timeout);
         update(end);
-    }
+    });
 </script>
 
 <div class="timer">

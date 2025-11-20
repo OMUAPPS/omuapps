@@ -9,13 +9,17 @@
     import about_plugin from './about_plugin.md?raw';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
+    interface Props {
+        screen: {
         handle: ScreenHandle;
         props: {
             request: PromptRequestAppPlugins;
             resolve: (accept: PromptResult) => void;
         };
     };
+    }
+
+    let { screen }: Props = $props();
 
     const { request, resolve } = screen.props;
 
@@ -109,7 +113,9 @@
             <i class="ti ti-check"></i>
         </button>
     </div>
-    <Document source={about_plugin} slot="info" />
+    {#snippet info()}
+        <Document source={about_plugin}  />
+    {/snippet}
 </Screen>
 
 <style lang="scss">

@@ -8,9 +8,9 @@
     import PanelRooms from '../panel/rooms/PanelRooms.svelte';
     import ConnectPageSetup from './ConnectPageSetup.svelte';
 
-    export const props = {};
+    let { data }: { data: unknown } = $props();
 
-    let setupOpen = false;
+    let setupOpen = $state(false);
 
     omu.onReady(async () => {
         setupOpen = await chat.channels.size() == 0;

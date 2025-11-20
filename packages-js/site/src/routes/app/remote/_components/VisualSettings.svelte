@@ -2,7 +2,11 @@
     import { Align, Combobox, Slider } from '@omujs/ui';
     import { type RemoteApp } from '../remote-app.js';
 
-    export let remote: RemoteApp;
+    interface Props {
+        remote: RemoteApp;
+    }
+
+    let { remote }: Props = $props();
 
     const { config } = remote;
 </script>

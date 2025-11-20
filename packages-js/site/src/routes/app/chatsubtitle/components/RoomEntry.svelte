@@ -2,8 +2,12 @@
     import type { Room } from '@omujs/chat/models';
     import { createSubtitle } from '../stores.js';
 
-    export let entry: Room;
-    export let selected: boolean = false;
+    interface Props {
+        entry: Room;
+        selected?: boolean;
+    }
+
+    let { entry, selected = false }: Props = $props();
 
     function create() {
         $createSubtitle(entry);

@@ -1,4 +1,4 @@
-import type { TypedComponent } from '@omujs/ui';
+import type { Component } from 'svelte';
 import { writable } from 'svelte/store';
 
 export type ScreenHandle = {
@@ -6,12 +6,10 @@ export type ScreenHandle = {
     pop: () => void;
 };
 
-export type ScreenComponentType<T> = TypedComponent<{
-    screen: {
-        handle: ScreenHandle;
-        props: T;
-    };
-}>;
+export type ScreenComponentType<T> = Component<{
+    handle: ScreenHandle;
+    props: T;
+}, object, ''>;
 
 export interface ScreenComponent<T> {
     id: number;

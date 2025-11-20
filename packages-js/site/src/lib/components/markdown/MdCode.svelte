@@ -4,8 +4,12 @@
     import bash from 'svelte-highlight/languages/bash';
     import typescript from 'svelte-highlight/languages/typescript';
 
-    export let lang: string;
-    export let text: string;
+    interface Props {
+        lang: string;
+        text: string;
+    }
+
+    let { lang, text }: Props = $props();
 
     let language = {
         typescript,
@@ -17,10 +21,12 @@
     <Highlight
         {language}
         code={text}
-        let:highlighted
+        
     >
-        <LineNumbers {highlighted} --border-color="#eee" />
-    </Highlight>
+        {#snippet children({ highlighted })}
+                <LineNumbers {highlighted} --border-color="#eee" />
+                    {/snippet}
+        </Highlight>
     <button onclick={() => {
         navigator.clipboard.writeText(text);
     }} class="copy">

@@ -18,7 +18,11 @@
     import { createLiquid } from './behaviors/liquid.js';
     import LiquidEdit from './behaviors/LiquidEdit.svelte';
 
-    export let item: Item;
+    interface Props {
+        item: Item;
+    }
+
+    let { item = $bindable() }: Props = $props();
 
     const { scene, gameConfig } = getGame();
 
@@ -139,8 +143,7 @@
                     {/if}
                 </button>
                 {#if item.behaviors[behavior.key]}
-                    <svelte:component
-                        this={behavior.edit}
+                    <behavior.edit
                         bind:behavior={item.behaviors[behavior.key]}
                     />
                 {/if}

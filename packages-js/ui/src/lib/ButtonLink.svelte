@@ -1,7 +1,12 @@
 <script lang="ts">
     import { linkOpenHandler } from './stores';
-    export let href: string;
-    export let primary = false;
+    interface Props {
+        href: string;
+        primary?: boolean;
+        children?: import('svelte').Snippet;
+    }
+
+    let { href, primary = false, children }: Props = $props();
 </script>
 
 <a {href} target="_blank" rel="noopener noreferrer" class:primary onclick={(event) => {

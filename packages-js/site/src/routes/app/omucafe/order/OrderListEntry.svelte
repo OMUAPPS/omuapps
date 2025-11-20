@@ -4,10 +4,14 @@
 
     const { gameConfig, states } = getGame();
 
-    export let entry: Order;
-    export let selected: boolean = false;
-    $: user = entry.user;
-    $: items = entry.items;
+    interface Props {
+        entry: Order;
+        selected?: boolean;
+    }
+
+    let { entry = $bindable(), selected = false }: Props = $props();
+    let user = $derived(entry.user);
+    let items = $derived(entry.items);
 </script>
 
 <div class="order" class:selected class:current={$states.kitchen.order?.id === entry.id}>

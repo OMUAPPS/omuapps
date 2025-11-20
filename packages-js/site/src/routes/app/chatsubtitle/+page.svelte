@@ -23,7 +23,7 @@
         return true;
     }
 
-    let xml = '';
+    let xml = $state('');
 
     $createSubtitle = async (room: Room) => {
         const { first_message_id, last_message_id } = room.metadata;
@@ -202,9 +202,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={APP} />
-    </header>
+    {#snippet header()}
+        <header >
+            <AppHeader app={APP} />
+        </header>
+    {/snippet}
     <main>
         {#if xml}
             <a

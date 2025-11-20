@@ -39,23 +39,23 @@ const BREAK_TIMER_STATE_REGISTRY_TYPE = RegistryType.createJson<BreakTimerState>
 
 export class BreakTimerApp {
     public readonly config: Writable<BreakTimerConfig>;
-    public readonly state: Writable<BreakTimerState>;
+    public readonly timerState: Writable<BreakTimerState>;
 
     constructor(
         public readonly omu: Omu,
         public readonly obs: OBSPlugin,
     ) {
         this.config = omu.registries.get(BREAK_TIMER_CONFIG_REGISTRY_TYPE).compatSvelte();
-        this.state = omu.registries.get(BREAK_TIMER_STATE_REGISTRY_TYPE).compatSvelte();
+        this.timerState = omu.registries.get(BREAK_TIMER_STATE_REGISTRY_TYPE).compatSvelte();
     }
 
     public async reset(): Promise<void> {
-        this.state.set({ type: 'work' });
+        this.timerState.set({ type: 'work' });
     }
 
     public async start(): Promise<void> {
         const scene = await this.obs.sceneGetCurrent();
-        this.state.set({ type: 'break', start: Date.now(), scene: scene?.name || null });
+        this.timerState.set({ type: 'break', start: Date.now(), scene: scene?.name || null });
         const config = get(this.config);
         if (!config.switch.scene) return;
         this.obs.sceneSetCurrentByName(config.switch.scene);

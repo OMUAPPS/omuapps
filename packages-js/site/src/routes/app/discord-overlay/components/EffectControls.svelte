@@ -2,10 +2,14 @@
     import { Slider, Tooltip } from '@omujs/ui';
     import type { Config } from '../discord-overlay-app.js';
 
-    export let effects: Config['effects'];
+    interface Props {
+        effects: Config['effects'];
+    }
 
-    let selectedEffectType: 'speech' | 'shadow' | null = null;
-    let shadowColorElement: HTMLInputElement | null = null;
+    let { effects = $bindable() }: Props = $props();
+
+    let selectedEffectType: 'speech' | 'shadow' | null = $state(null);
+    let shadowColorElement: HTMLInputElement | null = $state(null);
 
     function rgbToHex(r: number, g: number, b: number): string {
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;

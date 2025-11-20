@@ -13,7 +13,11 @@
     import { BROWSER } from 'esm-env';
     import { RemoteApp, type Resource } from '../remote-app.js';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const remote = new RemoteApp(omu, 'asset');
 
     if (BROWSER) {

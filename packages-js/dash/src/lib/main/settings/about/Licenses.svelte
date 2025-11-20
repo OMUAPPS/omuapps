@@ -4,7 +4,7 @@
     import { ExternalLink } from '@omujs/ui';
     import SvelteMarkdown from 'svelte-markdown';
 
-    let selectedLicense: string | undefined;
+    let selectedLicense: string | undefined = $state();
 </script>
 
 <div class="container">

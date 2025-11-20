@@ -3,14 +3,18 @@
     import { ExternalLink } from '@omujs/ui';
     import SvelteMarkdown from 'svelte-markdown';
 
-    export let entry: PackageInfo;
-    export let secure: boolean;
+    interface Props {
+        entry: PackageInfo;
+        secure: boolean;
+    }
+
+    let { entry, secure }: Props = $props();
 
     let open = false;
 
-    $: author =
-        entry.info.author ||
-        entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim();
+    let author =
+        $derived(entry.info.author ||
+        entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim());
 </script>
 
 <div class="entry">

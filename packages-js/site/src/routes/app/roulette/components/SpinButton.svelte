@@ -2,8 +2,12 @@
     import { Tooltip } from '@omujs/ui';
     import type { RouletteApp } from '../roulette-app.js';
 
-    export let roulette: RouletteApp;
-    const { state, entries } = roulette;
+    interface Props {
+        roulette: RouletteApp;
+    }
+
+    let { roulette }: Props = $props();
+    const { rouletteState: state, entries } = roulette;
 </script>
 
 <div class="spin-button" class:spinning={$state.type === 'spinning'}>

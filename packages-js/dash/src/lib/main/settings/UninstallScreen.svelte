@@ -9,12 +9,14 @@
     import { onMount, tick } from 'svelte';
     import ProgressBar from '../../../routes/_components/ProgressBar.svelte';
 
-    export let screen: {
+    interface Props {
         handle: ScreenHandle;
         props: undefined;
-    };
+    }
 
-    let state: {
+    let { handle, props }: Props = $props();
+
+    let uninstallState: {
         type: 'initializing';
     } | {
         type: 'yesno';
@@ -28,7 +30,7 @@
     } | {
         type: 'failed';
         message: string;
-    } = { type: 'initializing' };
+    } = $state({ type: 'initializing' });
 
     async function init() {
         const update = async (resolve: (confirmed: boolean) => void) => {
@@ -38,7 +40,7 @@
             while (!rejected) {
                 const remaining = timeout - performance.now();
                 await new Promise<void>((r) => setTimeout(r, 100));
-                state = {
+                uninstallState = {
                     type: 'yesno',
                     remaining,
                     accept: () => {
@@ -57,10 +59,10 @@
         };
         const confirmed = await new Promise<boolean>((resolve) => update(resolve));
         if (!confirmed) {
-            screen.handle.pop();
+            handle.pop();
             return;
         }
-        state = { type: 'uninstalling' };
+        uninstallState = { type: 'uninstalling' };
         await tick();
         try {
             await invoke('uninstall');
@@ -69,10 +71,10 @@
             const message = `Uninstallation failed: ${JSON.stringify(reason)}`;
             console.error(message);
             await error(message);
-            state = { type: 'failed', message: JSON.stringify(reason, null, 2) };
+            uninstallState = { type: 'failed', message: JSON.stringify(reason, null, 2) };
             return;
         }
-        state = { type: 'done' };
+        uninstallState = { type: 'done' };
     }
 
     onMount(() => {
@@ -80,23 +82,23 @@
     });
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="screen">
-        {#if state.type === 'yesno'}
+        {#if uninstallState.type === 'yesno'}
             <h2>全て消えます</h2>
             <small>今までのコメント、今までのアプリのデータ全て消えます</small>
             <div class="actions">
-                <Button onclick={state.cancel}>キャンセル</Button>
-                <Button onclick={state.accept} primary disabled={state.remaining > 0}>
-                    {#if state.remaining > 0}
+                <Button onclick={uninstallState.cancel}>キャンセル</Button>
+                <Button onclick={uninstallState.accept} primary disabled={uninstallState.remaining > 0}>
+                    {#if uninstallState.remaining > 0}
                         <Tooltip>
-                            {Math.ceil(state.remaining / 1000)}秒後にアンインストールできます。
+                            {Math.ceil(uninstallState.remaining / 1000)}秒後にアンインストールできます。
                         </Tooltip>
                     {/if}
                     アンインストール
                 </Button>
             </div>
-        {:else if state.type === 'uninstalling'}
+        {:else if uninstallState.type === 'uninstalling'}
             <h2>アンインストール中</h2>
             {#if !$uninstallProgress}
                 <Spinner />
@@ -110,7 +112,7 @@
                     プラグインを削除しています...
                 {/if}
             {/if}
-        {:else if state.type === 'done'}
+        {:else if uninstallState.type === 'done'}
             <h2>アンインストールが完了しました</h2>
             <small>アプリを削除するには、このままアプリケーションを閉じて</small>
             <small>アンインストーラーを起動してください。</small>
@@ -121,7 +123,7 @@
                     アプリを閉じる
                 </Button>
             </div>
-        {:else if state.type === 'failed'}
+        {:else if uninstallState.type === 'failed'}
             <h2>アンインストールに失敗しました</h2>
             <div class="actions">
                 <Button primary onclick={async () => {
@@ -130,7 +132,7 @@
                     再起動
                 </Button>
             </div>
-            <pre>{state.message}</pre>
+            <pre>{uninstallState.message}</pre>
         {/if}
     </div>
 </Screen>

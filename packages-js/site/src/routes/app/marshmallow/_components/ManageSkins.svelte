@@ -1,4 +1,5 @@
 <script lang="ts">
+
     import { Button, ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
     import { createSkin, MarshmallowApp, type MarshmallowScreen } from '../marshmallow-app';
     import EditSkin from './EditSkin.svelte';
@@ -6,15 +7,19 @@
     const marshmallowApp = MarshmallowApp.getInstance();
     const { config } = marshmallowApp;
 
-    export let state: Extract<MarshmallowScreen, { type: 'skins' }>['state'];
+    interface Props {
+        state: Extract<MarshmallowScreen, { type: 'skins' }>['state'];
+    }
 
-    $: {
+    let { state = $bindable() }: Props = $props();
+
+    $effect(() => {
         if (state.type === 'list' && Object.keys($config.skins).length === 0) {
             state = { type: 'create_or_upload' };
         } else if (state.type === 'create_or_upload' && Object.keys($config.skins).length !== 0) {
             state = { type: 'list' };
         }
-    }
+    });
 </script>
 
 {#if state.type === 'list'}

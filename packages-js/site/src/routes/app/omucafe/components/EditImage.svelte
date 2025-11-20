@@ -3,9 +3,13 @@
     import { uploadAssetByBlob, type Asset } from '../asset/asset.js';
     import AssetImage from './AssetImage.svelte';
 
-    export let image: Asset | null | undefined;
-    export let handle: (asset: Asset | undefined) => unknown;
-    export let required = false;
+    interface Props {
+        image: Asset | null | undefined;
+        handle: (asset: Asset | undefined) => unknown;
+        required?: boolean;
+    }
+
+    let { image, handle, required = false }: Props = $props();
 </script>
 
 {#if image}

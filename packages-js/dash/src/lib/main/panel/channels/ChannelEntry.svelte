@@ -7,8 +7,12 @@
     import { chat, omu } from '$lib/client.js';
     import { ButtonLink, ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
 
-    export let entry: Models.Channel;
-    export let selected: boolean = false;
+    interface Props {
+        entry: Models.Channel;
+        selected?: boolean;
+    }
+
+    let { entry = $bindable(), selected = false }: Props = $props();
 
     let active = writable(entry.active);
     active.subscribe((value) => {

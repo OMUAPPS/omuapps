@@ -1,10 +1,16 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { onDestroy } from 'svelte';
     import { translate } from './stores.js';
 
-    export let date: Date | undefined;
+    interface Props {
+        date: Date | undefined;
+    }
 
-    let formattedDate: string = '';
+    let { date }: Props = $props();
+
+    let formattedDate: string = $state('');
     let timer: number;
     let destroyed = false;
 
@@ -63,9 +69,9 @@
         }
     }
 
-    $: {
+    run(() => {
         formatDate(date);
-    }
+    });
 
     onDestroy(() => {
         window.clearTimeout(timer);

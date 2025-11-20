@@ -1,7 +1,11 @@
 <script lang="ts">
     import { QuizApp, type Asset } from '../../quiz-app';
 
-    export let asset: Asset;
+    interface Props {
+        asset: Asset;
+    }
+
+    let { asset }: Props = $props();
 
     const quizApp = QuizApp.getInstance();
 </script>

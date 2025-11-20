@@ -4,7 +4,11 @@
     import type { Models } from '@omujs/chat';
     import { Spinner, Tooltip } from '@omujs/ui';
 
-    export let cancel: () => void = () => {};
+    interface Props {
+        cancel?: () => void;
+    }
+
+    let { cancel = () => {} }: Props = $props();
 
     let stage: {
         type: 'input';
@@ -12,10 +16,10 @@
         type: 'searching';
     } | {
         type: 'select';
-    } = { type: 'input' };
+    } = $state({ type: 'input' });
 
-    let url = '';
-    let result: { channel: Models.Channel; checked: boolean }[] = [];
+    let url = $state('');
+    let result: { channel: Models.Channel; checked: boolean }[] = $state([]);
 
     async function search(url: string) {
         stage = { type: 'searching' };
@@ -29,7 +33,7 @@
     <div class="left">
         {#if stage.type === 'input'}
             <p>{$t('page.connect.input_url')}</p>
-            <input type="text" bind:value={url} on:keypress={(event) => {
+            <input type="text" bind:value={url} onkeypress={(event) => {
                 if (event.key === 'Enter') {
                     search(url);
                 }
@@ -67,9 +71,9 @@
         {:else}
             <p>{$t('page.connect.select_channel')}</p>
             <div class="channels">
-                {#each result as { channel, checked } (channel.id)}
+                {#each result as { channel, checked }, index (channel.id)}
                     <button class="channel" class:checked={checked} onclick={() => {
-                        checked = !checked;
+                        result[index].checked = !checked;
                     }}>
                         {#if checked}
                             <Tooltip>

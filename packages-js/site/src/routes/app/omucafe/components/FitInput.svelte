@@ -1,16 +1,24 @@
 <script lang="ts">
-    export let value: string;
+    import { run } from 'svelte/legacy';
 
-    let element: HTMLElement;
-    let width = 0;
+    interface Props {
+        value: string;
+    }
+
+    let { value = $bindable() }: Props = $props();
+
+    let element: HTMLElement = $state();
+    let width = $state(0);
 
     function update(_: string) {
         if (!element) return;
         width = element.getBoundingClientRect().width;
     }
 
-    $: setTimeout(() => {
-        update(value);
+    run(() => {
+        setTimeout(() => {
+            update(value);
+        });
     });
 </script>
 

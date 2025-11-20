@@ -1,10 +1,18 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import BackButton from '../components/BackButton.svelte';
     import { getGame } from '../omucafe-app.js';
     import type { SceneContext } from '../scenes/scene.js';
 
-    export let context: SceneContext;
-    $: console.log('SceneProductEdit', context);
+    interface Props {
+        context: SceneContext;
+    }
+
+    let { context }: Props = $props();
+    run(() => {
+        console.log('SceneProductEdit', context);
+    });
 
     const { scene } = getGame();
 </script>

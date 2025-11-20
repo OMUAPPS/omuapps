@@ -6,10 +6,10 @@
     import { Spectrum } from './spectrum.js';
     import { vowels } from './vowels.js';
 
-    let spectrum: Spectrum;
-    let loudness: number;
-    let highestVowel = { key: '', value: 0 };
-    let vowelScores: { key: string; value: number }[] = [];
+    let spectrum: Spectrum = $state();
+    let loudness: number = $state();
+    let highestVowel = $state({ key: '', value: 0 });
+    let vowelScores: { key: string; value: number }[] = $state([]);
 
     function updateScores(spectrum: Spectrum) {
         const vowelDotProduct: { [key: string]: number } = {};

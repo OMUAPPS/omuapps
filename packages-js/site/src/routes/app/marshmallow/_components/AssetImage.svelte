@@ -1,10 +1,17 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { MarshmallowApp, type Asset } from '../marshmallow-app';
 
     const marshmallowApp = MarshmallowApp.getInstance();
-    export let asset: Asset | undefined;
+    interface Props {
+        asset: Asset | undefined;
+        children?: import('svelte').Snippet<[any]>;
+    }
 
-    let src: string | undefined = undefined;
+    let { asset, children }: Props = $props();
+
+    let src: string | undefined = $state(undefined);
 
     async function update(asset: Asset | undefined) {
         if (!asset) {
@@ -14,15 +21,15 @@
         src = await marshmallowApp.getAssetUrl(asset);
     }
 
-    $: {
+    run(() => {
         update(asset);
-    };
+    });;
 </script>
 
 {#if src}
-    <slot {src}>
+    {#if children}{@render children({ src, })}{:else}
         <img src={src} alt="" />
-    </slot>
+    {/if}
 {/if}
 
 <style lang="scss">

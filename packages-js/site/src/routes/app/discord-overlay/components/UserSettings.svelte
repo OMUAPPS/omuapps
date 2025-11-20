@@ -5,9 +5,13 @@
     import type { VoiceStateItem } from '../discord/type.js';
     import { heldUser, selectedAvatar } from '../states.js';
 
-    export let overlayApp: DiscordOverlayApp;
-    export let state: VoiceStateItem;
-    export let id: string;
+    interface Props {
+        overlayApp: DiscordOverlayApp;
+        voiceState: VoiceStateItem;
+        id: string;
+    }
+
+    let { overlayApp, voiceState, id }: Props = $props();
     const { config } = overlayApp;
 
     function isJsonString(str: string) {
@@ -93,10 +97,10 @@
         await setAvatar(file);
     }
 
-    const avatarUrl = state.user.avatar && `https://cdn.discordapp.com/avatars/${state.user.id}/${state.user.avatar}.png`;
+    const avatarUrl = voiceState.user.avatar && `https://cdn.discordapp.com/avatars/${voiceState.user.id}/${voiceState.user.avatar}.png`;
 
-    let settingElement: HTMLElement;
-    let configOpen = false;
+    let settingElement: HTMLElement = $state();
+    let configOpen = $state(false);
 
     function handleWindowClick(event: MouseEvent) {
         if (!$heldUser) return;
@@ -111,25 +115,25 @@
         $heldUser = null;
     }
 
-    $: avatar = $config.users[id].avatar;
+    let avatar = $derived($config.users[id].avatar);
 </script>
 
-<svelte:window on:mousedown={handleWindowClick} />
+<svelte:window onmousedown={handleWindowClick} />
 
 <div class="settings" bind:this={settingElement}>
     <div class="states">
         <div class="avatar">
             {#if avatarUrl}
-                <img src={avatarUrl} alt={state.nick} />
+                <img src={avatarUrl} alt={voiceState.nick} />
             {:else}
-                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt={state.nick} />
+                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt={voiceState.nick} />
             {/if}
         </div>
-        <span>{state.nick}</span>
-        {#if state.voice_state.self_mute || state.voice_state.mute}
+        <span>{voiceState.nick}</span>
+        {#if voiceState.voice_state.self_mute || voiceState.voice_state.mute}
             🔇
         {/if}
-        {#if state.voice_state.self_deaf || state.voice_state.deaf}
+        {#if voiceState.voice_state.self_deaf || voiceState.voice_state.deaf}
             🔊
         {/if}
     </div>

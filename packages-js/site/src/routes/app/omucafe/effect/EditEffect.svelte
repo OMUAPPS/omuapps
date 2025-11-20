@@ -8,7 +8,11 @@
     import EffectSoundEdit from './EditEffectSound.svelte';
     import { createEffectSound, createParticle, type EffectState } from './effect-state.js';
 
-    export let effect: EffectState;
+    interface Props {
+        effect: EffectState;
+    }
+
+    let { effect = $bindable() }: Props = $props();
 
     const { scene, gameConfig } = getGame();
 </script>

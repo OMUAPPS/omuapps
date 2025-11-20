@@ -1,21 +1,27 @@
 <script lang="ts" generics="T">
+    import { run } from 'svelte/legacy';
+
     import { createEventDispatcher } from 'svelte';
 
-    export let options: {
+    interface Props {
+        options: {
         [key: string]: {
             value: T;
             label: string;
         };
     };
-    export let value: T;
-    export let key: string | null | undefined = Object.keys(options)[0];
+        value: T;
+        key?: string | null | undefined;
+    }
 
-    $: {
+    let { options, value = $bindable(), key = $bindable(Object.keys(options)[0]) }: Props = $props();
+
+    run(() => {
         const found = Object.keys(options).find((key) => options[key].value === value);
         if (found) {
             key = found;
         }
-    }
+    });
 
     const dispatch = createEventDispatcher<{
         change: { key: string; value: T };
@@ -36,8 +42,8 @@
     <select
         value={key}
         onchange={(event) => onChange(event)}
-        on:focus={() => dispatch('open')}
-        on:blur={() => dispatch('close')}
+        onfocus={() => dispatch('open')}
+        onblur={() => dispatch('close')}
     >
         {#each Object.entries(options) as [key, option] (key)}
             <option value={key}>{option.label}</option>

@@ -5,7 +5,11 @@
     import MarshmallowRenderer from '../_components/MarshmallowRenderer.svelte';
     import { MarshmallowApp } from '../marshmallow-app';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
 
     const marshmallow = new MarshmallowApp(omu);
     const { config, data } = marshmallow;
@@ -18,13 +22,13 @@
     }
 
     const PADDING = 100;
-    let imageWidth = 1;
-    let imageHeight = 1;
-    let windowWidth = 1;
-    let windowHeight = 1;
-    $: scale = Math.exp($config.scale * 0.5);
-    $: width = imageWidth;
-    $: height = imageHeight;
+    let imageWidth = $state(1);
+    let imageHeight = $state(1);
+    let windowWidth = $state(1);
+    let windowHeight = $state(1);
+    let scale = $derived(Math.exp($config.scale * 0.5));
+    let width = $derived(imageWidth);
+    let height = $derived(imageHeight);
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />

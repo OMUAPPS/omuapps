@@ -1,8 +1,19 @@
 <script lang="ts" generics="T">
-    export let primary = false;
-    export let disabled = false;
-    export let onclick: () => PromiseLike<T> | undefined | unknown = () => {};
-    export let promise: PromiseLike<T> | undefined | unknown = undefined;
+    interface Props {
+        primary?: boolean;
+        disabled?: boolean;
+        onclick?: () => PromiseLike<T> | undefined | unknown;
+        promise?: PromiseLike<T> | undefined | unknown;
+        children?: import('svelte').Snippet<[any]>;
+    }
+
+    let {
+        primary = false,
+        disabled = false,
+        onclick = () => {},
+        promise = $bindable(undefined),
+        children
+    }: Props = $props();
 
     async function handleClick() {
         if (disabled) return;
@@ -26,7 +37,7 @@
 <button
     class="button"
     type="button"
-    on:touchend={(event) => {
+    ontouchend={(event) => {
         event.preventDefault();
         handleClick();
     }}
@@ -35,7 +46,7 @@
     disabled={disabled || !!promise}
 >
     <span>
-        <slot {promise} />
+        {@render children?.({ promise, })}
     </span>
 </button>
 

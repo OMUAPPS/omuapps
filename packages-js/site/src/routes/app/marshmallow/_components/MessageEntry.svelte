@@ -5,7 +5,11 @@
     import ElementRenderer from './ElementRenderer.svelte';
     const { data } = MarshmallowApp.getInstance();
 
-    export let message: Message;
+    interface Props {
+        message: Message;
+    }
+
+    let { message }: Props = $props();
 </script>
 
 <button class="message" onclick={() => {

@@ -3,9 +3,13 @@
     import type { ClockApp } from '../clock-app.js';
     import FitWidthText from './FitWidthText.svelte';
 
-    export let clockApp: ClockApp;
+    interface Props {
+        clockApp: ClockApp;
+    }
+
+    let { clockApp }: Props = $props();
     const EVENT_SWITCH_DELAY = 30;
-    let time = new Date();
+    let time = $state(new Date());
     let handle: number;
 
     function updateTime() {
@@ -21,17 +25,17 @@
         };
     });
 
-    $: year = time.getFullYear();
-    $: month = time.getMonth() + 1;
-    $: date = time.getDate();
-    $: hours = time.getHours();
-    $: minutes = time.getMinutes();
-    $: seconds = time.getSeconds();
-    $: totalSeconds = hours * 3600 + minutes * 60 + seconds;
-    $: today = clockApp.getTodayEvents(new Date(year, month - 1, date));
-    $: eventIndex = today && totalSeconds / EVENT_SWITCH_DELAY % today.events.length | 0;
-    $: eventCount = today?.events.length || 0;
-    $: event = today?.events[eventIndex || 0];
+    let year = $derived(time.getFullYear());
+    let month = $derived(time.getMonth() + 1);
+    let date = $derived(time.getDate());
+    let hours = $derived(time.getHours());
+    let minutes = $derived(time.getMinutes());
+    let seconds = $derived(time.getSeconds());
+    let totalSeconds = $derived(hours * 3600 + minutes * 60 + seconds);
+    let today = $derived(clockApp.getTodayEvents(new Date(year, month - 1, date)));
+    let eventIndex = $derived(today && totalSeconds / EVENT_SWITCH_DELAY % today.events.length | 0);
+    let eventCount = $derived(today?.events.length || 0);
+    let event = $derived(today?.events[eventIndex || 0]);
 </script>
 
 <main>
@@ -63,7 +67,7 @@
     </div>
 </main>
 
-<svelte:element this="style">
+<svelte:element this={"style"}>
     {`
     .time {
         font-size: 5rem !important;

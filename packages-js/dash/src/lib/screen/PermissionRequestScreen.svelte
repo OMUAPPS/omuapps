@@ -12,13 +12,17 @@
     import about_permission from './about_permission.md?raw';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
-        handle: ScreenHandle;
-        props: {
-            request: PromptRequestAppPermissions;
-            resolve: (accept: PromptResult) => void;
+    interface Props {
+        screen: {
+            handle: ScreenHandle;
+            props: {
+                request: PromptRequestAppPermissions;
+                resolve: (accept: PromptResult) => void;
+            };
         };
-    };
+    }
+
+    let { screen }: Props = $props();
     const { request, resolve } = screen.props;
 
     function accept() {
@@ -37,13 +41,13 @@
         high: 2,
     };
 
-    const permissions = request.permissions
+    const permissions = $state(request.permissions
         .sort((a, b) => LEVELS[a.metadata.level] - LEVELS[b.metadata.level])
         .reverse()
         .map((permission) => ({
             permission: PermissionType.deserialize(permission),
             accepted: permission.metadata.level === 'low',
-        }));
+        })));
 </script>
 
 <Screen {screen} disableClose>
@@ -129,7 +133,9 @@
             <i class="ti ti-check"></i>
         </button>
     </div>
-    <Document source={about_permission} slot="info" />
+    {#snippet info()}
+        <Document source={about_permission} />
+    {/snippet}
 </Screen>
 
 <style lang="scss">

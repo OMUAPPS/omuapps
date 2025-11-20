@@ -5,13 +5,17 @@
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
+    interface Props {
+        screen: {
         handle: ScreenHandle;
         props: {
             request: PromptRequestHttpPort;
             resolve: (accept: PromptResult) => void;
         };
     };
+    }
+
+    let { screen }: Props = $props();
     const { request, resolve } = screen.props;
 
     function accept() {

@@ -1,9 +1,14 @@
 <script lang="ts">
+    import ItemDebugInfo from './ItemDebugInfo.svelte';
     import { getContext } from '../game/game.js';
     import type { ItemState } from '../item/item-state.js';
 
-    export let item: ItemState;
-    let open = false;
+    interface Props {
+        item: ItemState;
+    }
+
+    let { item }: Props = $props();
+    let open = $state(false);
 
 </script>
 
@@ -14,7 +19,7 @@
     {#if open}
         <div class="children">
             {#each Object.values(item.children) as child, i (i)}
-                <svelte:self item={getContext().items[child]} />
+                <ItemDebugInfo item={getContext().items[child]} />
             {/each}
         </div>
         <pre>{JSON.stringify(item, null, 2)}</pre>

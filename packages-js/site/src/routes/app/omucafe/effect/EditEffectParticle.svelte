@@ -5,7 +5,11 @@
     import AssetImage from '../components/AssetImage.svelte';
     import type { EffectParticle } from './effect-state.js';
 
-    export let particle: EffectParticle;
+    interface Props {
+        particle: EffectParticle;
+    }
+
+    let { particle = $bindable() }: Props = $props();
 </script>
 
 <h2>動き</h2>

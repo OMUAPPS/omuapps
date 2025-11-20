@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { Button, ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import BackButton from '../components/BackButton.svelte';
@@ -8,17 +10,23 @@
     import MenuRenderer from './MenuRenderer.svelte';
     import ProductList from './ProductList.svelte';
 
-    export let context: SceneContext;
+    interface Props {
+        context: SceneContext;
+    }
+
+    let { context }: Props = $props();
 
     const { scene, config, gameConfig } = getGame();
 
-    let container: HTMLElement;
+    let container: HTMLElement = $state();
 
-    $: if (container) {
-        container.scrollTo({ top: $config.scenes.product_list.scroll });
-    }
+    run(() => {
+        if (container) {
+            container.scrollTo({ top: $config.scenes.product_list.scroll });
+        }
+    });
 
-    let searchElement: HTMLInputElement;
+    let searchElement: HTMLInputElement = $state();
 
     onMount(() => {
         if (!searchElement) return;
@@ -32,14 +40,14 @@
 </script>
 
 <span class="search" class:active={$config.scenes.product_list.search}>
-    <input type="text" bind:this={searchElement} bind:value={$config.scenes.product_list.search} on:blur={() => {
+    <input type="text" bind:this={searchElement} bind:value={$config.scenes.product_list.search} onblur={() => {
         if ($scene.type !== 'product_list') return;
         searchElement.focus();
     }} />
     <i class="ti ti-search"></i>
 </span>
 <main>
-    <div class="list omu-scroll" bind:this={container} on:scroll={() => {
+    <div class="list omu-scroll" bind:this={container} onscroll={() => {
         if ($scene.type !== 'product_list') return;
         $config.scenes.product_list.scroll = container.scrollTop;
     }}>

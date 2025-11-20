@@ -30,9 +30,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={omu.app} />
-    </header>
+    {#snippet header()}
+        <header >
+            <AppHeader app={omu.app} />
+        </header>
+    {/snippet}
     {#await promise then}
         <App {omu} {obs} {clockApp} />
     {/await}

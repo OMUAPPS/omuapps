@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { comparator } from '$lib/helper.js';
     import { lerp } from '$lib/math/math.js';
     import { Timer } from '$lib/timer.js';
@@ -7,8 +9,12 @@
     import { onDestroy } from 'svelte';
     import { ReactionApp } from '../reaction-app.js';
 
-    export let omu: Omu;
-    export let reactionApp: ReactionApp;
+    interface Props {
+        omu: Omu;
+        reactionApp: ReactionApp;
+    }
+
+    let { omu, reactionApp }: Props = $props();
     let { config, reactionSignal } = reactionApp;
 
     type Reaction = {
@@ -52,17 +58,9 @@
         );
     });
 
-    let canvas: HTMLCanvasElement;
-    let ctx: CanvasRenderingContext2D;
+    let canvas: HTMLCanvasElement = $state();
+    let ctx: CanvasRenderingContext2D = $state();
 
-    $: if (canvas) {
-        resize();
-        const context = canvas.getContext('2d');
-        if (!context) {
-            throw new Error('Failed to get 2d context');
-        }
-        ctx = context;
-    }
 
     function resize() {
         canvas.width = canvas.clientWidth;
@@ -98,7 +96,6 @@
         }
     }
 
-    $: reactionScale = 50 * $config.scale;
 
     function spawnReaction(text: string) {
         const x = lerp(
@@ -234,6 +231,17 @@
             cancelAnimationFrame(animationTimer);
         });
     }
+    run(() => {
+        if (canvas) {
+            resize();
+            const context = canvas.getContext('2d');
+            if (!context) {
+                throw new Error('Failed to get 2d context');
+            }
+            ctx = context;
+        }
+    });
+    let reactionScale = $derived(50 * $config.scale);
 </script>
 
 <div class="hidden">
@@ -241,7 +249,7 @@
     😳😄❤🎉💯
 </div>
 
-<svelte:window on:resize={resize} />
+<svelte:window onresize={resize} />
 <canvas bind:this={canvas}></canvas>
 
 <style lang="scss">

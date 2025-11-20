@@ -1,6 +1,11 @@
 <script lang="ts">
-    let width = 0;
-    let containerWidth = 0;
+    interface Props {
+        children?: import('svelte').Snippet;
+    }
+
+    let { children }: Props = $props();
+    let width = $state(0);
+    let containerWidth = $state(0);
     let fontSize = 20;
 </script>
 

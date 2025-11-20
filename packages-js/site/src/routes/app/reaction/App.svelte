@@ -6,8 +6,12 @@
     import ReactionRenderer from './components/ReactionRenderer.svelte';
     import type { ReactionApp } from './reaction-app';
 
-    export let omu: Omu;
-    export let reactionApp: ReactionApp;
+    interface Props {
+        omu: Omu;
+        reactionApp: ReactionApp;
+    }
+
+    let { omu, reactionApp }: Props = $props();
 
     const { config } = reactionApp;
 

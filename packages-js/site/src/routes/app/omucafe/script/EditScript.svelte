@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { ButtonMini, Tooltip } from '@omujs/ui';
     import { setContext } from 'svelte';
     import FitInput from '../components/FitInput.svelte';
@@ -9,10 +11,14 @@
     import { executeExpression, validateScript, value, type Script } from './script.js';
     import { SCRIPT_EDITOR_CONTEXT, type ScriptEditorContext, type ValueEdit } from './scripteditor.js';
 
-    export let script: Script;
+    interface Props {
+        script: Script;
+    }
+
+    let { script = $bindable() }: Props = $props();
     const { scene, gameConfig, globals } = getGame();
 
-    let edit: ValueEdit | null = null;
+    let edit: ValueEdit | null = $state(null);
 
     setContext(SCRIPT_EDITOR_CONTEXT, {
         editValue(newEdit) {
@@ -23,9 +29,11 @@
         },
     } satisfies ScriptEditorContext);
 
-    $: if (edit) {
-        edit.setter(edit.value);
-    }
+    run(() => {
+        if (edit) {
+            edit.setter(edit.value);
+        }
+    });
 </script>
 
 <div class="editor">
@@ -118,7 +126,7 @@
                                     }}>
                                         <i class="ti ti-x"></i>
                                     </button>
-                                    <EditValue bind:value={arg} />
+                                    <EditValue bind:value={edit.value.args[index]} />
                                 </li>
                             {/each}
                             <li>
@@ -155,7 +163,7 @@
                 <i class="ti ti-copy"></i>
             </ButtonMini>
         </div>
-        <textarea value={JSON.stringify(script, null, 2)} on:input={(event) => {
+        <textarea value={JSON.stringify(script, null, 2)} oninput={(event) => {
             const { value } = event.currentTarget;
             try {
                 const obj = JSON.parse(value);

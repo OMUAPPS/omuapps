@@ -1,17 +1,24 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import type { App } from '@omujs/omu';
     import { onDestroy } from 'svelte';
     import Header from './Header.svelte';
     import { omu } from './stores.js';
 
-    let { app }: { app: App } = $props();
+    interface Props {
+        app: App;
+        children?: import('svelte').Snippet;
+    }
 
-    let title = '';
-    let icon = '';
-    let description = '';
+    let { app, children }: Props = $props();
 
-    let unlisten = () => {};
-    $effect(() => {
+    let title = $state('');
+    let icon = $state('');
+    let description = $state('');
+
+    let unlisten = $state(() => {});
+    run(() => {
         if ($omu) {
             unlisten();
             unlisten = $omu.onReady(() => {

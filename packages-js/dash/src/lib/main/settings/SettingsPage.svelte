@@ -5,6 +5,7 @@
     import { screenContext } from '$lib/screen/screen.js';
     import { checkUpdate, invoke } from '$lib/tauri.js';
     import { Button, Combobox, Header, Tooltip } from '@omujs/ui';
+    import { Update } from '@tauri-apps/plugin-updater';
     import UpdateScreen from '../screen/UpdateScreen.svelte';
     import {
         currentSettingsCategory,
@@ -19,7 +20,7 @@
     import DevSettings from './DevSettings.svelte';
     import UninstallScreen from './UninstallScreen.svelte';
 
-    export const props = {};
+    let { data }: { data: unknown } = $props();
 
     async function restartServer() {
         if (omu.ready) {
@@ -115,7 +116,7 @@
                                 </small>
                             </div>
                             <Button primary onclick={() => {
-                                screenContext.push(UpdateScreen, { update });
+                                screenContext.push<{ update: Update }>(UpdateScreen, { update });
                             }}>
                                 {$t('settings.setting.update')}
                                 <i class="ti ti-arrow-up"></i>
@@ -174,41 +175,45 @@
                     {$t('settings.setting.debug')}
                 </h3>
                 <span class="setting">
-                    <Button primary onclick={restartServer} let:promise>
-                        {#if promise}
-                            {#await promise}
-                                {$t('settings.setting.serverRestarting')}
-                            {:then}
-                                {$t('settings.setting.serverRestarted')}
-                            {:catch error}
-                                {$t('settings.setting.serverRestartError', {
-                                    error: JSON.stringify(error),
-                                })}
-                            {/await}
-                        {:else}
-                            {$t('settings.setting.serverRestart')}
-                        {/if}
+                    <Button primary onclick={restartServer}>
+                        {#snippet children({ promise })}
+                            {#if promise}
+                                {#await promise}
+                                    {$t('settings.setting.serverRestarting')}
+                                {:then}
+                                    {$t('settings.setting.serverRestarted')}
+                                {:catch error}
+                                    {$t('settings.setting.serverRestartError', {
+                                        error: JSON.stringify(error),
+                                    })}
+                                {/await}
+                            {:else}
+                                {$t('settings.setting.serverRestart')}
+                            {/if}
+                        {/snippet}
                     </Button>
                 </span>
                 <span class="setting">
-                    <Button primary onclick={() => invoke('generate_log_file')} let:promise>
-                        {#if promise}
-                            {#await promise}
-                                {$t('settings.setting.logFileGenerating')}
-                            {:catch error}
-                                {$t('settings.setting.logFileGenerateError', {
-                                    error,
-                                })}
-                            {/await}
-                        {:else}
-                            {$t('settings.setting.logFileGenerate')}
-                        {/if}
+                    <Button primary onclick={() => invoke('generate_log_file')}>
+                        {#snippet children({ promise })}
+                            {#if promise}
+                                {#await promise}
+                                    {$t('settings.setting.logFileGenerating')}
+                                {:catch error}
+                                    {$t('settings.setting.logFileGenerateError', {
+                                        error,
+                                    })}
+                                {/await}
+                            {:else}
+                                {$t('settings.setting.logFileGenerate')}
+                            {/if}
+                        {/snippet}
                     </Button>
                 </span>
                 <small>先にOBSを終了する必要があります</small>
                 <span class="setting clean-environment">
                     <Button primary onclick={() => {
-                        screenContext.push(
+                        screenContext.push<undefined>(
                             CleaningEnvironmentScreen,
                             undefined,
                         );
@@ -219,7 +224,7 @@
                 <small>アプリのデータをすべて削除し完全なアンインストールをします</small>
                 <span class="setting">
                     <Button primary onclick={() => {
-                        screenContext.push(
+                        screenContext.push<undefined>(
                             UninstallScreen,
                             undefined,
                         );

@@ -2,9 +2,19 @@
     import { linkOpenHandler } from './stores';
     import Tooltip from './Tooltip.svelte';
 
-    export let href: string = '';
-    export let title: string | undefined = undefined;
-    export let decorated: boolean = true;
+    interface Props {
+        href?: string;
+        title?: string | undefined;
+        decorated?: boolean;
+        children?: import('svelte').Snippet;
+    }
+
+    let {
+        href = $bindable(''),
+        title = undefined,
+        decorated = true,
+        children
+    }: Props = $props();
 
     if (href?.length && !href.startsWith('http')) {
         href = `https://${href}`;

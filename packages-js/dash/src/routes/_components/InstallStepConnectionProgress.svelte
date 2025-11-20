@@ -1,10 +1,12 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { appState, netState } from '../stores';
 
-    $: {
+    run(() => {
         if ($netState?.type === 'reconnecting') {
             if ($netState.attempt && $netState.attempt > 2) {
                 $appState = { type: 'restore', message: omu.network.reason?.message };
@@ -16,7 +18,7 @@
                 omu.stop();
             }
         }
-    }
+    });
 
     function formatRemainingTime(remaining: number): string {
         if (remaining <= 0) {

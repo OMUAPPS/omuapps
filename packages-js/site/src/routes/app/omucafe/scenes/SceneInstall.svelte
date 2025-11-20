@@ -1,19 +1,28 @@
 <script lang="ts">
-    import { page } from '$app/stores';
+    import { run } from 'svelte/legacy';
+
+    import { page } from '$app/state';
     import { once } from '$lib/helper.js';
     import { tryCatch } from '$lib/result.js';
     import { Button, Spinner } from '@omujs/ui';
     import { onMount } from 'svelte';
+    import { SvelteURL } from 'svelte/reactivity';
     import avatar_setup from '../asset/images/avatar_setup.png';
     import { getGame, isInstalled, sessions } from '../omucafe-app.js';
     import type { SceneContext } from './scene.js';
 
-    export let context: SceneContext;
-    $: console.log('SceneCooking', context);
+    interface Props {
+        context: SceneContext;
+    }
+
+    let { context }: Props = $props();
+    run(() => {
+        console.log('SceneCooking', context);
+    });
 
     const { scene, config, obs } = getGame();
 
-    let state: {
+    let installState: {
         type: 'waiting';
     } | {
         type: 'prompt';
@@ -21,27 +30,27 @@
         type: 'installing';
     } | {
         type: 'setup';
-    } = {
+    } = $state({
         type: 'waiting',
-    };
+    });
 
     onMount(async () => {
         const connected = obs.isConnected();
         if (!connected) {
             await once((resolve) => obs.on('connected', resolve));
         }
-        state = { type: 'prompt' };
+        installState = { type: 'prompt' };
     });
 
     sessions.subscribe(({ background, overlay }) => {
-        if (state.type !== 'prompt' && state.type !== 'waiting') return;
+        if (installState.type !== 'prompt' && installState.type !== 'waiting') return;
         if (background && overlay) {
             $scene = { type: 'main_menu' };
         }
     });
 
     function getURL(name: string) {
-        const url = new URL($page.url);
+        const url = new SvelteURL(page.url);
         url.pathname = `${url.pathname}asset/${name}`;
         return url;
     }
@@ -118,12 +127,12 @@
         })).source;
         $config.obs.background_uuid = background.uuid || null;
         $config.obs.overlay_uuid = overlay.uuid || null;
-        state = { type: 'setup' };
+        installState = { type: 'setup' };
     }
 </script>
 
 <main>
-    {#if state.type === 'waiting'}
+    {#if installState.type === 'waiting'}
         <div class="left">
             <h1>
                 OBSを待機しています
@@ -141,7 +150,7 @@
                 <i class="ti ti-chevron-right"></i>
             </Button>
         </div>
-    {:else if state.type === 'prompt'}
+    {:else if installState.type === 'prompt'}
         <div class="left">
             <h1>OBSに導入</h1>
             <p>これから設定を行います</p>
@@ -150,9 +159,9 @@
                 <i class="ti ti-check"></i>
             </Button>
         </div>
-    {:else if state.type === 'installing'}
+    {:else if installState.type === 'installing'}
         <Spinner />
-    {:else if state.type === 'setup'}
+    {:else if installState.type === 'setup'}
         <div class="left">
             <h1>あなたを追加</h1>
             <p>あなたのアバターをキッチンとカウンターの間に配置して準備完了！</p>

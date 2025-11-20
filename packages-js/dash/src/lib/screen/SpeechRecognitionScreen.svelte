@@ -3,12 +3,16 @@
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
+    interface Props {
+        screen: {
         handle: ScreenHandle;
         props: {
             resolve: (accept: boolean) => void;
         };
     };
+    }
+
+    let { screen }: Props = $props();
     const { resolve } = screen.props;
 
     function accept() {

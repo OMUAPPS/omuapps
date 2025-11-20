@@ -8,7 +8,11 @@
 
     const { scene } = getGame();
 
-    export let product: Product;
+    interface Props {
+        product: Product;
+    }
+
+    let { product = $bindable() }: Props = $props();
 </script>
 
 <div class="info">

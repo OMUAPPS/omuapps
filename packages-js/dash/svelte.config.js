@@ -9,9 +9,6 @@ const config = {
         postcss: true,
         scss: { includePaths: ['src'] },
     }),
-    compilerOptions: {
-        runes: true,
-    },
 
     kit: {
         adapter: adapter(),

@@ -5,7 +5,11 @@
     import type { SceneContext } from '../scenes/scene.js';
     import GalleryEntry from './GalleryEntry.svelte';
 
-    export let context: SceneContext;
+    interface Props {
+        context: SceneContext;
+    }
+
+    let { context }: Props = $props();
 
     const { scene, gallery } = getGame();
 </script>

@@ -1,7 +1,11 @@
 <script lang="ts">
     import { Content } from '@omujs/chat/models';
 
-    export let component: Content.Component;
+    interface Props {
+        component: Content.Component;
+    }
+
+    let { component = $bindable() }: Props = $props();
 
     function add(child: Content.Component) {
         const children = Content.children(component);
@@ -21,7 +25,7 @@
         }
     }
 
-    let select: HTMLSelectElement;
+    let select: HTMLSelectElement = $state();
 
     function handle(event: Event) {
         const target = event.target as HTMLSelectElement;

@@ -9,7 +9,11 @@
     import { getGame } from '../omucafe-app.js';
     import { createScript } from '../script/script.js';
 
-    export let search: string = '';
+    interface Props {
+        search?: string;
+    }
+
+    let { search = '' }: Props = $props();
 
     const { gameConfig: config, scene } = getGame();
 

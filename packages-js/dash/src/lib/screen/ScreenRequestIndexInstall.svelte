@@ -7,13 +7,17 @@
     import about_index from './about_index.md?raw';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
+    interface Props {
+        screen: {
         handle: ScreenHandle;
         props: {
             request: PromptRequestIndexInstall;
             resolve: (accept: PromptResult) => void;
         };
     };
+    }
+
+    let { screen }: Props = $props();
     const { request, resolve } = screen.props;
     const url = new URL(request.index_url);
 
@@ -66,7 +70,9 @@
             <i class="ti ti-check"></i>
         </button>
     </div>
-    <Document source={about_index} slot="info" />
+    {#snippet info()}
+        <Document source={about_index}  />
+    {/snippet}
 </Screen>
 
 <style lang="scss">

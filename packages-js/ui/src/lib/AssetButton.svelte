@@ -4,10 +4,19 @@
     import { BrowserSession, OmuPermissions, type IntoId } from '@omujs/omu';
     import { obs, omu, Spinner, Tooltip } from '@omujs/ui';
 
-    export let asset: App;
-    export let single = false;
-    export let dimensions: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined = undefined;
-    export let permissions: IntoId[] = [];
+    interface Props {
+        asset: App;
+        single?: boolean;
+        dimensions?: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined;
+        permissions?: IntoId[];
+    }
+
+    let {
+        asset,
+        single = false,
+        dimensions = undefined,
+        permissions = []
+    }: Props = $props();
 
     async function create() {
         const name = $omu.app.metadata?.name ? $omu.i18n.translate($omu.app.metadata?.name) : 'Asset';
@@ -25,7 +34,7 @@
         creating = null;
     }
 
-    let obsConnected = false;
+    let obsConnected = $state(false);
     $obs.on('connected', () => (obsConnected = true));
     $obs.on('disconnected', () => (obsConnected = false));
     obsConnected = $obs.isConnected();
@@ -51,7 +60,7 @@
         return url;
     }
 
-    let creating: Promise<void> | null = null;
+    let creating: Promise<void> | null = $state(null);
 </script>
 
 {#if obsConnected}

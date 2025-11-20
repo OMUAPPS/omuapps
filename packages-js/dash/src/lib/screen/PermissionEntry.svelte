@@ -4,11 +4,15 @@
     import type { PermissionType } from '@omujs/omu/api/permission';
     import { Tooltip } from '@omujs/ui';
 
-    export let permission: PermissionType;
-    export let accepted: boolean;
-    export let disabled: boolean;
+    interface Props {
+        permission: PermissionType;
+        accepted: boolean;
+        disabled: boolean;
+    }
 
-    $: note = permission.metadata.note && omu.i18n.translate(permission.metadata.note);
+    let { permission, accepted = $bindable(), disabled }: Props = $props();
+
+    let note = $derived(permission.metadata.note && omu.i18n.translate(permission.metadata.note));
 </script>
 
 <button class:accepted onclick={() => (accepted = !accepted)} {disabled}>

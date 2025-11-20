@@ -6,10 +6,12 @@
     import { Button, Spinner } from '@omujs/ui';
     import { relaunch } from '@tauri-apps/plugin-process';
 
-    export let screen: {
+    interface Props {
         handle: ScreenHandle;
         props: undefined;
-    };
+    }
+
+    let { handle, props }: Props = $props();
 
     const ERROR_MESSAGES = {
         DevMode: {
@@ -35,7 +37,7 @@
     };
 
     type ErrorType = { type: keyof typeof ERROR_MESSAGES; message: string };
-    let errorMessage: ErrorType | null = null;
+    let errorMessage: ErrorType | null = $state(null);
 
     async function cleanEnvironment(): Promise<void> {
         if (omu.ready) {
@@ -50,10 +52,10 @@
         await relaunch();
     }
 
-    let cleanPromise: Promise<void> = cleanEnvironment();
+    let cleanPromise: Promise<void> = $state(cleanEnvironment());
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="screen">
         {#await cleanPromise}
             <div class="container">

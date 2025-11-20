@@ -6,13 +6,17 @@
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
+    interface Props {
+        screen: {
         handle: ScreenHandle;
         props: {
             request: PromptRequestAppUpdate;
             resolve: (accept: PromptResult) => void;
         };
     };
+    }
+
+    let { screen }: Props = $props();
     const { request, resolve } = screen.props;
 
     function accept() {
@@ -30,7 +34,7 @@
         scrolled = scrollHeight - clientHeight - scrollTop < 10;
     }
 
-    let scrolled = false;
+    let scrolled = $state(false);
 </script>
 
 <Screen {screen} disableClose>
@@ -39,8 +43,8 @@
         <div
             class="content omu-scroll"
             use:updateScroll
-            on:scroll={({ currentTarget }) => updateScroll(currentTarget)}
-            on:resize={({ currentTarget }) => updateScroll(currentTarget)}
+            onscroll={({ currentTarget }) => updateScroll(currentTarget)}
+            onresize={({ currentTarget }) => updateScroll(currentTarget)}
         >
             <h3>
                 古いバージョン

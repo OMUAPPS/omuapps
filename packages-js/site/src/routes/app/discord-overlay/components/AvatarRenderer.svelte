@@ -24,13 +24,22 @@
     import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
     import { alignClear, alignIndexes, alignSide, avatarPositions, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
 
-    export let overlayApp: DiscordOverlayApp;
-    export let voiceState: RPCVoiceStates;
-    export let speakingState: RPCSpeakingStates;
-    export let dimensions = {
+    interface Props {
+        overlayApp: DiscordOverlayApp;
+        voiceState: RPCVoiceStates;
+        speakingState: RPCSpeakingStates;
+        dimensions?: any;
+    }
+
+    let {
+        overlayApp,
+        voiceState,
+        speakingState,
+        dimensions = {
         width: 1920,
         height: 1080,
-    };
+    }
+    }: Props = $props();
     const { config } = overlayApp;
 
     let context: GlContext;

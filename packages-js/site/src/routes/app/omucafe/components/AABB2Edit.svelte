@@ -2,7 +2,11 @@
     import type { AABB2Like } from '$lib/math/aabb2.js';
     import { Tooltip } from '@omujs/ui';
 
-    export let bounds: AABB2Like;
+    interface Props {
+        bounds: AABB2Like;
+    }
+
+    let { bounds = $bindable() }: Props = $props();
 </script>
 
 <div class="edit">

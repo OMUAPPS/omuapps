@@ -3,7 +3,11 @@
     import EditValue from './EditValue.svelte';
     import { builder, command, value, type Expression } from './script.js';
 
-    export let expression: Expression;
+    interface Props {
+        expression: Expression;
+    }
+
+    let { expression = $bindable() }: Props = $props();
 </script>
 
 <div class="commands">
@@ -11,7 +15,7 @@
         <div class="item">
             <button onclick={() => {
                 expression.commands = expression.commands.filter((_, idx) => idx !== index);
-            }} class="delete">
+            }} class="delete" title="削除">
                 <i class="ti ti-x"></i>
             </button>
             {#if command.type === 'invoke'}
@@ -20,14 +24,14 @@
                     <EditValue bind:value={command.function} />
                     <i class="ti ti-brackets-contain-start"></i>
                     {#each command.args as arg, index (index)}
-                        <EditValue bind:value={arg} />
+                        <EditValue bind:value={command.args[index]} />
                     {/each}
                     <button onclick={() => {
                         command.args = [
                             ...command.args,
                             builder.v.void(),
                         ];
-                    }}>
+                    }} title="追加">
                         <i class="ti ti-plus"></i>
                     </button>
                     <i class="ti ti-brackets-contain-end"></i>
@@ -57,7 +61,7 @@
             label: 'Invoke',
             value: () => command.invoke(value.void(), value.void()),
         },
-    }} value={null} onchange={({ detail: { value } }) => {
+    }} value={null} on:change={({ detail: { value } }) => {
         if (!value) return;
         expression.commands = [
             ...expression.commands,

@@ -4,7 +4,11 @@
     import RendererAsset from './AssetRenderer.svelte';
 
     const quizApp = QuizApp.getInstance();
-    export let prompt: Prompt;
+    interface Props {
+        prompt: Prompt;
+    }
+
+    let { prompt = $bindable() }: Props = $props();
 
     async function handleUpload(files: FileList) {
         const assets: Asset[] = [];

@@ -1,7 +1,12 @@
 <script lang="ts">
+    import JsonEditEntry from './JsonEditEntry.svelte';
 
-    export let value: any;
-    export let open = false;
+    interface Props {
+        value: any;
+        open?: boolean;
+    }
+
+    let { value = $bindable(), open = $bindable(false) }: Props = $props();
 </script>
 
 {#if typeof value === 'undefined'}
@@ -14,7 +19,7 @@
     </span>
 {:else if typeof value === 'number'}
     <span class="number">
-        <input type="text" value={value.toString()} on:input={({ currentTarget }) => {
+        <input type="text" value={value.toString()} oninput={({ currentTarget }) => {
             const newValue = parseFloat(currentTarget.value);
             if (Number.isNaN(newValue) || Number.isFinite(newValue)) return;
             value = newValue;
@@ -37,7 +42,7 @@
     <ul>
         {#each value as _, i (i)}
             <li>
-                <svelte:self bind:value={value[i]} />
+                <JsonEditEntry bind:value={value[i]} />
             </li>
         {/each}
     </ul>
@@ -56,7 +61,7 @@
             {#each Object.keys(value) as key (key)}
                 <li>
                     <strong>{key}:</strong>
-                    <svelte:self bind:value={value[key]} />
+                    <JsonEditEntry bind:value={value[key]} />
                 </li>
             {/each}
         </ul>

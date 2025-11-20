@@ -5,27 +5,31 @@
     import type { RPCSession } from '../discord/discord';
     import VoiceChannelStatus from './VoiceChannelStatus.svelte';
 
-    export let session: RPCSession | undefined;
+    interface Props {
+        session: RPCSession | undefined;
+    }
+
+    let { session }: Props = $props();
     const overlayApp = DiscordOverlayApp.getInstance();
     const { config, discord } = overlayApp;
     const { sessions } = discord;
 
-    let state: {
+    let accountState: {
         type: 'refreshing';
     } | {
         type: 'result';
         sessions: Record<string, RPCSession>;
-    } = {
+    } = $state({
         type: 'result',
         sessions: Object.fromEntries(Object.values($sessions).map((session) => {
             return [session.user.id, session];
         })),
-    };
+    });
 
     async function refresh() {
-        state = { type: 'refreshing' };
+        accountState = { type: 'refreshing' };
         await discord.refresh();
-        state = {
+        accountState = {
             type: 'result',
             sessions: Object.fromEntries(Object.values($sessions).map((session) => {
                 return [session.user.id, session];
@@ -33,9 +37,9 @@
         };
     }
 
-    let open = false;
-    let switcherElement: HTMLElement | undefined;
-    let userElement: HTMLElement | undefined;
+    let open = $state(false);
+    let switcherElement: HTMLElement | undefined = $state();
+    let userElement: HTMLElement | undefined = $state();
 </script>
 
 <svelte:window onclick={(event) => {
@@ -49,8 +53,8 @@
 }} />
 
 <div class="container">
-    {#if state.type === 'result'}
-        {#if Object.keys(state.sessions).length === 0}
+    {#if accountState.type === 'result'}
+        {#if Object.keys(accountState.sessions).length === 0}
             <small class="message">
                 起動しているDiscordが見つかりませんでした
                 <i class="ti ti-info-circle"></i>
@@ -67,7 +71,7 @@
             {#if !open && session}
                 <VoiceChannelStatus {session} />
             {/if}
-            {#if open && Object.keys(state.sessions).length > 0}
+            {#if open && Object.keys(accountState.sessions).length > 0}
                 <div class="switcher" bind:this={switcherElement}>
                     <button class="entry refresh" onclick={refresh}>
                         <Tooltip>
@@ -77,7 +81,7 @@
                         Discordを再検出
                         <i class="ti ti-refresh"></i>
                     </button>
-                    {#each Object.values(state.sessions).filter((session) => session.user.id !== $config.user_id) as session, index (index)}
+                    {#each Object.values(accountState.sessions).filter((session) => session.user.id !== $config.user_id) as session, index (index)}
                         {@const { user } = session}
                         <button class="entry" onclick={() => {
                             $config.user_id = user.id;
@@ -98,8 +102,8 @@
                     {/each}
                 </div>
             {/if}
-            {#if $config.user_id && state.sessions[$config.user_id]}
-                {@const { user } = state.sessions[$config.user_id]}
+            {#if $config.user_id && accountState.sessions[$config.user_id]}
+                {@const { user } = accountState.sessions[$config.user_id]}
                 <button class="entry" onclick={() => {open = !open;}} bind:this={userElement}>
                     {#if !open}
                         <Tooltip>
@@ -118,7 +122,7 @@
                 </button>
             {/if}
         {/if}
-    {:else if state.type === 'refreshing'}
+    {:else if accountState.type === 'refreshing'}
         <div class="entry refresh">
             Discordを検出中
             <Spinner />

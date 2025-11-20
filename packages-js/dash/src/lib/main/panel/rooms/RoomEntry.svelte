@@ -6,8 +6,12 @@
     import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
 
-    export let entry: Models.Room;
-    export let selected: boolean = false;
+    interface Props {
+        entry: Models.Room;
+        selected?: boolean;
+    }
+
+    let { entry, selected = false }: Props = $props();
 
     function copyViewers() {
         const viewers = entry.metadata?.viewers;

@@ -26,9 +26,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={omu.app} />
-    </header>
+    {#snippet header()}
+        <header >
+            <AppHeader app={omu.app} />
+        </header>
+    {/snippet}
     <main>
         {#await omu.waitForReady() then}
             <App {chat} />

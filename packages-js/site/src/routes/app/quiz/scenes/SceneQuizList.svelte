@@ -53,8 +53,8 @@
         }
     }
 
-    $: exportDisabled = !Object.entries($selectedQuizzes)
-        .some(([, checked]) => checked);
+    let exportDisabled = $derived(!Object.entries($selectedQuizzes)
+        .some(([, checked]) => checked));
 </script>
 
 <main>

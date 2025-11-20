@@ -4,7 +4,11 @@
     import type { App } from '@omujs/omu';
     import { ExternalLink } from '@omujs/ui';
 
-    export let app: App;
+    interface Props {
+        app: App;
+    }
+
+    let { app }: Props = $props();
 </script>
 
 <div class="info">

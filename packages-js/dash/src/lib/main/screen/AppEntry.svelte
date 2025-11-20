@@ -7,18 +7,22 @@
     import { currentPage } from '../settings.js';
     import { selectedApp } from './stores.js';
 
-    export let entry: App;
-    $: name = entry.metadata?.name
-        ? omu.i18n.translate(entry.metadata?.name)
-        : '';
-    $: description = entry.metadata?.description
-        ? omu.i18n.translate(entry.metadata?.description)
-        : '';
-    $: icon = entry.metadata?.icon
-        ? omu.i18n.translate(entry.metadata?.icon)
-        : '';
+    interface Props {
+        entry: App;
+    }
 
-    $: id = `app-${entry.id.key()}`;
+    let { entry }: Props = $props();
+    let name = $derived(entry.metadata?.name
+        ? omu.i18n.translate(entry.metadata?.name)
+        : '');
+    let description = $derived(entry.metadata?.description
+        ? omu.i18n.translate(entry.metadata?.description)
+        : '');
+    let icon = $derived(entry.metadata?.icon
+        ? omu.i18n.translate(entry.metadata?.icon)
+        : '');
+
+    let id = $derived(`app-${entry.id.key()}`);
 </script>
 
 <button onclick={() => {

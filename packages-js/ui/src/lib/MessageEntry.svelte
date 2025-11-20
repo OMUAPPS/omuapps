@@ -4,11 +4,15 @@
     import MessageRenderer from './MessageRenderer.svelte';
     import { chat } from './stores.js';
 
-    export let entry: Models.Message;
-    export let selected: boolean = false;
+    interface Props {
+        entry: Models.Message;
+        selected?: boolean;
+    }
 
-    let author: Models.Author | undefined;
-    let room: Models.Room | undefined;
+    let { entry, selected = false }: Props = $props();
+
+    let author: Models.Author | undefined = $state();
+    let room: Models.Room | undefined = $state();
 
     if (entry.authorId) {
         $chat.authors.get(entry.authorId.key()).then((res) => {

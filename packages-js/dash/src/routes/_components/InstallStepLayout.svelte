@@ -2,6 +2,12 @@
     import { keepOpenOnBackground } from '$lib/main/settings';
     import { backgroundRequested } from '$lib/tauri';
     import { Checkbox } from '@omujs/ui';
+    interface Props {
+        children?: import('svelte').Snippet;
+        hint?: import('svelte').Snippet;
+    }
+
+    let { children, hint }: Props = $props();
 
 </script>
 
@@ -15,7 +21,7 @@
     <div class="notification">
         {#if $backgroundRequested}
             起動後にこのウィンドウは閉じられます
-            <!-- svelte-ignore a11y-label-has-associated-control -->
+            <!-- svelte-ignore a11y_label_has_associated_control -->
             <label>
                 開いたままにする
                 <Checkbox bind:value={$keepOpenOnBackground} />

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { Slider, Tooltip } from '@omujs/ui';
     import { uploadAssetByBlob } from '../asset/asset.js';
     import { acquireRenderLock, getContext } from '../game/game.js';
@@ -10,7 +12,11 @@
     import type { PhotoTakeState, SceneType } from '../scenes/scene.js';
     import PhotoScreenInfo from './PhotoScreenInfo.svelte';
 
-    export let photoMode: SceneType<'photo_mode'>;
+    interface Props {
+        photoMode: SceneType<'photo_mode'>;
+    }
+
+    let { photoMode = $bindable() }: Props = $props();
 
     const { scene, states, obs, gameConfig, gallery } = getGame();
 
@@ -47,6 +53,7 @@
             const duration = photoTake.duration;
             const remaining = startTime + duration - Time.now();
             if (remaining < 0) {
+                // eslint-disable-next-line svelte/infinite-reactive-loop
                 taking = takePhoto(startTime, duration);
             }
             timer = window.setTimeout(() => {
@@ -60,7 +67,10 @@
         }
     }
 
-    $: update(photoMode.photoTake);
+    // eslint-disable-next-line svelte/infinite-reactive-loop
+    run(() => {
+        update(photoMode.photoTake);
+    });
 
     async function takePhoto(startTime: number, duration: number) {
         photoMode.photoTake = {
@@ -83,7 +93,7 @@
             timestamp: new Date().toISOString(),
             order: $states.kitchen.order,
         });
-
+        // eslint-disable-next-line svelte/infinite-reactive-loop
         photoMode.photoTake = {
             type: 'taken',
             asset,

@@ -3,10 +3,14 @@
     import type { SceneJson } from '@omujs/obs/types.js';
     import { Combobox } from '@omujs/ui';
 
-    export let obs: OBSPlugin;
-    export let scene: string | null = null;
+    interface Props {
+        obs: OBSPlugin;
+        scene?: string | null;
+    }
 
-    let scenes: SceneJson[] = [];
+    let { obs, scene = $bindable(null) }: Props = $props();
+
+    let scenes: SceneJson[] = $state([]);
 
     async function updateScenes() {
         scenes = (await obs.sceneList()).scenes;

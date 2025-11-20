@@ -1,10 +1,15 @@
 <script lang="ts">
     import { getContext } from 'svelte';
+    import EditValue from './EditValue.svelte';
     import type { Value } from './script.js';
     import { SCRIPT_EDITOR_CONTEXT, type ScriptEditorContext } from './scripteditor.js';
 
-    export let value: Value;
-    let active = false;
+    interface Props {
+        value: Value;
+    }
+
+    let { value = $bindable() }: Props = $props();
+    let active = $state(false);
 
     const ctx = getContext<ScriptEditorContext>(SCRIPT_EDITOR_CONTEXT);
 </script>
@@ -30,10 +35,10 @@
         {value.value}
     {:else if value.type === 'invoke'}
         <i class="ti ti-caret-right-filled"></i>
-        <svelte:self bind:value={value.function} />
+        <EditValue bind:value={value.function} />
         <i class="ti ti-brackets-contain-start"></i>
-        {#each value.args as arg, index (index)}
-            <svelte:self bind:value={arg} />
+        {#each value.args as _, index (index)}
+            <EditValue bind:value={value.args[index]} />
         {/each}
         <i class="ti ti-brackets-contain-end"></i>
     {:else if value.type === 'void'}

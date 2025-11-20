@@ -1,10 +1,18 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { onMount } from 'svelte';
     import { getGame } from '../omucafe-app.js';
     import type { SceneContext } from './scene.js';
 
-    export let context: SceneContext;
-    $: console.log('SceneLoading', context);
+    interface Props {
+        context: SceneContext;
+    }
+
+    let { context }: Props = $props();
+    run(() => {
+        console.log('SceneLoading', context);
+    });
 
     const { omu, scene } = getGame();
 

@@ -9,8 +9,11 @@
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
     import { appWindow, listen } from './tauri.js';
     import { VERSION } from './version.js';
+    interface Props {
+        children?: import('svelte').Snippet;
+    }
 
-    let { children } = $props();
+    let { children }: Props = $props();
 
     let alwaysOnTop = $state(false);
     let maximized = $state(false);

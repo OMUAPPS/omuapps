@@ -1,8 +1,13 @@
 <script lang="ts">
     import { ExternalLink } from '@omujs/ui';
 
-    export let href: string;
-    export let title: string;
+    interface Props {
+        href: string;
+        title: string;
+        children?: import('svelte').Snippet;
+    }
+
+    let { href, title, children }: Props = $props();
 </script>
 
 <ExternalLink {href} {title} decorated={false}>

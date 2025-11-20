@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
@@ -11,9 +13,13 @@
     import { ASSET_APP } from './app';
     import { CaptionApp, FONTS, LANGUAGES_OPTIONS, type LanguageKey } from './caption-app.js';
 
-    export let omu: Omu;
-    export let obs: OBSPlugin;
-    export let captionApp: CaptionApp;
+    interface Props {
+        omu: Omu;
+        obs: OBSPlugin;
+        captionApp: CaptionApp;
+    }
+
+    let { omu, obs, captionApp }: Props = $props();
 
     const { config } = captionApp;
     omu.dashboard.speechRecognitionStart();
@@ -22,7 +28,7 @@
         $config.lang = window.navigator.language as LanguageKey;
     }
 
-    $: {
+    run(() => {
         if ($config.style.fonts.length === 0) {
             $config.style.fonts = [
                 {
@@ -31,9 +37,11 @@
                 },
             ];
         }
-    }
+    });
 
-    $: console.log($config.style.fonts[0]);
+    run(() => {
+        console.log($config.style.fonts[0]);
+    });
 </script>
 
 <main>
@@ -49,7 +57,7 @@
             </Button>
         </h2>
         <section>
-            <Combobox options={LANGUAGES_OPTIONS} value={$config.lang} onchange={({ detail: { value } }) => {
+            <Combobox options={LANGUAGES_OPTIONS} value={$config.lang} on:change={({ detail: { value } }) => {
                 $config.lang = value;
             }} />
         </section>
@@ -67,7 +75,7 @@
                     },
                     label: name,
                 }];
-            }))} value={$config.style.fonts[0]} onchange={({ detail: { value } }) => {
+            }))} value={$config.style.fonts[0]} on:change={({ detail: { value } }) => {
                 $config.style.fonts = [value];
             }} />
             <div>

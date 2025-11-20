@@ -1,8 +1,21 @@
 <script lang="ts">
-    export let name: string | undefined = undefined;
-    export let icon: string | undefined = undefined;
-    export let flex: number = 0;
-    export let min: string = '';
+    interface Props {
+        name?: string | undefined;
+        icon?: string | undefined;
+        flex?: number;
+        min?: string;
+        actions?: import('svelte').Snippet;
+        children?: import('svelte').Snippet;
+    }
+
+    let {
+        name = undefined,
+        icon = undefined,
+        flex = 0,
+        min = '',
+        actions,
+        children
+    }: Props = $props();
 </script>
 
 {#if name || icon}

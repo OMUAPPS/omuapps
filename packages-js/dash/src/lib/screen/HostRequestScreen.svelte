@@ -5,7 +5,8 @@
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
+    interface Props {
+        screen: {
         handle: ScreenHandle;
         props: {
             request: HostRequest;
@@ -13,6 +14,9 @@
             resolve: (accept: UserResponse) => void;
         };
     };
+    }
+
+    let { screen }: Props = $props();
     const { request, app, resolve } = screen.props;
 
     function accept() {

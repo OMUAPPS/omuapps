@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { comparator } from '$lib/helper';
     import { Slider, Tooltip } from '@omujs/ui';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
@@ -9,13 +11,22 @@
     import type { RPCSession, RPCSpeakingStates, RPCVoiceStates } from './discord/discord';
     import { dragState, selectedAvatar } from './states.js';
 
-    export let session: RPCSession;
-    export let voiceState: RPCVoiceStates;
-    export let speakingState: RPCSpeakingStates;
-    export let overlayApp: DiscordOverlayApp;
+    interface Props {
+        session: RPCSession;
+        voiceState: RPCVoiceStates;
+        speakingState: RPCSpeakingStates;
+        overlayApp: DiscordOverlayApp;
+    }
+
+    let {
+        session,
+        voiceState,
+        speakingState,
+        overlayApp,
+    }: Props = $props();
     const { config } = overlayApp;
 
-    let resolution: { width: number; height: number } = { width: 0, height: 0 };
+    let resolution: { width: number; height: number } = $state({ width: 0, height: 0 });
 
     function getUser(id: string) {
         let user = $config.users[id];
@@ -26,11 +37,13 @@
         return user;
     }
 
-    $: Object.keys(voiceState.states).forEach(id => {
-        getUser(id);
+    run(() => {
+        Object.keys(voiceState.states).forEach(id => {
+            getUser(id);
+        });
     });
 
-    let settingsOpen = false;
+    let settingsOpen = $state(false);
 </script>
 
 <main>
@@ -58,9 +71,9 @@
                         <UserDragControl
                             {resolution}
                             {overlayApp}
-                            {voiceState}
+                            voiceStates={voiceState}
                             {id}
-                            {state}
+                            voiceState={state}
                             bind:user={$config.users[id]}
                         />
                     {/if}

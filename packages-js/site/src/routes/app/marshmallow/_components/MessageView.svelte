@@ -6,13 +6,17 @@
     import MarshmallowRenderer from './MarshmallowRenderer.svelte';
     import MessageActions from './MessageActions.svelte';
 
-    export let api: MarshmallowAPI;
+    interface Props {
+        api: MarshmallowAPI;
+    }
+
+    let { api }: Props = $props();
 
     const { data } = MarshmallowApp.getInstance();
 
-    let imageElement: HTMLElement;
-    let containerElement: HTMLElement;
-    let mouse: { clientX: number; clientY: number } = { clientX: 0, clientY: 0 };
+    let imageElement: HTMLElement = $state();
+    let containerElement: HTMLElement = $state();
+    let mouse: { clientX: number; clientY: number } = $state({ clientX: 0, clientY: 0 });
 
     function updatePointer() {
         const { clientX, clientY } = mouse;
@@ -35,7 +39,7 @@
 <div
     bind:this={containerElement}
     class="container omu-scroll"
-    on:scroll={handleScroll}
+    onscroll={handleScroll}
 >
     {#if $data.message}
         <div class="close">
@@ -47,11 +51,11 @@
         <div class="message">
             <div class="image"
                 role="img"
-                on:mousemove={(event) => {
+                onmousemove={(event) => {
                     mouse = event;
                     updatePointer();
                 }}
-                on:mouseleave={() => {
+                onmouseleave={() => {
                     $data.pointer = null;
                 }}
                 bind:this={imageElement}>

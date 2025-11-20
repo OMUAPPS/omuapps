@@ -30,9 +30,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={APP} />
-    </header>
+    {#snippet header()}
+        <header >
+            <AppHeader app={APP} />
+        </header>
+    {/snippet}
     {#await omu.waitForReady() then}
         <App {omu} {obs} {captionApp} />
     {/await}

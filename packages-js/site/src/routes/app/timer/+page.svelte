@@ -33,9 +33,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={APP} />
-    </header>
+    {#snippet header()}
+        <header >
+            <AppHeader app={APP} />
+        </header>
+    {/snippet}
     <main>
         <div class="flex col width">
             <h3>タイム</h3>
