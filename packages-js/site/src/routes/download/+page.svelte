@@ -123,6 +123,7 @@
                         <i class="ti ti-download"></i>
                     </a>
                     <button on:click={() => (showExtra = !showExtra)} class="extra">
+                        その他
                         <i class="ti ti-chevron-{showExtra ? 'up' : 'down'}"></i>
                     </button>
                 </div>

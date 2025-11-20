@@ -97,15 +97,12 @@ export class DiscordRPCService {
         this.discord.clients.forEach((client) => client.start({
             session: (session) => this.sessions.modify((value) => {
                 value[client.port] = session;
-                return value;
             }),
             voiceState: (states) => this.voiceStates.modify((value) => {
                 value[client.port] = states;
-                return value;
             }),
             speakingState: (states) => this.speakingStates.modify((value) => {
                 value[client.port] = states;
-                return value;
             }),
             message: (message) => {
                 this.channelMessageSignal.notify({

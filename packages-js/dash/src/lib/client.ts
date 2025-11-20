@@ -6,8 +6,9 @@ import type { Address } from '@omujs/omu/network';
 import { invoke, IS_TAURI } from '$lib/tauri.js';
 
 import { Chat, ChatPermissions } from '@omujs/chat';
-import { App, BrowserTokenProvider, Identifier, Omu, OmuPermissions } from '@omujs/omu';
+import { App, Identifier, Omu, OmuPermissions } from '@omujs/omu';
 import type { Locale } from '@omujs/omu/localization';
+import type { SessioTokenProvider } from '../../../omu/dist/dts/token.js';
 import { currentPage, language } from './main/settings.js';
 import { VERSION } from './version.js';
 
@@ -23,21 +24,20 @@ const address: Address = {
     secure: false,
 };
 
-class TokenProvider extends BrowserTokenProvider {
-    async get(serverAddress: Address, app: App): Promise<string | undefined> {
+class DashboardSession implements SessioTokenProvider {
+    async get(): Promise<string | undefined> {
         if (IS_TAURI) {
             const token = await invoke('get_token');
             if (token) {
                 return token;
             }
         }
-        return super.get(serverAddress, app);
     }
 }
 
 const omu = new Omu(app, {
     address,
-    token: new TokenProvider(),
+    token: new DashboardSession(),
 });
 const chat = Chat.create(omu);
 const dashboard = new Dashboard(omu);

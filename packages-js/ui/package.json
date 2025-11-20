@@ -2,12 +2,19 @@
     "type": "module",
     "name": "@omujs/ui",
     "version": "0.9.41",
+    "main": "./dist/index.js",
     "svelte": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
             "svelte": "./dist/index.js"
+        },
+        "./*": {
+            "types": "./dist/*/index.d.ts",
+            "import": "./dist/*/index.js",
+            "svelte": "./dist/*/index.js"
         }
     },
     "scripts": {
@@ -23,7 +30,7 @@
         "preview": "bun x --bun vite preview",
         "storybook": "storybook dev -p 6006",
         "test": "vitest",
-        "watch": "bun x --bun svelte-package --watch"
+        "watch": "nodemon --verbose --watch src --ext \"ts,svelte\" --exec \"bun x --bun svelte-package\""
     },
     "repository": {
         "type": "git",
@@ -61,7 +68,7 @@
         "@omujs/i18n": "workspace:*",
         "@omujs/obs": "workspace:*",
         "@omujs/omu": "workspace:*",
-        "@sveltejs/kit": "^2.5.4",
+        "@sveltejs/kit": "^2.48.5",
         "svelte": "^4.0.0"
     },
     "files": [

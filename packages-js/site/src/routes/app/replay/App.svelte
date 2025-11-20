@@ -90,7 +90,6 @@
                     <TwitchPlayer
                         video={$replayData.video}
                         bind:playback={$replayData.playback}
-                        bind:info={$replayData.info}
                     />
                 {/if}
             {:else}

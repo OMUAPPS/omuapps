@@ -115,7 +115,7 @@
         }
         | null = null;
 
-    omu.dashboard.requireDragDrop().then((handler) => {
+    omu.dashboard.requestDragDrop().then((handler) => {
         handler.onEnter(async ({ drag_id, files }) => {
             if (!files.some((it) => it.name.endsWith('.omucafe'))) return;
             importState = {

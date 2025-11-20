@@ -116,12 +116,6 @@
                 font-weight: 600;
                 color: var(--color-text);
             }
-
-            > a {
-                position: absolute;
-                font-size: 0.8rem;
-                bottom: -1.5rem;
-            }
         }
     }
 

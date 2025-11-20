@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { BrowserTokenProvider, Omu, type App, type DisconnectReason } from '@omujs/omu';
+    import { BrowserSession, Omu, type App, type DisconnectReason } from '@omujs/omu';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
@@ -28,7 +28,7 @@
     } = { type: 'initializing', browser: BROWSER };
 
     const id = BROWSER && new URLSearchParams(location.search).get('id');
-    const isSessionPresent = BROWSER && new URLSearchParams(location.search).get(BrowserTokenProvider.TOKEN_PARAM_KEY);
+    const isSessionPresent = BROWSER && new URLSearchParams(location.search).get(BrowserSession.PARAM_NAME);
 
     function init(omu: Omu) {
         state = { type: 'initialized', omu };

@@ -1,11 +1,24 @@
 <script lang="ts">
     import { Theme } from '@omujs/ui';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
+    import style from 'svelte-highlight/styles/stackoverflow-light';
     import ProgressBar from './_components/ProgressBar.svelte';
     import './styles.css';
+
+    const css = style
+        .replace('<style>', '')
+        .replace('</style>', '')
+        .replace('code.hljs{display:block;overflow-x:auto;padding:1em}', 'code.hljs{display:block;overflow-x:auto;padding:0.5em}');
 </script>
 
-<Theme />
+<svelte:head>
+    <Theme />
+</svelte:head>
+
+<svelte:element this="style">
+    {css}
+</svelte:element>
+
 <div class="app">
     <slot />
 </div>

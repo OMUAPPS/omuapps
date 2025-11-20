@@ -19,7 +19,7 @@
         code={text}
         let:highlighted
     >
-        <LineNumbers {highlighted} />
+        <LineNumbers {highlighted} --border-color="#eee" />
     </Highlight>
     <button on:click={() => {
         navigator.clipboard.writeText(text);
@@ -34,22 +34,27 @@
         position: relative;
         display: flex;
         flex-direction: column;
-        align-items: start;
+        align-items: stretch;
         width: 100%;
-        background: var(--langtag-background);
+        background: #f6f6f6;
         outline: 1px solid var(--color-outline);
         border-radius: 3px;
         user-select: text;
         margin: 1rem 0;
         overflow-x: auto;
+        padding: 0 0.25em;
+        font-weight: 500;
     }
 
     .copy {
         position: absolute;
         top: 0;
         right: 0;
+        z-index: 1;
+        border-radius: 2px;
+        outline: 1px solid var(--color-outline);
         padding: 0.25rem 0.5rem;
-        background: var(--color-bg-1);
+        background: var(--color-bg-2);
         color: var(--color-1);
         border: none;
         border-radius: 2px;

@@ -36,6 +36,14 @@
     });
 </script>
 
+<svelte:head>
+    <style>
+        :global(body) {
+            background: transparent;
+        }
+    </style>
+</svelte:head>
+
 <slot name="header" />
 <main>
     <slot />
@@ -117,10 +125,6 @@
 {/if}
 
 <style lang="scss">
-    :global(body) {
-        background: transparent;
-    }
-
     main {
         position: relative;
         width: 100%;

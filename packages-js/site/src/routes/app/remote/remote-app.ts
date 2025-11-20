@@ -1,4 +1,4 @@
-import { makeRegistryWritable } from '$lib/helper.js';
+import { makeRegistryWritable, sha256 } from '$lib/helper.js';
 import type { Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
 import type { AlignType } from '@omujs/ui';
@@ -126,17 +126,17 @@ export class RemoteApp {
     public async upload(...files: File[]) {
         const buffers = await Promise.all(files.map(async (file) => {
             const bytes = new Uint8Array(await file.arrayBuffer());
-            const hash = hash(bytes);
+            const hash = sha256(bytes);
             const hashHex = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
             const id = APP_ID.join('resource', hashHex);
-            return { identifier: id, buffer: bytes, file };
+            return { id, buffer: bytes, file };
         }));
         const results = await this.omu.assets.uploadMany(...buffers);
         this.resources.update((resources) => {
             resources.resources = {
                 ...resources.resources,
                 ...results.reduce((acc, id) => {
-                    const entry = buffers.find((buffer) => buffer.identifier.isEqual(id));
+                    const entry = buffers.find((buffer) => buffer.id.isEqual(id));
                     if (!entry) {
                         return acc;
                     }
@@ -168,7 +168,7 @@ export class RemoteApp {
 
     public async createAlbum(assets: string[], filename?: string) {
         const now = Date.now();
-        const hashBytes = hash(new TextEncoder().encode([now, ...assets].join('')));
+        const hashBytes = sha256(new TextEncoder().encode([now, ...assets].join('')));
         const hash = Array.from(new Uint8Array(hashBytes)).map((b) => b.toString(16).padStart(2, '0')).join('');
         const id = APP_ID.join('album', hash);
         this.resources.update((resources) => {

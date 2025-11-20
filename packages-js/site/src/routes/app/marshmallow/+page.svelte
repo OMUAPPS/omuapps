@@ -46,20 +46,6 @@
         }
         await omu.waitForReady();
         while (true) {
-            const hostResult = await omu.dashboard.requestHost({
-                host: 'marshmallow-qa.com',
-            });
-            if (hostResult.type !== 'ok') {
-                console.warn('Failed to request host:', hostResult);
-                await new Promise<void>((resolve) => {
-                    state = {
-                        type: 'failed',
-                        kind: 'host',
-                        retry: () => resolve(),
-                    };
-                });
-                continue;
-            }
             let session: MarshmallowSession | undefined = undefined;
             if (state.logout) {
                 session = await MarshmallowSession.login(omu);

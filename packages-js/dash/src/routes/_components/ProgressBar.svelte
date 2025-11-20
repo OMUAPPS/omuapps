@@ -15,7 +15,7 @@
 
 <div class="bar">
     <small>{progress.msg}</small>
-    <progress value={format(progress)} />
+    <progress value={format(progress)}></progress>
 </div>
 
 <style lang="scss">

@@ -121,12 +121,12 @@ class RegistryImpl<T> implements Registry<T> {
         return value;
     }
 
-    public async modify(fn: (value: T) => PromiseLike<T> | T): Promise<T> {
+    public async modify(fn: (value: T) => PromiseLike<void> | void): Promise<T> {
         const value = await this.lock.use(async () => {
             const value = await this.#get();
-            const newValue = await fn(value);
-            await this.#set(newValue);
-            return newValue;
+            await fn(value);
+            await this.#set(value);
+            return value;
         });
         this.eventEmitter.emit(value);
         return value;

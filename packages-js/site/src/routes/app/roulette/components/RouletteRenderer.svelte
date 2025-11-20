@@ -249,7 +249,7 @@
 </script>
 
 <svelte:window on:resize={resize} />
-<canvas bind:this={canvas} bind:clientWidth={width} bind:clientHeight={height} />
+<canvas bind:this={canvas} bind:clientWidth={width} bind:clientHeight={height}></canvas>
 
 <style lang="scss">
     canvas {

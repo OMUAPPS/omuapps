@@ -2,7 +2,7 @@
     import { omu } from '$lib/client';
     import { tryCatch } from '$lib/result';
     import { appWindow } from '$lib/tauri';
-    import { BrowserTokenProvider, type App, type SessionParam } from '@omujs/omu';
+    import { BrowserSession, type App } from '@omujs/omu';
     import { Spinner } from '@omujs/ui';
     import { onMount } from 'svelte';
 
@@ -25,20 +25,15 @@
             state = { type: 'error', message: 'App has no URL' };
             return;
         }
-        const { data: token, error } = await tryCatch(omu.sessions.generateToken({
+        const { data: session, error } = await tryCatch(omu.sessions.generateToken({
             app: props.app,
-            permissions: [],
         }));
         if (error) {
             state = { type: 'error', message: 'Failed to generate token: ' + error };
             return;
         }
         const url = new URL(props.app.url);
-        const paramJson: SessionParam = {
-            token,
-            address: omu.address,
-        };
-        url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(paramJson));
+        url.searchParams.set(BrowserSession.PARAM_NAME, JSON.stringify(session));
         state = { type: 'open', url, loading: true };
     });
 </script>

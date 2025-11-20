@@ -179,7 +179,7 @@
             {/each}
             <Button primary={!recognizing} disabled={replyEnable || !$hasPremium} onclick={() => {
                 recognizing = !recognizing;
-                omu.dashboard.speechRecognitionStart();
+                omu.dashboard.requestSpeechRecognition();
             }}>
                 {#if $hasPremium}
                     {#if recognizing}

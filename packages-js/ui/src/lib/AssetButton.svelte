@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { CreateBrowserRequest } from '@omujs/obs/types.js';
-    import type { App, SessionParam } from '@omujs/omu';
-    import { BrowserTokenProvider, OmuPermissions, type IntoId } from '@omujs/omu';
+    import type { App } from '@omujs/omu';
+    import { BrowserSession, OmuPermissions, type IntoId } from '@omujs/omu';
     import { obs, omu, Spinner, Tooltip } from '@omujs/ui';
 
     export let asset: App;
@@ -38,7 +38,7 @@
             url.searchParams.set('id', timestamp);
             app = app.join(timestamp);
         }
-        const token = await $omu.sessions.generateToken({
+        const session = await $omu.sessions.generateToken({
             app,
             permissions: [
                 OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
@@ -47,11 +47,7 @@
                 ...permissions,
             ],
         });
-        const tokenJson: SessionParam = {
-            token,
-            address: $omu.address,
-        };
-        url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(tokenJson));
+        url.searchParams.set(BrowserSession.PARAM_NAME, JSON.stringify(session));
         return url;
     }
 

@@ -106,7 +106,6 @@
                 <TwitchPlayer
                     video={$replayData.video}
                     playback={$replayData.playback}
-                    info={$replayData.info}
                 />
             {/if}
         </div>

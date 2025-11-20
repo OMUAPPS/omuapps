@@ -10,14 +10,14 @@ export const ASSET_EXTENSION_TYPE: ExtensionType<AssetExtension> = new Extension
 );
 
 export type Asset = {
-    identifier: Identifier;
+    id: Identifier;
     buffer: Uint8Array;
 };
 
 const FILE_SERIALIZER = new Serializer<Asset, Uint8Array>(
     (file) => {
         const writer = new ByteWriter();
-        writer.writeString(file.identifier.key());
+        writer.writeString(file.id.key());
         writer.writeUint8Array(file.buffer);
         return writer.finish();
     },
@@ -26,7 +26,7 @@ const FILE_SERIALIZER = new Serializer<Asset, Uint8Array>(
         const identifier = Identifier.fromKey(reader.readString());
         const buffer = reader.readUint8Array();
         reader.finish();
-        return { identifier, buffer };
+        return { id: identifier, buffer };
     },
 );
 const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
@@ -34,7 +34,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
         const writer = new ByteWriter();
         writer.writeULEB128(files.length);
         for (const file of files) {
-            writer.writeString(file.identifier.key());
+            writer.writeString(file.id.key());
             writer.writeUint8Array(file.buffer);
         }
         return writer.finish();
@@ -46,7 +46,7 @@ const FILE_ARRAY_SERIALIZER = new Serializer<Asset[], Uint8Array>(
         for (let i = 0; i < length; i++) {
             const identifier = Identifier.fromKey(reader.readString());
             const buffer = reader.readUint8Array();
-            files.push({ identifier, buffer });
+            files.push({ id: identifier, buffer });
         }
         reader.finish();
         return files;
@@ -125,7 +125,7 @@ export class AssetExtension {
 
     public async upload(identifier: IntoId, buffer: Uint8Array): Promise<Identifier> {
         const assetIdentifier = await this.omu.endpoints.call(ASSET_UPLOAD_ENDPOINT, {
-            identifier: Identifier.from(identifier),
+            id: Identifier.from(identifier),
             buffer,
         });
         return assetIdentifier;

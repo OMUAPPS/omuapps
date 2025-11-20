@@ -478,7 +478,6 @@ export class DiscordClientManager {
                     token: client.token,
                 };
             });
-            return registry;
         });
         return this.clients;
     }

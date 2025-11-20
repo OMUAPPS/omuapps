@@ -205,12 +205,12 @@
 
     type AvatarCacheKey<T extends string = string, K extends string = string> = `${T}:${K}`;
 
-    function getAvatarCacheKeyByVoiceState(config: UserConfig, user: User): AvatarCacheKey {
-        if (!config.avatar) {
+    function getAvatarCacheKeyByVoiceState(userConfig: UserConfig, user: User): AvatarCacheKey {
+        if (!userConfig.avatar) {
             return user.avatar ? `discord:${user.id}/${user.avatar}` : 'discord:default';
         }
-        const avatar = $config.avatars[config.avatar];
-        return avatar ? `avatar:${config.avatar}-${avatar.type}-${avatar.key}` : 'avatar:not_found';
+        const avatar = $config.avatars[userConfig.avatar];
+        return avatar ? `avatar:${userConfig.avatar}-${avatar.type}-${avatar.key}` : 'avatar:not_found';
     }
 
     function loadAvatarByVoiceState(id: string, voiceState: VoiceStateItem): AvatarState {
@@ -466,11 +466,11 @@
             const screenPos = matrices.model.get().transform2({ x: 0, y: POSITION_OFFSET });
             matrices.model.translate(0, -POSITION_OFFSET, 0);
 
-            const config = avatar.getConfig();
+            const avatarConfig = avatar.getConfig();
             const spacingFactor = getFitScaleFactor();
             applyAvatarScale(user.scale / spacingFactor);
-            if (config) {
-                applyAvatarTransform(config);
+            if (avatarConfig) {
+                applyAvatarTransform(avatarConfig);
             }
 
             const bounds = avatar.context.bounds();
@@ -726,8 +726,8 @@
 
     async function drawScreen() {
         if (!$selectedAvatar) return;
-        const config = $config.avatars[$selectedAvatar];
-        if (!config) return;
+        const avatarConfig = $config.avatars[$selectedAvatar];
+        if (!avatarConfig) return;
         const avatarStatus = loadAvatarModelById($selectedAvatar);
         if (avatarStatus.type == 'loaded') {
             matrices.view.push();
@@ -736,11 +736,11 @@
             matrices.view.identity();
             draw.rectangle(0, 0, width, height, PALETTE_RGB.BACKGROUND_1_TRANSPARENT);
             matrices.view.translate(width / 2, height / 2 + 60, 0);
-            const scaleFactor = 1 / Math.min(1920 / width, 1080 / height);
-            $scaleFactor = 1 / scaleFactor / config.scale;
-            matrices.view.scale(scaleFactor, scaleFactor, 0);
+            const scale = 1 / Math.min(1920 / width, 1080 / height);
+            $scaleFactor = 1 / scale / avatarConfig.scale;
+            matrices.view.scale(scale, scale, 0);
             matrices.model.push();
-            applyAvatarTransform(config);
+            applyAvatarTransform(avatarConfig);
             const avatarContext = avatarStatus.avatar.create();
             avatarContext.render(matrices, {
                 id: $selectedAvatar,

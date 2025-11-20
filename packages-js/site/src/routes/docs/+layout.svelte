@@ -1,6 +1,7 @@
 <script lang="ts">
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs';
+    import { Tooltip } from '@omujs/ui';
     import github from 'svelte-highlight/styles/github';
     import { writable } from 'svelte/store';
     import DocsFooter from './_components/DocsFooter.svelte';
@@ -115,6 +116,7 @@
                                     href={`/docs/${section.slug}`}
                                     class:selected={section.slug === $docs?.slug}
                                 >
+                                    <Tooltip>{section.meta.description}</Tooltip>
                                     {section.meta.title}
                                     <i class="ti ti-chevron-right"></i>
                                 </a>
@@ -178,6 +180,7 @@
 
     .content {
         flex: 1;
+        width: 100%;
     }
 
     .markdown {

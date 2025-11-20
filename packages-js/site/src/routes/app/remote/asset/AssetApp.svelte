@@ -78,7 +78,11 @@
     }
 
     class AssetRenderImage implements AssetRender {
-        constructor(public texture: GlTexture) {}
+        public texture: GlTexture;
+
+        constructor(texture: GlTexture) {
+            this.texture = texture;
+        }
 
         public render(color: Vec4 = Vec4.ONE) {
             const bounds = this.calculateBounds();
@@ -153,7 +157,11 @@
     }
 
     class AssetRenderAlbum implements AssetRender {
-        constructor(public assets: AssetRender[]) {}
+        public assets: AssetRender[];
+
+        constructor(assets: AssetRender[]) {
+            this.assets = assets;
+        }
 
         public render(color: Vec4 = Vec4.ONE) {
             const { animation, easing } = $config.asset;

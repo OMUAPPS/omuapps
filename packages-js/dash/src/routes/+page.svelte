@@ -17,15 +17,15 @@
     import InstallStepUpdate from './_components/InstallStepUpdate.svelte';
     import RestoreActions from './_components/RestoreActions.svelte';
     import StepUpdateHint from './_components/StepUpdateHint.svelte';
-    import { netState, state } from './stores';
+    import { appState, netState } from './stores';
 
     onMount(async () => {
         await start();
     });
 
     $: {
-        if ($serverState?.type === 'ServerStopped' && $state.type === 'connecting') {
-            $state.reject({
+        if ($serverState?.type === 'ServerStopped' && $appState.type === 'connecting') {
+            $appState.reject({
                 type: 'server_start_failed',
             });
             omu.stop();
@@ -35,12 +35,12 @@
     $: {
         if ($netState?.type === 'reconnecting') {
             if ($netState.attempt && $netState.attempt > 2) {
-                $state = { type: 'restore', message: omu.network.reason?.message };
+                $appState = { type: 'restore', message: omu.network.reason?.message };
                 omu.stop();
             }
-        } else if ($netState?.type === 'disconnected' && $netState.reason && $state.type === 'ready') {
+        } else if ($netState?.type === 'disconnected' && $netState.reason && $appState.type === 'ready') {
             if (![DisconnectType.SERVER_RESTART].includes($netState.reason.type)) {
-                $state = { type: 'restore', message: `${$netState.reason.type}: ${$netState.reason.message}` };
+                $appState = { type: 'restore', message: `${$netState.reason.type}: ${$netState.reason.message}` };
                 omu.stop();
             }
         }
@@ -50,25 +50,25 @@
 
     async function start() {
         try {
-            $state = { type: 'checking_update' };
+            $appState = { type: 'checking_update' };
             const update = await checkUpdate();
             if (update) {
                 await appWindow.show();
                 await new Promise<void>((resolve) => {
-                    $state = { type: 'update', update, resolve };
+                    $appState = { type: 'update', update, resolve };
                 });
             }
             if (!$installed) {
                 await new Promise<void>((accept) => {
-                    $state = { type: 'agreements', accept };
+                    $appState = { type: 'agreements', accept };
                 });
             }
 
-            $state = { type: 'starting' };
+            $appState = { type: 'starting' };
             await invoke('start_server');
 
             await new Promise<void>((resolve, reject) => {
-                $state = { type: 'connecting', reject };
+                $appState = { type: 'connecting', reject };
                 if (omu.running) {
                     omu.stop();
                 }
@@ -82,10 +82,10 @@
             });
             if (!$installed) {
                 await new Promise<void>((resolve) => {
-                    $state = { type: 'add_channels', state: { type: 'idle' }, resolve };
+                    $appState = { type: 'add_channels', state: { type: 'idle' }, resolve };
                 });
             }
-            $state = { type: 'ready' };
+            $appState = { type: 'ready' };
             $installed = true;
             if ($backgroundRequested && !$keepOpenOnBackground) {
                 console.log('Hiding window');
@@ -93,7 +93,7 @@
             }
         } catch (e) {
             console.error('Error during start:', e);
-            $state = { type: 'restore', message: JSON.stringify(e, null, 2) };
+            $appState = { type: 'restore', message: JSON.stringify(e, null, 2) };
             error(`Error during start: ${JSON.stringify(e)}`);
         }
     }
@@ -103,31 +103,31 @@
     }
 </script>
 
-{#if $state.type === 'ready'}
+{#if $appState.type === 'ready'}
     <MainWindow />
 {:else}
-    {#if $state.type === 'checking_update'}
+    {#if $appState.type === 'checking_update'}
         <InstallStepLayout>
             <h1>
                 更新を確認中
                 <Spinner />
             </h1>
         </InstallStepLayout>
-    {:else if $state.type === 'agreements'}
+    {:else if $appState.type === 'agreements'}
         <InstallStepLayout>
             <div class="header">
                 <h1>利用規約</h1>
                 <small>使用するにあたって</small>
             </div>
             <div class="actions">
-                <Button onclick={$state.accept} primary>
+                <Button onclick={$appState.accept} primary>
                     インストールを開始
                 </Button>
             </div>
 
             <Agreements slot="hint" />
         </InstallStepLayout>
-    {:else if $state.type === 'starting'}
+    {:else if $appState.type === 'starting'}
         <InstallStepLayout>
             <div class="header">
                 <h1>
@@ -148,7 +148,7 @@
                 <InstallStepStartProgress />
             </div>
         </InstallStepLayout>
-    {:else if $state.type === 'connecting'}
+    {:else if $appState.type === 'connecting'}
         <InstallStepLayout>
             <div class="header">
                 <h1>
@@ -160,11 +160,11 @@
                 <InstallStepConnectionProgress />
             </div>
         </InstallStepLayout>
-    {:else if $state.type === 'add_channels'}
+    {:else if $appState.type === 'add_channels'}
         <InstallStepLayout>
             <div class="header">
                 <h1>
-                    {#if $state.state.type === 'result'}
+                    {#if $appState.state.type === 'result'}
                         チャンネルを選択
                     {:else}
                         チャンネルを追加
@@ -174,32 +174,32 @@
                     チャットの機能で使用するチャンネルを追加します
                 </small>
             </div>
-            <InstallStepAddChannels bind:state={$state.state} resolve={$state.resolve} />
-            <InstallStepAddChannelsHint bind:state={$state.state} slot="hint" />
+            <InstallStepAddChannels bind:state={$appState.state} resolve={$appState.resolve} />
+            <InstallStepAddChannelsHint bind:state={$appState.state} slot="hint" />
         </InstallStepLayout>
-    {:else if $state.type === 'update'}
+    {:else if $appState.type === 'update'}
         <InstallStepLayout>
             <div class="title">
                 <h1>更新があります</h1>
-                <small>バージョン {$state.update.version} が利用可能です。</small>
+                <small>バージョン {$appState.update.version} が利用可能です。</small>
             </div>
 
             <div class="actions">
-                <InstallStepUpdate bind:state={$state} />
+                <InstallStepUpdate bind:state={$appState} />
             </div>
-            <StepUpdateHint update={$state.update} slot="hint" />
+            <StepUpdateHint update={$appState.update} slot="hint" />
         </InstallStepLayout>
-    {:else if $state.type === 'restore'}
+    {:else if $appState.type === 'restore'}
         <InstallStepLayout>
             <div class="title">
                 <h1>起動に失敗しました</h1>
                 <small>環境を再構築するか、アプリケーションを再起動してください。</small>
             </div>
-            <RestoreActions {retry} message={$state.message} />
+            <RestoreActions {retry} message={$appState.message} />
         </InstallStepLayout>
     {:else}
         <pre>
-            {JSON.stringify($state, null, 2)}
+            {JSON.stringify($appState, null, 2)}
         </pre>
     {/if}
 {/if}

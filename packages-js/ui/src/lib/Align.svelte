@@ -5,7 +5,7 @@
         | 'end';
 </script>
 <script lang="ts">
-    import { Tooltip } from '@omujs/ui';
+    import Tooltip from './Tooltip.svelte';
 
     export let horizontal: AlignType | undefined = undefined;
     export let vertical: AlignType | undefined = undefined;

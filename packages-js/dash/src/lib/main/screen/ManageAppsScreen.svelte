@@ -23,7 +23,7 @@
             アプリ
             <small>
                 {#await omu.server.apps.size()}
-                    <i class="spin ti ti-dots" /> 件
+                    <i class="spin ti ti-dots"></i> 件
                 {:then count}
                     {count} 件
                 {/await}

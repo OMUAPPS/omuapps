@@ -6,7 +6,7 @@ export * as network from './network';
 export { Omu } from './omu.js';
 export { Serializer } from './serialize';
 export type { Serializable } from './serialize';
-export { BrowserTokenProvider, type SessionParam, type TokenProvider } from './token';
+export { BrowserSession, type SessionParam, type SessioTokenProvider as TokenProvider } from './token';
 import { ASSET_PERMISSION_ID } from './api/asset';
 import {
     DASHBOARD_APP_INSTALL_PERMISSION_ID,

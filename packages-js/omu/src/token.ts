@@ -3,7 +3,7 @@ import type { Address } from './address.js';
 import type { App } from './app.js';
 import { tryCatch } from './helper.js';
 
-export interface TokenProvider {
+export interface SessioTokenProvider {
     get(serverAddress: Address, app: App): Promise<string | undefined>;
 }
 
@@ -12,14 +12,10 @@ export type SessionParam = {
     token: string;
 };
 
-export class BrowserTokenProvider implements TokenProvider {
-    public static readonly TOKEN_PARAM_KEY = '_omu_session';
+export class BrowserSession implements SessioTokenProvider {
+    public static readonly PARAM_NAME = '_omu_session';
 
-    private getKey(address: Address, app: App): string {
-        return JSON.stringify([address.host, address.port, address.hash ?? '', app.id.key()]);
-    }
-
-    public async get(address: Address, app: App): Promise<string | undefined> {
+    public async get(address: Address): Promise<string | undefined> {
         const foundToken = this.parseParamSession(address);
         if (foundToken) return foundToken;
         return;
@@ -27,7 +23,7 @@ export class BrowserTokenProvider implements TokenProvider {
 
     private parseParamSession(address: Address): string | undefined {
         const searchParams = new URLSearchParams(location.search);
-        const param = searchParams.get(BrowserTokenProvider.TOKEN_PARAM_KEY);
+        const param = searchParams.get(BrowserSession.PARAM_NAME);
         if (!param) return;
         const { ok, data: session } = tryCatch<SessionParam>(() => JSON.parse(param));
         if (!ok) {
