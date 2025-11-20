@@ -2,7 +2,11 @@
     import { fade } from 'svelte/transition';
     import type { AddChannelStatus } from '../stores';
 
-    export let state: AddChannelStatus;
+    interface Props {
+        state: AddChannelStatus;
+    }
+
+    let { state = $bindable() }: Props = $props();
 </script>
 
 {#if state.type === 'idle' || state.type === 'searching'}

@@ -8,7 +8,11 @@
     import EffectSoundEdit from './EditEffectSound.svelte';
     import { createEffectSound, createParticle, type EffectState } from './effect-state.js';
 
-    export let effect: EffectState;
+    interface Props {
+        effect: EffectState;
+    }
+
+    let { effect = $bindable() }: Props = $props();
 
     const { scene, gameConfig } = getGame();
 </script>
@@ -22,7 +26,7 @@
                 </Tooltip>
                 <FitInput bind:value={effect.name} />
             </h1>
-            <ButtonMini on:click={async () => {
+            <ButtonMini onclick={async () => {
                 await navigator.clipboard.writeText(effect.id);
             }} primary>
                 <Tooltip>
@@ -30,7 +34,7 @@
                 </Tooltip>
                 <i class="ti ti-copy"></i>
             </ButtonMini>
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 $scene = { type: 'product_list' };
                 delete $gameConfig.effects[effect.id];
             }} primary>

@@ -1,20 +1,23 @@
 <script lang="ts">
-    import { VirtualList } from '@omujs/ui';
     import type { RouletteApp } from '../roulette-app.js';
     import RouletteEntry from './RouletteEntry.svelte';
 
-    export let roulette: RouletteApp;
-    const { entries, state } = roulette;
+    interface Props {
+        roulette: RouletteApp;
+    }
+
+    let { roulette }: Props = $props();
+    const { entries, rouletteState: rouletteState } = roulette;
 </script>
 
 <div class="entries">
-    <VirtualList items={Object.entries($entries).reverse()} let:item let:key>
-        {@const index = Object.keys($entries).length - Object.keys($entries).indexOf(key) - 1}
-        <RouletteEntry {index} {item} {roulette} disabled={$state.type !== 'idle'} />
-        <div class="empty" slot="empty">
+    {#each Object.values($entries) as item, index (index)}
+        <RouletteEntry {index} {item} {roulette} disabled={$rouletteState.type !== 'idle'} />
+    {:else}
+        <div class="empty">
             1つ以上追加する必要があります
         </div>
-    </VirtualList>
+    {/each}
 </div>
 
 <style lang="scss">

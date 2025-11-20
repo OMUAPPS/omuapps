@@ -5,29 +5,32 @@
     import { createTransform } from '../../game/transform.js';
     import { showMask, type Container } from './container.js';
 
-    export let behavior: Container;
+    interface Props {
+        behavior: Container;
+    }
+
+    let { behavior = $bindable() }: Props = $props();
 </script>
 
 <div
     class="behavior"
-    on:mouseenter={() => {
+    onmouseenter={() => {
         $showMask = true;
     }}
-    on:mouseleave={() => {
+    onmouseleave={() => {
         $showMask = false;
     }}
     role="img"
 >
     <label class="setting">
         内容物を範囲内に収める
-        <input type="checkbox" value={!!behavior.bounded} on:change={({ currentTarget }) => {
+        <input type="checkbox" value={!!behavior.bounded} onchange={({ currentTarget }) => {
             if (!currentTarget.checked) {
                 behavior.bounded = undefined;
                 return;
             }
             behavior.bounded = { left: true, top: true, right: true, bottom: true };
-        }
-        } />
+        }} />
     </label>
     {#if behavior.bounded}
         <label class="setting">

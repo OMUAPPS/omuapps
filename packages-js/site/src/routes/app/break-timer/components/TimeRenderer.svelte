@@ -1,12 +1,19 @@
 <script lang="ts">
-    export let end: number;
+    import { run } from 'svelte/legacy';
 
-    let now = Date.now();
-    let seconds = Math.floor((end - now) / 1000) % 60;
-    let minutes = Math.floor((end - now) / 1000 / 60) % 60;
-    let hours = Math.floor((end - now) / 1000 / 60 / 60);
+    interface Props {
+        end: number;
+        children?: import('svelte').Snippet;
+    }
 
-    let timeout: number;
+    let { end, children }: Props = $props();
+
+    let now = $state(Date.now());
+    let seconds = $derived(Math.floor((end - now) / 1000) % 60);
+    let minutes = $derived(Math.floor((end - now) / 1000 / 60) % 60);
+    let hours = $derived(Math.floor((end - now) / 1000 / 60 / 60));
+
+    let timeout: number | undefined = $state(undefined);
 
     function update(end: number) {
         now = Date.now();
@@ -19,15 +26,15 @@
         }
     }
 
-    $: {
+    run(() => {
         clearTimeout(timeout);
         update(end);
-    }
+    });
 </script>
 
 <div class="timer">
     {#if now >= end}
-        <slot />
+        {@render children?.()}
     {:else}
         <h1>{hours}:{minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}</h1>
     {/if}

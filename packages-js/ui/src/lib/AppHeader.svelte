@@ -1,17 +1,23 @@
 <script lang="ts">
+
     import type { App } from '@omujs/omu';
     import { onDestroy } from 'svelte';
     import Header from './Header.svelte';
     import { omu } from './stores.js';
 
-    export let app: App;
+    interface Props {
+        app: App;
+        children?: import('svelte').Snippet;
+    }
 
-    let title = '';
-    let icon = '';
-    let description = '';
+    let { app, children }: Props = $props();
 
-    let unlisten = () => {};
-    $: {
+    let title = $state('');
+    let icon = $state('');
+    let description = $state('');
+
+    let unlisten = $state(() => {});
+    $effect(() => {
         if ($omu) {
             unlisten();
             unlisten = $omu.onReady(() => {
@@ -30,11 +36,11 @@
                 }
             });
         }
-    }
+    });
 
-    onDestroy(unlisten);
+    onDestroy(() => unlisten());
 </script>
 
 <Header {title} {icon} subtitle={description}>
-    <slot />
+    {@render children?.()}
 </Header>

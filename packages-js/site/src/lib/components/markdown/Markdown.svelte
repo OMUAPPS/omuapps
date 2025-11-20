@@ -6,7 +6,11 @@
     import MdImage from './MdImage.svelte';
     import MdLink from './MdLink.svelte';
 
-    export let source: string;
+    interface Props {
+        source: string;
+    }
+
+    let { source }: Props = $props();
 </script>
 
 <div class="markdown">

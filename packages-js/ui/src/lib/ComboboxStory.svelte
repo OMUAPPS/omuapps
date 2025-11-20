@@ -1,12 +1,16 @@
 <script lang="ts">
     import Combobox from './Combobox.svelte';
 
-    export let options = {
+    interface Props {
+        options?: any;
+        value?: string;
+    }
+
+    let { options = {
         a: { value: 'a', label: 'A' },
         b: { value: 'b', label: 'B' },
         c: { value: 'c', label: 'C' },
-    };
-    export let value = 'b';
+    }, value = $bindable('b') }: Props = $props();
 </script>
 
 <p>value: {value}</p>

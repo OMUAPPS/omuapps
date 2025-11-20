@@ -1,19 +1,25 @@
-<script context="module" lang="ts">
+<script module lang="ts">
     const REPLY_CACHE: Record<string, string> = {};
 </script>
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { Button, Spinner, Tooltip } from '@omujs/ui';
     import { DOM, type MarshmallowAPI, type Message, type MessageAction } from '../api';
     import { MarshmallowApp } from '../marshmallow-app';
     import { hasPremium } from '../stores';
 
-    export let api: MarshmallowAPI;
-    export let message: Message;
+    interface Props {
+        api: MarshmallowAPI;
+        message: Message;
+    }
+
+    let { api, message = $bindable() }: Props = $props();
 
     const { omu } = MarshmallowApp.getInstance();
 
-    let recognizing = false;
-    let speaking = false;
+    let recognizing = $state(false);
+    let speaking = $state(false);
     omu.dashboard.speechRecognition.listen((status) => {
         if (!recognizing) return;
         switch (status.type) {
@@ -47,7 +53,7 @@
         answer: MessageAction | undefined;
         actions: MessageAction[];
         tweetURL: string;
-    } = { type: 'initializing' };
+    } = $state({ type: 'initializing' });
 
     async function updateActions() {
         if (detail.type !== 'initializing') return;
@@ -79,10 +85,10 @@
 
     updateActions();
 
-    let reply = {
+    let reply = $state({
         value: '',
         id: '',
-    };
+    });
 
     function restoreReply() {
         reply.value = REPLY_CACHE[message.id] ?? '';
@@ -93,15 +99,17 @@
         REPLY_CACHE[reply.id] = reply.value;
     }
 
-    $: {
+    run(() => {
         if (reply.id !== message.id) {
             restoreReply();
         }
-    }
-    $: if (message?.reply) {
-        reply.value = DOM.blockToString(message.reply);
-        reply.id = message.id;
-    };
+    });
+    run(() => {
+        if (message?.reply) {
+            reply.value = DOM.blockToString(message.reply);
+            reply.id = message.id;
+        }
+    }); ;
 
     type ActionTranslation = { name: string; icon?: string; remove: boolean };
     function getActionTranslation(action: MessageAction): ActionTranslation {
@@ -136,12 +144,12 @@
         };
     }
 
-    $: replyEnable = !detail || !!message.reply || detail?.type !== 'ok' || !detail.answer;
+    let replyEnable = $derived(!detail || !!message.reply);
 </script>
 
 <div class="reply">
     <div class="textarea">
-        <textarea bind:value={reply.value} on:change={saveReply} disabled={!!message.reply}></textarea>
+        <textarea bind:value={reply.value} onchange={saveReply} disabled={!!message.reply}></textarea>
         <div class="overlay">
             {#if recognizing}
                 <div class="recognizing">
@@ -162,19 +170,21 @@
                 <Button primary={remove} onclick={async () => {
                     await action.submit(api, {});
                     refresh();
-                }} let:promise>
-                    {#if promise}
-                        <Spinner />
-                    {:else}
-                        <i class="ti {icon}"></i>
-                        {#if icon}
-                            <Tooltip>
-                                {name}
-                            </Tooltip>
+                }}>
+                    {#snippet children({ promise })}
+                        {#if promise}
+                            <Spinner />
                         {:else}
-                            {name}
+                            <i class="ti {icon}"></i>
+                            {#if icon}
+                                <Tooltip>
+                                    {name}
+                                </Tooltip>
+                            {:else}
+                                {name}
+                            {/if}
                         {/if}
-                    {/if}
+                    {/snippet}
                 </Button>
             {/each}
             <Button primary={!recognizing} disabled={replyEnable || !$hasPremium} onclick={() => {

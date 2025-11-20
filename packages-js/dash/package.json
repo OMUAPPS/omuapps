@@ -19,6 +19,7 @@
     },
     "devDependencies": {
         "@fontsource/noto-sans-jp": "5.0.19",
+        "@humanspeak/svelte-markdown": "^0.8.13",
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
         "@omujs/omu": "workspace:*",

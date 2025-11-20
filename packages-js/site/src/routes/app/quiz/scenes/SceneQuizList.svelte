@@ -53,8 +53,8 @@
         }
     }
 
-    $: exportDisabled = !Object.entries($selectedQuizzes)
-        .some(([, checked]) => checked);
+    let exportDisabled = $derived(!Object.entries($selectedQuizzes)
+        .some(([, checked]) => checked));
 </script>
 
 <main>
@@ -77,7 +77,11 @@
         </Button>
     </div>
     <div class="quizzes">
-        <TableList table={quizzes} component={QuizEntry} />
+        <TableList table={quizzes}>
+            {#snippet component({ entry })}
+                <QuizEntry {entry} />
+            {/snippet}
+        </TableList>
     </div>
 </main>
 

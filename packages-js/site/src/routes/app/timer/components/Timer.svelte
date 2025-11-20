@@ -1,13 +1,19 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { BROWSER } from 'esm-env';
     import { TimerApp } from '../timer-app.js';
 
-    export let timer: TimerApp;
+    interface Props {
+        timer: TimerApp;
+    }
+
+    let { timer }: Props = $props();
     const { data, config } = timer;
 
     let timerId: number;
-    let time = 0;
-    let displayTime = '';
+    let time = $state(0);
+    let displayTime = $state('');
 
     function updateTime() {
         if (!$data.running) {
@@ -47,10 +53,12 @@
         );
     }
 
-    $: updateDisplayTime(time);
-    $: background = `${$config.style.backgroundColor}${Math.floor(
+    run(() => {
+        updateDisplayTime(time);
+    });
+    let background = $derived(`${$config.style.backgroundColor}${Math.floor(
         $config.style.backgroundOpacity * 255,
-    ).toString(16)}`;
+    ).toString(16)}`);
 
     if (BROWSER) {
         data.subscribe(update);

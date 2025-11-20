@@ -1,7 +1,11 @@
 <script lang="ts">
     import JsonEditEntry from './JsonEditEntry.svelte';
 
-    export let value: any;
+    interface Props {
+        value: any;
+    }
+
+    let { value = $bindable() }: Props = $props();
 </script>
 
 <pre>

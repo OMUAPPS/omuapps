@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { BetterMath } from '$lib/math.js';
     import { AABB2 } from '$lib/math/aabb2.js';
     import type { Mat4 } from '$lib/math/mat4.js';
@@ -10,36 +12,48 @@
     import { alignClear, alignSide, avatarPositions, dragPosition, dragState, heldUser, isDraggingFinished, view } from '../states.js';
     import UserSettings from './UserSettings.svelte';
 
-    export let resolution: { width: number; height: number };
-    export let overlayApp: DiscordOverlayApp;
-    export let voiceState: RPCVoiceStates;
-    export let id: string;
-    export let state: VoiceStateItem;
-    export let user: UserConfig;
-    export let dimensions = {
-        width: 1920,
-        height: 1080,
-    };
+    interface Props {
+        resolution: { width: number; height: number };
+        overlayApp: DiscordOverlayApp;
+        voiceStates: RPCVoiceStates;
+        id: string;
+        voiceState: VoiceStateItem;
+        user: UserConfig;
+        dimensions?: any;
+    }
+
+    let {
+        resolution,
+        overlayApp,
+        voiceStates,
+        id,
+        voiceState,
+        user = $bindable(),
+        dimensions = {
+            width: 1920,
+            height: 1080,
+        },
+    }: Props = $props();
 
     const { config } = overlayApp;
 
-    let lastMouse: [number, number] | null = null;
-    let clickTime = 0;
-    let clickDistance = 0;
+    let lastMouse: [number, number] | null = $state(null);
+    let clickTime = $state(0);
+    let clickDistance = $state(0);
     let lastUpdate = performance.now();
-    let rect = { width: 0, height: 0 };
-    let element: HTMLElement | null = null;
+    let rect = $state({ width: 0, height: 0 });
+    let element: HTMLElement | null = $state(null);
 
-    $: {
+    run(() => {
         if (element) {
             rect = element.getBoundingClientRect();
         }
-    }
+    });
 
     const OFFSET = 150;
 
     function alignedCount(): number {
-        return Object.entries(voiceState.states).filter(([userId]) => {
+        return Object.entries(voiceStates.states).filter(([userId]) => {
             if (userId === id) return false;
             const user = $config.users[userId];
             return user?.align;
@@ -212,25 +226,25 @@
 </script>
 
 <svelte:window
-    on:mousemove={(event) => {
+    onmousemove={(event) => {
         if (lastMouse) {
             const x = event.clientX;
             const y = event.clientY;
             handleMouseMove(x, y);
         }
     }}
-    on:mouseup={() => {
+    onmouseup={() => {
         if (lastMouse) {
             handleMouseUp();
         }
     }}
-    on:touchmove={(event) => {
+    ontouchmove={(event) => {
         if (lastMouse) {
             const touch = event.touches[0];
             handleMouseMove(touch.clientX, touch.clientY);
         }
     }}
-    on:touchend={() => {
+    ontouchend={() => {
         if (lastMouse) {
             handleMouseUp();
         }
@@ -242,21 +256,21 @@
     class:dragging={lastMouse || ($dragState?.type === 'user' && $dragState.id == id)}
     bind:this={element}
     style={getStyle(rect, $config, $view, resolution)}
-    on:mousedown={(event) => handleMouseDown(event.clientX, event.clientY)}
-    on:touchstart={(event) => {
+    onmousedown={(event) => handleMouseDown(event.clientX, event.clientY)}
+    ontouchstart={(event) => {
         event.preventDefault();
         const touch = event.touches[0];
         handleMouseDown(touch.clientX, touch.clientY);
     }}
-    on:click={() => {
+    onclick={() => {
         const elapsed = performance.now() - clickTime;
         if (elapsed > 200 || clickDistance > 2) {
             return;
         }
         $heldUser = id;
     }}
-    on:keydown={handleKeyDown}
-    on:wheel={handleMouseWheel}
+    onkeydown={handleKeyDown}
+    onwheel={handleMouseWheel}
     draggable="false"
     style:opacity={$dragState?.type === 'user' && $dragState.id != id ? 0.2 : 1}
 >
@@ -295,7 +309,7 @@
         </Tooltip>
     {/if}
     <i class="grip ti ti-grip-vertical"></i>
-    <span class="nick">{state.nick}</span>
+    <span class="nick">{voiceState.nick}</span>
 </button>
 
 {#if $heldUser == id}
@@ -305,7 +319,7 @@
         style:opacity={$heldUser && $heldUser != id ? 0.2 : 1}
         class:side-right={user.position.x > 0}
     >
-        <UserSettings {overlayApp} {state} {id} />
+        <UserSettings {overlayApp} voiceState={voiceState} {id} />
     </div>
 {/if}
 

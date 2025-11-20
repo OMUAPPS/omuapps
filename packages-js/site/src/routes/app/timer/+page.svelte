@@ -33,9 +33,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={APP} />
-    </header>
+    {#snippet header()}
+        <header>
+            <AppHeader app={APP} />
+        </header>
+    {/snippet}
     <main>
         <div class="flex col width">
             <h3>タイム</h3>
@@ -46,7 +48,7 @@
             <h3>操作</h3>
             <section>
                 <div class="flex gap">
-                    <button on:click={() => timer.toggle()}>
+                    <button onclick={() => timer.toggle()}>
                         <Tooltip>
                             {#if $data.running}
                                 タイマーを停止します
@@ -62,7 +64,7 @@
                             <i class="ti ti-player-play"></i>
                         {/if}
                     </button>
-                    <button on:click={() => timer.reset()}>
+                    <button onclick={() => timer.reset()}>
                         <Tooltip>タイマーをリセットします</Tooltip>
                         リセット
                         <i class="ti ti-reload"></i>

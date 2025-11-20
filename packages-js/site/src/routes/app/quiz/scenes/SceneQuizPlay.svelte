@@ -4,7 +4,11 @@
     import QuizPlayQuestion from './_components/QuizPlayQuestion.svelte';
     import { ChatEvents } from '@omujs/chat';
 
-    export let state: PlayState;
+    interface Props {
+        state: PlayState;
+    }
+
+    let { state = $bindable() }: Props = $props();
     const quizApp = QuizApp.getInstance();
     const { sceneCurrent, answers } = quizApp;
 

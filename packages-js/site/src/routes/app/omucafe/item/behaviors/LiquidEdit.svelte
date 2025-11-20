@@ -6,7 +6,11 @@
     import { createTransform } from '../../game/transform.js';
     import type { Liquid } from './liquid.js';
 
-    export let behavior: Liquid;
+    interface Props {
+        behavior: Liquid;
+    }
+
+    let { behavior = $bindable() }: Props = $props();
 </script>
 
 <div class="behavior">

@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { OBSPlugin } from '@omujs/obs';
+    import { run } from 'svelte/legacy';
+
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AssetButton,
@@ -11,18 +12,21 @@
     import { ASSET_APP } from './app';
     import { CaptionApp, FONTS, LANGUAGES_OPTIONS, type LanguageKey } from './caption-app.js';
 
-    export let omu: Omu;
-    export let obs: OBSPlugin;
-    export let captionApp: CaptionApp;
+    interface Props {
+        omu: Omu;
+        captionApp: CaptionApp;
+    }
+
+    let { omu, captionApp }: Props = $props();
 
     const { config } = captionApp;
-    omu.dashboard.speechRecognitionStart();
+    omu.dashboard.requestSpeechRecognition();
 
     function resetLang() {
         $config.lang = window.navigator.language as LanguageKey;
     }
 
-    $: {
+    run(() => {
         if ($config.style.fonts.length === 0) {
             $config.style.fonts = [
                 {
@@ -31,9 +35,11 @@
                 },
             ];
         }
-    }
+    });
 
-    $: console.log($config.style.fonts[0]);
+    run(() => {
+        console.log($config.style.fonts[0]);
+    });
 </script>
 
 <main>

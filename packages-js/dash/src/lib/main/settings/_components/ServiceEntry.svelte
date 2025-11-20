@@ -1,7 +1,11 @@
 <script lang="ts">
     import type { App } from '@omujs/omu';
 
-    export let entry: App;
+    interface Props {
+        entry: App;
+    }
+
+    let { entry }: Props = $props();
 </script>
 
 {entry.id.key()}

@@ -1,7 +1,11 @@
 <script lang="ts">
     import type { Progress } from '$lib/tauri';
 
-    export let progress: Progress;
+    interface Props {
+        progress: Progress;
+    }
+
+    let { progress }: Props = $props();
 
     function format(progress: Progress): number {
         const completionRatio = progress.progress / progress.total;

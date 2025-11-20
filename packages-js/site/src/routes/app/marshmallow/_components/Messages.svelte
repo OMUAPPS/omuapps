@@ -1,21 +1,32 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { Button, Spinner } from '@omujs/ui';
     import { DOM, type MarshmallowAPI, type Message } from '../api';
     import MessageEntry from './MessageEntry.svelte';
 
-    export let api: MarshmallowAPI;
-    export let search: string = '';
-    export let messages: Record<string, Message> | undefined = undefined;
-    export let refresh = () => {
-        page = 1;
-        messages = undefined;
-        remaining = true;
-        loadNext();
-    };
+    interface Props {
+        api: MarshmallowAPI;
+        search?: string;
+        messages?: Record<string, Message> | undefined;
+        refresh?: any;
+    }
+
+    let {
+        api,
+        search = '',
+        messages = $bindable(undefined),
+        refresh = $bindable(() => {
+            page = 1;
+            messages = undefined;
+            remaining = true;
+            loadNext();
+        }),
+    }: Props = $props();
 
     let page = 1;
-    let loading = false;
-    let remaining = true;
+    let loading = $state(false);
+    let remaining = $state(true);
 
     async function loadNext() {
         if (!remaining) return;
@@ -35,22 +46,22 @@
         loading = false;
     }
 
-    $: {
+    run(() => {
         if (api) {
             refresh();
             loadNext();
         }
-    }
+    });
 
-    $: filteredEntries = Object.entries(messages ?? {}).filter(([,message]) => DOM.blockToString(message.content).toLocaleLowerCase().includes(search.toLocaleLowerCase()));
-    $: {
+    let filteredEntries = $derived(Object.entries(messages ?? {}).filter(([,message]) => DOM.blockToString(message.content).toLocaleLowerCase().includes(search.toLocaleLowerCase())));
+    run(() => {
         if (filteredEntries.length === 0) {
             loadNext();
         }
-    }
+    });
 </script>
 
-<div class="messages omu-scroll" on:scroll={(event) => {
+<div class="messages omu-scroll" onscroll={(event) => {
     const { scrollHeight, scrollTop, clientHeight } = event.currentTarget;
     const remaining = scrollHeight - scrollTop - clientHeight;
     if (remaining < clientHeight) {

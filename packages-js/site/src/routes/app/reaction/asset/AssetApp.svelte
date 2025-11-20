@@ -5,7 +5,11 @@
     import ReactionRenderer from '../components/ReactionRenderer.svelte';
     import { ReactionApp } from '../reaction-app';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const chat = Chat.create(omu);
     const reactionApp = new ReactionApp(omu, chat);
 

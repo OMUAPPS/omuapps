@@ -6,10 +6,14 @@
     import RouletteRenderer from '../components/RouletteRenderer.svelte';
     import { RouletteApp } from '../roulette-app';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const chat = Chat.create(omu);
     const roulette = new RouletteApp(omu);
-    const { state } = roulette;
+    const { rouletteState: state } = roulette;
 
     if (BROWSER) {
         omu.start();

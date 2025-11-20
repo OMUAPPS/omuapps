@@ -5,10 +5,14 @@
     import { BreakTimerApp } from '../break-timer-app';
     import TimeRenderer from '../components/TimeRenderer.svelte';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const obs = OBSPlugin.create(omu);
     const breakTimer = new BreakTimerApp(omu, obs);
-    const { config, state } = breakTimer;
+    const { config, timerState: state } = breakTimer;
 
     if (BROWSER) {
         omu.start();

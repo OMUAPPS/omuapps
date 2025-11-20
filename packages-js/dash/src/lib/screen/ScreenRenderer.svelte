@@ -5,7 +5,7 @@
         screen: ScreenComponent<unknown>;
         handle: ScreenHandle;
         props: unknown;
-    } | null = null;
+    } | null = $state(null);
 
     screenContext.current.subscribe((screen) => {
         if (!screen) {
@@ -30,6 +30,6 @@
 
 {#if current}
     {#key current.handle.id}
-        <svelte:component this={current.screen.component} screen={current} />
+        <current.screen.component handle={current.handle} props={current.props} />
     {/key}
 {/if}

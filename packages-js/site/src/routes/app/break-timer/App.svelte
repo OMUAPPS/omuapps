@@ -9,15 +9,19 @@
     import TimeEdit from './components/TimeEdit.svelte';
     import type { BreakTimerState } from './state.js';
 
-    export let omu: Omu;
-    export let obs: OBSPlugin;
-    export let breakTimer: BreakTimerApp;
-    const { config, state } = breakTimer;
+    interface Props {
+        omu: Omu;
+        obs: OBSPlugin;
+        breakTimer: BreakTimerApp;
+    }
 
-    state.subscribe((state) => update(state, $config));
-    config.subscribe((config) => update($state, config));
+    let { omu, obs, breakTimer }: Props = $props();
+    const { config, timerState } = breakTimer;
 
-    let task: number | null = null;
+    timerState.subscribe((state) => update(state, $config));
+    config.subscribe((config) => update($timerState, config));
+
+    let task: number | null = $state(null);
     function update(newState: BreakTimerState, config: BreakTimerConfig): void {
         if (newState.type === 'break') {
             const { scene } = newState;
@@ -25,7 +29,7 @@
             if (task) window.clearTimeout(task);
             task = window.setTimeout(() => {
                 obs.sceneSetCurrentByName(scene);
-                $state = { type: 'work' };
+                $timerState = { type: 'work' };
             }, config.timer.duration * 1000);
             console.log('set timeout', task, config.timer.duration);
         }
@@ -42,13 +46,13 @@
         {#if $config.timer}
             <TimeEdit bind:value={$config.timer.duration} />
         {/if}
-        <input type="button" value="Start" on:click={() => breakTimer.start()} />
+        <input type="button" value="Start" onclick={() => breakTimer.start()} />
         <input type="text" bind:value={$config.message} />
-        <input type="button" value="Reset Config" on:click={() => breakTimer.resetConfig()} />
-        {#if $state.type === 'break' && $config.timer}
-            {@const endTime = new Date($state.start).getTime() + $config.timer.duration * 1000}
+        <input type="button" value="Reset Config" onclick={() => breakTimer.resetConfig()} />
+        {#if $timerState.type === 'break' && $config.timer}
+            {@const endTime = new Date($timerState.start).getTime() + $config.timer.duration * 1000}
             <RelativeDate date={new Date(endTime)} />
-            <input type="datetime-local" bind:value={$state.start} />
+            <input type="datetime-local" bind:value={$timerState.start} />
         {/if}
         <SceneSelect {obs} bind:scene={$config.switch.scene} />
     </div>
@@ -58,7 +62,7 @@
             {JSON.stringify($config)}
         </p>
         <p>
-            {JSON.stringify($state)}
+            {JSON.stringify($timerState)}
         </p>
     </div>
 </main>

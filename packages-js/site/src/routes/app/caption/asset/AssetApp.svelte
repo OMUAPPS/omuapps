@@ -4,7 +4,11 @@
     import { CaptionApp } from '../caption-app';
     import CaptionRenderer from '../CaptionRenderer.svelte';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
 
     const captionApp = new CaptionApp(omu);
 

@@ -1,9 +1,16 @@
 <script lang="ts">
-    export let noBackground = false;
-    export let show = false;
-    let target: HTMLElement;
+    import { run } from 'svelte/legacy';
 
-    let tooltip: HTMLElement;
+    interface Props {
+        noBackground?: boolean;
+        show?: boolean;
+        children?: import('svelte').Snippet;
+    }
+
+    let { noBackground = false, show = $bindable(false), children }: Props = $props();
+    let target: HTMLElement | undefined = $state();
+
+    let tooltip: HTMLElement | undefined = $state();
     type Rect = { x: number; y: number; width: number; height: number };
     let tooltipRect: Rect = {
         x: 0,
@@ -11,19 +18,19 @@
         width: 0,
         height: 0,
     };
-    let targetRect: Rect = {
+    let targetRect: Rect = $state({
         x: 0,
         y: 0,
         width: 0,
         height: 0,
-    };
-    let tooltipPos: { x: number; y: number } = { x: 0, y: 0 };
-    let offset: { x: number; y: number } = { x: 0, y: 0 };
-    let direction: 'up' | 'down' = 'down';
+    });
+    let tooltipPos: { x: number; y: number } = $state({ x: 0, y: 0 });
+    let offset: { x: number; y: number } = $state({ x: 0, y: 0 });
+    let direction: 'up' | 'down' = $state('down');
 
     function showTooltip() {
         show = true;
-        targetRect = target.getBoundingClientRect();
+        targetRect = target!.getBoundingClientRect();
     }
 
     function hideTooltip() {
@@ -90,9 +97,9 @@
         }
     }
 
-    $: {
-        update(target, tooltip);
-    }
+    run(() => {
+        update(target!, tooltip!);
+    });
 
     let keyboardFocus = false;
 
@@ -121,10 +128,10 @@
 
         return {
             destroy() {
-                target.removeEventListener('mouseenter', showTooltip);
-                target.removeEventListener('mouseleave', hideTooltip);
-                target.removeEventListener('focus', handleFocus);
-                target.removeEventListener('blur', hideTooltip);
+                target!.removeEventListener('mouseenter', showTooltip);
+                target!.removeEventListener('mouseleave', hideTooltip);
+                target!.removeEventListener('focus', handleFocus);
+                target!.removeEventListener('blur', hideTooltip);
             },
         };
     }
@@ -141,7 +148,7 @@
 
     let lastMouseMoveTime = 0;
     let lastMousePos: { x: number; y: number } = { x: 0, y: 0 };
-    let isMouseMoving = false;
+    let isMouseMoving = $state(false);
     let timeout: number;
     let averageMouseVelocity = 0;
     let lastMouseVelocity = 0;
@@ -211,7 +218,7 @@
     }
 </script>
 
-<svelte:window on:mousemove={handleMouseMove} on:keydown={handleKeyDown} />
+<svelte:window onmousemove={handleMouseMove} onkeydown={handleKeyDown} />
 <span class="wrapper" use:attachParent>
     {#if show && !isMouseMoving}
         <div
@@ -222,7 +229,7 @@
             style:top="{tooltipPos.y - offset.y}px"
             bind:this={tooltip}
         >
-            <slot />
+            {@render children?.()}
         </div>
         <div
             class="arrow"

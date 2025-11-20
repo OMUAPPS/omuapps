@@ -1,12 +1,29 @@
 <script lang="ts">
-    export let value: number;
-    export let min: number;
-    export let max: number;
-    export let step: number;
-    export let clamp: boolean = true;
-    export let type: 'normal' | 'percent' = 'normal';
-    export let unit: string = '';
-    export let handleChange: (value: number) => void = () => {};
+    import { run } from 'svelte/legacy';
+
+    interface Props {
+        value: number;
+        min: number;
+        max: number;
+        step: number;
+        clamp?: boolean;
+        type?: 'normal' | 'percent';
+        unit?: string;
+        handleChange?: (value: number) => void;
+        children?: import('svelte').Snippet;
+    }
+
+    let {
+        value = $bindable(),
+        min,
+        max,
+        step,
+        clamp = true,
+        type = 'normal',
+        unit = '',
+        handleChange = () => {},
+        children,
+    }: Props = $props();
 
     function update(newValue: number) {
         if (step > 0) {
@@ -20,7 +37,9 @@
         handleChange(newValue);
     }
 
-    $: update(value);
+    run(() => {
+        update(value);
+    });
 
     function isValidNumber(value: number): boolean {
         return !isNaN(value) && isFinite(value);
@@ -70,14 +89,14 @@
         return str;
     }
 
-    $: percentValue = Math.round(invLerp(min, max, value) * 100);
+    let percentValue = $derived(Math.round(invLerp(min, max, value) * 100));
 </script>
 
 <div class="setting">
     <input type="range" id="scale" {value} {min} {max} {step}
-        on:input={(e) => setValue(e.currentTarget.valueAsNumber)}
-        on:change={(e) => setValue(e.currentTarget.valueAsNumber)}
-        on:keydown={(e) => {
+        oninput={(e) => setValue(e.currentTarget.valueAsNumber)}
+        onchange={(e) => setValue(e.currentTarget.valueAsNumber)}
+        onkeydown={(e) => {
             if (e.key === 'ArrowUp') {
                 setValue(value + step);
             } else if (e.key === 'ArrowDown') {
@@ -85,11 +104,11 @@
             }
         }} />
     <span class="label">
-        <label for="scale"><slot /></label>
+        <label for="scale">{@render children?.()}</label>
         {#if type === 'normal'}
             <input type="number" id="scale" value={toString(value)} {min} {max} {step}
-                on:input={(e) => setValue(e.currentTarget.valueAsNumber)}
-                on:change={(e) => setValue(e.currentTarget.valueAsNumber)}
+                oninput={(e) => setValue(e.currentTarget.valueAsNumber)}
+                onchange={(e) => setValue(e.currentTarget.valueAsNumber)}
             />
             {#if unit}
                 <span>{unit}</span>
@@ -102,7 +121,7 @@
                 min="0"
                 max="100"
                 step={step * 100}
-                on:input={(e) => (value = lerp(min, max, e.currentTarget.valueAsNumber / 100))}
+                oninput={(e) => (value = lerp(min, max, e.currentTarget.valueAsNumber / 100))}
             />
             <span>%</span>
         {/if}

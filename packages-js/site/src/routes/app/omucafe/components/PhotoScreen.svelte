@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { Slider, Tooltip } from '@omujs/ui';
     import { uploadAssetByBlob } from '../asset/asset.js';
     import { acquireRenderLock, getContext } from '../game/game.js';
@@ -10,7 +12,11 @@
     import type { PhotoTakeState, SceneType } from '../scenes/scene.js';
     import PhotoScreenInfo from './PhotoScreenInfo.svelte';
 
-    export let photoMode: SceneType<'photo_mode'>;
+    interface Props {
+        photoMode: SceneType<'photo_mode'>;
+    }
+
+    let { photoMode = $bindable() }: Props = $props();
 
     const { scene, states, obs, gameConfig, gallery } = getGame();
 
@@ -47,7 +53,6 @@
             const duration = photoTake.duration;
             const remaining = startTime + duration - Time.now();
             if (remaining < 0) {
-                // eslint-disable-next-line svelte/infinite-reactive-loop
                 taking = takePhoto(startTime, duration);
             }
             timer = window.setTimeout(() => {
@@ -61,8 +66,9 @@
         }
     }
 
-    // eslint-disable-next-line svelte/infinite-reactive-loop
-    $: update(photoMode.photoTake);
+    run(() => {
+        update(photoMode.photoTake);
+    });
 
     async function takePhoto(startTime: number, duration: number) {
         photoMode.photoTake = {
@@ -77,7 +83,7 @@
             console.error('No screenshot data received');
             return;
         }
-        const blob = new Blob([data], { type: 'image/png' });
+        const blob = new Blob([data.buffer as ArrayBuffer], { type: 'image/png' });
         const asset = await uploadAssetByBlob(blob);
         await gallery.add({
             id: uniqueId(),
@@ -85,7 +91,7 @@
             timestamp: new Date().toISOString(),
             order: $states.kitchen.order,
         });
-        // eslint-disable-next-line svelte/infinite-reactive-loop
+
         photoMode.photoTake = {
             type: 'taken',
             asset,
@@ -108,7 +114,7 @@
 <PhotoScreenInfo />
 <div class="screen" class:hide={photoMode.photoTake}>
     <div class="tools">
-        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'move'} on:click={() => {
+        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'move'} onclick={() => {
             $gameConfig.photo_mode.tool = {
                 type: 'move',
             };
@@ -119,7 +125,7 @@
             <i class="ti ti-arrows-move"></i>
             <span>アイテム移動</span>
         </button>
-        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'pen'} on:click={() => {
+        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'pen'} onclick={() => {
             $gameConfig.photo_mode.tool = {
                 type: 'pen',
             };
@@ -130,7 +136,7 @@
             <i class="ti ti-pencil"></i>
             <span>ペン</span>
         </button>
-        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'eraser'} on:click={() => {
+        <button class="tool" class:active={$gameConfig.photo_mode.tool.type === 'eraser'} onclick={() => {
             $gameConfig.photo_mode.tool = {
                 type: 'eraser',
             };
@@ -160,7 +166,7 @@
                         class="color"
                         class:active={current.x === color.x && current.y === color.y && current.z === color.z}
                         style="background: rgb({color.x}, {color.y}, {color.z})"
-                        on:click={() => {
+                        onclick={() => {
                             $gameConfig.photo_mode.pen.color = {
                                 x: color.x,
                                 y: color.y,
@@ -168,6 +174,7 @@
                                 w: 255,
                             };
                         }}
+                        title="色を設定"
                     ></button>
                 {/each}
             </div>
@@ -200,13 +207,13 @@
 </div>
 {#if photoMode.photoTake?.type === 'taken'}
     <div class="center">
-        <button on:click={() => {
+        <button onclick={() => {
             photoMode.photoTake = undefined;
         }}>
             撮り直す
             <i class="ti ti-refresh"></i>
         </button>
-        <button on:click={async () => {
+        <button onclick={async () => {
             await acquireRenderLock();
             $scene = {
                 type: 'kitchen',
@@ -231,7 +238,7 @@
     </div>
 {:else}
     <div class="actions">
-        <button on:click={async () => {
+        <button onclick={async () => {
             $scene = {
                 type: 'kitchen',
             };
@@ -239,7 +246,7 @@
             キッチンに戻って調整
             <i class="ti ti-arrow-back-up"></i>
         </button>
-        <button on:click={startTakePhoto} class="primary" class:hide={photoMode.photoTake}>
+        <button onclick={startTakePhoto} class="primary" class:hide={photoMode.photoTake}>
             <Tooltip>
                 3…2…1…で写真を撮ります
             </Tooltip>

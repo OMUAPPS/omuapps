@@ -1,15 +1,19 @@
 <script lang="ts">
-    import { page } from '$app/stores';
+    import { page } from '$app/state';
     import title from '$lib/images/title.svg';
     import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import Content from './Content.svelte';
 
-    export let always = false;
+    interface Props {
+        always?: boolean;
+    }
 
-    $: path = $page.url.pathname;
-    let onTop = BROWSER && (!$page.url.pathname.startsWith('/docs') && window.scrollY < 1);
+    let { always = false }: Props = $props();
+
+    let path = $derived(page.url.pathname);
+    let onTop = $state(BROWSER && (!page.url.pathname.startsWith('/docs') && window.scrollY < 1));
 
     function onScroll() {
         onTop = window.scrollY < 1;

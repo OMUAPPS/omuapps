@@ -1,15 +1,27 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { tick } from 'svelte';
     import { ARC4 } from '../../omucafe/game/random';
     import type { Message } from '../api';
     import { MarshmallowApp, type MarshmallowConfig, type MarshmallowScreen, type MarshmallowSkin } from '../marshmallow-app';
     import ElementRenderer from './ElementRenderer.svelte';
 
-    export let message: Message;
-    export let width = 1;
-    export let height = 1;
-    export let pointer: { x: number; y: number } | undefined | null = undefined;
-    export let targetWidth = 350;
+    interface Props {
+        message: Message;
+        width?: number;
+        height?: number;
+        pointer?: { x: number; y: number } | undefined | null;
+        targetWidth?: number;
+    }
+
+    let {
+        message,
+        width = $bindable(1),
+        height = $bindable(1),
+        pointer = undefined,
+        targetWidth = 350,
+    }: Props = $props();
 
     const marshmallowApp = MarshmallowApp.getInstance();
     const { config, screen } = marshmallowApp;
@@ -24,8 +36,8 @@
         return config.skins[id];
     }
 
-    $: skin = getSkin($config, $screen);
-    let element: HTMLElement;
+    let skin = $derived(getSkin($config, $screen));
+    let element: HTMLElement | undefined = $state(undefined);
 
     async function load(_: Message, _scale: number, skin?: MarshmallowSkin) {
         if (skin) {
@@ -38,7 +50,7 @@
             loadedSkin = undefined;
         }
         await tick();
-        const rect = element.getBoundingClientRect();
+        const rect = element!.getBoundingClientRect();
         width = targetWidth * scale;
         height = rect.height;
     }
@@ -47,10 +59,12 @@
         middle: string;
         bottom: string;
         cursor?: string;
-    } | undefined = undefined;
+    } | undefined = $state(undefined);
 
-    $: scale = targetWidth / 600;
-    $: load(message, scale, skin);
+    let scale = $derived(targetWidth / 600);
+    run(() => {
+        load(message, scale, skin);
+    });
 </script>
 
 <svelte:head>

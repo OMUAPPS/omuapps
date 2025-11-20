@@ -1,22 +1,34 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import type { Action } from 'svelte/action';
     import { ReplayApp, type Playback, type Video, type VideoInfo } from '../../replay-app.js';
 
-    export let video: Extract<Video, { type: 'youtube' }>;
-    export let playback: Playback;
-    export let info: VideoInfo;
-    export let hideOverlay = false;
-    export let heightToWidthRatio = 9 / 16;
-    const { config, side } = ReplayApp.getInstance();
-    let player: YT.Player;
-    let width = 0;
-    let height = 0;
-    let playerWidth = 0;
-    let playerHeight = 0;
-    let padding = 0;
-    let ended = false;
+    interface Props {
+        video: Extract<Video, { type: 'youtube' }>;
+        playback: Playback;
+        info: VideoInfo;
+        hideOverlay?: boolean;
+        heightToWidthRatio?: any;
+    }
 
-    $: {
+    let {
+        video,
+        playback = $bindable(),
+        info = $bindable(),
+        hideOverlay = false,
+        heightToWidthRatio = 9 / 16,
+    }: Props = $props();
+    const { config, side } = ReplayApp.getInstance();
+    let player: YT.Player | undefined = $state(undefined);
+    let width = $state(0);
+    let height = $state(0);
+    let playerWidth = $state(0);
+    let playerHeight = $state(0);
+    let padding = $state(0);
+    let ended = $state(false);
+
+    run(() => {
         if (heightToWidthRatio < 1) {
             playerWidth = width * Math.pow(heightToWidthRatio, 2);
             playerHeight = height / heightToWidthRatio;
@@ -26,7 +38,7 @@
             playerHeight = height * heightToWidthRatio;
             padding = (playerHeight - height) / 2;
         }
-    }
+    });
 
     let videoLoaded = false;
 
@@ -95,17 +107,17 @@
         }
     }
 
-    $: {
+    run(() => {
         updatePlayback(playback);
-    };
-    $: {
+    }); ;
+    run(() => {
         if (player && side === 'asset') {
             console.log($config.playbackRate);
             player.setPlaybackRate($config.playbackRate);
         }
-    };
+    }); ;
 
-    $: {
+    run(() => {
         if (player && side === 'asset') {
             if ($config.muted) {
                 player.mute();
@@ -115,7 +127,7 @@
                 console.log('unmuted');
             }
         }
-    }
+    });
 
     function toggle() {
         if (!player) return;
@@ -152,7 +164,7 @@
 </script>
 
 <svelte:window
-    on:keydown={(event) => {
+    onkeydown={(event) => {
         if (!player) return;
         switch (event.key) {
             case ' ':

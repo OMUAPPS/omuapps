@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { resolve } from '$app/paths';
     import Page from '$lib/components/Page.svelte';
     import { IS_BETA } from '$lib/consts.js';
     import { Tooltip } from '@omujs/ui';
@@ -6,7 +7,7 @@
     import { onMount } from 'svelte';
     import { getPlatform, type Platform, type VersionManifest } from './download.js';
 
-    let state: {
+    let versionState: {
         type: 'loading';
     } | {
         type: 'not_supported';
@@ -14,7 +15,7 @@
         type: 'found';
         manifest: VersionManifest;
         version: Platform & { platform: string };
-    } = { type: 'loading' };
+    } = $state({ type: 'loading' });
 
     onMount(async () => {
         const res = await fetch(
@@ -35,20 +36,20 @@
         const platform = getPlatform();
         if (manifest.platforms[platform] === undefined) {
             console.error(`Platform ${platform} is not supported.`);
-            state = {
+            versionState = {
                 type: 'not_supported',
             };
             return;
         }
-        state = {
+        versionState = {
             type: 'found',
             manifest,
             version: { ...manifest.platforms[platform], platform },
         };
     });
 
-    let downloading = false;
-    let showExtra = false;
+    let downloading = $state(false);
+    let showExtra = $state(false);
 </script>
 
 <svelte:head>
@@ -57,108 +58,112 @@
 </svelte:head>
 
 <Page>
-    <header slot="header">
-        <h1>
-            ダウンロード
-            <i class="ti ti-download"></i>
-        </h1>
-        <small> OMUAPPSをダウンロードして使ってみる </small>
-    </header>
-    <main slot="content">
-        <div class="warning">
-            <h2>現在はベータ版です。</h2>
-            <p>バグや不具合が発生し、PCへの影響がある可能性があります。ご利用の際は、自己責任でお願いします。</p>
-            <small>
-                お手数ですが不具合などを発見した際は
-                <b>
-                    <a href="/redirect/discord">
-                        discord
-                        <i class="ti ti-external-link"></i>
+    {#snippet header()}
+        <header>
+            <h1>
+                ダウンロード
+                <i class="ti ti-download"></i>
+            </h1>
+            <small> OMUAPPSをダウンロードして使ってみる </small>
+        </header>
+    {/snippet}
+    {#snippet content()}
+        <main>
+            <div class="warning">
+                <h2>現在はベータ版です。</h2>
+                <p>バグや不具合が発生し、PCへの影響がある可能性があります。ご利用の際は、自己責任でお願いします。</p>
+                <small>
+                    お手数ですが不具合などを発見した際は
+                    <b>
+                        <a href={resolve('/redirect/discord')}>
+                            discord
+                            <i class="ti ti-external-link"></i>
+                        </a>
+                    </b>
+                    にお問い合わせいただけると大変開発の助けになります。
+                </small>
+            </div>
+            <div class="state">
+                {#if versionState.type === 'loading'}
+                    <small> 読み込み中... </small>
+                {:else if versionState.type === 'found'}
+                    {@const { manifest, version } = versionState}
+                    <a href={resolve('/legal/terms')} class="legal-link">
+                        <p>
+                            利用規約
+                            <i class="ti ti-external-link"></i>
+                        </p>
+                        <small>使っていただくにあたって</small>
                     </a>
-                </b>
-                にお問い合わせいただけると大変開発の助けになります。
-            </small>
-        </div>
-        <div class="state">
-            {#if state.type === 'loading'}
-                <small> 読み込み中... </small>
-            {:else if state.type === 'found'}
-                {@const { manifest, version } = state}
-                <a href="/legal/terms" class="legal-link">
-                    <p>
-                        利用規約
-                        <i class="ti ti-external-link"></i>
+                    <a href={resolve('/legal/privacy')} class="legal-link">
+                        <p>
+                            プライバシーポリシー
+                            <i class="ti ti-external-link"></i>
+                        </p>
+                        <small>使っていただける方へお約束</small>
+                    </a>
+                    <p class="legal">
+                        OMUAPPSをダウンロードすることで、
+                        <br />
+                        利用規約とプライバシーポリシーに同意したものとみなします。
                     </p>
-                    <small>使っていただくにあたって</small>
-                </a>
-                <a href="/legal/privacy" class="legal-link">
-                    <p>
-                        プライバシーポリシー
-                        <i class="ti ti-external-link"></i>
-                    </p>
-                    <small>使っていただける方へお約束</small>
-                </a>
-                <p class="legal">
-                    OMUAPPSをダウンロードすることで、
                     <br />
-                    利用規約とプライバシーポリシーに同意したものとみなします。
-                </p>
-                <br />
-                {@const date = new Date(manifest.pub_date)}
-                <div>
-                    <a href={version.url} class="download" on:click={() => {
-                        downloading = true;
-                        setTimeout(() => {
-                            downloading = false;
-                        }, 1000);
-                    }}>
-                        <Tooltip>
-                            {version.platform} 用のインストーラーをダウンロードします
-                        </Tooltip>
-                        {#if downloading}
-                            ダウンロード中...
-                        {:else}
-                            ダウンロード
-                        {/if}
-                        <i class="ti ti-download"></i>
-                    </a>
-                    <button on:click={() => (showExtra = !showExtra)} class="extra">
-                        その他
-                        <i class="ti ti-chevron-{showExtra ? 'up' : 'down'}"></i>
-                    </button>
-                </div>
-                {#if showExtra}
-                    <ul>
-                        {#each Object.entries(manifest.platforms) as [key, platform] (key)}
-                            <li>
-                                <a
-                                    href={platform.url}
-                                    class="download"
-                                    on:click={() => (downloading = true)}
-                                >
-                                    {key}
-                                    <i class="ti ti-download"></i>
-                                </a>
-                            </li>
-                        {/each}
-                    </ul>
+                    {@const date = new Date(manifest.pub_date)}
+                    <div>
+                        <a href={version.url} class="download" onclick={() => {
+                            downloading = true;
+                            setTimeout(() => {
+                                downloading = false;
+                            }, 1000);
+                        }}>
+                            <Tooltip>
+                                {version.platform} 用のインストーラーをダウンロードします
+                            </Tooltip>
+                            {#if downloading}
+                                ダウンロード中...
+                            {:else}
+                                ダウンロード
+                            {/if}
+                            <i class="ti ti-download"></i>
+                        </a>
+                        <button onclick={() => (showExtra = !showExtra)} class="extra">
+                            その他
+                            <i class="ti ti-chevron-{showExtra ? 'up' : 'down'}"></i>
+                        </button>
+                    </div>
+                    {#if showExtra}
+                        <ul>
+                            {#each Object.entries(manifest.platforms) as [key, platform] (key)}
+                                <li>
+                                    <a
+                                        href={platform.url}
+                                        class="download"
+                                        onclick={() => (downloading = true)}
+                                    >
+                                        {key}
+                                        <i class="ti ti-download"></i>
+                                    </a>
+                                </li>
+                            {/each}
+                        </ul>
+                    {/if}
+                    <div class="version-info">
+                        <small class="version">
+                            バージョン
+                            {manifest.version}
+                        </small>
+                        <small>
+                            リリース日
+                            {date.toLocaleDateString()}
+                            {date.toLocaleTimeString()}
+                        </small>
+                    </div>
+                {:else if versionState.type === 'not_supported'}
+                    <small>お使いのプラットフォームはサポートされていませんでした</small>
                 {/if}
-                <div class="version-info">
-                    <small class="version">
-                        バージョン
-                        {manifest.version}
-                    </small>
-                    <small>
-                        リリース日
-                        {date.toLocaleDateString()}
-                        {date.toLocaleTimeString()}
-                    </small>
-                </div>
-            {:else if state.type === 'not_supported'}
-                <small>お使いのプラットフォームはサポートされていませんでした</small>
-            {/if}
-        </div>
-    </main>
+            </div>
+        </main>
+    {/snippet}
 </Page>
 
 <style lang="scss">

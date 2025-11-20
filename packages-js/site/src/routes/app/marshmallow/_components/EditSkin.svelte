@@ -1,11 +1,17 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { downloadFile } from '$lib/helper';
     import { Button, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
     import { MarshmallowApp, type MarshmallowSkin } from '../marshmallow-app';
     import AssetImage from './AssetImage.svelte';
     import EditSkinTextures from './EditSkinTextures.svelte';
 
-    export let skin: MarshmallowSkin;
+    interface Props {
+        skin: MarshmallowSkin;
+    }
+
+    let { skin = $bindable() }: Props = $props();
 
     const marshmallowApp = MarshmallowApp.getInstance();
     const { screen, config } = marshmallowApp;
@@ -21,7 +27,9 @@
         buffer = undefined;
         buffer = await marshmallowApp.downloadSkin(skin);
     }
-    $: updateDownload(skin);
+    run(() => {
+        updateDownload(skin);
+    });
 
     function download() {
         if (!buffer) return;

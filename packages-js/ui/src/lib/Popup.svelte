@@ -1,61 +1,73 @@
 <script lang="ts">
-    import { BROWSER } from 'esm-env';
-    import { afterUpdate, createEventDispatcher, onDestroy } from 'svelte';
+    import { run } from 'svelte/legacy';
 
-    export let noBackground = false;
-    export let isOpen = false;
-    export let onOpen: () => Promise<void> | void = () => {};
+    import { BROWSER } from 'esm-env';
+    import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+
+    interface Props {
+        noBackground?: boolean;
+        isOpen?: boolean;
+        onOpen?: () => Promise<void> | void;
+        children?: import('svelte').Snippet<[any]>;
+    }
+
+    let {
+        noBackground = false,
+        isOpen = $bindable(false),
+        onOpen = () => {},
+        children,
+    }: Props = $props();
 
     const eventDistacher = createEventDispatcher<{ open: void; close: void }>();
 
-    let element: HTMLElement;
-    let target: HTMLElement;
-    let popup: HTMLElement;
+    let element: HTMLElement | undefined = $state(undefined);
+    let target: HTMLElement | undefined = $state(undefined);
+    let popup: HTMLElement | undefined = $state(undefined);
     type Rect = { x: number; y: number; width: number; height: number };
-    let popupRect: Rect = {
+    let popupRect: Rect = $state({
         x: 0,
         y: 0,
         width: 0,
         height: 0,
-    };
-    let targetRect: Rect = {
+    });
+    let targetRect: Rect = $state({
         x: 0,
         y: 0,
         width: 0,
         height: 0,
-    };
-    let popupPos: { x: number; y: number } = { x: 0, y: 0 };
-    let direction: 'top' | 'bottom' = 'bottom';
+    });
+    let popupPos: { x: number; y: number } = $state({ x: 0, y: 0 });
+    let direction: 'top' | 'bottom' = $state('bottom');
 
     async function handleClick() {
-        targetRect = target.getBoundingClientRect();
+        targetRect = target!.getBoundingClientRect();
         await onOpen();
         isOpen = true;
     }
 
     function handleClickOutside(event: MouseEvent) {
         if (!isOpen) return;
-        if (element.contains(event.target as Node)) return;
+        if (element!.contains(event.target as Node)) return;
         if (event.target === target) return;
         isOpen = false;
     }
 
-    $: {
+    run(() => {
         if (isOpen) {
             eventDistacher('open');
         } else {
             eventDistacher('close');
         }
-    }
+    });
 
     function clamp(value: number, min: number, max: number) {
         return Math.min(Math.max(value, min), max);
     }
 
-    $: {
+    run(() => {
         const padding = 5;
         if (target && popup) {
-            popupRect = popup.getBoundingClientRect();
+            popupRect = popup!.getBoundingClientRect();
             direction =
                 targetRect.y + targetRect.height + popupRect.height + 10 > window.innerHeight
                     ? 'top'
@@ -75,14 +87,14 @@
                 ),
             };
         }
-    }
+    });
 
     if (BROWSER) {
-        afterUpdate(() => {
-            if (!element.parentElement) {
+        onMount(() => {
+            if (!element!.parentElement) {
                 throw new Error('PopupInline must be a child of another element');
             }
-            target = element.parentElement;
+            target = element!.parentElement;
             if (!target.addEventListener || !target.removeEventListener) {
                 throw new Error('target must support addEventListener and removeEventListener');
             }
@@ -90,12 +102,12 @@
         });
 
         onDestroy(() => {
-            target.removeEventListener('click', handleClick);
+            target!.removeEventListener('click', handleClick);
         });
     }
 </script>
 
-<svelte:window on:click={handleClickOutside} />
+<svelte:window onclick={handleClickOutside} />
 <span class="wrapper" bind:this={element}>
     {#if isOpen}
         <div
@@ -106,7 +118,7 @@
             style:left="{popupPos.x}px"
             bind:this={popup}
         >
-            <slot close={() => (isOpen = false)} />
+            {@render children?.({ close: () => (isOpen = false) })}
         </div>
         <div
             class="pointer"
@@ -115,7 +127,7 @@
             style:top="{direction === 'bottom'
                 ? targetRect.y + targetRect.height
                 : targetRect.y - 10}px"
-        />
+        ></div>
     {/if}
 </span>
 

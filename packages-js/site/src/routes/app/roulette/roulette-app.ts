@@ -34,12 +34,12 @@ const STATE_REGISTRY = RegistryType.createJson<State>(APP_ID, {
 
 export class RouletteApp {
     public config: Writable<Config>;
-    public state: Writable<State>;
+    public rouletteState: Writable<State>;
     public entries: Writable<Record<string, RouletteItem>>;
 
     constructor(omu: Omu) {
         this.config = omu.registries.get(CONFIG_REGISTRY).compatSvelte();
-        this.state = omu.registries.get(STATE_REGISTRY).compatSvelte();
+        this.rouletteState = omu.registries.get(STATE_REGISTRY).compatSvelte();
         this.entries = omu.registries.get(ENTRIES_REGISTRY).compatSvelte();
     }
 
@@ -75,7 +75,7 @@ export class RouletteApp {
     }
 
     public toggleRecruiting() {
-        this.state.update((state) => {
+        this.rouletteState.update((state) => {
             if (state.type === 'recruiting') {
                 return { type: 'idle' };
             }
@@ -103,11 +103,11 @@ export class RouletteApp {
             const start = Date.now();
             const duration = config.duration * 1000;
             const random = this.easeInOutCubic(BetterMath.invjsrandom());
-            this.state.set({ type: 'spin-start' });
-            this.state.set({ type: 'spinning', random, result: { entry }, start, duration });
+            this.rouletteState.set({ type: 'spin-start' });
+            this.rouletteState.set({ type: 'spinning', random, result: { entry }, start, duration });
 
             this.spinTimeout = window.setTimeout(() => {
-                this.state.set({ type: 'spin-result', random, result: { entry } });
+                this.rouletteState.set({ type: 'spin-result', random, result: { entry } });
             }, duration);
             return value;
         });
@@ -117,7 +117,7 @@ export class RouletteApp {
         if (this.spinTimeout) {
             clearTimeout(this.spinTimeout);
         }
-        this.state.update(() => ({
+        this.rouletteState.update(() => ({
             type: 'idle',
         }));
     }

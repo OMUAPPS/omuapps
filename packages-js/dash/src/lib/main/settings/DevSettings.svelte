@@ -6,8 +6,8 @@
     const appWindow = tauriWindow.getCurrentWindow();
 
     const trustedHosts = omu.server.trustedHosts.compatSvelte();
-    let srcHost = '';
-    let dstHost = '';
+    let srcHost = $state('');
+    let dstHost = $state('');
 
     function resetWindowSize() {
         appWindow.setSize(new LogicalSize(1280, 720));

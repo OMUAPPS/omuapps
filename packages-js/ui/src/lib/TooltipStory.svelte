@@ -1,8 +1,12 @@
 <script lang="ts">
     import Tooltip from './Tooltip.svelte';
 
-    export let text: string;
-    export let image: string;
+    interface Props {
+        text: string;
+        image: string;
+    }
+
+    let { text, image }: Props = $props();
 </script>
 
 <div class="left top">

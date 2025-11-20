@@ -32,9 +32,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={APP} />
-    </header>
+    {#snippet header()}
+        <header>
+            <AppHeader app={APP} />
+        </header>
+    {/snippet}
     <main>
         {#await omu.waitForReady() then }
             <App {omu} {reactionApp} />

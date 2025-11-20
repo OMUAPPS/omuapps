@@ -12,23 +12,25 @@
     import about_permission from './about_permission.md?raw';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
+    interface Props {
         handle: ScreenHandle;
         props: {
             request: PromptRequestAppPermissions;
             resolve: (accept: PromptResult) => void;
         };
-    };
-    const { request, resolve } = screen.props;
+    }
+
+    let { handle, props }: Props = $props();
+    const { request, resolve } = props;
 
     function accept() {
         resolve('accept');
-        screen.handle.pop();
+        handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        screen.handle.pop();
+        handle.pop();
     }
 
     const LEVELS: Record<PermissionLevel, number> = {
@@ -37,16 +39,16 @@
         high: 2,
     };
 
-    const permissions = request.permissions
+    const permissions = $state(request.permissions
         .sort((a, b) => LEVELS[a.metadata.level] - LEVELS[b.metadata.level])
         .reverse()
         .map((permission) => ({
             permission: PermissionType.deserialize(permission),
             accepted: permission.metadata.level === 'low',
-        }));
+        })));
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="header">
         <AppInfo app={App.deserialize(request.app)} />
         <p>は権限を要求しています</p>
@@ -104,7 +106,7 @@
     </div>
     <div class="actions">
         {#if $devMode}
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 const keys = permissions
                     .map(({ permission }) => permission.id.key())
                     .join('\n');
@@ -113,12 +115,12 @@
                 <i class="ti ti-clipboard"></i>
             </ButtonMini>
         {/if}
-        <button on:click={reject} class="reject">
+        <button onclick={reject} class="reject">
             キャンセル
             <i class="ti ti-x"></i>
         </button>
         <button
-            on:click={accept}
+            onclick={accept}
             class="accept"
             disabled={!permissions.every((entry) => entry.accepted)}
         >
@@ -129,7 +131,9 @@
             <i class="ti ti-check"></i>
         </button>
     </div>
-    <Document source={about_permission} slot="info" />
+    {#snippet info()}
+        <Document source={about_permission} />
+    {/snippet}
 </Screen>
 
 <style lang="scss">

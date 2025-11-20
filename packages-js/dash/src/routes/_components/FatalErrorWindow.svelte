@@ -12,9 +12,13 @@
     import { DEV } from 'esm-env';
     import '../styles.scss';
 
-    export let message: string;
+    interface Props {
+        message: string;
+    }
 
-    let updateProgress: UpdateEvent | undefined = undefined;
+    let { message }: Props = $props();
+
+    let updateProgress: UpdateEvent | undefined = $state(undefined);
 </script>
 
 <div class="window">
@@ -29,7 +33,7 @@
         </div>
         <div class="actions">
             <TitlebarButton
-                on:click={close}
+                onclick={close}
                 icon="ti-x"
                 tooltip="Close"
             />
@@ -76,20 +80,22 @@
             {/await}
         </div>
         <div class="actions">
-            <Button onclick={() => invoke('generate_log_file')} let:promise>
-                {#if promise}
-                    {#await promise}
-                        ログを生成中
-                        <Spinner />
-                    {:then}
-                        ログを生成しました
-                    {:catch e}
-                        ログの生成に失敗しました: {e}
-                    {/await}
-                {:else}
-                    ログを生成
-                    <i class="ti ti-file"></i>
-                {/if}
+            <Button onclick={() => invoke('generate_log_file')}>
+                {#snippet children({ promise })}
+                    {#if promise}
+                        {#await promise}
+                            ログを生成中
+                            <Spinner />
+                        {:then}
+                            ログを生成しました
+                        {:catch e}
+                            ログの生成に失敗しました: {e}
+                        {/await}
+                    {:else}
+                        ログを生成
+                        <i class="ti ti-file"></i>
+                    {/if}
+                {/snippet}
             </Button>
             <Button primary onclick={async () => {
                 await invoke('clean_environment');

@@ -34,5 +34,4 @@ export { default as Toggle } from './Toggle.svelte';
 export { default as Tooltip } from './Tooltip.svelte';
 export type { TypedComponent } from './typed-component.js';
 export { applyOpacity } from './utils/class-helper.js';
-export { default as VirtualList } from './VirtualList.svelte';
 
