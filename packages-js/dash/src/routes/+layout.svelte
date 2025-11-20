@@ -12,6 +12,8 @@
     import FatalErrorWindow from './_components/FatalErrorWindow.svelte';
     import './styles.scss';
 
+    const { children } = $props();
+
     async function init() {
         await loadLocale();
         await waitForTauri();
@@ -42,20 +44,20 @@
     onMount(async () => {
         try {
             await init();
-            state = { type: 'loaded' };
+            loadingState = { type: 'loaded' };
         } catch (err) {
-            state = { type: 'failed', message: formatError(err) };
+            loadingState = { type: 'failed', message: formatError(err) };
         }
     });
 
-    let state: {
+    let loadingState: {
         type: 'initializing';
     } | {
         type: 'failed';
         message: string;
     } | {
         type: 'loaded';
-    } = { type: 'initializing' };
+    } = $state({ type: 'initializing' });
 </script>
 
 <svelte:head>
@@ -63,10 +65,10 @@
     <Theme />
 </svelte:head>
 
-{#if state.type === 'loaded'}
+{#if loadingState.type === 'loaded'}
     <AppWindow>
-        <slot />
+        {@render children?.()}
     </AppWindow>
-{:else if state.type === 'failed'}
-    <FatalErrorWindow message={state.message} />
+{:else if loadingState.type === 'failed'}
+    <FatalErrorWindow message={loadingState.message} />
 {/if}
