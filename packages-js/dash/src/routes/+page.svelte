@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { chat, omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
@@ -27,7 +26,7 @@
 
     setGlobal({ omu, chat });
 
-    run(() => {
+    $effect(() => {
         if ($serverState?.type === 'ServerStopped' && $appState.type === 'connecting') {
             $appState.reject({
                 type: 'server_start_failed',
@@ -36,7 +35,7 @@
         }
     });
 
-    run(() => {
+    $effect(() => {
         if ($netState?.type === 'reconnecting') {
             if ($netState.attempt && $netState.attempt > 2) {
                 $appState = { type: 'restore', message: omu.network.reason?.message };
@@ -50,7 +49,7 @@
         }
     });
 
-    run(() => {
+    $effect(() => {
         console.log('serverState', $serverState);
     });
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     interface Props {
         value: number;
@@ -11,9 +10,6 @@
     let hours = $derived(Math.floor(value / 60 / 60) % 24);
     let minutes = $derived(Math.floor(value / 60) % 60);
     let seconds = $derived(value % 60);
-    run(() => {
-        console.log({ days, hours, minutes, seconds });
-    });
 
     function update(days: number, hours: number, minutes: number, seconds: number) {
         value = Math.max(0, days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds);

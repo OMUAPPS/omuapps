@@ -11,8 +11,8 @@
 </script>
 
 <div class="entries">
-    {#each Object.values($entries) as item, index (index)}
-        <RouletteEntry {index} {item} {roulette} disabled={$rouletteState.type !== 'idle'} />
+    {#each Object.keys($entries) as key, index (index)}
+        <RouletteEntry {index} bind:item={$entries[key]} {roulette} disabled={$rouletteState.type !== 'idle'} />
     {:else}
         <div class="empty">
             1つ以上追加する必要があります

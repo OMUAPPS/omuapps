@@ -1,5 +1,6 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
+    import { TooltipPortal } from '@omujs/ui';
     import { TauriEvent } from '@tauri-apps/api/event';
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
@@ -9,6 +10,7 @@
     import ScreenRenderer from './screen/ScreenRenderer.svelte';
     import { appWindow, listen } from './tauri.js';
     import { VERSION } from './version.js';
+
     interface Props {
         children?: import('svelte').Snippet;
     }
@@ -100,6 +102,7 @@
         {@render children?.()}
     </div>
     <ScreenRenderer />
+    <TooltipPortal />
 </div>
 
 <style lang="scss">

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     interface Props {
         end: number;
@@ -26,9 +25,12 @@
         }
     }
 
-    run(() => {
-        clearTimeout(timeout);
+    $effect(() => {
         update(end);
+
+        return () => {
+            clearTimeout(timeout);
+        };
     });
 </script>
 

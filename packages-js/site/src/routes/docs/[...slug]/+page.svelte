@@ -10,8 +10,10 @@
     }
 
     let { data }: Props = $props();
-    $docs = data.page;
-    let source = $derived(replaceConstants($docs.content, $config));
+    $effect(() => {
+        $docs = data.page;
+    });
+    let source = $derived(replaceConstants(data.page.content, $config));
 </script>
 
 <Markdown {source} />

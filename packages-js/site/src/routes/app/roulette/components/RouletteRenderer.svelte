@@ -1,9 +1,8 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { BetterMath } from '$lib/math.js';
     import { Timer } from '$lib/timer.js';
-    import { onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
     import type { RouletteApp } from '../roulette-app.js';
 
     interface Props {
@@ -242,15 +241,14 @@
         animationFrame = requestAnimationFrame(loop);
     }
 
-    run(() => {
+    onMount(() => {
         if (canvas) {
             resize();
             loop();
         }
-    });
-
-    onDestroy(() => {
-        if (animationFrame) cancelAnimationFrame(animationFrame);
+        return () => {
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+        };
     });
 </script>
 

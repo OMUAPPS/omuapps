@@ -3,7 +3,7 @@
     import { Tooltip } from '@omujs/ui';
 </script>
 
-<div class="content-width open-source">
+<section class="content-width open-source">
     <div class="section-header">
         <h3>
             オープンソース
@@ -22,9 +22,13 @@
             <i class="ti ti-arrow-right"></i>
         </a>
     </div>
-</div>
+</section>
 
 <style lang="scss">
+    section {
+        margin-top: 18rem;
+    }
+
     a {
         margin-top: 1rem;
     }

@@ -16,12 +16,16 @@
     <div class="menu">
         <div class="actions">
             {#if state.type === 'idle'}
-                <Button primary onclick={() => {state = { type: 'qustioning' };}}>
+                <Button primary onclick={() => {
+                    state = { type: 'qustioning' };
+                }}>
                     出題
                     <i class="ti ti-chevron-right"></i>
                 </Button>
             {:else if state.type === 'qustioning'}
-                <Button primary onclick={() => {state = { type: 'answering' };}}>
+                <Button primary onclick={() => {
+                    state = { type: 'answering' };
+                }}>
                     正誤発表
                     <i class="ti ti-chevron-right"></i>
                 </Button>

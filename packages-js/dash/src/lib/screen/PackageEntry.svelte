@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { PackageInfo } from '@omujs/omu/api/plugin';
     import { ExternalLink } from '@omujs/ui';
-    import SvelteMarkdown from 'svelte-markdown';
+    import { default as SvelteMarkdown } from '@humanspeak/svelte-markdown';
 
     interface Props {
         entry: PackageInfo;

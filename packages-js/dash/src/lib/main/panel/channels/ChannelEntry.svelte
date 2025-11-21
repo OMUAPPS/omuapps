@@ -106,13 +106,15 @@
             border-radius: 50%;
         }
 
-        .tooltip-image {
-            width: 200px;
-            height: 200px;
-            padding: 0;
-            margin: 0;
-            border-radius: 0;
-        }
+    }
+
+    .tooltip-image {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: contain;
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
     }
 
     .info {

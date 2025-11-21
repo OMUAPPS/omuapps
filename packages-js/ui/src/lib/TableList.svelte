@@ -33,7 +33,6 @@
 
     function updateItems(newItems: Map<string, T>) {
         for (const [key, entry] of newItems.entries()) {
-            if (items.has(key)) continue;
             items.set(key, entry);
         }
     }
@@ -76,6 +75,11 @@
     table.listen((items) => {
         updateItems(items);
     });
+    table.event.remove.listen((removedItems) => {
+        for (const key of removedItems.keys()) {
+            items.delete(key);
+        }
+    });
 
     let filtered = $derived.by(() => {
         let entries = Array.from(items.entries());
@@ -95,7 +99,7 @@
 <svelte:window />
 <div class="list">
     <div class="items">
-        {#if items.size > 0}
+        {#if filtered.length > 0}
             <VirtualList items={filtered} {onreached} bind:viewport bind:averageHeight>
                 {#snippet render([id, entry])}
                     <div class="item" onmouseenter={() => {
@@ -125,6 +129,7 @@
         flex-direction: column;
         width: 100%;
         height: 100%;
+        overflow-x: hidden;
     }
 
     .items {

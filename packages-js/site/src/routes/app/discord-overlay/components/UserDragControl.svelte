@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { BetterMath } from '$lib/math.js';
     import { AABB2 } from '$lib/math/aabb2.js';
@@ -44,7 +43,7 @@
     let rect = $state({ width: 0, height: 0 });
     let element: HTMLElement | null = $state(null);
 
-    run(() => {
+    $effect(() => {
         if (element) {
             rect = element.getBoundingClientRect();
         }

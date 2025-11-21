@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { BROWSER } from 'esm-env';
     import { TimerApp } from '../timer-app.js';
@@ -11,28 +10,23 @@
     let { timer }: Props = $props();
     const { data, config } = timer;
 
+    const PARAM_REGEX = /\{([\w]+)\}/g;
+
     let timerId: number;
     let time = $state(0);
-    let displayTime = $state('');
+    let displayTime = $derived(updateDisplayTime(time));
 
     function updateTime() {
-        if (!$data.running) {
-            return;
-        }
-        time = Date.now() - $data.startTime + $data.time;
-        timerId = requestAnimationFrame(updateTime);
-    }
-
-    function update() {
-        if ($data.running) {
-            updateTime();
+        const value = $data;
+        if (value.running) {
+            time = Date.now() - value.startTime + value.time;
+            displayTime = updateDisplayTime(time);
+            timerId = requestAnimationFrame(updateTime);
         } else {
-            time = $data.time;
+            time = value.time;
             cancelAnimationFrame(timerId);
         }
     }
-
-    const paramRegex = /\{([\w]+)\}/g;
 
     function updateDisplayTime(time: number) {
         const times = {
@@ -47,21 +41,20 @@
                 .padStart(2, '0'),
         };
 
-        displayTime = $config.format.replace(
-            paramRegex,
+        return $config.format.replace(
+            PARAM_REGEX,
             (match, key: keyof typeof times) => times[key],
         );
     }
 
-    run(() => {
-        updateDisplayTime(time);
-    });
     let background = $derived(`${$config.style.backgroundColor}${Math.floor(
         $config.style.backgroundOpacity * 255,
     ).toString(16)}`);
 
     if (BROWSER) {
-        data.subscribe(update);
+        data.subscribe(() => {
+            updateTime();
+        });
     }
 </script>
 

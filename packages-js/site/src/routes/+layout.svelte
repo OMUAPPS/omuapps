@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Theme } from '@omujs/ui';
+    import { Theme, TooltipPortal } from '@omujs/ui';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
     import style from 'svelte-highlight/styles/stackoverflow-light';
     import ProgressBar from './_components/ProgressBar.svelte';
@@ -28,6 +28,7 @@
     {@render children?.()}
 </div>
 <ProgressBar />
+<TooltipPortal />
 
 <style>
     .app {

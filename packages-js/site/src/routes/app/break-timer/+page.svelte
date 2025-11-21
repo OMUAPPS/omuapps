@@ -34,6 +34,6 @@
         </header>
     {/snippet}
     {#await waitReady then}
-        <App {omu} {breakTimer} {obs} />
+        <App {breakTimer} {obs} />
     {/await}
 </AppPage>

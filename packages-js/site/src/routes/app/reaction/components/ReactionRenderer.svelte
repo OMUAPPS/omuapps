@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { comparator } from '$lib/helper.js';
     import { lerp } from '$lib/math/math.js';
     import { Timer } from '$lib/timer.js';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
-    import { onDestroy } from 'svelte';
+    import { onDestroy, onMount } from 'svelte';
     import { ReactionApp } from '../reaction-app.js';
 
     interface Props {
@@ -229,7 +228,7 @@
             cancelAnimationFrame(animationTimer);
         });
     }
-    run(() => {
+    onMount(() => {
         if (canvas) {
             resize();
             const context = canvas.getContext('2d');

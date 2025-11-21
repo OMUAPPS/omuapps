@@ -1,8 +1,7 @@
 <script lang="ts">
     import type { OBSPlugin } from '@omujs/obs';
-    import type { Omu } from '@omujs/omu';
     import { AssetButton, RelativeDate } from '@omujs/ui';
-    import { onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
     import { ASSET_APP } from './app.js';
     import type { BreakTimerApp, BreakTimerConfig } from './break-timer-app.js';
     import SceneSelect from './components/SceneSelect.svelte';
@@ -10,18 +9,18 @@
     import type { BreakTimerState } from './state.js';
 
     interface Props {
-        omu: Omu;
         obs: OBSPlugin;
         breakTimer: BreakTimerApp;
     }
 
-    let { omu, obs, breakTimer }: Props = $props();
+    let { obs, breakTimer }: Props = $props();
     const { config, timerState } = breakTimer;
 
     timerState.subscribe((state) => update(state, $config));
     config.subscribe((config) => update($timerState, config));
 
     let task: number | null = $state(null);
+
     function update(newState: BreakTimerState, config: BreakTimerConfig): void {
         if (newState.type === 'break') {
             const { scene } = newState;
@@ -31,18 +30,19 @@
                 obs.sceneSetCurrentByName(scene);
                 $timerState = { type: 'work' };
             }, config.timer.duration * 1000);
-            console.log('set timeout', task, config.timer.duration);
         }
     }
 
-    onDestroy(() => {
-        if (task) clearTimeout(task);
+    onMount(() => {
+        update($timerState, $config);
+        return () => {
+            if (task) clearTimeout(task);
+        };
     });
 </script>
 
 <main>
     <div class="left">
-        {task}
         {#if $config.timer}
             <TimeEdit bind:value={$config.timer.duration} />
         {/if}
