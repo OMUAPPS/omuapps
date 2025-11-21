@@ -87,4 +87,22 @@ export interface TooltipEntry {
 };
 
 export const tooltipStack = writable<TooltipEntry[]>([]);
-export const tooltipId = writable(0);
+export let tooltipId = 0;
+
+export function getTooltipId() {
+    return tooltipId++;
+}
+
+export function tooltipAdd(entry: TooltipEntry) {
+    tooltipStack.update((value) => {
+        value = value.filter((item) => item.id !== entry.id);
+        value.push(entry);
+        return value;
+    });
+}
+
+export function tooltipRemove(entry: TooltipEntry) {
+    tooltipStack.update((value) => {
+        return value.filter((item) => item.id !== entry.id);
+    });
+}

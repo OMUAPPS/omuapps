@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { onDestroy } from 'svelte';
     import { translate } from './stores.js';
@@ -33,8 +32,6 @@
     ];
 
     function sleep(ms: number) {
-        if (destroyed) return;
-        window.clearTimeout(timer);
         timer = window.setTimeout(() => {
             timer = 0;
             formatDate(date);
@@ -69,7 +66,7 @@
         }
     }
 
-    run(() => {
+    $effect(() => {
         formatDate(date);
     });
 

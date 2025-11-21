@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy } from 'svelte';
-    import { tooltipId, tooltipStack, type TooltipEntry } from './stores';
+    import { getTooltipId, tooltipAdd, tooltipRemove, type TooltipEntry } from './stores';
 
     interface Props {
         noBackground?: boolean;
@@ -73,12 +73,7 @@
         update(target, tooltip);
     });
 
-    const id = $tooltipId ++;
     let entry: TooltipEntry | undefined = undefined;
-
-    function remove() {
-        $tooltipStack = $tooltipStack.filter((item) => item.id !== id);
-    }
 
     function attachParent(element: HTMLElement) {
         if (!element.parentElement) {
@@ -90,20 +85,18 @@
                 'target must support addEventListener and removeEventListener',
             );
         }
-        remove();
         entry = {
-            id,
+            id: getTooltipId(),
             render,
             element,
         };
-        $tooltipStack = [
-            ...$tooltipStack,
-            entry,
-        ];
+        tooltipAdd(entry);
     }
 
     onDestroy(() => {
-        remove();
+        if (entry) {
+            tooltipRemove(entry);
+        }
     });
 </script>
 

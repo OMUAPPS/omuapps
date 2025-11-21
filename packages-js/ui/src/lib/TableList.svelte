@@ -1,9 +1,7 @@
 <script lang="ts" generics="T">
 
     import type { Table } from '@omujs/omu/api/table';
-    import {
-        type Snippet,
-    } from 'svelte';
+    import { type Snippet } from 'svelte';
     import { SvelteMap } from 'svelte/reactivity';
     import { omu } from './stores';
     import VirtualList from './VirtualList.svelte';
@@ -96,7 +94,6 @@
     let selected: string | undefined = $state(undefined);
 </script>
 
-<svelte:window />
 <div class="list">
     <div class="items">
         {#if filtered.length > 0}
