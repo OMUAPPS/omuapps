@@ -218,4 +218,4 @@ jobs:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
-            bun ./scripts/js-upload-to-r2.ts --version ${{ needs.publish-npm.outputs.VERSION }} --channel beta --upload
+            bun ./scripts/js-upload-to-r2.ts --version $(bunx lerna ls --json | jq -r '.[0].version') --channel beta --upload
