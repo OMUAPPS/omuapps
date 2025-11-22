@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from 'svelte';
+    import { onDestroy, tick } from 'svelte';
     import { getTooltipId, tooltipAdd, tooltipRemove, type TooltipEntry } from './stores';
 
     interface Props {
@@ -32,10 +32,11 @@
         return Math.min(Math.max(value, min), max);
     }
 
-    function update(target: HTMLElement | undefined, tooltip: HTMLElement | undefined): void {
+    async function update(target: HTMLElement | undefined, tooltip: HTMLElement | undefined): void {
         if (!target || !tooltip) return;
         const margin = 10;
         const arrowSize = 10;
+        await tick();
         tooltipRect = tooltip.getBoundingClientRect();
         targetRect = target.getBoundingClientRect();
         const targetBounds = {
