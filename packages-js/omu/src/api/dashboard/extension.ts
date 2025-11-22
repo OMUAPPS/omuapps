@@ -453,6 +453,7 @@ export class DashboardExtension {
                     host,
                 }, params);
                 if (result.type === 'ok') {
+                    const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id: id, hosts: [] };
                     hostEntry.hosts.push(host);
                     await this.allowedHosts.update(hostEntry);
                 } else {
