@@ -41,7 +41,7 @@ jobs:
               uses: oven-sh/setup-bun@v2
 
             - name: Install Dependencies
-              run: bun install --frozen-lockfile
+              run: bun install
 
             - name: Version
               run: bunx lerna version --yes

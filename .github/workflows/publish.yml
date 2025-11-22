@@ -62,7 +62,7 @@ jobs:
               uses: oven-sh/setup-bun@v2
 
             - name: Install Dependencies
-              run: bun install --frozen-lockfile
+              run: bun install
 
             - name: Build
               run: bunx lerna run build
@@ -150,7 +150,7 @@ jobs:
               uses: oven-sh/setup-bun@v2
 
             - name: Install Dependencies
-              run: bun install --frozen-lockfile
+              run: bun install
 
             - name: install dependencies (ubuntu only)
               if: ${{ matrix.platform == 'ubuntu-22.04' }} # This must match the platform value defined above.
@@ -211,7 +211,7 @@ jobs:
           uses: oven-sh/setup-bun@v2
 
         - name: Install Dependencies
-          run: bun install --frozen-lockfile
+          run: bun install
 
         - name: Upload to Cloudflare R2
           env:
