@@ -49,6 +49,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.ASSET_PERMISSION_ID,
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
@@ -146,6 +147,7 @@
                 dimensions={{ width: 1080, height: 1080 }}
                 asset={ASSET_APP}
                 permissions={[
+                    OmuPermissions.ASSET_PERMISSION_ID,
                     ChatPermissions.CHAT_PERMISSION_ID,
                 ]}
             />
