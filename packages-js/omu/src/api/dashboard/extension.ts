@@ -5,6 +5,7 @@ import { Omu } from '../../omu.js';
 import { PromiseResult } from '../../result.js';
 import { Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
+import { InvokedParams } from '../endpoint/packets.js';
 import { ExtensionType } from '../extension.js';
 import { PermissionTypeJson } from '../permission/permission.js';
 import { PackageInfo } from '../plugin/package-info.js';
@@ -442,55 +443,45 @@ export class DashboardExtension {
             throw new Error('Dashboard already set');
         }
         this.dashboard = dashboard;
+
+        const requireHost = async (params: InvokedParams, host: string): Promise<UserResponse<undefined>> => {
+            const id = params.caller.key();
+            const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id: id, hosts: [] };
+            const allowed = hostEntry.hosts.includes(host);
+            if (!allowed) {
+                const result = await dashboard.hostRequested({
+                    host,
+                }, params);
+                if (result.type === 'ok') {
+                    hostEntry.hosts.push(host);
+                    await this.allowedHosts.update(hostEntry);
+                } else {
+                    return { type: 'cancelled' };
+                }
+            }
+            return { type: 'ok', value: undefined };
+        };
+
         this.omu.endpoints.bind(DASHBOARD_COOKIES_GET, async (request, params): Promise<UserResponse<Cookie[]>> => {
             const { url } = request;
             const { host } = new URL(url);
-            const id = params.caller.key();
-            const allowedHost: AllowedHost = await this.allowedHosts.get(id) ?? { id, hosts: [] };
-            const allowed = allowedHost.hosts.includes(host);
-            if (!allowed) {
-                return {
-                    type: 'cancelled',
-                };
+            const hostAccessResult = await requireHost(params, host);
+            if (hostAccessResult.type !== 'ok') {
+                return hostAccessResult;
             }
             return await dashboard.getCookies(request);
         });
         this.omu.endpoints.bind(DASHBOARD_HOST_REQUEST, async (request, params): Promise<UserResponse> => {
             const { host } = request;
-            const id = params.caller.key();
-            const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id, hosts: [] };
-            const allowed = hostEntry.hosts.includes(host);
-            if (allowed) {
-                return {
-                    type: 'ok',
-                    value: undefined,
-                };
-            }
-            const result = await dashboard.hostRequested(request, params);
-            if (result.type === 'ok') {
-                hostEntry.hosts.push(host);
-                await this.allowedHosts.update(hostEntry);
-            }
+            const result = await requireHost(params, host);
             return result;
         });
         this.omu.endpoints.bind(DASHBOARD_WEBVIEW_REQUEST, async (request, params): Promise<WebviewResponse> => {
             const url = new URL(request.url);
             const { host } = url;
-            {
-                const id = params.caller.key();
-                const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id, hosts: [] };
-                const allowed = hostEntry.hosts.includes(host);
-                if (!allowed) {
-                    const result = await dashboard.hostRequested({
-                        host,
-                    }, params);
-                    if (result.type === 'ok') {
-                        hostEntry.hosts.push();
-                        await this.allowedHosts.update(hostEntry);
-                    } else {
-                        return { type: 'cancelled' };
-                    }
-                }
+            const hostAccessResult = await requireHost(params, host);
+            if (hostAccessResult.type !== 'ok') {
+                return hostAccessResult;
             }
             const emit = async (event: WebviewEvent) => {
                 this.omu.send(DASHBOARD_WEBVIEW_EVENT_PACKET, {
