@@ -63,28 +63,19 @@
 <button onclick={handleClick}>
     <Tooltip>
         <div class="tooltip">
-            {#if $menuOpen}
-                {description}
-                {#if loaded}
-                    <h3>
-                        <span class="loaded">
-                            読み込み済み
-                            <i class="ti ti-check"></i>
-                        </span>
-                    </h3>
-                {/if}
-            {:else}
-                <h3>
-                    {name}
-                    {#if loaded}
-                        <span class="loaded">
-                            読み込み済み
-                            <i class="ti ti-check"></i>
-                        </span>
-                    {/if}
-                </h3>
-                <small>{description}</small>
+            {#if !$menuOpen}
+                {name}
             {/if}
+            <h3>
+                {#if loaded}
+                    <span class="loaded">
+                        読み込み済み
+                        <i class="ti ti-check"></i>
+                    </span>
+                {/if}
+            </h3>
+            <small>{description}</small>
+            <small>ダブルクリックで再読み込み</small>
         </div>
     </Tooltip>
     <div class="app" class:selected class:active>

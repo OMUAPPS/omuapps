@@ -33,10 +33,10 @@
     }
 
     async function update(target: HTMLElement | undefined, tooltip: HTMLElement | undefined): Promise<void> {
+        await tick();
         if (!target || !tooltip) return;
         const margin = 10;
         const arrowSize = 10;
-        await tick();
         tooltipRect = tooltip.getBoundingClientRect();
         targetRect = target.getBoundingClientRect();
         const targetBounds = {
