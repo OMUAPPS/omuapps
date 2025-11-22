@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ChatPermissions, Models } from '@omujs/chat';
-    import type { Omu } from '@omujs/omu';
+    import { OmuPermissions, type Omu } from '@omujs/omu';
     import { AssetButton, Button, ButtonMini, FileDrop, Slider, Tooltip } from '@omujs/ui';
     import { APP_ID, ASSET_APP } from './app';
     import ReactionRenderer from './components/ReactionRenderer.svelte';
@@ -51,6 +51,7 @@
     </h2>
     <section>
         <AssetButton asset={ASSET_APP} permissions={[
+            OmuPermissions.ASSET_PERMISSION_ID,
             ChatPermissions.CHAT_PERMISSION_ID,
             ChatPermissions.CHAT_REACTION_PERMISSION_ID,
         ]} />
