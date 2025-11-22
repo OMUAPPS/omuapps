@@ -26,19 +26,6 @@
                 added_at: new Date().toISOString(),
             };
         }
-        if ($isBetaEnabled && !$index.indexes['com.omuapps.beta']) {
-            $index.indexes['com.omuapps.beta'] ??= {
-                url: 'https://beta.omuapps.com/apps.json',
-                meta: {
-                    name: 'OMUAPPS - Beta',
-                    note: {
-                        ja: 'ベータ版OMUAPPS公式アプリ',
-                        en: 'Official Beta Channel OMUAPPS',
-                    },
-                },
-                added_at: new Date().toISOString(),
-            };
-        }
     }
 
     async function load({ indexes }: AppIndex) {
@@ -53,6 +40,26 @@
         load($index);
         index.subscribe(() => {
             load($index);
+        });
+        isBetaEnabled.subscribe((enabled) => {
+            if (enabled) {
+                $index.indexes['com.omuapps.beta'] ??= {
+                    url: 'https://beta.omuapps.com/apps.json',
+                    meta: {
+                        name: 'OMUAPPS - Beta',
+                        note: {
+                            ja: 'ベータ版OMUAPPS公式アプリ',
+                            en: 'Official Beta Channel OMUAPPS',
+                        },
+                    },
+                    added_at: new Date().toISOString(),
+                };
+            } else if ($index.indexes['com.omuapps.beta']) {
+                delete $index.indexes['com.omuapps.beta'];
+                $index.indexes = {
+                    ...$index.indexes,
+                };
+            }
         });
     });
 

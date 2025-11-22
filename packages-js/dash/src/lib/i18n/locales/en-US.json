@@ -254,7 +254,6 @@
         "setting": {
             "devMode": "Developer Mode",
             "betaMode": "Enable Beta Features",
-            "betaModeDescription": "Requires app restart to enable.",
             "language": "Language",
             "layoutInvert": "Invert Layout",
             "debug": "Debug",

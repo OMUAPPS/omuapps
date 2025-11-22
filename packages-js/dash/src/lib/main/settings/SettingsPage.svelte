@@ -232,9 +232,6 @@
                         {$t('settings.setting.uninstall')}
                     </Button>
                 </span>
-                <small>
-                    {$t('settings.setting.betaModeDescription')}
-                </small>
                 <label class="setting">
                     <p>{$t('settings.setting.betaMode')}</p>
                     <input
