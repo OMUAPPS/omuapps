@@ -34,6 +34,7 @@
         padding: 1rem 0;
         text-wrap: wrap;
         font-size: 0.9rem;
+        font-weight: 500;
         width: 100%;
         user-select: text;
         word-break: auto-phrase;
