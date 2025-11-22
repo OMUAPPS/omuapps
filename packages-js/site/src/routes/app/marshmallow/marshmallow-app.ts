@@ -56,6 +56,11 @@ export type MarshmallowSkin = {
         y: number;
         scale: number;
     };
+    transition: {
+        in: {
+            type: 'default' | 'paper';
+        };
+    };
 };
 
 import { sha256 } from '$lib/helper.js';
@@ -89,6 +94,11 @@ const DEFAULT_SKIN: MarshmallowSkin = {
         x: 0,
         y: 0,
         scale: 1,
+    },
+    transition: {
+        in: {
+            type: 'default',
+        },
     },
 };
 

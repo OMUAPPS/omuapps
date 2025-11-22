@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { downloadFile } from '$lib/helper';
-    import { Button, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
+    import { Button, Combobox, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
     import { MarshmallowApp, type MarshmallowSkin } from '../marshmallow-app';
     import AssetImage from './AssetImage.svelte';
     import EditSkinTextures from './EditSkinTextures.svelte';
@@ -105,6 +105,19 @@
     <p>
         <Slider bind:value={skin.cursor.scale} min={0} max={10} step={0.2} />
     </p>
+</section>
+<h3>アニメーション</h3>
+<section>
+    <Combobox options={{
+        default: {
+            label: '無し',
+            value: {type: 'default'}
+        },
+        paper: {
+            label: '紙',
+            value: {type: 'paper'}
+        }
+    }} bind:value={skin.transition.in} key={skin.transition.in.type}/>
 </section>
 
 <style lang="scss">

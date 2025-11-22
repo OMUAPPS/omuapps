@@ -71,12 +71,25 @@
     {#if skin?.text.font.family}
         <link href="https://fonts.googleapis.com/css2?family={encodeURIComponent(skin?.text.font.family)}&display=swap" rel="stylesheet">
     {/if}
+    <style>
+        @keyframes marshmallow-paper {
+            0% {
+                transform: translateY(-10vh) perspective(200px) rotateX(3deg)  translate(75%, 10rem) rotate(-3deg) translate(-75%, -10rem) ;
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
 </svelte:head>
 
 <div class="message" class:has-pointer={!!pointer} style="scale: {scale}; width: {targetWidth}px; height: {height}px">
     {#if skin}
         {#if loadedSkin}
-            <div class="skin" bind:this={element}>
+            <div class="skin animation" style:animation-name="marshmallow-{skin.transition.in.type}" bind:this={element}>
                 <img src={loadedSkin.top} alt="">
                 <div
                     class="content"
@@ -94,7 +107,7 @@
             </div>
         {/if}
     {:else}
-        <div class="img" bind:this={element}>
+        <div class="img animation" bind:this={element}>
             <img
                 width="{targetWidth}px"
                 src="https://media.marshmallow-qa.com/system/images/{message.id}.png"
@@ -126,6 +139,13 @@
         &.has-pointer {
             cursor: none;
         }
+    }
+
+    .animation {
+        transform-origin: center top;
+        animation-fill-mode: forwards;
+        animation-duration: 0.621s;
+        animation-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);
     }
 
     .skin {
