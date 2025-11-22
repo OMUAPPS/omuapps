@@ -6,7 +6,7 @@
     import ManageSkins from './_components/ManageSkins.svelte';
     import Messages from './_components/Messages.svelte';
     import MessageView from './_components/MessageView.svelte';
-    import { MarshmallowAPI, type Message, type User } from './api.js';
+    import { MarshmallowAPI, type User } from './api.js';
     import { ASSET_APP } from './app';
     import { MarshmallowApp } from './marshmallow-app.js';
     import { hasPremium } from './stores';
@@ -31,7 +31,6 @@
         screen = value;
     });
 
-    let messages: Record<string, Message> | undefined = $state();
     let search = $state('');
 
     let user: User | undefined = $state(undefined);
@@ -50,24 +49,23 @@
         }
     });
 
-    let refreshMessages: () => void = $state(() => {});
-    let refreshAnswers: () => void = $state(() => {});
+    let messageCount = $state(0);
 </script>
 
 <main>
     <div class="menu">
         <div class="tab" class:selected={screen.type === 'messages'}>
-            <Messages {api} {search} bind:messages bind:refresh={refreshMessages} />
+            <Messages {api} {search} bind:count={messageCount} />
         </div>
         <div class="tab" class:selected={screen.type === 'answers'}>
-            <Answers {api} {search} bind:refresh={refreshAnswers} />
+            <Answers {api} {search} />
         </div>
         <div class="tabs">
             <button onclick={() => (screen = { type: 'messages' })} class:active={screen.type === 'messages'}>
                 新着
-                {#if Object.keys(messages ?? {}).length > 0}
+                {#if messageCount > 0}
                     <span class="messages-count">
-                        {Object.keys(messages ?? {}).length}
+                        {messageCount}
                     </span>
                 {/if}
             </button>

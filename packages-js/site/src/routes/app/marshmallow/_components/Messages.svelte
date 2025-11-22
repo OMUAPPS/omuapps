@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { Button, Spinner } from '@omujs/ui';
     import { DOM, type MarshmallowAPI, type Message } from '../api';
@@ -8,23 +7,17 @@
     interface Props {
         api: MarshmallowAPI;
         search?: string;
-        messages?: Record<string, Message> | undefined;
-        refresh?: any;
+        count: number;
     }
 
     let {
         api,
         search = '',
-        messages = $bindable(undefined),
-        refresh = $bindable(() => {
-            page = 1;
-            messages = undefined;
-            remaining = true;
-            loadNext();
-        }),
+        count = $bindable(),
     }: Props = $props();
 
-    let page = 1;
+    let page = $state(1);
+    let messages: Record<string, Message> | undefined = $state({});
     let loading = $state(false);
     let remaining = $state(true);
 
@@ -46,15 +39,25 @@
         loading = false;
     }
 
-    run(() => {
+    function refresh() {
+        loading = false;
+        remaining = true;
+        messages = {};
+        page = 1;
+    }
+
+    $effect(() => {
         if (api) {
-            refresh();
             loadNext();
         }
     });
 
+    $effect(() => {
+        count = Object.keys(messages ?? {}).length;
+    });
+
     let filteredEntries = $derived(Object.entries(messages ?? {}).filter(([,message]) => DOM.blockToString(message.content).toLocaleLowerCase().includes(search.toLocaleLowerCase())));
-    run(() => {
+    $effect(() => {
         if (filteredEntries.length === 0) {
             loadNext();
         }

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { Button, Spinner } from '@omujs/ui';
     import { DOM, type AnswerMessage, type MarshmallowAPI } from '../api';
@@ -14,12 +13,6 @@
     let {
         api,
         search = '',
-        refresh = $bindable(() => {
-            last = undefined;
-            answers = undefined;
-            remaining = true;
-            loadNext();
-        }),
     }: Props = $props();
 
     let answers: Record<string, AnswerMessage> | undefined = $state({});
@@ -54,9 +47,15 @@
         }
     }
 
-    run(() => {
+    function refresh() {
+        last = undefined;
+        answers = undefined;
+        remaining = true;
+        loadNext();
+    }
+
+    $effect(() => {
         if (api) {
-            refresh();
             loadNext();
         }
     });
@@ -67,7 +66,7 @@
             if (DOM.blockToString(message.content).toLocaleLowerCase().includes(search.toLocaleLowerCase())) return true;
             if (message.reply && DOM.blockToString(message.reply).toLocaleLowerCase().includes(search.toLocaleLowerCase())) return true;
         }));
-    run(() => {
+    $effect(() => {
         if (filteredAnswers.length === 0) {
             loadNext();
         }
