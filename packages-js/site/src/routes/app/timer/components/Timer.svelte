@@ -15,15 +15,15 @@
     let timerId: number;
     let time = $state(0);
     let displayTime = $derived(updateDisplayTime(time));
+    let running = false;
 
     function updateTime() {
-        const value = $data;
-        if (value.running) {
-            time = Date.now() - value.startTime + value.time;
+        if (running) {
+            time = Date.now() - $data.startTime + $data.time;
             displayTime = updateDisplayTime(time);
             timerId = requestAnimationFrame(updateTime);
         } else {
-            time = value.time;
+            time = $data.time;
             cancelAnimationFrame(timerId);
         }
     }
@@ -52,7 +52,8 @@
     ).toString(16)}`);
 
     if (BROWSER) {
-        data.subscribe(() => {
+        data.subscribe((value) => {
+            running = value.running;
             updateTime();
         });
     }
