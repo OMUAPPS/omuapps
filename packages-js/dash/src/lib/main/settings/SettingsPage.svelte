@@ -239,7 +239,7 @@
                         bind:checked={$isBetaEnabled}
                     />
                 </label>
-                <small>開発者モードはアプリを開発するためにあります。必要でない場合に有効にすることは安全機能が一つ外れることを意味しますのでご注意ください</small>
+                <small>開発者モードはアプリを開発するためにあります。必要でない場合に有効にすることは安全機能が一つ外れることを意味しますので理解したうえで使用してください</small>
                 <label class="setting">
                     <p>{$t('settings.setting.devMode')}</p>
                     <input type="checkbox" bind:checked={$devMode} />
