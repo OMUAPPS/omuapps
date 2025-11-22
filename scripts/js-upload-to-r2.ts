@@ -122,7 +122,10 @@ async function uploadToR2(file: string, path: string): Promise<string> {
             ...process.env,
             WRANGLER_LOG: 'warn',
         }).nothrow();
-        if (result.exitCode === 0) return `${CONFIG.BASE_URL}/${path}`;
+        if (result.exitCode === 0) {
+            console.log(`Upload succeeded: ${file} to ${CONFIG.BUCKET}/${path}`);
+            return `${CONFIG.BASE_URL}/${path}`;
+        };
 
         console.error(`Upload failed (attempt ${retry + 1}): ${result.stderr}`);
         if (retry < 4) {
