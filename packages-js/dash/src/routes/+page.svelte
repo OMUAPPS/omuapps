@@ -73,6 +73,10 @@
             $appState = { type: 'starting' };
             await invoke('start_server');
 
+            let timeout = window.setTimeout(() => {
+                error('Connection timeout');
+                $appState = { type: 'restore', message: 'Connection timeout' };
+            }, 1000 * 20);
             await new Promise<void>((resolve, reject) => {
                 $appState = { type: 'connecting', reject };
                 if (omu.running) {
@@ -86,6 +90,7 @@
                     resolve();
                 });
             });
+            window.clearTimeout(timeout);
             if (!$installed) {
                 await new Promise<void>((resolve) => {
                     $appState = { type: 'add_channels', state: { type: 'idle' }, resolve };
