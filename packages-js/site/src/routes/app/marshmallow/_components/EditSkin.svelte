@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { downloadFile } from '$lib/helper';
     import { Button, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
@@ -27,8 +26,10 @@
         buffer = undefined;
         buffer = await marshmallowApp.downloadSkin(skin);
     }
-    run(() => {
+
+    $effect(() => {
         updateDownload(skin);
+        $config.skins[skin.id] = skin;
     });
 
     function download() {
@@ -39,11 +40,6 @@
             content: buffer,
             type: '.marshmallow',
         });
-    }
-
-    async function save() {
-        $config.skins[skin.id] = skin;
-        $screen = { type: 'skins', state: { type: 'list' } };
     }
 </script>
 
@@ -58,7 +54,9 @@
         書き出し
         <i class="ti ti-download"></i>
     </Button>
-    <Button primary onclick={save}>
+    <Button primary onclick={() => {
+        $screen = { type: 'skins', state: { type: 'list' } };
+    }}>
         保存
         <i class="ti ti-check"></i>
     </Button>

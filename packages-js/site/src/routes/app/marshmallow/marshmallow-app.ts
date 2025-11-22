@@ -134,6 +134,8 @@ export type MarshmallowScreen = {
     } | {
         type: 'edit';
         skin: MarshmallowSkin;
+    } | {
+        type: 'premium';
     };
 };
 

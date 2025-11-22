@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { OmuPermissions } from '@omujs/omu';
     import { AssetButton, ButtonMini, Slider, Tooltip } from '@omujs/ui';
@@ -19,7 +18,18 @@
 
     let { api, logout }: Props = $props();
 
-    const { config, screen } = MarshmallowApp.getInstance();
+    const marshmallowApp = MarshmallowApp.getInstance();
+    const { config, screen: screenStore } = marshmallowApp;
+
+    let screen = $state($screenStore);
+    $effect(() => {
+        if (JSON.stringify($screenStore) === JSON.stringify(screen)) return;
+        $screenStore = screen;
+    });
+    screenStore.subscribe((value) => {
+        if (screen === value) return;
+        screen = value;
+    });
 
     let messages: Record<string, Message> | undefined = $state();
     let search = $state('');
@@ -34,7 +44,7 @@
         }
     }
 
-    run(() => {
+    $effect(() => {
         if (api) {
             fetchUser();
         }
@@ -46,14 +56,14 @@
 
 <main>
     <div class="menu">
-        <div class="tab" class:selected={$screen.type === 'messages'}>
+        <div class="tab" class:selected={screen.type === 'messages'}>
             <Messages {api} {search} bind:messages bind:refresh={refreshMessages} />
         </div>
-        <div class="tab" class:selected={$screen.type === 'answers'}>
+        <div class="tab" class:selected={screen.type === 'answers'}>
             <Answers {api} {search} bind:refresh={refreshAnswers} />
         </div>
         <div class="tabs">
-            <button onclick={() => ($screen = { type: 'messages' })} disabled={$screen.type === 'messages'}>
+            <button onclick={() => (screen = { type: 'messages' })} class:active={screen.type === 'messages'}>
                 新着
                 {#if Object.keys(messages ?? {}).length > 0}
                     <span class="messages-count">
@@ -61,21 +71,21 @@
                     </span>
                 {/if}
             </button>
-            <button onclick={() => ($screen = { type: 'answers' })} disabled={$screen.type === 'answers'}>
+            <button onclick={() => (screen = { type: 'answers' })} class:active={screen.type === 'answers'}>
                 過去の回答
             </button>
-            {#if $hasPremium}
-                <button onclick={() => ($screen = { type: 'skins', state: { type: 'list' } })} disabled={$screen.type === 'skins'}>
-                    <Tooltip>
-                        着せ替える
-                    </Tooltip>
-                    <i class="ti ti-cards"></i>
-                </button>
-            {/if}
+            <button onclick={() => {
+                screen = { type: 'skins', state: { type: 'list' } };
+            }} class:active={screen.type === 'skins'}>
+                <Tooltip>
+                    着せ替える
+                </Tooltip>
+                <i class="ti ti-cards"></i>
+            </button>
         </div>
-        {#if $screen.type === 'skins'}
+        {#if screen.type === 'skins'}
             <div class="skins omu-scroll">
-                <ManageSkins bind:state={$screen.state} />
+                <ManageSkins bind:state={screen.state} {fetchUser} />
             </div>
         {:else}
             <div class="bottom">
@@ -168,7 +178,7 @@
                 background: var(--color-bg-2);
             }
 
-            &:disabled {
+            &.active {
                 border-color: var(--color-1);
                 cursor: default;
                 background: var(--color-active);

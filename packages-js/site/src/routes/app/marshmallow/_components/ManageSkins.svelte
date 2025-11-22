@@ -1,7 +1,8 @@
 <script lang="ts">
 
-    import { Button, ButtonMini, FileDrop, Tooltip } from '@omujs/ui';
+    import { Button, ButtonMini, ExternalLink, FileDrop, Tooltip } from '@omujs/ui';
     import { createSkin, MarshmallowApp, type MarshmallowScreen } from '../marshmallow-app';
+    import { hasPremium } from '../stores';
     import EditSkin from './EditSkin.svelte';
 
     const marshmallowApp = MarshmallowApp.getInstance();
@@ -9,12 +10,15 @@
 
     interface Props {
         state: Extract<MarshmallowScreen, { type: 'skins' }>['state'];
+        fetchUser: () => Promise<void>;
     }
 
-    let { state = $bindable() }: Props = $props();
+    let { state = $bindable(), fetchUser }: Props = $props();
 
     $effect(() => {
-        if (state.type === 'list' && Object.keys($config.skins).length === 0) {
+        if (!$hasPremium) {
+            state = { type: 'premium' };
+        } else if (state.type === 'list' && Object.keys($config.skins).length === 0) {
             state = { type: 'create_or_upload' };
         } else if (state.type === 'create_or_upload' && Object.keys($config.skins).length !== 0) {
             state = { type: 'list' };
@@ -47,7 +51,7 @@
         </div>
     </div>
     <div class="skins">
-        {#each Object.entries($config.skins) as [id, skin](id)}
+        {#each Object.entries($config.skins).reverse() as [id, skin](id)}
             {@const selected = !!$config.active_skins[skin.id]}
             <div class="skin">
                 <div class="meta">
@@ -107,9 +111,28 @@
     </div>
 {:else if state.type === 'edit'}
     <EditSkin bind:skin={state.skin} />
+{:else if state.type === 'premium'}
+    <div class="card">
+        <div class="premium">
+            <p>マシュマロのプレミアム会員限定</p>
+            <small>着せ替え機能が使えます</small>
+        </div>
+        <ExternalLink href="https://marshmallow-qa.com/settings/premium">
+            マシュマロ - プレミアム設定
+            <i class="ti ti-external-link"></i>
+        </ExternalLink>
+        <Button primary onclick={fetchUser}>
+            プレミアムの再確認
+        </Button>
+    </div>
 {/if}
 
 <style lang="scss">
+    .premium {
+        display: flex;
+        flex-direction: column;
+    }
+
     .card {
         display: flex;
         margin-top: 1rem;
