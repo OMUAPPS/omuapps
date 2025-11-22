@@ -171,6 +171,17 @@
                         リセット
                     </Button>
                 </span>
+                <small>アプリのデータをすべて削除し完全なアンインストールをします</small>
+                <span class="setting">
+                    <Button primary onclick={() => {
+                        screenContext.push<undefined>(
+                            UninstallScreen,
+                            undefined,
+                        );
+                    }}>
+                        {$t('settings.setting.uninstall')}
+                    </Button>
+                </span>
                 <h3>
                     {$t('settings.setting.debug')}
                 </h3>
@@ -219,17 +230,6 @@
                         );
                     }}>
                         {$t('settings.setting.cleanEnvironment')}
-                    </Button>
-                </span>
-                <small>アプリのデータをすべて削除し完全なアンインストールをします</small>
-                <span class="setting">
-                    <Button primary onclick={() => {
-                        screenContext.push<undefined>(
-                            UninstallScreen,
-                            undefined,
-                        );
-                    }}>
-                        {$t('settings.setting.uninstall')}
                     </Button>
                 </span>
                 <label class="setting">
