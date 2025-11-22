@@ -37,7 +37,6 @@ export default [
         ignores: [
             '**/dist/',
             '**/node_modules/',
-            '**/storybook-static/',
             '**/.svelte-kit/',
             '**/*.{js,cjs,mjs}',
             '**/src-tauri/',

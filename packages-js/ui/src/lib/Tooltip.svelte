@@ -32,7 +32,7 @@
         return Math.min(Math.max(value, min), max);
     }
 
-    async function update(target: HTMLElement | undefined, tooltip: HTMLElement | undefined): void {
+    async function update(target: HTMLElement | undefined, tooltip: HTMLElement | undefined): Promise<void> {
         if (!target || !tooltip) return;
         const margin = 10;
         const arrowSize = 10;
