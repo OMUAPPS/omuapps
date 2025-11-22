@@ -111,13 +111,13 @@
     <Combobox options={{
         default: {
             label: '無し',
-            value: {type: 'default'}
+            value: { type: 'default' },
         },
         paper: {
             label: '紙',
-            value: {type: 'paper'}
-        }
-    }} bind:value={skin.transition.in} key={skin.transition.in.type}/>
+            value: { type: 'paper' },
+        },
+    }} bind:value={skin.transition.in} key={skin.transition.in.type} />
 </section>
 
 <style lang="scss">

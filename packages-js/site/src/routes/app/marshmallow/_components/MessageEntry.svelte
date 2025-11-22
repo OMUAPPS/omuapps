@@ -17,6 +17,7 @@
         $data.message = null;
     } else {
         $data.message = message;
+        $data.scroll = 0;
     }
 }} class:selected={$data.message?.id === message.id}>
     <Tooltip>

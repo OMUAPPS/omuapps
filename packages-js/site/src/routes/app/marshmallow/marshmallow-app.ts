@@ -68,6 +68,7 @@ import bottom from './skins/bottom.svg';
 import cursor from './skins/cursor.png';
 import middle from './skins/middle.svg';
 import top from './skins/top.svg';
+
 const DEFAULT_SKIN: MarshmallowSkin = {
     id: 'default',
     version: 1,
