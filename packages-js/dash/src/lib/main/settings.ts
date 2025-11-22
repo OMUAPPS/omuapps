@@ -24,13 +24,15 @@ const settings = await load('settings.json');
 
 export function createSetting<T>(key: string, defaultValue: T): Writable<T> & { loaded: Promise<void> } {
     const store = writable<T>(defaultValue);
+    let loaded = false;
     const wait = settings.get<T>(key).then(async (value) => {
-        if (!value) return;
-        store.set(value);
-        await settings.save();
+        store.set(value ?? defaultValue);
+        loaded = true;
     });
-    store.subscribe((updated) => {
+    store.subscribe(async (updated) => {
+        if (!loaded) return;
         settings.set(key, updated);
+        await settings.save();
     });
     return {
         ...store,
