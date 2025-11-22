@@ -18,15 +18,16 @@ function getSystemLanguage(): keyof typeof LOCALES {
     return 'ja-JP';
 }
 
-import { LazyStore } from '@tauri-apps/plugin-store';
+import { load } from '@tauri-apps/plugin-store';
 
-const settings = new LazyStore('settings.json', { defaults: {}, autoSave: true });
+const settings = await load('settings.json');
 
 export function createSetting<T>(key: string, defaultValue: T): Writable<T> & { loaded: Promise<void> } {
     const store = writable<T>(defaultValue);
-    const wait = settings.get<T>(key).then((value) => {
+    const wait = settings.get<T>(key).then(async (value) => {
         if (!value) return;
         store.set(value);
+        await settings.save();
     });
     store.subscribe((updated) => {
         settings.set(key, updated);
