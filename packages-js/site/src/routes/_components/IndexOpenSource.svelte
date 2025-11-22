@@ -26,7 +26,7 @@
 
 <style lang="scss">
     section {
-        margin-top: 18rem;
+        margin-top: 9rem;
     }
 
     a {
@@ -35,7 +35,7 @@
 
     .section-header {
         > h3 {
-            font-size: 1.5rem;
+            font-size: 2rem;
             border-bottom: 2px solid var(--color-1);
             color: var(--color-1);
             text-align: center;
@@ -46,5 +46,11 @@
             margin-top: 0.75rem;
             padding-bottom: 2rem;
         }
+    }
+
+    img {
+        height: 16rem;
+        width: 100%;
+        object-fit: cover;
     }
 </style>
