@@ -54,6 +54,7 @@
     });
 
     async function start() {
+        await installed.loaded;
         try {
             $appState = { type: 'checking_update' };
             const update = await checkUpdate();
@@ -100,6 +101,7 @@
             console.error('Error during start:', e);
             $appState = { type: 'restore', message: JSON.stringify(e, null, 2) };
             error(`Error during start: ${JSON.stringify(e)}`);
+            await appWindow.show();
         }
     }
 

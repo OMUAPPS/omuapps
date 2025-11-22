@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
 
 import { LOCALES } from '$lib/i18n/i18n.js';
 import { linkOpenHandler } from '@omujs/ui';
@@ -22,16 +22,19 @@ import { LazyStore } from '@tauri-apps/plugin-store';
 
 const settings = new LazyStore('settings.json', { defaults: {}, autoSave: true });
 
-export function createSetting<T>(key: string, defaultValue: T) {
+export function createSetting<T>(key: string, defaultValue: T): Writable<T> & { loaded: Promise<void> } {
     const store = writable<T>(defaultValue);
-    settings.get<T>(key).then((value) => {
+    const wait = settings.get<T>(key).then((value) => {
         if (!value) return;
         store.set(value);
     });
     store.subscribe((updated) => {
         settings.set(key, updated);
     });
-    return store;
+    return {
+        ...store,
+        loaded: wait,
+    };
 }
 
 const systemLanguage = getSystemLanguage();
