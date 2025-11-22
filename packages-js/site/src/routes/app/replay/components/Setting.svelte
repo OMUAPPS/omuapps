@@ -1,10 +1,15 @@
 <script lang="ts">
-    export let name: string;
+    interface Props {
+        name: string;
+        children?: import('svelte').Snippet;
+    }
+
+    let { name, children }: Props = $props();
 </script>
 
 <label class="setting">
     <small>{name}</small>
-    <slot />
+    {@render children?.()}
 </label>
 
 <style lang="scss">

@@ -8,9 +8,13 @@
     import { TableList, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
 
-    export let filter: (key: string, message: Models.Channel) => boolean = () => true;
+    interface Props {
+        filter?: (key: string, message: Models.Channel) => boolean;
+    }
 
-    let checkIntervalLeft = 0;
+    let { filter = () => true }: Props = $props();
+
+    let checkIntervalLeft = $state(0);
 
     const interval = setInterval(() => {
         checkIntervalLeft = 15 - ((new Date().getTime() / 1000) % 15);
@@ -22,7 +26,11 @@
 </script>
 
 <div class="list">
-    <TableList table={chat.channels} component={ChannelEntry} {filter} />
+    <TableList table={chat.channels} {filter}>
+        {#snippet component({ entry, selected })}
+            <ChannelEntry {entry} {selected} />
+        {/snippet}
+    </TableList>
     <div class="check-interval">
         <Tooltip>
             {$t('panels.channels.next_check')}

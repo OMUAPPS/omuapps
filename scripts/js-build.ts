@@ -5,7 +5,8 @@ import Path from 'path';
 async function buildPackage(target: string) {
     console.log(`Building ${target}`);
     await $`bun run --cwd ${target} build`.catch((error) => {
-        console.error(`Error building ${target}:`, error);
+        console.error(`Error building ${target}`);
+        console.write(error.stdout);
         process.exit(1);
     });
     console.log(`Building ${target} finished`);

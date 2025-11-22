@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import type { DragDropFile } from '@omujs/omu/api/dashboard';
     import type { TypedComponent } from '@omujs/ui';
     import { Spinner } from '@omujs/ui';
@@ -57,14 +59,14 @@
         comp: TypedComponent<{
             context: SceneContext;
         }>;
-    } = { type: $scene.type, comp: SCENES[$scene.type] };
+    } = $state({ type: $scene.type, comp: SCENES[$scene.type] });
     let currentScene: {
         type: string;
         comp: TypedComponent<{
             context: SceneContext;
         }>;
-    } = { type: $scene.type, comp: SCENES[$scene.type] };
-    $: {
+    } = $state({ type: $scene.type, comp: SCENES[$scene.type] });
+    run(() => {
         if ($scene.type !== currentScene.type) {
             lastScene = currentScene;
             currentScene = {
@@ -72,11 +74,11 @@
                 comp: SCENES[$scene.type],
             };
         }
-    }
+    });
 
-    let sceneElement: HTMLElement;
+    let sceneElement: HTMLElement | undefined = $state(undefined);
 
-    $: {
+    run(() => {
         mouse.ui = false;
         if (sceneElement) {
             mouse.ui = (
@@ -96,7 +98,7 @@
             }
             sceneElement.focus({ preventScroll: true });
         }
-    }
+    });
 
     let importState:
         | {
@@ -113,9 +115,9 @@
         | {
             type: 'loaded';
         }
-        | null = null;
+        | null = $state(null);
 
-    omu.dashboard.requireDragDrop().then((handler) => {
+    omu.dashboard.requestDragDrop().then((handler) => {
         handler.onEnter(async ({ drag_id, files }) => {
             if (!files.some((it) => it.name.endsWith('.omucafe'))) return;
             importState = {
@@ -157,6 +159,8 @@
             }, 1000);
         });
     });
+
+    const SvelteComponent = $derived(SCENES[$scene.type]);
 </script>
 
 <main class:hide-cursor={!$states.kitchen.mouse.ui}>
@@ -164,8 +168,7 @@
     {#if lastScene !== currentScene}
         {#key lastScene.type}
             <div class="scene last" tabindex="-1">
-                <svelte:component
-                    this={lastScene.comp}
+                <lastScene.comp
                     context={{
                         time: Time.now(),
                         active: false,
@@ -176,8 +179,7 @@
     {/if}
     {#key lastScene.type}
         <div class="scene current" bind:this={sceneElement}>
-            <svelte:component
-                this={SCENES[$scene.type]}
+            <SvelteComponent
                 context={{
                     time: Time.now(),
                     active: true,
@@ -188,7 +190,7 @@
 </main>
 <div class="debug">
     <button
-        on:click={() => {
+        onclick={() => {
             $scene = { type: 'loading' };
             $config = DEFAULT_CONFIG;
             $gameConfig = DEFAULT_GAME_CONFIG;
@@ -201,14 +203,14 @@
         reset
     </button>
     <button
-        on:click={() => {
+        onclick={() => {
             window.location.reload();
         }}
     >
         reload
     </button>
     <button
-        on:click={() => {
+        onclick={() => {
             const ctx = getContext();
             ctx.order = null;
         }}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { page } from '$app/stores';
+    import { page } from '$app/state';
     const error = ({
         404: {
             title: 'Not Found',
@@ -9,7 +9,7 @@
             title: 'Internal Server Error',
             detail: 'サーバーで問題が発生しました',
         },
-    })[$page.status] || {
+    })[page.status] || {
         title: 'Error',
         detail: '予期しないエラーが発生しました',
     };

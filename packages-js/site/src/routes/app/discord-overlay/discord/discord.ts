@@ -8,6 +8,16 @@ import type { Channel, Guild, Message, User } from './type';
 const DISCORD_CLIENT_ID = '207646673902501888';
 const PORT_MIN = 6463;
 const PORT_MAX = 6473;
+const BASE_HEADERS = {
+    'accept': '*/*',
+    'accept-language': 'ja',
+    'cache-control': 'no-cache',
+    'content-type': 'application/json',
+    'origin': 'https://streamkit.discord.com',
+    'pragma': 'no-cache',
+    'referer': 'https://streamkit.discord.com/overlay',
+    'user-agent': 'OMUAPPS Discord StreamKit/1.0.0',
+};
 
 class DiscordRPC {
     constructor(
@@ -177,8 +187,9 @@ class DiscordRPCClient {
 
     private static async authorize(rpc: DiscordRPC, fetch: (input: string, init?: RequestInit) => Promise<Response>) {
         const authorizeResp = await rpc.dispatch('AUTHORIZE', {
-            client_id: `${DISCORD_CLIENT_ID}`,
+            client_id: DISCORD_CLIENT_ID,
             scopes: ['rpc', 'messages.read'],
+            prompt: 'none',
         }).wait();
         const token_res = await fetch(
             'https://streamkit.discord.com/overlay/token',
@@ -186,7 +197,7 @@ class DiscordRPCClient {
                 body: JSON.stringify({
                     'code': authorizeResp.code,
                 }),
-                headers: {},
+                headers: BASE_HEADERS,
                 method: 'POST',
             },
         );
@@ -323,6 +334,8 @@ class DiscordRPCClient {
                     resp.user,
                     rpc,
                 );
+            } else {
+                console.warn(`Failed to connect with existing session ${port}: ${JSON.stringify(resp)}`);
             }
         }
         token = await this.authorize(rpc, fetch);
@@ -409,19 +422,9 @@ export class DiscordClientManager {
     ) {}
 
     private async fromPort(port: number): Promise<Result<DiscordRPCClient>> {
-        const headers = {
-            'accept': '*/*',
-            'accept-language': 'ja',
-            'cache-control': 'no-cache',
-            'content-type': 'application/json',
-            'origin': 'https://streamkit.discord.com',
-            'pragma': 'no-cache',
-            'referer': 'https://streamkit.discord.com/overlay',
-            'user-agent': 'OMUAPPS Discord StreamKit/1.0.0',
-        };
         const url = `ws://127.0.0.1:${port}/?v=1&client_id=${DISCORD_CLIENT_ID}`;
         const socket = await this.omu.http.ws(url, {
-            headers,
+            headers: BASE_HEADERS,
         });
         const msg = await socket.receive();
         if (msg.type === 'error') {
@@ -478,7 +481,6 @@ export class DiscordClientManager {
                     token: client.token,
                 };
             });
-            return registry;
         });
         return this.clients;
     }

@@ -1,16 +1,20 @@
 <script lang="ts">
     import type { PackageInfo } from '@omujs/omu/api/plugin';
     import { ExternalLink } from '@omujs/ui';
-    import SvelteMarkdown from 'svelte-markdown';
+    import { default as SvelteMarkdown } from '@humanspeak/svelte-markdown';
 
-    export let entry: PackageInfo;
-    export let secure: boolean;
+    interface Props {
+        entry: PackageInfo;
+        secure: boolean;
+    }
+
+    let { entry, secure }: Props = $props();
 
     let open = false;
 
-    $: author =
-        entry.info.author ||
-        entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim();
+    let author =
+        $derived(entry.info.author ||
+            entry.info.author_email.replace(/<[\w+]+@[\w.]+>/gm, '').trim());
 </script>
 
 <div class="entry">
@@ -55,10 +59,6 @@
         background: var(--color-bg-1);
         font-weight: 600;
         color: var(--color-1);
-    }
-
-    .icon {
-        font-size: 1.5rem;
     }
 
     .info {

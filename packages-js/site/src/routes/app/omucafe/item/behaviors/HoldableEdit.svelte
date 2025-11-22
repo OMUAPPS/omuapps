@@ -2,7 +2,11 @@
     import { Checkbox } from '@omujs/ui';
     import type { Holdable } from './holdable.js';
 
-    export let behavior: Holdable;
+    interface Props {
+        behavior: Holdable;
+    }
+
+    let { behavior = $bindable() }: Props = $props();
 </script>
 
 <div class="behavior">

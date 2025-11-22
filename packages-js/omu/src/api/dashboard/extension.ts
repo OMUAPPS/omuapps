@@ -2,8 +2,10 @@ import { App, AppJson } from '../../app.js';
 import { Identifier, IdentifierMap } from '../../identifier';
 import { PacketType } from '../../network/packet/packet.js';
 import { Omu } from '../../omu.js';
+import { PromiseResult } from '../../result.js';
 import { Serializer } from '../../serialize';
 import { EndpointType } from '../endpoint/endpoint.js';
+import { InvokedParams } from '../endpoint/packets.js';
 import { ExtensionType } from '../extension.js';
 import { PermissionTypeJson } from '../permission/permission.js';
 import { PackageInfo } from '../plugin/package-info.js';
@@ -94,11 +96,11 @@ export type Cookie = {
 
 export type WebviewRequest = {
     url: string;
-    script: string;
+    script?: string;
 };
 
 export type WebviewPacket = {
-    id: Identifier;
+    id: string;
 };
 
 export type UserResponse<T = undefined> = {
@@ -109,25 +111,10 @@ export type UserResponse<T = undefined> = {
 } | {
     type: 'cancelled';
 };
-export class UserResult<T> {
-    constructor(
-        public result: {
-            type: 'ok';
-            value: T;
-        } | {
-            type: 'blocked';
-        } | {
-            type: 'cancelled';
-        },
-    ) {}
 
-    public unwrap(): T {
-        if (this.result.type === 'ok') return this.result.value;
-        throw new Error(`Tried to unwrap a ${this.result.type} result`);
-    }
-}
+export type UserError = Exclude<UserResponse, { type: 'ok' }>;
 
-export type WebviewResponse = UserResponse & WebviewPacket;
+export type WebviewResponse = UserResponse<WebviewPacket>;
 
 export const DASHBOARD_WEBVIEW_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('webview');
 
@@ -146,17 +133,11 @@ const DASHBOARD_COOKIES_GET = EndpointType.createJson<GetCookiesRequest, UserRes
 
 const DASHBOARD_WEBVIEW_REQUEST = EndpointType.createJson<WebviewRequest, WebviewResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'webview_request',
-    responseSerializer: Serializer.noop<WebviewResponse>()
-        .field('id', Identifier),
     permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
 });
 
 const DASHBOARD_WEBVIEW_CLOSE = EndpointType.createJson<WebviewPacket, WebviewResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'webview_close',
-    requestSerializer: Serializer.noop<WebviewPacket>()
-        .field('id', Identifier),
-    responseSerializer: Serializer.noop<WebviewResponse>()
-        .field('id', Identifier),
     permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
 });
 
@@ -186,9 +167,9 @@ export type WebviewEventPacket = {
 export type WebviewHandle = {
     readonly id: Identifier;
     readonly url: string;
-    getCookies(): Promise<Cookie[]>;
-    close(): void;
+    getCookies(): PromiseResult<Cookie[], UserError>;
     on<T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T }>) => void): void;
+    close(): Promise<void>;
     join(): Promise<void>;
 };
 
@@ -462,38 +443,46 @@ export class DashboardExtension {
             throw new Error('Dashboard already set');
         }
         this.dashboard = dashboard;
+
+        const requireHost = async (params: InvokedParams, host: string): Promise<UserResponse<undefined>> => {
+            const id = params.caller.key();
+            const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id: id, hosts: [] };
+            const allowed = hostEntry.hosts.includes(host);
+            if (!allowed) {
+                const result = await dashboard.hostRequested({
+                    host,
+                }, params);
+                if (result.type === 'ok') {
+                    hostEntry.hosts.push(host);
+                    await this.allowedHosts.update(hostEntry);
+                } else {
+                    return { type: 'cancelled' };
+                }
+            }
+            return { type: 'ok', value: undefined };
+        };
+
         this.omu.endpoints.bind(DASHBOARD_COOKIES_GET, async (request, params): Promise<UserResponse<Cookie[]>> => {
             const { url } = request;
-            const { hostname } = new URL(url);
-            const id = params.caller.key();
-            const allowedHost: AllowedHost = await this.allowedHosts.get(id) ?? { id, hosts: [] };
-            const allowed = allowedHost.hosts.includes(hostname);
-            if (!allowed) {
-                return {
-                    type: 'cancelled',
-                };
+            const { host } = new URL(url);
+            const hostAccessResult = await requireHost(params, host);
+            if (hostAccessResult.type !== 'ok') {
+                return hostAccessResult;
             }
             return await dashboard.getCookies(request);
         });
         this.omu.endpoints.bind(DASHBOARD_HOST_REQUEST, async (request, params): Promise<UserResponse> => {
             const { host } = request;
-            const id = params.caller.key();
-            const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id, hosts: [] };
-            const allowed = hostEntry.hosts.includes(host);
-            if (allowed) {
-                return {
-                    type: 'ok',
-                    value: undefined,
-                };
-            }
-            const result = await dashboard.hostRequested(request, params);
-            if (result.type === 'ok') {
-                hostEntry.hosts.push(host);
-                await this.allowedHosts.update(hostEntry);
-            }
+            const result = await requireHost(params, host);
             return result;
         });
         this.omu.endpoints.bind(DASHBOARD_WEBVIEW_REQUEST, async (request, params): Promise<WebviewResponse> => {
+            const url = new URL(request.url);
+            const { host } = url;
+            const hostAccessResult = await requireHost(params, host);
+            if (hostAccessResult.type !== 'ok') {
+                return hostAccessResult;
+            }
             const emit = async (event: WebviewEvent) => {
                 this.omu.send(DASHBOARD_WEBVIEW_EVENT_PACKET, {
                     id,
@@ -504,8 +493,9 @@ export class DashboardExtension {
             const id = await dashboard.createWebview(request, params, emit);
             return {
                 type: 'ok',
-                id,
-                value: undefined,
+                value: {
+                    id: id.key(),
+                },
             };
         });
         this.omu.endpoints.bind(DASHBOARD_WEBVIEW_CLOSE, async (request, params): Promise<WebviewResponse> => {
@@ -513,14 +503,14 @@ export class DashboardExtension {
             if (!id) {
                 return {
                     type: 'cancelled',
-                    id: request.id,
                 };
             }
             await dashboard.closeWebview(request, params);
             return {
                 type: 'ok',
-                id,
-                value: undefined,
+                value: {
+                    id: id.key(),
+                },
             };
         });
         this.omu.endpoints.bind(DASHBOARD_SPEECH_RECOGNITION_START, async (request, params): Promise<UserResponse<undefined>> => {
@@ -538,70 +528,74 @@ export class DashboardExtension {
         });
     }
 
-    public async requestHost(options: { host: string }): Promise<UserResponse> {
-        return this.omu.endpoints.call(
-            DASHBOARD_HOST_REQUEST,
-            options,
-        );
-    }
-
-    public async requestWebview(options: WebviewRequest): Promise<UserResult<WebviewHandle>> {
-        const result = await this.omu.endpoints.call(
+    public requestWebview(options: WebviewRequest): PromiseResult<WebviewHandle, UserError> {
+        const { promise, resolve, reject } = PromiseResult.create<WebviewHandle, UserError>();
+        this.omu.endpoints.call(
             DASHBOARD_WEBVIEW_REQUEST,
             options,
-        );
-        if (result.type !== 'ok') return new UserResult(result);
-        const { id } = result;
-        const eventListeners: WebviewEventListeners = {};
-        const handle: WebviewHandle = {
-            id,
-            url: options.url,
-            close: async () => {
-                await this.omu.endpoints.call(
-                    DASHBOARD_WEBVIEW_CLOSE,
-                    { id },
-                );
-            },
-            getCookies: async () => {
-                const cookies = (await this.getCookies({
+        ).then((result) => {
+            if (result.type !== 'ok') {
+                reject(result);
+                return;
+            }
+            const { value } = result;
+            const id = Identifier.fromKey(value.id);
+            const eventListeners: WebviewEventListeners = {};
+            const handle: WebviewHandle = {
+                id,
+                url: options.url,
+                close: async () => {
+                    await this.omu.endpoints.call(
+                        DASHBOARD_WEBVIEW_CLOSE,
+                        { id: id.key() },
+                    );
+                },
+                getCookies: () => this.getCookies({
                     url: options.url,
-                })).unwrap();
-                return cookies;
-            },
-            on: function <T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T }>) => void): void {
-                if (!eventListeners[key]) {
-                    eventListeners[key] = [];
-                }
-                const listeners = eventListeners[key]!;
-                listeners.push(callback);
-            },
-            join: async () => {
-                await new Promise<void>((resolve) => {
-                    handle.on('closed', () => resolve());
-                });
-            },
-        };
-        this.webviewHandles.set(id, {
-            handle,
-            emit: function <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T }>): void {
-                const listeners = eventListeners[event.type];
-                if (!listeners) return;
-                for (const listener of listeners) {
-                    listener(event);
-                }
-            },
+                }),
+                on: function <T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T }>) => void): void {
+                    if (!eventListeners[key]) {
+                        eventListeners[key] = [];
+                    }
+                    const listeners = eventListeners[key]!;
+                    listeners.push(callback);
+                },
+                join: async () => {
+                    await new Promise<void>((resolve) => {
+                        handle.on('closed', () => resolve());
+                    });
+                },
+            };
+            this.webviewHandles.set(id, {
+                handle,
+                emit: function <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T }>): void {
+                    const listeners = eventListeners[event.type];
+                    if (!listeners) return;
+                    for (const listener of listeners) {
+                        listener(event);
+                    }
+                },
+            });
+
+            resolve(handle);
         });
-        return new UserResult({
-            type: 'ok',
-            value: handle,
-        });
+        return promise;
     }
 
-    public async getCookies(options: GetCookiesRequest): Promise<UserResult<Cookie[]>> {
-        return new UserResult(await this.omu.endpoints.call(
+    public getCookies(options: GetCookiesRequest): PromiseResult<Cookie[], UserError> {
+        const { promise, resolve, reject } = PromiseResult.create<Cookie[], UserError>();
+        this.omu.endpoints.call(
             DASHBOARD_COOKIES_GET,
             options,
-        ));
+        ).then((response) => {
+            if (response.type === 'ok') {
+                resolve(response.value);
+                return;
+            } else {
+                reject(response);
+            }
+        });
+        return promise;
     }
 
     public async openApp(app: App): Promise<void> {
@@ -616,7 +610,7 @@ export class DashboardExtension {
         return await this.omu.endpoints.call(DASHBOARD_PROMPT_CLEAR_BLOCKED, null);
     }
 
-    public async requireDragDrop(): Promise<DragDropHandler> {
+    public async requestDragDrop(): Promise<DragDropHandler> {
         await this.omu.endpoints.call(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, {});
         const listeners = this.dragDropListeners;
         const client = this.omu;
@@ -634,7 +628,15 @@ export class DashboardExtension {
         this.omu.send(DASHBOARD_DRAG_DROP_STATE_PACKET, packet);
     }
 
-    public async speechRecognitionStart(): Promise<void> {
-        await this.omu.endpoints.call(DASHBOARD_SPEECH_RECOGNITION_START, { type: 'start' });
+    public requestSpeechRecognition(): PromiseResult<Registry<TranscriptStatus>, UserError> {
+        const { promise, resolve, reject } = PromiseResult.create<Registry<TranscriptStatus>, UserError>();
+        this.omu.endpoints.call(DASHBOARD_SPEECH_RECOGNITION_START, { type: 'start' }).then((result) => {
+            if (result.type === 'ok') {
+                resolve(this.speechRecognition);
+            } else {
+                reject(result);
+            }
+        });
+        return promise;
     }
 }

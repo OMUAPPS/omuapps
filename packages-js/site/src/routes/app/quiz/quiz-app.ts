@@ -1,9 +1,7 @@
 import { sha256 } from '$lib/helper';
 import { Identifier, type Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/api/registry';
-import { TableType, type Table } from '@omujs/omu/api/table';
+import { type Table } from '@omujs/omu/api/table';
 import type { Writable } from 'svelte/store';
-import { APP_ID } from './app';
 
 export type Asset = {
     type: 'url';
@@ -100,32 +98,10 @@ export function createQuiz() {
     return newQuiz;
 }
 
-const SCENE_CURRENT_REGISTRY = RegistryType.createJson<Scene>(APP_ID, {
-    name: 'scene_current',
-    defaultValue: { type: 'main_menu' },
-});
-const SCENE_HISTORY_REGISTRY = RegistryType.createJson<Scene[]>(APP_ID, {
-    name: 'scene_history',
-    defaultValue: [],
-});
-const ASSETS_REGISTRY = RegistryType.createJson<Record<string, Asset>>(APP_ID, {
-    name: 'assets',
-    defaultValue: {},
-});
-const QUIZZES_TABLE = TableType.createJson<Quiz>(APP_ID, {
-    name: 'quizzes',
-    key: (item) => item.id,
-});
-
 export type AnswerEntry = {
     id: string;
     answers: string[];
 };
-
-const ANSWERS_TABLE = TableType.createJson<AnswerEntry>(APP_ID, {
-    name: 'answers',
-    key: (item) => item.id,
-});
 
 export class QuizApp {
     private static INSTANCE: QuizApp;
@@ -139,11 +115,21 @@ export class QuizApp {
     private constructor(
         public readonly omu: Omu,
     ) {
-        this.sceneCurrent = omu.registries.get(SCENE_CURRENT_REGISTRY).compatSvelte();
-        this.sceneHistory = omu.registries.get(SCENE_HISTORY_REGISTRY).compatSvelte();
-        this.assets = omu.registries.get(ASSETS_REGISTRY).compatSvelte();
-        this.quizzes = omu.tables.get(QUIZZES_TABLE);
-        this.answers = omu.tables.get(ANSWERS_TABLE);
+        this.sceneCurrent = omu.registries.json<Scene>('scene_current', {
+            default: { type: 'main_menu' },
+        }).compatSvelte();
+        this.sceneHistory = omu.registries.json<Scene[]>('scene_history', {
+            default: [],
+        }).compatSvelte();
+        this.assets = omu.registries.json('assets', {
+            default: {},
+        }).compatSvelte();
+        this.quizzes = omu.tables.json<Quiz>('quizzes', {
+            key: (item) => item.id,
+        });
+        this.answers = omu.tables.json<AnswerEntry>('answers', {
+            key: (item) => item.id,
+        });
     }
 
     public static create(omu: Omu) {

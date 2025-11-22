@@ -1,11 +1,16 @@
 <script lang="ts">
-    import SvelteMarkdown from 'svelte-markdown';
+    import { default as SvelteMarkdown } from '@humanspeak/svelte-markdown';
+    import MdBlockquote from './MdBlockquote.svelte';
     import MdCode from './MdCode.svelte';
     import MdCodeSpan from './MdCodeSpan.svelte';
     import MdImage from './MdImage.svelte';
     import MdLink from './MdLink.svelte';
 
-    export let source: string;
+    interface Props {
+        source: string;
+    }
+
+    let { source }: Props = $props();
 </script>
 
 <div class="markdown">
@@ -16,6 +21,7 @@
             codespan: MdCodeSpan,
             link: MdLink,
             image: MdImage,
+            blockquote: MdBlockquote,
         }}
     />
 </div>
@@ -28,8 +34,10 @@
         padding: 1rem 0;
         text-wrap: wrap;
         font-size: 0.9rem;
+        font-weight: 500;
         width: 100%;
         user-select: text;
+        word-break: auto-phrase;
 
         :global(h1) {
             font-size: 2rem;
@@ -47,6 +55,11 @@
         :global(h3) {
             font-size: 1.25rem;
             margin: 1.25rem 0 0.5rem;
+        }
+
+        :global(h4) {
+            font-size: 1rem;
+            margin: 1.5rem 0 0.25rem;
         }
 
         :global(ul),

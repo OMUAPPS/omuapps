@@ -41,7 +41,7 @@ export class RegistryExtension implements Extension {
     }
 
     public json<T, D extends JsonType = JsonType>(name: string, options: { default: T; serializer?: Serializer<T, D> }): Registry<T> {
-        const identifier = this.omu.app.id.join(name);
+        const identifier = this.omu.app.id.base.join(name);
         if (this.registries.has(identifier)) {
             throw new Error(`Registry with name '${name}' already exists`);
         }
@@ -54,7 +54,7 @@ export class RegistryExtension implements Extension {
     }
 
     public serialized<T>(name: string, options: { default: T; serializer: Serializer<T, Uint8Array> }): Registry<T> {
-        const identifier = this.omu.app.id.join(name);
+        const identifier = this.omu.app.id.base.join(name);
         if (this.registries.has(identifier)) {
             throw new Error(`Registry with name '${name}' already exists`);
         }
@@ -121,12 +121,12 @@ class RegistryImpl<T> implements Registry<T> {
         return value;
     }
 
-    public async modify(fn: (value: T) => PromiseLike<T> | T): Promise<T> {
+    public async modify(fn: (value: T) => PromiseLike<void> | void): Promise<T> {
         const value = await this.lock.use(async () => {
             const value = await this.#get();
-            const newValue = await fn(value);
-            await this.#set(newValue);
-            return newValue;
+            await fn(value);
+            await this.#set(value);
+            return value;
         });
         this.eventEmitter.emit(value);
         return value;

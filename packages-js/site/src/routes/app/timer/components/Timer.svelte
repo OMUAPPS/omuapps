@@ -1,32 +1,32 @@
 <script lang="ts">
+
     import { BROWSER } from 'esm-env';
     import { TimerApp } from '../timer-app.js';
 
-    export let timer: TimerApp;
-    const { data, config } = timer;
-
-    let timerId: number;
-    let time = 0;
-    let displayTime = '';
-
-    function updateTime() {
-        if (!$data.running) {
-            return;
-        }
-        time = Date.now() - $data.startTime + $data.time;
-        timerId = requestAnimationFrame(updateTime);
+    interface Props {
+        timer: TimerApp;
     }
 
-    function update() {
-        if ($data.running) {
-            updateTime();
+    let { timer }: Props = $props();
+    const { data, config } = timer;
+
+    const PARAM_REGEX = /\{([\w]+)\}/g;
+
+    let timerId: number;
+    let time = $state(0);
+    let displayTime = $derived(updateDisplayTime(time));
+    let running = false;
+
+    function updateTime() {
+        if (running) {
+            time = Date.now() - $data.startTime + $data.time;
+            displayTime = updateDisplayTime(time);
+            timerId = requestAnimationFrame(updateTime);
         } else {
             time = $data.time;
             cancelAnimationFrame(timerId);
         }
     }
-
-    const paramRegex = /\{([\w]+)\}/g;
 
     function updateDisplayTime(time: number) {
         const times = {
@@ -41,19 +41,21 @@
                 .padStart(2, '0'),
         };
 
-        displayTime = $config.format.replace(
-            paramRegex,
+        return $config.format.replace(
+            PARAM_REGEX,
             (match, key: keyof typeof times) => times[key],
         );
     }
 
-    $: updateDisplayTime(time);
-    $: background = `${$config.style.backgroundColor}${Math.floor(
+    let background = $derived(`${$config.style.backgroundColor}${Math.floor(
         $config.style.backgroundOpacity * 255,
-    ).toString(16)}`;
+    ).toString(16)}`);
 
     if (BROWSER) {
-        data.subscribe(update);
+        data.subscribe((value) => {
+            running = value.running;
+            updateTime();
+        });
     }
 </script>
 

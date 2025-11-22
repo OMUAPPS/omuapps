@@ -4,7 +4,11 @@
     import { createClip, type Clip } from '../asset/audioclip.js';
     import EditAudioAsset from './EditAudioAsset.svelte';
 
-    export let clip: Clip | undefined;
+    interface Props {
+        clip: Clip | undefined;
+    }
+
+    let { clip = $bindable() }: Props = $props();
 
     async function handleChange(files: FileList) {
         const [file] = files;

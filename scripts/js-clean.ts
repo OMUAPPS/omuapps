@@ -22,6 +22,7 @@ const rm = async (path: string) => {
         console.info(`Skipping ${path} as it does not exist`);
         return;
     }
+    console.info(`Cleaning ${path}`);
     fs.rm(path, { recursive: true })
         .then(() => console.info(`Successfully deleted: ${path}`))
         .catch(err => console.error(`Error cleaning ${path}: ${err.message}`));

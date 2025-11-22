@@ -16,7 +16,7 @@
 
     const agreed = getSetting(APP.join('agreed'), false);
 
-    let state: {
+    let loadingState: {
         type: 'agreements';
         accept: () => void;
     } | {
@@ -29,39 +29,25 @@
         type: 'failed';
         kind: 'login' | 'host';
         retry: () => void;
-    } = { type: 'loading' };
+    } = $state({ type: 'loading' });
 
     async function init() {
         if (!$agreed) {
             await new Promise<void>((resolve) => {
-                state = {
+                loadingState = {
                     type: 'agreements',
                     accept: () => resolve(),
                 };
             });
             $agreed = true;
         }
-        if (state.type !== 'loading') {
-            state = { type: 'loading' };
+        if (loadingState.type !== 'loading') {
+            loadingState = { type: 'loading' };
         }
         await omu.waitForReady();
         while (true) {
-            const hostResult = await omu.dashboard.requestHost({
-                host: 'marshmallow-qa.com',
-            });
-            if (hostResult.type !== 'ok') {
-                console.warn('Failed to request host:', hostResult);
-                await new Promise<void>((resolve) => {
-                    state = {
-                        type: 'failed',
-                        kind: 'host',
-                        retry: () => resolve(),
-                    };
-                });
-                continue;
-            }
             let session: MarshmallowSession | undefined = undefined;
-            if (state.logout) {
+            if (loadingState.logout) {
                 session = await MarshmallowSession.login(omu);
             } else {
                 session = await MarshmallowSession.get(omu) ?? await MarshmallowSession.login(omu);
@@ -69,17 +55,17 @@
             if (!session) {
                 console.warn('Failed to get session');
                 await new Promise<void>((resolve) => {
-                    state = {
+                    loadingState = {
                         type: 'failed',
                         kind: 'login',
                         retry: () => resolve(),
                     };
                 });
-                state = { type: 'loading' };
+                loadingState = { type: 'loading' };
                 continue;
             }
             const api = MarshmallowAPI.new(omu, session);
-            state = {
+            loadingState = {
                 type: 'ready',
                 api,
             };
@@ -88,7 +74,7 @@
     }
 
     async function logout() {
-        state = { type: 'loading', logout: true };
+        loadingState = { type: 'loading', logout: true };
         init();
     }
 
@@ -114,10 +100,12 @@
 </svelte:head>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={APP} />
-    </header>
-    {#if state.type === 'agreements'}
+    {#snippet header()}
+        <header>
+            <AppHeader app={APP} />
+        </header>
+    {/snippet}
+    {#if loadingState.type === 'agreements'}
         <div class="screen">
             <div class="content">
                 <h2>このアプリについて</h2>
@@ -157,25 +145,25 @@
                     また、株式会社Diver Downの提供するマシュマロに同等の機能が追加された場合、本アプリからは予告なくその機能を削除する可能性があります。
                 </small>
             </div>
-            <Button primary onclick={state.accept}>
+            <Button primary onclick={loadingState.accept}>
                 同意する
                 <i class="ti ti-check"></i>
             </Button>
         </div>
-    {:else if state.type === 'loading'}
+    {:else if loadingState.type === 'loading'}
         <div class="screen">
             <Spinner />
         </div>
-    {:else if state.type === 'ready'}
-        <App api={state.api} logout={logout} />
-    {:else if state.type === 'failed'}
+    {:else if loadingState.type === 'ready'}
+        <App api={loadingState.api} logout={logout} />
+    {:else if loadingState.type === 'failed'}
         <div class="screen">
-            {#if state.kind === 'host'}
+            {#if loadingState.kind === 'host'}
                 <p>ホストの要求に失敗しました</p>
-            {:else if state.kind === 'login'}
+            {:else if loadingState.kind === 'login'}
                 <p>マシュマロにログインできませんでした</p>
             {/if}
-            <Button primary onclick={state.retry}>再試行</Button>
+            <Button primary onclick={loadingState.retry}>再試行</Button>
         </div>
     {/if}
 </AppPage>

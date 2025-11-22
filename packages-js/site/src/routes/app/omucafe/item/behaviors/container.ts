@@ -6,7 +6,7 @@ import { getTextureByAsset, type Asset } from '../../asset/asset.js';
 import { draw, getContext, glContext, matrices } from '../../game/game.js';
 import { transformToMatrix, type Transform } from '../../game/transform.js';
 import type { BehaviorAction, BehaviorHandler, ClickAction } from '../behavior.js';
-import { attachChildren, cloneItemState, detachChildren, getRenderBounds, ITEM_LAYERS, removeItemState, type ItemRender, type ItemState } from '../item-state.js';
+import { attachChildren, cloneItemState, detachChildren, getRenderBounds, isChildRecursively, ITEM_LAYERS, removeItemState, type ItemRender, type ItemState } from '../item-state.js';
 
 export type LiquidLayer = {
     side: Asset;
@@ -162,7 +162,8 @@ export class ContainerHandler implements BehaviorHandler<'container'> {
         this.childrenBufferTexture.use(() => {
             this.childrenBufferTexture.ensureSize(dimentions.x, dimentions.y);
         });
-        if (behavior.overlay && context.hovering !== item.id) {
+        const isChildHovering = context.hovering === item.id || context.hovering && isChildRecursively(context.items[item.id], context.items[context.hovering]);
+        if (behavior.overlay && !(context.held && isChildHovering)) {
             matrices.model.push();
             const transform = transformToMatrix(behavior.overlay.transform);
             matrices.model.multiply(transform);

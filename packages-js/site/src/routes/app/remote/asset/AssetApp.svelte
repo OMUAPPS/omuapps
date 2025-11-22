@@ -11,9 +11,14 @@
     import { Vec4 } from '$lib/math/vec4.js';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
+    import { SvelteMap } from 'svelte/reactivity';
     import { RemoteApp, type Resource } from '../remote-app.js';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const remote = new RemoteApp(omu, 'asset');
 
     if (BROWSER) {
@@ -43,7 +48,7 @@
         );
     }
 
-    const IMAGE_CACHE = new Map<string, GlTexture>();
+    const IMAGE_CACHE = new SvelteMap<string, GlTexture>();
 
     async function loadImage(src: string): Promise<GlTexture> {
         const exist = IMAGE_CACHE.get(src);
@@ -71,14 +76,18 @@
         return tex;
     }
 
-    const ASSET_CACHE = new Map<string, AssetRender>();
+    const ASSET_CACHE = new SvelteMap<string, AssetRender>();
 
     interface AssetRender {
         render(color?: Vec4): void;
     }
 
     class AssetRenderImage implements AssetRender {
-        constructor(public texture: GlTexture) {}
+        public texture: GlTexture;
+
+        constructor(texture: GlTexture) {
+            this.texture = texture;
+        }
 
         public render(color: Vec4 = Vec4.ONE) {
             const bounds = this.calculateBounds();
@@ -153,7 +162,11 @@
     }
 
     class AssetRenderAlbum implements AssetRender {
-        constructor(public assets: AssetRender[]) {}
+        public assets: AssetRender[];
+
+        constructor(assets: AssetRender[]) {
+            this.assets = assets;
+        }
 
         public render(color: Vec4 = Vec4.ONE) {
             const { animation, easing } = $config.asset;

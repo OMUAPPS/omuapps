@@ -3,10 +3,19 @@
     import { RouletteApp } from '../roulette-app.js';
     import type { RouletteItem } from '../state.js';
 
-    export let index: number;
-    export let item: RouletteItem;
-    export let roulette: RouletteApp;
-    export let disabled: boolean;
+    interface Props {
+        index: number;
+        item: RouletteItem;
+        roulette: RouletteApp;
+        disabled: boolean;
+    }
+
+    let {
+        index,
+        item = $bindable(),
+        roulette,
+        disabled,
+    }: Props = $props();
 </script>
 
 <div class="entry">
@@ -17,14 +26,14 @@
         <input
             type="text"
             bind:value={item.name}
-            on:input={() => {
+            oninput={() => {
                 roulette.updateEntry(item);
             }}
             placeholder="エントリー名..."
         />
     </span>
     <button
-        on:click={() => {
+        onclick={() => {
             roulette.removeEntry(item.id);
         }}
         {disabled}

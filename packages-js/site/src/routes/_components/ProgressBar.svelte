@@ -1,8 +1,8 @@
 <script lang="ts">
     import { beforeNavigate } from '$app/navigation';
 
-    let loading = false;
-    let loaded = true;
+    let loading = $state(false);
+    let loaded = $state(true);
     let timeout: number;
 
     beforeNavigate((nav) => {

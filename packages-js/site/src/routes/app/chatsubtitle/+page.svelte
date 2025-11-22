@@ -4,6 +4,7 @@
     import { Identifier, Omu } from '@omujs/omu';
     import { AppHeader, AppPage, setGlobal, TableList } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
+    import { SvelteMap } from 'svelte/reactivity';
     import { APP } from './app.js';
     import { ChatSubtitleApp } from './chatsubtitle-app.js';
     import RoomEntry from './components/RoomEntry.svelte';
@@ -23,7 +24,7 @@
         return true;
     }
 
-    let xml = '';
+    let xml = $state('');
 
     $createSubtitle = async (room: Room) => {
         const { first_message_id, last_message_id } = room.metadata;
@@ -55,7 +56,7 @@
             left: Content;
             right: Content;
         };
-        const output = new Map<number, Line[]>();
+        const output = new SvelteMap<number, Line[]>();
 
         const lines: Line[] = [];
         const insertLine = (time: Date, ...newLines: Line[]) => {
@@ -202,9 +203,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={APP} />
-    </header>
+    {#snippet header()}
+        <header>
+            <AppHeader app={APP} />
+        </header>
+    {/snippet}
     <main>
         {#if xml}
             <a
@@ -216,13 +219,16 @@
         {/if}
         <TableList
             table={chat.rooms}
-            component={RoomEntry}
-            filter={(key, room) =>
+            filter={(_, room) =>
                 !!(
                     room.metadata.first_message_id &&
                     room.metadata.last_message_id
                 )}
-        />
+        >
+            {#snippet component({ entry, selected })}
+                <RoomEntry {entry} {selected} />
+            {/snippet}
+        </TableList>
     </main>
 </AppPage>
 

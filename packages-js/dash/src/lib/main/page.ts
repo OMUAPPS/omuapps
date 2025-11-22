@@ -1,12 +1,12 @@
-import type { TypedComponent } from '@omujs/ui';
+import type { Component } from 'svelte';
 import { get, writable } from 'svelte/store';
 import { currentPage } from './settings.js';
 
 export type Page<T> = {
-    component: TypedComponent<{
-        props: T;
-    }>;
-    props: T;
+    component: Component<{
+        data: T;
+    }, object, ''>;
+    data: T;
 };
 
 export type PageItem<T> = {
@@ -23,10 +23,10 @@ export const pages = writable<Record<string, {
     type: 'loading';
 } | {
     type: 'loaded';
-    page: Page<unknown>;
+    page: Page<any>;
 }>>({});
 
-export function registerPage<Props, T extends PageItem<Props>>(page: T): T {
+export function registerPage<Props, T extends PageItem<Props> = PageItem<Props>>(page: T): T {
     if (get(pageMap)[page.id]) {
         return page;
     }

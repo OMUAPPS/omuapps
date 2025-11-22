@@ -1,5 +1,6 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
+    import { TooltipPortal } from '@omujs/ui';
     import { TauriEvent } from '@tauri-apps/api/event';
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
@@ -10,8 +11,14 @@
     import { appWindow, listen } from './tauri.js';
     import { VERSION } from './version.js';
 
-    let alwaysOnTop = false;
-    let maximized = false;
+    interface Props {
+        children?: import('svelte').Snippet;
+    }
+
+    let { children }: Props = $props();
+
+    let alwaysOnTop = $state(false);
+    let maximized = $state(false);
 
     const destroy = listen('single-instance', async ({ payload }) => {
         console.log(`single-instance: ${JSON.stringify(payload, null, 2)}`);
@@ -66,35 +73,36 @@
         </div>
         <div class="buttons">
             <TitlebarButton
-                on:click={togglePin}
+                onclick={togglePin}
                 icon={alwaysOnTop ? 'ti-pinned-filled' : 'ti-pin'}
                 tooltip={alwaysOnTop
                     ? $t('titlebar.pin-disable')
                     : $t('titlebar.pin-enable')}
             />
             <TitlebarButton
-                on:click={minimize}
+                onclick={minimize}
                 icon="ti-minus"
                 tooltip={$t('titlebar.minimize')}
             />
             <TitlebarButton
-                on:click={maximize}
+                onclick={maximize}
                 icon={maximized ? 'ti-picture-in-picture-top' : 'ti-rectangle'}
                 tooltip={$t(
                     `titlebar.${maximized ? 'unmaximize' : 'maximize'}`,
                 )}
             />
             <TitlebarButton
-                on:click={close}
+                onclick={close}
                 icon="ti-x"
                 tooltip={$t('titlebar.close')}
             />
         </div>
     </div>
     <div class="content" tabindex="-1">
-        <slot />
+        {@render children?.()}
     </div>
     <ScreenRenderer />
+    <TooltipPortal />
 </div>
 
 <style lang="scss">

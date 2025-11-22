@@ -1,11 +1,15 @@
 <script lang="ts">
-    export let value: boolean;
-    export let handleToggle = () => {
+    interface Props {
+        value: boolean;
+        handleToggle?: any;
+    }
+
+    let { value = $bindable(), handleToggle = () => {
         value = !value;
-    };
+    } }: Props = $props();
 </script>
 
-<button class:active={value} on:click={handleToggle}>
+<button class:active={value} onclick={handleToggle}>
     <span class="off">off</span>
     <span class="on">on</span>
 </button>

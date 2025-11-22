@@ -46,5 +46,5 @@ export type AppState = {
     type: 'ready';
 };
 
-export const state = writable<AppState>({ type: 'initializing' });
+export const appState = writable<AppState>({ type: 'initializing' });
 export const netState = writable<NetworkStatus | undefined>();

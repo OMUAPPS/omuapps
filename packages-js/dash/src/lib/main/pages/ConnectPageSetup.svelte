@@ -4,7 +4,11 @@
     import type { Models } from '@omujs/chat';
     import { Spinner, Tooltip } from '@omujs/ui';
 
-    export let cancel: () => void = () => {};
+    interface Props {
+        cancel?: () => void;
+    }
+
+    let { cancel = () => {} }: Props = $props();
 
     let stage: {
         type: 'input';
@@ -12,10 +16,10 @@
         type: 'searching';
     } | {
         type: 'select';
-    } = { type: 'input' };
+    } = $state({ type: 'input' });
 
-    let url = '';
-    let result: { channel: Models.Channel; checked: boolean }[] = [];
+    let url = $state('');
+    let result: { channel: Models.Channel; checked: boolean }[] = $state([]);
 
     async function search(url: string) {
         stage = { type: 'searching' };
@@ -29,19 +33,19 @@
     <div class="left">
         {#if stage.type === 'input'}
             <p>{$t('page.connect.input_url')}</p>
-            <input type="text" bind:value={url} on:keypress={(event) => {
+            <input type="text" bind:value={url} onkeypress={(event) => {
                 if (event.key === 'Enter') {
                     search(url);
                 }
             }} placeholder="youtube.com/watch?v=..." class="input" />
             <div class="actions">
-                <button on:click={() => {
+                <button onclick={() => {
                     cancel();
                 }} class="back">
                     <i class="ti ti-chevron-left"></i>
                     {$t('page.connect.input_cancel')}
                 </button>
-                <button on:click={() => {
+                <button onclick={() => {
                     search(url);
                 }} disabled={!url}>
                     {$t('page.connect.input_submit')}
@@ -57,7 +61,7 @@
             <p>{$t('page.connect.search_no_results')}</p>
 
             <div class="actions left">
-                <button on:click={() => {
+                <button onclick={() => {
                     stage = { type: 'input' };
                 }}>
                     <i class="ti ti-chevron-left"></i>
@@ -67,9 +71,9 @@
         {:else}
             <p>{$t('page.connect.select_channel')}</p>
             <div class="channels">
-                {#each result as { channel, checked } (channel.id)}
-                    <button class="channel" class:checked={checked} on:click={() => {
-                        checked = !checked;
+                {#each result as { channel, checked }, index (channel.id)}
+                    <button class="channel" class:checked={checked} onclick={() => {
+                        result[index].checked = !checked;
                     }}>
                         {#if checked}
                             <Tooltip>
@@ -91,13 +95,13 @@
                 {/each}
             </div>
             <div class="actions">
-                <button class="back" on:click={() => {
+                <button class="back" onclick={() => {
                     stage = { type: 'input' };
                 }}>
                     <i class="ti ti-chevron-left"></i>
                     {$t('page.connect.search_back')}
                 </button>
-                <button on:click={() => {
+                <button onclick={() => {
                     const selected = result.filter((item) => item.checked).map((item) => item.channel);
                     chat.channels.add(...selected);
                 }} disabled={result.every((item) => !item.checked)}>

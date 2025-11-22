@@ -56,6 +56,11 @@ export type MarshmallowSkin = {
         y: number;
         scale: number;
     };
+    transition: {
+        in: {
+            type: 'default' | 'paper';
+        };
+    };
 };
 
 import { sha256 } from '$lib/helper.js';
@@ -63,6 +68,7 @@ import bottom from './skins/bottom.svg';
 import cursor from './skins/cursor.png';
 import middle from './skins/middle.svg';
 import top from './skins/top.svg';
+
 const DEFAULT_SKIN: MarshmallowSkin = {
     id: 'default',
     version: 1,
@@ -89,6 +95,11 @@ const DEFAULT_SKIN: MarshmallowSkin = {
         x: 0,
         y: 0,
         scale: 1,
+    },
+    transition: {
+        in: {
+            type: 'default',
+        },
     },
 };
 
@@ -134,6 +145,8 @@ export type MarshmallowScreen = {
     } | {
         type: 'edit';
         skin: MarshmallowSkin;
+    } | {
+        type: 'premium';
     };
 };
 

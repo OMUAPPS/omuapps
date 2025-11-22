@@ -2,17 +2,22 @@
     import { Content } from '@omujs/chat/models';
     import { Tooltip } from '@omujs/ui';
     import AddComponent from './AddComponent.svelte';
+    import ComponentEditor from './ComponentEditor.svelte';
     import ImageEdit from './ImageEdit.svelte';
     import TextEdit from './TextEdit.svelte';
 
-    export let component: Content.Component;
-    export let remove: () => void;
+    interface Props {
+        component: Content.Component;
+        remove: () => void;
+    }
+
+    let { component = $bindable(), remove }: Props = $props();
 
     const icons = {
         text: 'ti ti-txt',
         image: 'ti ti-photo',
     };
-    $: icon = component && icons[component.type as 'text' | 'image'];
+    let icon = $derived(component && icons[component.type as 'text' | 'image']);
 
     function removeChild(child: Content.Component) {
         const children = Content.children(component);
@@ -24,7 +29,7 @@
 {#if component}
     {@const children = Content.children(component)}
     {#if icon}
-        <button on:click={remove}>
+        <button onclick={remove}>
             <Tooltip>コンポーネントを削除</Tooltip>
             <i class={icon}></i>
         </button>
@@ -37,8 +42,8 @@
     {#if children.length > 0}
         <div>
             {#each children as child, i (i)}
-                <svelte:self
-                    bind:component={child}
+                <ComponentEditor
+                    bind:component={children[i]}
                     remove={() => removeChild(child)}
                 />
             {/each}

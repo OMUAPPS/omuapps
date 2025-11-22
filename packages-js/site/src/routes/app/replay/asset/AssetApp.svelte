@@ -1,24 +1,30 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
     import TwitchPlayer from '../components/player/TwitchPlayer.svelte';
     import YoutubePlayer from '../components/player/YoutubePlayer.svelte';
     import { ReplayApp } from '../replay-app.js';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const { replayData, config } = ReplayApp.create(omu, 'asset');
 
     if (BROWSER) {
         omu.start();
     }
 
-    let timeTimeout = 0;
+    let timeTimeout = $state(0);
     let timer: {
         start: number;
         time: number;
         duration?: number;
-    } | null = null;
-    let formattedTime = '...';
+    } | null = $state(null);
+    let formattedTime = $state('...');
 
     type TimeUnit = { factor: number };
 
@@ -68,18 +74,20 @@
         );
     }
 
-    $: if ($replayData) {
-        timer = {
-            start: $replayData.playback.start,
-            time: $replayData.playback.offset,
-            duration: $replayData.info.duration,
-        };
-        if ($replayData.playback.playing) {
-            updateTime();
-        } else {
-            clearTimeout(timeTimeout);
+    run(() => {
+        if ($replayData) {
+            timer = {
+                start: $replayData.playback.start,
+                time: $replayData.playback.offset,
+                duration: $replayData.info.duration,
+            };
+            if ($replayData.playback.playing) {
+                updateTime();
+            } else {
+                clearTimeout(timeTimeout);
+            }
         }
-    }
+    });
 </script>
 
 <svelte:head>
@@ -106,7 +114,6 @@
                 <TwitchPlayer
                     video={$replayData.video}
                     playback={$replayData.playback}
-                    info={$replayData.info}
                 />
             {/if}
         </div>

@@ -166,6 +166,7 @@ export interface ActivityJoinRequest extends DispatchPayload<'ACTIVITY_JOIN_REQU
 export interface AuthorizePayload extends Payload<'AUTHORIZE'>, WithArg<{
     client_id: string;
     scopes: Scope[];
+    prompt?: 'none';
 }>, WithData<{
         'code': string;
     }> {}

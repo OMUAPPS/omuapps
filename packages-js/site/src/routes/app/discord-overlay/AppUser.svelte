@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { comparator } from '$lib/helper';
     import { Slider, Tooltip } from '@omujs/ui';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
@@ -9,13 +11,22 @@
     import type { RPCSession, RPCSpeakingStates, RPCVoiceStates } from './discord/discord';
     import { dragState, selectedAvatar } from './states.js';
 
-    export let session: RPCSession;
-    export let voiceState: RPCVoiceStates;
-    export let speakingState: RPCSpeakingStates;
-    export let overlayApp: DiscordOverlayApp;
+    interface Props {
+        session: RPCSession;
+        voiceState: RPCVoiceStates;
+        speakingState: RPCSpeakingStates;
+        overlayApp: DiscordOverlayApp;
+    }
+
+    let {
+        session,
+        voiceState,
+        speakingState,
+        overlayApp,
+    }: Props = $props();
     const { config } = overlayApp;
 
-    let resolution: { width: number; height: number } = { width: 0, height: 0 };
+    let resolution: { width: number; height: number } = $state({ width: 0, height: 0 });
 
     function getUser(id: string) {
         let user = $config.users[id];
@@ -26,11 +37,13 @@
         return user;
     }
 
-    $: Object.keys(voiceState.states).forEach(id => {
-        getUser(id);
+    run(() => {
+        Object.keys(voiceState.states).forEach(id => {
+            getUser(id);
+        });
     });
 
-    let settingsOpen = false;
+    let settingsOpen = $state(false);
 </script>
 
 <main>
@@ -58,9 +71,9 @@
                         <UserDragControl
                             {resolution}
                             {overlayApp}
-                            {voiceState}
+                            voiceStates={voiceState}
                             {id}
-                            {state}
+                            voiceState={state}
                             bind:user={$config.users[id]}
                         />
                     {/if}
@@ -70,7 +83,7 @@
     </div>
     {#if !$dragState && !$selectedAvatar}
         <div class="config">
-            <button on:click={() => {
+            <button onclick={() => {
                 $config.effects.backlightEffect.active = !$config.effects.backlightEffect.active;
             }} class:active={$config.effects.backlightEffect.active}>
                 <Tooltip>
@@ -79,7 +92,7 @@
                 <i class="ti ti-sun"></i>
                 逆光効果
             </button>
-            <button on:click={() => {
+            <button onclick={() => {
                 $config.effects.shadow.active = !$config.effects.shadow.active;
             }} class:active={$config.effects.shadow.active}>
                 <Tooltip>
@@ -88,7 +101,7 @@
                 <i class="ti ti-ghost-3"></i>
                 アバターの影
             </button>
-            <button on:click={() => {
+            <button onclick={() => {
                 $config.effects.speech.active = !$config.effects.speech.active;
             }} class:active={$config.effects.speech.active}>
                 <Tooltip>
@@ -97,7 +110,7 @@
                 <i class="ti ti-ghost-3"></i>
                 明るさ調整
             </button>
-            <button on:click={() => {
+            <button onclick={() => {
                 $config.show_name_tags = !$config.show_name_tags;
             }} class:active={$config.show_name_tags}>
                 <i class="ti ti-label"></i>
@@ -105,7 +118,7 @@
             </button>
         </div>
         <div class="settings">
-            <button on:click={() => {settingsOpen = !settingsOpen;}}>
+            <button onclick={() => {settingsOpen = !settingsOpen;}}>
                 <i class="ti ti-settings"></i>
                 詳細設定
                 {#if settingsOpen}
@@ -144,21 +157,6 @@
         justify-content: center;
         align-items: center;
         outline: 1px solid var(--color-outline);
-    }
-
-    .menu {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        gap: 1rem;
-        padding: 0.5rem;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        z-index: 1;
-        width: 20rem;
-        margin: 1rem;
-        animation: slide-in 0.0621s ease;
     }
 
     .config {

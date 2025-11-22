@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { OmuPermissions, type Omu } from '@omujs/omu';
     import { } from '@omujs/omu/api/asset';
     import type { RequestRemoteAppResponse } from '@omujs/omu/api/session';
@@ -8,11 +10,15 @@
     import { ORIGIN } from '../../origin.js';
     import { REMOTE_APP } from '../app.js';
 
-    export let omu: Omu;
-    export let cancel: () => void;
-    export let connected: boolean;
+    interface Props {
+        omu: Omu;
+        cancel: () => void;
+        connected: boolean;
+    }
 
-    let state:
+    let { omu, cancel, connected }: Props = $props();
+
+    let connectState:
         | {
             type: 'idle';
         }
@@ -28,13 +34,13 @@
         }
         | {
             type: 'connected';
-        } = {
+        } = $state({
             type: 'idle',
-        };
+        });
     let result: RequestRemoteAppResponse | null = null;
 
     async function generateToken() {
-        state = {
+        connectState = {
             type: 'requesting',
         };
         result = await omu.sessions.requestRemoteApp({
@@ -46,7 +52,7 @@
             ],
         });
         if (result.type === 'error') {
-            state = {
+            connectState = {
                 type: 'denied',
             };
             return;
@@ -55,7 +61,7 @@
         console.log(token, lan_ip);
         const url = `http://${lan_ip}:26423/frame?url=${encodeURIComponent(`${DEV ? `http://${lan_ip}:5173` : ORIGIN}/app/remote/session/?token=${token}&lan=${lan_ip}`)}`;
         console.log(url);
-        state = {
+        connectState = {
             type: 'generated',
             qr: new QrCode({
                 value: url,
@@ -66,39 +72,41 @@
         };
     }
 
-    $: if (connected) {
-        state = {
-            type: 'connected',
-        };
-        setTimeout(() => {
-            cancel();
-        }, 3000);
-    }
+    run(() => {
+        if (connected) {
+            connectState = {
+                type: 'connected',
+            };
+            setTimeout(() => {
+                cancel();
+            }, 3000);
+        }
+    });
 
     generateToken();
 </script>
 
 <div class="screen">
-    {#if state.type === 'requesting'}
+    {#if connectState.type === 'requesting'}
         <h2>
             通信中
             <i class="ti ti-loader"></i>
         </h2>
         <small> デバイスとの接続をリクエストしています </small>
-    {:else if state.type === 'generated'}
+    {:else if connectState.type === 'generated'}
         <h2>
             QRコードをスキャンしてください
             <i class="ti ti-scan"></i>
         </h2>
         <small> 接続したいデバイスでQRコードを読み取ってください </small>
-        <img src={state.qr.toDataURL()} alt="QR Code" />
+        <img src={connectState.qr.toDataURL()} alt="QR Code" />
         <div class="actions">
             <Button primary onclick={cancel}>
                 完了
                 <i class="ti ti-check"></i>
             </Button>
         </div>
-    {:else if state.type === 'connected'}
+    {:else if connectState.type === 'connected'}
         <h2>
             接続されました
             <i class="ti ti-check"></i>
@@ -110,7 +118,7 @@
                 <i class="ti ti-check"></i>
             </Button>
         </div>
-    {:else if state.type === 'denied'}
+    {:else if connectState.type === 'denied'}
         <h2>
             キャンセルされました
             <i class="ti ti-alert-hexagon"></i>

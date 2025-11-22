@@ -110,7 +110,7 @@ class SessionExtension:
                 return {"type": "error", "message": "You can only generate tokens for child apps"}
             if requested_app.parent_id != session.app.id:
                 return {"type": "error", "message": "You can only generate tokens for your own child apps"}
-        permissions = list(map(Identifier.from_key, request["permissions"]))
+        permissions = list(map(Identifier.from_key, request.get("permissions", [])))
         if not session.permissions.has_all(permissions):
             missing_permissions = [p for p in permissions if not session.permissions.has(p)]
             return {

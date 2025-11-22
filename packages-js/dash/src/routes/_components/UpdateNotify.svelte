@@ -5,8 +5,8 @@
     import type { Update } from '@tauri-apps/plugin-updater';
     import { onMount } from 'svelte';
 
-    let update: Update | null = null;
-    let updateProgress: UpdateEvent | null = null;
+    let update: Update | null = $state(null);
+    let updateProgress: UpdateEvent | null = $state(null);
 
     onMount(async () => {
         try {

@@ -2,8 +2,12 @@
     import type { Prompt, QuestionState } from '../../quiz-app';
     import AssetRenderer from './AssetRenderer.svelte';
 
-    export let prompt: Prompt;
-    export let state: QuestionState = { type: 'idle' };
+    interface Props {
+        prompt: Prompt;
+        state?: QuestionState;
+    }
+
+    let { prompt, state = { type: 'idle' } }: Props = $props();
 </script>
 
 <div class="prompt" class:show={state.type === 'qustioning' || state.type === 'answering'}>

@@ -1,15 +1,20 @@
 <script lang="ts">
+
     import { BetterMath } from '$lib/math.js';
     import { Timer } from '$lib/timer.js';
-    import { onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
     import type { RouletteApp } from '../roulette-app.js';
 
-    export let roulette: RouletteApp;
-    const { state, entries } = roulette;
+    interface Props {
+        roulette: RouletteApp;
+    }
 
-    let canvas: HTMLCanvasElement;
-    let width: number;
-    let height: number;
+    let { roulette }: Props = $props();
+    const { rouletteState, entries } = roulette;
+
+    let canvas: HTMLCanvasElement | undefined = $state(undefined);
+    let width: number = $state(0);
+    let height: number = $state(0);
 
     function resize() {
         if (!canvas) return;
@@ -40,7 +45,7 @@
     let rotation = 0;
     let lastRotation = 0;
 
-    state.subscribe((value) => {
+    rouletteState.subscribe((value) => {
         if (value.type === 'spin-start') {
             lastRotation = rotation;
             rotateTimer.reset();
@@ -68,28 +73,28 @@
 
         let tint = 0;
 
-        if ($state.type === 'idle' || $state.type === 'recruiting') {
+        if ($rouletteState.type === 'idle' || $rouletteState.type === 'recruiting') {
             const speed = Math.min(1, Math.sqrt(timer.getElapsedMS()) / 100);
             rotation = lastRotation + (timer.getElapsedMS() / 1000 / 20) * speed;
-        } else if ($state.type === 'spinning') {
-            const { entry } = $state.result;
+        } else if ($rouletteState.type === 'spinning') {
+            const { entry } = $rouletteState.result;
             const index = Object.keys($entries).indexOf(entry.id);
             const offset = 1 / count;
-            const hitRotation = index * offset + offset * $state.random;
+            const hitRotation = index * offset + offset * $rouletteState.random;
             const rotateTo = hitRotation + Math.floor(lastRotation) + 10;
-            const time = Date.now() - $state.start;
+            const time = Date.now() - $rouletteState.start;
             tint = BetterMath.clamp01(1 / ((time / 1000) * 3 + 1));
-            const t = rouletteEasing(BetterMath.clamp01(time / $state.duration));
+            const t = rouletteEasing(BetterMath.clamp01(time / $rouletteState.duration));
             rotation = BetterMath.lerp(lastRotation, rotateTo, t);
             const scale = zoomEasing(t);
             ctx.translate(width / 2, height / 2);
             ctx.scale(scale, scale);
             ctx.translate(-width / 2, -height / 2);
-        } else if ($state.type === 'spin-result') {
-            const { entry } = $state.result;
+        } else if ($rouletteState.type === 'spin-result') {
+            const { entry } = $rouletteState.result;
             const index = Object.keys($entries).indexOf(entry.id);
             const offset = 1 / count;
-            const hitRotation = index * offset + offset * $state.random;
+            const hitRotation = index * offset + offset * $rouletteState.random;
             const rotateTo = hitRotation + Math.floor(rotation);
             lastRotation = rotation = rotateTo;
             timer.reset();
@@ -125,7 +130,7 @@
             ctx.font = 'bold 24px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const text = $state.type === 'recruiting' ? '募集中' : '';
+            const text = $rouletteState.type === 'recruiting' ? '募集中' : '';
             ctx.fillStyle = 'black';
             ctx.fillText(text, width / 2, height / 2);
             ctx.restore();
@@ -236,20 +241,19 @@
         animationFrame = requestAnimationFrame(loop);
     }
 
-    $: {
+    onMount(() => {
         if (canvas) {
             resize();
             loop();
         }
-    }
-
-    onDestroy(() => {
-        if (animationFrame) cancelAnimationFrame(animationFrame);
+        return () => {
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+        };
     });
 </script>
 
-<svelte:window on:resize={resize} />
-<canvas bind:this={canvas} bind:clientWidth={width} bind:clientHeight={height} />
+<svelte:window onresize={resize} />
+<canvas bind:this={canvas} bind:clientWidth={width} bind:clientHeight={height}></canvas>
 
 <style lang="scss">
     canvas {

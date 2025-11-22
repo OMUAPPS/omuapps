@@ -4,9 +4,13 @@
     import HintRenderer from './HintRenderer.svelte';
     import PromptRenderer from './PromptRenderer.svelte';
 
-    export let question: Question;
-    export let index: number;
-    export let state: QuestionState = { type: 'idle' };
+    interface Props {
+        question: Question;
+        index: number;
+        state?: QuestionState;
+    }
+
+    let { question, index, state = { type: 'idle' } }: Props = $props();
 </script>
 
 <div class="question">

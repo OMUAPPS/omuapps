@@ -110,6 +110,10 @@ export class Identifier {
         return parsed.hostname.split('.').reverse().join('.');
     }
 
+    public get base(): Identifier {
+        return new Identifier(this.namespace, this.path[0]);
+    }
+
     public toJson(): string {
         return this.key();
     }

@@ -4,7 +4,11 @@
     import { DEFAULT_CONFIG, type DiscordOverlayApp } from '../discord-overlay-app.js';
     import EffectControls from './EffectControls.svelte';
 
-    export let overlayApp: DiscordOverlayApp;
+    interface Props {
+        overlayApp: DiscordOverlayApp;
+    }
+
+    let { overlayApp }: Props = $props();
     const { config } = overlayApp;
 </script>
 

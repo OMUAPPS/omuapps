@@ -1,32 +1,70 @@
-import { Glob } from 'bun';
 import fs from 'fs/promises';
 
-const original = `/** @param {string} path */
-export function rimraf(path) {
-	fs.rmSync(path, { force: true, recursive: true });
-}`.replace(/\r\n/g, '\n');
-
-const patch = `/** @param {string} path */
-export function rimraf(path) {
-    try {
-        fs.rmSync(path, { force: true, recursive: true });
-    } catch (/** @type {any} */ e) {
+async function updatePkg(path: string, overrides: Record<string, unknown>) {
+    if (!await fs.exists(path)) {
+        console.info(`Skipped patching ${path}`);
+        return;
     }
-}`.replace(/\r\n/g, '\n');
-
-const glob = new Glob('node_modules/**/package/src/filesystem.js');
-for await (const path of glob.scan('.')) {
-    let content = (await fs.readFile(path, 'utf-8')).replace(/\r\n/g, '\n');
-    const alreadyPatched = content.includes(patch);
-    if (alreadyPatched) {
-        console.log(`Already patched ${path}`);
-    } else {
-        if (!content.includes(original)) {
-            throw new Error(`Original not found in ${path}: ${content.split('\n').slice(10, 30).join('\n')}`);
-        } else {
-            content = content.replace(original, patch);
-            await fs.writeFile(path, content, 'utf-8');
-            console.log('Patched', path);
-        }
-    }
+    const content = await fs.readFile(path, {
+        encoding: 'utf-8',
+    });
+    let pkg = JSON.parse(content);
+    pkg = {
+        ...pkg,
+        ...overrides,
+    };
+    await fs.writeFile(path, JSON.stringify(pkg, null, 4), { encoding: 'utf-8' });
+    console.log(`Successfully patched ${path}`);
 }
+
+await updatePkg('packages-js/site/node_modules/@humanspeak/svelte-markdown/package.json', {
+    'main': './dist/index.js',
+    'svelte': './dist/index.js',
+    'types': './dist/index.d.ts',
+    'exports': {
+        '.': {
+            'import': './dist/index.js',
+            'svelte': './dist/index.js',
+            'types': './dist/index.d.ts',
+        },
+        './*': {
+            'import': './dist/*/index.js',
+            'svelte': './dist/*/index.js',
+            'types': './dist/*/index.d.js',
+        },
+    },
+});
+await updatePkg('packages-js/dash/node_modules/@humanspeak/svelte-markdown/package.json', {
+    'main': './dist/index.js',
+    'svelte': './dist/index.js',
+    'types': './dist/index.d.ts',
+    'exports': {
+        '.': {
+            'import': './dist/index.js',
+            'svelte': './dist/index.js',
+            'types': './dist/index.d.ts',
+        },
+        './*': {
+            'import': './dist/*/index.js',
+            'svelte': './dist/*/index.js',
+            'types': './dist/*/index.d.js',
+        },
+    },
+});
+await updatePkg('node_modules/.bun/@humanspeak+svelte-markdown@0.8.13+acce27d485e4186f/node_modules/@humanspeak/svelte-markdown/package.json', {
+    'main': './dist/index.js',
+    'svelte': './dist/index.js',
+    'types': './dist/index.d.ts',
+    'exports': {
+        '.': {
+            'import': './dist/index.js',
+            'svelte': './dist/index.js',
+            'types': './dist/index.d.ts',
+        },
+        './*': {
+            'import': './dist/*/index.js',
+            'svelte': './dist/*/index.js',
+            'types': './dist/*/index.d.js',
+        },
+    },
+});

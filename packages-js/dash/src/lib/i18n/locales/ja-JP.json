@@ -264,7 +264,7 @@
         },
         "setting": {
             "devMode": "開発者モード",
-            "betaMode": "開発版の機能を有効にする",
+            "betaMode": "開発ベータ版を有効にする",
             "betaModeDescription": "有効にするにはアプリの再起動が必要です。",
             "language": "言語",
             "link": "リンクの開き方",

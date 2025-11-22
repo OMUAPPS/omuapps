@@ -8,16 +8,20 @@
     import { ASSET_APP } from './app';
     import type { RemoteApp } from './remote-app.js';
 
-    export let remote: RemoteApp;
-    export let omu: Omu;
+    interface Props {
+        remote: RemoteApp;
+        omu: Omu;
+    }
 
-    let screen: 'connect' | null = null;
+    let { remote, omu }: Props = $props();
+
+    let screen: 'connect' | null = $state(null);
 
     const { connected, config, resources } = remote;
 
-    let showSettings = false;
+    let showSettings = $state(false);
 
-    $: selected = $config.show?.id;
+    let selected = $derived($config.show?.id);
 </script>
 
 <main>
@@ -55,7 +59,7 @@
             </section>
         {/if}
         <h2>
-            <button class="tab" on:click={() => {showSettings = !showSettings;}}>
+            <button class="tab" onclick={() => {showSettings = !showSettings;}}>
                 表示の設定
                 <i class="ti ti-settings"></i>
                 {#if showSettings}

@@ -7,8 +7,12 @@
     import { chat, omu } from '$lib/client.js';
     import { ButtonLink, ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
 
-    export let entry: Models.Channel;
-    export let selected: boolean = false;
+    interface Props {
+        entry: Models.Channel;
+        selected?: boolean;
+    }
+
+    let { entry = $bindable(), selected = false }: Props = $props();
 
     let active = writable(entry.active);
     active.subscribe((value) => {
@@ -39,7 +43,7 @@
     </div>
     <div class="actions">
         {#if selected}
-            <ButtonMini on:click={remove}>
+            <ButtonMini onclick={remove}>
                 <Tooltip>
                     <div>{$t('panels.channels.delete')}</div>
                 </Tooltip>
@@ -102,13 +106,15 @@
             border-radius: 50%;
         }
 
-        .tooltip-image {
-            width: 200px;
-            height: 200px;
-            padding: 0;
-            margin: 0;
-            border-radius: 0;
-        }
+    }
+
+    .tooltip-image {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: contain;
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
     }
 
     .info {

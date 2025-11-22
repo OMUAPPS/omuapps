@@ -1,9 +1,13 @@
 <script lang="ts">
     import type { Text } from '@omujs/chat/models';
 
-    export let component: Text;
+    interface Props {
+        component: Text;
+    }
 
-    let rect = { width: 0, height: 0 };
+    let { component = $bindable() }: Props = $props();
+
+    let rect = $state({ width: 0, height: 0 });
 </script>
 
 <span>

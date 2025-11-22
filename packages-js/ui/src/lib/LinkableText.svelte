@@ -1,16 +1,22 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import Tooltip from './Tooltip.svelte';
 
-    export let text: string;
+    interface Props {
+        text: string;
+    }
+
+    let { text }: Props = $props();
 
     interface Part {
         type: 'text' | 'url';
         content: string;
     }
 
-    let parts: Part[] = [];
+    let parts: Part[] = $state([]);
 
-    $: {
+    run(() => {
         parts = text.split(/(https?:\/\/[^()\s]+)/g).map((part) => {
             if (part.startsWith('http')) {
                 return {
@@ -24,7 +30,7 @@
                 };
             }
         });
-    }
+    });
 </script>
 
 {#each parts as part, i (i)}

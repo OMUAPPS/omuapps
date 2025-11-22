@@ -1,11 +1,16 @@
 <script lang="ts">
+
     import { downloadFile } from '$lib/helper';
-    import { Button, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
+    import { Button, Combobox, FileDrop, Slider, Textbox, Tooltip } from '@omujs/ui';
     import { MarshmallowApp, type MarshmallowSkin } from '../marshmallow-app';
     import AssetImage from './AssetImage.svelte';
     import EditSkinTextures from './EditSkinTextures.svelte';
 
-    export let skin: MarshmallowSkin;
+    interface Props {
+        skin: MarshmallowSkin;
+    }
+
+    let { skin = $bindable() }: Props = $props();
 
     const marshmallowApp = MarshmallowApp.getInstance();
     const { screen, config } = marshmallowApp;
@@ -21,7 +26,11 @@
         buffer = undefined;
         buffer = await marshmallowApp.downloadSkin(skin);
     }
-    $: updateDownload(skin);
+
+    $effect(() => {
+        updateDownload(skin);
+        $config.skins[skin.id] = skin;
+    });
 
     function download() {
         if (!buffer) return;
@@ -31,11 +40,6 @@
             content: buffer,
             type: '.marshmallow',
         });
-    }
-
-    async function save() {
-        $config.skins[skin.id] = skin;
-        $screen = { type: 'skins', state: { type: 'list' } };
     }
 </script>
 
@@ -50,7 +54,9 @@
         書き出し
         <i class="ti ti-download"></i>
     </Button>
-    <Button primary onclick={save}>
+    <Button primary onclick={() => {
+        $screen = { type: 'skins', state: { type: 'list' } };
+    }}>
         保存
         <i class="ti ti-check"></i>
     </Button>
@@ -99,6 +105,19 @@
     <p>
         <Slider bind:value={skin.cursor.scale} min={0} max={10} step={0.2} />
     </p>
+</section>
+<h3>アニメーション</h3>
+<section>
+    <Combobox options={{
+        default: {
+            label: '無し',
+            value: { type: 'default' },
+        },
+        paper: {
+            label: '紙',
+            value: { type: 'paper' },
+        },
+    }} bind:value={skin.transition.in} key={skin.transition.in.type} />
 </section>
 
 <style lang="scss">

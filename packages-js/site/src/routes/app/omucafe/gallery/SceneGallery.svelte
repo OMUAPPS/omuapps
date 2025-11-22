@@ -5,7 +5,11 @@
     import type { SceneContext } from '../scenes/scene.js';
     import GalleryEntry from './GalleryEntry.svelte';
 
-    export let context: SceneContext;
+    interface Props {
+        context: SceneContext;
+    }
+
+    let { context }: Props = $props();
 
     const { scene, gallery } = getGame();
 </script>
@@ -13,7 +17,11 @@
 {#if $scene.type === 'gallery'}
     <main>
         <div class="items">
-            <TableList table={gallery} component={GalleryEntry} reverse />
+            <TableList table={gallery} reverse>
+                {#snippet component({ entry })}
+                    <GalleryEntry {entry} />
+                {/snippet}
+            </TableList>
         </div>
     </main>
 {/if}

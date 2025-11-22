@@ -5,7 +5,11 @@
     import ReactionRenderer from '../components/ReactionRenderer.svelte';
     import { ReactionApp } from '../reaction-app';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const chat = Chat.create(omu);
     const reactionApp = new ReactionApp(omu, chat);
 
@@ -13,10 +17,13 @@
         omu.permissions.require(
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
+            OmuPermissions.ASSET_PERMISSION_ID,
             ChatPermissions.CHAT_REACTION_PERMISSION_ID,
         );
         omu.start();
     }
 </script>
 
-<ReactionRenderer {omu} {reactionApp} />
+{#await omu.waitForReady() then }
+    <ReactionRenderer {omu} {reactionApp} />
+{/await}

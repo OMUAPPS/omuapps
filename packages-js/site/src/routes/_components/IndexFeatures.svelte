@@ -2,7 +2,7 @@
     import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
 
-    let scroll = 0;
+    let scroll = $state(0);
 
     function onScroll() {
         scroll = window.scrollY;
@@ -15,10 +15,12 @@
         return rect.top + 100 < window.innerHeight;
     }
 
-    let card0, card1, card2;
+    let card0: HTMLElement | undefined = $state(undefined);
+    let card1: HTMLElement | undefined = $state(undefined);
+    let card2: HTMLElement | undefined = $state(undefined);
 </script>
 
-<svelte:window on:scroll={onScroll} />
+<svelte:window onscroll={onScroll} />
 
 <div class="features">
     <a class="card" href="/docs/guide" bind:this={card0} class:visible={isVisible(card0, scroll)}>
@@ -115,12 +117,6 @@
                 font-size: 0.75rem;
                 font-weight: 600;
                 color: var(--color-text);
-            }
-
-            > a {
-                position: absolute;
-                font-size: 0.8rem;
-                bottom: -1.5rem;
             }
         }
     }

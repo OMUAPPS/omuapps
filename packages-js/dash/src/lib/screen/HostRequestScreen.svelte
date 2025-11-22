@@ -5,28 +5,30 @@
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
-    export let screen: {
+    interface Props {
         handle: ScreenHandle;
         props: {
             request: HostRequest;
             app: App;
             resolve: (accept: UserResponse) => void;
         };
-    };
-    const { request, app, resolve } = screen.props;
+    }
+
+    let { handle, props }: Props = $props();
+    const { request, app, resolve } = props;
 
     function accept() {
         resolve({ type: 'ok', value: undefined });
-        screen.handle.pop();
+        handle.pop();
     }
 
     function reject() {
         resolve({ type: 'cancelled' });
-        screen.handle.pop();
+        handle.pop();
     }
 </script>
 
-<Screen {screen} disableClose>
+<Screen {handle} disableClose>
     <div class="content">
         <AppInfo {app} />
         <p>が<code>{request.host}</code>を要求しています</p>
@@ -35,11 +37,11 @@
             <li>信用できるアプリからの要求のみ許可してください。</li>
         </ul>
         <div class="actions">
-            <button on:click={reject} class="reject">
+            <button onclick={reject} class="reject">
                 キャンセル
                 <i class="ti ti-x"></i>
             </button>
-            <button on:click={accept} class="accept">
+            <button onclick={accept} class="accept">
                 追加
                 <i class="ti ti-check"></i>
             </button>
