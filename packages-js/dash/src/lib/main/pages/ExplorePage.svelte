@@ -49,7 +49,12 @@
         };
     }
 
-    index.wait().then(() => load($index));
+    index.wait().then(() => {
+        load($index);
+        index.subscribe(() => {
+            load($index);
+        });
+    });
 
     let loadingState: {
         type: 'loading';
