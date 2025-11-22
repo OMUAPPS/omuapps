@@ -48,7 +48,7 @@
         const deltaTime = (performance.now() - lastScroll.time) / 1000;
         const itemsInSeconds = (deltaY / deltaTime) / Math.max(1, averageHeight);
         lock = table.fetchItems({
-            limit: Math.max(chunkSize, Math.sqrt(itemsInSeconds) + Math.log(itemsInSeconds)),
+            limit: Math.max(chunkSize, Math.pow(itemsInSeconds, 0.98) + Math.log(itemsInSeconds)),
             backward: true,
             cursor: [...items.keys()][items.size - 1],
         }).then((newItems) => {

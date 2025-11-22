@@ -38,6 +38,7 @@
         viewportHeight: number,
     ) {
         if (!viewport) throw new Error('VirtualList: missing viewport');
+        let newEnd = end;
         if (!items.length) {
             first = true;
             return;
@@ -45,13 +46,13 @@
         if (first) {
             first = false;
             // render first 3 rows
-            end = Math.min(3, items.length);
+            newEnd = Math.min(3, items.length);
             await tick();
             let averageHeight = 0;
-            for (let i = 0; i < end; i += 1) {
+            for (let i = 0; i < newEnd; i += 1) {
                 averageHeight += heightMap[i] = rows[i]?.offsetHeight || minHeight;
             }
-            averageHeight /= end;
+            averageHeight /= newEnd;
             averageHeight = Math.max(averageHeight, minHeight);
             heightMap = new Array(items.length).fill(averageHeight);
         }
@@ -66,7 +67,7 @@
             let row = rows[i - start];
 
             if (!row) {
-                end = i + 1;
+                newEnd = i + 1;
                 await tick(); // render the newly visible row
                 row = rows[i - start];
             }
@@ -78,14 +79,19 @@
             i += 1;
         }
 
-        end = i;
+        newEnd = i;
 
-        const remaining = items.length - end;
-        averageHeight = (top + content_height) / end;
+        const remaining = items.length - newEnd;
+        averageHeight = (top + content_height) / newEnd;
         averageHeight = Math.max(averageHeight, minHeight);
 
         bottom = remaining * averageHeight;
         heightMap.length = items.length;
+
+        const visible = viewport.checkVisibility();
+        if (visible) {
+            end = newEnd;
+        }
     }
 
     async function handleUpdate() {
@@ -149,7 +155,6 @@
     }));
 </script>
 
-<svelte:window />
 <div class="viewport omu-scroll" bind:this={viewport} onscroll={() => handleUpdate()}>
     <div
         class="contents"
