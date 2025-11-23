@@ -10,7 +10,6 @@
     import SettingGenerals from './SettingGenerals.svelte';
 
     let { data }: { data: unknown } = $props();
-
 </script>
 
 <div class="container">

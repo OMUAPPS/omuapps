@@ -11,7 +11,7 @@
     import { Button, Combobox } from '@omujs/ui';
     import { invoke } from '@tauri-apps/api/core';
     import { Update } from '@tauri-apps/plugin-updater';
-    import LaunchMode from './_components/LaunchMode.svelte';
+    import SettingLaunchMode from './_components/SettingLaunchMode.svelte';
 
     async function restartServer() {
         if (omu.ready) {
@@ -61,7 +61,7 @@
     </span>
 {/await}
 
-<LaunchMode />
+<SettingLaunchMode />
 <span class="setting">
     <p>{$t('settings.setting.link')}</p>
     <Combobox

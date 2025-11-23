@@ -96,11 +96,12 @@ class Config:
         return Path(python_path)
 
     def set_launch(self, server: Server):
-        if server.directories.dashboard:
-            self.json["launch"] = LaunchCommand(
-                cwd=Path.cwd().resolve().as_posix(),
-                args=[server.directories.dashboard.resolve().as_posix(), "--background"],
-            )
+        if not server.directories.dashboard:
+            return
+        self.json["launch"] = LaunchCommand(
+            cwd=Path.cwd().resolve().as_posix(),
+            args=[server.directories.dashboard.resolve().as_posix(), "--background"],
+        )
 
     def unset_launch(self):
         if "launch" in self.json:
