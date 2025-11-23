@@ -215,7 +215,10 @@ async function uploadManifest(platform: Platform[], target: UpdateTarget, channe
         pub_date,
         platforms: Object.fromEntries(platform.map(({ type, filename }) => {
             const existing = ORIGINAL_LATEST.platforms[type as PlatformKey];
-            if (!existing) throw new Error(`Existing manifest not found for: ${type}`);
+            if (!existing) {
+                console.warn(`Warning: Existing manifest not found for: ${type}`);
+                return [type, undefined];
+            }
             const resolvedFilename = filename.replace('{VERSION}', VERSION);
             const url = fileToUrl[resolvedFilename];
             if (!url) throw new Error(`URL not found for: ${resolvedFilename}`);
