@@ -14,7 +14,7 @@
 
 <h4>Q. OMUAPPSはどのプラットフォームで利用できますか？</h4>
 <section>
-    <h4>A. 現在はWindowsのみで利用できます</h4>
+    <h4>A. 現在は<b>Windowsのみ</b>で利用できます</h4>
     <p>
         将来的にはmacOSやLinuxにも対応する予定ですが、現時点ではWindows版のみ提供しています。
     </p>
