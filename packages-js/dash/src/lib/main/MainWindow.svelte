@@ -6,7 +6,8 @@
     import PageSettings from '$lib/pages/settings/PageSettings.svelte';
     import { screenContext } from '$lib/screen/screen.js';
     import type { App } from '@omujs/omu';
-    import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
+    import { Button, ButtonMini, TableList, Tooltip } from '@omujs/ui';
+    import * as tauriLog from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
     import AppPage from '../pages/PageApp.svelte';
     import ConnectPage from '../pages/PageConnect.svelte';
@@ -224,9 +225,32 @@
             {#key id}
                 {#if entry.type === 'loaded'}
                     <div class="page" class:visible={$currentPage === id}>
-                        <entry.page.component
-                            data={entry.page.data}
-                        />
+                        <svelte:boundary onerror={(error) => {
+                            tauriLog.error(`Error loading page '${id}': ${JSON.stringify(error)}`);
+                            console.error(`Error loading page '${id}':`, error);
+                        }}>
+                            <entry.page.component
+                                data={entry.page.data}
+                            />
+                            {#snippet failed(error, reset)}
+                                <div class="page-error">
+                                    <h2>
+                                        {$t('main.page.loadError.title')}
+                                    </h2>
+                                    <p>
+                                        {$t('main.page.loadError.message', {
+                                            error: JSON.stringify(error),
+                                        })}
+                                    </p>
+                                    <div class="actions">
+                                        <Button onclick={reset} primary>
+                                            {$t('main.page.loadError.retry')}
+                                            <i class="ti ti-reload"></i>
+                                        </Button>
+                                    </div>
+                                </div>
+                            {/snippet}
+                        </svelte:boundary>
                     </div>
                 {/if}
             {/key}
@@ -370,6 +394,26 @@
 
         &.visible {
             display: block;
+        }
+    }
+
+    .page-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 2rem;
+        text-align: center;
+        color: var(--color-1);
+
+        > h2 {
+            margin-bottom: 1rem;
+        }
+
+        > p {
+            margin-bottom: 2rem;
+            color: var(--color-text);
         }
     }
 

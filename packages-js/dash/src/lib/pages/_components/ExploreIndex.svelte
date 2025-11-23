@@ -3,7 +3,7 @@
     import type { App } from '@omujs/omu';
     import { AppIndexRegistry, type AppIndexEntry } from '@omujs/omu/api/server';
     import type { LocalizedText } from '@omujs/omu/localization';
-    import { Button, Spinner, Tooltip } from '@omujs/ui';
+    import { ButtonMini, Spinner, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import { filter } from '../explore';
     import ExploreAppEntry from './ExploreAppEntry.svelte';
@@ -32,8 +32,9 @@
         return JSON.stringify(error);
     }
 
-    onMount(async () => {
+    async function load() {
         try {
+            indexState = { type: 'loading' };
             const resp = await omu.http.fetch(entry.url);
             const index = AppIndexRegistry.fromJSON(await resp.json());
             indexState = { type: 'result', index };
@@ -41,6 +42,10 @@
             indexState = { type: 'failed', message: formatError(err) };
             console.error(err);
         }
+    }
+
+    onMount(() => {
+        load();
     });
 
     let url = $derived(new URL(entry.url));
@@ -88,7 +93,7 @@
         {/if}
     </div>
     <div class="actions">
-        <Button onclick={async () => {
+        <ButtonMini onclick={async () => {
             await omu.server.index.update((index) => {
                 delete index.indexes[id];
                 return index;
@@ -97,9 +102,14 @@
             <Tooltip>
                 この提供元を削除
             </Tooltip>
-            削除
             <i class="ti ti-x"></i>
-        </Button>
+        </ButtonMini>
+        <ButtonMini onclick={load}>
+            <Tooltip>
+                再読み込み
+            </Tooltip>
+            <i class="ti ti-reload"></i>
+        </ButtonMini>
     </div>
 </div>
 {#if indexState.type === 'loading'}
@@ -138,11 +148,13 @@
     .info {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        padding-right: 1rem;
 
         &:hover {
-            outline: 1px solid var(--color-outline);
-            outline-offset: 1rem;
+            background: var(--color-bg-2);
+            box-shadow: 0 1px var(--color-outline);
         }
 
         > .body {

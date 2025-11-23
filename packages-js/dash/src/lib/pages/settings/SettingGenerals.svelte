@@ -61,7 +61,12 @@
     </span>
 {/await}
 
-<SettingLaunchMode />
+<svelte:boundary>
+    <SettingLaunchMode />
+    {#snippet failed(error)}
+        <small>起動設定の取得に失敗: {error}</small>
+    {/snippet}
+</svelte:boundary>
 <span class="setting">
     <p>{$t('settings.setting.link')}</p>
     <Combobox
