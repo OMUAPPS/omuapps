@@ -1,6 +1,6 @@
 import { relaunch } from '@tauri-apps/plugin-process';
 import { check, Update } from '@tauri-apps/plugin-updater';
-import { BROWSER, DEV } from 'esm-env';
+import { BROWSER } from 'esm-env';
 import { omu } from './client.js';
 
 export type Config = {
@@ -264,16 +264,6 @@ if (BROWSER) {
 
 export async function checkUpdate() {
     const beta = get(isBetaEnabled);
-    if (DEV) {
-        return new Update({
-            rid: 0,
-            currentVersion: VERSION,
-            version: VERSION,
-            rawJson: {},
-            body: 'update!!11!',
-            date: new Date().toISOString(),
-        });
-    }
     return await check({
         headers: {
             'Updater-Channel': beta ? 'beta' : 'stable',
@@ -344,7 +334,6 @@ import { exit } from '@tauri-apps/plugin-process';
 import { get, writable } from 'svelte/store';
 import { initDragDrop } from './dragdrop.js';
 import { isBetaEnabled } from './settings.js';
-import { VERSION } from './version.js';
 
 async function initTrayIcon() {
     let visible = false;

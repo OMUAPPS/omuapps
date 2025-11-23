@@ -232,4 +232,19 @@
             }
         }
     }
+
+    small {
+        padding: 0 0.75rem;
+        margin-top: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    h3 {
+        margin-top: 2rem;
+        margin-bottom: 0.5rem;
+        padding: 0.75rem;
+        color: var(--color-1);
+        border-top: 1px solid var(--color-outline);
+        padding-top: 1rem;
+    }
 </style>

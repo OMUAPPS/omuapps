@@ -42,7 +42,13 @@
 <style lang="scss">
     h3 {
         margin-bottom: 0.5rem;
+        padding: 0.75rem;
         color: var(--color-1);
+
+        &:not(:nth-child(2)) {
+            border-top: 1px solid var(--color-outline);
+            padding-top: 1rem;
+        }
     }
 
     .modes {
@@ -105,6 +111,6 @@
     }
 
     .actions {
-        margin-bottom: 4rem;
+        margin-bottom: 2rem;
     }
 </style>
