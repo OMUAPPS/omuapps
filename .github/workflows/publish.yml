@@ -40,7 +40,7 @@ jobs:
         outputs:
             VERSION: ${{ steps.get_version.outputs.VERSION }}
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Git Identity
               run: |
@@ -84,7 +84,7 @@ jobs:
         if: ${{ github.event.inputs.pypi == 'true' }}
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v6
 
             - name: Set up Python
               uses: actions/setup-python@v5.1.0
@@ -136,7 +136,7 @@ jobs:
         runs-on: ${{ matrix.platform }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
             - name: Cache Bun dependencies
               uses: actions/cache@v4
@@ -197,7 +197,7 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v6
 
         - name: Cache Bun dependencies
           uses: actions/cache@v4
