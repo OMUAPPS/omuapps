@@ -132,6 +132,7 @@ export class Omu {
     public stop(): void {
         this.running = false;
         this.ready = false;
+        this.network.close();
         this.event.stopped.emit();
     }
 

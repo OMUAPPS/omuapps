@@ -314,4 +314,9 @@ export class Network {
         this.status = status;
         await this.event.status.emit(status);
     }
+
+    public close(): void {
+        this.setStatus({ type: 'disconnected' });
+        this.attempt = 0;
+    }
 }
