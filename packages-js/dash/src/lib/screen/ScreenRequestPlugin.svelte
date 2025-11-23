@@ -4,10 +4,10 @@
     import { App } from '@omujs/omu';
     import type { PromptRequestAppPlugins, PromptResult } from '@omujs/omu/api/dashboard';
     import { Tooltip } from '@omujs/ui';
-    import PackageEntry from './PackageEntry.svelte';
-    import Screen from './Screen.svelte';
-    import about_plugin from './about_plugin.md?raw';
+    import PackageEntry from './_components/EntryPackage.svelte';
+    import about_plugin from './_docs/about_plugin.md?raw';
     import type { ScreenHandle } from './screen.js';
+    import Screen from './Screen.svelte';
 
     interface Props {
         handle: ScreenHandle;

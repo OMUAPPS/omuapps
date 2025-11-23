@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Models } from '@omujs/chat';
 
-    import ChannelEntry from './ChannelEntry.svelte';
+    import ChannelEntry from './EntryChannel.svelte';
 
     import { chat } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';

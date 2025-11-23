@@ -2,12 +2,13 @@
     import { t } from '$lib/i18n/i18n-context';
     import { type ScreenHandle } from '$lib/screen/screen.js';
     import Screen from '$lib/screen/Screen.svelte';
-    import { invoke, uninstallProgress, type UninstallError } from '$lib/tauri';
+    import { uninstallProgress, type UninstallError } from '$lib/tauri';
     import { Button, Spinner, Tooltip } from '@omujs/ui';
+    import { invoke } from '@tauri-apps/api/core';
     import { error } from '@tauri-apps/plugin-log';
     import { exit, relaunch } from '@tauri-apps/plugin-process';
     import { onMount, tick } from 'svelte';
-    import ProgressBar from '../../../routes/_components/ProgressBar.svelte';
+    import ProgressBar from '../../routes/_components/ProgressBar.svelte';
 
     interface Props {
         handle: ScreenHandle;

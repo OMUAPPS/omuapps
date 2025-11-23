@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { keepOpenOnBackground } from '$lib/main/settings';
+    import { keepOpenOnBackground } from '$lib/settings';
     import { backgroundRequested } from '$lib/tauri';
     import { Checkbox } from '@omujs/ui';
     interface Props {

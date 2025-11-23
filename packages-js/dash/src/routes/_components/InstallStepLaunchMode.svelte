@@ -1,6 +1,6 @@
 <script lang="ts">
     import { obs } from '$lib/client';
-    import { Button, Spinner } from '@omujs/ui';
+    import { Button, Spinner, Tooltip } from '@omujs/ui';
     import type { OBSInstallState } from '../stores';
 
     interface Props {
@@ -27,15 +27,18 @@
 <div class="step">
     {#if installState.type === 'select'}
         <div class="mode">
-            <small>アプリを使用するには起動する必要があります</small>
             <button onclick={() => installState = { type: 'select', mode: 'automatically' }} class:selected={installState.mode === 'automatically'}>
-                <h3>自動起動</h3>
-                <small>OBSと同時に自動で起動します</small>
+                <Tooltip>
+                    OBSを起動するだけでアプリが使えるようになります
+                </Tooltip>
+                <p>自動起動</p>
                 <i class="ti ti-check"></i>
             </button>
             <button onclick={() => installState = { type: 'select', mode: 'manually' }} class:selected={installState.mode === 'manually'}>
-                <h3>手動起動</h3>
-                <small>OBSを起動した後に手動で起動しないとアプリは使えません</small>
+                <Tooltip>
+                    OBSを起動した後に手動で起動するまでアプリは使えません
+                </Tooltip>
+                <p>手動起動</p>
                 <i class="ti ti-check"></i>
             </button>
         </div>
@@ -68,28 +71,28 @@
     .mode {
         display: flex;
         flex-direction: column;
-        gap: 1rem;
-        margin-top: 4rem;
+        gap: 0.5rem;
+        margin-top: 6rem;
 
         button {
             position: relative;
             flex: 1;
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1rem;
             padding-right: 4rem;
             border: none;
-            outline: 1px solid var(--color-1);
             background: var(--color-bg-1);
-            border-radius: 2px;
             color: var(--color-1);
-            border-radius: 1px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
+            border-radius: 1px;
             cursor: pointer;
             text-align: left;
             transform: translateX(1px);
 
             &:hover {
-                outline: 1px solid var(--color-1);
+                outline: 2px solid var(--color-1);
+                outline-offset: 0.1621rem;
+                border-radius: 1px;
                 transition: transform 0.0621s;
             }
 

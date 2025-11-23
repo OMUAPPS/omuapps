@@ -2,8 +2,8 @@
     import { omu } from '$lib/client.js';
     import { type ScreenHandle } from '$lib/screen/screen.js';
     import Screen from '$lib/screen/Screen.svelte';
-    import { invoke } from '$lib/tauri.js';
     import { Button, Spinner } from '@omujs/ui';
+    import { invoke } from '@tauri-apps/api/core';
     import { relaunch } from '@tauri-apps/plugin-process';
 
     interface Props {
@@ -11,7 +11,7 @@
         props: undefined;
     }
 
-    let { handle, props }: Props = $props();
+    let { handle }: Props = $props();
 
     const ERROR_MESSAGES = {
         DevMode: {

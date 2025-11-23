@@ -1,11 +1,7 @@
-import type * as api from '@tauri-apps/api/core';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { check, Update } from '@tauri-apps/plugin-updater';
-import { BROWSER } from 'esm-env';
+import { BROWSER, DEV } from 'esm-env';
 import { omu } from './client.js';
-
-let _invoke: typeof api.invoke;
-let loaded = false;
 
 export type Config = {
     enable_beta: boolean;
@@ -190,90 +186,33 @@ type Commands = {
     open_uv_path(): void;
 };
 
-export async function invoke<T extends keyof Commands>(
-    command: T,
-    ...args: Parameters<Commands[T]>
-): Promise<ReturnType<Commands[T]>> {
-    assertTauri();
-    return _invoke(command, ...args);
+declare module '@tauri-apps/api/core' {
+    function invoke<T extends keyof Commands>(
+        command: T,
+        ...args: Parameters<Commands[T]>
+    ): Promise<ReturnType<Commands[T]>>;
 }
 
 type AppEvent<T> = {
     payload: T;
 };
 
-import { listen as listenTauri, TauriEvent } from '@tauri-apps/api/event';
+import { listen, TauriEvent } from '@tauri-apps/api/event';
 
-export function listen<T extends keyof Events>(
-    command: T,
-    callback: (event: AppEvent<Events[T]>) => void,
-): Promise<() => void> {
-    assertTauri();
-    return listenTauri(command, (event: AppEvent<Events[T]>) => {
-        callback(event);
-    });
-}
-
-export function listenSync<T extends keyof Events>(
-    command: T,
-    callback: (event: AppEvent<Events[T]>) => void,
-): () => void {
-    assertTauri();
-    let destroyCallback = () => { };
-    let isDestroyed = false;
-    listenTauri(command, (event: AppEvent<Events[T]>) => {
-        callback(event);
-    }).then((destroyFunc) => {
-        destroyCallback = destroyFunc;
-        if (isDestroyed) {
-            destroyCallback();
-        }
-    });
-    return () => {
-        destroyCallback();
-        isDestroyed = true;
-    };
-}
-
-const loadHandlers: (() => void)[] = [];
-const loadPromises: (() => Promise<void>)[] = [];
-
-function loadLazy<T>(load: () => Promise<T>): T {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let obj: T | any = {};
-    loadPromises.push(async () => {
-        obj = await load();
-    });
-    return new Proxy(obj, {
-        get(target, prop) {
-            if (!loaded) {
-                throw new Error('Tauri not loaded yet');
-            }
-            if (prop in obj) {
-                return obj[prop];
-            } else {
-                throw new Error(`Property ${prop.toString()} not found`);
-            }
-        },
-    });
+declare module '@tauri-apps/api/event' {
+    function listen<T extends keyof Events>(
+        command: T,
+        callback: (event: AppEvent<Events[T]>) => void,
+    ): Promise<() => void>;
 }
 
 export function assertTauri() {
     if (!checkOnTauri()) {
         throw new Error('Not on Tauri');
     }
-    if (!loaded) {
-        throw new Error('Tauri not loaded yet');
-    }
 }
 
-export const tauriFs = loadLazy(() => import('@tauri-apps/plugin-fs'));
-export const tauriWindow = loadLazy(() => import('@tauri-apps/api/window'));
-export const tauriPath = loadLazy(() => import('@tauri-apps/api/path'));
-export const appWindow = loadLazy(async () => {
-    const { getCurrentWindow } = await import('@tauri-apps/api/window');
-    return getCurrentWindow();
-});
+export const appWindow = getCurrentWindow();
 
 export function checkOnTauri() {
     if (typeof window === 'undefined') return false;
@@ -293,10 +232,6 @@ async function load() {
     if (!checkOnTauri()) {
         return;
     }
-    if (loaded) {
-        throw new Error('Tauri already loaded');
-    }
-    loaded = true;
     console.log('Initializing Tauri...');
     const matches = await getMatches();
     console.log('arguments', JSON.stringify(matches, null, 2));
@@ -304,13 +239,6 @@ async function load() {
         backgroundRequested.set(true);
     }
 
-    const [{ invoke }] = await Promise.all([
-        import('@tauri-apps/api/core'),
-        import('@tauri-apps/api/event'),
-    ]);
-    _invoke = invoke;
-    await Promise.all(loadPromises.map((it) => it()));
-    loadHandlers.forEach((handler) => handler());
     initDragDrop();
     await initTrayIcon();
     await listen('start_progress', ({ payload }) => {
@@ -334,20 +262,18 @@ if (BROWSER) {
     load();
 }
 
-export function waitForTauri() {
-    if (!checkOnTauri()) {
-        return Promise.resolve();
-    }
-    if (loaded) {
-        return Promise.resolve();
-    }
-    return new Promise<void>((resolve) => {
-        loadHandlers.push(resolve);
-    });
-}
-
 export async function checkUpdate() {
     const beta = get(isBetaEnabled);
+    if (DEV) {
+        return new Update({
+            rid: 0,
+            currentVersion: VERSION,
+            version: VERSION,
+            rawJson: {},
+            body: 'update!!11!',
+            date: new Date().toISOString(),
+        });
+    }
     return await check({
         headers: {
             'Updater-Channel': beta ? 'beta' : 'stable',
@@ -409,13 +335,16 @@ export async function applyUpdate(update: Update, progress: (event: UpdateEvent)
 }
 
 import { defaultWindowIcon } from '@tauri-apps/api/app';
+import { invoke } from '@tauri-apps/api/core';
 import { Menu } from '@tauri-apps/api/menu/menu';
 import { TrayIcon } from '@tauri-apps/api/tray';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { getMatches } from '@tauri-apps/plugin-cli';
 import { exit } from '@tauri-apps/plugin-process';
 import { get, writable } from 'svelte/store';
 import { initDragDrop } from './dragdrop.js';
-import { isBetaEnabled } from './main/settings.js';
+import { isBetaEnabled } from './settings.js';
+import { VERSION } from './version.js';
 
 async function initTrayIcon() {
     let visible = false;

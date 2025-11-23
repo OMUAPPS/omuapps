@@ -4,9 +4,9 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
+    import AppPage from '../pages/PageApp.svelte';
+    import { currentPage, lastApp, menuOpen } from '../settings.js';
     import { pages, registerPage } from './page.js';
-    import AppPage from './pages/AppPage.svelte';
-    import { currentPage, lastApp, menuOpen } from './settings.js';
 
     interface Props {
         entry: App;

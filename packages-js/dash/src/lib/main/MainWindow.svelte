@@ -3,11 +3,16 @@
 
     import { chat, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
+    import PageSettings from '$lib/pages/settings/PageSettings.svelte';
     import { screenContext } from '$lib/screen/screen.js';
     import type { App } from '@omujs/omu';
     import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
-    import AppEntry from './AppEntry.svelte';
+    import AppPage from '../pages/PageApp.svelte';
+    import ConnectPage from '../pages/PageConnect.svelte';
+    import ExplorePage from '../pages/PageExplore.svelte';
+    import ManageAppsScreen from '../screen/manage/ScreenManageApps.svelte';
+    import { currentPage, devMode, lastApp, menuOpen } from '../settings.js';
     import {
         pageMap,
         pages,
@@ -16,12 +21,7 @@
         type Page,
         type PageItem,
     } from './page.js';
-    import AppPage from './pages/AppPage.svelte';
-    import ConnectPage from './pages/ConnectPage.svelte';
-    import ExplorePage from './pages/ExplorePage.svelte';
-    import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
-    import { currentPage, devMode, lastApp, menuOpen } from './settings.js';
-    import SettingsPage from './settings/SettingsPage.svelte';
+    import AppEntry from './TabApp.svelte';
     import TabEntry from './TabEntry.svelte';
 
     const EXPLORE_PAGE = registerPage<unknown>({
@@ -48,7 +48,7 @@
         id: 'settings',
         async open() {
             return {
-                component: SettingsPage,
+                component: PageSettings,
                 data: undefined,
             };
         },

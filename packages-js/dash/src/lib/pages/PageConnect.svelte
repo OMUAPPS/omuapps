@@ -3,10 +3,10 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import { ChatEvents } from '@omujs/chat';
     import { Header, Tooltip } from '@omujs/ui';
-    import PanelChannels from '../panel/channels/PanelChannels.svelte';
-    import PanelMessages from '../panel/messages/PanelMessages.svelte';
-    import PanelRooms from '../panel/rooms/PanelRooms.svelte';
-    import ConnectPageSetup from './ConnectPageSetup.svelte';
+    import ConnectPageSetup from './_components/ConnectSetup.svelte';
+    import PanelChannels from './_components/PanelChannels.svelte';
+    import PanelMessages from './_components/PanelMessages.svelte';
+    import PanelRooms from './_components/PanelRooms.svelte';
 
     let { data }: { data: unknown } = $props();
 

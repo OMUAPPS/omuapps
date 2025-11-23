@@ -6,8 +6,8 @@
     import type { ScreenHandle } from '$lib/screen/screen.js';
     import { App } from '@omujs/omu';
     import { Button, TableList, Tooltip } from '@omujs/ui';
-    import { devMode } from '../settings';
-    import AppEntry from './AppEntry.svelte';
+    import { devMode } from '../../settings';
+    import AppEntry from './EntryApp.svelte';
     import { selectedApp } from './stores';
 
     interface Props {

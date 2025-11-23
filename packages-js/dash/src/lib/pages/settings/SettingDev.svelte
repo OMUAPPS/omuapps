@@ -1,9 +1,8 @@
 <script lang="ts">
     import { omu } from '$lib/client.js';
-    import { tauriWindow } from '$lib/tauri.js';
+    import { appWindow } from '$lib/tauri.js';
     import { Button, Textbox } from '@omujs/ui';
     import { LogicalSize } from '@tauri-apps/api/window';
-    const appWindow = tauriWindow.getCurrentWindow();
 
     const trustedHosts = omu.server.trustedHosts.compatSvelte();
     let srcHost = $state('');

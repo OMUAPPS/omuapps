@@ -1,7 +1,8 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context';
-    import { cleanProgress, invoke, type CleanError } from '$lib/tauri.js';
+    import { cleanProgress, type CleanError } from '$lib/tauri.js';
     import { Button, Spinner } from '@omujs/ui';
+    import { invoke } from '@tauri-apps/api/core';
     import { error } from '@tauri-apps/plugin-log';
     import { relaunch } from '@tauri-apps/plugin-process';
     import ProgressBar from './ProgressBar.svelte';

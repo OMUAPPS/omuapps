@@ -1,8 +1,7 @@
-import { writable, type Writable } from 'svelte/store';
-
 import { LOCALES } from '$lib/i18n/i18n.js';
 import { linkOpenHandler } from '@omujs/ui';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { writable, type Writable } from 'svelte/store';
 
 function getSystemLanguage(): keyof typeof LOCALES {
     if (typeof window === 'undefined') {

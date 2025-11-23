@@ -3,18 +3,19 @@
     import { omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
     import MainWindow from '$lib/main/MainWindow.svelte';
-    import { installed, keepOpenOnBackground } from '$lib/main/settings';
-    import { appWindow, backgroundRequested, checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
+    import { installed, keepOpenOnBackground } from '$lib/settings';
+    import { appWindow, backgroundRequested, checkUpdate, serverState, startProgress } from '$lib/tauri';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Button, Spinner } from '@omujs/ui';
+    import { invoke } from '@tauri-apps/api/core';
     import { error } from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
     import Agreements from './_components/Agreements.svelte';
     import InstallStepAddChannels from './_components/InstallStepAddChannels.svelte';
     import InstallStepAddChannelsHint from './_components/InstallStepAddChannelsHint.svelte';
     import InstallStepConnectionProgress from './_components/InstallStepConnectionProgress.svelte';
+    import InstallStepOBSInstall from './_components/InstallStepLaunchMode.svelte';
     import InstallStepLayout from './_components/InstallStepLayout.svelte';
-    import InstallStepOBSInstall from './_components/InstallStepOBSInstall.svelte';
     import InstallStepStartProgress from './_components/InstallStepStartProgress.svelte';
     import InstallStepUpdate from './_components/InstallStepUpdate.svelte';
     import RestoreActions from './_components/RestoreActions.svelte';
@@ -54,6 +55,7 @@
 
     async function start() {
         await installed.loaded;
+        $installed = false;
         try {
             $appState = { type: 'checking_update' };
             const update = await checkUpdate();
@@ -183,7 +185,7 @@
                     起動方法を選択
                 </h1>
                 <small>
-                    OBSプラグインのインストール方法を選択します
+                    OBSとの連携方法を選択します
                 </small>
             </div>
             <InstallStepOBSInstall bind:installState={$appState.state} resolve={$appState.resolve} />
@@ -213,7 +215,7 @@
         <InstallStepLayout>
             <div class="title">
                 <h1>更新があります</h1>
-                <small>バージョン {$appState.update.version} が利用可能です。</small>
+                <small>バージョン {$appState.update.version} が利用可能です</small>
             </div>
 
             <div class="actions">
@@ -229,7 +231,7 @@
         <InstallStepLayout>
             <div class="title">
                 <h1>起動に失敗しました</h1>
-                <small>環境を再構築するか、アプリケーションを再起動してください。</small>
+                <small>環境を再構築するか、アプリケーションを再起動してください</small>
             </div>
             <RestoreActions {retry} message={$appState.message} />
         </InstallStepLayout>

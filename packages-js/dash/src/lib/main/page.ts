@@ -1,6 +1,6 @@
 import type { Component } from 'svelte';
 import { get, writable } from 'svelte/store';
-import { currentPage } from './settings.js';
+import { currentPage } from '../settings.js';
 
 export type Page<T> = {
     component: Component<{

@@ -1,10 +1,10 @@
 <script lang="ts">
 
     import { omu } from '$lib/client.js';
+    import { isBetaEnabled } from '$lib/settings';
     import type { AppIndex, AppIndexEntry } from '@omujs/omu/api/server';
     import { Checkbox, Spinner, Textbox } from '@omujs/ui';
     import { DEV } from 'esm-env';
-    import { isBetaEnabled } from '../settings.js';
     import ExploreIndex from './_components/ExploreIndex.svelte';
     import { filter } from './explore.js';
 

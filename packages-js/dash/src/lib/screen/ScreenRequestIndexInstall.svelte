@@ -3,7 +3,7 @@
     import Document from '$lib/common/Document.svelte';
     import type { PromptRequestIndexInstall, PromptResult } from '@omujs/omu/api/dashboard';
     import { ExternalLink, Tooltip } from '@omujs/ui';
-    import about_index from './about_index.md?raw';
+    import about_index from './_docs/about_index.md?raw';
     import type { ScreenHandle } from './screen.js';
     import Screen from './Screen.svelte';
 

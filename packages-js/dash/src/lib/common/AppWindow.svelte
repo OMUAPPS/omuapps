@@ -1,15 +1,14 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
-    import { TooltipPortal } from '@omujs/ui';
-    import { TauriEvent } from '@tauri-apps/api/event';
+    import { Tooltip, TooltipPortal } from '@omujs/ui';
+    import { listen, TauriEvent } from '@tauri-apps/api/event';
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
-    import TitlebarButton from './TitlebarButton.svelte';
-    import Title from './images/title.svg';
-    import { isBetaEnabled } from './main/settings.js';
-    import ScreenRenderer from './screen/ScreenRenderer.svelte';
-    import { appWindow, listen } from './tauri.js';
-    import { VERSION } from './version.js';
+    import Title from '../images/title.svg';
+    import ScreenRenderer from '../screen/ScreenRenderer.svelte';
+    import { isBetaEnabled } from '../settings.js';
+    import { appWindow } from '../tauri.js';
+    import { VERSION } from '../version.js';
 
     interface Props {
         children?: import('svelte').Snippet;
@@ -36,6 +35,9 @@
             maximized = await appWindow.isMaximized();
         });
         listen(TauriEvent.WINDOW_RESIZED, async () => {
+            maximized = await appWindow.isMaximized();
+        });
+        listen(TauriEvent.WINDOW_MOVED, async () => {
             maximized = await appWindow.isMaximized();
         });
     });
@@ -72,30 +74,38 @@
             </span>
         </div>
         <div class="buttons">
-            <TitlebarButton
-                onclick={togglePin}
-                icon={alwaysOnTop ? 'ti-pinned-filled' : 'ti-pin'}
-                tooltip={alwaysOnTop
+            {#snippet button(icon: string, tooltip: string, onclick: () => void)}
+                <button
+                    class="button"
+                    type="button"
+                    {onclick}
+                >
+                    <Tooltip>{tooltip}</Tooltip>
+                    <i class="ti {icon}"></i>
+                </button>
+            {/snippet}
+            {@render button(
+                alwaysOnTop ? 'ti-pinned-filled' : 'ti-pin',
+                alwaysOnTop
                     ? $t('titlebar.pin-disable')
-                    : $t('titlebar.pin-enable')}
-            />
-            <TitlebarButton
-                onclick={minimize}
-                icon="ti-minus"
-                tooltip={$t('titlebar.minimize')}
-            />
-            <TitlebarButton
-                onclick={maximize}
-                icon={maximized ? 'ti-picture-in-picture-top' : 'ti-rectangle'}
-                tooltip={$t(
-                    `titlebar.${maximized ? 'unmaximize' : 'maximize'}`,
-                )}
-            />
-            <TitlebarButton
-                onclick={close}
-                icon="ti-x"
-                tooltip={$t('titlebar.close')}
-            />
+                    : $t('titlebar.pin-enable'),
+                togglePin,
+            )}
+            {@render button(
+                'ti-minus',
+                $t('titlebar.minimize'),
+                minimize,
+            )}
+            {@render button(
+                maximized ? 'ti-picture-in-picture-top' : 'ti-rectangle',
+                $t(`titlebar.${maximized ? 'unmaximize' : 'maximize'}`),
+                maximize,
+            )}
+            {@render button(
+                'ti-x',
+                $t('titlebar.close'),
+                close,
+            )}
         </div>
     </div>
     <div class="content" tabindex="-1">
@@ -189,5 +199,29 @@
         height: calc(100% - $height);
         overflow: hidden;
         background: var(--color-bg-2);
+    }
+
+    .button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 1rem;
+        color: var(--color-1);
+        background: transparent;
+        border: none;
+        outline: none;
+
+        &:focus-visible,
+        &:hover {
+            background: var(--color-1);
+            color: var(--color-bg-2);
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
     }
 </style>

@@ -3,8 +3,8 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import type { App } from '@omujs/omu';
     import { ButtonMini, Tooltip } from '@omujs/ui';
-    import { pages } from '../page.js';
-    import { currentPage } from '../settings.js';
+    import { pages } from '../../main/page.js';
+    import { currentPage } from '../../settings.js';
     import { selectedApp } from './stores.js';
 
     interface Props {

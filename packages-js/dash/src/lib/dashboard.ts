@@ -1,8 +1,8 @@
-import { currentPage, speechRecognition } from '$lib/main/settings.js';
-import PermissionRequestScreen from '$lib/screen/PermissionRequestScreen.svelte';
-import PluginRequestScreen from '$lib/screen/PluginRequestScreen.svelte';
-import { appWindow, invoke, tauriFs, tauriPath, type Cookie } from '$lib/tauri.js';
-import { App, Identifier, IdentifierMap, Omu } from '@omujs/omu';
+import PermissionRequestScreen from '$lib/screen/ScreenRequestPermission.svelte';
+import PluginRequestScreen from '$lib/screen/ScreenRequestPlugin.svelte';
+import { currentPage, speechRecognition } from '$lib/settings.js';
+import { appWindow, type Cookie } from '$lib/tauri.js';
+import { Identifier, IdentifierMap, type App, type Omu } from '@omujs/omu';
 import {
     DragDropReadResponse,
     type DashboardHandler,
@@ -25,18 +25,21 @@ import {
     type WebviewRequest,
 } from '@omujs/omu/api/dashboard';
 import type { InvokedParams } from '@omujs/omu/api/endpoint';
+import { invoke } from '@tauri-apps/api/core';
+import { basename } from '@tauri-apps/api/path';
 import { Webview } from '@tauri-apps/api/webview';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { Window } from '@tauri-apps/api/window';
+import { readFile } from '@tauri-apps/plugin-fs';
 import { get } from 'svelte/store';
 import { dragDropApps, dragDrops } from './dragdrop.js';
-import AppInstallRequestScreen from './screen/AppInstallRequestScreen.svelte';
-import AppUpdateRequestScreen from './screen/AppUpdateRequestScreen.svelte';
-import HostRequestScreen from './screen/HostRequestScreen.svelte';
 import { screenContext } from './screen/screen.js';
+import AppInstallRequestScreen from './screen/ScreenRequestAppInstall.svelte';
+import AppUpdateRequestScreen from './screen/ScreenRequestAppUpdate.svelte';
+import HostRequestScreen from './screen/ScreenRequestHost.svelte';
 import ScreenRequestHttpPort from './screen/ScreenRequestHttpPort.svelte';
 import ScreenRequestIndexInstall from './screen/ScreenRequestIndexInstall.svelte';
-import SpeechRecognitionScreen from './screen/SpeechRecognitionScreen.svelte';
+import SpeechRecognitionScreen from './screen/ScreenRequestSpeechRecognition.svelte';
 
 export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 
@@ -50,6 +53,9 @@ export class Dashboard implements DashboardHandler {
 
     constructor(private readonly omu: Omu) {
         omu.dashboard.set(this);
+        currentPage.subscribe(() => {
+            this.currentApp = null;
+        });
     }
 
     async speechRecognitionStart(): Promise<UserResponse<undefined>> {
@@ -190,10 +196,10 @@ export class Dashboard implements DashboardHandler {
         }
         const files: Record<string, FileData> = {};
         for (const [index, path] of dragDrop.paths.entries()) {
-            const name = await tauriPath.basename(path);
+            const name = await basename(path);
             files[name] = {
                 file: dragDrop.files[index],
-                buffer: await tauriFs.readFile(path),
+                buffer: await readFile(path),
             };
         }
         return new DragDropReadResponse(

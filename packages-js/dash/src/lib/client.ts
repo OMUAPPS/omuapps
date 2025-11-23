@@ -2,19 +2,18 @@ import { Dashboard } from './dashboard.js';
 
 import type { Address } from '@omujs/omu/network';
 
-import { invoke, IS_TAURI } from '$lib/tauri.js';
-
 import { Chat, ChatPermissions } from '@omujs/chat';
 import { OBSPlugin } from '@omujs/obs';
 import { App, Identifier, Omu, OmuPermissions } from '@omujs/omu';
 import type { Locale } from '@omujs/omu/localization';
 import { setGlobal } from '@omujs/ui';
+import { invoke } from '@tauri-apps/api/core';
 import type { SessioTokenProvider } from '../../../omu/dist/dts/token.js';
-import { currentPage, language } from './main/settings.js';
+import { language } from './settings.js';
 import { VERSION } from './version.js';
 
-const IDENTIFIER = new Identifier('com.omuapps', 'dashboard');
-const app = new App(IDENTIFIER, {
+const DASHBOARD_ID = new Identifier('com.omuapps', 'dashboard');
+const DASHBOARD_APP = new App(DASHBOARD_ID, {
     version: VERSION,
     type: 'dashboard',
 });
@@ -27,19 +26,18 @@ const address: Address = {
 
 class DashboardSession implements SessioTokenProvider {
     async get(): Promise<string | undefined> {
-        if (IS_TAURI) {
-            const token = await invoke('get_token');
-            if (token) {
-                return token;
-            }
+        const token = await invoke('get_token');
+        if (token) {
+            return token;
         }
     }
 }
 
-export const omu = new Omu(app, {
+export const omu = new Omu(DASHBOARD_APP, {
     address,
     token: new DashboardSession(),
 });
+
 export const chat: Chat = Chat.create(omu);
 export const obs: OBSPlugin = OBSPlugin.create(omu);
 export const dashboard: Dashboard = new Dashboard(omu);
@@ -69,8 +67,4 @@ omu.onReady(() => {
     language.subscribe((lang) => {
         omu.i18n.setLocale([lang] as Locale[]);
     });
-});
-
-currentPage.subscribe(() => {
-    dashboard.currentApp = null;
 });

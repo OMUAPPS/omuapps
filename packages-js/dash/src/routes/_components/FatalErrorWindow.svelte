@@ -1,13 +1,14 @@
 <script lang="ts">
+    import TitlebarButton from '$lib/common/ButtonTitlebar.svelte';
     import title from '$lib/images/title.svg';
-    import { isBetaEnabled } from '$lib/main/settings.js';
+    import { isBetaEnabled } from '$lib/settings.js';
     import type { UpdateEvent } from '$lib/tauri';
-    import { applyUpdate, checkUpdate, invoke } from '$lib/tauri.js';
-    import TitlebarButton from '$lib/TitlebarButton.svelte';
+    import { applyUpdate, checkUpdate } from '$lib/tauri.js';
     import { VERSION } from '$lib/version';
     import '@omujs/ui';
     import { Button, ExternalLink, Spinner } from '@omujs/ui';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
+    import { invoke } from '@tauri-apps/api/core';
     import { relaunch } from '@tauri-apps/plugin-process';
     import { DEV } from 'esm-env';
     import '../styles.scss';

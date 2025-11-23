@@ -2,14 +2,14 @@
     import AppInfo from '$lib/common/AppInfo.svelte';
     import Document from '$lib/common/Document.svelte';
     import { t } from '$lib/i18n/i18n-context.js';
-    import { devMode } from '$lib/main/settings';
+    import { devMode } from '$lib/settings';
     import { App } from '@omujs/omu';
     import type { PromptRequestAppPermissions, PromptResult } from '@omujs/omu/api/dashboard';
     import { PermissionType, type PermissionLevel } from '@omujs/omu/api/permission';
     import { ButtonMini, Tooltip } from '@omujs/ui';
-    import PermissionEntry from './PermissionEntry.svelte';
     import Screen from './Screen.svelte';
-    import about_permission from './about_permission.md?raw';
+    import EntryPermission from './_components/EntryPermission.svelte';
+    import about_permission from './_docs/about_permission.md?raw';
     import type { ScreenHandle } from './screen.js';
 
     interface Props {
@@ -63,7 +63,7 @@
                 </span>
             </li>
             {#each permissions.filter(({ permission }) => permission.metadata.level === 'high') as entry, i (i)}
-                <PermissionEntry
+                <EntryPermission
                     permission={entry.permission}
                     bind:accepted={entry.accepted}
                     disabled={entry.permission.metadata.level === 'low'}
@@ -80,7 +80,7 @@
                 </span>
             </li>
             {#each permissions.filter(({ permission }) => permission.metadata.level === 'medium') as entry, i (i)}
-                <PermissionEntry
+                <EntryPermission
                     permission={entry.permission}
                     bind:accepted={entry.accepted}
                     disabled={entry.permission.metadata.level === 'low'}
@@ -96,7 +96,7 @@
                 </span>
             </li>
             {#each permissions.filter(({ permission }) => permission.metadata.level === 'low') as entry, i (i)}
-                <PermissionEntry
+                <EntryPermission
                     permission={entry.permission}
                     bind:accepted={entry.accepted}
                     disabled={entry.permission.metadata.level === 'low'}
