@@ -59,8 +59,10 @@
         try {
             $appState = { type: 'checking_update' };
             const update = await checkUpdate();
-            if (update) {
+            if (update || !installed) {
                 await appWindow.show();
+            }
+            if (update) {
                 await new Promise<void>((resolve) => {
                     $appState = { type: 'update', update, resolve };
                 });

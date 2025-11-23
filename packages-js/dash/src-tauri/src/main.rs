@@ -145,7 +145,9 @@ fn main() {
                     if Some(Value::Bool(true))
                         == matches.args.get("background").map(|arg| arg.value.clone())
                     {
-                        info!("Running dashboard in background.")
+                        info!("Running dashboard in background.");
+                        let window = app.get_webview_window("main").unwrap();
+                        window.hide().unwrap();
                     }
                 }
                 Err(_) => {}
