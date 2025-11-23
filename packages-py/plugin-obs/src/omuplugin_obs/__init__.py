@@ -41,6 +41,7 @@ async def start(ctx: PluginContext):
             config.set_launch(server)
         else:
             config.unset_launch()
+        config.store()
 
         if request["script_active"]:
             installed = check_installed()
