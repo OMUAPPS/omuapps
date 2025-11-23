@@ -23,6 +23,7 @@
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
         "@omujs/omu": "workspace:*",
+        "@omujs/obs": "workspace:*",
         "@omujs/ui": "workspace:*",
         "@sveltejs/adapter-static": "3.0.10",
         "@sveltejs/kit": "2.48.5",

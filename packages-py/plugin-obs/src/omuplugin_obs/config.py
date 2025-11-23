@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import NotRequired, TypedDict
 
 from loguru import logger
-from omu.address import Address
+from omu.address import Address, AddressJSON
 from omu.result import Err, Ok, Result
 from omuserver.helper import start_compressing_logs
+from omuserver.server import Server
 
 from .const import PLUGIN_ID
 
@@ -19,17 +21,11 @@ class LaunchCommand(TypedDict):
     cwd: NotRequired[str]
 
 
-class ServerAddress(TypedDict):
-    host: str
-    port: int
-    hash: str | None
-
-
 class ConfigJSON(TypedDict):
     log_path: NotRequired[str]
     python_path: NotRequired[str]
-    server: ServerAddress
-    launch: NotRequired[LaunchCommand] | None
+    server: NotRequired[AddressJSON]
+    launch: NotRequired[LaunchCommand | None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,7 +51,12 @@ class Config:
     def load() -> Result[Config, str]:
         path = Config.get_config_path()
         if not path.exists():
-            return Err(f"Config not found at {path}")
+            return Ok(
+                Config(
+                    path=path,
+                    json=ConfigJSON(),
+                )
+            )
         try:
             return Ok(
                 Config(
@@ -82,14 +83,28 @@ class Config:
         start_compressing_logs(log_path)
         return log_path
 
-    def get_server_address(self) -> Address:
-        return Address(**self.json["server"])
+    def get_server_address(self) -> Address | None:
+        address = self.json.get("server")
+        if address is None:
+            return None
+        return Address(**address)
 
     def get_python_path(self) -> Path | None:
         python_path = self.json.get("python_path")
         if not python_path or not Path(python_path).exists():
             return
         return Path(python_path)
+
+    def set_launch(self, server: Server):
+        if server.directories.dashboard:
+            self.json["launch"] = LaunchCommand(
+                cwd=Path.cwd().resolve().as_posix(),
+                args=[server.directories.dashboard.resolve().as_posix(), "--background"],
+            )
+
+    def unset_launch(self):
+        if "launch" in self.json:
+            del self.json["launch"]
 
     def launch_server(self):
         launch_command = self.json.get("launch")
@@ -122,7 +137,6 @@ class Config:
         logger.info(f"Launched dashboard with PID {process.pid} using command {launch_command}")
 
     def setup_logger(self) -> None:
-        import os
         import sys
 
         import obspython  # type: ignore

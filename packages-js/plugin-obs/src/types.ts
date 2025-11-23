@@ -8,6 +8,24 @@ import {
     OBS_SCENE_SET_CURRENT_PERMISSION_ID,
 } from './permissions.js';
 
+export type InstallationStatus = {
+    script_installed: boolean;
+    launch_installed: boolean;
+};
+
+export type InstallRequest = {
+    script_active: boolean;
+    launch_active: boolean;
+};
+
+export const CHECK_INSTALLED: EndpointType<null, InstallationStatus> = EndpointType.createJson<null, InstallationStatus>(PLUGIN_ID, {
+    name: 'check_installed',
+});
+
+export const SET_INSTALL: EndpointType<InstallRequest, null> = EndpointType.createJson<InstallRequest, null>(PLUGIN_ID, {
+    name: 'set_install',
+});
+
 export type OBSFrontendEvent =
     | 'STREAMING_STARTING'
     | 'STREAMING_STARTED'

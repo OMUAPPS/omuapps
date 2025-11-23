@@ -1,11 +1,20 @@
 import threading
 
 from loguru import logger
-from omu.plugin import InstallContext, Plugin, StartContext
+from omu.plugin import Plugin, PluginContext
 from omuserver.server import Server
+from omuserver.session import Session
+
+from omuplugin_obs.config import Config
+from omuplugin_obs.types import (
+    CHECK_INSTALLED_ENDPOINT_TYPE,
+    SET_INSTALL_ENDPOINT_TYPE,
+    InstallationStatus,
+    InstallRequest,
+)
 
 from .permissions import PERMISSION_TYPES
-from .plugin import install, uninstall
+from .plugin import check_installed, install, uninstall, update_config
 from .version import VERSION
 
 __version__ = VERSION
@@ -14,27 +23,55 @@ global install_thread
 install_thread: threading.Thread | None = None
 
 
-def install_start(server: Server) -> None:
-    global install_thread
-    if install_thread and install_thread.is_alive():
-        raise RuntimeError("Installation thread is already running")
-    logger.info("Starting installation thread")
-    install_thread = threading.Thread(target=install, args=(server,))
-    install_thread.start()
+async def start(ctx: PluginContext):
+    server = ctx.server
+    await update(server)
+
+    async def obs_check_installed(session: Session, _) -> InstallationStatus:
+        installed = check_installed()
+        config = Config.load().unwrap()
+        return {
+            "script_installed": installed.is_ok,
+            "launch_installed": config.json.get("launch") is not None,
+        }
+
+    async def obs_set_install(session: Session, request: InstallRequest):
+        config = Config.load().unwrap()
+        if request["launch_active"]:
+            config.set_launch(server)
+        else:
+            config.unset_launch()
+
+        if request["script_active"]:
+            installed = check_installed()
+            if installed.is_ok is True:
+                logger.info("OBS plugin is already installed")
+                return
+            logger.warning(f"OBS plugin is not installed: {installed.err}")
+            install()
+        else:
+            uninstall(server)
+
+    server.endpoints.bind(CHECK_INSTALLED_ENDPOINT_TYPE, obs_check_installed)
+    server.endpoints.bind(SET_INSTALL_ENDPOINT_TYPE, obs_set_install)
 
 
-async def plugin_install(ctx: StartContext | InstallContext) -> None:
-    logger.info("Installing OBS plugin")
-    ctx.server.security.register_permission(
+async def update(server: Server) -> None:
+    logger.info("Updating OBS plugin config")
+    server.security.register_permission(
         *PERMISSION_TYPES,
         overwrite=True,
     )
-    install_start(ctx.server)
+    update_config(server)
+
+
+async def on_uninstall(ctx: PluginContext):
+    uninstall(ctx.server)
 
 
 plugin = Plugin(
-    on_start=plugin_install,
-    on_install=plugin_install,
-    on_uninstall=uninstall,
+    on_start=start,
+    on_install=lambda ctx: update(ctx.server),
+    on_uninstall=on_uninstall,
     isolated=False,
 )

@@ -2,10 +2,11 @@ import type { Omu } from '@omujs/omu';
 
 import { SESSIONS_READ_PERMISSION_ID } from '@omujs/omu/api/session';
 import { PLUGIN_ID } from './const.js';
-import type { CreateBrowserRequest, CreateResponse, SceneCreateRequest, SceneCreateResponse, SceneJson, SceneListResponse, ScreenshotCreateRequest, ScreenshotCreateResponse, ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse, SourceGetByNameRequest, SourceGetByUuidRequest, SourceJson, SourceListRequest } from './types.js';
+import type { CreateBrowserRequest, CreateResponse, InstallationStatus, InstallRequest, SceneCreateRequest, SceneCreateResponse, SceneJson, SceneListResponse, ScreenshotCreateRequest, ScreenshotCreateResponse, ScreenshotGetLastBinaryRequest, ScreenshotGetLastBinaryResponse, SourceGetByNameRequest, SourceGetByUuidRequest, SourceJson, SourceListRequest } from './types.js';
 import {
     BROWSER_ADD,
     BROWSER_CREATE,
+    CHECK_INSTALLED,
     SCENE_CREATE,
     SCENE_GET_BY_NAME,
     SCENE_GET_BY_UUID,
@@ -15,6 +16,7 @@ import {
     SCENE_SET_CURRENT_BY_UUID,
     SCREENSHOT_CREATE,
     SCREENSHOT_GET_LAST_BINARY,
+    SET_INSTALL,
     SOURCE_ADD,
     SOURCE_CREATE,
     SOURCE_GET_BY_NAME,
@@ -99,104 +101,112 @@ export class OBSPlugin {
         this.omu.sessions.require(PLUGIN_ID);
     }
 
-    public assetConnected(): void {
+    public assertConnected(): void {
         if (!this.isConnected()) {
             throw new Error('Not connected to OBS');
         }
     }
 
+    public async setInstall(request: InstallRequest): Promise<null> {
+        return await this.omu.endpoints.call(SET_INSTALL, request);
+    }
+
+    public async checkInstalled(): Promise<InstallationStatus> {
+        return await this.omu.endpoints.call(CHECK_INSTALLED, null);
+    }
+
     async sourceCreate(source: SourceJson): Promise<CreateResponse> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SOURCE_CREATE, source);
     }
 
     async sourceAdd(source: SourceJson): Promise<CreateResponse> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SOURCE_ADD, source);
     }
 
     async browserCreate(options: CreateBrowserRequest): Promise<CreateResponse> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(BROWSER_CREATE, options);
     }
 
     async browserAdd(options: CreateBrowserRequest): Promise<CreateResponse> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(BROWSER_ADD, options);
     }
 
     async sourceUpdate(source: SourceJson): Promise<void> {
-        this.assetConnected();
+        this.assertConnected();
         await this.omu.endpoints.call(SOURCE_UPDATE, source);
     }
 
     async sourceRemoveByName(name: string): Promise<void> {
-        this.assetConnected();
+        this.assertConnected();
         await this.omu.endpoints.call(SOURCE_REMOVE_BY_NAME, { name });
     }
 
     async sourceRemoveByUuid(uuid: string): Promise<void> {
-        this.assetConnected();
+        this.assertConnected();
         await this.omu.endpoints.call(SOURCE_REMOVE_BY_UUID, { uuid });
     }
 
     async sourceGetByName(request: SourceGetByNameRequest): Promise<SourceJson> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SOURCE_GET_BY_NAME, request);
     }
 
     async sourceGetByUuid(request: SourceGetByUuidRequest): Promise<SourceJson> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SOURCE_GET_BY_UUID, request);
     }
 
     async sourceList(request: SourceListRequest): Promise<SourceJson[]> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SOURCE_LIST, request);
     }
 
     async sceneList(): Promise<SceneListResponse> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SCENE_LIST, {});
     }
 
     async sceneGetByName(name: string): Promise<SceneJson> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SCENE_GET_BY_NAME, { name });
     }
 
     async sceneGetByUuid(uuid: string): Promise<SceneJson> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SCENE_GET_BY_UUID, { uuid });
     }
 
     async sceneGetCurrent(): Promise<SceneJson | null> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SCENE_GET_CURRENT, {});
     }
 
     async sceneSetCurrentByName(name: string): Promise<void> {
-        this.assetConnected();
+        this.assertConnected();
         await this.omu.endpoints.call(SCENE_SET_CURRENT_BY_NAME, { name });
     }
 
     async sceneSetCurrentByUuid(uuid: string): Promise<void> {
-        this.assetConnected();
+        this.assertConnected();
         await this.omu.endpoints.call(SCENE_SET_CURRENT_BY_UUID, { uuid });
     }
 
     async sceneCreate(request: SceneCreateRequest): Promise<SceneCreateResponse> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SCENE_CREATE, request);
     }
 
     async screenshotCreate(request: ScreenshotCreateRequest): Promise<ScreenshotCreateResponse> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SCREENSHOT_CREATE, request);
     }
 
     async screenshotGetLastBinary(request: ScreenshotGetLastBinaryRequest): Promise<ScreenshotGetLastBinaryResponse> {
-        this.assetConnected();
+        this.assertConnected();
         return await this.omu.endpoints.call(SCREENSHOT_GET_LAST_BINARY, request);
     }
 }

@@ -11,6 +11,7 @@ from omu.serializer import Serializer
 from omuplugin_obs.const import PLUGIN_ID
 
 from .permissions import (
+    OBS_INSTALL_PERMISSION_ID,
     OBS_SCENE_CREATE_PERMISSION_ID,
     OBS_SCENE_READ_PERMISSION_ID,
     OBS_SCENE_SET_CURRENT_PERMISSION_ID,
@@ -19,9 +20,26 @@ from .permissions import (
     OBS_SOURCE_UPDATE_PERMISSION_ID,
 )
 
-TEST_ENDPOINT_TYPE = EndpointType[None, str].create_json(
+
+class InstallationStatus(TypedDict):
+    script_installed: bool
+    launch_installed: bool
+
+
+class InstallRequest(TypedDict):
+    launch_active: bool
+    script_active: bool
+
+
+CHECK_INSTALLED_ENDPOINT_TYPE = EndpointType[None, InstallationStatus].create_json(
     PLUGIN_ID,
-    name="test",
+    name="check_installed",
+    permission_id=OBS_INSTALL_PERMISSION_ID,
+)
+SET_INSTALL_ENDPOINT_TYPE = EndpointType[InstallRequest, None].create_json(
+    PLUGIN_ID,
+    name="set_install",
+    permission_id=OBS_INSTALL_PERMISSION_ID,
 )
 
 

@@ -19,6 +19,13 @@ export type AddChannelStatus = {
     }[];
 };
 
+export type OBSInstallState = {
+    type: 'select';
+    mode: 'automatically' | 'manually';
+} | {
+    type: 'installing';
+};
+
 export type AppState = {
     type: 'initializing';
 } | {
@@ -31,6 +38,10 @@ export type AppState = {
 } | {
     type: 'connecting';
     reject: (reason: { type: 'server_start_failed' }) => void;
+} | {
+    type: 'obs_install';
+    state: OBSInstallState;
+    resolve: () => void;
 } | {
     type: 'add_channels';
     state: AddChannelStatus;

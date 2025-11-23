@@ -1,12 +1,12 @@
 <script lang="ts">
 
-    import { chat, omu } from '$lib/client';
+    import { omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
     import MainWindow from '$lib/main/MainWindow.svelte';
     import { installed, keepOpenOnBackground } from '$lib/main/settings';
     import { appWindow, backgroundRequested, checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
     import { DisconnectType } from '@omujs/omu/network/packet';
-    import { Button, setGlobal, Spinner } from '@omujs/ui';
+    import { Button, Spinner } from '@omujs/ui';
     import { error } from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
     import Agreements from './_components/Agreements.svelte';
@@ -14,6 +14,7 @@
     import InstallStepAddChannelsHint from './_components/InstallStepAddChannelsHint.svelte';
     import InstallStepConnectionProgress from './_components/InstallStepConnectionProgress.svelte';
     import InstallStepLayout from './_components/InstallStepLayout.svelte';
+    import InstallStepOBSInstall from './_components/InstallStepOBSInstall.svelte';
     import InstallStepStartProgress from './_components/InstallStepStartProgress.svelte';
     import InstallStepUpdate from './_components/InstallStepUpdate.svelte';
     import RestoreActions from './_components/RestoreActions.svelte';
@@ -23,8 +24,6 @@
     onMount(async () => {
         await start();
     });
-
-    setGlobal({ omu, chat });
 
     $effect(() => {
         if ($serverState?.type === 'ServerStopped' && $appState.type === 'connecting') {
@@ -92,6 +91,9 @@
             });
             window.clearTimeout(timeout);
             if (!$installed) {
+                await new Promise<void>((resolve) => {
+                    $appState = { type: 'obs_install', state: { type: 'select', mode: 'automatically' }, resolve };
+                });
                 await new Promise<void>((resolve) => {
                     $appState = { type: 'add_channels', state: { type: 'idle' }, resolve };
                 });
@@ -173,6 +175,18 @@
             <div class="progress">
                 <InstallStepConnectionProgress />
             </div>
+        </InstallStepLayout>
+    {:else if $appState.type === 'obs_install'}
+        <InstallStepLayout>
+            <div class="header">
+                <h1>
+                    起動方法を選択
+                </h1>
+                <small>
+                    OBSプラグインのインストール方法を選択します
+                </small>
+            </div>
+            <InstallStepOBSInstall bind:installState={$appState.state} resolve={$appState.resolve} />
         </InstallStepLayout>
     {:else if $appState.type === 'add_channels'}
         <InstallStepLayout>
