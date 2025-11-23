@@ -55,7 +55,6 @@
 
     async function start() {
         await installed.loaded;
-        $installed = false;
         try {
             $appState = { type: 'checking_update' };
             const update = await checkUpdate();
