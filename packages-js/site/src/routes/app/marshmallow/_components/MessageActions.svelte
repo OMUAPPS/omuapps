@@ -1,8 +1,7 @@
 <script module lang="ts">
-    const REPLY_CACHE: Record<string, string> = {};
+    const replyCache: Record<string, string> = {};
 </script>
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { Button, Spinner, Tooltip } from '@omujs/ui';
     import { DOM, type MarshmallowAPI, type Message, type MessageAction } from '../api';
@@ -91,25 +90,23 @@
     });
 
     function restoreReply() {
-        reply.value = REPLY_CACHE[message.id] ?? '';
+        if (message.reply) {
+            reply.value = DOM.blockToString(message.reply);
+        } else {
+            reply.value = replyCache[message.id] ?? '';
+        }
         reply.id = message.id;
     }
 
     function saveReply() {
-        REPLY_CACHE[reply.id] = reply.value;
+        replyCache[reply.id] = reply.value;
     }
 
-    run(() => {
+    $effect(() => {
         if (reply.id !== message.id) {
             restoreReply();
         }
     });
-    run(() => {
-        if (message?.reply) {
-            reply.value = DOM.blockToString(message.reply);
-            reply.id = message.id;
-        }
-    }); ;
 
     type ActionTranslation = { name: string; icon?: string; remove: boolean };
     function getActionTranslation(action: MessageAction): ActionTranslation {
@@ -208,12 +205,7 @@
                     <i class="ti ti-bubble-text"></i>
                 {/if}
             </Button>
-            {#if message.reply}
-                <a href={detail.tweetURL} target="_blank">
-                    Xで投稿
-                    <i class="ti ti-external-link"></i>
-                </a>
-            {:else}
+            {#if detail?.answer}
                 <Button primary disabled={!reply.value || replyEnable} onclick={async () => {
                     recognizing = false;
                     if (!message) throw new Error('No message selected');
@@ -224,8 +216,10 @@
                         'answer[skip_tweet_confirmation]': 'on',
                         'answer[publish_method]': 'web_share_api',
                     });
+                    detail.answer = undefined;
                     message.reply = { type: 'text', body: reply.value };
-                    delete REPLY_CACHE[reply.id];
+                    refresh();
+                    delete replyCache[reply.id];
                 }}>
                     {#if !!message.reply}
                         <Tooltip>すでに返信しています</Tooltip>
@@ -239,6 +233,11 @@
                     返信
                     <i class="ti ti-message-circle"></i>
                 </Button>
+            {:else}
+                <a href={detail.tweetURL} target="_blank">
+                    Xで投稿
+                    <i class="ti ti-external-link"></i>
+                </a>
             {/if}
         {:else if detail.type === 'fetching'}
             <Button disabled><Spinner /></Button>
