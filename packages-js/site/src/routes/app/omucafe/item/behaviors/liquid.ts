@@ -30,7 +30,7 @@ export type Liquid = {
         type: 'dripping';
         point: Vec2Like;
     };
-    spawn?: null;
+    spawn?: object;
 };
 
 export function createLiquid(): Liquid {

@@ -282,7 +282,7 @@
     >
         <div class="image">
             {#await omu.assets.download(selected.asset).then(async ({ buffer }) => {
-                const blob = new Blob([buffer]);
+                const blob = new Blob([buffer.buffer as ArrayBuffer]);
                 const uri = URL.createObjectURL(blob);
                 return uri;
             })}
