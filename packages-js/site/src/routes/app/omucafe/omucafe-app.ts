@@ -1,4 +1,4 @@
-import { makeRegistryWritable, once } from '$lib/helper.js';
+import { once } from '$lib/helper.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Chat, ChatEvents, ChatPermissions } from '@omujs/chat';
 import { OBSPermissions, OBSPlugin } from '@omujs/obs';
@@ -151,19 +151,19 @@ export async function createGame(app: App, side: GameSide): Promise<void> {
     setGlobal({ omu, chat });
     const obs = OBSPlugin.create(omu);
     const gameConfigRegistry = omu.registries.get(CONFIG_REGISTRY_TYPE);
-    const gameConfig = makeRegistryWritable(gameConfigRegistry);
+    const gameConfig = gameConfigRegistry.compatSvelte();
     const configRegistry = omu.registries.get(APP_CONFIG_REGISTRY_TYPE);
-    const config = makeRegistryWritable(configRegistry);
+    const config = configRegistry.compatSvelte();
     const resourcesRegistry = omu.registries.get(RESOURCE_REGISTRY_TYPE);
-    const resources = makeRegistryWritable(resourcesRegistry);
+    const resources = resourcesRegistry.compatSvelte();
     const statesRegistry = omu.registries.get(STATES_REGISTRY_TYPE);
-    const states = makeRegistryWritable(statesRegistry);
+    const states = statesRegistry.compatSvelte();
     const sceneRegistry = omu.registries.get(SCENE_REGISTRY_TYPE);
-    const scene = makeRegistryWritable(sceneRegistry);
+    const scene = sceneRegistry.compatSvelte();
     const orders = omu.tables.get(ORDER_TABLE_TYPE);
     const gallery = omu.tables.get(GALLERY_TABLE_TYPE);
     const paintSignal = omu.signals.get(PAINT_SIGNAL_TYPE);
-    const paintEvents = makeRegistryWritable(omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE));
+    const paintEvents = omu.registries.get(PAINT_EVENTS_REGISTRY_TYPE).compatSvelte();
 
     chat.on(ChatEvents.Message.Add, (message) => {
         processMessage(message);

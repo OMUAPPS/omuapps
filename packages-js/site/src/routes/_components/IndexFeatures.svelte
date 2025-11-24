@@ -1,8 +1,9 @@
 <script lang="ts">
+    import background from '$lib/images/background.svg';
     import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
 
-    let scroll = 0;
+    let scroll = $state(0);
 
     function onScroll() {
         scroll = window.scrollY;
@@ -15,10 +16,12 @@
         return rect.top + 100 < window.innerHeight;
     }
 
-    let card0, card1, card2;
+    let card0: HTMLElement | undefined = $state(undefined);
+    let card1: HTMLElement | undefined = $state(undefined);
+    let card2: HTMLElement | undefined = $state(undefined);
 </script>
 
-<svelte:window on:scroll={onScroll} />
+<svelte:window onscroll={onScroll} />
 
 <div class="features">
     <a class="card" href="/docs/guide" bind:this={card0} class:visible={isVisible(card0, scroll)}>
@@ -50,14 +53,27 @@
             <p>難しいことを可能な限り排除することを安全の次に考えています。</p>
         </div>
     </div>
+    <img class="background" src={background} alt="">
 </div>
 
 <style lang="scss">
     .features {
+        position: relative;
         display: flex;
         flex-direction: column;
         width: min(30rem, 100%);
         gap: 3rem;
+    }
+
+    .background {
+        position: absolute;
+        height: 38vh;
+        top: 34rem;
+        left: 0;
+        object-fit: cover;
+        opacity: 0.4;
+        z-index: -10;
+        transform: translateX(-50%) perspective(100px) skewY(6deg) rotateZ(-8deg) translateX(35%);
     }
 
     .card {
@@ -115,12 +131,6 @@
                 font-size: 0.75rem;
                 font-weight: 600;
                 color: var(--color-text);
-            }
-
-            > a {
-                position: absolute;
-                font-size: 0.8rem;
-                bottom: -1.5rem;
             }
         }
     }

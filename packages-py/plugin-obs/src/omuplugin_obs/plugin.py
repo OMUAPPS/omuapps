@@ -16,7 +16,6 @@ from omu.api.i18n.extension import I18N_GET_LOCALES_PERMISSION_ID
 from omu.api.logger.extension import LOGGER_LOG_PERMISSION_ID
 from omu.api.registry.extension import REGISTRY_PERMISSION_ID
 from omu.api.table.extension import TABLE_PERMISSION_ID
-from omu.plugin import UninstallContext
 from omu.result import Err, Ok, Result
 from omu.token import JsonTokenProvider
 from omuserver.helper import LOG_DIRECTORY
@@ -27,9 +26,6 @@ from omuplugin_obs.const import PLUGIN_APP
 from . import obsconfig
 from .config import (
     Config,
-    ConfigJSON,
-    LaunchCommand,
-    ServerAddress,
 )
 
 
@@ -246,25 +242,11 @@ def relaunch_obs():
 
 
 def update_config(server: Server):
-    launch = None
-    if server.directories.dashboard:
-        launch = LaunchCommand(args=[server.directories.dashboard.resolve().as_posix(), "--background"])
-    python_path = get_python_directory()
-    log_path = LOG_DIRECTORY.resolve().as_posix()
-    server_address = ServerAddress(
-        {"host": server.address.host, "port": server.address.port, "hash": server.address.hash}
-    )
-    config_json = ConfigJSON(
-        log_path=log_path,
-        launch=launch,
-        python_path=python_path,
-        server=server_address,
-    )
-    logger.info(f"Updated config: {config_json}")
-    config = Config(
-        path=Config.get_config_path(),
-        json=config_json,
-    )
+    config = Config.load().unwrap()
+    config.json["python_path"] = get_python_directory()
+    config.json["log_path"] = LOG_DIRECTORY.resolve().as_posix()
+    config.json["server"] = server.address.to_json()
+    logger.info(f"Updated config: {config.json}")
     config.store()
 
     token_path = Config.get_token_path()
@@ -279,16 +261,14 @@ def update_config(server: Server):
             I18N_GET_LOCALES_PERMISSION_ID,
             TABLE_PERMISSION_ID,
             LOGGER_LOG_PERMISSION_ID,
-        ]
+        ],
     )
     tokens[token_key] = new_token
     token_path.write_text(json.dumps(tokens, ensure_ascii=False), encoding="utf-8")
 
 
-def install(server: Server):
+def install():
     try:
-        update_config(server)
-
         installed = check_installed()
         if installed.is_ok is True:
             logger.info("OBS plugin is already installed")
@@ -372,7 +352,7 @@ def uninstall_all_scene():
         uninstall_script(launcher_path, scene)
 
 
-async def uninstall(ctx: UninstallContext):
+def uninstall(server: Server):
     logger.info("Uninstalling OBS Plugin...")
 
     match ensure_obs_stopped():
@@ -382,7 +362,7 @@ async def uninstall(ctx: UninstallContext):
             logger.error(f"Failed to stop OBS: {err}")
             return
 
-    ctx.server.security.remove_app(PLUGIN_APP.id)
+    server.security.remove_app(PLUGIN_APP.id)
     uninstall_all_scene()
     remove_dir_all(Config.get_config_path())
     remove_dir_all(Config.get_token_path())

@@ -1,11 +1,8 @@
 <script lang="ts">
-    import { makeRegistryWritable } from '$lib/helper.js';
-    import { Chat, ChatEvents } from '@omujs/chat';
-    import type { Author, Message } from '@omujs/chat/models';
-    import { App, Omu } from '@omujs/omu';
-    import { BROWSER } from 'esm-env';
+    import { App, BrowserSession, Omu, OmuPermissions } from '@omujs/omu';
+    import { onMount } from 'svelte';
 
-    const APP = new App('com.example:my-keisatsu', {
+    const PARENT_APP = new App('com.example:my-keisatsu', {
         version: '1.0.0',
         metadata: {
             locale: 'ja',
@@ -14,182 +11,108 @@
                 '【2025年最新版】草を投稿した人を自動で検出して収集するアプリ',
         },
     });
-    const omu = new Omu(APP);
-    const DEFAULT_CONFIG = {
-        filters: ['草'],
-    };
-    type Config = typeof DEFAULT_CONFIG;
-    const configRegistry = omu.registries.json<Config>('config', {
-        default: DEFAULT_CONFIG,
-    });
-    const config = makeRegistryWritable(configRegistry);
-    type Comment = {
-        id: string;
-        authorId: string;
-        name: string;
-        content: string;
-        date: string;
-    };
-    const table = omu.tables.json<Comment>('comments', {
-        key: (item) => item.id,
-    });
-    const chat = Chat.create(omu);
+    const omu = new Omu(PARENT_APP);
 
-    chat.on(ChatEvents.Message.Add, async (message) => {
-        if (!message.authorId) return;
-        if (!shouldDiscardMessage(message)) return;
-        const author = await chat.authors.get(message.authorId.key());
-        if (!author) return;
-        if (isAuthorAdmin(author)) return;
-        const comment: Comment = {
-            id: message.id.key(),
-            name: author.name ?? '名無し',
-            authorId: message.authorId.key(),
-            content: message.text,
-            date: message.createdAt.toISOString(),
+    onMount(async () => {
+        const CHILD_APP = new App('com.omuapps:child', {
+            parentId: PARENT_APP, // 親が設定されている必要があります
+            url: 'omuapps.com/app/child',
+        });
+        omu.sessions.require(CHILD_APP);
+        const observer = omu.sessions.observe(CHILD_APP);
+        observer.onConnect((app) => {
+            console.log(`Child connected: ${app.id.key()}`);
+        });
+        observer.onDisconnect((app) => {
+            console.log(`Child connected: ${app.id.key()}`);
+        });
+        const params = await omu.sessions.generateToken({
+            app: CHILD_APP,
+            permissions: [
+                OmuPermissions.ASSET_PERMISSION_ID,
+            ],
+        });
+        // { token, address }
+        console.log(params.token); // 子の接続に使うトークン
+        console.log(params.address); // 接続用アドレス
+        const url = new URL('https://omuapps.com/app/child');
+        url.searchParams.set(BrowserSession.PARAM_NAME, JSON.stringify(params));
+        // urlを開くことで子アプリの接続ができます
+
+        const resp = await omu.http.fetch('https://omuapps.com/apps.json'); // window.fetchと同様の引数
+        console.log(await resp.json()); // Responseが実装されています
+
+        // WebSocketとは異なり、イベントの順序を考える必要がないため簡単に操作できます
+        const socket = await omu.http.ws('wss://echo.websocket.org');
+        socket.send('Hello, world!');
+        while (true) {
+            const msg = await socket.receive();
+            if (msg.type === 'close') break;
+            if (msg.type === 'text') {
+                console.log(msg.data); // Hello, world!
+            }
+        }
+
+        const ws = await omu.http.ws('wss://echo.websocket.org');
+        const webSocket = ws.toWebSocket(); // .toWebSocket()で標準のWebSocketとして扱うこともできます
+        webSocket.onmessage = (message) => {
+            console.log('msg:', message.data);
         };
-        await table.add(comment);
-    });
 
-    if (BROWSER) {
-        omu.permissions.require();
-        omu.start();
-    }
+        const drag = await omu.dashboard.requestDragDrop();
+        drag.onDrop(async (event) => {
+            console.log(event.drag_id); // ドラッグID
+            const file = event.files[0]; // ファイルの配列
+            console.log(file.name); // ファイル名
+            console.log(file.size); // ファイルサイズ
+            console.log(file.type); // ファイルかディレクトリかどうか
+            const { meta, files } = await drag.read(event.drag_id);
+            console.log(meta.files); // 上記と同様
+            console.log(files); // ファイルのファイル名をキーに、ファイル内容を値に持つオブジェクト
+            console.log(files['ファイル名'].buffer); // Uint8Arrayのファイル内容
+            console.log(files['ファイル名'].file === file); // 上記のfileと同様
+        });
+        drag.onEnter((event) => {
+            // ファイルを持って管理画面に入った時
+            console.log(event);// onDropのeventと同様
+        });
+        drag.onLeave((event) => {
+            // 解除されたとき
+            console.log(event);// onDropのeventと同様
+        });
 
-    let comments: Map<string, Comment> = new Map();
+        const webview = await omu.dashboard.requestWebview({
+            url: 'https://omuapps.com', // 開くURL
+            script: 'console.log("Hello, ${location.host}")', // 起動と同時に読み込まれるスクリプト
+        });
 
-    table.listen((newItems) => {
-        comments = new Map([
-            ...Array.from(comments.entries()),
-            ...Array.from(newItems.values()).map(
-                (comment): [string, Comment] => [comment.id, comment],
-            ),
-        ]);
-    });
-    table.event.clear.listen(() => {
-        comments = new Map();
-    });
-    table.event.remove.listen((removed) => {
-        removed.keys().forEach((id) => {
-            comments.delete(id);
+        const cookies = await webview.getCookies();
+        console.log(cookies[0].name); // クッキーの名前
+        console.log(cookies[0].value); // クッキーの値
+
+        await webview.join(); // 閉じるのを待機
+        await webview.close(); // 強制的に閉じる
+
+        const speechRecognition = await omu.dashboard.requestSpeechRecognition();
+
+        speechRecognition.listen((state) => {
+            if (state.type === 'audio_started') {
+                // 音が始まった
+                console.log(state.timestamp); // 音が始まった時間
+            }
+            if (state.type === 'audio_ended') {
+                // 音が終わった
+                console.log(state.timestamp); // 音が終わった時間
+            }
+            if (state.type === 'result') {
+                // 認識された
+                console.log(state.segments);
+            }
+            if (state.type === 'final') {
+                // 認識が終了した
+                console.log(state.segments);
+                console.log(state.segments[0].transcript); // 認識された文字列
+            }
         });
     });
-    omu.onReady(() => {
-        table.fetchAll();
-    });
-
-    function shouldDiscardMessage(message: Message) {
-        return $config.filters
-            .map((filter) => filter.trim())
-            .filter((it) => it.length > 0)
-            .some((filter) => message.text.includes(filter));
-    }
-
-    function isAuthorAdmin(author: Author) {
-        return author.roles?.some((role) => role.isOwner || role.isModerator);
-    }
 </script>
-
-<main>
-    <div class="config">
-        filter:
-        {#each $config.filters as filter, i (i)}
-            <span>
-                <input type="text" bind:value={filter} />
-                <button
-                    on:click={() => {
-                        $config.filters = $config.filters.filter(
-                            (_, j) => i !== j,
-                        );
-                    }}>削除</button
-                >
-            </span>
-        {/each}
-        <button
-            on:click={() => {
-                $config.filters = [...$config.filters, ''];
-            }}>追加</button
-        >
-
-        <button
-            on:click={() => {
-                $config = DEFAULT_CONFIG;
-            }}
-        >
-            リセット
-        </button>
-    </div>
-    <div class="comments">
-        <h2>
-            comments
-            <button
-                on:click={() => {
-                    table.clear();
-                }}>すべて削除</button
-            >
-        </h2>
-        {#each Array.from(comments.values()).reverse() as comment (comment.id)}
-            <div class="comment">
-                {#await chat.authors.get(comment.authorId) then author}
-                    {#if author}
-                        {#if author.avatarUrl}
-                            <img
-                                src={omu.assets.proxy(author.avatarUrl)}
-                                alt={author.name}
-                            />
-                        {/if}
-                        <p>{author.name}</p>
-                    {/if}
-                {/await}
-                <p>{comment.content}</p>
-                <button
-                    on:click={() => {
-                        table.remove(comment);
-                    }}>削除</button
-                >
-                {new Date(comment.date).toLocaleString()}
-            </div>
-        {/each}
-    </div>
-</main>
-
-<style lang="scss">
-    main {
-        display: flex;
-        align-items: start;
-        justify-content: space-between;
-        gap: 1rem;
-        margin: 1rem 0;
-        padding: 1rem;
-    }
-
-    .config {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .comments {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .comment {
-        display: flex;
-        flex-direction: row;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        border-radius: 3px;
-    }
-
-    img {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-    }
-
-    button {
-        margin-left: auto;
-    }
-</style>

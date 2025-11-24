@@ -1,13 +1,18 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context';
-    import { cleanProgress, invoke, type CleanError } from '$lib/tauri.js';
+    import { cleanProgress, type CleanError } from '$lib/tauri.js';
     import { Button, Spinner } from '@omujs/ui';
+    import { invoke } from '@tauri-apps/api/core';
     import { error } from '@tauri-apps/plugin-log';
     import { relaunch } from '@tauri-apps/plugin-process';
     import ProgressBar from './ProgressBar.svelte';
 
-    export let retry: () => void;
-    export let message: string | undefined;
+    interface Props {
+        retry: () => void;
+        message: string | undefined;
+    }
+
+    let { retry, message }: Props = $props();
 
     let restoreState: {
         type: 'idle';
@@ -16,7 +21,7 @@
     } | {
         type: 'cleaning_failed';
         reason: CleanError;
-    } = { type: 'idle' };
+    } = $state({ type: 'idle' });
 
     async function cleanEnvironment() {
         try {
@@ -53,20 +58,22 @@
         </div>
         <small>報告するときは以下からログを生成してください</small>
         <div class="actions">
-            <Button onclick={() => invoke('generate_log_file')} let:promise>
-                {#if promise}
-                    {#await promise}
-                        ログを生成中
-                        <Spinner />
-                    {:then}
-                        ログを生成しました
-                    {:catch e}
-                        ログの生成に失敗しました: {e}
-                    {/await}
-                {:else}
-                    ログを生成
-                    <i class="ti ti-file"></i>
-                {/if}
+            <Button onclick={() => invoke('generate_log_file')}>
+                {#snippet children({ promise })}
+                    {#if promise}
+                        {#await promise}
+                            ログを生成中
+                            <Spinner />
+                        {:then}
+                            ログを生成しました
+                        {:catch e}
+                            ログの生成に失敗しました: {e}
+                        {/await}
+                    {:else}
+                        ログを生成
+                        <i class="ti ti-file"></i>
+                    {/if}
+                {/snippet}
             </Button>
         </div>
     {:else if restoreState.type === 'cleaning'}

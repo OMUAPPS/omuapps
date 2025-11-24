@@ -21,7 +21,7 @@ import { Transport } from './network/connection.js';
 import { PACKET_TYPES } from './network/packet/packet-types.js';
 import type { PacketType } from './network/packet/packet.js';
 import { WebsocketTransport } from './network/websocket-transport';
-import { BrowserTokenProvider, type TokenProvider } from './token.js';
+import { BrowserSession, type SessioTokenProvider } from './token.js';
 
 export type ClientEvents = {
     started: EventEmitter<[]>;
@@ -37,7 +37,7 @@ export class Omu {
         stopped: new EventEmitter(),
         ready: new EventEmitter(),
     };
-    readonly token: TokenProvider;
+    readonly token: SessioTokenProvider;
     readonly address: Address;
     readonly sessions: SessionExtension;
     readonly network: Network;
@@ -59,7 +59,7 @@ export class Omu {
         public readonly app: App,
         options?: {
             address?: Address;
-            token?: TokenProvider | string;
+            token?: SessioTokenProvider | string;
             transport?: Transport;
             connection?: Connection;
         },
@@ -72,7 +72,7 @@ export class Omu {
                 get: () => Promise.resolve(token),
             };
         } else {
-            this.token = options?.token ?? new BrowserTokenProvider();
+            this.token = options?.token ?? new BrowserSession();
         }
         this.address = options?.address ?? {
             host: '127.0.0.1',
@@ -132,6 +132,7 @@ export class Omu {
     public stop(): void {
         this.running = false;
         this.ready = false;
+        this.network.close();
         this.event.stopped.emit();
     }
 

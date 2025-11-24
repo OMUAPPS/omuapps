@@ -3,6 +3,49 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.45 (2025-11-23)
+
+
+### Bug Fixes
+
+* **dash:** token.txtを生成できない場合のエラーメッセージを修正 ([29d4c34](https://github.com/OMUAPPS/omuapps/commit/29d4c34e1fbfa60b909a56d7fbcc5e65c3424cae))
+
+
+
+
+
+## 0.9.44 (2025-11-22)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.43 (2025-11-22)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.42 (2025-11-20)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
+## 0.9.41 (2025-11-19)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
 ## 0.9.40 (2025-11-19)
 
 **Note:** Version bump only for package @omujs/chat

@@ -122,7 +122,10 @@ async function uploadToR2(file: string, path: string): Promise<string> {
             ...process.env,
             WRANGLER_LOG: 'warn',
         }).nothrow();
-        if (result.exitCode === 0) return `${CONFIG.BASE_URL}/${path}`;
+        if (result.exitCode === 0) {
+            console.log(`Upload succeeded: ${file} to ${CONFIG.BUCKET}/${path}`);
+            return `${CONFIG.BASE_URL}/${path}`;
+        };
 
         console.error(`Upload failed (attempt ${retry + 1}): ${result.stderr}`);
         if (retry < 4) {
@@ -146,7 +149,7 @@ const DOWNLOAD_PLATFORMS: Platform[] = [
     },
     {
         type: 'linux-x86_64',
-        filename: 'OMUAPPS_{VERSION}_amd64.AppImage',
+        filename: 'OMUAPPS_{VERSION}_amd64.deb',
     },
     {
         type: 'darwin-aarch64',
@@ -212,7 +215,10 @@ async function uploadManifest(platform: Platform[], target: UpdateTarget, channe
         pub_date,
         platforms: Object.fromEntries(platform.map(({ type, filename }) => {
             const existing = ORIGINAL_LATEST.platforms[type as PlatformKey];
-            if (!existing) throw new Error(`Existing manifest not found for: ${type}`);
+            if (!existing) {
+                console.warn(`Warning: Existing manifest not found for: ${type}`);
+                return [type, undefined];
+            }
             const resolvedFilename = filename.replace('{VERSION}', VERSION);
             const url = fileToUrl[resolvedFilename];
             if (!url) throw new Error(`URL not found for: ${resolvedFilename}`);

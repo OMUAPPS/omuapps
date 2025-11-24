@@ -1,74 +1,86 @@
 <script lang="ts">
+
     import { omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
     import MainWindow from '$lib/main/MainWindow.svelte';
-    import { installed, keepOpenOnBackground } from '$lib/main/settings';
-    import { appWindow, backgroundRequested, checkUpdate, invoke, serverState, startProgress } from '$lib/tauri';
+    import { installed, keepOpenOnBackground } from '$lib/settings';
+    import { appWindow, backgroundRequested, checkUpdate, serverState, startProgress } from '$lib/tauri';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Button, Spinner } from '@omujs/ui';
+    import { invoke } from '@tauri-apps/api/core';
     import { error } from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
     import Agreements from './_components/Agreements.svelte';
     import InstallStepAddChannels from './_components/InstallStepAddChannels.svelte';
     import InstallStepAddChannelsHint from './_components/InstallStepAddChannelsHint.svelte';
     import InstallStepConnectionProgress from './_components/InstallStepConnectionProgress.svelte';
+    import InstallStepOBSInstall from './_components/InstallStepLaunchMode.svelte';
     import InstallStepLayout from './_components/InstallStepLayout.svelte';
     import InstallStepStartProgress from './_components/InstallStepStartProgress.svelte';
     import InstallStepUpdate from './_components/InstallStepUpdate.svelte';
     import RestoreActions from './_components/RestoreActions.svelte';
     import StepUpdateHint from './_components/StepUpdateHint.svelte';
-    import { netState, state } from './stores';
+    import { appState, netState } from './stores';
 
     onMount(async () => {
         await start();
     });
 
-    $: {
-        if ($serverState?.type === 'ServerStopped' && $state.type === 'connecting') {
-            $state.reject({
+    $effect(() => {
+        if ($serverState?.type === 'ServerStopped' && $appState.type === 'connecting') {
+            $appState.reject({
                 type: 'server_start_failed',
             });
             omu.stop();
         }
-    }
+    });
 
-    $: {
+    $effect(() => {
         if ($netState?.type === 'reconnecting') {
             if ($netState.attempt && $netState.attempt > 2) {
-                $state = { type: 'restore', message: omu.network.reason?.message };
+                $appState = { type: 'restore', message: omu.network.reason?.message };
                 omu.stop();
             }
-        } else if ($netState?.type === 'disconnected' && $netState.reason && $state.type === 'ready') {
+        } else if ($netState?.type === 'disconnected' && $netState.reason && $appState.type === 'ready') {
             if (![DisconnectType.SERVER_RESTART].includes($netState.reason.type)) {
-                $state = { type: 'restore', message: `${$netState.reason.type}: ${$netState.reason.message}` };
+                $appState = { type: 'restore', message: `${$netState.reason.type}: ${$netState.reason.message}` };
                 omu.stop();
             }
         }
-    }
+    });
 
-    $: console.log('serverState', $serverState);
+    $effect(() => {
+        console.log('serverState', $serverState);
+    });
 
     async function start() {
+        await installed.loaded;
         try {
-            $state = { type: 'checking_update' };
+            $appState = { type: 'checking_update' };
             const update = await checkUpdate();
-            if (update) {
+            if (update || !installed) {
                 await appWindow.show();
+            }
+            if (update) {
                 await new Promise<void>((resolve) => {
-                    $state = { type: 'update', update, resolve };
+                    $appState = { type: 'update', update, resolve };
                 });
             }
             if (!$installed) {
                 await new Promise<void>((accept) => {
-                    $state = { type: 'agreements', accept };
+                    $appState = { type: 'agreements', accept };
                 });
             }
 
-            $state = { type: 'starting' };
+            $appState = { type: 'starting' };
             await invoke('start_server');
 
+            let timeout = window.setTimeout(() => {
+                error('Connection timeout');
+                $appState = { type: 'restore', message: 'Connection timeout' };
+            }, 1000 * 20);
             await new Promise<void>((resolve, reject) => {
-                $state = { type: 'connecting', reject };
+                $appState = { type: 'connecting', reject };
                 if (omu.running) {
                     omu.stop();
                 }
@@ -80,12 +92,16 @@
                     resolve();
                 });
             });
+            window.clearTimeout(timeout);
             if (!$installed) {
                 await new Promise<void>((resolve) => {
-                    $state = { type: 'add_channels', state: { type: 'idle' }, resolve };
+                    $appState = { type: 'obs_install', state: { type: 'select', mode: 'automatically' }, resolve };
+                });
+                await new Promise<void>((resolve) => {
+                    $appState = { type: 'add_channels', state: { type: 'idle' }, resolve };
                 });
             }
-            $state = { type: 'ready' };
+            $appState = { type: 'ready' };
             $installed = true;
             if ($backgroundRequested && !$keepOpenOnBackground) {
                 console.log('Hiding window');
@@ -93,8 +109,9 @@
             }
         } catch (e) {
             console.error('Error during start:', e);
-            $state = { type: 'restore', message: JSON.stringify(e, null, 2) };
+            $appState = { type: 'restore', message: JSON.stringify(e, null, 2) };
             error(`Error during start: ${JSON.stringify(e)}`);
+            await appWindow.show();
         }
     }
 
@@ -103,31 +120,33 @@
     }
 </script>
 
-{#if $state.type === 'ready'}
+{#if $appState.type === 'ready'}
     <MainWindow />
 {:else}
-    {#if $state.type === 'checking_update'}
+    {#if $appState.type === 'checking_update'}
         <InstallStepLayout>
             <h1>
                 更新を確認中
                 <Spinner />
             </h1>
         </InstallStepLayout>
-    {:else if $state.type === 'agreements'}
+    {:else if $appState.type === 'agreements'}
         <InstallStepLayout>
             <div class="header">
                 <h1>利用規約</h1>
                 <small>使用するにあたって</small>
             </div>
             <div class="actions">
-                <Button onclick={$state.accept} primary>
+                <Button onclick={$appState.accept} primary>
                     インストールを開始
                 </Button>
             </div>
 
-            <Agreements slot="hint" />
+            {#snippet hint()}
+                <Agreements />
+            {/snippet}
         </InstallStepLayout>
-    {:else if $state.type === 'starting'}
+    {:else if $appState.type === 'starting'}
         <InstallStepLayout>
             <div class="header">
                 <h1>
@@ -148,7 +167,7 @@
                 <InstallStepStartProgress />
             </div>
         </InstallStepLayout>
-    {:else if $state.type === 'connecting'}
+    {:else if $appState.type === 'connecting'}
         <InstallStepLayout>
             <div class="header">
                 <h1>
@@ -160,11 +179,23 @@
                 <InstallStepConnectionProgress />
             </div>
         </InstallStepLayout>
-    {:else if $state.type === 'add_channels'}
+    {:else if $appState.type === 'obs_install'}
         <InstallStepLayout>
             <div class="header">
                 <h1>
-                    {#if $state.state.type === 'result'}
+                    起動方法を選択
+                </h1>
+                <small>
+                    OBSとの連携方法を選択します
+                </small>
+            </div>
+            <InstallStepOBSInstall bind:installState={$appState.state} resolve={$appState.resolve} />
+        </InstallStepLayout>
+    {:else if $appState.type === 'add_channels'}
+        <InstallStepLayout>
+            <div class="header">
+                <h1>
+                    {#if $appState.state.type === 'result'}
                         チャンネルを選択
                     {:else}
                         チャンネルを追加
@@ -174,32 +205,40 @@
                     チャットの機能で使用するチャンネルを追加します
                 </small>
             </div>
-            <InstallStepAddChannels bind:state={$state.state} resolve={$state.resolve} />
-            <InstallStepAddChannelsHint bind:state={$state.state} slot="hint" />
+            <InstallStepAddChannels bind:status={$appState.state} resolve={$appState.resolve} />
+            {#snippet hint()}
+                {#if $appState.type === 'add_channels'}
+                    <InstallStepAddChannelsHint bind:state={$appState.state} />
+                {/if}
+            {/snippet}
         </InstallStepLayout>
-    {:else if $state.type === 'update'}
+    {:else if $appState.type === 'update'}
         <InstallStepLayout>
             <div class="title">
                 <h1>更新があります</h1>
-                <small>バージョン {$state.update.version} が利用可能です。</small>
+                <small>バージョン {$appState.update.version} が利用可能です</small>
             </div>
 
             <div class="actions">
-                <InstallStepUpdate bind:state={$state} />
+                <InstallStepUpdate bind:appState={$appState} />
             </div>
-            <StepUpdateHint update={$state.update} slot="hint" />
+            {#snippet hint()}
+                {#if $appState.type === 'update'}
+                    <StepUpdateHint update={$appState.update} />
+                {/if}
+            {/snippet}
         </InstallStepLayout>
-    {:else if $state.type === 'restore'}
+    {:else if $appState.type === 'restore'}
         <InstallStepLayout>
             <div class="title">
                 <h1>起動に失敗しました</h1>
-                <small>環境を再構築するか、アプリケーションを再起動してください。</small>
+                <small>環境を再構築するか、アプリケーションを再起動してください</small>
             </div>
-            <RestoreActions {retry} message={$state.message} />
+            <RestoreActions {retry} message={$appState.message} />
         </InstallStepLayout>
     {:else}
         <pre>
-            {JSON.stringify($state, null, 2)}
+            {JSON.stringify($appState, null, 2)}
         </pre>
     {/if}
 {/if}

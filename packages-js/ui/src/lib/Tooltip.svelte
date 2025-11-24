@@ -1,239 +1,127 @@
 <script lang="ts">
-    export let noBackground = false;
-    export let show = false;
-    let target: HTMLElement;
+    import { onDestroy, tick } from 'svelte';
+    import { getTooltipId, tooltipAdd, tooltipRemove, type TooltipEntry } from './stores';
 
-    let tooltip: HTMLElement;
+    interface Props {
+        noBackground?: boolean;
+        children?: import('svelte').Snippet;
+    }
+
+    let { noBackground = false, children }: Props = $props();
+    let target: HTMLElement | undefined = $state();
+    let tooltip: HTMLElement | undefined = $state();
     type Rect = { x: number; y: number; width: number; height: number };
+    // svelte-ignore non_reactive_update
     let tooltipRect: Rect = {
         x: 0,
         y: 0,
         width: 0,
         height: 0,
     };
+    // svelte-ignore non_reactive_update
     let targetRect: Rect = {
         x: 0,
         y: 0,
         width: 0,
         height: 0,
     };
-    let tooltipPos: { x: number; y: number } = { x: 0, y: 0 };
-    let offset: { x: number; y: number } = { x: 0, y: 0 };
-    let direction: 'up' | 'down' = 'down';
-
-    function showTooltip() {
-        show = true;
-        targetRect = target.getBoundingClientRect();
-    }
-
-    function hideTooltip() {
-        show = false;
-    }
-
-    function getPositionRoot(element: HTMLElement): { x: number; y: number } {
-        let currentElement: HTMLElement | null = element;
-        while (currentElement) {
-            const style = getComputedStyle(currentElement);
-            if (
-                style.getPropertyValue('transform') !== 'none'
-            ) {
-                const rect = currentElement.getBoundingClientRect();
-                return {
-                    x: rect.x,
-                    y: rect.y,
-                };
-            }
-            currentElement = currentElement.parentElement;
-        }
-        return { x: 0, y: 0 };
-    }
+    let tooltipPos: { x: number; y: number } = $state({ x: 0, y: 0 });
+    let direction: 'up' | 'down' = $state('down');
 
     function clamp(value: number, min: number, max: number) {
         return Math.min(Math.max(value, min), max);
     }
 
-    function update(target: HTMLElement, tooltip: HTMLElement): void {
+    async function update(target: HTMLElement | undefined, tooltip: HTMLElement | undefined): Promise<void> {
+        await tick();
+        if (!target || !tooltip) return;
         const margin = 10;
         const arrowSize = 10;
-        if (target && tooltip) {
-            tooltipRect = tooltip.getBoundingClientRect();
-            const targetBounds = {
-                top: targetRect.y,
-                bottom: targetRect.y + targetRect.height,
-                centerX: targetRect.x + targetRect.width / 2,
-            };
-            const bounds = {
-                left: margin,
-                top: margin,
-                right: window.innerWidth - margin,
-                bottom: window.innerHeight - margin,
-            };
-            direction =
-                targetBounds.bottom + tooltipRect.height > bounds.bottom
-                    ? 'up'
-                    : 'down';
-            tooltipPos = {
-                x: clamp(
-                    targetBounds.centerX - tooltipRect.width / 2,
-                    bounds.left,
-                    bounds.right - tooltipRect.width,
-                ),
-                y: clamp(
-                    direction === 'down'
-                        ? targetBounds.bottom + arrowSize
-                        : targetBounds.top - tooltipRect.height - arrowSize,
-                    bounds.top,
-                    bounds.bottom - tooltipRect.height,
-                ),
-            };
-            offset = getPositionRoot(target);
-        }
+        tooltipRect = tooltip.getBoundingClientRect();
+        targetRect = target.getBoundingClientRect();
+        const targetBounds = {
+            top: targetRect.y,
+            bottom: targetRect.y + targetRect.height,
+            centerX: targetRect.x + targetRect.width / 2,
+        };
+        const bounds = {
+            left: margin,
+            top: margin,
+            right: window.innerWidth - margin,
+            bottom: window.innerHeight - margin,
+        };
+        direction =
+            targetBounds.bottom + tooltipRect.height > bounds.bottom
+                ? 'up'
+                : 'down';
+        tooltipPos = {
+            x: clamp(
+                targetBounds.centerX - tooltipRect.width / 2,
+                bounds.left,
+                bounds.right - tooltipRect.width,
+            ),
+            y: clamp(
+                direction === 'down'
+                    ? targetBounds.bottom + arrowSize
+                    : targetBounds.top - tooltipRect.height - arrowSize,
+                bounds.top,
+                bounds.bottom - tooltipRect.height,
+            ),
+        };
     }
 
-    $: {
+    $effect(() => {
         update(target, tooltip);
-    }
+    });
 
-    let keyboardFocus = false;
+    let entry: TooltipEntry | undefined = undefined;
 
-    function handleFocus() {
-        showTooltip();
-    }
-
-    function handleKeyDown() {
-        keyboardFocus = true;
-    }
-
-    function attachParent(node: HTMLElement) {
-        if (!node.parentElement) {
+    function attachParent(element: HTMLElement) {
+        if (!element.parentElement) {
             throw new Error('TooltipInline must be a child of another node');
         }
-        target = node.parentElement;
+        target = element.parentElement;
         if (!target.addEventListener || !target.removeEventListener) {
             throw new Error(
                 'target must support addEventListener and removeEventListener',
             );
         }
-        target.addEventListener('mouseenter', showTooltip);
-        target.addEventListener('mouseleave', hideTooltip);
-        target.addEventListener('focus', handleFocus);
-        target.addEventListener('blur', hideTooltip);
-
-        return {
-            destroy() {
-                target.removeEventListener('mouseenter', showTooltip);
-                target.removeEventListener('mouseleave', hideTooltip);
-                target.removeEventListener('focus', handleFocus);
-                target.removeEventListener('blur', hideTooltip);
-            },
+        entry = {
+            id: getTooltipId(),
+            render,
+            element,
         };
+        tooltipAdd(entry);
     }
 
-    function log(value: number) {
-        if (value === 0) {
-            return 0;
+    onDestroy(() => {
+        if (entry) {
+            tooltipRemove(entry);
         }
-        if (value < 0) {
-            return -Math.log(-value);
-        }
-        return Math.log(value);
-    }
-
-    let lastMouseMoveTime = 0;
-    let lastMousePos: { x: number; y: number } = { x: 0, y: 0 };
-    let isMouseMoving = false;
-    let timeout: number;
-    let averageMouseVelocity = 0;
-    let lastMouseVelocity = 0;
-    let mouseJerk = 0;
-    function handleMouseMove(event: MouseEvent) {
-        if (keyboardFocus) {
-            hideTooltip();
-            keyboardFocus = false;
-            return;
-        }
-        if (event.timeStamp - lastMouseMoveTime < 1000 / 60) {
-            return;
-        }
-        lastMouseMoveTime = event.timeStamp;
-        averageMouseVelocity = average(
-            'velocity',
-            Math.sqrt(
-                Math.pow(event.clientX - lastMousePos.x, 2) +
-                    Math.pow(event.clientY - lastMousePos.y, 2),
-            ),
-            2,
-        );
-        mouseJerk = averageMouseVelocity - lastMouseVelocity;
-        lastMouseVelocity = averageMouseVelocity;
-        lastMousePos = { x: event.clientX, y: event.clientY };
-        if (
-            log(averageMouseVelocity) < 2 ||
-            max('jerk', log(mouseJerk)) < 2.6
-        ) {
-            return;
-        }
-        if (isMouseMoving) {
-            clearTimeout(timeout);
-        }
-        if (!show) {
-            isMouseMoving = true;
-        }
-        timeout = window.setTimeout(() => {
-            isMouseMoving = false;
-        }, 1000 / 30);
-    }
-
-    const averageTimes: Record<string, number[]> = {};
-    function average(key: string, value: number, length = 10) {
-        if (!averageTimes[key]) {
-            averageTimes[key] = [];
-        }
-        averageTimes[key].push(value);
-        if (averageTimes[key].length > length) {
-            averageTimes[key].shift();
-        }
-        return (
-            averageTimes[key].reduce((a, b) => a + b, 0) /
-            averageTimes[key].length
-        );
-    }
-    const maxTimes: Record<string, number[]> = {};
-    function max(key: string, value: number) {
-        if (!maxTimes[key]) {
-            maxTimes[key] = [];
-        }
-        maxTimes[key].push(value);
-        if (maxTimes[key].length > 10) {
-            maxTimes[key].shift();
-        }
-        return Math.max(...maxTimes[key]);
-    }
+    });
 </script>
 
-<svelte:window on:mousemove={handleMouseMove} on:keydown={handleKeyDown} />
-<span class="wrapper" use:attachParent>
-    {#if show && !isMouseMoving}
-        <div
-            class="tooltip"
-            class:background={!noBackground}
-            class:top={direction === 'up'}
-            style:left="{tooltipPos.x - offset.x}px"
-            style:top="{tooltipPos.y - offset.y}px"
-            bind:this={tooltip}
-        >
-            <slot />
-        </div>
-        <div
-            class="arrow"
-            class:top={direction === 'up'}
-            style:left="{targetRect.x + targetRect.width / 2 - offset.x}px"
-            style:top="{(direction === 'down'
-                ? targetRect.y + targetRect.height
-                : targetRect.y - 10) - offset.y}px"
-        ></div>
-    {/if}
-</span>
+<span class="wrapper" use:attachParent></span>
+{#snippet render()}
+    <div
+        class="tooltip"
+        class:background={!noBackground}
+        class:top={direction === 'up'}
+        style:left="{tooltipPos.x}px"
+        style:top="{tooltipPos.y}px"
+        bind:this={tooltip}
+    >
+        {@render children?.()}
+    </div>
+    <div
+        class="arrow"
+        class:top={direction === 'up'}
+        style:left="{targetRect.x + targetRect.width / 2}px"
+        style:top="{(direction === 'down'
+            ? tooltipPos.y - 10
+            : tooltipPos.y + tooltipRect.height)}px"
+    ></div>
+{/snippet}
 
 <style lang="scss">
     .tooltip {

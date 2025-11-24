@@ -4,7 +4,11 @@
     import type { AppState } from '../stores';
     import ProgressBar from './ProgressBar.svelte';
 
-    export let state: Extract<AppState, { type: 'update' }>;
+    interface Props {
+        appState: Extract<AppState, { type: 'update' }>;
+    }
+
+    let { appState = $bindable() }: Props = $props();
 
     let updateState: {
         type: 'progress';
@@ -12,7 +16,7 @@
     } | {
         type: 'failed';
         error: string;
-    } | undefined = undefined;
+    } | undefined = $state(undefined);
 
     function formatError(msg: unknown): string {
         if (msg instanceof Error) {
@@ -23,13 +27,13 @@
 </script>
 
 {#if !updateState}
-    <Button onclick={() => {state.resolve();}}>
+    <Button onclick={() => {appState.resolve();}}>
         このバージョンで続行
         <i class="ti ti-cancel"></i>
     </Button>
     <Button primary onclick={async () => {
         try {
-            await applyUpdate(state.update, (event) => {
+            await applyUpdate(appState.update, (event) => {
                 updateState = {
                     type: 'progress',
                     event,
@@ -68,7 +72,7 @@
 {:else if updateState.type === 'failed'}
     <div class="error">
         <p>アップデートに失敗しました: {updateState.error}</p>
-        <Button primary onclick={() => {state.resolve();}}>
+        <Button primary onclick={() => {appState.resolve();}}>
             このバージョンで続行
             <i class="ti ti-cancel"></i>
         </Button>

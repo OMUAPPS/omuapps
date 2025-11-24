@@ -1,20 +1,24 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
     import { Tooltip } from '@omujs/ui';
+    import { currentPage, menuOpen } from '../settings.js';
     import { type PageItem } from './page.js';
-    import { currentPage, menuOpen } from './settings.js';
 
-    export let entry: PageItem<unknown>;
-    export let badge: string | undefined = undefined;
+    interface Props {
+        entry: PageItem<unknown>;
+        badge?: string | undefined;
+    }
 
-    $: title = $t(`page.${entry.id}.title`);
-    $: tooltip = $t(`page.${entry.id}.tooltip`);
-    $: icon = $t(`page.${entry.id}.icon`);
+    let { entry, badge = undefined }: Props = $props();
+
+    let title = $derived($t(`page.${entry.id}.title`));
+    let tooltip = $derived($t(`page.${entry.id}.tooltip`));
+    let icon = $derived($t(`page.${entry.id}.icon`));
 </script>
 
 <button
     class="tab"
-    on:click={() => ($currentPage = entry.id)}
+    onclick={() => ($currentPage = entry.id)}
     class:active={$currentPage === entry.id}
 >
     <Tooltip>

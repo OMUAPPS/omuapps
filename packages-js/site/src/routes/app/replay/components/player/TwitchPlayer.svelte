@@ -1,10 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import type { Playback, Video, VideoInfo } from '../../replay-app';
+    import type { Playback, Video } from '../../replay-app';
 
-    export let video: Extract<Video, { type: 'twitch' }>;
-    export let playback: Playback;
-    export let info: VideoInfo;
+    interface Props {
+        video: Extract<Video, { type: 'twitch' }>;
+        playback: Playback;
+    }
+
+    let { video, playback = $bindable() }: Props = $props();
 
     onMount(() => {
         const options = {

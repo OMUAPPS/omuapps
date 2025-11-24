@@ -1,19 +1,24 @@
-<script context="module" lang="ts">
-    const REPLY_CACHE: Record<string, string> = {};
+<script module lang="ts">
+    const replyCache: Record<string, string> = {};
 </script>
 <script lang="ts">
+
     import { Button, Spinner, Tooltip } from '@omujs/ui';
     import { DOM, type MarshmallowAPI, type Message, type MessageAction } from '../api';
     import { MarshmallowApp } from '../marshmallow-app';
     import { hasPremium } from '../stores';
 
-    export let api: MarshmallowAPI;
-    export let message: Message;
+    interface Props {
+        api: MarshmallowAPI;
+        message: Message;
+    }
+
+    let { api, message = $bindable() }: Props = $props();
 
     const { omu } = MarshmallowApp.getInstance();
 
-    let recognizing = false;
-    let speaking = false;
+    let recognizing = $state(false);
+    let speaking = $state(false);
     omu.dashboard.speechRecognition.listen((status) => {
         if (!recognizing) return;
         switch (status.type) {
@@ -47,7 +52,7 @@
         answer: MessageAction | undefined;
         actions: MessageAction[];
         tweetURL: string;
-    } = { type: 'initializing' };
+    } = $state({ type: 'initializing' });
 
     async function updateActions() {
         if (detail.type !== 'initializing') return;
@@ -79,29 +84,29 @@
 
     updateActions();
 
-    let reply = {
+    let reply = $state({
         value: '',
         id: '',
-    };
+    });
 
     function restoreReply() {
-        reply.value = REPLY_CACHE[message.id] ?? '';
+        if (message.reply) {
+            reply.value = DOM.blockToString(message.reply);
+        } else {
+            reply.value = replyCache[message.id] ?? '';
+        }
         reply.id = message.id;
     }
 
     function saveReply() {
-        REPLY_CACHE[reply.id] = reply.value;
+        replyCache[reply.id] = reply.value;
     }
 
-    $: {
+    $effect(() => {
         if (reply.id !== message.id) {
             restoreReply();
         }
-    }
-    $: if (message?.reply) {
-        reply.value = DOM.blockToString(message.reply);
-        reply.id = message.id;
-    };
+    });
 
     type ActionTranslation = { name: string; icon?: string; remove: boolean };
     function getActionTranslation(action: MessageAction): ActionTranslation {
@@ -136,12 +141,12 @@
         };
     }
 
-    $: replyEnable = !detail || !!message.reply || detail?.type !== 'ok' || !detail.answer;
+    let replyEnable = $derived(!detail || !!message.reply);
 </script>
 
 <div class="reply">
     <div class="textarea">
-        <textarea bind:value={reply.value} on:change={saveReply} disabled={!!message.reply}></textarea>
+        <textarea bind:value={reply.value} onchange={saveReply} disabled={!!message.reply}></textarea>
         <div class="overlay">
             {#if recognizing}
                 <div class="recognizing">
@@ -162,24 +167,26 @@
                 <Button primary={remove} onclick={async () => {
                     await action.submit(api, {});
                     refresh();
-                }} let:promise>
-                    {#if promise}
-                        <Spinner />
-                    {:else}
-                        <i class="ti {icon}"></i>
-                        {#if icon}
-                            <Tooltip>
-                                {name}
-                            </Tooltip>
+                }}>
+                    {#snippet children({ promise })}
+                        {#if promise}
+                            <Spinner />
                         {:else}
-                            {name}
+                            <i class="ti {icon}"></i>
+                            {#if icon}
+                                <Tooltip>
+                                    {name}
+                                </Tooltip>
+                            {:else}
+                                {name}
+                            {/if}
                         {/if}
-                    {/if}
+                    {/snippet}
                 </Button>
             {/each}
             <Button primary={!recognizing} disabled={replyEnable || !$hasPremium} onclick={() => {
                 recognizing = !recognizing;
-                omu.dashboard.speechRecognitionStart();
+                omu.dashboard.requestSpeechRecognition();
             }}>
                 {#if $hasPremium}
                     {#if recognizing}
@@ -198,12 +205,7 @@
                     <i class="ti ti-bubble-text"></i>
                 {/if}
             </Button>
-            {#if message.reply}
-                <a href={detail.tweetURL} target="_blank">
-                    Xで投稿
-                    <i class="ti ti-external-link"></i>
-                </a>
-            {:else}
+            {#if detail?.answer}
                 <Button primary disabled={!reply.value || replyEnable} onclick={async () => {
                     recognizing = false;
                     if (!message) throw new Error('No message selected');
@@ -214,8 +216,10 @@
                         'answer[skip_tweet_confirmation]': 'on',
                         'answer[publish_method]': 'web_share_api',
                     });
+                    detail.answer = undefined;
                     message.reply = { type: 'text', body: reply.value };
-                    delete REPLY_CACHE[reply.id];
+                    refresh();
+                    delete replyCache[reply.id];
                 }}>
                     {#if !!message.reply}
                         <Tooltip>すでに返信しています</Tooltip>
@@ -229,6 +233,11 @@
                     返信
                     <i class="ti ti-message-circle"></i>
                 </Button>
+            {:else}
+                <a href={detail.tweetURL} target="_blank">
+                    Xで投稿
+                    <i class="ti ti-external-link"></i>
+                </a>
             {/if}
         {:else if detail.type === 'fetching'}
             <Button disabled><Spinner /></Button>

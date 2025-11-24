@@ -11,7 +11,7 @@ import {
 import { EventEmitter } from '../event';
 import { IdentifierMap } from '../identifier';
 import { Omu } from '../omu.js';
-import type { TokenProvider } from '../token.js';
+import type { SessioTokenProvider } from '../token.js';
 import { VERSION } from '../version.js';
 
 import type { Connection, Transport } from './connection.js';
@@ -59,7 +59,7 @@ export class Network {
     constructor(
         private readonly omu: Omu,
         public address: Address,
-        private readonly tokenProvider: TokenProvider,
+        private readonly tokenProvider: SessioTokenProvider,
         private transport: Transport,
         private connection?: Connection | undefined,
         private aes?: AES | undefined,
@@ -313,5 +313,10 @@ export class Network {
         }
         this.status = status;
         await this.event.status.emit(status);
+    }
+
+    public close(): void {
+        this.setStatus({ type: 'disconnected' });
+        this.attempt = 0;
     }
 }

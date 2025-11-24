@@ -1,13 +1,24 @@
 <script lang="ts">
-    import { BrowserTokenProvider, Omu, type App, type DisconnectReason } from '@omujs/omu';
+    import { BrowserSession, Omu, type App, type DisconnectReason } from '@omujs/omu';
     import { DisconnectType } from '@omujs/omu/network/packet';
     import { Spinner } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
 
-    export let asset: App;
-    export let single = false;
+    interface Props {
+        asset: App;
+        single?: boolean;
+        children?: import('svelte').Snippet<[any]>;
+        connecting?: import('svelte').Snippet;
+    }
 
-    let state: {
+    let {
+        asset,
+        single = false,
+        children,
+        connecting,
+    }: Props = $props();
+
+    let appState: {
         type: 'initializing';
         browser: boolean;
     } | {
@@ -25,24 +36,24 @@
         type: 'disconnected';
         omu: Omu;
         reason?: DisconnectReason;
-    } = { type: 'initializing', browser: BROWSER };
+    } = $state({ type: 'initializing', browser: BROWSER });
 
     const id = BROWSER && new URLSearchParams(location.search).get('id');
-    const isSessionPresent = BROWSER && new URLSearchParams(location.search).get(BrowserTokenProvider.TOKEN_PARAM_KEY);
+    const isSessionPresent = BROWSER && new URLSearchParams(location.search).get(BrowserSession.PARAM_NAME);
 
     function init(omu: Omu) {
-        state = { type: 'initialized', omu };
+        appState = { type: 'initialized', omu };
 
         omu.onReady(() => {
-            state = { type: 'ready', omu };
+            appState = { type: 'ready', omu };
         });
         omu.network.event.status.listen((netState) => {
             if (netState.type === 'connecting') {
-                state = { type: 'connecting', omu };
+                appState = { type: 'connecting', omu };
             }
         });
         omu.network.event.disconnected.listen((reason) => {
-            state = {
+            appState = {
                 type: 'disconnected',
                 omu,
                 reason,
@@ -56,27 +67,27 @@
         const omu = new Omu(asset.join(id));
         init(omu);
     } else if (BROWSER) {
-        state = { type: 'invalid_id' };
+        appState = { type: 'invalid_id' };
     }
 </script>
-{#if state.type === 'invalid_id'}
+{#if appState.type === 'invalid_id'}
     <div class="modal">
         <div class="info">
             <h1>無効なアセットIDです</h1>
             <h2>URLに正しいアセットIDを指定してください</h2>
         </div>
     </div>
-{:else if state.type !== 'initializing'}
-    <slot omu={state.omu} />
+{:else if appState.type !== 'initializing'}
+    {@render children?.({ omu: appState.omu })}
 {/if}
-{#if state.type === 'connecting'}
-    <slot name="connecting">
+{#if appState.type === 'connecting'}
+    {#if connecting}{@render connecting()}{:else}
         <div class="loading">
             <Spinner />
         </div>
-    </slot>
-{:else if state.type === 'disconnected' && state.reason?.type !== DisconnectType.SERVER_RESTART}
-    {@const { omu: { app: { metadata }, i18n } } = state}
+    {/if}
+{:else if appState.type === 'disconnected' && appState.reason?.type !== DisconnectType.SERVER_RESTART}
+    {@const { omu: { app: { metadata }, i18n } } = appState}
     <div class="container">
         <div class="modal">
             {#if metadata}
@@ -86,18 +97,18 @@
                     {/if}
                 </div>
             {/if}
-            {#if !state.reason}
+            {#if !appState.reason}
                 <h1>切断されました</h1>
-            {:else if state.reason.type === DisconnectType.ANOTHER_CONNECTION}
+            {:else if appState.reason.type === DisconnectType.ANOTHER_CONNECTION}
                 <h1>同じIDを持つアセットが接続されました</h1>
                 <small>ソースは複製できません。どちらかを閉じて再読込してください</small>
-            {:else if state.reason.type === DisconnectType.PERMISSION_DENIED}
+            {:else if appState.reason.type === DisconnectType.PERMISSION_DENIED}
                 <h1>権限が拒否されました</h1>
                 <small>このソースを再読み込みしてください</small>
-            {:else if state.reason.type === DisconnectType.APP_REMOVED}
+            {:else if appState.reason.type === DisconnectType.APP_REMOVED}
                 <h1>アプリが削除されました</h1>
                 <small>このソースを削除することができます</small>
-            {:else if state.reason.type === DisconnectType.INVALID_TOKEN}
+            {:else if appState.reason.type === DisconnectType.INVALID_TOKEN}
                 {#if isSessionPresent}
                     <h1>認証に失敗しました</h1>
                 {:else}
@@ -108,10 +119,10 @@
                 <h1>切断されました</h1>
             {/if}
         </div>
-        {#if state.reason}
+        {#if appState.reason}
             <div class="error">
                 <h2>エラーコード</h2>
-                <pre>{state.reason.type}: {state.reason.message}</pre>
+                <pre>{appState.reason.type}: {appState.reason.message}</pre>
             </div>
         {/if}
     </div>

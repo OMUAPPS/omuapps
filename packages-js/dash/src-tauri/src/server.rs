@@ -301,10 +301,17 @@ impl Server {
 
     fn save_token(token: &str, option: &ServerConfig) -> Result<(), String> {
         let token_path = option.get_token_path();
+        let parent_dir = token_path.parent().unwrap();
+        std::fs::create_dir_all(&parent_dir).map_err(|err| {
+            format!(
+                "Failed to create token file directory at {}: {}",
+                parent_dir.display(),
+                err
+            )
+        })?;
         std::fs::write(token_path.clone(), token).map_err(|err| {
             format!(
-                "Port {} is already in use, but failed to write token file at {}: {}",
-                option.port,
+                "Failed to write token file at {}: {}",
                 token_path.display(),
                 err
             )

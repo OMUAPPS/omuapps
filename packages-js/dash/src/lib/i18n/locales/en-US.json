@@ -254,7 +254,6 @@
         "setting": {
             "devMode": "Developer Mode",
             "betaMode": "Enable Beta Features",
-            "betaModeDescription": "Requires app restart to enable.",
             "language": "Language",
             "layoutInvert": "Invert Layout",
             "debug": "Debug",
@@ -293,5 +292,14 @@
         "skip": "Skip Setup",
         "app_hint": "You can add various apps from the site!",
         "finish": "Got it"
+    },
+    "main": {
+        "page": {
+            "loadError": {
+                "title": "Failed to Load Page",
+                "message": "An error occurred while loading the page.",
+                "retry": "Retry"
+            }
+        }
     }
 }

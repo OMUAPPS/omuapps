@@ -1,7 +1,12 @@
 <script lang="ts">
+    import DebugValue from './DebugValue.svelte';
     import type { Value } from '../script/script.js';
 
-    export let value: Value;
+    interface Props {
+        value: Value;
+    }
+
+    let { value }: Props = $props();
 </script>
 
 {#if value.type === 'string'}
@@ -14,7 +19,7 @@
         {#if i > 0}
             <span>,</span>
         {/if}
-        <svelte:self value={item} />
+        <DebugValue value={item} />
     {/each}
     <span>]</span>
 {:else if value.type === 'void'}

@@ -1,9 +1,9 @@
 import { App } from '@omujs/omu';
 import type { DragDropFile } from '@omujs/omu/api/dashboard';
-import { TauriEvent } from '@tauri-apps/api/event';
-import type { FileInfo } from '@tauri-apps/plugin-fs';
+import { listen, TauriEvent } from '@tauri-apps/api/event';
+import { basename } from '@tauri-apps/api/path';
+import { stat, type FileInfo } from '@tauri-apps/plugin-fs';
 import { dashboard, omu } from './client.js';
-import { listen, tauriFs, tauriPath } from './tauri.js';
 
 type DragDrop = {
     files: DragDropFile[];
@@ -32,12 +32,12 @@ function getFileType(info: FileInfo): 'file' | 'directory' | null {
 async function getFilesByPaths(paths: string[]): Promise<DragDropFile[]> {
     const files: DragDropFile[] = [];
     for (const path of paths) {
-        const stat = await tauriFs.stat(path);
-        const type = getFileType(stat);
+        const info = await stat(path);
+        const type = getFileType(info);
         if (!type) continue;
         files.push({
-            name: await tauriPath.basename(path),
-            size: stat.size,
+            name: await basename(path),
+            size: info.size,
             type,
         });
     }

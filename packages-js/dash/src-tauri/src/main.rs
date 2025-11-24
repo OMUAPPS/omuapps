@@ -83,6 +83,7 @@ fn main() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(
             tauri_plugin_log::Builder::new()
@@ -144,7 +145,9 @@ fn main() {
                     if Some(Value::Bool(true))
                         == matches.args.get("background").map(|arg| arg.value.clone())
                     {
-                        info!("Running dashboard in background.")
+                        info!("Running dashboard in background.");
+                        let window = app.get_webview_window("main").unwrap();
+                        window.hide().unwrap();
                     }
                 }
                 Err(_) => {}

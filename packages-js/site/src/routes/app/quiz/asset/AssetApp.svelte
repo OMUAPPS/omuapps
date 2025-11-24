@@ -4,7 +4,11 @@
     import { QuizApp } from '../quiz-app';
     import QuestionRenderer from '../scenes/_components/QuestionRenderer.svelte';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const quizApp = QuizApp.create(omu);
     const { sceneCurrent } = quizApp;
     sceneCurrent.subscribe((value) => {

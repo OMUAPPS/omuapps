@@ -24,12 +24,12 @@
     const obs = OBSPlugin.create(omu);
     setGlobal({ omu, chat, obs });
     const roulette = new RouletteApp(omu);
-    const { entries, state, config } = roulette;
+    const { entries, rouletteState, config } = roulette;
 
-    let joinKeyword = '';
+    let joinKeyword = $state('');
 
     async function onMessage(message: Message) {
-        if ($state.type !== 'recruiting') return;
+        if ($rouletteState.type !== 'recruiting') return;
         if (!message.authorId) return;
 
         if (message.text.includes(joinKeyword)) {
@@ -49,6 +49,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.ASSET_PERMISSION_ID,
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
@@ -59,9 +60,11 @@
 </script>
 
 <AppPage>
-    <header slot="header">
-        <AppHeader app={APP} />
-    </header>
+    {#snippet header()}
+        <header>
+            <AppHeader app={APP} />
+        </header>
+    {/snippet}
 
     <main>
         <div class="left">
@@ -71,10 +74,10 @@
                     <i class="ti ti-users"></i>
                 </span>
                 <button
-                    class:recruiting={$state.type === 'recruiting'}
-                    on:click={() => roulette.toggleRecruiting()}
+                    class:recruiting={$rouletteState.type === 'recruiting'}
+                    onclick={() => roulette.toggleRecruiting()}
                 >
-                    {#if $state.type === 'recruiting'}
+                    {#if $rouletteState.type === 'recruiting'}
                         募集を終了
                         <i class="ti ti-player-pause"></i>
                     {:else}
@@ -103,13 +106,13 @@
                     <i class="ti ti-list-numbers"></i>
                 </span>
                 <span class="buttons">
-                    <button on:click={() => roulette.clearEntries()}>
+                    <button onclick={() => roulette.clearEntries()}>
                         <Tooltip>エントリーをすべて消す</Tooltip>
                         クリア
                         <i class="ti ti-trash"></i>
                     </button>
                     <button
-                        on:click={() => {
+                        onclick={() => {
                             let name = 'エントリー';
                             let i = 1;
                             while (
@@ -144,22 +147,23 @@
                 dimensions={{ width: 1080, height: 1080 }}
                 asset={ASSET_APP}
                 permissions={[
+                    OmuPermissions.ASSET_PERMISSION_ID,
                     ChatPermissions.CHAT_PERMISSION_ID,
                 ]}
             />
         </div>
-        <div class="right" class:end={$state.type === 'spin-result'}>
+        <div class="right" class:end={$rouletteState.type === 'spin-result'}>
             <div class="roulette">
                 <RouletteRenderer {roulette} />
             </div>
-            {#if $state.type === 'spin-result'}
+            {#if $rouletteState.type === 'spin-result'}
                 {@const message =
-                    $state.result.entry.message &&
-                        Message.deserialize($state.result.entry.message)}
+                    $rouletteState.result.entry.message &&
+                        Message.deserialize($rouletteState.result.entry.message)}
                 <div class="result-container">
                     <div class="spin-result">
                         <p>
-                            {$state.result.entry.name}
+                            {$rouletteState.result.entry.name}
                         </p>
                         {#if message && message.authorId}
                             <div class="message">
@@ -192,23 +196,23 @@
                     <SpinButton {roulette} />
                 </div>
                 <div class="state">
-                    <span class:current={$state.type === 'spin-start'}
+                    <span class:current={$rouletteState.type === 'spin-start'}
                     >抽選開始</span
                     ><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === 'recruiting'}
+                    <span class:current={$rouletteState.type === 'recruiting'}
                     >募集中</span
                     ><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === 'recruiting-end'}
+                    <span class:current={$rouletteState.type === 'recruiting-end'}
                     >募集終了</span
                     >
                     <br />
-                    <span class:current={$state.type === 'idle'}>待機中</span><i
+                    <span class:current={$rouletteState.type === 'idle'}>待機中</span><i
                         class="ti ti-chevron-right"
                     ></i>
-                    <span class:current={$state.type === 'spinning'}
+                    <span class:current={$rouletteState.type === 'spinning'}
                     >抽選中 <small>({$config.duration}秒)</small></span
                     ><i class="ti ti-chevron-right"></i>
-                    <span class:current={$state.type === 'spin-result'}
+                    <span class:current={$rouletteState.type === 'spin-result'}
                     >結果</span
                     >
                 </div>

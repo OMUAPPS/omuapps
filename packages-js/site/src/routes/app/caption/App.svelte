@@ -1,28 +1,27 @@
 <script lang="ts">
-    import { OBSPlugin } from '@omujs/obs';
+
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
         AssetButton,
         Button,
         Combobox,
-        Tooltip,
+        Slider,
     } from '@omujs/ui';
     import CaptionRenderer from './CaptionRenderer.svelte';
     import { ASSET_APP } from './app';
-    import { CaptionApp, FONTS, LANGUAGES_OPTIONS, type LanguageKey } from './caption-app.js';
+    import { CaptionApp, FONTS } from './caption-app.js';
 
-    export let omu: Omu;
-    export let obs: OBSPlugin;
-    export let captionApp: CaptionApp;
-
-    const { config } = captionApp;
-    omu.dashboard.speechRecognitionStart();
-
-    function resetLang() {
-        $config.lang = window.navigator.language as LanguageKey;
+    interface Props {
+        omu: Omu;
+        captionApp: CaptionApp;
     }
 
-    $: {
+    let { omu, captionApp }: Props = $props();
+
+    const { config } = captionApp;
+    omu.dashboard.requestSpeechRecognition();
+
+    $effect(() => {
         if ($config.style.fonts.length === 0) {
             $config.style.fonts = [
                 {
@@ -31,28 +30,15 @@
                 },
             ];
         }
-    }
+    });
 
-    $: console.log($config.style.fonts[0]);
+    $effect(() => {
+        console.log($config.style.fonts[0]);
+    });
 </script>
 
 <main>
     <div class="options omu-scroll">
-        <h2>
-            言語選択
-            <i class="ti ti-language-hiragana"></i>
-            <Button primary onclick={resetLang}>
-                <Tooltip>
-                    言語をリセット
-                </Tooltip>
-                <i class="ti ti-reload"></i>
-            </Button>
-        </h2>
-        <section>
-            <Combobox options={LANGUAGES_OPTIONS} value={$config.lang} on:change={({ detail: { value } }) => {
-                $config.lang = value;
-            }} />
-        </section>
         <h2>
             フォント
             <i class="ti ti-typography"></i>
@@ -73,22 +59,20 @@
             <div>
                 <div>
                     <small> フォントサイズ </small>
-                    <input
-                        type="range"
-                        min="10"
-                        max="100"
-                        step="1"
+                    <Slider
+                        min={10}
+                        max={100}
+                        step={1}
                         bind:value={$config.style.fontSize}
                     />
                     {$config.style.fontSize}
                 </div>
                 <div>
                     <small> フォントウェイト </small>
-                    <input
-                        type="range"
-                        min="100"
-                        max="900"
-                        step="100"
+                    <Slider
+                        min={100}
+                        max={900}
+                        step={100}
                         bind:value={$config.style.fontWeight}
                     />
                     {$config.style.fontWeight}

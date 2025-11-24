@@ -1,9 +1,8 @@
 <script lang="ts">
+    import AppWindow from '$lib/common/AppWindow.svelte';
     import { i18n } from '$lib/i18n/i18n-context.js';
     import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
-    import { language } from '$lib/main/settings.js';
-    import { waitForTauri } from '$lib/tauri.js';
-    import Window from '$lib/Window.svelte';
+    import { language } from '$lib/settings.js';
     import { createI18nUnion, type I18n } from '@omujs/i18n';
     import '@omujs/ui';
     import { Theme } from '@omujs/ui';
@@ -12,9 +11,10 @@
     import FatalErrorWindow from './_components/FatalErrorWindow.svelte';
     import './styles.scss';
 
+    const { children } = $props();
+
     async function init() {
         await loadLocale();
-        await waitForTauri();
 
         language.subscribe(loadLocale);
     }
@@ -42,20 +42,20 @@
     onMount(async () => {
         try {
             await init();
-            state = { type: 'loaded' };
+            loadingState = { type: 'loaded' };
         } catch (err) {
-            state = { type: 'failed', message: formatError(err) };
+            loadingState = { type: 'failed', message: formatError(err) };
         }
     });
 
-    let state: {
+    let loadingState: {
         type: 'initializing';
     } | {
         type: 'failed';
         message: string;
     } | {
         type: 'loaded';
-    } = { type: 'initializing' };
+    } = $state({ type: 'initializing' });
 </script>
 
 <svelte:head>
@@ -63,10 +63,10 @@
     <Theme />
 </svelte:head>
 
-{#if state.type === 'loaded'}
-    <Window>
-        <slot />
-    </Window>
-{:else if state.type === 'failed'}
-    <FatalErrorWindow message={state.message} />
+{#if loadingState.type === 'loaded'}
+    <AppWindow>
+        {@render children?.()}
+    </AppWindow>
+{:else if loadingState.type === 'failed'}
+    <FatalErrorWindow message={loadingState.message} />
 {/if}

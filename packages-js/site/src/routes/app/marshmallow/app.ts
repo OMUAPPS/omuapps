@@ -18,7 +18,7 @@ export const APP = new App(APP_ID, {
         },
         icon: 'ti-notes',
         image: thumbnail,
-        tags: ['underdevelopment', 'tool'] as TagKey[],
+        tags: ['tool'] as TagKey[],
     }),
 });
 

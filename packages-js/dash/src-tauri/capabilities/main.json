@@ -40,6 +40,7 @@
         "fs:allow-stat",
         "fs:allow-read",
         "fs:allow-read-file",
+        "store:default",
         {
             "identifier": "fs:scope",
             "allow": [

@@ -5,7 +5,11 @@
     import Tooltip from './Tooltip.svelte';
     import { applyOpacity } from './utils/class-helper.js';
 
-    export let role: Models.Role;
+    interface Props {
+        role: Models.Role;
+    }
+
+    let { role }: Props = $props();
 </script>
 
 <div

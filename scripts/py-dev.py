@@ -39,7 +39,7 @@ def check_port(port: int, name: str):
     used = check_port_in_use(port)
     if used.is_ok is True:
         return
-    print(f"Port {port} ({name}) is used by: {", ".join([f"{p.name()} ({p.pid})" for p in used.err])}")
+    print(f"Port {port} ({name}) is used by: {', '.join([f'{p.name()} ({p.pid})' for p in used.err])}")
     for process in used.err:
         kill_process(process).unwrap()
 
@@ -67,6 +67,8 @@ async def start_process(command: str):
             await process.wait()
             print(f"Process {command} exited with code {process.returncode}")
         except asyncio.CancelledError:
+            if process:
+                process.terminate()
             break
         except Exception:
             traceback.print_exc()

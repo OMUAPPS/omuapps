@@ -119,6 +119,12 @@ class Server:
         return web.Response(text=content, content_type="text/html")
 
     async def _handle_get_index_install(self, request: web.Request) -> web.StreamResponse:
+        # Check host
+        if request.remote:
+            remote_url = URL(request.remote)
+            if remote_url.host not in {"localhost", "127.0.0.1", self.address.host}:
+                return self._error_response("Invalid Host")
+
         raw_index_url = request.query.get("index_url")
         if not raw_index_url:
             return self._error_response("inedx_url not provided")
@@ -158,6 +164,7 @@ class Server:
         )
 
     async def _handle_post_index_install(self, request: web.Request) -> web.StreamResponse:
+        # Check origin
         origin = request.headers.get("Origin")
         if origin is None:
             return self._error_response("Missing Origin header")
@@ -166,6 +173,12 @@ class Server:
             return self._error_response("Invalid Origin Host")
         if origin_url.port not in {self.address.port}:
             return self._error_response("Invalid Origin Port")
+        # Check host
+        if request.remote:
+            remote_url = URL(request.remote)
+            if remote_url.host not in {"localhost", "127.0.0.1", self.address.host}:
+                return self._error_response("Invalid Host")
+
         install_request: InstallRequest = await request.json()
         raw_index_url = URL(install_request["index"])
         key = Identifier.from_key(install_request["id"]).namespace

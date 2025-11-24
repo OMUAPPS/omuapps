@@ -3,7 +3,7 @@
     import { Tooltip } from '@omujs/ui';
 </script>
 
-<div class="content-width open-source">
+<section class="content-width open-source">
     <div class="section-header">
         <h3>
             オープンソース
@@ -22,36 +22,11 @@
             <i class="ti ti-arrow-right"></i>
         </a>
     </div>
-</div>
+</section>
 
 <style lang="scss">
-    .open-source {
-        position: relative;
-        height: 40rem;
-        margin-top: 18rem;
-
-        > .image {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2rem;
-            height: 16rem;
-
-            > img {
-                display: block;
-                width: 100%;
-                object-fit: cover;
-                border-radius: 0.5rem;
-                box-shadow: 0.25rem 0.5rem 1rem var(--color-outline);
-                width: 100%;
-                height: 100%;
-            }
-        }
-    }
-
-    .info {
-        display: flex;
-        flex-direction: column;
+    section {
+        margin-top: 9rem;
     }
 
     a {
@@ -60,7 +35,7 @@
 
     .section-header {
         > h3 {
-            font-size: 1.5rem;
+            font-size: 2rem;
             border-bottom: 2px solid var(--color-1);
             color: var(--color-1);
             text-align: center;
@@ -73,9 +48,9 @@
         }
     }
 
-    @container (width < 400px) {
-        .info {
-            font-size: 1rem;
-        }
+    img {
+        height: 16rem;
+        width: 100%;
+        object-fit: cover;
     }
 </style>

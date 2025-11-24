@@ -1,34 +1,40 @@
 <script lang="ts">
+
     import type { App } from '@omujs/omu';
-    import { onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
     import Header from './Header.svelte';
     import { omu } from './stores.js';
 
-    export let app: App;
+    interface Props {
+        app: App;
+        children?: import('svelte').Snippet;
+    }
 
-    let title = '';
-    let icon = '';
-    let description = '';
+    let { app, children }: Props = $props();
 
-    const unlisten = $omu.onReady(() => {
-        const metadata = app.metadata;
-        if (!metadata) {
-            return;
-        }
-        if (metadata.name) {
-            title = $omu.i18n.translate(metadata.name);
-        }
-        if (metadata.icon) {
-            icon = $omu.i18n.translate(metadata.icon);
-        }
-        if (metadata.description) {
-            description = $omu.i18n.translate(metadata.description);
-        }
+    let title = $state('');
+    let icon = $state('');
+    let description = $state('');
+
+    onMount(() => {
+        return $omu.onReady(() => {
+            const metadata = app.metadata;
+            if (!metadata) {
+                return;
+            }
+            if (metadata.name) {
+                title = $omu.i18n.translate(metadata.name);
+            }
+            if (metadata.icon) {
+                icon = $omu.i18n.translate(metadata.icon);
+            }
+            if (metadata.description) {
+                description = $omu.i18n.translate(metadata.description);
+            }
+        });
     });
-
-    onDestroy(unlisten);
 </script>
 
 <Header {title} {icon} subtitle={description}>
-    <slot />
+    {@render children?.()}
 </Header>

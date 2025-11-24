@@ -1,7 +1,12 @@
 <script lang="ts">
+    import ElementRenderer from './ElementRenderer.svelte';
     import type { ContentBlock } from '../api';
 
-    export let block: ContentBlock | undefined;
+    interface Props {
+        block: ContentBlock | undefined;
+    }
+
+    let { block }: Props = $props();
 </script>
 
 {#if block === undefined}
@@ -12,7 +17,7 @@
     <img src={block.src} alt="">
 {:else if block.type === 'block'}
     {#each block.children as child, index (index)}
-        <svelte:self block={child} />
+        <ElementRenderer block={child} />
     {/each}
 {:else}
     /* {JSON.stringify(block)} */

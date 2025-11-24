@@ -8,6 +8,7 @@
     import IndexFeatures from './_components/IndexFeatures.svelte';
     import IndexLinks from './_components/IndexLinks.svelte';
     import IndexOpenSource from './_components/IndexOpenSource.svelte';
+    import IndexQA from './_components/IndexQA.svelte';
 </script>
 
 <svelte:head>
@@ -29,6 +30,7 @@
         <img class="dashboard" src={dashboard} alt="">
         <IndexAbout />
         <IndexFeatures />
+        <IndexQA />
         <IndexOpenSource />
         <IndexLinks />
     </Content>
@@ -67,8 +69,8 @@
 
     .dashboard {
         position: absolute;
-        top: 25%;
-        height: 100%;
+        top: 10%;
+        height: fit-content;
         margin-left: max(40rem, 0%);
         object-fit: cover;
         filter: drop-shadow(-2px 4px 10px var(--color-outline));

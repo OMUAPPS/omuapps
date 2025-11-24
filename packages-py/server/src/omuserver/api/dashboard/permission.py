@@ -69,8 +69,8 @@ DASHBOARD_WEBVIEW_PERMISSION = PermissionType(
             "en": "Use external sites to login",
         },
         "note": {
-            "ja": "すべてのアクセスが可能なため、慎重に扱う必要があります",
-            "en": "Since it can access everything, it needs to be handled carefully",
+            "ja": "サイトへのすべてのアクセスが可能なため、慎重に扱う必要があります",
+            "en": "Since it has access to all sites, it needs to be handled carefully",
         },
     },
 )

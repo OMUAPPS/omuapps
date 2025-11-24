@@ -5,8 +5,12 @@
 
     const { gameConfig } = getGame();
 
-    export let entry: GalleryItem;
-    $: order = entry.order;
+    interface Props {
+        entry: GalleryItem;
+    }
+
+    let { entry }: Props = $props();
+    let order = $derived(entry.order);
 </script>
 
 <article>

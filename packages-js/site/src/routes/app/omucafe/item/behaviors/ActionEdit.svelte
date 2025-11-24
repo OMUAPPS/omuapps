@@ -3,10 +3,14 @@
     import { getGame } from '../../omucafe-app.js';
     import type { Action } from './action.js';
 
-    export let behavior: Action;
+    interface Props {
+        behavior: Action;
+    }
+
+    let { behavior = $bindable() }: Props = $props();
 
     const { gameConfig } = getGame();
-    $: scripts = {
+    let scripts = $derived({
         '': {
             label: '',
             values: undefined,
@@ -17,7 +21,7 @@
                 value: key,
             }];
         })]),
-    };
+    });
 </script>
 
 <div class="behavior">

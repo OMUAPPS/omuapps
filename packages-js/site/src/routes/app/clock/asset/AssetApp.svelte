@@ -4,7 +4,11 @@
     import { ClockApp } from '../clock-app';
     import ClockRenderer from '../components/ClockRenderer.svelte';
 
-    export let omu: Omu;
+    interface Props {
+        omu: Omu;
+    }
+
+    let { omu }: Props = $props();
     const clockApp = new ClockApp(omu);
 
     if (BROWSER) {

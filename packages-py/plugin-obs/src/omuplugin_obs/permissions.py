@@ -2,6 +2,17 @@ from omu.api.permission.permission import PermissionType
 
 from .const import PLUGIN_ID
 
+OBS_INSTALL_PERMISSION_ID = PLUGIN_ID / "source" / "read"
+OBS_INSTALL_PERMISSION_TYPE = PermissionType(
+    OBS_INSTALL_PERMISSION_ID,
+    {
+        "level": "low",
+        "name": {
+            "ja": "OBSプラグインのインストール",
+            "en": "Install OBS plugin",
+        },
+    },
+)
 OBS_SOURCE_READ_PERMISSION_ID = PLUGIN_ID / "source" / "read"
 OBS_SOURCE_READ_PERMISSION_TYPE = PermissionType(
     OBS_SOURCE_READ_PERMISSION_ID,

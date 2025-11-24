@@ -1,13 +1,22 @@
 <script lang="ts">
     import type { CreateBrowserRequest } from '@omujs/obs/types.js';
-    import type { App, SessionParam } from '@omujs/omu';
-    import { BrowserTokenProvider, OmuPermissions, type IntoId } from '@omujs/omu';
+    import type { App } from '@omujs/omu';
+    import { BrowserSession, OmuPermissions, type IntoId } from '@omujs/omu';
     import { obs, omu, Spinner, Tooltip } from '@omujs/ui';
 
-    export let asset: App;
-    export let single = false;
-    export let dimensions: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined = undefined;
-    export let permissions: IntoId[] = [];
+    interface Props {
+        asset: App;
+        single?: boolean;
+        dimensions?: { width: CreateBrowserRequest['width']; height: CreateBrowserRequest['height'] } | undefined;
+        permissions?: IntoId[];
+    }
+
+    let {
+        asset,
+        single = false,
+        dimensions = undefined,
+        permissions = [],
+    }: Props = $props();
 
     async function create() {
         const name = $omu.app.metadata?.name ? $omu.i18n.translate($omu.app.metadata?.name) : 'Asset';
@@ -25,7 +34,7 @@
         creating = null;
     }
 
-    let obsConnected = false;
+    let obsConnected = $state(false);
     $obs.on('connected', () => (obsConnected = true));
     $obs.on('disconnected', () => (obsConnected = false));
     obsConnected = $obs.isConnected();
@@ -38,7 +47,7 @@
             url.searchParams.set('id', timestamp);
             app = app.join(timestamp);
         }
-        const result = await $omu.sessions.generateToken({
+        const session = await $omu.sessions.generateToken({
             app,
             permissions: [
                 OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
@@ -47,24 +56,16 @@
                 ...permissions,
             ],
         });
-        if (result.type === 'error') {
-            throw new Error(result.message);
-        }
-        const { token } = result;
-        const tokenJson: SessionParam = {
-            token,
-            address: $omu.address,
-        };
-        url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(tokenJson));
+        url.searchParams.set(BrowserSession.PARAM_NAME, JSON.stringify(session));
         return url;
     }
 
-    let creating: Promise<void> | null = null;
+    let creating: Promise<void> | null = $state(null);
 </script>
 
 {#if obsConnected}
     <div class="container">
-        <button on:click={() => (creating = create())} class="add-button" disabled={creating !== null}>
+        <button onclick={() => (creating = create())} class="add-button" disabled={creating !== null}>
             {#if creating}
                 作成中...
                 <Spinner />

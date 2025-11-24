@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import { ButtonMini, Tooltip } from '@omujs/ui';
     import { setContext } from 'svelte';
     import FitInput from '../components/FitInput.svelte';
@@ -9,10 +11,14 @@
     import { executeExpression, validateScript, value, type Script } from './script.js';
     import { SCRIPT_EDITOR_CONTEXT, type ScriptEditorContext, type ValueEdit } from './scripteditor.js';
 
-    export let script: Script;
+    interface Props {
+        script: Script;
+    }
+
+    let { script = $bindable() }: Props = $props();
     const { scene, gameConfig, globals } = getGame();
 
-    let edit: ValueEdit | null = null;
+    let edit: ValueEdit | null = $state(null);
 
     setContext(SCRIPT_EDITOR_CONTEXT, {
         editValue(newEdit) {
@@ -23,9 +29,11 @@
         },
     } satisfies ScriptEditorContext);
 
-    $: if (edit) {
-        edit.setter(edit.value);
-    }
+    run(() => {
+        if (edit) {
+            edit.setter(edit.value);
+        }
+    });
 </script>
 
 <div class="editor">
@@ -37,7 +45,7 @@
                 </Tooltip>
                 <FitInput bind:value={script.name} />
             </h1>
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 $scene = { type: 'product_list' };
                 delete $gameConfig.items[script.id];
             }} primary>
@@ -46,7 +54,7 @@
                 </Tooltip>
                 <i class="ti ti-trash"></i>
             </ButtonMini>
-            <ButtonMini on:click={async () => {
+            <ButtonMini onclick={async () => {
                 await navigator.clipboard.writeText(script.id);
             }} primary>
                 <Tooltip>
@@ -54,7 +62,7 @@
                 </Tooltip>
                 <i class="ti ti-copy"></i>
             </ButtonMini>
-            <ButtonMini on:click={() => {
+            <ButtonMini onclick={() => {
                 const ctx = globals.newContext();
                 executeExpression(ctx, script.expression);
             }} primary>
@@ -67,28 +75,28 @@
         {#if edit}
             <div class="edit">
                 <div class="types">
-                    <button on:click={() => {
+                    <button onclick={() => {
                         if (!edit) return;
                         edit.value = value.variable('');
                     }}>
                         <i class="ti ti-variable"></i>
                         variable
                     </button>
-                    <button on:click={() => {
+                    <button onclick={() => {
                         if (!edit) return;
                         edit.value = value.string('');
                     }}>
                         <i class="ti ti-text-size"></i>
                         string
                     </button>
-                    <button on:click={() => {
+                    <button onclick={() => {
                         if (!edit) return;
                         edit.value = value.invoke(value.void(), []);
                     }}>
                         <i class="ti ti-caret-right-filled"></i>
                         invoke
                     </button>
-                    <button on:click={() => {
+                    <button onclick={() => {
                         if (!edit) return;
                         edit.value = value.void();
                     }}>
@@ -110,25 +118,25 @@
                     <div class="property">
                         <span>args</span>
                         <ul class="args">
-                            {#each edit.value.args as arg, index (index)}
+                            {#each edit.value.args as _, index (index)}
                                 <li>
-                                    <button on:click={() => {
+                                    <button onclick={() => {
                                         if (!edit || edit.value.type !== 'invoke') return;
                                         edit.value.args = edit.value.args.filter((_, idx) => idx !== index);
-                                    }}>
+                                    }} title="削除">>
                                         <i class="ti ti-x"></i>
                                     </button>
-                                    <EditValue bind:value={arg} />
+                                    <EditValue bind:value={edit.value.args[index]} />
                                 </li>
                             {/each}
                             <li>
-                                <button on:click={() => {
+                                <button onclick={() => {
                                     if (!edit || edit.value.type !== 'invoke') return;
                                     edit.value.args = [
                                         ...edit.value.args,
                                         value.void(),
                                     ];
-                                }}>
+                                }} title="追加">
                                     <i class="ti ti-plus"></i>
                                 </button>
                             </li>
@@ -146,7 +154,7 @@
         {/if}
         <div class="actions">
             JSONとして管理
-            <ButtonMini primary on:click={() => {
+            <ButtonMini primary onclick={() => {
                 navigator.clipboard.writeText(JSON.stringify(script, null, 2));
             }}>
                 <Tooltip>
@@ -155,7 +163,7 @@
                 <i class="ti ti-copy"></i>
             </ButtonMini>
         </div>
-        <textarea value={JSON.stringify(script, null, 2)} on:input={(event) => {
+        <textarea value={JSON.stringify(script, null, 2)} oninput={(event) => {
             const { value } = event.currentTarget;
             try {
                 const obj = JSON.parse(value);

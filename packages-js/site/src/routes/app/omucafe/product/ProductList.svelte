@@ -9,7 +9,11 @@
     import { getGame } from '../omucafe-app.js';
     import { createScript } from '../script/script.js';
 
-    export let search: string = '';
+    interface Props {
+        search?: string;
+    }
+
+    let { search = '' }: Props = $props();
 
     const { gameConfig: config, scene } = getGame();
 
@@ -46,7 +50,7 @@
 </div>
 <div class="list">
     {#each Object.entries($config.products).filter(([,item]) => compareSearch(item, search)) as [id, product] (id)}
-        <button on:click={() => {
+        <button onclick={() => {
             $scene = { type: 'product_edit', id };
         }}>
             <div class="item">
@@ -85,7 +89,7 @@
 </div>
 <div class="list">
     {#each Object.entries($config.items).filter(([,item]) => compareSearch(item, search)) as [id, item] (id)}
-        <button on:click={() => {
+        <button onclick={() => {
             $scene = { type: 'item_edit', id };
         }}>
             <div class="item">
@@ -124,7 +128,7 @@
 </div>
 <div class="list">
     {#each Object.entries($config.effects).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
-        <button on:click={() => {
+        <button onclick={() => {
             $scene = { type: 'effect_edit', id, time: Time.now() };
         }}>
             <div class="item">
@@ -157,7 +161,7 @@
 </div>
 <div class="list">
     {#each Object.entries($config.scripts).filter(([,item]) => compareSearch(item, search)) as [id, effect] (id)}
-        <button on:click={() => {
+        <button onclick={() => {
             $scene = { type: 'script_edit', id };
         }}>
             <div class="item">

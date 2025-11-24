@@ -10,6 +10,13 @@ const config = {
         scss: { includePaths: ['src'] },
     }),
 
+    compilerOptions: {
+        runes: true,
+        experimental: {
+            async: true
+        }
+    },
+
     kit: {
         adapter: adapter(),
     },

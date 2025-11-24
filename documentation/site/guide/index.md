@@ -2,7 +2,7 @@
 index: 1
 icon: book
 title: OMUAPPSの導入方法
-description: アプリの導入から使い方まで
+description: 導入からアプリを追加するまで
 ---
 
 # OMUAPPSの導入方法
@@ -20,7 +20,7 @@ description: アプリの導入から使い方まで
 
 ![Edgeの警告画面](/img/download_warning_edge_0.png)
 
-> [警告が出て止まった場合はこちら](%DOCS_ROOT%/guide/download-warning)
+[警告が出て止まった場合はこちら](%DOCS_ROOT%/guide/download-warning)
 
 ## なぜ警告が出るのか
 
@@ -51,11 +51,13 @@ OMUAPPSは、アプリを安心して利用できるよう、個人開発でも[
 
 ![ダッシュボード](/img/dashboard_install.png)
 
-基本的各手順には説明がありますので読みながら進めていけばセットアップが完了します
+基本的に各手順には説明がありますので読みながら進めていくことでセットアップが完了します
 
 ## 4. アプリの入れ方
 
 気になったアプリを導入してみましょう
+
+![ダッシュボード](/img/dashboard_app.png)
 
 アプリはダッシュボード内の「アプリを探す」タブから導入することができます
 

@@ -1,7 +1,11 @@
 <script lang="ts">
     import type { DocsSection } from '$lib/server/docs';
 
-    export let section: DocsSection;
+    interface Props {
+        section: DocsSection;
+    }
+
+    let { section }: Props = $props();
 </script>
 
 {#if section}

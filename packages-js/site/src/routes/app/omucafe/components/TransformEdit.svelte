@@ -2,8 +2,12 @@
     import { Button, Slider } from '@omujs/ui';
     import type { Transform } from '../game/transform.js';
 
-    export let transform: Transform;
-    export let type: 'matrix' | 'transform' = 'transform';
+    interface Props {
+        transform: Transform;
+        type?: 'matrix' | 'transform';
+    }
+
+    let { transform = $bindable(), type = 'transform' }: Props = $props();
 
     function getScale(): {
         scaleX: number;

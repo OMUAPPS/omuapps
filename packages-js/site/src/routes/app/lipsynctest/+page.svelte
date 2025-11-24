@@ -6,10 +6,10 @@
     import { Spectrum } from './spectrum.js';
     import { vowels } from './vowels.js';
 
-    let spectrum: Spectrum;
-    let loudness: number;
-    let highestVowel = { key: '', value: 0 };
-    let vowelScores: { key: string; value: number }[] = [];
+    let spectrum: Spectrum | undefined = $state(undefined);
+    let loudness: number = $state(0);
+    let highestVowel = $state({ key: '', value: 0 });
+    let vowelScores: { key: string; value: number }[] = $state([]);
 
     function updateScores(spectrum: Spectrum) {
         const vowelDotProduct: { [key: string]: number } = {};
@@ -92,7 +92,7 @@
             u_maxValue.set(1.0);
             u_color.set(new Vec3(1.0, 0.0, 0.0));
 
-            analyzer.getFloatTimeDomainData(timeDomainArray);
+            analyzer.getFloatTimeDomainData(timeDomainArray as Float32Array<ArrayBuffer>);
             timeDomainVbo.bind(() => {
                 timeDomainVbo.setSubData(timeDomainArray, 0);
                 gl.enableVertexAttribArray(0);
@@ -105,7 +105,7 @@
             u_maxValue.set(analyzer.maxDecibels);
             u_color.set(new Vec3(0.0, 0.0, 1.0));
 
-            analyzer.getFloatFrequencyData(frequencyArray);
+            analyzer.getFloatFrequencyData(frequencyArray as Float32Array<ArrayBuffer>);
             frequencyVbo.bind(() => {
                 frequencyVbo.setSubData(frequencyArray, 0);
                 gl.enableVertexAttribArray(0);
@@ -150,8 +150,8 @@
                 />
             </div>
             <button
-                on:click={() => {
-                    vowels.set(key, spectrum);
+                onclick={() => {
+                    vowels.set(key, spectrum!);
                 }}
             >
                 set
@@ -164,7 +164,7 @@
         </div>
     {/if}
     <div>loudness: {loudness}</div>
-    <button on:click={() => copy()}>copy</button>
+    <button onclick={() => copy()}>copy</button>
 </main>
 
 <style lang="scss">

@@ -1,20 +1,25 @@
 <script lang="ts">
+    import TitlebarButton from '$lib/common/ButtonTitlebar.svelte';
     import title from '$lib/images/title.svg';
-    import { isBetaEnabled } from '$lib/main/settings.js';
+    import { isBetaEnabled } from '$lib/settings.js';
     import type { UpdateEvent } from '$lib/tauri';
-    import { applyUpdate, checkUpdate, invoke } from '$lib/tauri.js';
-    import TitlebarButton from '$lib/TitlebarButton.svelte';
+    import { applyUpdate, checkUpdate } from '$lib/tauri.js';
     import { VERSION } from '$lib/version';
     import '@omujs/ui';
     import { Button, ExternalLink, Spinner } from '@omujs/ui';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
+    import { invoke } from '@tauri-apps/api/core';
     import { relaunch } from '@tauri-apps/plugin-process';
     import { DEV } from 'esm-env';
     import '../styles.scss';
 
-    export let message: string;
+    interface Props {
+        message: string;
+    }
 
-    let updateProgress: UpdateEvent | undefined = undefined;
+    let { message }: Props = $props();
+
+    let updateProgress: UpdateEvent | undefined = $state(undefined);
 </script>
 
 <div class="window">
@@ -29,7 +34,7 @@
         </div>
         <div class="actions">
             <TitlebarButton
-                on:click={close}
+                onclick={close}
                 icon="ti-x"
                 tooltip="Close"
             />
@@ -76,20 +81,22 @@
             {/await}
         </div>
         <div class="actions">
-            <Button onclick={() => invoke('generate_log_file')} let:promise>
-                {#if promise}
-                    {#await promise}
-                        ログを生成中
-                        <Spinner />
-                    {:then}
-                        ログを生成しました
-                    {:catch e}
-                        ログの生成に失敗しました: {e}
-                    {/await}
-                {:else}
-                    ログを生成
-                    <i class="ti ti-file"></i>
-                {/if}
+            <Button onclick={() => invoke('generate_log_file')}>
+                {#snippet children({ promise })}
+                    {#if promise}
+                        {#await promise}
+                            ログを生成中
+                            <Spinner />
+                        {:then}
+                            ログを生成しました
+                        {:catch e}
+                            ログの生成に失敗しました: {e}
+                        {/await}
+                    {:else}
+                        ログを生成
+                        <i class="ti ti-file"></i>
+                    {/if}
+                {/snippet}
             </Button>
             <Button primary onclick={async () => {
                 await invoke('clean_environment');

@@ -1,10 +1,15 @@
 <script lang="ts">
+    import ComponentRenderer from './ComponentRenderer.svelte';
     import { Content } from '@omujs/chat/models';
     import LinkableText from './LinkableText.svelte';
     import { omu } from './stores.js';
     import Tooltip from './Tooltip.svelte';
 
-    export let component: Content.Component;
+    interface Props {
+        component: Content.Component;
+    }
+
+    let { component }: Props = $props();
 </script>
 
 {#if component.type === 'text'}
@@ -41,19 +46,19 @@
             {url}
         </Tooltip>
         {#each children || [] as sibling, i (i)}
-            <svelte:self component={sibling} />
+            <ComponentRenderer component={sibling} />
         {/each}
     </a>
 {:else if component.type === 'root'}
     {@const children = component.data}
     {#each children || [] as sibling, i (i)}
-        <svelte:self component={sibling} />
+        <ComponentRenderer component={sibling} />
     {/each}
 {:else if component.type === 'system'}
     {@const children = component.data}
     <code>
         {#each children || [] as sibling, i (i)}
-            <svelte:self component={sibling} />
+            <ComponentRenderer component={sibling} />
         {/each}
     </code>
 {:else}

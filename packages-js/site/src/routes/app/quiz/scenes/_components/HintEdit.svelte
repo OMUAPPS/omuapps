@@ -2,7 +2,11 @@
     import { Textbox } from '@omujs/ui';
     import type { Hint } from '../../quiz-app';
 
-    export let hint: Hint;
+    interface Props {
+        hint: Hint;
+    }
+
+    let { hint = $bindable() }: Props = $props();
 </script>
 
 {#if hint.type === 'text'}
