@@ -65,8 +65,6 @@ function getEntrypointsFromGlob(entrypoint: string[]): string[] {
     return entrypoints;
 }
 
-;
-
 async function build(entrypoints: string[]) {
     if (values.debug) {
         console.log('building', entrypoints);
