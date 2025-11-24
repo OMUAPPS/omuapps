@@ -149,7 +149,7 @@ const DOWNLOAD_PLATFORMS: Platform[] = [
     },
     {
         type: 'linux-x86_64',
-        filename: 'OMUAPPS_{VERSION}_amd64.AppImage',
+        filename: 'OMUAPPS_{VERSION}_amd64.deb',
     },
     {
         type: 'darwin-aarch64',
