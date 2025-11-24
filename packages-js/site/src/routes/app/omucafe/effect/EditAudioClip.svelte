@@ -1,33 +1,28 @@
 <script lang="ts">
     import { Checkbox, Slider } from '@omujs/ui';
     import { createClip, createEnvelopeClip, createFilter, type AudioClip } from '../asset/audioclip.js';
-    import EditAudioClip from './EditAudioClip.svelte';
     import EditClip from './EditClip.svelte';
 
-    interface Props {
-        clip: AudioClip | null | undefined;
-    }
-
-    let { clip = $bindable() }: Props = $props();
+    export let clip: AudioClip | null;
 </script>
 
 <div class="actions">
-    <button disabled={!clip} onclick={async () => {
+    <button disabled={!clip} on:click={async () => {
         clip = null;
     }}>
         無し
     </button>
-    <button disabled={clip?.type === 'clip'} onclick={async () => {
+    <button disabled={clip?.type === 'clip'} on:click={async () => {
         clip = await createClip({});
     }}>
         単音
     </button>
-    <button disabled={clip?.type === 'envelope'} onclick={async () => {
+    <button disabled={clip?.type === 'envelope'} on:click={async () => {
         clip = createEnvelopeClip({});
     }}>
         Envelope
     </button>
-    <button disabled={clip?.type === 'filter'} onclick={async () => {
+    <button disabled={clip?.type === 'filter'} on:click={async () => {
         clip = createFilter({
             clip: await createClip({}),
         });
@@ -42,11 +37,11 @@
     <EditClip bind:clip />
 {:else if clip.type === 'envelope'}
     Attack
-    <EditAudioClip bind:clip={clip.sources.attack} />
+    <svelte:self bind:clip={clip.sources.attack} />
     Sustain
-    <EditAudioClip bind:clip={clip.sources.sustain} />
+    <svelte:self bind:clip={clip.sources.sustain} />
     Release
-    <EditAudioClip bind:clip={clip.sources.release} />
+    <svelte:self bind:clip={clip.sources.release} />
 {:else if clip.type === 'filter'}
     効果
     <Checkbox value={!!clip.attack} handle={(value) => {
@@ -64,7 +59,7 @@
     {#if clip.release}
         <Slider bind:value={clip.release} min={0} max={1000} step={1} unit="ms" clamp={false} />
     {/if}
-    <EditAudioClip bind:clip={clip.clip} />
+    <svelte:self bind:clip={clip.clip} />
 {/if}
 
 <style lang="scss">

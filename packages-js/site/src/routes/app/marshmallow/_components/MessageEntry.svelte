@@ -5,19 +5,14 @@
     import ElementRenderer from './ElementRenderer.svelte';
     const { data } = MarshmallowApp.getInstance();
 
-    interface Props {
-        message: Message;
-    }
-
-    let { message }: Props = $props();
+    export let message: Message;
 </script>
 
-<button class="message" onclick={() => {
+<button class="message" on:click={() => {
     if ($data.message?.id === message.id) {
         $data.message = null;
     } else {
         $data.message = message;
-        $data.scroll = 0;
     }
 }} class:selected={$data.message?.id === message.id}>
     <Tooltip>

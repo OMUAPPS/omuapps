@@ -1,12 +1,8 @@
 <script lang="ts">
     import type { Answer, QuestionState } from '../../quiz-app';
 
-    interface Props {
-        answer: Answer;
-        state?: QuestionState;
-    }
-
-    let { answer, state = { type: 'idle' } }: Props = $props();
+    export let answer: Answer;
+    export let state: QuestionState = { type: 'idle' };
 </script>
 
 {#if answer.type === 'choices'}

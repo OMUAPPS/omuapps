@@ -8,37 +8,29 @@
     import { chat } from '$lib/client.js';
     import { Button, TableList } from '@omujs/ui';
 
-    interface Props {
-        openSetup?: () => void;
-        filter?: (key: string, room: Models.Room) => boolean;
-        sort?: (a: Models.Room) => number;
-    }
-
-    let { openSetup = () => {}, filter = () => true, sort = (a) => {
+    export let openSetup: () => void = () => {};
+    export let filter: (key: string, room: Models.Room) => boolean = () => true;
+    export let sort: (a: Models.Room) => number = (a) => {
         if (!a.metadata.created_at) return 0;
         return new Date(a.metadata.created_at).getTime();
-    } }: Props = $props();
+    };
 </script>
 
 <div class="rooms">
     <TableList
         table={chat.rooms}
+        component={RoomEntry}
         {filter}
         {sort}
         reverse={true}
     >
-        {#snippet component({ entry, selected })}
-            <RoomEntry {entry} {selected} />
-        {/snippet}
-        {#snippet empty()}
-            <div class="empty">
-                {$t('panels.rooms.not_found_rooms')}
-                <Button onclick={openSetup}>
-                    {$t('panels.rooms.question_add_channel')}
-                    <i class="ti ti-external-link"></i>
-                </Button>
-            </div>
-        {/snippet}
+        <div class="empty">
+            {$t('panels.rooms.not_found_rooms')}
+            <Button onclick={openSetup}>
+                {$t('panels.rooms.question_add_channel')}
+                <i class="ti ti-external-link"></i>
+            </Button>
+        </div>
     </TableList>
 </div>
 

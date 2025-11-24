@@ -1,3 +1,4 @@
+import { makeRegistryWritable } from '$lib/helper';
 import { OmuPermissions, type IntoId, type Omu } from '@omujs/omu';
 import { EndpointType } from '@omujs/omu/api/endpoint';
 import { PermissionType } from '@omujs/omu/api/permission';
@@ -96,12 +97,15 @@ export class DiscordRPCService {
         this.discord.clients.forEach((client) => client.start({
             session: (session) => this.sessions.modify((value) => {
                 value[client.port] = session;
+                return value;
             }),
             voiceState: (states) => this.voiceStates.modify((value) => {
                 value[client.port] = states;
+                return value;
             }),
             speakingState: (states) => this.speakingStates.modify((value) => {
                 value[client.port] = states;
+                return value;
             }),
             message: (message) => {
                 this.channelMessageSignal.notify({
@@ -131,9 +135,9 @@ export class DiscordRPCAPI {
     constructor(
         private readonly omu: Omu,
     ) {
-        this.sessions = omu.registries.get(SESSION_REGISTRY_TYPE).compatSvelte();
-        this.voiceStates = omu.registries.get(VOICE_STATES_REGISTRY_TYPE).compatSvelte();
-        this.speakingStates = omu.registries.get(SPEAKING_STATES_REGISTRY_TYPE).compatSvelte();
+        this.sessions = makeRegistryWritable(omu.registries.get(SESSION_REGISTRY_TYPE));
+        this.voiceStates = makeRegistryWritable(omu.registries.get(VOICE_STATES_REGISTRY_TYPE));
+        this.speakingStates = makeRegistryWritable(omu.registries.get(SPEAKING_STATES_REGISTRY_TYPE));
         this.channelMessageSignal = omu.signals.get(CHANNEL_MESSAGE);
     }
 

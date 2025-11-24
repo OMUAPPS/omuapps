@@ -8,14 +8,10 @@
     import { filter } from '../explore';
     import ExploreAppEntry from './ExploreAppEntry.svelte';
 
-    interface Props {
-        id: string;
-        entry: AppIndexEntry;
-    }
+    export let id: string;
+    export let entry: AppIndexEntry;
 
-    let { id, entry }: Props = $props();
-
-    let indexState: {
+    let state: {
         type: 'loading';
     } | {
         type: 'failed';
@@ -23,7 +19,7 @@
     } | {
         type: 'result';
         index: AppIndexRegistry;
-    } = $state({ type: 'loading' });
+    } = { type: 'loading' };
 
     function formatError(error: unknown) {
         if (error instanceof Error) {
@@ -36,14 +32,14 @@
         try {
             const resp = await omu.http.fetch(entry.url);
             const index = AppIndexRegistry.fromJSON(await resp.json());
-            indexState = { type: 'result', index };
+            state = { type: 'result', index };
         } catch (err) {
-            indexState = { type: 'failed', message: formatError(err) };
+            state = { type: 'failed', message: formatError(err) };
             console.error(err);
         }
     });
 
-    let url = $derived(new URL(entry.url));
+    $: url = new URL(entry.url);
 
     function filterApps(apps: App[], filter: typeof $filter) {
         return apps.filter((app) => {
@@ -102,20 +98,20 @@
         </Button>
     </div>
 </div>
-{#if indexState.type === 'loading'}
+{#if state.type === 'loading'}
     <Spinner />
-{:else if indexState.type === 'failed'}
+{:else if state.type === 'failed'}
     <div class="apps">
         <p>
             読み込みに失敗しました
             <small>
-                {indexState.message}
+                {state.message}
             </small>
         </p>
     </div>
-{:else if indexState.type === 'result'}
+{:else if state.type === 'result'}
     <div class="apps">
-        {#each filterApps([...indexState.index.apps.values()], $filter) as app (app.id.key())}
+        {#each filterApps([...state.index.apps.values()], $filter) as app (app.id.key())}
             <ExploreAppEntry {app} />
         {:else}
             <p>No apps found</p>

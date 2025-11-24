@@ -2,7 +2,6 @@ import type { Chat } from '@omujs/chat';
 import type { OBSPlugin } from '@omujs/obs';
 import { Omu } from '@omujs/omu';
 import { BROWSER } from 'esm-env';
-import type { Snippet } from 'svelte';
 import { type Writable, writable } from 'svelte/store';
 
 type TranslateFunction = (key: string, options?: Record<string, string>) => string;
@@ -77,32 +76,5 @@ if (BROWSER) {
             timeStyle: 'short',
             hour12: false,
         }),
-    });
-}
-
-export interface TooltipEntry {
-    id: number;
-    render: Snippet<[]>;
-    element: HTMLElement;
-};
-
-export const tooltipStack = writable<TooltipEntry[]>([]);
-export let tooltipId = 0;
-
-export function getTooltipId() {
-    return tooltipId++;
-}
-
-export function tooltipAdd(entry: TooltipEntry) {
-    tooltipStack.update((value) => {
-        value = value.filter((item) => item.id !== entry.id);
-        value.push(entry);
-        return value;
-    });
-}
-
-export function tooltipRemove(entry: TooltipEntry) {
-    tooltipStack.update((value) => {
-        return value.filter((item) => item.id !== entry.id);
     });
 }

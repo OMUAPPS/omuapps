@@ -1,13 +1,5 @@
-<script lang="ts">
-    interface Props {
-        children?: import('svelte').Snippet;
-    }
-
-    let { children }: Props = $props();
-</script>
-
 <main>
-    {@render children?.()}
+    <slot />
 </main>
 
 <style>
@@ -17,9 +9,9 @@
         display: flex;
         flex: 1;
         flex-direction: column;
-        width: min(100%, 62rem);
+        width: min(100%, 70rem);
         max-width: 70rem;
-        padding: 0 1.5rem;
+        padding: 0 4rem;
         margin: 0 auto;
     }
 </style>

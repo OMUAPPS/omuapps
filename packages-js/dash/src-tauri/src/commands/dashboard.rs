@@ -69,7 +69,7 @@ pub async fn get_cookies(
 pub struct CreateWebviewWindowOptions {
     label: String,
     url: String,
-    script: Option<String>,
+    script: String,
 }
 
 fn sanitize_string_literal(str: &String) -> String {
@@ -100,7 +100,7 @@ pub async fn create_webview_window(
     eval(\"{}\");
 }}",
         sanitize_string_literal(&host),
-        sanitize_string_literal(&options.script.unwrap_or_else(|| "".to_string())),
+        sanitize_string_literal(&options.script),
     );
 
     let label = options.label.clone();

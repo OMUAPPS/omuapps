@@ -1,13 +1,5 @@
-<script lang="ts">
-    interface Props {
-        children?: import('svelte').Snippet;
-    }
-
-    let { children }: Props = $props();
-</script>
-
 <strong>
-    {@render children?.()}
+    <slot />
 </strong>
 
 <style lang="scss">

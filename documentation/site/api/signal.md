@@ -1,5 +1,5 @@
 ---
-index: 21
+index: 20
 icon: bell
 title: シグナル
 description: シグナルを使って他のセッションに通知する
@@ -9,16 +9,9 @@ description: シグナルを使って他のセッションに通知する
 
 ## 概要
 
-アプリ間で任意のデータで通知し合う事ができます
+シグナルは他のセッションと通信するために使います。
 
 ## 定義
-
-`omu.signals.json<T>(name)`から定義することができます
-
-- T?: メッセージの型
-- name: シグナルの名前。同じ名前で複数のシグナルを作ることはできません
-
-以下が定義例です
 
 ```typescript
 type MySignal = {
@@ -27,14 +20,10 @@ type MySignal = {
 }
 
 // シグナルの定義
-const mySignal = omu.signals.json<MySignal>('my_signal');
+const mySignal = omu.signals.create<MySignal>('my_signal');
 ```
 
 ## シグナルの送信
-
-`.notify(body)`
-
-- body: 送るメッセージ
 
 ```typescript
 // シグナルを送信する
@@ -45,10 +34,6 @@ await mySignal.notify({
 ```
 
 ## シグナルの受信
-
-`.listen(callback)`
-
-- callback: データを引数に取る関数
 
 ```typescript
 // シグナルを受信する

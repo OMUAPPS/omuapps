@@ -5,29 +5,27 @@
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
-    interface Props {
+    export let screen: {
         handle: ScreenHandle;
         props: {
             request: PromptRequestHttpPort;
             resolve: (accept: PromptResult) => void;
         };
-    }
-
-    let { handle, props }: Props = $props();
-    const { request, resolve } = props;
+    };
+    const { request, resolve } = screen.props;
 
     function accept() {
         resolve('accept');
-        handle.pop();
+        screen.handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        handle.pop();
+        screen.handle.pop();
     }
 </script>
 
-<Screen {handle} disableClose>
+<Screen {screen} disableClose>
     <div class="screen">
         <div class="header">
             <h2>ネットワークアクセスの要求</h2>
@@ -50,11 +48,11 @@
             {/each}
         </div>
         <div class="actions">
-            <button onclick={reject} class="reject">
+            <button on:click={reject} class="reject">
                 キャンセル
                 <i class="ti ti-x"></i>
             </button>
-            <button onclick={accept} class="accept">
+            <button on:click={accept} class="accept">
                 許可
                 <i class="ti ti-check"></i>
             </button>

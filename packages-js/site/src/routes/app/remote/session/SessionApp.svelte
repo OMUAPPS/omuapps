@@ -4,12 +4,8 @@
     import Gallery from '../_components/Gallery.svelte';
     import type { RemoteApp } from '../remote-app.js';
 
-    interface Props {
-        omu: Omu;
-        remote: RemoteApp;
-    }
-
-    let { omu, remote }: Props = $props();
+    export let omu: Omu;
+    export let remote: RemoteApp;
 
 </script>
 

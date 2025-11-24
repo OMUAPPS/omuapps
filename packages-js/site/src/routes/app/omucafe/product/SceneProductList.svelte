@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { Button, ButtonMini, Checkbox, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import BackButton from '../components/BackButton.svelte';
@@ -10,23 +8,17 @@
     import MenuRenderer from './MenuRenderer.svelte';
     import ProductList from './ProductList.svelte';
 
-    interface Props {
-        context: SceneContext;
-    }
-
-    let { context }: Props = $props();
+    export let context: SceneContext;
 
     const { scene, config, gameConfig } = getGame();
 
-    let container: HTMLElement | undefined = $state(undefined);
+    let container: HTMLElement;
 
-    run(() => {
-        if (container) {
-            container.scrollTo({ top: $config.scenes.product_list.scroll });
-        }
-    });
+    $: if (container) {
+        container.scrollTo({ top: $config.scenes.product_list.scroll });
+    }
 
-    let searchElement: HTMLInputElement | undefined = $state(undefined);
+    let searchElement: HTMLInputElement;
 
     onMount(() => {
         if (!searchElement) return;
@@ -40,16 +32,16 @@
 </script>
 
 <span class="search" class:active={$config.scenes.product_list.search}>
-    <input type="text" bind:this={searchElement} bind:value={$config.scenes.product_list.search} onblur={() => {
+    <input type="text" bind:this={searchElement} bind:value={$config.scenes.product_list.search} on:blur={() => {
         if ($scene.type !== 'product_list') return;
-        searchElement!.focus();
+        searchElement.focus();
     }} />
     <i class="ti ti-search"></i>
 </span>
 <main>
-    <div class="list omu-scroll" bind:this={container} onscroll={() => {
+    <div class="list omu-scroll" bind:this={container} on:scroll={() => {
         if ($scene.type !== 'product_list') return;
-        $config.scenes.product_list.scroll = container!.scrollTop;
+        $config.scenes.product_list.scroll = container.scrollTop;
     }}>
         <div class="actions">
             <Button onclick={handleExport}>
@@ -72,7 +64,7 @@
                 .filter(([id]) => !$gameConfig.menu.items.some((it) => it.product === id)) as [id, product] (id)}
                 <div class="item">
                     <span>
-                        <ButtonMini primary onclick={() => {
+                        <ButtonMini primary on:click={() => {
                             $gameConfig.menu.items = [
                                 {
                                     product: id,
@@ -96,7 +88,7 @@
                 {@const product = $gameConfig.products[entry.product]}
                 <div class="item">
                     <span>
-                        <ButtonMini primary onclick={() => {
+                        <ButtonMini primary on:click={() => {
                             $gameConfig.menu.items = $gameConfig.menu.items.filter((_, i) => i !== index);
                         }}>
                             <Tooltip>

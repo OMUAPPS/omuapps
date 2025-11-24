@@ -34,6 +34,7 @@ export async function uploadAssetById(id: Identifier, buffer: Uint8Array): Promi
     };
     await resourcesRegistry.modify((value) => {
         value.assets[id.key()] = asset;
+        return value;
     });
     return asset;
 }

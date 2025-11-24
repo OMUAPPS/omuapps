@@ -1,4 +1,4 @@
-import { writable, type Writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 
 import { LOCALES } from '$lib/i18n/i18n.js';
 import { linkOpenHandler } from '@omujs/ui';
@@ -18,33 +18,30 @@ function getSystemLanguage(): keyof typeof LOCALES {
     return 'ja-JP';
 }
 
-import { load } from '@tauri-apps/plugin-store';
-
-const settings = await load('settings.json');
-
-export function createSetting<T>(key: string, defaultValue: T): Writable<T> & { loaded: Promise<void> } {
-    const store = writable<T>(defaultValue);
-    let loaded = false;
-    const wait = settings.get<T>(key).then(async (value) => {
-        store.set(value ?? defaultValue);
-        loaded = true;
-    });
-    store.subscribe(async (updated) => {
-        if (!loaded) return;
-        settings.set(key, updated);
-        await settings.save();
-    });
-    return {
-        ...store,
-        loaded: wait,
-    };
+export function createSetting<T>(key: string, defaultValue: T) {
+    if (typeof localStorage === 'undefined') {
+        return writable<T>(defaultValue);
+    }
+    let value = localStorage.getItem(key);
+    if (value) {
+        try {
+            value = JSON.parse(value);
+        } catch (e) {
+            console.error(e);
+            localStorage.removeItem(key);
+        }
+    }
+    const store = writable<T>(
+        localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)!) : defaultValue,
+    );
+    store.subscribe((value) => localStorage.setItem(key, JSON.stringify(value)));
+    return store;
 }
 
 const systemLanguage = getSystemLanguage();
 export const language = createSetting<keyof typeof LOCALES>('language', systemLanguage);
 export const devMode = createSetting('devMode', false);
 export const currentPage = createSetting('currentPage', 'explore');
-export const lastApp = createSetting<string | null>('lastApp', null);
 export const currentSettingsCategory = createSetting('currentPageSettings', 'general');
 export const isBetaEnabled = createSetting('isBetaEnabled', false);
 export const installed = createSetting('installed', false);

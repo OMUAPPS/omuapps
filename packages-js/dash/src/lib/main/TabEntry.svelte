@@ -4,21 +4,17 @@
     import { type PageItem } from './page.js';
     import { currentPage, menuOpen } from './settings.js';
 
-    interface Props {
-        entry: PageItem<unknown>;
-        badge?: string | undefined;
-    }
+    export let entry: PageItem<unknown>;
+    export let badge: string | undefined = undefined;
 
-    let { entry, badge = undefined }: Props = $props();
-
-    let title = $derived($t(`page.${entry.id}.title`));
-    let tooltip = $derived($t(`page.${entry.id}.tooltip`));
-    let icon = $derived($t(`page.${entry.id}.icon`));
+    $: title = $t(`page.${entry.id}.title`);
+    $: tooltip = $t(`page.${entry.id}.tooltip`);
+    $: icon = $t(`page.${entry.id}.icon`);
 </script>
 
 <button
     class="tab"
-    onclick={() => ($currentPage = entry.id)}
+    on:click={() => ($currentPage = entry.id)}
     class:active={$currentPage === entry.id}
 >
     <Tooltip>

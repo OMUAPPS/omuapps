@@ -1,5 +1,5 @@
 import { App, AppJson } from '../../app.js';
-import { Identifier, IdentifierMap, IntoId } from '../../identifier';
+import { Identifier, IdentifierMap } from '../../identifier';
 import { LocalizedText } from '../../localization/localization.js';
 import { Omu } from '../../omu.js';
 import { EndpointType } from '../endpoint/endpoint.js';
@@ -116,14 +116,6 @@ export class AppIndexRegistry {
         public meta: AppIndexRegistryMeta | undefined,
     ) { }
 
-    public static build(options: { id: IntoId; meta: AppIndexRegistryMeta; apps: App[] }): AppIndexRegistry {
-        return new AppIndexRegistry(
-            Identifier.from(options.id),
-            new IdentifierMap(options.apps.map((app) => [app.id, app])),
-            options.meta,
-        );
-    }
-
     public static fromJSON(json: AppIndexRegistryJSON): AppIndexRegistry {
         const id = Identifier.fromKey(json['id']);
         const apps = new IdentifierMap<App>();
@@ -140,16 +132,5 @@ export class AppIndexRegistry {
             apps,
             json.meta,
         );
-    }
-
-    public toJSON(): AppIndexRegistryJSON {
-        return {
-            id: this.id.key(),
-            meta: this.meta,
-            apps: Object.fromEntries([...this.apps.entries()].map(([id, app]) => [
-                id.key(),
-                App.serialize(app),
-            ])),
-        };
     }
 }

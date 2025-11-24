@@ -6,14 +6,10 @@
     import type { Identifier } from '@omujs/omu';
     import { MessageEntry, TableList } from '@omujs/ui';
 
-    interface Props {
-        filter?: (key: string, message: Models.Message) => boolean;
-    }
-
-    let { filter = (
+    export let filter: (key: string, message: Models.Message) => boolean = (
         _,
         message,
-    ) => message.deleted !== true }: Props = $props();
+    ) => message.deleted !== true;
     let sort = (a: Models.Message) => {
         if (!a.createdAt) return 0;
         return a.createdAt.getTime();
@@ -32,11 +28,8 @@
 
 <TableList
     table={chat.messages}
+    component={MessageEntry}
     {filter}
     {sort}
     reverse={true}
->
-    {#snippet component({ entry, selected })}
-        <MessageEntry {entry} {selected} />
-    {/snippet}
-</TableList>
+/>

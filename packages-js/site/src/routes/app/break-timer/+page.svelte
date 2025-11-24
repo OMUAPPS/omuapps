@@ -28,12 +28,10 @@
 </script>
 
 <AppPage>
-    {#snippet header()}
-        <header>
-            <AppHeader app={APP} />
-        </header>
-    {/snippet}
+    <header slot="header">
+        <AppHeader app={APP} />
+    </header>
     {#await waitReady then}
-        <App {breakTimer} {obs} />
+        <App {omu} {breakTimer} {obs} />
     {/await}
 </AppPage>

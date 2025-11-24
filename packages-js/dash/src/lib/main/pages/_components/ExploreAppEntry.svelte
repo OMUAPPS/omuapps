@@ -6,13 +6,9 @@
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import { TAGS } from './category.js';
-    interface Props {
-        app: App;
-    }
+    export let app: App;
 
-    let { app }: Props = $props();
-
-    let alreadyAdded = $state(false);
+    let alreadyAdded = false;
 
     async function install() {
         const { accepted } = await omu.dashboard.installApp(app);
@@ -35,8 +31,8 @@
         }
     }));
 
-    let tags =
-        $derived(app.metadata?.tags?.map((tag) => {
+    $: tags =
+        app.metadata?.tags?.map((tag) => {
             const tagData = TAGS[tag];
             if (!tagData) {
                 return {
@@ -48,7 +44,7 @@
                 id: tag,
                 data: tagData,
             };
-        }).sort((a) => -(a.id === 'underdevelopment')) || []);
+        }).sort((a) => -(a.id === 'underdevelopment')) || [];
 </script>
 
 <article class:added={alreadyAdded}>

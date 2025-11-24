@@ -30,33 +30,12 @@
         );
         omu.start();
     }
-
-    function toggle() {
-        const currentTime = Date.now();
-        if ($data.running) {
-            $data.stopTime = currentTime;
-            $data.running = false;
-            $data.time = $data.time + currentTime - $data.startTime;
-        } else {
-            $data.startTime = currentTime;
-            $data.running = true;
-        }
-    }
-
-    function reset() {
-        const currentTime = Date.now();
-        $data.startTime = currentTime;
-        $data.stopTime = currentTime;
-        $data.time = 0;
-    }
 </script>
 
 <AppPage>
-    {#snippet header()}
-        <header>
-            <AppHeader app={APP} />
-        </header>
-    {/snippet}
+    <header slot="header">
+        <AppHeader app={APP} />
+    </header>
     <main>
         <div class="flex col width">
             <h3>タイム</h3>
@@ -67,7 +46,7 @@
             <h3>操作</h3>
             <section>
                 <div class="flex gap">
-                    <button onclick={toggle}>
+                    <button on:click={() => timer.toggle()}>
                         <Tooltip>
                             {#if $data.running}
                                 タイマーを停止します
@@ -83,7 +62,7 @@
                             <i class="ti ti-player-play"></i>
                         {/if}
                     </button>
-                    <button onclick={reset}>
+                    <button on:click={() => timer.reset()}>
                         <Tooltip>タイマーをリセットします</Tooltip>
                         リセット
                         <i class="ti ti-reload"></i>
@@ -95,21 +74,21 @@
                 <Textbox bind:value={$config.format} />
                 <small>
                     それぞれ
-                    <span>
+                    <p>
                         {'{minutes}'}
                         <i class="ti ti-chevron-right"></i>
                         分
-                    </span>
-                    <span>
+                    </p>
+                    <p>
                         {'{seconds}'}
                         <i class="ti ti-chevron-right"></i>
                         秒
-                    </span>
-                    <span>
+                    </p>
+                    <p>
                         {'{centiseconds}'}
                         <i class="ti ti-chevron-right"></i>
                         少数第2位までの秒
-                    </span>
+                    </p>
                     で置換されます。
                 </small>
             </section>
@@ -121,15 +100,15 @@
             </section>
             <h3>見た目</h3>
             <section>
-                <span class="setting">
+                <p class="setting">
                     <small>配置</small>
                     <Align bind:horizontal={$config.style.align.x} bind:vertical={$config.style.align.y} />
-                </span>
-                <span class="setting">
+                </p>
+                <p class="setting">
                     <small>文字の色</small>
                     <input type="color" bind:value={$config.style.color} />
-                </span>
-                <span class="setting">
+                </p>
+                <p class="setting">
                     <small>文字の大きさ</small>
                     <span class="font-size">
                         <input
@@ -140,16 +119,16 @@
                         />
                         <input type="number" bind:value={$config.style.fontSize} />
                     </span>
-                </span>
-                <span class="setting">
+                </p>
+                <p class="setting">
                     <small>文字のフォント</small>
                     <input type="text" bind:value={$config.style.fontFamily} />
-                </span>
-                <span class="setting">
+                </p>
+                <p class="setting">
                     <small>背景の色</small>
                     <input type="color" bind:value={$config.style.backgroundColor} />
-                </span>
-                <span class="setting">
+                </p>
+                <p class="setting">
                     <small>背景の透明度</small>
                     <span class="font-size">
                         <input
@@ -161,7 +140,7 @@
                         />
                         <input type="number" bind:value={$config.style.backgroundOpacity} />
                     </span>
-                </span>
+                </p>
                 <div class="setting">
                     <div>
                         <small>背景の余白</small>

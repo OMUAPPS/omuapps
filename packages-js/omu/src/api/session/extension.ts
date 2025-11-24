@@ -3,7 +3,6 @@ import { Identifier, IdentifierMap, IdentifierSet, IntoId } from '../../identifi
 import { PacketType } from '../../network/packet';
 import { Omu } from '../../omu';
 import { Serializer } from '../../serialize';
-import { SessionParam } from '../../token';
 import { EndpointType } from '../endpoint';
 import { Extension, ExtensionType } from '../extension';
 import { SessionObserver } from '../server/extension';
@@ -106,21 +105,20 @@ export class SessionExtension implements Extension {
         return await this.sessions.has(Identifier.from(id).key());
     }
 
-    public observe(appId: IntoId, options?: {
-        onConnect?(app: App): void;
-        onDisconnect?(app: App): void;
+    public observe(appId: IntoId, {
+        onConnect,
+        onDisconnect,
+    }: {
+        onConnect(app: App): void;
+        onDisconnect(app: App): void;
     }): SessionObserver {
         const id = Identifier.from(appId);
         if (this.omu.running) {
             this.omu.send(SESSION_OBSERVE_PACKET_TYPE, [id]);
         }
         const observer = this.sessionObservers.get(id) ?? new SessionObserver([], []);
-        if (options?.onConnect) {
-            observer.onConnect(options.onConnect);
-        }
-        if (options?.onDisconnect) {
-            observer.onDisconnect(options.onDisconnect);
-        }
+        observer.onConnect(onConnect);
+        observer.onDisconnect(onDisconnect);
         this.sessionObservers.set(id, observer);
         return observer;
     }
@@ -188,18 +186,11 @@ export class SessionExtension implements Extension {
 
     public async generateToken(options: {
         app: App;
-        permissions?: IntoId[];
-    }): Promise<SessionParam> {
-        const result = await this.omu.endpoints.call(GENERATE_TOKEN_ENDPOINT_TYPE, {
+        permissions: IntoId[];
+    }): Promise<GenerateTokenResponse> {
+        return this.omu.endpoints.call(GENERATE_TOKEN_ENDPOINT_TYPE, {
             app: App.serialize(options.app),
-            permissions: options.permissions?.map(id => Identifier.from(id).key()),
+            permissions: options.permissions.map(id => Identifier.from(id).key()),
         });
-        if (result.type === 'error') {
-            throw new Error(result.message);
-        }
-        return {
-            token: result.token,
-            address: this.omu.address,
-        };
     }
 }

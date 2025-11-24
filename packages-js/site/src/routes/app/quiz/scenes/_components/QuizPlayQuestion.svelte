@@ -3,29 +3,21 @@
     import type { Question, QuestionState } from '../../quiz-app';
     import QuestionRenderer from './QuestionRenderer.svelte';
 
-    interface Props {
-        state: QuestionState;
-        question: Question;
-        index: number;
-    }
-
-    let { state = $bindable(), question, index = $bindable() }: Props = $props();
+    export let state: QuestionState;
+    export let question: Question;
+    export let index: number;
 </script>
 
 <main>
     <div class="menu">
         <div class="actions">
             {#if state.type === 'idle'}
-                <Button primary onclick={() => {
-                    state = { type: 'qustioning' };
-                }}>
+                <Button primary onclick={() => {state = { type: 'qustioning' };}}>
                     出題
                     <i class="ti ti-chevron-right"></i>
                 </Button>
             {:else if state.type === 'qustioning'}
-                <Button primary onclick={() => {
-                    state = { type: 'answering' };
-                }}>
+                <Button primary onclick={() => {state = { type: 'answering' };}}>
                     正誤発表
                     <i class="ti ti-chevron-right"></i>
                 </Button>

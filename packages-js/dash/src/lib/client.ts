@@ -1,3 +1,4 @@
+import { setGlobal } from '@omujs/ui';
 import { Dashboard } from './dashboard.js';
 
 import type { Address } from '@omujs/omu/network';
@@ -5,9 +6,8 @@ import type { Address } from '@omujs/omu/network';
 import { invoke, IS_TAURI } from '$lib/tauri.js';
 
 import { Chat, ChatPermissions } from '@omujs/chat';
-import { App, Identifier, Omu, OmuPermissions } from '@omujs/omu';
+import { App, BrowserTokenProvider, Identifier, Omu, OmuPermissions } from '@omujs/omu';
 import type { Locale } from '@omujs/omu/localization';
-import type { SessioTokenProvider } from '../../../omu/dist/dts/token.js';
 import { currentPage, language } from './main/settings.js';
 import { VERSION } from './version.js';
 
@@ -23,23 +23,25 @@ const address: Address = {
     secure: false,
 };
 
-class DashboardSession implements SessioTokenProvider {
-    async get(): Promise<string | undefined> {
+class TokenProvider extends BrowserTokenProvider {
+    async get(serverAddress: Address, app: App): Promise<string | undefined> {
         if (IS_TAURI) {
             const token = await invoke('get_token');
             if (token) {
                 return token;
             }
         }
+        return super.get(serverAddress, app);
     }
 }
 
 const omu = new Omu(app, {
     address,
-    token: new DashboardSession(),
+    token: new TokenProvider(),
 });
 const chat = Chat.create(omu);
 const dashboard = new Dashboard(omu);
+setGlobal({ omu, chat });
 omu.plugins.require({
     omu_chat: `>=${VERSION}`,
     omu_chat_youtube: `>=${VERSION}`,

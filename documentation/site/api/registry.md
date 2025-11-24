@@ -9,19 +9,9 @@ description: データを保持するためのAPI
 
 ## 概要
 
-データをアプリ間で同期・保持する事ができます
+レジストリはデータを保持するために使います。
 
 ## 定義
-
-レジストリは`omu.registries.json<T>(name, { default: ... })`から定義できます
-
-- T?: データの型
-- name: レジストリの名前。同じ名前で複数のレジストリを作ることはできません
-- default: レジストリの初期値を設定
-
-`omu.registries.serialized<T>(name, { default: ..., serializer: ... })`ではバイト配列として処理したい場合に使えます。[シリアライザ](%DOCS_ROOT%/api/serializer)を指定する必要があります
-
-以下が定義例です
 
 ```typescript
 type MyData = {
@@ -30,7 +20,7 @@ type MyData = {
 };
 
 // レジストリの定義
-const myData = omu.registries.json<MyData>('my_data', {
+const myData = omu.registries.create<MyData>('my_data', {
     // データの初期値
     default: {
         name: 'Taro Yamada',
@@ -39,11 +29,11 @@ const myData = omu.registries.json<MyData>('my_data', {
 });
 ```
 
-jsonであっても[serializer](%DOCS_ROOT%/api/serializer) を指定することで値のシリアライズをカスタマイズできます
+[serializer](%DOCS_ROOT%/api/serializer) を指定することでデータのシリアライズをカスタマイズすることができます。
 
 ```typescript
 // レジストリの定義
-const myData = omu.registries.serialized<MyData>('my_data', {
+const myData = omu.registries.create<MyData>('my_data', {
     // データの初期値
     default: {
         name: 'Taro Yamada',
@@ -56,41 +46,35 @@ const myData = omu.registries.serialized<MyData>('my_data', {
 
 ## データの取得
 
-`.get()`メソッドを使って値を取得します
-
 ```typescript
 // データの取得
 const data = myData.value;
 
-// .get() メソッドを使って値を取得することもできます
+// .get() メソッドを使ってデータを取得することもできます
 const data = await myData.get();
 ```
 
 ## データの更新
 
-`.set(value)`, `.modify(modifier)`, `.update(updater)` メソッドを使って値を更新します
-
-- value: 新しく設定する値
-- modifier: 引数にデータを受け取りデータを変更する関数
-- updater: 引数にデータを受け取り新しいデータを返す関数
+`.set()`, `.modify()`, `.update()` メソッドを使ってデータを更新します。
 
 ```typescript
-// 値を上書きする
+// データを上書きする
 // 新しいデータを引数に渡すことで更新します
 await myData.set({
     name: 'Taro Yamada',
     age: 21,
 });
 
-// 値を変更する
+// データを変更する
 // 引数の関数でデータを変更することで更新します
 const modifiedValue = await myData.modify((data) => {
     data.age++;
 });
 
-// 値を更新する
+// データを更新する
 // 引数の関数でデータを変更して新しいデータを返すことで更新します
-const updatedValue = await myData.update((data) => {
+const modifiedValue = await myData.update((data) => {
     return {
         ...data,
         age: data.age + 1,
@@ -98,12 +82,12 @@ const updatedValue = await myData.update((data) => {
 });
 ```
 
-## 値の監視
+## データの監視
 
 データの変更を監視することができます。
 
 ```typescript
-// 値の監視
+// データの監視
 myData.listen((data) => {
     console.log(data);
 });

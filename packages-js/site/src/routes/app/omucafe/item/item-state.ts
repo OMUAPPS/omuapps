@@ -594,10 +594,6 @@ export async function isItemHovering(item: ItemState): Promise<boolean> {
     return alpha > 0;
 }
 
-export function isChildRecursively(item: ItemState, child: ItemState): boolean {
-    return getParents(child).includes(item);
-}
-
 export async function collectClickActions(): Promise<ClickAction | null> {
     const context = getContext();
     const { items, hovering, held } = context;
@@ -776,14 +772,8 @@ export async function updateHoveringItem(layers: ItemLayer[]) {
         }
     }
     if (args.target) {
-        if (ctx.hovering == args.target.id) return;
-        if (ctx.hovering) {
-            markItemStateChanged(ctx.items[ctx.hovering]);
-        }
         ctx.hovering = args.target.id;
-        markItemStateChanged(ctx.items[ctx.hovering]);
     } else if (ctx.hovering) {
-        markItemStateChanged(ctx.items[ctx.hovering]);
         ctx.hovering = null;
     }
 }

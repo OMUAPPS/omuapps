@@ -1,5 +1,4 @@
 <script lang="ts">
-
     import { OmuPermissions } from '@omujs/omu';
     import { AssetButton, ButtonMini, Slider, Tooltip } from '@omujs/ui';
     import Answers from './_components/Answers.svelte';
@@ -11,30 +10,15 @@
     import { MarshmallowApp } from './marshmallow-app.js';
     import { hasPremium } from './stores';
 
-    interface Props {
-        api: MarshmallowAPI;
-        logout: () => void;
-    }
+    export let api: MarshmallowAPI;
+    export let logout: () => void;
 
-    let { api, logout }: Props = $props();
+    const { config, screen } = MarshmallowApp.getInstance();
 
-    const marshmallowApp = MarshmallowApp.getInstance();
-    const { config, screen: screenStore } = marshmallowApp;
+    let messages: Record<string, Message> | undefined;
+    let search = '';
 
-    let screen = $state($screenStore);
-    $effect(() => {
-        if (JSON.stringify($screenStore) === JSON.stringify(screen)) return;
-        $screenStore = screen;
-    });
-    screenStore.subscribe((value) => {
-        if (screen === value) return;
-        screen = value;
-    });
-
-    let messages: Record<string, Message> | undefined = $state();
-    let search = $state('');
-
-    let user: User | undefined = $state(undefined);
+    let user: User | undefined = undefined;
 
     async function fetchUser() {
         user = await api.user();
@@ -44,26 +28,26 @@
         }
     }
 
-    $effect(() => {
+    $: {
         if (api) {
             fetchUser();
         }
-    });
+    };
 
-    let refreshMessages: () => void = $state(() => {});
-    let refreshAnswers: () => void = $state(() => {});
+    let refreshMessages: () => void;
+    let refreshAnswers: () => void;
 </script>
 
 <main>
     <div class="menu">
-        <div class="tab" class:selected={screen.type === 'messages'}>
+        <div class="tab" class:selected={$screen.type === 'messages'}>
             <Messages {api} {search} bind:messages bind:refresh={refreshMessages} />
         </div>
-        <div class="tab" class:selected={screen.type === 'answers'}>
+        <div class="tab" class:selected={$screen.type === 'answers'}>
             <Answers {api} {search} bind:refresh={refreshAnswers} />
         </div>
         <div class="tabs">
-            <button onclick={() => (screen = { type: 'messages' })} class:active={screen.type === 'messages'}>
+            <button on:click={() => ($screen = { type: 'messages' })} disabled={$screen.type === 'messages'}>
                 新着
                 {#if Object.keys(messages ?? {}).length > 0}
                     <span class="messages-count">
@@ -71,21 +55,21 @@
                     </span>
                 {/if}
             </button>
-            <button onclick={() => (screen = { type: 'answers' })} class:active={screen.type === 'answers'}>
+            <button on:click={() => ($screen = { type: 'answers' })} disabled={$screen.type === 'answers'}>
                 過去の回答
             </button>
-            <button onclick={() => {
-                screen = { type: 'skins', state: { type: 'list' } };
-            }} class:active={screen.type === 'skins'}>
-                <Tooltip>
-                    着せ替える
-                </Tooltip>
-                <i class="ti ti-cards"></i>
-            </button>
+            {#if $hasPremium}
+                <button on:click={() => ($screen = { type: 'skins', state: { type: 'list' } })} disabled={$screen.type === 'skins'}>
+                    <Tooltip>
+                        着せ替える
+                    </Tooltip>
+                    <i class="ti ti-cards"></i>
+                </button>
+            {/if}
         </div>
-        {#if screen.type === 'skins'}
+        {#if $screen.type === 'skins'}
             <div class="skins omu-scroll">
-                <ManageSkins bind:state={screen.state} {fetchUser} />
+                <ManageSkins bind:state={$screen.state} />
             </div>
         {:else}
             <div class="bottom">
@@ -106,7 +90,7 @@
                             {/if}
                         </span>
                         <div class="actions">
-                            <ButtonMini onclick={logout}>
+                            <ButtonMini on:click={logout}>
                                 <Tooltip>
                                     アカウントを切り替える
                                 </Tooltip>
@@ -178,7 +162,7 @@
                 background: var(--color-bg-2);
             }
 
-            &.active {
+            &:disabled {
                 border-color: var(--color-1);
                 cursor: default;
                 background: var(--color-active);

@@ -12,11 +12,7 @@
 
     const { config } = ReplayApp.getInstance();
 
-    interface Props {
-        showConfig: boolean;
-    }
-
-    let { showConfig = $bindable() }: Props = $props();
+    export let showConfig: boolean;
 </script>
 
 <div class="config omu-scroll">

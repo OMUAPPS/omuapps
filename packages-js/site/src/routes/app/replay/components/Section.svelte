@@ -1,19 +1,7 @@
 <script lang="ts">
-    interface Props {
-        name: string;
-        icon?: string | undefined;
-        flex?: number | undefined;
-        actions?: import('svelte').Snippet;
-        children?: import('svelte').Snippet;
-    }
-
-    let {
-        name,
-        icon = undefined,
-        flex = undefined,
-        actions,
-        children,
-    }: Props = $props();
+    export let name: string;
+    export let icon: string | undefined = undefined;
+    export let flex: number | undefined = undefined;
 </script>
 
 <div class="section" style:flex>
@@ -22,9 +10,9 @@
         {#if icon}
             <i class="ti ti-{icon}"></i>
         {/if}
-        {@render actions?.()}
+        <slot name="actions" />
     </h3>
-    {@render children?.()}
+    <slot />
 </div>
 
 <style lang="scss">

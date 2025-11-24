@@ -5,13 +5,9 @@
     import type { VoiceStateItem } from '../discord/type.js';
     import { heldUser, selectedAvatar } from '../states.js';
 
-    interface Props {
-        overlayApp: DiscordOverlayApp;
-        voiceState: VoiceStateItem;
-        id: string;
-    }
-
-    let { overlayApp, voiceState, id }: Props = $props();
+    export let overlayApp: DiscordOverlayApp;
+    export let state: VoiceStateItem;
+    export let id: string;
     const { config } = overlayApp;
 
     function isJsonString(str: string) {
@@ -97,10 +93,10 @@
         await setAvatar(file);
     }
 
-    const avatarUrl = voiceState.user.avatar && `https://cdn.discordapp.com/avatars/${voiceState.user.id}/${voiceState.user.avatar}.png`;
+    const avatarUrl = state.user.avatar && `https://cdn.discordapp.com/avatars/${state.user.id}/${state.user.avatar}.png`;
 
-    let settingElement: HTMLElement | undefined = $state(undefined);
-    let configOpen = $state(false);
+    let settingElement: HTMLElement;
+    let configOpen = false;
 
     function handleWindowClick(event: MouseEvent) {
         if (!$heldUser) return;
@@ -115,25 +111,25 @@
         $heldUser = null;
     }
 
-    let avatar = $derived($config.users[id].avatar);
+    $: avatar = $config.users[id].avatar;
 </script>
 
-<svelte:window onmousedown={handleWindowClick} />
+<svelte:window on:mousedown={handleWindowClick} />
 
 <div class="settings" bind:this={settingElement}>
     <div class="states">
         <div class="avatar">
             {#if avatarUrl}
-                <img src={avatarUrl} alt={voiceState.nick} />
+                <img src={avatarUrl} alt={state.nick} />
             {:else}
-                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt={voiceState.nick} />
+                <img src="https://cdn.discordapp.com/embed/avatars/0.png" alt={state.nick} />
             {/if}
         </div>
-        <span>{voiceState.nick}</span>
-        {#if voiceState.voice_state.self_mute || voiceState.voice_state.mute}
+        <span>{state.nick}</span>
+        {#if state.voice_state.self_mute || state.voice_state.mute}
             🔇
         {/if}
-        {#if voiceState.voice_state.self_deaf || voiceState.voice_state.deaf}
+        {#if state.voice_state.self_deaf || state.voice_state.deaf}
             🔊
         {/if}
     </div>
@@ -179,7 +175,7 @@
         </Button>
     </div>
     {#if avatar && $config.avatars[avatar]?.type === 'pngtuber'}
-        <button onclick={() => {configOpen = !configOpen;}} class="config-toggle">
+        <button on:click={() => {configOpen = !configOpen;}} class="config-toggle">
             <Tooltip>
                 レイヤーを変更
             </Tooltip>
@@ -194,7 +190,7 @@
             <div class="pngtuber-config">
                 {#each Array.from({ length: 10 }) as _, i (i)}
                     <button
-                        onclick={() => {
+                        on:click={() => {
                             $config.users[id].config.pngtuber.layer = i;
                         }}
                         class="layer"

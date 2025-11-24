@@ -6,13 +6,9 @@
     import type { ClockApp } from './clock-app.js';
     import ClockRenderer from './components/ClockRenderer.svelte';
 
-    interface Props {
-        omu: Omu;
-        obs: OBSPlugin;
-        clockApp: ClockApp;
-    }
-
-    let { omu, obs, clockApp }: Props = $props();
+    export let omu: Omu;
+    export let obs: OBSPlugin;
+    export let clockApp: ClockApp;
 </script>
 
 <main>

@@ -1,9 +1,6 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs';
-    import { Tooltip } from '@omujs/ui';
     import github from 'svelte-highlight/styles/github';
     import { writable } from 'svelte/store';
     import DocsFooter from './_components/DocsFooter.svelte';
@@ -11,22 +8,17 @@
     import { config, GROUP_NAMES } from './constants.js';
     import { docs } from './stores.js';
 
-    interface Props {
-        data: { sections: Record<string, DocsSection[]> };
-        children?: import('svelte').Snippet;
-    }
+    export let data: { sections: Record<string, DocsSection[]> };
 
-    let { data, children }: Props = $props();
-
-    let sections = $derived(data.sections);
-    let section = $derived(Object.values(sections)
+    $: sections = data.sections;
+    $: section = Object.values(sections)
         .flat()
-        .find((s) => s.slug === $docs?.slug));
-    let group =
-        $derived(section &&
-            Object.entries(sections).find(([, entries]) =>
-                entries.includes(section),
-            ));
+        .find((s) => s.slug === $docs?.slug);
+    $: group =
+        section &&
+        Object.entries(sections).find(([, entries]) =>
+            entries.includes(section),
+        );
 
     function createSetting<T>(key: string, defaultValue: T) {
         if (typeof localStorage === 'undefined') {
@@ -49,14 +41,12 @@
     }
     let menuOpen = createSetting('site/docs/menu_open', true);
     let openedGroups = createSetting<string[]>('site/docs/opened_groups', []);
-    let selectedGroup: string | undefined = $state(undefined);
-    run(() => {
-        selectedGroup = $docs?.group;
-    });
+    let selectedGroup: string | undefined = undefined;
+    $: selectedGroup = $docs?.group;
 </script>
 
 <svelte:head>
-    <svelte:element this={'style'}>
+    <svelte:element this="style">
         {github}
     </svelte:element>
     <title>{$docs?.meta.title || 'ドキュメント'} | OMUAPPS</title>
@@ -65,114 +55,109 @@
 </svelte:head>
 
 <Page>
-    {#snippet header()}
-        <header>
-            {#if $docs}
-                {@const meta = $docs.meta}
-                <span>
-                    <h1>
-                        {meta.title}
-                        <i class="ti ti-{meta.icon || 'pencil'}"></i>
-                    </h1>
-                    <small> {meta.description} </small>
-                </span>
+    <header slot="header">
+        {#if $docs}
+            {@const meta = $docs.meta}
+            <span>
+                <h1>
+                    {meta.title}
+                    <i class="ti ti-{meta.icon || 'pencil'}"></i>
+                </h1>
+                <small> {meta.description} </small>
+            </span>
+        {/if}
+    </header>
+    <main slot="content">
+        <div class="content">
+            <DocsNav {section} {group} />
+            <div class="markdown">
+                <h2 class="warning">
+                    現在ドキュメントは制作段階にあるため、多くの情報が不完全なものになっています
+                    <i class="ti ti-alert-hexagon"></i>
+                </h2>
+                <slot />
+            </div>
+            <DocsNav {section} {group} />
+            {#if section}
+                <DocsFooter {section} />
             {/if}
-        </header>
-    {/snippet}
-    {#snippet content()}
-        <main>
-            <div class="content">
-                <DocsNav {section} {group} />
-                <div class="markdown">
-                    <h2 class="warning">
-                        現在ドキュメントは制作段階にあるため、多くの情報が不完全なものになっています
-                        <i class="ti ti-alert-hexagon"></i>
-                    </h2>
-                    {@render children?.()}
-                </div>
-                <DocsNav {section} {group} />
-                {#if section}
-                    <DocsFooter {section} />
-                {/if}
-            </div>
-            <div class="groups omu-scroll" class:open={$menuOpen}>
-                <button class="menu-toggle" onclick={() => ($menuOpen = !$menuOpen)}>
-                    {#if $menuOpen}
-                        閉じる
-                    {:else}
-                        開く
-                    {/if}
-                    <i class="ti ti-menu"></i>
-                </button>
+        </div>
+        <div class="groups omu-scroll" class:open={$menuOpen}>
+            <button class="menu-toggle" on:click={() => ($menuOpen = !$menuOpen)}>
                 {#if $menuOpen}
-                    {#each Object.entries(sections) as [group, entries], index (index)}
-                        {#if group !== 'index'}
-                            <button class="group-toggle" onclick={() => {
-                                if (selectedGroup === group) {
-                                    selectedGroup = undefined;
-                                }
-                                if ($openedGroups.includes(group)) {
-                                    $openedGroups = $openedGroups.filter((it) => it != group);
-                                } else {
-                                    $openedGroups = [...$openedGroups, group];
-                                }
-                            }}>
-                                {GROUP_NAMES[group] ?? group}
-                                <i class="ti ti-chevron-down"></i>
-                            </button>
-                        {/if}
-                        {#if group === 'index' || $openedGroups.includes(group) || selectedGroup === group}
-                            <div class="sections">
-                                {#each entries as section, index (index)}
-                                    <a
-                                        href={`/docs/${section.slug}`}
-                                        class:selected={section.slug === $docs?.slug}
-                                    >
-                                        <Tooltip>{section.meta.description}</Tooltip>
-                                        {section.meta.title}
-                                        <i class="ti ti-chevron-right"></i>
-                                    </a>
-                                {/each}
-                            </div>
-                        {/if}
-                    {/each}
-                    <div class="config">
-                        使用するパッケージマネージャー
-                        <div class="package-manager">
-                            <button
-                                onclick={() => ($config.PACKAGE_MANAGER = 'npm')}
-                                class:selected={$config.PACKAGE_MANAGER === 'npm'}
-                            >
-                                npm
-                                <i class="ti ti-brand-npm"></i>
-                            </button>
-                            <button
-                                onclick={() => ($config.PACKAGE_MANAGER = 'yarn')}
-                                class:selected={$config.PACKAGE_MANAGER === 'yarn'}
-                            >
-                                yarn
-                                <i class="ti ti-brand-yarn"></i>
-                            </button>
-                            <button
-                                onclick={() => ($config.PACKAGE_MANAGER = 'pnpm')}
-                                class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
-                            >
-                                pnpm
-                                <i class="ti ti-brand-pnpm"></i>
-                            </button>
-                            <button
-                                onclick={() => ($config.PACKAGE_MANAGER = 'bun')}
-                                class:selected={$config.PACKAGE_MANAGER === 'bun'}
-                            >
-                                bun
-                                <i class="ti ti-package"></i>
-                            </button>
-                        </div>
-                    </div>
+                    閉じる
+                {:else}
+                    開く
                 {/if}
-            </div>
-        </main>
-    {/snippet}
+                <i class="ti ti-menu"></i>
+            </button>
+            {#if $menuOpen}
+                {#each Object.entries(sections) as [group, entries], index (index)}
+                    {#if group !== 'index'}
+                        <button class="group-toggle" on:click={() => {
+                            if (selectedGroup === group) {
+                                selectedGroup = undefined;
+                            }
+                            if ($openedGroups.includes(group)) {
+                                $openedGroups = $openedGroups.filter((it) => it != group);
+                            } else {
+                                $openedGroups = [...$openedGroups, group];
+                            }
+                        }}>
+                            {GROUP_NAMES[group] ?? group}
+                            <i class="ti ti-chevron-down"></i>
+                        </button>
+                    {/if}
+                    {#if group === 'index' || $openedGroups.includes(group) || selectedGroup === group}
+                        <div class="sections">
+                            {#each entries as section, index (index)}
+                                <a
+                                    href={`/docs/${section.slug}`}
+                                    class:selected={section.slug === $docs?.slug}
+                                >
+                                    {section.meta.title}
+                                    <i class="ti ti-chevron-right"></i>
+                                </a>
+                            {/each}
+                        </div>
+                    {/if}
+                {/each}
+                <div class="config">
+                    使用するパッケージマネージャー
+                    <div class="package-manager">
+                        <button
+                            on:click={() => ($config.PACKAGE_MANAGER = 'npm')}
+                            class:selected={$config.PACKAGE_MANAGER === 'npm'}
+                        >
+                            npm
+                            <i class="ti ti-brand-npm"></i>
+                        </button>
+                        <button
+                            on:click={() => ($config.PACKAGE_MANAGER = 'yarn')}
+                            class:selected={$config.PACKAGE_MANAGER === 'yarn'}
+                        >
+                            yarn
+                            <i class="ti ti-brand-yarn"></i>
+                        </button>
+                        <button
+                            on:click={() => ($config.PACKAGE_MANAGER = 'pnpm')}
+                            class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
+                        >
+                            pnpm
+                            <i class="ti ti-brand-pnpm"></i>
+                        </button>
+                        <button
+                            on:click={() => ($config.PACKAGE_MANAGER = 'bun')}
+                            class:selected={$config.PACKAGE_MANAGER === 'bun'}
+                        >
+                            bun
+                            <i class="ti ti-package"></i>
+                        </button>
+                    </div>
+                </div>
+            {/if}
+        </div>
+    </main>
 </Page>
 
 <style lang="scss">
@@ -193,7 +178,6 @@
 
     .content {
         flex: 1;
-        width: 100%;
     }
 
     .markdown {
@@ -268,6 +252,10 @@
             border: none;
             background: var(--color-bg-2);
             outline: 1px solid var(--color-outline);
+        }
+
+        > a {
+            padding: 0 4rem;
         }
 
         > .group-toggle {

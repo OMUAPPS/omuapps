@@ -6,21 +6,17 @@
     import MarshmallowRenderer from './MarshmallowRenderer.svelte';
     import MessageActions from './MessageActions.svelte';
 
-    interface Props {
-        api: MarshmallowAPI;
-    }
-
-    let { api }: Props = $props();
+    export let api: MarshmallowAPI;
 
     const { data } = MarshmallowApp.getInstance();
 
-    let imageElement: HTMLElement | undefined = $state(undefined);
-    let containerElement: HTMLElement | undefined = $state(undefined);
-    let mouse: { clientX: number; clientY: number } = $state({ clientX: 0, clientY: 0 });
+    let imageElement: HTMLElement;
+    let containerElement: HTMLElement;
+    let mouse: { clientX: number; clientY: number } = { clientX: 0, clientY: 0 };
 
     function updatePointer() {
         const { clientX, clientY } = mouse;
-        const { left, top, right, bottom } = imageElement!.getBoundingClientRect();
+        const { left, top, right, bottom } = imageElement.getBoundingClientRect();
         $data.pointer = {
             x: invLerp(left, right, clientX),
             y: invLerp(top, bottom, clientY),
@@ -28,8 +24,8 @@
     }
 
     async function handleScroll() {
-        const imageRect = imageElement!.getBoundingClientRect();
-        const containerRect = containerElement!.getBoundingClientRect();
+        const imageRect = imageElement.getBoundingClientRect();
+        const containerRect = containerElement.getBoundingClientRect();
         $data.scroll = invLerp(containerRect.top, containerRect.bottom - imageRect.height, imageRect.top);
         if (!$data.pointer) return;
         updatePointer();
@@ -39,7 +35,7 @@
 <div
     bind:this={containerElement}
     class="container omu-scroll"
-    onscroll={handleScroll}
+    on:scroll={handleScroll}
 >
     {#if $data.message}
         <div class="close">
@@ -51,11 +47,11 @@
         <div class="message">
             <div class="image"
                 role="img"
-                onmousemove={(event) => {
+                on:mousemove={(event) => {
                     mouse = event;
                     updatePointer();
                 }}
-                onmouseleave={() => {
+                on:mouseleave={() => {
                     $data.pointer = null;
                 }}
                 bind:this={imageElement}>

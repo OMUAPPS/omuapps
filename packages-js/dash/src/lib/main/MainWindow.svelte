@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { chat, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import { screenContext } from '$lib/screen/screen.js';
@@ -20,37 +18,37 @@
     import ConnectPage from './pages/ConnectPage.svelte';
     import ExplorePage from './pages/ExplorePage.svelte';
     import ManageAppsScreen from './screen/ManageAppsScreen.svelte';
-    import { currentPage, devMode, lastApp, menuOpen } from './settings.js';
+    import { currentPage, devMode, menuOpen } from './settings.js';
     import SettingsPage from './settings/SettingsPage.svelte';
     import TabEntry from './TabEntry.svelte';
 
-    const EXPLORE_PAGE = registerPage<unknown>({
+    const EXPLORE_PAGE = registerPage({
         id: 'explore',
         async open() {
             return {
                 component: ExplorePage,
-                data: undefined,
-            };
+                props: {},
+            } as Page<unknown>;
         },
     });
 
-    const CONNECT_PAGE = registerPage<unknown>({
+    const CONNECT_PAGE = registerPage({
         id: 'connect',
         async open() {
             return {
                 component: ConnectPage,
-                data: undefined,
-            };
+                props: {},
+            } as Page<unknown>;
         },
     });
 
-    const SETTINGS_PAGE = registerPage<unknown>({
+    const SETTINGS_PAGE = registerPage({
         id: 'settings',
         async open() {
             return {
                 component: SettingsPage,
-                data: undefined,
-            };
+                props: {},
+            } as Page<unknown>;
         },
     });
 
@@ -80,35 +78,19 @@
         await loadPage($currentPage, pageItem);
     });
 
-    async function openApps() {
+    async function registerServicePages() {
         omu.server.apps.listen();
         const update = async (apps: Map<string, App>) => {
             const services = [...apps.values().filter((app) => app.type === 'service')];
             for (const service of services) {
                 const id = `app-${service.id.key()}`;
-                const page: Page<{ app: App }> = {
-                    component: AppPage,
-                    data: {
-                        app: service,
-                    },
-                };
                 $pages[id] = {
-                    type: 'loaded',
-                    page,
-                };
-            }
-            const lastApps = [...apps.values().filter((app) => app.id.key() === $lastApp)];
-            for (const app of lastApps) {
-                const id = `app-${app.id.key()}`;
-                const page: Page<{ app: App }> = {
-                    component: AppPage,
-                    data: {
-                        app: app,
-                    },
-                };
-                $pages[id] = {
-                    type: 'loaded',
-                    page,
+                    type: 'loaded', page: {
+                        component: AppPage,
+                        props: {
+                            app: service,
+                        },
+                    } as Page<unknown>,
                 };
             }
         };
@@ -116,7 +98,7 @@
         update(await omu.server.apps.fetchAll());
     }
 
-    let onlineChats = $state(0);
+    let onlineChats = 0;
 
     onMount(async () => {
         omu.server.apps.event.remove.listen((removedItems) => {
@@ -136,17 +118,15 @@
             backward: true,
         });
         updateOnlineChats();
-        openApps();
+        registerServicePages();
     });
-    run(() => {
-        console.log($pages);
-    });
+    $: console.log($pages);
 </script>
 
 <main class:open={$menuOpen}>
     <div class="tabs" class:open={$menuOpen}>
         <section>
-            <button class="menu" onclick={() => ($menuOpen = !$menuOpen)}>
+            <button class="menu" on:click={() => ($menuOpen = !$menuOpen)}>
                 {#if $menuOpen}
                     <i class="ti ti-chevron-left"></i>
                     <Tooltip>{$t('menu.collapse')}</Tooltip>
@@ -166,7 +146,7 @@
                     </span>
                     <div class="buttons">
                         <ButtonMini
-                            onclick={() =>
+                            on:click={() =>
                                 screenContext.push(ManageAppsScreen, undefined)}
                         >
                             <Tooltip>
@@ -186,36 +166,31 @@
             </div>
         </section>
         <div class="list">
-            <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && ($devMode || app.type === 'app')}>
-                {#snippet component({ entry, selected })}
-                    <AppEntry {entry} {selected} />
-                {/snippet}
-                {#snippet empty()}
-                    <button
-                        onclick={() => ($currentPage = EXPLORE_PAGE.id)}
-
-                        class="no-apps"
-                    >
-                        {#if $menuOpen}
-                            {#if $currentPage === EXPLORE_PAGE.id}
-                                <p>
-                                    {$t('menu.jump-to-explore-hint')}
-                                </p>
-                                <small>
-                                    {$t('menu.add-apps-hint')}
-                                </small>
-                            {:else}
-                                <p>
-                                    {$t('menu.add-apps')}
-                                    <i class="ti ti-external-link"></i>
-                                </p>
-                                <small>
-                                    {$t('menu.jump-to-explore')}
-                                </small>
-                            {/if}
+            <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && ($devMode || app.type === 'app')} component={AppEntry}>
+                <button
+                    on:click={() => ($currentPage = EXPLORE_PAGE.id)}
+                    slot="empty"
+                    class="no-apps"
+                >
+                    {#if $menuOpen}
+                        {#if $currentPage === EXPLORE_PAGE.id}
+                            <p>
+                                {$t('menu.jump-to-explore-hint')}
+                            </p>
+                            <small>
+                                {$t('menu.add-apps-hint')}
+                            </small>
+                        {:else}
+                            <p>
+                                {$t('menu.add-apps')}
+                                <i class="ti ti-external-link"></i>
+                            </p>
+                            <small>
+                                {$t('menu.jump-to-explore')}
+                            </small>
                         {/if}
-                    </button>
-                {/snippet}
+                    {/if}
+                </button>
             </TableList>
         </div>
     </div>
@@ -224,8 +199,9 @@
             {#key id}
                 {#if entry.type === 'loaded'}
                     <div class="page" class:visible={$currentPage === id}>
-                        <entry.page.component
-                            data={entry.page.data}
+                        <svelte:component
+                            this={entry.page.component}
+                            props={entry.page.props}
                         />
                     </div>
                 {/if}

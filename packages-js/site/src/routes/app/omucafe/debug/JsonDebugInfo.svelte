@@ -1,11 +1,7 @@
 <script lang="ts">
     import JsonDebugInfoEntry from './JsonDebugInfoEntry.svelte';
 
-    interface Props {
-        value: any;
-    }
-
-    let { value }: Props = $props();
+    export let value: any;
 </script>
 
 <pre>

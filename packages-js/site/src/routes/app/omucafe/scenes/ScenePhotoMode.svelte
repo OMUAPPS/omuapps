@@ -1,23 +1,15 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import PhotoScreen from '../components/PhotoScreen.svelte';
     import { getGame } from '../omucafe-app.js';
     import type { SceneContext } from './scene.js';
 
-    interface Props {
-        context: SceneContext;
-    }
-
-    let { context }: Props = $props();
+    export let context: SceneContext;
     const { scene, gameConfig } = getGame();
-    run(() => {
-        console.log('ScenePhotoMode', context);
-    });
+    $: console.log('ScenePhotoMode', context);
 </script>
 
 <svelte:window
-    onwheel={(event) => {
+    on:wheel={(event) => {
         let scale = $gameConfig.photo_mode.scale;
         const logFactor = 2.621;
         const wheelFactor = 0.002621;
@@ -36,7 +28,7 @@
             $gameConfig.photo_mode.eraser.width = Math.min(Math.max(1, newWidth), 400);
         }
     }}
-    onkeydown={(event) => {
+    on:keydown={(event) => {
         if (!context.active) return;
         if (event.key === 'e') {
             $gameConfig.photo_mode.tool = {

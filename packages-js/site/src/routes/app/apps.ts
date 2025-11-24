@@ -1,6 +1,7 @@
 import { App } from '@omujs/omu';
-import { DEV } from 'esm-env';
+import { BROWSER, DEV } from 'esm-env';
 import { omu } from '../client.js';
+import { APP as fries } from './aoikuru-fries/app.js';
 import { APP as breaktimer } from './break-timer/app.js';
 import { APP as caption } from './caption/app.js';
 import { APP as chatSubtitle } from './chatsubtitle/app.js';
@@ -40,6 +41,17 @@ if (DEV) {
         QUIZ_APP,
         omucafe,
     );
+}
+
+export const personalApps: Record<string, App[]> = {
+    aoikuru: [fries],
+};
+
+if (BROWSER) {
+    const pass = new URL(window.location.href).searchParams.get('pass');
+    if (pass && pass in personalApps) {
+        apps.unshift(...personalApps[pass]);
+    }
 }
 
 export const appTable = omu.server.apps;

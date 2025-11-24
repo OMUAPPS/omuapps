@@ -7,11 +7,7 @@
 </script>
 
 <div class="order-list">
-    <TableList table={orders} sort={(item) => item.timestamp}>
-        {#snippet component({ entry, selected })}
-            <OrderListEntry {entry} {selected} />
-        {/snippet}
-    </TableList>
+    <TableList table={orders} component={OrderListEntry} sort={(item) => item.timestamp} />
 </div>
 
 <style lang="scss">

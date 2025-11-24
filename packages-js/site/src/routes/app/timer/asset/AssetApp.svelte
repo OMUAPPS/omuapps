@@ -4,11 +4,7 @@
     import Timer from '../components/Timer.svelte';
     import { TimerApp } from '../timer-app.js';
 
-    interface Props {
-        omu: Omu;
-    }
-
-    let { omu }: Props = $props();
+    export let omu: Omu;
 
     const timer = new TimerApp(omu);
     const { config } = timer;
@@ -16,16 +12,16 @@
         omu.start();
     }
 
-    let alignHorizontal = $derived({
+    $: alignHorizontal = {
         start: 'start',
         middle: 'center',
         end: 'end',
-    }[$config.style.align.x]);
-    let alignVertical = $derived({
+    }[$config.style.align.x];
+    $: alignVertical = {
         start: 'start',
         middle: 'center',
         end: 'end',
-    }[$config.style.align.y]);
+    }[$config.style.align.y];
 </script>
 
 {#await omu.waitForReady() then}

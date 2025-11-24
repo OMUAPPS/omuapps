@@ -1,3 +1,4 @@
+import { makeRegistryWritable } from '$lib/helper.js';
 import { type Vec2Like } from '$lib/math/vec2.js';
 import { Identifier, Serializer, type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
@@ -147,7 +148,7 @@ export class DiscordOverlayApp {
         private readonly side: AppSide,
     ) {
         this.discord = new DiscordRPCAPI(omu);
-        this.config = omu.registries.get(CONFIG_REGISTRY_TYPE).compatSvelte();
+        this.config = makeRegistryWritable(omu.registries.get(CONFIG_REGISTRY_TYPE));
     }
 
     public static getInstance(): DiscordOverlayApp {

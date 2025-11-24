@@ -1,20 +1,14 @@
 <script lang="ts">
-
     import { Tooltip } from '@omujs/ui';
 
-    interface Props {
-        icon: string;
-        tooltip: string;
-        onclick: () => void;
-    }
-
-    let { icon, tooltip, onclick }: Props = $props();
+    export let icon: string;
+    export let tooltip: string;
 </script>
 
 <button
     class="button"
     type="button"
-    {onclick}
+    on:click
 >
     <Tooltip>{tooltip}</Tooltip>
     <i class="ti {icon}"></i>

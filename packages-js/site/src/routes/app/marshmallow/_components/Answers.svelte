@@ -1,31 +1,21 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { Button, Spinner } from '@omujs/ui';
     import { DOM, type AnswerMessage, type MarshmallowAPI } from '../api';
     import MessageEntry from './MessageEntry.svelte';
 
-    interface Props {
-        api: MarshmallowAPI;
-        search?: string;
-        refresh?: any;
-    }
+    export let api: MarshmallowAPI;
+    export let search: string = '';
+    export let refresh = () => {
+        last = undefined;
+        answers = undefined;
+        remaining = true;
+        loadNext();
+    };
 
-    let {
-        api,
-        search = '',
-        refresh = $bindable(() => {
-            last = undefined;
-            answers = undefined;
-            remaining = true;
-            loadNext();
-        }),
-    }: Props = $props();
-
-    let answers: Record<string, AnswerMessage> | undefined = $state({});
+    let answers: Record<string, AnswerMessage> | undefined = undefined;
     let last: AnswerMessage | undefined = undefined;
-    let loading = $state(false);
-    let remaining = $state(true);
+    let loading = false;
+    let remaining = true;
 
     async function loadNext() {
         if (!remaining) return;
@@ -54,27 +44,27 @@
         }
     }
 
-    run(() => {
+    $: {
         if (api) {
             refresh();
             loadNext();
         }
-    });
+    }
 
-    let filteredAnswers = $derived(Object.entries(answers ?? {})
+    $: filteredAnswers = Object.entries(answers ?? {})
         .sort(([,a], [,b]) => b.iso8601.getTime() - a.iso8601.getTime())
         .filter(([,message]) => {
             if (DOM.blockToString(message.content).toLocaleLowerCase().includes(search.toLocaleLowerCase())) return true;
             if (message.reply && DOM.blockToString(message.reply).toLocaleLowerCase().includes(search.toLocaleLowerCase())) return true;
-        }));
-    run(() => {
+        });
+    $: {
         if (filteredAnswers.length === 0) {
             loadNext();
         }
-    });
+    }
 </script>
 
-<div class="answers omu-scroll" onscroll={(event) => {
+<div class="answers omu-scroll" on:scroll={(event) => {
     const { scrollHeight, scrollTop, clientHeight } = event.currentTarget;
     const remaining = scrollHeight - scrollTop - clientHeight;
     if (remaining < clientHeight) {

@@ -3,11 +3,7 @@
     import EditAnswer from './AnswerEdit.svelte';
     import EditPrompt from './PromptEdit.svelte';
 
-    interface Props {
-        question: Question;
-    }
-
-    let { question = $bindable() }: Props = $props();
+    export let question: Question;
 </script>
 
 <div class="question">

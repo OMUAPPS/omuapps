@@ -1,0 +1,112 @@
+<script lang="ts">
+    import { Chat, ChatEvents, Content, Models } from '@omujs/chat';
+    import type { Omu } from '@omujs/omu';
+    import { BROWSER } from 'esm-env';
+    import { FriesApp } from '../fries-app';
+    import type { ThrowData } from '../state';
+    import Avatar from './Avatar.svelte';
+    import Board from './Board.svelte';
+    import Fries from './Fries.svelte';
+    import bg from './img/bg.png';
+
+    export let omu: Omu;
+    const chat = Chat.create(omu);
+    const friesApp = new FriesApp(omu);
+    const { config, state } = friesApp;
+
+    let queue: ThrowData[] = [];
+
+    function processQueue() {
+        if ($state.type !== 'idle') return;
+        const data = queue.shift();
+        if (!data) return;
+        $state = {
+            type: 'catching',
+            start: performance.timeOrigin + performance.now(),
+            data,
+        };
+    }
+
+    state.subscribe(() => processQueue());
+
+    function getMessageGreasiness(message: Models.Message): number {
+        if (!message.content) return 0;
+        let greasyOMetor = 0;
+        for (const component of Content.walk(message.content)) {
+            if (component.type !== 'image') continue;
+            const { id } = component.data;
+            if (id === '🍟') {
+                greasyOMetor++;
+            }
+        }
+        return greasyOMetor;
+    }
+
+    chat.on(ChatEvents.Message.Add, async (message) => {
+        if (!message.authorId) return;
+        const greasiness = getMessageGreasiness(message);
+        if (greasiness <= 0) return;
+        const author = await chat.authors.get(message.authorId.key());
+        queue.push({
+            thrower: author?.name || '',
+            count: greasiness,
+        });
+        processQueue();
+    });
+
+    friesApp.testSignal.listen(() => {
+        queue.push({
+            thrower: `test${Date.now() % 1000}`,
+            count: 1,
+        });
+        processQueue();
+    });
+
+    chat.messages.listen();
+
+    if (BROWSER) {
+        omu.start();
+    }
+
+</script>
+<main>
+    <img src={bg} alt="" />
+    <Board title={$config.text} />
+    <Avatar {state} />
+    <Fries {state} />
+
+    {#if $config.hint}
+        <small class="hint">
+            {$config.hint}
+        </small>
+    {/if}
+</main>
+
+<style lang="scss">
+    main {
+        position: fixed;
+        inset: 0;
+    }
+
+    img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .hint {
+        position: absolute;
+        bottom: 24px;
+        right: calc(27px * 2);
+        font-size: 40px;
+        padding: 5px 10px;
+        color: #f0ebe0;
+        font-family: "RocknRoll One", sans-serif;
+        font-weight: 500;
+    }
+
+    :global(body) {
+        background: transparent !important;
+    }
+</style>

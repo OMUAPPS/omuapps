@@ -1,27 +1,15 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { tick } from 'svelte';
     import { ARC4 } from '../../omucafe/game/random';
     import type { Message } from '../api';
     import { MarshmallowApp, type MarshmallowConfig, type MarshmallowScreen, type MarshmallowSkin } from '../marshmallow-app';
     import ElementRenderer from './ElementRenderer.svelte';
 
-    interface Props {
-        message: Message;
-        width?: number;
-        height?: number;
-        pointer?: { x: number; y: number } | undefined | null;
-        targetWidth?: number;
-    }
-
-    let {
-        message,
-        width = $bindable(1),
-        height = $bindable(1),
-        pointer = undefined,
-        targetWidth = 350,
-    }: Props = $props();
+    export let message: Message;
+    export let width = 1;
+    export let height = 1;
+    export let pointer: { x: number; y: number } | undefined | null = undefined;
+    export let targetWidth = 350;
 
     const marshmallowApp = MarshmallowApp.getInstance();
     const { config, screen } = marshmallowApp;
@@ -36,8 +24,8 @@
         return config.skins[id];
     }
 
-    let skin = $derived(getSkin($config, $screen));
-    let element: HTMLElement | undefined = $state(undefined);
+    $: skin = getSkin($config, $screen);
+    let element: HTMLElement;
 
     async function load(_: Message, _scale: number, skin?: MarshmallowSkin) {
         if (skin) {
@@ -50,7 +38,7 @@
             loadedSkin = undefined;
         }
         await tick();
-        const rect = element!.getBoundingClientRect();
+        const rect = element.getBoundingClientRect();
         width = targetWidth * scale;
         height = rect.height;
     }
@@ -59,37 +47,22 @@
         middle: string;
         bottom: string;
         cursor?: string;
-    } | undefined = $state(undefined);
+    } | undefined = undefined;
 
-    let scale = $derived(targetWidth / 600);
-    run(() => {
-        load(message, scale, skin);
-    });
+    $: scale = targetWidth / 600;
+    $: load(message, scale, skin);
 </script>
 
 <svelte:head>
     {#if skin?.text.font.family}
         <link href="https://fonts.googleapis.com/css2?family={encodeURIComponent(skin?.text.font.family)}&display=swap" rel="stylesheet">
     {/if}
-    <style>
-        @keyframes marshmallow-paper {
-            0% {
-                transform: translateY(-10vh) perspective(200px) rotateX(3deg)  translate(75%, 10rem) rotate(-3deg) translate(-75%, -10rem) ;
-                opacity: 0;
-            }
-
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-    </style>
 </svelte:head>
 
 <div class="message" class:has-pointer={!!pointer} style="scale: {scale}; width: {targetWidth}px; height: {height}px">
     {#if skin}
         {#if loadedSkin}
-            <div class="skin animation" style:animation-name="marshmallow-{skin.transition.in.type}" bind:this={element}>
+            <div class="skin" bind:this={element}>
                 <img src={loadedSkin.top} alt="">
                 <div
                     class="content"
@@ -107,7 +80,7 @@
             </div>
         {/if}
     {:else}
-        <div class="img animation" bind:this={element}>
+        <div class="img" bind:this={element}>
             <img
                 width="{targetWidth}px"
                 src="https://media.marshmallow-qa.com/system/images/{message.id}.png"
@@ -139,13 +112,6 @@
         &.has-pointer {
             cursor: none;
         }
-    }
-
-    .animation {
-        transform-origin: center top;
-        animation-fill-mode: forwards;
-        animation-duration: 0.621s;
-        animation-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);
     }
 
     .skin {

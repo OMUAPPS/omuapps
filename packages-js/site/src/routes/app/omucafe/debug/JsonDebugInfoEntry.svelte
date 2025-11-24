@@ -1,11 +1,6 @@
 <script lang="ts">
-    import JsonDebugInfoEntry from './JsonDebugInfoEntry.svelte';
-    interface Props {
-        value: any;
-        open?: boolean;
-    }
-
-    let { value, open = $bindable(false) }: Props = $props();
+    export let value: any;
+    export let open = false;
 </script>
 
 {#if typeof value === 'undefined'}
@@ -22,7 +17,7 @@
     <strong>Uint8Array({value.length})</strong>
 {:else if Array.isArray(value)}
     <strong>[</strong>
-    <button onclick={() => open = !open}>
+    <button on:click={() => open = !open}>
         {#if open}
             <i class="ti ti-chevron-up"></i>
         {:else}
@@ -32,14 +27,14 @@
     <ul>
         {#each value as item, i (i)}
             <li>
-                <JsonDebugInfoEntry value={item} />
+                <svelte:self value={item} />
             </li>
         {/each}
     </ul>
     <strong>]</strong>
 {:else if typeof value === 'object'}
     <strong>{'{'}</strong>
-    <button onclick={() => open = !open}>
+    <button on:click={() => open = !open}>
         {#if open}
             <i class="ti ti-chevron-up"></i>
         {:else}
@@ -51,7 +46,7 @@
             {#each Object.entries(value) as [key, val] (key)}
                 <li>
                     <strong>{key}:</strong>
-                    <JsonDebugInfoEntry value={val} />
+                    <svelte:self value={val} />
                 </li>
             {/each}
         </ul>

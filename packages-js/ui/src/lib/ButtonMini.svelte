@@ -1,21 +1,10 @@
 <script lang="ts">
-    interface Props {
-        primary?: boolean;
-        disabled?: boolean;
-        onclick?: () => unknown;
-        children?: import('svelte').Snippet;
-    }
-
-    let {
-        primary = false,
-        disabled = false,
-        onclick = () => {},
-        children,
-    }: Props = $props();
+    export let primary = false;
+    export let disabled = false;
 </script>
 
-<button type="button" {onclick} class:primary {disabled}>
-    {@render children?.()}
+<button type="button" on:click class:primary {disabled}>
+    <slot />
 </button>
 
 <style lang="scss">

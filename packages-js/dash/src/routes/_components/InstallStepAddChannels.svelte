@@ -4,21 +4,17 @@
     import { Button, Spinner, Textbox, Tooltip } from '@omujs/ui';
     import type { AddChannelStatus } from '../stores';
 
-    interface Props {
-        status: AddChannelStatus;
-        resolve: () => void;
-    }
-
-    let { status = $bindable(), resolve }: Props = $props();
+    export let state: AddChannelStatus;
+    export let resolve: () => void;
 
     const URL_REGEX = /[\w-]+\.[\w-]+(\/[\w-./?%&=]*)?/;
 
-    let url: string = $state('');
+    let url: string = '';
 
     async function search() {
-        status = { type: 'searching' };
+        state = { type: 'searching' };
         const channels = await chat.createChannelTree(url);
-        status = {
+        state = {
             type: 'result',
             channels: await Promise.all(channels.map(async (channel) => ({
                 channel,
@@ -28,11 +24,11 @@
     }
 
     async function finish() {
-        if (status.type !== 'result') {
+        if (state.type !== 'result') {
             resolve();
             return;
         }
-        const addedChannels = status.channels
+        const addedChannels = state.channels
             .filter(({ added }) => added)
             .map(({ channel }) => channel);
         await chat.channels.add(...addedChannels);
@@ -41,7 +37,7 @@
 </script>
 
 <div class="step">
-    {#if status.type === 'idle'}
+    {#if state.type === 'idle'}
         <Textbox bind:value={url} placeholder="https://..." />
         <div class="actions">
             <Button onclick={resolve}>
@@ -65,17 +61,16 @@
                 <i class="ti ti-search"></i>
             </Button>
         </div>
-    {:else if status.type === 'searching'}
+    {:else if state.type === 'searching'}
         <p>
             検索中
             <Spinner />
         </p>
-    {:else if status.type === 'result'}
+    {:else if state.type === 'result'}
         <div class="channels">
-            {#each status.channels as { channel, added }, index (index)}
-                <button class="channel" class:checked={added} onclick={() => {
-                    if (status.type !== 'result') return;
-                    status.channels[index].added = !added;
+            {#each state.channels as { channel, added }, index (index)}
+                <button class="channel" class:checked={added} on:click={() => {
+                    added = !added;
                 }}>
                     {#if added}
                         <Tooltip>
@@ -100,20 +95,20 @@
         </div>
         <div class="actions">
             <Button onclick={() => {
-                status = { type: 'idle' };
+                state = { type: 'idle' };
             }}>
                 <i class="ti ti-search"></i>
                 もう一度検索
             </Button>
-            <Button onclick={finish} primary disabled={status.channels.length > 0 && status.channels.every(({ added }) => !added)}>
+            <Button onclick={finish} primary disabled={state.channels.length > 0 && state.channels.every(({ added }) => !added)}>
                 <Tooltip>
-                    {#if status.channels.some(({ added }) => added)}
+                    {#if state.channels.some(({ added }) => added)}
                         追加して終了
                     {:else}
                         一つ以上選んでください
                     {/if}
                 </Tooltip>
-                {#if status.channels.length > 0}
+                {#if state.channels.length > 0}
                     追加して終了
                 {:else}
                     追加せずに終了

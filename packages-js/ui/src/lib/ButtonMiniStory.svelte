@@ -2,17 +2,13 @@
     import ButtonMini from './ButtonMini.svelte';
     import { Tooltip } from './index.js';
 
-    interface Props {
-        icon: string;
-        text: string;
-    }
-
-    let { icon, text }: Props = $props();
+    export let icon: string;
+    export let text: string;
 </script>
 
 <ButtonMini>
     <Tooltip>
         {text}
     </Tooltip>
-    <i class="ti ti-{icon}"></i>aa
+    <i class="ti ti-{icon}" />aa
 </ButtonMini>

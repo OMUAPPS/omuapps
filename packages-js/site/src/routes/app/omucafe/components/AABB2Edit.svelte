@@ -2,11 +2,7 @@
     import type { AABB2Like } from '$lib/math/aabb2.js';
     import { Tooltip } from '@omujs/ui';
 
-    interface Props {
-        bounds: AABB2Like;
-    }
-
-    let { bounds = $bindable() }: Props = $props();
+    export let bounds: AABB2Like;
 </script>
 
 <div class="edit">
@@ -16,7 +12,7 @@
             <Tooltip>
                 最小値X
             </Tooltip>
-            <input type="number" value={bounds.min.x} onchange={({ currentTarget: { valueAsNumber } }) => {
+            <input type="number" value={bounds.min.x} on:change={({ currentTarget: { valueAsNumber } }) => {
                 bounds = {
                     ...bounds,
                     min: {
@@ -30,7 +26,7 @@
             <Tooltip>
                 最小値Y
             </Tooltip>
-            <input type="number" value={bounds.min.y} onchange={({ currentTarget: { valueAsNumber } }) => {
+            <input type="number" value={bounds.min.y} on:change={({ currentTarget: { valueAsNumber } }) => {
                 bounds = {
                     ...bounds,
                     min: {
@@ -47,7 +43,7 @@
             <Tooltip>
                 最大値X
             </Tooltip>
-            <input type="number" value={bounds.max.x} onchange={({ currentTarget: { valueAsNumber } }) => {
+            <input type="number" value={bounds.max.x} on:change={({ currentTarget: { valueAsNumber } }) => {
                 bounds = {
                     ...bounds,
                     max: {
@@ -61,7 +57,7 @@
             <Tooltip>
                 最大値Y
             </Tooltip>
-            <input type="number" value={bounds.max.y} onchange={({ currentTarget: { valueAsNumber } }) => {
+            <input type="number" value={bounds.max.y} on:change={({ currentTarget: { valueAsNumber } }) => {
                 bounds = {
                     ...bounds,
                     max: {

@@ -1,25 +1,10 @@
 <script lang="ts">
-    interface Props {
-        primary?: boolean;
-        multiple?: boolean;
-        files?: FileList | null;
-        accept?: string | null;
-        handle?: (files: FileList) => void;
-        fileDrop?: HTMLInputElement | null;
-        button?: import('svelte').Snippet<[any]>;
-        children?: import('svelte').Snippet;
-    }
-
-    let {
-        primary = false,
-        multiple = false,
-        files = $bindable(null),
-        accept = null,
-        handle = () => {},
-        fileDrop = $bindable(null),
-        button,
-        children,
-    }: Props = $props();
+    export let primary = false;
+    export let multiple = false;
+    export let files: FileList | null = null;
+    export let accept: string | null = null;
+    export let handle: (files: FileList) => void = () => {};
+    export let fileDrop: HTMLInputElement | null = null;
 
     export const open = (): Promise<FileList> => {
         if (!fileDrop) return Promise.resolve(new FileList());
@@ -44,15 +29,15 @@
     }
 </script>
 
-<input type="file" bind:this={fileDrop} bind:files onchange={handleChange} {multiple} {accept} hidden />
-{#if button}{@render button({ open })}{:else}
+<input type="file" bind:this={fileDrop} bind:files on:change={handleChange} {multiple} {accept} hidden />
+<slot {open} name="button">
     <button
         class:primary
-        onclick={open}
+        on:click={open}
     >
-        {@render children?.()}
+        <slot />
     </button>
-{/if}
+</slot>
 
 <style lang="scss">
     button {

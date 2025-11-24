@@ -3,15 +3,11 @@
     import type { App } from '@omujs/omu';
     import { Localized, Tooltip } from '@omujs/ui';
 
-    interface Props {
-        app: App;
-    }
+    export let app: App;
 
-    let { app }: Props = $props();
-
-    let host = $derived(app.id.namespace.split('.').reverse().join('.'));
-    let metadata = $derived(app.metadata);
-    let icon = $derived(metadata?.icon && omu.i18n.translate(metadata?.icon));
+    $: host = app.id.namespace.split('.').reverse().join('.');
+    $: metadata = app.metadata;
+    $: icon = metadata?.icon && omu.i18n.translate(metadata?.icon);
 </script>
 
 <div class="info">

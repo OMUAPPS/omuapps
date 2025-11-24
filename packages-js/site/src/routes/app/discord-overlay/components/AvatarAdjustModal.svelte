@@ -7,24 +7,15 @@
     import type { RPCSpeakingStates, RPCVoiceStates } from '../discord/discord.js';
     import { scaleFactor, selectedAvatar } from '../states.js';
 
-    interface Props {
-        overlayApp: DiscordOverlayApp;
-        avatarConfig: AvatarConfig;
-        voiceState: RPCVoiceStates;
-        speakingState: RPCSpeakingStates;
-    }
-
-    let {
-        overlayApp,
-        avatarConfig = $bindable(),
-        voiceState,
-        speakingState,
-    }: Props = $props();
+    export let overlayApp: DiscordOverlayApp;
+    export let avatarConfig: AvatarConfig;
+    export let voiceState: RPCVoiceStates;
+    export let speakingState: RPCSpeakingStates;
 
     const { config } = overlayApp;
 
     let lastMouse: { x: number; y: number } | null = null;
-    let dragger: HTMLElement | null = $state(null);
+    let dragger: HTMLElement | null = null;
 
     function handleMouseMove(event: MouseEvent) {
         if (!lastMouse) return;
@@ -88,13 +79,13 @@
     {@const avatar = $selectedAvatar}
     <button
         bind:this={dragger}
-        onmousedown={handleMouseDown}
-        onwheel={handleMouseWheel}
+        on:mousedown={handleMouseDown}
+        on:wheel={handleMouseWheel}
         aria-label="Avatar Origin"
         class="origin">
     </button>
     <div class="actions">
-        <button onclick={() => {
+        <button on:click={() => {
             if (!$selectedAvatar) return;
             if (!avatarConfig) return;
             avatarConfig.offset = [0, 0];
@@ -109,7 +100,7 @@
             <i class="ti ti-refresh"></i>
         </button>
         {#if avatarConfig.type === 'pngtuber'}
-            <button onclick={() => {
+            <button on:click={() => {
                 if (!$selectedAvatar) return;
                 if (!avatarConfig) return;
                 if (avatarConfig.type !== 'pngtuber') return;
@@ -120,7 +111,7 @@
                 左右を反転
                 <i class="ti ti-arrows-horizontal"></i>
             </button>
-            <button onclick={() => {
+            <button on:click={() => {
                 if (!$selectedAvatar) return;
                 if (!avatarConfig) return;
                 if (avatarConfig.type !== 'pngtuber') return;
@@ -142,7 +133,7 @@
             <i class="ti ti-check"></i>
         </Button>
     </div>
-    <button onclick={() => {
+    <button on:click={() => {
         $selectedAvatar = null;
     }} class="close">
         完了
@@ -163,7 +154,8 @@
                 {@const stateType =
                     stateVoice && (stateVoice.self_deaf || stateVoice.deaf) ? 'deafened' :
                         stateVoice && (stateVoice.self_mute || stateVoice.mute) ? 'muted' :
-                            stateSpeaking ? 'active' : null}
+                            stateSpeaking ? 'active' : null
+                }
                 <div class="sprite">
                     <div class="png-avatar">
                         {#await getSourceUrl(avatarConfig.base) then url}

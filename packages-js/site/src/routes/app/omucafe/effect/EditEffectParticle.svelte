@@ -5,11 +5,7 @@
     import AssetImage from '../components/AssetImage.svelte';
     import type { EffectParticle } from './effect-state.js';
 
-    interface Props {
-        particle: EffectParticle;
-    }
-
-    let { particle = $bindable() }: Props = $props();
+    export let particle: EffectParticle;
 </script>
 
 <h2>動き</h2>
@@ -64,7 +60,7 @@
 <div class="property">
     <div class="sources">
         {#each particle.source.assets as asset, i (i)}
-            <button class="image" onclick={() => {
+            <button class="image" on:click={() => {
                 particle.source.assets = particle.source.assets.filter((_, index) => index !== i);
             }}>
                 <Tooltip>

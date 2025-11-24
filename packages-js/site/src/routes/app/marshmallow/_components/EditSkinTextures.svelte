@@ -3,11 +3,7 @@
     import { MarshmallowApp, type MarshmallowSkin } from '../marshmallow-app';
     import AssetImage from './AssetImage.svelte';
 
-    interface Props {
-        textures: MarshmallowSkin['textures'];
-    }
-
-    let { textures = $bindable() }: Props = $props();
+    export let textures: MarshmallowSkin['textures'];
 
     const marshmallowApp = MarshmallowApp.getInstance();
 </script>

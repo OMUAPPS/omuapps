@@ -1,20 +1,15 @@
 <script lang="ts">
     import { getContext } from 'svelte';
-    import EditValue from './EditValue.svelte';
     import type { Value } from './script.js';
     import { SCRIPT_EDITOR_CONTEXT, type ScriptEditorContext } from './scripteditor.js';
 
-    interface Props {
-        value: Value;
-    }
-
-    let { value = $bindable() }: Props = $props();
-    let active = $state(false);
+    export let value: Value;
+    let active = false;
 
     const ctx = getContext<ScriptEditorContext>(SCRIPT_EDITOR_CONTEXT);
 </script>
 
-<button onclick={(event) => {
+<button on:click={(event) => {
     ctx.editValue({
         value,
         setter: (val) => {
@@ -35,10 +30,10 @@
         {value.value}
     {:else if value.type === 'invoke'}
         <i class="ti ti-caret-right-filled"></i>
-        <EditValue bind:value={value.function} />
+        <svelte:self bind:value={value.function} />
         <i class="ti ti-brackets-contain-start"></i>
-        {#each value.args as _, index (index)}
-            <EditValue bind:value={value.args[index]} />
+        {#each value.args as arg, index (index)}
+            <svelte:self bind:value={arg} />
         {/each}
         <i class="ti ti-brackets-contain-end"></i>
     {:else if value.type === 'void'}

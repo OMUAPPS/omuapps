@@ -1,11 +1,7 @@
 <script lang="ts">
     import type { Hint } from '../../quiz-app';
 
-    interface Props {
-        hint: Hint;
-    }
-
-    let { hint }: Props = $props();
+    export let hint: Hint;
 </script>
 
 {#if hint.type === 'text'}

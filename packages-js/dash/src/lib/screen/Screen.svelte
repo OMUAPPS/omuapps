@@ -1,32 +1,17 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { type ScreenHandle } from './screen.js';
 
-    interface Props {
-        handle: ScreenHandle;
-        windowed?: boolean;
-        disableClose?: boolean;
-        children?: import('svelte').Snippet;
-        info?: import('svelte').Snippet;
-    }
-
-    let {
-        handle,
-        windowed = true,
-        disableClose = false,
-        children,
-        info,
-    }: Props = $props();
-
-    let container: HTMLButtonElement | undefined = $state();
+    export let screen: { handle: ScreenHandle };
+    export let windowed: boolean = true;
+    export let disableClose: boolean = false;
+    let container: HTMLButtonElement;
 
     function handleClick(event: MouseEvent) {
         if (disableClose) {
             return;
         }
         if (event.target === container) {
-            handle.pop();
+            screen.handle.pop();
         }
     }
 
@@ -35,27 +20,27 @@
             return;
         }
         if (e.key === 'Escape') {
-            handle.pop();
+            screen.handle.pop();
         }
     }
 
-    let content: HTMLElement | undefined = $state();
+    let content: HTMLElement | undefined;
 
-    run(() => {
+    $: {
         if (content) {
             content.focus();
         }
-    });
+    }
 </script>
 
-<svelte:window onkeydown={onKeyPress} />
+<svelte:window on:keydown={onKeyPress} />
 
-<button class="container" class:windowed onclick={handleClick} bind:this={container}>
+<button class="container" class:windowed on:click={handleClick} bind:this={container}>
     <div class="content" class:windowed bind:this={content} tabindex="-1">
-        {@render children?.()}
+        <slot />
     </div>
     <div class="info" class:disableClose>
-        {@render info?.()}
+        <slot name="info" />
     </div>
 </button>
 

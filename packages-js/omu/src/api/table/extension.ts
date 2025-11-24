@@ -143,7 +143,7 @@ export class TableExtension implements Extension {
 
     public json<T, D extends JsonType = JsonType>(name: string, options: { key: (item: T) => string; serializer?: Serializable<T, D> }): Table<T> {
         const tableType = new TableType<T>(
-            this.omu.app.id.base.join(name),
+            this.omu.app.id.join(name),
             Serializer.pipe<T, JsonType, Uint8Array>(options.serializer ?? Serializer.noop(), Serializer.json()),
             options.key,
         );
@@ -152,7 +152,7 @@ export class TableExtension implements Extension {
 
     public serialized<T>(name: string, options: { key: (item: T) => string; serializer: Serializable<T, Uint8Array> }): Table<T> {
         const tableType = new TableType<T>(
-            this.omu.app.id.base.join(name),
+            this.omu.app.id.join(name),
             options.serializer,
             options.key,
         );

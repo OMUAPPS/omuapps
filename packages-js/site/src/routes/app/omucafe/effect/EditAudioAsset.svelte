@@ -1,13 +1,9 @@
 <script lang="ts">
     import { getAsset, type Asset } from '../asset/asset.js';
 
-    interface Props {
-        asset: Asset | undefined;
-    }
+    export let asset: Asset | undefined;
 
-    let { asset = $bindable() }: Props = $props();
-
-    let src = $derived(asset && getAsset(asset));
+    $: src = asset && getAsset(asset);
 </script>
 
 {#await src then src}

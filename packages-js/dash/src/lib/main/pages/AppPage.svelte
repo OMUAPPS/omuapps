@@ -1,61 +1,60 @@
 <script lang="ts">
     import { omu } from '$lib/client';
-    import { tryCatch } from '$lib/result';
     import { appWindow } from '$lib/tauri';
-    import { BrowserSession, type App } from '@omujs/omu';
+    import { BrowserTokenProvider, type App, type SessionParam } from '@omujs/omu';
     import { Spinner } from '@omujs/ui';
     import { onMount } from 'svelte';
 
-    interface Props {
-        data: {
-            app: App;
-        };
-    }
+    export let props: {
+        app: App;
+    };
 
-    let { data }: Props = $props();
-    let { app } = data;
-
-    let appState: {
+    let state: {
         type: 'generating';
     } | {
         type: 'error'; message: string;
     } | {
         type: 'open'; url: URL; loading: boolean;
-    } = $state({
+    } = {
         type: 'generating',
-    });
+    };
 
     onMount(async () => {
-        if (!app.url) {
-            appState = { type: 'error', message: 'App has no URL' };
+        if (!props.app.url) {
+            state = { type: 'error', message: 'App has no URL' };
             return;
         }
-        const { data: session, error } = await tryCatch(omu.sessions.generateToken({
-            app: app,
-        }));
-        if (error) {
-            appState = { type: 'error', message: 'Failed to generate token: ' + error };
+        const tokenResult = await omu.sessions.generateToken({
+            app: props.app,
+            permissions: [],
+        });
+        if (tokenResult.type === 'error') {
+            state = { type: 'error', message: 'Failed to generate token: ' + tokenResult.message };
             return;
         }
-        const url = new URL(app.url);
-        url.searchParams.set(BrowserSession.PARAM_NAME, JSON.stringify(session));
-        appState = { type: 'open', url, loading: true };
+        const url = new URL(props.app.url);
+        const paramJson: SessionParam = {
+            token: tokenResult.token,
+            address: omu.address,
+        };
+        url.searchParams.set(BrowserTokenProvider.TOKEN_PARAM_KEY, JSON.stringify(paramJson));
+        state = { type: 'open', url, loading: true };
     });
 </script>
 
 <div class="container">
-    {#if appState.type === 'generating'}
+    {#if state.type === 'generating'}
         <div class="loading">
             <Spinner /> 認証中
         </div>
-    {:else if appState.type === 'error'}
-        <div class="loading">Error: {appState.message}</div>
-    {:else if appState.type === 'open'}
-        {#if appState.loading}
+    {:else if state.type === 'error'}
+        <div class="loading">Error: {state.message}</div>
+    {:else if state.type === 'open'}
+        {#if state.loading}
             <div class="loading">
                 <Spinner />
-                {#if app.metadata?.name}
-                    {omu.i18n.translate(app.metadata.name)}
+                {#if props.app.metadata?.name}
+                    {omu.i18n.translate(props.app.metadata.name)}
                     アプリを読み込み中
                 {:else}
                     読み込み中
@@ -63,29 +62,29 @@
             </div>
         {/if}
         <iframe
-            onload={() => {
-                if (appState.type !== 'open') {
-                    throw new Error(`Invalid state: ${appState.type}`);
+            on:load={() => {
+                if (state.type !== 'open') {
+                    throw new Error(`Invalid state: ${state.type}`);
                 }
-                appState.loading = false;
+                state.loading = false;
             }}
-            src={appState.url.toJSON()}
+            src={state.url.toJSON()}
             title=""
             frameborder="0"
             allow="camera; microphone; clipboard-read; clipboard-write; fullscreen"
         ></iframe>
     {/if}
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
         class="window-resize bottom"
-        onmousedown={() => {
+        on:mousedown={() => {
             appWindow.startResizeDragging('South');
         }}
     ></div>
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
         class="window-resize right"
-        onmousedown={() => {
+        on:mousedown={() => {
             appWindow.startResizeDragging('East');
         }}
     ></div>

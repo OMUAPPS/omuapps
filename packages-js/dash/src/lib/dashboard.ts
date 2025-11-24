@@ -18,6 +18,7 @@ import {
     type PromptRequestHttpPort,
     type PromptRequestIndexInstall,
     type PromptResult,
+    type SpeechRecognitionStart,
     type TranscriptSegment,
     type UserResponse,
     type WebviewEvent,
@@ -52,7 +53,7 @@ export class Dashboard implements DashboardHandler {
         omu.dashboard.set(this);
     }
 
-    async speechRecognitionStart(): Promise<UserResponse<undefined>> {
+    async speechRecognitionStart(request: SpeechRecognitionStart, params: InvokedParams): Promise<UserResponse<undefined>> {
         if (this.recognition) return { type: 'ok', value: undefined };
         const accepted = get(speechRecognition) || await new Promise<boolean>((resolve) => {
             screenContext.push(SpeechRecognitionScreen, {
@@ -268,16 +269,14 @@ export class Dashboard implements DashboardHandler {
     }
 
     async getWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined> {
-        const id = Identifier.fromKey(request.id);
-        if (!id.isSubpathOf(params.caller)) return;
-        const handle = this.webviewHandles.get(id);
+        if (!request.id.isSubpathOf(params.caller)) return;
+        const handle = this.webviewHandles.get(request.id);
         return handle?.id;
     }
 
     async closeWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined> {
-        const id = Identifier.fromKey(request.id);
-        if (!id.isSubpathOf(params.caller)) return;
-        const handle = this.webviewHandles.get(id);
+        if (!request.id.isSubpathOf(params.caller)) return;
+        const handle = this.webviewHandles.get(request.id);
         return handle?.id;
     }
 }

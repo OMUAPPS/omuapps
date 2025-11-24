@@ -1,26 +1,20 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { formatBytes } from '$lib/helper.js';
     import type { Omu } from '@omujs/omu';
     import { Button, ButtonMini, Combobox, FileDrop, Spinner, Tooltip } from '@omujs/ui';
     import type { AlbumResource, ImageResource, RemoteApp, Resource } from '../remote-app.js';
 
-    interface Props {
-        omu: Omu;
-        remote: RemoteApp;
-    }
-
-    let { omu, remote }: Props = $props();
+    export let omu: Omu;
+    export let remote: RemoteApp;
     const { resources, config } = remote;
 
-    let selectedId: string | null = $state(null);
-    let multipleSelectedIds: string[] = $state([]);
-    let multiple = $derived(multipleSelectedIds.length > 1);
-    let activeClicked = $state(false);
+    let selectedId: string | null = null;
+    let multipleSelectedIds: string[] = [];
+    $: multiple = multipleSelectedIds.length > 1;
+    let activeClicked = false;
     let lastClickedTime = 0;
-    let album: AlbumResource | null = $state(null);
-    let selected: ImageResource | null = $state(null);
+    let album: AlbumResource | null = null;
+    let selected: ImageResource | null = null;
 
     function select(shiftKey: boolean, id: string, type: 'click' | 'drag') {
         const active = id === $config.show?.id;
@@ -58,15 +52,15 @@
         }
     }
 
-    let search = $state('');
+    let search = '';
     type Sort = {
         order: 'asc' | 'desc';
         key: 'addedAt' | 'filename' | 'size';
     };
-    let sort: Sort = $state({
+    let sort: Sort = {
         order: 'desc',
         key: 'addedAt',
-    });
+    };
 
     function compare(sort: Sort) {
         return ([, a]: [string, Resource], [, b]: [string, Resource]) => {
@@ -82,7 +76,7 @@
         };
     }
 
-    let visibleItems = $derived([
+    $: visibleItems = [
         ...Object.entries($resources.resources).filter((it) => it[1].type === 'album')
             .filter((it) => it[1].filename?.includes(search))
             .filter(album ? (it) => album?.assets.includes(it[0]) : () => true)
@@ -91,12 +85,12 @@
             .filter((it) => it[1].filename?.includes(search))
             .filter(album ? (it) => album?.assets.includes(it[0]) : () => true)
             .toSorted(compare(sort)),
-    ]);
-    run(() => {
+    ];
+    $: {
         for (const item of visibleItems) {
             remote.assetUri(item[0]);
         }
-    });
+    }
 </script>
 
 <div class="header">
@@ -150,13 +144,13 @@
         {@const active = $config.show?.id === id || (multiple && multipleSelectedIds.includes(id))}
         {@const selected = selectedId === id}
         <div
-            onfocus={() => {
+            on:focus={() => {
                 selectedId = id;
             }}
-            onmouseover={() => {
+            on:mouseover={() => {
                 selectedId = id;
             }}
-            onmouseleave={() => {
+            on:mouseleave={() => {
                 selectedId = null;
             }}
             role="button"
@@ -196,11 +190,11 @@
                 {#if resource.type === 'album'}
                     <i class="ti ti-library-photo"></i>
                 {/if}
-                <input type="text" value={resource.filename} onblur={(e) => {
+                <input type="text" value={resource.filename} on:blur={(e) => {
                     $resources.resources[id].filename = e.currentTarget.value;
                 }} />
                 {#if selected}
-                    <ButtonMini onclick={() => {
+                    <ButtonMini on:click={() => {
                         remote.deleteResource(id);
                     }}>
                         <i class="ti ti-trash"></i>
@@ -208,18 +202,18 @@
                 {/if}
             </span>
             <button class="asset" class:active class:album={resource.type === 'album'}
-                ontouchend={(event) => {
+                on:touchend={(event) => {
                     event.preventDefault();
                     select(false, id, 'click');
                 }}
-                onclick={(event) => {
+                on:click={(event) => {
                     select(event.shiftKey, id, 'click');
                 }}
-                onmousemove={(event) => {
+                on:mousemove={(event) => {
                     if (event.buttons !== 1) return;
                     select(event.shiftKey, id, 'drag');
                 }}
-                onmousedown={() => {
+                on:mousedown={() => {
                     activeClicked = multipleSelectedIds.includes(id);
                 }}
             >
@@ -268,7 +262,7 @@
         </Button>
     </div>
 {/if}
-<svelte:window onkeydown={(event) => {
+<svelte:window on:keydown={(event) => {
     if (event.key === 'Escape') {
         selected = null;
     }
@@ -276,7 +270,7 @@
 {#if selected}
     <button
         class="preview"
-        onclick={() => {
+        on:click={() => {
             selected = null;
         }}
     >

@@ -2,36 +2,19 @@
     import { onDestroy, onMount } from 'svelte';
     import { GlContext } from './glcontext.js';
 
-    interface Props {
-        canvas?: HTMLCanvasElement | undefined;
-        width?: number;
-        height?: number;
-        fps?: number;
-        requestId?: number | null;
-        contextMenu?: boolean;
-        render?: (gl: GlContext) => Promise<void> | void;
-        render2D?: (context: CanvasRenderingContext2D) => Promise<void> | void;
-        init?: (gl: GlContext) => Promise<void>;
-        enter?: (gl: GlContext) => Promise<void> | void;
-        leave?: (gl: GlContext) => Promise<void> | void;
-        resize?: (gl: GlContext) => void;
-    }
-
-    let {
-        canvas = $bindable(undefined),
-        width = $bindable(0),
-        height = $bindable(0),
-        fps = 60,
-        requestId = $bindable(null),
-        contextMenu = $bindable(false),
-        render = () => {},
-        render2D = () => {},
-        init = async () => {},
-        enter = () => {},
-        leave = () => {},
-        resize = () => {},
-    }: Props = $props();
-    let glContext: GlContext | undefined = $state(undefined);
+    export let canvas: HTMLCanvasElement | undefined = undefined;
+    export let width: number = 0;
+    export let height: number = 0;
+    export let fps: number = 60;
+    export let requestId: number | null = null;
+    export let contextMenu: boolean = false;
+    export let render: (gl: GlContext) => Promise<void> | void = () => {};
+    export let render2D: (context: CanvasRenderingContext2D) => Promise<void> | void = () => {};
+    export let init: (gl: GlContext) => Promise<void> = async () => {};
+    export let enter: (gl: GlContext) => Promise<void> | void = () => {};
+    export let leave: (gl: GlContext) => Promise<void> | void = () => {};
+    export let resize: (gl: GlContext) => void = () => {};
+    let glContext: GlContext;
 
     let context: CanvasRenderingContext2D | null = null;
     let offscreen: OffscreenCanvas | null = null;
@@ -110,7 +93,7 @@
         create();
         resized = true;
         handleResize();
-        init(glContext!).then(() => {
+        init(glContext).then(() => {
             renderInternal();
             renderLoop();
         });
@@ -131,7 +114,7 @@
 </script>
 
 <svelte:window
-    oncontextmenu={(event) => {
+    on:contextmenu={(event) => {
         if (event.target !== canvas) {
             return;
         }
@@ -143,16 +126,16 @@
 />
 <canvas
     bind:this={canvas}
-    oncontextmenu={(event) => {
+    on:contextmenu={(event) => {
         event.preventDefault();
         event.stopPropagation();
         contextMenu = true;
         return false;
     }}
-    onmouseenter={() => {
+    on:mouseenter={() => {
         if (glContext) enter(glContext);
     }}
-    onmouseleave={() => {
+    on:mouseleave={() => {
         if (glContext) leave(glContext);
     }}
 ></canvas>

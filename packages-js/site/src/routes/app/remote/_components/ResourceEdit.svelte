@@ -3,11 +3,7 @@
     import { Slider, Tooltip } from '@omujs/ui';
     import type { Resource } from '../remote-app.js';
 
-    interface Props {
-        resource: Resource;
-    }
-
-    let { resource = $bindable() }: Props = $props();
+    export let resource: Resource;
 </script>
 
 <span class="setting">

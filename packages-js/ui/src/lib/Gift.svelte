@@ -3,11 +3,7 @@
     import Tooltip from './Tooltip.svelte';
     import { omu } from './stores.js';
 
-    interface Props {
-        gift: Models.Gift;
-    }
-
-    let { gift }: Props = $props();
+    export let gift: Models.Gift;
 </script>
 
 <div class="gift">

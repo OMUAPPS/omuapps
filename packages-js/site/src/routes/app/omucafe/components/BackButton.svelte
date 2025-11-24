@@ -3,12 +3,8 @@
     import { getGame, lastSceneChange } from '../omucafe-app.js';
     import type { Scene } from '../scenes/scene.js';
 
-    interface Props {
-        to?: Scene;
-        active?: boolean;
-    }
-
-    let { to = { type: 'main_menu' }, active = false }: Props = $props();
+    export let to: Scene = { type: 'main_menu' };
+    export let active = false;
 
     const { scene } = getGame();
 
@@ -26,13 +22,13 @@
     }
 </script>
 
-<svelte:window onkeydown={(event) => {
+<svelte:window on:keydown={(event) => {
     if (event.key === 'Escape') {
         set();
     }
 }} />
 
-<button class="back" onclick={() => {
+<button class="back" on:click={() => {
     set();
 }}>
     <Tooltip>

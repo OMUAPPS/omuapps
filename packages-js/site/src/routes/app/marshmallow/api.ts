@@ -180,9 +180,9 @@ export class MarshmallowSession {
 
     public static async get(omu: Omu): Promise<MarshmallowSession | undefined> {
         const url = 'https://marshmallow-qa.com/';
-        const cookies = await omu.dashboard.getCookies({
+        const cookies = (await omu.dashboard.getCookies({
             url,
-        });
+        })).unwrap();
         const session = cookies.find(
             ({ name }) => name === '_marshmallow_session',
         )?.value;
@@ -198,10 +198,16 @@ export class MarshmallowSession {
 
     public static async login(omu: Omu): Promise<MarshmallowSession | undefined> {
         const url = 'https://marshmallow-qa.com/';
-        const handle = await omu.dashboard.requestWebview({
-            url,
-            script: LOGIN_SCRIPT,
+        const allowed = await omu.dashboard.requestHost({
+            host: 'marshmallow-qa.com',
         });
+        if (allowed.type !== 'ok') throw new Error('Failed to request host permission');
+        const handle = (
+            await omu.dashboard.requestWebview({
+                url,
+                script: LOGIN_SCRIPT,
+            })
+        ).unwrap();
         await handle.join();
         const cookies = await handle.getCookies();
         const session = cookies.find(

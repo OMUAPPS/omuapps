@@ -9,26 +9,24 @@
     import about_plugin from './about_plugin.md?raw';
     import type { ScreenHandle } from './screen.js';
 
-    interface Props {
+    export let screen: {
         handle: ScreenHandle;
         props: {
             request: PromptRequestAppPlugins;
             resolve: (accept: PromptResult) => void;
         };
-    }
+    };
 
-    let { handle, props }: Props = $props();
-
-    const { request, resolve } = props;
+    const { request, resolve } = screen.props;
 
     function accept() {
         resolve('accept');
-        handle.pop();
+        screen.handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        handle.pop();
+        screen.handle.pop();
     }
 
     const SECURELIST = [
@@ -64,7 +62,7 @@
     );
 </script>
 
-<Screen {handle} disableClose>
+<Screen {screen} disableClose>
     <div class="header">
         <AppInfo app={App.deserialize(request.app)} />
         <small>は以下のプラグインのインストールを要求しています。</small>
@@ -102,18 +100,16 @@
         {/if}
     </div>
     <div class="actions">
-        <button onclick={reject} class="reject">
+        <button on:click={reject} class="reject">
             キャンセル
             <i class="ti ti-x"></i>
         </button>
-        <button onclick={accept} class="accept">
+        <button on:click={accept} class="accept">
             インストール
             <i class="ti ti-check"></i>
         </button>
     </div>
-    {#snippet info()}
-        <Document source={about_plugin} />
-    {/snippet}
+    <Document source={about_plugin} slot="info" />
 </Screen>
 
 <style lang="scss">

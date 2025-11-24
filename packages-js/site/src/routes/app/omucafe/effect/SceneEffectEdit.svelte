@@ -4,11 +4,7 @@
     import type { SceneContext } from '../scenes/scene.js';
     import EffectEdit from './EditEffect.svelte';
 
-    interface Props {
-        context: SceneContext;
-    }
-
-    let { context }: Props = $props();
+    export let context: SceneContext;
 
     const { scene, gameConfig: config } = getGame();
 </script>

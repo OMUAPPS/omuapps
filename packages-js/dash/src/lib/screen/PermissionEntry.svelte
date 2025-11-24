@@ -4,18 +4,14 @@
     import type { PermissionType } from '@omujs/omu/api/permission';
     import { Tooltip } from '@omujs/ui';
 
-    interface Props {
-        permission: PermissionType;
-        accepted: boolean;
-        disabled: boolean;
-    }
+    export let permission: PermissionType;
+    export let accepted: boolean;
+    export let disabled: boolean;
 
-    let { permission, accepted = $bindable(), disabled }: Props = $props();
-
-    let note = $derived(permission.metadata.note && omu.i18n.translate(permission.metadata.note));
+    $: note = permission.metadata.note && omu.i18n.translate(permission.metadata.note);
 </script>
 
-<button class:accepted onclick={() => (accepted = !accepted)} {disabled}>
+<button class:accepted on:click={() => (accepted = !accepted)} {disabled}>
     {#if note}
         <Tooltip>
             {note}
@@ -69,6 +65,32 @@
                 background: var(--color-bg-1);
             }
         }
+    }
+
+    .info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        flex: 1;
+    }
+
+    .name {
+        width: 100%;
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .id {
+        margin-left: auto;
+        font-size: 0.7rem;
+        color: var(--color-text);
+        font-weight: 600;
+        opacity: 0.8;
     }
 
     .check {

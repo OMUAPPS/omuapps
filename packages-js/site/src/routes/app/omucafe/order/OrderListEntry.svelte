@@ -4,14 +4,10 @@
 
     const { gameConfig, states } = getGame();
 
-    interface Props {
-        entry: Order;
-        selected?: boolean;
-    }
-
-    let { entry = $bindable(), selected = false }: Props = $props();
-    let user = $derived(entry.user);
-    let items = $derived(entry.items);
+    export let entry: Order;
+    export let selected: boolean = false;
+    $: user = entry.user;
+    $: items = entry.items;
 </script>
 
 <div class="order" class:selected class:current={$states.kitchen.order?.id === entry.id}>
@@ -38,7 +34,7 @@
         </ul>
     {/each}
     {#if entry.status.type === 'waiting'}
-        <button onclick={async () => {
+        <button on:click={async () => {
             entry.status.type = 'cooking';
             await updateOrder(entry);
         }}>
@@ -46,7 +42,7 @@
         </button>
     {/if}
     {#if entry.status.type === 'cooking'}
-        <button onclick={async () => {
+        <button on:click={async () => {
             entry.status.type = 'done';
             await updateOrder(entry);
         }}>

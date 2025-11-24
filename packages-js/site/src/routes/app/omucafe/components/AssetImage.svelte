@@ -1,16 +1,9 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { getAsset, type Asset } from '../asset/asset.js';
 
-    interface Props {
-        asset: Asset | undefined;
-        children?: import('svelte').Snippet<[any]>;
-    }
+    export let asset: Asset | undefined;
 
-    let { asset, children }: Props = $props();
-
-    let src: string | null = $state(null);
+    let src: string | null = null;
 
     async function update(asset: Asset | undefined) {
         if (asset) {
@@ -18,15 +11,13 @@
         }
     }
 
-    run(() => {
-        update(asset);
-    });
+    $: update(asset);
 </script>
 
 {#if src}
-    {#if children}{@render children({ src })}{:else}
+    <slot {src}>
         <img src={src} alt="" />
-    {/if}
+    </slot>
 {/if}
 
 <style lang="scss">

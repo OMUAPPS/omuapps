@@ -6,11 +6,7 @@
     const quizApp = QuizApp.getInstance();
     const { quizzes } = quizApp;
 
-    interface Props {
-        entry: Quiz;
-    }
-
-    let { entry }: Props = $props();
+    export let entry: Quiz;
 </script>
 
 <div class="entry">

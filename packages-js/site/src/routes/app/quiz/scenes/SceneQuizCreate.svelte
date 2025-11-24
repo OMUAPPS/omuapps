@@ -1,23 +1,16 @@
 <script lang="ts">
-
     import { Button, ButtonMini, Textbox, Tooltip } from '@omujs/ui';
     import { QuizApp, type QuestionState, type Quiz } from '../quiz-app';
     import EditQuestion from './_components/QuestionEdit.svelte';
     import QuestionRenderer from './_components/QuestionRenderer.svelte';
 
-    interface Props {
-        quiz: Quiz;
-    }
-
-    let { quiz = $bindable() }: Props = $props();
+    export let quiz: Quiz;
     const quizApp = QuizApp.getInstance();
     const { quizzes } = quizApp;
 
-    let questionState: QuestionState = $state({ type: 'idle' });
+    let state: QuestionState = { type: 'idle' };
 
-    $effect(() => {
-        quizzes.update(quiz);
-    });
+    $: quizzes.update(quiz);
 </script>
 
 <main>
@@ -41,7 +34,7 @@
                 <h3 class="index">{index + 1} <small>問目</small></h3>
                 <div>
                     <span class="actions">
-                        <ButtonMini disabled={isFirst} onclick={() => {
+                        <ButtonMini disabled={isFirst} on:click={() => {
                             const former = quiz.questions.filter((_, it) => it < index);
                             const swap = former.pop();
                             if (!swap) return;
@@ -56,7 +49,7 @@
                             <Tooltip>順番を入れ替える</Tooltip>
                             <i class="ti ti-chevron-up"></i>
                         </ButtonMini>
-                        <ButtonMini disabled={isLast} onclick={() => {
+                        <ButtonMini disabled={isLast} on:click={() => {
                             const former = quiz.questions.filter((_, it) => it < index);
                             const [swap, ...latter] = quiz.questions.filter((_, it) => it > index);
                             quiz.questions = [
@@ -69,28 +62,28 @@
                             <Tooltip>順番を入れ替える</Tooltip>
                             <i class="ti ti-chevron-down"></i>
                         </ButtonMini>
-                        <ButtonMini onclick={() => {
+                        <ButtonMini on:click={() => {
                             quiz.questions = quiz.questions.filter((_, it) => it !== index);
                         }}>
                             <Tooltip>削除</Tooltip>
                             <i class="ti ti-trash"></i>
                         </ButtonMini>
                     </span>
-                    <EditQuestion bind:question={quiz.questions[index]} />
+                    <EditQuestion bind:question />
                 </div>
                 <div class="preview">
                     <h2>プレビュー</h2>
-                    <QuestionRenderer {question} {index} state={questionState} />
+                    <QuestionRenderer {question} {index} {state} />
                     <div class="actions">
-                        <Button primary={questionState.type !== 'idle'} onclick={() => {questionState = { type: 'idle' };}}>
+                        <Button primary={state.type !== 'idle'} onclick={() => {state = { type: 'idle' };}}>
                             待機状態
                         </Button>
                         <i class="ti ti-chevron-right"></i>
-                        <Button primary={questionState.type !== 'qustioning'} onclick={() => {questionState = { type: 'qustioning' };}}>
+                        <Button primary={state.type !== 'qustioning'} onclick={() => {state = { type: 'qustioning' };}}>
                             出題
                         </Button>
                         <i class="ti ti-chevron-right"></i>
-                        <Button primary={questionState.type !== 'answering'} onclick={() => {questionState = { type: 'answering' };}}>
+                        <Button primary={state.type !== 'answering'} onclick={() => {state = { type: 'answering' };}}>
                             回答
                         </Button>
                     </div>

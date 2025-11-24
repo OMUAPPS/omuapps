@@ -6,22 +6,20 @@
     import { Button } from '@omujs/ui';
     import { type Update } from '@tauri-apps/plugin-updater';
 
-    interface Props {
+    export let screen: {
         handle: ScreenHandle;
         props: {
             update: Update;
         };
-    }
-
-    let { handle, props }: Props = $props();
-    const { update } = props;
+    };
+    const { update } = screen.props;
     const date = update.date && new Date(update.date.replace(/:00$/, ''));
 
-    let updateEvent: UpdateEvent | null = $state(null);
+    let state: UpdateEvent | null = null;
 </script>
 
-<Screen {handle}>
-    {#if !updateEvent}
+<Screen {screen}>
+    {#if !state}
         <div class="info">
             <h3>
                 新しいバージョンが利用可能です🎉
@@ -35,41 +33,39 @@
                 {/if}
             </h3>
             <div class="actions">
-                <Button onclick={handle.pop}>
+                <Button onclick={screen.handle.pop}>
                     スキップ
                     <i class="ti ti-x"></i>
                 </Button>
-                <Button primary onclick={() => applyUpdate(update, (progress) => updateEvent = progress)}>
+                <Button primary onclick={() => applyUpdate(update, (progress) => state = progress)}>
                     アップデート
                     <i class="ti ti-arrow-right"></i>
                 </Button>
             </div>
         </div>
-    {:else if updateEvent.type === 'updating'}
+    {:else if state.type === 'updating'}
         <div class="info">
             <h3>新しいバージョンをダウンロードしています...</h3>
             <div>
-                <progress value={updateEvent.downloaded} max={updateEvent.contentLength}></progress>
+                <progress value={state.downloaded} max={state.contentLength}></progress>
                 <small>
-                    {updateEvent.downloaded}
+                    {state.downloaded}
                     <i class="ti ti-slash"></i>
-                    {updateEvent.contentLength}
+                    {state.contentLength}
                 </small>
             </div>
         </div>
-    {:else if updateEvent.type === 'shutting-down'}
+    {:else if state.type === 'shutting-down'}
         <div class="info">
             <h3>サーバーを終了しています...</h3>
         </div>
-    {:else if updateEvent.type === 'restarting'}
+    {:else if state.type === 'restarting'}
         <div class="info">
             <h3>インストーラーを起動しています...</h3>
         </div>
     {/if}
 
-    {#snippet info()}
-        <Document source={update.body ?? ''} />
-    {/snippet}
+    <Document source={update.body ?? ''} slot="info" />
 </Screen>
 
 <style lang="scss">

@@ -11,7 +11,7 @@ import {
 import { EventEmitter } from '../event';
 import { IdentifierMap } from '../identifier';
 import { Omu } from '../omu.js';
-import type { SessioTokenProvider } from '../token.js';
+import type { TokenProvider } from '../token.js';
 import { VERSION } from '../version.js';
 
 import type { Connection, Transport } from './connection.js';
@@ -59,7 +59,7 @@ export class Network {
     constructor(
         private readonly omu: Omu,
         public address: Address,
-        private readonly tokenProvider: SessioTokenProvider,
+        private readonly tokenProvider: TokenProvider,
         private transport: Transport,
         private connection?: Connection | undefined,
         private aes?: AES | undefined,

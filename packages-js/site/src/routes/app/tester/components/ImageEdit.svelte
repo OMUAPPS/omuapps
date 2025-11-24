@@ -1,11 +1,7 @@
 <script lang="ts">
     import type { Content } from '@omujs/chat';
 
-    interface Props {
-        component: Content.Image;
-    }
-
-    let { component = $bindable() }: Props = $props();
+    export let component: Content.Image;
 </script>
 
 <input type="text" bind:value={component.data.url} placeholder="url" />

@@ -6,12 +6,8 @@
     import { omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
 
-    interface Props {
-        entry: Models.Room;
-        selected?: boolean;
-    }
-
-    let { entry, selected = false }: Props = $props();
+    export let entry: Models.Room;
+    export let selected: boolean = false;
 
     function copyViewers() {
         const viewers = entry.metadata?.viewers;
@@ -24,7 +20,7 @@
     <div class="thumbnail">
         {#if entry.metadata && entry.metadata.thumbnail}
             {#if entry.metadata.url}
-                <a href={entry.metadata.url} target="_blank" rel="noopener noreferrer" onclick={(event) => {
+                <a href={entry.metadata.url} target="_blank" rel="noopener noreferrer" on:click={(event) => {
                     if (!entry.metadata.url) return;
                     if (!$linkOpenHandler) return;
                     const prevent = $linkOpenHandler(entry.metadata.url);
@@ -94,7 +90,7 @@
                 </small>
             {/if}
             {#if entry.metadata && entry.metadata.viewers}
-                <button onclick={copyViewers}>
+                <button on:click={copyViewers}>
                     <Tooltip>{$t('panels.rooms.viewers')}</Tooltip>
                     {entry.metadata.viewers}
                     <i class="ti ti-user"></i>

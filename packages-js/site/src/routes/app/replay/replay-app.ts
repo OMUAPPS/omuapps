@@ -1,3 +1,4 @@
+import { makeRegistryWritable } from '$lib/helper.js';
 import { type Vec4Like } from '$lib/math/vec4.js';
 import { Serializer, type Omu } from '@omujs/omu';
 import { RegistryType } from '@omujs/omu/api/registry';
@@ -121,8 +122,8 @@ export class ReplayApp {
         public readonly omu: Omu,
         public readonly side: AppSide,
     ) {
-        this.replayData = omu.registries.get(REPLAY_DATA_REGISTRY_TYPE).compatSvelte();
-        this.config = omu.registries.get(REPLAY_CONFIG_REGISTRY_TYPE).compatSvelte();
+        this.replayData = makeRegistryWritable(omu.registries.get(REPLAY_DATA_REGISTRY_TYPE));
+        this.config = makeRegistryWritable(omu.registries.get(REPLAY_CONFIG_REGISTRY_TYPE));
     }
 
     private static instance: ReplayApp;

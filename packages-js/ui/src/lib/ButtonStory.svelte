@@ -23,32 +23,28 @@
     <Button primary>
         <ti class="ti ti-player-play"></ti>
     </Button>
-    <Button primary onclick={() => new Promise((resolve) => setTimeout(resolve, 1000))}>
-        {#snippet children({ promise })}
-            {#if promise}
-                Loading...
-            {:else}
-                Promise
-                <ti class="ti ti-player-play"></ti>
-            {/if}
-        {/snippet}
+    <Button primary onclick={() => new Promise((resolve) => setTimeout(resolve, 1000))} let:promise>
+        {#if promise}
+            Loading...
+        {:else}
+            Promise
+            <ti class="ti ti-player-play"></ti>
+        {/if}
     </Button>
-    <Button primary onclick={() => new Promise((_, reject) => setTimeout(reject, 1000))}>
-        {#snippet children({ promise })}
-            {#if promise}
-                {#await promise}
-                    Loading...
-                {:then}
-                    Failed
-                    <ti class="ti ti-player-play"></ti>
-                {:catch}
-                    Failed
-                {/await}
-            {:else}
-                Promise
+    <Button primary onclick={() => new Promise((_, reject) => setTimeout(reject, 1000))} let:promise>
+        {#if promise}
+            {#await promise}
+                Loading...
+            {:then}
+                Failed
                 <ti class="ti ti-player-play"></ti>
-            {/if}
-        {/snippet}
+            {:catch}
+                Failed
+            {/await}
+        {:else}
+            Promise
+            <ti class="ti ti-player-play"></ti>
+        {/if}
     </Button>
 </div>
 

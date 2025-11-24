@@ -1,19 +1,14 @@
 <script lang="ts">
-
     import { comparator } from '$lib/helper.js';
     import { lerp } from '$lib/math/math.js';
     import { Timer } from '$lib/timer.js';
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
-    import { onDestroy, onMount } from 'svelte';
+    import { onDestroy } from 'svelte';
     import { ReactionApp } from '../reaction-app.js';
 
-    interface Props {
-        omu: Omu;
-        reactionApp: ReactionApp;
-    }
-
-    let { omu, reactionApp }: Props = $props();
+    export let omu: Omu;
+    export let reactionApp: ReactionApp;
     let { config, reactionSignal } = reactionApp;
 
     type Reaction = {
@@ -57,12 +52,21 @@
         );
     });
 
-    let canvas: HTMLCanvasElement | undefined = $state(undefined);
-    let ctx: CanvasRenderingContext2D | undefined = $state(undefined);
+    let canvas: HTMLCanvasElement;
+    let ctx: CanvasRenderingContext2D;
+
+    $: if (canvas) {
+        resize();
+        const context = canvas.getContext('2d');
+        if (!context) {
+            throw new Error('Failed to get 2d context');
+        }
+        ctx = context;
+    }
 
     function resize() {
-        canvas!.width = canvas!.clientWidth;
-        canvas!.height = canvas!.clientHeight;
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
     }
 
     function getSpawnRate() {
@@ -94,15 +98,17 @@
         }
     }
 
+    $: reactionScale = 50 * $config.scale;
+
     function spawnReaction(text: string) {
         const x = lerp(
             reactionScale,
-            canvas!.width - reactionScale - 50,
+            canvas.width - reactionScale - 50,
             Math.random(),
         );
         const y = lerp(
             reactionScale + 300,
-            canvas!.height - reactionScale,
+            canvas.height - reactionScale,
             Math.random(),
         );
         const z = lerp(1 - ($config.depth || 0), 1, Math.random());
@@ -150,8 +156,8 @@
         const screenBounds = {
             left: -reactionScale,
             top: -reactionScale,
-            right: canvas!.width + reactionScale,
-            bottom: canvas!.height + reactionScale,
+            right: canvas.width + reactionScale,
+            bottom: canvas.height + reactionScale,
         };
 
         reactionArray = reactionArray
@@ -228,17 +234,6 @@
             cancelAnimationFrame(animationTimer);
         });
     }
-    onMount(() => {
-        if (canvas) {
-            resize();
-            const context = canvas.getContext('2d');
-            if (!context) {
-                throw new Error('Failed to get 2d context');
-            }
-            ctx = context;
-        }
-    });
-    let reactionScale = $derived(50 * $config.scale);
 </script>
 
 <div class="hidden">
@@ -246,7 +241,7 @@
     😳😄❤🎉💯
 </div>
 
-<svelte:window onresize={resize} />
+<svelte:window on:resize={resize} />
 <canvas bind:this={canvas}></canvas>
 
 <style lang="scss">

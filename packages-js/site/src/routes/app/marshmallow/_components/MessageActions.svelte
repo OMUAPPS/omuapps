@@ -1,25 +1,19 @@
-<script module lang="ts">
+<script context="module" lang="ts">
     const REPLY_CACHE: Record<string, string> = {};
 </script>
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { Button, Spinner, Tooltip } from '@omujs/ui';
     import { DOM, type MarshmallowAPI, type Message, type MessageAction } from '../api';
     import { MarshmallowApp } from '../marshmallow-app';
     import { hasPremium } from '../stores';
 
-    interface Props {
-        api: MarshmallowAPI;
-        message: Message;
-    }
-
-    let { api, message = $bindable() }: Props = $props();
+    export let api: MarshmallowAPI;
+    export let message: Message;
 
     const { omu } = MarshmallowApp.getInstance();
 
-    let recognizing = $state(false);
-    let speaking = $state(false);
+    let recognizing = false;
+    let speaking = false;
     omu.dashboard.speechRecognition.listen((status) => {
         if (!recognizing) return;
         switch (status.type) {
@@ -53,7 +47,7 @@
         answer: MessageAction | undefined;
         actions: MessageAction[];
         tweetURL: string;
-    } = $state({ type: 'initializing' });
+    } = { type: 'initializing' };
 
     async function updateActions() {
         if (detail.type !== 'initializing') return;
@@ -85,10 +79,10 @@
 
     updateActions();
 
-    let reply = $state({
+    let reply = {
         value: '',
         id: '',
-    });
+    };
 
     function restoreReply() {
         reply.value = REPLY_CACHE[message.id] ?? '';
@@ -99,17 +93,15 @@
         REPLY_CACHE[reply.id] = reply.value;
     }
 
-    run(() => {
+    $: {
         if (reply.id !== message.id) {
             restoreReply();
         }
-    });
-    run(() => {
-        if (message?.reply) {
-            reply.value = DOM.blockToString(message.reply);
-            reply.id = message.id;
-        }
-    }); ;
+    }
+    $: if (message?.reply) {
+        reply.value = DOM.blockToString(message.reply);
+        reply.id = message.id;
+    };
 
     type ActionTranslation = { name: string; icon?: string; remove: boolean };
     function getActionTranslation(action: MessageAction): ActionTranslation {
@@ -144,12 +136,12 @@
         };
     }
 
-    let replyEnable = $derived(!detail || !!message.reply);
+    $: replyEnable = !detail || !!message.reply || detail?.type !== 'ok' || !detail.answer;
 </script>
 
 <div class="reply">
     <div class="textarea">
-        <textarea bind:value={reply.value} onchange={saveReply} disabled={!!message.reply}></textarea>
+        <textarea bind:value={reply.value} on:change={saveReply} disabled={!!message.reply}></textarea>
         <div class="overlay">
             {#if recognizing}
                 <div class="recognizing">
@@ -170,26 +162,24 @@
                 <Button primary={remove} onclick={async () => {
                     await action.submit(api, {});
                     refresh();
-                }}>
-                    {#snippet children({ promise })}
-                        {#if promise}
-                            <Spinner />
-                        {:else}
-                            <i class="ti {icon}"></i>
-                            {#if icon}
-                                <Tooltip>
-                                    {name}
-                                </Tooltip>
-                            {:else}
+                }} let:promise>
+                    {#if promise}
+                        <Spinner />
+                    {:else}
+                        <i class="ti {icon}"></i>
+                        {#if icon}
+                            <Tooltip>
                                 {name}
-                            {/if}
+                            </Tooltip>
+                        {:else}
+                            {name}
                         {/if}
-                    {/snippet}
+                    {/if}
                 </Button>
             {/each}
             <Button primary={!recognizing} disabled={replyEnable || !$hasPremium} onclick={() => {
                 recognizing = !recognizing;
-                omu.dashboard.requestSpeechRecognition();
+                omu.dashboard.speechRecognitionStart();
             }}>
                 {#if $hasPremium}
                     {#if recognizing}

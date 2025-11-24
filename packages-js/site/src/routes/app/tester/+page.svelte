@@ -11,13 +11,13 @@
     import { chat, omu } from './client.js';
     import ComponentEditor from './components/ComponentEditor.svelte';
 
-    let component: Component = $state({
+    let component: Component = {
         type: 'root',
         data: [
             { type: 'text', data: 'Hello, World!' },
             { type: 'text', data: 'This is a test.' },
         ],
-    });
+    };
 
     function reset() {
         component = {
@@ -71,19 +71,17 @@
 </script>
 
 <AppPage>
-    {#snippet header()}
-        <header>
-            <AppHeader app={APP} />
-        </header>
-    {/snippet}
+    <header slot="header">
+        <AppHeader app={APP} />
+    </header>
     <main>
         <section>
             <div class="flex gap">
-                <button onclick={reset}>
+                <button on:click={reset}>
                     <i class="ti ti-reload"></i>
                     Reset
                 </button>
-                <button onclick={send}>
+                <button on:click={send}>
                     <i class="ti ti-send"></i>
                     Send
                 </button>
@@ -94,7 +92,7 @@
             Preview
         </h3>
         <section class="fill">
-            <MessageRenderer content={component} />
+            <MessageRenderer bind:content={component} />
         </section>
         <h3>
             <i class="ti ti-pencil"></i>

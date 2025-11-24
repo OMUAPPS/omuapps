@@ -1,11 +1,7 @@
 <script lang="ts">
     import { Content } from '@omujs/chat/models';
 
-    interface Props {
-        component: Content.Component;
-    }
-
-    let { component = $bindable() }: Props = $props();
+    export let component: Content.Component;
 
     function add(child: Content.Component) {
         const children = Content.children(component);
@@ -25,7 +21,7 @@
         }
     }
 
-    let select: HTMLSelectElement | undefined = $state(undefined);
+    let select: HTMLSelectElement;
 
     function handle(event: Event) {
         const target = event.target as HTMLSelectElement;
@@ -36,10 +32,10 @@
 </script>
 
 <span>
-    <select bind:this={select} onchange={(event) => handle(event)}>
+    <select bind:this={select} on:change={(event) => handle(event)}>
         <option disabled selected>追加</option>
-        <option value="text" onchange={() => create('text')}>テキスト</option>
-        <option value="image" onchange={() => create('image')}>画像</option>
+        <option value="text" on:change={() => create('text')}>テキスト</option>
+        <option value="image" on:change={() => create('image')}>画像</option>
     </select>
 </span>
 

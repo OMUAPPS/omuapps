@@ -5,11 +5,7 @@
     import { DiscordOverlayApp } from '../discord-overlay-app';
     import { VOICE_CHAT_PERMISSION_ID } from '../plugin/plugin';
 
-    interface Props {
-        omu: Omu;
-    }
-
-    let { omu }: Props = $props();
+    export let omu: Omu;
     const overlayApp = DiscordOverlayApp.create(omu, 'asset');
     const { config, discord: { speakingStates, voiceStates, sessions } } = overlayApp;
 
@@ -23,7 +19,7 @@
         omu.start();
     }
 
-    let port = $derived(Object.entries($sessions).find(([, session]) => session.user.id === $config.user_id)?.[0]);
+    $: port = Object.entries($sessions).find(([, session]) => session.user.id === $config.user_id)?.[0];
 </script>
 
 <main>
@@ -31,7 +27,8 @@
         {#if port
             && $sessions[port]
             && $speakingStates[port]
-            && $voiceStates[port]}
+            && $voiceStates[port]
+        }
             <AvatarRenderer
                 {overlayApp}
                 speakingState={$speakingStates[port]}

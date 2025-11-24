@@ -35,11 +35,9 @@
 </script>
 
 <AppPage>
-    {#snippet header()}
-        <header>
-            <AppHeader app={omu.app} />
-        </header>
-    {/snippet}
+    <header slot="header">
+        <AppHeader app={omu.app} />
+    </header>
     {#await promise}
         <p>loading...</p>
     {:then}

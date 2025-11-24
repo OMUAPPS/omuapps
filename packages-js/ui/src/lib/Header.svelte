@@ -1,17 +1,7 @@
 <script lang="ts">
-    interface Props {
-        title: string;
-        subtitle?: string | undefined;
-        icon: string;
-        children?: import('svelte').Snippet;
-    }
-
-    let {
-        title,
-        subtitle = undefined,
-        icon,
-        children,
-    }: Props = $props();
+    export let title: string;
+    export let subtitle: string | undefined = undefined;
+    export let icon: string;
 </script>
 
 <div class="header">
@@ -28,7 +18,7 @@
             {/if}
         </span>
     </div>
-    {@render children?.()}
+    <slot />
 </div>
 
 <style lang="scss">

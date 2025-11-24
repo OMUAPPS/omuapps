@@ -4,10 +4,8 @@
     import AssetApp from './AssetApp.svelte';
 </script>
 
-<AssetPage asset={QUIZ_ASSET_APP}>
-    {#snippet children({ omu })}
-        <AssetApp {omu} />
-    {/snippet}
+<AssetPage asset={QUIZ_ASSET_APP} let:omu>
+    <AssetApp {omu} />
 </AssetPage>
 
 <style lang="scss">

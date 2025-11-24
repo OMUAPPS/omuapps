@@ -32,7 +32,7 @@ jobs:
           uses: oven-sh/setup-bun@v2
 
         - name: Install Dependencies
-          run: bun install
+          run: bun install --frozen-lockfile
 
         - name: Upload to Cloudflare R2
           env:

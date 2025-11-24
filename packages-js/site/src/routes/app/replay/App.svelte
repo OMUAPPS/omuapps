@@ -10,18 +10,14 @@
     import RoomEntry from './components/RoomEntry.svelte';
     import { ReplayApp } from './replay-app.js';
 
-    interface Props {
-        chat: Chat;
-    }
-
-    let { chat }: Props = $props();
+    export let chat: Chat;
 
     const replay = ReplayApp.getInstance();
     const { replayData, config } = replay;
 
-    let search: string = $state('');
+    let search: string = '';
 
-    let showConfig = $state(false);
+    let showConfig = false;
 </script>
 
 <div class="container">
@@ -42,17 +38,16 @@
             />
         </MenuSection>
         <MenuSection name="最近の配信から" icon="ti-video" flex={1}>
-            {#snippet actions()}
-                <div class="search">
-                    <Tooltip>過去の配信から検索</Tooltip>
-                    <input type="search" bind:value={search} placeholder="検索" />
-                    {#if !search}
-                        <i class="ti ti-search"></i>
-                    {/if}
-                </div>
-            {/snippet}
+            <div class="search" slot="actions">
+                <Tooltip>過去の配信から検索</Tooltip>
+                <input type="search" bind:value={search} placeholder="検索" />
+                {#if !search}
+                    <i class="ti ti-search"></i>
+                {/if}
+            </div>
             <TableList
                 table={chat.rooms}
+                component={RoomEntry}
                 filter={(_, room) => {
                     if (!room.metadata?.url) return false;
                     if (
@@ -66,14 +61,9 @@
                     return true;
                 }}
             >
-                {#snippet component({ entry, selected })}
-                    <RoomEntry {entry} {selected} />
-                {/snippet}
-                {#snippet empty()}
-                    <p class="no-streams">
-                        配信が追加されるとここに表示されます
-                    </p>
-                {/snippet}
+                <p slot="empty" class="no-streams">
+                    配信が追加されるとここに表示されます
+                </p>
             </TableList>
         </MenuSection>
         <MenuSection name="URLから" icon="ti-link">
@@ -100,6 +90,7 @@
                     <TwitchPlayer
                         video={$replayData.video}
                         bind:playback={$replayData.playback}
+                        bind:info={$replayData.info}
                     />
                 {/if}
             {:else}

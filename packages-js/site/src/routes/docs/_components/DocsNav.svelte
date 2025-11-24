@@ -2,25 +2,21 @@
     import type { DocsMeta } from '$lib/server/docs';
     import { Tooltip } from '@omujs/ui';
 
-    interface Props {
-        section:
-            | Readonly<{
+    export let section:
+        | Readonly<{
+            meta: DocsMeta;
+            slug: string;
+        }>
+        | undefined;
+    export let group:
+        | [
+            string,
+            Readonly<{
                 meta: DocsMeta;
                 slug: string;
-            }>
-            | undefined;
-        group:
-            | [
-                string,
-                Readonly<{
-                    meta: DocsMeta;
-                    slug: string;
-                }>[],
-            ]
-            | undefined;
-    }
-
-    let { section, group }: Props = $props();
+            }>[],
+        ]
+        | undefined;
 </script>
 
 {#if section && group && group[1].length > 1}

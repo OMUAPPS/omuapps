@@ -1,26 +1,23 @@
 <script lang="ts">
     import type { OBSPlugin } from '@omujs/obs';
+    import type { Omu } from '@omujs/omu';
     import { AssetButton, RelativeDate } from '@omujs/ui';
-    import { onMount } from 'svelte';
+    import { onDestroy } from 'svelte';
     import { ASSET_APP } from './app.js';
     import type { BreakTimerApp, BreakTimerConfig } from './break-timer-app.js';
     import SceneSelect from './components/SceneSelect.svelte';
     import TimeEdit from './components/TimeEdit.svelte';
     import type { BreakTimerState } from './state.js';
 
-    interface Props {
-        obs: OBSPlugin;
-        breakTimer: BreakTimerApp;
-    }
+    export let omu: Omu;
+    export let obs: OBSPlugin;
+    export let breakTimer: BreakTimerApp;
+    const { config, state } = breakTimer;
 
-    let { obs, breakTimer }: Props = $props();
-    const { config, timerState } = breakTimer;
+    state.subscribe((state) => update(state, $config));
+    config.subscribe((config) => update($state, config));
 
-    timerState.subscribe((state) => update(state, $config));
-    config.subscribe((config) => update($timerState, config));
-
-    let task: number | null = $state(null);
-
+    let task: number | null = null;
     function update(newState: BreakTimerState, config: BreakTimerConfig): void {
         if (newState.type === 'break') {
             const { scene } = newState;
@@ -28,31 +25,30 @@
             if (task) window.clearTimeout(task);
             task = window.setTimeout(() => {
                 obs.sceneSetCurrentByName(scene);
-                $timerState = { type: 'work' };
+                $state = { type: 'work' };
             }, config.timer.duration * 1000);
+            console.log('set timeout', task, config.timer.duration);
         }
     }
 
-    onMount(() => {
-        update($timerState, $config);
-        return () => {
-            if (task) clearTimeout(task);
-        };
+    onDestroy(() => {
+        if (task) clearTimeout(task);
     });
 </script>
 
 <main>
     <div class="left">
+        {task}
         {#if $config.timer}
             <TimeEdit bind:value={$config.timer.duration} />
         {/if}
-        <input type="button" value="Start" onclick={() => breakTimer.start()} />
+        <input type="button" value="Start" on:click={() => breakTimer.start()} />
         <input type="text" bind:value={$config.message} />
-        <input type="button" value="Reset Config" onclick={() => breakTimer.resetConfig()} />
-        {#if $timerState.type === 'break' && $config.timer}
-            {@const endTime = new Date($timerState.start).getTime() + $config.timer.duration * 1000}
+        <input type="button" value="Reset Config" on:click={() => breakTimer.resetConfig()} />
+        {#if $state.type === 'break' && $config.timer}
+            {@const endTime = new Date($state.start).getTime() + $config.timer.duration * 1000}
             <RelativeDate date={new Date(endTime)} />
-            <input type="datetime-local" bind:value={$timerState.start} />
+            <input type="datetime-local" bind:value={$state.start} />
         {/if}
         <SceneSelect {obs} bind:scene={$config.switch.scene} />
     </div>
@@ -62,7 +58,7 @@
             {JSON.stringify($config)}
         </p>
         <p>
-            {JSON.stringify($timerState)}
+            {JSON.stringify($state)}
         </p>
     </div>
 </main>

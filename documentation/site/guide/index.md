@@ -20,7 +20,7 @@ description: アプリの導入から使い方まで
 
 ![Edgeの警告画面](/img/download_warning_edge_0.png)
 
-[警告が出て止まった場合はこちら](%DOCS_ROOT%/guide/download-warning)
+> [警告が出て止まった場合はこちら](%DOCS_ROOT%/guide/download-warning)
 
 ## なぜ警告が出るのか
 

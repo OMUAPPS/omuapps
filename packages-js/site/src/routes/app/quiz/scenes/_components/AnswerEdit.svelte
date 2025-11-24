@@ -2,11 +2,7 @@
     import { Button, Checkbox, Combobox, Textbox } from '@omujs/ui';
     import type { Answer } from '../../quiz-app';
 
-    interface Props {
-        answer: Answer;
-    }
-
-    let { answer = $bindable() }: Props = $props();
+    export let answer: Answer;
 
     function addChoice(index?: number) {
         if (answer.type !== 'choices') return;

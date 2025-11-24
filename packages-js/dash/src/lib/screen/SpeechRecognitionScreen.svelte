@@ -1,30 +1,28 @@
 <script lang="ts">
     import { Button, ExternalLink } from '@omujs/ui';
-    import type { ScreenHandle } from './screen.js';
     import Screen from './Screen.svelte';
+    import type { ScreenHandle } from './screen.js';
 
-    interface Props {
+    export let screen: {
         handle: ScreenHandle;
         props: {
             resolve: (accept: boolean) => void;
         };
-    }
-
-    let { handle, props }: Props = $props();
-    const { resolve } = props;
+    };
+    const { resolve } = screen.props;
 
     function accept() {
         resolve(true);
-        handle.pop();
+        screen.handle.pop();
     }
 
     function reject() {
         resolve(false);
-        handle.pop();
+        screen.handle.pop();
     }
 </script>
 
-<Screen {handle}>
+<Screen {screen}>
     <div class="screen">
         <h2>音声認識を使用します</h2>
         <small>

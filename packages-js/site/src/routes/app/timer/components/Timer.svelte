@@ -1,32 +1,32 @@
 <script lang="ts">
-
     import { BROWSER } from 'esm-env';
     import { TimerApp } from '../timer-app.js';
 
-    interface Props {
-        timer: TimerApp;
-    }
-
-    let { timer }: Props = $props();
+    export let timer: TimerApp;
     const { data, config } = timer;
 
-    const PARAM_REGEX = /\{([\w]+)\}/g;
-
     let timerId: number;
-    let time = $state(0);
-    let displayTime = $derived(updateDisplayTime(time));
-    let running = false;
+    let time = 0;
+    let displayTime = '';
 
     function updateTime() {
-        if (running) {
-            time = Date.now() - $data.startTime + $data.time;
-            displayTime = updateDisplayTime(time);
-            timerId = requestAnimationFrame(updateTime);
+        if (!$data.running) {
+            return;
+        }
+        time = Date.now() - $data.startTime + $data.time;
+        timerId = requestAnimationFrame(updateTime);
+    }
+
+    function update() {
+        if ($data.running) {
+            updateTime();
         } else {
             time = $data.time;
             cancelAnimationFrame(timerId);
         }
     }
+
+    const paramRegex = /\{([\w]+)\}/g;
 
     function updateDisplayTime(time: number) {
         const times = {
@@ -41,21 +41,19 @@
                 .padStart(2, '0'),
         };
 
-        return $config.format.replace(
-            PARAM_REGEX,
+        displayTime = $config.format.replace(
+            paramRegex,
             (match, key: keyof typeof times) => times[key],
         );
     }
 
-    let background = $derived(`${$config.style.backgroundColor}${Math.floor(
+    $: updateDisplayTime(time);
+    $: background = `${$config.style.backgroundColor}${Math.floor(
         $config.style.backgroundOpacity * 255,
-    ).toString(16)}`);
+    ).toString(16)}`;
 
     if (BROWSER) {
-        data.subscribe((value) => {
-            running = value.running;
-            updateTime();
-        });
+        data.subscribe(update);
     }
 </script>
 

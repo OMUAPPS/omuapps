@@ -2,11 +2,7 @@
     import Document from '$lib/common/Document.svelte';
     import type { Update } from '@tauri-apps/plugin-updater';
 
-    interface Props {
-        update: Update;
-    }
-
-    let { update }: Props = $props();
+    export let update: Update;
 </script>
 
 <div class="hint">

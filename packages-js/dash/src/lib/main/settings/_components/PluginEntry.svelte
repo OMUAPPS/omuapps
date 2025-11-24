@@ -3,11 +3,7 @@
     import type { PluginPackageInfo } from '@omujs/omu/api/plugin';
     import { Button } from '@omujs/ui';
 
-    interface Props {
-        entry: PluginPackageInfo;
-    }
-
-    let { entry }: Props = $props();
+    export let entry: PluginPackageInfo;
 </script>
 
 <li class="package">

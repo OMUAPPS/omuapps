@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { Interval } from '$lib/helper.js';
     import { Slider } from '@omujs/ui';
     import button_line from '../asset/images/button_line.png';
@@ -10,14 +8,8 @@
     import { getGame } from '../omucafe-app.js';
     import type { SceneContext } from './scene.js';
 
-    interface Props {
-        context: SceneContext;
-    }
-
-    let { context }: Props = $props();
-    run(() => {
-        console.log('SceneMainMenu', context);
-    });
+    export let context: SceneContext;
+    $: console.log('SceneMainMenu', context);
 
     const { scene, gallery, config } = getGame();
 
@@ -29,7 +21,7 @@
     const galleryInterval = new Interval(1000 * 10).start();
 </script>
 
-<svelte:window onkeydown={(event) => {
+<svelte:window on:keydown={(event) => {
     if (!context.active) return;
     if (event.key === 'Escape') {
         $scene = { type: 'kitchen' };
@@ -38,7 +30,7 @@
 <div class="container">
     <div class="actions">
         <img src={title} width="480" height="134" alt="OMU CAFE" class="title" />
-        <button onclick={() => {
+        <button on:click={() => {
             $scene = { type: 'kitchen' };
         }}>
             <img src={button_line} alt="">
@@ -46,7 +38,7 @@
             <span>お店を開く</span>
             <i class="ti ti-chevron-right"></i>
         </button>
-        <button onclick={() => {
+        <button on:click={() => {
             $scene = { type: 'kitchen_edit' };
         }}>
             <img src={button_line} alt="">
@@ -54,7 +46,7 @@
             <span>キッチンの整理</span>
             <i class="ti ti-chevron-right"></i>
         </button>
-        <button onclick={() => {
+        <button on:click={() => {
             $scene = { type: 'product_list' };
         }}>
             <img src={button_line} alt="">
@@ -73,14 +65,12 @@
         {#if items.size > 0}
             {@const index = $galleryInterval % items.size}
             {@const item = [...items.values()][index]}
-            <button class="gallery" onclick={() => {
+            <button class="gallery" on:click={() => {
                 $scene = { type: 'gallery' };
             }}>
                 {#key index}
-                    <AssetImage asset={item.asset}>
-                        {#snippet children({ src })}
-                            <img class="image" {src} alt="" />
-                        {/snippet}
+                    <AssetImage asset={item.asset} let:src>
+                        <img class="image" {src} alt="" />
                     </AssetImage>
                 {/key}
                 <div class="go-gallery">

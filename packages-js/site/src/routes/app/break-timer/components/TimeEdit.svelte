@@ -1,15 +1,11 @@
 <script lang="ts">
+    export let value: number;
 
-    interface Props {
-        value: number;
-    }
-
-    let { value = $bindable() }: Props = $props();
-
-    let days = $derived(Math.floor(value / 24 / 60 / 60));
-    let hours = $derived(Math.floor(value / 60 / 60) % 24);
-    let minutes = $derived(Math.floor(value / 60) % 60);
-    let seconds = $derived(value % 60);
+    $: days = Math.floor(value / 24 / 60 / 60);
+    $: hours = Math.floor(value / 60 / 60) % 24;
+    $: minutes = Math.floor(value / 60) % 60;
+    $: seconds = value % 60;
+    $: console.log({ days, hours, minutes, seconds });
 
     function update(days: number, hours: number, minutes: number, seconds: number) {
         value = Math.max(0, days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds);
@@ -34,7 +30,7 @@
                     min={-1}
                     max={100}
                     value={days}
-                    oninput={(event) => update(event.currentTarget.valueAsNumber, hours, minutes, seconds)}
+                    on:input={(event) => update(event.currentTarget.valueAsNumber, hours, minutes, seconds)}
                 />
             </td>
             <td>
@@ -44,7 +40,7 @@
                     min={-1}
                     max={25}
                     value={hours}
-                    oninput={(event) => update(days, event.currentTarget.valueAsNumber, minutes, seconds)}
+                    on:input={(event) => update(days, event.currentTarget.valueAsNumber, minutes, seconds)}
                 />
             </td>
             <td>
@@ -56,7 +52,7 @@
                         min={-1}
                         max={61}
                         value={minutes}
-                        oninput={(event) => update(days, hours, event.currentTarget.valueAsNumber, seconds)}
+                        on:input={(event) => update(days, hours, event.currentTarget.valueAsNumber, seconds)}
                     />
                 </span>
             </td>
@@ -69,7 +65,7 @@
                         min={-1}
                         max={61}
                         value={seconds}
-                        oninput={(event) => update(days, hours, minutes, event.currentTarget.valueAsNumber)}
+                        on:input={(event) => update(days, hours, minutes, event.currentTarget.valueAsNumber)}
                     />
                 </span>
             </td>

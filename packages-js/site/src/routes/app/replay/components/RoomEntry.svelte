@@ -3,12 +3,8 @@
     import { Tooltip } from '@omujs/ui';
     import { ReplayApp } from '../replay-app';
 
-    interface Props {
-        entry: Room;
-        selected?: boolean;
-    }
-
-    let { entry, selected = false }: Props = $props();
+    export let entry: Room;
+    export let selected: boolean = false;
 
     const replay = ReplayApp.getInstance();
 
@@ -19,7 +15,7 @@
     }
 </script>
 
-<button class="entry" class:selected onclick={() => play()}>
+<button class="entry" class:selected on:click={() => play()}>
     <div class="thumbnail-container">
         <Tooltip>
             <p class="tooltip">

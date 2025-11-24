@@ -3,11 +3,7 @@
     import type { RPCSession } from '../discord/discord.js';
 
     let state: 'wait-for-ready' | 'connecting-vc' | null = null;
-    interface Props {
-        session: RPCSession;
-    }
-
-    let { session }: Props = $props();
+    export let session: RPCSession;
 
     const CHANNEL_TYPE = {
         GUILD_TEXT: 0,

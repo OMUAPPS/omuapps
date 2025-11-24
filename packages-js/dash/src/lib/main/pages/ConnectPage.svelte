@@ -8,9 +8,9 @@
     import PanelRooms from '../panel/rooms/PanelRooms.svelte';
     import ConnectPageSetup from './ConnectPageSetup.svelte';
 
-    let { data }: { data: unknown } = $props();
+    export const props = {};
 
-    let setupOpen = $state(false);
+    let setupOpen = false;
 
     omu.onReady(async () => {
         setupOpen = await chat.channels.size() == 0;
@@ -35,7 +35,7 @@
                     {$t('page.connect.channels')}
                     <i class="ti ti-user"></i>
                     <div class="actions">
-                        <button onclick={() => setupOpen = true}>
+                        <button on:click={() => setupOpen = true}>
                             <Tooltip>{$t('panels.channels.setup_channel')}</Tooltip>
                             {$t('panels.channels.append_channel')}
                             <i class="ti ti-user-share"></i>

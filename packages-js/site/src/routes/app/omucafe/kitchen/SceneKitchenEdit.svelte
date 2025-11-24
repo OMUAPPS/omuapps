@@ -1,22 +1,14 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { getGame } from '../omucafe-app.js';
     import type { SceneContext } from '../scenes/scene.js';
 
-    interface Props {
-        context: SceneContext;
-    }
-
-    let { context }: Props = $props();
-    run(() => {
-        console.log('SceneKitchenEdit', context);
-    });
+    export let context: SceneContext;
+    $: console.log('SceneKitchenEdit', context);
 
     const { scene } = getGame();
 </script>
 
-<svelte:window onkeydown={(event) => {
+<svelte:window on:keydown={(event) => {
     if (!context.active) return;
     if (event.key === 'Escape') {
         $scene = { type: 'main_menu' };

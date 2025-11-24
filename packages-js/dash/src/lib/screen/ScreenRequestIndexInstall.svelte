@@ -3,39 +3,37 @@
     import Document from '$lib/common/Document.svelte';
     import type { PromptRequestIndexInstall, PromptResult } from '@omujs/omu/api/dashboard';
     import { ExternalLink, Tooltip } from '@omujs/ui';
+    import Screen from './Screen.svelte';
     import about_index from './about_index.md?raw';
     import type { ScreenHandle } from './screen.js';
-    import Screen from './Screen.svelte';
 
-    interface Props {
+    export let screen: {
         handle: ScreenHandle;
         props: {
             request: PromptRequestIndexInstall;
             resolve: (accept: PromptResult) => void;
         };
-    }
-
-    let { handle, props }: Props = $props();
-    const { request, resolve } = props;
+    };
+    const { request, resolve } = screen.props;
     const url = new URL(request.index_url);
 
     function accept() {
         resolve('accept');
-        handle.pop();
+        screen.handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        handle.pop();
+        screen.handle.pop();
     }
 
     function block() {
         resolve('block');
-        handle.pop();
+        screen.handle.pop();
     }
 </script>
 
-<Screen {handle} disableClose>
+<Screen {screen} disableClose>
     <div class="header">
         <h2>アプリ提供元を追加</h2>
     </div>
@@ -52,25 +50,23 @@
         </div>
     </div>
     <div class="actions">
-        <button onclick={block} class="reject">
+        <button on:click={block} class="reject">
             <Tooltip>
                 <p>この提供元の要求を拒否する</p>
             </Tooltip>
             禁止する
             <i class="ti ti-forbid-2"></i>
         </button>
-        <button onclick={reject} class="reject">
+        <button on:click={reject} class="reject">
             キャンセル
             <i class="ti ti-x"></i>
         </button>
-        <button onclick={accept} class="accept">
+        <button on:click={accept} class="accept">
             追加
             <i class="ti ti-check"></i>
         </button>
     </div>
-    {#snippet info()}
-        <Document source={about_index} />
-    {/snippet}
+    <Document source={about_index} slot="info" />
 </Screen>
 
 <style lang="scss">
@@ -90,6 +86,10 @@
 
     h2 {
         font-weight: 600;
+    }
+
+    h3 {
+        color: var(--color-1);
     }
 
     .info {

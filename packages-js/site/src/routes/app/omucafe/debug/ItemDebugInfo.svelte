@@ -1,25 +1,20 @@
 <script lang="ts">
-    import ItemDebugInfo from './ItemDebugInfo.svelte';
     import { getContext } from '../game/game.js';
     import type { ItemState } from '../item/item-state.js';
 
-    interface Props {
-        item: ItemState;
-    }
-
-    let { item }: Props = $props();
-    let open = $state(false);
+    export let item: ItemState;
+    let open = false;
 
 </script>
 
 <div class="item-debug-info">
-    <button onclick={() => open = !open}>
+    <button on:click={() => open = !open}>
         {item.id}
     </button>
     {#if open}
         <div class="children">
             {#each Object.values(item.children) as child, i (i)}
-                <ItemDebugInfo item={getContext().items[child]} />
+                <svelte:self item={getContext().items[child]} />
             {/each}
         </div>
         <pre>{JSON.stringify(item, null, 2)}</pre>

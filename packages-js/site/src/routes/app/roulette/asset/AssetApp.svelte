@@ -1,37 +1,30 @@
 <script lang="ts">
     import { Chat, Models } from '@omujs/chat';
-    import { OmuPermissions, type Omu } from '@omujs/omu';
+    import type { Omu } from '@omujs/omu';
     import { ComponentRenderer } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import RouletteRenderer from '../components/RouletteRenderer.svelte';
     import { RouletteApp } from '../roulette-app';
 
-    interface Props {
-        omu: Omu;
-    }
-
-    let { omu }: Props = $props();
+    export let omu: Omu;
     const chat = Chat.create(omu);
     const roulette = new RouletteApp(omu);
-    const { rouletteState } = roulette;
+    const { state } = roulette;
 
     if (BROWSER) {
-        omu.permissions.require(
-            OmuPermissions.ASSET_PERMISSION_ID,
-        );
         omu.start();
     }
 </script>
-<main class:end={$rouletteState.type === 'spin-result'}>
+<main class:end={$state.type === 'spin-result'}>
     <div class="roulette">
         <RouletteRenderer {roulette} />
     </div>
-    {#if $rouletteState.type === 'spin-result'}
-        {@const message = $rouletteState.result.entry.message && Models.Message.deserialize($rouletteState.result.entry.message)}
+    {#if $state.type === 'spin-result'}
+        {@const message = $state.result.entry.message && Models.Message.deserialize($state.result.entry.message)}
         <div class="result-container">
             <div class="result">
                 <p>
-                    {$rouletteState.result.entry.name}
+                    {$state.result.entry.name}
                 </p>
                 {#if message && message.authorId}
                     <div class="message">

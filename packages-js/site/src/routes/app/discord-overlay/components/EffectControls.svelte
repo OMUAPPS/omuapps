@@ -2,14 +2,10 @@
     import { Slider, Tooltip } from '@omujs/ui';
     import type { Config } from '../discord-overlay-app.js';
 
-    interface Props {
-        effects: Config['effects'];
-    }
+    export let effects: Config['effects'];
 
-    let { effects = $bindable() }: Props = $props();
-
-    let selectedEffectType: 'speech' | 'shadow' | null = $state(null);
-    let shadowColorElement: HTMLInputElement | null = $state(null);
+    let selectedEffectType: 'speech' | 'shadow' | null = null;
+    let shadowColorElement: HTMLInputElement | null = null;
 
     function rgbToHex(r: number, g: number, b: number): string {
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
@@ -17,11 +13,11 @@
 </script>
 
 <span>
-    <button onclick={() => { effects.speech.active = !effects.speech.active; }} class:active={effects.speech.active} class="effect">
+    <button on:click={() => { effects.speech.active = !effects.speech.active; }} class:active={effects.speech.active} class="effect">
         <i class="ti ti-brightness"></i>
         明るさを調整
     </button>
-    <button class="option" onclick={() => {
+    <button class="option" on:click={() => {
         selectedEffectType = selectedEffectType === 'speech' ? null : 'speech';
     }}>
         {#if selectedEffectType === 'speech'}
@@ -58,13 +54,13 @@
     </div>
 {/if}
 <span>
-    <button onclick={() => {
+    <button on:click={() => {
         effects.shadow.active = !effects.shadow.active;
     }} class:active={effects.shadow.active} class="effect">
         <i class="ti ti-square-half"></i>
         影
     </button>
-    <button class="option" onclick={() => {
+    <button class="option" on:click={() => {
         selectedEffectType = selectedEffectType === 'shadow' ? null : 'shadow';
     }}>
         {#if selectedEffectType === 'shadow'}
@@ -84,7 +80,7 @@
     <div class="options">
         <span>
             <label for="shadow-color">色</label>
-            <input bind:this={shadowColorElement} type="color" id="shadow-color" value={rgbToHex(effects.shadow.color.r * 255, effects.shadow.color.g * 255, effects.shadow.color.b * 255)} onchange={() => {
+            <input bind:this={shadowColorElement} type="color" id="shadow-color" value={rgbToHex(effects.shadow.color.r * 255, effects.shadow.color.g * 255, effects.shadow.color.b * 255)} on:change={() => {
                 if (!shadowColorElement) {
                     return;
                 }

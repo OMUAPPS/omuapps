@@ -1,9 +1,7 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { type Color, theme } from './stores.js';
 
-    let css = $state('');
+    let css = '';
 
     function format(value: Color | number) {
         if (typeof value === 'object') {
@@ -15,7 +13,7 @@
         return `${value}px`;
     }
 
-    run(() => {
+    $: {
         const properties = Object.entries($theme);
         const lines = properties.map(([key, value]) => {
             return `--${key}: ${format(value)};`;
@@ -23,9 +21,9 @@
         css = `:root {
             ${lines.join('\n')}
         }`;
-    });
+    }
 </script>
 
-<svelte:element this={'style'}>
+<svelte:element this="style">
     {css}
 </svelte:element>

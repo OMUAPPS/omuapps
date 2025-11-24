@@ -1,12 +1,7 @@
 <script lang="ts">
-    import JsonEditEntry from './JsonEditEntry.svelte';
 
-    interface Props {
-        value: any;
-        open?: boolean;
-    }
-
-    let { value = $bindable(), open = $bindable(false) }: Props = $props();
+    export let value: any;
+    export let open = false;
 </script>
 
 {#if typeof value === 'undefined'}
@@ -19,7 +14,7 @@
     </span>
 {:else if typeof value === 'number'}
     <span class="number">
-        <input type="text" value={value.toString()} oninput={({ currentTarget }) => {
+        <input type="text" value={value.toString()} on:input={({ currentTarget }) => {
             const newValue = parseFloat(currentTarget.value);
             if (Number.isNaN(newValue) || Number.isFinite(newValue)) return;
             value = newValue;
@@ -32,7 +27,7 @@
     <strong>Uint8Array({value.length})</strong>
 {:else if Array.isArray(value)}
     <strong>[</strong>
-    <button onclick={() => open = !open}>
+    <button on:click={() => open = !open}>
         {#if open}
             <i class="ti ti-chevron-up"></i>
         {:else}
@@ -42,14 +37,14 @@
     <ul>
         {#each value as _, i (i)}
             <li>
-                <JsonEditEntry bind:value={value[i]} />
+                <svelte:self bind:value={value[i]} />
             </li>
         {/each}
     </ul>
     <strong>]</strong>
 {:else if typeof value === 'object'}
     <strong>{'{'}</strong>
-    <button onclick={() => open = !open}>
+    <button on:click={() => open = !open}>
         {#if open}
             <i class="ti ti-chevron-up"></i>
         {:else}
@@ -61,7 +56,7 @@
             {#each Object.keys(value) as key (key)}
                 <li>
                     <strong>{key}:</strong>
-                    <JsonEditEntry bind:value={value[key]} />
+                    <svelte:self bind:value={value[key]} />
                 </li>
             {/each}
         </ul>

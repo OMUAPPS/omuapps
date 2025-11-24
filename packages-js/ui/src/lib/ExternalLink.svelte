@@ -2,26 +2,16 @@
     import { linkOpenHandler } from './stores';
     import Tooltip from './Tooltip.svelte';
 
-    interface Props {
-        href?: string;
-        title?: string | undefined;
-        decorated?: boolean;
-        children?: import('svelte').Snippet;
-    }
-
-    let {
-        href = $bindable(''),
-        title = undefined,
-        decorated = true,
-        children,
-    }: Props = $props();
+    export let href: string = '';
+    export let title: string | undefined = undefined;
+    export let decorated: boolean = true;
 
     if (href?.length && !href.startsWith('http')) {
         href = `https://${href}`;
     }
 </script>
 
-<a class:decorated {href} {title} target="_blank" rel="noopener noreferrer" onclick={(event) => {
+<a class:decorated {href} {title} target="_blank" rel="noopener noreferrer" on:click={(event) => {
     if (!$linkOpenHandler) return;
     const prevent = $linkOpenHandler(href);
     if (!prevent) return;
@@ -30,7 +20,7 @@
     <Tooltip>
         {href}
     </Tooltip>
-    {@render children?.()}
+    <slot />
 </a>
 
 <style lang="scss">

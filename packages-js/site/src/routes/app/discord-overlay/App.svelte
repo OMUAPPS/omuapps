@@ -9,14 +9,10 @@
     import { VOICE_CHAT_PERMISSION_ID } from './plugin/plugin';
     import { dragState, selectedAvatar } from './states.js';
 
-    interface Props {
-        overlayApp: DiscordOverlayApp;
-    }
-
-    let { overlayApp }: Props = $props();
+    export let overlayApp: DiscordOverlayApp;
     const { config, discord: { sessions, speakingStates, voiceStates } } = overlayApp;
 
-    let port = $derived(Object.entries($sessions).find(([, session]) => session.user.id === $config.user_id)?.[0]);
+    $: port = Object.entries($sessions).find(([, session]) => session.user.id === $config.user_id)?.[0];
 
     onMount(() => {
         const values = Object.values($sessions);
@@ -30,7 +26,8 @@
     {#if port
         && $sessions[port]
         && $speakingStates[port]
-        && $voiceStates[port]}
+        && $voiceStates[port]
+    }
         <AppUser
             {overlayApp}
             session={$sessions[port]}

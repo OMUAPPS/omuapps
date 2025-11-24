@@ -1,5 +1,4 @@
 <script lang="ts">
-
     import { omu } from '$lib/client.js';
     import type { AppIndex, AppIndexEntry } from '@omujs/omu/api/server';
     import { Checkbox, Spinner, Textbox } from '@omujs/ui';
@@ -8,8 +7,7 @@
     import ExploreIndex from './_components/ExploreIndex.svelte';
     import { filter } from './explore.js';
 
-    let { data }: { data: unknown } = $props();
-
+    export const props = {};
     const index = omu.server.index.compatSvelte();
 
     async function setIndex() {
@@ -43,22 +41,22 @@
 
     async function load({ indexes }: AppIndex) {
         await setIndex();
-        loadingState = {
+        state = {
             type: 'loaded',
             indexes: Object.fromEntries(Object.entries(indexes).sort(([,a], [,b]) => new Date(b.added_at).getTime() - new Date(a.added_at).getTime())),
         };
     }
 
-    index.wait().then(() => load($index));
+    $: index.wait().then(() => load($index));
 
-    let loadingState: {
+    let state: {
         type: 'loading';
     } | {
         type: 'loaded';
         indexes: Record<string, AppIndexEntry>;
-    } = $state({ type: 'loading' });
+    } = { type: 'loading' };
 
-    let elements: Record<string, HTMLElement> = $state({});
+    let elements: Record<string, HTMLElement> = {};
 </script>
 
 <div class="container omu-scroll">
@@ -74,10 +72,10 @@
     <div class="content">
         <div class="margin">
             <div class="entries">
-                {#if loadingState.type === 'loading'}
+                {#if state.type === 'loading'}
                     <Spinner />
-                {:else if loadingState.type === 'loaded'}
-                    {#each Object.entries(loadingState.indexes) as [id, entry] (id)}
+                {:else if state.type === 'loaded'}
+                    {#each Object.entries(state.indexes) as [id, entry] (id)}
                         <div class="entry" bind:this={elements[id]}>
                             <ExploreIndex {id} {entry} />
                         </div>
@@ -91,15 +89,16 @@
                     <p>検索</p>
                     <Textbox bind:value={$filter.search} />
                 </div>
+                <!-- svelte-ignore a11y-label-has-associated-control -->
                 <label class="filter">
                     <p>開発段階のアプリを含む</p>
                     <Checkbox bind:value={$filter.showIndev} />
                 </label>
-                {#if loadingState.type === 'loaded'}
+                {#if state.type === 'loaded'}
                     <h3>提供元</h3>
                     <div class="providers">
-                        {#each Object.entries(loadingState.indexes).filter(([, entry]) => !!entry) as [id, entry] (id)}
-                            <button onclick={() => {
+                        {#each Object.entries(state.indexes).filter(([, entry]) => !!entry) as [id, entry] (id)}
+                            <button on:click={() => {
                                 elements[id]?.scrollIntoView({
                                     behavior: 'smooth',
                                 });

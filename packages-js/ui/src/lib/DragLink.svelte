@@ -1,14 +1,8 @@
 <script lang="ts">
     type UrlLike = string | URL | Promise<string | URL> | (() => UrlLike);
-    interface Props {
-        href: UrlLike;
-        preview?: import('svelte').Snippet;
-        children?: import('svelte').Snippet;
-    }
+    export let href: UrlLike;
 
-    let { href, preview, children }: Props = $props();
-
-    let previewElement: HTMLDivElement | undefined = $state();
+    let preview: HTMLDivElement;
 
     async function resolveUrl(url: UrlLike): Promise<string> {
         if (typeof url === 'string') {
@@ -24,17 +18,17 @@
 
     async function handleDragStart(event: DragEvent) {
         if (!event.dataTransfer) return;
-        event.dataTransfer.setDragImage(previewElement!, 0, 0);
+        event.dataTransfer.setDragImage(preview, 0, 0);
         const url = await resolveUrl(href);
         event.dataTransfer.setData('text/uri-list', url);
     }
 </script>
 
-<div class="container" ondragstart={handleDragStart} draggable="true" role="form">
-    <div class="preview" bind:this={previewElement}>
-        {@render preview?.()}
+<div class="container" on:dragstart={handleDragStart} draggable="true" role="form">
+    <div class="preview" bind:this={preview}>
+        <slot name="preview" />
     </div>
-    {@render children?.()}
+    <slot />
 </div>
 
 <style lang="scss">

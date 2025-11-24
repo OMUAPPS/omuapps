@@ -1,17 +1,11 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import type { CaptionApp } from './caption-app.js';
 
-    interface Props {
-        captionApp: CaptionApp;
-        placeholder?: string;
-    }
-
-    let { captionApp, placeholder = '' }: Props = $props();
+    export let captionApp: CaptionApp;
+    export let placeholder = '';
     const { omu, config } = captionApp;
 
-    let text = $state(placeholder);
+    let text = placeholder;
     omu.dashboard.speechRecognition.listen((status) => {
         if (status.type !== 'final') return;
         const { segments } = status;
@@ -19,12 +13,12 @@
     });
 
     let previosWidth = 0;
-    let clientWidth = $state(0);
+    let clientWidth = 0;
 
-    let fontFamily = $state('');
-    run(() => {
+    let fontFamily = '';
+    $: {
         fontFamily = $config.style.fonts.map((font) => font.family).join(', ');
-    });
+    }
 </script>
 
 {#each $config.style.fonts as font, i (i)}

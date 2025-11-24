@@ -1,14 +1,10 @@
 <script lang="ts">
-    import { default as SvelteMarkdown } from '@humanspeak/svelte-markdown';
+    import SvelteMarkdown from 'svelte-markdown';
     import DocumentLink from './DocumentLink.svelte';
     import DocumentList from './DocumentList.svelte';
     import DocumentStrong from './DocumentStrong.svelte';
 
-    interface Props {
-        source: string;
-    }
-
-    let { source }: Props = $props();
+    export let source: string;
 </script>
 
 <div class="markdown">

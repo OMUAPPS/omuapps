@@ -7,25 +7,21 @@
     import { currentPage } from '../settings.js';
     import { selectedApp } from './stores.js';
 
-    interface Props {
-        entry: App;
-    }
-
-    let { entry }: Props = $props();
-    let name = $derived(entry.metadata?.name
+    export let entry: App;
+    $: name = entry.metadata?.name
         ? omu.i18n.translate(entry.metadata?.name)
-        : '');
-    let description = $derived(entry.metadata?.description
+        : '';
+    $: description = entry.metadata?.description
         ? omu.i18n.translate(entry.metadata?.description)
-        : '');
-    let icon = $derived(entry.metadata?.icon
+        : '';
+    $: icon = entry.metadata?.icon
         ? omu.i18n.translate(entry.metadata?.icon)
-        : '');
+        : '';
 
-    let id = $derived(`app-${entry.id.key()}`);
+    $: id = `app-${entry.id.key()}`;
 </script>
 
-<button onclick={() => {
+<button on:click={() => {
     $selectedApp = entry;
 }}>
     {#if $currentPage === id}
@@ -59,13 +55,13 @@
         </p>
     </div>
     <div class="actions">
-        <ButtonMini primary onclick={() => omu.server.apps.remove(entry)}>
+        <ButtonMini primary on:click={() => omu.server.apps.remove(entry)}>
             <Tooltip>
                 <span>{$t('general.delete')}</span>
             </Tooltip>
             <i class="ti ti-trash"></i>
         </ButtonMini>
-        <ButtonMini primary onclick={() => {
+        <ButtonMini primary on:click={() => {
             const id = `app-${entry.id.key()}`;
             delete $pages[id];
             $currentPage = 'explore';

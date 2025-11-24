@@ -1,19 +1,15 @@
 <script lang="ts">
-    import { page } from '$app/state';
+    import { page } from '$app/stores';
     import title from '$lib/images/title.svg';
     import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
     import Content from './Content.svelte';
 
-    interface Props {
-        always?: boolean;
-    }
+    export let always = false;
 
-    let { always = false }: Props = $props();
-
-    let path = $derived(page.url.pathname);
-    let onTop = $state(BROWSER && (!page.url.pathname.startsWith('/docs') && window.scrollY < 1));
+    $: path = $page.url.pathname;
+    let onTop = BROWSER && (!$page.url.pathname.startsWith('/docs') && window.scrollY < 1);
 
     function onScroll() {
         onTop = window.scrollY < 1;
@@ -53,7 +49,7 @@
                         導入ガイド
                     </li>
                 </a>
-                <a href="/docs/api">
+                <a href="/docs/index">
                     <li
                         aria-current={path.startsWith('/docs') && !path.startsWith('/docs/guide')
                             ? 'page'

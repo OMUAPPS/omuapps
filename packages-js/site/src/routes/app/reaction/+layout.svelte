@@ -1,12 +1,4 @@
-<script lang="ts">
-    interface Props {
-        children?: import('svelte').Snippet;
-    }
-
-    let { children }: Props = $props();
-</script>
-
-{@render children?.()}
+<slot />
 
 <style lang="scss">
     // https://github.com/fontsource/fontsource/issues/588

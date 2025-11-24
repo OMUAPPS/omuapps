@@ -1,35 +1,30 @@
 <script lang="ts">
-
     import { dashboard, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
-    import { pages, registerPage } from './page.js';
+    import { pages, registerPage, type Page } from './page.js';
     import AppPage from './pages/AppPage.svelte';
-    import { currentPage, lastApp, menuOpen } from './settings.js';
+    import { currentPage, menuOpen } from './settings.js';
 
-    interface Props {
-        entry: App;
-        selected?: boolean;
-    }
+    export let entry: App;
+    export let selected: boolean = false;
 
-    let { entry, selected = false }: Props = $props();
+    $: metadata = entry.metadata;
+    $: name = metadata?.name ? omu.i18n.translate(metadata?.name) : entry.id.key();
+    $: description = metadata?.description && omu.i18n.translate(metadata?.description) || $t('general.no_description');
+    $: icon = metadata?.icon ? omu.i18n.translate(metadata?.icon) : null;
+    $: image = metadata?.image ? omu.i18n.translate(metadata?.image) : null;
 
-    let metadata = $derived(entry.metadata);
-    let name = $derived(metadata?.name ? omu.i18n.translate(metadata?.name) : entry.id.key());
-    let description = $derived(metadata?.description && omu.i18n.translate(metadata?.description) || $t('general.no_description'));
-    let icon = $derived(metadata?.icon ? omu.i18n.translate(metadata?.icon) : null);
-    let image = $derived(metadata?.image ? omu.i18n.translate(metadata?.image) : null);
-
-    const appPage = registerPage<{ app: App }>({
+    const appPage = registerPage({
         id: `app-${entry.id.key()}`,
         async open() {
             return {
                 component: AppPage,
-                data: {
+                props: {
                     app: entry,
                 },
-            };
+            } as Page<unknown>;
         },
     });
 
@@ -50,17 +45,14 @@
         $currentPage = appPage.id;
     }
 
-    let loaded = $derived($pages[appPage.id]);
-    let active = $derived($currentPage === appPage.id);
-    $effect(() => {
-        if (active) {
-            dashboard.currentApp = entry;
-            $lastApp = entry.id.key();
-        }
-    });
+    $: loaded = $pages[appPage.id];
+    $: active = $currentPage === appPage.id;
+    $: if (active) {
+        dashboard.currentApp = entry;
+    };
 </script>
 
-<button onclick={handleClick}>
+<button on:click={handleClick}>
     <Tooltip>
         <div class="tooltip">
             {#if $menuOpen}

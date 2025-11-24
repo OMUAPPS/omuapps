@@ -2,8 +2,9 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import { LICENSES } from '$lib/license/license.js';
     import { ExternalLink } from '@omujs/ui';
+    import SvelteMarkdown from 'svelte-markdown';
 
-    let selectedLicense: string | undefined = $state();
+    let selectedLicense: string | undefined;
 </script>
 
 <div class="container">
@@ -14,7 +15,7 @@
     {#each LICENSES as license (license.name)}
         {@const selected = selectedLicense === license.name}
         <button
-            onclick={() => (selectedLicense = selected ? undefined : license.name)}
+            on:click={() => (selectedLicense = selected ? undefined : license.name)}
             class:selected
         >
             <div class="body">
@@ -29,7 +30,12 @@
                 {/if}
                 {#if selected && license.licenseText}
                     <div class="content">
-                        {license.licenseText}
+                        <SvelteMarkdown
+                            source={license.licenseText}
+                            renderers={{
+                                link: ExternalLink,
+                            }}
+                        />
                     </div>
                 {/if}
             </div>

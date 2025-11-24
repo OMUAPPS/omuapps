@@ -11,36 +11,23 @@
     import { dateTimeFormats, omu, translate } from './stores.js';
     import { applyOpacity } from './utils/class-helper.js';
 
-    interface Props {
-        paid?: Models.Paid | undefined;
-        gifts?: Array<Models.Gift> | undefined;
-        author?: Models.Author | undefined;
-        room?: Models.Room | undefined;
-        createdAt?: Date | undefined;
-        content?: Content.Component | undefined;
-        handleCopy?: () => void;
-        selected?: boolean;
-    }
+    export let paid: Models.Paid | undefined = undefined;
+    export let gifts: Array<Models.Gift> | undefined = undefined;
+    export let author: Models.Author | undefined = undefined;
+    export let room: Models.Room | undefined = undefined;
+    export let createdAt: Date | undefined = undefined;
+    export let content: Content.Component | undefined = undefined;
+    export let handleCopy: () => void = () => {};
+    export let selected: boolean = false;
 
-    let {
-        paid = undefined,
-        gifts = undefined,
-        author = undefined,
-        room = undefined,
-        createdAt = undefined,
-        content = undefined,
-        handleCopy = () => {},
-        selected = false,
-    }: Props = $props();
-
-    let roomStartedAt =
-        $derived(room?.metadata.started_at && new Date(room.metadata.started_at));
-    let time =
-        $derived((createdAt &&
+    $: roomStartedAt =
+        room?.metadata.started_at && new Date(room.metadata.started_at);
+    $: time =
+        (createdAt &&
             roomStartedAt &&
             new Date(createdAt.getTime() - roomStartedAt.getTime())) ||
-            null);
-    let url = $derived(room?.metadata.url || null);
+        null;
+    $: url = room?.metadata.url || null;
 
     function formatTime(date: Date): string {
         const parts: string[] = [];
@@ -171,7 +158,7 @@
                     <i class="ti ti-external-link"></i>
                 </ButtonLink>
             {/if}
-            <ButtonMini primary onclick={handleCopy}>
+            <ButtonMini primary on:click={handleCopy}>
                 <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
                 <i class="ti ti-files"></i>
             </ButtonMini>

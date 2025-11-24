@@ -6,12 +6,8 @@
     import { relaunch } from '@tauri-apps/plugin-process';
     import ProgressBar from './ProgressBar.svelte';
 
-    interface Props {
-        retry: () => void;
-        message: string | undefined;
-    }
-
-    let { retry, message }: Props = $props();
+    export let retry: () => void;
+    export let message: string | undefined;
 
     let restoreState: {
         type: 'idle';
@@ -20,7 +16,7 @@
     } | {
         type: 'cleaning_failed';
         reason: CleanError;
-    } = $state({ type: 'idle' });
+    } = { type: 'idle' };
 
     async function cleanEnvironment() {
         try {
@@ -57,22 +53,20 @@
         </div>
         <small>報告するときは以下からログを生成してください</small>
         <div class="actions">
-            <Button onclick={() => invoke('generate_log_file')}>
-                {#snippet children({ promise })}
-                    {#if promise}
-                        {#await promise}
-                            ログを生成中
-                            <Spinner />
-                        {:then}
-                            ログを生成しました
-                        {:catch e}
-                            ログの生成に失敗しました: {e}
-                        {/await}
-                    {:else}
-                        ログを生成
-                        <i class="ti ti-file"></i>
-                    {/if}
-                {/snippet}
+            <Button onclick={() => invoke('generate_log_file')} let:promise>
+                {#if promise}
+                    {#await promise}
+                        ログを生成中
+                        <Spinner />
+                    {:then}
+                        ログを生成しました
+                    {:catch e}
+                        ログの生成に失敗しました: {e}
+                    {/await}
+                {:else}
+                    ログを生成
+                    <i class="ti ti-file"></i>
+                {/if}
             </Button>
         </div>
     {:else if restoreState.type === 'cleaning'}

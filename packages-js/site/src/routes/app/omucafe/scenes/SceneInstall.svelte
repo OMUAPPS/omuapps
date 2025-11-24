@@ -1,28 +1,19 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
-    import { page } from '$app/state';
+    import { page } from '$app/stores';
     import { once } from '$lib/helper.js';
     import { tryCatch } from '$lib/result.js';
     import { Button, Spinner } from '@omujs/ui';
     import { onMount } from 'svelte';
-    import { SvelteURL } from 'svelte/reactivity';
     import avatar_setup from '../asset/images/avatar_setup.png';
     import { getGame, isInstalled, sessions } from '../omucafe-app.js';
     import type { SceneContext } from './scene.js';
 
-    interface Props {
-        context: SceneContext;
-    }
-
-    let { context }: Props = $props();
-    run(() => {
-        console.log('SceneCooking', context);
-    });
+    export let context: SceneContext;
+    $: console.log('SceneCooking', context);
 
     const { scene, config, obs } = getGame();
 
-    let installState: {
+    let state: {
         type: 'waiting';
     } | {
         type: 'prompt';
@@ -30,27 +21,27 @@
         type: 'installing';
     } | {
         type: 'setup';
-    } = $state({
+    } = {
         type: 'waiting',
-    });
+    };
 
     onMount(async () => {
         const connected = obs.isConnected();
         if (!connected) {
             await once((resolve) => obs.on('connected', resolve));
         }
-        installState = { type: 'prompt' };
+        state = { type: 'prompt' };
     });
 
     sessions.subscribe(({ background, overlay }) => {
-        if (installState.type !== 'prompt' && installState.type !== 'waiting') return;
+        if (state.type !== 'prompt' && state.type !== 'waiting') return;
         if (background && overlay) {
             $scene = { type: 'main_menu' };
         }
     });
 
     function getURL(name: string) {
-        const url = new SvelteURL(page.url);
+        const url = new URL($page.url);
         url.pathname = `${url.pathname}asset/${name}`;
         return url;
     }
@@ -67,10 +58,10 @@
             return;
         }
         const sceneRes = $config.obs.scene_uuid && (await tryCatch(obs.sceneGetByUuid($config.obs.scene_uuid))).data || (await tryCatch(obs.sceneGetByName(NAMES.SCENE))).data || null;
-        const createdScene = sceneRes ?? (await obs.sceneCreate({
+        const scene = sceneRes ?? (await obs.sceneCreate({
             name: NAMES.SCENE,
         })).scene;
-        const sources = await obs.sourceList({ scene: createdScene.name });
+        const sources = await obs.sourceList({ scene: scene.name });
         const overlayUrl = getURL('overlay');
         const backgroundUrl = getURL('background');
         console.log('sources', sources);
@@ -100,11 +91,11 @@
                 continue;
             }
         }
-        $config.obs.scene_uuid = createdScene.uuid;
-        const backgroundRes = $config.obs.background_uuid && (await tryCatch(obs.sourceGetByUuid({ uuid: $config.obs.background_uuid }))).data || (await tryCatch(obs.sourceGetByName({ name: NAMES.BACKGROUND, scene: createdScene.name }))).data || null;
+        $config.obs.scene_uuid = scene.uuid;
+        const backgroundRes = $config.obs.background_uuid && (await tryCatch(obs.sourceGetByUuid({ uuid: $config.obs.background_uuid }))).data || (await tryCatch(obs.sourceGetByName({ name: NAMES.BACKGROUND, scene: scene.name }))).data || null;
         const background = backgroundRes ?? (await obs.browserAdd({
             name: NAMES.BACKGROUND,
-            scene: createdScene.name,
+            scene: scene.name,
             url: backgroundUrl.href,
             blend_properties: {
                 blending_method: 'SRGB_OFF',
@@ -113,10 +104,10 @@
             width: '100:%',
             height: '100:%',
         })).source;
-        const overlayRes = $config.obs.overlay_uuid && (await tryCatch(obs.sourceGetByUuid({ uuid: $config.obs.overlay_uuid }))).data || (await tryCatch(obs.sourceGetByName({ name: NAMES.OVERLAY, scene: createdScene.name }))).data || null;
+        const overlayRes = $config.obs.overlay_uuid && (await tryCatch(obs.sourceGetByUuid({ uuid: $config.obs.overlay_uuid }))).data || (await tryCatch(obs.sourceGetByName({ name: NAMES.OVERLAY, scene: scene.name }))).data || null;
         const overlay = overlayRes ?? (await obs.browserAdd({
             name: NAMES.OVERLAY,
-            scene: createdScene.name,
+            scene: scene.name,
             url: overlayUrl.href,
             blend_properties: {
                 blending_method: 'SRGB_OFF',
@@ -127,12 +118,12 @@
         })).source;
         $config.obs.background_uuid = background.uuid || null;
         $config.obs.overlay_uuid = overlay.uuid || null;
-        installState = { type: 'setup' };
+        state = { type: 'setup' };
     }
 </script>
 
 <main>
-    {#if installState.type === 'waiting'}
+    {#if state.type === 'waiting'}
         <div class="left">
             <h1>
                 OBSを待機しています
@@ -150,7 +141,7 @@
                 <i class="ti ti-chevron-right"></i>
             </Button>
         </div>
-    {:else if installState.type === 'prompt'}
+    {:else if state.type === 'prompt'}
         <div class="left">
             <h1>OBSに導入</h1>
             <p>これから設定を行います</p>
@@ -159,9 +150,9 @@
                 <i class="ti ti-check"></i>
             </Button>
         </div>
-    {:else if installState.type === 'installing'}
+    {:else if state.type === 'installing'}
         <Spinner />
-    {:else if installState.type === 'setup'}
+    {:else if state.type === 'setup'}
         <div class="left">
             <h1>あなたを追加</h1>
             <p>あなたのアバターをキッチンとカウンターの間に配置して準備完了！</p>

@@ -10,22 +10,20 @@
     import AppEntry from './AppEntry.svelte';
     import { selectedApp } from './stores';
 
-    interface Props {
+    export let screen: {
         handle: ScreenHandle;
         props: undefined;
-    }
-
-    let { handle }: Props = $props();
+    };
 
 </script>
 
-<Screen {handle}>
+<Screen {screen}>
     <div class="container">
         <h3>
             アプリ
             <small>
                 {#await omu.server.apps.size()}
-                    <i class="spin ti ti-dots"></i> 件
+                    <i class="spin ti ti-dots" /> 件
                 {:then count}
                     {count} 件
                 {/await}
@@ -38,66 +36,61 @@
                     (app && (app.type === 'app' || app.type === 'remote'))
                     || ($devMode && (app.type === 'plugin' || app.type === 'service'))
                 )}
-            >
-                {#snippet component({ entry })}
-                    <AppEntry {entry} />
-                {/snippet}
-            </TableList>
+                component={AppEntry}
+            />
         </ul>
         <div class="actions">
-            <Button primary onclick={() => handle.pop()}>
+            <Button primary onclick={() => screen.handle.pop()}>
                 {$t('general.close')}
                 <i class="ti ti-x"></i>
             </Button>
         </div>
     </div>
-    {#snippet info()}
-        <div class="info">
-            {#if $selectedApp}
-                <div class="app">
-                    {$selectedApp.id.namespace.split('.').reverse().join('.')}によって提供されているアプリ
-                    <AppInfo app={$selectedApp} />
-                </div>
-                {#await omu.server.apps
-                    .fetchAll()
-                    .then((items) => [...items
-                        .entries()]
-                        .filter(([, app]) => $selectedApp && app.parentId && app.parentId.isSubpathOf($selectedApp.id)),
-                    ) then children}
-                    {#if children.length > 0}
-                        <div class="children omu-scroll">
-                            <h2>
-                                子アプリ
+    <div class="info" slot="info">
+        {#if $selectedApp}
+            <div class="app">
+                {$selectedApp.id.namespace.split('.').reverse().join('.')}によって提供されているアプリ
+                <AppInfo app={$selectedApp} />
+            </div>
+            {#await omu.server.apps
+                .fetchAll()
+                .then((items) => [...items
+                    .entries()]
+                    .filter(([, app]) => $selectedApp && app.parentId && app.parentId.isSubpathOf($selectedApp.id)),
+                ) then children}
+                {#if children.length > 0}
+                    <div class="children omu-scroll">
+                        <h2>
+                            子アプリ
+                            <Button primary onclick={() => {
+                                omu.server.apps.remove(...children.map(([,app]) => app));
+                                $selectedApp = $selectedApp;
+                            }}>
+                                すべて削除
+                            </Button>
+                        </h2>
+                        {#each children as [id, app] (id)}
+                            <div class="entry">
+                                <AppInfo {app} />
                                 <Button primary onclick={() => {
-                                    omu.server.apps.remove(...children.map(([,app]) => app));
+                                    omu.server.apps.remove(app);
                                     $selectedApp = $selectedApp;
                                 }}>
-                                    すべて削除
-                                </Button>
-                            </h2>
-                            {#each children as [id, app] (id)}
-                                <div class="entry">
-                                    <AppInfo {app} />
-                                    <Button primary onclick={() => {
-                                        omu.server.apps.remove(app);
-                                        $selectedApp = $selectedApp;
-                                    }}>
-                                        <Tooltip>
-                                            削除
-                                        </Tooltip>
+                                    <Tooltip>
                                         削除
-                                        <i class="ti ti-x"></i>
-                                    </Button>
-                                </div>
-                            {/each}
-                        </div>
-                    {/if}
-                {/await}
-                <h2>JSON</h2>
-                <pre>{JSON.stringify(App.serialize($selectedApp), null, 2)}</pre>
-            {/if}
-        </div>
-    {/snippet}
+                                    </Tooltip>
+                                    削除
+                                    <i class="ti ti-x"></i>
+                                </Button>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+            {/await}
+            <h2>JSON</h2>
+            <pre>{JSON.stringify(App.serialize($selectedApp), null, 2)}</pre>
+        {/if}
+    </div>
 </Screen>
 
 <style lang="scss">

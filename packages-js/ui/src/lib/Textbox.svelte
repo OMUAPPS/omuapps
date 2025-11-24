@@ -1,36 +1,22 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { createEventDispatcher, onDestroy } from 'svelte';
 
-    interface Props {
-        value?: string;
-        placeholder?: string;
-        disabled?: boolean;
-        readonly?: boolean;
-        lazy?: boolean;
-        focused?: boolean;
-        submit?: any;
-    }
-
-    let {
-        value = $bindable(''),
-        placeholder = '',
-        disabled = false,
-        readonly = false,
-        lazy = false,
-        focused = $bindable(false),
-        submit = () => {},
-    }: Props = $props();
-    let inputValue = $derived(value);
+    export let value: string = '';
+    export let placeholder: string = '';
+    export let disabled: boolean = false;
+    export let readonly: boolean = false;
+    export let lazy: boolean = false;
+    export let focused: boolean = false;
+    export let submit = () => {};
+    $: inputValue = value;
     let timer: number | undefined;
-    let input: HTMLInputElement | undefined = $state(undefined);
+    let input: HTMLInputElement;
 
-    run(() => {
+    $: {
         if (input && focused) {
             input.focus();
         }
-    });
+    }
 
     const eventDispatcher = createEventDispatcher<{
         input: string;
@@ -75,13 +61,13 @@
     {disabled}
     {readonly}
     bind:this={input}
-    oninput={handleChange}
-    onkeydown={(event) => {
+    on:input={handleChange}
+    on:keydown={(event) => {
         if (event.key !== 'Enter') return;
         submit();
     }}
-    onfocus={() => focused = true}
-    onblur={exit}
+    on:focus={() => focused = true}
+    on:blur={exit}
 />
 
 <style lang="scss">

@@ -2,19 +2,15 @@
     import type { Room } from '@omujs/chat/models';
     import { createSubtitle } from '../stores.js';
 
-    interface Props {
-        entry: Room;
-        selected?: boolean;
-    }
-
-    let { entry, selected = false }: Props = $props();
+    export let entry: Room;
+    export let selected: boolean = false;
 
     function create() {
         $createSubtitle(entry);
     }
 </script>
 
-<button class="room-entry" class:selected onclick={create}>
+<button class="room-entry" class:selected on:click={create}>
     <img src={entry.metadata?.thumbnail} class="thumbnail" alt="" />
     <div class="info">
         <div class="title">{entry.metadata?.title}</div>

@@ -2,38 +2,32 @@
     import { Tooltip } from '@omujs/ui';
 </script>
 
-<section>
-    <a class="card" href="https://github.com/omuapps">
-        <Tooltip>
-            <p>OMUAPPSのソースコード</p>
-        </Tooltip>
-        <i class="ti ti-brand-github"></i>
-        <p>ソースコード</p>
-        <i class="ti ti-external-link"></i>
-    </a>
-    <a class="card" href="https://discord.gg/MZKvbPpsuK">
-        <Tooltip>
-            <p>OMUAPPSのDiscordサーバー</p>
-        </Tooltip>
-        <i class="ti ti-brand-discord"></i>
-        <p>コミュニティ</p>
-        <i class="ti ti-external-link"></i>
-    </a>
-    <a class="card" href="https://x.com/omuapps">
-        <Tooltip>
-            <p>OMUAPPSの情報発信</p>
-        </Tooltip>
-        <i class="ti ti-brand-x"></i>
-        <p>情報発信</p>
-        <i class="ti ti-external-link"></i>
-    </a>
-</section>
+<a class="card" href="https://github.com/omuapps">
+    <Tooltip>
+        <p>OMUAPPSのソースコード</p>
+    </Tooltip>
+    <i class="ti ti-brand-github"></i>
+    <p>ソースコード</p>
+    <i class="ti ti-external-link"></i>
+</a>
+<a class="card" href="https://discord.gg/MZKvbPpsuK">
+    <Tooltip>
+        <p>OMUAPPSのDiscordサーバー</p>
+    </Tooltip>
+    <i class="ti ti-brand-discord"></i>
+    <p>コミュニティ</p>
+    <i class="ti ti-external-link"></i>
+</a>
+<a class="card" href="https://x.com/omuapps">
+    <Tooltip>
+        <p>OMUAPPSの情報発信</p>
+    </Tooltip>
+    <i class="ti ti-brand-x"></i>
+    <p>情報発信</p>
+    <i class="ti ti-external-link"></i>
+</a>
 
 <style lang="scss">
-    section {
-        margin-top: 9rem;
-    }
-
     .card {
         width: fit-content;
         display: flex;

@@ -5,7 +5,7 @@
     import { screenContext } from '$lib/screen/screen.js';
     import { checkUpdate, invoke } from '$lib/tauri.js';
     import { Button, Combobox, Header, Tooltip } from '@omujs/ui';
-    import { Update } from '@tauri-apps/plugin-updater';
+    import { relaunch } from '@tauri-apps/plugin-process';
     import UpdateScreen from '../screen/UpdateScreen.svelte';
     import {
         currentSettingsCategory,
@@ -18,9 +18,10 @@
     import About from './about/About.svelte';
     import CleaningEnvironmentScreen from './CleaningEnvironmentScreen.svelte';
     import DevSettings from './DevSettings.svelte';
+    import PluginSettings from './PluginSettings.svelte';
     import UninstallScreen from './UninstallScreen.svelte';
 
-    let { data }: { data: unknown } = $props();
+    export const props = {};
 
     async function restartServer() {
         if (omu.ready) {
@@ -35,6 +36,25 @@
         await new Promise<void>((resolve) => omu.onReady(resolve));
         window.location.reload();
     }
+
+    async function updateConfig() {
+        await invoke('set_config', {
+            config: { enable_beta: $isBetaEnabled },
+        });
+        console.log('config', await invoke('get_config'));
+        try {
+            if (omu.ready) {
+                await omu.server.shutdown();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        await relaunch();
+    }
+
+    $: {
+        $devMode &&= $isBetaEnabled;
+    }
 </script>
 
 <div class="container">
@@ -47,7 +67,7 @@
         <div class="categories">
             <button
                 class:selected={$currentSettingsCategory == 'general'}
-                onclick={() => ($currentSettingsCategory = 'general')}
+                on:click={() => ($currentSettingsCategory = 'general')}
             >
                 <Tooltip>{$t('settings.category.general.description')}</Tooltip>
                 <span>
@@ -58,7 +78,7 @@
             </button>
             <button
                 class:selected={$currentSettingsCategory == 'about'}
-                onclick={() => ($currentSettingsCategory = 'about')}
+                on:click={() => ($currentSettingsCategory = 'about')}
             >
                 <Tooltip>{$t('settings.category.about.description')}</Tooltip>
                 <span>
@@ -67,10 +87,26 @@
                     <i class="ti ti-chevron-right"></i>
                 </span>
             </button>
+            {#if $isBetaEnabled}
+                <button
+                    class:selected={$currentSettingsCategory == 'plugins'}
+                    on:click={() => ($currentSettingsCategory = 'plugins')}
+                >
+                    <Tooltip
+                    >{$t('settings.category.plugins.description')}</Tooltip
+                    >
+                    <span>
+                        <i class="ti {$t('settings.category.plugins.icon')}"
+                        ></i>
+                        <p>{$t('settings.category.plugins.name')}</p>
+                        <i class="ti ti-chevron-right"></i>
+                    </span>
+                </button>
+            {/if}
             {#if $devMode}
                 <button
                     class:selected={$currentSettingsCategory == 'developer'}
-                    onclick={() => ($currentSettingsCategory = 'developer')}
+                    on:click={() => ($currentSettingsCategory = 'developer')}
                 >
                     <Tooltip
                     >{$t(
@@ -86,7 +122,7 @@
                 </button>
             {/if}
         </div>
-        <div class="settings omu-scroll">
+        <div class="settings">
             <h2>
                 {$t(`settings.category.${$currentSettingsCategory}.name`)}
                 <small>
@@ -116,7 +152,7 @@
                                 </small>
                             </div>
                             <Button primary onclick={() => {
-                                screenContext.push<{ update: Update }>(UpdateScreen, { update });
+                                screenContext.push(UpdateScreen, { update });
                             }}>
                                 {$t('settings.setting.update')}
                                 <i class="ti ti-arrow-up"></i>
@@ -163,6 +199,12 @@
                         bind:checked={$speechRecognition}
                     />
                 </label>
+                {#if $isBetaEnabled}
+                    <label class="setting">
+                        <p>{$t('settings.setting.devMode')}</p>
+                        <input type="checkbox" bind:checked={$devMode} />
+                    </label>
+                {/if}
                 <span class="setting">
                     拒否した確認をリセット
                     <Button onclick={async () => {
@@ -175,45 +217,41 @@
                     {$t('settings.setting.debug')}
                 </h3>
                 <span class="setting">
-                    <Button primary onclick={restartServer}>
-                        {#snippet children({ promise })}
-                            {#if promise}
-                                {#await promise}
-                                    {$t('settings.setting.serverRestarting')}
-                                {:then}
-                                    {$t('settings.setting.serverRestarted')}
-                                {:catch error}
-                                    {$t('settings.setting.serverRestartError', {
-                                        error: JSON.stringify(error),
-                                    })}
-                                {/await}
-                            {:else}
-                                {$t('settings.setting.serverRestart')}
-                            {/if}
-                        {/snippet}
+                    <Button primary onclick={restartServer} let:promise>
+                        {#if promise}
+                            {#await promise}
+                                {$t('settings.setting.serverRestarting')}
+                            {:then}
+                                {$t('settings.setting.serverRestarted')}
+                            {:catch error}
+                                {$t('settings.setting.serverRestartError', {
+                                    error: JSON.stringify(error),
+                                })}
+                            {/await}
+                        {:else}
+                            {$t('settings.setting.serverRestart')}
+                        {/if}
                     </Button>
                 </span>
                 <span class="setting">
-                    <Button primary onclick={() => invoke('generate_log_file')}>
-                        {#snippet children({ promise })}
-                            {#if promise}
-                                {#await promise}
-                                    {$t('settings.setting.logFileGenerating')}
-                                {:catch error}
-                                    {$t('settings.setting.logFileGenerateError', {
-                                        error,
-                                    })}
-                                {/await}
-                            {:else}
-                                {$t('settings.setting.logFileGenerate')}
-                            {/if}
-                        {/snippet}
+                    <Button primary onclick={() => invoke('generate_log_file')} let:promise>
+                        {#if promise}
+                            {#await promise}
+                                {$t('settings.setting.logFileGenerating')}
+                            {:catch error}
+                                {$t('settings.setting.logFileGenerateError', {
+                                    error,
+                                })}
+                            {/await}
+                        {:else}
+                            {$t('settings.setting.logFileGenerate')}
+                        {/if}
                     </Button>
                 </span>
                 <small>先にOBSを終了する必要があります</small>
                 <span class="setting clean-environment">
                     <Button primary onclick={() => {
-                        screenContext.push<undefined>(
+                        screenContext.push(
                             CleaningEnvironmentScreen,
                             undefined,
                         );
@@ -224,7 +262,7 @@
                 <small>アプリのデータをすべて削除し完全なアンインストールをします</small>
                 <span class="setting">
                     <Button primary onclick={() => {
-                        screenContext.push<undefined>(
+                        screenContext.push(
                             UninstallScreen,
                             undefined,
                         );
@@ -240,13 +278,11 @@
                     <input
                         type="checkbox"
                         bind:checked={$isBetaEnabled}
+                        on:change={async () => updateConfig()}
                     />
                 </label>
-                <small>開発者モードはアプリを開発するためにあります。必要でない場合に有効にすることは安全機能が一つ外れることを意味しますのでご注意ください</small>
-                <label class="setting">
-                    <p>{$t('settings.setting.devMode')}</p>
-                    <input type="checkbox" bind:checked={$devMode} />
-                </label>
+            {:else if $currentSettingsCategory === 'plugins'}
+                <PluginSettings />
             {:else if $currentSettingsCategory === 'about'}
                 <About />
             {:else if $currentSettingsCategory === 'developer'}
@@ -331,6 +367,7 @@
         margin: 1rem;
         padding: 2.25rem 2rem;
         flex: 1;
+        overflow-y: auto;
         display: flex;
         flex-direction: column;
 
@@ -357,10 +394,10 @@
     }
 
     .settings > small {
-        color: var(--color-1);
+        color: var(--color-text);
         font-size: 0.8rem;
         border-bottom: 1px solid var(--color-outline);
-        margin-top: 1rem;
+        margin-top: 0.5rem;
         margin-left: 1rem;
         width: fit-content;
     }

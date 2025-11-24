@@ -6,25 +6,23 @@
     import Screen from './Screen.svelte';
     import type { ScreenHandle } from './screen.js';
 
-    interface Props {
+    export let screen: {
         handle: ScreenHandle;
         props: {
             request: PromptRequestAppUpdate;
             resolve: (accept: PromptResult) => void;
         };
-    }
-
-    let { handle, props }: Props = $props();
-    const { request, resolve } = props;
+    };
+    const { request, resolve } = screen.props;
 
     function accept() {
         resolve('accept');
-        handle.pop();
+        screen.handle.pop();
     }
 
     function reject() {
         resolve('deny');
-        handle.pop();
+        screen.handle.pop();
     }
 
     function updateScroll(element: HTMLDivElement) {
@@ -32,17 +30,17 @@
         scrolled = scrollHeight - clientHeight - scrollTop < 10;
     }
 
-    let scrolled = $state(false);
+    let scrolled = false;
 </script>
 
-<Screen {handle} disableClose>
+<Screen {screen} disableClose>
     <div class="screen">
         <h1>アプリの更新があります</h1>
         <div
             class="content omu-scroll"
             use:updateScroll
-            onscroll={({ currentTarget }) => updateScroll(currentTarget)}
-            onresize={({ currentTarget }) => updateScroll(currentTarget)}
+            on:scroll={({ currentTarget }) => updateScroll(currentTarget)}
+            on:resize={({ currentTarget }) => updateScroll(currentTarget)}
         >
             <h3>
                 古いバージョン
@@ -71,11 +69,11 @@
             {/if}
         </div>
         <div class="actions">
-            <button onclick={reject} class="reject">
+            <button on:click={reject} class="reject">
                 キャンセル
                 <i class="ti ti-x"></i>
             </button>
-            <button onclick={accept} class="accept" disabled={!scrolled}>
+            <button on:click={accept} class="accept" disabled={!scrolled}>
                 {#if !scrolled}
                     <Tooltip>
                         最後までスクロールしてください

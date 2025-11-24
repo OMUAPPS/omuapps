@@ -1,15 +1,11 @@
 <script lang="ts">
 
-    interface Props {
-        href?: string;
-        title?: any;
-        text?: string;
-    }
+    export let href = '';
+    export let title = undefined;
+    export let text = '';
 
-    let { href = '', title = undefined, text = '' }: Props = $props();
-
-    let uri = $derived(new URL(!href.startsWith('/') ? href : 'https://' + href));
-    let style = $derived(uri.searchParams.get('_style') || 'default' as 'default' | 'large');
+    $: uri = new URL(!href.startsWith('/') ? href : 'https://' + href);
+    $: style = uri.searchParams.get('_style') || 'default' as 'default' | 'large';
 </script>
 
 <a {href} {title} class={style}>

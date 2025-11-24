@@ -25,7 +25,7 @@
     }
 
     const contributorsUrl = 'https://api.github.com/repos/OMUAPPS/omuapps/contributors';
-    let contributors: Contributor[] = $state([]);
+    let contributors: Contributor[] = [];
 
     fetch(contributorsUrl)
         .then((res) => res.json())

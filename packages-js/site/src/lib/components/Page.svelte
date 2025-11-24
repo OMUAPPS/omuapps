@@ -4,42 +4,28 @@
     import Footer from './Footer.svelte';
     import Header from './Header.svelte';
 
-    interface Props {
-        noBackground?: boolean;
-        headerMode?: boolean | 'always';
-        footer?: boolean;
-        banner?: import('svelte').Snippet;
-        header?: import('svelte').Snippet;
-        content?: import('svelte').Snippet;
-    }
-
-    let {
-        noBackground = false,
-        headerMode = true,
-        footer = true,
-        banner,
-        header,
-        content,
-    }: Props = $props();
+    export let noBackground = false;
+    export let header: boolean | 'always' = true;
+    export let footer: boolean = true;
 </script>
 
-{#if headerMode}
-    <Header always={headerMode === 'always'} />
+{#if header}
+    <Header always={header === 'always'} />
 {/if}
-{#if banner}{@render banner()}{:else}
+<slot name="banner">
     <img src={background} alt="background" class="background" />
-{/if}
+</slot>
 <header>
     <Content>
         <div class="header-content">
-            {@render header?.()}
+            <slot name="header" />
         </div>
     </Content>
 </header>
 <main class:no-background={noBackground}>
     <Content>
         <div class="main-content">
-            {@render content?.()}
+            <slot name="content" />
         </div>
         {#if footer}
             <Footer />

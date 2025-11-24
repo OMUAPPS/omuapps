@@ -1,21 +1,16 @@
 <script lang="ts">
     import { linkOpenHandler } from './stores';
-    interface Props {
-        href: string;
-        primary?: boolean;
-        children?: import('svelte').Snippet;
-    }
-
-    let { href, primary = false, children }: Props = $props();
+    export let href: string;
+    export let primary = false;
 </script>
 
-<a {href} target="_blank" rel="noopener noreferrer" class:primary onclick={(event) => {
+<a {href} target="_blank" rel="noopener noreferrer" class:primary on:click={(event) => {
     if (!$linkOpenHandler) return;
     const prevent = $linkOpenHandler(href);
     if (!prevent) return;
     event.preventDefault();
 }}>
-    {@render children?.()}
+    <slot />
 </a>
 
 <style lang="scss">

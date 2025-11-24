@@ -175,7 +175,7 @@ type Commands = {
         options: {
             label: string;
             url: string;
-            script?: string;
+            script: string;
         };
     }): Cookie[];
     get_cookies(options: {

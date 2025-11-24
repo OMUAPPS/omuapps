@@ -9,12 +9,8 @@
     import ChatRenderer from './ChatRenderer.svelte';
 
     const { omu, config, gameConfig, states, scene, paintEvents } = getGame();
-    interface Props {
-        side: 'client' | 'overlay' | 'background';
-    }
-
-    let { side }: Props = $props();
-    let showDebug = $state(false);
+    export let side: 'client' | 'overlay' | 'background';
+    let showDebug = false;
 </script>
 
 <div class="kitchen">
@@ -34,7 +30,7 @@
     {#if side === 'client'}
         <div class="debug">
             <h2>
-                <button onclick={() => showDebug = !showDebug}>
+                <button on:click={() => showDebug = !showDebug}>
                     {showDebug ? 'hide' : 'show'}
                 </button>
             </h2>

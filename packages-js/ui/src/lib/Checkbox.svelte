@@ -1,18 +1,9 @@
 <script lang="ts" generics="T">
     type BooleanLike = true | false | T;
-    interface Props {
-        value: BooleanLike;
-        disabled?: boolean;
-        label?: string | undefined;
-        handle?: (value: boolean) => unknown;
-    }
-
-    let {
-        value = $bindable(),
-        disabled = false,
-        label = undefined,
-        handle = () => {},
-    }: Props = $props();
+    export let value: BooleanLike;
+    export let disabled: boolean = false;
+    export let label: string | undefined = undefined;
+    export let handle: (value: boolean) => unknown = () => {};
 
     function toggle() {
         if (value) {
@@ -29,7 +20,7 @@
         <span>{label}</span>
     {/if}
     <span class="toggle">
-        <input type="checkbox" checked={!!value} {disabled} onclick={toggle} />
+        <input type="checkbox" checked={!!value} {disabled} on:click={toggle} />
         {#if value}
             <i class="ti ti-check"></i>
         {/if}

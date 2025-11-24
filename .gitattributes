@@ -1,3 +1,4 @@
+*.md -diff -text
 *.svg -diff -text
 *.psd -diff -text
 *.ai -diff -text
@@ -5,5 +6,4 @@
 *.glb -diff -text
 *.blend -diff -text
 *.afdesign -diff -text
-*.md -text
 * text=auto eol=lf
