@@ -144,7 +144,7 @@
                 </button>
                 {#if item.behaviors[behavior.key]}
                     <behavior.edit
-                        bind:behavior={item.behaviors[behavior.key]}
+                        bind:behavior={item.behaviors[behavior.key] as never}
                     />
                 {/if}
             </div>
