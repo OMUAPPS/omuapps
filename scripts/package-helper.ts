@@ -1,8 +1,8 @@
 import { $, type BuildConfig, Glob } from 'bun';
+import isolatedDecl from 'bun-plugin-isolated-decl';
 import { watch } from 'fs';
 import * as fs from 'node:fs/promises';
 import { parseArgs } from 'node:util';
-import isolatedDecl from './bun-plugin-isolated-decl.js';
 
 const { values } = parseArgs({
     args: Bun.argv,
@@ -94,7 +94,7 @@ async function build(entrypoints: string[]) {
                 plugins: [
                     isolatedDecl({
                         forceGenerate: true,
-                        outdir: values.dtsdir, //USEIN' PATCHED ISOLATEDDECL
+                        outdir: values.dtsdir,
                     }),
                 ],
             };

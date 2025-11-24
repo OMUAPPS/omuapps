@@ -3,7 +3,7 @@
 
     import Page from '$lib/components/Page.svelte';
     import type { DocsSection } from '$lib/server/docs';
-    import { Tooltip } from '@omujs/ui';
+    import { ExternalLink, Tooltip } from '@omujs/ui';
     import github from 'svelte-highlight/styles/github';
     import { writable } from 'svelte/store';
     import DocsFooter from './_components/DocsFooter.svelte';
@@ -84,10 +84,20 @@
             <div class="content">
                 <DocsNav {section} {group} />
                 <div class="markdown">
-                    <h2 class="warning">
-                        現在ドキュメントは制作段階にあるため、多くの情報が不完全なものになっています
-                        <i class="ti ti-alert-hexagon"></i>
-                    </h2>
+                    <div class="warning">
+                        <h2>
+                            現在ドキュメントは制作段階にあるため、多くの情報が不完全なものになっています
+                            <i class="ti ti-alert-hexagon"></i>
+                        </h2>
+                        <small>
+                            報告は
+                            <ExternalLink href="/redirect/discord">
+                                Discord
+                                <i class="ti ti-external-link"></i>
+                            </ExternalLink>
+                            までお願いします
+                        </small>
+                    </div>
                     {@render children?.()}
                 </div>
                 <DocsNav {section} {group} />
@@ -206,14 +216,20 @@
 
     .warning {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-start;
         padding: 1rem;
-        gap: 1rem;
+        gap: 0.5rem;
         background: var(--color-bg-1);
         color: var(--color-1);
 
         > i {
             font-size: 1.5rem;
+        }
+
+        > small {
+            font-size: 0.9rem;
+            color: var(--color-text);
         }
     }
 

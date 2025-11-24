@@ -1,6 +1,6 @@
 import type { Matrices } from '$lib/components/canvas/matrices.js';
 import type { AABB2 } from '$lib/math/aabb2.js';
-import type { TypedComponent } from '@omujs/ui';
+import type { Component } from 'svelte';
 import type { KitchenContext } from '../kitchen/kitchen.js';
 import { ActionHandler, type Action } from './behaviors/action.js';
 import { ContainerHandler, type Container } from './behaviors/container.js';
@@ -62,8 +62,8 @@ export type DefaultBehaviors<T extends keyof Behaviors = keyof Behaviors> = {
         name: string;
         key: key;
         default: Behaviors[key];
-        edit: TypedComponent<{
+        edit: Component<{
             behavior: Behaviors[key];
-        }>;
+        }, object, 'behavior'>;
     }
 };
