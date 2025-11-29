@@ -51,6 +51,15 @@ export class ARC4 {
         return r / 0x100000000;
     }
 
+    public getString(count: number, charset: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'): string {
+        let result = '';
+        const charlen = charset.length;
+        while (count--) {
+            result += charset.charAt(Math.floor(this.next() * charlen) % charlen);
+        }
+        return result;
+    }
+
     public next(): number {
         return this.get(4);
     }

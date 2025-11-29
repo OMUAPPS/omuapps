@@ -16,6 +16,7 @@ import { APP as replay } from './replay/app.js';
 import { APP as roulette } from './roulette/app.js';
 import { APP as tester } from './tester/app.js';
 import { APP as timer } from './timer/app.js';
+import { VIDEO_OVERLAY_APP } from './video-overlay/app.js';
 
 export const apps = [
     discordOverlay,
@@ -26,6 +27,7 @@ export const apps = [
     roulette,
     reaction,
     DISCORD_PLUGIN_APP,
+    VIDEO_OVERLAY_APP,
 ] satisfies App[];
 
 if (DEV) {

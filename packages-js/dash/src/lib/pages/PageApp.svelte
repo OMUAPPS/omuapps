@@ -72,7 +72,7 @@
             src={appState.url.toJSON()}
             title=""
             frameborder="0"
-            allow="camera; microphone; clipboard-read; clipboard-write; fullscreen"
+            allow="camera; microphone; clipboard-read; clipboard-write; fullscreen; display-capture"
         ></iframe>
     {/if}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
