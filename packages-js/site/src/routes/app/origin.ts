@@ -1,6 +1,5 @@
 import { IS_BETA } from '$lib/consts.js';
 import type { AppMetadata } from '@omujs/omu';
-import { Identifier } from '@omujs/omu';
 import type { LocalizedText } from '@omujs/omu/localization';
 import { DEV } from 'esm-env';
 
@@ -34,4 +33,4 @@ export function buildMetadata(metadata: AppMetadata): AppMetadata {
     return metadata;
 }
 
-export const NAMESPACE = DEV ? 'com.omuapps' : Identifier.namespaceFromUrl(CF_PAGES_URL);
+export const NAMESPACE = 'com.omuapps';
