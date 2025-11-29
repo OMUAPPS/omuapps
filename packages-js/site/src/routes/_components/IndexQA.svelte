@@ -41,7 +41,7 @@
 
 <style lang="scss">
     h3 {
-        font-size: 4rem;
+        font-size: 4em;
         color: var(--color-1);
         margin-top: 10rem;
         margin-bottom: 4rem;
@@ -49,18 +49,18 @@
 
     section {
         background: var(--color-bg-2);
-        padding: 1.75rem 2rem;
-        margin-bottom: 6rem;
+        padding: 1.75em 2em;
+        margin-bottom: 6em;
     }
 
     h4 {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+        font-size: 1.5em;
+        margin-bottom: 1em;
         color: var(--color-1);
     }
 
     p {
-        font-size: 0.9rem;
+        font-size: 0.9em;
     }
 
     b {

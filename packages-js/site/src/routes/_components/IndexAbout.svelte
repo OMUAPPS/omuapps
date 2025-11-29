@@ -14,11 +14,11 @@
     h3 {
         border-bottom: 2px solid var(--color-1);
         padding-bottom: 0.5rem;
-        font-size: 1.621rem;
+        font-size: 1.621em;
     }
 
     p {
-        font-size: 0.9rem;
+        font-size: 0.9em;
         color: var(--color-text);
         padding-top: 1rem;
         margin-bottom: 4rem;

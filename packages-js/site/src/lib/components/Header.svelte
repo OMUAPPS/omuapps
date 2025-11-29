@@ -13,17 +13,17 @@
     let { always = false }: Props = $props();
 
     let path = $derived(page.url.pathname);
-    let onTop = $state(BROWSER && (!page.url.pathname.startsWith('/docs') && window.scrollY < 1));
+    let onTop = $state(BROWSER && (!page.url.pathname.startsWith('/docs') && document.body.scrollTop < 1));
 
     function onScroll() {
-        onTop = window.scrollY < 1;
+        onTop = document.body.scrollTop < 1;
     }
 
     onMount(() => {
-        window.addEventListener('scroll', onScroll);
+        document.body.addEventListener('scroll', onScroll);
 
         return () => {
-            window.removeEventListener('scroll', onScroll);
+            document.body.removeEventListener('scroll', onScroll);
         };
     });
 </script>

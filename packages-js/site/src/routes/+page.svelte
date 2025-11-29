@@ -41,7 +41,11 @@
 
 <style lang="scss">
     :global(body) {
-        overflow-x: hidden;
+        overflow-x: hidden !important;
+    }
+
+    main {
+        container-type: inline-size;
     }
 
     .title {
@@ -74,17 +78,29 @@
         margin-left: max(40rem, 0%);
         object-fit: cover;
         filter: drop-shadow(-2px 4px 10px var(--color-outline));
+        overflow-x: hidden;
     }
 
     @container (width < 400px) {
+        .title {
+            margin-bottom: 4rem;
+        }
+
+        .title > img {
+            width: min(20rem, 86.21%);
+        }
+
+        .title > small {
+            background: var(--color-bg-2);
+            color: var(--color-1);
+            padding: 0.5em 1em;
+        }
+
         .dashboard {
-            position: absolute;
-            inset: 0;
-            top: 20%;
-            left: 50%;
+            position: relative;
             margin-left: 0;
-            z-index: -1;
-            opacity: 0.2;
+            width: 200%;
+            margin-bottom: 4rem;
         }
     }
 </style>
