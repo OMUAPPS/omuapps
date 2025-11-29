@@ -13,45 +13,18 @@
     const index = omu.server.index.compatSvelte();
 
     async function setIndex() {
-        let mainIndex = {
-            url: 'https://omuapps.com/apps.json',
-            meta: {
-                name: 'OMUAPPS',
-                note: {
-                    ja: 'OMUAPPS公式アプリ',
-                    en: 'Official OMUAPPS',
-                },
-            },
-            added_at: new Date().toISOString(),
-        };
-        if ($isBetaEnabled) {
-            mainIndex = {
-                url: 'https://beta.omuapps.com/apps.json',
+        if (!$index.indexes['com.omuapps']) {
+            $index.indexes['com.omuapps'] ??= {
+                url: DEV ? 'http://localhost:5173/apps.json' : 'https://omuapps.com/apps.json',
                 meta: {
-                    name: 'OMUAPPS - Beta',
+                    name: 'OMUAPPS',
                     note: {
-                        ja: 'ベータ版OMUAPPS公式アプリ',
-                        en: 'Official Beta Channel OMUAPPS',
+                        ja: 'OMUAPPS公式アプリ',
+                        en: 'Official OMUAPPS',
                     },
                 },
                 added_at: new Date().toISOString(),
             };
-        }
-        if (DEV) {
-            mainIndex = {
-                url: 'http://localhost:5173/apps.json',
-                meta: {
-                    name: 'OMUAPPS - Dev',
-                    note: {
-                        ja: '開発版版OMUAPPS公式アプリ',
-                        en: 'Official Dev Channel OMUAPPS',
-                    },
-                },
-                added_at: new Date().toISOString(),
-            };
-        }
-        if ($index.indexes['com.omuapps']?.url !== mainIndex.url) {
-            $index.indexes['com.omuapps'] = mainIndex;
         }
     }
 
@@ -69,7 +42,24 @@
             load($index);
         });
         isBetaEnabled.subscribe((enabled) => {
-            setIndex();
+            if (enabled) {
+                $index.indexes['com.omuapps.beta'] ??= {
+                    url: 'https://beta.omuapps.com/apps.json',
+                    meta: {
+                        name: 'OMUAPPS - Beta',
+                        note: {
+                            ja: 'ベータ版OMUAPPS公式アプリ',
+                            en: 'Official Beta Channel OMUAPPS',
+                        },
+                    },
+                    added_at: new Date().toISOString(),
+                };
+            } else if ($index.indexes['com.omuapps.beta']) {
+                delete $index.indexes['com.omuapps.beta'];
+                $index.indexes = {
+                    ...$index.indexes,
+                };
+            }
         });
     });
 
