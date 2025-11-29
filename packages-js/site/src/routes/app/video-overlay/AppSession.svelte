@@ -4,10 +4,9 @@
     import type { RPCSession, RPCVoiceStates, SelectedVoiceChannel } from '../discord-overlay/discord/discord';
     import { ARC4 } from '../omucafe/game/random';
     import { VIDEO_OVERLAY_APP } from './app';
-    import type { BufferedDataChannel } from './bufferedchannel';
     import { Connection, type Payload } from './connection';
     import { shorten, unshorten } from './shortener';
-    import { Signaling, type ErrorKind, type ParticipantInfo, type PeerConnection } from './signaling';
+    import { RTCConnector, SignalServerSDPTransport, type ErrorKind, type ParticipantInfo } from './signaling';
     import type { VideoOverlayApp } from './video-overlay-app';
 
     interface Props {
@@ -30,7 +29,7 @@
         thumbnail: string;
         stream: undefined;
     } | {
-        type: 'played';
+        type: 'playing';
         thumbnail: string;
         stream: MediaStream;
         close: () => void;
@@ -93,76 +92,63 @@
             }
         };
 
-        const createConnection = async (connection: PeerConnection, channel: BufferedDataChannel): Promise<Connection> => {
-            const { promise, resolve } = Promise.withResolvers<Connection>();
-            const conn = new Connection(channel, {
-                open() {
-                    resolve(conn);
-                    console.log(`Data channel opened with ${connection.id}`);
-                    conn.send({ type: 'ready' });
-                    if (stream && localVideo) {
-                        localVideo.requestVideoFrameCallback(() => {
-                            const frame = captureVideo(localVideo!);
-                            conn.send({
-                                type: 'share_started',
-                                thumbnail: frame,
-                            });
-                        });
-                    }
-                },
-                close() {
-                    console.log(`Connection ${connection.id} closed`);
-                    if (outgoingConnections[connection.id]) {
-                        outgoingConnections[connection.id].destroy();
-                        delete outgoingConnections[connection.id];
-                    }
-                },
-                payload(payload) {
-                    console.log(connection.id, payload);
-                    if (payload.type === 'request') {
-                        if (!stream) {
-                            console.warn('No stream to share');
-                            return;
-                        }
-                        const streamConnection = signaling.connect(connection.id);
-                        streamConnection.addStream(stream);
-                        streamConnection.offer();
-                    } else if (payload.type === 'share_started') {
-                        console.log(`Participant ${connection.id} started sharing`);
-                        remoteVideos[connection.id] = {
-                            type: 'started',
-                            request: () => playRequest(connection.id),
-                            thumbnail: payload.thumbnail,
-                        };
-                    }
-                },
-            });
-            return promise;
-        };
-
         const updateParticipants = (newParticipants: Record<string, ParticipantInfo>) => {
-            const promises: Promise<void>[] = [];
             for (const key of Object.keys(outgoingConnections)) {
                 if (!newParticipants[key]) continue;
-                const conn = outgoingConnections[key];
-                conn.destroy();
                 delete outgoingConnections[key];
             }
             for (const id of Object.keys(newParticipants)) {
                 if (id === loginId) continue;
                 if (outgoingConnections[id]) continue;
-                promises.push(new Promise<void>((resolve) => {
-                    const connection = signaling.connect(id);
-                    const channel = connection.createDataChannel('payload');
-                    createConnection(connection, channel).then((conn) => {
-                        outgoingConnections[connection.id] = conn;
-                        resolve();
+                const connection = signalConnector.connect(id);
+
+                const conn = new Connection(loginInfo.login.id, connection, {
+                    payload: (payload) => {
+                        console.log(payload);
+                        if (payload.type === 'request') {
+                            if (!stream) {
+                                console.warn('No stream to share');
+                                return;
+                            }
+                            conn.setStream(stream);
+                        } else if (payload.type === 'share_started') {
+                            console.log(`Participant ${connection.id} started sharing`);
+                            remoteVideos[connection.id] = {
+                                type: 'started',
+                                request: () => playRequest(connection.id),
+                                thumbnail: payload.thumbnail,
+                            };
+                        }
+                    },
+                    mediaAdded: (media) => {
+                        remoteVideos[connection.id] = {
+                            type: 'playing',
+                            stream: media,
+                            close() {
+                                remoteVideos[connection.id] = {
+                                    type: 'started',
+                                    request: () => playRequest(connection.id),
+                                    thumbnail: remoteVideos[connection.id].thumbnail,
+                                };
+                            },
+                            thumbnail: remoteVideos[connection.id].thumbnail,
+                        };
+                    },
+                });
+                conn.send({ type: 'ready' });
+                if (stream && localVideo) {
+                    localVideo.requestVideoFrameCallback(() => {
+                        const frame = captureVideo(localVideo!);
+                        conn.send({
+                            type: 'share_started',
+                            thumbnail: frame,
+                        });
                     });
-                    connection.offer();
-                }));
+                }
+                outgoingConnections[id] = conn;
+                connection.offer();
             }
             parcitipants = newParticipants;
-            return Promise.all(promises);
         };
 
         const playRequest = (id: string) => {
@@ -173,9 +159,8 @@
             }
             connection.send({ type: 'request' });
         };
-
-        const handlers: Signaling['events'] = {
-            onJoined: () => {
+        const handlers: SignalServerSDPTransport['handlers'] = {
+            joined: () => {
                 loginState = {
                     type: 'logged_in',
                     roomPassword,
@@ -198,12 +183,12 @@
                     },
                 };
             },
-            onError(kind, message) {
+            error(kind, message) {
                 console.error(`Signaling error [${kind}]: ${message}`);
                 loginState = { type: 'failed', kind };
             },
-            onParticipantUpdate: async (peerParticipants) => {
-                await updateParticipants(peerParticipants);
+            updateParticipants: async (peerParticipants) => {
+                updateParticipants(peerParticipants);
                 if (stream) {
                     broadcastPayload({
                         type: 'share_started',
@@ -211,27 +196,9 @@
                     });
                 }
             },
-            onChannelAdded: (connection, channel) => {
-                createConnection(connection, channel);
-            },
-            onStreamAdded: (connection, stream) => {
-                console.log(`Stream added from ${connection.id}:`, stream);
-                remoteVideos[connection.id] = {
-                    type: 'played',
-                    stream,
-                    thumbnail: remoteVideos[connection.id].thumbnail,
-                    close: () => {
-                        console.log(`Stream from ${connection.id} closed`);
-                        remoteVideos[connection.id] = {
-                            type: 'started',
-                            request: () => playRequest(connection.id),
-                            thumbnail: remoteVideos[connection.id].thumbnail,
-                        };
-                    },
-                };
-            },
         };
-        const signaling = await Signaling.new($omu, loginInfo, handlers);
+        const signalServer = await SignalServerSDPTransport.new($omu, loginInfo, handlers);
+        const signalConnector = new RTCConnector(signalServer, loginInfo.login.id);
         loginState = { type: 'joining' };
     }
 
@@ -306,7 +273,7 @@
                                 <button onclick={video.request}>Request Video</button>
                                 <!-- Thumbnail -->
                                 <img src={video.thumbnail} alt="Thumbnail" />
-                            {:else if video.type === 'played'}
+                            {:else if video.type === 'playing'}
                                 {@const load = (node: HTMLVideoElement) => {
                                     node.srcObject = video.stream!;
                                 }}

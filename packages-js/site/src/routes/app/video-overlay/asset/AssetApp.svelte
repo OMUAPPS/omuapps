@@ -7,7 +7,7 @@
     import { ARC4 } from '../../omucafe/game/random';
     import { VIDEO_OVERLAY_APP } from '../app';
     import { Connection } from '../connection';
-    import { Signaling, type ErrorKind, type ParticipantInfo } from '../signaling';
+    import { RTCConnector, SignalServerSDPTransport, type ErrorKind, type ParticipantInfo } from '../signaling';
     import { VideoOverlayApp } from '../video-overlay-app';
 
     interface Props {
@@ -40,7 +40,7 @@
         type: 'joining';
     } | {
         type: 'logged_in';
-        signaling: Signaling;
+        signaling: SignalServerSDPTransport;
         roomPassword: string;
     } | {
         type: 'failed';
@@ -70,28 +70,13 @@
         };
 
         const updateParticipants = (newParticipants: Record<string, ParticipantInfo>) => {
-            const promises: Promise<void>[] = [];
             for (const [idStr, info] of Object.entries(newParticipants)) {
                 if (idStr === loginId) continue;
                 if (connections[idStr]) continue;
-                promises.push(new Promise<void>((resolve) => {
-                    const connection = signaling.connect(idStr);
-                    const channel = connection.createDataChannel('payload');
-                    const conn = connections[idStr] = new Connection(channel, {
-                        open() {
-                            resolve();
-                            console.log(`Data channel opened with ${idStr}`);
-                            conn.send({ type: 'ready' });
-                        },
-                        close() {
-                            console.log(`Data channel ${idStr} closed`);
-                        },
-                        payload(payload) {
-                            console.log('Unhandled payload', payload);
-                        },
-                    });
-                    connection.offer();
-                }));
+                const connection = signalConnector.connect(idStr);
+                const conn = connections[idStr] = new Connection(loginInfo.login.id, connection, {});
+                conn.send({ type: 'ready' });
+                connection.offer();
                 const id = Identifier.fromKey(idStr);
                 parcitipants[idStr] = {
                     ...info,
@@ -99,52 +84,26 @@
                     userId: id.path[id.path.length - 2],
                 };
             }
-            return Promise.all(promises);
         };
 
-        const playRequest = (id: string) => {
-            const connection = connections[id];
-            if (!connection) {
-                console.error(`No connection for ${id}`);
-                return;
-            }
-            connection.send({ type: 'request' });
-        };
-
-        const handlers: Signaling['events'] = {
-            onJoined: () => {
+        const handlers: SignalServerSDPTransport['handlers'] = {
+            joined: () => {
                 loginState = {
                     type: 'logged_in',
                     roomPassword,
-                    signaling,
+                    signaling: signalServer,
                 };
             },
-            onError(kind, message) {
+            error: (kind, message) => {
                 console.error(`Signaling error [${kind}]: ${message}`);
                 loginState = { type: 'failed', kind };
             },
-            onParticipantUpdate: async (peerParticipants) => {
-                await updateParticipants(peerParticipants);
-            },
-            onChannelAdded: (connection, channel) => {
-                connections[connection.id] = new Connection(channel, {
-                    payload(payload) {
-                        if (payload.type === 'share_started') {
-                            console.log(`Participant ${connection.id} started sharing`);
-                            playRequest(connection.id);
-                        }
-                    },
-                });
-            },
-            onStreamAdded: (connection, stream) => {
-                console.log(`Stream added from ${connection.id}:`, stream);
-                remoteVideos[connection.id] = {
-                    type: 'played',
-                    stream,
-                };
+            updateParticipants: async (peerParticipants) => {
+                updateParticipants(peerParticipants);
             },
         };
-        const signaling = await Signaling.new(omu, loginInfo, handlers);
+        const signalServer = await SignalServerSDPTransport.new(omu, loginInfo, handlers);
+        const signalConnector = new RTCConnector(signalServer, loginInfo.login.id);
     }
 
     let { sessions, speakingStates } = overlayApp.discord;
@@ -183,7 +142,7 @@
 {#if loginState.type === 'logged_in'}
     {@const { signaling } = loginState}
     <div class="videos">
-        {#each Object.entries(parcitipants).filter(([id]) => id !== signaling.options.login.id) as [id, participant] (id)}
+        {#each Object.entries(parcitipants).filter(([id]) => id !== signaling.id) as [id, participant] (id)}
             {#if remoteVideos[id]}
                 {@const video = remoteVideos[id]}
                 <div class="video" class:speaking={$speakingStates[$config.user!].states[participant.userId]?.speaking}>
