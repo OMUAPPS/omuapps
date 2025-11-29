@@ -1,5 +1,4 @@
-import { $, type BuildConfig, Glob } from 'bun';
-import isolatedDecl from 'bun-plugin-isolated-decl';
+import { $, BuildConfig, Glob } from 'bun';
 import { watch } from 'fs';
 import * as fs from 'node:fs/promises';
 import { parseArgs } from 'node:util';
@@ -89,12 +88,6 @@ async function build(entrypoints: string[]) {
                 naming: '[dir]/[name].[ext]',
                 minify: values.minify,
                 root: values.root,
-                plugins: [
-                    isolatedDecl({
-                        forceGenerate: true,
-                        outdir: values.dtsdir,
-                    }),
-                ],
             };
             const result = await Bun.build(option);
             if (!result.success) {
@@ -107,6 +100,9 @@ async function build(entrypoints: string[]) {
             console.error(`Error building ${entrypoint}:`, error);
         }
     }
+
+    await $`bun run tsc --project tsconfig.json --outDir ${values.outdir}/${values.dtsdir} --declaration true --emitDeclarationOnly true --rootDir ${values.root}`;
+
     if (values.debug) {
         console.timeEnd('build');
     }
