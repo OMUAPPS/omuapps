@@ -2,9 +2,8 @@
     import { obs } from '$lib/client';
     import { Button } from '@omujs/ui';
 
-    // svelte-ignore non_reactive_update
-    let installed = await obs.checkInstalled();
-    let isAutoLaunchEnabled = $state(installed.launch_installed);
+    let installed = $state(await obs.checkInstalled());
+    let isAutoLaunchEnabled = $derived(installed.launch_installed);
 </script>
 
 <h3>起動方法</h3>
