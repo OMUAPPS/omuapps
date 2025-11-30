@@ -13,40 +13,46 @@ export type Payload = {
     thumbnail: string;
 };
 
-export class Connection {
-    public readonly payload: BufferedDataChannel;
-    public readonly connector: RTCConnector;
-    public mediaConn: PeerConnection;
+export class Socket {
+    private readonly payload: BufferedDataChannel;
+    private readonly negotiate: BufferedDataChannel;
+    private readonly mediaConns: Record<string, PeerConnection> = {};
 
     constructor(
-        private readonly id: string,
-        private readonly connection: PeerConnection,
+        private readonly connector: RTCConnector,
         private readonly handlers: {
-            payload?: (payload: Payload) => void;
-            mediaAdded?: (stream: MediaStream) => void;
+            open?: () => void;
+            payload?: (sender: PeerConnection, payload: Payload) => void;
+            mediaAdded?: (sender: PeerConnection, stream: MediaStream) => void;
         },
     ) {
-        this.payload = connection.createDataChannel('payload');
-        this.payload.onmessage = (data) => {
+        this.payload = connector.createDataChannel('payload');
+        this.payload.onmessage = (sender, data) => {
             const reader = ByteReader.fromUint8Array(data);
             const payload = reader.readJSON<Payload>();
-            console.log(payload);
-            handlers.payload?.(payload);
+            handlers.payload?.(sender, payload);
         };
-        const dataSDPTransport = DataChannelSDPTransport.new(connection.createDataChannel('negotiate'));
-        this.connector = new RTCConnector(dataSDPTransport, id);
-        this.mediaConn = this.connector.connect(this.connection.id);
-        this.mediaConn.listenMediaStream((stream) => handlers.mediaAdded?.(stream));
+        this.negotiate = connector.createDataChannel('negotiate');
     }
 
-    send(payload: Payload) {
+    send(to: PeerConnection, payload: Payload) {
         const writer = new ByteWriter();
         writer.writeJSON(payload);
-        this.payload.send(writer.toUint8Array());
+        this.payload.send(writer.toUint8Array(), to);
     }
 
-    setStream(stream: MediaStream) {
-        this.mediaConn.addMediaStream(stream);
-        this.mediaConn.offer();
+    requestStream(target: PeerConnection) {
+        this.mediaConns[target.id]?.close();
+        const sdpTransport = DataChannelSDPTransport.new(target, this.negotiate);
+        this.mediaConns[target.id] = new RTCConnector(sdpTransport, target.id).connect(target.id);
+        this.mediaConns[target.id].listenMediaStream((stream) => this.handlers.mediaAdded?.(target, stream));
+        this.send(target, { type: 'request' });
+    }
+
+    setStream(to: PeerConnection, stream: MediaStream) {
+        const sdpTransport = DataChannelSDPTransport.new(to, this.negotiate);
+        this.mediaConns[to.id] = new RTCConnector(sdpTransport, to.id).connect(to.id);
+        this.mediaConns[to.id].addMediaStream(stream);
+        this.mediaConns[to.id].offer();
     }
 }

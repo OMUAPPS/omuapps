@@ -4,9 +4,9 @@
     import type { RPCSession, RPCVoiceStates, SelectedVoiceChannel } from '../discord-overlay/discord/discord';
     import { ARC4 } from '../omucafe/game/random';
     import { VIDEO_OVERLAY_APP } from './app';
-    import { Connection, type Payload } from './connection';
+    import { Socket, type Payload } from './connection';
     import { shorten, unshorten } from './shortener';
-    import { RTCConnector, SignalServerSDPTransport, type ErrorKind, type ParticipantInfo } from './signaling';
+    import { RTCConnector, SignalServerSDPTransport, type ErrorKind, type ParticipantInfo, type PeerConnection } from './signaling';
     import type { VideoOverlayApp } from './video-overlay-app';
 
     interface Props {
@@ -19,7 +19,7 @@
     let { session, channel, overlayApp }: Props = $props();
     const { config } = overlayApp;
 
-    let parcitipants: Record<string, ParticipantInfo> = $state({});
+    let participants: Record<string, ParticipantInfo> = $state({});
     let remoteVideos: Record<string, {
         type: 'started';
         thumbnail: string;
@@ -68,7 +68,7 @@
         return canvas.toDataURL('image/png');
     }
 
-    const outgoingConnections: Record<string, Connection> = {};
+    const connections: Record<string, PeerConnection> = {};
 
     async function init(roomPassword: string) {
         const loginInfo = {
@@ -86,79 +86,6 @@
             },
         };
 
-        const broadcastPayload = (payload: Payload) => {
-            for (const connection of Object.values(outgoingConnections)) {
-                connection.send(payload);
-            }
-        };
-
-        const updateParticipants = (newParticipants: Record<string, ParticipantInfo>) => {
-            for (const key of Object.keys(outgoingConnections)) {
-                if (!newParticipants[key]) continue;
-                delete outgoingConnections[key];
-            }
-            for (const id of Object.keys(newParticipants)) {
-                if (id === loginId) continue;
-                if (outgoingConnections[id]) continue;
-                const connection = signalConnector.connect(id);
-
-                const conn = new Connection(loginInfo.login.id, connection, {
-                    payload: (payload) => {
-                        console.log(payload);
-                        if (payload.type === 'request') {
-                            if (!stream) {
-                                console.warn('No stream to share');
-                                return;
-                            }
-                            conn.setStream(stream);
-                        } else if (payload.type === 'share_started') {
-                            console.log(`Participant ${connection.id} started sharing`);
-                            remoteVideos[connection.id] = {
-                                type: 'started',
-                                request: () => playRequest(connection.id),
-                                thumbnail: payload.thumbnail,
-                            };
-                        }
-                    },
-                    mediaAdded: (media) => {
-                        remoteVideos[connection.id] = {
-                            type: 'playing',
-                            stream: media,
-                            close() {
-                                remoteVideos[connection.id] = {
-                                    type: 'started',
-                                    request: () => playRequest(connection.id),
-                                    thumbnail: remoteVideos[connection.id].thumbnail,
-                                };
-                            },
-                            thumbnail: remoteVideos[connection.id].thumbnail,
-                        };
-                    },
-                });
-                conn.send({ type: 'ready' });
-                if (stream && localVideo) {
-                    localVideo.requestVideoFrameCallback(() => {
-                        const frame = captureVideo(localVideo!);
-                        conn.send({
-                            type: 'share_started',
-                            thumbnail: frame,
-                        });
-                    });
-                }
-                outgoingConnections[id] = conn;
-                connection.offer();
-            }
-            parcitipants = newParticipants;
-        };
-
-        const playRequest = (id: string) => {
-            const connection = outgoingConnections[id];
-            if (!connection) {
-                console.error(`No connection for ${id}`);
-                return;
-            }
-            connection.send({ type: 'request' });
-        };
         const handlers: SignalServerSDPTransport['handlers'] = {
             joined: () => {
                 loginState = {
@@ -199,6 +126,63 @@
         };
         const signalServer = await SignalServerSDPTransport.new($omu, loginInfo, handlers);
         const signalConnector = new RTCConnector(signalServer, loginInfo.login.id);
+
+        const broadcastPayload = (payload: Payload) => {
+            for (const peer of Object.values(connections)) {
+                socket.send(peer, payload);
+            }
+        };
+
+        const updateParticipants = (newParticipants: Record<string, ParticipantInfo>) => {
+            console.log(newParticipants);
+            for (const key of Object.keys(connections)) {
+                if (!newParticipants[key]) continue;
+                delete connections[key];
+            }
+            for (const id of Object.keys(newParticipants)) {
+                if (id === loginId) continue;
+                if (connections[id]) continue;
+                console.log(`connecting to ${id}`);
+                const conn = connections[id] = signalConnector.connect(id);
+                conn.offer();
+            }
+            participants = newParticipants;
+        };
+        const socket = new Socket(signalConnector, {
+            payload: (sender, payload) => {
+                console.log(sender.id, payload);
+                if (payload.type === 'request') {
+                    if (!stream) {
+                        console.warn('No stream to share');
+                        return;
+                    }
+                    socket.setStream(sender, stream);
+                } else if (payload.type === 'share_started') {
+                    console.log(`Participant ${sender.id} started sharing`);
+                    remoteVideos[sender.id] = {
+                        type: 'started',
+                        request: () => socket.requestStream(sender),
+                        thumbnail: payload.thumbnail,
+                    };
+                }
+            },
+            mediaAdded: (sender, media) => {
+                console.log('media added');
+                remoteVideos[sender.id] = {
+                    type: 'playing',
+                    stream: media,
+                    close() {
+                        remoteVideos[sender.id] = {
+                            type: 'started',
+                            request: () => socket.requestStream(sender),
+                            thumbnail: remoteVideos[sender.id].thumbnail,
+                        };
+                    },
+                    thumbnail: remoteVideos[sender.id].thumbnail,
+                };
+            },
+        });
+
         loginState = { type: 'joining' };
     }
 
@@ -246,6 +230,7 @@
         </button>
     {:else if loginState.type === 'logged_in'}
         <h2>{session.user.global_name}</h2>
+        <h2>{session.user.id}</h2>
         <button onclick={() => {
             $config.user = session.port.toString();
         }}>このユーザーにログイン</button>
@@ -263,7 +248,7 @@
             招待をコピー
         </button>
         <ul>
-            {#each Object.entries(parcitipants).filter((([id]) => id.endsWith('user'))) as [id, participant] (id)}
+            {#each Object.entries(participants).filter((([id]) => id.endsWith('user'))) as [id, participant] (id)}
                 <li>
                     {participant.name}
                     {#if remoteVideos[id] && id !== loginId}
@@ -274,13 +259,15 @@
                                 <!-- Thumbnail -->
                                 <img src={video.thumbnail} alt="Thumbnail" />
                             {:else if video.type === 'playing'}
-                                {@const load = (node: HTMLVideoElement) => {
-                                    node.srcObject = video.stream!;
-                                }}
-                                <div>
-                                    <button onclick={video.close}>Close</button>
-                                </div>
-                                <video playsinline autoplay muted use:load></video>
+                                {#key video.stream}
+                                    {@const load = (node: HTMLVideoElement) => {
+                                        node.srcObject = video.stream;
+                                    }}
+                                    <div>
+                                        <button onclick={video.close}>Close</button>
+                                    </div>
+                                    <video playsinline autoplay muted use:load></video>
+                                {/key}
                             {/if}
                         </div>
                     {/if}
@@ -311,7 +298,7 @@
     {/if}
 </div>
 <ul>
-    {#each Object.entries(parcitipants) as [id] (id)}
+    {#each Object.entries(participants) as [id] (id)}
         <li>
             {id}
         </li>

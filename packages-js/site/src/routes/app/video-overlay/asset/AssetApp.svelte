@@ -6,8 +6,8 @@
     import { VOICE_CHAT_PERMISSION_ID } from '../../discord-overlay/plugin/plugin';
     import { ARC4 } from '../../omucafe/game/random';
     import { VIDEO_OVERLAY_APP } from '../app';
-    import { Connection } from '../connection';
-    import { RTCConnector, SignalServerSDPTransport, type ErrorKind, type ParticipantInfo } from '../signaling';
+    import { Socket } from '../connection';
+    import { RTCConnector, SignalServerSDPTransport, type ErrorKind, type ParticipantInfo, type PeerConnection } from '../signaling';
     import { VideoOverlayApp } from '../video-overlay-app';
 
     interface Props {
@@ -18,7 +18,7 @@
     const overlayApp = new VideoOverlayApp(omu);
     const { config } = overlayApp;
 
-    let parcitipants: Record<string, ParticipantInfo & {
+    let participants: Record<string, ParticipantInfo & {
         side: 'page' | 'asset';
         userId: string;
     }> = $state({});
@@ -28,7 +28,7 @@
     } | {
         type: 'requested';
     } | {
-        type: 'played';
+        type: 'playing';
         stream: MediaStream;
     }> = $state({});
 
@@ -49,7 +49,7 @@
 
     const password = ARC4.fromNumber(Date.now()).getString(16);
 
-    const connections: Record<string, Connection> = {};
+    const connections: Record<string, PeerConnection> = {};
 
     async function init(channel: SelectedVoiceChannel, session: RPCSession, roomPassword: string) {
         const roomId = VIDEO_OVERLAY_APP.id.join(channel.guild.id, channel.channel.id).key();
@@ -67,23 +67,6 @@
                 name: session.user.global_name ?? session.user.username,
                 version: omu.app.version ?? '0.0.0',
             },
-        };
-
-        const updateParticipants = (newParticipants: Record<string, ParticipantInfo>) => {
-            for (const [idStr, info] of Object.entries(newParticipants)) {
-                if (idStr === loginId) continue;
-                if (connections[idStr]) continue;
-                const connection = signalConnector.connect(idStr);
-                const conn = connections[idStr] = new Connection(loginInfo.login.id, connection, {});
-                conn.send({ type: 'ready' });
-                connection.offer();
-                const id = Identifier.fromKey(idStr);
-                parcitipants[idStr] = {
-                    ...info,
-                    side: id.path[id.path.length - 1] === 'asset' ? 'asset' : 'page',
-                    userId: id.path[id.path.length - 2],
-                };
-            }
         };
 
         const handlers: SignalServerSDPTransport['handlers'] = {
@@ -104,9 +87,53 @@
         };
         const signalServer = await SignalServerSDPTransport.new(omu, loginInfo, handlers);
         const signalConnector = new RTCConnector(signalServer, loginInfo.login.id);
+        const socket = new Socket(signalConnector, {
+            payload: (from, payload) => {
+                console.log(from.id, payload);
+                if (payload.type === 'share_started') {
+                    console.log(`Participant ${from.id} started sharing`);
+                    socket.requestStream(from);
+                }
+            },
+            mediaAdded: (from, media) => {
+                console.log('media added');
+                remoteVideos[from.id] = {
+                    type: 'playing',
+                    stream: media,
+                };
+            },
+        });
+
+        const updateParticipants = (newParticipants: Record<string, ParticipantInfo>) => {
+            console.log(newParticipants);
+            for (const key of Object.keys(connections)) {
+                if (!newParticipants[key]) continue;
+                delete connections[key];
+                console.log(`connection ${key} removed`);
+            }
+            for (const [idStr, info] of Object.entries(newParticipants)) {
+                if (idStr === loginId) continue;
+                if (connections[idStr]) continue;
+                console.log(`connecting to ${idStr}`);
+                createConnection(idStr, info);
+            }
+        };
+
+        const createConnection = (idStr: string, info: ParticipantInfo) => {
+            const connection = signalConnector.connect(idStr);
+            const conn = connections[idStr] = signalConnector.connect(loginInfo.login.id);
+            const id = Identifier.fromKey(idStr);
+            participants[idStr] = {
+                ...info,
+                side: id.path[id.path.length - 1] === 'asset' ? 'asset' : 'page',
+                userId: id.path[id.path.length - 2],
+            };
+            socket.send(conn, { type: 'ready' });
+            connection.offer();
+        };
     }
 
-    let { sessions, speakingStates } = overlayApp.discord;
+    let { sessions, speakingStates, voiceStates } = overlayApp.discord;
 
     let status = $derived.by(() => {
         if (!$config.user) return 'ログインしていません';
@@ -142,14 +169,15 @@
 {#if loginState.type === 'logged_in'}
     {@const { signaling } = loginState}
     <div class="videos">
-        {#each Object.entries(parcitipants).filter(([id]) => id !== signaling.id) as [id, participant] (id)}
+        {#each Object.entries(participants).filter(([id]) => id !== signaling.id) as [id, participant] (id)}
             {#if remoteVideos[id]}
                 {@const video = remoteVideos[id]}
                 <div class="video" class:speaking={$speakingStates[$config.user!].states[participant.userId]?.speaking}>
-                    {#if video.type === 'played'}
+                    {#if video.type === 'playing'}
                         {#key video.stream}
                             {@const load = (node: HTMLVideoElement) => {
-                                node.srcObject = video.stream!;
+                                console.log(video.stream);
+                                node.srcObject = video.stream;
                             }}
                             <video playsinline autoplay muted use:load></video>
                             <p>{participant.name}</p>
@@ -157,6 +185,11 @@
                     {:else if video.type === 'requested'}
                         <Spinner />
                     {/if}
+                </div>
+            {:else}
+                {@const user = $voiceStates[$config.user!].states[participant.userId]?.user}
+                <div class="video" class:speaking={$speakingStates[$config.user!].states[participant.userId]?.speaking}>
+                    <img src={user?.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="">
                 </div>
             {/if}
         {/each}

@@ -1,10 +1,12 @@
 
 import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
+import type { PeerConnection } from './signaling';
 
 type Entry = {
     id: number;
     offset: number;
     buffer: Uint8Array;
+    to: PeerConnection;
 };
 
 const BUFFER_PACKET = {
@@ -13,54 +15,83 @@ const BUFFER_PACKET = {
     CLOSE: 2,
 };
 
+export type ReservedChannel = {
+    channel: BufferedDataChannel;
+    attachReceiver: (connection: PeerConnection, channel: RTCDataChannel) => void;
+    attachSender: (connection: PeerConnection, channel: RTCDataChannel) => void;
+    // open: (channel: RTCDataChannel) => Promise<void>;
+    // onclose: () => void;
+    // onmessage: (data: Uint8Array) => void;
+};
+
 export class BufferedDataChannel {
     private entries: Array<Entry> = [];
-    private open = false;
     private chunkSize = 1024 * 16;
     private index = 0;
     private sender: Promise<void> | null = null;
-    private waitConnected?: () => void = undefined;
     private handlers: Record<number, {
         buffer: Uint8Array;
         offset: number;
     }> = {};
-    public onmessage: (data: Uint8Array) => void = () => {};
+    public onmessage: (from: PeerConnection, data: Uint8Array) => void = (data) => {
+        console.log('unhandled message:', data);
+    };
+    private connections: Record<string, {
+        channel?: RTCDataChannel;
+        sendQueue: ArrayBuffer[];
+    }> = {};
 
     private constructor(
         public readonly label: string,
-        public readonly sendData: (data: ArrayBuffer) => Promise<void>,
+        public sendData: (data: ArrayBuffer, to: PeerConnection) => Promise<void>,
     ) { }
 
-    public static outgoing(connection: RTCPeerConnection, label: string) {
-        const channel = connection.createDataChannel(label, {
-            ordered: true,
-        });
-        const sendQueue: ArrayBuffer[] = [];
-        let sendData = async (data: ArrayBuffer) => {
-            sendQueue.push(data);
-        };
-        const bufferedChannel = new BufferedDataChannel(label, (data) => sendData(data));
-        channel.addEventListener('open', async () => {
-            bufferedChannel.open = true;
-            bufferedChannel.waitConnected?.();
-            sendData = async (data) => {
-                await this.waitForBufferedAmountLow(channel);
-                channel.send(data);
-            };
-            while (sendQueue.length) {
-                const data = sendQueue.shift();
-                if (!data) break;
-                await this.waitForBufferedAmountLow(channel);
-                channel.send(data);
+    public static reserve(label: string): ReservedChannel {
+        const bufferedChannel = new BufferedDataChannel(label, async (data: ArrayBuffer, to) => {
+            const conn = bufferedChannel.connections[to.id] ??= { sendQueue: [] };
+            if (conn.channel) {
+                await BufferedDataChannel.processQueue(conn.channel, conn.sendQueue);
+                await this.waitForBufferedAmountLow(conn.channel);
+                conn.channel.send(data);
+            } else {
+                conn.sendQueue.push(data);
             }
         });
-        channel.onclose = () => {
-            bufferedChannel.open = false;
+        const attachReceiver = (connection: PeerConnection, channel: RTCDataChannel) => {
+            channel.onopen = async () => {
+                const conn = bufferedChannel.connections[connection.id] ??= { sendQueue: [] };
+                conn.channel = channel;
+                await BufferedDataChannel.processQueue(conn.channel, conn.sendQueue);
+            };
+            channel.onmessage = (event) => {
+                bufferedChannel.handleData(connection, event.data);
+            };
         };
-        channel.onmessage = (event) => {
-            bufferedChannel.handleData(event.data);
+        const attachSender = (connection: PeerConnection, channel: RTCDataChannel) => {
+            channel.onopen = async () => {
+                const conn = bufferedChannel.connections[connection.id] ??= { sendQueue: [] };
+                conn.channel = channel;
+                await BufferedDataChannel.processQueue(conn.channel, conn.sendQueue);
+            };
+            channel.onmessage = (event) => {
+                bufferedChannel.handleData(connection, event.data);
+            };
         };
-        return bufferedChannel;
+        return {
+            channel: bufferedChannel,
+            attachReceiver,
+            attachSender,
+        };
+    }
+
+    private static async processQueue(channel: RTCDataChannel, sendQueue: ArrayBuffer[]) {
+        const queue = sendQueue;
+        while (queue.length) {
+            const data = queue.shift();
+            if (!data) break;
+            await this.waitForBufferedAmountLow(channel);
+            channel.send(data);
+        }
     }
 
     private static async waitForBufferedAmountLow(channel: RTCDataChannel) {
@@ -74,22 +105,7 @@ export class BufferedDataChannel {
         }
     }
 
-    public attach(channel: RTCDataChannel) {
-        channel.addEventListener('open', async () => {
-            console.log('open', this.label);
-            this.open = true;
-            this.waitConnected?.();
-        });
-        channel.onclose = () => {
-            this.open = false;
-        };
-        channel.onmessage = (event) => {
-            this.handleData(event.data);
-        };
-        return this;
-    }
-
-    private async handleData(data: Uint8Array) {
+    private async handleData(connection: PeerConnection, data: Uint8Array) {
         const reader = ByteReader.fromUint8Array(data);
         const type = reader.readUint8();
         const id = reader.readUint32();
@@ -107,24 +123,18 @@ export class BufferedDataChannel {
             handle.offset += data.length;
         } else if (type === BUFFER_PACKET.CLOSE) {
             const { buffer } = this.handlers[id];
-            this.onmessage(buffer);
+            this.onmessage(connection, buffer);
             delete this.handlers[id];
         }
     }
 
     private async sendEntry(entry: Entry) {
-        if (!this.open) {
-            const { promise, resolve } = Promise.withResolvers<void>();
-            this.waitConnected = resolve;
-            await promise;
-        }
-
         const writer = new ByteWriter();
         writer.writeUint8(BUFFER_PACKET.OPEN);
         writer.writeUint32(entry.id);
         writer.writeUint32(entry.buffer.length);
 
-        await this.sendData(writer.toArrayBuffer());
+        await this.sendData(writer.toArrayBuffer(), entry.to);
 
         for (let offset = 0; offset < entry.buffer.length; offset += this.chunkSize) {
             const chunk = entry.buffer.slice(offset, offset + this.chunkSize);
@@ -133,14 +143,14 @@ export class BufferedDataChannel {
             chunkWriter.writeUint32(entry.id);
             chunkWriter.writeUint8Array(chunk);
 
-            await this.sendData(chunkWriter.toArrayBuffer());
+            await this.sendData(chunkWriter.toArrayBuffer(), entry.to);
         }
 
         const closeWriter = new ByteWriter();
         closeWriter.writeUint8(BUFFER_PACKET.CLOSE);
         closeWriter.writeUint32(entry.id);
 
-        await this.sendData(closeWriter.toArrayBuffer());
+        await this.sendData(closeWriter.toArrayBuffer(), entry.to);
     }
 
     private async sendLoop() {
@@ -161,12 +171,13 @@ export class BufferedDataChannel {
         }
     }
 
-    public send(data: Uint8Array) {
+    public send(data: Uint8Array, to: PeerConnection) {
         const id = this.index++;
         const entry: Entry = {
             id: id + performance.now(),
             offset: 0,
             buffer: data,
+            to,
         };
         this.entries.push(entry);
 

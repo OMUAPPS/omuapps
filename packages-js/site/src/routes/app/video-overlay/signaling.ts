@@ -1,7 +1,7 @@
 import type { Omu } from '@omujs/omu';
 import type { OmuWS } from '@omujs/omu/api/http';
 import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
-import { BufferedDataChannel } from './bufferedchannel';
+import { BufferedDataChannel, type ReservedChannel } from './bufferedchannel';
 
 const RTC_CONFIGURATION: RTCConfiguration = {
     iceServers: [
@@ -44,6 +44,7 @@ export type Joined = {
 
 export type Offer = {
     type: 'offer';
+    id: string;
     sender: string;
     to: string;
     sdp: SessionDescription;
@@ -51,6 +52,7 @@ export type Offer = {
 
 export type Answer = {
     type: 'answer';
+    id: string;
     sender: string;
     to: string;
     sdp: SessionDescription;
@@ -58,6 +60,7 @@ export type Answer = {
 
 export type Candidate = {
     type: 'candidate';
+    id: string;
     sender: string;
     to: string;
     candidate: RTCLocalIceCandidateInit | null;
@@ -70,7 +73,7 @@ export type Update = {
 
 export type SDPPacket = Offer | Answer | Candidate;
 
-export type ErrorKind = 'invalid_packet' | 'invalid_login' | 'invalid_password' | 'parcitipant_not_found';
+export type ErrorKind = 'invalid_packet' | 'invalid_login' | 'invalid_password' | 'participant_not_found';
 
 export type S2CPacket = Update | SDPPacket | Joined | {
     type: 'error';
@@ -114,7 +117,6 @@ export class SignalServerSDPTransport implements SDPTransport {
     }
 
     sendSDP(sdp: SDPPacket | Join): void {
-        console.log('send', sdp);
         this.ws.send(JSON.stringify(sdp));
     }
 
@@ -156,21 +158,24 @@ export class SignalServerSDPTransport implements SDPTransport {
                 }
                 continue;
             }
-            console.log('receive', packet);
             return { type: 'receive', packet };
         }
     }
 }
 
 export class DataChannelSDPTransport implements SDPTransport {
-    private constructor(private readonly channel: BufferedDataChannel) {}
+    private constructor(
+        private readonly connection: PeerConnection,
+        private readonly channel: BufferedDataChannel,
+    ) {}
 
     private readonly receiveQueue: SDPPacket[] = [];
     private receiveResolve: () => void = () => {};
 
-    public static new(channel: BufferedDataChannel): DataChannelSDPTransport {
-        const transport = new DataChannelSDPTransport(channel);
-        channel.onmessage = (data) => {
+    public static new(connection: PeerConnection, channel: BufferedDataChannel): DataChannelSDPTransport {
+        const transport = new DataChannelSDPTransport(connection, channel);
+        channel.onmessage = (from, data) => {
+            if (from !== connection) return;
             const reader = ByteReader.fromUint8Array(data);
             const packet = reader.readJSON<SDPPacket>();
             transport.receiveQueue.push(packet);
@@ -182,7 +187,7 @@ export class DataChannelSDPTransport implements SDPTransport {
     sendSDP(sdp: SDPPacket): void {
         const writer = new ByteWriter();
         writer.writeJSON(sdp);
-        this.channel.send(writer.toUint8Array());
+        this.channel.send(writer.toUint8Array(), this.connection);
     }
 
     async receiveSDP(): Promise<ReceiveResult> {
@@ -204,10 +209,8 @@ export class DataChannelSDPTransport implements SDPTransport {
 
 export interface PeerConnection {
     id: string;
-    outgoing: RTCPeerConnection;
-    setIncoming(): RTCPeerConnection;
+    peer: RTCPeerConnection;
     offer(): void;
-    createDataChannel(label: string): BufferedDataChannel;
     addMediaStream(stream: MediaStream): void;
     listenMediaStream(callback: (stream: MediaStream) => void): () => void;
     close(): void;
@@ -215,6 +218,9 @@ export interface PeerConnection {
 
 export class RTCConnector {
     private readonly connections: Record<string, PeerConnection> = {};
+    private channels: Record<string, ReservedChannel> = {};
+    private medias: Record<string, RTCRtpSender> = {};
+    private mediaCallbacks: ((stream: MediaStream) => void)[] = [];
 
     constructor(
         private readonly transport: SDPTransport,
@@ -235,8 +241,7 @@ export class RTCConnector {
     private async handleSDPPacket(packet: SDPPacket) {
         switch (packet.type) {
             case 'offer': {
-                const connection = this.connections[packet.sender];
-                const peer = connection.setIncoming();
+                const { peer } = this.createConnection(packet.id, packet.sender);
 
                 await peer.setRemoteDescription(packet.sdp);
 
@@ -248,18 +253,19 @@ export class RTCConnector {
                         type: 'answer',
                         sdp: answer.sdp!,
                     },
+                    id: packet.id,
                     sender: this.sender,
                     to: packet.sender,
                 });
                 break;
             }
             case 'answer': {
-                const connection = this.connections[packet.sender];
+                const connection = this.connections[packet.id];
                 if (!connection) {
                     console.log('No connection for answer from', packet.sender);
                     return;
                 }
-                const { outgoing: peer } = connection;
+                const { peer: peer } = connection;
                 if (peer.signalingState === 'stable') {
                     console.warn('Received unexpected answer from', packet.sender);
                     return;
@@ -267,10 +273,10 @@ export class RTCConnector {
                 await peer.setRemoteDescription(packet.sdp);
                 break;
             }
-            case 'candidate':{
-                const connection = this.connections[packet.sender];
-                if (connection && connection.outgoing.remoteDescription) {
-                    const { outgoing: peer } = connection;
+            case 'candidate': {
+                const connection = this.connections[packet.id];
+                if (connection && connection.peer.remoteDescription) {
+                    const { peer } = connection;
                     await peer.addIceCandidate(packet.candidate);
                 }
                 break;
@@ -278,27 +284,47 @@ export class RTCConnector {
         }
     }
 
+    private counter = 0;
+
     public connect(to: string) {
+        const sdpId = `${to}-${this.counter++}`;
+        return this.createConnection(sdpId, to);
+    }
+
+    public createConnection(sdpId: string, to: string) {
         const peer = new RTCPeerConnection(RTC_CONFIGURATION);
+
+        peer.addEventListener('iceconnectionstatechange', () => {
+            console.log(`ICE connection state changed: ${peer.iceConnectionState}`);
+        });
+
+        peer.addEventListener('icegatheringstatechange', () => {
+            console.log(`ICE gathering state changed: ${peer.iceGatheringState}`);
+        });
+
         peer.onicecandidate = (event) => {
-            if (event.candidate) {
-                this.transport.sendSDP({
-                    type: 'candidate',
-                    candidate: event.candidate,
-                    sender: this.sender,
-                    to,
-                });
-            }
+            console.log('ICE candidate:', event.candidate ? event.candidate.candidate : '(null)');
+            this.transport.sendSDP({
+                type: 'candidate',
+                candidate: event.candidate,
+                id: sdpId,
+                sender: this.sender,
+                to,
+            });
         };
-        const channels: Record<string, BufferedDataChannel> = {};
-        const medias: Record<string, RTCRtpSender> = {};
-        const mediaCallbacks: ((stream: MediaStream) => void)[] = [];
-        let incoming: RTCPeerConnection | undefined = undefined;
-        const connection: PeerConnection = this.connections[to] = {
+        peer.ontrack = (event) => {
+            this.mediaCallbacks.forEach((it) => it(event.streams[0]));
+        };
+        peer.ondatachannel = ({ channel }) => {
+            console.log(to, 'data channel', channel);
+            this.channels[channel.label].attachReceiver(connection, channel);
+        };
+        const connection: PeerConnection = this.connections[sdpId] = {
             id: to,
-            outgoing: peer,
+            peer: peer,
             offer: async () => {
                 const offer = await peer.createOffer();
+                await peer.setLocalDescription(offer);
 
                 this.transport.sendSDP({
                     type: 'offer',
@@ -306,65 +332,41 @@ export class RTCConnector {
                         type: 'offer',
                         sdp: offer.sdp!,
                     },
+                    id: sdpId,
                     sender: this.sender,
                     to,
                 });
-
-                await peer.setLocalDescription(offer);
-            },
-            setIncoming: () => {
-                incoming = new RTCPeerConnection(RTC_CONFIGURATION);
-                incoming.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        this.transport.sendSDP({
-                            type: 'candidate',
-                            candidate: event.candidate,
-                            sender: this.sender,
-                            to,
-                        });
-                    }
-                };
-                incoming.addIceCandidate();
-                incoming.ontrack = (event) => {
-                    console.log('track added', event.streams);
-                    mediaCallbacks.forEach((it) => it(event.streams[0]));
-                };
-                incoming.ondatachannel = ({ channel }) => {
-                    console.log('data channel', channel);
-                    channels[channel.label].attach(channel);
-                };
-                return incoming;
-            },
-            createDataChannel: (label: string): BufferedDataChannel => {
-                const channel = BufferedDataChannel.outgoing(peer, label);
-                channels[label] = channel;
-                return channel;
             },
             addMediaStream: (stream: MediaStream) => {
-                for (const track of Object.values(medias)) {
+                for (const track of Object.values(this.medias)) {
                     peer.removeTrack(track);
                 }
                 for (const track of stream.getTracks()) {
-                    medias[track.id] = peer.addTrack(track, stream);
+                    this.medias[track.id] = peer.addTrack(track, stream);
                 }
             },
             listenMediaStream: (callback: (stream: MediaStream) => void) => {
-                mediaCallbacks.push(callback);
+                this.mediaCallbacks.push(callback);
                 return () => {
-                    const index = mediaCallbacks.indexOf(callback);
-                    mediaCallbacks.splice(index, 1);
+                    const index = this.mediaCallbacks.indexOf(callback);
+                    this.mediaCallbacks.splice(index, 1);
                 };
             },
             close: () => {
                 peer.close();
-                incoming?.close();
+                delete this.connections[sdpId];
             },
         };
+        for (const channel of Object.values(this.channels)) {
+            channel.attachSender(connection, peer.createDataChannel(channel.channel.label));
+        }
         peer.addIceCandidate();
         return connection;
     }
-}
 
-type MediaStreamHandle = {
-    listen(callback: (stream: MediaStream) => void): () => void;
-};
+    createDataChannel(label: string): BufferedDataChannel {
+        const channel = BufferedDataChannel.reserve(label);
+        this.channels[label] = channel;
+        return channel.channel;
+    }
+}
