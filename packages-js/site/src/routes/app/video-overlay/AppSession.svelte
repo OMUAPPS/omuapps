@@ -1,12 +1,12 @@
 <script lang="ts">
     import { Button, omu, Spinner } from '@omujs/ui';
-    import { onDestroy } from 'svelte';
     import type { RPCSession, RPCVoiceStates, SelectedVoiceChannel } from '../discord-overlay/discord/discord';
     import { ARC4 } from '../omucafe/game/random';
     import { VIDEO_OVERLAY_APP } from './app';
-    import { Socket, type Payload } from './connection';
-    import { shorten, unshorten } from './shortener';
-    import { RTCConnector, SignalServerSDPTransport, type ErrorKind, type ParticipantInfo, type PeerConnection } from './signaling';
+    import { Socket, type SocketParticipant } from './rtc/connection';
+    import { type ErrorKind, type LoginOptions } from './rtc/signaling';
+    import { captureVideoFrame } from './rtc/video';
+    import { shorten } from './shortener';
     import type { VideoOverlayApp } from './video-overlay-app';
 
     interface Props {
@@ -19,21 +19,7 @@
     let { session, channel, overlayApp }: Props = $props();
     const { config } = overlayApp;
 
-    let participants: Record<string, ParticipantInfo> = $state({});
-    let remoteVideos: Record<string, {
-        type: 'started';
-        thumbnail: string;
-        request: () => void;
-    } | {
-        type: 'requested';
-        thumbnail: string;
-        stream: undefined;
-    } | {
-        type: 'playing';
-        thumbnail: string;
-        stream: MediaStream;
-        close: () => void;
-    }> = $state({});
+    let participants: Record<string, SocketParticipant> = $state({});
 
     let loginState: {
         type: 'logging_in';
@@ -50,28 +36,66 @@
         kind: ErrorKind;
     } = $state({ type: 'logging_in' });
 
-    let stream: MediaStream | null = $state(null);
+    let media: MediaStream | undefined = $state(undefined);
     const random = ARC4.fromNumber(Date.now());
     const loginPassword = random.getString(16);
-    let localVideo: HTMLVideoElement | null = null;
+    let localVideo: HTMLVideoElement | undefined = undefined;
+    let loginId = $derived(VIDEO_OVERLAY_APP.id.join(session.user.id, 'user').key());
+    let roomId = $derived(VIDEO_OVERLAY_APP.id.join(channel.guild.id, channel.channel.id).key());
 
-    const roomId = VIDEO_OVERLAY_APP.id.join(channel.guild.id, channel.channel.id).key();
-    const loginId = VIDEO_OVERLAY_APP.id.join(session.user.id, 'user').key();
-
-    function captureVideo(video: HTMLVideoElement) {
-        const canvas = document.createElement('canvas');
-        const scale = 1;
-        canvas.width = video.videoWidth * scale;
-        canvas.height = video.videoHeight * scale;
-        const canvasContext = canvas.getContext('2d')!;
-        canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/png');
+    async function createSocket(loginInfo: LoginOptions) {
+        const socket = await Socket.new($omu, loginInfo, {
+            share: async () => {
+                media = await navigator.mediaDevices.getDisplayMedia({
+                    audio: false,
+                    video: {
+                        frameRate: 15,
+                    },
+                });
+                localVideo!.srcObject = media;
+                const getThumbnail = new Promise<void>((resolve) => {
+                    localVideo!.requestVideoFrameCallback(() => {
+                        // const frame = captureVideoFrame(localVideo!);
+                        resolve();
+                    });
+                });
+                await getThumbnail;
+                return {
+                    media,
+                // thumbnail: await getThumbnail,
+                };
+            },
+            loggedIn: () => {
+                loginState = {
+                    type: 'logged_in',
+                    roomPassword: loginInfo.auth.password,
+                    share: () => socket.share(),
+                };
+            },
+            getStream: async () => {
+                if (!media) {
+                    console.warn('No stream to share');
+                    return;
+                }
+                const getThumbnail = new Promise<string>((resolve) => {
+                    localVideo!.requestVideoFrameCallback(() => {
+                        const frame = captureVideoFrame(localVideo!);
+                        resolve(frame);
+                    });
+                });
+                return {
+                    media,
+                    thumbnail: await getThumbnail,
+                };
+            },
+            updateParticipants: (updatedParticipants: Record<string, SocketParticipant>) => {
+                participants = updatedParticipants;
+            },
+        });
     }
 
-    const connections: Record<string, PeerConnection> = {};
-
     async function init(roomPassword: string) {
-        const loginInfo = {
+        const loginInfo: LoginOptions = {
             login: {
                 id: loginId,
                 password: loginPassword,
@@ -86,135 +110,23 @@
             },
         };
 
-        const handlers: SignalServerSDPTransport['handlers'] = {
-            joined: () => {
-                loginState = {
-                    type: 'logged_in',
-                    roomPassword,
-                    async share() {
-                        stream = await navigator.mediaDevices.getDisplayMedia({
-                            audio: true,
-                            video: true,
-                        });
-                        localVideo!.srcObject = stream;
-                        broadcastPayload({
-                            type: 'sharing',
-                        });
-                        localVideo!.requestVideoFrameCallback(() => {
-                            const frame = captureVideo(localVideo!);
-                            broadcastPayload({
-                                type: 'share_started',
-                                thumbnail: frame,
-                            });
-                        });
-                    },
-                };
-            },
-            error(kind, message) {
-                console.error(`Signaling error [${kind}]: ${message}`);
-                loginState = { type: 'failed', kind };
-            },
-            updateParticipants: async (peerParticipants) => {
-                updateParticipants(peerParticipants);
-            },
-        };
-        const signalServer = await SignalServerSDPTransport.new($omu, loginInfo, handlers);
-        const signalConnector = new RTCConnector(signalServer, loginInfo.login.id);
-
-        const broadcastPayload = (payload: Payload) => {
-            for (const peer of Object.values(connections)) {
-                socket.send(peer, payload);
-            }
-        };
-
-        const updateParticipants = (newParticipants: Record<string, ParticipantInfo>) => {
-            console.log(newParticipants);
-            for (const key of Object.keys(connections)) {
-                if (!newParticipants[key]) continue;
-                delete connections[key];
-            }
-            for (const id of Object.keys(newParticipants)) {
-                if (id === loginId) continue;
-                if (connections[id]) continue;
-                console.log(`connecting to ${id}`);
-                const conn = connections[id] = signalConnector.connect(id);
-                conn.offer();
-                if (stream) {
-                    socket.send(conn, {
-                        type: 'share_started',
-                        thumbnail: captureVideo(localVideo!),
-                    });
-                }
-            }
-            participants = newParticipants;
-        };
-        const socket = new Socket(signalConnector, {
-            payload: (sender, payload) => {
-                console.log(sender.id, payload);
-                if (payload.type === 'request') {
-                    if (!stream) {
-                        console.warn('No stream to share');
-                        return;
-                    }
-                    socket.setStream(sender, stream);
-                } else if (payload.type === 'share_started') {
-                    console.log(`Participant ${sender.id} started sharing`);
-                    remoteVideos[sender.id] = {
-                        type: 'started',
-                        request: () => socket.requestStream(sender),
-                        thumbnail: payload.thumbnail,
-                    };
-                }
-            },
-            mediaAdded: (sender, media) => {
-                console.log('media added');
-                remoteVideos[sender.id] = {
-                    type: 'playing',
-                    stream: media,
-                    close() {
-                        socket.closeStream(sender);
-                        remoteVideos[sender.id] = {
-                            type: 'started',
-                            request: () => socket.requestStream(sender),
-                            thumbnail: remoteVideos[sender.id].thumbnail,
-                        };
-                    },
-                    thumbnail: remoteVideos[sender.id].thumbnail,
-                };
-            },
-        });
-
         loginState = { type: 'joining' };
+        await createSocket(loginInfo);
     }
 
     $effect(() => {
         const roomPassword = $config.channels[channel.ref.channel_id]?.password;
+        console.log(channel.ref.channel_id, roomPassword);
         if (roomPassword) {
             init(roomPassword);
         } else {
             loginState = { type: 'logged_out' };
         }
     });
-
-    const { channelMessageSignal } = overlayApp.discord;
-    onDestroy(channelMessageSignal.listen(({ port, message }) => {
-        if (port !== session.port) return;
-        console.log(message.content);
-        const regex = /(?<code>\u200b.+)\n/gm;
-        const code = regex.exec(message.content)?.groups?.code;
-        if (!code) return;
-        const unshortened = unshorten(code);
-        console.log(`Received code: ${unshortened}`);
-        if (!unshortened) return;
-        $config.channels[channel.ref.channel_id] = {
-            password: unshortened,
-        };
-        init(unshortened);
-    }));
 </script>
 
-<video playsinline autoplay muted hidden bind:this={localVideo}></video>
 <div class="session">
+    <video class="local-video" playsinline autoplay muted bind:this={localVideo}></video>
     {#if loginState.type === 'logging_in'}
         <h2>ログイン中<Spinner /></h2>
     {:else if loginState.type === 'logged_out'}
@@ -250,28 +162,27 @@
         </button>
         <ul>
             {#each Object.entries(participants).filter((([id]) => id.endsWith('user'))) as [id, participant] (id)}
+                {@const { stream } = participant}
                 <li>
                     {participant.name}
-                    {#if remoteVideos[id] && id !== loginId}
-                        {@const video = remoteVideos[id]}
-                        <div class="video">
-                            {#if video.type === 'started'}
-                                <button onclick={video.request}>Request Video</button>
-                                <!-- Thumbnail -->
-                                <img src={video.thumbnail} alt="Thumbnail" />
-                            {:else if video.type === 'playing'}
-                                {#key video.stream}
+                    <div class="video">
+                        {#if stream}
+                            {#if stream.type === 'playing'}
+                                {#key stream}
                                     {@const load = (node: HTMLVideoElement) => {
-                                        node.srcObject = video.stream;
+                                        node.srcObject = stream.media;
                                     }}
                                     <div>
-                                        <button onclick={video.close}>Close</button>
+                                        <button onclick={stream.close}>Close</button>
                                     </div>
                                     <video playsinline autoplay muted use:load></video>
                                 {/key}
+                            {:else}
+                                <button onclick={stream.request}>Request Video</button>
+                                <img src={stream.info.thumbnail} alt="Thumbnail" />
                             {/if}
-                        </div>
-                    {/if}
+                        {/if}
+                    </div>
                 </li>
             {/each}
         </ul>
@@ -316,6 +227,11 @@
             height: 100%;
             object-fit: contain;
         }
+    }
+
+    .local-video {
+        width: 10rem;
+        height: 10rem;
     }
 
     .session {

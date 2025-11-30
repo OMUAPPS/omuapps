@@ -2,18 +2,20 @@ import type { Omu } from '@omujs/omu';
 import type { OmuWS } from '@omujs/omu/api/http';
 import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
 import { BufferedDataChannel, type ReservedChannel } from './bufferedchannel';
+import { AsyncQueue } from './queue';
 
 const RTC_CONFIGURATION: RTCConfiguration = {
-    iceServers: [
-        {
-            urls: [
-                'stun:stun.l.google.com:19302',
-                'stun:stun1.l.google.com:19302',
-                'stun:stun2.l.google.com:19302',
-                'stun:stun.cloudflare.com:3478',
-            ],
-        },
-    ],
+    // iceServers: [
+    //     {
+    //         urls: [
+    //             'stun:stun.l.google.com:19302',
+    //             'stun:stun1.l.google.com:19302',
+    //             'stun:stun2.l.google.com:19302',
+    //             'stun:stun.cloudflare.com:3478',
+    //         ],
+    //     },
+    // ],
+    // No ICE servers for now
 };
 
 export type ParticipantInfo = {
@@ -94,6 +96,8 @@ type SignalServerEvents = {
     updateParticipants?: (participants: Record<string, ParticipantInfo>) => void;
 };
 
+export type LoginOptions = Omit<Join, 'type'>;
+
 export class SignalServerSDPTransport implements SDPTransport {
     private readonly sdpQueue: SDPPacket[] = [];
     private sdpResolve: () => void = () => {};
@@ -106,7 +110,7 @@ export class SignalServerSDPTransport implements SDPTransport {
         this.receiveLoop();
     }
 
-    public static async new(omu: Omu, options: Omit<Join, 'type'>, handlers: SignalServerEvents) {
+    public static async new(omu: Omu, options: LoginOptions, handlers: SignalServerEvents) {
         const ws = await omu.http.ws('wss://signal.omuapps.com/ws');
         const signaling = new SignalServerSDPTransport(ws, handlers, options.login.id);
         signaling.sendSDP({
@@ -169,8 +173,7 @@ export class DataChannelSDPTransport implements SDPTransport {
         private readonly channel: BufferedDataChannel,
     ) {}
 
-    private readonly receiveQueue: SDPPacket[] = [];
-    private receiveResolve: () => void = () => {};
+    private readonly receiveQueue = new AsyncQueue<SDPPacket>();
 
     public static new(connection: PeerConnection, channel: BufferedDataChannel): DataChannelSDPTransport {
         const transport = new DataChannelSDPTransport(connection, channel);
@@ -179,7 +182,6 @@ export class DataChannelSDPTransport implements SDPTransport {
             const reader = ByteReader.fromUint8Array(data);
             const packet = reader.readJSON<SDPPacket>();
             transport.receiveQueue.push(packet);
-            transport.receiveResolve();
         };
         return transport;
     }
@@ -192,15 +194,9 @@ export class DataChannelSDPTransport implements SDPTransport {
 
     async receiveSDP(): Promise<ReceiveResult> {
         while (true) {
-            const packet = this.receiveQueue.shift();
+            const packet = await this.receiveQueue.pop();
             if (!packet) {
-                const { promise, resolve } = Promise.withResolvers<boolean>();
-                this.receiveResolve = resolve;
-                const cancel = await promise;
-                if (cancel) {
-                    return { type: 'closed' };
-                }
-                continue;
+                return { type: 'closed' };
             }
             return { type: 'receive', packet };
         }
@@ -233,7 +229,7 @@ export class RTCConnector {
         while (true) {
             const result = await this.transport.receiveSDP();
             if (result.type === 'receive') {
-                this.handleSDPPacket(result.packet);
+                await this.handleSDPPacket(result.packet);
             }
         }
     }
@@ -294,25 +290,20 @@ export class RTCConnector {
     public createConnection(sdpId: string, to: string) {
         const peer = new RTCPeerConnection(RTC_CONFIGURATION);
 
-        peer.addEventListener('iceconnectionstatechange', () => {
-            console.log(`ICE connection state changed: ${peer.iceConnectionState}`);
-        });
-
-        peer.addEventListener('icegatheringstatechange', () => {
-            console.log(`ICE gathering state changed: ${peer.iceGatheringState}`);
-        });
-
         peer.onicecandidate = (event) => {
-            console.log('ICE candidate:', event.candidate ? event.candidate.candidate : '(null)');
-            this.transport.sendSDP({
-                type: 'candidate',
-                candidate: event.candidate,
-                id: sdpId,
-                sender: this.sender,
-                to,
-            });
+            if (event.candidate) {
+                this.transport.sendSDP({
+                    type: 'candidate',
+                    candidate: event.candidate,
+                    id: sdpId,
+                    sender: this.sender,
+                    to,
+                });
+            }
         };
+        const tracks: MediaStreamTrack[] = [];
         peer.ontrack = (event) => {
+            tracks.push(event.track);
             this.mediaCallbacks.forEach((it) => it(event.streams[0]));
         };
         peer.ondatachannel = ({ channel }) => {
@@ -354,13 +345,15 @@ export class RTCConnector {
             },
             close: () => {
                 peer.close();
+                for (const track of tracks) {
+                    track.stop();
+                }
                 delete this.connections[sdpId];
             },
         };
         for (const channel of Object.values(this.channels)) {
             channel.attachSender(connection, peer.createDataChannel(channel.channel.label));
         }
-        peer.addIceCandidate();
         return connection;
     }
 

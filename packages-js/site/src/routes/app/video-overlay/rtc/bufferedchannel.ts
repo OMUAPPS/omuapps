@@ -19,9 +19,6 @@ export type ReservedChannel = {
     channel: BufferedDataChannel;
     attachReceiver: (connection: PeerConnection, channel: RTCDataChannel) => void;
     attachSender: (connection: PeerConnection, channel: RTCDataChannel) => void;
-    // open: (channel: RTCDataChannel) => Promise<void>;
-    // onclose: () => void;
-    // onmessage: (data: Uint8Array) => void;
 };
 
 export class BufferedDataChannel {
@@ -49,7 +46,7 @@ export class BufferedDataChannel {
     public static reserve(label: string): ReservedChannel {
         const bufferedChannel = new BufferedDataChannel(label, async (data: ArrayBuffer, to) => {
             const conn = bufferedChannel.connections[to.id] ??= { sendQueue: [] };
-            if (conn.channel) {
+            if (conn.channel && conn.channel.readyState === 'open') {
                 await BufferedDataChannel.processQueue(conn.channel, conn.sendQueue);
                 await this.waitForBufferedAmountLow(conn.channel);
                 conn.channel.send(data);
@@ -61,12 +58,26 @@ export class BufferedDataChannel {
             channel.onmessage = (event) => {
                 bufferedChannel.handleData(connection, event.data);
             };
+            channel.onclose = () => {
+                const conn = bufferedChannel.connections[connection.id] ??= { sendQueue: [] };
+                conn.channel = undefined;
+            };
+            channel.onerror = (event) => {
+                console.error(connection.id, 'receiver', event);
+            };
         };
         const attachSender = (connection: PeerConnection, channel: RTCDataChannel) => {
             channel.onopen = async () => {
                 const conn = bufferedChannel.connections[connection.id] ??= { sendQueue: [] };
                 conn.channel = channel;
                 await BufferedDataChannel.processQueue(conn.channel, conn.sendQueue);
+            };
+            channel.onclose = () => {
+                const conn = bufferedChannel.connections[connection.id] ??= { sendQueue: [] };
+                conn.channel = undefined;
+            };
+            channel.onerror = (event) => {
+                console.error(connection.id, 'sender', event);
             };
             channel.onmessage = (event) => {
                 bufferedChannel.handleData(connection, event.data);

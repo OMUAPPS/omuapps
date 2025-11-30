@@ -1,13 +1,13 @@
 <script lang="ts">
     import { browser } from '$app/environment';
-    import { Identifier, OmuPermissions, type Omu } from '@omujs/omu';
+    import { OmuPermissions, type Omu } from '@omujs/omu';
     import { Spinner } from '@omujs/ui';
     import type { RPCSession, SelectedVoiceChannel } from '../../discord-overlay/discord/discord';
     import { VOICE_CHAT_PERMISSION_ID } from '../../discord-overlay/plugin/plugin';
     import { ARC4 } from '../../omucafe/game/random';
     import { VIDEO_OVERLAY_APP } from '../app';
-    import { Socket } from '../connection';
-    import { RTCConnector, SignalServerSDPTransport, type ErrorKind, type ParticipantInfo, type PeerConnection } from '../signaling';
+    import { Socket, type SocketParticipant } from '../rtc/connection';
+    import { type ErrorKind } from '../rtc/signaling';
     import { VideoOverlayApp } from '../video-overlay-app';
 
     interface Props {
@@ -18,38 +18,18 @@
     const overlayApp = new VideoOverlayApp(omu);
     const { config } = overlayApp;
 
-    let participants: Record<string, ParticipantInfo & {
-        side: 'page' | 'asset';
-        userId: string;
-    }> = $state({});
-
-    let remoteVideos: Record<string, {
-        type: 'started';
-    } | {
-        type: 'requested';
-    } | {
-        type: 'playing';
-        stream: MediaStream;
-    }> = $state({});
+    let participants: Record<string, SocketParticipant> = $state({});
 
     let loginState: {
-        type: 'logging_in';
-    } | {
-        type: 'logged_out';
-    } | {
-        type: 'joining';
+        type: 'logging_in' | 'logged_out' | 'joining';
     } | {
         type: 'logged_in';
-        signaling: SignalServerSDPTransport;
-        roomPassword: string;
     } | {
         type: 'failed';
         kind: ErrorKind;
     } = $state({ type: 'logging_in' });
 
     const password = ARC4.fromNumber(Date.now()).getString(16);
-
-    const connections: Record<string, PeerConnection> = {};
 
     async function init(channel: SelectedVoiceChannel, session: RPCSession, roomPassword: string) {
         const roomId = VIDEO_OVERLAY_APP.id.join(channel.guild.id, channel.channel.id).key();
@@ -69,68 +49,18 @@
             },
         };
 
-        const handlers: SignalServerSDPTransport['handlers'] = {
-            joined: () => {
-                loginState = {
-                    type: 'logged_in',
-                    roomPassword,
-                    signaling: signalServer,
-                };
+        Socket.new(omu, loginInfo, {
+            handleStreamStarted: (sender, stream) => {
+                console.log(`Participant ${sender.id} started sharing`);
+                stream.request();
             },
-            error: (kind, message) => {
-                console.error(`Signaling error [${kind}]: ${message}`);
-                loginState = { type: 'failed', kind };
+            loggedIn: function (): void {
+                loginState = { type: 'logged_in' };
             },
-            updateParticipants: async (peerParticipants) => {
-                updateParticipants(peerParticipants);
-            },
-        };
-        const signalServer = await SignalServerSDPTransport.new(omu, loginInfo, handlers);
-        const signalConnector = new RTCConnector(signalServer, loginInfo.login.id);
-        const socket = new Socket(signalConnector, {
-            payload: (from, payload) => {
-                console.log(from.id, payload);
-                if (payload.type === 'share_started') {
-                    console.log(`Participant ${from.id} started sharing`);
-                    socket.requestStream(from);
-                }
-            },
-            mediaAdded: (from, media) => {
-                console.log('media added');
-                remoteVideos[from.id] = {
-                    type: 'playing',
-                    stream: media,
-                };
+            updateParticipants: function (updatedParticipants: Record<string, SocketParticipant>): void {
+                participants = updatedParticipants;
             },
         });
-
-        const updateParticipants = (newParticipants: Record<string, ParticipantInfo>) => {
-            console.log(newParticipants);
-            for (const key of Object.keys(connections)) {
-                if (!newParticipants[key]) continue;
-                delete connections[key];
-                console.log(`connection ${key} removed`);
-            }
-            for (const [idStr, info] of Object.entries(newParticipants)) {
-                if (idStr === loginId) continue;
-                if (connections[idStr]) continue;
-                console.log(`connecting to ${idStr}`);
-                createConnection(idStr, info);
-            }
-        };
-
-        const createConnection = (idStr: string, info: ParticipantInfo) => {
-            const connection = signalConnector.connect(idStr);
-            const conn = connections[idStr] = signalConnector.connect(loginInfo.login.id);
-            const id = Identifier.fromKey(idStr);
-            participants[idStr] = {
-                ...info,
-                side: id.path[id.path.length - 1] === 'asset' ? 'asset' : 'page',
-                userId: id.path[id.path.length - 2],
-            };
-            socket.send(conn, { type: 'ready' });
-            connection.offer();
-        };
     }
 
     let { sessions, speakingStates, voiceStates } = overlayApp.discord;
@@ -167,22 +97,34 @@
     </div>
 {/if}
 {#if loginState.type === 'logged_in'}
-    {@const { signaling } = loginState}
     <div class="videos">
-        {#each Object.entries(participants).filter(([id]) => id !== signaling.id) as [id, participant] (id)}
-            {#if remoteVideos[id]}
-                {@const video = remoteVideos[id]}
+        {#each Object.entries(participants) as [id, participant] (id)}
+            {@const { stream } = participant}
+            {#if stream}
                 <div class="video" class:speaking={$speakingStates[$config.user!].states[participant.userId]?.speaking}>
-                    {#if video.type === 'playing'}
-                        {#key video.stream}
+                    {#if stream.type === 'playing'}
+                        {#key stream.media}
                             {@const load = (node: HTMLVideoElement) => {
-                                console.log(video.stream);
-                                node.srcObject = video.stream;
+                                console.log(stream.media);
+                                node.srcObject = stream.media;
+                                stream.media.getTracks().forEach((track) => {
+                                    console.log(track);
+                                });
+                                return {
+                                    update() {
+                                        node.srcObject = stream.media;
+                                    },
+                                    destroy() {
+                                        node.srcObject = null;
+                                    },
+                                };
                             }}
-                            <video playsinline autoplay muted use:load></video>
+                            <video playsinline autoplay muted use:load onload={() => {
+                                console.log('video loaded!');
+                            }}></video>
                             <p>{participant.name}</p>
                         {/key}
-                    {:else if video.type === 'requested'}
+                    {:else if stream.type === 'started'}
                         <Spinner />
                     {/if}
                 </div>

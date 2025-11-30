@@ -2,7 +2,6 @@
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import {
-        AppHeader,
         AppPage,
         setGlobal,
     } from '@omujs/ui';
@@ -32,11 +31,6 @@
 </script>
 
 <AppPage>
-    {#snippet header()}
-        <header>
-            <AppHeader app={VIDEO_OVERLAY_APP} />
-        </header>
-    {/snippet}
     <main>
         {#await omu.waitForReady() then }
             <App {omu} {overlayApp} />

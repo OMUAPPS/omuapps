@@ -402,11 +402,11 @@ const characters = [
     '\udb40\uddef',
 ];
 
-export const unshorten = (s: string): string | null => {
+export const unshorten = (s: string): string | undefined => {
     // Check header
     if (s[0] !== '\u200b') {
         console.error('Invalid header');
-        return null;
+        return undefined;
     }
     s = s.slice(1);
     // Bytes
@@ -427,7 +427,7 @@ export const unshorten = (s: string): string | null => {
         const index = characters.indexOf(c);
         if (index === -1) {
             console.error(`Character not found in mapping: ${c} (U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')})`);
-            return null;
+            return undefined;
         }
         bytes.push(index);
     }
