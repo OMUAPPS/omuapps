@@ -116,12 +116,6 @@
             },
             updateParticipants: async (peerParticipants) => {
                 updateParticipants(peerParticipants);
-                if (stream) {
-                    broadcastPayload({
-                        type: 'share_started',
-                        thumbnail: captureVideo(localVideo!),
-                    });
-                }
             },
         };
         const signalServer = await SignalServerSDPTransport.new($omu, loginInfo, handlers);
@@ -145,6 +139,12 @@
                 console.log(`connecting to ${id}`);
                 const conn = connections[id] = signalConnector.connect(id);
                 conn.offer();
+                if (stream) {
+                    socket.send(conn, {
+                        type: 'share_started',
+                        thumbnail: captureVideo(localVideo!),
+                    });
+                }
             }
             participants = newParticipants;
         };
@@ -172,6 +172,7 @@
                     type: 'playing',
                     stream: media,
                     close() {
+                        socket.closeStream(sender);
                         remoteVideos[sender.id] = {
                             type: 'started',
                             request: () => socket.requestStream(sender),

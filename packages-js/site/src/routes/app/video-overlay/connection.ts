@@ -55,4 +55,8 @@ export class Socket {
         this.mediaConns[to.id].addMediaStream(stream);
         this.mediaConns[to.id].offer();
     }
+
+    closeStream(target: PeerConnection) {
+        this.mediaConns[target.id].close();
+    }
 }

@@ -58,11 +58,6 @@ export class BufferedDataChannel {
             }
         });
         const attachReceiver = (connection: PeerConnection, channel: RTCDataChannel) => {
-            channel.onopen = async () => {
-                const conn = bufferedChannel.connections[connection.id] ??= { sendQueue: [] };
-                conn.channel = channel;
-                await BufferedDataChannel.processQueue(conn.channel, conn.sendQueue);
-            };
             channel.onmessage = (event) => {
                 bufferedChannel.handleData(connection, event.data);
             };
