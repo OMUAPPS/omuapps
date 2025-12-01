@@ -93,12 +93,12 @@ export class BufferedDataChannel {
     }
 
     private static async processQueue(channel: RTCDataChannel, sendQueue: ArrayBuffer[]) {
-        const queue = sendQueue;
-        while (queue.length) {
-            const data = queue.shift();
+        while (sendQueue.length > 0) {
+            const data = sendQueue[0];
             if (!data) break;
             await this.waitForBufferedAmountLow(channel);
             channel.send(data);
+            sendQueue.shift();
         }
     }
 
@@ -113,7 +113,7 @@ export class BufferedDataChannel {
         }
     }
 
-    private async handleData(connection: PeerConnection, data: Uint8Array) {
+    private handleData(connection: PeerConnection, data: Uint8Array) {
         const reader = ByteReader.fromUint8Array(data);
         const type = reader.readUint8();
         const id = reader.readUint32();
