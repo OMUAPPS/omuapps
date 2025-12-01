@@ -3,6 +3,10 @@ export class AsyncQueue<T> {
     private resolve: ((value: T | null) => void) | null = null;
     private closed = false;
 
+    get length() {
+        return this.queue.length;
+    }
+
     push(item: T): void {
         if (this.resolve) {
             this.resolve(item);
