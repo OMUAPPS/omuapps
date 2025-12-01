@@ -40,7 +40,7 @@ export class BufferedDataChannel {
 
     private constructor(
         public readonly label: string,
-        public sendData: (data: ArrayBuffer, to: PeerConnection) => Promise<void>,
+        public sendData: (data: ArrayBuffer, to: PeerConnection) => void,
     ) { }
 
     public static reserve(label: string): ReservedChannel {
@@ -61,6 +61,7 @@ export class BufferedDataChannel {
             channel.onclose = () => {
                 const conn = bufferedChannel.connections[connection.id] ??= { sendQueue: [] };
                 conn.channel = undefined;
+                conn.sendQueue = [];
             };
             channel.onerror = (event) => {
                 console.error(connection.id, 'receiver', event);
@@ -75,6 +76,7 @@ export class BufferedDataChannel {
             channel.onclose = () => {
                 const conn = bufferedChannel.connections[connection.id] ??= { sendQueue: [] };
                 conn.channel = undefined;
+                conn.sendQueue = [];
             };
             channel.onerror = (event) => {
                 console.error(connection.id, 'sender', event);
@@ -134,13 +136,13 @@ export class BufferedDataChannel {
         }
     }
 
-    private async sendEntry(entry: Entry) {
+    private sendEntry(entry: Entry) {
         const writer = new ByteWriter();
         writer.writeUint8(BUFFER_PACKET.OPEN);
         writer.writeUint32(entry.id);
         writer.writeUint32(entry.buffer.length);
 
-        await this.sendData(writer.toArrayBuffer(), entry.to);
+        this.sendData(writer.toArrayBuffer(), entry.to);
 
         for (let offset = 0; offset < entry.buffer.length; offset += this.chunkSize) {
             const chunk = entry.buffer.slice(offset, offset + this.chunkSize);
@@ -149,14 +151,14 @@ export class BufferedDataChannel {
             chunkWriter.writeUint32(entry.id);
             chunkWriter.writeUint8Array(chunk);
 
-            await this.sendData(chunkWriter.toArrayBuffer(), entry.to);
+            this.sendData(chunkWriter.toArrayBuffer(), entry.to);
         }
 
         const closeWriter = new ByteWriter();
         closeWriter.writeUint8(BUFFER_PACKET.CLOSE);
         closeWriter.writeUint32(entry.id);
 
-        await this.sendData(closeWriter.toArrayBuffer(), entry.to);
+        this.sendData(closeWriter.toArrayBuffer(), entry.to);
     }
 
     private async sendLoop() {
@@ -168,7 +170,7 @@ export class BufferedDataChannel {
         try {
             while (this.entries.length > 0) {
                 const entry = this.entries[0];
-                await this.sendEntry(entry);
+                this.sendEntry(entry);
                 this.entries.shift();
             }
         } finally {

@@ -1,7 +1,7 @@
 import { Identifier, type Omu } from '@omujs/omu';
 import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
 import type { BufferedDataChannel } from './bufferedchannel';
-import { DataChannelSDPTransport, RTCConnector, SignalServerSDPTransport, type LoginOptions, type ParticipantInfo, type PeerConnection } from './signaling';
+import { DataChannelSDPTransport, RTCConnector, SignalServerSDPTransport, type ErrorKind, type LoginOptions, type ParticipantInfo, type PeerConnection } from './signaling';
 
 export type MediaInfo = {
     thumbnail?: string;
@@ -16,6 +16,8 @@ export type Payload = {
 } | {
     type: 'share_started';
     info: MediaInfo;
+} | {
+    type: 'share_ended';
 };
 
 type StreamStarted = {
@@ -44,6 +46,7 @@ type ShareResult = {
 
 export interface SocketHandler {
     loggedIn(): void;
+    handleError(kind: ErrorKind, message: string): void;
     getStream?(): Promise<ShareResult | undefined>;
     handleStreamStarted?(sender: PeerConnection, stream: StreamStarted): void;
     handleStreamPlaying?(sender: PeerConnection, stream: StreamPlaying): void;
@@ -60,7 +63,7 @@ export class Socket {
     private media: MediaStream | undefined = undefined;
 
     constructor(
-        private readonly connector: RTCConnector,
+        connector: RTCConnector,
         private readonly handlers: SocketHandler,
     ) {
         this.payload = connector.createDataChannel('payload');
@@ -79,6 +82,7 @@ export class Socket {
             },
             error(kind, message) {
                 console.error(`Signaling error [${kind}]: ${message}`);
+                handler.handleError(kind, message);
             },
             updateParticipants: async (newParticipants) => {
                 console.log(newParticipants);
@@ -140,6 +144,10 @@ export class Socket {
             };
             this.participants[sender.id].stream = stream;
             this.handlers.handleStreamStarted?.(sender, stream);
+            this.handlers.updateParticipants(this.participants);
+        } else if (payload.type === 'share_ended') {
+            console.log(`Participant ${sender.id} started sharing`);
+            this.participants[sender.id].stream = undefined;
             this.handlers.updateParticipants(this.participants);
         }
     }
@@ -204,6 +212,12 @@ export class Socket {
         this.broadcastPayload({
             type: 'share_started',
             info: { thumbnail },
+        });
+    }
+
+    endShare() {
+        this.broadcastPayload({
+            type: 'share_ended',
         });
     }
 }

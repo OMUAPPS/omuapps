@@ -5,17 +5,16 @@ import { BufferedDataChannel, type ReservedChannel } from './bufferedchannel';
 import { AsyncQueue } from './queue';
 
 const RTC_CONFIGURATION: RTCConfiguration = {
-    // iceServers: [
-    //     {
-    //         urls: [
-    //             'stun:stun.l.google.com:19302',
-    //             'stun:stun1.l.google.com:19302',
-    //             'stun:stun2.l.google.com:19302',
-    //             'stun:stun.cloudflare.com:3478',
-    //         ],
-    //     },
-    // ],
-    // No ICE servers for now
+    iceServers: [
+        {
+            urls: [
+                'stun:stun.l.google.com:19302',
+                'stun:stun1.l.google.com:19302',
+                'stun:stun2.l.google.com:19302',
+                'stun:stun.cloudflare.com:3478',
+            ],
+        },
+    ],
 };
 
 export type ParticipantInfo = {
@@ -31,6 +30,11 @@ export type Login = {
 export type SessionDescription = {
     type: 'answer' | 'offer' | 'pranswer' | 'rollback';
     sdp: string;
+};
+
+export type Ping = {
+    type: 'ping';
+    timestamp: number;
 };
 
 export type Join = {
@@ -77,7 +81,7 @@ export type SDPPacket = Offer | Answer | Candidate;
 
 export type ErrorKind = 'invalid_packet' | 'invalid_login' | 'invalid_password' | 'participant_not_found';
 
-export type S2CPacket = Update | SDPPacket | Joined | {
+export type S2CPacket = Update | SDPPacket | Joined | Ping | {
     type: 'error';
     kind: ErrorKind;
     message: string;
@@ -99,8 +103,8 @@ type SignalServerEvents = {
 export type LoginOptions = Omit<Join, 'type'>;
 
 export class SignalServerSDPTransport implements SDPTransport {
-    private readonly sdpQueue: SDPPacket[] = [];
-    private sdpResolve: () => void = () => {};
+    private readonly sdpQueue = new AsyncQueue<SDPPacket>();
+    private closed = false;
 
     private constructor(
         private readonly ws: OmuWS,
@@ -108,6 +112,7 @@ export class SignalServerSDPTransport implements SDPTransport {
         public readonly id: string,
     ) {
         this.receiveLoop();
+        this.pingLoop();
     }
 
     public static async new(omu: Omu, options: LoginOptions, handlers: SignalServerEvents) {
@@ -120,7 +125,7 @@ export class SignalServerSDPTransport implements SDPTransport {
         return signaling;
     }
 
-    sendSDP(sdp: SDPPacket | Join): void {
+    sendSDP(sdp: SDPPacket | Join | Ping): void {
         this.ws.send(JSON.stringify(sdp));
     }
 
@@ -129,6 +134,7 @@ export class SignalServerSDPTransport implements SDPTransport {
             const msg = await this.ws.receive();
             if (msg.type === 'open') continue;
             if (msg.type === 'close') {
+                this.closed = true;
                 return { type: 'closed' };
             }
             if (msg.type !== 'text') {
@@ -143,24 +149,26 @@ export class SignalServerSDPTransport implements SDPTransport {
                 this.handlers.joined?.();
             } else if (payload.type === 'error') {
                 this.handlers.error?.(payload.kind, payload.message);
+            } else if (payload.type === 'ping') {
+                continue;
             } else {
                 this.sdpQueue.push(payload);
-                this.sdpResolve();
             }
+        }
+    }
+
+    async pingLoop() {
+        while (!this.closed) {
+            await new Promise((resolve) => setTimeout(resolve, 15 * 1000));
+            this.sendSDP({ type: 'ping', timestamp: Date.now() });
         }
     }
 
     async receiveSDP(): Promise<ReceiveResult> {
         while (true) {
-            const packet = this.sdpQueue.shift();
+            const packet = await this.sdpQueue.pop();
             if (!packet) {
-                const { promise, resolve } = Promise.withResolvers();
-                this.sdpResolve = resolve;
-                const cancelled = await promise;
-                if (cancelled) {
-                    return { type: 'closed' };
-                }
-                continue;
+                return { type: 'closed' };
             }
             return { type: 'receive', packet };
         }

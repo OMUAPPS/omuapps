@@ -1,12 +1,14 @@
 <script lang="ts">
-    import { Button, omu, Spinner } from '@omujs/ui';
+    import { AssetButton, Button, omu, Spinner, Tooltip } from '@omujs/ui';
+    import { onDestroy } from 'svelte';
     import type { RPCSession, RPCVoiceStates, SelectedVoiceChannel } from '../discord-overlay/discord/discord';
+    import type { Message } from '../discord-overlay/discord/type';
     import { ARC4 } from '../omucafe/game/random';
-    import { VIDEO_OVERLAY_APP } from './app';
+    import { VIDEO_OVERLAY_APP, VIDEO_OVERLAY_ASSET_APP } from './app';
     import { Socket, type SocketParticipant } from './rtc/connection';
     import { type ErrorKind, type LoginOptions } from './rtc/signaling';
-    import { captureVideoFrame } from './rtc/video';
-    import { shorten } from './shortener';
+    import { bindMediaStream, captureVideoFrame } from './rtc/video';
+    import { shorten, unshorten } from './shortener';
     import type { VideoOverlayApp } from './video-overlay-app';
 
     interface Props {
@@ -17,7 +19,8 @@
     }
 
     let { session, channel, overlayApp }: Props = $props();
-    const { config } = overlayApp;
+    const { config, discord } = overlayApp;
+    const { channelMessageSignal } = discord;
 
     let participants: Record<string, SocketParticipant> = $state({});
 
@@ -31,6 +34,7 @@
         type: 'logged_in';
         roomPassword: string;
         share: () => void;
+        end: () => void;
     } | {
         type: 'failed';
         kind: ErrorKind;
@@ -47,22 +51,19 @@
         const socket = await Socket.new($omu, loginInfo, {
             share: async () => {
                 media = await navigator.mediaDevices.getDisplayMedia({
-                    audio: false,
-                    video: {
-                        frameRate: 15,
-                    },
+                    audio: true,
+                    video: true,
                 });
                 localVideo!.srcObject = media;
-                const getThumbnail = new Promise<void>((resolve) => {
+                const getThumbnail = new Promise<string>((resolve) => {
                     localVideo!.requestVideoFrameCallback(() => {
-                        // const frame = captureVideoFrame(localVideo!);
-                        resolve();
+                        const frame = captureVideoFrame(localVideo!);
+                        resolve(frame);
                     });
                 });
-                await getThumbnail;
                 return {
                     media,
-                // thumbnail: await getThumbnail,
+                    thumbnail: await getThumbnail,
                 };
             },
             loggedIn: () => {
@@ -70,6 +71,13 @@
                     type: 'logged_in',
                     roomPassword: loginInfo.auth.password,
                     share: () => socket.share(),
+                    end: () => socket.endShare(),
+                };
+            },
+            handleError: (kind) => {
+                loginState = {
+                    type: 'failed',
+                    kind,
                 };
             },
             getStream: async () => {
@@ -123,69 +131,102 @@
             loginState = { type: 'logged_out' };
         }
     });
+
+    function matchPassCode(message: Message): string | undefined {
+        const regex = /(?<code>\u200b.+)\n/gm;
+        const shortenedCode = regex.exec(message.content)?.groups?.code;
+        if (!shortenedCode) return;
+        const code = unshorten(shortenedCode);
+        return code;
+    }
+
+    onDestroy(channelMessageSignal.listen(({ message }) => {
+        const code = matchPassCode(message);
+        if (code) {
+            $config.channels[channel.ref.channel_id] = {
+                password: code,
+            };
+        }
+    }));
 </script>
 
-<div class="session">
-    <video class="local-video" playsinline autoplay muted bind:this={localVideo}></video>
+<video class="local-video" playsinline autoplay muted hidden bind:this={localVideo}></video>
+<main>
     {#if loginState.type === 'logging_in'}
         <h2>ログイン中<Spinner /></h2>
     {:else if loginState.type === 'logged_out'}
-        パスワードを設定
-        以下からコピーして参加しているボイスチャットのチャットに送信してください
-        <button onclick={() => {
-            const shortened = shorten(random.getString(16));
-            console.log('copy pass', shortened);
-            const text = `# ビデオオーバーレイ認証メッセージ${shortened}\n ⚠️警告: このメッセージを見れる人はボイスチャットに参加せずに配信を見ることができます。安全なボイスチャットで使用することを推奨します。`;
+        <div class="modal">
+            <h1>パスワードを設定</h1>
+            <p>以下からコピーして参加している<b>ボイスチャットのチャット</b>に送信してください</p>
+            <Button primary onclick={() => {
+                const shortened = shorten(random.getString(16));
+                console.log('copy pass', shortened);
+                const text = `# ビデオオーバーレイ認証メッセージ${shortened}\n ⚠️警告: このメッセージを見れる人はボイスチャットに参加せずに配信を見ることができます。安全なボイスチャットで使用することを推奨します。`;
 
-            navigator.clipboard.writeText(text);
-        }}>
-            コピー
-        </button>
+                navigator.clipboard.writeText(text);
+            }}>
+                コピー
+                <i class="ti ti-copy"></i>
+            </Button>
+        </div>
     {:else if loginState.type === 'logged_in'}
-        <h2>{session.user.global_name}</h2>
-        <h2>{session.user.id}</h2>
-        <button onclick={() => {
-            $config.user = session.port.toString();
-        }}>このユーザーにログイン</button>
-        <button onclick={loginState.share}>画面を共有</button>
         {@const state = loginState}
-        他の人を招待
-        以下からコピーして参加しているボイスチャットのチャットに送信してください
-        <button onclick={() => {
-            const shortened = shorten(state.roomPassword);
-            console.log('copy pass', shortened);
-            const text = `# ビデオオーバーレイ認証メッセージ${shortened}\n ⚠️警告: このメッセージを見れる人はボイスチャットに参加せずに配信を見ることができます。安全なボイスチャットで使用することを推奨します。`;
+        <div class="participants">
+            <div class="participant">
+                <video class="local-video" playsinline autoplay muted bind:this={localVideo}></video>
+            </div>
+        </div>
+        <div class="control">
+            <h2>{session.user.global_name}</h2>
+            {#if media}
+                <Button primary onclick={loginState.share}>
+                    変更
+                </Button>
+                <Button primary onclick={loginState.end}>
+                    解除
+                </Button>
+            {:else}
+                <Button primary onclick={loginState.share}>
+                    画面を共有
+                </Button>
+            {/if}
+            <Button primary onclick={() => {
+                const shortened = shorten(state.roomPassword);
+                console.log('copy pass', shortened);
+                const text = `# ビデオオーバーレイ認証メッセージ${shortened}\n ⚠️警告: このメッセージを見れる人はボイスチャットに参加せずに配信を見ることができます。安全なボイスチャットで使用することを推奨します。`;
 
-            navigator.clipboard.writeText(text);
-        }}>
-            招待をコピー
-        </button>
-        <ul>
-            {#each Object.entries(participants).filter((([id]) => id.endsWith('user'))) as [id, participant] (id)}
-                {@const { stream } = participant}
-                <li>
-                    {participant.name}
-                    <div class="video">
-                        {#if stream}
-                            {#if stream.type === 'playing'}
-                                {#key stream}
-                                    {@const load = (node: HTMLVideoElement) => {
-                                        node.srcObject = stream.media;
-                                    }}
-                                    <div>
-                                        <button onclick={stream.close}>Close</button>
-                                    </div>
-                                    <video playsinline autoplay muted use:load></video>
-                                {/key}
-                            {:else}
-                                <button onclick={stream.request}>Request Video</button>
-                                <img src={stream.info.thumbnail} alt="Thumbnail" />
+                navigator.clipboard.writeText(text);
+            }}>
+                <Tooltip>
+                    参加している<b>ボイスチャットのチャット</b>に送信してください
+                </Tooltip>
+                招待
+            </Button>
+            <ul>
+                {#each Object.entries(participants).filter((([id]) => id.endsWith('user'))) as [id, participant] (id)}
+                    {@const { stream } = participant}
+                    <li>
+                        {participant.name}
+                        <div class="video">
+                            {#if stream}
+                                {#if stream.type === 'playing'}
+                                    {#key stream}
+                                        <div>
+                                            <button onclick={stream.close}>Close</button>
+                                        </div>
+                                        <video playsinline autoplay muted use:bindMediaStream={stream.media}></video>
+                                    {/key}
+                                {:else}
+                                    <button onclick={stream.request}>Request Video</button>
+                                    <img src={stream.info.thumbnail} alt="Thumbnail" />
+                                {/if}
                             {/if}
-                        {/if}
-                    </div>
-                </li>
-            {/each}
-        </ul>
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+            <AssetButton asset={VIDEO_OVERLAY_ASSET_APP} />
+        </div>
     {:else if loginState.type === 'failed'}
         <h2>ログイン失敗</h2>
         {#if loginState.kind === 'invalid_login'}
@@ -200,7 +241,13 @@
         {/if}
         {#if loginState.kind !== 'invalid_password'}
             <Button onclick={() => {
-                loginState = { type: 'logged_out' };
+                const roomPassword = $config.channels[channel.ref.channel_id]?.password;
+                console.log(channel.ref.channel_id, roomPassword);
+                if (roomPassword) {
+                    init(roomPassword);
+                } else {
+                    loginState = { type: 'logged_out' };
+                }
             }} primary>
                 再試行
             </Button>
@@ -208,14 +255,7 @@
     {:else if loginState.type === 'joining'}
         <h2>参加中<Spinner /></h2>
     {/if}
-</div>
-<ul>
-    {#each Object.entries(participants) as [id] (id)}
-        <li>
-            {id}
-        </li>
-    {/each}
-</ul>
+</main>
 
 <style lang="scss">
     .video {
@@ -229,17 +269,58 @@
         }
     }
 
-    .local-video {
-        width: 10rem;
-        height: 10rem;
+    h1 {
+        color: var(--color-1);
     }
 
-    .session {
+    .modal {
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        background: var(--color-bg-2);
-        margin: 1rem;
+        align-items: center;
+
+        b {
+            color: var(--color-1);
+            border-bottom: 1px solid var(--color-1);
+        }
+    }
+
+    main {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        inset: 0;
+    }
+
+    .participants {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 1rem;
+        flex: 1;
         padding: 1rem;
+    }
+
+    .participant {
+        background: var(--color-bg-2);
+        padding: 1rem;
+    }
+
+    .control {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 1rem;
+        background: var(--color-bg-2);
+        padding: 1rem;
+        margin: 1rem;
+        margin-top: 0;
+    }
+
+    .local-video {
+        width: 100%;
+        height: 100%;
     }
 </style>

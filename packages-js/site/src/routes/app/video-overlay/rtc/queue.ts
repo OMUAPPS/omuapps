@@ -1,6 +1,7 @@
 export class AsyncQueue<T> {
     private queue: T[] = [];
-    private resolve: ((value: T) => void) | null = null;
+    private resolve: ((value: T | null) => void) | null = null;
+    private closed = false;
 
     push(item: T): void {
         if (this.resolve) {
@@ -11,11 +12,22 @@ export class AsyncQueue<T> {
         }
     }
 
+    close() {
+        this.closed = true;
+        if (this.resolve) {
+            this.resolve(null);
+            this.resolve = null;
+        }
+    }
+
     async pop(): Promise<T | null> {
+        if (this.closed) {
+            return null;
+        }
         if (this.queue.length > 0) {
             return this.queue.shift()!;
         }
-        return new Promise<T>((resolve) => {
+        return new Promise<T | null>((resolve) => {
             this.resolve = resolve;
         });
     }

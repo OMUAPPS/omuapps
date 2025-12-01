@@ -8,3 +8,7 @@ export function captureVideoFrame(video: HTMLVideoElement) {
     canvasContext.drawImage(video, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL('image/png');
 }
+
+export function bindMediaStream(node: HTMLVideoElement, media: MediaStream) {
+    node.srcObject = media;
+};
