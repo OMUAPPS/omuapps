@@ -291,7 +291,7 @@ export class RTCConnector {
     private counter = 0;
 
     public connect(to: string) {
-        const sdpId = `${to}-${this.counter++}`;
+        const sdpId = `${this.sender}-${to}-${this.counter++ + Date.now()}`;
         return this.createConnection(sdpId, to);
     }
 

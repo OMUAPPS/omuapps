@@ -40,10 +40,10 @@
         kind: ErrorKind;
     } = $state({ type: 'logging_in' });
 
-    let media: MediaStream | undefined = $state(undefined);
+    let media: MediaStream | undefined = $state();
     const random = ARC4.fromNumber(Date.now());
     const loginPassword = random.getString(16);
-    let localVideo: HTMLVideoElement | undefined = undefined;
+    let localVideo: HTMLVideoElement | undefined = $state();
     let loginId = $derived(VIDEO_OVERLAY_APP.id.join(session.user.id, 'user').key());
     let roomId = $derived(VIDEO_OVERLAY_APP.id.join(channel.guild.id, channel.channel.id).key());
 
@@ -175,6 +175,23 @@
             <div class="participant">
                 <video class="local-video" playsinline autoplay muted bind:this={localVideo}></video>
             </div>
+            {#each Object.entries(participants).filter((([id]) => id.endsWith('user'))) as [id, participant] (id)}
+                {@const { stream } = participant}
+                <div class="participant">
+                    <p class="name">{participant.name}</p>
+                    {#if stream}
+                        {#if stream.type === 'playing'}
+                            {#key stream}
+                                <video playsinline autoplay muted use:bindMediaStream={stream.media}></video>
+                                <button onclick={stream.close}>閉じる</button>
+                            {/key}
+                        {:else}
+                            <img src={stream.info.thumbnail} alt="Thumbnail" />
+                            <button onclick={stream.request}>見る</button>
+                        {/if}
+                    {/if}
+                </div>
+            {/each}
         </div>
         <div class="control">
             <h2>{session.user.global_name}</h2>
@@ -202,30 +219,7 @@
                 </Tooltip>
                 招待
             </Button>
-            <ul>
-                {#each Object.entries(participants).filter((([id]) => id.endsWith('user'))) as [id, participant] (id)}
-                    {@const { stream } = participant}
-                    <li>
-                        {participant.name}
-                        <div class="video">
-                            {#if stream}
-                                {#if stream.type === 'playing'}
-                                    {#key stream}
-                                        <div>
-                                            <button onclick={stream.close}>Close</button>
-                                        </div>
-                                        <video playsinline autoplay muted use:bindMediaStream={stream.media}></video>
-                                    {/key}
-                                {:else}
-                                    <button onclick={stream.request}>Request Video</button>
-                                    <img src={stream.info.thumbnail} alt="Thumbnail" />
-                                {/if}
-                            {/if}
-                        </div>
-                    </li>
-                {/each}
-            </ul>
-            <AssetButton asset={VIDEO_OVERLAY_ASSET_APP} />
+            <AssetButton asset={VIDEO_OVERLAY_ASSET_APP} single />
         </div>
     {:else if loginState.type === 'failed'}
         <h2>ログイン失敗</h2>
@@ -304,8 +298,36 @@
     }
 
     .participant {
+        position: relative;
         background: var(--color-bg-2);
-        padding: 1rem;
+        padding: 0.5rem;
+
+        > video, img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        > button {
+            position: absolute;
+            background: none;
+            border: none;
+            right: 0.5rem;
+            bottom: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--color-bg-1);
+            color: var(--color-1);
+            font-size: 0.8rem;
+            outline: 1px solid var(--color-1);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        > .name {
+            position: absolute;
+            left: 1rem;
+            top: 1rem;
+        }
     }
 
     .control {

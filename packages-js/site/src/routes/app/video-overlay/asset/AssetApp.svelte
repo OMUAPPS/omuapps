@@ -7,7 +7,7 @@
     import { ARC4 } from '../../omucafe/game/random';
     import { VIDEO_OVERLAY_APP } from '../app';
     import { Socket, type SocketParticipant } from '../rtc/connection';
-    import { type ErrorKind } from '../rtc/signaling';
+    import { type ErrorKind, type LoginOptions } from '../rtc/signaling';
     import { VideoOverlayApp } from '../video-overlay-app';
 
     interface Props {
@@ -21,23 +21,56 @@
     let participants: Record<string, SocketParticipant> = $state({});
 
     let loginState: {
-        type: 'logging_in' | 'logged_out' | 'joining';
+        type: 'logging_in';
+    } | {
+        type: 'logged_out';
+    } | {
+        type: 'joining';
     } | {
         type: 'logged_in';
+        roomPassword: string;
+        share: () => void;
+        end: () => void;
     } | {
         type: 'failed';
         kind: ErrorKind;
     } = $state({ type: 'logging_in' });
 
-    const password = ARC4.fromNumber(Date.now()).getString(16);
+    const random = ARC4.fromNumber(Date.now());
+    const loginPassword = random.getString(16);
+
+    async function createSocket(loginInfo: LoginOptions) {
+        const socket = await Socket.new(omu, loginInfo, {
+            loggedIn: () => {
+                loginState = {
+                    type: 'logged_in',
+                    roomPassword: loginInfo.auth.password,
+                    share: () => socket.share(),
+                    end: () => socket.endShare(),
+                };
+            },
+            handleError: (kind) => {
+                loginState = {
+                    type: 'failed',
+                    kind,
+                };
+            },
+            updateParticipants: (updatedParticipants: Record<string, SocketParticipant>) => {
+                participants = updatedParticipants;
+            },
+            handleStreamStarted: (sender, stream) => {
+                stream.request();
+            },
+        });
+    }
 
     async function init(channel: SelectedVoiceChannel, session: RPCSession, roomPassword: string) {
         const roomId = VIDEO_OVERLAY_APP.id.join(channel.guild.id, channel.channel.id).key();
         const loginId = VIDEO_OVERLAY_APP.id.join(session.user.id, 'asset').key();
-        const loginInfo = {
+        const loginInfo: LoginOptions = {
             login: {
                 id: loginId,
-                password,
+                password: loginPassword,
             },
             auth: {
                 id: roomId,
@@ -49,24 +82,12 @@
             },
         };
 
-        Socket.new(omu, loginInfo, {
-            handleStreamStarted: (sender, stream) => {
-                console.log(`Participant ${sender.id} started sharing`);
-                stream.request();
-            },
-            loggedIn: (): void => {
-                loginState = { type: 'logged_in' };
-            },
-            handleError: (kind) => {
-                loginState = { type: 'failed', kind };
-            },
-            updateParticipants: (updatedParticipants: Record<string, SocketParticipant>): void => {
-                participants = updatedParticipants;
-            },
-        });
+        loginState = { type: 'joining' };
+        await createSocket(loginInfo);
     }
 
     let { sessions, speakingStates, voiceStates } = overlayApp.discord;
+    let port = $derived(Object.entries($sessions).find(([, session]) => session.user.id === $config.user)?.[0]);
 
     let status = $derived.by(() => {
         if (!$config.user) return 'ログインしていません';
@@ -108,7 +129,7 @@
         {#each Object.entries(participants) as [id, participant] (id)}
             {@const { stream } = participant}
             {#if stream}
-                <div class="video" class:speaking={$speakingStates[$config.user!].states[participant.userId]?.speaking}>
+                <div class="video" class:speaking={$speakingStates[port!].states[participant.userId]?.speaking}>
                     {#if stream.type === 'playing'}
                         {#key stream.media}
                             {@const load = (node: HTMLVideoElement) => {
@@ -136,8 +157,8 @@
                     {/if}
                 </div>
             {:else}
-                {@const user = $voiceStates[$config.user!].states[participant.userId]?.user}
-                <div class="video" class:speaking={$speakingStates[$config.user!].states[participant.userId]?.speaking}>
+                {@const user = $voiceStates[port!].states[participant.userId]?.user}
+                <div class="video" class:speaking={$speakingStates[port!].states[participant.userId]?.speaking}>
                     <img src={user?.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png'} alt="">
                 </div>
             {/if}
