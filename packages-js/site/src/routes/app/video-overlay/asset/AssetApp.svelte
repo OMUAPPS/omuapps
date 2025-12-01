@@ -54,10 +54,13 @@
                 console.log(`Participant ${sender.id} started sharing`);
                 stream.request();
             },
-            loggedIn: function (): void {
+            loggedIn: (): void => {
                 loginState = { type: 'logged_in' };
             },
-            updateParticipants: function (updatedParticipants: Record<string, SocketParticipant>): void {
+            handleError: (kind) => {
+                loginState = { type: 'failed', kind };
+            },
+            updateParticipants: (updatedParticipants: Record<string, SocketParticipant>): void => {
                 participants = updatedParticipants;
             },
         });
@@ -67,7 +70,9 @@
 
     let status = $derived.by(() => {
         if (!$config.user) return 'ログインしていません';
-        const session = $sessions[$config.user];
+        let port = Object.entries($sessions).find(([, session]) => session.user.id === $config.user)?.[0];
+        if (!port) return 'ユーザーがありません';
+        const session = $sessions[port];
         if (!session || !session.selected_voice_channel) return 'チャンネルに接続していません';
         const channel = $config.channels[session.selected_voice_channel.ref.channel_id];
         if (!channel) return 'パスワードが設定されていません';
@@ -75,7 +80,9 @@
 
     $effect(() => {
         if (!$config.user) return;
-        const session = $sessions[$config.user];
+        let port = Object.entries($sessions).find(([, session]) => session.user.id === $config.user)?.[0];
+        if (!port) return;
+        const session = $sessions[port];
         if (!session || !session.selected_voice_channel) return;
         const channel = $config.channels[session.selected_voice_channel.ref.channel_id];
         if (!channel) return;
