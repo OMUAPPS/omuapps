@@ -164,49 +164,169 @@ class RegistryImpl<T> implements Registry<T> {
     }
 
     public compatSvelte(): Writable<T> {
-        let ready = false;
-        let value: T = this.value;
+        let isReady = false;
+        let updating = false;
         const listeners = new Set<(value: T) => void>();
-        this.listen((newValue) => {
-            ready = true;
-            value = newValue;
-            listeners.forEach((run) => {
-                run(value);
+        const resetUpdating = () => { updating = true; setTimeout(() => { updating = false; }); };
+
+        const handle = (newValue: T, unset = () => {}) => {
+            isReady = true;
+            unset();
+            resetUpdating();
+            emit(newValue);
+        };
+
+        const unsubscribe = this.listen(handle);
+
+        const emit = (value: T) => {
+            this.value = value;
+            const proxied = proxy(value, (unset) => {
+                this.#set(this.value);
+                handle(this.value, unset);
             });
-        });
+            listeners.forEach(listener => listener(proxied));
+        };
+
         return {
             set: (value: T) => {
-                if (!ready) {
+                if (!isReady) {
                     throw new Error(`Registry ${this.type.id.key()} is not ready`);
                 }
-                this.set(value);
+                const original = value[ORIGINAL_SYMBOL];
+                if (!original) {
+                    resetUpdating();
+                    this.#set(value);
+                    emit(value);
+                    return;
+                }
+                const changed = value[ORIGINAL_CHANGED];
+                if (!changed) return;
+                this.#set(value);
+                handle(value);
             },
-            subscribe: (run) => {
+            subscribe: (run: (value: T) => void) => {
                 listeners.add(run);
-                run(value);
+                run(proxy(this.value, (unset) => {
+                    this.#set(this.value);
+                    handle(this.value, unset);
+                }));
+
                 return () => {
                     listeners.delete(run);
+                    if (listeners.size === 0) {
+                        unsubscribe?.();
+                    }
                 };
             },
-            update: (fn) => {
-                if (!ready) {
+            update: (fn: (value: T) => T) => {
+                if (!isReady) {
                     throw new Error(`Registry ${this.type.id.key()} is not ready`);
                 }
                 this.update(fn);
             },
-            wait: () => {
-                return new Promise<T>((resolve) => {
-                    if (ready) {
-                        resolve(value);
-                    } else {
-                        listeners.add(() => {
+            wait: (): Promise<T> => {
+                return isReady
+                    ? Promise.resolve(this.value)
+                    : new Promise(resolve => {
+                        const unsubscribe = this.listen((value: T) => {
+                            unsubscribe?.();
                             resolve(value);
                         });
-                    }
-                });
+                    });
             },
         };
     }
+}
+
+const ORIGINAL_SYMBOL = Symbol('OmuRegistry_Original');
+const ORIGINAL_CHANGED = Symbol('OmuRegistry_Changed');
+
+function deepEqual(objA, objB) {
+    if (objA === objB) return true; // Check for referential equality and primitive values
+
+    if (
+        typeof objA !== 'object' ||
+    objA === null ||
+    typeof objB !== 'object' ||
+    objB === null
+    ) {
+        return false; // Handle non-object types or null
+    }
+
+    const keysA = Object.keys(objA);
+    const keysB = Object.keys(objB);
+
+    if (keysA.length !== keysB.length) return false; // Different number of properties
+
+    for (const key of keysA) {
+        if (!keysB.includes(key) || !deepEqual(objA[key], objB[key])) {
+            return false; // Property missing or values are not deeply equal
+        }
+    }
+
+    return true; // All properties and their values are deeply equal
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function areChanged(a: any, b: any): boolean {
+    if (
+        typeof a !== 'object' || a === null ||
+        typeof b !== 'object' || b === null
+    ) {
+        return a !== b;
+    }
+    const aChanged: boolean | undefined = a[ORIGINAL_CHANGED];
+    const bChanged: boolean | undefined = b[ORIGINAL_CHANGED];
+    // primitives
+    if (aChanged === undefined && bChanged === undefined) return !deepEqual(a, b);
+    if (aChanged === undefined || bChanged === undefined) return true;
+    return aChanged || bChanged;
+}
+
+function proxy<T>(
+    value: T,
+    callback: (unset: () => void) => void,
+    markChanged = () => {},
+    clearChanged = () => {},
+) {
+    if (typeof value !== 'object' || value === null) {
+        return value;
+    }
+    if (ORIGINAL_SYMBOL in value) {
+        return value;
+    }
+    let changed = false;
+    return new Proxy(value, {
+        set(target, prop, value) {
+            changed = areChanged(target[prop], value);
+            if (!changed) return true;
+            markChanged();
+            target[prop] = value;
+            callback(() => {
+                changed = false;
+                clearChanged();
+            });
+            return true;
+        },
+        get(target, prop) {
+            if (prop === ORIGINAL_SYMBOL) {
+                return value;
+            } else if (prop === ORIGINAL_CHANGED) {
+                return changed;
+            }
+            return proxy(target[prop], callback, () => {
+                changed = true;
+                markChanged();
+            }, () => {
+                changed = false;
+                clearChanged();
+            });
+        },
+        has(target, p) {
+            if (p === ORIGINAL_SYMBOL) return true;
+            return p in target;
+        },
+    });
 }
 
 export const REGISTRY_EXTENSION_TYPE: ExtensionType<RegistryExtension> = new ExtensionType(
