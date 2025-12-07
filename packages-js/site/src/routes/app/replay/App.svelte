@@ -5,8 +5,7 @@
     import Config from './components/Config.svelte';
     import Menu from './components/Menu.svelte';
     import MenuSection from './components/MenuSection.svelte';
-    import TwitchPlayer from './components/player/TwitchPlayer.svelte';
-    import YoutubePlayer from './components/player/YoutubePlayer.svelte';
+    import Player from './components/player/Player.svelte';
     import RoomEntry from './components/RoomEntry.svelte';
     import { ReplayApp } from './replay-app.js';
 
@@ -17,7 +16,7 @@
     let { chat }: Props = $props();
 
     const replay = ReplayApp.getInstance();
-    const { replayData, config } = replay;
+    const { replayData } = replay;
 
     let search: string = $state('');
 
@@ -25,6 +24,28 @@
 </script>
 
 <div class="container">
+    <div class="content">
+        <div class="player">
+            {#if $replayData}
+                <Player bind:replayData={$replayData} bind:playback={$replayData.playback} />
+            {:else}
+                <div class="empty">
+                    動画を選択するとここに表示されます
+                    <i class="ti ti-video"></i>
+                </div>
+            {/if}
+        </div>
+        <MenuSection name="URLから" icon="ti-link">
+            <Textbox
+                placeholder="https://youtu.be/..."
+                on:input={(event) => {
+                    const url = new URL(event.detail);
+                    replay.playByUrl(url);
+                }}
+                lazy
+            />
+        </MenuSection>
+    </div>
     <Menu>
         <Button
             onclick={() => {
@@ -65,6 +86,10 @@
                     }
                     return true;
                 }}
+                sort = {(a) => {
+                    if (!a.metadata.created_at) return 0;
+                    return new Date(a.metadata.created_at).getTime();
+                }}
             >
                 {#snippet component({ entry, selected })}
                     <RoomEntry {entry} {selected} />
@@ -76,67 +101,7 @@
                 {/snippet}
             </TableList>
         </MenuSection>
-        <MenuSection name="URLから" icon="ti-link">
-            <Textbox
-                placeholder="https://youtu.be/..."
-                on:input={(event) => {
-                    const url = new URL(event.detail);
-                    replay.playByUrl(url);
-                }}
-                lazy
-            />
-        </MenuSection>
     </Menu>
-    <div class="content">
-        <div class="player">
-            {#if $replayData}
-                {#if $replayData.video.type === 'youtube'}
-                    <YoutubePlayer
-                        video={$replayData.video}
-                        bind:playback={$replayData.playback}
-                        bind:info={$replayData.info}
-                    />
-                {:else if $replayData.video.type === 'twitch'}
-                    <TwitchPlayer
-                        video={$replayData.video}
-                        bind:playback={$replayData.playback}
-                    />
-                {/if}
-            {:else}
-                <div class="empty">
-                    動画を選択するとここに表示されます
-                    <i class="ti ti-video"></i>
-                </div>
-            {/if}
-        </div>
-        <MenuSection name="OBSの音" icon="ti ti-volume">
-            <div class="audio">
-                <Button primary={$config.muted} onclick={() => {
-                    $config.muted = !$config.muted;
-                }}>
-                    {#if $config.muted}
-                        <i class="ti ti-volume-2"></i>
-                        ミュート解除
-                    {:else}
-                        <i class="ti ti-volume-3"></i>
-                        ミュート
-                    {/if}
-                </Button>
-                <div class="hint">
-                    <i class="ti ti-info-circle"></i> OBSに音を取り込むには
-                    <Tooltip>
-                        <div class="tooltip">
-                            <p>音を流すには</p>
-                            <ol>
-                                <li>ブラウザソースのプロパティから「OBSで音声を制御する」を有効にする</li>
-                                <li>OBS内のミキサーを使って調節</li>
-                            </ol>
-                        </div>
-                    </Tooltip>
-                </div>
-            </div>
-        </MenuSection>
-    </div>
 </div>
 {#if showConfig}
     <Config bind:showConfig />

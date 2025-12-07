@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import type { Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
+    import { onMount } from 'svelte';
     import TwitchPlayer from '../components/player/TwitchPlayer.svelte';
     import YoutubePlayer from '../components/player/YoutubePlayer.svelte';
     import { ReplayApp } from '../replay-app.js';
@@ -74,20 +74,37 @@
         );
     }
 
-    run(() => {
-        if ($replayData) {
-            timer = {
-                start: $replayData.playback.start,
-                time: $replayData.playback.offset,
-                duration: $replayData.info.duration,
-            };
-            if ($replayData.playback.playing) {
-                updateTime();
-            } else {
-                clearTimeout(timeTimeout);
-            }
+    replayData.subscribe((replayData) => {
+        if (!replayData) return;
+        timer = {
+            start: replayData.playback.start,
+            time: replayData.playback.offset,
+            duration: replayData.info.duration,
+        };
+        if (replayData.playback.playing) {
+            updateTime();
         }
     });
+    replayData.subscribe((replayData) => {
+        if (!replayData) return;
+        if (!replayData.playback.playing) {
+            clearTimeout(timeTimeout);
+        }
+    });
+    onMount(() => {
+        if (!$replayData) return;
+        $replayData.playback.playing = false;
+    });
+
+    function mapColorKeyValue(value: number) {
+        if ($config.filter.type !== 'color_key') return 0.5 - value;
+        value = 0.5 - value;
+        const { add, sub } = $config.filter;
+        if (value > 0) {
+            return (sub + add) * value;
+        }
+        return sub * value;
+    }
 </script>
 
 <svelte:head>
@@ -99,16 +116,68 @@
     />
 </svelte:head>
 
+<svg>
+    <filter id="filter" x="0" y="0">
+        {#if $config.filter.type === 'pixelate'}
+            <feFlood x="4" y="4" height="1" width="1" />
+            <feComposite
+                width={$config.filter.radius * 2}
+                height={$config.filter.radius * 2}
+            />
+            <feTile result="a" />
+            <feComposite in="SourceGraphic" in2="a" operator="in" />
+            <feMorphology operator="dilate" radius={$config.filter.radius} />
+            <feColorMatrix
+                type="matrix"
+                values="
+                    1 0 0 0 0
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    0 0 0 0 1"
+            />
+        {:else if $config.filter.type === 'blur'}
+            <feFlood x="4" y="4" height="1" width="1" />
+            <feGaussianBlur
+                in="SourceGraphic"
+                stdDeviation={$config.filter.radius}
+            />
+            <feColorMatrix
+                type="matrix"
+                values="
+                    1 0 0 0 0
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    0 0 0 0 1"
+            />
+        {:else if $config.filter.type === 'color_key'}
+            {@const { x, y, z } = $config.filter.color}
+            <feColorMatrix
+                in="SourceGraphic"
+                result="mask1"
+                type="matrix"
+                values="
+                    1 0 0 0 0
+                    0 1 0 0 0
+                    0 0 1 0 0
+                    {mapColorKeyValue(x)} {mapColorKeyValue(y)} {mapColorKeyValue(z)} 1 0"
+            />
+        {/if}
+    </filter>
+</svg>
 <main>
     {#if $replayData}
-        <div class="player" class:hide={$config.overlay.hideVideo}>
+        <div
+            class="player"
+            class:hide={$config.overlay.hideVideo}
+            style="filter: url(#filter)">
             {#if $replayData.video.type === 'youtube'}
                 <YoutubePlayer
                     video={$replayData.video}
                     playback={$replayData.playback}
                     info={$replayData.info}
-                    hideOverlay
-                    heightToWidthRatio={16 / 9}
+                    interacted={false}
+                    loading={false}
+                    asset
                 />
             {:else if $replayData.video.type === 'twitch'}
                 <TwitchPlayer

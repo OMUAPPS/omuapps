@@ -27,7 +27,7 @@ export type VideoInfo = {
     duration?: number;
 };
 
-type ReplayData = {
+export type ReplayData = {
     video: Video;
     info: VideoInfo;
     playback: Playback;
@@ -80,6 +80,7 @@ type Filter = FilterNoop | FilterPixelate | FilterBlur | FilterColorKey;
 const DEFAULT_REPLAY_CONFIG = {
     version: 2,
     playbackRate: 1,
+    qualityLevel: undefined as string | undefined,
     muted: true,
     overlay: {
         active: false,
@@ -96,7 +97,8 @@ const DEFAULT_REPLAY_CONFIG = {
     },
     filter: { type: 'noop' } as Filter,
 };
-type ReplayConfig = typeof DEFAULT_REPLAY_CONFIG;
+
+export type ReplayConfig = typeof DEFAULT_REPLAY_CONFIG;
 
 const REPLAY_CONFIG_REGISTRY_TYPE = RegistryType.createJson<ReplayConfig>(APP_ID, {
     name: 'replay_config',
@@ -172,7 +174,7 @@ export class ReplayApp {
                 },
                 info: {},
                 playback: {
-                    start: 0,
+                    start: Date.now(),
                     offset: 0,
                     playing: false,
                 },
@@ -188,7 +190,7 @@ export class ReplayApp {
                 },
                 info: {},
                 playback: {
-                    start: 0,
+                    start: Date.now(),
                     offset: 0,
                     playing: false,
                 },
