@@ -7,6 +7,7 @@
         AppHeader,
         AppPage,
         AssetButton,
+        Button,
         ComponentRenderer,
         setGlobal,
         Tooltip,
@@ -73,8 +74,8 @@
                     募集設定
                     <i class="ti ti-users"></i>
                 </span>
-                <button
-                    class:recruiting={$rouletteState.type === 'recruiting'}
+                <Button
+                    primary={$rouletteState.type !== 'recruiting'}
                     onclick={() => roulette.toggleRecruiting()}
                 >
                     {#if $rouletteState.type === 'recruiting'}
@@ -84,7 +85,7 @@
                         募集を開始
                         <i class="ti ti-player-play"></i>
                     {/if}
-                </button>
+                </Button>
             </h3>
             <div class="join-settings">
                 <span>
@@ -106,12 +107,13 @@
                     <i class="ti ti-list-numbers"></i>
                 </span>
                 <span class="buttons">
-                    <button onclick={() => roulette.clearEntries()}>
+                    <Button primary onclick={() => roulette.clearEntries()}>
                         <Tooltip>エントリーをすべて消す</Tooltip>
                         クリア
                         <i class="ti ti-trash"></i>
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        primary
                         onclick={() => {
                             let name = 'エントリー';
                             let i = 1;
@@ -131,7 +133,7 @@
                         <Tooltip>エントリーを増やす</Tooltip>
                         追加
                         <i class="ti ti-plus"></i>
-                    </button>
+                    </Button>
                 </span>
             </h3>
             <section class="entries">
@@ -312,26 +314,6 @@
         gap: 0.5rem;
         overflow: auto;
         height: 100%;
-    }
-
-    button {
-        background: var(--color-1);
-        color: var(--color-bg-2);
-        padding: 0.4rem 1rem;
-        border: none;
-        cursor: pointer;
-        font-size: 0.8rem;
-        font-weight: 600;
-        white-space: nowrap;
-        border-radius: 2px;
-
-        &:focus-visible,
-        &:hover {
-            background: var(--color-bg-2);
-            color: var(--color-1);
-            outline: 1px solid var(--color-1);
-            outline-offset: -1px;
-        }
     }
 
     .right {
