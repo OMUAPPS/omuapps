@@ -1,6 +1,6 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
-    import { Tooltip, TooltipPortal } from '@omujs/ui';
+    import { PopupPortal, Tooltip, TooltipPortal } from '@omujs/ui';
     import { listen, TauriEvent } from '@tauri-apps/api/event';
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
@@ -113,6 +113,7 @@
     </div>
     <ScreenRenderer />
     <TooltipPortal />
+    <PopupPortal />
 </div>
 
 <style lang="scss">

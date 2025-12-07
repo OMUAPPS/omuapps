@@ -58,7 +58,7 @@
         color: var(--color-1);
         outline: 1px solid var(--color-1);
         outline-offset: -1px;
-        border-radius: 2px;
+        border-radius: 3px;
         border: none;
         font-weight: 600;
         font-size: 0.8rem;

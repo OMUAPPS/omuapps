@@ -163,11 +163,16 @@
         align-items: center;
         padding: 0.5rem;
         border: 1px solid var(--color-outline);
+        color: var(--color-text);
         background: transparent;
         cursor: pointer;
 
+        &:hover {
+            background: var(--color-bg-2);
+        }
+
         &.selected {
-            color: var(--color-bg-1);
+            color: var(--color-bg-2);
             background: var(--color-1);
         }
     }
