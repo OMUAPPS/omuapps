@@ -212,7 +212,8 @@
                 "license": "ライセンス",
                 "repository": "リポジトリ",
                 "site": "サイト",
-                "tags": "タグ"
+                "tags": "タグ",
+                "url": "URL"
             }
         },
         "app_update": {
