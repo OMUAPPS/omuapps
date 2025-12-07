@@ -20,7 +20,7 @@
         : '');
     let icon = $derived(entry.metadata?.icon
         ? omu.i18n.translate(entry.metadata?.icon)
-        : '');
+        : 'ti-box');
 
     let id = $derived(`app-${entry.id.key()}`);
 </script>

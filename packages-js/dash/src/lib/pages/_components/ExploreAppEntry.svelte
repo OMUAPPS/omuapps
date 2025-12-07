@@ -61,7 +61,7 @@
             {#if app.metadata}
                 <div class="meta">
                     <span class="icon">
-                        {#if BROWSER && app.metadata.icon}
+                        {#if app.metadata.icon}
                             {@const icon = omu.i18n.translate(app.metadata.icon)}
                             {#if icon.startsWith('ti-')}
                                 <i class="ti {icon}"></i>
@@ -69,7 +69,7 @@
                                 <img src={icon} alt="" />
                             {/if}
                         {:else}
-                            <i class="ti ti-app"></i>
+                            <i class="ti ti-box"></i>
                         {/if}
                     </span>
                     <span>
