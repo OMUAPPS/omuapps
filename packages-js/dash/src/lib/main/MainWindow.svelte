@@ -187,7 +187,12 @@
             </div>
         </section>
         <div class="list">
-            <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && ($devMode || app.type === 'app')}>
+            <TableList table={omu.server.apps} filter={(_, app) => {
+                if (!app.url) return false;
+                if (app.parentId) return false;
+                if ($devMode) return true;
+                return app.type === 'app';
+            }}>
                 {#snippet component({ entry, selected })}
                     <AppEntry {entry} {selected} />
                 {/snippet}
