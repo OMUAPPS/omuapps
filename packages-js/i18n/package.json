@@ -1,6 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/i18n",
+    "private": "true",
     "version": "0.9.45",
     "exports": {
         ".": {
