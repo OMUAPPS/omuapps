@@ -121,9 +121,8 @@ class Server:
     async def _handle_get_index_install(self, request: web.Request) -> web.StreamResponse:
         # Check host
         if request.remote:
-            remote_url = URL(request.remote)
-            if remote_url.host not in {"localhost", "127.0.0.1", self.address.host}:
-                return self._error_response("Invalid Host")
+            if request.remote not in {"localhost", "127.0.0.1", self.address.host}:
+                return self._error_response(f"Invalid Host: {request.remote} is not a local IP")
 
         raw_index_url = request.query.get("index_url")
         if not raw_index_url:
@@ -138,7 +137,7 @@ class Server:
         provided_index_namespace = Identifier.namespace_from_url(mapped_index_url)
 
         if index.id.namespace != provided_index_namespace:
-            return self._error_response("Namespace mismatch")
+            return self._error_response(f"Namespace mismatch: {index.id.namespace} != {provided_index_namespace}")
 
         if not index.id.is_namepath_equal(index.id):
             return self._error_response("Trust issue")
@@ -175,9 +174,8 @@ class Server:
             return self._error_response("Invalid Origin Port")
         # Check host
         if request.remote:
-            remote_url = URL(request.remote)
-            if remote_url.host not in {"localhost", "127.0.0.1", self.address.host}:
-                return self._error_response("Invalid Host")
+            if request.remote not in {"localhost", "127.0.0.1", self.address.host}:
+                return self._error_response(f"Invalid Host: {request.remote} is not a local IP")
 
         install_request: InstallRequest = await request.json()
         raw_index_url = URL(install_request["index"])
@@ -199,7 +197,7 @@ class Server:
                 ...
 
         if index.id.namespace != provided_index_namespace:
-            return self._error_response("Namespace mismatch")
+            return self._error_response(f"Namespace mismatch: {index.id.namespace} != {provided_index_namespace}")
 
         if not index.id.is_namepath_equal(index.id):
             return self._error_response("Trust issue")
