@@ -165,14 +165,18 @@ class RegistryImpl<T> implements Registry<T> {
 
     public compatSvelte(): Writable<T> {
         let isReady = false;
-        let updating = false;
+        const context = {
+            changed: false,
+            markChanged: () => {
+                context.changed = true;
+                this.#set(this.value);
+                handle(this.value);
+            },
+        };
         const listeners = new Set<(value: T) => void>();
-        const resetUpdating = () => { updating = true; setTimeout(() => { updating = false; }); };
 
-        const handle = (newValue: T, unset = () => {}) => {
+        const handle = (newValue: T) => {
             isReady = true;
-            unset();
-            resetUpdating();
             emit(newValue);
         };
 
@@ -180,10 +184,7 @@ class RegistryImpl<T> implements Registry<T> {
 
         const emit = (value: T) => {
             this.value = value;
-            const proxied = proxy(value, (unset) => {
-                this.#set(this.value);
-                handle(this.value, unset);
-            });
+            const proxied = proxy(value, context);
             listeners.forEach(listener => listener(proxied));
         };
 
@@ -192,24 +193,15 @@ class RegistryImpl<T> implements Registry<T> {
                 if (!isReady) {
                     throw new Error(`Registry ${this.type.id.key()} is not ready`);
                 }
-                const original = value[ORIGINAL_SYMBOL];
-                if (!original) {
-                    resetUpdating();
-                    this.#set(value);
-                    emit(value);
-                    return;
-                }
-                const changed = value[ORIGINAL_CHANGED];
-                if (!changed) return;
+                const proxied = value?.[PROXIED_SYMBOL];
+                if (proxied && !context.changed) return;
                 this.#set(value);
-                handle(value);
+                emit(value);
+                context.changed = false;
             },
             subscribe: (run: (value: T) => void) => {
                 listeners.add(run);
-                run(proxy(this.value, (unset) => {
-                    this.#set(this.value);
-                    handle(this.value, unset);
-                }));
+                run(proxy(this.value, context));
 
                 return () => {
                     listeners.delete(run);
@@ -238,19 +230,18 @@ class RegistryImpl<T> implements Registry<T> {
     }
 }
 
-const ORIGINAL_SYMBOL = Symbol('OmuRegistry_Original');
-const ORIGINAL_CHANGED = Symbol('OmuRegistry_Changed');
+const PROXIED_SYMBOL = Symbol('ProxiedRegistry');
 
 function deepEqual(objA, objB) {
     if (objA === objB) return true; // Check for referential equality and primitive values
 
     if (
         typeof objA !== 'object' ||
-    objA === null ||
-    typeof objB !== 'object' ||
-    objB === null
+        typeof objB !== 'object' ||
+        objA === null ||
+        objB === null
     ) {
-        return false; // Handle non-object types or null
+        return false;
     }
 
     const keysA = Object.keys(objA);
@@ -267,63 +258,38 @@ function deepEqual(objA, objB) {
     return true; // All properties and their values are deeply equal
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function areChanged(a: any, b: any): boolean {
-    if (
-        typeof a !== 'object' || a === null ||
-        typeof b !== 'object' || b === null
-    ) {
-        return a !== b;
-    }
-    const aChanged: boolean | undefined = a[ORIGINAL_CHANGED];
-    const bChanged: boolean | undefined = b[ORIGINAL_CHANGED];
-    // primitives
-    if (aChanged === undefined && bChanged === undefined) return !deepEqual(a, b);
-    if (aChanged === undefined || bChanged === undefined) return true;
-    return aChanged || bChanged;
-}
+type ProxyContext = {
+    changed: boolean;
+    markChanged: () => void;
+};
 
 function proxy<T>(
     value: T,
-    callback: (unset: () => void) => void,
-    markChanged = () => {},
-    clearChanged = () => {},
+    context: ProxyContext,
 ) {
     if (typeof value !== 'object' || value === null) {
         return value;
     }
-    if (ORIGINAL_SYMBOL in value) {
+    if (PROXIED_SYMBOL in value) {
         return value;
     }
     let changed = false;
     return new Proxy(value, {
         set(target, prop, value) {
-            changed = areChanged(target[prop], value);
+            changed = !deepEqual(target[prop], value);
             if (!changed) return true;
-            markChanged();
+            context.markChanged();
             target[prop] = value;
-            callback(() => {
-                changed = false;
-                clearChanged();
-            });
             return true;
         },
         get(target, prop) {
-            if (prop === ORIGINAL_SYMBOL) {
+            if (prop === PROXIED_SYMBOL) {
                 return value;
-            } else if (prop === ORIGINAL_CHANGED) {
-                return changed;
             }
-            return proxy(target[prop], callback, () => {
-                changed = true;
-                markChanged();
-            }, () => {
-                changed = false;
-                clearChanged();
-            });
+            return proxy(target[prop], context);
         },
         has(target, p) {
-            if (p === ORIGINAL_SYMBOL) return true;
+            if (p === PROXIED_SYMBOL) return true;
             return p in target;
         },
     });
