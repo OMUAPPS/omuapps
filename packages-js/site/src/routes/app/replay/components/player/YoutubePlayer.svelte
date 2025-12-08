@@ -22,7 +22,7 @@
         loading = $bindable(),
         ratio = 16 / 9,
     }: Props = $props();
-    const { config, side } = ReplayApp.getInstance();
+    const { config } = ReplayApp.getInstance();
     let player: YT.Player | undefined = $state(undefined);
     let width = $state(0);
     let height = $state(0);
@@ -31,23 +31,22 @@
     let ended = $state(false);
 
     function onReady(event: YT.PlayerEvent) {
-        if (!asset) {
-            interacted = false;
-            loading = false;
-        }
         player = event.target;
         if (asset) {
             player.playVideo();
             player.mute();
+        } else {
+            resetInteraction();
         }
     }
 
-    function onPlaybackRateChange(event: YT.OnPlaybackRateChangeEvent) {
-        if (side !== 'client') return;
-        $config.playbackRate = event.data;
+    function resetInteraction() {
+        interacted = false;
+        loading = false;
     }
 
     function onStateChange(event: YT.OnStateChangeEvent) {
+        player = event.target;
         if (event.data === YT.PlayerState.UNSTARTED) {
             loading = true;
         }
@@ -58,24 +57,16 @@
                     playback.playing = true;
                     playback.start = Date.now();
                 }
-                updatePlayback(playback);
             }
-
-            if (asset && !playback.playing) {
-                player?.pauseVideo();
-                if ($config.muted) {
-                    player?.mute();
-                } else {
-                    player?.unMute();
-                }
-            }
-            ended = false;
+            updatePlayback(playback);
         }
         if (event.data === YT.PlayerState.ENDED) {
             ended = true;
             playback.playing = false;
             playback.start = Date.now();
             playback.offset = 0;
+        } else {
+            ended = false;
         }
     }
 
@@ -91,6 +82,11 @@
             player.playVideo();
         } else {
             player.pauseVideo();
+        }
+        if ($config.muted) {
+            player?.mute();
+        } else if (asset) {
+            player?.unMute();
         }
     }
 
@@ -120,7 +116,6 @@
             },
             events: {
                 onReady,
-                onPlaybackRateChange,
                 onStateChange,
             },
         });

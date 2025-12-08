@@ -60,6 +60,7 @@
     }
 
     function updateTime() {
+        if (!$replayData?.playback.playing) return;
         if (!timer) {
             formattedTime = '...';
             return;
