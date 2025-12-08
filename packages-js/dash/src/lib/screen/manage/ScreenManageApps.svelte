@@ -45,7 +45,7 @@
             </TableList>
         </ul>
         <div class="actions">
-            <Button primary onclick={() => handle.pop()}>
+            <Button primary onclick={() => handle.close()}>
                 {$t('general.close')}
                 <i class="ti ti-x"></i>
             </Button>
@@ -55,7 +55,6 @@
         <div class="info">
             {#if $selectedApp}
                 <div class="app">
-                    {$selectedApp.id.namespace.split('.').reverse().join('.')}によって提供されているアプリ
                     <AppInfo app={$selectedApp} />
                 </div>
                 {#await omu.server.apps
@@ -149,8 +148,9 @@
     .info {
         display: flex;
         flex-direction: column;
-        align-items: self-start;
+        align-items: stretch;
         pointer-events: all;
+        overflow-x: hidden;
 
         > .app {
             border-bottom: 2px solid var(--color-1);

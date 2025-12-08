@@ -5,7 +5,7 @@
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
     import AppPage from '../pages/PageApp.svelte';
-    import { currentPage, lastApp, menuOpen } from '../settings.js';
+    import { currentPage, lastApp, managingApps, menuOpen } from '../settings.js';
     import { pages, registerPage } from './page.js';
 
     interface Props {
@@ -60,64 +60,83 @@
     });
 </script>
 
-<button onclick={handleClick}>
-    <Tooltip>
-        <div class="tooltip">
-            {#if !$menuOpen}
-                {name}
-            {/if}
-            <h3>
-                {#if loaded}
-                    <span class="loaded">
-                        読み込み済み
-                        <i class="ti ti-check"></i>
-                    </span>
-                {/if}
-            </h3>
-            <small>{description}</small>
-            <small>ダブルクリックで再読み込み</small>
-        </div>
-    </Tooltip>
-    <div class="app" class:selected class:active>
-        {#if image}
-            <img src={image} alt="" class="image" />
-        {/if}
-        {#if $menuOpen}
-            <div class="info" class:open={$menuOpen}>
-                <span class="icon">
-                    {#if icon === null}
-                        <i class="ti ti-box"></i>
-                    {:else if icon.startsWith('ti-')}
-                        <i class="ti {icon}"></i>
-                    {:else}
-                        <img src={icon} alt={name} />
-                    {/if}
-                </span>
-                <p class="name">
+<div class="entry">
+    <button class="open-button" onclick={handleClick}>
+        <Tooltip>
+            <div class="tooltip">
+                {#if !$menuOpen}
                     {name}
-                </p>
-                <div class="open">
-                    <i class="ti ti-chevron-right"></i>
-                </div>
-            </div>
-        {:else}
-            <div class="info">
-                <span class="icon">
-                    {#if icon === null}
-                        <i class="ti ti-box"></i>
-                    {:else if icon.startsWith('ti-')}
-                        <i class="ti {icon}"></i>
-                    {:else}
-                        <img src={icon} alt={name} />
+                {/if}
+                <h3>
+                    {#if loaded}
+                        <span class="loaded">
+                            読み込み済み
+                            <i class="ti ti-check"></i>
+                        </span>
                     {/if}
-                </span>
+                </h3>
+                <small>{description}</small>
+                <small>ダブルクリックで再読み込み</small>
             </div>
-        {/if}
-    </div>
-</button>
+        </Tooltip>
+        <div class="app" class:selected class:active>
+            {#if image}
+                <img src={image} alt="" class="image" />
+            {/if}
+            {#if $menuOpen}
+                <div class="info" class:open={$menuOpen}>
+                    <span class="icon">
+                        {#if icon === null}
+                            <i class="ti ti-box"></i>
+                        {:else if icon.startsWith('ti-')}
+                            <i class="ti {icon}"></i>
+                        {:else}
+                            <img src={icon} alt={name} />
+                        {/if}
+                    </span>
+                    <p class="name">
+                        {name}
+                    </p>
+                    <div class="open">
+                        <i class="ti ti-chevron-right"></i>
+                    </div>
+                </div>
+            {:else}
+                <div class="info">
+                    <span class="icon">
+                        {#if icon === null}
+                            <i class="ti ti-box"></i>
+                        {:else if icon.startsWith('ti-')}
+                            <i class="ti {icon}"></i>
+                        {:else}
+                            <img src={icon} alt={name} />
+                        {/if}
+                    </span>
+                </div>
+            {/if}
+        </div>
+    </button>
+    {#if $managingApps}
+        <button class="remove" onclick={async () => {
+            await omu.server.apps.remove(entry);
+            $managingApps = false;
+        }}>
+            <Tooltip>
+                アプリを削除
+            </Tooltip>
+            <i class="ti ti-minus"></i>
+        </button>
+    {/if}
+</div>
 
 <style lang="scss">
-    button {
+    .entry {
+        position: relative;
+        width: 100%;
+    }
+
+    .open-button {
+        position: relative;
         border: none;
         background: none;
         padding: 0;
@@ -160,6 +179,22 @@
             font-size: 0.621rem;
             color: var(--color-text-2);
         }
+    }
+
+    .remove {
+        position: absolute;
+        margin-left: auto;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-1);
+        color: var(--color-bg-2);
     }
 
     .app {

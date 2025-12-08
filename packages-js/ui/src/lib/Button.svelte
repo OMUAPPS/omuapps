@@ -2,7 +2,7 @@
     interface Props {
         primary?: boolean;
         disabled?: boolean;
-        onclick?: () => PromiseLike<T> | undefined | unknown;
+        onclick?: (event: { currentTarget: EventTarget & HTMLButtonElement }) => PromiseLike<T> | undefined | unknown;
         promise?: PromiseLike<T> | undefined | unknown;
         children?: import('svelte').Snippet<[any]>;
     }
@@ -15,12 +15,12 @@
         children,
     }: Props = $props();
 
-    async function handleClick() {
+    async function handleClick(event: { currentTarget: EventTarget & HTMLButtonElement }) {
         if (disabled) return;
         if (promise) {
             await promise;
         }
-        promise = onclick();
+        promise = onclick(event);
         try {
             await promise;
         } catch (error) {
@@ -39,7 +39,7 @@
     type="button"
     ontouchend={(event) => {
         event.preventDefault();
-        handleClick();
+        handleClick(event);
     }}
     onclick={handleClick}
     class:primary
@@ -62,6 +62,7 @@
         border: none;
         font-weight: 600;
         font-size: 0.8rem;
+        min-height: 2.2rem;
         white-space: nowrap;
         cursor: pointer;
         touch-action: manipulation;

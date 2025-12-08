@@ -3,7 +3,7 @@ import { writable } from 'svelte/store';
 
 export type ScreenHandle = {
     id: number;
-    pop: () => void;
+    close: () => void;
 };
 
 export type ScreenComponentType<T> = Component<{
@@ -11,42 +11,25 @@ export type ScreenComponentType<T> = Component<{
     props: T;
 }, object, ''>;
 
-export interface ScreenComponent<T> {
+export interface ScreenEntry<T> {
     id: number;
+    target: string;
     component: ScreenComponentType<T>;
     props: T;
 }
 
 let id = 0;
-const stack = writable<Map<number, ScreenComponent<unknown>>>(new Map());
-const current = writable<ScreenComponent<unknown> | null>(null);
-stack.subscribe((stack) => {
-    const first = stack.values().next().value;
-    current.set(first ?? null);
-});
+export const screenEntries = writable<ScreenEntry<unknown>[]>([]);
 
-function push<T>(component: ScreenComponentType<T>, props: T) {
-    stack.update((stack) => {
+export function pushScreen<T>(component: ScreenComponentType<T>, target: string, props: T) {
+    screenEntries.update((entries) => {
         const newId = id++;
-        stack.set(newId, {
+        entries.push({
             id: newId,
+            target,
             component: component as ScreenComponentType<unknown>,
             props,
         });
-        return stack;
+        return entries;
     });
 }
-
-function pop(id: number) {
-    stack.update((stack) => {
-        stack.delete(id);
-        return stack;
-    });
-}
-
-export const screenContext = {
-    push,
-    pop,
-    current,
-    stack,
-};

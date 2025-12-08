@@ -1,5 +1,6 @@
 <script lang="ts">
     import AppInfo from '$lib/common/AppInfo.svelte';
+    import { currentPage } from '$lib/settings';
     import { App } from '@omujs/omu';
     import type { PromptRequestAppInstall, PromptResult } from '@omujs/omu/api/dashboard';
     import { Tooltip } from '@omujs/ui';
@@ -23,12 +24,13 @@
 
     function accept() {
         resolve('accept');
-        handle.pop();
+        handle.close();
+        $currentPage = `app-${app.id.key()}`;
     }
 
     function reject() {
         resolve('deny');
-        handle.pop();
+        handle.close();
     }
 
     const app = App.deserialize(request.app);
@@ -44,7 +46,6 @@
 <Screen {handle} disableClose>
     <div class="header">
         <AppInfo {app} />
-        <p>を追加しますか？</p>
     </div>
     <div class="content omu-scroll"
         use:updateScroll
@@ -124,9 +125,8 @@
     .actions {
         display: flex;
         margin-top: auto;
-        margin-bottom: 4rem;
         gap: 0.5rem;
-        padding: 0.5rem 1rem;
+        padding: 1rem 1rem;
         width: 100%;
         border-top: 1px solid var(--color-outline);
 

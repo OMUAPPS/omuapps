@@ -21,17 +21,17 @@
 
     function accept() {
         resolve('accept');
-        handle.pop();
+        handle.close();
     }
 
     function reject() {
         resolve('deny');
-        handle.pop();
+        handle.close();
     }
 
     function block() {
         resolve('block');
-        handle.pop();
+        handle.close();
     }
 </script>
 

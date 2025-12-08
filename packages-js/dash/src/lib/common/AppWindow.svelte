@@ -5,7 +5,6 @@
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
     import Title from '../images/title.svg';
-    import ScreenRenderer from '../screen/ScreenRenderer.svelte';
     import { isBetaEnabled } from '../settings.js';
     import { appWindow } from '../tauri.js';
     import { VERSION } from '../version.js';
@@ -111,9 +110,8 @@
     <div class="content" tabindex="-1">
         {@render children?.()}
     </div>
-    <ScreenRenderer />
-    <TooltipPortal />
     <PopupPortal />
+    <TooltipPortal />
 </div>
 
 <style lang="scss">

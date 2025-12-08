@@ -1,35 +1,39 @@
 <script lang="ts">
-    import { screenContext, type ScreenComponent, type ScreenHandle } from './screen.js';
+    import { currentPage } from '$lib/settings';
+    import { screenEntries } from './screen';
 
-    let current: {
-        screen: ScreenComponent<unknown>;
-        handle: ScreenHandle;
-        props: unknown;
-    } | null = $state(null);
-
-    screenContext.current.subscribe((screen) => {
-        if (!screen) {
-            current = null;
-            return;
+    let current = $derived.by(() => {
+        let currentScreens = $screenEntries.filter((entry) => entry.target === $currentPage);
+        if (currentScreens.length > 0) {
+            return currentScreens.at(0);
         }
-        const id = screen.id;
-        const handle = {
-            id: id,
-            pop() {
-                screenContext.pop(id);
-            },
-        };
-        const props = screen.props;
-        current = {
-            screen,
-            handle,
-            props,
-        };
+        return $screenEntries.at(0);
+    });
+
+    $effect(() => {
+        console.log($screenEntries, current);
     });
 </script>
 
 {#if current}
-    {#key current.handle.id}
-        <current.screen.component handle={current.handle} props={current.props} />
+    {#key current.id}
+        <div class="screen">
+            <current.component
+                handle={{
+                    id: current.id,
+                    close: () => {
+                        $screenEntries = $screenEntries.filter((entry) => entry.id !== current.id);
+                    },
+                }}
+                props={current.props}
+            />
+        </div>
     {/key}
 {/if}
+
+<style lang="scss">
+    .screen {
+        position: absolute;
+        inset: 0;
+    }
+</style>

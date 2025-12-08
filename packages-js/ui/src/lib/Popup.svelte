@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, tick, type Snippet } from 'svelte';
+    import type { Action } from 'svelte/action';
     import { getPopupId, popupAdd, popupRemove, type PopupEntry } from './stores';
 
     interface Props {
@@ -88,6 +89,12 @@
     const id = getPopupId();
 
     function attachParent(element: HTMLElement) {
+        if (entry) {
+            popupRemove(entry);
+            entry = undefined;
+            active = false;
+            return;
+        }
         if (!element) {
             throw new Error('PopupInline must be a child of another node');
         }
@@ -109,9 +116,21 @@
     onDestroy(() => {
         if (entry) {
             popupRemove(entry);
+            entry = undefined;
             active = false;
         }
     });
+
+    function usePopup(_node: HTMLElement): ReturnType<Action> {
+        return {
+            destroy: () => {
+                if (!entry) return;
+                popupRemove(entry);
+                entry = undefined;
+                active = false;
+            },
+        };
+    }
 </script>
 
 <span class="wrapper" bind:this={target}></span>
@@ -123,6 +142,7 @@
         style:left="{popupPos.x}px"
         style:top="{popupPos.y}px"
         bind:this={popup}
+        use:usePopup
     >
         {@render content?.()}
     </div>
@@ -147,6 +167,8 @@
         padding: 1rem 1.5rem;
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
+        filter: drop-shadow(0 0.2rem 0 var(--color-outline));
+        border-radius: 2px;
     }
 
     .arrow {

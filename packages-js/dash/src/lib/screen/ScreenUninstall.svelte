@@ -60,7 +60,7 @@
         };
         const confirmed = await new Promise<boolean>((resolve) => update(resolve));
         if (!confirmed) {
-            handle.pop();
+            handle.close();
             return;
         }
         uninstallState = { type: 'uninstalling' };

@@ -25,6 +25,8 @@
         color: var(--color-text);
         font-weight: 500;
         font-size: 1rem;
+        background: var(--color-bg-2);
+        padding: 4rem;
 
         > :global(h1) {
             color: var(--color-1);

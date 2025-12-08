@@ -15,12 +15,12 @@
 
     function accept() {
         resolve(true);
-        handle.pop();
+        handle.close();
     }
 
     function reject() {
         resolve(false);
-        handle.pop();
+        handle.close();
     }
 </script>
 

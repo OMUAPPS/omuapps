@@ -33,13 +33,13 @@ import { Window } from '@tauri-apps/api/window';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { get } from 'svelte/store';
 import { dragDropApps, dragDrops } from './dragdrop.js';
-import { screenContext } from './screen/screen.js';
 import AppInstallRequestScreen from './screen/ScreenRequestAppInstall.svelte';
 import AppUpdateRequestScreen from './screen/ScreenRequestAppUpdate.svelte';
 import HostRequestScreen from './screen/ScreenRequestHost.svelte';
 import ScreenRequestHttpPort from './screen/ScreenRequestHttpPort.svelte';
 import ScreenRequestIndexInstall from './screen/ScreenRequestIndexInstall.svelte';
 import SpeechRecognitionScreen from './screen/ScreenRequestSpeechRecognition.svelte';
+import { pushScreen, screenEntries } from './screen/screen.js';
 
 export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 
@@ -53,6 +53,14 @@ export class Dashboard implements DashboardHandler {
 
     constructor(private readonly omu: Omu) {
         omu.dashboard.set(this);
+        omu.server.apps.event.remove.listen((apps) => {
+            screenEntries.update((screens) => {
+                for (const id of apps.keys()) {
+                    screens = screens.filter((entry) => entry.target === `app-${id}`);
+                }
+                return screens;
+            });
+        });
         currentPage.subscribe(() => {
             this.currentApp = null;
         });
@@ -61,7 +69,7 @@ export class Dashboard implements DashboardHandler {
     async speechRecognitionStart(): Promise<UserResponse<undefined>> {
         if (this.recognition) return { type: 'ok', value: undefined };
         const accepted = get(speechRecognition) || await new Promise<boolean>((resolve) => {
-            screenContext.push(SpeechRecognitionScreen, {
+            pushScreen(SpeechRecognitionScreen, 'settings', {
                 resolve: (accept: boolean) => resolve(accept),
             });
         });
@@ -117,7 +125,7 @@ export class Dashboard implements DashboardHandler {
         await appWindow.show();
         await appWindow.setFocus();
         return new Promise<PromptResult>((resolve) => {
-            screenContext.push(PermissionRequestScreen, {
+            pushScreen(PermissionRequestScreen, `app-${request.app.id}`, {
                 request,
                 resolve: (result: PromptResult) => resolve(result),
             });
@@ -128,7 +136,7 @@ export class Dashboard implements DashboardHandler {
         await appWindow.show();
         await appWindow.setFocus();
         return new Promise<PromptResult>((resolve) => {
-            screenContext.push(PluginRequestScreen, {
+            pushScreen(PluginRequestScreen, `app-${request.app.id}`, {
                 request,
                 resolve: (result: PromptResult) => resolve(result),
             });
@@ -139,7 +147,7 @@ export class Dashboard implements DashboardHandler {
         await appWindow.show();
         await appWindow.setFocus();
         return new Promise<PromptResult>((resolve) => {
-            screenContext.push(AppInstallRequestScreen, {
+            pushScreen(AppInstallRequestScreen, 'explore', {
                 request,
                 resolve: (result: PromptResult) => resolve(result),
             });
@@ -150,7 +158,7 @@ export class Dashboard implements DashboardHandler {
         await appWindow.show();
         await appWindow.setFocus();
         return new Promise<PromptResult>((resolve) => {
-            screenContext.push(AppUpdateRequestScreen, {
+            pushScreen(AppUpdateRequestScreen, `app-${request.old_app.id}`, {
                 request,
                 resolve: (result: PromptResult) => resolve(result),
             });
@@ -161,7 +169,7 @@ export class Dashboard implements DashboardHandler {
         await appWindow.show();
         await appWindow.setFocus();
         return new Promise<PromptResult>((resolve) => {
-            screenContext.push(ScreenRequestIndexInstall, {
+            pushScreen(ScreenRequestIndexInstall, 'explore', {
                 request,
                 resolve: (result: PromptResult) => resolve(result),
             });
@@ -172,9 +180,26 @@ export class Dashboard implements DashboardHandler {
         await appWindow.show();
         await appWindow.setFocus();
         return new Promise<PromptResult>((resolve) => {
-            screenContext.push(ScreenRequestHttpPort, {
+            pushScreen(ScreenRequestHttpPort, `app-${request.app.id}`, {
                 request,
                 resolve: (result: PromptResult) => resolve(result),
+            });
+        });
+    }
+
+    async handleHostRequest(request: HostRequest, params: InvokedParams): Promise<PromptResult> {
+        await appWindow.show();
+        await appWindow.setFocus();
+        const app = await this.omu.server.apps.get(params.caller.key());
+        if (!app) {
+            console.warn('App not found for host request', params.caller);
+            return 'deny';
+        }
+        return new Promise<PromptResult>((resolve) => {
+            pushScreen(HostRequestScreen, `app-${app.id.key()}`, {
+                request,
+                app,
+                resolve: (response: PromptResult) => resolve(response),
             });
         });
     }
@@ -220,23 +245,6 @@ export class Dashboard implements DashboardHandler {
             type: 'ok',
             value: cookies,
         };
-    }
-
-    async hostRequested(request: HostRequest, params: InvokedParams): Promise<UserResponse> {
-        await appWindow.show();
-        await appWindow.setFocus();
-        const app = await this.omu.server.apps.get(params.caller.key());
-        if (!app) {
-            console.warn('App not found for host request', params.caller);
-            return { type: 'cancelled' };
-        }
-        return new Promise<UserResponse>((resolve) => {
-            screenContext.push(HostRequestScreen, {
-                request,
-                app,
-                resolve: (response: UserResponse) => resolve(response),
-            });
-        });
     }
 
     async createWebview(request: WebviewRequest, params: InvokedParams, emit: (event: WebviewEvent) => Promise<void>): Promise<Identifier> {

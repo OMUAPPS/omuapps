@@ -11,6 +11,8 @@
 
     let { status = $bindable(), resolve }: Props = $props();
 
+    let selectedEntries: string[] = $state([]);
+
     const URL_REGEX = /[\w-]+\.[\w-]+(\/[\w-./?%&=]*)?/;
 
     let url: string = $state('');
@@ -25,6 +27,9 @@
                 added: await chat.channels.has(channel.id.key()),
             }))),
         };
+        selectedEntries = status.channels
+            .filter((entry) => entry.added)
+            .map((entry) => entry.channel.id.key());
     }
 
     async function finish() {
@@ -33,7 +38,7 @@
             return;
         }
         const addedChannels = status.channels
-            .filter(({ added }) => added)
+            .filter(({ channel }) => selectedEntries.includes(channel.id.key()))
             .map(({ channel }) => channel);
         await chat.channels.add(...addedChannels);
         resolve();
@@ -73,11 +78,17 @@
     {:else if status.type === 'result'}
         <div class="channels">
             {#each status.channels as { channel, added }, index (index)}
-                <button class="channel" class:checked={added} onclick={() => {
+                {@const checked = selectedEntries.includes(channel.id.key())}
+                <button class="channel" class:checked onclick={() => {
                     if (status.type !== 'result') return;
                     status.channels[index].added = !added;
+                    if (checked) {
+                        selectedEntries = selectedEntries.filter(key => key !== channel.id.key());
+                    } else {
+                        selectedEntries = [...selectedEntries, channel.id.key()];
+                    }
                 }}>
-                    {#if added}
+                    {#if checked}
                         <Tooltip>
                             <p>{$t('page.connect.selected_tooltip')}</p>
                         </Tooltip>
@@ -98,6 +109,8 @@
                 <small>チャンネルを見つけることができませんでした。</small>
             {/each}
         </div>
+        <!-- {JSON.stringify(selectedEntries)}
+        {JSON.stringify(status.channels)} -->
         <div class="actions">
             <Button onclick={() => {
                 status = { type: 'idle' };
@@ -105,15 +118,15 @@
                 <i class="ti ti-search"></i>
                 もう一度検索
             </Button>
-            <Button onclick={finish} primary disabled={status.channels.length > 0 && status.channels.every(({ added }) => !added)}>
+            <Button onclick={finish} primary disabled={status.channels.length > 0 && selectedEntries.length === 0}>
                 <Tooltip>
-                    {#if status.channels.some(({ added }) => added)}
+                    {#if selectedEntries.length > 0}
                         追加して終了
                     {:else}
                         一つ以上選んでください
                     {/if}
                 </Tooltip>
-                {#if status.channels.length > 0}
+                {#if selectedEntries.length > 0}
                     追加して終了
                 {:else}
                     追加せずに終了
