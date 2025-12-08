@@ -18,7 +18,10 @@ export default defineConfig({
         port: 26420,
         strictPort: true,
         watch: {
-            ignored: ['**/src-tauri/**'],
+            ignored: [
+                '**/src-tauri/**',
+                '**/.svelte-kit/**',
+            ],
         },
     },
 });
