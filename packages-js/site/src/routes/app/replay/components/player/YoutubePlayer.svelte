@@ -58,7 +58,6 @@
                     playback.start = Date.now();
                 }
             }
-            updatePlayback(playback);
         }
         if (event.data === YT.PlayerState.ENDED) {
             ended = true;
