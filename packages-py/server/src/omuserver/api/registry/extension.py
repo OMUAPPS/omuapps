@@ -29,12 +29,12 @@ REGISTRY_PERMISSION = PermissionType(
     {
         "level": "low",
         "name": {
-            "ja": "レジストリ",
-            "en": "Registry Permission",
+            "ja": "データを保持",
+            "en": "Application Data",
         },
         "note": {
             "ja": "アプリがデータを保持するために使われます",
-            "en": "Used by apps to store data",
+            "en": "Used to store data for the app",
         },
     },
 )

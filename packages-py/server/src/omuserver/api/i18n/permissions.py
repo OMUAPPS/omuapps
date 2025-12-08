@@ -7,11 +7,11 @@ I18N_SET_LOCALES_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "ja": "地域設定を変更",
+            "ja": "言語設定を変更",
             "en": "Change locale settings",
         },
         "note": {
-            "ja": "言語設定を変更するために使われます",
+            "ja": "アプリが言語設定を変更するために使われます",
             "en": "Used to change locale settings such as language and currency",
         },
     },
@@ -21,11 +21,11 @@ I18N_GET_LOCALES_PERMISSION = PermissionType(
     metadata={
         "level": "low",
         "name": {
-            "ja": "地域設定を取得",
+            "ja": "言語設定を取得",
             "en": "Get locale settings",
         },
         "note": {
-            "ja": "言語設定を取得するために使われます",
+            "ja": "アプリが言語設定を取得するために使われます",
             "en": "Used to get locale settings such as language and currency",
         },
     },
