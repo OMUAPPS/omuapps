@@ -1,10 +1,11 @@
 <script lang="ts">
     import type { Models } from '@omujs/chat';
 
-    import { linkOpenHandler, Tooltip } from '@omujs/ui';
+    import { ButtonMini, linkOpenHandler, Tooltip } from '@omujs/ui';
 
-    import { omu } from '$lib/client.js';
+    import { chat, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
+    import { devMode } from '$lib/settings';
 
     interface Props {
         entry: Models.Room;
@@ -99,6 +100,15 @@
                     {entry.metadata.viewers}
                     <i class="ti ti-user"></i>
                 </button>
+            {/if}
+            {#if $devMode}
+                <div class="actions">
+                    <ButtonMini onclick={() => {
+                        chat.rooms.remove(entry);
+                    }}>
+                        <i class="ti ti-trash"></i>
+                    </ButtonMini>
+                </div>
             {/if}
         </div>
     </div>
@@ -244,5 +254,9 @@
     p {
         white-space: pre-wrap;
         font-size: 0.5rem;
+    }
+
+    .actions {
+        margin-left: auto;
     }
 </style>
