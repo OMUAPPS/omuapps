@@ -148,7 +148,8 @@
         <i class="ti ti-check"></i>
     </button>
     <span class="message">
-        <p>アバターを移動して枠に顔が合うように調整してください</p>
+        <h2>枠に合わせてください</h2>
+        <small>アバターを移動して枠に顔が合うように調整してください</small>
         <ul>
             <li>マウスホイールで拡大縮小</li>
             <li>つかんで移動</li>
@@ -328,12 +329,20 @@
         white-space: nowrap;
         color: var(--color-1);
         pointer-events: none;
+        display: flex;
+        flex-direction: column;
 
-        > p {
+        > h2 {
             border-bottom: 1px solid var(--color-1);
             padding-bottom: 0.25rem;
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        > small {
+            color: var(--color-text);
+            margin-top: 0.5rem;
             margin-bottom: 1rem;
-            font-size: 1.5rem;
         }
 
         > ul {
