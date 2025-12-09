@@ -185,8 +185,7 @@ export class DiscordOverlayApp {
             const file = await this.omu.assets.download(Identifier.fromKey(source.asset_id));
             return file.buffer;
         } else if (type === 'url') {
-            const proxyUrl = this.omu.assets.proxy(source.url);
-            const response = await fetch(proxyUrl);
+            const response = await this.omu.http.fetch(source.url);
             const buffer = new Uint8Array(await response.arrayBuffer());
             return buffer;
         }
