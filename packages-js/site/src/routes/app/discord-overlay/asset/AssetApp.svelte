@@ -17,6 +17,7 @@
         omu.permissions.require(
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
+            OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
             VOICE_CHAT_PERMISSION_ID,
             OmuPermissions.ASSET_PERMISSION_ID,
         );
