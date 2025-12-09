@@ -195,6 +195,9 @@
         <div class="control-container" transition:fly={{ duration: 62.1, y: 10 }}>
             <div class="control">
                 <button onclick={() => {
+                    lastActionTime = Date.now();
+                    playback.start = Date.now();
+                    playback.offset = elapsed;
                     playback.playing = !playback.playing;
                 }} aria-label="play">
                     <Tooltip>

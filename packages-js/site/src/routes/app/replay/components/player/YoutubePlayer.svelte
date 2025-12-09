@@ -73,8 +73,7 @@
         if (!player) return;
         if (!interacted) return;
         const now = Date.now();
-        const elapsed = (now - playback.start) / 1000 + playback.offset;
-        // player.setPlaybackRate($config.playbackRate);
+        const elapsed = playback.playing ? (now - playback.start) / 1000 + playback.offset : playback.offset;
         player.setPlaybackQuality('hd1080');
         player.seekTo(elapsed, true);
         if (playback.playing) {
