@@ -57,7 +57,6 @@
         lastMouse = null;
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
-        $config.avatars = { ...$config.avatars };
     }
 
     onDestroy(() => {

@@ -1,6 +1,6 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { Vec2 } from '$lib/math/vec2.js';
-import type { AvatarAction, Effect } from '../pngtuber/avatar.js';
+import type { AvatarAction, Effect } from '../avatars/avatar.js';
 
 const BLOOM_VERTEX_SHADER = `#version 300 es
 

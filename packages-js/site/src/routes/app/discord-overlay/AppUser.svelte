@@ -2,6 +2,7 @@
     import { run } from 'svelte/legacy';
 
     import { comparator } from '$lib/helper';
+    import type { Vec2Like } from '$lib/math/vec2';
     import { Slider, Tooltip } from '@omujs/ui';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
@@ -26,7 +27,7 @@
     }: Props = $props();
     const { config } = overlayApp;
 
-    let resolution: { width: number; height: number } = $state({ width: 0, height: 0 });
+    let resolution: Vec2Like = $state({ x: 0, y: 0 });
 
     function getUser(id: string) {
         let user = $config.users[id];
@@ -47,7 +48,7 @@
 </script>
 
 <main>
-    <div class="canvas" bind:clientWidth={resolution.width} bind:clientHeight={resolution.height}>
+    <div class="canvas" bind:clientWidth={resolution.x} bind:clientHeight={resolution.y}>
         <AvatarRenderer
             overlayApp={overlayApp}
             {voiceState}
