@@ -35,11 +35,11 @@
         })));
 </script>
 
-{#snippet category(level: PermissionLevel)}
+{#snippet category(level: PermissionLevel, color: string)}
     {#if permissions.some(({ permission }) => permission.metadata.level === level)}
         <div class="category">
             <li>
-                <span class="level">
+                <span class="level" style:color>
                     {$t(`permission_level.${level}`)}
                     <small>
                         {$t(`permission_level.${level}_hint`)}</small>
@@ -60,9 +60,9 @@
     {handle}
     {resolve}
 >
-    {@render category('high')}
-    {@render category('medium')}
-    {@render category('low')}
+    {@render category('high', 'rgb(203 24 24)')}
+    {@render category('medium', 'rgb(197 129 0)')}
+    {@render category('low', 'var(--color-1)')}
     {#snippet info()}
         <Document source={about_permission} />
     {/snippet}
@@ -80,7 +80,8 @@
         margin: 0 1rem;
         text-align: left;
         margin-bottom: 1rem;
-        border-bottom: 1px solid var(--color-outline);
+        padding-left: 1rem;
+        border-left: 3px solid currentColor;
 
         > small {
             font-size: 0.6rem;
