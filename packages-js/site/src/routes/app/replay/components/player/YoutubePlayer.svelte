@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import type { Action } from 'svelte/action';
     import { ReplayApp, type Playback, type Video, type VideoInfo } from '../../replay-app.js';
@@ -8,298 +7,177 @@
         video: Extract<Video, { type: 'youtube' }>;
         playback: Playback;
         info: VideoInfo;
-        hideOverlay?: boolean;
-        heightToWidthRatio?: any;
+        ratio?: number;
+        asset?: boolean;
+        interacted: boolean;
+        loading: boolean;
     }
 
     let {
         video,
         playback = $bindable(),
         info = $bindable(),
-        hideOverlay = false,
-        heightToWidthRatio = 9 / 16,
+        asset = false,
+        interacted = $bindable(),
+        loading = $bindable(),
+        ratio = 16 / 9,
     }: Props = $props();
-    const { config, side } = ReplayApp.getInstance();
+    const { config } = ReplayApp.getInstance();
     let player: YT.Player | undefined = $state(undefined);
     let width = $state(0);
     let height = $state(0);
-    let playerWidth = $state(0);
-    let playerHeight = $state(0);
-    let padding = $state(0);
+    let playerHeight = $derived(height * ratio);
+    let padding = $derived((playerHeight - height) / 2);
     let ended = $state(false);
-
-    run(() => {
-        if (heightToWidthRatio < 1) {
-            playerWidth = width * Math.pow(heightToWidthRatio, 2);
-            playerHeight = height / heightToWidthRatio;
-            padding = (playerHeight - height) / 2;
-        } else {
-            playerWidth = width;
-            playerHeight = height * heightToWidthRatio;
-            padding = (playerHeight - height) / 2;
-        }
-    });
-
-    let videoLoaded = false;
 
     function onReady(event: YT.PlayerEvent) {
         player = event.target;
-        player.playVideo();
-        player.mute();
-        const now = Date.now();
-        const elapsed = playback.offset + (now - playback.start) / 1000;
-        player.setPlaybackRate($config.playbackRate);
-        player.seekTo(elapsed, true);
-        info = {
-            ...player.getVideoData(),
-            duration: player.getDuration(),
-        };
-        videoLoaded = false;
+        if (asset) {
+            player.playVideo();
+            player.mute();
+        } else {
+            resetInteraction();
+        }
     }
 
-    function onPlaybackRateChange(event: YT.OnPlaybackRateChangeEvent) {
-        if (side !== 'client') return;
-        $config.playbackRate = event.data;
+    function resetInteraction() {
+        interacted = false;
+        loading = false;
     }
 
     function onStateChange(event: YT.OnStateChangeEvent) {
-        if (!player) return;
-        ended = event.data === YT.PlayerState.ENDED;
-        if (event.data === YT.PlayerState.BUFFERING) {
-            return;
-        }
+        player = event.target;
         if (event.data === YT.PlayerState.UNSTARTED) {
-            if (playback.playing) {
-                player.playVideo();
-            }
-            return;
+            loading = true;
         }
         if (event.data === YT.PlayerState.PLAYING) {
-            if (!playback.playing && !videoLoaded) {
-                player.pauseVideo();
-                videoLoaded = true;
+            if (!interacted) {
+                interacted = true;
+                if (!asset) {
+                    playback.playing = true;
+                    playback.start = Date.now();
+                }
             }
         }
-        const playing = event.data === YT.PlayerState.PLAYING;
-        if (side === 'asset' && playing && !playback.playing) {
-            player.pauseVideo();
+        if (event.data === YT.PlayerState.ENDED) {
+            ended = true;
+            playback.playing = false;
+            playback.start = Date.now();
+            playback.offset = 0;
+        } else {
+            ended = false;
         }
-        if (side === 'asset') return;
-        const time = player.getCurrentTime();
-        playback = {
-            offset: time,
-            start: Date.now(),
-            playing,
-        };
     }
 
     function updatePlayback(playback: Playback) {
-        if (side === 'client') return;
         if (!player) return;
+        if (!interacted) return;
         const now = Date.now();
-        const elapsed = playback.offset + (now - playback.start) / 1000;
-        player.setPlaybackRate($config.playbackRate);
+        const elapsed = playback.playing ? (now - playback.start) / 1000 + playback.offset : playback.offset;
+        player.setPlaybackQuality('hd1080');
         player.seekTo(elapsed, true);
         if (playback.playing) {
             player.playVideo();
         } else {
             player.pauseVideo();
         }
+        if ($config.muted) {
+            player?.mute();
+        } else if (asset) {
+            player?.unMute();
+        }
     }
 
-    run(() => {
+    $effect(() => {
         updatePlayback(playback);
-    }); ;
-    run(() => {
-        if (player && side === 'asset') {
-            console.log($config.playbackRate);
-            player.setPlaybackRate($config.playbackRate);
-        }
-    }); ;
-
-    run(() => {
-        if (player && side === 'asset') {
-            if ($config.muted) {
-                player.mute();
-                console.log('muted');
-            } else {
-                player.unMute();
-                console.log('unmuted');
-            }
+        if (player) {
+            info = {
+                ...player.getVideoData(),
+                duration: player.getDuration(),
+            };
         }
     });
 
-    function toggle() {
-        if (!player) return;
-        if (player.getPlayerState() === YT.PlayerState.PAUSED) {
-            player.playVideo();
-        } else {
-            player.pauseVideo();
+    $effect(() => {
+        if ($config.muted) {
+            player?.mute();
+        } else if (asset) {
+            player?.unMute();
         }
-    }
+    });
 
-    const setup: Action = (node) => {
-        new YT.Player(node, {
+    function createPlayer(node: HTMLElement) {
+        return new YT.Player(node, {
             videoId: video.id,
             playerVars: {
                 'origin': location.origin,
             },
             events: {
                 onReady,
-                onPlaybackRateChange,
                 onStateChange,
             },
         });
-    };
-
-    function mapColorKeyValue(value: number) {
-        if ($config.filter.type !== 'color_key') return 0.5 - value;
-        value = 0.5 - value;
-        const { add, sub } = $config.filter;
-        if (value > 0) {
-            return (sub + add) * value;
-        }
-        return sub * value;
     }
+
+    const setup: Action = (node: HTMLElement) => {
+        let created = createPlayer(node);
+        return {
+            update: () => {
+                created?.destroy();
+                created = createPlayer(node);
+            },
+            destroy: () => {
+                created?.destroy();
+                player = undefined;
+            },
+        };
+    };
 </script>
 
-<svelte:window
-    onkeydown={(event) => {
-        if (!player) return;
-        switch (event.key) {
-            case ' ':
-            case 'k':
-                toggle();
-                break;
-            case 'ArrowLeft':
-                player.seekTo(player.getCurrentTime() - 5, true);
-                break;
-            case 'ArrowRight':
-                player.seekTo(player.getCurrentTime() + 5, true);
-                break;
-            case 'j':
-                player.seekTo(player.getCurrentTime() - 10, true);
-                break;
-            case 'l':
-                player.seekTo(player.getCurrentTime() + 10, true);
-                break;
-            case 'm':
-                if (player.isMuted()) {
-                    player.unMute();
-                } else {
-                    player.mute();
-                }
-                break;
-            default:
-                break;
-        }
-    }}
-/>
-
-<svg>
-    <filter id="filter" x="0" y="0">
-        {#if $config.filter.type === 'pixelate'}
-            <feFlood x="4" y="4" height="1" width="1" />
-            <feComposite
-                width={$config.filter.radius * 2}
-                height={$config.filter.radius * 2}
-            />
-            <feTile result="a" />
-            <feComposite in="SourceGraphic" in2="a" operator="in" />
-            <feMorphology operator="dilate" radius={$config.filter.radius} />
-            <feColorMatrix
-                type="matrix"
-                values="
-                    1 0 0 0 0
-                    0 1 0 0 0
-                    0 0 1 0 0
-                    0 0 0 0 1"
-            />
-        {:else if $config.filter.type === 'blur'}
-            <feFlood x="4" y="4" height="1" width="1" />
-            <feGaussianBlur
-                in="SourceGraphic"
-                stdDeviation={$config.filter.radius}
-            />
-            <feColorMatrix
-                type="matrix"
-                values="
-                    1 0 0 0 0
-                    0 1 0 0 0
-                    0 0 1 0 0
-                    0 0 0 0 1"
-            />
-        {:else if $config.filter.type === 'color_key'}
-            {@const { x, y, z } = $config.filter.color}
-            <feColorMatrix
-                in="SourceGraphic"
-                result="mask1"
-                type="matrix"
-                values="
-                    1 0 0 0 0
-                    0 1 0 0 0
-                    0 0 1 0 0
-                    {mapColorKeyValue(x)} {mapColorKeyValue(y)} {mapColorKeyValue(z)} 1 0"
-            />
-        {/if}
-    </filter>
-</svg>
 <div
+    class="container"
+    class:interacted={interacted || loading}
     bind:clientWidth={width}
     bind:clientHeight={height}
-    style={(side === 'asset' && 'filter: url(#filter)') || ''}
+    style:clip-path={interacted ? `inset(${(height - width / 16 * 9) / 2}px 0px round 2px)` : undefined}
 >
-    {#if video}
-        {#key video.id}
-            {#if hideOverlay}
-                <iframe
-                    use:setup
-                    id="player"
-                    width={playerWidth}
-                    height={playerHeight}
-                    style:top="{-padding}px"
-                    style:clip-path="inset({padding}px 0 {padding}px 0)"
-                    src="https://www.youtube.com/embed/{video.id}?enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&origin={location.origin}"
-                    frameborder="0"
-                    title="YouTube video player"
-                    allow="fullscreen"
-                ></iframe>
-            {:else}
-                <iframe
-                    use:setup
-                    id="player"
-                    {width}
-                    {height}
-                    src="https://www.youtube.com/embed/{video.id}?enablejsapi=1&rel=0&modestbranding=1&origin={location.origin}"
-                    frameborder="0"
-                    title="YouTube video player"
-                    allow="fullscreen"
-                ></iframe>
-            {/if}
-        {/key}
-        {#if ended && side === 'asset'}
-            <div class="thumbnail">
-                <img
-                    src="https://i.ytimg.com/vi/{video.id}/maxresdefault.jpg"
-                    alt=""
-                />
-            </div>
-        {/if}
+    {#key video.id}
+        <iframe
+            use:setup
+            id="player"
+            width="{width}px"
+            height="{playerHeight}px"
+            style:top="{-padding}px"
+            src="https://www.youtube.com/embed/{video.id}?enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&origin={location.origin}"
+            frameborder="0"
+            title="YouTube video player"
+            allow="fullscreen"
+        ></iframe>
+    {/key}
+    {#if ended || (!asset && !interacted)}
+        <div class="thumbnail" class:asset>
+            <img
+                src="https://i.ytimg.com/vi/{video.id}/maxresdefault.jpg"
+                alt=""
+            />
+        </div>
     {/if}
 </div>
 
 <style lang="scss">
-    svg {
-        position: absolute;
-    }
-
-    div {
+    .container {
         position: relative;
         width: 100%;
         height: 100%;
         display: flex;
         justify-content: center;
+        user-select: none;
         align-items: center;
+        overflow: hidden;
+
+        &.interacted {
+            pointer-events: none;
+        }
     }
 
     iframe {
@@ -307,17 +185,25 @@
     }
 
     .thumbnail {
+        position: absolute;
+        inset: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         position: absolute;
         inset: 0;
-        background: #000;
+        background: var(--color-bg-2);
+        user-select: none;
+        pointer-events: none;
 
         > img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+        }
+
+        &:not(&.asset) {
+            filter: saturate(0.9s) contrast(0.5) brightness(1.5);
         }
     }
 </style>

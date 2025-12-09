@@ -67,5 +67,15 @@
         &:focus-within {
             outline: 1px solid var(--color-1);
         }
+
+        select::-ms-expand {
+            display: none;
+        }
+    }
+
+    option {
+        background: var(--color-bg-2);
+        color: #000;
+        font-weight: 500;
     }
 </style>

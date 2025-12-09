@@ -35,7 +35,7 @@
 
     .section-header {
         > h3 {
-            font-size: 2rem;
+            font-size: 2em;
             border-bottom: 2px solid var(--color-1);
             color: var(--color-1);
             text-align: center;

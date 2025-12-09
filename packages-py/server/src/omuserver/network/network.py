@@ -8,6 +8,8 @@ from pathlib import Path
 from tkinter import messagebox
 from typing import TYPE_CHECKING
 
+import aiohttp
+import aiohttp.typedefs
 import psutil
 from aiohttp import web
 from loguru import logger
@@ -33,7 +35,7 @@ if TYPE_CHECKING:
 
 
 @web.middleware
-async def cors_middleware(request: web.Request, handler) -> web.Response:
+async def cors_middleware(request: web.Request, handler: aiohttp.typedefs.Handler) -> web.StreamResponse:
     if request.method == "OPTIONS":
         return web.Response(
             status=200,

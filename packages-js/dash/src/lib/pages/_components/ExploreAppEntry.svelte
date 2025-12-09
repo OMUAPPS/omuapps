@@ -2,6 +2,7 @@
     import type { App } from '@omujs/omu';
 
     import { omu } from '$lib/client.js';
+    import { t } from '$lib/i18n/i18n-context.js';
     import { Button, Localized, Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
@@ -29,10 +30,8 @@
         alreadyAdded = await omu.server.apps.has(app.id.key());
     });
 
-    onMount(() => omu.server.apps.event.remove.listen((items) => {
-        if (items.values().some((app) => app.id.isEqual(app.id))) {
-            alreadyAdded = false;
-        }
+    onMount(() => omu.server.apps.event.remove.listen(async () => {
+        alreadyAdded = await omu.server.apps.has(app.id.key());
     }));
 
     let tags =
@@ -51,7 +50,7 @@
         }).sort((a) => -(a.id === 'underdevelopment')) || []);
 </script>
 
-<article class:added={alreadyAdded}>
+<button class="entry" class:added={alreadyAdded}>
     {#if BROWSER && app.metadata?.image}
         <img src={omu.i18n.translate(app.metadata.image)} alt="" class="thumbnail" />
     {/if}
@@ -61,7 +60,7 @@
             {#if app.metadata}
                 <div class="meta">
                     <span class="icon">
-                        {#if BROWSER && app.metadata.icon}
+                        {#if app.metadata.icon}
                             {@const icon = omu.i18n.translate(app.metadata.icon)}
                             {#if icon.startsWith('ti-')}
                                 <i class="ti {icon}"></i>
@@ -69,7 +68,7 @@
                                 <img src={icon} alt="" />
                             {/if}
                         {:else}
-                            <i class="ti ti-app"></i>
+                            <i class="ti ti-box"></i>
                         {/if}
                     </span>
                     <span>
@@ -99,18 +98,31 @@
                 {/each}
             </small>
         </div>
-        <Button onclick={alreadyAdded ? launch : install} primary={!alreadyAdded}>
-            <Tooltip>
-                {alreadyAdded ? 'このアプリを起動する' : '管理画面に追加する'}
-            </Tooltip>
-            {alreadyAdded ? '開く' : '追加'}
-            <i class={alreadyAdded ? 'ti ti-player-play' : 'ti ti-download'}></i>
-        </Button>
+        {#if alreadyAdded}
+            <Button onclick={() => omu.server.apps.remove(app)}>
+                <Tooltip>
+                    <span>{$t('general.delete')}</span>
+                </Tooltip>
+                <i class="ti ti-trash"></i>
+            </Button>
+            <Button onclick={launch}>
+                <Tooltip>
+                    このアプリを起動する
+                </Tooltip>
+                開く
+                <i class="ti ti-player-play"></i>
+            </Button>
+        {:else}
+            <Button onclick={install} primary>
+                追加
+                <i class="ti ti-plus"></i>
+            </Button>
+        {/if}
     </div>
-</article>
+</button>
 
 <style lang="scss">
-    article {
+    .entry {
         position: relative;
         flex-direction: column;
         justify-content: space-between;
@@ -121,13 +133,14 @@
         padding: 1rem;
         color: var(--color-1);
         background: var(--color-bg-2);
+        border: none;
         outline: 1px solid var(--color-outline);
         outline-offset: -1px;
         box-shadow: 0 0.25rem 0rem 0px color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%);
         border-radius: 2px;
     }
 
-    article:hover {
+    .entry:hover {
         outline: 1px solid var(--color-1);
         background: var(--color-bg-1);
         transform: translateX(1px);
@@ -139,7 +152,7 @@
         inset: 0;
     }
 
-    article:hover {
+    .entry:hover {
         .thumbnail-tint {
             content: '';
             position: absolute;
@@ -210,6 +223,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        font-size: 1rem;
     }
 
     .description {
@@ -224,6 +238,7 @@
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        text-align: left;
     }
 
     .tag-list {
@@ -276,7 +291,7 @@
         }
     }
 
-    @container (max-width: 400px) {
+    @container (max-width: 300px) {
         .tag {
             &:not(.dev) {
                 display: flex;

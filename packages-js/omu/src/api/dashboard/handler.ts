@@ -15,8 +15,8 @@ export interface DashboardHandler {
     handleOpenApp(app: App): Promise<void>;
     handleDragDropRequest(request: DragDropRequestDashboard): Promise<boolean>;
     handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<DragDropReadResponse>;
+    handleHostRequest(request: HostRequest, params: InvokedParams): Promise<PromptResult>;
     getCookies(request: GetCookiesRequest): Promise<UserResponse<Cookie[]>>;
-    hostRequested(request: HostRequest, params: InvokedParams): Promise<UserResponse>;
     createWebview(request: WebviewRequest, params: InvokedParams, emit: (event: WebviewEvent) => Promise<void>): Promise<Identifier>;
     getWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined>;
     closeWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined>;

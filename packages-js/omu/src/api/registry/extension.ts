@@ -164,49 +164,135 @@ class RegistryImpl<T> implements Registry<T> {
     }
 
     public compatSvelte(): Writable<T> {
-        let ready = false;
-        let value: T = this.value;
+        let isReady = false;
+        const context = {
+            changed: false,
+            markChanged: () => {
+                context.changed = true;
+                this.#set(this.value);
+                handle(this.value);
+            },
+        };
         const listeners = new Set<(value: T) => void>();
-        this.listen((newValue) => {
-            ready = true;
-            value = newValue;
-            listeners.forEach((run) => {
-                run(value);
-            });
-        });
+
+        const handle = (newValue: T) => {
+            isReady = true;
+            emit(newValue);
+        };
+
+        const unsubscribe = this.listen(handle);
+
+        const emit = (value: T) => {
+            this.value = value;
+            const proxied = proxy(value, context);
+            listeners.forEach(listener => listener(proxied));
+        };
+
         return {
             set: (value: T) => {
-                if (!ready) {
+                if (!isReady) {
                     throw new Error(`Registry ${this.type.id.key()} is not ready`);
                 }
-                this.set(value);
+                const proxied = value?.[PROXIED_SYMBOL];
+                if (proxied && !context.changed) return;
+                this.#set(value);
+                emit(value);
+                context.changed = false;
             },
-            subscribe: (run) => {
+            subscribe: (run: (value: T) => void) => {
                 listeners.add(run);
-                run(value);
+                run(proxy(this.value, context));
+
                 return () => {
                     listeners.delete(run);
+                    if (listeners.size === 0) {
+                        unsubscribe?.();
+                    }
                 };
             },
-            update: (fn) => {
-                if (!ready) {
+            update: (fn: (value: T) => T) => {
+                if (!isReady) {
                     throw new Error(`Registry ${this.type.id.key()} is not ready`);
                 }
                 this.update(fn);
             },
-            wait: () => {
-                return new Promise<T>((resolve) => {
-                    if (ready) {
-                        resolve(value);
-                    } else {
-                        listeners.add(() => {
+            wait: (): Promise<T> => {
+                return isReady
+                    ? Promise.resolve(this.value)
+                    : new Promise(resolve => {
+                        const unsubscribe = this.listen((value: T) => {
+                            unsubscribe?.();
                             resolve(value);
                         });
-                    }
-                });
+                    });
             },
         };
     }
+}
+
+const PROXIED_SYMBOL = Symbol('ProxiedRegistry');
+
+function deepEqual(objA, objB) {
+    if (objA === objB) return true; // Check for referential equality and primitive values
+
+    if (
+        typeof objA !== 'object' ||
+        typeof objB !== 'object' ||
+        objA === null ||
+        objB === null
+    ) {
+        return false;
+    }
+
+    const keysA = Object.keys(objA);
+    const keysB = Object.keys(objB);
+
+    if (keysA.length !== keysB.length) return false; // Different number of properties
+
+    for (const key of keysA) {
+        if (!keysB.includes(key) || !deepEqual(objA[key], objB[key])) {
+            return false; // Property missing or values are not deeply equal
+        }
+    }
+
+    return true; // All properties and their values are deeply equal
+}
+
+type ProxyContext = {
+    changed: boolean;
+    markChanged: () => void;
+};
+
+function proxy<T>(
+    value: T,
+    context: ProxyContext,
+) {
+    if (typeof value !== 'object' || value === null) {
+        return value;
+    }
+    if (PROXIED_SYMBOL in value) {
+        return value;
+    }
+    let changed = false;
+    return new Proxy(value, {
+        set(target, prop, value) {
+            changed = !deepEqual(target[prop], value);
+            if (!changed) return true;
+            context.markChanged();
+            target[prop] = value;
+            return true;
+        },
+        get(target, prop) {
+            if (prop === PROXIED_SYMBOL) {
+                return value;
+            }
+            return proxy(target[prop], context);
+        },
+        has(target, p) {
+            if (p === PROXIED_SYMBOL) return true;
+            return p in target;
+        },
+    });
 }
 
 export const REGISTRY_EXTENSION_TYPE: ExtensionType<RegistryExtension> = new ExtensionType(

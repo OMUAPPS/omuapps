@@ -19,12 +19,12 @@
 
     function accept() {
         resolve('accept');
-        handle.pop();
+        handle.close();
     }
 
     function reject() {
         resolve('deny');
-        handle.pop();
+        handle.close();
     }
 
     function updateScroll(element: HTMLDivElement) {

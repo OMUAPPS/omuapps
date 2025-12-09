@@ -257,6 +257,14 @@ export class ByteWriter {
         this.finished = true;
         return new Uint8Array(this.buffer, 0, this.offset);
     }
+
+    public toUint8Array(): Uint8Array {
+        return new Uint8Array(this.buffer, 0, this.offset);
+    }
+
+    public toArrayBuffer(): ArrayBuffer {
+        return this.buffer.slice(0, this.offset);
+    }
 }
 
 export class ByteReader {

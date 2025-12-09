@@ -2,7 +2,7 @@
     import { omu } from '$lib/client';
     import { LOCALES } from '$lib/i18n/i18n';
     import { t } from '$lib/i18n/i18n-context';
-    import { screenContext } from '$lib/screen/screen';
+    import { pushScreen } from '$lib/screen/screen';
     import ScreenCleaningEnvironment from '$lib/screen/ScreenCleanEnvironment.svelte';
     import ScreenUninstall from '$lib/screen/ScreenUninstall.svelte';
     import ScreenUpdate from '$lib/screen/ScreenUpdate.svelte';
@@ -48,7 +48,7 @@
                 </small>
             </div>
             <Button primary onclick={() => {
-                screenContext.push<{ update: Update }>(ScreenUpdate, { update });
+                pushScreen<{ update: Update }>(ScreenUpdate, 'settings', { update });
             }}>
                 {$t('settings.setting.update')}
                 <i class="ti ti-arrow-up"></i>
@@ -113,8 +113,9 @@
 <small>アプリのデータをすべて削除し完全なアンインストールをします</small>
 <span class="setting">
     <Button primary onclick={() => {
-        screenContext.push<undefined>(
+        pushScreen<undefined>(
             ScreenUninstall,
+            'settings',
             undefined,
         );
     }}>
@@ -163,8 +164,9 @@
 <small>先にOBSを終了する必要があります</small>
 <span class="setting clean-environment">
     <Button primary onclick={() => {
-        screenContext.push<undefined>(
+        pushScreen<undefined>(
             ScreenCleaningEnvironment,
+            'settings',
             undefined,
         );
     }}>

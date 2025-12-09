@@ -48,6 +48,7 @@ export const currentSettingsCategory = createSetting('currentPageSettings', 'gen
 export const isBetaEnabled = createSetting('isBetaEnabled', false);
 export const installed = createSetting('installed', false);
 export const menuOpen = createSetting('menuOpen', true);
+export const managingApps = createSetting('managingApps', false);
 export const speechRecognition = createSetting('speechRecognition', false);
 export type OpenLinkMode = 'browser' | 'window';
 export const keepOpenOnBackground = createSetting('keepOpenOnBackground', false);

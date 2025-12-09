@@ -16,11 +16,13 @@
 <h3>アプリ開発用ホストマッピング</h3>
 <section>
     <div class="mappings">
-        {#each Object.entries($trustedHosts) as [src, dst] (src)}
+        {#each Object.keys($trustedHosts) as src (src)}
             <div class="mapping">
                 <div class="src">{src}</div>
                 <i class="ti ti-chevron-right"></i>
-                <div class="dst">{dst}</div>
+                <div class="dst">
+                    <Textbox bind:value={$trustedHosts[src]} placeholder="https://..." />
+                </div>
                 <Button onclick={() => {
                     delete $trustedHosts[src];
                     $trustedHosts = $trustedHosts;

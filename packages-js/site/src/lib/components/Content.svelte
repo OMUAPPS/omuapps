@@ -21,5 +21,12 @@
         max-width: 70rem;
         padding: 0 1.5rem;
         margin: 0 auto;
+        font-size: 1em;
+    }
+
+    @container (width < 400px) {
+        main {
+            font-size: 0.75em;
+        }
     }
 </style>

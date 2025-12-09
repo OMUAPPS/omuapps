@@ -17,8 +17,14 @@
     let imageElement: HTMLElement | undefined = $state(undefined);
     let containerElement: HTMLElement | undefined = $state(undefined);
     let mouse: { clientX: number; clientY: number } = $state({ clientX: 0, clientY: 0 });
+    let lastMoveTime = 0;
 
     function updatePointer() {
+        const elapsed = performance.now() - lastMoveTime;
+        if (elapsed < 1000 / 60) {
+            return;
+        }
+        lastMoveTime = performance.now();
         const { clientX, clientY } = mouse;
         const { left, top, right, bottom } = imageElement!.getBoundingClientRect();
         $data.pointer = {

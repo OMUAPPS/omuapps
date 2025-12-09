@@ -33,12 +33,13 @@
         border-bottom: 1px solid var(--color-1);
         padding-bottom: 0.5rem;
         margin: 0 0.5rem;
+        margin-bottom: 0.5rem;
     }
 
     .section {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.25rem;
         background: var(--color-bg-2);
         padding: 1rem 1rem;
     }

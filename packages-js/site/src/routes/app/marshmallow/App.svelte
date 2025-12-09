@@ -19,17 +19,7 @@
     let { api, logout }: Props = $props();
 
     const marshmallowApp = MarshmallowApp.getInstance();
-    const { config, screen: screenStore } = marshmallowApp;
-
-    let screen = $state($screenStore);
-    $effect(() => {
-        if (JSON.stringify($screenStore) === JSON.stringify(screen)) return;
-        $screenStore = screen;
-    });
-    screenStore.subscribe((value) => {
-        if (screen === value) return;
-        screen = value;
-    });
+    const { config, screen } = marshmallowApp;
 
     let search = $state('');
 
@@ -54,14 +44,14 @@
 
 <main>
     <div class="menu">
-        <div class="tab" class:selected={screen.type === 'messages'}>
+        <div class="tab" class:selected={$screen.type === 'messages'}>
             <Messages {api} {search} bind:count={messageCount} />
         </div>
-        <div class="tab" class:selected={screen.type === 'answers'}>
+        <div class="tab" class:selected={$screen.type === 'answers'}>
             <Answers {api} {search} />
         </div>
         <div class="tabs">
-            <button onclick={() => (screen = { type: 'messages' })} class:active={screen.type === 'messages'}>
+            <button onclick={() => ($screen = { type: 'messages' })} class:active={$screen.type === 'messages'}>
                 新着
                 {#if messageCount > 0}
                     <span class="messages-count">
@@ -69,21 +59,21 @@
                     </span>
                 {/if}
             </button>
-            <button onclick={() => (screen = { type: 'answers' })} class:active={screen.type === 'answers'}>
+            <button onclick={() => ($screen = { type: 'answers' })} class:active={$screen.type === 'answers'}>
                 過去の回答
             </button>
             <button onclick={() => {
-                screen = { type: 'skins', state: { type: 'list' } };
-            }} class:active={screen.type === 'skins'}>
+                $screen = { type: 'skins', state: { type: 'list' } };
+            }} class:active={$screen.type === 'skins'}>
                 <Tooltip>
                     着せ替える
                 </Tooltip>
                 <i class="ti ti-cards"></i>
             </button>
         </div>
-        {#if screen.type === 'skins'}
+        {#if $screen.type === 'skins'}
             <div class="skins omu-scroll">
-                <ManageSkins bind:state={screen.state} {fetchUser} />
+                <ManageSkins bind:state={$screen.state} {fetchUser} />
             </div>
         {:else}
             <div class="bottom">

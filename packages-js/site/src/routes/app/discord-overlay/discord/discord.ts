@@ -374,28 +374,16 @@ export interface ChannelReference {
     channel_id: string;
 };
 
+export type SelectedVoiceChannel = {
+    ref: ChannelReference;
+    channel: Channel;
+    guild: Omit<Guild, 'afk_timeout' | 'owner_id' | 'afk_timeout' | 'verification_level' | 'explicit_content_filter' | 'roles' | 'emojis' | 'features' | 'mfa_level' | 'system_channel_flags' | 'premium_tier' | 'preferred_locale' | 'nsfw_level' | 'premium_progress_bar_enabled'>;
+};
+
 export interface RPCSession {
     port: number;
     user: User;
-    selected_voice_channel?: {
-        ref: ChannelReference;
-        channel: Channel;
-        guild: Omit<Guild,
-        'afk_timeout'
-        | 'owner_id'
-        | 'afk_timeout'
-        | 'verification_level'
-        | 'explicit_content_filter'
-        | 'roles'
-        | 'emojis'
-        | 'features'
-        | 'mfa_level'
-        | 'system_channel_flags'
-        | 'premium_tier'
-        | 'preferred_locale'
-        | 'nsfw_level'
-        | 'premium_progress_bar_enabled'>;
-    } | null;
+    selected_voice_channel?: SelectedVoiceChannel | null;
 };
 export interface RPCVoiceStates {
     states: Record<string, VoiceStateCreatePayload['data']>;

@@ -340,12 +340,12 @@ export class DashboardExtension {
             DASHBOARD_PROMPT_REQUEST,
             DASHBOARD_PROMPT_RESPONSE,
         );
-        omu.network.addPacketHandler(DASHBOARD_PROMPT_REQUEST, (request) =>
-            this.handlePromptRequest(request),
-        );
-        omu.network.addPacketHandler(DASHBOARD_OPEN_APP_PACKET, (app) =>
-            this.handleOpenApp(app),
-        );
+        omu.network.addPacketHandler(DASHBOARD_PROMPT_REQUEST, (request) => {
+            this.handlePromptRequest(request);
+        });
+        omu.network.addPacketHandler(DASHBOARD_OPEN_APP_PACKET, (app) => {
+            this.handleOpenApp(app);
+        });
         omu.network.addPacketHandler(DASHBOARD_DRAG_DROP_REQUEST_PACKET, (request) => {
             this.handleDragDropRequest(request);
         });
@@ -444,15 +444,23 @@ export class DashboardExtension {
         }
         this.dashboard = dashboard;
 
+        this.omu.server.apps.event.remove.listen(async (apps) => {
+            for (const app of apps.values()) {
+                const hosts = await this.allowedHosts.get(app.id.key());
+                if (!hosts) continue;
+                this.allowedHosts.remove(hosts);
+            }
+        });
+
         const requireHost = async (params: InvokedParams, host: string): Promise<UserResponse<undefined>> => {
             const id = params.caller.key();
             const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id: id, hosts: [] };
             const allowed = hostEntry.hosts.includes(host);
             if (!allowed) {
-                const result = await dashboard.hostRequested({
+                const result = await dashboard.handleHostRequest({
                     host,
                 }, params);
-                if (result.type === 'ok') {
+                if (result === 'accept') {
                     const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id: id, hosts: [] };
                     hostEntry.hosts.push(host);
                     await this.allowedHosts.update(hostEntry);

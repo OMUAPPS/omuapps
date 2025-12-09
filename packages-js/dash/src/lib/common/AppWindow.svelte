@@ -1,11 +1,10 @@
 <script lang="ts">
     import { t } from '$lib/i18n/i18n-context.js';
-    import { Tooltip, TooltipPortal } from '@omujs/ui';
+    import { PopupPortal, Tooltip, TooltipPortal } from '@omujs/ui';
     import { listen, TauriEvent } from '@tauri-apps/api/event';
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
     import Title from '../images/title.svg';
-    import ScreenRenderer from '../screen/ScreenRenderer.svelte';
     import { isBetaEnabled } from '../settings.js';
     import { appWindow } from '../tauri.js';
     import { VERSION } from '../version.js';
@@ -111,7 +110,7 @@
     <div class="content" tabindex="-1">
         {@render children?.()}
     </div>
-    <ScreenRenderer />
+    <PopupPortal />
     <TooltipPortal />
 </div>
 

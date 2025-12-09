@@ -1,13 +1,12 @@
 <script lang="ts">
-    import AppInfo from '$lib/common/AppInfo.svelte';
     import Document from '$lib/common/Document.svelte';
     import { App } from '@omujs/omu';
     import type { PromptRequestAppPlugins, PromptResult } from '@omujs/omu/api/dashboard';
     import { Tooltip } from '@omujs/ui';
     import PackageEntry from './_components/EntryPackage.svelte';
     import about_plugin from './_docs/about_plugin.md?raw';
+    import AppAgreementScreen from './AppAgreementScreen.svelte';
     import type { ScreenHandle } from './screen.js';
-    import Screen from './Screen.svelte';
 
     interface Props {
         handle: ScreenHandle;
@@ -23,12 +22,12 @@
 
     function accept() {
         resolve('accept');
-        handle.pop();
+        handle.close();
     }
 
     function reject() {
         resolve('deny');
-        handle.pop();
+        handle.close();
     }
 
     const SECURELIST = [
@@ -64,11 +63,12 @@
     );
 </script>
 
-<Screen {handle} disableClose>
-    <div class="header">
-        <AppInfo app={App.deserialize(request.app)} />
-        <small>は以下のプラグインのインストールを要求しています。</small>
-    </div>
+<AppAgreementScreen
+    app={App.deserialize(request.app)}
+    {handle}
+    {resolve}
+>
+    <small>以下のプラグインのインストールを要求しています。</small>
     <div class="packages">
         {#if insecurePackages.length > 0}
             <h3 class="insecure">
@@ -101,36 +101,12 @@
             {/each}
         {/if}
     </div>
-    <div class="actions">
-        <button onclick={reject} class="reject">
-            キャンセル
-            <i class="ti ti-x"></i>
-        </button>
-        <button onclick={accept} class="accept">
-            インストール
-            <i class="ti ti-check"></i>
-        </button>
-    </div>
     {#snippet info()}
         <Document source={about_plugin} />
     {/snippet}
-</Screen>
+</AppAgreementScreen>
 
 <style lang="scss">
-    .header {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-        padding: 2rem 1.25rem;
-        padding-bottom: 1rem;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--color-1);
-        border-bottom: 1px solid var(--color-outline);
-        gap: 0.5rem;
-    }
-
     .packages {
         display: flex;
         flex-direction: column;
@@ -182,42 +158,6 @@
 
             &.insecure {
                 color: #a23023;
-            }
-        }
-    }
-
-    .actions {
-        display: flex;
-        margin-top: auto;
-        margin-bottom: 4rem;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        width: 100%;
-        border-top: 1px solid var(--color-outline);
-
-        > button {
-            border: none;
-            padding: 0.5rem 1rem;
-            font-weight: 600;
-            color: var(--color-1);
-            background: var(--color-bg-1);
-            cursor: pointer;
-            border-radius: 4px;
-            flex: 1;
-
-            &.reject {
-                color: var(--color-text);
-                background: var(--color-bg-1);
-            }
-
-            &.accept {
-                background: var(--color-1);
-                color: var(--color-bg-1);
-
-                &:disabled {
-                    background: var(--color-bg-1);
-                    color: var(--color-1);
-                }
             }
         }
     }

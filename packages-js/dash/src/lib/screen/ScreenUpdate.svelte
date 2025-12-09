@@ -35,7 +35,7 @@
                 {/if}
             </h3>
             <div class="actions">
-                <Button onclick={handle.pop}>
+                <Button onclick={handle.close}>
                     スキップ
                     <i class="ti ti-x"></i>
                 </Button>

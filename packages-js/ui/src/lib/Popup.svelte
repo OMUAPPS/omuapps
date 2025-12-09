@@ -1,165 +1,188 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
-    import { BROWSER } from 'esm-env';
-    import { createEventDispatcher, onDestroy, onMount } from 'svelte';
+    import { onDestroy, tick, type Snippet } from 'svelte';
+    import type { Action } from 'svelte/action';
+    import { getPopupId, popupAdd, popupRemove, type PopupEntry } from './stores';
 
     interface Props {
-        noBackground?: boolean;
-        isOpen?: boolean;
-        onOpen?: () => Promise<void> | void;
-        children?: import('svelte').Snippet<[any]>;
+        active?: boolean;
+        open?: (element: HTMLElement) => void;
+        children?: Snippet<[(element: HTMLElement) => void]>;
+        content?: Snippet<[]>;
     }
 
     let {
-        noBackground = false,
-        isOpen = $bindable(false),
-        onOpen = () => {},
+        active = $bindable(false),
+        open = $bindable((element) => {
+            if (!target) return;
+            attachParent(element);
+        }),
         children,
+        content,
     }: Props = $props();
-
-    const eventDistacher = createEventDispatcher<{ open: void; close: void }>();
-
-    let element: HTMLElement | undefined = $state(undefined);
-    let target: HTMLElement | undefined = $state(undefined);
-    let popup: HTMLElement | undefined = $state(undefined);
+    let target: HTMLElement | undefined = $state();
+    let popup: HTMLElement | undefined = $state();
     type Rect = { x: number; y: number; width: number; height: number };
-    let popupRect: Rect = $state({
+    // svelte-ignore non_reactive_update
+    let popupRect: Rect = {
         x: 0,
         y: 0,
         width: 0,
         height: 0,
-    });
-    let targetRect: Rect = $state({
+    };
+    // svelte-ignore non_reactive_update
+    let targetRect: Rect = {
         x: 0,
         y: 0,
         width: 0,
         height: 0,
-    });
+    };
     let popupPos: { x: number; y: number } = $state({ x: 0, y: 0 });
-    let direction: 'top' | 'bottom' = $state('bottom');
-
-    async function handleClick() {
-        targetRect = target!.getBoundingClientRect();
-        await onOpen();
-        isOpen = true;
-    }
-
-    function handleClickOutside(event: MouseEvent) {
-        if (!isOpen) return;
-        if (element!.contains(event.target as Node)) return;
-        if (event.target === target) return;
-        isOpen = false;
-    }
-
-    run(() => {
-        if (isOpen) {
-            eventDistacher('open');
-        } else {
-            eventDistacher('close');
-        }
-    });
+    let direction: 'up' | 'down' = $state('down');
 
     function clamp(value: number, min: number, max: number) {
         return Math.min(Math.max(value, min), max);
     }
 
-    run(() => {
-        const padding = 5;
-        if (target && popup) {
-            popupRect = popup!.getBoundingClientRect();
-            direction =
-                targetRect.y + targetRect.height + popupRect.height + 10 > window.innerHeight
-                    ? 'top'
-                    : 'bottom';
-            popupPos = {
-                x: clamp(
-                    targetRect.x + targetRect.width / 2 - popupRect.width / 2,
-                    padding,
-                    window.innerWidth - popupRect.width - padding,
-                ),
-                y: clamp(
-                    direction === 'bottom'
-                        ? targetRect.y + targetRect.height + 10
-                        : targetRect.y - popupRect.height - 10,
-                    padding,
-                    window.innerHeight - popupRect.height - padding,
-                ),
-            };
+    async function update(target: HTMLElement | undefined, popup: HTMLElement | undefined): Promise<void> {
+        await tick();
+        if (!target || !popup) return;
+        const margin = 10;
+        const arrowSize = 10;
+        popupRect = popup.getBoundingClientRect();
+        targetRect = target.getBoundingClientRect();
+        const targetBounds = {
+            top: targetRect.y,
+            bottom: targetRect.y + targetRect.height,
+            centerX: targetRect.x + targetRect.width / 2,
+        };
+        const bounds = document.fullscreenElement ? document.fullscreenElement.getBoundingClientRect() : {
+            left: margin,
+            top: margin,
+            right: window.innerWidth - margin,
+            bottom: window.innerHeight - margin,
+        };
+        direction =
+            targetBounds.bottom + popupRect.height > bounds.bottom
+                ? 'up'
+                : 'down';
+        popupPos = {
+            x: clamp(
+                targetBounds.centerX - popupRect.width / 2,
+                bounds.left,
+                bounds.right - popupRect.width,
+            ),
+            y: clamp(
+                direction === 'down'
+                    ? targetBounds.bottom + arrowSize
+                    : targetBounds.top - popupRect.height - arrowSize,
+                bounds.top,
+                bounds.bottom - popupRect.height,
+            ),
+        };
+    }
+
+    $effect(() => {
+        update(target, popup);
+    });
+
+    let entry: PopupEntry | undefined = undefined;
+    const id = getPopupId();
+
+    function attachParent(element: HTMLElement) {
+        if (entry) {
+            popupRemove(entry);
+            entry = undefined;
+            active = false;
+            return;
+        }
+        if (!element) {
+            throw new Error('PopupInline must be a child of another node');
+        }
+        target = element;
+        if (!target.addEventListener || !target.removeEventListener) {
+            throw new Error(
+                'target must support addEventListener and removeEventListener',
+            );
+        }
+        entry = {
+            id,
+            render,
+            element,
+        };
+        popupAdd(entry);
+        active = true;
+    }
+
+    onDestroy(() => {
+        if (entry) {
+            popupRemove(entry);
+            entry = undefined;
+            active = false;
         }
     });
 
-    if (BROWSER) {
-        onMount(() => {
-            if (!element!.parentElement) {
-                throw new Error('PopupInline must be a child of another element');
-            }
-            target = element!.parentElement;
-            if (!target.addEventListener || !target.removeEventListener) {
-                throw new Error('target must support addEventListener and removeEventListener');
-            }
-            target.addEventListener('click', handleClick);
-        });
-
-        onDestroy(() => {
-            target!.removeEventListener('click', handleClick);
-        });
+    function usePopup(_node: HTMLElement): ReturnType<Action> {
+        return {
+            destroy: () => {
+                if (!entry) return;
+                popupRemove(entry);
+                entry = undefined;
+                active = false;
+            },
+        };
     }
 </script>
 
-<svelte:window onclick={handleClickOutside} />
-<span class="wrapper" bind:this={element}>
-    {#if isOpen}
-        <div
-            class="popup"
-            class:background={!noBackground}
-            class:top={direction === 'top'}
-            style:top="{popupPos.y}px"
-            style:left="{popupPos.x}px"
-            bind:this={popup}
-        >
-            {@render children?.({ close: () => (isOpen = false) })}
-        </div>
-        <div
-            class="pointer"
-            class:top={direction === 'top'}
-            style:left="{targetRect.x + targetRect.width / 2}px"
-            style:top="{direction === 'bottom'
-                ? targetRect.y + targetRect.height
-                : targetRect.y - 10}px"
-        ></div>
-    {/if}
-</span>
+<span class="wrapper" bind:this={target}></span>
+{@render children?.(open)}
+{#snippet render()}
+    <div
+        class="popup"
+        class:top={direction === 'up'}
+        style:left="{popupPos.x}px"
+        style:top="{popupPos.y}px"
+        bind:this={popup}
+        use:usePopup
+    >
+        {@render content?.()}
+    </div>
+    <div
+        class="arrow"
+        class:top={direction === 'up'}
+        style:left="{targetRect.x + targetRect.width / 2}px"
+        style:top="{(direction === 'down'
+            ? popupPos.y - 10
+            : popupPos.y + popupRect.height)}px"
+    ></div>
+{/snippet}
 
 <style lang="scss">
     .popup {
         position: fixed;
         z-index: 200;
-        font-size: 12px;
+        font-size: 0.75rem;
         font-weight: 600;
-        color: var(--color-1);
+        color: #fff;
         white-space: nowrap;
-        user-select: none;
-        filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.1));
-
-        &.background {
-            padding: 5px 10px;
-            background: var(--color-bg-2);
-        }
+        padding: 1rem 1.5rem;
+        background: var(--color-bg-2);
+        outline: 1px solid var(--color-outline);
+        filter: drop-shadow(0 0.2rem 0 var(--color-outline));
+        border-radius: 2px;
     }
 
-    .pointer {
+    .arrow {
         position: fixed;
         z-index: 20;
-        content: '';
+        pointer-events: none;
+        content: "";
         user-select: none;
-        border: 5px solid transparent;
-        border-bottom-color: var(--color-bg-2);
-        transform: translateX(-50%);
-        filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
+        border: 0.4rem solid transparent;
+        border-bottom-color: var(--color-outline);
+        transform: translate(-50%, -15%);
 
         &.top {
-            transform: translateX(-50%) rotate(180deg);
+            transform: translateX(-50%) scaleY(-1);
         }
     }
 

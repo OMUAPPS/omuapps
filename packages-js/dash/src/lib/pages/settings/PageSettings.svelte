@@ -25,14 +25,11 @@
                     class:selected={$currentSettingsCategory == id}
                     onclick={set}
                 >
-                    <Tooltip
-                    >{$t(
-                        `settings.category.${id}.description`,
-                    )}</Tooltip
-                    >
+                    <Tooltip>
+                        {$t(`settings.category.${id}.description`)}
+                    </Tooltip>
                     <span>
-                        <i class="ti {$t(`settings.category.${id}.icon`)}"
-                        ></i>
+                        <i class="ti {$t(`settings.category.${id}.icon`)}"></i>
                         <p>{$t(`settings.category.${id}.name`)}</p>
                         <i class="ti ti-chevron-right"></i>
                     </span>

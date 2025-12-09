@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { Align, Button, Checkbox, Combobox, Slider } from '@omujs/ui';
+    import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
+    import { Align, Button, Checkbox, Combobox, Slider, Tooltip } from '@omujs/ui';
     import {
         DEFAULT_FILTER_BLUR,
         DEFAULT_FILTER_COLOR_KEY,
@@ -19,6 +20,16 @@
     let { showConfig = $bindable() }: Props = $props();
 </script>
 
+{#snippet colorButton(color: Vec4Like, name: string)}
+    <button class="color-button" class:selected={$config.filter.type === 'color_key' && Vec4.from(color).equal($config.filter.color)} style:background="#{Vec4.from(color).toColorHex()}" onclick={() => {
+        if ($config.filter.type !== 'color_key') return;
+        $config.filter.color = color;
+    }}>
+        <Tooltip>
+            {name}
+        </Tooltip>
+    </button>
+{/snippet}
 <div class="config omu-scroll">
     <Button
         onclick={() => {
@@ -30,7 +41,7 @@
         <i class="ti ti-x"></i>
     </Button>
     <Section name="動画">
-        <Setting name="フィルター">
+        <Setting name="フィルター" disableAuto>
             <Combobox
                 options={{
                     noop: {
@@ -55,42 +66,12 @@
             />
         </Setting>
         {#if $config.filter.type === 'noop'}
-            <small>フィルターを使うとモザイクや色削除ができます</small>
+            <small>色を削除したりモザイクをかけられます</small>
         {:else if $config.filter.type === 'color_key'}
-            <Setting name="色">
-                <Button primary onclick={() => {
-                    if ($config.filter.type !== 'color_key') return;
-                    $config.filter.color = {
-                        x: 0,
-                        y: 1,
-                        z: 0,
-                        w: 1,
-                    };
-                }}>
-                    緑(G)
-                </Button>
-                <Button primary onclick={() => {
-                    if ($config.filter.type !== 'color_key') return;
-                    $config.filter.color = {
-                        x: 0,
-                        y: 0,
-                        z: 1,
-                        w: 1,
-                    };
-                }}>
-                    青(B)
-                </Button>
-                <Button primary onclick={() => {
-                    if ($config.filter.type !== 'color_key') return;
-                    $config.filter.color = {
-                        x: 1,
-                        y: 0,
-                        z: 0,
-                        w: 1,
-                    };
-                }}>
-                    赤(R)
-                </Button>
+            <Setting name="色" disableAuto>
+                {@render colorButton({ x: 0, y: 1, z: 0, w: 1 }, '緑')}
+                {@render colorButton({ x: 0, y: 0, z: 1, w: 1 }, '青')}
+                {@render colorButton({ x: 1, y: 0, z: 0, w: 1 }, '赤')}
             </Setting>
             <Setting name="強さ">
                 <Slider
@@ -140,7 +121,7 @@
             <Setting name="タイトルを表示">
                 <Checkbox bind:value={$config.overlay.title} />
             </Setting>
-            <Setting name="配置">
+            <Setting name="配置" disableAuto>
                 <Align
                     bind:horizontal={$config.overlay.align.horizontal}
                     bind:vertical={$config.overlay.align.vertical}
@@ -154,13 +135,48 @@
     .config {
         position: absolute;
         top: 2rem;
+        right: 0;
         bottom: 2rem;
-        width: 22rem;
+        width: 24rem;
         background: var(--color-bg-1);
         display: flex;
         flex-direction: column;
         gap: 1rem;
         overflow-y: scroll;
         padding-right: 1rem;
+    }
+
+    small {
+        font-size: 0.8rem;
+        padding: 0.75rem 1rem;
+        color: var(--color-text);
+    }
+
+    .color-button {
+        width: 1.25rem;
+        height: 1.25rem;
+        padding: 0.25rem;
+        border-radius: 999rem;
+        outline: 2px solid var(--color-bg-2);
+        outline-offset: 2px;
+        border: none;
+        cursor: pointer;
+
+        &:hover {
+            outline: 2px solid var(--color-1);
+            outline-offset: 3px;
+        }
+
+        &.selected {
+            outline: 2px solid var(--color-1);
+            outline-offset: 2px;
+            transition: outline-offset 0.1621s;
+        }
+
+        &:active {
+            outline: 2px solid var(--color-1);
+            outline-offset: 2px;
+            transition: outline-offset 0.1621s;
+        }
     }
 </style>

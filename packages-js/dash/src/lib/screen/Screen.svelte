@@ -26,7 +26,7 @@
             return;
         }
         if (event.target === container) {
-            handle.pop();
+            handle.close();
         }
     }
 
@@ -35,7 +35,7 @@
             return;
         }
         if (e.key === 'Escape') {
-            handle.pop();
+            handle.close();
         }
     }
 
@@ -67,29 +67,32 @@
         display: flex;
         align-items: stretch;
         appearance: none;
-        background: color-mix(in srgb, var(--color-bg-1) 97%, transparent);
         border: none;
-        top: 2rem;
         overflow: hidden;
-
-        > :global(*) {
-            animation: forwards 0.08621s fade;
-        }
+        background: linear-gradient(
+            to right,
+            color-mix(in srgb, var(--color-bg-1) 60%, transparent 0%),
+            color-mix(in srgb, var(--color-bg-1) 100%, transparent 0%)
+        );
     }
 
     .content {
         width: 24rem;
-        background: color-mix(in srgb, var(--color-bg-2) 97%, transparent);
+        margin: 2.5rem 1.5rem;
+        background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
+        filter: drop-shadow(0px 4px 0 var(--color-outline));
+        border-radius: 0.25rem;
         display: flex;
         flex-direction: column;
-        animation: forwards 0.08621s slide;
         z-index: 10;
+        animation: slide forwards 0.1621s;
     }
 
     .info {
+        position: relative;
         flex: 1;
-        padding: max(4rem, 10%) max(2rem, 10%);
+        padding: 4rem max(2rem, 5%);
         overflow-y: auto;
         pointer-events: none;
         overflow: auto;
@@ -101,35 +104,16 @@
 
     @keyframes slide {
         0% {
-            transform: translateX(-100%);
+            transform: translateX(-10%);
+            opacity: 0;
         }
-        20% {
-            transform: translateX(-3%);
-        }
-        98% {
-            transform: translateX(0.621%);
-        }
-        100% {
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes fade {
-        0% {
-            background: color-mix(in srgb, var(--color-bg-1) 0%, transparent);
-            transform: translateX(4px);
-        }
-        20% {
-            background: color-mix(in srgb, var(--color-bg-1) 70%, transparent);
-            transform: translateX(3px);
-        }
-        98% {
-            background: color-mix(in srgb, var(--color-bg-1) 90%, transparent);
-            transform: translateX(-0.621px);
+        38% {
+            transform: translateX(0.25rem);
+            opacity: 0.9;
         }
         100% {
-            background: color-mix(in srgb, var(--color-bg-1) 96%, transparent);
-            transform: translateX(0);
+            transform: translateX(0%);
+            opacity: 1;
         }
     }
 </style>

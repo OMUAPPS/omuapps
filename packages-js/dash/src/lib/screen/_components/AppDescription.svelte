@@ -54,6 +54,10 @@
             <p>{tags.map((tag) => omu.i18n.translate(tag)).join(', ')}</p>
         {/if}
     {/if}
+    {#if app.url}
+        <small>{$t('screen.app_install.info.url')}</small>
+        <p>{app.url}</p>
+    {/if}
 </div>
 
 <style lang="scss">

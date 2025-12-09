@@ -6,14 +6,14 @@
     let scroll = $state(0);
 
     function onScroll() {
-        scroll = window.scrollY;
+        scroll = document.body.scrollTop;
     }
 
     function isVisible(element: HTMLElement | undefined, _: number) {
         if (!BROWSER) return true;
         if (!element) return false;
         const rect = element.getBoundingClientRect();
-        return rect.top + 100 < window.innerHeight;
+        return rect.top + 100 < document.body.clientHeight;
     }
 
     let card0: HTMLElement | undefined = $state(undefined);
@@ -21,7 +21,7 @@
     let card2: HTMLElement | undefined = $state(undefined);
 </script>
 
-<svelte:window onscroll={onScroll} />
+<svelte:body onscroll={onScroll} />
 
 <div class="features">
     <a class="card" href="/docs/guide" bind:this={card0} class:visible={isVisible(card0, scroll)}>
@@ -107,12 +107,12 @@
         }
 
         > i {
-            font-size: 2rem;
+            font-size: 2em;
             margin-right: 2rem;
         }
 
         > .ti-chevron-right {
-            font-size: 1.25rem;
+            font-size: 1.25em;
             margin-left: auto;
             margin-right: 0rem;
         }
@@ -123,12 +123,12 @@
             flex-direction: column;
 
             > h3 {
-                font-size: 1.5rem;
+                font-size: 1.5em;
                 white-space: nowrap;
             }
 
             > p {
-                font-size: 0.75rem;
+                font-size: 0.75em;
                 font-weight: 600;
                 color: var(--color-text);
             }
@@ -140,7 +140,7 @@
             flex-direction: column;
             align-items: stretch;
             gap: 1rem;
-            padding-bottom: 2rem;
+            padding: 0rem 2rem;
 
             > i {
                 display: none;
@@ -150,7 +150,8 @@
                 display: block;
                 position: absolute;
                 right: 1rem;
-                bottom: 1rem;
+                bottom: 50%;
+                transform: translateY(50%);
             }
         }
     }

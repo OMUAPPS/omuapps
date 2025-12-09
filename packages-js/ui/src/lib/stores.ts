@@ -106,3 +106,30 @@ export function tooltipRemove(entry: TooltipEntry) {
         return value.filter((item) => item.id !== entry.id);
     });
 }
+
+export interface PopupEntry {
+    id: number;
+    render: Snippet<[]>;
+    element: HTMLElement;
+};
+
+export const popupStack = writable<PopupEntry[]>([]);
+export let popupId = 0;
+
+export function getPopupId() {
+    return popupId++;
+}
+
+export function popupAdd(entry: PopupEntry) {
+    popupStack.update((value) => {
+        value = value.filter((item) => item.id !== entry.id);
+        value.push(entry);
+        return value;
+    });
+}
+
+export function popupRemove(entry: PopupEntry) {
+    popupStack.update((value) => {
+        return value.filter((item) => item.id !== entry.id);
+    });
+}

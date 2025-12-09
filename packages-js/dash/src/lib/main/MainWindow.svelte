@@ -4,7 +4,7 @@
     import { chat, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import PageSettings from '$lib/pages/settings/PageSettings.svelte';
-    import { screenContext } from '$lib/screen/screen.js';
+    import ScreenRenderer from '$lib/screen/ScreenRenderer.svelte';
     import type { App } from '@omujs/omu';
     import { Button, ButtonMini, TableList, Tooltip } from '@omujs/ui';
     import * as tauriLog from '@tauri-apps/plugin-log';
@@ -12,8 +12,7 @@
     import AppPage from '../pages/PageApp.svelte';
     import ConnectPage from '../pages/PageConnect.svelte';
     import ExplorePage from '../pages/PageExplore.svelte';
-    import ManageAppsScreen from '../screen/manage/ScreenManageApps.svelte';
-    import { currentPage, devMode, lastApp, menuOpen } from '../settings.js';
+    import { currentPage, devMode, lastApp, managingApps, menuOpen } from '../settings.js';
     import {
         pageMap,
         pages,
@@ -22,7 +21,7 @@
         type Page,
         type PageItem,
     } from './page.js';
-    import AppEntry from './TabApp.svelte';
+    import TabApp from './TabApp.svelte';
     import TabEntry from './TabEntry.svelte';
 
     const EXPLORE_PAGE = registerPage<unknown>({
@@ -166,10 +165,11 @@
                         <i class="ti ti-apps"></i>
                     </span>
                     <div class="buttons">
-                        <ButtonMini
-                            onclick={() =>
-                                screenContext.push(ManageAppsScreen, undefined)}
-                        >
+                        <ButtonMini onclick={() => {
+                            // pushScreen(ManageAppsScreen, '', undefined);
+                            // $currentPage = 'explore';
+                            $managingApps = !$managingApps;
+                        }}>
                             <Tooltip>
                                 <div class="tooltip">
                                     <h3>{$t('screen.manage-apps.name')}</h3>
@@ -187,9 +187,14 @@
             </div>
         </section>
         <div class="list">
-            <TableList table={omu.server.apps} filter={(_, app) => !!app.url && !app.parentId && ($devMode || app.type === 'app')}>
+            <TableList table={omu.server.apps} filter={(_, app) => {
+                if (!app.url) return false;
+                if (app.parentId) return false;
+                if ($devMode) return true;
+                return app.type === 'app';
+            }}>
                 {#snippet component({ entry, selected })}
-                    <AppEntry {entry} {selected} />
+                    <TabApp {entry} {selected} />
                 {/snippet}
                 {#snippet empty()}
                     <button
@@ -224,7 +229,7 @@
         {#each Object.entries($pages) as [id, entry] (id)}
             {#key id}
                 {#if entry.type === 'loaded'}
-                    <div class="page" class:visible={$currentPage === id}>
+                    <div class="page" class:visible={$currentPage === id} data-page-id={id}>
                         <svelte:boundary onerror={(error) => {
                             tauriLog.error(`Error loading page '${id}': ${JSON.stringify(error)}`);
                             console.error(`Error loading page '${id}':`, error);
@@ -255,6 +260,7 @@
                 {/if}
             {/key}
         {/each}
+        <ScreenRenderer />
     </div>
 </main>
 

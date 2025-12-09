@@ -35,5 +35,6 @@
         user-select: text;
         font-family: monospace;
         font-weight: 600;
+        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
     }
 </style>

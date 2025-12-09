@@ -22,6 +22,7 @@ export { default as Localized } from './Localized.svelte';
 export { default as MessageEntry } from './MessageEntry.svelte';
 export { default as MessageRenderer } from './MessageRenderer.svelte';
 export { default as Popup } from './Popup.svelte';
+export { default as PopupPortal } from './PopupPortal.svelte';
 export { default as RelativeDate } from './RelativeDate.svelte';
 export { default as Role } from './Role.svelte';
 export { default as Slider } from './Slider.svelte';

@@ -35,15 +35,15 @@
         "current": "現在"
     },
     "permission_level": {
-        "high": "信頼できるアプリのみ: 高",
+        "high": "セキュリティ上の影響の可能性",
         "high_icon": "ti ti-alert-triangle",
-        "high_hint": "この権限は信用できるアプリにのみ許可することをお勧めします。",
-        "medium": "少し注意が必要です: 中",
+        "high_hint": "システムの安定性やセキュリティ上の侵害の可能性",
+        "medium": "プライバシーに影響する可能性",
         "medium_icon": "ti ti-exclamation-mark",
         "medium_hint": "この権限はプライバシーに影響を与える可能性があります。",
-        "low": "あまり注意は必要ありません: 低",
+        "low": "影響のない基本機能",
         "low_icon": "ti ti-eye",
-        "low_hint": "この権限がPCに影響を与える可能性は低いです。"
+        "low_hint": "この権限でPCに影響を与える可能性は低いです。"
     },
     "date": {
         "just_now": "今",
@@ -212,7 +212,8 @@
                 "license": "ライセンス",
                 "repository": "リポジトリ",
                 "site": "サイト",
-                "tags": "タグ"
+                "tags": "タグ",
+                "url": "URL"
             }
         },
         "app_update": {
@@ -228,7 +229,7 @@
         "manage-apps": {
             "name": "アプリを管理",
             "icon": "ti ti-apps",
-            "description": "設定やアンインストールを行います"
+            "description": "アプリのアンインストール"
         },
         "speechrecognition_request": {
             "name": "音声認識について",
