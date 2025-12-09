@@ -19,7 +19,7 @@ export const VIDEO_OVERLAY_APP = new App(APP_ID, {
             en: 'An overlay app that can be displayed over the screen for streaming',
         },
         icon: 'ti-video',
-        tags: ['asset', 'tool'] as TagKey[],
+        tags: ['asset', 'tool', 'underdevelopment'] as TagKey[],
     }),
     dependencies: {
         [DISCORD_PLUGIN_APP.id.key()]: {

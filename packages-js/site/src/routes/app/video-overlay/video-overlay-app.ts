@@ -4,6 +4,7 @@ import { DiscordRPCAPI } from '../discord-overlay/plugin/plugin';
 
 export type VideoOverlayConfig = {
     user?: string;
+    password?: string;
     channels: Record<string, {
         password: string;
     } | undefined>;

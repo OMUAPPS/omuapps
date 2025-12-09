@@ -4,10 +4,11 @@
     import type { RPCSession, RPCVoiceStates, SelectedVoiceChannel } from '../discord-overlay/discord/discord';
     import type { Message } from '../discord-overlay/discord/type';
     import { ARC4 } from '../omucafe/game/random';
+    import ParticipantEntry from './_components/ParticipantEntry.svelte';
     import { VIDEO_OVERLAY_APP, VIDEO_OVERLAY_ASSET_APP } from './app';
     import { Socket, type SocketParticipant } from './rtc/connection';
     import { type ErrorKind, type LoginOptions } from './rtc/signaling';
-    import { bindMediaStream, captureVideoFrame } from './rtc/video';
+    import { captureVideoFrame } from './rtc/video';
     import { shorten, unshorten } from './shortener';
     import type { VideoOverlayApp } from './video-overlay-app';
 
@@ -18,11 +19,11 @@
         overlayApp: VideoOverlayApp;
     }
 
-    let { session, channel, overlayApp }: Props = $props();
+    let { session, channel, voiceStates, overlayApp }: Props = $props();
     const { config, discord } = overlayApp;
     const { channelMessageSignal } = discord;
 
-    let participants: Record<string, SocketParticipant> = $state({});
+    let sockets: Record<string, SocketParticipant> = $state({});
 
     let loginState: {
         type: 'logging_in';
@@ -42,7 +43,7 @@
 
     let media: MediaStream | undefined = $state();
     const random = ARC4.fromNumber(Date.now());
-    const loginPassword = random.getString(16);
+    const loginPassword = $config.password ??= random.getString(16);
     let localVideo: HTMLVideoElement | undefined = $state();
     let loginId = $derived(VIDEO_OVERLAY_APP.id.join(session.user.id, 'user').key());
     let roomId = $derived(VIDEO_OVERLAY_APP.id.join(channel.guild.id, channel.channel.id).key());
@@ -97,7 +98,7 @@
                 };
             },
             updateParticipants: (updatedParticipants: Record<string, SocketParticipant>) => {
-                participants = updatedParticipants;
+                sockets = updatedParticipants;
             },
         });
     }
@@ -172,26 +173,13 @@
     {:else if loginState.type === 'logged_in'}
         {@const state = loginState}
         <div class="participants">
-            <div class="participant">
-                <video class="local-video" playsinline autoplay muted bind:this={localVideo}></video>
-            </div>
-            {#each Object.entries(participants).filter((([id]) => id.endsWith('user'))) as [id, participant] (id)}
-                {@const { stream } = participant}
-                <div class="participant">
-                    <p class="name">{participant.name}</p>
-                    {#if stream}
-                        {#if stream.type === 'playing'}
-                            {#key stream}
-                                <video playsinline autoplay muted use:bindMediaStream={stream.media}></video>
-                                <button onclick={stream.close}>閉じる</button>
-                            {/key}
-                        {:else}
-                            <img src={stream.info.thumbnail} alt="Thumbnail" />
-                            <button onclick={stream.request}>見る</button>
-                        {/if}
-                    {/if}
-                </div>
+            {#each Object.entries(voiceStates.states) as [id, state] (id)}
+                {@const socket = Object.values(sockets).find(((socket) => socket.userId === id))}
+                <ParticipantEntry user={state.user} {socket} />
             {/each}
+            <div class="asset">
+                <AssetButton asset={VIDEO_OVERLAY_ASSET_APP} single />
+            </div>
         </div>
         <div class="control">
             <h2>{session.user.global_name}</h2>
@@ -205,6 +193,7 @@
             {:else}
                 <Button primary onclick={loginState.share}>
                     画面を共有
+                    <i class="ti ti-shareplay"></i>
                 </Button>
             {/if}
             <Button primary onclick={() => {
@@ -218,8 +207,8 @@
                     参加している<b>ボイスチャットのチャット</b>に送信してください
                 </Tooltip>
                 招待
+                <i class="ti ti-users-plus"></i>
             </Button>
-            <AssetButton asset={VIDEO_OVERLAY_ASSET_APP} single />
         </div>
     {:else if loginState.type === 'failed'}
         <h2>ログイン失敗</h2>
@@ -252,17 +241,6 @@
 </main>
 
 <style lang="scss">
-    .video {
-        width: 10rem;
-        height: 10rem;
-
-        > video, img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-    }
-
     h1 {
         color: var(--color-1);
     }
@@ -289,45 +267,19 @@
     }
 
     .participants {
+        position: relative;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(2, 1fr);
         gap: 1rem;
         flex: 1;
         padding: 1rem;
     }
 
-    .participant {
-        position: relative;
-        background: var(--color-bg-2);
-        padding: 0.5rem;
-
-        > video, img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        > button {
-            position: absolute;
-            background: none;
-            border: none;
-            right: 0.5rem;
-            bottom: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: var(--color-bg-1);
-            color: var(--color-1);
-            font-size: 0.8rem;
-            outline: 1px solid var(--color-1);
-            border-radius: 2px;
-            cursor: pointer;
-        }
-
-        > .name {
-            position: absolute;
-            left: 1rem;
-            top: 1rem;
-        }
+    .asset {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        margin: 1rem;
     }
 
     .control {
