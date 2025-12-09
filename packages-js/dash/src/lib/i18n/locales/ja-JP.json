@@ -38,10 +38,10 @@
         "high": "セキュリティ上の影響の可能性",
         "high_icon": "ti ti-alert-triangle",
         "high_hint": "システムの安定性やセキュリティ上の侵害の可能性",
-        "medium": "プライバシーに影響する可能性: 中",
+        "medium": "プライバシーに影響する可能性",
         "medium_icon": "ti ti-exclamation-mark",
         "medium_hint": "この権限はプライバシーに影響を与える可能性があります。",
-        "low": "影響のない基本機能: 低",
+        "low": "影響のない基本機能",
         "low_icon": "ti ti-eye",
         "low_hint": "この権限でPCに影響を与える可能性は低いです。"
     },
