@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Omu } from '@omujs/omu';
+    import { OmuPermissions, type Omu } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
     import { ClockApp } from '../clock-app';
     import ClockRenderer from '../components/ClockRenderer.svelte';
@@ -12,6 +12,9 @@
     const clockApp = new ClockApp(omu);
 
     if (BROWSER) {
+        omu.permissions.require(
+            OmuPermissions.ASSET_PERMISSION_ID,
+        );
         omu.start();
     }
 

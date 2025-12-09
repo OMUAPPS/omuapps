@@ -14,6 +14,7 @@
 
     if (BROWSER) {
         omu.permissions.require(
+            OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.ASSET_PERMISSION_ID,
