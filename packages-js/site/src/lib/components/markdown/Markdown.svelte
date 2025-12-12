@@ -33,8 +33,9 @@
         align-items: start;
         padding: 1rem 0;
         text-wrap: wrap;
-        font-size: 0.9rem;
-        font-weight: 500;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-text);
         width: 100%;
         user-select: text;
         word-break: auto-phrase;
@@ -68,7 +69,7 @@
         }
 
         :global(p) {
-            margin-top: 1rem;
+            line-height: 1.75;
         }
 
         :global(strong) {

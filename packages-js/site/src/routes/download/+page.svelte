@@ -57,7 +57,7 @@
     <meta name="description" content="OMUAPPSをダウンロードして使ってみる" />
 </svelte:head>
 
-<Page>
+<Page headerMode="always">
     {#snippet header()}
         <header>
             <h1>

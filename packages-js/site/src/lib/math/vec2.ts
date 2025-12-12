@@ -38,6 +38,10 @@ export class Vec2 {
         return new Vec2(this.x * scalar, this.y * scalar);
     }
 
+    public inverse(): Vec2 {
+        return new Vec2(-this.x, -this.y);
+    }
+
     public mul(other: Vec2Like): Vec2 {
         return new Vec2(this.x * other.x, this.y * other.y);
     }

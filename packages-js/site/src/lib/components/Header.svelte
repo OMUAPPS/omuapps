@@ -4,6 +4,7 @@
     import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
+    import { menuOpen } from '../../routes/docs/stores';
     import Content from './Content.svelte';
 
     interface Props {
@@ -13,17 +14,17 @@
     let { always = false }: Props = $props();
 
     let path = $derived(page.url.pathname);
-    let onTop = $state(BROWSER && (!page.url.pathname.startsWith('/docs') && document.body.scrollTop < 1));
+    let onTop = $state(BROWSER && (!page.url.pathname.startsWith('/docs') && window.scrollY < 1));
 
     function onScroll() {
-        onTop = document.body.scrollTop < 1;
+        onTop = window.scrollY < 1;
     }
 
     onMount(() => {
-        document.body.addEventListener('scroll', onScroll);
+        document.addEventListener('scroll', onScroll);
 
         return () => {
-            document.body.removeEventListener('scroll', onScroll);
+            document.removeEventListener('scroll', onScroll);
         };
     });
 </script>
@@ -31,6 +32,11 @@
 <header class:ontop={!always && onTop}>
     <Content>
         <nav>
+            {#if path.startsWith('/docs')}
+                <button class="menu-toggle" onclick={() => ($menuOpen = !$menuOpen)} title="menu">
+                    <i class="ti ti-menu"></i>
+                </button>
+            {/if}
             <a href="/" class="title">
                 <img src={title} alt="title" />
             </a>
@@ -53,15 +59,15 @@
                         導入ガイド
                     </li>
                 </a>
-                <a href="/docs/api">
+                <a href="/docs/app">
                     <li
-                        aria-current={path.startsWith('/docs') && !path.startsWith('/docs/guide')
+                        aria-current={path.startsWith('/docs/app') && !path.startsWith('/docs/guide')
                             ? 'page'
                             : undefined}
                     >
                         <Tooltip>あったらいいなが作れるかも</Tooltip>
-                        <i class="ti ti-pencil"></i>
-                        アプリを作る
+                        <i class="ti ti-box"></i>
+                        アプリ一覧
                     </li>
                 </a>
             </ul>
@@ -87,6 +93,18 @@
             background: var(--color-bg-2);
             border-bottom: 1px solid var(--color-outline);
         }
+    }
+
+    .menu-toggle {
+        display: none;
+        width: 2.5rem;
+        min-width: 2.5rem;
+        height: 2.5rem;
+        min-height: 2.5rem;
+        border: none;
+        background: var(--color-bg-1);
+        color: var(--color-1);
+        margin-right: 1rem;
     }
 
     nav {
@@ -118,17 +136,17 @@
         text-transform: uppercase;
         letter-spacing: 0.1em;
         font-weight: 600;
+        padding-bottom: 0.5rem;
 
         &:hover {
             background: var(--color-bg-2);
-            padding-bottom: 1rem;
-            transition: padding 0.0621s;
         }
 
         &[aria-current='page'] {
             background: var(--color-bg-2);
             border-bottom: 2px solid var(--color-1);
-            padding-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            transition: padding 0.0621s;
             font-weight: 800;
         }
     }
@@ -137,7 +155,8 @@
         display: flex;
         align-items: center;
         height: 3em;
-        height: 1.2rem;
+        padding: 1rem;
+        padding-left: 0;
         margin-right: 2rem;
 
         img {
@@ -161,9 +180,19 @@
         font-size: 1.1rem;
     }
 
-    @container (min-width: 600px) {
+    @container (width > 600px) {
         li {
             font-size: 0.8rem;
+        }
+    }
+
+    @container (width < 600px) {
+        li {
+            width: 3rem;
+        }
+
+        .menu-toggle {
+            display: block;
         }
     }
 

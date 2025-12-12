@@ -60,6 +60,7 @@
     .nav {
         display: flex;
         justify-content: space-between;
+        gap: 1rem;
 
         > span > a {
             display: flex;

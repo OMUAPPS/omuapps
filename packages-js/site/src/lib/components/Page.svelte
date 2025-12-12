@@ -26,14 +26,14 @@
 {#if headerMode}
     <Header always={headerMode === 'always'} />
 {/if}
-{#if banner}{@render banner()}{:else}
+{#if banner}
+    {@render banner()}
+{:else}
     <img src={background} alt="background" class="background" />
 {/if}
 <header>
     <Content>
-        <div class="header-content">
-            {@render header?.()}
-        </div>
+        {@render header?.()}
     </Content>
 </header>
 <main class:no-background={noBackground}>
@@ -48,7 +48,7 @@
 </main>
 
 <style lang="scss">
-    $haeder-height: min(42vh, calc(100vw));
+    $header-height: min(42vh, calc(100vw));
 
     .background {
         position: fixed;
@@ -59,29 +59,22 @@
     }
 
     header {
+        container-type: inline-size;
         position: absolute;
         top: 0;
         display: flex;
-        height: $haeder-height;
+        height: $header-height;
         width: 100%;
         font-weight: 600;
-
-        .header-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: 100%;
-            width: 100%;
-            padding: 4rem 0;
-            padding-top: 10rem;
-        }
+        padding-top: 14rem;
     }
 
     main {
         position: absolute;
-        top: $haeder-height;
+        container-type: inline-size;
+        top: $header-height;
         width: 100%;
-        min-height: calc(100% - #{$haeder-height});
+        min-height: calc(100% - #{$header-height});
         height: fit-content;
         background: var(--color-bg-2);
 

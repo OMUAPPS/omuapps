@@ -13,6 +13,8 @@ description: すべてのアプリとその簡単な説明
 - DiscordのボイスチャットをOBSに表示することができます
 - PNGTuber+アバターに対応。あなたの持っているPNGTuber+アバターでコラボ配信ができます
 
+[Discordオーバーレイ詳細](%DOCS_ROOT%/app/discord-overlay?_style=large)
+
 ## リアクション
 
 - Youtubeのリアクションボタンで出る効果を好きなように出すことができます
