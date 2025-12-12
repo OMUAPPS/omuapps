@@ -13,9 +13,10 @@
         resolve: (accept: PromptResult) => void;
         children: Snippet<[]>;
         info?: Snippet<[]>;
+        disabled?: { reason: string } | false | undefined;
     }
 
-    let { handle, app, resolve, children, info }: Props = $props();
+    let { handle, app, resolve, children, info, disabled }: Props = $props();
 
     function updateScroll(element: HTMLDivElement) {
         const { scrollTop, scrollHeight, clientHeight } = element;
@@ -56,8 +57,12 @@
         <button onclick={() => {
             resolve('accept');
             handle.close();
-        }} class="accept" disabled={!scrolled || !delayed}>
-            {#if !scrolled}
+        }} class="accept" disabled={!scrolled || !delayed || !!disabled}>
+            {#if disabled}
+                <Tooltip>
+                    {disabled.reason}
+                </Tooltip>
+            {:else if !scrolled}
                 <Tooltip>
                     最後までスクロールしてください
                 </Tooltip>
