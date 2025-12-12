@@ -16,4 +16,10 @@
     let source = $derived(replaceConstants(data.page.content, $config));
 </script>
 
+<svelte:head>
+    <title>{data.page.meta.title || 'ドキュメント'} | OMUAPPS</title>
+    <meta name="description" content={data.page.meta.description} />
+    <link rel="canonical" href={`https://omuapps.com/docs/${data.page.slug}`} />
+</svelte:head>
+
 <Markdown {source} />
