@@ -1,7 +1,7 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { Draw } from '$lib/components/canvas/draw.js';
-    import { type GlContext } from '$lib/components/canvas/glcontext.js';
+    import { GlContext } from '$lib/components/canvas/glcontext.js';
     import { Matrices } from '$lib/components/canvas/matrices.js';
     import { comparator } from '$lib/helper.js';
     import { BetterMath } from '$lib/math.js';
@@ -26,6 +26,7 @@
         voiceState: RPCVoiceStates;
         speakingState: RPCSpeakingStates;
         dimensions?: Vec2;
+        takeScreenshot?: () => Promise<void>;
     }
 
     let {
@@ -33,8 +34,46 @@
         voiceState,
         speakingState,
         dimensions = new Vec2(1920, 1080),
+        takeScreenshot = $bindable(),
     }: Props = $props();
     const { config } = overlayApp;
+
+    takeScreenshot = async () => {
+        const { gl } = context;
+        const { width: oldWidth, height: oldHeight } = gl.canvas;
+        gl.canvas.width = 1920;
+        gl.canvas.height = 1080;
+        const width = 1920;
+        const height = 1080;
+        try {
+            gl.colorMask(true, true, true, true);
+            gl.enable(gl.BLEND);
+            gl.clearColor(1, 1, 1, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+            gl.viewport(0, 0, width, height);
+
+            matrices.identity();
+            matrices.projection.orthographic(0, 0, width, height, -1, 1);
+
+            await drawAvatars();
+            await drawHeldTips();
+            await drawScreen();
+
+            const a = await (gl.canvas as OffscreenCanvas).convertToBlob();
+            const link = document.createElement('a');
+
+            link.download = new Date().toLocaleString() + '.png';
+            link.href = URL.createObjectURL(a);
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } finally {
+            gl.canvas.width = oldWidth;
+            gl.canvas.height = oldHeight;
+        }
+    };
 
     let context: GlContext;
     let matrices = new Matrices();

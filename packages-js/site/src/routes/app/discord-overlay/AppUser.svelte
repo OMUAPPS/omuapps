@@ -34,6 +34,8 @@
         }
         return user;
     }
+
+    let takeScreenshot: () => Promise<void> = $state(async () => {});
 </script>
 
 <main>
@@ -42,6 +44,7 @@
             overlayApp={overlayApp}
             {voiceState}
             {speakingState}
+            bind:takeScreenshot
         />
         {#if $selectedAvatar && $config.avatars[$selectedAvatar]}
             <AvatarAdjustModal
@@ -125,9 +128,12 @@
                     <VisualConfig {overlayApp} />
                 {/snippet}
             </Popup>
-        </div>
-        <div class="settings">
-
+            <button onclick={takeScreenshot} class="screenshot">
+                <Tooltip>
+                    <p>撮影</p>
+                </Tooltip>
+                <i class="ti ti-camera"></i>
+            </button>
         </div>
     {/if}
 </main>
@@ -159,6 +165,7 @@
     .effects {
         position: absolute;
         top: 0;
+        bottom: 0;
         right: 0;
         left: auto;
         gap: 0.75rem;
@@ -202,6 +209,10 @@
         > .settings {
             background: transparent;
             outline: none;
+        }
+
+        > .screenshot {
+            margin-top: auto;
         }
     }
 
