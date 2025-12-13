@@ -11,6 +11,7 @@ export type DocsData = Readonly<{
 export type DocsMeta = Readonly<{
     title: string;
     description: string;
+    image?: string;
     index?: number;
     icon?: string;
 }>;

@@ -14,11 +14,17 @@
         $docs = data.page;
     });
     let source = $derived(replaceConstants(data.page.content, $config));
+    let meta = $derived(data.page.meta);
 </script>
 
 <svelte:head>
-    <title>{data.page.meta.title || 'ドキュメント'} | OMUAPPS</title>
-    <meta name="description" content={data.page.meta.description} />
+    <title>{meta.title || 'ドキュメント'} | OMUAPPS</title>
+    <meta name="description" content={meta.description} />
+    <meta name="og:title" content={meta.title}>
+    {#if data.page.meta}
+        <meta name="og:image" content={meta.image}>
+    {/if}
+    <meta name="og:url" content={`https://omuapps.com/docs/${data.page.slug}`} />
     <link rel="canonical" href={`https://omuapps.com/docs/${data.page.slug}`} />
 </svelte:head>
 

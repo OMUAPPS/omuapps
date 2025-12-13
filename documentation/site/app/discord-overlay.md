@@ -3,6 +3,7 @@ index: 10
 icon: brand-discord
 title: Discordオーバーレイ
 description: 安定して表示されるPNGTuber+の使えるオーバーレイ
+image: /img/discord-overlay.png
 ---
 
 # Discordオーバーレイ
