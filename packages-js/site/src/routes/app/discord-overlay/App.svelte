@@ -33,7 +33,6 @@
         && $voiceStates[port]}
         <AppUser
             {overlayApp}
-            session={$sessions[port]}
             speakingState={$speakingStates[port]}
             voiceState={$voiceStates[port]}
         />

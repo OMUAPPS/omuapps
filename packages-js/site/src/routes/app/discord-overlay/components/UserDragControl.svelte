@@ -43,6 +43,7 @@
 
     $effect(() => {
         const newPosition = Vec2.from(user.position);
+        if (Number.isNaN(newPosition.x)) return;
         if (newPosition.distance(position) === 0) return;
         if (!isDragging) position = newPosition;
     });
@@ -231,7 +232,7 @@
         class="settings"
         style={style}
         style:opacity={$heldUser && $heldUser != id ? 0.2 : 1}
-        class:side-right={user.position.x > 0}
+        class:side-right={user.position.x > 1920 / 2}
     >
         <UserSettings {overlayApp} {voiceState} {id} />
     </div>

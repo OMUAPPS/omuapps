@@ -32,7 +32,7 @@ export class LayoutEngine {
         const sideScalar = { start: -1, middle: 0, end: 1 }[side];
         const origin = align01.add(dirPerp.scale(Math.abs(align.x) > Math.abs(align.y) ? this.dimensions.y / 2 : this.dimensions.x / 2).scale(sideScalar));
 
-        const spacing = Math.min(AVATAR_DEFAULT_SPACING, (this.dimensions.x - MARGIN * 2) / total);
+        const spacing = Math.min(this.config.align.spacing, (this.dimensions.x - MARGIN * 2) / total);
         let offsetScale = index * spacing + MARGIN * 2;
         if (side === 'middle') {
             offsetScale = (index - (total - 1) / 2) * spacing;
@@ -45,7 +45,7 @@ export class LayoutEngine {
     public getFitScaleFactor(): number {
         const MARGIN = this.config.align.margin;
         const total = Object.keys(this.alignDistances).length;
-        const spacing = AVATAR_DEFAULT_SPACING / Math.min(AVATAR_DEFAULT_SPACING, (this.dimensions.x - MARGIN * 2) / total);
+        const spacing = this.config.align.spacing / Math.min(this.config.align.spacing, (this.dimensions.x - MARGIN * 2) / total);
         return spacing;
     }
 }

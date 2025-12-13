@@ -1,26 +1,23 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { comparator } from '$lib/helper';
     import type { Vec2Like } from '$lib/math/vec2';
-    import { Slider, Tooltip } from '@omujs/ui';
+    import { Popup, Tooltip } from '@omujs/ui';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
     import VisualConfig from './components/VisualConfig.svelte';
     import { createUserConfig, DiscordOverlayApp } from './discord-overlay-app.js';
-    import type { RPCSession, RPCSpeakingStates, RPCVoiceStates } from './discord/discord';
+    import type { RPCSpeakingStates, RPCVoiceStates } from './discord/discord';
     import { dragState, selectedAvatar } from './states.js';
 
     interface Props {
-        session: RPCSession;
         voiceState: RPCVoiceStates;
         speakingState: RPCSpeakingStates;
         overlayApp: DiscordOverlayApp;
     }
 
     let {
-        session,
         voiceState,
         speakingState,
         overlayApp,
@@ -37,14 +34,6 @@
         }
         return user;
     }
-
-    run(() => {
-        Object.keys(voiceState.states).forEach(id => {
-            getUser(id);
-        });
-    });
-
-    let settingsOpen = $state(false);
 </script>
 
 <main>
@@ -65,7 +54,7 @@
             {#if resolution}
                 {#each Object.entries(voiceState.states)
                     .sort(comparator(([id]) => {
-                        const user = $config.users[id];
+                        const user = $config.users[id] ?? getUser(id);
                         return user.lastDraggedAt;
                     })) as [id, state] (id)}
                     {#if state}
@@ -83,55 +72,62 @@
         {/if}
     </div>
     {#if !$dragState && !$selectedAvatar}
-        <div class="config">
+        <div class="effects">
             <button onclick={() => {
                 $config.effects.backlightEffect.active = !$config.effects.backlightEffect.active;
             }} class:active={$config.effects.backlightEffect.active}>
                 <Tooltip>
-                    注意！高GPU使用率
+                    <p>逆光効果</p>
+                    <small>注意！高GPU使用率</small>
                 </Tooltip>
                 <i class="ti ti-sun"></i>
-                逆光効果
             </button>
             <button onclick={() => {
                 $config.effects.shadow.active = !$config.effects.shadow.active;
             }} class:active={$config.effects.shadow.active}>
                 <Tooltip>
-                    影をつけて見やすくします
+                    <p>アバターの影</p>
+                    <small>影をつけて見やすくします</small>
                 </Tooltip>
                 <i class="ti ti-ghost-3"></i>
-                アバターの影
             </button>
             <button onclick={() => {
                 $config.effects.speech.active = !$config.effects.speech.active;
             }} class:active={$config.effects.speech.active}>
                 <Tooltip>
-                    喋ってないときに暗くなり、喋ると明るくなります
+                    <p>明るさ調整</p>
+                    <small>喋ってないときに暗くなり、喋ると明るくなります</small>
                 </Tooltip>
                 <i class="ti ti-ghost-3"></i>
-                明るさ調整
             </button>
             <button onclick={() => {
                 $config.show_name_tags = !$config.show_name_tags;
             }} class:active={$config.show_name_tags}>
+                <Tooltip>
+                    <p>名前を表示</p>
+                </Tooltip>
                 <i class="ti ti-label"></i>
-                名前を表示
             </button>
+            <Popup>
+                {#snippet children(open)}
+                    <button onclick={(event) => {
+                        open(event.currentTarget);
+                    }} class="settings">
+                        <Tooltip>
+                            <p>
+                                設定を開く
+                            </p>
+                        </Tooltip>
+                        <i class="ti ti-settings"></i>
+                    </button>
+                {/snippet}
+                {#snippet content()}
+                    <VisualConfig {overlayApp} />
+                {/snippet}
+            </Popup>
         </div>
         <div class="settings">
-            <button onclick={() => {settingsOpen = !settingsOpen;}}>
-                <i class="ti ti-settings"></i>
-                詳細設定
-                {#if settingsOpen}
-                    <i class="ti ti-chevron-up"></i>
-                {:else}
-                    <i class="ti ti-chevron-down"></i>
-                {/if}
-            </button>
-            {#if settingsOpen}
-                <VisualConfig {overlayApp} />
-            {/if}
-            <Slider bind:value={$config.align.margin} min={0} max={100} step={1} />
+
         </div>
     {/if}
 </main>
@@ -160,14 +156,15 @@
         outline: 1px solid var(--color-outline);
     }
 
-    .config {
+    .effects {
         position: absolute;
         top: 0;
         right: 0;
         left: auto;
-        gap: 1rem;
+        gap: 0.75rem;
         padding: 0.5rem;
         display: flex;
+        flex-direction: column;
         align-items: stretch;
         z-index: 1;
         margin: 1rem;
@@ -176,51 +173,35 @@
 
         > button {
             border: none;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.9rem;
-            font-weight: 600;
-            background: var(--color-bg-1);
+            border-radius: 4rem;
+            padding: 1rem;
+            background: var(--color-bg-2);
             color: var(--color-1);
             outline: 1px solid var(--color-1);
-            outline-offset: -1px;
+            outline-offset: -2px;
             cursor: pointer;
-            border-radius: 2px;
             white-space: nowrap;
-
-            > i {
-                margin-right: 0.25rem;
-            }
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
             &.active {
                 background: var(--color-1);
                 color: var(--color-bg-1);
             }
+
+            &:hover {
+                outline-offset: -3px;
+            }
+
+            > i {
+                font-size: 1.25rem;
+            }
         }
-    }
 
-    .settings {
-        position: absolute;
-        top: 5rem;
-        right: 0;
-        gap: 1rem;
-        padding: 0.5rem;
-        display: flex;
-        width: 20rem;
-        flex-direction: column;
-        align-items: flex-end;
-        z-index: 1;
-        margin: 1rem;
-        animation: slide-in 0.0621s ease;
-
-        > button {
-            border: none;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            background: var(--color-1);
-            color: var(--color-bg-1);
-            cursor: pointer;
-            border-radius: 2px;
+        > .settings {
+            background: transparent;
+            outline: none;
         }
     }
 
