@@ -38,20 +38,31 @@
         updateElement(event.target as HTMLElement);
     }
 
+    function reset() {
+        top = undefined;
+    }
+
     function onkeydown() {
         requestAnimationFrame(() => {
             if (!document.activeElement) return;
             updateElement(document.activeElement);
         });
     }
-
 </script>
 
 <svelte:window
     {onmousemove}
+    onscroll={reset}
     {onkeydown}
     onmouseout={() => {top = undefined;}}
 />
 {#if top}
-    {@render top.render()}
+    <svelte:boundary onerror={(error) => {
+        console.error(error);
+    }}>
+        {@render top.render()}
+        {#snippet failed()}
+            aaaaaa
+        {/snippet}
+    </svelte:boundary>
 {/if}

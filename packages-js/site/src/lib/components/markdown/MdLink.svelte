@@ -1,20 +1,31 @@
 <script lang="ts">
+    import { ORIGIN } from '../../../routes/app/origin';
 
     interface Props {
         href?: string;
-        title?: any;
+        title?: string;
         text?: string;
     }
 
     let { href = '', title = undefined, text = '' }: Props = $props();
 
-    let uri = $derived(new URL(!href.startsWith('/') ? href : 'https://' + href));
+    let uri = $derived(new URL(href, ORIGIN));
     let style = $derived(uri.searchParams.get('_style') || 'default' as 'default' | 'large');
+    let [content, description] = $derived((text || title || href).split('\\\\'));
 </script>
 
-<a {href} {title} class={style}>
-    {text || title || href}
-    <i class="ti ti-external-link"></i>
+<a {href} {title} class={style} class:description>
+    <span>
+        {content}
+        {#if !description}
+            <i class="ti ti-external-link"></i>
+        {/if}
+    </span>
+    {#if description}
+        <small>
+            {description}
+        </small>
+    {/if}
 </a>
 
 <style lang="scss">
@@ -33,12 +44,29 @@
     }
 
     .large {
-        padding: 0.75rem 2rem;
+        padding: 2rem 2.5rem;
+        font-size: 1.2rem;
+        font-weight: 600;
         border-radius: 2px;
-        background: var(--color-1);
-        color: var(--color-bg-2);
-        font-size: 1rem;
+        background: var(--color-bg-1);
+        color: var(--color-1);
+        outline: 1px solid var(--color-1);
+        outline-offset: -0.5rem;
         margin-top: 1rem;
+        text-decoration: none;
+    }
+
+    .description {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        width: 20rem;
+        filter: drop-shadow(0 2px 0px var(--color-outline));
+    }
+
+    small {
+        font-size: 0.85rem;
+        color: var(--color-text);
     }
 
     i {

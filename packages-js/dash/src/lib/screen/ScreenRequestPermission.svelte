@@ -20,14 +20,7 @@
     let { handle, props }: Props = $props();
     const { request, resolve } = props;
 
-    const LEVELS: Record<PermissionLevel, number> = {
-        low: 0,
-        medium: 1,
-        high: 2,
-    };
-
     const permissions = $state(request.permissions
-        .sort((a, b) => LEVELS[a.metadata.level] - LEVELS[b.metadata.level])
         .reverse()
         .map((permission) => ({
             permission: PermissionType.deserialize(permission),
@@ -55,10 +48,14 @@
         </div>
     {/if}
 {/snippet}
+
 <AppAgreementScreen
     app={App.deserialize(request.app)}
     {handle}
     {resolve}
+    disabled={!permissions.every((entry) => entry.accepted) && {
+        reason: '権限をすべて選択してください',
+    }}
 >
     {@render category('high', 'rgb(203 24 24)')}
     {@render category('medium', 'rgb(197 129 0)')}

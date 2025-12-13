@@ -3,6 +3,7 @@ import { DEV } from 'esm-env';
 import { omu } from '../client.js';
 import { APP as breaktimer } from './break-timer/app.js';
 import { APP as caption } from './caption/app.js';
+import { CHAT_OVERLAY_APP } from './chat-overlay/app.js';
 import { APP as chatSubtitle } from './chatsubtitle/app.js';
 import { APP as clock } from './clock/app.js';
 import { DISCORD_PLUGIN_APP, APP as discordOverlay } from './discord-overlay/app.js';
@@ -41,6 +42,7 @@ if (DEV) {
         remote,
         QUIZ_APP,
         omucafe,
+        CHAT_OVERLAY_APP,
     );
 }
 

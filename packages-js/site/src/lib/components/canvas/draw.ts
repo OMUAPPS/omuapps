@@ -1,6 +1,6 @@
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Bezier } from '$lib/math/bezier.js';
-import { TAU } from '$lib/math/math.js';
+import { lerp, TAU } from '$lib/math/math.js';
 import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
 import { Vec4, type Vec4Like } from '$lib/math/vec4.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlShader, GlTexture } from './glcontext.js';
@@ -330,14 +330,29 @@ uniform vec2 u_resolution;
 uniform float u_radiusInner;
 uniform float u_radiusOuter;
 uniform float u_smoothness;
+uniform vec2 u_direction;
+uniform float u_angle;
 
 in vec2 v_texcoord;
 
 out vec4 fragColor;
 
+float PI = 3.141592653589793;
+
+float atan2(in float y, in float x)
+{
+    return x == 0.0 ? sign(y)*PI/2.0 : atan(y, x);
+}
+
 void main() {
     vec2 uv = v_texcoord * u_resolution;
-    float dist = length(uv) / 2.0;
+    float dot = uv.x*u_direction.x + uv.y*u_direction.y;
+    float det = uv.x*u_direction.y - uv.y*u_direction.x;
+    float angle = atan2(det, dot);
+    if (angle < u_angle) {
+        discard;
+    }
+    float dist = length(uv);
     float alpha = smoothstep(u_radiusOuter, u_radiusOuter - u_smoothness, dist) * smoothstep(u_radiusInner - u_smoothness, u_radiusInner, dist);
     fragColor = vec4(u_color.rgb, u_color.a * alpha);
 }
@@ -519,7 +534,7 @@ export class Draw {
     }
 
     private async generateTextTexture(text: string): Promise<TextTexture | null> {
-        const key = JSON.stringify({ font: this.fontFamily, text });
+        const key = JSON.stringify({ font: this.font, text });
         const existing = this.textRenderPool.get(key);
         if (existing) {
             return existing;
@@ -563,7 +578,7 @@ export class Draw {
         return textTexture;
     }
 
-    public async text(left: number, top: number, text: string, color: Vec4): Promise<boolean> {
+    public async text(left: number, top: number, text: string, color: Vec4Like): Promise<boolean> {
         this.textContext.font = this.font;
         const textTexture = await this.generateTextTexture(text);
         if (!textTexture) {
@@ -623,7 +638,7 @@ export class Draw {
         program.getUniform('u_model').asMat4().set(this.matrices.model.get());
     }
 
-    public triangle(p1: Vec2Like, p2: Vec2Like, p3: Vec2Like, color: Vec4): void {
+    public triangle(p1: Vec2Like, p2: Vec2Like, p3: Vec2Like, color: Vec4Like): void {
         const { gl } = this.glContext;
 
         this.colorProgram.use(() => {
@@ -876,10 +891,14 @@ export class Draw {
         y: number,
         radiusInner: number,
         radiusOuter: number,
-        color: Vec4,
+        color: Vec4Like,
         smoothness: number = 1.0,
+        dir: number = 0,
+        angle: number = 1,
     ): void {
         const { gl } = this.glContext;
+        radiusInner *= 2;
+        radiusOuter *= 2;
 
         this.circleProgram.use(() => {
             this.setMesh(this.circleProgram, new Float32Array([
@@ -904,6 +923,11 @@ export class Draw {
             this.circleProgram.getUniform('u_radiusInner').asFloat().set(radiusInner);
             this.circleProgram.getUniform('u_radiusOuter').asFloat().set(radiusOuter);
             this.circleProgram.getUniform('u_smoothness').asFloat().set(smoothness);
+            this.circleProgram.getUniform('u_angle').asFloat().set(lerp(Math.PI, -Math.PI, angle));
+            this.circleProgram.getUniform('u_direction').asVec2().set({
+                x: Math.sin(dir - Math.PI / 2),
+                y: Math.cos(dir - Math.PI / 2),
+            });
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }

@@ -53,7 +53,6 @@
         onresize={({ currentTarget }) => updateScroll(currentTarget)}>
         <div class="info">
             <h2>アプリ情報</h2>
-            <small>詳細</small>
             <AppDescription {app} />
         </div>
         {#if Object.keys(request.dependencies).length > 0}

@@ -31,7 +31,7 @@ export default [
                 },
             },
         },
-        files: ['**/*.svelte'],
+        files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
     },
     {
         ignores: [

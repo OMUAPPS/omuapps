@@ -1,15 +1,13 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import Page from '$lib/components/Page.svelte';
-    import type { DocsSection } from '$lib/server/docs';
     import { ExternalLink, Tooltip } from '@omujs/ui';
     import github from 'svelte-highlight/styles/github';
-    import { writable } from 'svelte/store';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
     import { config, GROUP_NAMES } from './constants.js';
-    import { docs } from './stores.js';
+    import type { DocsSection } from './server';
+    import { docs, menuOpen, openedGroups } from './stores.js';
 
     interface Props {
         data: { sections: Record<string, DocsSection[]> };
@@ -28,56 +26,27 @@
                 entries.includes(section),
             ));
 
-    function createSetting<T>(key: string, defaultValue: T) {
-        if (typeof localStorage === 'undefined') {
-            return writable<T>(defaultValue);
-        }
-        let value = localStorage.getItem(key);
-        if (value) {
-            try {
-                value = JSON.parse(value);
-            } catch (e) {
-                console.error(e);
-                localStorage.removeItem(key);
-            }
-        }
-        const store = writable<T>(
-            localStorage.getItem(key) ? JSON.parse(localStorage.getItem(key)!) : defaultValue,
-        );
-        store.subscribe((value) => localStorage.setItem(key, JSON.stringify(value)));
-        return store;
-    }
-    let menuOpen = createSetting('site/docs/menu_open', true);
-    let openedGroups = createSetting<string[]>('site/docs/opened_groups', []);
-    let selectedGroup: string | undefined = $state(undefined);
-    run(() => {
-        selectedGroup = $docs?.group;
-    });
+    let selectedGroup: string | undefined = $derived($docs?.group);
 </script>
 
 <svelte:head>
     <svelte:element this={'style'}>
         {github}
     </svelte:element>
-    <title>{$docs?.meta.title || 'ドキュメント'} | OMUAPPS</title>
-    <meta name="description" content={$docs?.meta.description} />
-    <link rel="canonical" href={`https://omuapps.com/docs/${$docs?.slug}`} />
 </svelte:head>
 
-<Page>
+<Page headerMode="always">
     {#snippet header()}
-        <header>
-            {#if $docs}
-                {@const meta = $docs.meta}
-                <span>
-                    <h1>
-                        {meta.title}
-                        <i class="ti ti-{meta.icon || 'pencil'}"></i>
-                    </h1>
-                    <small> {meta.description} </small>
-                </span>
-            {/if}
-        </header>
+        {#if $docs}
+            {@const meta = $docs.meta}
+            <span>
+                <h1>
+                    {meta.title}
+                    <i class="ti ti-{meta.icon || 'pencil'}"></i>
+                </h1>
+                <small> {meta.description} </small>
+            </span>
+        {/if}
     {/snippet}
     {#snippet content()}
         <main>
@@ -106,80 +75,73 @@
                 {/if}
             </div>
             <div class="groups omu-scroll" class:open={$menuOpen}>
-                <button class="menu-toggle" onclick={() => ($menuOpen = !$menuOpen)}>
-                    {#if $menuOpen}
-                        閉じる
-                    {:else}
-                        開く
+                {#each Object.entries(sections) as [group, entries], index (index)}
+                    {#if group !== 'index'}
+                        <button class="group-toggle" onclick={() => {
+                            if (selectedGroup === group) {
+                                selectedGroup = undefined;
+                            }
+                            if ($openedGroups.includes(group)) {
+                                $openedGroups = $openedGroups.filter((it) => it != group);
+                            } else {
+                                $openedGroups = [...$openedGroups, group];
+                            }
+                        }}>
+                            {GROUP_NAMES[group] ?? group}
+                            <i class="ti ti-chevron-down"></i>
+                        </button>
                     {/if}
-                    <i class="ti ti-menu"></i>
-                </button>
-                {#if $menuOpen}
-                    {#each Object.entries(sections) as [group, entries], index (index)}
-                        {#if group !== 'index'}
-                            <button class="group-toggle" onclick={() => {
-                                if (selectedGroup === group) {
-                                    selectedGroup = undefined;
-                                }
-                                if ($openedGroups.includes(group)) {
-                                    $openedGroups = $openedGroups.filter((it) => it != group);
-                                } else {
-                                    $openedGroups = [...$openedGroups, group];
-                                }
-                            }}>
-                                {GROUP_NAMES[group] ?? group}
-                                <i class="ti ti-chevron-down"></i>
-                            </button>
-                        {/if}
-                        {#if group === 'index' || $openedGroups.includes(group) || selectedGroup === group}
-                            <div class="sections">
-                                {#each entries as section, index (index)}
-                                    <a
-                                        href={`/docs/${section.slug}`}
-                                        class:selected={section.slug === $docs?.slug}
-                                    >
-                                        <Tooltip>{section.meta.description}</Tooltip>
-                                        {section.meta.title}
-                                        <i class="ti ti-chevron-right"></i>
-                                    </a>
-                                {/each}
-                            </div>
-                        {/if}
-                    {/each}
-                    <div class="config">
-                        使用するパッケージマネージャー
-                        <div class="package-manager">
-                            <button
-                                onclick={() => ($config.PACKAGE_MANAGER = 'npm')}
-                                class:selected={$config.PACKAGE_MANAGER === 'npm'}
-                            >
-                                npm
-                                <i class="ti ti-brand-npm"></i>
-                            </button>
-                            <button
-                                onclick={() => ($config.PACKAGE_MANAGER = 'yarn')}
-                                class:selected={$config.PACKAGE_MANAGER === 'yarn'}
-                            >
-                                yarn
-                                <i class="ti ti-brand-yarn"></i>
-                            </button>
-                            <button
-                                onclick={() => ($config.PACKAGE_MANAGER = 'pnpm')}
-                                class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
-                            >
-                                pnpm
-                                <i class="ti ti-brand-pnpm"></i>
-                            </button>
-                            <button
-                                onclick={() => ($config.PACKAGE_MANAGER = 'bun')}
-                                class:selected={$config.PACKAGE_MANAGER === 'bun'}
-                            >
-                                bun
-                                <i class="ti ti-package"></i>
-                            </button>
+                    {#if group === 'index' || $openedGroups.includes(group) || selectedGroup === group}
+                        <div class="sections">
+                            {#each entries as section, index (index)}
+                                <a
+                                    href={`/docs/${section.slug}`}
+                                    class:selected={section.slug === $docs?.slug}
+                                    onclick={() => {
+                                        $menuOpen = false;
+                                    }}
+                                >
+                                    <Tooltip>{section.meta.description}</Tooltip>
+                                    {section.meta.title}
+                                    <i class="ti ti-chevron-right"></i>
+                                </a>
+                            {/each}
                         </div>
+                    {/if}
+                {/each}
+                <div class="config">
+                    使用するパッケージマネージャー
+                    <div class="package-manager">
+                        <button
+                            onclick={() => ($config.PACKAGE_MANAGER = 'npm')}
+                            class:selected={$config.PACKAGE_MANAGER === 'npm'}
+                        >
+                            npm
+                            <i class="ti ti-brand-npm"></i>
+                        </button>
+                        <button
+                            onclick={() => ($config.PACKAGE_MANAGER = 'yarn')}
+                            class:selected={$config.PACKAGE_MANAGER === 'yarn'}
+                        >
+                            yarn
+                            <i class="ti ti-brand-yarn"></i>
+                        </button>
+                        <button
+                            onclick={() => ($config.PACKAGE_MANAGER = 'pnpm')}
+                            class:selected={$config.PACKAGE_MANAGER === 'pnpm'}
+                        >
+                            pnpm
+                            <i class="ti ti-brand-pnpm"></i>
+                        </button>
+                        <button
+                            onclick={() => ($config.PACKAGE_MANAGER = 'bun')}
+                            class:selected={$config.PACKAGE_MANAGER === 'bun'}
+                        >
+                            bun
+                            <i class="ti ti-package"></i>
+                        </button>
                     </div>
-                {/if}
+                </div>
             </div>
         </main>
     {/snippet}
@@ -197,8 +159,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 4rem;
-        width: 100%;
-        padding-right: min(calc(70rem - 100%), calc(100% - 20rem));
+        width: min(54rem, 100%);
     }
 
     .content {
@@ -222,10 +183,7 @@
         gap: 0.5rem;
         background: var(--color-bg-1);
         color: var(--color-1);
-
-        > i {
-            font-size: 1.5rem;
-        }
+        margin-bottom: 4rem;
 
         > small {
             font-size: 0.9rem;
@@ -238,6 +196,7 @@
         font-weight: 600;
         width: fit-content;
         color: var(--color-1);
+        text-align: left;
 
         > i {
             font-size: 1.5rem;
@@ -246,44 +205,24 @@
     }
 
     .groups {
+        display: none;
         z-index: 100;
         position: fixed;
-        top: 0;
-        right: 0;
-        height: 5rem;
-        border-left: 1px solid var(--color-outline);
+        top: 5rem;
+        bottom: 0;
+        height: 100%;
+        left: 0;
         background: var(--color-bg-2);
-        display: flex;
+        padding: 4rem 0;
         flex-direction: column;
-        gap: 0.25rem;
         font-size: 0.7rem;
         width: 18rem;
         overflow-y: auto;
+        border-top: 1px solid var(--color-outline);
+        border-right: 1px solid var(--color-outline);
 
         &.open {
-            bottom: 0;
-            height: 100%;
-
-            > .menu-toggle {
-                position: sticky;
-                left: 0;
-                right: 0;
-                top: 0;
-                padding: 2rem;
-                height: 5rem;
-                margin-bottom: 4rem;
-            }
-        }
-
-        > .menu-toggle {
-            position: sticky;
-            left: 0;
-            right: 0;
-            top: 0;
-            height: 5rem;
-            border: none;
-            background: var(--color-bg-2);
-            outline: 1px solid var(--color-outline);
+            display: flex;
         }
 
         > .group-toggle {
@@ -291,7 +230,7 @@
             color: var(--color-1);
             margin: 0 1rem;
             padding: 0 0.5rem;
-            padding-bottom: 0.25rem;
+            padding-bottom: 0.5rem;
             padding-top: 0.5rem;
             background: none;
             border: none;
@@ -305,6 +244,12 @@
             &:hover {
                 background: var(--color-bg-1);
             }
+        }
+    }
+
+    @container (width > 600px) {
+        .groups {
+            display: flex;
         }
     }
 
@@ -349,6 +294,7 @@
             &.selected {
                 color: var(--color-1);
                 background: var(--color-bg-1);
+                font-weight: 900;
             }
         }
     }

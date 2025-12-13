@@ -17,7 +17,7 @@ export const QUIZ_APP = new App(APP_ID, {
             en: 'It\'s quiz time!',
         },
         icon: 'ti-letter-q',
-        tags: ['asset', 'game'] as TagKey[],
+        tags: ['asset', 'game', 'underdevelopment'] as TagKey[],
     }),
 });
 export const QUIZ_ASSET_APP = new App(APP_ID.join('asset'), {

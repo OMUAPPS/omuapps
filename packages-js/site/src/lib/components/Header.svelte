@@ -4,6 +4,7 @@
     import { Tooltip } from '@omujs/ui';
     import { BROWSER } from 'esm-env';
     import { onMount } from 'svelte';
+    import { menuOpen } from '../../routes/docs/stores';
     import Content from './Content.svelte';
 
     interface Props {
@@ -13,24 +14,29 @@
     let { always = false }: Props = $props();
 
     let path = $derived(page.url.pathname);
-    let onTop = $state(BROWSER && (!page.url.pathname.startsWith('/docs') && document.body.scrollTop < 1));
+    let onTop = $state(BROWSER && (!page.url.pathname.startsWith('/docs') && window.scrollY < 1));
 
     function onScroll() {
-        onTop = document.body.scrollTop < 1;
+        onTop = window.scrollY < 1;
     }
 
     onMount(() => {
-        document.body.addEventListener('scroll', onScroll);
+        document.addEventListener('scroll', onScroll);
 
         return () => {
-            document.body.removeEventListener('scroll', onScroll);
+            document.removeEventListener('scroll', onScroll);
         };
     });
 </script>
 
-<header class:ontop={!always && onTop}>
+<header class:ontop={!always && onTop} class:index={!page.url.pathname.startsWith('/docs')}>
     <Content>
         <nav>
+            {#if path.startsWith('/docs')}
+                <button class="menu-toggle" onclick={() => ($menuOpen = !$menuOpen)} title="menu">
+                    <i class="ti ti-menu"></i>
+                </button>
+            {/if}
             <a href="/" class="title">
                 <img src={title} alt="title" />
             </a>
@@ -46,22 +52,22 @@
                         ダウンロード
                     </li>
                 </a>
+                <a href="/docs/app">
+                    <li
+                        aria-current={path.startsWith('/docs/app') && !path.startsWith('/docs/guide')
+                            ? 'page'
+                            : undefined}
+                    >
+                        <Tooltip>あったらいいながあるかも</Tooltip>
+                        <i class="ti ti-box"></i>
+                        アプリ一覧
+                    </li>
+                </a>
                 <a href="/docs/guide">
                     <li aria-current={path.startsWith('/docs/guide') ? 'page' : undefined}>
                         <Tooltip>アプリの導入から使い方を知る</Tooltip>
                         <i class="ti ti-book"></i>
                         導入ガイド
-                    </li>
-                </a>
-                <a href="/docs/api">
-                    <li
-                        aria-current={path.startsWith('/docs') && !path.startsWith('/docs/guide')
-                            ? 'page'
-                            : undefined}
-                    >
-                        <Tooltip>あったらいいなが作れるかも</Tooltip>
-                        <i class="ti ti-pencil"></i>
-                        アプリを作る
                     </li>
                 </a>
             </ul>
@@ -89,6 +95,18 @@
         }
     }
 
+    .menu-toggle {
+        display: none;
+        width: 2.5rem;
+        min-width: 2.5rem;
+        height: 2.5rem;
+        min-height: 2.5rem;
+        border: none;
+        background: var(--color-bg-1);
+        color: var(--color-1);
+        margin-right: 1rem;
+    }
+
     nav {
         position: sticky;
         top: 0.5rem;
@@ -101,7 +119,6 @@
         width: 100%;
         max-width: 64rem;
         height: 3em;
-        margin: 0 auto;
         color: var(--color-1);
     }
 
@@ -118,18 +135,30 @@
         text-transform: uppercase;
         letter-spacing: 0.1em;
         font-weight: 600;
+        padding-bottom: 0.5rem;
 
         &:hover {
             background: var(--color-bg-2);
-            padding-bottom: 1rem;
-            transition: padding 0.0621s;
         }
 
         &[aria-current='page'] {
             background: var(--color-bg-2);
             border-bottom: 2px solid var(--color-1);
-            padding-bottom: 1rem;
+            animation: selected forwards 0.07621s;
             font-weight: 800;
+        }
+    }
+
+    @keyframes selected {
+        0% {
+            transform: translateY(0.125rem);
+        }
+        90% {
+            transform: translateY(-0.125rem);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(-0.075rem);
         }
     }
 
@@ -137,11 +166,22 @@
         display: flex;
         align-items: center;
         height: 3em;
-        height: 1.2rem;
-        margin-right: 2rem;
+        padding: 1rem;
+        padding-left: 0;
+        margin-right: 1rem;
 
         img {
             height: 1.1rem;
+        }
+
+        > .default {
+            margin-right: 1rem;
+        }
+
+        > .mini {
+            display: none;
+            width: 1.75rem;
+            height: 1.75rem;
         }
     }
 
@@ -161,9 +201,29 @@
         font-size: 1.1rem;
     }
 
-    @container (min-width: 600px) {
+    @container (width > 600px) {
         li {
             font-size: 0.8rem;
+        }
+    }
+
+    @container (width < 600px) {
+        li {
+            width: 3rem;
+        }
+
+        ul {
+            display: none;
+        }
+
+        .menu-toggle {
+            display: block;
+        }
+    }
+
+    .index {
+        ul {
+            display: flex;
         }
     }
 

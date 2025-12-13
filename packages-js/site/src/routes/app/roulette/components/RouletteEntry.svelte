@@ -16,6 +16,8 @@
         roulette,
         disabled,
     }: Props = $props();
+
+    const { entries } = roulette;
 </script>
 
 <div class="entry">
@@ -26,15 +28,15 @@
         <input
             type="text"
             bind:value={item.name}
-            oninput={() => {
-                roulette.updateEntry(item);
-            }}
-            placeholder="エントリー名..."
+            placeholder="エントリー{index}"
         />
     </span>
     <button
         onclick={() => {
-            roulette.removeEntry(item.id);
+            entries.update((entries) => {
+                delete entries[item.id];
+                return entries;
+            });
         }}
         {disabled}
     >

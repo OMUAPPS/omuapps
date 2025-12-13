@@ -278,8 +278,8 @@ function proxy<T>(
         set(target, prop, value) {
             changed = !deepEqual(target[prop], value);
             if (!changed) return true;
-            context.markChanged();
             target[prop] = value;
+            context.markChanged();
             return true;
         },
         get(target, prop) {

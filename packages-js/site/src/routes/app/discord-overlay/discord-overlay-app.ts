@@ -96,6 +96,7 @@ export type Config = {
     align: {
         alignSide?: AlignSide;
         margin: number;
+        spacing: number;
     };
 };
 export const DEFAULT_CONFIG: Config = {
@@ -117,6 +118,7 @@ export const DEFAULT_CONFIG: Config = {
             side: 'end',
         },
         margin: 100,
+        spacing: 300,
     },
 };
 const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
@@ -129,6 +131,7 @@ const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
             config.version = 11;
             config.align = {
                 margin: 100,
+                spacing: 300,
             };
         }
         return config;

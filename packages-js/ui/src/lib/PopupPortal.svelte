@@ -5,12 +5,16 @@
 
 <svelte:window onclick={({ target }) => {
     for (const popup of $popupStack) {
-        let parent = target as HTMLElement | null;
-        while (parent) {
-            if (popup.element.contains(target as Node)) {
+        let current = target as HTMLElement | null;
+        while (current) {
+            if (
+                popup.element === current
+                || popup.content === current
+                || popup.content?.contains(current)
+            ) {
                 return;
             }
-            parent = parent.parentElement;
+            current = current.parentElement;
         }
     }
     $popupStack.length = 0;

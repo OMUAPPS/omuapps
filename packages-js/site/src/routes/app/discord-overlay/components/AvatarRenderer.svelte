@@ -1,7 +1,7 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { Draw } from '$lib/components/canvas/draw.js';
-    import { type GlContext } from '$lib/components/canvas/glcontext.js';
+    import { GlContext } from '$lib/components/canvas/glcontext.js';
     import { Matrices } from '$lib/components/canvas/matrices.js';
     import { comparator } from '$lib/helper.js';
     import { BetterMath } from '$lib/math.js';
@@ -11,59 +11,90 @@
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
     import { Timer } from '$lib/timer.js';
+    import { AvatarManager } from '../avatars/avatar-manager.js';
+    import type { RenderOptions } from '../avatars/avatar.js';
     import { PALETTE_RGB } from '../consts.js';
     import { DiscordOverlayApp, type AlignSide, type AvatarConfig, type UserConfig } from '../discord-overlay-app.js';
     import type { RPCSpeakingStates, RPCVoiceStates } from '../discord/discord.js';
-    import type { User, VoiceStateItem } from '../discord/type.js';
-    import { createBackLightEffect } from '../effects/backlight.js';
-    import { createBloomEffect } from '../effects/bloom.js';
-    import { createShadowEffect } from '../effects/shadow.js';
-    import { createSpeechEffect } from '../effects/speech.js';
-    import type { Avatar, AvatarContext, Effect, RenderOptions } from '../pngtuber/avatar.js';
-    import { PNGAvatar } from '../pngtuber/pngavatar.js';
-    import { PNGTuber, type PNGTuberData } from '../pngtuber/pngtuber.js';
+    import type { VoiceStateItem } from '../discord/type.js';
+    import { EffectManager } from '../effects/effect-manager.js';
     import { alignClear, alignIndexes, alignSide, avatarPositions, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
+    import { LayoutEngine } from './layout-engine.svelte.js';
 
     interface Props {
         overlayApp: DiscordOverlayApp;
         voiceState: RPCVoiceStates;
         speakingState: RPCSpeakingStates;
-        dimensions?: any;
+        dimensions?: Vec2;
+        takeScreenshot?: () => Promise<void>;
     }
 
     let {
         overlayApp,
         voiceState,
         speakingState,
-        dimensions = {
-            width: 1920,
-            height: 1080,
-        },
+        dimensions = new Vec2(1920, 1080),
+        takeScreenshot = $bindable(),
     }: Props = $props();
     const { config } = overlayApp;
+
+    takeScreenshot = async () => {
+        const { gl } = context;
+        const { width: oldWidth, height: oldHeight } = gl.canvas;
+        gl.canvas.width = 1920;
+        gl.canvas.height = 1080;
+        const width = 1920;
+        const height = 1080;
+        try {
+            gl.colorMask(true, true, true, true);
+            gl.enable(gl.BLEND);
+            gl.clearColor(1, 1, 1, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+            gl.viewport(0, 0, width, height);
+
+            matrices.identity();
+            matrices.projection.orthographic(0, 0, width, height, -1, 1);
+
+            await drawAvatars();
+            await drawHeldTips();
+            await drawScreen();
+
+            const a = await (gl.canvas as OffscreenCanvas).convertToBlob();
+            const link = document.createElement('a');
+
+            link.download = new Date().toLocaleString() + '.png';
+            link.href = URL.createObjectURL(a);
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } finally {
+            gl.canvas.width = oldWidth;
+            gl.canvas.height = oldHeight;
+        }
+    };
 
     let context: GlContext;
     let matrices = new Matrices();
     let draw: Draw;
-    let timer = new Timer();
+    let frameTimer = new Timer();
 
     async function resize() {
         $view = matrices.get();
     }
 
-    let shadowEffect: Effect;
-    let backlightEffect: Effect;
-    let bloomEffect: Effect;
-    let speechEffect: Effect;
+    let effectManager: EffectManager;
+    let avatarManager: AvatarManager;
+    let layoutEngine: LayoutEngine;
 
     async function init(ctx: GlContext) {
         context = ctx;
         matrices = new Matrices();
         draw = new Draw(matrices, ctx);
-        speechEffect = await createSpeechEffect(context, () => $config.effects.speech);
-        shadowEffect = await createShadowEffect(context, () => $config.effects.shadow);
-        backlightEffect = await createBackLightEffect(context);
-        bloomEffect = await createBloomEffect(context);
+        effectManager = await EffectManager.new(ctx, () => $config);
+        avatarManager = new AvatarManager(ctx, overlayApp, () => $config);
+        layoutEngine = new LayoutEngine($config, dimensions);
     }
 
     function setupWorldMatrices() {
@@ -77,196 +108,45 @@
         const start = new Vec2(50, 150);
         const end = new Vec2(50, 150);
         const screen = new Vec2(width, height);
-        const target = new Vec2(dimensions.width, dimensions.height);
         const inner = screen.sub(start).sub(end);
-        const scaleVector = inner.div(target);
+        const scaleVector = inner.div(dimensions);
         const scaleFactor = Math.min(scaleVector.x, scaleVector.y);
         matrices.view.translate(start.x, start.y, 0);
-        const space = inner.sub(target.scale(scaleFactor)).scale(0.5);
+        const space = inner.sub(dimensions.scale(scaleFactor)).scale(0.5);
         matrices.view.translate(space.x, space.y, 0);
         matrices.view.scale(scaleFactor, scaleFactor, scaleFactor);
+        $view = matrices.get();
     }
 
     async function render(context: GlContext) {
         const { gl } = context;
         const { width, height } = gl.canvas;
+
         gl.colorMask(true, true, true, true);
         gl.enable(gl.BLEND);
         gl.clearColor(1, 1, 1, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
         gl.viewport(0, 0, width, height);
 
         setupWorldMatrices();
-        $view = matrices.get();
 
         if (overlayApp.isOnClient()) {
-            draw.rectangle(0, 0, dimensions.width, dimensions.height, new Vec4(1, 1, 1, 1));
+            drawBackground();
         }
         await drawAvatars();
         await drawHeldTips();
         await drawScreen();
-        timer.reset();
-    }
 
-    type ModelState = {
-        type: 'unloaded';
-    } | {
-        type: 'loading';
-    } | {
-        type: 'loaded';
-        cacheKey: string;
-        avatar: Avatar;
-        getConfig(): AvatarConfig | undefined;
-    } | {
-        type: 'failed';
-        reason: {
-            type: 'not_found';
-            id: string;
-        };
-    };
-    type AvatarState = {
-        type: 'unloaded';
-    } | {
-        type: 'loading';
-    } | {
-        type: 'loaded';
-        context: AvatarContext;
-        prevPos: Vec2Like;
-        cacheKey: string;
-        getConfig(): AvatarConfig | undefined;
-    } | {
-        type: 'failed';
-        reason: {
-            type: 'no_user_found';
-            id: string;
-        };
-    } | {
-        type: 'no_avatar';
-    };
-
-    let models: Record<string, ModelState> = {};
-
-    async function loadAvatarModelByConfig(avatar: AvatarConfig): Promise<Avatar> {
-        let parsedData: PNGTuberData;
-        if (avatar.type === 'pngtuber') {
-            const buffer = await overlayApp.getSource(avatar.source);
-            parsedData = JSON.parse(new TextDecoder().decode(buffer));
-            const model = await PNGTuber.load(context, parsedData);
-            return model;
-        } else if (avatar.type === 'png') {
-            const base = await overlayApp.getSource(avatar.base);
-            const active = avatar.active && await overlayApp.getSource(avatar.active);
-            const deafened = avatar.deafened && await overlayApp.getSource(avatar.deafened);
-            const muted = avatar.muted && await overlayApp.getSource(avatar.muted);
-            const model = await PNGAvatar.load(context, {
-                base,
-                active,
-                deafened,
-                muted,
-            });
-            return model;
-        } else {
-            throw new Error(`Unknown avatar type ${JSON.stringify(avatar)}`);
-        }
-    }
-
-    function loadAvatarModelById(id: string): ModelState {
-        let state = models[id] ?? { type: 'unloaded' };
-        const avatar = $config.avatars[id];
-        if (!avatar) return {
-            type: 'failed',
-            reason: { type: 'not_found', id },
-        };
-        const cacheKey = `avatar:${id}-${avatar.type}-${avatar.key}`;
-        if (state.type === 'loaded') {
-            if (state.cacheKey !== cacheKey) {
-                state = { type: 'unloaded' };
-            }
-        }
-        if (state.type === 'unloaded') {
-            state = {
-                type: 'loading',
-            };
-            loadAvatarModelByConfig(avatar).then((model) => {
-                models[id] = {
-                    type: 'loaded',
-                    cacheKey,
-                    avatar: model,
-                    getConfig: () => $config.avatars[id],
-                };
-            });
-        }
-        models[id] = state;
-        return state;
-    }
-
-    let avatars: Record<string, AvatarState> = {};
-
-    async function createDefaultAvatar(url: string) {
-        const base = await overlayApp.getSource({ type: 'url', url });
-        const model = await PNGAvatar.load(context, {
-            base,
-        });
-        return model;
-    }
-
-    type AvatarCacheKey<T extends string = string, K extends string = string> = `${T}:${K}`;
-
-    function getAvatarCacheKeyByVoiceState(userConfig: UserConfig, user: User): AvatarCacheKey {
-        if (!userConfig.avatar) {
-            return user.avatar ? `discord:${user.id}/${user.avatar}` : 'discord:default';
-        }
-        const avatar = $config.avatars[userConfig.avatar];
-        return avatar ? `avatar:${userConfig.avatar}-${avatar.type}-${avatar.key}` : 'avatar:not_found';
-    }
-
-    function loadAvatarByVoiceState(id: string, voiceState: VoiceStateItem): AvatarState {
-        const userConfig = $config.users[id];
-        if (!userConfig) return {
-            type: 'failed',
-            reason: { type: 'no_user_found', id },
-        };
-        let state: AvatarState = avatars[id] ?? { type: 'unloaded' };
-        if (state.type === 'loaded') {
-            const cacheKey = getAvatarCacheKeyByVoiceState(userConfig, voiceState.user);
-            if (state.cacheKey === cacheKey) return state;
-            state = { type: 'unloaded' };
-        }
-        if (state.type === 'unloaded') {
-            if (!userConfig.avatar) {
-                const { user } = voiceState;
-                const avatarUrl = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
-                createDefaultAvatar(avatarUrl).then((avatar) => {
-                    avatars[id] = {
-                        type: 'loaded',
-                        context: avatar.create(),
-                        prevPos: userConfig.position,
-                        cacheKey: getAvatarCacheKeyByVoiceState(userConfig, voiceState.user),
-                        getConfig: () => undefined,
-                    };
-                });
-                return avatars[id] = {
-                    type: 'loading',
-                };
-            }
-            const model = loadAvatarModelById(userConfig.avatar);
-            if (model.type === 'loaded') {
-                return avatars[id] = {
-                    type: 'loaded',
-                    context: model.avatar.create(),
-                    cacheKey: model.cacheKey,
-                    prevPos: userConfig.position,
-                    getConfig: model.getConfig,
-                };
-            }
-        }
-        return state;
+        frameTimer.reset();
     }
 
     const AVATAR_FACE_RADIUS = 150;
     const POSITION_OFFSET = AVATAR_FACE_RADIUS / 2;
+
+    function drawBackground() {
+        draw.rectangle(0, 0, dimensions.x, dimensions.y, new Vec4(1, 1, 1, 1));
+    }
 
     function applyAvatarScale(scale: number) {
         matrices.model.translate(0, AVATAR_FACE_RADIUS, 0);
@@ -286,44 +166,6 @@
         }
     }
 
-    function calculateAlignDir(alignSide: AlignSide): Vec2 {
-        const { align, side } = alignSide;
-        const horizontal = align.y === 0;
-        return new Vec2(
-            horizontal ? 0 : (side === 'start' ? 1 : -1),
-            horizontal ? (side === 'end' ? -1 : 1) : 0,
-        );
-    }
-
-    const AVATAR_DEFAULT_SPACING = 300;
-
-    function getFitScaleFactor(): number {
-        const MARGIN = $config.align.margin;
-        const total = Object.keys(alignDistanceCache).length;
-        const spacing = AVATAR_DEFAULT_SPACING / Math.min(AVATAR_DEFAULT_SPACING, (dimensions.width - MARGIN * 2) / total);
-        return spacing;
-    }
-
-    function calculateAlignPosition(alignSide: AlignSide, index: number, total: number): Vec2 {
-        const MARGIN = $config.align.margin;
-        const { align, side } = alignSide;
-        const align01 = Vec2.from(align).add(Vec2.ONE).mul({ x: dimensions.width / 2 - MARGIN, y: dimensions.height / 2 - MARGIN }).add({ x: MARGIN, y: MARGIN });
-        const dirPerp = getAlignPerpendicularOffset(align);
-        const sideScalar = { start: -1, middle: 0, end: 1 }[side];
-        const origin = align01.add(dirPerp.scale(Math.abs(align.x) > Math.abs(align.y) ? dimensions.height / 2 : dimensions.width / 2).scale(sideScalar));
-
-        const spacing = Math.min(AVATAR_DEFAULT_SPACING, (dimensions.width - MARGIN * 2) / total);
-        let offsetScale = index * spacing + MARGIN * 2;
-        if (side === 'middle') {
-            offsetScale = (index - (total - 1) / 2) * spacing;
-        } else {
-            offsetScale = offsetScale;
-        }
-        const offsetDir = calculateAlignDir(alignSide);
-        const offset = offsetDir.scale(offsetScale);
-        return origin.add(offset);
-    }
-
     function applyUserTransform(id: string, user: UserConfig, alignSide: AlignSide | undefined, index: number, total: number): { target: Vec2Like; current: Vec2Like } {
         const last = avatarPositions[id];
         const transform = { ...last ?? {
@@ -332,11 +174,11 @@
             rot: 0,
             scale: Vec2.ONE,
         } };
-        const deltaTime = timer.getElapsedMS() / 1000;
+        const deltaTime = frameTimer.getElapsedMS() / 1000;
         const t = 1 - Math.exp(-deltaTime * 16);
         if (alignSide && user.align) {
             const { align, side } = alignSide;
-            transform.pos = calculateAlignPosition(alignSide, index, total);
+            transform.pos = layoutEngine.calculateAlignPosition(alignSide, index, total);
             transform.targetPos = transform.pos;
 
             const horizontal = align.y === 0;
@@ -349,12 +191,12 @@
             );
             transform.rot = horizontal ? TAU / 4 : 0;
             if (id !== $dragState?.id) {
-                user.position = Vec2.from(user.position).lerp(transform.pos, t);
+                user.position = transform.pos;
                 transform.targetPos = user.position;
             }
         } else {
             if (alignSide) {
-                const dir = calculateAlignDir(alignSide);
+                const dir = layoutEngine.calculateAlignDir(alignSide);
                 const newDistances = {
                     ...alignDistanceCache,
                     [id]: dir.dot(id === $dragState?.id ? $dragPosition ?? user.position : user.position),
@@ -364,7 +206,7 @@
                         .sort(comparator(([, offset]) => offset))
                         .map(([id], index) => [id, index]),
                 );
-                transform.targetPos = calculateAlignPosition(alignSide, alignIndexes[id], total);
+                transform.targetPos = layoutEngine.calculateAlignPosition(alignSide, alignIndexes[id], total);
             }
             transform.pos = user.position;
             transform.scale = Vec2.ONE;
@@ -390,14 +232,7 @@
     let alignDistanceCache: Record<string, number> = {};
 
     function getRenderOptions(): RenderOptions {
-        const effects: Effect[] = [
-            $config.effects.speech.active && speechEffect,
-            $config.effects.shadow.active && shadowEffect,
-            $config.effects.backlightEffect.active && backlightEffect,
-            $config.effects.backlightEffect.active && bloomEffect,
-        ].filter((it): it is Effect => !!it);
-
-        return { effects };
+        return { effects: effectManager.getActiveEffects() };
     }
 
     function getSortedVoiceEntries(): [string, VoiceStateItem][] {
@@ -427,7 +262,7 @@
     }
 
     function calculateAlignOffset(id: string, user: UserConfig): number {
-        const dir = calculateAlignDir($config.align.alignSide!);
+        const dir = layoutEngine.calculateAlignDir($config.align.alignSide!);
         const position = id === $dragState?.id ? $dragPosition ?? user.position : user.position;
         return dir.dot(position);
     }
@@ -467,7 +302,7 @@
                 speaking_start: 0,
                 speaking_stop: 0,
             };
-            const avatar = loadAvatarByVoiceState(id, voiceState);
+            const avatar = avatarManager.loadAvatarByVoiceState(id, voiceState);
             if (avatar.type !== 'loaded') return;
             matrices.model.push();
 
@@ -475,14 +310,14 @@
             const screenPos = matrices.model.get().transform2({ x: 0, y: POSITION_OFFSET });
             matrices.model.translate(0, -POSITION_OFFSET, 0);
 
-            const avatarConfig = avatar.getConfig();
-            const spacingFactor = getFitScaleFactor();
+            const avatarConfig = avatar.data.getConfig();
+            const spacingFactor = layoutEngine.getFitScaleFactor();
             applyAvatarScale(user.scale / spacingFactor);
             if (avatarConfig) {
                 applyAvatarTransform(avatarConfig);
             }
 
-            const bounds = avatar.context.bounds();
+            const bounds = avatar.data.context.bounds();
             const avatarMatrix = matrices.model.get();
             const worldBounds = avatarMatrix.transformAABB2(bounds).expand({ x: 40, y: 40 });
             const alignedWorldBounds = worldBounds
@@ -494,7 +329,7 @@
                 continue;
             }
 
-            avatar.context.render(matrices, {
+            avatar.data.context.render(matrices, {
                 id,
                 talking: speakState.speaking,
                 mute: voiceState.voice_state.mute,
@@ -545,10 +380,7 @@
                 name,
                 { x: align ? (align.x + 1) / 2 : 0.5, y: 1 },
                 { x: 1, y: 1, z: 1, w: 1 },
-                {
-                    width: offsetScale,
-                    color: new Vec4(0, 0, 0, 1),
-                },
+                { width: offsetScale, color: new Vec4(0, 0, 0, 1) },
             );
         }
     }
@@ -557,9 +389,6 @@
 
     const RADIUS = 24;
     const RADIUS_VEC = new Vec2(RADIUS, RADIUS);
-    const getAlignPerpendicularOffset = (align: Vec2Like): Vec2 => {
-        return Vec2.from(align).turnRight().scale(align.x > 0 || align.y < 0 ? -1 : 1);
-    };
 
     function alignedCount(): number {
         return Object.entries(voiceState.states).filter(([userId]) => {
@@ -573,7 +402,6 @@
         $alignSide = undefined;
         const dragTime = performance.now() - $dragState.time;
         const dragT = (1 - 1 / (dragTime + 1));
-        const screen = new Vec2(dimensions.width, dimensions.height);
         matrices.push();
         setupWorldMatrices();
         const worldView = matrices.view.get();
@@ -615,7 +443,7 @@
         // Helper functions
         const getWorldPoint = (align: Align): Vec2 => {
             const dir01 = align.dir.add(Vec2.ONE).scale(0.5);
-            return align.dir.scale(MARGIN * dragT).add(dir01.mul(screen));
+            return align.dir.scale(MARGIN * dragT).add(dir01.mul(dimensions));
         };
 
         const drawAlignIcon = async (point: Vec2, icon: string, color = PALETTE_RGB.ACCENT): Promise<void> => {
@@ -656,7 +484,7 @@
             const point = marginMounds.closest(worldView.transform2(pointWorld));
             const hovered = hoveredAlign === align.icon;
             const scale = hovered ? 2 : 0;
-            const dirPerp = getAlignPerpendicularOffset(align.dir)
+            const dirPerp = layoutEngine.getAlignPerpendicularOffset(align.dir)
                 .scale(RADIUS)
                 .scale(scale);
 
@@ -705,7 +533,7 @@
         }
 
         if ($config.align.alignSide && alignedCount() > 2) {
-            const center = worldView.transform2(screen.scale(0.5));
+            const center = worldView.transform2(dimensions.scale(0.5));
             const bounds = draw.measureTextActual('整列を解除').centered(Vec2.ONE.scale(0.5)).offset(center).expand({ x: 150, y: 50 });
             const boundsOutline = bounds.expand(Vec2.ONE.scale(2));
             const worldBounds = worldViewInv.transformAABB2(boundsOutline);
@@ -737,7 +565,7 @@
         if (!$selectedAvatar) return;
         const avatarConfig = $config.avatars[$selectedAvatar];
         if (!avatarConfig) return;
-        const avatarStatus = loadAvatarModelById($selectedAvatar);
+        const avatarStatus = avatarManager.loadAvatarModelById($selectedAvatar);
         if (avatarStatus.type == 'loaded') {
             matrices.view.push();
             const { gl } = context;
@@ -750,7 +578,7 @@
             matrices.view.scale(scale, scale, 0);
             matrices.model.push();
             applyAvatarTransform(avatarConfig);
-            const avatarContext = avatarStatus.avatar.create();
+            const avatarContext = avatarStatus.data.avatar.create();
             avatarContext.render(matrices, {
                 id: $selectedAvatar,
                 talking: false,

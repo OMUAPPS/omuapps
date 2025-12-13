@@ -7,11 +7,11 @@
     }
 
     let { roulette }: Props = $props();
-    const { rouletteState: state, entries } = roulette;
+    const { rouletteState, entries } = roulette;
 </script>
 
-<div class="spin-button" class:spinning={$state.type === 'spinning'}>
-    {#if $state.type === 'idle' || $state.type === 'recruiting'}
+<div class="spin-button" class:spinning={$rouletteState.type === 'spinning'}>
+    {#if $rouletteState.type === 'idle' || $rouletteState.type === 'recruiting'}
         {@const empty = Object.keys($entries).length === 0}
         <button onclick={() => roulette.spin()} disabled={empty}>
             <Tooltip>
@@ -28,7 +28,7 @@
             {/if}
             <i class="ti ti-rotate-360"></i>
         </button>
-    {:else if $state.type === 'spin-result'}
+    {:else if $rouletteState.type === 'spin-result'}
         <button onclick={() => roulette.stop()}>
             <Tooltip>このルーレットを終わる</Tooltip>
             終了

@@ -27,11 +27,11 @@
         <RouletteRenderer {roulette} />
     </div>
     {#if $rouletteState.type === 'spin-result'}
-        {@const message = $rouletteState.result.entry.message && Models.Message.deserialize($rouletteState.result.entry.message)}
+        {@const message = $rouletteState.result.message && Models.Message.deserialize($rouletteState.result.message)}
         <div class="result-container">
             <div class="result">
                 <p>
-                    {$rouletteState.result.entry.name}
+                    {$rouletteState.result.name}
                 </p>
                 {#if message && message.authorId}
                     <div class="message">

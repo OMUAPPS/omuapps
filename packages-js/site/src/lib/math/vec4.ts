@@ -25,33 +25,33 @@ export class Vec4 {
         r = g = b = a = 1;
         switch (hex.length) {
             case 1: {
-                r = g = b = parseInt(hex, 16);
+                r = g = b = parseInt(hex, 16) / 16;
                 break;
             }
             case 3: {
-                r = parseInt(hex.charAt(0), 16);
-                g = parseInt(hex.charAt(1), 16);
-                b = parseInt(hex.charAt(2), 16);
+                r = parseInt(hex.charAt(0), 16) / 16;
+                g = parseInt(hex.charAt(1), 16) / 16;
+                b = parseInt(hex.charAt(2), 16) / 16;
                 break;
             }
             case 4: {
-                r = parseInt(hex.charAt(0), 16);
-                g = parseInt(hex.charAt(1), 16);
-                b = parseInt(hex.charAt(2), 16);
-                a = parseInt(hex.charAt(3), 16);
+                r = parseInt(hex.charAt(0), 16) / 16;
+                g = parseInt(hex.charAt(1), 16) / 16;
+                b = parseInt(hex.charAt(2), 16) / 16;
+                a = parseInt(hex.charAt(3), 16) / 16;
                 break;
             }
             case 6: {
-                r = parseInt(hex.slice(0, 2), 16);
-                g = parseInt(hex.slice(2, 4), 16);
-                b = parseInt(hex.slice(4, 6), 16);
+                r = parseInt(hex.slice(0, 2), 16) / 16;
+                g = parseInt(hex.slice(2, 4), 16) / 16;
+                b = parseInt(hex.slice(4, 6), 16) / 16;
                 break;
             }
             case 8: {
-                r = parseInt(hex.slice(0, 2), 16);
-                g = parseInt(hex.slice(2, 4), 16);
-                b = parseInt(hex.slice(4, 6), 16);
-                a = parseInt(hex.slice(6, 8), 16);
+                r = parseInt(hex.slice(0, 2), 16) / 16;
+                g = parseInt(hex.slice(2, 4), 16) / 16;
+                b = parseInt(hex.slice(4, 6), 16) / 16;
+                a = parseInt(hex.slice(6, 8), 16) / 16;
                 break;
             }
             default: {
@@ -59,10 +59,10 @@ export class Vec4 {
             }
         }
         return new Vec4(
-            r / 255,
-            g / 255,
-            b / 255,
-            a / 255,
+            r,
+            g,
+            b,
+            a,
         );
     }
 

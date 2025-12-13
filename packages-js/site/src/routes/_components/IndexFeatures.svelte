@@ -5,15 +5,11 @@
 
     let scroll = $state(0);
 
-    function onScroll() {
-        scroll = document.body.scrollTop;
-    }
-
     function isVisible(element: HTMLElement | undefined, _: number) {
         if (!BROWSER) return true;
         if (!element) return false;
         const rect = element.getBoundingClientRect();
-        return rect.top + 100 < document.body.clientHeight;
+        return rect.top < window.innerHeight * 0.85;
     }
 
     let card0: HTMLElement | undefined = $state(undefined);
@@ -21,7 +17,9 @@
     let card2: HTMLElement | undefined = $state(undefined);
 </script>
 
-<svelte:body onscroll={onScroll} />
+<svelte:window onscroll={() => {
+    scroll = window.scrollY;
+}} />
 
 <div class="features">
     <a class="card" href="/docs/guide" bind:this={card0} class:visible={isVisible(card0, scroll)}>

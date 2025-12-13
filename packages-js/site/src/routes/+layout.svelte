@@ -28,8 +28,8 @@
     {@render children?.()}
 </div>
 <ProgressBar />
-<TooltipPortal />
 <PopupPortal />
+<TooltipPortal />
 
 <style>
     .app {

@@ -1,4 +1,4 @@
-export type State =
+export type RouletteState =
     | IdleState
     | RecruitingState
     | RecruitingEndState
@@ -27,17 +27,13 @@ export type RecruitingEndState = {
     type: 'recruiting-end';
 };
 
-export type SpinResult = {
-    entry: RouletteItem;
-};
-
 export type SpinStartState = {
     type: 'spin-start';
 };
 
 export type SpinningState = {
     type: 'spinning';
-    result: SpinResult;
+    result: RouletteItem;
     random: number;
     start: number;
     duration: number;
@@ -45,6 +41,6 @@ export type SpinningState = {
 
 export type SpinResultState = {
     type: 'spin-result';
-    result: SpinResult;
+    result: RouletteItem;
     random: number;
 };

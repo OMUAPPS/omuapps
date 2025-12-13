@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context.js';
     import { PopupPortal, Tooltip, TooltipPortal } from '@omujs/ui';
     import { listen, TauriEvent } from '@tauri-apps/api/event';
+    import { exit } from '@tauri-apps/plugin-process';
     import { DEV } from 'esm-env';
     import { onDestroy, onMount } from 'svelte';
     import Title from '../images/title.svg';
@@ -58,7 +60,12 @@
     }
 
     async function close() {
-        await appWindow.hide();
+        await appWindow.close();
+        try {
+            await omu.server.shutdown(false);
+        } finally {
+            exit();
+        }
     }
 </script>
 

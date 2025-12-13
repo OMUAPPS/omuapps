@@ -26,29 +26,29 @@
 {#if headerMode}
     <Header always={headerMode === 'always'} />
 {/if}
-{#if banner}{@render banner()}{:else}
+{#if banner}
+    {@render banner()}
+{:else}
     <img src={background} alt="background" class="background" />
 {/if}
-<header>
-    <Content>
-        <div class="header-content">
-            {@render header?.()}
-        </div>
-    </Content>
-</header>
 <main class:no-background={noBackground}>
-    <Content>
-        <div class="main-content">
+    <header>
+        <Content>
+            {@render header?.()}
+        </Content>
+    </header>
+    <div class="main-content">
+        <Content>
             {@render content?.()}
-        </div>
-        {#if footer}
-            <Footer />
-        {/if}
-    </Content>
+            {#if footer}
+                <Footer />
+            {/if}
+        </Content>
+    </div>
 </main>
 
 <style lang="scss">
-    $haeder-height: min(42vh, calc(100vw));
+    $header-height: min(42vh, calc(100vw));
 
     .background {
         position: fixed;
@@ -59,34 +59,26 @@
     }
 
     header {
-        position: absolute;
+        container-type: inline-size;
         top: 0;
         display: flex;
-        height: $haeder-height;
+        min-height: $header-height;
+        padding: 4rem 0;
         width: 100%;
         font-weight: 600;
-
-        .header-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: 100%;
-            width: 100%;
-            padding: 4rem 0;
-            padding-top: 10rem;
-        }
+        padding-top: min(14rem, $header-height - 8rem);
     }
 
     main {
         position: absolute;
-        top: $haeder-height;
+        container-type: inline-size;
         width: 100%;
-        min-height: calc(100% - #{$haeder-height});
+        min-height: calc(100% - #{$header-height});
         height: fit-content;
-        background: var(--color-bg-2);
 
         .main-content {
-            margin-top: 4rem;
+            padding-top: 4rem;
+            background: var(--color-bg-2);
         }
 
         &.no-background {

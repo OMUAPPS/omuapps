@@ -1,7 +1,7 @@
-import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import type { Matrices } from '$lib/components/canvas/matrices.js';
 import type { AABB2 } from '$lib/math/aabb2.js';
 import type { UserAvatarConfig } from '../discord-overlay-app.js';
+import type { Effect } from '../effects/effect.js';
 
 export type AvatarAction = {
     id: string;
@@ -12,10 +12,6 @@ export type AvatarAction = {
     self_deaf: boolean;
     suppress: boolean;
     config: UserAvatarConfig;
-};
-
-export type Effect = {
-    render: (action: AvatarAction, texture: GlTexture, dest: GlFramebuffer) => void;
 };
 
 export type RenderOptions = {

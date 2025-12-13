@@ -12,21 +12,22 @@
 
 <style>
     main {
-        container-type: inline-size;
+        position: relative;
         box-sizing: border-box;
         display: flex;
         flex: 1;
         flex-direction: column;
-        width: min(100%, 62rem);
+        width: 100%;
         max-width: 70rem;
         padding: 0 1.5rem;
-        margin: 0 auto;
         font-size: 1em;
     }
 
-    @container (width < 400px) {
+    @container (width > 600px) {
         main {
-            font-size: 0.75em;
+            position: relative;
+            left: 24rem;
+            right: 20rem;
         }
     }
 </style>

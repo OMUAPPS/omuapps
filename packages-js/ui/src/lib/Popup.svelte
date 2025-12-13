@@ -121,7 +121,9 @@
         }
     });
 
-    function usePopup(_node: HTMLElement): ReturnType<Action> {
+    function usePopup(node: HTMLElement): ReturnType<Action> {
+        if (!entry) return;
+        entry.content = node;
         return {
             destroy: () => {
                 if (!entry) return;
@@ -162,7 +164,6 @@
         z-index: 200;
         font-size: 0.75rem;
         font-weight: 600;
-        color: #fff;
         white-space: nowrap;
         padding: 1rem 1.5rem;
         background: var(--color-bg-2);
