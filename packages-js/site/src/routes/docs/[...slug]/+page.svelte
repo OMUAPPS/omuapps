@@ -20,12 +20,15 @@
 <svelte:head>
     <title>{meta.title || 'ドキュメント'} | OMUAPPS</title>
     <meta name="description" content={meta.description} />
+    <meta name="og:description" content={meta.description} />
     <meta name="og:title" content={meta.title}>
     {#if data.page.meta}
         <meta name="og:image" content={meta.image}>
     {/if}
     <meta name="og:url" content={`https://omuapps.com/docs/${data.page.slug}`} />
     <link rel="canonical" href={`https://omuapps.com/docs/${data.page.slug}`} />
+    <meta name="twitter:card" content={meta.image} />
+    <meta name="twitter:site" content="@OMUAPPS" />
 </svelte:head>
 
 <Markdown {source} />
