@@ -9,11 +9,13 @@ description: すべてのアプリとその簡単な説明
 
 ## Discordオーバーレイ
 
-- 安定して起動できるDiscordオーバーレイ
+![Discord Overlay](/img/discord-overlay.png)
+
+- 安定して表示できるDiscordオーバーレイ
 - DiscordのボイスチャットをOBSに表示することができます
 - PNGTuber+アバターに対応。あなたの持っているPNGTuber+アバターでコラボ配信ができます
 
-[Discordオーバーレイ詳細](%DOCS_ROOT%/app/discord-overlay?_style=large)
+[Discordオーバーレイ](%DOCS_ROOT%/app/discord-overlay)
 
 ## リアクション
 
