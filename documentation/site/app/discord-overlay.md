@@ -2,7 +2,7 @@
 index: 10
 icon: brand-discord
 title: Discordオーバーレイ
-description: すべてのアプリとその簡単な説明
+description: 安定して表示されるPNGTuber+の使えるオーバーレイ
 ---
 
 # Discordオーバーレイ
