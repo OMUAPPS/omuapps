@@ -27,7 +27,13 @@
     {/if}
     <meta name="og:url" content={`https://omuapps.com/docs/${data.page.slug}`} />
     <link rel="canonical" href={`https://omuapps.com/docs/${data.page.slug}`} />
-    <meta name="twitter:card" content={meta.image} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={meta.title} />
+    {#if meta.image}
+        <meta name="twitter:image" content={meta.image} />
+    {/if}
+    <meta name="twitter:description" content={meta.description} />
+    <meta name="twitter:domain" content="omuapps.com" />
     <meta name="twitter:site" content="@OMUAPPS" />
 </svelte:head>
 
