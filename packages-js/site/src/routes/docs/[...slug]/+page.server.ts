@@ -1,5 +1,5 @@
-import { getDocsData, normalizeSlug } from '$lib/server/docs';
 import { error } from '@sveltejs/kit';
+import { getDocsData, normalizeSlug } from '../server.js';
 import type { EntryGenerator } from './$types.js';
 
 export const prerender = true;

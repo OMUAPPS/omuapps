@@ -29,7 +29,7 @@
     });
 </script>
 
-<header class:ontop={!always && onTop}>
+<header class:ontop={!always && onTop} class:index={!page.url.pathname.startsWith('/docs')}>
     <Content>
         <nav>
             {#if path.startsWith('/docs')}
@@ -52,22 +52,22 @@
                         ダウンロード
                     </li>
                 </a>
-                <a href="/docs/guide">
-                    <li aria-current={path.startsWith('/docs/guide') ? 'page' : undefined}>
-                        <Tooltip>アプリの導入から使い方を知る</Tooltip>
-                        <i class="ti ti-book"></i>
-                        導入ガイド
-                    </li>
-                </a>
                 <a href="/docs/app">
                     <li
                         aria-current={path.startsWith('/docs/app') && !path.startsWith('/docs/guide')
                             ? 'page'
                             : undefined}
                     >
-                        <Tooltip>あったらいいなが作れるかも</Tooltip>
+                        <Tooltip>あったらいいながあるかも</Tooltip>
                         <i class="ti ti-box"></i>
                         アプリ一覧
+                    </li>
+                </a>
+                <a href="/docs/guide">
+                    <li aria-current={path.startsWith('/docs/guide') ? 'page' : undefined}>
+                        <Tooltip>アプリの導入から使い方を知る</Tooltip>
+                        <i class="ti ti-book"></i>
+                        導入ガイド
                     </li>
                 </a>
             </ul>
@@ -119,7 +119,6 @@
         width: 100%;
         max-width: 64rem;
         height: 3em;
-        margin: 0 auto;
         color: var(--color-1);
     }
 
@@ -145,9 +144,21 @@
         &[aria-current='page'] {
             background: var(--color-bg-2);
             border-bottom: 2px solid var(--color-1);
-            padding-bottom: 0.75rem;
-            transition: padding 0.0621s;
+            animation: selected forwards 0.07621s;
             font-weight: 800;
+        }
+    }
+
+    @keyframes selected {
+        0% {
+            transform: translateY(0.125rem);
+        }
+        90% {
+            transform: translateY(-0.125rem);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(-0.075rem);
         }
     }
 
@@ -157,10 +168,20 @@
         height: 3em;
         padding: 1rem;
         padding-left: 0;
-        margin-right: 2rem;
+        margin-right: 1rem;
 
         img {
             height: 1.1rem;
+        }
+
+        > .default {
+            margin-right: 1rem;
+        }
+
+        > .mini {
+            display: none;
+            width: 1.75rem;
+            height: 1.75rem;
         }
     }
 
@@ -191,8 +212,18 @@
             width: 3rem;
         }
 
+        ul {
+            display: none;
+        }
+
         .menu-toggle {
             display: block;
+        }
+    }
+
+    .index {
+        ul {
+            display: flex;
         }
     }
 

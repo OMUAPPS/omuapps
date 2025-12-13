@@ -38,6 +38,10 @@
         updateElement(event.target as HTMLElement);
     }
 
+    function reset() {
+        top = undefined;
+    }
+
     function onkeydown() {
         requestAnimationFrame(() => {
             if (!document.activeElement) return;
@@ -49,6 +53,7 @@
 
 <svelte:window
     {onmousemove}
+    onscroll={reset}
     {onkeydown}
     onmouseout={() => {top = undefined;}}
 />

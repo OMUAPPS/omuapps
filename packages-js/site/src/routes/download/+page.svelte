@@ -54,7 +54,7 @@
 
 <svelte:head>
     <title>OMUAPPS - ダウンロード</title>
-    <meta name="description" content="OMUAPPSをダウンロードして使ってみる" />
+    <meta name="description" content="OMUAPPSを始めて見る" />
 </svelte:head>
 
 <Page headerMode="always">
@@ -64,7 +64,7 @@
                 ダウンロード
                 <i class="ti ti-download"></i>
             </h1>
-            <small> OMUAPPSをダウンロードして使ってみる </small>
+            <small>OMUAPPSを始めて見る</small>
         </header>
     {/snippet}
     {#snippet content()}

@@ -1,8 +1,8 @@
 <script lang="ts">
 
     import Markdown from '$lib/components/markdown/Markdown.svelte';
-    import type { DocsData } from '$lib/server/docs';
     import { config, replaceConstants } from '../constants.js';
+    import type { DocsData } from '../server.js';
     import { docs } from '../stores.js';
 
     interface Props {

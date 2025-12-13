@@ -111,6 +111,7 @@ export interface PopupEntry {
     id: number;
     render: Snippet<[]>;
     element: HTMLElement;
+    content?: HTMLElement;
 };
 
 export const popupStack = writable<PopupEntry[]>([]);

@@ -31,20 +31,20 @@
 {:else}
     <img src={background} alt="background" class="background" />
 {/if}
-<header>
-    <Content>
-        {@render header?.()}
-    </Content>
-</header>
 <main class:no-background={noBackground}>
-    <Content>
-        <div class="main-content">
+    <header>
+        <Content>
+            {@render header?.()}
+        </Content>
+    </header>
+    <div class="main-content">
+        <Content>
             {@render content?.()}
-        </div>
-        {#if footer}
-            <Footer />
-        {/if}
-    </Content>
+            {#if footer}
+                <Footer />
+            {/if}
+        </Content>
+    </div>
 </main>
 
 <style lang="scss">
@@ -60,26 +60,25 @@
 
     header {
         container-type: inline-size;
-        position: absolute;
         top: 0;
         display: flex;
-        height: $header-height;
+        min-height: $header-height;
+        padding: 4rem 0;
         width: 100%;
         font-weight: 600;
-        padding-top: 14rem;
+        padding-top: min(14rem, $header-height - 8rem);
     }
 
     main {
         position: absolute;
         container-type: inline-size;
-        top: $header-height;
         width: 100%;
         min-height: calc(100% - #{$header-height});
         height: fit-content;
-        background: var(--color-bg-2);
 
         .main-content {
-            margin-top: 4rem;
+            padding-top: 4rem;
+            background: var(--color-bg-2);
         }
 
         &.no-background {

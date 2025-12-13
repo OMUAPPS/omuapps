@@ -20,13 +20,12 @@
         width: 100%;
         max-width: 70rem;
         padding: 0 1.5rem;
-        font-size: 0.75em;
+        font-size: 1em;
     }
 
     @container (width > 600px) {
         main {
             position: relative;
-            font-size: 1em;
             left: 24rem;
             right: 20rem;
         }

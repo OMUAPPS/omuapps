@@ -1,13 +1,12 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import Page from '$lib/components/Page.svelte';
-    import type { DocsSection } from '$lib/server/docs';
     import { ExternalLink, Tooltip } from '@omujs/ui';
     import github from 'svelte-highlight/styles/github';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
     import { config, GROUP_NAMES } from './constants.js';
+    import type { DocsSection } from './server';
     import { docs, menuOpen, openedGroups } from './stores.js';
 
     interface Props {
@@ -27,10 +26,7 @@
                 entries.includes(section),
             ));
 
-    let selectedGroup: string | undefined = $state(undefined);
-    run(() => {
-        selectedGroup = $docs?.group;
-    });
+    let selectedGroup: string | undefined = $derived($docs?.group);
 </script>
 
 <svelte:head>
@@ -41,18 +37,16 @@
 
 <Page headerMode="always">
     {#snippet header()}
-        <header>
-            {#if $docs}
-                {@const meta = $docs.meta}
-                <span>
-                    <h1>
-                        {meta.title}
-                        <i class="ti ti-{meta.icon || 'pencil'}"></i>
-                    </h1>
-                    <small> {meta.description} </small>
-                </span>
-            {/if}
-        </header>
+        {#if $docs}
+            {@const meta = $docs.meta}
+            <span>
+                <h1>
+                    {meta.title}
+                    <i class="ti ti-{meta.icon || 'pencil'}"></i>
+                </h1>
+                <small> {meta.description} </small>
+            </span>
+        {/if}
     {/snippet}
     {#snippet content()}
         <main>

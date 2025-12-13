@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ORIGIN } from '../../../routes/app/origin';
 
     interface Props {
         href?: string;
@@ -8,7 +9,7 @@
 
     let { href = '', title = undefined, text = '' }: Props = $props();
 
-    let uri = $derived(new URL(!href.startsWith('/') ? href : 'https://' + href));
+    let uri = $derived(new URL(href, ORIGIN));
     let style = $derived(uri.searchParams.get('_style') || 'default' as 'default' | 'large');
     let [content, description] = $derived((text || title || href).split('\\\\'));
 </script>
@@ -60,6 +61,7 @@
         flex-direction: column;
         gap: 0.25rem;
         width: 20rem;
+        filter: drop-shadow(0 2px 0px var(--color-outline));
     }
 
     small {

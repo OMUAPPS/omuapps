@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { DocsSection } from '$lib/server/docs';
+    import type { DocsSection } from '../server';
 
     interface Props {
         section: DocsSection;
