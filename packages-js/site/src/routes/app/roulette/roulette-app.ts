@@ -5,7 +5,7 @@ import { RegistryType } from '@omujs/omu/api/registry';
 import seedrandom from 'seedrandom';
 import { get, type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
-import type { RouletteItem, State } from './state.js';
+import type { RouletteItem, RouletteState } from './state.js';
 
 export type Config = {
     duration: number;
@@ -25,7 +25,7 @@ const ENTRIES_REGISTRY = RegistryType.createJson<Record<string, RouletteItem>>(A
     defaultValue: {},
 });
 
-const STATE_REGISTRY = RegistryType.createJson<State>(APP_ID, {
+const STATE_REGISTRY = RegistryType.createJson<RouletteState>(APP_ID, {
     name: 'state',
     defaultValue: {
         type: 'idle',
@@ -34,44 +34,13 @@ const STATE_REGISTRY = RegistryType.createJson<State>(APP_ID, {
 
 export class RouletteApp {
     public config: Writable<Config>;
-    public rouletteState: Writable<State>;
+    public rouletteState: Writable<RouletteState>;
     public entries: Writable<Record<string, RouletteItem>>;
 
     constructor(omu: Omu) {
         this.config = omu.registries.get(CONFIG_REGISTRY).compatSvelte();
         this.rouletteState = omu.registries.get(STATE_REGISTRY).compatSvelte();
         this.entries = omu.registries.get(ENTRIES_REGISTRY).compatSvelte();
-    }
-
-    public addEntry(...entry: RouletteItem[]) {
-        this.entries.update((entries) => {
-            for (const e of entry) {
-                entries[e.id] = e;
-            }
-            return entries;
-        });
-    }
-
-    public removeEntry(id: string) {
-        this.entries.update((entries) => {
-            delete entries[id];
-            return entries;
-        });
-    }
-
-    public updateEntry(entry: RouletteItem) {
-        this.entries.update((entries) => {
-            entries[entry.id] = entry;
-            return entries;
-        });
-    }
-
-    public setEntries(entries: Record<string, RouletteItem>) {
-        this.entries.set(entries);
-    }
-
-    public clearEntries() {
-        this.entries.set({});
     }
 
     public toggleRecruiting() {
@@ -104,10 +73,10 @@ export class RouletteApp {
             const duration = config.duration * 1000;
             const random = this.easeInOutCubic(BetterMath.invjsrandom());
             this.rouletteState.set({ type: 'spin-start' });
-            this.rouletteState.set({ type: 'spinning', random, result: { entry }, start, duration });
+            this.rouletteState.set({ type: 'spinning', random, result: entry, start, duration });
 
             this.spinTimeout = window.setTimeout(() => {
-                this.rouletteState.set({ type: 'spin-result', random, result: { entry } });
+                this.rouletteState.set({ type: 'spin-result', random, result: entry });
             }, duration);
             return value;
         });

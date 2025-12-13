@@ -30,18 +30,18 @@
     let joinKeyword = $state('');
 
     async function onMessage(message: Message) {
-        if ($rouletteState.type !== 'recruiting') return;
         if (!message.authorId) return;
-
-        if (message.text.includes(joinKeyword)) {
-            const id = `join-${message.authorId.key()}`;
-            const author = await chat.authors.get(message.authorId.key());
-            if ($entries[id] && !$config.editable) return;
-            roulette.addEntry({
-                id,
-                name: author?.name || '',
-                message: Message.serialize(message),
-            });
+        if ($rouletteState.type === 'recruiting') {
+            if (message.text.includes(joinKeyword)) {
+                const id = `join-${message.authorId.key()}`;
+                const author = await chat.authors.get(message.authorId.key());
+                if ($entries[id] && !$config.editable) return;
+                $entries[id] = {
+                    id,
+                    name: author?.name || '',
+                    message: Message.serialize(message),
+                };
+            }
         }
     }
 
@@ -52,6 +52,7 @@
         omu.permissions.require(
             OmuPermissions.ASSET_PERMISSION_ID,
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
+            OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
@@ -107,7 +108,7 @@
                     <i class="ti ti-list-numbers"></i>
                 </span>
                 <span class="buttons">
-                    <Button primary onclick={() => roulette.clearEntries()}>
+                    <Button primary onclick={() => $entries = {}}>
                         <Tooltip>エントリーをすべて消す</Tooltip>
                         クリア
                         <i class="ti ti-trash"></i>
@@ -115,19 +116,11 @@
                     <Button
                         primary
                         onclick={() => {
-                            let name = 'エントリー';
-                            let i = 1;
-                            while (
-                                Object.values($entries).some(
-                                    (it) => it.name == `${name} ${i}`,
-                                )
-                            ) {
-                                i++;
-                            }
-                            roulette.addEntry({
-                                id: Date.now().toString(),
-                                name: `${name} ${i}`,
-                            });
+                            const id = Date.now().toString();
+                            $entries[id] = {
+                                id,
+                                name: '',
+                            };
                         }}
                     >
                         <Tooltip>エントリーを増やす</Tooltip>
@@ -160,12 +153,12 @@
             </div>
             {#if $rouletteState.type === 'spin-result'}
                 {@const message =
-                    $rouletteState.result.entry.message &&
-                        Message.deserialize($rouletteState.result.entry.message)}
+                    $rouletteState.result.message &&
+                        Message.deserialize($rouletteState.result.message)}
                 <div class="result-container">
                     <div class="spin-result">
                         <p>
-                            {$rouletteState.result.entry.name}
+                            {$rouletteState.result.name}
                         </p>
                         {#if message && message.authorId}
                             <div class="message">
