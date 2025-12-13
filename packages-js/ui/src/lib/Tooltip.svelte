@@ -94,7 +94,10 @@
         tooltipAdd(entry);
     }
 
+    let destroyed = $state(false);
+
     onDestroy(() => {
+        destroyed = true;
         if (entry) {
             tooltipRemove(entry);
         }
@@ -103,24 +106,26 @@
 
 <span class="wrapper" use:attachParent></span>
 {#snippet render()}
-    <div
-        class="tooltip"
-        class:background={!noBackground}
-        class:top={direction === 'up'}
-        style:left="{tooltipPos.x}px"
-        style:top="{tooltipPos.y}px"
-        bind:this={tooltip}
-    >
-        {@render children?.()}
-    </div>
-    <div
-        class="arrow"
-        class:top={direction === 'up'}
-        style:left="{targetRect.x + targetRect.width / 2}px"
-        style:top="{(direction === 'down'
-            ? tooltipPos.y - 10
-            : tooltipPos.y + tooltipRect.height)}px"
-    ></div>
+    {#if !destroyed}
+        <div
+            class="tooltip"
+            class:background={!noBackground}
+            class:top={direction === 'up'}
+            style:left="{tooltipPos.x}px"
+            style:top="{tooltipPos.y}px"
+            bind:this={tooltip}
+        >
+            {@render children?.()}
+        </div>
+        <div
+            class="arrow"
+            class:top={direction === 'up'}
+            style:left="{targetRect.x + targetRect.width / 2}px"
+            style:top="{(direction === 'down'
+                ? tooltipPos.y - 10
+                : tooltipPos.y + tooltipRect.height)}px"
+        ></div>
+    {/if}
 {/snippet}
 
 <style lang="scss">

@@ -48,7 +48,6 @@
             updateElement(document.activeElement);
         });
     }
-
 </script>
 
 <svelte:window
@@ -58,5 +57,12 @@
     onmouseout={() => {top = undefined;}}
 />
 {#if top}
-    {@render top.render()}
+    <svelte:boundary onerror={(error) => {
+        console.error(error);
+    }}>
+        {@render top.render()}
+        {#snippet failed()}
+            aaaaaa
+        {/snippet}
+    </svelte:boundary>
 {/if}
