@@ -29,6 +29,8 @@ export const apps = [
     reaction,
     DISCORD_PLUGIN_APP,
     VIDEO_OVERLAY_APP,
+    CHAT_OVERLAY_APP,
+    clock,
 ] satisfies App[];
 
 if (DEV) {
@@ -38,11 +40,9 @@ if (DEV) {
         tester,
         chatSubtitle,
         breaktimer,
-        clock,
         remote,
         QUIZ_APP,
         omucafe,
-        CHAT_OVERLAY_APP,
     );
 }
 
