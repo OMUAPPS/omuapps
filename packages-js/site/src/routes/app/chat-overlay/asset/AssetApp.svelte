@@ -45,28 +45,30 @@
 
 <main>
     <div class="messages">
-        {#each messages as message (message.id.key())}
+        {#each messages.filter((it) => it) as message, index (index)}
             <svelte:boundary onerror={(err) => {
                 console.error(err);
             }}>
-                {@const author = message.authorId && await chat.authors.get(message.authorId.key())}
-                <div class="message">
-                    {#if author}
-                        <div class="author">
-                            <div class="avatar">
-                                <img src={author.avatarUrl} alt="">
+                {@const author = message.authorId && chat.authors.get(message.authorId.key())}
+                {#await author then author}
+                    <div class="message">
+                        {#if author}
+                            <div class="author">
+                                <div class="avatar">
+                                    <img src={author.avatarUrl} alt="">
+                                </div>
+                                <div class="name">
+                                    {author.name ?? author.metadata.screen_id}
+                                </div>
                             </div>
-                            <div class="name">
-                                {author.name ?? author.metadata.screen_id}
+                        {/if}
+                        {#if message.content}
+                            <div class="content">
+                                <ComponentRenderer component={message.content} />
                             </div>
-                        </div>
-                    {/if}
-                    {#if message.content}
-                        <div class="content">
-                            <ComponentRenderer component={message.content} />
-                        </div>
-                    {/if}
-                </div>
+                        {/if}
+                    </div>
+                {/await}
             </svelte:boundary>
         {/each}
     </div>
