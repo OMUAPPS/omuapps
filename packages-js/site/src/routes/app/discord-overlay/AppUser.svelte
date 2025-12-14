@@ -22,6 +22,7 @@
         speakingState,
         overlayApp,
     }: Props = $props();
+
     const { config } = overlayApp;
 
     let resolution: Vec2Like = $state({ x: 0, y: 0 });
@@ -35,6 +36,11 @@
         return user;
     }
 
+    $effect(() => {
+        for (const id of Object.keys(voiceState.states)) {
+            getUser(id);
+        }
+    });
     let takeScreenshot: () => Promise<void> = $state(async () => {});
 </script>
 
@@ -56,8 +62,9 @@
         {:else}
             {#if resolution}
                 {#each Object.entries(voiceState.states)
+                    .filter(([id]) => $config.users[id])
                     .sort(comparator(([id]) => {
-                        const user = $config.users[id] ?? getUser(id);
+                        const user = $config.users[id];
                         return user.lastDraggedAt;
                     })) as [id, state] (id)}
                     {#if state}
