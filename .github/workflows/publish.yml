@@ -57,9 +57,11 @@ jobs:
 
             - name: Setup Bun
               uses: oven-sh/setup-bun@v2
-              
-            - name: Setup Node
-              uses: actions/setup-node@v6
+
+            - uses: actions/setup-node@v6
+              with:
+                node-version: '24'
+                registry-url: 'https://registry.npmjs.org'
 
             - name: Install Dependencies
               run: bun install
@@ -72,13 +74,9 @@ jobs:
               run: |
                   echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
-            - name: NPM User
-              run: |
-                  npm login
-                  npm whoami
-
             - name: Publish
-              run: bun run publish
+              run: |
+                bun run publish
 
     publish-pypi:
         if: ${{ github.event.inputs.pypi == 'true' }}
