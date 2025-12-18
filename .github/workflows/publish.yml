@@ -76,7 +76,8 @@ jobs:
 
             - name: Publish
               run: |
-                bun run publish
+                # bun run publish
+                npx lerna publish from-package --force-publish -y --push=false --gitTagVersion=false
 
     publish-pypi:
         if: ${{ github.event.inputs.pypi == 'true' }}
