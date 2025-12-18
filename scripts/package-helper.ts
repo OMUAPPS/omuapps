@@ -1,4 +1,4 @@
-import { $, BuildConfig, Glob } from 'bun';
+import { $, Glob } from 'bun';
 import { watch } from 'fs';
 import * as fs from 'node:fs/promises';
 import { parseArgs } from 'node:util';
@@ -77,31 +77,8 @@ async function build(entrypoints: string[]) {
         console.error('TypeScript type checking failed. Please fix the errors before building.');
     }
 
-    for (const entrypoint of entrypoints) {
-        try {
-            const option: BuildConfig = {
-                entrypoints: [entrypoint],
-                outdir: values.outdir,
-                target: 'bun',
-                format: 'esm',
-                sourcemap: 'inline',
-                naming: '[dir]/[name].[ext]',
-                minify: values.minify,
-                root: values.root,
-            };
-            const result = await Bun.build(option);
-            if (!result.success) {
-                console.error(`Build failed for ${entrypoint}:`);
-                for (const message of result.logs) {
-                    console.error(message);
-                }
-            }
-        } catch (error) {
-            console.error(`Error building ${entrypoint}:`, error);
-        }
-    }
-
-    await $`bun run tsc --project tsconfig.json --outDir ${values.outdir}/${values.dtsdir} --declaration true --emitDeclarationOnly true --rootDir ${values.root}`;
+    await $`bun --bun run tsc --outDir ${values.outdir} --rootDir ${values.root}`;
+    await $`bun --bun run tsc --project tsconfig.json --outDir ${values.outdir}/${values.dtsdir} --declaration true --emitDeclarationOnly true --rootDir ${values.root}`;
 
     if (values.debug) {
         console.timeEnd('build');
