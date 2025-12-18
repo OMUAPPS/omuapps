@@ -72,6 +72,11 @@ jobs:
               run: |
                   echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
+            - name: NPM User
+              run: |
+                  npm login
+                  npm whoami
+
             - name: Publish
               run: bun run publish
 
