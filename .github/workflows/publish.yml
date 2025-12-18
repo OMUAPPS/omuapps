@@ -70,7 +70,7 @@ jobs:
                   echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
             - name: Publish
-              run: npm publish --provenance --access public
+              run: bun run publish
 
     publish-pypi:
         if: ${{ github.event.inputs.pypi == 'true' }}
