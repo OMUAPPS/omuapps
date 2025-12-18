@@ -31,13 +31,13 @@ export const apps = [
     VIDEO_OVERLAY_APP,
     CHAT_OVERLAY_APP,
     clock,
+    tester,
 ] satisfies App[];
 
 if (DEV) {
     apps.unshift(
         caption,
         lipsynctest,
-        tester,
         chatSubtitle,
         breaktimer,
         remote,
