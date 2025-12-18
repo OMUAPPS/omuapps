@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.49 (2025-12-18)
+
+**Note:** Version bump only for package @omujs/chat
+
+
+
+
+
 ## 0.9.48 (2025-12-18)
 
 **Note:** Version bump only for package @omujs/chat
