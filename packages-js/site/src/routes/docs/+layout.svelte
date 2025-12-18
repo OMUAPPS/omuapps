@@ -2,7 +2,6 @@
 
     import Page from '$lib/components/Page.svelte';
     import { ExternalLink, Tooltip } from '@omujs/ui';
-    import github from 'svelte-highlight/styles/github';
     import style from 'svelte-highlight/styles/stackoverflow-light';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
@@ -37,9 +36,6 @@
 </script>
 
 <svelte:head>
-    <svelte:element this={'style'}>
-        {github}
-    </svelte:element>
     <svelte:element this={'style'}>
         {css}
     </svelte:element>
