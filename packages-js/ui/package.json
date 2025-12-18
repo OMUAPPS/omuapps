@@ -57,8 +57,8 @@
         "@omujs/i18n": "workspace:*",
         "@omujs/obs": "workspace:*",
         "@omujs/omu": "workspace:*",
-        "@sveltejs/kit": "^2.48.5",
-        "svelte": "^4.0.0"
+        "@sveltejs/kit": "^2.49.2",
+        "svelte": "^5.46.0"
     },
     "files": [
         "dist",
