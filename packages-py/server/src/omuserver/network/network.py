@@ -124,7 +124,6 @@ class Network:
             scheme=url.scheme,
             authority=authority,
             path=url.path,
-            query=url.query,
             query_string=url.query_string,
             fragment=url.fragment,
         )
