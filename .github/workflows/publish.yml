@@ -64,7 +64,7 @@ jobs:
                 registry-url: 'https://registry.npmjs.org'
 
             - name: Install Dependencies
-              run: bun install
+              run: bun install --frozen-lockfile
 
             - name: Build
               run: bunx lerna run build
