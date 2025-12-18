@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/chat",
-    "version": "0.9.46",
+    "version": "0.9.47",
     "exports": {
         ".": {
             "import": "./dist/esm/index.js",
