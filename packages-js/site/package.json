@@ -2,7 +2,7 @@
     "private": false,
     "type": "module",
     "name": "site",
-    "version": "0.0.1",
+    "version": "0.9.48",
     "scripts": {
         "build": "bun run build-pre && bun x --bun vite build",
         "build-pre": "bun ./scripts/build-pre.ts",
