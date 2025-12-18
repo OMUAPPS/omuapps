@@ -1,4 +1,5 @@
 <script lang="ts">
+
     interface Props {
         children?: import('svelte').Snippet;
     }
@@ -6,28 +7,29 @@
     let { children }: Props = $props();
 </script>
 
-<main>
-    {@render children?.()}
-</main>
+<div class="container">
+    <div class="content">
+        {@render children?.()}
+    </div>
+</div>
 
 <style>
-    main {
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .content {
         position: relative;
         box-sizing: border-box;
         display: flex;
         flex: 1;
         flex-direction: column;
-        width: 100%;
-        max-width: 70rem;
+        align-items: flex-start;
+        width: min(70rem, 100%);
         padding: 0 1.5rem;
         font-size: 1em;
-    }
-
-    @container (width > 600px) {
-        main {
-            position: relative;
-            left: 24rem;
-            right: 20rem;
-        }
     }
 </style>
