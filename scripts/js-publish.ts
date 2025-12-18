@@ -3,7 +3,7 @@ import { promises as fs } from 'fs';
 import Path from 'path';
 
 async function publishPackage(target: string) {
-    await $`bun publish --cwd ${target} --access public --tolerate-republish`;
+    await $`npm publish --access public --tolerate-republish`.cwd(target).nothrow();
 }
 
 await publishPackage('packages-js/i18n');
