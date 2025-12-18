@@ -25,6 +25,7 @@ on:
                 type: boolean
 
 permissions:
+    id-token: write
     contents: write # for checkout and tag
     pull-requests: write # for comments
     packages: write # for publish
@@ -33,10 +34,6 @@ jobs:
     publish-npm:
         if: ${{ github.event.inputs.npm == 'true' }}
         runs-on: ubuntu-latest
-        env:
-            NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-            NPM_TOKEN: ${{secrets.NPM_TOKEN}}
-            GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
         outputs:
             VERSION: ${{ steps.get_version.outputs.VERSION }}
         steps:
@@ -72,13 +69,8 @@ jobs:
               run: |
                   echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
-            - name: Setup npmrc
-              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
-
             - name: Publish
-              run: bun run publish
-              env:
-                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+              run: npm publish --provenance --access public
 
     publish-pypi:
         if: ${{ github.event.inputs.pypi == 'true' }}
