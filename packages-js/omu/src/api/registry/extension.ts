@@ -292,6 +292,12 @@ function proxy<T>(
             if (p === PROXIED_SYMBOL) return true;
             return p in target;
         },
+        deleteProperty(target, prop) {
+            if (!(prop in target)) return false;
+            delete target[prop];
+            context.markChanged();
+            return true;
+        },
     });
 }
 
