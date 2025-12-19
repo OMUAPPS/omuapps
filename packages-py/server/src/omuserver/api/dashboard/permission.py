@@ -65,11 +65,11 @@ DASHBOARD_WEBVIEW_PERMISSION = PermissionType(
     {
         "level": "high",
         "name": {
-            "ja": "外部サイトの認証情報を使用",
+            "ja": "外部サイトの認証情報を要求",
             "en": "Use external sites login information",
         },
         "note": {
-            "ja": "サイトへのすべての操作が可能になります",
+            "ja": "許可したサイトへのすべての操作が可能になります",
             "en": "All operations on the site will be enabled.",
         },
     },
