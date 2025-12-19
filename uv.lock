@@ -688,7 +688,7 @@ wheels = [
 
 [[package]]
 name = "omu"
-version = "0.9.46"
+version = "0.9.49"
 source = { editable = "packages-py/omu" }
 dependencies = [
     { name = "aiohttp" },
@@ -703,7 +703,7 @@ requires-dist = [
 
 [[package]]
 name = "omu-chat"
-version = "0.9.46"
+version = "0.9.49"
 source = { editable = "packages-py/chat" }
 dependencies = [
     { name = "loguru" },
@@ -718,7 +718,7 @@ requires-dist = [
 
 [[package]]
 name = "omu-chat-twitch"
-version = "0.9.46"
+version = "0.9.49"
 source = { editable = "packages-py/chat-twitch" }
 dependencies = [
     { name = "loguru" },
@@ -733,7 +733,7 @@ requires-dist = [
 
 [[package]]
 name = "omu-chat-youtube"
-version = "0.9.46"
+version = "0.9.49"
 source = { editable = "packages-py/chat-youtube" }
 dependencies = [
     { name = "loguru" },
@@ -748,7 +748,7 @@ requires-dist = [
 
 [[package]]
 name = "omu-chatprovider"
-version = "0.9.46"
+version = "0.9.49"
 source = { editable = "packages-py/chat-provider" }
 dependencies = [
     { name = "aiohttp" },
@@ -771,7 +771,7 @@ requires-dist = [
 
 [[package]]
 name = "omuplugin-obs"
-version = "0.9.46"
+version = "0.9.49"
 source = { editable = "packages-py/plugin-obs" }
 dependencies = [
     { name = "loguru" },
@@ -833,7 +833,7 @@ dev = [
 
 [[package]]
 name = "omuserver"
-version = "0.9.46"
+version = "0.9.49"
 source = { editable = "packages-py/server" }
 dependencies = [
     { name = "aiohttp" },

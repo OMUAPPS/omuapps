@@ -45,10 +45,6 @@ a {
     text-decoration: none;
 }
 
-a:hover {
-    text-decoration: underline;
-}
-
 body {
     min-height: 100vh;
     margin: 0;

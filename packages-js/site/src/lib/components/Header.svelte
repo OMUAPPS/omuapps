@@ -201,13 +201,13 @@
         font-size: 1.1rem;
     }
 
-    @container (width > 600px) {
+    @container (width > 800px) {
         li {
             font-size: 0.8rem;
         }
     }
 
-    @container (width < 600px) {
+    @container (width < 800px) {
         li {
             width: 3rem;
         }

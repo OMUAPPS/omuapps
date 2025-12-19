@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/obs",
-    "version": "0.9.46",
+    "version": "0.9.49",
     "exports": {
         ".": {
             "import": "./dist/esm/index.js",
@@ -12,6 +12,9 @@
             "types": "./dist/dts/*"
         }
     },
+    "files": [
+        "dist"
+    ],
     "scripts": {
         "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",
         "dev": "bun run watch",

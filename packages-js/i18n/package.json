@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/i18n",
-    "private": "true",
+    "private": "false",
     "version": "0.9.45",
     "exports": {
         ".": {
@@ -13,6 +13,9 @@
             "types": "./dist/dts/*"
         }
     },
+    "files": [
+        "dist"
+    ],
     "scripts": {
         "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",
         "dev": "bun run watch",

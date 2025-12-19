@@ -54,7 +54,7 @@ export type Message = {
 };
 
 export type AnswerMessage = Message & {
-    iso8601: Date;
+    iso8601: string;
 };
 
 type QueryOptions = {
@@ -341,7 +341,7 @@ export class MarshmallowAPI {
         return {
             id,
             date: updatedAt,
-            iso8601: new Date(updatedAt),
+            iso8601: new Date(updatedAt).toISOString(),
             content: DOM.serialize(content),
             reply: DOM.serialize(reply),
         };

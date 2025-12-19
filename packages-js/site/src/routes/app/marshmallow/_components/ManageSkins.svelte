@@ -30,10 +30,9 @@
     <div class="card">
         <div class="actions">
             <Button onclick={() => {
-                state = {
-                    type: 'edit',
-                    skin: createSkin(),
-                };
+                const skin = createSkin();
+                $config.skins[skin.id] = skin;
+                state = { type: 'edit', skin };
             }}>
                 作る
                 <i class="ti ti-pencil"></i>
@@ -105,12 +104,16 @@
             読み込む
             <i class="ti ti-upload"></i>
         </FileDrop>
-        <Button primary onclick={() => state = { type: 'edit', skin: createSkin() }}>
+        <Button primary onclick={() => {
+            const skin = createSkin();
+            $config.skins[skin.id] = skin;
+            state = { type: 'edit', skin };
+        }}>
             作る
         </Button>
     </div>
 {:else if state.type === 'edit'}
-    <EditSkin bind:skin={state.skin} />
+    <EditSkin bind:skin={$config.skins[state.skin.id]} />
 {:else if state.type === 'premium'}
     <div class="card">
         <div class="premium">

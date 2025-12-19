@@ -2,7 +2,7 @@
 
     import Page from '$lib/components/Page.svelte';
     import { ExternalLink, Tooltip } from '@omujs/ui';
-    import github from 'svelte-highlight/styles/github';
+    import style from 'svelte-highlight/styles/stackoverflow-light';
     import DocsFooter from './_components/DocsFooter.svelte';
     import DocsNav from './_components/DocsNav.svelte';
     import { config, GROUP_NAMES } from './constants.js';
@@ -27,11 +27,17 @@
             ));
 
     let selectedGroup: string | undefined = $derived($docs?.group);
+
+    const css = style
+        .replace('<style>', '')
+        .replace('</style>', '')
+        .replace('code.hljs{display:block;overflow-x:auto;padding:1em}', 'code.hljs{display:block;overflow-x:auto;padding:0.5em}');
+
 </script>
 
 <svelte:head>
     <svelte:element this={'style'}>
-        {github}
+        {css}
     </svelte:element>
 </svelte:head>
 
@@ -39,7 +45,7 @@
     {#snippet header()}
         {#if $docs}
             {@const meta = $docs.meta}
-            <span>
+            <span class="banner">
                 <h1>
                     {meta.title}
                     <i class="ti ti-{meta.icon || 'pencil'}"></i>
@@ -159,12 +165,13 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 4rem;
-        width: min(54rem, 100%);
     }
 
     .content {
         flex: 1;
         width: 100%;
+        max-width: min(74rem, 100%);
+        padding: 0 2rem;
     }
 
     .markdown {
@@ -250,6 +257,14 @@
     @container (width > 600px) {
         .groups {
             display: flex;
+        }
+
+        .content {
+            padding-left: 24rem;
+        }
+
+        .banner {
+            padding-left: 24rem;
         }
     }
 

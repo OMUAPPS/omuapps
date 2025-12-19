@@ -25,6 +25,7 @@ on:
                 type: boolean
 
 permissions:
+    id-token: write
     contents: write # for checkout and tag
     pull-requests: write # for comments
     packages: write # for publish
@@ -33,10 +34,6 @@ jobs:
     publish-npm:
         if: ${{ github.event.inputs.npm == 'true' }}
         runs-on: ubuntu-latest
-        env:
-            NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
-            NPM_TOKEN: ${{secrets.NPM_TOKEN}}
-            GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
         outputs:
             VERSION: ${{ steps.get_version.outputs.VERSION }}
         steps:
@@ -61,8 +58,13 @@ jobs:
             - name: Setup Bun
               uses: oven-sh/setup-bun@v2
 
+            - uses: actions/setup-node@v6
+              with:
+                node-version: '24'
+                registry-url: 'https://registry.npmjs.org'
+
             - name: Install Dependencies
-              run: bun install
+              run: bun install --frozen-lockfile
 
             - name: Build
               run: bunx lerna run build
@@ -72,13 +74,13 @@ jobs:
               run: |
                   echo "VERSION=$(bunx lerna ls --json | jq -r '.[0].version')" >> "$GITHUB_OUTPUT"
 
-            - name: Setup npmrc
-              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+            - name: Fix Version
+              run: |
+                bun ./scripts/js-fixversion.ts
 
             - name: Publish
-              run: bun run publish
-              env:
-                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+              run: |
+                bun run publish
 
     publish-pypi:
         if: ${{ github.event.inputs.pypi == 'true' }}

@@ -93,7 +93,7 @@
                 <img src={loadedSkin.top} alt="">
                 <div
                     class="content"
-                    style="padding-bottom: {skin.textures.min_height}px; background-image: url({loadedSkin.middle});"
+                    style="padding-bottom: {Math.floor(skin.textures.min_height - 2)}px; background-image: url({loadedSkin.middle});"
                     style:font-family={skin.text.font.family}
                     style:font-weight={skin.text.font.weight}
                     style:color={skin.text.color}

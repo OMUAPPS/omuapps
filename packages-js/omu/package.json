@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/omu",
-    "version": "0.9.46",
+    "version": "0.9.49",
     "main": "./dist/esm/index.js",
     "types": "./dist/dts/index.d.ts",
     "exports": {
@@ -14,6 +14,9 @@
             "types": "./dist/dts/*/index.d.js"
         }
     },
+    "files": [
+        "dist"
+    ],
     "module": "",
     "scripts": {
         "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",

@@ -1,6 +1,5 @@
 <script lang="ts">
     import background from '$lib/images/background.png';
-    import Content from './Content.svelte';
     import Footer from './Footer.svelte';
     import Header from './Header.svelte';
 
@@ -33,17 +32,13 @@
 {/if}
 <main class:no-background={noBackground}>
     <header>
-        <Content>
-            {@render header?.()}
-        </Content>
+        {@render header?.()}
     </header>
     <div class="main-content">
-        <Content>
-            {@render content?.()}
-            {#if footer}
-                <Footer />
-            {/if}
-        </Content>
+        {@render content?.()}
+        {#if footer}
+            <Footer />
+        {/if}
     </div>
 </main>
 

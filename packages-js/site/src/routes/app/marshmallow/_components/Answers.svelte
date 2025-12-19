@@ -25,7 +25,7 @@
         if (loading) return;
         loading = true;
         const results = await api.answers({
-            before: last ? last.iso8601 : new Date(),
+            before: last ? new Date(last.iso8601) : new Date(),
         });
         if (results.length === 0) {
             remaining = false;
@@ -61,7 +61,7 @@
     });
 
     let filteredAnswers = $derived(Object.entries(answers ?? {})
-        .sort(([,a], [,b]) => b.iso8601.getTime() - a.iso8601.getTime())
+        .sort(([,a], [,b]) => new Date(b.iso8601).getTime() - new Date(a.iso8601).getTime())
         .filter(([,message]) => {
             if (DOM.blockToString(message.content).toLocaleLowerCase().includes(search.toLocaleLowerCase())) return true;
             if (message.reply && DOM.blockToString(message.reply).toLocaleLowerCase().includes(search.toLocaleLowerCase())) return true;
