@@ -40,7 +40,7 @@ export class RegistryExtension implements Extension {
         return registry as Registry<T>;
     }
 
-    public json<T, D extends JsonType = JsonType>(name: string, options: { default: T; serializer?: Serializer<T, D> }): Registry<T> {
+    public json<T, D extends JsonType = T extends JsonType ? T : JsonType>(name: string, options: { default: T; serializer?: Serializer<T, D> }): Registry<T> {
         const identifier = this.omu.app.id.base.join(name);
         if (this.registries.has(identifier)) {
             throw new Error(`Registry with name '${name}' already exists`);
