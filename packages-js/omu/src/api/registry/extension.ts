@@ -41,28 +41,26 @@ export class RegistryExtension implements Extension {
     }
 
     public json<T, D extends JsonType = T extends JsonType ? T : JsonType>(name: string, options: { default: T; serializer?: Serializer<T, D> }): Registry<T> {
-        const identifier = this.omu.app.id.base.join(name);
-        if (this.registries.has(identifier)) {
-            throw new Error(`Registry with name '${name}' already exists`);
-        }
-        const tableType = RegistryType.createJson<T>(identifier, {
+        const tableType = RegistryType.createJson<T>(this.omu.app.id.base, {
             name,
             defaultValue: options.default,
             serializer: options.serializer,
         });
+        if (this.registries.has(tableType.id)) {
+            throw new Error(`Registry with name '${name}' already exists`);
+        }
         return this.createRegistry(tableType);
     }
 
     public serialized<T>(name: string, options: { default: T; serializer: Serializer<T, Uint8Array> }): Registry<T> {
-        const identifier = this.omu.app.id.base.join(name);
-        if (this.registries.has(identifier)) {
-            throw new Error(`Registry with name '${name}' already exists`);
-        }
-        const tableType = RegistryType.createSerialized<T>(identifier, {
+        const tableType = RegistryType.createSerialized<T>(this.omu.app.id.base, {
             name,
             defaultValue: options.default,
             serializer: options.serializer,
         });
+        if (this.registries.has(tableType.id)) {
+            throw new Error(`Registry with name '${name}' already exists`);
+        }
         return this.createRegistry(tableType);
     }
 }
