@@ -1,8 +1,8 @@
 import type { Omu } from '@omujs/omu';
 import type { OmuWS } from '@omujs/omu/api/http';
 import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
+import { AsyncQueue } from '../../../../lib/queue';
 import { BufferedDataChannel, type ReservedChannel } from './bufferedchannel';
-import { AsyncQueue } from './queue';
 
 const RTC_CONFIGURATION: RTCConfiguration = {
     iceServers: [

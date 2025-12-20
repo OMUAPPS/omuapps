@@ -1,14 +1,13 @@
 import { type Vec2Like } from '$lib/math/vec2.js';
 import { Identifier, Serializer, type Omu } from '@omujs/omu';
-import { RegistryType } from '@omujs/omu/api/registry';
 import { BROWSER } from 'esm-env';
 import { type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
+import type { GameObject } from './avatars/object.js';
 import { DEFAULT_SHADOW_EFFECT_OPTIONS } from './effects/shadow.js';
 import { DEFAULT_SPEECH_EFFECT_OPTIONS } from './effects/speech.js';
 import { DiscordRPCAPI } from './plugin/plugin.js';
 
-export type Align = 'start' | 'middle' | 'end';
 export type Source = {
     type: 'asset';
     asset_id: string;
@@ -54,6 +53,7 @@ export type PngTuberAvatarConfig = {
     flipHorizontal: boolean;
     flipVertical: boolean;
 };
+
 export type PngAvatarConfig = {
     type: 'png';
     key: string;
@@ -66,10 +66,6 @@ export type PngAvatarConfig = {
 };
 
 export type AvatarConfig = PngTuberAvatarConfig | PngAvatarConfig;
-
-export type GameObject = {
-    type: 'image';
-};
 
 export type AlignSide = {
     align: Vec2Like;
@@ -121,36 +117,44 @@ export const DEFAULT_CONFIG: Config = {
         spacing: 300,
     },
 };
-const CONFIG_REGISTRY_TYPE = RegistryType.createJson<Config>(APP_ID, {
-    name: 'config',
-    defaultValue: DEFAULT_CONFIG,
-    serializer: Serializer.transform((config: Config) => {
-        if (!config.version || config.version < 10) {
-            config = DEFAULT_CONFIG;
-        } else if (config.version === 10) {
-            config.version = 11;
-            config.align = {
-                margin: 100,
-                spacing: 300,
-            };
-        }
-        return config;
-    }),
-});
 
 type AppSide = 'client' | 'asset';
+
+interface World {
+    objects: Record<string, GameObject>;
+}
 
 export class DiscordOverlayApp {
     private static INSTANCE: DiscordOverlayApp;
     public readonly discord: DiscordRPCAPI;
     public readonly config: Writable<Config>;
+    public readonly world: Writable<World>;
 
     private constructor(
         public readonly omu: Omu,
         private readonly side: AppSide,
     ) {
         this.discord = new DiscordRPCAPI(omu);
-        this.config = omu.registries.get(CONFIG_REGISTRY_TYPE).compatSvelte();
+        this.config = omu.registries.json<Config>('config', {
+            default: DEFAULT_CONFIG,
+            serializer: Serializer.transform((config: Config): Config => {
+                if (!config.version || config.version < 10) {
+                    config = DEFAULT_CONFIG;
+                } else if (config.version === 10) {
+                    config.version = 11;
+                    config.align = {
+                        margin: 100,
+                        spacing: 300,
+                    };
+                }
+                return config;
+            }),
+        }).compatSvelte();
+        this.world = omu.registries.json<World>('config', {
+            default: {
+                objects: {},
+            },
+        }).compatSvelte();
     }
 
     public static getInstance(): DiscordOverlayApp {
@@ -193,6 +197,18 @@ export class DiscordOverlayApp {
             return buffer;
         }
         throw new Error(`Invalid source type: ${type}`);
+    }
+
+    public async uploadSource(buffer: ArrayBuffer): Promise<Source> {
+        const hash = await crypto.subtle.digest('SHA-256', buffer).then((buf) => {
+            return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+        });
+        const id = APP_ID.join('source', hash);
+        await this.omu.assets.upload(id, new Uint8Array(buffer));
+        return {
+            type: 'asset',
+            asset_id: id.key(),
+        };
     }
 
     public resetConfig(): void {

@@ -1,7 +1,7 @@
 <script lang="ts">
 
     import { comparator } from '$lib/helper';
-    import type { Vec2Like } from '$lib/math/vec2';
+    import { type Vec2Like } from '$lib/math/vec2';
     import { Popup, Tooltip } from '@omujs/ui';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
     import AvatarRenderer from './components/AvatarRenderer.svelte';

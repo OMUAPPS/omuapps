@@ -1,16 +1,16 @@
 <script lang="ts">
+    import { AsyncQueue } from '$lib/queue.js';
     import { onDestroy, onMount } from 'svelte';
+    import { Draw } from './draw.js';
     import { GlContext } from './glcontext.js';
+    import { Matrices } from './matrices.js';
+    import { HTMLInput, type RenderPipeline, type Time } from './pipeline.js';
 
     interface Props {
-        canvas?: HTMLCanvasElement | undefined;
-        width?: number;
-        height?: number;
         fps?: number;
-        requestId?: number | null;
-        contextMenu?: boolean;
         render?: (gl: GlContext) => Promise<void> | void;
         render2D?: (context: CanvasRenderingContext2D) => Promise<void> | void;
+        setPipeline?: (pipeline: RenderPipeline) => Promise<void>;
         init?: (gl: GlContext) => Promise<void>;
         enter?: (gl: GlContext) => Promise<void> | void;
         leave?: (gl: GlContext) => Promise<void> | void;
@@ -18,115 +18,111 @@
     }
 
     let {
-        canvas = $bindable(undefined),
-        width = $bindable(0),
-        height = $bindable(0),
         fps = 60,
-        requestId = $bindable(null),
-        contextMenu = $bindable(false),
+        setPipeline = undefined,
         render = () => {},
         render2D = () => {},
         init = async () => {},
-        enter = () => {},
-        leave = () => {},
         resize = () => {},
     }: Props = $props();
-    let glContext: GlContext | undefined = $state(undefined);
 
-    let context: CanvasRenderingContext2D | null = null;
-    let offscreen: OffscreenCanvas | null = null;
-    let resized = false;
+    let canvas: HTMLCanvasElement | undefined = $state(undefined);
+    let destroyed: boolean = $state(false);
+    const frameQueue = new AsyncQueue<Time>();
 
-    function handleResize() {
-        if (!canvas || !offscreen || !glContext) return;
-        width = canvas.clientWidth;
-        height = canvas.clientHeight;
-        canvas.width = width;
-        canvas.height = height;
-        offscreen.width = width;
-        offscreen.height = height;
-        glContext.gl.viewport(0, 0, width, height);
-        resize(glContext);
+    function createPipeline(context: GlContext, canvas: HTMLCanvasElement): RenderPipeline {
+        const matrices = new Matrices();
+        const draw = new Draw(matrices, context);
+        const input = new HTMLInput(canvas);
+        let time: Time = { stamp: performance.now(), delta: 0 };
+
+        return {
+            context,
+            matrices,
+            draw,
+            input,
+            time,
+            [Symbol.asyncIterator]: async function*() {
+                requestAnimationFrame(async function handle(time) {
+                    const delta = time - last;
+                    last = time;
+                    frameQueue.push({ stamp: time, delta });
+                    const interval = 1000 / fps;
+                    const delay = interval - delta;
+                    if (delay > 0) {
+                        await new Promise((r) => setTimeout(r, delay));
+                    }
+                    requestAnimationFrame(handle);
+                });
+
+                let last = performance.now();
+                while (!destroyed) {
+                    const timestamp = await frameQueue.pop();
+                    if (timestamp === null) break;
+                    time = timestamp;
+
+                    matrices.width = canvas.clientWidth;
+                    matrices.height = canvas.clientHeight;
+                    context.gl.canvas.width = canvas.clientWidth;
+                    context.gl.canvas.height = canvas.clientHeight;
+
+                    yield { time };
+                }
+            },
+        };
     }
 
-    let lastTime = performance.now();
-    let resolveFrameBlock: () => void = () => {};
-
-    function create() {
-        offscreen = new OffscreenCanvas(width, height);
-        context = canvas!.getContext('2d');
-        glContext = GlContext.create(offscreen);
-    }
-
-    async function renderInternal() {
-        while (true) {
-            await new Promise<void>((r) => {
-                resolveFrameBlock = r;
-            });
-            if (resized) {
-                handleResize();
-                resized = false;
-                continue;
-            } else if (!canvas || !glContext || !context || !offscreen) {
-                continue;
-            }
-            if (context.isContextLost()) {
-                console.warn('Canvas context lost, reinitializing...');
-                offscreen = new OffscreenCanvas(width, height);
-                context = canvas.getContext('2d');
-                glContext = GlContext.create(offscreen);
-                resized = true;
-                handleResize();
-                continue;
-            }
-            if (offscreen.width === 0 || offscreen.height === 0) {
-                continue;
-            }
-            await render(glContext);
-            context.clearRect(0, 0, width, height);
-            context.drawImage(offscreen, 0, 0);
-            await render2D(context);
-            const currentTime = performance.now();
-            const deltaTime = currentTime - lastTime;
-            lastTime = currentTime;
-            const interval = 1000 / fps;
-            const delay = interval - deltaTime;
-            if (delay > 0) {
-                await new Promise((r) => setTimeout(r, delay));
-            }
-        }
-    }
-
-    function renderLoop() {
-        requestId = requestAnimationFrame(renderLoop);
-        if (!canvas || !glContext || !context || !offscreen) {
-            return;
-        }
-        resolveFrameBlock();
-    }
-
-    onMount(() => {
+    onMount(async () => {
         if (!canvas) return;
-        create();
-        resized = true;
-        handleResize();
-        init(glContext!).then(() => {
-            renderInternal();
-            renderLoop();
-        });
-        const resizeObserver = new ResizeObserver(() => {
-            if (!canvas) return;
-            width = canvas.clientWidth;
-            height = canvas.clientHeight;
-            resized = true;
-        });
-        resizeObserver.observe(canvas);
-        return () => resizeObserver.disconnect();
+        if (setPipeline) {
+            const context = GlContext.create(canvas);
+            const pipeline = createPipeline(context, canvas);
+            setPipeline(pipeline);
+        } else {
+            let width = canvas.clientWidth;
+            let height = canvas.clientHeight;
+            const offscreen = new OffscreenCanvas(width, height);
+            const context = GlContext.create(offscreen);
+            const target = canvas!.getContext('2d');
+            if (!target) {
+                throw new Error('Cannot get 2d context from canvas');
+            }
+            const pipeline = createPipeline(context, canvas);
+
+            await init(context!);
+
+            function handleResize() {
+                if (
+                    !canvas
+                    || !offscreen
+                    || !context
+                ) return;
+                if (
+                    width === canvas.clientWidth && height === canvas.clientHeight
+                ) return;
+
+                width = canvas.clientWidth;
+                height = canvas.clientHeight;
+                canvas.width = width;
+                canvas.height = height;
+                offscreen.width = width;
+                offscreen.height = height;
+                context.gl.viewport(0, 0, width, height);
+                resize(context);
+            }
+
+            for await (const frame of pipeline) {
+                handleResize();
+                await render(context);
+                target.clearRect(0, 0, width, height);
+                target.drawImage(offscreen, 0, 0);
+                await render2D(target);
+            }
+        }
     });
 
     onDestroy(() => {
-        if (requestId) cancelAnimationFrame(requestId);
-        if (glContext) glContext.destroy();
+        destroyed = true;
     });
 </script>
 
@@ -137,7 +133,6 @@
         }
         event.preventDefault();
         event.stopPropagation();
-        contextMenu = true;
         return false;
     }}
 />
@@ -146,14 +141,7 @@
     oncontextmenu={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        contextMenu = true;
         return false;
-    }}
-    onmouseenter={() => {
-        if (glContext) enter(glContext);
-    }}
-    onmouseleave={() => {
-        if (glContext) leave(glContext);
     }}
 ></canvas>
 

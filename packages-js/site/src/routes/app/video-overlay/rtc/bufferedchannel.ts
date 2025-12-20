@@ -1,5 +1,5 @@
+import { AsyncQueue } from '$lib/queue';
 import { ByteReader, ByteWriter } from '@omujs/omu/serialize';
-import { AsyncQueue } from './queue';
 import type { PeerConnection } from './signaling';
 
 const BUFFER_PACKET = {

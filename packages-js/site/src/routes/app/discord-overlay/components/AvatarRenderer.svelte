@@ -3,6 +3,7 @@
     import { Draw } from '$lib/components/canvas/draw.js';
     import { GlContext } from '$lib/components/canvas/glcontext.js';
     import { Matrices } from '$lib/components/canvas/matrices.js';
+    import type { Input, RenderPipeline, Time } from '$lib/components/canvas/pipeline.js';
     import { comparator } from '$lib/helper.js';
     import { BetterMath } from '$lib/math.js';
     import { AABB2 } from '$lib/math/aabb2.js';
@@ -10,7 +11,6 @@
     import { TAU } from '$lib/math/math.js';
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
-    import { Timer } from '$lib/timer.js';
     import { AvatarManager } from '../avatars/avatar-manager.js';
     import type { RenderOptions } from '../avatars/avatar.js';
     import { PALETTE_RGB } from '../consts.js';
@@ -60,41 +60,64 @@
             await drawHeldTips();
             await drawScreen();
 
-            const a = await (gl.canvas as OffscreenCanvas).convertToBlob();
-            const link = document.createElement('a');
+            (gl.canvas as HTMLCanvasElement).toBlob((blob) => {
+                if (!blob) return;
+                const link = document.createElement('a');
 
-            link.download = new Date().toLocaleString() + '.png';
-            link.href = URL.createObjectURL(a);
+                link.download = new Date().toLocaleString() + '.png';
+                link.href = URL.createObjectURL(blob);
 
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }, 'image/png');
         } finally {
             gl.canvas.width = oldWidth;
             gl.canvas.height = oldHeight;
         }
     };
 
+    let pipeline: RenderPipeline;
     let context: GlContext;
     let matrices = new Matrices();
     let draw: Draw;
-    let frameTimer = new Timer();
-
-    async function resize() {
-        $view = matrices.get();
-    }
 
     let effectManager: EffectManager;
     let avatarManager: AvatarManager;
     let layoutEngine: LayoutEngine;
+    let time: Time;
 
-    async function init(ctx: GlContext) {
-        context = ctx;
-        matrices = new Matrices();
-        draw = new Draw(matrices, ctx);
-        effectManager = await EffectManager.new(ctx, () => $config);
-        avatarManager = new AvatarManager(ctx, overlayApp, () => $config);
+    async function setPipeline(newPipeline: RenderPipeline) {
+        pipeline = newPipeline;
+        context = pipeline.context;
+        matrices = newPipeline.matrices;
+        draw = newPipeline.draw;
+        const { input } = pipeline;
+
+        effectManager = await EffectManager.new(context, () => $config);
+        avatarManager = new AvatarManager(context, overlayApp, () => $config);
         layoutEngine = new LayoutEngine($config, dimensions);
+
+        for await (const frame of pipeline) {
+            time = frame.time;
+
+            setupWorldMatrices();
+            $view = matrices.get();
+
+            await render();
+
+            matrices.identity();
+            matrices.projection.orthographic(0, 0, matrices.width, matrices.height, -1, 1);
+            processInputs(input);
+        }
+    }
+
+    function processInputs(input: Input) {
+        for (const event of input) {
+            if (event.kind === 'mouse-down') {
+                console.log('mouse down');
+            }
+        }
     }
 
     function setupWorldMatrices() {
@@ -118,7 +141,7 @@
         $view = matrices.get();
     }
 
-    async function render(context: GlContext) {
+    async function render() {
         const { gl } = context;
         const { width, height } = gl.canvas;
 
@@ -129,16 +152,13 @@
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         gl.viewport(0, 0, width, height);
 
-        setupWorldMatrices();
-
         if (overlayApp.isOnClient()) {
             drawBackground();
         }
         await drawAvatars();
+        await drawObjects();
         await drawHeldTips();
         await drawScreen();
-
-        frameTimer.reset();
     }
 
     const AVATAR_FACE_RADIUS = 150;
@@ -174,8 +194,6 @@
             rot: 0,
             scale: Vec2.ONE,
         } };
-        const deltaTime = frameTimer.getElapsedMS() / 1000;
-        const t = 1 - Math.exp(-deltaTime * 16);
         if (alignSide && user.align) {
             const { align, side } = alignSide;
             transform.pos = layoutEngine.calculateAlignPosition(alignSide, index, total);
@@ -213,6 +231,7 @@
             transform.rot = 0;
         }
 
+        const t = 1 - Math.exp(-time.delta / 64);
         const newTransform = {
             targetPos: transform.targetPos,
             pos: Vec2.from(last?.pos ?? transform.pos).lerp(transform.pos, t),
@@ -383,6 +402,9 @@
                 { width: offsetScale, color: new Vec4(0, 0, 0, 1) },
             );
         }
+    }
+
+    async function drawObjects() {
     }
 
     let hoveredAlign: string | undefined = undefined;
@@ -613,7 +635,7 @@
 </script>
 
 <div class="canvas">
-    <Canvas {init} {render} {resize} />
+    <Canvas {setPipeline} />
 </div>
 
 <style lang="scss">
