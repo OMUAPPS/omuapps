@@ -1,4 +1,4 @@
-import { App, AppJson } from '../../app.js';
+import { App } from '../../app.js';
 import { ByteReader, ByteWriter } from '../../serialize';
 
 export type AppInstallResponse = {
@@ -53,13 +53,7 @@ export type DragDropReadRequest = {
     drag_id: string;
 };
 
-export type DragDropReadRequestDashboard = {
-    request_id: string;
-    drag_id: string;
-};
-
 export type DragDropReadMeta = {
-    request_id: string;
     drag_id: string;
     files: readonly DragDropFile[];
 };
@@ -113,14 +107,8 @@ export class DragDropReadResponse {
     }
 }
 
-export type DragDropRequest = object;
-
-export type DragDropRequestDashboard = {
-    request_id: string;
-    app: AppJson;
-};
+export type DragDropRequestDashboard = object;
 
 export type DragDropRequestResponse = {
-    request_id: string;
     ok: boolean;
 };

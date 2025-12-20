@@ -1,7 +1,7 @@
 export {
     Cookie,
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
-    DAShBOARD_DRAG_DROP_PERMISSION_ID,
+    DASHBOARD_DRAG_DROP_PERMISSION_ID as DAShBOARD_DRAG_DROP_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHBOARD_SET_PERMISSION_ID,
     DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
@@ -30,7 +30,7 @@ export {
 export type { DashboardHandler } from './handler';
 export {
     DragDropFile,
-    DragDropReadRequestDashboard,
+    DragDropReadRequest,
     DragDropReadResponse,
     DragDropRequestDashboard,
     FileData,

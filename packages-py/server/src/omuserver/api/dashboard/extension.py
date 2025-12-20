@@ -5,7 +5,6 @@ from asyncio import Future
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
-from venv import logger
 
 from omu.api.dashboard.extension import (
     DASHBOARD_ALLOWED_WEBVIEW_HOSTS,
@@ -14,10 +13,6 @@ from omu.api.dashboard.extension import (
     DASHBOARD_APP_INSTALL_PERMISSION_ID,
     DASHBOARD_APP_UPDATE_PACKET,
     DASHBOARD_DRAG_DROP_READ_ENDPOINT,
-    DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
-    DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
-    DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT,
-    DASHBOARD_DRAG_DROP_REQUEST_PACKET,
     DASHBOARD_DRAG_DROP_STATE_PACKET,
     DASHBOARD_OPEN_APP_ENDPOINT,
     DASHBOARD_OPEN_APP_PACKET,
@@ -31,9 +26,6 @@ from omu.api.dashboard.extension import (
     DashboardSetResponse,
     DragDropReadRequest,
     DragDropReadResponse,
-    DragDropRequest,
-    DragDropRequestDashboard,
-    DragDropRequestResponse,
     FileDragPacket,
     PortProcess,
     PromptRequest,
@@ -84,8 +76,6 @@ class DashboardExtension:
             DASHBOARD_APP_INSTALL_PACKET,
             DASHBOARD_APP_UPDATE_PACKET,
             DASHBOARD_DRAG_DROP_STATE_PACKET,
-            DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
-            DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
             DASHBOARD_WEBVIEW_EVENT_PACKET,
             DASHBOARD_PROMPT_REQUEST,
             DASHBOARD_PROMPT_RESPONSE,
@@ -99,14 +89,12 @@ class DashboardExtension:
             DASHBOARD_SPEECH_RECOGNITION_PERMISSION,
         )
         server.packets.bind(DASHBOARD_DRAG_DROP_STATE_PACKET, self.handle_drag_drop_state)
-        server.packets.bind(DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET, self.handle_drag_drop_read_response)
         server.packets.bind(DASHBOARD_WEBVIEW_EVENT_PACKET, self.handle_webview_event)
         server.packets.bind(DASHBOARD_PROMPT_RESPONSE, self.handle_prompt_response)
         server.endpoints.bind(DASHBOARD_PROMPT_CLEAR_BLOCKED, self.clear_blocked_prompts)
         server.endpoints.bind(DASHBOARD_SET_ENDPOINT, self.handle_dashboard_set)
         server.endpoints.bind(DASHBOARD_OPEN_APP_ENDPOINT, self.handle_dashboard_open_app)
         server.endpoints.bind(DASHBOARD_APP_INSTALL_ENDPOINT, self.handle_dashboard_app_install)
-        server.endpoints.bind(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, self.handle_drag_drop_request)
         server.endpoints.bind(DASHBOARD_DRAG_DROP_READ_ENDPOINT, self.handle_drag_drop_read)
         self.allowed_webview_hosts = server.tables.register(DASHBOARD_ALLOWED_WEBVIEW_HOSTS)
         self.speech_recognition = server.registries.register(DASHBOARD_SPEECH_RECOGNITION)
@@ -115,8 +103,6 @@ class DashboardExtension:
         self.prompt_requests: dict[str, PromptHandle] = {}
         self.prompt_keys: dict[str, PromptHandle] = {}
         self.blocked_prompts: set[str] = set()
-        self.drag_drop_requests: dict[str, Future[DragDropRequestResponse]] = {}
-        self.drag_drop_sessions: dict[str, Session] = {}
         self.drag_drop_states: dict[str, Session] = {}
         self.drag_drop_read_requests: dict[str, Future[DragDropReadResponse]] = {}
         self.request_id = 0
@@ -340,63 +326,12 @@ class DashboardExtension:
 
     async def handle_drag_drop_state(self, session: Session, packet: FileDragPacket):
         self.ensure_dashboard_session(session)
-        app = packet["app"]
-        target = self.drag_drop_sessions.get(app["id"], None)
-        if target is None:
-            logger.warning(
-                f"Dashboard {self.dashboard_session} tried to send drag drop state to unknown app {app['id']}"
-            )
-            return
-        self.drag_drop_states[packet["drag_id"]] = target
-        await target.send(DASHBOARD_DRAG_DROP_STATE_PACKET, packet)
-
-    async def handle_drag_drop_request_approval(self, session: Session, response: DragDropRequestResponse):
-        self.ensure_dashboard_session(session)
-        request = self.drag_drop_requests.pop(response["request_id"], None)
-        if not request:
-            msg = (
-                f"Dashboard {self.dashboard_session} tried to {'approve' if response['ok'] else 'deny'} "
-                f"to unknown request {response['request_id']} with"
-            )
-            logger.warning(msg)
-            return
-        request.set_result(response)
-
-    async def handle_drag_drop_request(self, session: Session, request: DragDropRequest) -> DragDropRequestResponse:
-        dashboard = await self.wait_dashboard_ready()
-        request_id = self.get_next_request_id()
-        request = DragDropRequestDashboard(
-            request_id=request_id,
-            app=session.app.to_json(),
-        )
-        await dashboard.send(DASHBOARD_DRAG_DROP_REQUEST_PACKET, request)
-        future = Future[DragDropRequestResponse]()
-        self.drag_drop_requests[request_id] = future
-        response = await future
-        if response["ok"]:
-            self.drag_drop_sessions[session.app.key()] = session
-        return response
+        id = Identifier.from_key(packet["app"]["id"])
+        session = self.server.sessions.sessions[id]
+        await session.send(DASHBOARD_DRAG_DROP_STATE_PACKET, packet)
 
     async def handle_drag_drop_read(self, session: Session, request: DragDropReadRequest) -> DragDropReadResponse:
-        dashboard = await self.wait_dashboard_ready()
-        target = self.drag_drop_states[request["drag_id"]]
-        if target != session:
-            msg = f"Session {session} tried to read invalid drag drop file"
-            logger.warning(msg)
-            raise PermissionDenied(msg)
-        request_id = self.get_next_request_id()
-        await dashboard.send(
-            DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
-            {"drag_id": request["drag_id"], "request_id": request_id},
-        )
-        future = Future[DragDropReadResponse]()
-        self.drag_drop_read_requests[request_id] = future
-        return await future
-
-    async def handle_drag_drop_read_response(self, session: Session, response: DragDropReadResponse):
-        drag_id = response.meta["request_id"]
-        request = self.drag_drop_read_requests[drag_id]
-        request.set_result(response)
+        raise Exception("Not implemented")
 
     async def handle_webview_event(self, session: Session, packet: WebviewEventPacket):
         self.ensure_dashboard_session(session)
