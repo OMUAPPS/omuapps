@@ -1,6 +1,5 @@
-import type { Draw } from '$lib/components/canvas/draw.js';
 import { GlBuffer, GlContext, GlFramebuffer, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
-import type { Matrices } from '$lib/components/canvas/matrices.js';
+import type { RenderPipeline } from '$lib/components/canvas/pipeline.js';
 import { BetterMath } from '$lib/math.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
@@ -308,25 +307,23 @@ export class PNGTuber implements Avatar {
     private readonly fullscreenTexcoordBuffer: GlBuffer;
 
     constructor(
-        private readonly glContext: GlContext,
-        private readonly draw: Draw,
-        private readonly matrices: Matrices,
+        private readonly pipeline: RenderPipeline,
         public readonly layers: Map<number, LayerData>,
     ) {
-        const { spriteProgram, bufferProgram } = this.createPrograms(glContext);
+        const { spriteProgram, bufferProgram } = this.createPrograms(pipeline.context);
         this.spriteProgram = spriteProgram;
         this.bufferProgram = bufferProgram;
 
-        const mainFBO = this.createFrameBuffer(glContext);
+        const mainFBO = this.createFrameBuffer(pipeline.context);
         this.frameBuffer = mainFBO.framebuffer;
         this.frameBufferTexture = mainFBO.texture;
 
-        const effectFBO = this.createFrameBuffer(glContext);
+        const effectFBO = this.createFrameBuffer(pipeline.context);
         this.effectTargetFrameBuffer = effectFBO.framebuffer;
         this.effectTargetTexture = effectFBO.texture;
 
-        this.fullscreenVertexBuffer = this.createFullscreenBuffer(glContext);
-        this.fullscreenTexcoordBuffer = LayerData['createUVBuffer'](glContext);
+        this.fullscreenVertexBuffer = this.createFullscreenBuffer(pipeline.context);
+        this.fullscreenTexcoordBuffer = LayerData['createUVBuffer'](pipeline.context);
     }
 
     private createPrograms(glContext: GlContext) {
@@ -366,7 +363,7 @@ export class PNGTuber implements Avatar {
         return buffer;
     }
 
-    public static async load(glContext: GlContext, draw: Draw, matrices: Matrices, data: PNGTuberData): Promise<PNGTuber> {
+    public static async load(pipeline: RenderPipeline, data: PNGTuberData): Promise<PNGTuber> {
         const values = Object.values(data);
         const images: Record<string, HTMLImageElement> = {};
 
@@ -379,10 +376,10 @@ export class PNGTuber implements Avatar {
 
         const layerData = new Map<number, LayerData>();
         for (const value of values) {
-            const layer = await LayerData.load(glContext, images[value.identification], value);
+            const layer = await LayerData.load(pipeline.context, images[value.identification], value);
             layerData.set(value.identification, layer);
         }
-        return new PNGTuber(glContext, draw, matrices, layerData);
+        return new PNGTuber(pipeline, layerData);
     }
 
     public create(): AvatarContext {
@@ -455,13 +452,13 @@ export class PNGTuber implements Avatar {
     }
 
     private ensureBufferSizes() {
-        const { gl } = this.glContext;
+        const { gl } = this.pipeline.context;
         this.frameBufferTexture.use(() => this.frameBufferTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight));
         this.effectTargetTexture.use(() => this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight));
     }
 
     private renderSceneToFrameBuffer(context: PNGTuberContext, options: RenderOptions) {
-        const { gl } = this.glContext;
+        const { gl } = this.pipeline.context;
         const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex))).sort((a, b) => a - b);
         const rootSprites = [...context.spriteGroups.entries()].filter(([,sprite]) => sprite.layerData.parentId === null);
 
@@ -476,11 +473,11 @@ export class PNGTuber implements Avatar {
             for (const object of options.objects) {
                 for (const [id, { sprite, layerData }] of context.spriteGroups.entries()) {
                     if (id !== object.attached.target) continue;
-                    this.matrices.model.push();
-                    this.matrices.model.multiply(sprite.globalTransform.getMat4());
-                    this.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
+                    this.pipeline.matrices.model.push();
+                    this.pipeline.matrices.model.multiply(sprite.globalTransform.getMat4());
+                    this.pipeline.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
                     object.render();
-                    this.matrices.model.pop();
+                    this.pipeline.matrices.model.pop();
                 }
             }
         });
@@ -500,16 +497,16 @@ export class PNGTuber implements Avatar {
     }
 
     private renderSingleLayer(sprite: SpriteGroup, layerData: LayerData, context: PNGTuberContext) {
-        this.matrices.model.push();
-        this.matrices.model.multiply(sprite.sprite.globalTransform.getMat4());
-        this.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
+        this.pipeline.matrices.model.push();
+        this.pipeline.matrices.model.multiply(sprite.sprite.globalTransform.getMat4());
+        this.pipeline.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
 
         const elapsed = context.timer.getElapsedMS() / 1000 / 6;
         const frame = Math.floor(elapsed * (layerData.animSpeed + 1)) % layerData.frames;
 
         const uvOffsetX = frame / layerData.frames;
         const uvScaleX = 1 / layerData.frames;
-        this.draw.textureUV(
+        this.pipeline.draw.textureUV(
             -layerData.width / 2, -layerData.height / 2,
             layerData.width / 2, layerData.height / 2,
             layerData.imageData,
@@ -517,17 +514,17 @@ export class PNGTuber implements Avatar {
             uvOffsetX + uvScaleX, 1,
         );
         if (DEV) {
-            this.draw.rectangleStroke(
+            this.pipeline.draw.rectangleStroke(
                 -layerData.width / 2, -layerData.height / 2,
                 layerData.width / 2, layerData.height / 2,
                 PALETTE_RGB.DEBUG_BLUE, 2,
             );
         }
-        this.matrices.model.pop();
+        this.pipeline.matrices.model.pop();
     }
 
     private applyEffects(action: AvatarAction, options: RenderOptions) {
-        const { gl } = this.glContext;
+        const { gl } = this.pipeline.context;
 
         options.effects.forEach(effect => {
             this.effectTargetFrameBuffer.use(() => {
@@ -551,7 +548,7 @@ export class PNGTuber implements Avatar {
     }
 
     private drawTextureToBuffer(texture: GlTexture) {
-        const { gl } = this.glContext;
+        const { gl } = this.pipeline.context;
         this.bufferProgram.use(() => {
             this.bufferProgram.getUniform('u_texture').asSampler2D().set(texture);
             this.bufferProgram.getUniform('u_projection').asMat4().set(Mat4.IDENTITY);
@@ -641,16 +638,16 @@ export class PNGTuber implements Avatar {
                 render: () => {
                     const { group } = topLayer;
                     const { layerData, sprite } = group;
-                    this.matrices.model.push();
-                    this.matrices.model.multiply(sprite.globalTransform.getMat4());
-                    this.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
+                    this.pipeline.matrices.model.push();
+                    this.pipeline.matrices.model.multiply(sprite.globalTransform.getMat4());
+                    this.pipeline.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
 
                     const elapsed = context.timer.getElapsedMS() / 1000 / 6;
                     const frame = Math.floor(elapsed * (layerData.animSpeed + 1)) % layerData.frames;
 
                     const uvOffsetX = frame / layerData.frames;
                     const uvScaleX = 1 / layerData.frames;
-                    this.draw.textureOutline(
+                    this.pipeline.draw.textureOutline(
                         -layerData.width / 2, -layerData.height / 2,
                         layerData.width / 2, layerData.height / 2,
                         layerData.imageData,
@@ -659,7 +656,7 @@ export class PNGTuber implements Avatar {
                             right: uvOffsetX + uvScaleX, bottom: 1,
                         },
                     );
-                    this.matrices.model.pop();
+                    this.pipeline.matrices.model.pop();
                 },
             };
         }

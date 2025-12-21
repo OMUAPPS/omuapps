@@ -1,9 +1,7 @@
-import type { Draw } from '$lib/components/canvas/draw';
-import type { GlContext } from '$lib/components/canvas/glcontext';
-import type { Matrices } from '$lib/components/canvas/matrices';
 import type { Vec2Like } from '$lib/math/vec2';
-import type { AvatarConfig, Config, DiscordOverlayApp, UserConfig } from '../discord-overlay-app';
+import type { AvatarConfig, UserConfig } from '../discord-overlay-app';
 import type { User, VoiceStateItem } from '../discord/type';
+import type { AppRenderer } from './app-renderer';
 import type { Avatar, AvatarContext } from './avatar';
 import { PNGAvatar } from './pngavatar';
 import { PNGTuber, type PNGTuberData } from './pngtuber';
@@ -45,16 +43,12 @@ export class AvatarManager {
     private readonly models: Record<string, ModelState> = {};
 
     constructor(
-        private readonly context: GlContext,
-        private readonly draw: Draw,
-        private readonly matrices: Matrices,
-        private readonly overlayApp: DiscordOverlayApp,
-        private readonly getConfig: () => Config,
+        private readonly app: AppRenderer,
     ) {}
 
     private async createDefaultAvatar(url: string) {
-        const base = await this.overlayApp.getSource({ type: 'url', url });
-        const model = await PNGAvatar.load(this.context, this.draw, this.matrices, {
+        const base = await this.app.overlayApp.getSource({ type: 'url', url });
+        const model = await PNGAvatar.load(this.app.pipeline, {
             base,
         });
         return model;
@@ -64,23 +58,23 @@ export class AvatarManager {
         if (!userConfig.avatar) {
             return user.avatar ? `discord:${user.id}/${user.avatar}` : 'discord:default';
         }
-        const avatar = this.getConfig().avatars[userConfig.avatar];
+        const avatar = this.app.config.avatars[userConfig.avatar];
         return avatar ? `avatar:${userConfig.avatar}-${avatar.type}-${avatar.key}` : 'avatar:not_found';
     }
 
     private async loadAvatarModelByConfig(avatar: AvatarConfig): Promise<Avatar> {
         let parsedData: PNGTuberData;
         if (avatar.type === 'pngtuber') {
-            const buffer = await this.overlayApp.getSource(avatar.source);
+            const buffer = await this.app.overlayApp.getSource(avatar.source);
             parsedData = JSON.parse(new TextDecoder().decode(buffer));
-            const model = await PNGTuber.load(this.context, this.draw, this.matrices, parsedData);
+            const model = await PNGTuber.load(this.app.pipeline, parsedData);
             return model;
         } else if (avatar.type === 'png') {
-            const base = await this.overlayApp.getSource(avatar.base);
-            const active = avatar.active && await this.overlayApp.getSource(avatar.active);
-            const deafened = avatar.deafened && await this.overlayApp.getSource(avatar.deafened);
-            const muted = avatar.muted && await this.overlayApp.getSource(avatar.muted);
-            const model = await PNGAvatar.load(this.context, this.draw, this.matrices, {
+            const base = await this.app.overlayApp.getSource(avatar.base);
+            const active = avatar.active && await this.app.overlayApp.getSource(avatar.active);
+            const deafened = avatar.deafened && await this.app.overlayApp.getSource(avatar.deafened);
+            const muted = avatar.muted && await this.app.overlayApp.getSource(avatar.muted);
+            const model = await PNGAvatar.load(this.app.pipeline, {
                 base,
                 active,
                 deafened,
@@ -93,7 +87,7 @@ export class AvatarManager {
     }
 
     public loadAvatarModelById(id: string): ModelState {
-        const avatar = this.getConfig().avatars[id];
+        const avatar = this.app.config.avatars[id];
         if (!avatar) return {
             type: 'failed',
             reason: { type: 'not_found', id },
@@ -115,7 +109,7 @@ export class AvatarManager {
                     data: {
                         cacheKey,
                         avatar: model,
-                        getConfig: () => this.getConfig().avatars[id],
+                        getConfig: () => this.app.config.avatars[id],
                     },
                 };
             });
@@ -125,7 +119,7 @@ export class AvatarManager {
     }
 
     public loadAvatarByVoiceState(id: string, voiceState: VoiceStateItem): AvatarState {
-        const userConfig = this.getConfig().users[id];
+        const userConfig = this.app.config.users[id];
         if (!userConfig) {
             return { type: 'failed', reason: { type: 'not_found', id } };
         }

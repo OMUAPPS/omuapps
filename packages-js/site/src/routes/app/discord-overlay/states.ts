@@ -13,14 +13,13 @@ type DragState = {
 
 export const selectedAvatar = writable<string | null>(null);
 export const dragState = writable<DragState | null>(null);
-export const dragPosition = writable<Vec2 | null>(null);
+export const dragPosition = writable<Vec2>(Vec2.ZERO);
 export const heldUser = writable<string | null>(null);
 export const isDraggingFinished = writable<boolean>(false);
 export const scaleFactor = writable<number>(1);
 export const view = writable<Mat4>(Mat4.IDENTITY);
 export const alignSide = writable<AlignSide | undefined>();
 export const alignClear = writable<boolean>(false);
-export const alignIndexes = writable<Record<string, number>>({});
 export const avatarPositions: Record<string, {
     targetPos: Vec2Like;
     pos: Vec2Like;

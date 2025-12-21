@@ -5,7 +5,7 @@
     import { omu, Popup, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
-    import AvatarRenderer from './components/AvatarRenderer.svelte';
+    import AvatarRenderer from './components/DiscordRenderer.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
     import VisualConfig from './components/VisualConfig.svelte';
     import { createUserConfig, DiscordOverlayApp } from './discord-overlay-app.js';

@@ -1,6 +1,5 @@
-import type { Draw } from '$lib/components/canvas/draw.js';
 import type { GlBuffer, GlContext, GlFramebuffer, GlProgram, GlTexture } from '$lib/components/canvas/glcontext.js';
-import type { Matrices } from '$lib/components/canvas/matrices.js';
+import type { RenderPipeline } from '$lib/components/canvas/pipeline.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Vec2 } from '$lib/math/vec2.js';
@@ -131,39 +130,37 @@ export class PNGAvatar implements Avatar {
     private readonly geometry: QuadGeometry;
 
     private constructor(
-        private readonly glContext: GlContext,
-        private readonly draw: Draw,
-        private readonly matrices: Matrices,
+        private readonly pipeline: RenderPipeline,
         public program: GlProgram,
         public base: TextureMesh,
         public active?: TextureMesh,
         public deafened?: TextureMesh,
         public muted?: TextureMesh,
     ) {
-        this.primaryTarget = createRenderTarget(glContext);
-        this.effectTarget = createRenderTarget(glContext);
+        this.primaryTarget = createRenderTarget(pipeline.context);
+        this.effectTarget = createRenderTarget(pipeline.context);
 
-        this.geometry = createQuadGeometry(glContext);
+        this.geometry = createQuadGeometry(pipeline.context);
     }
 
-    public static async load(context: GlContext, draw: Draw, matrices: Matrices, options: {
+    public static async load(pipeline: RenderPipeline, options: {
         base: Uint8Array;
         active?: Uint8Array;
         deafened?: Uint8Array;
         muted?: Uint8Array;
     }): Promise<PNGAvatar> {
-        const vertexShader = context.createShader({ type: 'vertex', source: MVP_VERTEX_SHADER });
-        const fragmentShader = context.createShader({ type: 'fragment', source: TEXTURE_FRAGMENT_SHADER });
-        const program = context.createProgram([vertexShader, fragmentShader]);
+        const vertexShader = pipeline.context.createShader({ type: 'vertex', source: MVP_VERTEX_SHADER });
+        const fragmentShader = pipeline.context.createShader({ type: 'fragment', source: TEXTURE_FRAGMENT_SHADER });
+        const program = pipeline.context.createProgram([vertexShader, fragmentShader]);
 
         const [base, active, deafened, muted] = await Promise.all([
-            PNGAvatar.createTextureMesh(context, options.base),
-            options.active ? PNGAvatar.createTextureMesh(context, options.active) : undefined,
-            options.deafened ? PNGAvatar.createTextureMesh(context, options.deafened) : undefined,
-            options.muted ? PNGAvatar.createTextureMesh(context, options.muted) : undefined,
+            PNGAvatar.createTextureMesh(pipeline.context, options.base),
+            options.active ? PNGAvatar.createTextureMesh(pipeline.context, options.active) : undefined,
+            options.deafened ? PNGAvatar.createTextureMesh(pipeline.context, options.deafened) : undefined,
+            options.muted ? PNGAvatar.createTextureMesh(pipeline.context, options.muted) : undefined,
         ]);
 
-        return new PNGAvatar(context, draw, matrices, program, base, active || base, deafened || base, muted || base);
+        return new PNGAvatar(pipeline, program, base, active || base, deafened || base, muted || base);
     }
 
     private static async createTextureMesh(context: GlContext, body: Uint8Array): Promise<TextureMesh> {
@@ -232,7 +229,7 @@ export class PNGAvatar implements Avatar {
         };
 
         const render = (action: AvatarAction, options: RenderOptions) => {
-            const { gl } = this.glContext;
+            const { gl } = this.pipeline.context;
 
             updatePhysics(action);
 
@@ -292,18 +289,18 @@ export class PNGAvatar implements Avatar {
         const targetWidth = 300;
         const ratio = height / width;
 
-        this.matrices.model.push();
-        this.matrices.model.translate(0, -bounceY * 0.0166 / 4, 0);
-        this.draw.texture(
+        this.pipeline.matrices.model.push();
+        this.pipeline.matrices.model.translate(0, -bounceY * 0.0166 / 4, 0);
+        this.pipeline.draw.texture(
             -targetWidth / 2, -targetWidth / 2 * ratio,
             targetWidth, targetWidth * ratio,
             mesh.texture,
         );
-        this.matrices.model.pop();
+        this.pipeline.matrices.model.pop();
     }
 
     private drawFullscreenQuad(texture: GlTexture) {
-        const { gl } = this.glContext;
+        const { gl } = this.pipeline.context;
 
         this.program.getUniform('u_texture').asSampler2D().set(texture);
         this.program.getUniform('u_projection').asMat4().set(Mat4.IDENTITY);
