@@ -72,13 +72,13 @@ async function build(entrypoints: string[]) {
 
     await fs.rm(values.dtsdir, { recursive: true, force: true });
 
-    const checkResult = await $`bun run tsc --noEmit --skipLibCheck --strict`.nothrow();
+    const checkResult = await $`bun run tsgo --noEmit --skipLibCheck --strict`.nothrow();
     if (checkResult.exitCode !== 0) {
         console.error('TypeScript type checking failed. Please fix the errors before building.');
     }
 
-    await $`bun --bun run tsc --outDir ${values.outdir} --rootDir ${values.root}`;
-    await $`bun --bun run tsc --project tsconfig.json --outDir ${values.outdir}/${values.dtsdir} --declaration true --emitDeclarationOnly true --rootDir ${values.root}`;
+    await $`bun --bun run tsgo --outDir ${values.outdir} --rootDir ${values.root}`;
+    await $`bun --bun run tsgo --project tsconfig.json --outDir ${values.outdir}/${values.dtsdir} --declaration true --emitDeclarationOnly true --rootDir ${values.root}`;
 
     if (values.debug) {
         console.timeEnd('build');
