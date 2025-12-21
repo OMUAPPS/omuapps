@@ -1,12 +1,17 @@
+import type { Draw } from '$lib/components/canvas/draw.js';
 import { GlBuffer, GlContext, GlFramebuffer, GlProgram, type GlTexture } from '$lib/components/canvas/glcontext.js';
 import type { Matrices } from '$lib/components/canvas/matrices.js';
 import { BetterMath } from '$lib/math.js';
 import { AABB2 } from '$lib/math/aabb2.js';
 import { Mat4 } from '$lib/math/mat4.js';
 import { Node2D } from '$lib/math/node2d.js';
+import type { Transform2D } from '$lib/math/transform2d.js';
 import { Vec2 } from '$lib/math/vec2.js';
+import { Vec4 } from '$lib/math/vec4.js';
 import { Timer } from '$lib/timer.js';
-import type { Avatar, AvatarAction, AvatarContext, RenderOptions } from './avatar.js';
+import { DEV } from 'esm-env';
+import { PALETTE_RGB } from '../consts.js';
+import type { Avatar, AvatarAction, AvatarContext, ContactCandidate, RenderOptions } from './avatar.js';
 import { MVP_VERTEX_SHADER, SPRITE_FRAGMENT_SHADER, TEXTURE_FRAGMENT_SHADER } from './shaders.js';
 
 export type LayerJson = {
@@ -37,22 +42,65 @@ export type LayerJson = {
     zindex: number;
 };
 
+export type PNGTuberData = Record<string, LayerJson>;
+
+interface PNGTuberContext {
+    readonly timer: Timer;
+    readonly tickTimer: Timer;
+    readonly spriteGroups: Map<number, SpriteGroup>;
+    readonly origin: Node2D;
+    bounceVelocity: number;
+    bounceTick: number;
+    blinking: boolean;
+    talking: boolean;
+    layer: number;
+}
+
 function parseVector2(data: string): Vec2 {
     const regex = /\(([\d. -]+,)*([\d. -]+)\)/gm;
     const match = regex.exec(data);
-    if (!match) {
-        throw new Error('Invalid vector2');
-    }
+    if (!match) throw new Error('Invalid vector2');
     const [x, y] = match[0].slice(1, -1).split(',').map(Number);
     return new Vec2(x, y);
 }
 
-export type PNGTuberData = Record<string, LayerJson>;
+function shouldRenderLayer(layerData: LayerData, context: PNGTuberContext): boolean {
+    if (layerData.showBlink !== 0) {
+        if (context.blinking && layerData.showBlink === 1) return false;
+        if (!context.blinking && layerData.showBlink === 2) return false;
+    }
+
+    if (layerData.showTalk !== 0) {
+        if (context.talking && layerData.showTalk === 1) return false;
+        if (!context.talking && layerData.showTalk === 2) return false;
+    }
+
+    if (layerData.costumeLayers[context.layer] !== 1) {
+        return false;
+    }
+    return true;
+}
+
+function alphaPixelsFromImage(image: HTMLImageElement): number[] {
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to create canvas context');
+    ctx.drawImage(image, 0, 0);
+    const imageData = ctx.getImageData(0, 0, image.width, image.height);
+    const alphaPixels: number[] = [];
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        alphaPixels.push(imageData.data[i + 3]);
+    }
+    return alphaPixels;
+}
 
 export class LayerData {
     constructor(
         public readonly vertexBuffer: GlBuffer,
         public readonly texcoordBuffer: GlBuffer,
+        public readonly alphaPixels: number[],
         public readonly animSpeed: number,
         public readonly clipped: boolean,
         public readonly costumeLayers: number[],
@@ -83,55 +131,17 @@ export class LayerData {
     ) { }
 
     public static async load(glContext: GlContext, image: HTMLImageElement, data: LayerJson): Promise<LayerData> {
-        const texture = glContext.createTexture();
-        texture.use(() => {
-            texture.setParams({
-                minFilter: 'linear',
-                magFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
-            texture.setImage(image, {
-                internalFormat: 'rgba',
-                format: 'rgba',
-                width: image.width,
-                height: image.height,
-            });
-        });
-        const vertexBuffer = glContext.createBuffer();
-        vertexBuffer.bind(() => {
-            const width = image.width / data.frames;
-            const height = image.height;
-            vertexBuffer.setData(new Float32Array([
-                0, 0, 0,
-                0, height, 0,
-                width, 0, 0,
-                0, height, 0,
-                width, height, 0,
-                width, 0, 0,
-            ]), 'static');
-        });
-        const uvBuffer = glContext.createBuffer();
-        uvBuffer.bind(() => {
-            uvBuffer.setData(new Float32Array([
-                0, 0,
-                0, 1,
-                1, 0,
-                0, 1,
-                1, 1,
-                1, 0,
-            ]), 'static');
-        });
+        const texture = this.createTexture(glContext, image);
+        const vertexBuffer = this.createVertexBuffer(glContext, image.width / data.frames, image.height);
+        const uvBuffer = this.createUVBuffer(glContext);
 
         const costumeLayers = JSON.parse(data.costumeLayers);
-        if (!Array.isArray(costumeLayers)) {
-            throw new Error(`Invalid costume layers: ${data.costumeLayers}`);
-        }
-        const offset = parseVector2(data.offset);
-        const pos = parseVector2(data.pos);
+        if (!Array.isArray(costumeLayers)) throw new Error(`Invalid costume layers: ${data.costumeLayers}`);
+
         return new LayerData(
             vertexBuffer,
             uvBuffer,
+            alphaPixelsFromImage(image),
             data.animSpeed,
             data.clipped,
             costumeLayers,
@@ -140,10 +150,10 @@ export class LayerData {
             data.identification,
             data.ignoreBounce,
             texture,
-            offset,
+            parseVector2(data.offset),
             data.parentId,
             data.path,
-            pos,
+            parseVector2(data.pos),
             data.rLimitMax,
             data.rLimitMin,
             data.rotDrag,
@@ -160,6 +170,55 @@ export class LayerData {
             image.width / data.frames,
             image.height,
         );
+    }
+
+    private static createTexture(glContext: GlContext, image: HTMLImageElement): GlTexture {
+        const texture = glContext.createTexture();
+        texture.use(() => {
+            texture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+            texture.setImage(image, {
+                internalFormat: 'rgba',
+                format: 'rgba',
+                width: image.width,
+                height: image.height,
+            });
+        });
+        return texture;
+    }
+
+    private static createVertexBuffer(glContext: GlContext, width: number, height: number): GlBuffer {
+        const buffer = glContext.createBuffer();
+        buffer.bind(() => {
+            buffer.setData(new Float32Array([
+                0, 0, 0,
+                0, height, 0,
+                width, 0, 0,
+                0, height, 0,
+                width, height, 0,
+                width, 0, 0,
+            ]), 'static');
+        });
+        return buffer;
+    }
+
+    private static createUVBuffer(glContext: GlContext): GlBuffer {
+        const buffer = glContext.createBuffer();
+        buffer.bind(() => {
+            buffer.setData(new Float32Array([
+                0, 0,
+                0, 1,
+                1, 0,
+                0, 1,
+                1, 1,
+                1, 0,
+            ]), 'static');
+        });
+        return buffer;
     }
 }
 
@@ -200,13 +259,11 @@ class SpriteGroup {
 
     public process() {
         this.tick += 1;
-
         const glob = this.dragger.globalPosition;
         this.drag();
         this.wobble();
 
         const length = glob.y - this.dragger.globalPosition.y;
-
         this.rotationalDrag(length);
         this.stretch(length);
     }
@@ -240,18 +297,6 @@ class SpriteGroup {
     }
 }
 
-interface PNGTuberContext {
-    readonly timer: Timer;
-    readonly tickTimer: Timer;
-    readonly spriteGroups: Map<number, SpriteGroup>;
-    readonly origin: Node2D;
-    bounceVelocity: number;
-    bounceTick: number;
-    blinking: boolean;
-    talking: boolean;
-    layer: number;
-}
-
 export class PNGTuber implements Avatar {
     private readonly spriteProgram: GlProgram;
     private readonly bufferProgram: GlProgram;
@@ -259,28 +304,106 @@ export class PNGTuber implements Avatar {
     private readonly frameBuffer: GlFramebuffer;
     private readonly effectTargetTexture: GlTexture;
     private readonly effectTargetFrameBuffer: GlFramebuffer;
-    private readonly vertexBuffer: GlBuffer;
-    private readonly texcoordBuffer: GlBuffer;
+    private readonly fullscreenVertexBuffer: GlBuffer;
+    private readonly fullscreenTexcoordBuffer: GlBuffer;
+
+    constructor(
+        private readonly glContext: GlContext,
+        private readonly draw: Draw,
+        private readonly matrices: Matrices,
+        public readonly layers: Map<number, LayerData>,
+    ) {
+        const { spriteProgram, bufferProgram } = this.createPrograms(glContext);
+        this.spriteProgram = spriteProgram;
+        this.bufferProgram = bufferProgram;
+
+        const mainFBO = this.createFrameBuffer(glContext);
+        this.frameBuffer = mainFBO.framebuffer;
+        this.frameBufferTexture = mainFBO.texture;
+
+        const effectFBO = this.createFrameBuffer(glContext);
+        this.effectTargetFrameBuffer = effectFBO.framebuffer;
+        this.effectTargetTexture = effectFBO.texture;
+
+        this.fullscreenVertexBuffer = this.createFullscreenBuffer(glContext);
+        this.fullscreenTexcoordBuffer = LayerData['createUVBuffer'](glContext);
+    }
+
+    private createPrograms(glContext: GlContext) {
+        const mvpVertexShader = glContext.createShader({ source: MVP_VERTEX_SHADER, type: 'vertex' });
+        const spriteFShader = glContext.createShader({ source: SPRITE_FRAGMENT_SHADER, type: 'fragment' });
+        const textureFShader = glContext.createShader({ source: TEXTURE_FRAGMENT_SHADER, type: 'fragment' });
+
+        return {
+            spriteProgram: glContext.createProgram([mvpVertexShader, spriteFShader]),
+            bufferProgram: glContext.createProgram([mvpVertexShader, textureFShader]),
+        };
+    }
+
+    private createFrameBuffer(glContext: GlContext) {
+        const texture = glContext.createTexture();
+        texture.use(() => {
+            texture.setParams({
+                minFilter: 'linear',
+                magFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+        });
+        const framebuffer = glContext.createFramebuffer();
+        framebuffer.use(() => framebuffer.attachTexture(texture));
+        return { texture, framebuffer };
+    }
+
+    private createFullscreenBuffer(glContext: GlContext): GlBuffer {
+        const buffer = glContext.createBuffer();
+        buffer.bind(() => {
+            buffer.setData(new Float32Array([
+                -1, -1, 0, -1, 1, 0, 1, -1, 0,
+                -1, 1, 0, 1, 1, 0, 1, -1, 0,
+            ]), 'static');
+        });
+        return buffer;
+    }
+
+    public static async load(glContext: GlContext, draw: Draw, matrices: Matrices, data: PNGTuberData): Promise<PNGTuber> {
+        const values = Object.values(data);
+        const images: Record<string, HTMLImageElement> = {};
+
+        await Promise.all(values.map(async (value) => {
+            const image = new Image();
+            image.src = `data:image/png;base64,${value.imageData}`;
+            await new Promise(resolve => { image.onload = resolve; });
+            images[value.identification] = image;
+        }));
+
+        const layerData = new Map<number, LayerData>();
+        for (const value of values) {
+            const layer = await LayerData.load(glContext, images[value.identification], value);
+            layerData.set(value.identification, layer);
+        }
+        return new PNGTuber(glContext, draw, matrices, layerData);
+    }
 
     public create(): AvatarContext {
         const spriteGroups = new Map<number, SpriteGroup>();
         const origin = new Node2D(Vec2.ZERO, 0, Vec2.ONE, null);
+
         for (const layer of this.layers.values()) {
             spriteGroups.set(layer.identification, new SpriteGroup(layer, origin));
         }
         for (const layer of this.layers.values()) {
             if (layer.parentId !== null) {
                 const parent = spriteGroups.get(layer.parentId);
-                if (!parent) {
-                    throw new Error('Invalid parent');
-                }
-                spriteGroups.get(layer.identification)?.setParent(parent);
+                if (parent) spriteGroups.get(layer.identification)?.setParent(parent);
+                else throw new Error('Invalid parent');
             }
         }
         for (const sprite of spriteGroups.values()) {
             sprite.initialize();
         }
-        const context = {
+
+        const context: PNGTuberContext = {
             timer: new Timer(),
             tickTimer: new Timer(),
             spriteGroups,
@@ -290,110 +413,24 @@ export class PNGTuber implements Avatar {
             blinking: false,
             talking: false,
             layer: 0,
-            showOnTalk: 0,
-            showOnBlink: 0,
         };
-        const render = (matrices: Matrices, action: AvatarAction, options: RenderOptions) => this.render(matrices, context, action, options);
-        const bounds = () => this.getBoundingBox(context);
+
         return {
-            render,
-            bounds,
+            render: (action, options) => this.render(context, action, options),
+            bounds: () => this.getBoundingBox(context),
+            getContactCandidate: (point) => this.getContactCandidate(context, point),
         };
     }
 
-    constructor(
-        private readonly glContext: GlContext,
-        public readonly layers: Map<number, LayerData>,
-    ) {
-        const mvpVertexShader = glContext.createShader({
-            source: MVP_VERTEX_SHADER,
-            type: 'vertex',
-        });
-        const spriteFShader = glContext.createShader({
-            source: SPRITE_FRAGMENT_SHADER,
-            type: 'fragment',
-        });
-        this.spriteProgram = glContext.createProgram([mvpVertexShader, spriteFShader]);
-        const textureFShader = glContext.createShader({
-            source: TEXTURE_FRAGMENT_SHADER,
-            type: 'fragment',
-        });
-        this.bufferProgram = glContext.createProgram([mvpVertexShader, textureFShader]);
-
-        this.frameBuffer = glContext.createFramebuffer();
-        this.frameBufferTexture = glContext.createTexture();
-        this.frameBufferTexture.use(() => {
-            this.frameBufferTexture.setParams({
-                minFilter: 'linear',
-                magFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
-        });
-        this.frameBuffer.use(() => {
-            this.frameBuffer.attachTexture(this.frameBufferTexture);
-        });
-        this.effectTargetTexture = glContext.createTexture();
-        this.effectTargetTexture.use(() => {
-            this.effectTargetTexture.setParams({
-                minFilter: 'linear',
-                magFilter: 'linear',
-                wrapS: 'clamp-to-edge',
-                wrapT: 'clamp-to-edge',
-            });
-        });
-        this.effectTargetFrameBuffer = glContext.createFramebuffer();
-        this.effectTargetFrameBuffer.use(() => {
-            this.effectTargetFrameBuffer.attachTexture(this.effectTargetTexture);
-        });
-        this.vertexBuffer = this.glContext.createBuffer();
-        this.vertexBuffer.bind(() => {
-            this.vertexBuffer.setData(new Float32Array([
-                -1, -1, 0,
-                -1, 1, 0,
-                1, -1, 0,
-                -1, 1, 0,
-                1, 1, 0,
-                1, -1, 0,
-            ]), 'static');
-        });
-        this.texcoordBuffer = this.glContext.createBuffer();
-        this.texcoordBuffer.bind(() => {
-            this.texcoordBuffer.setData(new Float32Array([
-                0, 0,
-                0, 1,
-                1, 0,
-                0, 1,
-                1, 1,
-                1, 0,
-            ]), 'static');
-        });
+    public render(context: PNGTuberContext, action: AvatarAction, options: RenderOptions): void {
+        this.updateStateAndPhysics(context, action);
+        this.ensureBufferSizes();
+        this.renderSceneToFrameBuffer(context, options);
+        this.applyEffects(action, options);
+        this.drawFinalToScreen();
     }
 
-    public static async load(glContext: GlContext, data: PNGTuberData): Promise<PNGTuber> {
-        const values = Object.values(data);
-        const images: Record<string, HTMLImageElement> = {};
-        await Promise.all(values.map(async (value) => {
-            const image = new Image();
-            image.src = `data:image/png;base64,${value.imageData}`;
-            await new Promise(resolve => {
-                // .decode()を並列で使うとエラー吐くから.decode()の代わりに.onloadを使う (https://issues.chromium.org/issues/40792189#comment7)
-                image.onload = resolve;
-            });
-            images[value.identification] = image;
-        }));
-
-        const layerData = new Map<number, LayerData>();
-        for (const value of values) {
-            const image = images[value.identification];
-            const layer = await LayerData.load(glContext, image, value);
-            layerData.set(value.identification, layer);
-        }
-        return new PNGTuber(glContext, layerData);
-    }
-
-    public render(matrices: Matrices, context: PNGTuberContext, action: AvatarAction, options: RenderOptions): void {
-        const { gl } = this.glContext;
+    private updateStateAndPhysics(context: PNGTuberContext, action: AvatarAction) {
         const time = context.timer.getElapsedMS() / 500;
         context.blinking = action.self_mute || Math.sin(time) > 0.995;
         context.talking = action.talking;
@@ -415,29 +452,82 @@ export class PNGTuber implements Avatar {
                 sprite.process();
             }
         }
+    }
 
-        const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex)));
+    private ensureBufferSizes() {
+        const { gl } = this.glContext;
+        this.frameBufferTexture.use(() => this.frameBufferTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight));
+        this.effectTargetTexture.use(() => this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight));
+    }
 
-        this.frameBufferTexture.use(() => {
-            this.frameBufferTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
-        });
-        this.effectTargetTexture.use(() => {
-            this.effectTargetTexture.ensureSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
-        });
-
-        passes.sort((a, b) => a - b);
+    private renderSceneToFrameBuffer(context: PNGTuberContext, options: RenderOptions) {
+        const { gl } = this.glContext;
+        const passes = Array.from(new Set([...this.layers.values()].map(layer => layer.zindex))).sort((a, b) => a - b);
+        const rootSprites = [...context.spriteGroups.entries()].filter(([,sprite]) => sprite.layerData.parentId === null);
 
         this.frameBuffer.use(() => {
             gl.clearColor(1, 1, 1, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
             passes.forEach(pass => {
-                [...context.spriteGroups.values()].filter(sprite => sprite.layerData.parentId === null).forEach(sprite => {
-                    matrices.push();
-                    this.renderLayer(context, matrices, sprite, pass);
-                    matrices.pop();
+                rootSprites.forEach(sprite => {
+                    this.renderLayerRecursive(context, options, sprite[0], sprite[1], pass);
                 });
             });
+            for (const object of options.objects) {
+                for (const [id, { sprite, layerData }] of context.spriteGroups.entries()) {
+                    if (id !== object.attached.target) continue;
+                    this.matrices.model.push();
+                    this.matrices.model.multiply(sprite.globalTransform.getMat4());
+                    this.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
+                    object.render();
+                    this.matrices.model.pop();
+                }
+            }
         });
+    }
+
+    private renderLayerRecursive(context: PNGTuberContext, options: RenderOptions, index: number, sprite: SpriteGroup, pass: number) {
+        if (!shouldRenderLayer(sprite.layerData, context)) return;
+
+        const { layerData } = sprite;
+
+        if (layerData.zindex === pass) {
+            this.renderSingleLayer(sprite, layerData, context);
+        }
+
+        const children = [...context.spriteGroups.entries()].filter(([,child]) => child.layerData.parentId === layerData.identification);
+        children.forEach(child => this.renderLayerRecursive(context, options, child[0], child[1], pass));
+    }
+
+    private renderSingleLayer(sprite: SpriteGroup, layerData: LayerData, context: PNGTuberContext) {
+        this.matrices.model.push();
+        this.matrices.model.multiply(sprite.sprite.globalTransform.getMat4());
+        this.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
+
+        const elapsed = context.timer.getElapsedMS() / 1000 / 6;
+        const frame = Math.floor(elapsed * (layerData.animSpeed + 1)) % layerData.frames;
+
+        const uvOffsetX = frame / layerData.frames;
+        const uvScaleX = 1 / layerData.frames;
+        this.draw.textureUV(
+            -layerData.width / 2, -layerData.height / 2,
+            layerData.width / 2, layerData.height / 2,
+            layerData.imageData,
+            uvOffsetX, 0,
+            uvOffsetX + uvScaleX, 1,
+        );
+        if (DEV) {
+            this.draw.rectangleStroke(
+                -layerData.width / 2, -layerData.height / 2,
+                layerData.width / 2, layerData.height / 2,
+                PALETTE_RGB.DEBUG_BLUE, 2,
+            );
+        }
+        this.matrices.model.pop();
+    }
+
+    private applyEffects(action: AvatarAction, options: RenderOptions) {
+        const { gl } = this.glContext;
 
         options.effects.forEach(effect => {
             this.effectTargetFrameBuffer.use(() => {
@@ -445,97 +535,35 @@ export class PNGTuber implements Avatar {
                 gl.clear(gl.COLOR_BUFFER_BIT);
             });
             effect.render(action, this.frameBufferTexture, this.effectTargetFrameBuffer);
+
             this.frameBuffer.use(() => {
                 gl.clearColor(1, 1, 1, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
-                this.bufferProgram.use(() => {
-                    const textureUniform = this.bufferProgram.getUniform('u_texture').asSampler2D();
-                    textureUniform.set(this.effectTargetTexture);
-                    const projection = this.bufferProgram.getUniform('u_projection').asMat4();
-                    projection.set(Mat4.IDENTITY);
-                    const model = this.bufferProgram.getUniform('u_model').asMat4();
-                    model.set(Mat4.IDENTITY);
-                    const view = this.bufferProgram.getUniform('u_view').asMat4();
-                    view.set(Mat4.IDENTITY);
-                    const positionAttribute = this.bufferProgram.getAttribute('a_position');
-                    positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                    const uvAttribute = this.bufferProgram.getAttribute('a_texcoord');
-                    uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
-                    gl.drawArrays(gl.TRIANGLES, 0, 6);
-                });
-            });
-        });
-
-        this.frameBufferTexture.use(() => {
-            this.bufferProgram.use(() => {
-                const textureUniform = this.bufferProgram.getUniform('u_texture').asSampler2D();
-                textureUniform.set(this.frameBufferTexture);
-                const projection = this.bufferProgram.getUniform('u_projection').asMat4();
-                projection.set(Mat4.IDENTITY);
-                const model = this.bufferProgram.getUniform('u_model').asMat4();
-                model.set(Mat4.IDENTITY);
-                const view = this.bufferProgram.getUniform('u_view').asMat4();
-                view.set(Mat4.IDENTITY);
-                const positionAttribute = this.bufferProgram.getAttribute('a_position');
-                positionAttribute.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = this.bufferProgram.getAttribute('a_texcoord');
-                uvAttribute.set(this.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
+                this.drawTextureToBuffer(this.effectTargetTexture);
             });
         });
     }
 
-    private renderLayer(context: PNGTuberContext, matrices: Matrices, sprite: SpriteGroup, pass: number) {
-        const { layerData } = sprite;
-        if (layerData.showBlink !== 0) {
-            if (context.blinking && layerData.showBlink === 1) {
-                return;
-            } else if (!context.blinking && layerData.showBlink === 2) {
-                return;
-            }
-        }
-        if (layerData.showTalk !== 0) {
-            if (context.talking && layerData.showTalk === 1) {
-                return;
-            } else if (!context.talking && layerData.showTalk === 2) {
-                return;
-            }
-        }
-        if (layerData.costumeLayers[context.layer] !== 1) {
-            return;
-        }
-        const { gl } = this.glContext;
+    private drawFinalToScreen() {
+        this.frameBufferTexture.use(() => {
+            this.drawTextureToBuffer(this.frameBufferTexture);
+        });
+    }
 
-        if (layerData.zindex === pass) {
-            this.spriteProgram.use(() => {
-                const textureUniform = this.spriteProgram.getUniform('u_texture').asSampler2D();
-                textureUniform.set(layerData.imageData);
-                const projection = this.spriteProgram.getUniform('u_projection').asMat4();
-                projection.set(Mat4.IDENTITY);
-                const model = this.spriteProgram.getUniform('u_model').asMat4();
-                const matrix = sprite.sprite
-                    .globalTransform
-                    .getMat4()
-                    .translate(-layerData.width / 2, -layerData.height / 2, 0)
-                    .translate(layerData.offset.x, layerData.offset.y, 0);
-                model.set(matrix);
-                const view = this.spriteProgram.getUniform('u_view').asMat4();
-                view.set(matrices.get());
-                const frameCount = this.spriteProgram.getUniform('u_frame_count').asFloat();
-                frameCount.set(layerData.frames);
-                const frameUniform = this.spriteProgram.getUniform('u_frame').asFloat();
-                const elapsed = context.timer.getElapsedMS() / 1000 / 6;
-                const frame = Math.floor(elapsed * (layerData.animSpeed + 1)) % layerData.frames;
-                frameUniform.set(layerData.frames > 1 ? frame : 0);
-                const positionAttribute = this.spriteProgram.getAttribute('a_position');
-                positionAttribute.set(layerData.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
-                const uvAttribute = this.spriteProgram.getAttribute('a_texcoord');
-                uvAttribute.set(layerData.texcoordBuffer, 2, gl.FLOAT, false, 0, 0);
-                gl.drawArrays(gl.TRIANGLES, 0, 6);
-            });
-        }
-        [...context.spriteGroups.values()].filter(child => child.layerData.parentId === layerData.identification).forEach(child => {
-            this.renderLayer(context, matrices, child, pass);
+    private drawTextureToBuffer(texture: GlTexture) {
+        const { gl } = this.glContext;
+        this.bufferProgram.use(() => {
+            this.bufferProgram.getUniform('u_texture').asSampler2D().set(texture);
+            this.bufferProgram.getUniform('u_projection').asMat4().set(Mat4.IDENTITY);
+            this.bufferProgram.getUniform('u_model').asMat4().set(Mat4.IDENTITY);
+            this.bufferProgram.getUniform('u_view').asMat4().set(Mat4.IDENTITY);
+
+            this.bufferProgram.getAttribute('a_position')
+                .set(this.fullscreenVertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            this.bufferProgram.getAttribute('a_texcoord')
+                .set(this.fullscreenTexcoordBuffer, 2, gl.FLOAT, false, 0, 0);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
 
@@ -544,19 +572,96 @@ export class PNGTuber implements Avatar {
         for (const sprite of context.spriteGroups.values()) {
             const transform = sprite.sprite.globalTransform;
             const { width, height } = sprite.layerData.imageData;
-            const halfWidth = width / 2;
-            const halfHeight = height / 2;
             const corners = [
-                { x: -halfWidth, y: -halfHeight },
-                { x: -halfWidth, y: halfHeight },
-                { x: halfWidth, y: -halfHeight },
-                { x: halfWidth, y: halfHeight },
+                { x: -width / 2, y: -height / 2 },
+                { x: -width / 2, y: height / 2 },
+                { x: width / 2, y: -height / 2 },
+                { x: width / 2, y: height / 2 },
             ];
-            const offset = new Vec2(sprite.layerData.offset.x, sprite.layerData.offset.y);
-            for (const corner of corners) {
-                points.push(transform.xform(offset.add(corner)));
-            }
+            const offset = sprite.layerData.offset;
+            corners.forEach(c => points.push(transform.xform(offset.add(c))));
         }
         return AABB2.fromPoints(points);
+    }
+
+    public getContactCandidate(context: PNGTuberContext, point: Vec2): ContactCandidate | undefined {
+        let topLayer: {
+            id: number;
+            group: SpriteGroup;
+            offset: Vec2;
+            transform: Transform2D;
+        } | undefined = undefined;
+        for (const [id, group] of context.spriteGroups.entries()) {
+            const { layerData, sprite } = group;
+            const transform = sprite.globalTransform;
+            const { width, height } = layerData.imageData;
+            const offset = layerData.offset;
+
+            // bounds check
+            const corners = [
+                new Vec2(-width / 2, -height / 2),
+                new Vec2(-width / 2, height / 2),
+                new Vec2(width / 2, height / 2),
+                new Vec2(width / 2, -height / 2),
+            ].map(c => transform.xform(offset.add(c)));
+
+            const bounds = AABB2.fromPoints(corners);
+
+            if (!bounds.contains(point)) continue;
+
+            // alpha check
+            const localPoint = transform.affineInverse().xform(point).sub(offset).add(new Vec2(width / 2, height / 2));
+            const x = Math.floor(localPoint.x);
+            const y = Math.floor(localPoint.y);
+            if (x < 0 || x >= width || y < 0 || y >= height) continue;
+            const pixelIndex = y * width + x;
+            const alpha = layerData.alphaPixels[pixelIndex];
+            if (alpha < 10) continue;
+
+            if (!topLayer || layerData.zindex >= topLayer.group.layerData.zindex) {
+                topLayer = {
+                    id,
+                    group,
+                    offset: localPoint.sub(new Vec2(width / 2, height / 2)),
+                    transform: transform,
+                };
+            };
+        }
+        if (topLayer) {
+            return {
+                attach: (object, offset) => {
+                    return {
+                        object,
+                        offset,
+                        origin: topLayer.offset,
+                        target: topLayer.id,
+                        matrix: topLayer.transform.getMat4(),
+                    };
+                },
+                render: () => {
+                    const { group } = topLayer;
+                    const { layerData, sprite } = group;
+                    this.matrices.model.push();
+                    this.matrices.model.multiply(sprite.globalTransform.getMat4());
+                    this.matrices.model.translate(layerData.offset.x, layerData.offset.y, 0);
+
+                    const elapsed = context.timer.getElapsedMS() / 1000 / 6;
+                    const frame = Math.floor(elapsed * (layerData.animSpeed + 1)) % layerData.frames;
+
+                    const uvOffsetX = frame / layerData.frames;
+                    const uvScaleX = 1 / layerData.frames;
+                    this.draw.textureOutline(
+                        -layerData.width / 2, -layerData.height / 2,
+                        layerData.width / 2, layerData.height / 2,
+                        layerData.imageData,
+                        Vec4.ONE, 8, {
+                            left: uvOffsetX, top: 0,
+                            right: uvOffsetX + uvScaleX, bottom: 1,
+                        },
+                    );
+                    this.matrices.model.pop();
+                },
+            };
+        }
     }
 }

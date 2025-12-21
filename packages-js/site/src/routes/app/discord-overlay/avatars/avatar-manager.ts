@@ -1,4 +1,6 @@
+import type { Draw } from '$lib/components/canvas/draw';
 import type { GlContext } from '$lib/components/canvas/glcontext';
+import type { Matrices } from '$lib/components/canvas/matrices';
 import type { Vec2Like } from '$lib/math/vec2';
 import type { AvatarConfig, Config, DiscordOverlayApp, UserConfig } from '../discord-overlay-app';
 import type { User, VoiceStateItem } from '../discord/type';
@@ -44,13 +46,15 @@ export class AvatarManager {
 
     constructor(
         private readonly context: GlContext,
+        private readonly draw: Draw,
+        private readonly matrices: Matrices,
         private readonly overlayApp: DiscordOverlayApp,
         private readonly getConfig: () => Config,
     ) {}
 
     private async createDefaultAvatar(url: string) {
         const base = await this.overlayApp.getSource({ type: 'url', url });
-        const model = await PNGAvatar.load(this.context, {
+        const model = await PNGAvatar.load(this.context, this.draw, this.matrices, {
             base,
         });
         return model;
@@ -69,14 +73,14 @@ export class AvatarManager {
         if (avatar.type === 'pngtuber') {
             const buffer = await this.overlayApp.getSource(avatar.source);
             parsedData = JSON.parse(new TextDecoder().decode(buffer));
-            const model = await PNGTuber.load(this.context, parsedData);
+            const model = await PNGTuber.load(this.context, this.draw, this.matrices, parsedData);
             return model;
         } else if (avatar.type === 'png') {
             const base = await this.overlayApp.getSource(avatar.base);
             const active = avatar.active && await this.overlayApp.getSource(avatar.active);
             const deafened = avatar.deafened && await this.overlayApp.getSource(avatar.deafened);
             const muted = avatar.muted && await this.overlayApp.getSource(avatar.muted);
-            const model = await PNGAvatar.load(this.context, {
+            const model = await PNGAvatar.load(this.context, this.draw, this.matrices, {
                 base,
                 active,
                 deafened,

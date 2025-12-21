@@ -15,6 +15,9 @@ export const PALETTE_RGB = {
     OUTLINE_2: new Vec4(0, 0, 0, 0.2),
     TOOLTIP_BACKGROUND: new Vec4(0, 0, 0, 1),
     TOOLTIP_TEXT: new Vec4(1, 1, 1, 1),
+    DEBUG_RED: new Vec4(1, 0, 0, 1),
+    DEBUG_GREEN: new Vec4(0, 1, 0, 1),
+    DEBUG_BLUE: new Vec4(0, 0, 1, 1),
 };
 
 export const PALETTE_HEX: Record<keyof typeof PALETTE_RGB, string> = Object.fromEntries(

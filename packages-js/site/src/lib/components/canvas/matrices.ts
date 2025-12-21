@@ -82,4 +82,28 @@ export class Matrices {
         const invView = view.inverse();
         return invModel.basisTransform2(invView.basisTransform2(invProjection.basisTransform2(point)));
     }
+
+    public getModelToWorld(): Mat4 {
+        return this.model.get();
+    }
+
+    public getWorldToModel(): Mat4 {
+        return this.model.get().inverse();
+    }
+
+    public getWorldToView(): Mat4 {
+        return this.view.get();
+    }
+
+    public getViewToWorld(): Mat4 {
+        return this.view.get().inverse();
+    }
+
+    public getModelToView(): Mat4 {
+        return this.view.get().multiply(this.model.get());
+    }
+
+    public getViewToModel(): Mat4 {
+        return this.model.get().inverse().multiply(this.view.get().inverse());
+    }
 }

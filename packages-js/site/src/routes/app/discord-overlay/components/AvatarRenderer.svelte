@@ -1,25 +1,27 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { Draw } from '$lib/components/canvas/draw.js';
-    import { GlContext } from '$lib/components/canvas/glcontext.js';
+    import { GlContext, GlTexture } from '$lib/components/canvas/glcontext.js';
     import { Matrices } from '$lib/components/canvas/matrices.js';
-    import type { Input, RenderPipeline, Time } from '$lib/components/canvas/pipeline.js';
+    import type { EventKeyDown, EventMouseMove, EventMouseWheel, Frame, Input, RenderPipeline, Time } from '$lib/components/canvas/pipeline.js';
     import { comparator } from '$lib/helper.js';
     import { BetterMath } from '$lib/math.js';
     import { AABB2 } from '$lib/math/aabb2.js';
     import { Axis } from '$lib/math/axis.js';
-    import { TAU } from '$lib/math/math.js';
+    import { Mat4 } from '$lib/math/mat4.js';
+    import { clamp, TAU } from '$lib/math/math.js';
     import { Vec2, type Vec2Like } from '$lib/math/vec2.js';
     import { Vec4 } from '$lib/math/vec4.js';
+    import { SvelteMap } from 'svelte/reactivity';
     import { AvatarManager } from '../avatars/avatar-manager.js';
-    import type { RenderOptions } from '../avatars/avatar.js';
+    import type { AvatarContext, ContactCandidate, RenderObject, RenderOptions } from '../avatars/avatar.js';
+    import { LayoutEngine } from '../avatars/layout-engine.js';
     import { PALETTE_RGB } from '../consts.js';
-    import { DiscordOverlayApp, type AlignSide, type AvatarConfig, type UserConfig } from '../discord-overlay-app.js';
+    import { DiscordOverlayApp, type AlignSide, type AvatarConfig, type Source, type UserConfig } from '../discord-overlay-app.js';
     import type { RPCSpeakingStates, RPCVoiceStates } from '../discord/discord.js';
     import type { VoiceStateItem } from '../discord/type.js';
     import { EffectManager } from '../effects/effect-manager.js';
     import { alignClear, alignIndexes, alignSide, avatarPositions, dragPosition, dragState, scaleFactor, selectedAvatar, view } from '../states.js';
-    import { LayoutEngine } from './layout-engine.svelte.js';
 
     interface Props {
         overlayApp: DiscordOverlayApp;
@@ -36,7 +38,7 @@
         dimensions = new Vec2(1920, 1080),
         takeScreenshot = $bindable(),
     }: Props = $props();
-    const { config } = overlayApp;
+    const { config, world } = overlayApp;
 
     takeScreenshot = async () => {
         const { gl } = context;
@@ -46,11 +48,7 @@
         const width = 1920;
         const height = 1080;
         try {
-            gl.colorMask(true, true, true, true);
-            gl.enable(gl.BLEND);
-            gl.clearColor(1, 1, 1, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+            prepareGL();
             gl.viewport(0, 0, width, height);
 
             matrices.identity();
@@ -92,30 +90,86 @@
         context = pipeline.context;
         matrices = newPipeline.matrices;
         draw = newPipeline.draw;
-        const { input } = pipeline;
 
         effectManager = await EffectManager.new(context, () => $config);
-        avatarManager = new AvatarManager(context, overlayApp, () => $config);
+        avatarManager = new AvatarManager(context, draw, matrices, overlayApp, () => $config);
         layoutEngine = new LayoutEngine($config, dimensions);
 
         for await (const frame of pipeline) {
-            time = frame.time;
-
-            setupWorldMatrices();
-            $view = matrices.get();
-
-            await render();
-
-            matrices.identity();
-            matrices.projection.orthographic(0, 0, matrices.width, matrices.height, -1, 1);
-            processInputs(input);
+            await handleFrame(frame, pipeline.input);
         }
     }
 
-    function processInputs(input: Input) {
+    async function handleFrame(frame: Frame, input: Input) {
+        time = frame.time;
+
+        setupWorldMatrices();
+        $view = matrices.get();
+
+        handleInput(input);
+        await renderFrame();
+
+        resetMatrices();
+    }
+
+    function resetMatrices() {
+        matrices.identity();
+        matrices.projection.orthographic(0, 0, matrices.width, matrices.height, -1, 1);
+    }
+
+    function onMouseDown() {
+        console.log('mouse down');
+        if (hoveredObject) {
+            heldObject = hoveredObject;
+        }
+    }
+
+    function onMouseUp() {
+        const object = heldObject && $world.objects[heldObject];
+        if (objectAttachCandidate && object) {
+            const attached = objectAttachCandidate.candidate.attach(object, objectAttachCandidate.offset);
+            const objects = $world.attahed[objectAttachCandidate.id] ??= [];
+            objects.push(attached);
+            delete $world.objects[attached.object.id];
+        }
+        heldObject = undefined;
+    }
+
+    function onMouseMove(event: EventMouseMove) {
+        const object = heldObject && $world.objects[heldObject];
+        if (object) {
+            const start = new Vec2(50, 150);
+            const end = new Vec2(50, 150);
+            const screen = new Vec2(matrices.width, matrices.height);
+            const inner = screen.sub(start).sub(end);
+            const scaleVector = inner.div(dimensions);
+            const scaleFactor = Math.min(scaleVector.x, scaleVector.y);
+            const delta = event.mouse.delta.scale(1 / scaleFactor);
+            object.position = delta.add(object.position);
+        }
+    }
+
+    function onMouseWheel(event: EventMouseWheel) {
+        const object = hoveredObject && $world.objects[hoveredObject];
+        if (object) {
+            object.scale = clamp(Math.exp(Math.log(object.scale) - event.delta / 500), 0.1, 10);
+        }
+    }
+
+    function onKeyDown(event: EventKeyDown) {
+        if (event.key === 'Backspace' && hoveredObject && $world.objects[hoveredObject]) {
+            delete $world.objects[hoveredObject];
+        }
+    }
+
+    function handleInput(input: Input) {
         for (const event of input) {
-            if (event.kind === 'mouse-down') {
-                console.log('mouse down');
+            switch (event.kind) {
+                case 'mouse-down': onMouseDown(); break;
+                case 'mouse-up': onMouseUp(); break;
+                case 'mouse-move': onMouseMove(event); break;
+                case 'mouse-wheel': onMouseWheel(event); break;
+                case 'key-down': onKeyDown(event); break;
             }
         }
     }
@@ -141,15 +195,20 @@
         $view = matrices.get();
     }
 
-    async function render() {
+    function prepareGL() {
         const { gl } = context;
-        const { width, height } = gl.canvas;
-
         gl.colorMask(true, true, true, true);
         gl.enable(gl.BLEND);
         gl.clearColor(1, 1, 1, 0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    }
+
+    async function renderFrame() {
+        const { gl } = context;
+        const { width, height } = gl.canvas;
+
+        prepareGL();
         gl.viewport(0, 0, width, height);
 
         if (overlayApp.isOnClient()) {
@@ -170,12 +229,12 @@
 
     function applyAvatarScale(scale: number) {
         matrices.model.translate(0, AVATAR_FACE_RADIUS, 0);
-        matrices.model.scale(scale, scale, 0);
+        matrices.model.scale(scale, scale, 1);
         matrices.model.translate(0, -AVATAR_FACE_RADIUS, 0);
     }
 
     function applyAvatarTransform(config: AvatarConfig) {
-        matrices.model.scale(config.scale, config.scale, 0);
+        matrices.model.scale(config.scale, config.scale, 1);
         matrices.model.translate(config.offset[0], config.offset[1], 0);
         if (config.type === 'pngtuber') {
             matrices.model.scale(
@@ -240,7 +299,7 @@
         };
         avatarPositions[id] = newTransform;
         matrices.model.translate(newTransform.pos.x, newTransform.pos.y, 0);
-        matrices.model.scale(newTransform.scale.x, newTransform.scale.y, 0);
+        matrices.model.scale(newTransform.scale.x, newTransform.scale.y, 1);
         matrices.model.rotate(Axis.Z_POS.rotate(newTransform.rot));
         return {
             target: user.align ? newTransform.targetPos : newTransform.pos,
@@ -249,10 +308,6 @@
     }
 
     let alignDistanceCache: Record<string, number> = {};
-
-    function getRenderOptions(): RenderOptions {
-        return { effects: effectManager.getActiveEffects() };
-    }
 
     function getSortedVoiceEntries(): [string, VoiceStateItem][] {
         return Object.entries(voiceState.states)
@@ -289,7 +344,7 @@
     function getWorldSpaceScreenBounds() {
         const { gl } = context;
         const { width, height } = gl.canvas;
-        return matrices.view.get().inverse().transformAABB2(new AABB2(Vec2.ZERO, new Vec2(width, height)));
+        return matrices.getViewToWorld().transformAABB2(new AABB2(Vec2.ZERO, new Vec2(width, height)));
     }
 
     function getAlignIndexes(): Record<string, number> {
@@ -300,99 +355,156 @@
         );
     }
 
-    async function drawAvatars() {
-        const renderOptions = getRenderOptions();
+    interface RenderedAvatar {
+        bounds: AABB2;
+        pos: Vec2;
+        worldToModel: Mat4;
+        context: AvatarContext;
+    }
 
+    const renderedAvatars = new SvelteMap<string, RenderedAvatar>();
+
+    async function drawSingleAvatar(
+        id: string,
+        userConfig: UserConfig,
+        voiceState: VoiceStateItem,
+        alignTotal: number,
+        screenBounds: AABB2,
+        align: boolean | undefined,
+    ): Promise<RenderedAvatar | undefined> {
+        const speakState = speakingState.states[id] ?? {
+            speaking: false,
+            speaking_start: 0,
+            speaking_stop: 0,
+        };
+        const avatar = avatarManager.loadAvatarByVoiceState(id, voiceState);
+        if (avatar.type !== 'loaded') return;
+        matrices.model.push();
+
+        const { target, current } = applyUserTransform(id, userConfig, $config.align.alignSide, $alignIndexes[id], alignTotal);
+        const worldPos = matrices.getModelToWorld().transform2({ x: 0, y: POSITION_OFFSET });
+        matrices.model.translate(0, -POSITION_OFFSET, 0);
+
+        const avatarConfig = avatar.data.getConfig();
+        const spacingFactor = layoutEngine.getFitScaleFactor();
+        applyAvatarScale(userConfig.scale / spacingFactor);
+        if (avatarConfig) {
+            applyAvatarTransform(avatarConfig);
+        }
+
+        const modelBounds = avatar.data.context.bounds();
+        const modelToWorld = matrices.getModelToWorld();
+        const worldBounds = modelToWorld.transformAABB2(modelBounds).expand({ x: 40, y: 40 });
+        const alignedWorldBounds = worldBounds
+            .offset(Vec2.from(current).scale(-1))
+            .offset(target);
+
+        if (!screenBounds.intersects(worldBounds)) {
+            matrices.model.pop();
+            return;
+        }
+        const renderOptions: RenderOptions = {
+            effects: effectManager.getActiveEffects(),
+            objects: $world.attahed[id]?.map((attached): RenderObject => {
+                return {
+                    render: () => {
+                        const source = getSourceTexture(attached.object.source);
+                        if (source.type === 'failed') {
+                            delete $world.objects[id];
+                        }
+                        if (source.type !== 'loaded') return;
+                        const { texture } = source;
+                        matrices.model.push();
+                        draw.circle(0, 0, 0, 20, PALETTE_RGB.DEBUG_RED);
+                        draw.circle(attached.origin.x, attached.origin.y, 0, 20, PALETTE_RGB.DEBUG_BLUE);
+                        matrices.model.translate(attached.origin.x, attached.origin.y, 0);
+                        matrices.model.scale(attached.object.scale, attached.object.scale, 1);
+                        matrices.model.translate(-attached.offset.x, -attached.offset.y, 0);
+                        draw.texture(
+                            -texture.width / 2, -texture.height / 2,
+                            texture.width / 2, texture.height / 2,
+                            texture,
+                        );
+                        matrices.model.pop();
+                    },
+                    attached,
+                };
+            }) || [],
+        };
+        avatar.data.context.render({
+            id,
+            talking: speakState.speaking,
+            mute: voiceState.voice_state.mute,
+            deaf: voiceState.voice_state.deaf,
+            self_mute: voiceState.voice_state.self_mute,
+            self_deaf: voiceState.voice_state.self_deaf,
+            suppress: voiceState.voice_state.suppress,
+            config: userConfig.config,
+        }, renderOptions);
+
+        matrices.model.pop();
+        if (align && userConfig.align && $dragState?.id === id) {
+            const { min, max } = alignedWorldBounds;
+            const center = alignedWorldBounds.center();
+            draw.roundedRect(min, max, 40, PALETTE_RGB.BACKGROUND_3, 1);
+            draw.roundedRect(min, max, 40, PALETTE_RGB.ACCENT, 5);
+            draw.fontSize = 24;
+            draw.fontWeight = '600';
+            await draw.textAlign(
+                { x: center.x, y: max.y + 20 },
+                'ここに整列',
+                Vec2.ONE.scale(0.5),
+                PALETTE_RGB.ACCENT,
+                { color: PALETTE_RGB.BACKGROUND_3, width: 3 },
+            );
+        } else if ($dragState?.id === id) {
+            const { min, max } = worldBounds;
+            draw.roundedRect(min, max, 40, PALETTE_RGB.OUTLINE_1, 5);
+        }
+        return {
+            bounds: worldBounds,
+            worldToModel: modelToWorld,
+            context: avatar.data.context,
+            pos: worldPos,
+        };
+    }
+
+    async function drawAvatars() {
         const entries = getSortedVoiceEntries();
         let alignTotal = calculateAlignments(entries);
         $alignIndexes = getAlignIndexes();
         const names: Array<{
-            user: UserConfig;
+            userConfig: UserConfig;
             pos: Vec2;
             name: string;
         }> = [];
         const screenBounds = getWorldSpaceScreenBounds();
         const align = $config.align.alignSide && alignTotal > 0;
+        renderedAvatars.clear();
+
         for (const [id, voiceState] of entries) {
-            const user = $config.users[id];
-            if (!voiceState) continue;
-            const speakState = speakingState.states[id] ?? {
-                speaking: false,
-                speaking_start: 0,
-                speaking_stop: 0,
-            };
-            const avatar = avatarManager.loadAvatarByVoiceState(id, voiceState);
-            if (avatar.type !== 'loaded') return;
-            matrices.model.push();
-
-            const { target, current } = applyUserTransform(id, user, $config.align.alignSide, $alignIndexes[id], alignTotal);
-            const screenPos = matrices.model.get().transform2({ x: 0, y: POSITION_OFFSET });
-            matrices.model.translate(0, -POSITION_OFFSET, 0);
-
-            const avatarConfig = avatar.data.getConfig();
-            const spacingFactor = layoutEngine.getFitScaleFactor();
-            applyAvatarScale(user.scale / spacingFactor);
-            if (avatarConfig) {
-                applyAvatarTransform(avatarConfig);
+            const userConfig = $config.users[id];
+            if (!voiceState) return;
+            const screenPos = await drawSingleAvatar(id, userConfig, voiceState, alignTotal, screenBounds, align);
+            if (!screenPos) continue;
+            renderedAvatars.set(id, screenPos);
+            if ($config.show_name_tags) {
+                const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
+                names.push({
+                    userConfig,
+                    pos: screenPos.pos,
+                    name,
+                });
             }
-
-            const bounds = avatar.data.context.bounds();
-            const avatarMatrix = matrices.model.get();
-            const worldBounds = avatarMatrix.transformAABB2(bounds).expand({ x: 40, y: 40 });
-            const alignedWorldBounds = worldBounds
-                .offset(Vec2.from(current).scale(-1))
-                .offset(target);
-
-            if (!screenBounds.intersects(worldBounds)) {
-                matrices.model.pop();
-                continue;
-            }
-
-            avatar.data.context.render(matrices, {
-                id,
-                talking: speakState.speaking,
-                mute: voiceState.voice_state.mute,
-                deaf: voiceState.voice_state.deaf,
-                self_mute: voiceState.voice_state.self_mute,
-                self_deaf: voiceState.voice_state.self_deaf,
-                suppress: voiceState.voice_state.suppress,
-                config: user.config,
-            }, renderOptions);
-
-            matrices.model.pop();
-            if (align && user.align && $dragState?.id === id) {
-                const { min, max } = alignedWorldBounds;
-                const center = alignedWorldBounds.center();
-                draw.roundedRect(min, max, 40, PALETTE_RGB.BACKGROUND_3, 1);
-                draw.roundedRect(min, max, 40, PALETTE_RGB.ACCENT, 5);
-                draw.fontSize = 24;
-                draw.fontWeight = '600';
-                await draw.textAlign(
-                    { x: center.x, y: max.y + 20 },
-                    'ここに整列',
-                    Vec2.ONE.scale(0.5),
-                    PALETTE_RGB.ACCENT,
-                    { color: PALETTE_RGB.BACKGROUND_3, width: 3 },
-                );
-            } else if ($dragState?.id === id) {
-                const { min, max } = worldBounds;
-                draw.roundedRect(min, max, 40, PALETTE_RGB.OUTLINE_1, 5);
-            }
-            if (!$config.show_name_tags) continue;
-            const name = voiceState.nick ?? voiceState.user.global_name ?? voiceState.user.username;
-            names.push({
-                user,
-                pos: screenPos,
-                name,
-            });
         }
+
         const offsetScale = overlayApp.isOnAsset() ? 4 : 2;
         const alignSide = $config.align.alignSide;
         const horizontal = alignSide && alignSide.align.y === 0;
         draw.fontSize = overlayApp.isOnAsset() ? 36 : 26;
         draw.fontWeight = '600';
         for (const entry of names) {
-            const { pos, name, user } = entry;
+            const { pos, name, userConfig: user } = entry;
             const align = user.align ? alignSide?.align : undefined;
             await draw.textAlign(
                 horizontal ? pos.add({ x: 0, y: align ? POSITION_OFFSET * 2 : 0 }) : pos,
@@ -404,7 +516,137 @@
         }
     }
 
+    type SourceState = {
+        type: 'loading';
+    } | {
+        type: 'failed';
+    } | {
+        type: 'loaded';
+        texture: GlTexture;
+    };
+    const sourceTextures = new SvelteMap<string, SourceState>();
+
+    function getSourceKey(source: Source): string {
+        if (source.type === 'url') {
+            return source.url;
+        } else if (source.type === 'asset') {
+            return source.asset_id;
+        }
+        throw new Error('Invalid source');
+    }
+
+    function getSourceTexture(source: Source): SourceState {
+        const key = getSourceKey(source);
+        const existing = sourceTextures.get(key);
+        if (existing) return existing;
+        sourceTextures.set(key, {
+            type: 'loading',
+        });
+        overlayApp.getSource(source).then((buffer) => {
+            const texture = context.createTexture();
+            const image = new Image();
+            const blob = new Blob([buffer.buffer as ArrayBuffer], { type: 'image/png' });
+            image.src = URL.createObjectURL(blob);
+            image.onerror = () => {
+                sourceTextures.set(key, {
+                    type: 'failed',
+                });
+            };
+            image.onload = () => {
+                texture.use(() => {
+                    texture.setImage(image, {
+                        width: image.width,
+                        height: image.height,
+                        internalFormat: 'rgba',
+                        format: 'rgba',
+                    });
+                    texture.setParams({
+                        minFilter: 'linear',
+                        magFilter: 'linear',
+                        wrapS: 'clamp-to-edge',
+                        wrapT: 'clamp-to-edge',
+                    });
+                });
+                sourceTextures.set(key, {
+                    type: 'loaded',
+                    texture,
+                });
+            };
+        });
+
+        return {
+            type: 'loading',
+        };
+    }
+
+    let hoveredObject: string | undefined = undefined;
+    let heldObject: string | undefined = undefined;
+    let objectAttachCandidate: {
+        id: string;
+        candidate: ContactCandidate;
+        offset: Vec2;
+    } | undefined = undefined;
+
     async function drawObjects() {
+        const { input } = pipeline;
+
+        objectAttachCandidate = undefined;
+
+        let hovered: string | undefined = undefined;
+        for (const [id, object] of Object.entries($world.objects)) {
+            const source = getSourceTexture(object.source);
+            if (source.type === 'failed') {
+                delete $world.objects[id];
+            }
+            if (source.type !== 'loaded') continue;
+            const { texture } = source;
+            matrices.model.push();
+            matrices.model.translate(object.position.x, object.position.y, 0);
+            matrices.model.scale(object.scale, object.scale, 1);
+            draw.texture(
+                -texture.width / 2, -texture.height / 2,
+                texture.width / 2, texture.height / 2,
+                texture,
+            );
+            const mouseWorld = matrices.getViewToWorld().transform2(input.mouse.pos);
+            const mouseModel = matrices.getWorldToModel().transform2(mouseWorld);
+            const size = new Vec2(texture.width, texture.height);
+            const boundsWorld = matrices.getModelToWorld().transformAABB2(new AABB2(size.scale(-1 / 2), size.scale(1 / 2)));
+            if (boundsWorld.contains(mouseWorld)) {
+                hovered = id;
+                console.log(mouseModel);
+            }
+            matrices.model.pop();
+            const bounds = boundsWorld.expand(Vec2.ONE.scale(10));
+            if (hoveredObject === id) {
+                draw.roundedRect(bounds.min, bounds.max, 10, PALETTE_RGB.ACCENT, 4);
+            }
+            if (heldObject === id) {
+                draw.roundedRect(bounds.min, bounds.max, 10, PALETTE_RGB.ACCENT, 4);
+                for (const [id, { bounds, worldToModel, context }] of renderedAvatars.entries()) {
+                    const intersects = bounds.intersects(boundsWorld);
+                    if (intersects) {
+                        const offsetWorld = mouseWorld.sub(worldToModel.offset.cast2());
+                        const modelPos = worldToModel.asMat2().inverse().transform(offsetWorld);
+                        const candidate = context.getContactCandidate(modelPos);
+                        if (candidate) {
+                            matrices.model.push();
+                            matrices.model.multiply(worldToModel);
+                            candidate.render(matrices);
+                            objectAttachCandidate = {
+                                id,
+                                candidate,
+                                offset: mouseModel,
+                            };
+                            matrices.model.pop();
+                            draw.roundedRect(bounds.min, bounds.max, 10, PALETTE_RGB.ACCENT, 4);
+                        }
+                    }
+                }
+            }
+        }
+        hoveredObject = undefined;
+        hoveredObject = hovered;
     }
 
     let hoveredAlign: string | undefined = undefined;
@@ -426,8 +668,8 @@
         const dragT = (1 - 1 / (dragTime + 1));
         matrices.push();
         setupWorldMatrices();
-        const worldView = matrices.view.get();
-        const worldViewInv = worldView.inverse();
+        const worldToView = matrices.getWorldToView();
+        const viewToWorld = matrices.getViewToWorld();
         matrices.view.identity();
 
         type Align = {
@@ -503,7 +745,7 @@
         // Main loop
         for (const align of ALIGNS) {
             const pointWorld = getWorldPoint(align);
-            const point = marginMounds.closest(worldView.transform2(pointWorld));
+            const point = marginMounds.closest(worldToView.transform2(pointWorld));
             const hovered = hoveredAlign === align.icon;
             const scale = hovered ? 2 : 0;
             const dirPerp = layoutEngine.getAlignPerpendicularOffset(align.dir)
@@ -515,7 +757,7 @@
                 point.add(RADIUS_VEC).add(dirPerp),
             );
 
-            const renderBounds = worldViewInv.transformAABB2(bounds);
+            const renderBounds = viewToWorld.transformAABB2(bounds);
             const isInBound = $dragPosition && renderBounds.distance($dragPosition) < 1;
 
             draw.roundedRect(bounds.min, bounds.max, RADIUS, PALETTE_RGB.BACKGROUND_1_TRANSPARENT);
@@ -537,7 +779,7 @@
                 for (const { side, pos, icon } of sides) {
                     await drawAlignIcon(pos, icon);
 
-                    const posWorld = worldViewInv.transform2(pos);
+                    const posWorld = viewToWorld.transform2(pos);
                     const dist = $dragPosition?.distance(posWorld);
 
                     if (dist && (!closest || dist < closest.dist)) {
@@ -555,10 +797,10 @@
         }
 
         if ($config.align.alignSide && alignedCount() > 2) {
-            const center = worldView.transform2(dimensions.scale(0.5));
+            const center = worldToView.transform2(dimensions.scale(0.5));
             const bounds = draw.measureTextActual('整列を解除').centered(Vec2.ONE.scale(0.5)).offset(center).expand({ x: 150, y: 50 });
             const boundsOutline = bounds.expand(Vec2.ONE.scale(2));
-            const worldBounds = worldViewInv.transformAABB2(boundsOutline);
+            const worldBounds = viewToWorld.transformAABB2(boundsOutline);
             const hovered = $dragPosition ? worldBounds.contains($dragPosition) : false;
             $alignClear = hovered;
             if (hovered) {
@@ -597,11 +839,11 @@
             matrices.view.translate(width / 2, height / 2 + 60, 0);
             const scale = 1 / Math.min(1920 / width, 1080 / height);
             $scaleFactor = 1 / scale / avatarConfig.scale;
-            matrices.view.scale(scale, scale, 0);
+            matrices.view.scale(scale, scale, 1);
             matrices.model.push();
             applyAvatarTransform(avatarConfig);
             const avatarContext = avatarStatus.data.avatar.create();
-            avatarContext.render(matrices, {
+            avatarContext.render({
                 id: $selectedAvatar,
                 talking: false,
                 mute: false,
@@ -616,6 +858,7 @@
                 },
             }, {
                 effects: [],
+                objects: [],
             });
             matrices.model.pop();
             for (const { line, color } of [{ line: 3, color: PALETTE_RGB.BACKGROUND_2_TRANSPARENT }, { line: 2, color: PALETTE_RGB.ACCENT }]) {

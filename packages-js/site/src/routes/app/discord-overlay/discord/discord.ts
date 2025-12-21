@@ -389,12 +389,14 @@ export interface RPCVoiceStates {
     states: Record<string, VoiceStateCreatePayload['data']>;
 };
 
+export interface SpeakingState {
+    speaking: boolean;
+    speaking_start?: number;
+    speaking_stop?: number;
+}
+
 export interface RPCSpeakingStates {
-    states: Record<string, {
-        speaking: boolean;
-        speaking_start?: number;
-        speaking_stop?: number;
-    }>;
+    states: Record<string, SpeakingState>;
 };
 
 export interface RPCMessage {

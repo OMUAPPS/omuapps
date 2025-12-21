@@ -1,7 +1,16 @@
 import { AABB2, type AABB2Like } from './aabb2.js';
+import { Mat2 } from './mat2.js';
 import type { Quaternion } from './quaternion.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 import { Vec3 } from './vec3.js';
+import { Vec4 } from './vec4.js';
+
+export type Mat4Like = {
+    m00: number; m01: number; m02: number; m03: number;
+    m10: number; m11: number; m12: number; m13: number;
+    m20: number; m21: number; m22: number; m23: number;
+    m30: number; m31: number; m32: number; m33: number;
+};
 
 export class Mat4 {
     public static readonly IDENTITY = new Mat4(
@@ -52,6 +61,15 @@ export class Mat4 {
         );
     }
 
+    public static from(mat4like: Mat4Like): Mat4 {
+        return new Mat4(
+            mat4like.m00, mat4like.m01, mat4like.m02, mat4like.m03,
+            mat4like.m10, mat4like.m11, mat4like.m12, mat4like.m13,
+            mat4like.m20, mat4like.m21, mat4like.m22, mat4like.m23,
+            mat4like.m30, mat4like.m31, mat4like.m32, mat4like.m33,
+        );
+    }
+
     public add(mat: Mat4): Mat4 {
         return new Mat4(
             this.m00 + mat.m00, this.m01 + mat.m01, this.m02 + mat.m02, this.m03 + mat.m03,
@@ -61,7 +79,7 @@ export class Mat4 {
         );
     }
 
-    public multiply(right: Mat4): Mat4 {
+    public multiply(right: Mat4Like): Mat4 {
         const nm00 = this.m00 * right.m00 + this.m10 * right.m01 + this.m20 * right.m02 + this.m30 * right.m03;
         const nm01 = this.m01 * right.m00 + this.m11 * right.m01 + this.m21 * right.m02 + this.m31 * right.m03;
         const nm02 = this.m02 * right.m00 + this.m12 * right.m01 + this.m22 * right.m02 + this.m32 * right.m03;
@@ -284,6 +302,22 @@ export class Mat4 {
             this.m10 === other.m10 && this.m11 === other.m11 && this.m12 === other.m12 && this.m13 === other.m13 &&
             this.m20 === other.m20 && this.m21 === other.m21 && this.m22 === other.m22 && this.m23 === other.m23 &&
             this.m30 === other.m30 && this.m31 === other.m31 && this.m32 === other.m32 && this.m33 === other.m33
+        );
+    }
+
+    public get offset(): Vec4 {
+        return new Vec4(
+            this.m30,
+            this.m31,
+            this.m32,
+            this.m33,
+        );
+    }
+
+    public asMat2(): Mat2 {
+        return new Mat2(
+            this.m00, this.m01,
+            this.m10, this.m11,
         );
     }
 }

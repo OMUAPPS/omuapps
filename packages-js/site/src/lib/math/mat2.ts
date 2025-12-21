@@ -55,7 +55,7 @@ export class Mat2 {
         return this.m00 * this.m11 - this.m01 * this.m10;
     }
 
-    public affineInverse(): Mat2 {
+    public inverse(): Mat2 {
         const det = this.determinant();
         if (det === 0) {
             throw new Error('Matrix is not invertible');
@@ -63,8 +63,8 @@ export class Mat2 {
         const invDet = 1 / det;
         return new Mat2(
             this.m11 * invDet,
-            this.m01 * -invDet,
-            this.m10 * -invDet,
+            -this.m01 * invDet,
+            -this.m10 * invDet,
             this.m00 * invDet,
         );
     }
@@ -82,20 +82,6 @@ export class Mat2 {
             this.m10,
             this.m01,
             this.m11,
-        );
-    }
-
-    public inverse(): Mat2 | null {
-        const det = this.determinant();
-        if (det === 0) {
-            return null;
-        }
-        const invDet = 1 / det;
-        return new Mat2(
-            this.m11 * invDet,
-            -this.m01 * invDet,
-            -this.m10 * invDet,
-            this.m00 * invDet,
         );
     }
 }

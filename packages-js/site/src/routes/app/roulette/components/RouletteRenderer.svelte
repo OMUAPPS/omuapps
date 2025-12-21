@@ -1,7 +1,6 @@
 <script lang="ts">
     import Canvas from '$lib/components/canvas/Canvas.svelte';
     import { Draw } from '$lib/components/canvas/draw.js';
-    import type { GlContext } from '$lib/components/canvas/glcontext.js';
     import { Matrices } from '$lib/components/canvas/matrices.js';
     import { BetterMath } from '$lib/math.js';
     import { Axis } from '$lib/math/axis.js';
@@ -9,6 +8,7 @@
     import { Timer } from '$lib/timer.js';
     import { RouletteMechanics } from './roulette-mechanics.js';
     // Import the new logic
+    import type { RenderPipeline } from '$lib/components/canvas/pipeline.js';
     import type { RouletteApp } from '../roulette-app.js';
     import type { RouletteItem } from '../state.js';
 
@@ -39,111 +39,112 @@
         count: number;
     };
 
-    async function init(ctx: GlContext) {
-        matrices = new Matrices();
-        draw = new Draw(matrices, ctx);
-    }
+    async function setPipeline(pipeline: RenderPipeline) {
+        matrices = pipeline.matrices;
+        draw = pipeline.draw;
 
-    async function render(ctx: GlContext) {
-        const { gl } = ctx;
-        gl.enable(gl.BLEND);
-        gl.clearColor(1, 1, 1, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        for await (const frame of pipeline) {
+            const { context } = pipeline;
+            const { gl } = context;
+            const { width, height } = matrices;
+            gl.enable(gl.BLEND);
+            gl.clearColor(1, 1, 1, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-        matrices.identity();
-        const { width, height } = ctx.gl.canvas;
-        matrices.projection.orthographic(0, 0, width, height, -1, 1);
-        matrices.view.translate(width / 2, height / 2, 0);
+            matrices.identity();
+            matrices.projection.orthographic(0, 0, width, height, -1, 1);
+            matrices.view.translate(width / 2, height / 2, 0);
 
-        const state = $rouletteState;
-        const entriesObj = $entries;
-        const entryArray = Object.entries(entriesObj);
-        const count = entryArray.length;
+            const state = $rouletteState;
+            const entriesObj = $entries;
+            const entryArray = Object.entries(entriesObj);
+            const count = entryArray.length;
 
-        // --- Logic Update ---
-        let targetId: string | undefined;
-        let targetIndex = -1;
+            // --- Logic Update ---
+            let targetId: string | undefined;
+            let targetIndex = -1;
 
-        if (state.type === 'spinning' || state.type === 'spin-result') {
-            targetId = state.result.id;
-            targetIndex = entryArray.findIndex(([id]) => id === targetId);
-        }
+            if (state.type === 'spinning' || state.type === 'spin-result') {
+                targetId = state.result.id;
+                targetIndex = entryArray.findIndex(([id]) => id === targetId);
+            }
 
-        // Update the physics/math engine
-        mechanics.update(state, count, targetId, targetIndex, timer.getElapsedMS());
+            // Update the physics/math engine
+            mechanics.update(state, count, targetId, targetIndex, timer.getElapsedMS());
 
-        // Apply calculations from mechanics
-        const rotation = mechanics.rotation;
-        matrices.model.scale(mechanics.scale, mechanics.scale, 1);
+            // Apply calculations from mechanics
+            const rotation = mechanics.rotation;
+            matrices.model.scale(mechanics.scale, mechanics.scale, 1);
 
-        // Example: Use velocity to adjust blur or other visuals (optional)
-        // const speedFactor = mechanics.velocity;
+            // Example: Use velocity to adjust blur or other visuals (optional)
+            // const speedFactor = mechanics.velocity;
 
-        // Calculate visual tint based on spin progress
-        let tint = 0;
-        if (state.type === 'spinning') {
-            const time = Date.now() - state.start;
-            tint = BetterMath.clamp01(1 / ((time / 1000) * 3 + 1));
-        }
+            // Calculate visual tint based on spin progress
+            let tint = 0;
+            if (state.type === 'spinning') {
+                const time = Date.now() - state.start;
+                tint = BetterMath.clamp01(1 / ((time / 1000) * 3 + 1));
+            }
 
-        // --- Drawing Logic (Mostly Unchanged) ---
+            // --- Drawing Logic (Mostly Unchanged) ---
 
-        const scaleBase = 0.75;
-        const scaleFactor = Math.min(width, height) / 1000;
-        matrices.view.scale(scaleFactor, scaleFactor, 1);
+            const scaleBase = 0.75;
+            const scaleFactor = Math.min(width, height) / 1000;
+            matrices.view.scale(scaleFactor, scaleFactor, 1);
 
-        const t = rotation % 1;
-        const angle = -deg2rad(t * 360 - 90);
-        const radius = (Math.min(width, height) / 2) * scaleBase;
-        const split = (2 * Math.PI) / Math.max(1, count);
-
-        const hitIndex = count > 0 ? Math.floor(t * count) % count : -1;
-        const spin: SpinState = {
-            hitEntry: entryArray[hitIndex]?.[0],
-            radius,
-            count,
-        };
-
-        draw.circle(0, 0, 0, radius * 1.0125, { x: 0, y: 0, z: 0, w: 1 });
-        draw.circle(0, 0, 0, radius, Vec4.ONE);
-
-        if (count === 0) {
-            const count = 5;
+            const t = rotation % 1;
+            const angle = -deg2rad(t * 360 - 90);
+            const radius = (Math.min(width, height) / 2) * scaleBase;
             const split = (2 * Math.PI) / Math.max(1, count);
-            for (let index = 0; index < count; index++) {
+
+            const hitIndex = count > 0 ? Math.floor(t * count) % count : -1;
+            const spin: SpinState = {
+                hitEntry: entryArray[hitIndex]?.[0],
+                radius,
+                count,
+            };
+
+            draw.circle(0, 0, 0, radius * 1.0125, { x: 0, y: 0, z: 0, w: 1 });
+            draw.circle(0, 0, 0, radius, Vec4.ONE);
+
+            if (count === 0) {
+                const count = 5;
+                const split = (2 * Math.PI) / Math.max(1, count);
+                for (let index = 0; index < count; index++) {
+                    matrices.model.push();
+                    matrices.model.rotate(Axis.Z_POS.rotate(index * split + angle - Math.PI));
+                    await drawEntry({
+                        count,
+                        radius,
+                    }, index, { id: '', name: ' ' }, false);
+                    matrices.model.pop();
+                }
+                return;
+            }
+
+            matrices.model.rotate(Axis.Z_POS.rotateDeg(90));
+
+            for (let index = 0; index < entryArray.length; index++) {
+                const [id, entry] = entryArray[index];
+                const hit = spin.hitEntry === id;
                 matrices.model.push();
                 matrices.model.rotate(Axis.Z_POS.rotate(index * split + angle - Math.PI));
-                await drawEntry({
-                    count,
-                    radius,
-                }, index, { id: '', name: ' ' }, false);
+                await drawEntry(spin, index, entry, hit);
                 matrices.model.pop();
             }
-            return;
-        }
 
-        matrices.model.rotate(Axis.Z_POS.rotateDeg(90));
+            draw.circle(0, 0, 0, radius / 5, { x: 0.75, y: 0.75, z: 0.75, w: 1 });
 
-        for (let index = 0; index < entryArray.length; index++) {
-            const [id, entry] = entryArray[index];
-            const hit = spin.hitEntry === id;
-            matrices.model.push();
-            matrices.model.rotate(Axis.Z_POS.rotate(index * split + angle - Math.PI));
-            await drawEntry(spin, index, entry, hit);
-            matrices.model.pop();
-        }
+            if (tint > 0.75) {
+                draw.circle(0, 0, 0, radius, { x: 1, y: 1, z: 1, w: tint });
+            }
+            drawArrow(radius);
 
-        draw.circle(0, 0, 0, radius / 5, { x: 0.75, y: 0.75, z: 0.75, w: 1 });
-
-        if (tint > 0.75) {
-            draw.circle(0, 0, 0, radius, { x: 1, y: 1, z: 1, w: tint });
-        }
-        drawArrow(radius);
-
-        // Handle timer reset on result
-        if (state.type === 'spin-result' && timer.getElapsedMS() > 100) { // arbitrary small buffer
-            timer.reset();
+            // Handle timer reset on result
+            if (state.type === 'spin-result' && timer.getElapsedMS() > 100) { // arbitrary small buffer
+                timer.reset();
+            }
         }
     }
 
@@ -185,7 +186,7 @@
 </script>
 
 <div class="canvas">
-    <Canvas {init} {render} />
+    <Canvas {setPipeline} />
 </div>
 
 <style lang="scss">

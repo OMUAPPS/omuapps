@@ -1,4 +1,4 @@
-import { Mat4 } from './mat4.js';
+import { Mat4, type Mat4Like } from './mat4.js';
 import { Quaternion } from './quaternion.js';
 
 type Pose = {
@@ -63,7 +63,7 @@ export class MatrixStack {
         pose.pose = pose.pose.rotate(quaternion);
     }
 
-    public multiply(mat: Mat4): void {
+    public multiply(mat: Mat4Like): void {
         const pose = this.stack[this.stack.length - 1];
         pose.pose = pose.pose.multiply(mat);
     }
