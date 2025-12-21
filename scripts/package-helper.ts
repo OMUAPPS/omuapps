@@ -1,6 +1,7 @@
 import { $, Glob } from 'bun';
-import { watch } from 'fs';
+import esbuild from 'esbuild';
 import * as fs from 'node:fs/promises';
+import path from 'node:path';
 import { parseArgs } from 'node:util';
 
 const { values } = parseArgs({
@@ -64,9 +65,9 @@ function getEntrypointsFromGlob(entrypoint: string[]): string[] {
     return entrypoints;
 }
 
-async function build(entrypoints: string[]) {
+async function buildDts() {
     if (values.debug) {
-        console.log('building', entrypoints);
+        console.log('building');
         console.time('build');
     }
 
@@ -78,41 +79,59 @@ async function build(entrypoints: string[]) {
     }
 
     await $`bun --bun run tsc --outDir ${values.outdir} --rootDir ${values.root}`;
-    await $`bun --bun run tsc --project tsconfig.json --outDir ${values.outdir}/${values.dtsdir} --declaration true --emitDeclarationOnly true --rootDir ${values.root}`;
 
     if (values.debug) {
         console.timeEnd('build');
     }
 }
 
-const entrypoints = values.glob
+const entryPoints = values.glob
     ? getEntrypointsFromGlob(values.entrypoint)
     : values.entrypoint;
 
-async function rebuild() {
-    try {
-        await build(entrypoints);
-    } catch (error) {
-        console.error('Error while rebuilding:', error);
-    }
-}
+const options: esbuild.BuildOptions = {
+    entryPoints,
+    minify: true,
+    outdir: './dist',
+    target: 'es2022',
+    platform: 'browser',
+    format: 'esm',
+    sourcemap: 'linked',
+};
 
-await build(entrypoints);
+await buildDts();
 
 if (values.watch) {
-    console.log(`watching for changes in ${values.watchDir}...`);
-    let debounceTimeout: Timer | null = null;
+    const packageName = path.basename(process.cwd());
+    const plugins: esbuild.Plugin[] = [{
+        name: 'gen-dts',
+        setup(build) {
+            build.onStart(() => {
+                console.log(`[${packageName}] changes detected`);
+            });
+            build.onEnd(async result => {
+                if (result.errors.length > 0) {
+                    console.error(`[${packageName}] failed to build:`, result);
+                    return;
+                }
+                await buildDts();
+            });
+        },
+    }];
 
-    const watcher = watch(values.watchDir, { recursive: true }, (event, filename) => {
-        if (event !== 'change') return;
-        if (!filename) return;
-        console.log(`file ${filename} changed, rebuilding...`);
-        if (debounceTimeout) clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(rebuild, 100);
-    });
+    console.log(`[${packageName}] watch started`);
 
-    process.on('SIGINT', () => {
-        watcher.close();
-        process.exit(0);
+    const context = await esbuild.context({ ...options, plugins });
+    await context.watch();
+
+    await new Promise((resolve, reject) => {
+        process.on('SIGHUP', resolve);
+        process.on('SIGINT', resolve);
+        process.on('SIGTERM', resolve);
+        process.on('uncaughtException', reject);
+        process.on('exit', resolve);
+    }).finally(async () => {
+        await context.dispose();
+        console.log(`[${packageName}] finish watching.`);
     });
 }

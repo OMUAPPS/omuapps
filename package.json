@@ -29,6 +29,7 @@
         "@types/eslint": "^9.6.0",
         "@types/node": "^20.11.2",
         "bun-plugin-isolated-decl": "^0.2.8",
+        "esbuild": "^0.27.2",
         "eslint": "^9.32.0",
         "eslint-plugin-svelte": "3.13.0",
         "glob": "^11.0.0",
