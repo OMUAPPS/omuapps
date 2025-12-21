@@ -1,2 +1,3 @@
 export { ByteReader, ByteWriter, Flags } from './bytebuffer';
-export { JsonType, Serializer, type Serializable } from './serializer';
+export { Serializer, type JsonType, type Serializable } from './serializer';
+

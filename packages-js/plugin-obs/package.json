@@ -16,9 +16,9 @@
         "dist"
     ],
     "scripts": {
-        "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",
+        "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --out \"./dist\" --root \"src/\"",
         "dev": "bun run watch",
-        "watch": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\" --watch"
+        "watch": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --out \"./dist\" --root \"src/\" --watch"
     },
     "repository": {
         "type": "git",

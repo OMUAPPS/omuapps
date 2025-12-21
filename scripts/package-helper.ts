@@ -1,6 +1,5 @@
 import { $, Glob } from 'bun';
-import esbuild from 'esbuild';
-import * as fs from 'node:fs/promises';
+import esbuild, { build } from 'esbuild';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -16,21 +15,13 @@ const { values } = parseArgs({
             type: 'boolean',
             default: false,
         },
-        outdir: {
+        out: {
             type: 'string',
             default: './dist',
-        },
-        dtsdir: {
-            type: 'string',
-            default: './dist/dts',
         },
         watch: {
             type: 'boolean',
             default: false,
-        },
-        watchDir: {
-            type: 'string',
-            default: 'src/',
         },
         minify: {
             type: 'boolean',
@@ -48,6 +39,8 @@ const { values } = parseArgs({
     strict: true,
     allowPositionals: true,
 });
+
+const packageName = path.basename(process.cwd());
 
 function getEntrypointsFromGlob(entrypoint: string[]): string[] {
     const entrypoints: string[] = [];
@@ -67,18 +60,16 @@ function getEntrypointsFromGlob(entrypoint: string[]): string[] {
 
 async function buildDts() {
     if (values.debug) {
-        console.log('building');
+        console.log(`[${packageName}] building`);
         console.time('build');
     }
-
-    await fs.rm(values.dtsdir, { recursive: true, force: true });
 
     const checkResult = await $`bun run tsc --noEmit --skipLibCheck --strict`.nothrow();
     if (checkResult.exitCode !== 0) {
         console.error('TypeScript type checking failed. Please fix the errors before building.');
     }
 
-    await $`bun --bun run tsc --outDir ${values.outdir} --rootDir ${values.root}`;
+    await $`bun --bun run tsc --project tsconfig.json --outDir ./dist --declaration true --emitDeclarationOnly true --rootDir ${values.root}`;
 
     if (values.debug) {
         console.timeEnd('build');
@@ -92,7 +83,7 @@ const entryPoints = values.glob
 const options: esbuild.BuildOptions = {
     entryPoints,
     minify: true,
-    outdir: './dist',
+    outdir: values.out,
     target: 'es2022',
     platform: 'browser',
     format: 'esm',
@@ -102,7 +93,6 @@ const options: esbuild.BuildOptions = {
 await buildDts();
 
 if (values.watch) {
-    const packageName = path.basename(process.cwd());
     const plugins: esbuild.Plugin[] = [{
         name: 'gen-dts',
         setup(build) {
@@ -134,4 +124,19 @@ if (values.watch) {
         await context.dispose();
         console.log(`[${packageName}] finish watching.`);
     });
+} else {
+    console.log(`[${packageName}] building...`);
+
+    await build(options)
+        .then(() => {
+            console.log(`[${packageName}] built successfully.`);
+        })
+        .catch((err) => {
+            process.stderr.write(err.stderr);
+            process.exit(1);
+        });
+
+    await buildDts();
+
+    console.log(`[${packageName}] build finished.`);
 }
