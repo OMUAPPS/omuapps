@@ -28,8 +28,8 @@
     async function fetchUser() {
         user = await api.user();
         $hasPremium = user.premium;
-        const premiumStart = new Date(2025, 11, 10).getTime();
-        const premiumEnd = new Date(2025, 11, 28).getTime();
+        const premiumStart = new Date(2025, 11, 21).getTime();
+        const premiumEnd = new Date(2026, 0, 10).getTime();
         const now = Date.now();
         if (now > premiumStart && now < premiumEnd) {
             $hasPremium = true;
