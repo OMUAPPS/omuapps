@@ -40,7 +40,7 @@
             ランダム化
             <Checkbox bind:value={answer.randomize} />
         </small>
-        <Button onclick={addChoice} primary>
+        <Button onclick={() => addChoice()} primary>
             追加
         </Button>
         {#each answer.choices as choice, index (index)}
