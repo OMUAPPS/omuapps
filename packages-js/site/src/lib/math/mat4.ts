@@ -1,5 +1,6 @@
 import { AABB2, type AABB2Like } from './aabb2.js';
 import { Mat2 } from './mat2.js';
+import { Mat3 } from './mat3.js';
 import type { Quaternion } from './quaternion.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 import { Vec3 } from './vec3.js';
@@ -101,6 +102,27 @@ export class Mat4 {
             nm10, nm11, nm12, nm13,
             nm20, nm21, nm22, nm23,
             nm30, nm31, nm32, nm33,
+        );
+    }
+
+    public multiply3(mat: Mat3): Mat4 {
+        const nm00 = this.m00 * mat.m00 + this.m10 * mat.m01 + this.m20 * mat.m02;
+        const nm01 = this.m01 * mat.m00 + this.m11 * mat.m01 + this.m21 * mat.m02;
+        const nm02 = this.m02 * mat.m00 + this.m12 * mat.m01 + this.m22 * mat.m02;
+        const nm03 = this.m03;
+        const nm10 = this.m00 * mat.m10 + this.m10 * mat.m11 + this.m20 * mat.m12;
+        const nm11 = this.m01 * mat.m10 + this.m11 * mat.m11 + this.m21 * mat.m12;
+        const nm12 = this.m02 * mat.m10 + this.m12 * mat.m11 + this.m22 * mat.m12;
+        const nm13 = this.m13;
+        const nm20 = this.m00 * mat.m20 + this.m10 * mat.m21 + this.m20 * mat.m22;
+        const nm21 = this.m01 * mat.m20 + this.m11 * mat.m21 + this.m21 * mat.m22;
+        const nm22 = this.m02 * mat.m20 + this.m12 * mat.m21 + this.m22 * mat.m22;
+        const nm23 = this.m23;
+        return new Mat4(
+            nm00, nm01, nm02, nm03,
+            nm10, nm11, nm12, nm13,
+            nm20, nm21, nm22, nm23,
+            this.m30, this.m31, this.m32, this.m33,
         );
     }
 
@@ -311,6 +333,14 @@ export class Mat4 {
             this.m31,
             this.m32,
             this.m33,
+        );
+    }
+
+    public get basis(): Mat3 {
+        return new Mat3(
+            this.m00, this.m01, this.m02,
+            this.m10, this.m11, this.m12,
+            this.m20, this.m21, this.m22,
         );
     }
 

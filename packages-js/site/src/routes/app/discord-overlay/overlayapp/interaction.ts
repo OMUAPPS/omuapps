@@ -1,5 +1,6 @@
 // interaction.ts
 import type { EventKeyDown, EventMouseMove, EventMouseWheel, Input } from '$lib/components/canvas/pipeline.js';
+import type { Mat4 } from '$lib/math/mat4.js';
 import { clamp } from '$lib/math/math.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import type { AppRenderer } from './app-renderer.js';
@@ -11,6 +12,7 @@ export class InteractionManager {
     objectAttachCandidate: {
         id: string;
         candidate: ContactCandidate;
+        matrix: Mat4;
         offset: Vec2;
     } | undefined;
 
@@ -40,7 +42,7 @@ export class InteractionManager {
     private onMouseUp() {
         const object = this.heldObject && this.app.world.objects[this.heldObject];
         if (this.objectAttachCandidate && object) {
-            const attached = this.objectAttachCandidate.candidate.attach(object, this.objectAttachCandidate.offset);
+            const attached = this.objectAttachCandidate.candidate.attach(object, this.objectAttachCandidate.matrix, this.objectAttachCandidate.offset);
             const objects = this.app.world.attahed[this.objectAttachCandidate.id] ??= [];
             objects.push(attached);
             delete this.app.world.objects[attached.object.id];

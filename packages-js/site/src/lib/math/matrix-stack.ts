@@ -1,3 +1,4 @@
+import type { Mat3 } from './mat3.js';
 import { Mat4, type Mat4Like } from './mat4.js';
 import { Quaternion } from './quaternion.js';
 
@@ -66,6 +67,11 @@ export class MatrixStack {
     public multiply(mat: Mat4Like): void {
         const pose = this.stack[this.stack.length - 1];
         pose.pose = pose.pose.multiply(mat);
+    }
+
+    public multiply3(mat: Mat3): void {
+        const pose = this.stack[this.stack.length - 1];
+        pose.pose = pose.pose.multiply3(mat);
     }
 
     public scale(x: number, y: number, z: number): void {

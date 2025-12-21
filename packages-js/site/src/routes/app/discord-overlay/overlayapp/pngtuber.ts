@@ -8,8 +8,6 @@ import type { Transform2D } from '$lib/math/transform2d.js';
 import { Vec2 } from '$lib/math/vec2.js';
 import { Vec4 } from '$lib/math/vec4.js';
 import { Timer } from '$lib/timer.js';
-import { DEV } from 'esm-env';
-import { PALETTE_RGB } from '../consts.js';
 import type { Avatar, AvatarAction, AvatarContext, ContactCandidate, RenderOptions } from './avatar.js';
 import { MVP_VERTEX_SHADER, SPRITE_FRAGMENT_SHADER, TEXTURE_FRAGMENT_SHADER } from './shaders.js';
 
@@ -513,13 +511,6 @@ export class PNGTuber implements Avatar {
             uvOffsetX, 0,
             uvOffsetX + uvScaleX, 1,
         );
-        if (DEV) {
-            this.pipeline.draw.rectangleStroke(
-                -layerData.width / 2, -layerData.height / 2,
-                layerData.width / 2, layerData.height / 2,
-                PALETTE_RGB.DEBUG_BLUE, 2,
-            );
-        }
         this.pipeline.matrices.model.pop();
     }
 
@@ -590,6 +581,7 @@ export class PNGTuber implements Avatar {
         } | undefined = undefined;
         for (const [id, group] of context.spriteGroups.entries()) {
             const { layerData, sprite } = group;
+            if (!shouldRenderLayer(layerData, context)) continue;
             const transform = sprite.globalTransform;
             const { width, height } = layerData.imageData;
             const offset = layerData.offset;
@@ -620,22 +612,22 @@ export class PNGTuber implements Avatar {
                     id,
                     group,
                     offset: localPoint.sub(new Vec2(width / 2, height / 2)),
-                    transform: transform,
+                    transform,
                 };
             };
         }
         if (topLayer) {
             return {
-                attach: (object, offset) => {
+                attach: (object, matrix, offset) => {
                     return {
                         object,
+                        matrix,
                         offset,
                         origin: topLayer.offset,
                         target: topLayer.id,
-                        matrix: topLayer.transform.getMat4(),
                     };
                 },
-                render: () => {
+                renderHighlight: () => {
                     const { group } = topLayer;
                     const { layerData, sprite } = group;
                     this.pipeline.matrices.model.push();

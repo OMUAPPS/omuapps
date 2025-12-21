@@ -1,6 +1,6 @@
 import { comparator } from '$lib/helper';
 import { AABB2 } from '$lib/math/aabb2';
-import type { Mat4 } from '$lib/math/mat4';
+import { Mat4 } from '$lib/math/mat4';
 import { Vec2 } from '$lib/math/vec2';
 import { Vec4 } from '$lib/math/vec4';
 import { get } from 'svelte/store';
@@ -94,10 +94,11 @@ export class AvatarRenderer {
                         if (source.type !== 'loaded') return;
                         const { texture } = source;
                         matrices.model.push();
-                        draw.circle(0, 0, 0, 20, PALETTE_RGB.DEBUG_RED);
-                        draw.circle(attached.origin.x, attached.origin.y, 0, 20, PALETTE_RGB.DEBUG_BLUE);
+                        const matrix = Mat4.from(attached.matrix);
+                        const inverse = matrix.basis.inverse();
                         matrices.model.translate(attached.origin.x, attached.origin.y, 0);
                         matrices.model.scale(attached.object.scale, attached.object.scale, 1);
+                        matrices.model.multiply3(inverse);
                         matrices.model.translate(-attached.offset.x, -attached.offset.y, 0);
                         draw.texture(
                             -texture.width / 2, -texture.height / 2,
