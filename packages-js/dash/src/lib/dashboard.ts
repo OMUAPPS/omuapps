@@ -6,7 +6,7 @@ import { Identifier, IdentifierMap, type App, type Omu } from '@omujs/omu';
 import {
     DragDropReadResponse,
     type DashboardHandler,
-    type DragDropReadRequestDashboard,
+    type DragDropReadRequest,
     type DragDropRequestDashboard,
     type FileData,
     type GetCookiesRequest,
@@ -209,15 +209,15 @@ export class Dashboard implements DashboardHandler {
         currentPage.update(() => `app-${app.id.key()}`);
     }
 
-    async handleDragDropRequest(request: DragDropRequestDashboard): Promise<boolean> {
-        dragDropApps.push(request.app.id);
+    async handleDragDropRequest(request: DragDropRequestDashboard, params: InvokedParams): Promise<boolean> {
+        dragDropApps.push(params.caller.key());
         return true;
     }
 
-    async handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<DragDropReadResponse> {
+    async handleDragDropReadRequest(request: DragDropReadRequest): Promise<DragDropReadResponse> {
         const dragDrop = dragDrops[request.drag_id];
         if (!dragDrop) {
-            return new DragDropReadResponse({ drag_id: request.drag_id, request_id: request.request_id, files: [] }, {});
+            return new DragDropReadResponse({ drag_id: request.drag_id, files: [] }, {});
         }
         const files: Record<string, FileData> = {};
         for (const [index, path] of dragDrop.paths.entries()) {

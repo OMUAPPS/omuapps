@@ -3,7 +3,7 @@ import { Identifier } from '../../identifier';
 import { InvokedParams } from '../endpoint/packets.js';
 import { Cookie, GetCookiesRequest, HostRequest, PromptRequestAppInstall, PromptRequestAppPermissions, PromptRequestAppPlugins, PromptRequestAppUpdate, PromptRequestHttpPort, PromptRequestIndexInstall, PromptResult, SpeechRecognitionStart, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from './extension.js';
 
-import type { DragDropReadRequestDashboard, DragDropReadResponse, DragDropRequestDashboard } from './packets.js';
+import type { DragDropReadRequest, DragDropReadResponse, DragDropRequestDashboard } from './packets.js';
 
 export interface DashboardHandler {
     handlePermissionRequest(request: PromptRequestAppPermissions): Promise<PromptResult>;
@@ -13,8 +13,8 @@ export interface DashboardHandler {
     handleIndexInstall(request: PromptRequestIndexInstall): Promise<PromptResult>;
     handleHttpPortRequest(request: PromptRequestHttpPort): Promise<PromptResult>;
     handleOpenApp(app: App): Promise<void>;
-    handleDragDropRequest(request: DragDropRequestDashboard): Promise<boolean>;
-    handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<DragDropReadResponse>;
+    handleDragDropRequest(request: DragDropRequestDashboard, params: InvokedParams): Promise<boolean>;
+    handleDragDropReadRequest(request: DragDropReadRequest, params: InvokedParams): Promise<DragDropReadResponse>;
     handleHostRequest(request: HostRequest, params: InvokedParams): Promise<PromptResult>;
     getCookies(request: GetCookiesRequest): Promise<UserResponse<Cookie[]>>;
     createWebview(request: WebviewRequest, params: InvokedParams, emit: (event: WebviewEvent) => Promise<void>): Promise<Identifier>;

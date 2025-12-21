@@ -197,28 +197,14 @@ DASHBOARD_DRAG_DROP_READ_ENDPOINT = EndpointType[DragDropReadRequest, DragDropRe
     permission_id=DASHBOARD_DRAG_DROP_PERMISSION_ID,
 )
 
-DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET = PacketType[DragDropReadRequestDashboard].create_json(
-    DASHBOARD_EXTENSION_TYPE,
-    "drag_drop_read_request",
-)
-
-DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET = PacketType[DragDropReadResponse].create_serialized(
-    DASHBOARD_EXTENSION_TYPE,
-    "drag_drop_read_response",
-    serializer=DragDropReadResponse,
-)
-
 
 class DragDropRequest(TypedDict): ...
 
 
-class DragDropRequestDashboard(TypedDict):
-    request_id: str
-    app: AppJson
+class DragDropRequestDashboard(TypedDict): ...
 
 
 class DragDropRequestResponse(TypedDict):
-    request_id: str
     ok: bool
 
 
@@ -226,10 +212,6 @@ DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT = EndpointType[DragDropRequest, DragDropReq
     DASHBOARD_EXTENSION_TYPE,
     "drag_drop_request",
     permission_id=DASHBOARD_DRAG_DROP_PERMISSION_ID,
-)
-
-DASHBOARD_DRAG_DROP_REQUEST_PACKET = PacketType[DragDropRequestDashboard].create_json(
-    DASHBOARD_EXTENSION_TYPE, "drag_drop_request"
 )
 
 
@@ -430,9 +412,6 @@ class DashboardExtension(Extension):
             DASHBOARD_APP_INSTALL_PACKET,
             DASHBOARD_APP_UPDATE_PACKET,
             DASHBOARD_DRAG_DROP_STATE_PACKET,
-            DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
-            DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
-            DASHBOARD_DRAG_DROP_REQUEST_PACKET,
         )
 
     async def open_app(self, app: App) -> None:

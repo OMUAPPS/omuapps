@@ -15,7 +15,7 @@ import type { Table } from '../table/table.js';
 import { TableType } from '../table/table.js';
 
 import type { DashboardHandler } from './handler.js';
-import { AppInstallResponse, DragDrop, DragDropReadRequest, DragDropReadRequestDashboard, DragDropReadResponse, DragDropRequest, DragDropRequestDashboard, DragDropRequestResponse, DragEnter, DragLeave, DragOver, FileDragPacket } from './packets.js';
+import { AppInstallResponse, DragDrop, DragDropReadRequest, DragDropReadResponse, DragDropRequestDashboard, DragDropRequestResponse, DragEnter, DragLeave, DragOver, FileDragPacket } from './packets.js';
 
 export const DASHBOARD_EXTENSION_TYPE: ExtensionType<DashboardExtension> = new ExtensionType(
     'dashboard',
@@ -52,7 +52,7 @@ const DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType.createJson<App, AppInstallRe
     requestSerializer: App,
     permissionId: DASHBOARD_APP_INSTALL_PERMISSION_ID,
 });
-export const DAShBOARD_DRAG_DROP_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('drag_drop');
+export const DASHBOARD_DRAG_DROP_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('drag_drop');
 const DASHBOARD_DRAG_DROP_STATE_PACKET = PacketType.createJson<FileDragPacket>(DASHBOARD_EXTENSION_TYPE, {
     name: 'drag_drop_state',
     serializer: Serializer.noop<FileDragPacket>()
@@ -62,23 +62,11 @@ const DASHBOARD_DRAG_DROP_READ_ENDPOINT = EndpointType.createSerialized<DragDrop
     name: 'drag_drop_read',
     requestSerializer: Serializer.json(),
     responseSerializer: DragDropReadResponse,
+    permissionId: DASHBOARD_DRAG_DROP_PERMISSION_ID,
 });
-const DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET = PacketType.createJson<DragDropReadRequestDashboard>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'drag_drop_read_request',
-});
-const DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET = PacketType.createSerialized<DragDropReadResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'drag_drop_read_response',
-    serializer: DragDropReadResponse,
-});
-const DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT = EndpointType.createJson<DragDropRequest, DragDropRequestResponse>(DASHBOARD_EXTENSION_TYPE, {
+const DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT = EndpointType.createJson<DragDropRequestDashboard, DragDropRequestResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'drag_drop_request',
-    permissionId: DAShBOARD_DRAG_DROP_PERMISSION_ID,
-});
-const DASHBOARD_DRAG_DROP_REQUEST_PACKET = PacketType.createJson<DragDropRequestDashboard>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'drag_drop_request',
-});
-const DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET = PacketType.createJson<DragDropRequestResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'drag_drop_request_approval',
+    permissionId: DASHBOARD_DRAG_DROP_PERMISSION_ID,
 });
 
 type DragDropHandler = {
@@ -332,10 +320,6 @@ export class DashboardExtension {
         omu.network.registerPacket(
             DASHBOARD_OPEN_APP_PACKET,
             DASHBOARD_DRAG_DROP_STATE_PACKET,
-            DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET,
-            DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET,
-            DASHBOARD_DRAG_DROP_REQUEST_PACKET,
-            DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET,
             DASHBOARD_WEBVIEW_EVENT_PACKET,
             DASHBOARD_PROMPT_REQUEST,
             DASHBOARD_PROMPT_RESPONSE,
@@ -345,9 +329,6 @@ export class DashboardExtension {
         });
         omu.network.addPacketHandler(DASHBOARD_OPEN_APP_PACKET, (app) => {
             this.handleOpenApp(app);
-        });
-        omu.network.addPacketHandler(DASHBOARD_DRAG_DROP_REQUEST_PACKET, (request) => {
-            this.handleDragDropRequest(request);
         });
         omu.network.addPacketHandler(DASHBOARD_DRAG_DROP_STATE_PACKET, ({ state }) => {
             switch (state.type) {
@@ -368,9 +349,6 @@ export class DashboardExtension {
                     break;
                 }
             }
-        });
-        omu.network.addPacketHandler(DASHBOARD_DRAG_DROP_READ_REQUEST_PACKET, (request) => {
-            this.handleDragDropReadRequest(request);
         });
         omu.network.addPacketHandler(DASHBOARD_WEBVIEW_EVENT_PACKET, (packet) => {
             const handle = this.webviewHandles.get(packet.id);
@@ -415,21 +393,6 @@ export class DashboardExtension {
         await dashboard.handleOpenApp(app);
     }
 
-    private async handleDragDropRequest(request: DragDropRequestDashboard): Promise<void> {
-        const dashboard = this.getDashboard();
-        const accepted = await dashboard.handleDragDropRequest(request);
-        this.omu.send(DASHBOARD_DRAG_DROP_REQUEST_APPROVAL_PACKET, {
-            ok: accepted,
-            request_id: request.request_id,
-        });
-    }
-
-    private async handleDragDropReadRequest(request: DragDropReadRequestDashboard): Promise<void> {
-        const dashboard = this.getDashboard();
-        const response = await dashboard.handleDragDropReadRequest(request);
-        this.omu.send(DASHBOARD_DRAG_DROP_READ_RESPONSE_PACKET, response);
-    }
-
     private getDashboard(): DashboardHandler {
         if (this.dashboard === null) {
             throw new Error('Dashboard not set');
@@ -471,6 +434,18 @@ export class DashboardExtension {
             return { type: 'ok', value: undefined };
         };
 
+        this.omu.endpoints.bind(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, async (request: DragDropRequestDashboard, params): Promise<DragDropRequestResponse> => {
+            const dashboard = this.getDashboard();
+            const accepted = await dashboard.handleDragDropRequest(request, params);
+            return {
+                ok: accepted,
+            };
+        });
+        this.omu.endpoints.bind(DASHBOARD_DRAG_DROP_READ_ENDPOINT, async (request, params): Promise<DragDropReadResponse> => {
+            const dashboard = this.getDashboard();
+            const response = await dashboard.handleDragDropReadRequest(request, params);
+            return response;
+        });
         this.omu.endpoints.bind(DASHBOARD_COOKIES_GET, async (request, params): Promise<UserResponse<Cookie[]>> => {
             const { url } = request;
             const { host } = new URL(url);

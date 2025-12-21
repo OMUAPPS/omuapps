@@ -1,8 +1,6 @@
 import { Vec2, type Vec2Like } from '$lib/math/vec2';
 import type { AlignSide, Config } from '../discord-overlay-app';
 
-const AVATAR_DEFAULT_SPACING = 300;
-
 export class LayoutEngine {
     private alignDistances: Record<string, number> = {};
 

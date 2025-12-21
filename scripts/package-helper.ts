@@ -103,8 +103,10 @@ if (values.watch) {
     console.log(`watching for changes in ${values.watchDir}...`);
     let debounceTimeout: Timer | null = null;
 
-    const watcher = watch(values.watchDir, { recursive: true }, () => {
-        console.log('file change detected, rebuilding...');
+    const watcher = watch(values.watchDir, { recursive: true }, (event, filename) => {
+        if (event !== 'change') return;
+        if (!filename) return;
+        console.log(`file ${filename} changed, rebuilding...`);
         if (debounceTimeout) clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(rebuild, 100);
     });
