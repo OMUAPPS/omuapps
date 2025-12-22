@@ -155,9 +155,10 @@
             </Popup>
             <button onclick={() => {
                 $world.attahed = {};
+                $world.objects = {};
             }} class="screenshot">
                 <Tooltip>
-                    <p>アイテムを消す</p>
+                    <p>アイテムをすべて消す</p>
                 </Tooltip>
                 <i class="ti ti-x"></i>
             </button>

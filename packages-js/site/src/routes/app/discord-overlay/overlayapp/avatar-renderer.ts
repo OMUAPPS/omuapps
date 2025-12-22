@@ -10,7 +10,7 @@ import type { SpeakingState } from '../discord/discord';
 import type { VoiceStateItem } from '../discord/type';
 import { dragState } from '../states';
 import type { AppRenderer } from './app-renderer';
-import type { AvatarContext, RenderObject, RenderOptions } from './avatar';
+import type { AvatarAction, AvatarContext, RenderObject, RenderOptions } from './avatar';
 import { LayoutEngine } from './layout-engine';
 
 interface RenderedAvatar {
@@ -56,8 +56,18 @@ export class AvatarRenderer {
         align: boolean | undefined,
     ): Promise<RenderedAvatar | undefined> {
         const avatar = this.app.avatarManager.loadAvatarByVoiceState(id, voiceState);
-        if (avatar.type !== 'loaded') return;
         const { matrices, draw } = this.app.pipeline;
+        if (avatar.type !== 'loaded') {
+            const { user } = this.app.voiceState.states[id];
+            const name = user.global_name ?? user.username;
+            await draw.textAlign(
+                userConfig.position,
+                `${name}を読み込み中`,
+                Vec2.ONE.scale(0.5),
+                PALETTE_RGB.ACCENT,
+            );
+            return;
+        }
         matrices.model.push();
 
         const { target, current } = this.app.layoutEngine.applyUserTransform(id, userConfig, this.app.config.align.alignSide, this.app.layoutEngine.getAlignIndexes()[id], alignTotal);
@@ -84,43 +94,10 @@ export class AvatarRenderer {
         }
         const renderOptions: RenderOptions = {
             effects: this.app.effectManager.getActiveEffects(),
-            objects: this.app.world.attahed[id]?.map((attached): RenderObject => {
-                return {
-                    render: () => {
-                        const source = this.app.sourceManager.getSourceTexture(attached.object.source);
-                        if (source.type === 'failed') {
-                            delete this.app.world.objects[id];
-                        }
-                        if (source.type !== 'loaded') return;
-                        const { texture } = source;
-                        matrices.model.push();
-                        const matrix = Mat4.from(attached.matrix);
-                        const inverse = matrix.basis.inverse();
-                        matrices.model.translate(attached.origin.x, attached.origin.y, 0);
-                        matrices.model.scale(attached.object.scale, attached.object.scale, 1);
-                        matrices.model.multiply3(inverse);
-                        matrices.model.translate(-attached.offset.x, -attached.offset.y, 0);
-                        draw.texture(
-                            -texture.width / 2, -texture.height / 2,
-                            texture.width / 2, texture.height / 2,
-                            texture,
-                        );
-                        matrices.model.pop();
-                    },
-                    attached,
-                };
-            }) || [],
+            objects: this.app.world.attahed[id]?.map((attached): RenderObject => this.app.objectManager.getRenderObject(id, attached)) || [],
         };
-        avatar.data.context.render({
-            id,
-            talking: speakState.speaking,
-            mute: voiceState.voice_state.mute,
-            deaf: voiceState.voice_state.deaf,
-            self_mute: voiceState.voice_state.self_mute,
-            self_deaf: voiceState.voice_state.self_deaf,
-            suppress: voiceState.voice_state.suppress,
-            config: userConfig.config,
-        }, renderOptions);
+
+        avatar.data.context.render(this.buildAvatarAction(id, speakState, voiceState, userConfig), renderOptions);
 
         matrices.model.pop();
         if (align && userConfig.align && get(dragState)?.id === id) {
@@ -146,6 +123,19 @@ export class AvatarRenderer {
             worldToModel: modelToWorld,
             context: avatar.data.context,
             pos: worldPos,
+        };
+    }
+
+    private buildAvatarAction(id: string, speakState: SpeakingState, voiceState: VoiceStateItem, userConfig: UserConfig): AvatarAction {
+        return {
+            id,
+            talking: speakState.speaking,
+            mute: voiceState.voice_state.mute,
+            deaf: voiceState.voice_state.deaf,
+            self_mute: voiceState.voice_state.self_mute,
+            self_deaf: voiceState.voice_state.self_deaf,
+            suppress: voiceState.voice_state.suppress,
+            config: userConfig.config,
         };
     }
 
