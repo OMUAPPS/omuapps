@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.9.50 (2025-12-22)
+
+
+### Bug Fixes
+
+* **app-discord-overlay:** FPSカウンターを調整 ([adb193f](https://github.com/OMUAPPS/omuapps/commit/adb193f98063bb392de0033c642b5c362d8239c7))
+
+
+
+
+
 ## 0.9.49 (2025-12-18)
 
 **Note:** Version bump only for package @omujs/ui
