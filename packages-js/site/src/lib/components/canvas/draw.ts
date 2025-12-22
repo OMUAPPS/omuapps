@@ -656,7 +656,7 @@ export class Draw {
         });
     }
 
-    public rectangle(left: number, top: number, right: number, bottom: number, color: Vec4): void {
+    public rectangle(left: number, top: number, right: number, bottom: number, color: Vec4Like): void {
         const { gl } = this.glContext;
 
         this.colorProgram.use(() => {
@@ -677,7 +677,7 @@ export class Draw {
         });
     }
 
-    public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4, width: number): void {
+    public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4Like, width: number): void {
         const { gl } = this.glContext;
         width /= 2;
 
@@ -719,25 +719,69 @@ export class Draw {
         });
     }
 
-    public texture(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4Like = Vec4.ONE): void {
+    public texture(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4Like = Vec4.ONE, uv: {
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    } | null = null): void {
         const { gl } = this.glContext;
 
         this.textureProgram.use(() => {
-            this.setMesh(this.textureProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]), new Float32Array([
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 0,
-                1, 1,
-                0, 1,
-            ]));
+            this.setMesh(
+                this.textureProgram, new Float32Array([
+                    left, top, 0,
+                    right, top, 0,
+                    right, bottom, 0,
+                    left, top, 0,
+                    right, bottom, 0,
+                    left, bottom, 0,
+                ]),
+                uv ? new Float32Array([
+                    uv.left, uv.top,
+                    uv.right, uv.top,
+                    uv.right, uv.bottom,
+                    uv.left, uv.top,
+                    uv.right, uv.bottom,
+                    uv.left, uv.bottom,
+                ]) : new Float32Array([
+                    0, 0,
+                    1, 0,
+                    1, 1,
+                    0, 0,
+                    1, 1,
+                    0, 1,
+                ]),
+            );
+            this.setMatrices(this.textureProgram);
+
+            this.textureProgram.getUniform('u_texture').asSampler2D().set(texture);
+            this.textureProgram.getUniform('u_color').asVec4().set(color);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public textureUV(left: number, top: number, right: number, bottom: number, texture: GlTexture, uvLeft: number, uvTop: number, uvRight: number, uvBottom: number, color: Vec4Like = Vec4.ONE): void {
+        const { gl } = this.glContext;
+
+        this.textureProgram.use(() => {
+            this.setMesh(
+                this.textureProgram,
+                new Float32Array([
+                    left, top, 0,
+                    right, top, 0,
+                    right, bottom, 0,
+                    left, top, 0,
+                    right, bottom, 0,
+                    left, bottom, 0,
+                ]), new Float32Array([
+                    uvLeft, uvTop,
+                    uvRight, uvTop,
+                    uvRight, uvBottom,
+                    uvLeft, uvTop,
+                    uvRight, uvBottom,
+                    uvLeft, uvBottom,
+                ]));
             this.setMatrices(this.textureProgram);
 
             this.textureProgram.getUniform('u_texture').asSampler2D().set(texture);
@@ -774,25 +818,41 @@ export class Draw {
         });
     }
 
-    public textureColor(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4): void {
+    public textureColor(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4, uv: {
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    } | null = null): void {
         const { gl } = this.glContext;
 
         this.textureColorProgram.use(() => {
-            this.setMesh(this.textureColorProgram, new Float32Array([
-                left, top, 0,
-                right, top, 0,
-                right, bottom, 0,
-                left, top, 0,
-                right, bottom, 0,
-                left, bottom, 0,
-            ]), new Float32Array([
-                0, 0,
-                1, 0,
-                1, 1,
-                0, 0,
-                1, 1,
-                0, 1,
-            ]));
+            this.setMesh(
+                this.textureColorProgram,
+                new Float32Array([
+                    left, top, 0,
+                    right, top, 0,
+                    right, bottom, 0,
+                    left, top, 0,
+                    right, bottom, 0,
+                    left, bottom, 0,
+                ]),
+                uv ? new Float32Array([
+                    uv.left, uv.top,
+                    uv.right, uv.top,
+                    uv.right, uv.bottom,
+                    uv.left, uv.top,
+                    uv.right, uv.bottom,
+                    uv.left, uv.bottom,
+                ]) : new Float32Array([
+                    0, 0,
+                    1, 0,
+                    1, 1,
+                    0, 0,
+                    1, 1,
+                    0, 1,
+                ]),
+            );
             this.setMatrices(this.textureColorProgram);
 
             this.textureColorProgram.getUniform('u_texture').asSampler2D().set(texture);
@@ -801,7 +861,12 @@ export class Draw {
         });
     }
 
-    public textureOutline(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4Like, outlineWidth: number): void {
+    public textureOutline(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4Like, outlineWidth: number, uv: {
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    } | null = null): void {
         const { gl } = this.glContext;
 
         const width = right - left;
@@ -812,21 +877,32 @@ export class Draw {
         };
 
         this.textureOutlineProgram.use(() => {
-            this.setMesh(this.textureOutlineProgram, new Float32Array([
-                left - outlineWidth, top - outlineWidth, 0,
-                left + width + outlineWidth, top - outlineWidth, 0,
-                left + width + outlineWidth, bottom + outlineWidth, 0,
-                left - outlineWidth, top - outlineWidth, 0,
-                left + width + outlineWidth, bottom + outlineWidth, 0,
-                left - outlineWidth, bottom + outlineWidth, 0,
-            ]), new Float32Array([
-                -uvMargin.x, -uvMargin.y,
-                1 + uvMargin.x, -uvMargin.y,
-                1 + uvMargin.x, 1 + uvMargin.y,
-                -uvMargin.x, -uvMargin.y,
-                1 + uvMargin.x, 1 + uvMargin.y,
-                -uvMargin.x, 1 + uvMargin.y,
-            ]));
+            this.setMesh(
+                this.textureOutlineProgram,
+                new Float32Array([
+                    left - outlineWidth, top - outlineWidth, 0,
+                    left + width + outlineWidth, top - outlineWidth, 0,
+                    left + width + outlineWidth, bottom + outlineWidth, 0,
+                    left - outlineWidth, top - outlineWidth, 0,
+                    left + width + outlineWidth, bottom + outlineWidth, 0,
+                    left - outlineWidth, bottom + outlineWidth, 0,
+                ]),
+                uv ? new Float32Array([
+                    uv.left - uvMargin.x, uv.top - uvMargin.y,
+                    uv.right + uvMargin.x, uv.top - uvMargin.y,
+                    uv.right + uvMargin.x, uv.bottom + uvMargin.y,
+                    uv.left - uvMargin.x, uv.top - uvMargin.y,
+                    uv.right + uvMargin.x, uv.bottom + uvMargin.y,
+                    uv.left - uvMargin.x, uv.bottom + uvMargin.y,
+                ]) : new Float32Array([
+                    -uvMargin.x, -uvMargin.y,
+                    1 + uvMargin.x, -uvMargin.y,
+                    1 + uvMargin.x, 1 + uvMargin.y,
+                    -uvMargin.x, -uvMargin.y,
+                    1 + uvMargin.x, 1 + uvMargin.y,
+                    -uvMargin.x, 1 + uvMargin.y,
+                ]),
+            );
             this.setMatrices(this.textureOutlineProgram);
 
             this.textureOutlineProgram.getUniform('u_texture').asSampler2D().set(texture);

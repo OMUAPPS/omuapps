@@ -1,7 +1,7 @@
 import type { GlContext, GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext.js';
 import { BetterMath } from '$lib/math.js';
 import { Vec2 } from '$lib/math/vec2.js';
-import type { AvatarAction } from '../avatars/avatar.js';
+import type { AvatarAction } from '../overlayapp/avatar.js';
 import type { Effect } from './effect.js';
 
 const BACKLIGHT_VERTEX_SHADER = `#version 300 es

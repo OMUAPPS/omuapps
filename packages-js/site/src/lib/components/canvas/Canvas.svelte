@@ -34,19 +34,18 @@
         const matrices = new Matrices();
         const draw = new Draw(matrices, context);
         const input = new HTMLInput(canvas);
-        let time: Time = { stamp: performance.now(), delta: 0 };
 
-        return {
+        const pipeline: RenderPipeline = {
             context,
             matrices,
             draw,
             input,
-            time,
+            time: { stamp: performance.now(), delta: 0 },
             [Symbol.asyncIterator]: async function*() {
-                requestAnimationFrame(async function handle(time) {
-                    const delta = time - last;
-                    last = time;
-                    frameQueue.push({ stamp: time, delta });
+                requestAnimationFrame(async function handle(timestamp) {
+                    const delta = timestamp - last;
+                    last = timestamp;
+                    frameQueue.push({ stamp: timestamp, delta });
                     const interval = 1000 / fps;
                     const delay = interval - delta;
                     if (delay > 0) {
@@ -59,17 +58,18 @@
                 while (!destroyed) {
                     const timestamp = await frameQueue.pop();
                     if (timestamp === null) break;
-                    time = timestamp;
+                    pipeline.time = timestamp;
 
                     matrices.width = canvas.clientWidth;
                     matrices.height = canvas.clientHeight;
                     context.gl.canvas.width = canvas.clientWidth;
                     context.gl.canvas.height = canvas.clientHeight;
 
-                    yield { time };
+                    yield { time: pipeline.time };
                 }
             },
         };
+        return pipeline;
     }
 
     onMount(async () => {

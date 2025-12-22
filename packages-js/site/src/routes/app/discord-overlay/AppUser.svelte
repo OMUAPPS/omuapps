@@ -1,10 +1,11 @@
 <script lang="ts">
 
     import { comparator } from '$lib/helper';
-    import { type Vec2Like } from '$lib/math/vec2';
-    import { Popup, Tooltip } from '@omujs/ui';
+    import { Vec2, type Vec2Like } from '$lib/math/vec2';
+    import { omu, Popup, Tooltip } from '@omujs/ui';
+    import { onMount } from 'svelte';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
-    import AvatarRenderer from './components/AvatarRenderer.svelte';
+    import AvatarRenderer from './components/DiscordRenderer.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
     import VisualConfig from './components/VisualConfig.svelte';
     import { createUserConfig, DiscordOverlayApp } from './discord-overlay-app.js';
@@ -23,7 +24,7 @@
         overlayApp,
     }: Props = $props();
 
-    const { config } = overlayApp;
+    const { config, world } = overlayApp;
 
     let resolution: Vec2Like = $state({ x: 0, y: 0 });
 
@@ -42,6 +43,23 @@
         }
     });
     let takeScreenshot: () => Promise<void> = $state(async () => {});
+
+    onMount(async () => {
+        const dragDrop = await $omu.dashboard.requestDragDrop();
+        dragDrop.onDrop(async (event) => {
+            const files = await dragDrop.read(event.drag_id);
+            for (const file of Object.values(files.files)) {
+                const id = Date.now().toString(36);
+                const source = await overlayApp.uploadSource(file.buffer.buffer as ArrayBuffer);
+                $world.objects[id] = {
+                    id,
+                    position: Vec2.ZERO,
+                    scale: 1,
+                    source,
+                };
+            }
+        });
+    });
 </script>
 
 <main>
@@ -135,7 +153,16 @@
                     <VisualConfig {overlayApp} />
                 {/snippet}
             </Popup>
-            <button onclick={takeScreenshot} class="screenshot">
+            <button onclick={() => {
+                $world.attahed = {};
+                $world.objects = {};
+            }} class="screenshot">
+                <Tooltip>
+                    <p>アイテムをすべて消す</p>
+                </Tooltip>
+                <i class="ti ti-x"></i>
+            </button>
+            <button onclick={takeScreenshot}>
                 <Tooltip>
                     <p>撮影</p>
                 </Tooltip>

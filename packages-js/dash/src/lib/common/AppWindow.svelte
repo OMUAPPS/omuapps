@@ -163,7 +163,6 @@
         user-select: none;
         background: var(--color-bg-2);
         outline: 1px solid var(--color-outline);
-        outline-offset: -1px;
     }
 
     .version {

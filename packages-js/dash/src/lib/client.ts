@@ -4,11 +4,10 @@ import type { Address } from '@omujs/omu/network';
 
 import { Chat, ChatPermissions } from '@omujs/chat';
 import { OBSPlugin } from '@omujs/obs';
-import { App, Identifier, Omu, OmuPermissions } from '@omujs/omu';
+import { App, Identifier, Omu, OmuPermissions, type SessioTokenProvider } from '@omujs/omu';
 import type { Locale } from '@omujs/omu/localization';
 import { setGlobal } from '@omujs/ui';
 import { invoke } from '@tauri-apps/api/core';
-import type { SessioTokenProvider } from '../../../omu/dist/dts/token.js';
 import { language } from './settings.js';
 import { VERSION } from './version.js';
 

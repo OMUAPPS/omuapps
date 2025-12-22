@@ -3,9 +3,10 @@ import { Identifier, Serializer, type Omu } from '@omujs/omu';
 import { BROWSER } from 'esm-env';
 import { type Writable } from 'svelte/store';
 import { APP_ID } from './app.js';
-import type { GameObject } from './avatars/object.js';
 import { DEFAULT_SHADOW_EFFECT_OPTIONS } from './effects/shadow.js';
 import { DEFAULT_SPEECH_EFFECT_OPTIONS } from './effects/speech.js';
+import type { AttachedObject } from './overlayapp/avatar.js';
+import type { GameObject } from './overlayapp/object.js';
 import { DiscordRPCAPI } from './plugin/plugin.js';
 
 export type Source = {
@@ -120,8 +121,9 @@ export const DEFAULT_CONFIG: Config = {
 
 type AppSide = 'client' | 'asset';
 
-interface World {
+export interface World {
     objects: Record<string, GameObject>;
+    attahed: Record<string, AttachedObject[]>;
 }
 
 export class DiscordOverlayApp {
@@ -150,9 +152,10 @@ export class DiscordOverlayApp {
                 return config;
             }),
         }).compatSvelte();
-        this.world = omu.registries.json<World>('config', {
+        this.world = omu.registries.json<World>('world', {
             default: {
                 objects: {},
+                attahed: {},
             },
         }).compatSvelte();
     }

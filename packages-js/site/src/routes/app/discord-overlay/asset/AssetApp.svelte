@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Omu, OmuPermissions } from '@omujs/omu';
     import { BROWSER } from 'esm-env';
-    import AvatarRenderer from '../components/AvatarRenderer.svelte';
+    import AvatarRenderer from '../components/DiscordRenderer.svelte';
     import { DiscordOverlayApp } from '../discord-overlay-app';
     import { VOICE_CHAT_PERMISSION_ID } from '../plugin/plugin';
 

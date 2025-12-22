@@ -5,21 +5,21 @@
     "version": "0.9.45",
     "exports": {
         ".": {
-            "import": "./dist/esm/index.js",
-            "types": "./dist/dts/index.d.ts"
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
         },
         "./*": {
-            "import": "./dist/esm/*",
-            "types": "./dist/dts/*"
+            "import": "./dist/*",
+            "types": "./dist/*"
         }
     },
     "files": [
         "dist"
     ],
     "scripts": {
-        "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\"",
+        "build": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --out \"./dist\" --root \"src/\"",
         "dev": "bun run watch",
-        "watch": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --outdir \"dist/esm\" --dtsdir \"../dts\" --root \"src/\" --watch"
+        "watch": "bun ../../scripts/package-helper.ts --glob --entrypoint \"src/**/*.ts\" --out \"./dist\" --root \"src/\" --watch"
     },
     "repository": {
         "type": "git",

@@ -190,25 +190,6 @@
         color: #666;
     }
 
-    .audio {
-        display: flex;
-        align-items: baseline;
-        gap: 1rem;
-
-        > .hint {
-            text-decoration: underline;
-        }
-    }
-
-    .tooltip {
-        padding: 0.5rem 1rem;
-        text-align: left;
-
-        > ol {
-            margin-top: 0.5rem;
-        }
-    }
-
     @container (width < 800px) {
         .container {
             flex-direction: column-reverse;

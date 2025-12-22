@@ -1,1 +1,2 @@
-export { SignalPermissions, SignalType, type Signal } from './signal.js';
+export { SignalType, type Signal, type SignalPermissions } from './signal.js';
+

@@ -84,10 +84,6 @@
             background: var(--color-bg-1);
             color: var(--color-1);
             width: 100%;
-
-            > i {
-                font-size: 1rem;
-            }
         }
 
         small {

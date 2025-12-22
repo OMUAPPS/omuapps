@@ -1,3 +1,3 @@
 export { ExtensionRegistry } from './extension-registry.js';
-export { Extension, ExtensionType } from './extension.js';
+export { ExtensionType, type Extension } from './extension.js';
 

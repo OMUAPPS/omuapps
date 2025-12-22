@@ -100,11 +100,6 @@
                 transform: translateX(0px);
             }
 
-            > small {
-                font-size: 0.8rem;
-                color: var(--color-text);
-            }
-
             > .ti-check {
                 position: absolute;
                 display: none;
@@ -123,10 +118,6 @@
 
                 > .ti-check {
                     display: block;
-                }
-
-                > small {
-                    color: var(--color-bg-1);
                 }
             }
         }

@@ -173,16 +173,6 @@
         img {
             height: 1.1rem;
         }
-
-        > .default {
-            margin-right: 1rem;
-        }
-
-        > .mini {
-            display: none;
-            width: 1.75rem;
-            height: 1.75rem;
-        }
     }
 
     ul {

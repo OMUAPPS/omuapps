@@ -1,4 +1,5 @@
 import { lerp } from './math.js';
+import { Vec2 } from './vec2.js';
 
 export type Vec4Like = { x: number; y: number; z: number; w: number };
 
@@ -116,5 +117,9 @@ export class Vec4 {
             this.z - other.z,
             this.w - other.w,
         );
+    }
+
+    cast2() {
+        return new Vec2(this.x, this.y);
     }
 }

@@ -307,7 +307,7 @@ export class ByteReader {
         if (this.offset + size > this.dataView.byteLength) {
             throw new Error('Buffer not fully read');
         }
-        const value = new Uint8Array(this.dataView.buffer, this.offset, size);
+        const value = new Uint8Array(this.dataView.buffer.slice(this.offset, this.offset + size));
         this.offset += size;
         return value;
     }
