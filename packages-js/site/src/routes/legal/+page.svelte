@@ -1,31 +1,36 @@
 <script lang="ts">
+    import Content from '$lib/components/Content.svelte';
     import Page from '$lib/components/Page.svelte';
 </script>
 
 <Page>
     {#snippet header()}
-        <header>
-            <h1>
-                法的事項
-                <i class="ti ti-file"></i>
-            </h1>
-            <small> 使っていただくにあたって </small>
-        </header>
+        <Content>
+            <header>
+                <h1>
+                    法的事項
+                    <i class="ti ti-file"></i>
+                </h1>
+                <small> 使っていただくにあたって </small>
+            </header>
+        </Content>
     {/snippet}
     {#snippet content()}
         <main>
-            <a href="/legal/privacy">
-                <p>
-                    プライバシーポリシー
-                    <i class="ti ti-external-link"></i>
-                </p>
-            </a>
-            <a href="/legal/terms">
-                <p>
-                    利用規約
-                    <i class="ti ti-external-link"></i>
-                </p>
-            </a>
+            <Content>
+                <a href="/legal/privacy">
+                    <p>
+                        プライバシーポリシー
+                        <i class="ti ti-external-link"></i>
+                    </p>
+                </a>
+                <a href="/legal/terms">
+                    <p>
+                        利用規約
+                        <i class="ti ti-external-link"></i>
+                    </p>
+                </a>
+            </Content>
         </main>
     {/snippet}
 </Page>
