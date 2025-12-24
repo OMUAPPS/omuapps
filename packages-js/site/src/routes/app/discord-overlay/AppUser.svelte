@@ -5,7 +5,7 @@
     import { omu, Popup, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AvatarAdjustModal from './components/AvatarAdjustModal.svelte';
-    import AvatarRenderer from './components/DiscordRenderer.svelte';
+    import DiscordRenderer from './components/DiscordRenderer.svelte';
     import UserDragControl from './components/UserDragControl.svelte';
     import VisualConfig from './components/VisualConfig.svelte';
     import { createUserConfig, DiscordOverlayApp } from './discord-overlay-app.js';
@@ -64,7 +64,7 @@
 
 <main>
     <div class="canvas" bind:clientWidth={resolution.x} bind:clientHeight={resolution.y}>
-        <AvatarRenderer
+        <DiscordRenderer
             overlayApp={overlayApp}
             {voiceState}
             {speakingState}

@@ -693,7 +693,7 @@ export class GlContext {
     public destroy(): void {}
 
     public static create(canvas: HTMLCanvasElement | OffscreenCanvas): GlContext {
-        const gl = canvas.getContext('webgl2', { premultipliedAlpha: false }) as WebGL2RenderingContext | null;
+        const gl = canvas.getContext('webgl2', { premultipliedAlpha: true }) as WebGL2RenderingContext | null;
         if (gl == null) {
             throw new Error('WebGL2 not supported');
         }

@@ -117,8 +117,8 @@ export class AppRenderer {
         const { gl } = this.pipeline.context;
         gl.colorMask(true, true, true, true);
         gl.enable(gl.BLEND);
-        gl.clearColor(1, 1, 1, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.clearColor(1, 1, 1, 1);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     }
 
