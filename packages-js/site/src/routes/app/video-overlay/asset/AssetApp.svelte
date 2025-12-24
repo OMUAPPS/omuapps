@@ -1,10 +1,10 @@
 <script lang="ts">
     import { browser } from '$app/environment';
+    import { ARC4 } from '$lib/random';
     import { OmuPermissions, type Omu } from '@omujs/omu';
     import { Spinner } from '@omujs/ui';
     import type { RPCSession, SelectedVoiceChannel } from '../../discord-overlay/discord/discord';
     import { VOICE_CHAT_PERMISSION_ID } from '../../discord-overlay/plugin/plugin';
-    import { ARC4 } from '../../omucafe/game/random';
     import { VIDEO_OVERLAY_APP } from '../app';
     import { Socket, type SocketParticipant } from '../rtc/connection';
     import { type ErrorKind, type LoginOptions } from '../rtc/signaling';

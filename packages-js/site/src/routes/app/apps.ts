@@ -9,7 +9,7 @@ import { APP as clock } from './clock/app.js';
 import { DISCORD_PLUGIN_APP, APP as discordOverlay } from './discord-overlay/app.js';
 import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
-import { APP as omucafe } from './omucafe/app.js';
+import { OMUCAFE_APP } from './omucafe/app.js';
 import { QUIZ_APP } from './quiz/app.js';
 import { APP as reaction } from './reaction/app.js';
 import { APP as remote } from './remote/app.js';
@@ -42,7 +42,7 @@ if (DEV) {
         breaktimer,
         remote,
         QUIZ_APP,
-        omucafe,
+        OMUCAFE_APP,
     );
 }
 
