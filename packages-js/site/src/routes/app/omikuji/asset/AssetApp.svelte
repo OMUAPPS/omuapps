@@ -21,10 +21,19 @@
             return {
                 name: 'デフォルト',
                 description: 'デフォルトの説明です。',
+                probability: 0,
             };
         }
-        const index = Math.floor(message.createdAt.getTime() % patterns.length);
-        return patterns[index];
+        const totalProbability = patterns.reduce((sum, pattern) => sum + pattern.probability, 0);
+        const rand = Math.random() * totalProbability;
+        let cumulativeProbability = 0;
+        for (const pattern of patterns) {
+            cumulativeProbability += pattern.probability;
+            if (rand <= cumulativeProbability) {
+                return pattern;
+            }
+        }
+        return patterns[patterns.length - 1];
     }
 
     chat.on(ChatEvents.Message.Add, async (message) => {

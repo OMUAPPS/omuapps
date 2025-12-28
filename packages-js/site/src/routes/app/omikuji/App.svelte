@@ -21,6 +21,8 @@
                 <i class="ti ti-x"></i>
             </Button>
         </span>
+        <small>比率</small>
+        <input type="number" placeholder="確率…" min="1" max="100" bind:value={pattern.probability} />
         <small>説明</small>
         <textarea placeholder="説明…" bind:value={pattern.description}></textarea>
     </div>
@@ -79,7 +81,7 @@
                 <i class="ti ti-refresh"></i>
             </Button>
             <Button onclick={() => {
-                $config.patterns = [{ name: '', description: '' }, ...$config.patterns];
+                $config.patterns = [{ name: '', description: '', probability: 1 }, ...$config.patterns];
             }} primary>
                 追加
                 <i class="ti ti-plus"></i>
@@ -179,6 +181,9 @@
     }
 
     .entry {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
         margin-bottom: 1rem;
         background: var(--color-bg-2);
         border: 1px solid var(--color-outline);
@@ -194,6 +199,16 @@
 
         input[type="text"] {
             width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 0.5rem;
+            background: none;
+            border: none;
+            border-bottom: 2px solid var(--color-1);
+            padding-bottom: 0.5rem;
+        }
+
+        input[type="number"] {
+            width: 4rem;
             box-sizing: border-box;
             margin-bottom: 0.5rem;
             background: none;
