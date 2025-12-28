@@ -133,8 +133,9 @@ export class TableExtension implements Extension {
 
     private createTable<T>(tableType: TableType<T>): Table<T> {
         this.omu.permissions.require(TABLE_PERMISSION_ID);
-        if (this.has(tableType.id)) {
-            throw new Error('Table already exists');
+        const existing = this.tableMap.get(tableType.id);
+        if (existing) {
+            return existing as Table<T>;
         }
         const table = new TableImpl<T>(this.omu, tableType);
         this.tableMap.set(tableType.id, table as Table<unknown>);

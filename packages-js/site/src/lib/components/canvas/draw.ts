@@ -308,7 +308,7 @@ float closestBezierPoint(
 vec4 getColor(float dir, float dist, float t) {
     float radius = mix(u_widthIn, u_widthOut, t);
     float alpha = smoothstep(radius - 1.0, radius - 2.0, dist);
-    return vec4(u_color.rgb, u_color.a * alpha);
+    return u_color * alpha;
 }
 
 void main() {
@@ -354,7 +354,7 @@ void main() {
     }
     float dist = length(uv);
     float alpha = smoothstep(u_radiusOuter, u_radiusOuter - u_smoothness, dist) * smoothstep(u_radiusInner - u_smoothness, u_radiusInner, dist);
-    fragColor = vec4(u_color.rgb, u_color.a * alpha);
+    fragColor = u_color * alpha;
 }
 `;
 
@@ -377,8 +377,7 @@ void main() {
     float dist = length(fragCoord) / 4.0;
     float alpha = smoothstep(u_radiusOuter, u_radiusOuter - u_smoothness, dist) * smoothstep(u_radiusInner - u_smoothness, u_radiusInner, dist);
     vec4 color = texture(u_texture, v_texcoord);
-    fragColor = vec4(color.rgb * u_color.rgb, color.a * u_color.a * alpha);
-    // fragColor = vec4(v_texcoord.x, v_texcoord.y, 0.0, 1.0);
+    fragColor = color * u_color * alpha;
 }
 `;
 
@@ -409,7 +408,7 @@ void main() {
     float inner = 1.0 - roundedRect(vec2(0.0) + u_width, u_resolution - u_width, fragCoord, u_radius - u_width);
     float outer = roundedRect(vec2(0.0), u_resolution, fragCoord, u_radius);
     float alpha = outer * inner;
-    fragColor = vec4(u_color.rgb, u_color.a * alpha);
+    fragColor = u_color * alpha;
 }`;
 
 const ROUNDED_RECT_TEXTURE_FRAGMENT_SHADER = `#version 300 es
@@ -438,7 +437,7 @@ void main() {
     float dist = roundedRect(vec2(0.0), u_resolution, fragCoord, u_radius);
     float alpha = linearstep(u_smoothness, -u_smoothness, dist);
     vec4 color = texture(u_texture, v_texcoord);
-    fragColor = vec4(color.rgb * u_color.rgb, color.a * u_color.a * alpha);
+    fragColor = color * u_color * alpha;
 }`;
 
 type TextTexture = {

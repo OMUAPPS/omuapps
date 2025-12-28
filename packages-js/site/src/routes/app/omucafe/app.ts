@@ -6,7 +6,7 @@ export const APP_ID = new Identifier(NAMESPACE, 'omucafe');
 export const BACKGROUND_ID = APP_ID.join('assets', 'background');
 export const OVERLAY_ID = APP_ID.join('assets', 'overlay');
 
-export const APP = new App(APP_ID, {
+export const OMUCAFE_APP = new App(APP_ID, {
     url: getUrl('/app/omucafe'),
     metadata: buildMetadata({
         locale: 'en',

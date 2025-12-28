@@ -7,7 +7,7 @@
     interface Props {
         asset: App;
         single?: boolean;
-        children?: import('svelte').Snippet<[any]>;
+        children?: import('svelte').Snippet<[{ omu: Omu }]>;
         connecting?: import('svelte').Snippet;
     }
 
@@ -101,7 +101,7 @@
                 <h1>切断されました</h1>
             {:else if appState.reason.type === DisconnectType.ANOTHER_CONNECTION}
                 <h1>同じIDを持つアセットが接続されました</h1>
-                <small>ソースは複製できません。どちらかを閉じて再読込してください</small>
+                <small>OBS上でのみ複製することができます</small>
             {:else if appState.reason.type === DisconnectType.PERMISSION_DENIED}
                 <h1>権限が拒否されました</h1>
                 <small>このソースを再読み込みしてください</small>

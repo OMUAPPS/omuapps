@@ -1,8 +1,8 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
+    import { ARC4 } from '$lib/random';
     import { tick } from 'svelte';
-    import { ARC4 } from '../../omucafe/game/random';
     import type { Message } from '../api';
     import { MarshmallowApp, type MarshmallowConfig, type MarshmallowScreen, type MarshmallowSkin } from '../marshmallow-app';
     import ElementRenderer from './ElementRenderer.svelte';
@@ -135,6 +135,7 @@
 <style lang="scss">
     .message {
         transform-origin: left top;
+        filter: drop-shadow(1rem 1rem 2rem rgba(0,0,0,0.1));
 
         &.has-pointer {
             cursor: none;

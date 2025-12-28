@@ -80,6 +80,9 @@ class RegistryImpl<T> implements Registry<T> {
             this.handleUpdate(packet),
         );
         omu.network.addTask(() => this.onTask());
+        if (omu.running) {
+            this.onTask();
+        }
     }
 
     async #get(): Promise<T> {

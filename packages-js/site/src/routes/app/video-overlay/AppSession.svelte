@@ -1,9 +1,9 @@
 <script lang="ts">
+    import { ARC4 } from '$lib/random';
     import { AssetButton, Button, omu, Spinner, Tooltip } from '@omujs/ui';
     import { onDestroy } from 'svelte';
     import type { RPCSession, RPCVoiceStates, SelectedVoiceChannel } from '../discord-overlay/discord/discord';
     import type { Message } from '../discord-overlay/discord/type';
-    import { ARC4 } from '../omucafe/game/random';
     import ParticipantEntry from './_components/ParticipantEntry.svelte';
     import { VIDEO_OVERLAY_APP, VIDEO_OVERLAY_ASSET_APP } from './app';
     import { Socket, type SocketParticipant } from './rtc/connection';

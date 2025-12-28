@@ -1,72 +1,44 @@
-import { RegistryType } from '@omujs/omu/api/registry';
-import { APP_ID } from '../app.js';
-import type { Asset } from '../asset/asset.js';
+import type { TypedComponent } from '@omujs/ui';
+import type { Game } from '../core/game';
+import { SceneKitchen, type SceneKitchenData } from './kitchen/kitchen';
+import { SceneMainMenu, type SceneMainMenuData } from './main';
 
-export type PhotoTakeState = {
-    type: 'countdown';
-    startTime: number;
-    duration: number;
-} | {
-    type: 'taking';
-    startTime: number;
-    duration: number;
-} | {
-    type: 'taken';
-    asset: Asset;
-    time: number;
-};
+export type SceneData = SceneMainMenuData | SceneKitchenData;
 
-export type Scene = {
-    type: 'loading';
-} | {
-    type: 'install';
-} | {
-    type: 'main_menu';
-} | {
-    type: 'photo_mode';
-    time: number;
-    items: string[];
-    photoTake?: PhotoTakeState;
-} | {
-    type: 'kitchen';
-    transition?: {
-        time: number;
+export interface SceneHandler<T> {
+    component?: TypedComponent<{
+        scene: T;
+        game: Game;
+    }>;
+    handle(scene: T): Promise<void>;
+}
+
+export class SceneSystem {
+    private readonly registry: {
+        [key in SceneData['type']]: SceneHandler<Extract<SceneData, { type: key }>>;
     };
-} | {
-    type: 'kitchen_edit';
-} | {
-    type: 'product_list';
-} | {
-    type: 'product_edit';
-    id: string;
-} | {
-    type: 'product_take_photo';
-    id: string;
-} | {
-    type: 'item_edit';
-    id: string;
-    created?: boolean;
-} | {
-    type: 'effect_edit';
-    id: string;
-    time: number;
-} | {
-    type: 'script_edit';
-    id: string;
-} | {
-    type: 'gallery';
-};
 
-export type SceneType<T extends Scene['type'] = Scene['type']> = Extract<Scene, { type: T }>;
+    constructor(
+        private readonly game: Game,
+    ) {
+        this.registry = {
+            main_menu: new SceneMainMenu(game),
+            kitchen: new SceneKitchen(game),
+        };
+    }
 
-export const SCENE_REGISTRY_TYPE = RegistryType.createJson<Scene>(APP_ID, {
-    name: 'scene',
-    defaultValue: {
-        type: 'loading',
-    },
-});
+    public getSceneHandler() {
+    }
 
-export type SceneContext = {
-    time: number;
-    active: boolean;
-};
+    async handleFrame() {
+        const scene = this.game.states.scene.value;
+        const handler = this.registry[scene.type];
+        // @ts-expect-error Union vs Intersection
+        handler.handle(scene);
+    }
+
+    public getComponent(data: SceneData) {
+        const handler = this.registry[data.type] ?? this.registry.main_menu;
+        return handler.component;
+    }
+}
