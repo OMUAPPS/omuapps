@@ -9,6 +9,7 @@ import { APP as clock } from './clock/app.js';
 import { DISCORD_PLUGIN_APP, APP as discordOverlay } from './discord-overlay/app.js';
 import { APP as lipsynctest } from './lipsynctest/app.js';
 import { APP as marshmallow } from './marshmallow/app.js';
+import { OMIKUJI_APP } from './omikuji/app.js';
 import { OMUCAFE_APP } from './omucafe/app.js';
 import { QUIZ_APP } from './quiz/app.js';
 import { APP as reaction } from './reaction/app.js';
@@ -20,6 +21,7 @@ import { APP as timer } from './timer/app.js';
 import { VIDEO_OVERLAY_APP } from './video-overlay/app.js';
 
 export const apps = [
+    OMIKUJI_APP,
     discordOverlay,
     reaction,
     replay,
