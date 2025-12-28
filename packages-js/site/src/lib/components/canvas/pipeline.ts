@@ -17,27 +17,27 @@ export interface Input {
 export class HTMLInput implements Input {
     private queue: ({
         type: 'mouse';
-        mouse: MouseEvent;
+        ev: MouseEvent;
     } | {
         type: 'wheel';
-        wheel: WheelEvent;
+        ev: WheelEvent;
     } | {
         type: 'keyboard';
-        keyboard: KeyboardEvent;
+        ev: KeyboardEvent;
     })[] = [];
 
     private prev: Vec2 = Vec2.ZERO;
     public mouse: Mouse = { pos: Vec2.ZERO, delta: Vec2.ZERO, entered: false };
 
     constructor(element: HTMLElement) {
-        window.addEventListener('mousemove', (event) => this.queue.push({ type: 'mouse', mouse: event }));
-        window.addEventListener('mousedown', (event) => this.queue.push({ type: 'mouse', mouse: event }));
-        window.addEventListener('mouseup', (event) => this.queue.push({ type: 'mouse', mouse: event }));
-        window.addEventListener('mouseenter', (event) => this.queue.push({ type: 'mouse', mouse: event }));
-        window.addEventListener('mouseleave', (event) => this.queue.push({ type: 'mouse', mouse: event }));
-        window.addEventListener('wheel', (event) => this.queue.push({ type: 'wheel', wheel: event }));
-        window.addEventListener('keydown', (event) => this.queue.push({ type: 'keyboard', keyboard: event }));
-        window.addEventListener('keyup', (event) => this.queue.push({ type: 'keyboard', keyboard: event }));
+        window.addEventListener('mousemove', (ev) => this.queue.push({ type: 'mouse', ev }));
+        window.addEventListener('mousedown', (ev) => this.queue.push({ type: 'mouse', ev }));
+        window.addEventListener('mouseup', (ev) => this.queue.push({ type: 'mouse', ev }));
+        window.addEventListener('mouseenter', (ev) => this.queue.push({ type: 'mouse', ev }));
+        window.addEventListener('mouseleave', (ev) => this.queue.push({ type: 'mouse', ev }));
+        window.addEventListener('wheel', (ev) => this.queue.push({ type: 'wheel', ev }));
+        window.addEventListener('keydown', (ev) => this.queue.push({ type: 'keyboard', ev }));
+        window.addEventListener('keyup', (ev) => this.queue.push({ type: 'keyboard', ev }));
     }
 
     *[Symbol.iterator](): Generator<InputEvent> {
@@ -45,7 +45,7 @@ export class HTMLInput implements Input {
             const event = this.queue.shift();
             if (!event) break;
             if (event.type === 'mouse') {
-                const pos = new Vec2(event.mouse.clientX, event.mouse.clientY);
+                const pos = new Vec2(event.ev.clientX, event.ev.clientY);
                 const delta = pos.sub(this.prev);
                 this.prev = pos;
 
@@ -55,51 +55,59 @@ export class HTMLInput implements Input {
                     entered: true,
                 };
 
-                if (event.mouse.type === 'mousemove') {
+                if (event.ev.type === 'mousemove') {
                     yield {
+                        timestamp: event.ev.timeStamp,
                         kind: 'mouse-move',
                         mouse: this.mouse,
                     };
-                } else if (event.mouse.type === 'mousedown') {
+                } else if (event.ev.type === 'mousedown') {
                     yield {
+                        timestamp: event.ev.timeStamp,
                         kind: 'mouse-down',
                         mouse: this.mouse,
-                        button: event.mouse.button,
+                        button: event.ev.button,
                     };
-                } else if (event.mouse.type === 'mouseup') {
+                } else if (event.ev.type === 'mouseup') {
                     yield {
+                        timestamp: event.ev.timeStamp,
                         kind: 'mouse-up',
                         mouse: this.mouse,
-                        button: event.mouse.button,
+                        button: event.ev.button,
                     };
-                } else if (event.mouse.type === 'mouseenter') {
+                } else if (event.ev.type === 'mouseenter') {
                     yield {
+                        timestamp: event.ev.timeStamp,
                         kind: 'mouse-enter',
                         mouse: this.mouse,
                     };
-                } else if (event.mouse.type === 'mouseleave') {
+                } else if (event.ev.type === 'mouseleave') {
                     this.mouse.entered = false;
                     yield {
+                        timestamp: event.ev.timeStamp,
                         kind: 'mouse-leave',
                         mouse: this.mouse,
                     };
                 }
             } else if (event.type == 'wheel') {
                 yield {
+                    timestamp: event.ev.timeStamp,
                     kind: 'mouse-wheel',
                     mouse: this.mouse,
-                    delta: event.wheel.deltaY,
+                    delta: event.ev.deltaY,
                 };
             } else if (event.type == 'keyboard') {
-                if (event.keyboard.type === 'keydown') {
+                if (event.ev.type === 'keydown') {
                     yield {
+                        timestamp: event.ev.timeStamp,
                         kind: 'key-down',
-                        key: event.keyboard.key,
+                        key: event.ev.key,
                     };
-                } else if (event.keyboard.type === 'keyup') {
+                } else if (event.ev.type === 'keyup') {
                     yield {
+                        timestamp: event.ev.timeStamp,
                         kind: 'key-down',
-                        key: event.keyboard.key,
+                        key: event.ev.key,
                     };
                 }
             }
@@ -108,7 +116,11 @@ export class HTMLInput implements Input {
     }
 }
 
-export interface EventKey {
+export interface TimedInputEvent {
+    timestamp: number;
+}
+
+export interface EventKey extends TimedInputEvent {
     key: string;
 }
 
@@ -120,7 +132,7 @@ export interface EventKeyDown extends EventKey {
     kind: 'key-down';
 }
 
-export interface EventMouse {
+export interface EventMouse extends TimedInputEvent {
     mouse: Mouse;
 }
 

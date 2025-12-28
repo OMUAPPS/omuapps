@@ -1,8 +1,29 @@
 <script lang="ts">
+    import Canvas from '$lib/components/canvas/Canvas.svelte';
+    import type { RenderPipeline } from '$lib/components/canvas/pipeline';
+    import { Game } from './core/game';
+    import { GameState } from './core/game-state';
+    import { OmucafeApp } from './omucafe-app';
 
+    let game: Game | undefined = $state();
+    let scene = $derived(game?.states.scene.store);
+
+    async function setPipeline(pipeline: RenderPipeline) {
+        const states = await GameState.new(OmucafeApp.getInstance().omu);
+        game = new Game(OmucafeApp.getInstance(), pipeline, states);
+        await game.loop();
+    }
 </script>
 
 <main>
+    <Canvas {setPipeline} />
+    {#if $scene && game}
+        {@const Component = $scene && game?.sceneSystem.getComponent($scene)}
+        {#if Component}
+            <!-- Union vs Intersection -->
+            <Component scene={$scene as never} {game} />
+        {/if}
+    {/if}
 </main>
 
 <style lang="scss">
@@ -11,19 +32,5 @@
         inset: 0;
         display: flex;
         justify-content: center;
-    }
-
-    button {
-        position: absolute;
-        left: 0;
-        top: 0;
-        margin: 2rem;
-        padding: 0.5rem 1.5rem;
-        padding-left: 1rem;
-        background: var(--color-1);
-        color: var(--color-bg-2);
-        border: none;
-        border-radius: 2px;
-        cursor: pointer;
     }
 </style>

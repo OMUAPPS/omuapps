@@ -4,7 +4,7 @@ import { Vec2, type Vec2Like } from './vec2.js';
 
 export class Transform2D {
     constructor(
-        public columns: readonly [Vec2, Vec2, Vec2],
+        private columns: readonly [Vec2Like, Vec2Like, Vec2Like],
     ) { }
 
     public tdotx(p_v: Vec2Like): number {
@@ -55,7 +55,7 @@ export class Transform2D {
     }
 
     get origin(): Vec2 {
-        return this.columns[2];
+        return Vec2.from(this.columns[2]);
     }
 
     public getMat3(): Mat3 {
