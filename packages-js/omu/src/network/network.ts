@@ -291,9 +291,6 @@ export class Network {
     }
 
     public addTask(task: () => Promise<void> | void): void {
-        if (this.omu.running) {
-            throw new Error('Cannot add task after client is ready');
-        }
         this.tasks.push(task);
     }
 
