@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { omu } from '$lib/client';
     import AppInfo from '$lib/common/AppInfo.svelte';
+    import AppInfoDiff from '$lib/common/AppInfoDiff.svelte';
     import { App } from '@omujs/omu';
     import type { PromptRequestAppUpdate, PromptResult } from '@omujs/omu/api/dashboard';
     import { Tooltip } from '@omujs/ui';
@@ -37,34 +39,34 @@
 
 <Screen {handle} disableClose>
     <div class="screen">
-        <h1>アプリの更新があります</h1>
+        <h1>
+            <i class="ti ti-rotate-clockwise-2"></i>
+            アプリの更新があります
+        </h1>
         <div
             class="content omu-scroll"
             use:updateScroll
             onscroll={({ currentTarget }) => updateScroll(currentTarget)}
             onresize={({ currentTarget }) => updateScroll(currentTarget)}
         >
-            <h3>
-                古いバージョン
-                <i class="ti ti-package-export"></i>
-            </h3>
-            <div class="app-info old">
-                <AppInfo app={App.deserialize(request.old_app)} />
-            </div>
-            <h3>
-                新しいバージョン
-                <i class="ti ti-package-import"></i>
-            </h3>
+            <h2>
+                更新で変わったところ
+            </h2>
             <div class="app-info new">
-                <AppInfo app={App.deserialize(request.new_app)} />
+                <AppInfoDiff oldApp={App.deserialize(request.old_app)} newApp={App.deserialize(request.new_app)} />
             </div>
             {#if Object.keys(request.dependencies).length > 0}
-                <h2>更新で必要になった前提アプリ</h2>
+                <h2>必要になる前提アプリ</h2>
                 <small>更新と同時にインストールされます</small>
                 <div class="dependencies">
                     {#each Object.entries(request.dependencies) as [id, dependency] (id)}
+                        {@const existing = await omu.server.apps.get(id)}
                         <div class="app-info">
-                            <AppInfo app={App.deserialize(dependency)} />
+                            {#if existing}
+                                <AppInfoDiff oldApp={existing} newApp={App.deserialize(dependency)} />
+                            {:else}
+                                <AppInfo app={App.deserialize(dependency)} />
+                            {/if}
                         </div>
                     {/each}
                 </div>
@@ -102,7 +104,7 @@
         flex-direction: column;
         align-items: center;
         gap: 0.5rem;
-        padding: 4rem 0;
+        padding: 2rem 0;
         overflow-y: auto;
     }
 
@@ -114,16 +116,17 @@
         border-radius: 4px;
     }
 
-    h1 {
-        padding: 2rem 0;
-        font-size: 1.5rem;
-    }
-
     h1, h2, h3 {
         margin-top: 1rem;
         padding-bottom: 0.25rem;
         color: var(--color-1);
         border-bottom: 1px solid var(--color-outline);
+    }
+
+    h1 {
+        padding: 2rem 1rem;
+        margin-top: 0.5rem;
+        font-size: 1.5rem;
     }
 
     h2 {
