@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+import json
+from typing import TYPE_CHECKING, TypedDict
 
 from loguru import logger
 from omu import Identifier
 from omu.api.registry import RegistryPermissions
 from omu.api.registry.extension import REGISTRY_UPDATE_PACKET, RegistryPacket
+from omu.api.registry.registry import RegistryPermissionsJSON
 from omu.event_emitter import Unlisten
 from omu.serializer import Serializable
 
@@ -14,6 +16,10 @@ from omuserver.session import Session
 
 if TYPE_CHECKING:
     from omuserver.server import Server
+
+
+class RegistryMeta(TypedDict):
+    permissions: RegistryPermissionsJSON
 
 
 class ServerRegistry:
@@ -30,12 +36,22 @@ class ServerRegistry:
         self._changed = False
         self.value: bytes | None = None
         self.save_task: asyncio.Task | None = None
+        self.meta_path = self._path.with_suffix(".json")
 
     async def load(self):
         if self._changed:
             raise Exception("Registry already loaded")
         if self._path.exists():
             self.value = self._path.read_bytes()
+        if self.meta_path.exists():
+            meta: RegistryMeta = json.loads(self.meta_path.read_text(encoding="utf-8"))
+            self.permissions = RegistryPermissions.from_json(meta["permissions"])
+
+    def set_permissions(self, permissions: RegistryPermissions):
+        self.permissions = permissions
+        meta = RegistryMeta(permissions=self.permissions.to_json())
+        self.meta_path.parent.mkdir(parents=True, exist_ok=True)
+        self.meta_path.write_text(json.dumps(meta), encoding="utf-8")
 
     def store(self, value: bytes | None) -> None:
         self.value = value
