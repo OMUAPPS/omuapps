@@ -73,6 +73,7 @@ export default [
                 },
             ],
             'svelte/no-navigation-without-resolve': 'off',
+            'svelte/no-unused-svelte-ignore': 'off',
 
             //#region stylistic
             '@stylistic/array-bracket-spacing': ['error', 'never'],
