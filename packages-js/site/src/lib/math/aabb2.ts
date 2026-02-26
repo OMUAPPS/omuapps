@@ -9,7 +9,7 @@ export type AABB2Like = {
 export class AABB2 {
     public static readonly ZEROZERO = new AABB2(Vec2.ZERO, Vec2.ZERO);
     public static readonly ONEONE = new AABB2(Vec2.ONE, Vec2.ONE);
-    public static readonly ZEROONE = new AABB2(Vec2.ONE, Vec2.ONE);
+    public static readonly ZEROONE = new AABB2(Vec2.ZERO, Vec2.ONE);
 
     constructor(
         public readonly min: Vec2,
@@ -40,6 +40,14 @@ export class AABB2 {
             new Vec2(maxX, maxY),
         );
     }
+    public toArray(): [number, number, number, number] {
+        return [
+            this.min.x,
+            this.min.y,
+            this.max.x,
+            this.max.y,
+        ];
+    }
 
     public contains(point: Vec2Like): boolean {
         return point.x >= this.min.x && point.x <= this.max.x
@@ -69,6 +77,31 @@ export class AABB2 {
 
     public overlap(other: AABB2Like): AABB2 {
         return new AABB2(this.min.max(other.min), this.max.min(other.max));
+    }
+
+    public fit(other: AABB2Like): AABB2 {
+        // Preserve aspect ratio of other within this
+        const thisDimensions = this.dimensions();
+        const otherDimensions = new Vec2(other.max.x - other.min.x, other.max.y - other.min.y);
+        const thisAspect = thisDimensions.x / thisDimensions.y;
+        const otherAspect = otherDimensions.x / otherDimensions.y;
+
+        let scale: number;
+        if (otherAspect > thisAspect) {
+            // Other is wider than this, fit to width
+            scale = thisDimensions.x / otherDimensions.x;
+        } else {
+            // Other is taller than this, fit to height
+            scale = thisDimensions.y / otherDimensions.y;
+        }
+
+        const newSize = otherDimensions.scale(scale);
+        const center = this.center();
+        const halfSize = newSize.scale(0.5);
+        return new AABB2(
+            center.sub(halfSize),
+            center.add(halfSize),
+        );
     }
 
     public offset(position: Vec2Like) {

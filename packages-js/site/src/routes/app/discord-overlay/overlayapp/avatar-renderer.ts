@@ -94,7 +94,7 @@ export class AvatarRenderer {
         }
         const renderOptions: RenderOptions = {
             effects: this.app.effectManager.getActiveEffects(),
-            objects: this.app.world.attahed[id]?.map((attached): RenderObject => this.app.objectManager.getRenderObject(id, attached)) || [],
+            objects: this.app.world.attahed?.[id]?.map((attached): RenderObject => this.app.objectManager.getRenderObject(id, attached)) || [],
         };
 
         avatar.data.context.render(this.buildAvatarAction(id, speakState, voiceState, userConfig), renderOptions);

@@ -97,6 +97,10 @@ export class Vec2 {
         return new Vec2(this.x / len, this.y / len);
     }
 
+    public floor(): Vec2 {
+        return new Vec2(Math.floor(this.x), Math.floor(this.y));
+    }
+
     public toArray(): [number, number] {
         return [this.x, this.y];
     }

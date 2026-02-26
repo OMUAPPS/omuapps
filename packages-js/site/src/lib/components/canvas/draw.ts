@@ -102,14 +102,21 @@ out vec4 fragColor;
 
 void main() {
     vec2 offset = vec2(u_outlineWidth) / u_resolution;
-    float alphaLeft = texture(u_texture, v_texcoord + vec2(-offset.y, 0.0)).a;
-    float alphaRight = texture(u_texture, v_texcoord + vec2(offset.x, 0.0)).a;
-    float alphaTop = texture(u_texture, v_texcoord + vec2(0.0, offset.y)).a;
-    float alphaBottom = texture(u_texture, v_texcoord + vec2(0.0, -offset.y)).a;
-    float neighborAverage = (alphaLeft + alphaRight + alphaTop + alphaBottom) / 4.0;
-    vec4 color = texture(u_texture, v_texcoord);
-    float diff = neighborAverage - color.a;
-    fragColor = u_outlineColor * smoothstep(0.0, 0.1, diff);
+    // Consider 8 neighboring pixels around the current pixel
+    float alpha = 0.0;
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            vec2 sampleCoord = v_texcoord + vec2(float(x), float(y)) * offset;
+            bool isOnEdge = sampleCoord.x < 0.0 || sampleCoord.x > 1.0 || sampleCoord.y < 0.0 || sampleCoord.y > 1.0;
+            if (!isOnEdge) {
+                alpha = max(alpha, texture(u_texture, sampleCoord).a);
+            }
+        }
+    }
+    if (v_texcoord.x > 0.0 && v_texcoord.x < 1.0 && v_texcoord.y > 0.0 && v_texcoord.y < 1.0) {
+        alpha -= texture(u_texture, v_texcoord).a;
+    }
+    fragColor = u_outlineColor * alpha;
 }
 `;
 
@@ -408,7 +415,8 @@ void main() {
     float inner = 1.0 - roundedRect(vec2(0.0) + u_width, u_resolution - u_width, fragCoord, u_radius - u_width);
     float outer = roundedRect(vec2(0.0), u_resolution, fragCoord, u_radius);
     float alpha = outer * inner;
-    fragColor = u_color * alpha;
+    fragColor = vec4(u_color.rgb, u_color.a * alpha);
+    fragColor.rgb *= fragColor.a;
 }`;
 
 const ROUNDED_RECT_TEXTURE_FRAGMENT_SHADER = `#version 300 es
@@ -492,7 +500,7 @@ export class Draw {
         this.frameBuffer = glContext.createFramebuffer();
         this.frameBufferTexture = glContext.createTexture();
         this.textCanvas = new OffscreenCanvas(0, 0);
-        const textContext = this.textCanvas.getContext('2d');
+        const textContext = this.textCanvas.getContext('2d', { willReadFrequently: true });
         if (textContext === null) {
             throw new Error('Failed to get 2d rendering context from text offscreen canvas');
         }
@@ -532,6 +540,22 @@ export class Draw {
         );
     }
 
+    private unpackMultipliedAlpha(): ImageData {
+        const data = this.textContext.getImageData(0, 0, this.textCanvas.width, this.textCanvas.height);
+        // const pixels = data.data;
+        // for (let i = 0; i < pixels.length; i += 4) {
+        //     const r = pixels[i + 0];
+        //     const g = pixels[i + 1];
+        //     const b = pixels[i + 2];
+        //     const a = pixels[i + 3];
+        //     pixels[i + 0] = r / a;
+        //     pixels[i + 1] = g / a;
+        //     pixels[i + 2] = b / a;
+        //     pixels[i + 3] = a;
+        // }
+        return data;
+    }
+
     private async generateTextTexture(text: string): Promise<TextTexture | null> {
         const key = JSON.stringify({ font: this.font, text });
         const existing = this.textRenderPool.get(key);
@@ -544,6 +568,7 @@ export class Draw {
         this.textCanvas.width = dimensions.x;
         this.textCanvas.height = dimensions.y;
         this.textContext.clearRect(0, 0, dimensions.x, dimensions.y);
+        this.textContext.globalCompositeOperation = 'source-over';
         this.textContext.textAlign = 'start';
         this.textContext.textBaseline = 'top';
         this.textContext.fillStyle = '#fff';
@@ -554,7 +579,7 @@ export class Draw {
         }
         const texture = this.glContext.createTexture();
         texture.use(() => {
-            texture.setImage(this.textCanvas, {
+            texture.setImage(this.unpackMultipliedAlpha(), {
                 width: dimensions.x,
                 height: dimensions.y,
                 internalFormat: 'rgba',
@@ -584,7 +609,7 @@ export class Draw {
             return false;
         }
         const { width, height, texture } = textTexture;
-        this.texture(left, top, left + width, top + height, texture, color);
+        this.textureColor(left, top, left + width, top + height, texture, color);
         return true;
     }
 
@@ -817,7 +842,7 @@ export class Draw {
         });
     }
 
-    public textureColor(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4, uv: {
+    public textureColor(left: number, top: number, right: number, bottom: number, texture: GlTexture, color: Vec4Like, uv: {
         left: number;
         top: number;
         right: number;
@@ -870,21 +895,22 @@ export class Draw {
 
         const width = right - left;
         const height = bottom - top;
+        const margin = outlineWidth;
         const uvMargin = {
-            x: outlineWidth / width,
-            y: outlineWidth / height,
+            x: margin / width,
+            y: margin / height,
         };
 
         this.textureOutlineProgram.use(() => {
             this.setMesh(
                 this.textureOutlineProgram,
                 new Float32Array([
-                    left - outlineWidth, top - outlineWidth, 0,
-                    left + width + outlineWidth, top - outlineWidth, 0,
-                    left + width + outlineWidth, bottom + outlineWidth, 0,
-                    left - outlineWidth, top - outlineWidth, 0,
-                    left + width + outlineWidth, bottom + outlineWidth, 0,
-                    left - outlineWidth, bottom + outlineWidth, 0,
+                    left - margin, top - margin, 0,
+                    left + width + margin, top - margin, 0,
+                    left + width + margin, bottom + margin, 0,
+                    left - margin, top - margin, 0,
+                    left + width + margin, bottom + margin, 0,
+                    left - margin, bottom + margin, 0,
                 ]),
                 uv ? new Float32Array([
                     uv.left - uvMargin.x, uv.top - uvMargin.y,

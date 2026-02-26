@@ -83,6 +83,12 @@ export async function createBackLightEffect(context: GlContext): Promise<Effect>
     const verticalPassFramebuffer = context.createFramebuffer();
     const verticalPassTexture = context.createTexture();
     verticalPassTexture.use(() => {
+        verticalPassTexture.setImage(null, {
+            width: 1,
+            height: 1,
+            internalFormat: 'rgba',
+            format: 'rgba',
+        });
         verticalPassTexture.setParams({
             minFilter: 'linear',
             magFilter: 'linear',

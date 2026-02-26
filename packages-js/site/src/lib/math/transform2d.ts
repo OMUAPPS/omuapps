@@ -7,6 +7,14 @@ export class Transform2D {
         private columns: readonly [Vec2Like, Vec2Like, Vec2Like],
     ) { }
 
+    public toJSON() {
+        return {
+            right: this.columns[0],
+            up: this.columns[1],
+            offset: this.columns[2],
+        };
+    }
+
     public tdotx(p_v: Vec2Like): number {
         return this.columns[0].x * p_v.x + this.columns[1].x * p_v.y;
     }
