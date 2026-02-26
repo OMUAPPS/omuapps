@@ -23,12 +23,12 @@
         "check:watch": "nodemon --verbose --watch src --ext \"ts,svelte\" --exec \"bun x --bun svelte-check --tsconfig ./tsconfig.json\"",
         "chromatic": "chromatic",
         "dev": "bun x --bun vite dev --port 5174",
-        "package": "bun x --bun svelte-package && bun x --bun publint",
+        "package": "bun x --bun @sveltejs/package && bun x --bun publint",
         "prepare": "bun x --bun svelte-kit sync",
         "prepublishOnly": "bun run package",
         "preview": "bun x --bun vite preview",
         "test": "vitest",
-        "watch": "bun x --bun svelte-package --watch"
+        "watch": "bun x --bun @sveltejs/package --watch"
     },
     "repository": {
         "type": "git",
