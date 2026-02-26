@@ -28,7 +28,7 @@ sha2 = "0.10.8"
 hex = "0.4.3"
 rand = "0.8.5"
 tauri-plugin-window-state = { version = "2.4.1" }
-tauri-plugin-single-instance = { version = "2.3.6" }
+tauri-plugin-single-instance = { version = "2.4.0" }
 tauri-plugin-log = "2.7.1"
 tauri-plugin-cli = { version = "2.4.1" }
 zstd = "0.13.0"
