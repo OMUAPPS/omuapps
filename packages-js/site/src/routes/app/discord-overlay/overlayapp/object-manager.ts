@@ -54,7 +54,6 @@ export class ObjectManager {
     }
 
     private onMouseDown() {
-        console.log('mouse down');
         if (this.hoveredObject) {
             if (this.hoveredObject.type === 'detached') {
                 this.heldObject = this.hoveredObject.objectId;
@@ -290,8 +289,9 @@ export class ObjectManager {
                 );
                 const worldBounds = matrices.getModelToWorld().transformAABB2(bounds);
                 matrices.model.pop();
-                const renderedObjects = this.renderedObjects.get(userId) ?? { objects: new Map() };
+                const renderedObjects: AttachedObjectRenders = this.renderedObjects.get(userId) ?? { objects: new Map() };
                 renderedObjects.objects.set(attached.object.id, { worldBounds });
+                attached.object.position = worldBounds.center();
                 this.renderedObjects.set(userId, renderedObjects);
             },
             attached,
