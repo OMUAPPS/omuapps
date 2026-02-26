@@ -1,13 +1,15 @@
 import type { Omu } from '@omujs/omu';
 
+export type GameSide = 'client' | 'overlay' | 'background';
+
 export class OmucafeApp {
     private static INSTANCE: OmucafeApp;
 
-    constructor(public readonly omu: Omu) {}
-
-    public static create(omu: Omu) {
-        OmucafeApp.INSTANCE = new OmucafeApp(omu);
-        return this.INSTANCE;
+    constructor(
+        public readonly omu: Omu,
+        public readonly side: GameSide,
+    ) {
+        OmucafeApp.INSTANCE = this;
     }
 
     public static getInstance() {

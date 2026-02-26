@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { AssetButton } from '@omujs/ui';
+    import { OMUCAFE_OVERLAY_APP } from '../../app';
     import type { Game } from '../../core/game';
     import type { SceneKitchenData } from './kitchen';
 
@@ -20,11 +22,17 @@
     }}>
         bbb
     </button>
+    <div class="asset">
+        <AssetButton asset={OMUCAFE_OVERLAY_APP} single />
+    </div>
 </main>
 
 <style>
     main {
         position: absolute;
         inset: 0;
+    }
+
+    .asset {
     }
 </style>

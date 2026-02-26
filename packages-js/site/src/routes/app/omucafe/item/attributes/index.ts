@@ -1,3 +1,3 @@
-export { AttributeImage } from './image';
-export type { AttrImage } from './image';
+export { AttributeDragging, type AttrDragging } from './dragging';
+export { AttributeImage, type AttrImage } from './image';
 
