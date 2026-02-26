@@ -31,7 +31,7 @@ const rm = async (path: string) => {
 const modulePaths = [
     'node_modules',
     ...await fs.readdir('packages-js', { withFileTypes: true })
-        .then(entries => entries.filter(entry => entry.isDirectory() && entry.name.startsWith('node_modules')).map(entry => `packages-js/${entry.name}`)),
+        .then(entries => entries.filter(entry => entry.isDirectory()).map(entry => `packages-js/${entry.name}/node_modules`)),
 ];
 
 const builtPaths = [
