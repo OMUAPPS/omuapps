@@ -32,6 +32,7 @@
 
     function onReady(event: YT.PlayerEvent) {
         player = event.target;
+        player.setPlaybackQuality($config.providers.youtube.preferredQuality as YT.SuggestedVideoQuality);
         if (asset) {
             player.playVideo();
             player.mute();
@@ -50,6 +51,9 @@
         if (event.data === YT.PlayerState.UNSTARTED) {
             loading = true;
         }
+        if (event.data === YT.PlayerState.BUFFERING) {
+            info.qualities = player.getAvailableQualityLevels();
+        }
         if (event.data === YT.PlayerState.PLAYING) {
             if (!interacted) {
                 interacted = true;
@@ -57,6 +61,10 @@
                     playback.playing = true;
                     playback.start = Date.now();
                 }
+                info = {
+                    ...player.getVideoData(),
+                    duration: player.getDuration(),
+                };
             }
         }
         if (event.data === YT.PlayerState.ENDED) {
@@ -74,12 +82,16 @@
         if (!interacted) return;
         const now = Date.now();
         const elapsed = playback.playing ? (now - playback.start) / 1000 + playback.offset : playback.offset;
-        player.setPlaybackQuality('hd1080');
+
         player.seekTo(elapsed, true);
         if (playback.playing) {
-            player.playVideo();
+            if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                player.playVideo();
+            }
         } else {
-            player.pauseVideo();
+            if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            }
         }
         if ($config.muted) {
             player?.mute();
@@ -90,12 +102,6 @@
 
     $effect(() => {
         updatePlayback(playback);
-        if (player) {
-            info = {
-                ...player.getVideoData(),
-                duration: player.getDuration(),
-            };
-        }
     });
 
     $effect(() => {
@@ -104,6 +110,7 @@
         } else if (asset) {
             player?.unMute();
         }
+        player?.setPlaybackQuality($config.providers.youtube.preferredQuality as YT.SuggestedVideoQuality);
     });
 
     function createPlayer(node: HTMLElement) {
@@ -148,7 +155,7 @@
             width="{width}px"
             height="{playerHeight}px"
             style:top="{-padding}px"
-            src="https://www.youtube.com/embed/{video.id}?enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&origin={location.origin}"
+            src="https://www.youtube.com/embed/{video.id}?vq=hd720p&enablejsapi=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&origin={location.origin}"
             frameborder="0"
             title="YouTube video player"
             allow="fullscreen"

@@ -25,6 +25,7 @@ export type VideoInfo = {
     author?: string;
     title?: string;
     duration?: number;
+    qualities?: string[];
 };
 
 export type ReplayData = {
@@ -78,7 +79,7 @@ export const DEFAULT_FILTER_COLOR_KEY: FilterColorKey = { type: 'color_key', col
 type Filter = FilterNoop | FilterPixelate | FilterBlur | FilterColorKey;
 
 const DEFAULT_REPLAY_CONFIG = {
-    version: 2,
+    version: 3,
     playbackRate: 1,
     qualityLevel: undefined as string | undefined,
     muted: true,
@@ -96,6 +97,11 @@ const DEFAULT_REPLAY_CONFIG = {
         hideVideo: false,
     },
     filter: { type: 'noop' } as Filter,
+    providers: {
+        youtube: {
+            preferredQuality: 'large',
+        },
+    },
 };
 
 export type ReplayConfig = typeof DEFAULT_REPLAY_CONFIG;
@@ -108,6 +114,10 @@ const REPLAY_CONFIG_REGISTRY_TYPE = RegistryType.createJson<ReplayConfig>(APP_ID
             config.version = 1;
             config.overlay = DEFAULT_REPLAY_CONFIG.overlay;
             config.filter = DEFAULT_REPLAY_CONFIG.filter;
+        }
+        if (config.version === 1) {
+            config.version = 2;
+            config.providers = DEFAULT_REPLAY_CONFIG.providers;
         }
         return config;
     }),
