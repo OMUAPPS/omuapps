@@ -17,7 +17,7 @@
         "@2ji-han/kuromoji.js": "^0.1.8",
         "@fontsource/noto-sans-jp": "^5.2.9",
         "@fontsource/rocknroll-one": "^5.2.8",
-        "@humanspeak/svelte-markdown": "^1.0.2",
+        "@humanspeak/svelte-markdown": "^0.8.13",
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
         "@omujs/obs": "workspace:*",

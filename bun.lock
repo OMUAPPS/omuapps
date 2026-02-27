@@ -96,7 +96,7 @@
         "@2ji-han/kuromoji.js": "^0.1.8",
         "@fontsource/noto-sans-jp": "^5.2.9",
         "@fontsource/rocknroll-one": "^5.2.8",
-        "@humanspeak/svelte-markdown": "^1.0.2",
+        "@humanspeak/svelte-markdown": "^0.8.13",
         "@omujs/chat": "workspace:*",
         "@omujs/i18n": "workspace:*",
         "@omujs/obs": "workspace:*",
@@ -2287,8 +2287,6 @@
     "sass/chokidar": ["chokidar@4.0.3", "", { "dependencies": { "readdirp": "^4.0.1" } }, "sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA=="],
 
     "sharp/detect-libc": ["detect-libc@2.1.2", "", {}, "sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ=="],
-
-    "site/@humanspeak/svelte-markdown": ["@humanspeak/svelte-markdown@1.0.2", "", { "dependencies": { "@humanspeak/memory-cache": "^1.0.5", "github-slugger": "^2.0.0", "htmlparser2": "^10.1.0", "marked": "^17.0.3" }, "peerDependencies": { "svelte": "^5.0.0" } }, "sha512-jAKrbA0/woa0JV0OsBFrciXwn4lAZf/ffXln9JUopu0tGPo+mt1uFqdVKgdMw6bGhNFtIOQ99a7wH8eoHp8kYA=="],
 
     "string_decoder/safe-buffer": ["safe-buffer@5.2.1", "", {}, "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ=="],
 

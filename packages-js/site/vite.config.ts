@@ -13,6 +13,9 @@ export default defineConfig({
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}'],
     },
+    optimizeDeps: {
+        noDiscovery: true,
+    },
     server: {
         host: '0.0.0.0',
         port: 5173,
