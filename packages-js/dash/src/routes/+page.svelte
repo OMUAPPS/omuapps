@@ -1,8 +1,6 @@
 <script lang="ts">
-
     import { omu } from '$lib/client';
     import { t } from '$lib/i18n/i18n-context';
-    import MainWindow from '$lib/main/MainWindow.svelte';
     import { installed, keepOpenOnBackground } from '$lib/settings';
     import { appWindow, backgroundRequested, checkUpdate, serverState, startProgress } from '$lib/tauri';
     import { DisconnectType } from '@omujs/omu/network/packet';
@@ -10,6 +8,7 @@
     import { invoke } from '@tauri-apps/api/core';
     import { error } from '@tauri-apps/plugin-log';
     import { onMount } from 'svelte';
+    import MainWindow from '../lib/main/MainWindow.svelte';
     import Agreements from './_components/Agreements.svelte';
     import InstallStepAddChannels from './_components/InstallStepAddChannels.svelte';
     import InstallStepAddChannelsHint from './_components/InstallStepAddChannelsHint.svelte';

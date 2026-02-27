@@ -109,6 +109,11 @@
                 <Localized text={oldMetadata?.description} />
             </small>
         {/if}
+        {#if oldApp.version !== newApp.version}
+            <br>
+            <small>バージョン</small>
+            <small><DiffText old={oldApp.version} new={newApp.version} /></small>
+        {/if}
         {#if oldApp.url !== newApp.url}
             <br>
             <small>URL</small>
@@ -147,6 +152,13 @@
             <small>タグ</small>
             <small class="description">
                 <DiffText old={oldTags} new={newTags} />
+            </small>
+        {/if}
+        {#if oldApp.parentId?.key() !== newApp.parentId?.key()}
+            <br>
+            <small>親アプリ</small>
+            <small class="description">
+                <DiffText old={oldApp.parentId?.key()} new={newApp.parentId?.key()} />
             </small>
         {/if}
     </div>

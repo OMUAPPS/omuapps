@@ -25,15 +25,19 @@
     <span>{oldTextTranslated}</span>
 {:else}
     <span class="diff">
-        <i class="ti ti-minus"></i>
-        <span class="old">
-            {oldTextTranslated}
-        </span>
-        <br>
-        <span class="new">
-            <i class="ti ti-plus"></i>
-            {newTextTranslated}
-        </span>
+        {#if oldTextTranslated}
+            <i class="ti ti-minus"></i>
+            <span class="old">
+                {oldTextTranslated}
+            </span>
+        {/if}
+        {#if newTextTranslated}
+            <br>
+            <span class="new">
+                <i class="ti ti-plus"></i>
+                {newTextTranslated}
+            </span>
+        {/if}
     </span>
 {/if}
 
