@@ -82,6 +82,7 @@ if (BROWSER) {
 
 export interface TooltipEntry {
     id: number;
+    update: () => void;
     render: Snippet<[]>;
     element: HTMLElement;
 };
