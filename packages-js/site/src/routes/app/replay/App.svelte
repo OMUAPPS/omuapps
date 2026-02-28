@@ -7,6 +7,7 @@
     import MenuSection from './components/MenuSection.svelte';
     import Player from './components/player/Player.svelte';
     import RoomEntry from './components/RoomEntry.svelte';
+    import { openNetflix } from './netflix';
     import { ReplayApp } from './replay-app.js';
 
     interface Props {
@@ -21,97 +22,157 @@
     let search: string = $state('');
 
     let showConfig = $state(false);
+
+    let provider: 'menu' | 'from_url' | 'recent' | 'netflix' = $state('menu');
 </script>
 
 <div class="container">
     <div class="content">
         <div class="player">
-            {#if $replayData}
-                <Player bind:replayData={$replayData} bind:playback={$replayData.playback} />
+            {#if $replayData?.video.type === 'netflix'}
+                Netflixから再生中
+                {JSON.stringify($replayData)}
             {:else}
-                <div class="empty">
-                    動画を選択するとここに表示されます
-                    <i class="ti ti-video"></i>
-                </div>
+                {#if $replayData}
+                    <Player bind:replayData={$replayData} bind:playback={$replayData.playback} />
+                {:else}
+                    <div class="empty">
+                        動画を選択するとここに表示されます
+                        <i class="ti ti-video"></i>
+                    </div>
+                {/if}
             {/if}
         </div>
-        <MenuSection name="URLから" icon="ti-link">
-            <Textbox
-                placeholder="https://youtu.be/..."
-                on:input={(event) => {
-                    const url = new URL(event.detail);
-                    replay.playByUrl(url);
-                }}
-                lazy
-            />
-        </MenuSection>
     </div>
     <Menu>
-        <Button
-            onclick={() => {
-                showConfig = true;
-            }}
-            primary
-        >
-            設定
-            <i class="ti ti-settings"></i>
-        </Button>
-        <MenuSection name="配信ソフトに追加する" icon="ti-arrow-bar-to-down">
-            <AssetButton
-                asset={ASSET_APP}
-                dimensions={{ width: '50:%', height: '50:%' }}
-            />
-        </MenuSection>
-        <MenuSection name="最近の配信から" icon="ti-video" flex={1}>
-            {#snippet actions()}
-                <div class="search">
-                    <Tooltip>過去の配信から検索</Tooltip>
-                    <input type="search" bind:value={search} placeholder="検索" />
-                    {#if !search}
-                        <i class="ti ti-search"></i>
-                    {/if}
-                </div>
-            {/snippet}
-            <TableList
-                table={chat.rooms}
-                filter={(_, room) => {
-                    if (!room.metadata?.url) return false;
-                    if (
-                        search &&
-                        room.metadata.title
-                            ?.toLowerCase()
-                            .includes(search.toLowerCase())
-                    ) {
-                        return false;
-                    }
-                    return true;
-                }}
-                sort = {(a) => {
-                    if (!a.metadata.created_at) return 0;
-                    return new Date(a.metadata.created_at).getTime();
-                }}
-            >
-                {#snippet component({ entry, selected })}
-                    <RoomEntry {entry} {selected} />
+        {#if provider !== 'menu'}
+            <Button primary onclick={() => {
+                provider = 'menu';
+            }}>
+                <i class="ti ti-chevron-left"></i>
+                戻る
+            </Button>
+        {/if}
+        {#if provider === 'menu'}
+            <MenuSection name="動画を選択する" icon="ti-search" gap>
+                <Button primary onclick={() => {
+                    provider = 'from_url';
+                }}>
+                    URLから
+                </Button>
+                <Button primary onclick={() => {
+                    provider = 'recent';
+                }}>
+                    最近の配信から
+                </Button>
+                <Button primary onclick={() => {
+                    provider = 'netflix';
+                    openNetflix();
+                }}>
+                    Netflixから
+                </Button>
+            </MenuSection>
+            <MenuSection name="配信ソフトに追加する" icon="ti-arrow-bar-to-down" gap>
+                <AssetButton
+                    asset={ASSET_APP}
+                    dimensions={{ width: '50:%', height: '50:%' }}
+                />
+                <Button
+                    onclick={() => {
+                        showConfig = true;
+                    }}
+                    primary
+                >
+                    設定
+                    <i class="ti ti-settings"></i>
+                </Button>
+            </MenuSection>
+        {:else if provider === 'from_url'}
+            <MenuSection name="URLから" icon="ti-link">
+                <Textbox
+                    placeholder="https://youtu.be/..."
+                    on:input={(event) => {
+                        const url = new URL(event.detail);
+                        replay.playByUrl(url);
+                    }}
+                    lazy
+                />
+            </MenuSection>
+        {:else if provider === 'recent'}
+            <MenuSection name="最近の配信から" icon="ti-video" flex={1}>
+                {#snippet actions()}
+                    <div class="search">
+                        <Tooltip>過去の配信から検索</Tooltip>
+                        <input type="search" bind:value={search} placeholder="検索" />
+                        {#if !search}
+                            <i class="ti ti-search"></i>
+                        {/if}
+                    </div>
                 {/snippet}
-                {#snippet empty()}
-                    <p class="no-streams">
-                        配信が追加されるとここに表示されます
-                    </p>
-                {/snippet}
-            </TableList>
-        </MenuSection>
+                <TableList
+                    table={chat.rooms}
+                    filter={(_, room) => {
+                        if (!room.metadata?.url) return false;
+                        if (
+                            search &&
+                            room.metadata.title
+                                ?.toLowerCase()
+                                .includes(search.toLowerCase())
+                        ) {
+                            return false;
+                        }
+                        return true;
+                    }}
+                    sort = {(a) => {
+                        if (!a.metadata.created_at) return 0;
+                        return new Date(a.metadata.created_at).getTime();
+                    }}
+                >
+                    {#snippet component({ entry, selected })}
+                        <RoomEntry {entry} {selected} />
+                    {/snippet}
+                    {#snippet empty()}
+                        <p class="no-streams">
+                            配信が追加されるとここに表示されます
+                        </p>
+                    {/snippet}
+                </TableList>
+            </MenuSection>
+        {/if}
     </Menu>
+    {#if showConfig}
+        <Config bind:showConfig />
+    {/if}
 </div>
-{#if showConfig}
-    <Config bind:showConfig />
-{/if}
 
 <style lang="scss">
     .container {
         display: flex;
         gap: 2rem;
         flex: 1;
+    }
+
+    .menu {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+
+        > button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            background: var(--color-1);
+            color: var(--color-bg-2);
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+        }
     }
 
     .search {

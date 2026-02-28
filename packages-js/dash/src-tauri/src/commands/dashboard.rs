@@ -1,4 +1,4 @@
-use tauri::{Manager, Url, WebviewUrl};
+use tauri::{Emitter, Manager, Url, WebviewUrl};
 
 use crate::AppState;
 
@@ -79,6 +79,12 @@ fn sanitize_string_literal(str: &String) -> String {
         .replace('\n', "\\n");
 }
 
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
+pub struct WebviewMessage {
+    label: String,
+    message: String,
+}
+
 #[tauri::command]
 pub async fn create_webview_window(
     state: tauri::State<'_, AppState>,
@@ -95,16 +101,19 @@ pub async fn create_webview_window(
     let url = Url::parse(&options.url).map_err(|err| err.to_string())?;
     let host = url.host_str().unwrap().to_string();
     let init_script = format!(
-        "if (location.hostname === \"{}\") {{
+"if (location.hostname === \"{}\") {{
     window.close = () => location.href='webview://close';
+    window.webview = {{
+        emit: async (data) => await window.__TAURI_INTERNALS__.invoke(\"plugin:event|emit\", {{event: \"message\", payload: data}}, undefined),
+    }}
     eval(\"{}\");
 }}",
         sanitize_string_literal(&host),
         sanitize_string_literal(&options.script.unwrap_or_else(|| "".to_string())),
     );
 
-    let label = options.label.clone();
-    let handle_clone = state.app_handle.clone();
+    let label_2 = options.label.clone();
+    let handle_clone_2 = state.app_handle.clone();
 
     tauri::WebviewWindowBuilder::new(&app_handle, &options.label, WebviewUrl::External(url))
         .title(host)
@@ -113,9 +122,12 @@ pub async fn create_webview_window(
         .resizable(true)
         .closable(true)
         .on_navigation(move |url| {
-            if url.scheme().eq_ignore_ascii_case("webview") && url.host_str() == Some("close") {
-                if let Some(handle) = &*handle_clone.lock().unwrap() {
-                    if let Some(view) = handle.get_webview_window(&label) {
+            if !url.scheme().eq_ignore_ascii_case("webview") {
+                return true;
+            }
+            if let Some(handle) = &*handle_clone_2.lock().unwrap() {
+                if url.host_str() == Some("close") {
+                    if let Some(view) = handle.get_webview_window(&label_2) {
                         let _ = view.close();
                     }
                 }

@@ -5,7 +5,7 @@
     import { onMount } from 'svelte';
     import TwitchPlayer from '../components/player/TwitchPlayer.svelte';
     import YoutubePlayer from '../components/player/YoutubePlayer.svelte';
-    import { ReplayApp } from '../replay-app.js';
+    import { ReplayApp, type ReplayData } from '../replay-app.js';
 
     interface Props {
         omu: Omu;
@@ -59,8 +59,9 @@
         return components.join(':');
     }
 
+    let data: ReplayData | null = $replayData;
+
     function updateTime() {
-        if (!$replayData?.playback.playing) return;
         if (!timer) {
             formattedTime = '...';
             return;
@@ -69,13 +70,16 @@
         const elapsed = (performance.now() + performance.timeOrigin) - start;
         const time = timer.time + elapsed / 1000;
         formattedTime = formatTime(time, duration ? getTimeUnits(duration) : undefined);
-        timeTimeout = window.setTimeout(
-            () => updateTime(),
-            (1 - (time % 1)) * 1000,
-        );
+        if (data?.playback.playing) {
+            timeTimeout = window.setTimeout(
+                () => updateTime(),
+                (1 - (time % 1)) * 1000,
+            );
+        }
     }
 
     replayData.subscribe((replayData) => {
+        data = replayData;
         if (!replayData) return;
         timer = {
             start: replayData.playback.start,
@@ -94,7 +98,6 @@
     });
     onMount(() => {
         if (!$replayData) return;
-        $replayData.playback.playing = false;
     });
 
     function mapColorKeyValue(value: number) {
@@ -185,6 +188,8 @@
                     video={$replayData.video}
                     playback={$replayData.playback}
                 />
+            {:else if $replayData.video.type === 'netflix'}
+                <img src={data?.info.thumbnailUrl} alt="">
             {/if}
         </div>
         {#if $config.overlay.active}

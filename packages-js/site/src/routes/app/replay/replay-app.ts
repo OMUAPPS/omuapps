@@ -13,6 +13,9 @@ export type Video = {
     type: 'twitch';
     channel: string;
     video?: string;
+} | {
+    type: 'netflix';
+    id: string;
 };
 
 export type Playback = {
@@ -24,7 +27,9 @@ export type Playback = {
 export type VideoInfo = {
     author?: string;
     title?: string;
+    description?: string;
     duration?: number;
+    thumbnailUrl?: string;
     qualities?: string[];
 };
 

@@ -146,6 +146,9 @@ export type WebviewEvent = {
 } | {
     type: 'cookie';
     cookies: Cookie[];
+} | {
+    type: 'message';
+    data: any;
 };
 
 export type WebviewEventListeners = {

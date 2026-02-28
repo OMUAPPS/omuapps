@@ -1,7 +1,7 @@
 import { relaunch } from '@tauri-apps/plugin-process';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { BROWSER } from 'esm-env';
-import { omu } from './client.js';
+import { dashboard, omu } from './client.js';
 
 export type Config = {
     enable_beta: boolean;
@@ -130,6 +130,11 @@ export type ServerState = SerdeEnum<{
     ServerStopped: { msg: string };
 }>;
 
+export interface WebviewMessage {
+    label: string;
+    message: string;
+}
+
 type Events = {
     start_progress: StartProgress;
     stop_progress: StopProgress;
@@ -137,6 +142,7 @@ type Events = {
     uninstall_progress: UninstallProgress;
     server_state: ServerState;
     server_restart: unknown;
+    webview_message: WebviewMessage;
     'single-instance': {
         args: string[];
         cwd: string;
@@ -255,6 +261,9 @@ async function load() {
     });
     await listen('server_state', ({ payload }) => {
         serverState.set(payload);
+    });
+    await listen('webview_message', ({ payload }) => {
+        dashboard.processWebviewMessage(payload);
     });
 }
 

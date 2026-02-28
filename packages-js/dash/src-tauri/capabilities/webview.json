@@ -1,0 +1,21 @@
+{
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "webview",
+    "description": "Webview capability for OMUAPPS Dashboard",
+    "local": true,
+    "windows": [
+        "webview-*"
+    ],
+    "webviews": [
+        "webview-*"
+    ],
+    "remote": {
+        "urls": [
+            "http://*.*",
+            "https://*.*"
+        ]
+    },
+    "permissions": [
+        "core:event:allow-emit"
+    ]
+}
