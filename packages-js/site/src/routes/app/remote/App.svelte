@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Omu } from '@omujs/omu';
+    import { Omu, OmuPermissions } from '@omujs/omu';
     import { AssetButton, Button } from '@omujs/ui';
     import ConnectScreen from './_components/ConnectScreen.svelte';
     import Gallery from './_components/Gallery.svelte';
@@ -80,6 +80,9 @@
         </h2>
         <AssetButton
             asset={ASSET_APP}
+            permissions={[
+                OmuPermissions.ASSET_PERMISSION_ID,
+            ]}
             dimensions={{ width: '50:%', height: '50:%' }}
         />
     </div>

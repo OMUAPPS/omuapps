@@ -1,12 +1,12 @@
 <script lang="ts">
     import { run } from 'svelte/legacy';
 
+    import { QRCode } from '$lib/qrcode.js';
     import { OmuPermissions, type Omu } from '@omujs/omu';
     import { } from '@omujs/omu/api/asset';
     import type { RequestRemoteAppResponse } from '@omujs/omu/api/session';
     import { Button } from '@omujs/ui';
     import { DEV } from 'esm-env';
-    import QrCode from 'qrious';
     import { ORIGIN } from '../../origin.js';
     import { REMOTE_APP } from '../app.js';
 
@@ -30,7 +30,7 @@
         }
         | {
             type: 'generated';
-            qr: InstanceType<typeof QrCode>;
+            qr: string;
         }
         | {
             type: 'connected';
@@ -61,14 +61,12 @@
         console.log(token, lan_ip);
         const url = `http://${lan_ip}:26423/frame?url=${encodeURIComponent(`${DEV ? `http://${lan_ip}:5173` : ORIGIN}/app/remote/session/?token=${token}&lan=${lan_ip}`)}`;
         console.log(url);
+        const qr = new QRCode(10, 'L');
+        qr.addData(url, 'Byte');
+        qr.make();
         connectState = {
             type: 'generated',
-            qr: new QrCode({
-                value: url,
-                size: 256,
-                backgroundAlpha: 0,
-                foreground: '#000',
-            }),
+            qr: qr.toDataURL(4),
         };
     }
 
@@ -99,7 +97,7 @@
             <i class="ti ti-scan"></i>
         </h2>
         <small> 接続したいデバイスでQRコードを読み取ってください </small>
-        <img src={connectState.qr.toDataURL()} alt="QR Code" />
+        <img src={connectState.qr} alt="QR Code" />
         <div class="actions">
             <Button primary onclick={cancel}>
                 完了
@@ -170,8 +168,8 @@
     }
 
     img {
-        width: 10rem;
-        height: 10rem;
+        width: 14rem;
+        height: 14rem;
         image-rendering: pixelated;
         margin-bottom: 1rem;
     }
