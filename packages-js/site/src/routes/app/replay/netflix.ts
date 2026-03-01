@@ -1,3 +1,4 @@
+import { type WebviewHandle } from '@omujs/omu/api/dashboard';
 import { ReplayApp, type Playback, type Video, type VideoInfo } from './replay-app';
 
 interface Artwork {
@@ -88,7 +89,7 @@ interface NetflixVideo {
     requiresAdultVerification: boolean;
     requiresPin: boolean;
     requiresPreReleasePin: boolean;
-    seasons: Season[];
+    seasons?: Season[];
     merchedVideoId: null;
     cinematch: {
         type: 'predicted';
@@ -198,11 +199,11 @@ async function init() {
     }
 
     function updatePlaybackFromVideo() {
-        const v = state.video;
-        if (!v) return;
+        const { video } = state;
+        if (!video) return;
         const start = Date.now();
-        const offset = v.currentTime;
-        const playing = !v.paused && !v.ended;
+        const offset = video.currentTime;
+        const playing = !video.paused && !video.ended;
         setPlayback({ start, offset, playing });
     }
 
@@ -220,10 +221,10 @@ async function init() {
                         const clone = response.clone();
                         const metadata: Metadata = await clone.json();
                         state.metadata = metadata;
-                        const episode = metadata.video.seasons.flatMap(s => s.episodes).find(e => e.id === metadata.video.currentEpisode);
+                        const episode = metadata.video.seasons?.flatMap(s => s.episodes).find(e => e.id === metadata.video.currentEpisode);
                         let title = metadata.video.title;
                         if (episode) {
-                            title += ' - ' + episode.title;
+                            title += ` - ${episode.seq} - ${episode.title}`;
                         }
                         const storyarts = episode?.thumbs ?? metadata.video?.storyart ?? [];
                         setInfo({
@@ -231,7 +232,7 @@ async function init() {
                             description: episode?.synopsis ?? metadata.video?.synopsis,
                             thumbnailUrl: storyarts.length ? storyarts[storyarts.length - 1]?.url : undefined,
                         });
-
+                        state.video = undefined;
                         observeForVideo();
                     } catch (innerErr) {
                         console.warn('Failed to parse Netflix metadata:', innerErr);
@@ -279,10 +280,13 @@ const LOGIN_SCRIPT = `
 (${init.toString()})();
 `;
 
+let webview: WebviewHandle | null = null;
+
 export async function openNetflix() {
+    if (webview) return;
     const replay = ReplayApp.getInstance();
     const { omu, replayData } = replay;
-    const webview = await omu.dashboard.requestWebview({
+    webview = await omu.dashboard.requestWebview({
         url: 'https://www.netflix.com/jp/login',
         script: LOGIN_SCRIPT,
     });
@@ -303,5 +307,8 @@ export async function openNetflix() {
             info,
             playback,
         });
+    });
+    webview.join().then(() => {
+        webview = null;
     });
 }

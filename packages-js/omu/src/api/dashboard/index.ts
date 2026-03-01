@@ -22,8 +22,7 @@ export {
     type TranscriptSegment,
     type TranscriptStatus,
     type UserResponse,
-    type WebviewEvent,
-    type WebviewPacket,
+    type WebviewEvent, type WebviewHandle, type WebviewPacket,
     type WebviewRequest,
 } from './extension.js';
 export type { DashboardHandler } from './handler';

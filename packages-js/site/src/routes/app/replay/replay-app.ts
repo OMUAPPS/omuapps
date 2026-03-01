@@ -16,6 +16,8 @@ export type Video = {
 } | {
     type: 'netflix';
     id: string;
+} | {
+    type: 'amazonprime';
 };
 
 export type Playback = {
