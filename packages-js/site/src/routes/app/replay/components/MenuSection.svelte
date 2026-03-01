@@ -3,6 +3,7 @@
         name?: string | undefined;
         icon?: string | undefined;
         flex?: number;
+        gap?: boolean;
         min?: string;
         actions?: import('svelte').Snippet;
         children?: import('svelte').Snippet;
@@ -12,6 +13,7 @@
         name = undefined,
         icon = undefined,
         flex = 0,
+        gap = false,
         min = '',
         actions,
         children,
@@ -29,7 +31,7 @@
         {@render actions?.()}
     </h3>
 {/if}
-<section style:flex style:min-height={min}>
+<section style:flex style:min-height={min} class:gap={gap}>
     {@render children?.()}
 </section>
 
@@ -40,5 +42,14 @@
         gap: 0.5rem;
         white-space: nowrap;
         font-size: 1rem;
+    }
+
+    section {
+        display: flex;
+        flex-direction: column;
+
+        &.gap {
+            gap: 0.5rem;
+        }
     }
 </style>

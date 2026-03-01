@@ -27,7 +27,7 @@ const DEFAULT_RESOURCES = {
     resources: {} as Record<string, Resource>,
 };
 
-type Resources = typeof DEFAULT_RESOURCES;
+export type Resources = typeof DEFAULT_RESOURCES;
 const RESOURCES_REGISTRY = RegistryType.createJson<Resources>(APP_ID, {
     name: 'resources',
     defaultValue: DEFAULT_RESOURCES,
@@ -90,15 +90,15 @@ export const DEFAULT_CONFIG = {
     },
 };
 
-type Config = typeof DEFAULT_CONFIG;
-const CONFIG_REGISTRY = RegistryType.createJson<Config>(APP_ID, {
+export type RemoteAppConfig = typeof DEFAULT_CONFIG;
+const CONFIG_REGISTRY = RegistryType.createJson<RemoteAppConfig>(APP_ID, {
     name: 'config',
     defaultValue: DEFAULT_CONFIG,
 });
 
 export class RemoteApp {
     public readonly resources: Writable<Resources>;
-    public readonly config: Writable<Config>;
+    public readonly config: Writable<RemoteAppConfig>;
     public readonly connected: Writable<boolean>;
 
     constructor(
@@ -215,12 +215,7 @@ async function resizeImage(image: string, width: number, height: number): Promis
     const aspect = img.width / img.height;
     const targetAspect = width / height;
     // contain
-    let scale = 1;
-    if (aspect > targetAspect) {
-        scale = width / img.width;
-    } else {
-        scale = height / img.height;
-    }
+    const scale = aspect > targetAspect ? width / img.width : height / img.height;
     const scaledWidth = img.width * scale;
     const scaledHeight = img.height * scale;
     const offsetX = (width - scaledWidth) / 2;

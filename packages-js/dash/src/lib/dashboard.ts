@@ -1,7 +1,7 @@
 import PermissionRequestScreen from '$lib/screen/ScreenRequestPermission.svelte';
 import PluginRequestScreen from '$lib/screen/ScreenRequestPlugin.svelte';
 import { currentPage, speechRecognition } from '$lib/settings.js';
-import { appWindow, type Cookie } from '$lib/tauri.js';
+import { appWindow, type Cookie, type WebviewMessage } from '$lib/tauri.js';
 import { Identifier, IdentifierMap, type App, type Omu } from '@omujs/omu';
 import {
     DragDropReadResponse,
@@ -45,10 +45,11 @@ export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
 
 export class Dashboard implements DashboardHandler {
     public currentApp: App | null = null;
-    readonly webviewHandles: IdentifierMap<{
+    private readonly webviewHandles: IdentifierMap<{
         id: Identifier;
         close: () => void;
     }> = new IdentifierMap();
+    private readonly messageHandlers: Map<string, (event: WebviewMessage) => void> = new Map();
     private recognition: SpeechRecognition | undefined;
 
     constructor(private readonly omu: Omu) {
@@ -64,6 +65,12 @@ export class Dashboard implements DashboardHandler {
         currentPage.subscribe(() => {
             this.currentApp = null;
         });
+    }
+
+    public processWebviewMessage(event: WebviewMessage) {
+        const handle = this.messageHandlers.get(event.label);
+        if (!handle) return;
+        handle(event);
     }
 
     async speechRecognitionStart(): Promise<UserResponse<undefined>> {
@@ -253,12 +260,6 @@ export class Dashboard implements DashboardHandler {
         if (!['https:', 'http:'].includes(uri.protocol)) throw new Error('Invalid URL protocol');
         const label = `webview-${Math.floor(performance.timeOrigin * 1000)}-${this.webviewHandles.size}-${Math.floor(performance.now() * 10000)}`;
         const id = params.caller.join(label);
-        this.webviewHandles.set(id, {
-            id,
-            close: () => {
-                webviewWindow?.destroy();
-            },
-        });
         const existingWebviewWindow = await WebviewWindow.getByLabel(label);
         existingWebviewWindow?.destroy();
         const existingWebview = await Webview.getByLabel(label);
@@ -274,9 +275,26 @@ export class Dashboard implements DashboardHandler {
         if (!webviewWindow) {
             throw new Error('Webview not found');
         }
-        webviewWindow.once('tauri://close-requested', async () => {
+        const close = async () => {
             this.webviewHandles.delete(id);
+            this.messageHandlers.delete(label);
             await emit({ type: 'closed' });
+            await webviewWindow.destroy();
+        };
+        webviewWindow.once('tauri://close-requested', () => close());
+        webviewWindow.listen('tauri://resize', async () => {
+            const size = await webviewWindow.size();
+            await emit({ type: 'resize', dimentions: { x: size.width, y: size.height } });
+        });
+        webviewWindow.listen('message', async (event) => {
+            await emit({ type: 'message', data: event.payload as string });
+        });
+        this.webviewHandles.set(id, {
+            id,
+            close: () => close(),
+        });
+        this.messageHandlers.set(label, async (event) => {
+            await emit({ type: 'message', data: event.message });
         });
         return id;
     }

@@ -1,6 +1,7 @@
 import { VERSION } from '$lib/version';
 import type { Omu } from '@omujs/omu';
 import type { AnyNode, Element, ParentNode } from 'domhandler';
+import { DEV } from 'esm-env';
 import { DomUtils, ElementType, parseDocument } from 'htmlparser2';
 
 async function script() {
@@ -285,6 +286,9 @@ export class MarshmallowAPI {
     }
 
     private async hasPremium(): Promise<boolean | undefined> {
+        if (DEV) {
+            return true;
+        }
         const resp = await this.fetch('https://marshmallow-qa.com/settings/premium', {
             'headers': this.headers,
             'body': null,

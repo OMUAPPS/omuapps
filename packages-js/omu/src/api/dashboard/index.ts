@@ -1,13 +1,12 @@
 export {
-    DASHBOARD_APP_INSTALL_PERMISSION_ID,
+    CookieList, DASHBOARD_APP_INSTALL_PERMISSION_ID,
     DASHBOARD_DRAG_DROP_PERMISSION_ID as DAShBOARD_DRAG_DROP_PERMISSION_ID,
     DASHBOARD_OPEN_APP_PERMISSION_ID,
     DASHBOARD_SET_PERMISSION_ID,
     DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
     DASHBOARD_WEBVIEW_PERMISSION_ID,
     DASHOBARD_APP_EDIT_PERMISSION_ID,
-    DASHOBARD_APP_READ_PERMISSION_ID,
-    type Cookie,
+    DASHOBARD_APP_READ_PERMISSION_ID, type Cookie,
     type GetCookiesRequest,
     type HostRequest,
     type PortProcess,
@@ -23,8 +22,7 @@ export {
     type TranscriptSegment,
     type TranscriptStatus,
     type UserResponse,
-    type WebviewEvent,
-    type WebviewPacket,
+    type WebviewEvent, type WebviewHandle, type WebviewPacket,
     type WebviewRequest,
 } from './extension.js';
 export type { DashboardHandler } from './handler';

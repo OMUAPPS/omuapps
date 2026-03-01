@@ -10,29 +10,92 @@ export type Asset = {
     url: string;
 };
 
-export type AssetStatus = {
-    type: 'loading';
-} | {
+export type LoadingResult<T, E> = ({
     type: 'ready';
-    data: Uint8Array;
+    data: T;
+    unwrap: T;
 } | {
     type: 'error';
-    error: Error;
+    error: E;
+    unwrap: T;
+}) & {
+    promise: Promise<LoadingResult<T, E>>;
 };
 
-export type TextureStatus = {
+export type LoadingState<T, E = Error> = {
     type: 'loading';
-} | {
-    type: 'ready';
-    texture: GlTexture;
-} | {
-    type: 'error';
-    error: Error;
-};
+    promise: Promise<LoadingResult<T, E>>;
+} | LoadingResult<T, E>;
+
+export type AssetStatus = LoadingState<Uint8Array>;
+
+export type TextureStatus = LoadingState<GlTexture>;
+
+class Loader<D, T, E = Error> {
+    private readonly cache: Map<string, LoadingState<T, E>> = new Map();
+
+    constructor(
+        private readonly key: (data: D) => string,
+        private readonly load: (data: D) => Promise<T>,
+    ) { }
+
+    public get(data: D): LoadingState<T, E> {
+        const key = this.key(data);
+        let state = this.cache.get(key);
+        if (!state) {
+            const { promise, resolve } = Promise.withResolvers<LoadingResult<T, E>>();
+            state = {
+                type: 'loading',
+                promise,
+            };
+            this.cache.set(key, state);
+            this.load(data).then(data => {
+                const state: LoadingResult<T, E> = {
+                    type: 'ready',
+                    data,
+                    promise,
+                    unwrap: data,
+                };
+                this.cache.set(key, state);
+                resolve(state);
+            }).catch(error => {
+                const state: LoadingResult<T, E> = {
+                    type: 'error',
+                    error: error as E,
+                    promise,
+                    get unwrap(): T {
+                        throw error;
+                    },
+                };
+                this.cache.set(key, state);
+                resolve(state);
+            });
+        }
+        return state;
+    }
+}
 
 export class AssetManager {
-    private readonly cache: Map<string, AssetStatus> = new Map();
-    private readonly textures: Map<string, TextureStatus> = new Map();
+    private readonly assets = new Loader<Asset, Uint8Array>((data) => this.getAssetKey(data), async (asset) => {
+        if (asset.type === 'asset') {
+            const { buffer } = await this.omu.assets.download(asset.id);
+            return buffer;
+        } else {
+            const response = await fetch(asset.url);
+            const arrayBuffer = await response.arrayBuffer();
+            return new Uint8Array(arrayBuffer);
+        }
+    });
+
+    private readonly textures = new Loader<Asset, GlTexture>((data) => this.getAssetKey(data), async (asset) => {
+        const result = await this.assets.get(asset).promise;
+        if (result.type === 'error') {
+            throw result.error;
+        }
+        const { data } = result;
+        const texture = await this.createTexture(data);
+        return texture;
+    });
 
     constructor(
         private readonly omu: Omu,
@@ -47,60 +110,12 @@ export class AssetManager {
         }
     }
 
-    public async getAsset(asset: Asset): Promise<AssetStatus> {
-        const existing = this.cache.get(this.getAssetKey(asset));
-        if (existing) return existing;
-
-        this.cache.set(this.getAssetKey(asset), { type: 'loading' });
-
-        try {
-            let data: Uint8Array;
-            if (asset.type === 'asset') {
-                const { buffer } = await this.omu.assets.download(asset.id);
-                data = buffer;
-            } else {
-                const response = await fetch(asset.url);
-                const arrayBuffer = await response.arrayBuffer();
-                data = new Uint8Array(arrayBuffer);
-            }
-            const status: AssetStatus = { type: 'ready', data };
-            this.cache.set(this.getAssetKey(asset), status);
-            return status;
-        } catch (error) {
-            const status: AssetStatus = { type: 'error', error: error as Error };
-            this.cache.set(this.getAssetKey(asset), status);
-            return status;
-        }
+    public getTexture(asset: Asset): TextureStatus {
+        return this.textures.get(asset);
     }
 
-    public async getTexture(asset: Asset): Promise<TextureStatus> {
-        const assetKey = this.getAssetKey(asset);
-        const existing = this.textures.get(assetKey);
-        if (existing) return existing;
-
-        this.textures.set(assetKey, { type: 'loading' });
-
-        const assetStatus = await this.getAsset(asset);
-        if (assetStatus.type === 'loading') {
-            return { type: 'loading' };
-        }
-
-        if (assetStatus.type === 'error') {
-            const status: TextureStatus = { type: 'error', error: assetStatus.error };
-            this.textures.set(assetKey, status);
-            return status;
-        }
-
-        try {
-            const texture = await this.createTexture(assetStatus.data);
-            const status: TextureStatus = { type: 'ready', texture };
-            this.textures.set(assetKey, status);
-            return status;
-        } catch (error) {
-            const status: TextureStatus = { type: 'error', error: error as Error };
-            this.textures.set(assetKey, status);
-            return status;
-        }
+    public getTextureByUrl(url: string): TextureStatus {
+        return this.textures.get({ type: 'url', url });
     }
 
     private async createTexture(data: Uint8Array): Promise<GlTexture> {

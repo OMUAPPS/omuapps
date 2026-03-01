@@ -1,57 +1,237 @@
-import type { Omu } from '@omujs/omu';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Registry } from '@omujs/omu/api/registry';
 import type { Table } from '@omujs/omu/api/table';
-import type { Writable } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
 import type { Item } from '../item';
-import type { ItemPool } from '../item/item';
+import type { ItemPool, ItemSystemState } from '../item/item';
+import type { OmucafeApp } from '../omucafe-app';
 import type { SceneData } from '../scenes/scene';
 
-export class BufferedMap<T> {
-    constructor(
-        private readonly table: Table<T>,
-    ) {
-        table.listen((map) => {
-            this.map = map;
-        });
+// パフォーマンス改善版 ProxyTracker
+class FastProxyTracker<T extends object> {
+    private readonly originalSymbol = Symbol('Original');
+    private readonly proxyCache = new WeakMap<object, any>();
+    private readonly changes = new Map<symbol, any>();
+
+    private readonly callback: (changed: boolean) => void;
+    #proxy: T;
+
+    constructor(value: T, callback: (changed: boolean) => void) {
+        this.callback = callback;
+        this.#proxy = this.createProxy(value);
     }
 
+    get changed() {
+        return this.changes.size > 0;
+    }
+
+    get value() {
+        return this.#proxy;
+    }
+
+    // 値が差し替わった場合に再ラップする
+    set value(newValue: T) {
+        this.#proxy = this.createProxy(newValue);
+        this.changes.clear();
+    }
+
+    public flush() {
+        this.changes.clear();
+    }
+
+    private createProxy<U extends object>(target: U): U {
+        // プリミティブやnullはそのまま返す
+        if (typeof target !== 'object' || target === null) {
+            return target;
+        }
+
+        // 既にこのTrackerでラップ済みのオブジェクトならキャッシュを返す
+        if (this.proxyCache.has(target)) {
+            return this.proxyCache.get(target);
+        }
+
+        if ((target as any)[this.originalSymbol]) {
+            return target;
+        }
+
+        const fields: Map<keyof any, symbol> = new Map();
+
+        const handler: ProxyHandler<U> = {
+            get: (obj, prop, receiver) => {
+                if (prop === this.originalSymbol) {
+                    return obj;
+                }
+                const val = Reflect.get(obj, prop, receiver);
+                // ネストされたオブジェクトも再帰的にプロキシ化（キャッシュ利用）
+                if (typeof val === 'object' && val !== null) {
+                    return this.createProxy(val);
+                }
+                return val;
+            },
+            set: (obj, prop, val, receiver) => {
+                const current = Reflect.get(obj, prop, receiver);
+                // 値が変わった場合のみ通知
+                if (current !== val) {
+                    let symbol = fields.get(prop);
+                    if (!symbol) {
+                        symbol = Symbol(prop.toString());
+                        fields.set(prop, symbol);
+                    }
+                    if (this.changes.has(symbol)) {
+                        const original = this.changes.get(symbol);
+                        if (original === val) {
+                            this.changes.delete(symbol);
+                            if (this.changes.size === 0) {
+                                this.callback(false); // 変更通知
+                            }
+                        }
+                    } else {
+                        if (this.changes.size === 0) {
+                            this.callback(true); // 変更通知
+                        }
+                        this.changes.set(symbol, current);
+                    }
+                    const result = Reflect.set(obj, prop, val, receiver);
+                    return result;
+                }
+                return true;
+            },
+            deleteProperty: (obj, prop) => {
+                if (prop in obj) {
+                    let symbol = fields.get(prop);
+                    if (!symbol) {
+                        symbol = Symbol(prop.toString());
+                        fields.set(prop, symbol);
+                    }
+                    if (!this.changes.has(symbol)) {
+                        if (this.changes.size === 0) {
+                            this.callback(true); // 変更通知
+                        }
+                        this.changes.set(symbol, Reflect.get(obj, prop));
+                    }
+                }
+                const result = Reflect.deleteProperty(obj, prop);
+                return result;
+            },
+        };
+
+        const proxy = new Proxy(target, handler);
+        this.proxyCache.set(target, proxy);
+        return proxy;
+    }
+}
+
+export class BufferedMap<T extends object> {
     private map: Map<string, T> = new Map();
+    // 生成したProxyをキャッシュして、getのたびに生成しないようにする
+    private proxies: Map<string, FastProxyTracker<T>> = new Map();
+
     private updated: Set<string> = new Set();
     private removed: Map<string, T> = new Map();
+    private unlisten: (() => void)[] = [];
+
+    constructor(
+        private readonly table: Table<T>,
+        listen: boolean,
+    ) {
+        if (listen) {
+            this.unlisten.push(
+                table.event.add.listen((items) => {
+                    for (const [id, item] of items) {
+                        this.map.set(id, item);
+                        this.proxies.delete(id); // 元データが変わったらキャッシュを無効化
+                    }
+                }),
+                table.event.update.listen((items) => {
+                    for (const [id, item] of items) {
+                        this.map.set(id, item);
+                        this.proxies.delete(id); // キャッシュ無効化
+                    }
+                }),
+                table.event.remove.listen((items) => {
+                    for (const [id] of items) {
+                        this.map.delete(id);
+                        this.proxies.delete(id);
+                        this.updated.delete(id);
+                    }
+                }),
+            );
+            table.listen();
+        }
+    }
 
     public async wait() {
-        this.map = await this.table.fetchAll();
+        const items = await this.table.fetchAll();
+        this.map = items;
+        this.proxies.clear();
+    }
+
+    public entries(): MapIterator<[string, T]> {
+        return this.map.entries();
+    }
+
+    public keys(): IterableIterator<string> {
+        return this.map.keys();
     }
 
     public values(): IterableIterator<T> {
+        // values() でイテレートする場合も、できればProxy経由が望ましいが
+        // パフォーマンス重視なら生データを返すか、必要に応じてProxy生成
         return this.map.values();
+    }
+
+    public clear() {
+        this.removed = new Map(this.map);
+        this.updated.clear();
+        this.map.clear();
+        this.proxies.clear();
     }
 
     public set(key: string, value: T) {
         this.map.set(key, value);
+        this.proxies.delete(key); // 上書きされたらProxyを作り直す
         this.updated.add(key);
-        this.removed.delete(key);
     }
 
     public delete(key: string) {
         const existed = this.map.get(key);
         if (existed) {
             this.map.delete(key);
+            this.proxies.delete(key);
             this.removed.set(key, existed);
             this.updated.delete(key);
         }
     }
 
     public get(key: string): T | undefined {
-        return this.map.get(key);
+        // キャッシュがあればそれを返す（超高速化）
+        if (this.proxies.has(key)) {
+            return this.proxies.get(key)?.value;
+        }
+
+        const item = this.map.get(key);
+        if (!item) return undefined;
+
+        // 新しいProxyを作り、キャッシュに保存
+        const tracker = new FastProxyTracker(item, (changed) => {
+            if (changed) {
+                this.updated.add(key);
+            } else {
+                this.updated.delete(key);
+            }
+        });
+
+        this.proxies.set(key, tracker);
+        return tracker.value;
     }
 
     private getUpdated(): T[] {
         const result: T[] = [];
         for (const key of this.updated) {
-            const value = this.map.get(key);
-            if (value) {
-                result.push(value);
+            const proxy = this.proxies.get(key);
+            if (proxy) {
+                result.push(proxy.value);
+                proxy.flush();
             }
         }
         this.updated.clear();
@@ -59,129 +239,132 @@ export class BufferedMap<T> {
     }
 
     private getRemoved(): T[] {
-        const result: T[] = [];
-        for (const key of this.removed.keys()) {
-            const value = this.removed.get(key);
-            if (value) {
-                result.push(value);
-            }
-        }
+        const result: T[] = Array.from(this.removed.values());
         this.removed.clear();
         return result;
     }
 
     public async flush() {
+        const promises: Promise<any>[] = [];
         if (this.updated.size > 0) {
-            await this.table.update(...this.getUpdated());
+            promises.push(this.table.update(...this.getUpdated()));
         }
         if (this.removed.size > 0) {
-            await this.table.remove(...this.getRemoved());
+            promises.push(this.table.remove(...this.getRemoved()));
         }
+        await Promise.all(promises);
+    }
+
+    public destroy() {
+        this.unlisten.forEach(u => u());
+        this.unlisten = [];
     }
 }
 
-const TRACK_SYMBOL = Symbol('TrackingId');
-export class BufferedRegistry<T> {
-    #value: T;
-    #changed: boolean = false;
+export class BufferedRegistry<T extends object> {
+    #tracker: FastProxyTracker<T>;
     public store: Writable<T>;
 
     constructor(
         public readonly registry: Registry<T>,
     ) {
-        this.#value = registry.value;
-        this.store = registry.compatSvelte();
-        registry.listen((newValue) => {
-            this.#value = newValue;
+        // Registryの値監視
+        this.#tracker = new FastProxyTracker(registry.value, () => {
+            // Svelte storeにも通知が必要ならここで行う
+            this.store.set(this.#tracker.value);
         });
+
+        this.store = writable(registry.value);
+
+        registry.listen((newValue) => {
+            // サーバー側から更新が来たらProxyのターゲットを差し替える
+            this.#tracker.value = newValue;
+        });
+
         this.store.subscribe((newValue) => {
-            this.#value = newValue;
+            // Svelte側で代入が行われた場合
+            if (newValue !== this.#tracker.value) {
+                this.#tracker.value = newValue;
+            }
         });
     }
 
     public async wait() {
-        this.#value = await this.registry.get();
+        const val = await this.registry.get();
+        this.#tracker.value = val;
     }
 
     get value(): T {
-        return this.#value;
+        return this.#tracker.value;
     }
 
     set value(val: T) {
-        this.#value = this.trackChange(val);
-        this.#changed = true;
-    }
-
-    private trackChange<T>(value: T) {
-        if (!value) return value;
-        if (typeof value !== 'object') return value;
-        if (TRACK_SYMBOL in value) return value;
-        Object.defineProperty(value, TRACK_SYMBOL, {
-            value: true,
-            enumerable: false,
-            configurable: false,
-        });
-        const handler: ProxyHandler<any> = {
-            get: (target, prop) => {
-                const val = target[prop];
-                return this.trackChange(val);
-            },
-            set: (target, prop, val) => {
-                if (val !== target[prop]) {
-                    this.#changed = true;
-                }
-                target[prop] = this.trackChange(val);
-                return true;
-            },
-            deleteProperty: (target, prop) => {
-                if (prop in target) {
-                    this.#changed = true;
-                }
-                delete target[prop];
-                return true;
-            },
-        };
-        return new Proxy(value, handler);
+        this.#tracker.value = val;
+        this.store.set(val);
     }
 
     public async flush() {
-        if (!this.#changed) return;
-        this.#changed = false;
-        await this.registry.set(this.#value);
+        if (!this.#tracker.changed) return;
+        this.#tracker.flush();
+        // FastProxyTrackerは生オブジェクトを汚染しないので、
+        // update時には現在のProxyがラップしている生の値を取得する必要があるが、
+        // Proxyを通して変更した内容は生オブジェクト(this.#tracker.valueの実体)に反映されているため
+        // そのままregistry.valueを送ればよい。
+
+        // 注意: ここで送るべきは「変更が適用された生オブジェクト」です。
+        // OmuのRegistry実装によりますが、通常は生データを送るのが安全です。
+        // しかし、Proxyのまま送ってもJSON.stringifyされる際に剥がれることが多いです。
+        await this.registry.set(this.#tracker.value);
     }
 }
 
 export class GameState {
-    private constructor(
-        public items: BufferedMap<Item>,
-        public kitchen: BufferedRegistry<ItemPool>,
-        public scene: BufferedRegistry<SceneData>,
-    ) { }
+    public items: BufferedMap<Item>;
+    public kitchen: BufferedRegistry<ItemPool>;
+    public fridge: BufferedRegistry<ItemPool>;
+    public itemStates: BufferedRegistry<ItemSystemState>;
+    public scene: BufferedRegistry<SceneData>;
 
-    public static async new(omu: Omu) {
+    constructor(
+        private readonly omucafe: OmucafeApp,
+    ) {
+        const { omu } = omucafe;
+        const listen = omucafe.side !== 'client';
         const items = new BufferedMap(omu.tables.json<Item>('items', {
             key: (item) => item.id,
-        }));
+        }), listen);
         const kitchen = new BufferedRegistry(omu.registries.json<ItemPool>('kitchen', {
             default: { items: {} },
+        }));
+        const fridge = new BufferedRegistry(omu.registries.json<ItemPool>('fridge', {
+            default: { items: {} },
+        }));
+        const itemStates = new BufferedRegistry(omu.registries.json<ItemSystemState>('itemStates', {
+            default: { },
         }));
         const scene = new BufferedRegistry(omu.registries.json<SceneData>('scene', {
             default: { 'type': 'main_menu' },
         }));
-        await Promise.all([
-            items.wait(),
-            kitchen.wait(),
-            scene.wait(),
-        ]);
-        return new GameState(
-            items,
-            kitchen,
-            scene,
-        );
+
+        this.items = items;
+        this.kitchen = kitchen;
+        this.fridge = fridge;
+        this.itemStates = itemStates;
+        this.scene = scene;
+    }
+
+    public async wait() {
+        await Promise.all([this.items.wait(), this.kitchen.wait(), this.scene.wait()]);
     }
 
     public async flush() {
-        await this.items.flush();
-        await this.scene.flush();
+        if (this.omucafe.side === 'client') {
+            await Promise.all([
+                this.items.flush(),
+                this.kitchen.flush(),
+                this.fridge.flush(),
+                this.scene.flush(),
+            ]);
+        }
     }
 }

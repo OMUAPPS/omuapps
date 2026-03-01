@@ -250,7 +250,7 @@ export class ByteWriter {
         return this;
     }
 
-    public finish(): Uint8Array {
+    public finish(): Uint8Array<ArrayBuffer> {
         if (this.finished) {
             throw new Error('Buffer already finished');
         }

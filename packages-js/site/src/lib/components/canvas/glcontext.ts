@@ -491,7 +491,7 @@ export class GlTexture {
         };
     }
 
-    public setImage(image: TexImageSource, params: {
+    public setImage(image: TexImageSource | null, params: {
         internalFormat: ColorFormat;
         format?: ColorFormat;
         width: number;
@@ -512,17 +512,32 @@ export class GlTexture {
             srgb8: this.gl.SRGB8,
             srgb8alpha8: this.gl.SRGB8_ALPHA8,
         };
-        this.gl.texImage2D(
-            this.gl.TEXTURE_2D,
-            0,
-            COLOR_FORMATS[internalFormat],
-            width,
-            height,
-            0,
-            COLOR_FORMATS[params.format ?? internalFormat],
-            this.gl.UNSIGNED_BYTE,
-            image,
-        );
+        if (image) {
+            this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+            this.gl.texImage2D(
+                this.gl.TEXTURE_2D,
+                0,
+                COLOR_FORMATS[internalFormat],
+                width,
+                height,
+                0,
+                COLOR_FORMATS[params.format ?? internalFormat],
+                this.gl.UNSIGNED_BYTE,
+                image,
+            );
+        } else {
+            this.gl.texImage2D(
+                this.gl.TEXTURE_2D,
+                0,
+                COLOR_FORMATS[internalFormat],
+                width,
+                height,
+                0,
+                COLOR_FORMATS[internalFormat],
+                this.gl.UNSIGNED_BYTE,
+                null,
+            );
+        }
     }
 
     public setParams(params: TextureParams): void {
@@ -609,6 +624,23 @@ export class GlFramebuffer {
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, texture.texture, 0);
         } else {
             this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, null, 0);
+        }
+        // Check framebuffer status
+        const status = this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER);
+        if (status !== this.gl.FRAMEBUFFER_COMPLETE) {
+            throw new Error(`Framebuffer is not complete: ${status}`);
+        }
+        // Check errors
+        const error = this.gl.getError();
+        if (error !== this.gl.NO_ERROR) {
+            const MAP: Record<number, string> = {
+                [this.gl.INVALID_ENUM]: 'INVALID_ENUM',
+                [this.gl.INVALID_VALUE]: 'INVALID_VALUE',
+                [this.gl.INVALID_OPERATION]: 'INVALID_OPERATION',
+                [this.gl.OUT_OF_MEMORY]: 'OUT_OF_MEMORY',
+                [this.gl.INVALID_FRAMEBUFFER_OPERATION]: 'INVALID_FRAMEBUFFER_OPERATION',
+            };
+            throw new Error(`Error attaching texture to framebuffer: ${MAP[error] ?? error}`);
         }
     }
 

@@ -24,7 +24,9 @@
         overlayApp,
     }: Props = $props();
 
-    const { config, world } = overlayApp;
+    const { config, world, discord } = overlayApp;
+    const { sessions } = discord;
+    let session = $derived(Object.entries($sessions).find(([, session]) => session.user.id === $config.user_id)?.[1]);
 
     let resolution: Vec2Like = $state({ x: 0, y: 0 });
 
@@ -170,6 +172,26 @@
             </button>
         </div>
     {/if}
+    {#if Object.keys(voiceState.states).length === 0}
+        <div class="overlay">
+            <h2>
+                通話をはじめましょう！
+            </h2>
+            <p>
+                Discordの通話に参加するとここに自分と通話相手のアバターが表示されます。
+            </p>
+            {#if session?.user.global_name}
+                {@const avatarUrl = session.user.avatar
+                    ? `https://cdn.discordapp.com/avatars/${session.user.id}/${session.user.avatar}.png`
+                    : 'https://cdn.discordapp.com/embed/avatars/0.png'}
+                <div class="user">
+                    <img src={avatarUrl} alt="">
+                    <b>{session.user.global_name}</b>
+                    <small>にログインしています</small>
+                </div>
+            {/if}
+        </div>
+    {/if}
 </main>
 
 <style lang="scss">
@@ -184,6 +206,39 @@
         container-type: inline-size;
         display: flex;
         flex-direction: column;
+    }
+
+    .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: var(--color-bg-1);
+        text-align: center;
+
+        > h2 {
+            font-size: 1.5rem;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-1);
+        }
+
+        > .user {
+            margin-top: 2rem;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            > img {
+                width: 1.5rem;
+                height: 1.5rem;
+                border-radius: 9999px;
+            }
+        }
     }
 
     .canvas {

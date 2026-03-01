@@ -83,6 +83,15 @@ export class Vec4 {
         return this.x === other.x && this.y === other.y && this.z === other.z && this.w === other.w;
     }
 
+    with(values: Partial<Vec4Like>): Vec4 {
+        return new Vec4(
+            values.x ?? this.x,
+            values.y ?? this.y,
+            values.z ?? this.z,
+            values.w ?? this.w,
+        );
+    }
+
     scale(scalar: number): Vec4 {
         return new Vec4(
             this.x * scalar,

@@ -1,9 +1,5 @@
 import type { Game } from './game';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface RenderEvent {
-}
-
 export class GameRenderer {
     constructor(
         private readonly game: Game,
@@ -24,10 +20,10 @@ export class GameRenderer {
         const { context, matrices } = this.game.pipeline;
         const { gl } = context;
         gl.colorMask(true, true, true, true);
-        gl.enable(gl.BLEND);
         gl.clearColor(1, 1, 1, 1);
         gl.clear(gl.DEPTH_BUFFER_BIT);
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-        gl.viewport(0, 0, matrices.width, matrices.height);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        context.stateManager.setViewport({ x: matrices.width, y: matrices.height });
     }
 }

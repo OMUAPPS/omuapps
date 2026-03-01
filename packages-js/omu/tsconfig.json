@@ -2,11 +2,11 @@
     "$schema": "http://json.schemastore.org/tsconfig",
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-		"paths": {
-			"/*": [
-				"../src/lib/*/index.js"
-			]
-		},
+        "paths": {
+            "/*": [
+                "../src/lib/*/index.js"
+            ]
+        },
     },
     "compileOnSave": true,
     "include": [

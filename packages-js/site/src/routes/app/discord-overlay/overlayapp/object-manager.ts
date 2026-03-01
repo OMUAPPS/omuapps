@@ -26,6 +26,7 @@ type HoveredObject = {
     type: 'attached';
     userId: string;
     objectId: string;
+    render: RenderedObject;
 };
 
 export class ObjectManager {
@@ -54,16 +55,17 @@ export class ObjectManager {
     }
 
     private onMouseDown() {
-        console.log('mouse down');
         if (this.hoveredObject) {
             if (this.hoveredObject.type === 'detached') {
                 this.heldObject = this.hoveredObject.objectId;
             } else if (this.hoveredObject.type === 'attached') {
-                const { objectId, userId } = this.hoveredObject;
+                const { objectId, userId, render } = this.hoveredObject;
                 const object = this.app.world.attahed[userId]?.find(({ object }) => object.id === objectId);
                 if (!object) return;
                 this.app.world.attahed[userId] = this.app.world.attahed[userId].filter(({ object }) => object.id !== objectId);
                 this.app.world.objects[object.object.id] = object.object;
+                const center = render.worldBounds.center();
+                object.object.position = center;
                 this.heldObject = objectId;
             }
         }
@@ -150,6 +152,7 @@ export class ObjectManager {
                         type: 'attached',
                         userId,
                         objectId,
+                        render: renderedObject,
                     };
                     draw.roundedRect(
                         renderedObject.worldBounds.min,
@@ -290,7 +293,7 @@ export class ObjectManager {
                 );
                 const worldBounds = matrices.getModelToWorld().transformAABB2(bounds);
                 matrices.model.pop();
-                const renderedObjects = this.renderedObjects.get(userId) ?? { objects: new Map() };
+                const renderedObjects: AttachedObjectRenders = this.renderedObjects.get(userId) ?? { objects: new Map() };
                 renderedObjects.objects.set(attached.object.id, { worldBounds });
                 this.renderedObjects.set(userId, renderedObjects);
             },

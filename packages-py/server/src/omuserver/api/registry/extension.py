@@ -63,7 +63,7 @@ class RegistryExtension:
         if not registry.id.is_subpath_of(session.app.id):
             msg = f"App {session.app.id=} not allowed to register {packet.id=}"
             raise PermissionDenied(msg)
-        registry.permissions = packet.permissions
+        registry.set_permissions(packet.permissions)
 
     async def handle_listen(self, session: Session, id: Identifier) -> None:
         await session.wait_ready()

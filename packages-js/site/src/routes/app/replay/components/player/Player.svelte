@@ -90,6 +90,8 @@
         }
         return components.join(':');
     }
+
+    let settingsOpen = $state(false);
 </script>
 
 <svelte:window
@@ -191,7 +193,7 @@
             {/if}
         </div>
     {/if}
-    {#if interacted && now - lastActionTime < 621}
+    {#if interacted && now - lastActionTime < 2000}
         <div class="control-container" transition:fly={{ duration: 62.1, y: 10 }}>
             <div class="control">
                 <button onclick={() => {
@@ -238,6 +240,17 @@
                 </div>
                 <button
                     style:margin-left="auto"
+                    onclick={() => {
+                        settingsOpen = !settingsOpen;
+                    }}
+                    aria-label="quality"
+                >
+                    <Tooltip>
+                        設定
+                    </Tooltip>
+                    <i class="ti ti-settings"></i>
+                </button>
+                <button
                     bind:this={fullscreenButton}
                     onclick={() => {
                         if (fullscreen) {
@@ -299,6 +312,17 @@
     {#if fullscreen}
         <TooltipPortal />
         <PopupPortal />
+    {/if}
+    {#if settingsOpen}
+        <div class="settings">
+            {#each replayData.info.qualities as quality, index (index)}
+                <button onclick={() => {
+                    $config.providers.youtube.preferredQuality = quality;
+                }}>
+                    {quality}
+                </button>
+            {/each}
+        </div>
     {/if}
 </div>
 
@@ -375,6 +399,32 @@
                 outline: 1px solid var(--color-1);
                 padding: 0.5rem 1rem;
                 filter: drop-shadow(0 3px 0 var(--color-outline));
+            }
+        }
+    }
+
+    .settings {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        bottom: 3.5rem;
+        right: 1rem;
+        background: var(--color-bg-2);
+        border: 1px solid var(--color-outline);
+        border-radius: 3px;
+
+        > button {
+            text-align: left;
+            border: none;
+            background: none;
+            padding: 0.25rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--color-1);
+
+            &:hover {
+                background: var(--color-1);
+                color: var(--color-bg-1);
             }
         }
     }

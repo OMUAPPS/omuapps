@@ -12,7 +12,7 @@
     import { OmucafeApp } from './omucafe-app';
 
     const omu = new Omu(OMUCAFE_APP);
-    OmucafeApp.create(omu);
+    new OmucafeApp(omu, 'client');
     const obs = OBSPlugin.create(omu);
     const chat = Chat.create(omu);
     setGlobal({ omu, obs, chat });

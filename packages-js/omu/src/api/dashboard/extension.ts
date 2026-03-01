@@ -82,6 +82,12 @@ export type Cookie = {
     value: string;
 };
 
+export class CookieList extends Array<Cookie> {
+    public toString(): string {
+        return this.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
+    }
+}
+
 export type WebviewRequest = {
     url: string;
     script?: string;
@@ -140,6 +146,9 @@ export type WebviewEvent = {
 } | {
     type: 'cookie';
     cookies: Cookie[];
+} | {
+    type: 'message';
+    data: any;
 };
 
 export type WebviewEventListeners = {
@@ -155,7 +164,7 @@ export type WebviewEventPacket = {
 export type WebviewHandle = {
     readonly id: Identifier;
     readonly url: string;
-    getCookies(): PromiseResult<Cookie[], UserError>;
+    getCookies(): PromiseResult<CookieList, UserError>;
     on<T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T }>) => void): void;
     close(): Promise<void>;
     join(): Promise<void>;
@@ -566,14 +575,14 @@ export class DashboardExtension {
         return promise;
     }
 
-    public getCookies(options: GetCookiesRequest): PromiseResult<Cookie[], UserError> {
-        const { promise, resolve, reject } = PromiseResult.create<Cookie[], UserError>();
+    public getCookies(options: GetCookiesRequest): PromiseResult<CookieList, UserError> {
+        const { promise, resolve, reject } = PromiseResult.create<CookieList, UserError>();
         this.omu.endpoints.call(
             DASHBOARD_COOKIES_GET,
             options,
         ).then((response) => {
             if (response.type === 'ok') {
-                resolve(response.value);
+                resolve(CookieList.from(response.value));
                 return;
             } else {
                 reject(response);

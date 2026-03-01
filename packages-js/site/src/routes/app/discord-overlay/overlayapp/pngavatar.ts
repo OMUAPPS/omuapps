@@ -109,6 +109,12 @@ function createRenderTarget(glContext: GlContext): RenderTarget {
     const framebuffer = glContext.createFramebuffer();
 
     texture.use(() => {
+        texture.setImage(null, {
+            width: 1,
+            height: 1,
+            internalFormat: 'rgba',
+            format: 'rgba',
+        });
         texture.setParams({
             minFilter: 'linear',
             magFilter: 'linear',

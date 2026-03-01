@@ -106,7 +106,7 @@ export class HTMLInput implements Input {
                 } else if (event.ev.type === 'keyup') {
                     yield {
                         timestamp: event.ev.timeStamp,
-                        kind: 'key-down',
+                        kind: 'key-up',
                         key: event.ev.key,
                     };
                 }
@@ -166,7 +166,10 @@ export interface EventMouseLeave extends EventMouse {
     kind: 'mouse-leave';
 }
 
-export type InputEvent = EventKeyUp | EventKeyDown | EventMouseWheel | EventMouseMove | EventMouseDown | EventMouseUp | EventMouseEnter | EventMouseLeave;
+export type InputEventMouse = EventMouseWheel | EventMouseMove | EventMouseDown | EventMouseUp | EventMouseEnter | EventMouseLeave;
+export type InputEventKey = EventKeyUp | EventKeyDown;
+
+export type InputEvent = InputEventKey | InputEventMouse;
 
 export interface Time {
     stamp: number;

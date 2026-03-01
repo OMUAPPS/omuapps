@@ -5,7 +5,8 @@
     import { onMount } from 'svelte';
     import TwitchPlayer from '../components/player/TwitchPlayer.svelte';
     import YoutubePlayer from '../components/player/YoutubePlayer.svelte';
-    import { ReplayApp } from '../replay-app.js';
+    import { ReplayApp, type ReplayData } from '../replay-app.js';
+    import { formatTime, getTimeUnits } from '../time';
 
     interface Props {
         omu: Omu;
@@ -26,41 +27,9 @@
     } | null = $state(null);
     let formattedTime = $state('...');
 
-    type TimeUnit = { factor: number };
-
-    const TIME_UNITS: TimeUnit[] = [
-        {
-            factor: 60 * 60,
-        },
-        {
-            factor: 60,
-        },
-        {
-            factor: 1,
-        },
-    ] as const;
-
-    function getTimeUnits(time: number) {
-        return TIME_UNITS.filter((unit) => time > unit.factor);
-    }
-
-    function formatTime(time: number, units?: TimeUnit[]) {
-        units = units ?? getTimeUnits(time);
-        const components: string[] = [];
-        for (let index = 0; index < units.length; index++) {
-            const last = index === 0;
-            const unit = units[index];
-            components.push(
-                Math.floor((time / unit.factor) % 60)
-                    .toString()
-                    .padStart(last ? 0 : 2, '0'),
-            );
-        }
-        return components.join(':');
-    }
+    let data: ReplayData | null = $replayData;
 
     function updateTime() {
-        if (!$replayData?.playback.playing) return;
         if (!timer) {
             formattedTime = '...';
             return;
@@ -69,13 +38,16 @@
         const elapsed = (performance.now() + performance.timeOrigin) - start;
         const time = timer.time + elapsed / 1000;
         formattedTime = formatTime(time, duration ? getTimeUnits(duration) : undefined);
-        timeTimeout = window.setTimeout(
-            () => updateTime(),
-            (1 - (time % 1)) * 1000,
-        );
+        if (data?.playback.playing) {
+            timeTimeout = window.setTimeout(
+                () => updateTime(),
+                (1 - (time % 1)) * 1000,
+            );
+        }
     }
 
     replayData.subscribe((replayData) => {
+        data = replayData;
         if (!replayData) return;
         timer = {
             start: replayData.playback.start,
@@ -94,7 +66,6 @@
     });
     onMount(() => {
         if (!$replayData) return;
-        $replayData.playback.playing = false;
     });
 
     function mapColorKeyValue(value: number) {
@@ -185,6 +156,8 @@
                     video={$replayData.video}
                     playback={$replayData.playback}
                 />
+            {:else}
+                <img src={$replayData.info.thumbnailUrl} alt="">
             {/if}
         </div>
         {#if $config.overlay.active}
@@ -258,6 +231,12 @@
 
         &.hide {
             visibility: hidden;
+        }
+
+        > img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
     }
 

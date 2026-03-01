@@ -4,6 +4,7 @@
 </script>
 
 <section class="content-width open-source">
+    <img src={opensource} alt="Open Source" />
     <div class="section-header">
         <h3>
             オープンソース
@@ -12,7 +13,6 @@
         <p>APIと管理画面、そしてサイトを含む全てはオープンソースなので、動いている中身を完全に知ることができます</p>
     </div>
     <div class="image">
-        <img src={opensource} alt="Open Source" />
         <a href="https://github.com/omuapps" target="_blank" rel="noopener noreferrer">
             <Tooltip>
                 <p>GitHubで開発を見る</p>
@@ -26,7 +26,9 @@
 
 <style lang="scss">
     section {
+        position: relative;
         margin-top: 9rem;
+        width: 100%;
     }
 
     a {
@@ -49,8 +51,18 @@
     }
 
     img {
-        height: 16rem;
+        position: absolute;
+        top: -5rem;
+        height: 20rem;
         width: 100%;
         object-fit: cover;
+        mask-image: radial-gradient(
+            ellipse 50% 50% at 50% 50%,
+            rgba(0, 0, 0, 1) 60%,
+            rgba(0, 0, 0, 0) 100%
+        );
+        z-index: -1;
+        opacity: 0.3;
+        filter: blur(0.1rem);
     }
 </style>

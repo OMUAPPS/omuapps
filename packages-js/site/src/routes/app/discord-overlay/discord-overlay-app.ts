@@ -157,6 +157,11 @@ export class DiscordOverlayApp {
                 objects: {},
                 attahed: {},
             },
+            serializer: Serializer.transform((world: World): World => {
+                world.attahed ??= {};
+                world.objects ??= {};
+                return world;
+            }),
         }).compatSvelte();
     }
 

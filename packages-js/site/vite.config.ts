@@ -2,7 +2,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-    plugins: [sveltekit() as never],
+    plugins: [sveltekit() as any],
     css: {
         preprocessorOptions: {
             scss: {
@@ -12,6 +12,9 @@ export default defineConfig({
     },
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}'],
+    },
+    optimizeDeps: {
+        noDiscovery: true,
     },
     server: {
         host: '0.0.0.0',

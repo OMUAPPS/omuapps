@@ -14,9 +14,15 @@ export const TRANSFORM_ORIGIN: Transform = {
 };
 
 export function getTransform(transform: Transform): Transform2D {
-    return new Transform2D([
+    const _transform = new Transform2D([
         transform.right,
         transform.up,
         transform.offset,
     ]);
+    if (_transform.determinant() === 0) {
+        return new Transform2D(
+            [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 0 }],
+        );
+    }
+    return _transform;
 }

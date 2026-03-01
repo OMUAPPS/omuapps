@@ -14,7 +14,12 @@ const config = {
         runes: true,
         experimental: {
             async: true
-        }
+        },
+        warningFilter: (warning) => {
+            const ignoredWarnings = ['state_referenced_locally'];
+
+            return !ignoredWarnings.includes(warning.code);
+        },
     },
 
     kit: {

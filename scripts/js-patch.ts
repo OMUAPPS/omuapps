@@ -68,3 +68,28 @@ await updatePkg('node_modules/.bun/@humanspeak+svelte-markdown@0.8.13+acce27d485
         },
     },
 });
+await updatePkg('node_modules/highlight.js/package.json', {
+    'exports': {
+        '.': {
+            'types': './types/index.d.ts',
+            'require': './lib/index.js',
+            'import': './lib/index.js',
+        },
+        './package.json': './package.json',
+        './lib/common': {
+            'require': './lib/common.js',
+            'import': './lib/common.js',
+        },
+        './lib/core': {
+            'require': './lib/core.js',
+            'import': './lib/core.js',
+        },
+        './lib/languages/*': {
+            'require': './lib/languages/*.js',
+            'import': './lib/languages/*.js',
+        },
+        './scss/*': './scss/*',
+        './styles/*': './styles/*',
+        './types/*': './types/*',
+    },
+});

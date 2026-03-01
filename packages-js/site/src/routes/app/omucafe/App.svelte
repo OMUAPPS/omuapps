@@ -9,7 +9,8 @@
     let scene = $derived(game?.states.scene.store);
 
     async function setPipeline(pipeline: RenderPipeline) {
-        const states = await GameState.new(OmucafeApp.getInstance().omu);
+        const states = new GameState(OmucafeApp.getInstance());
+        await states.wait();
         game = new Game(OmucafeApp.getInstance(), pipeline, states);
         await game.loop();
     }

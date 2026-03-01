@@ -34,7 +34,7 @@ export class SceneSystem {
         const scene = this.game.states.scene.value;
         const handler = this.registry[scene.type];
         // @ts-expect-error Union vs Intersection
-        handler.handle(scene);
+        await handler.handle(scene);
     }
 
     public getComponent(data: SceneData) {
