@@ -44,8 +44,8 @@ const DASHBOARD_OPEN_APP_PACKET = PacketType.createJson<App>(DASHBOARD_EXTENSION
     name: 'open_app',
     serializer: App,
 });
-export const DASHOBARD_APP_READ_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'read');
-export const DASHOBARD_APP_EDIT_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'edit');
+export const DASHBOARD_APP_READ_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'read');
+export const DASHBOARD_APP_EDIT_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'edit');
 export const DASHBOARD_APP_INSTALL_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'install');
 const DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType.createJson<App, AppInstallResponse>(DASHBOARD_EXTENSION_TYPE, {
     name: 'install_app',
@@ -139,7 +139,7 @@ export type WebviewEvent = {
     type: 'closed';
 } | {
     type: 'resize';
-    dimentions: {
+    dimensions: {
         x: number;
         y: number;
     };
@@ -476,14 +476,16 @@ export class DashboardExtension {
             if (hostAccessResult.type !== 'ok') {
                 return hostAccessResult;
             }
+
+            let webviewId: Identifier | null = null;
             const emit = async (event: WebviewEvent) => {
-                this.omu.send(DASHBOARD_WEBVIEW_EVENT_PACKET, {
-                    id,
-                    target: params.caller,
-                    event,
-                });
+                if (!webviewId) return;
+                this.omu.send(DASHBOARD_WEBVIEW_EVENT_PACKET, { id: webviewId, target: params.caller, event });
             };
+
             const id = await dashboard.createWebview(request, params, emit);
+            webviewId = id;
+
             return {
                 type: 'ok',
                 value: {
