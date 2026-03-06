@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ChatPermissions } from '@omujs/chat';
     import { OBSPermissions, OBSPlugin } from '@omujs/obs';
     import { Omu, OmuPermissions } from '@omujs/omu';
     import { AppHeader, AppPage, setGlobal } from '@omujs/ui';
@@ -18,7 +19,11 @@
             OmuPermissions.I18N_GET_LOCALES_PERMISSION_ID,
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.ASSET_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_WEBVIEW_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_APP_CLOSE_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_APP_STARTUP_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
+            ChatPermissions.CHAT_PERMISSION_ID,
         );
         omu.start();
     }

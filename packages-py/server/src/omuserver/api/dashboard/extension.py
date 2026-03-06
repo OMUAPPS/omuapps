@@ -22,6 +22,7 @@ from omu.api.dashboard.extension import (
     DASHBOARD_PROMPT_RESPONSE,
     DASHBOARD_SET_ENDPOINT,
     DASHBOARD_SPEECH_RECOGNITION,
+    DASHBOARD_STARTUP_APPS,
     DASHBOARD_WEBVIEW_EVENT_PACKET,
     DashboardSetResponse,
     DragDropReadRequest,
@@ -51,7 +52,9 @@ from omuserver.helper import find_processes_by_port
 from omuserver.session import Session
 
 from .permission import (
+    DASHBOARD_APP_CLOSE_PERMISSION,
     DASHBOARD_APP_INSTALL_PERMISSION,
+    DASHBOARD_APP_STARTUP_PERMISSION,
     DASHBOARD_DRAG_DROP_PERMISSION,
     DASHBOARD_OPEN_APP_PERMISSION,
     DASHBOARD_SET_PERMISSION,
@@ -86,6 +89,8 @@ class DashboardExtension:
             DASHBOARD_APP_INSTALL_PERMISSION,
             DASHBOARD_DRAG_DROP_PERMISSION,
             DASHBOARD_WEBVIEW_PERMISSION,
+            DASHBOARD_APP_CLOSE_PERMISSION,
+            DASHBOARD_APP_STARTUP_PERMISSION,
             DASHBOARD_SPEECH_RECOGNITION_PERMISSION,
         )
         server.packets.bind(DASHBOARD_DRAG_DROP_STATE_PACKET, self.handle_drag_drop_state)
@@ -96,6 +101,7 @@ class DashboardExtension:
         server.endpoints.bind(DASHBOARD_OPEN_APP_ENDPOINT, self.handle_dashboard_open_app)
         server.endpoints.bind(DASHBOARD_APP_INSTALL_ENDPOINT, self.handle_dashboard_app_install)
         server.endpoints.bind(DASHBOARD_DRAG_DROP_READ_ENDPOINT, self.handle_drag_drop_read)
+        server.tables.register(DASHBOARD_STARTUP_APPS)
         self.allowed_webview_hosts = server.tables.register(DASHBOARD_ALLOWED_WEBVIEW_HOSTS)
         self.speech_recognition = server.registries.register(DASHBOARD_SPEECH_RECOGNITION)
         self.dashboard_session: Session | None = None

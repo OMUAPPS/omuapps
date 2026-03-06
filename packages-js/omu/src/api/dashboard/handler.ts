@@ -1,9 +1,11 @@
 import type { App } from '../../app.js';
 import { Identifier } from '../../identifier';
 import { InvokedParams } from '../endpoint/packets.js';
-import { Cookie, GetCookiesRequest, HostRequest, PromptRequestAppInstall, PromptRequestAppPermissions, PromptRequestAppPlugins, PromptRequestAppUpdate, PromptRequestHttpPort, PromptRequestIndexInstall, PromptResult, SpeechRecognitionStart, UserResponse, WebviewEvent, WebviewPacket, WebviewRequest } from './extension.js';
+import { HostRequest, SpeechRecognitionStart, UserResponse } from './constants.js';
 
-import type { DragDropReadRequest, DragDropReadResponse, DragDropRequestDashboard } from './packets.js';
+import { DragDropReadRequest, DragDropReadResponse, DragDropRequestDashboard } from './dragdrop.js';
+import type { PromptRequestAppInstall, PromptRequestAppPermissions, PromptRequestAppPlugins, PromptRequestAppUpdate, PromptRequestHttpPort, PromptRequestIndexInstall, PromptResult } from './packets.js';
+import { Cookie, GetCookiesRequest, WebviewEvent, WebviewPacket, WebviewRequest } from './webview.js';
 
 export interface DashboardHandler {
     handlePermissionRequest(request: PromptRequestAppPermissions): Promise<PromptResult>;
@@ -16,9 +18,11 @@ export interface DashboardHandler {
     handleDragDropRequest(request: DragDropRequestDashboard, params: InvokedParams): Promise<boolean>;
     handleDragDropReadRequest(request: DragDropReadRequest, params: InvokedParams): Promise<DragDropReadResponse>;
     handleHostRequest(request: HostRequest, params: InvokedParams): Promise<PromptResult>;
+    openApp(...apps: App[]): Promise<void>;
     getCookies(request: GetCookiesRequest): Promise<UserResponse<Cookie[]>>;
     createWebview(request: WebviewRequest, params: InvokedParams, emit: (event: WebviewEvent) => Promise<void>): Promise<Identifier>;
     getWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined>;
     closeWebview(request: WebviewPacket, params: InvokedParams): Promise<Identifier | undefined>;
     speechRecognitionStart(request: SpeechRecognitionStart, params: InvokedParams): Promise<UserResponse<undefined>>;
+    closeApp(id: Identifier): Promise<void>;
 }

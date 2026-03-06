@@ -15,7 +15,7 @@ export const CHAT_OVERLAY_APP = new App(APP_ID, {
             ja: 'チャットを画面に表示します',
             en: 'Display the chat in the screen',
         },
-        icon: 'ti-message-2',
+        icon: 'ti-list',
         tags: ['underdevelopment', 'tool', 'asset'] as TagKey[],
     }),
 });
@@ -28,6 +28,18 @@ export const ASSET_APP = new App(APP_ID.join('asset'), {
             ja: 'チャット表示用アセット',
             en: 'Chat Display Asset',
         },
-        icon: 'ti-message-2',
+        icon: 'ti-list',
+    }),
+});
+export const HUD_APP = new App(APP_ID.join('hud'), {
+    url: getUrl('/app/chat-overlay/hud'),
+    parentId: CHAT_OVERLAY_APP,
+    metadata: buildMetadata({
+        locale: 'en',
+        name: {
+            ja: 'チャット表示',
+            en: 'Chat Display HUD',
+        },
+        icon: 'ti-list',
     }),
 });

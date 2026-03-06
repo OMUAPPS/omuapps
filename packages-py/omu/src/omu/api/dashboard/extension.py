@@ -30,18 +30,26 @@ if TYPE_CHECKING:
 DASHBOARD_EXTENSION_TYPE = ExtensionType("dashboard", lambda client: DashboardExtension(client))
 
 
+DASHBOARD_SET_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "set"
+DASHBOARD_OPEN_APP_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "open"
+DASHBOARD_APP_INSTALL_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "install"
+DASHBOARD_DRAG_DROP_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "drag_drop"
+DASHBOARD_WEBVIEW_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "webview"
+DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join("speech_recognition")
+DASHBOARD_APP_CLOSE_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "close"
+DASHBOARD_APP_STARTUP_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "startup"
+
+
 class DashboardSetResponse(TypedDict):
     success: bool
 
 
-DASHBOARD_SET_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "set"
 DASHBOARD_SET_ENDPOINT = EndpointType[Identifier, DashboardSetResponse].create_json(
     DASHBOARD_EXTENSION_TYPE,
     "set",
     request_serializer=Serializer.model(Identifier),
     permission_id=DASHBOARD_SET_PERMISSION_ID,
 )
-DASHBOARD_OPEN_APP_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "open"
 DASHBOARD_OPEN_APP_ENDPOINT = EndpointType[App, None].create_json(
     DASHBOARD_EXTENSION_TYPE,
     "open_app",
@@ -53,7 +61,6 @@ DASHBOARD_OPEN_APP_PACKET = PacketType[App].create_json(
     "open_app",
     Serializer.model(App),
 )
-DASHBOARD_APP_INSTALL_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "app" / "install"
 DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType[App, AppInstallResponse].create_json(
     DASHBOARD_EXTENSION_TYPE,
     "install_app",
@@ -65,13 +72,44 @@ DASHBOARD_APP_INSTALL_PACKET = PacketType[AppInstallRequestPacket].create_serial
     "install_app",
     AppInstallRequestPacket,
 )
+DASHBOARD_APP_CLOSE_ENDPOINT = EndpointType[Identifier, None].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "close_app",
+    Serializer.model(Identifier),
+)
+
+
+class RequestStartup(TypedDict):
+    type: Literal["register", "unregister"]
+    app: str
+
+
+ENDPOINT_REQUEST_STARTUP = EndpointType[RequestStartup, None].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    "request_startup",
+    permission_id=DASHBOARD_APP_STARTUP_PERMISSION_ID,
+)
+
+
+class StartupApp(TypedDict):
+    id: str
+
+
+DASHBOARD_STARTUP_APPS = TableType[StartupApp].create_json(
+    DASHBOARD_EXTENSION_TYPE,
+    name="startup_apps",
+    key=lambda entry: entry["id"],
+    permissions=TablePermissions(
+        all=DASHBOARD_SET_PERMISSION_ID,
+        read=DASHBOARD_APP_STARTUP_PERMISSION_ID,
+    ),
+)
+
 DASHBOARD_APP_UPDATE_PACKET = PacketType[AppUpdateRequestPacket].create_serialized(
     DASHBOARD_EXTENSION_TYPE,
     "update_app",
     AppUpdateRequestPacket,
 )
-
-DASHBOARD_DRAG_DROP_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "drag_drop"
 
 
 class DragDropFile(TypedDict):
@@ -291,8 +329,6 @@ DASHBOARD_PROMPT_CLEAR_BLOCKED = EndpointType[None, None].create_json(
     permission_id=DASHBOARD_SET_PERMISSION_ID,
 )
 
-DASHBOARD_WEBVIEW_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE / "webview"
-
 
 @dataclass
 class WebviewEventPacket:
@@ -335,7 +371,6 @@ DASHBOARD_ALLOWED_WEBVIEW_HOSTS = TableType[AllowedHost].create_json(
     key=lambda entry: entry["id"],
     permissions=TablePermissions(all=DASHBOARD_SET_PERMISSION_ID),
 )
-DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID = DASHBOARD_EXTENSION_TYPE.join("speech_recognition")
 
 
 class TranscriptSegment(TypedDict):

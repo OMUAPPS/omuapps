@@ -1,83 +1,41 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     import { chat, omu } from '$lib/client.js';
     import { t } from '$lib/i18n/i18n-context.js';
     import PageSettings from '$lib/pages/settings/PageSettings.svelte';
-    import ScreenRenderer from '$lib/screen/ScreenRenderer.svelte';
     import type { App } from '@omujs/omu';
-    import { Button, ButtonMini, TableList, Tooltip } from '@omujs/ui';
-    import * as tauriLog from '@tauri-apps/plugin-log';
+    import { ButtonMini, TableList, Tooltip } from '@omujs/ui';
     import { onMount } from 'svelte';
     import AppPage from '../pages/PageApp.svelte';
     import ConnectPage from '../pages/PageConnect.svelte';
     import ExplorePage from '../pages/PageExplore.svelte';
     import { currentPage, devMode, lastApp, managingApps, menuOpen } from '../settings.js';
     import {
-        pageMap,
         pages,
         registerPage,
         unregisterPage,
-        type Page,
         type PageItem,
     } from './page.js';
+    import PageContainer from './PageContainer.svelte';
     import TabApp from './TabApp.svelte';
     import TabEntry from './TabEntry.svelte';
 
-    const EXPLORE_PAGE = registerPage<unknown>({
+    const EXPLORE_PAGE = registerPage({
         id: 'explore',
-        async open() {
-            return {
-                component: ExplorePage,
-                data: undefined,
-            };
-        },
+        component: ExplorePage,
+        data: undefined,
     });
 
-    const CONNECT_PAGE = registerPage<unknown>({
+    const CONNECT_PAGE = registerPage({
         id: 'connect',
-        async open() {
-            return {
-                component: ConnectPage,
-                data: undefined,
-            };
-        },
+        component: ConnectPage,
+        data: undefined,
     });
 
-    const SETTINGS_PAGE = registerPage<unknown>({
+    const SETTINGS_PAGE = registerPage({
         id: 'settings',
-        async open() {
-            return {
-                component: PageSettings,
-                data: undefined,
-            };
-        },
-    });
-
-    async function loadPage(id: string, pageItem: PageItem<unknown>) {
-        if ($pages[id] && $pages[id].type === 'loaded') return;
-        $pages[id] = { type: 'loading' };
-        console.log('loading', id);
-        const page = await pageItem.open();
-        $pages[id] = { type: 'loaded', page };
-        console.log('loaded', id);
-    }
-
-    currentPage.subscribe(async (value) => {
-        const pageItem = $pageMap[value];
-        if (!pageItem) {
-            $pages[value] = { type: 'waiting' };
-            console.log('waiting', value);
-            return;
-        }
-        await loadPage(value, pageItem);
-    });
-    pageMap.subscribe(async (value) => {
-        const page = $pages[$currentPage];
-        if (!page || page.type !== 'waiting') return;
-        if (!value[$currentPage]) return;
-        const pageItem = value[$currentPage];
-        await loadPage($currentPage, pageItem);
+        component: PageSettings,
+        data: undefined,
     });
 
     async function openApps() {
@@ -86,7 +44,8 @@
             const services = [...apps.values().filter((app) => app.type === 'service')];
             for (const service of services) {
                 const id = `app-${service.id.key()}`;
-                const page: Page<{ app: App }> = {
+                const page: PageItem<{ app: App }> = {
+                    id,
                     component: AppPage,
                     data: {
                         app: service,
@@ -100,7 +59,8 @@
             const lastApps = [...apps.values().filter((app) => app.id.key() === $lastApp)];
             for (const app of lastApps) {
                 const id = `app-${app.id.key()}`;
-                const page: Page<{ app: App }> = {
+                const page: PageItem<{ app: App }> = {
+                    id,
                     component: AppPage,
                     data: {
                         app: app,
@@ -138,9 +98,6 @@
         updateOnlineChats();
         openApps();
     });
-    run(() => {
-        console.log($pages);
-    });
 </script>
 
 <main class:open={$menuOpen}>
@@ -166,8 +123,6 @@
                     </span>
                     <div class="buttons">
                         <ButtonMini onclick={() => {
-                            // pushScreen(ManageAppsScreen, '', undefined);
-                            // $currentPage = 'explore';
                             $managingApps = !$managingApps;
                         }}>
                             <Tooltip>
@@ -225,43 +180,7 @@
             </TableList>
         </div>
     </div>
-    <div class="page-container">
-        {#each Object.entries($pages) as [id, entry] (id)}
-            {#key id}
-                {#if entry.type === 'loaded'}
-                    <div class="page" class:visible={$currentPage === id} data-page-id={id}>
-                        <svelte:boundary onerror={(error) => {
-                            tauriLog.error(`Error loading page '${id}': ${JSON.stringify(error)}`);
-                            console.error(`Error loading page '${id}':`, error);
-                        }}>
-                            <entry.page.component
-                                data={entry.page.data}
-                            />
-                            {#snippet failed(error, reset)}
-                                <div class="page-error">
-                                    <h2>
-                                        {$t('main.page.loadError.title')}
-                                    </h2>
-                                    <p>
-                                        {$t('main.page.loadError.message', {
-                                            error: JSON.stringify(error),
-                                        })}
-                                    </p>
-                                    <div class="actions">
-                                        <Button onclick={reset} primary>
-                                            {$t('main.page.loadError.retry')}
-                                            <i class="ti ti-reload"></i>
-                                        </Button>
-                                    </div>
-                                </div>
-                            {/snippet}
-                        </svelte:boundary>
-                    </div>
-                {/if}
-            {/key}
-        {/each}
-        <ScreenRenderer />
-    </div>
+    <PageContainer />
 </main>
 
 <style lang="scss">
@@ -382,45 +301,7 @@
             background: var(--color-bg-1);
             transition: background 0.0621s;
         }
-    }
 
-    .page-container {
-        position: relative;
-        flex: 1;
-        background: var(--color-bg-1);
-    }
-
-    .page {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        display: none;
-        background: var(--color-bg-1);
-        z-index: 1;
-
-        &.visible {
-            display: block;
-        }
-    }
-
-    .page-error {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        padding: 2rem;
-        text-align: center;
-        color: var(--color-1);
-
-        > h2 {
-            margin-bottom: 1rem;
-        }
-
-        > p {
-            margin-bottom: 2rem;
-            color: var(--color-text);
-        }
     }
 
     main {

@@ -8,10 +8,11 @@ import ScreenRequestIndexInstall from './screen/ScreenRequestIndexInstall.svelte
 import ScreenRequestSpeechRecognition from './screen/ScreenRequestSpeechRecognition.svelte';
 
 import { currentPage, speechRecognition } from '$lib/settings.js';
-import { appWindow, type Cookie, type WebviewMessage } from '$lib/tauri.js';
+import { appWindow, type WebviewMessage } from '$lib/tauri.js';
 import { Identifier, IdentifierMap, type App, type Omu } from '@omujs/omu';
 import {
     DragDropReadResponse,
+    type Cookie,
     type DashboardHandler,
     type DragDropReadRequest,
     type DragDropRequestDashboard,
@@ -42,6 +43,8 @@ import { readFile } from '@tauri-apps/plugin-fs';
 
 import { get } from 'svelte/store';
 import { dragDropApps, dragDrops } from './dragdrop.js';
+import { closePage, loadPage, registerPage } from './main/page';
+import PageApp from './pages/PageApp.svelte';
 import { pushScreen, screenEntries, type ScreenComponentType } from './screen/screen.js';
 
 export const IDENTIFIER = Identifier.fromKey('com.omuapps:dashboard');
@@ -142,45 +145,43 @@ export class Dashboard implements DashboardHandler {
         return { type: 'ok', value: undefined };
     }
 
-    async handlePermissionRequest(request: PromptRequestAppPermissions): Promise<PromptResult> {
+    private async showAppWindow() {
         await appWindow.show();
         await appWindow.setFocus();
+    }
+
+    async handlePermissionRequest(request: PromptRequestAppPermissions): Promise<PromptResult> {
+        await this.showAppWindow();
         return this.showPrompt(ScreenRequestPermission, `app-${request.app.id}`, { request });
     }
 
     async handlePluginRequest(request: PromptRequestAppPlugins): Promise<PromptResult> {
-        await appWindow.show();
-        await appWindow.setFocus();
+        await this.showAppWindow();
         return this.showPrompt(ScreenRequestPlugin, `app-${request.app.id}`, { request });
     }
 
     async handleInstallApp(request: PromptRequestAppInstall): Promise<PromptResult> {
-        await appWindow.show();
-        await appWindow.setFocus();
+        await this.showAppWindow();
         return this.showPrompt(ScreenRequestAppInstall, 'explore', { request });
     }
 
     async handleUpdateApp(request: PromptRequestAppUpdate): Promise<PromptResult> {
-        await appWindow.show();
-        await appWindow.setFocus();
+        await this.showAppWindow();
         return this.showPrompt(ScreenRequestAppUpdate, `app-${request.old_app.id}`, { request });
     }
 
     async handleIndexInstall(request: PromptRequestIndexInstall): Promise<PromptResult> {
-        await appWindow.show();
-        await appWindow.setFocus();
+        await this.showAppWindow();
         return this.showPrompt(ScreenRequestIndexInstall, 'explore', { request });
     }
 
     async handleHttpPortRequest(request: PromptRequestHttpPort): Promise<PromptResult> {
-        await appWindow.show();
-        await appWindow.setFocus();
+        await this.showAppWindow();
         return this.showPrompt(ScreenRequestHttpPort, `app-${request.app.id}`, { request });
     }
 
     async handleHostRequest(request: HostRequest, params: InvokedParams): Promise<PromptResult> {
-        await appWindow.show();
-        await appWindow.setFocus();
+        await this.showAppWindow();
         const app = await this.omu.server.apps.get(params.caller.key());
         if (!app) {
             console.warn('App not found for host request', params.caller);
@@ -191,6 +192,23 @@ export class Dashboard implements DashboardHandler {
 
     async handleOpenApp(app: App): Promise<void> {
         currentPage.update(() => `app-${app.id.key()}`);
+    }
+
+    async openApp(...apps: App[]): Promise<void> {
+        for (const app of apps) {
+            const page = registerPage<{ app: App }>({
+                id: `app-${app.id.key()}`,
+                component: PageApp,
+                data: {
+                    app,
+                },
+            });
+            loadPage(page.id, page);
+        }
+    }
+
+    async closeApp(id: Identifier): Promise<void> {
+        closePage(`app-${id.key()}`);
     }
 
     async handleDragDropRequest(request: DragDropRequestDashboard, params: InvokedParams): Promise<boolean> {
@@ -227,8 +245,7 @@ export class Dashboard implements DashboardHandler {
     }
 
     async createWebview(request: WebviewRequest, params: InvokedParams, emit: (event: WebviewEvent) => Promise<void>): Promise<Identifier> {
-        const { url, script } = request;
-        const uri = new URL(url);
+        const uri = new URL(request.url);
         if (!['https:', 'http:'].includes(uri.protocol)) throw new Error('Invalid URL protocol');
 
         const label = `webview-${Math.floor(performance.timeOrigin * 1000)}-${this.webviewHandles.size}-${Math.floor(performance.now() * 10000)}`;
@@ -241,7 +258,10 @@ export class Dashboard implements DashboardHandler {
         const existingWindow = await Window.getByLabel(label);
         existingWindow?.close();
 
-        await invoke('create_webview_window', { options: { script, url, label } });
+        await invoke('create_webview_window', { options: {
+            ...request,
+            label,
+        } });
 
         const webviewWindow = await WebviewWindow.getByLabel(label);
         if (!webviewWindow) throw new Error('Webview not found');
@@ -250,6 +270,7 @@ export class Dashboard implements DashboardHandler {
             this.webviewHandles.delete(id);
             this.messageHandlers.delete(label);
             await emit({ type: 'closed' });
+            await webviewWindow.close();
             await webviewWindow.destroy();
         };
 
@@ -281,6 +302,7 @@ export class Dashboard implements DashboardHandler {
         const id = Identifier.fromKey(request.id);
         if (!id.isSubpathOf(params.caller)) return;
         const handle = this.webviewHandles.get(id);
+        handle?.close();
         return handle?.id;
     }
 

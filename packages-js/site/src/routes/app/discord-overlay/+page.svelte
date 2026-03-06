@@ -21,7 +21,7 @@
             OmuPermissions.REGISTRY_PERMISSION_ID,
             OmuPermissions.ASSET_PERMISSION_ID,
             OmuPermissions.GENERATE_TOKEN_PERMISSION_ID,
-            OmuPermissions.DAShBOARD_DRAG_DROP_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_DRAG_DROP_PERMISSION_ID,
             OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
             OBSPermissions.OBS_SOURCE_CREATE_PERMISSION_ID,
             VOICE_CHAT_PERMISSION_ID,
