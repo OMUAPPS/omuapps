@@ -196,8 +196,10 @@ pub async fn create_webview_window(
     if let Some(decorations) = options.decorations {
         builder = builder.decorations(decorations);
     }
-    if let Some(transparent) = options.transparent {
-        builder = builder.transparent(transparent);
+    if cfg!(windows) {
+        if let Some(transparent) = options.transparent {
+            builder = builder.transparent(transparent);
+        }
     }
 
     builder.build().map_err(|err| err.to_string())?;
