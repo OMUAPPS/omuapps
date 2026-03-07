@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Models } from '@omujs/chat';
     import { chat, ComponentRenderer, Tooltip } from '@omujs/ui';
+    import HeightTransition from './HeightTransition.svelte';
 
     interface Props {
         entry: Models.Message;
@@ -17,40 +18,58 @@
     }
 
     load();
+
+    let animation = Date.now() - entry.createdAt.getTime() < 5000;
 </script>
 
-<div class="entry">
-    <div class="left">
-        {#if author?.avatarUrl}
-            <span class="avatar">
-                <a href={author.metadata.url} title={author.metadata.screen_id} target="_blank" rel="noopener noreferrer">
-                    <Tooltip>
-                        {author.metadata.url}
-                    </Tooltip>
-                    <img src={author.avatarUrl} alt="">
-                </a>
-            </span>
-        {/if}
+<HeightTransition duration={animation ? 150 : 0}>
+    <div class="entry" class:animation>
+        <div class="left">
+            {#if author?.avatarUrl}
+                <span class="avatar">
+                    <a href={author.metadata.url} title={author.metadata.screen_id} target="_blank" rel="noopener noreferrer">
+                        <Tooltip>
+                            {author.metadata.url}
+                        </Tooltip>
+                        <img src={author.avatarUrl} alt="">
+                    </a>
+                </span>
+            {/if}
+        </div>
+        <div class="body">
+            {#if author}
+                <span class="name">
+                    {author.name}
+                </span>
+            {/if}
+            {#if entry.content}
+                <span class="content">
+                    <ComponentRenderer component={entry.content} />
+                </span>
+            {/if}
+        </div>
     </div>
-    <div class="body">
-        {#if author}
-            <span class="name">
-                {author.name}
-            </span>
-        {/if}
-        {#if entry.content}
-            <span class="content">
-                <ComponentRenderer component={entry.content} />
-            </span>
-        {/if}
-    </div>
-</div>
+</HeightTransition>
 
 <style lang="scss">
     .entry {
-        margin: 0.75rem 1rem;
+        margin: 0 1rem;
+        margin-top: 0.75rem;
         font-size: 0.85rem;
         display: flex;
+    }
+
+    .animation {
+        animation: in 150ms forwards;
+    }
+
+    @keyframes in {
+        0% {
+            transform: translateY(-100%);
+        }
+        100% {
+            transform: translateY(0);
+        }
     }
 
     a {
