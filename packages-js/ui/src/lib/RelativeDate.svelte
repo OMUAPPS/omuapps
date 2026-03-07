@@ -11,7 +11,6 @@
 
     let formattedDate: string = $state('');
     let timer: number;
-    let destroyed = false;
 
     const timeUnits = [
         { label: 'date.years_ago', value: 1000 * 60 * 60 * 24 * 365.25 },
@@ -72,7 +71,6 @@
 
     onDestroy(() => {
         window.clearTimeout(timer);
-        destroyed = true;
     });
 </script>
 

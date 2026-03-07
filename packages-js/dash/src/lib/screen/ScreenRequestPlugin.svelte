@@ -20,16 +20,6 @@
 
     const { request, resolve } = props;
 
-    function accept() {
-        resolve('accept');
-        handle.close();
-    }
-
-    function reject() {
-        resolve('deny');
-        handle.close();
-    }
-
     const SECURELIST = [
         'omuserver',
         'omuplugin-obs',

@@ -32,7 +32,7 @@
     <div class="content">
         <div class="player">
             {#if $replayData?.video.type === 'netflix' || $replayData?.video.type === 'amazonprime'}
-                {@const { info, playback, video } = $replayData}
+                {@const { info, playback } = $replayData}
                 {@const units = getTimeUnits(info.duration ?? 0)}
                 <div class="video-info">
                     <img src={info.thumbnailUrl} alt="">
@@ -90,6 +90,7 @@
                     Amazon Prime Videoを開く
                 </Button>
             </MenuSection>
+            <hr>
             <MenuSection name="配信ソフトに追加する" icon="ti-arrow-bar-to-down" gap>
                 <AssetButton
                     asset={ASSET_APP}
@@ -170,27 +171,11 @@
         flex: 1;
     }
 
-    .menu {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-
-        > button {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 1rem 2rem;
-            font-size: 1.25rem;
-            font-weight: 600;
-            background: var(--color-1);
-            color: var(--color-bg-2);
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-        }
+    hr {
+        margin-top: auto;
+        margin-bottom: 2rem;
+        border: none;
+        border-top: 1px solid var(--color-outline);
     }
 
     .search {
@@ -267,10 +252,6 @@
         gap: 1rem;
         padding: 1rem;
         text-align: center;
-
-        > h2 {
-            font-size: 1rem;
-        }
 
         > h3 {
             font-size: 2rem;

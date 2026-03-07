@@ -10,10 +10,10 @@
         filter?: (key: string, message: Models.Message) => boolean;
     }
 
-    let { filter = (
-        _,
-        message,
-    ) => message.deleted !== true }: Props = $props();
+    let {
+        filter = (_, message) => message.deleted !== true,
+    }: Props = $props();
+
     let sort = (a: Models.Message) => {
         if (!a.createdAt) return 0;
         return a.createdAt.getTime();

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { Snippet } from 'svelte';
+    import type { Snippet } from "svelte";
 
     interface Props {
         name: string;
-        icon: string;
+        icon?: string;
         children: Snippet<[]>;
     }
 
@@ -13,7 +13,9 @@
 <section>
     <h2>
         {name}
-        <i class="ti {icon}"></i>
+        {#if icon}
+            <i class="ti {icon}"></i>
+        {/if}
     </h2>
     {@render children()}
 </section>

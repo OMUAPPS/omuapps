@@ -38,7 +38,7 @@
         viewportHeight: number,
     ) {
         if (!viewport) throw new Error('VirtualList: missing viewport');
-        let newEnd = end;
+        let newEnd: number;
         if (!items.length) {
             first = true;
             return;
@@ -67,7 +67,6 @@
             let row = rows[i - start];
 
             if (!row) {
-                newEnd = i + 1;
                 await tick(); // render the newly visible row
                 row = rows[i - start];
             }

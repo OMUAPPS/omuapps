@@ -13,7 +13,6 @@
         sort?: ((a: T) => number) | undefined;
         reverse?: boolean;
         chunkSize?: number;
-        selectedItem?: string | undefined;
         empty?: import('svelte').Snippet;
     }
 
@@ -23,7 +22,6 @@
         filter = () => true,
         sort = undefined,
         chunkSize = 40,
-        selectedItem = $bindable(undefined),
         empty,
     }: Props<T> = $props();
 

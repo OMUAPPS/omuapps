@@ -43,7 +43,6 @@ export class RouletteMechanics {
             const hitRotation = entryIndex * offset + offset * state.random;
 
             const timeSinceStart = now - state.start;
-            const remainingDuration = Math.max(0, state.duration - timeSinceStart);
             const progress = BetterMath.clamp01(timeSinceStart / state.duration);
 
             const t = this.rouletteEasing(progress);

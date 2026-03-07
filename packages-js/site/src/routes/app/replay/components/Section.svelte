@@ -3,8 +3,8 @@
         name: string;
         icon?: string | undefined;
         flex?: number | undefined;
-        actions?: import('svelte').Snippet;
-        children?: import('svelte').Snippet;
+        actions?: import("svelte").Snippet;
+        children?: import("svelte").Snippet;
     }
 
     let {
