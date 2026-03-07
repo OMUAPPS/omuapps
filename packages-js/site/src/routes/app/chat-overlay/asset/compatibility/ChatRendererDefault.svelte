@@ -88,7 +88,7 @@
         align-items: flex-start;
         gap: 1rem;
         font-size: 1.2rem;
-        padding: 1rem;
+        padding: 1rem 1.5rem;
         overflow: hidden;
         transition: background 0.1s;
         animation: fade 0.2s forwards;
@@ -176,6 +176,8 @@
     .avatar {
         > img {
             border-radius: 999px;
+            width: 2rem;
+            height: 2rem;
         }
         margin-right: 1rem;
     }
