@@ -23,7 +23,7 @@ export class Vec4 {
             hex = hex.slice(1);
         }
         let r: number, g: number, b: number, a: number;
-        r = g = b = a = 1;
+        a = 1;
         switch (hex.length) {
             case 1: {
                 r = g = b = parseInt(hex, 16) / 16;

@@ -16,17 +16,17 @@ export class GLStateManager {
 
     constructor(public readonly gl: WebGL2RenderingContext) {}
 
-    public setViewport(dimentions: Vec2Like) {
-        this.viewportStack[this.viewportStack.length - 1] = dimentions;
-        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+    public setViewport(dimensions: Vec2Like) {
+        this.viewportStack[this.viewportStack.length - 1] = dimensions;
+        this.gl.viewport(0, 0, dimensions.x, dimensions.y);
     }
 
-    public pushViewport(dimentions: Vec2Like) {
+    public pushViewport(dimensions: Vec2Like) {
         if (this.viewportStack.length >= 100) {
             console.warn('Viewport stack overflow (>=100)');
         }
-        this.viewportStack.push(dimentions);
-        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+        this.viewportStack.push(dimensions);
+        this.gl.viewport(0, 0, dimensions.x, dimensions.y);
     }
 
     public popViewport() {
@@ -34,8 +34,8 @@ export class GLStateManager {
         if (this.viewportStack.length <= 0) {
             console.warn('Viewport stack underflow (<=0)');
         }
-        const dimentions = this.viewportStack[this.viewportStack.length - 1];
-        this.gl.viewport(0, 0, dimentions.x, dimentions.y);
+        const dimensions = this.viewportStack[this.viewportStack.length - 1];
+        this.gl.viewport(0, 0, dimensions.x, dimensions.y);
     }
 
     public useProgram(program: GlProgram, callback: () => void): void {

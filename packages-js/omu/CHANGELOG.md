@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 0.10.1 (2026-03-07)
+
+**Note:** Version bump only for package @omujs/omu
+
+
+
+
+
+# 0.10.0 (2026-03-01)
+
+
+### Features
+
+* **app-replay:** アマゾンプライムビデオの対応を追加 ([04c25de](https://github.com/OMUAPPS/omuapps/commit/04c25de2b3505853e737c7e133c8f2c968de6864))
+
+
+
+
+
 ## 0.9.50 (2025-12-22)
 
 

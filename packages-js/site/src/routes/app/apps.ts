@@ -1,6 +1,5 @@
 import { App } from '@omujs/omu';
 import { DEV } from 'esm-env';
-import { omu } from '../client.js';
 import { APP as breaktimer } from './break-timer/app.js';
 import { APP as caption } from './caption/app.js';
 import { CHAT_OVERLAY_APP } from './chat-overlay/app.js';
@@ -47,6 +46,3 @@ if (DEV) {
         OMUCAFE_APP,
     );
 }
-
-export const appTable = omu.server.apps;
-omu.onReady(() => appTable.fetchAll());

@@ -6,6 +6,7 @@ from omu.api.dashboard import (
     DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
     DASHBOARD_WEBVIEW_PERMISSION_ID,
 )
+from omu.api.dashboard.extension import DASHBOARD_APP_CLOSE_PERMISSION_ID, DASHBOARD_APP_STARTUP_PERMISSION_ID
 from omu.api.permission import PermissionType
 
 DASHBOARD_SET_PERMISSION = PermissionType(
@@ -71,6 +72,26 @@ DASHBOARD_WEBVIEW_PERMISSION = PermissionType(
         "note": {
             "ja": "許可したサイトへのすべての操作が可能になります",
             "en": "All operations on the site will be enabled.",
+        },
+    },
+)
+DASHBOARD_APP_CLOSE_PERMISSION = PermissionType(
+    DASHBOARD_APP_CLOSE_PERMISSION_ID,
+    {
+        "level": "low",
+        "name": {
+            "ja": "アプリを閉じる",
+            "en": "Close an app",
+        },
+    },
+)
+DASHBOARD_APP_STARTUP_PERMISSION = PermissionType(
+    DASHBOARD_APP_STARTUP_PERMISSION_ID,
+    {
+        "level": "low",
+        "name": {
+            "ja": "アプリを自動起動に追加",
+            "en": "Start an app",
         },
     },
 )

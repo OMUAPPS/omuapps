@@ -1,114 +1,81 @@
-import { App } from '../../app.js';
-import { ByteReader, ByteWriter } from '../../serialize';
+import { App, AppJson } from '../../app.js';
+import { PacketType } from '../../network/packet/packet.js';
+import { PermissionTypeJson } from '../permission/permission.js';
+import { PackageInfo } from '../plugin/package-info.js';
+import { AppIndexRegistryMeta } from '../server/extension.js';
+import { DASHBOARD_EXTENSION_TYPE } from './constants.js';
 
 export type AppInstallResponse = {
     accepted: boolean;
 };
 
-export type DragDropFile = {
-    type: 'file' | 'directory';
-    size: number;
-    name: string;
-};
-
-export type DragDropPosition = {
-    x: number;
-    y: number;
-};
-
-export type DragEnter = {
-    type: 'enter';
-    drag_id: string;
-    files: DragDropFile[];
-    position: DragDropPosition;
-};
-
-export type DragOver = {
-    type: 'over';
-    drag_id: string;
-    position: DragDropPosition;
-};
-
-export type DragDrop = {
-    type: 'drop';
-    drag_id: string;
-    position: DragDropPosition;
-    files: DragDropFile[];
-};
-
-export type DragLeave = {
-    type: 'leave';
-    drag_id: string;
-};
-
-export type DragState = DragEnter | DragOver | DragDrop | DragLeave;
-
-export type FileDragPacket = {
-    drag_id: string;
-    app: App;
-    state: DragState;
-};
-
-export type DragDropReadRequest = {
-    drag_id: string;
-};
-
-export type DragDropReadMeta = {
-    drag_id: string;
-    files: readonly DragDropFile[];
-};
-
-export type FileData = {
-    file: DragDropFile;
-    buffer: Uint8Array;
-};
-
-export class DragDropReadResponse {
-    constructor(
-        public readonly meta: DragDropReadMeta,
-        public readonly files: Record<string, FileData>,
-        public readonly version: number = 1,
-    ) {}
-
-    public static serialize(data: DragDropReadResponse): Uint8Array {
-        const writer = new ByteWriter();
-        writer.writeULEB128(data.version);
-        writer.writeString(JSON.stringify(data.meta));
-        writer.writeULEB128(Object.keys(data.files).length);
-
-        for (const [key, { file, buffer }] of Object.entries(data.files)) {
-            writer.writeString(key);
-            writer.writeString(JSON.stringify(file));
-            writer.writeUint8Array(buffer);
-        }
-
-        return writer.finish();
-    }
-
-    public static deserialize(data: Uint8Array): DragDropReadResponse {
-        const reader = ByteReader.fromUint8Array(data);
-        const version = reader.readULEB128();
-        const meta: DragDropReadMeta = JSON.parse(reader.readString());
-        const length = reader.readULEB128();
-
-        const files: Record<string, FileData> = {};
-        for (let i = 0; i < length; i++) {
-            const key = reader.readString();
-            const file: DragDropFile = JSON.parse(reader.readString());
-            const buffer = reader.readUint8Array();
-            files[key] = { file, buffer };
-        }
-
-        return new DragDropReadResponse(
-            meta,
-            files,
-            version,
-        );
-    }
+export const DASHBOARD_OPEN_APP_PACKET: PacketType<App> = PacketType.createJson<App>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'open_app',
+    serializer: App,
+});
+export interface PromptRequestBase<T extends string> {
+    kind: T;
+    id: string;
 }
 
-export type DragDropRequestDashboard = object;
+export interface PromptRequestAppPermissions extends PromptRequestBase<'app/permissions'> {
+    app: AppJson;
+    permissions: PermissionTypeJson[];
+}
 
-export type DragDropRequestResponse = {
-    ok: boolean;
-};
+export interface PromptRequestAppPlugins extends PromptRequestBase<'app/plugins'> {
+    app: AppJson;
+    packages: PackageInfo[];
+}
+
+export interface PromptRequestAppInstall extends PromptRequestBase<'app/install'> {
+    app: AppJson;
+    dependencies: Record<string, AppJson>;
+}
+
+export interface PromptRequestAppUpdate extends PromptRequestBase<'app/update'> {
+    old_app: AppJson;
+    new_app: AppJson;
+    dependencies: Record<string, AppJson>;
+}
+
+export interface PromptRequestIndexInstall extends PromptRequestBase<'index/install'> {
+    index_url: string;
+    meta?: AppIndexRegistryMeta;
+}
+
+export interface PortProcess {
+    port: number;
+    name: string;
+    exe: string;
+}
+
+export interface PromptRequestHttpPort extends PromptRequestBase<'http/port'> {
+    app: AppJson;
+    processes: PortProcess[];
+}
+
+export type PromptResult = 'accept' | 'deny' | 'block';
+
+export interface PromptResponse {
+    id: string;
+    kind: string;
+    result: PromptResult;
+}
+
+export type PromptRequest = (
+    PromptRequestAppPermissions
+    | PromptRequestAppPlugins
+    | PromptRequestAppInstall
+    | PromptRequestAppUpdate
+    | PromptRequestIndexInstall
+    | PromptRequestHttpPort
+);
+
+export const DASHBOARD_PROMPT_REQUEST: PacketType<PromptRequest> = PacketType.createJson<PromptRequest>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'prompt_request',
+});
+export const DASHBOARD_PROMPT_RESPONSE: PacketType<PromptResponse> = PacketType.createJson<PromptResponse>(DASHBOARD_EXTENSION_TYPE, {
+    name: 'prompt_response',
+});
+

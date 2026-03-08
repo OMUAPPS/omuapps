@@ -16,14 +16,14 @@
     let alreadyAdded = $state(false);
 
     async function install() {
-        const { accepted } = await omu.dashboard.installApp(app);
+        const { accepted } = await omu.dashboard.apps.install(app);
         if (!accepted) return;
         console.log(`App ${app.id.key()} added`);
         alreadyAdded = true;
     }
 
     async function launch() {
-        await omu.dashboard.openApp(app);
+        await omu.dashboard.apps.open(app);
     }
 
     omu.onReady(async () => {

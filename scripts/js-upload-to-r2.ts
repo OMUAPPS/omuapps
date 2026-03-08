@@ -111,7 +111,7 @@ async function uploadToR2(file: string, path: string): Promise<string> {
     try {
         await fs.access(file);
     } catch (e) {
-        throw new Error(`File not found: ${file}\nError: ${e}`);
+        throw new Error(`File not found: ${file}\nError: ${e}`, { cause: e });
     }
 
     const stats = await fs.stat(file);

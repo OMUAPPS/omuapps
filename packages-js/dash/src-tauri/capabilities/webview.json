@@ -11,11 +11,13 @@
     ],
     "remote": {
         "urls": [
-            "http://*.*",
-            "https://*.*"
+            "http://*:*",
+            "https://*:*"
         ]
     },
     "permissions": [
-        "core:event:allow-emit"
+        "core:event:allow-emit",
+        "core:window:allow-start-resize-dragging",
+        "core:window:allow-start-dragging"
     ]
 }

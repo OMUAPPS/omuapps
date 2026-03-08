@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@omujs/obs",
-    "version": "0.9.50",
+    "version": "0.10.1",
     "exports": {
         ".": {
             "import": "./dist/index.js",

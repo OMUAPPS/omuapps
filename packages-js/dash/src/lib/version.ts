@@ -1,2 +1,2 @@
-export const VERSION = '0.9.50';
-export const VERSION_MINOR = '0.9.0';
+export const VERSION = '0.10.1';
+export const VERSION_MINOR = '0.10.0';

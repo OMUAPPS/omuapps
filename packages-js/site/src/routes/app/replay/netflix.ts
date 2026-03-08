@@ -290,6 +290,7 @@ export async function openNetflix() {
         url: 'https://www.netflix.com/jp/login',
         script: LOGIN_SCRIPT,
     });
+
     let info: VideoInfo | null = null;
     let video: Video | null = null;
     let playback: Playback | null = null;
@@ -301,13 +302,16 @@ export async function openNetflix() {
         } else if (event.type === 'playback') {
             playback = event.playback;
         }
+
         if (!info || !video || !playback) return;
+
         replayData.set({
             video,
             info,
             playback,
         });
     });
+
     webview.join().then(() => {
         webview = null;
     });

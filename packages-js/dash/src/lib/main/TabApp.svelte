@@ -4,9 +4,10 @@
     import { t } from '$lib/i18n/i18n-context.js';
     import type { App } from '@omujs/omu';
     import { Tooltip } from '@omujs/ui';
-    import AppPage from '../pages/PageApp.svelte';
+    import { tick } from 'svelte';
+    import PageApp from '../pages/PageApp.svelte';
     import { currentPage, lastApp, managingApps, menuOpen } from '../settings.js';
-    import { pages, registerPage } from './page.js';
+    import { closePage, loadPage, pages, registerPage } from './page.js';
 
     interface Props {
         entry: App;
@@ -23,28 +24,23 @@
 
     const appPage = registerPage<{ app: App }>({
         id: `app-${entry.id.key()}`,
-        async open() {
-            return {
-                component: AppPage,
-                data: {
-                    app: entry,
-                },
-            };
+        component: PageApp,
+        data: {
+            app: entry,
         },
     });
 
     let lastClickTime = 0;
 
-    function handleClick() {
+    async function handleClick() {
         const now = Date.now();
         const doubleClick = now - lastClickTime < 300;
         lastClickTime = now;
         if (doubleClick) {
             const id = `app-${entry.id.key()}`;
-            delete $pages[id];
-            $currentPage = 'explore';
-            $currentPage = id;
-            dashboard.currentApp = entry;
+            closePage(id);
+            await tick();
+            loadPage(id, appPage);
             return;
         }
         $currentPage = appPage.id;

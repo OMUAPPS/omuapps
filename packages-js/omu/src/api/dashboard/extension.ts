@@ -1,335 +1,32 @@
-import { App, AppJson } from '../../app.js';
-import { Identifier, IdentifierMap } from '../../identifier';
-import { PacketType } from '../../network/packet/packet.js';
+import { App } from '../../app.js';
 import { Omu } from '../../omu.js';
 import { PromiseResult } from '../../result.js';
-import { Serializer } from '../../serialize';
-import { EndpointType } from '../endpoint/endpoint.js';
-import { InvokedParams } from '../endpoint/packets.js';
 import { ExtensionType } from '../extension.js';
-import { PermissionTypeJson } from '../permission/permission.js';
-import { PackageInfo } from '../plugin/package-info.js';
-import { Registry, RegistryType } from '../registry/registry.js';
-import { AppIndexRegistryMeta } from '../server/extension.js';
-import type { Table } from '../table/table.js';
-import { TableType } from '../table/table.js';
+import { Registry } from '../registry/registry.js';
+import { DashboardApps } from './apps.js';
+import { DASHBOARD_EXTENSION_TYPE, DASHBOARD_PROMPT_CLEAR_BLOCKED, DASHBOARD_SET_ENDPOINT, DASHBOARD_SET_PERMISSION_ID, DASHBOARD_SPEECH_RECOGNITION, DASHBOARD_SPEECH_RECOGNITION_START, TranscriptStatus, UserError, UserResponse } from './constants.js';
+import { DragDropAPI, DragDropHandler, FileDragPacket } from './dragdrop.js';
 
 import type { DashboardHandler } from './handler.js';
-import { AppInstallResponse, DragDrop, DragDropReadRequest, DragDropReadResponse, DragDropRequestDashboard, DragDropRequestResponse, DragEnter, DragLeave, DragOver, FileDragPacket } from './packets.js';
+import { DASHBOARD_OPEN_APP_PACKET, DASHBOARD_PROMPT_REQUEST, DASHBOARD_PROMPT_RESPONSE, PromptRequest, PromptResult } from './packets.js';
+import { GetCookiesRequest, WebviewAPI, WebviewHandle, WebviewRequest } from './webview.js';
 
-export const DASHBOARD_EXTENSION_TYPE: ExtensionType<DashboardExtension> = new ExtensionType(
-    'dashboard',
-    (omu: Omu) => new DashboardExtension(omu),
-);
-
-type DashboardSetResponse = {
-    success: boolean;
-};
-export const DASHBOARD_SET_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('set');
-const DASHBOARD_SET_ENDPOINT = EndpointType.createJson<Identifier, DashboardSetResponse>(
-    DASHBOARD_EXTENSION_TYPE,
-    {
-        name: 'set',
-        requestSerializer: Identifier,
-        permissionId: DASHBOARD_SET_PERMISSION_ID,
-    },
-);
-export const DASHBOARD_OPEN_APP_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'open');
-const DASHBOARD_OPEN_APP_ENDPOINT = EndpointType.createJson<App, void>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'open_app',
-    requestSerializer: App,
-    permissionId: DASHBOARD_OPEN_APP_PERMISSION_ID,
-});
-const DASHBOARD_OPEN_APP_PACKET = PacketType.createJson<App>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'open_app',
-    serializer: App,
-});
-export const DASHOBARD_APP_READ_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'read');
-export const DASHOBARD_APP_EDIT_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'edit');
-export const DASHBOARD_APP_INSTALL_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('app', 'install');
-const DASHBOARD_APP_INSTALL_ENDPOINT = EndpointType.createJson<App, AppInstallResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'install_app',
-    requestSerializer: App,
-    permissionId: DASHBOARD_APP_INSTALL_PERMISSION_ID,
-});
-export const DASHBOARD_DRAG_DROP_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('drag_drop');
-const DASHBOARD_DRAG_DROP_STATE_PACKET = PacketType.createJson<FileDragPacket>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'drag_drop_state',
-    serializer: Serializer.noop<FileDragPacket>()
-        .field('app', App),
-});
-const DASHBOARD_DRAG_DROP_READ_ENDPOINT = EndpointType.createSerialized<DragDropReadRequest, DragDropReadResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'drag_drop_read',
-    requestSerializer: Serializer.json(),
-    responseSerializer: DragDropReadResponse,
-    permissionId: DASHBOARD_DRAG_DROP_PERMISSION_ID,
-});
-const DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT = EndpointType.createJson<DragDropRequestDashboard, DragDropRequestResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'drag_drop_request',
-    permissionId: DASHBOARD_DRAG_DROP_PERMISSION_ID,
-});
-
-type DragDropHandler = {
-    onEnter(fn: (event: DragEnter) => unknown): void;
-    onOver(fn: (event: DragOver) => unknown): void;
-    onDrop(fn: (event: DragDrop) => unknown): void;
-    onLeave(fn: (event: DragLeave) => unknown): void;
-    read(id: string): Promise<DragDropReadResponse>;
-};
-
-export type Cookie = {
-    name: string;
-    value: string;
-};
-
-export class CookieList extends Array<Cookie> {
-    public toString(): string {
-        return this.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
-    }
-}
-
-export type WebviewRequest = {
-    url: string;
-    script?: string;
-};
-
-export type WebviewPacket = {
-    id: string;
-};
-
-export type UserResponse<T = undefined> = {
-    type: 'ok';
-    value: T;
-} | {
-    type: 'blocked';
-} | {
-    type: 'cancelled';
-};
-
-export type UserError = Exclude<UserResponse, { type: 'ok' }>;
-
-export type WebviewResponse = UserResponse<WebviewPacket>;
-
-export const DASHBOARD_WEBVIEW_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('webview');
-
-export type HostRequest = {
-    host: string;
-};
-
-export type GetCookiesRequest = {
-    url: string;
-};
-
-const DASHBOARD_COOKIES_GET = EndpointType.createJson<GetCookiesRequest, UserResponse<Cookie[]>>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'cookies_get',
-    permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
-});
-
-const DASHBOARD_WEBVIEW_REQUEST = EndpointType.createJson<WebviewRequest, WebviewResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'webview_request',
-    permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
-});
-
-const DASHBOARD_WEBVIEW_CLOSE = EndpointType.createJson<WebviewPacket, WebviewResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'webview_close',
-    permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
-});
-
-export type WebviewEvent = {
-    type: 'closed';
-} | {
-    type: 'resize';
-    dimentions: {
-        x: number;
-        y: number;
-    };
-} | {
-    type: 'cookie';
-    cookies: Cookie[];
-} | {
-    type: 'message';
-    data: any;
-};
-
-export type WebviewEventListeners = {
-    [K in WebviewEvent['type']]?: Array<(event: Extract<WebviewEvent, { type: K }>) => void>;
-};
-
-export type WebviewEventPacket = {
-    id: Identifier;
-    target: Identifier;
-    event: WebviewEvent;
-};
-
-export type WebviewHandle = {
-    readonly id: Identifier;
-    readonly url: string;
-    getCookies(): PromiseResult<CookieList, UserError>;
-    on<T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T }>) => void): void;
-    close(): Promise<void>;
-    join(): Promise<void>;
-};
-
-export type WebviewEventEmit = <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T }>) => void;
-
-const DASHBOARD_WEBVIEW_EVENT_PACKET = PacketType.createJson<WebviewEventPacket>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'webview_event',
-    serializer: Serializer.noop<WebviewEventPacket>()
-        .field('id', Identifier)
-        .field('target', Identifier),
-});
-
-type AllowedHost = {
-    id: string;
-    hosts: string[];
-};
-
-const DASHBOARD_ALLOWED_WEBVIEW_HOSTS = TableType.createJson<AllowedHost>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'allowed_webview_hosts',
-    key: (entry) => entry.id,
-    permissions: { all: DASHBOARD_SET_PERMISSION_ID },
-});
-
-const DASHBOARD_HOST_REQUEST = EndpointType.createJson<{
-    host: string;
-}, UserResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'host_request',
-    permissionId: DASHBOARD_WEBVIEW_PERMISSION_ID,
-});
-
-export const DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID: Identifier = DASHBOARD_EXTENSION_TYPE.join('speech_recognition');
-
-export type TranscriptSegment = {
-    confidence: number;
-    transcript: string;
-};
-
-export type TranscriptStatus = {
-    type: 'idle';
-} | {
-    type: 'result';
-    timestamp: number;
-    segments: TranscriptSegment[];
-} | {
-    type: 'final';
-    timestamp: number;
-    segments: TranscriptSegment[];
-} | {
-    type: 'audio_started';
-    timestamp: number;
-} | {
-    type: 'audio_ended';
-    timestamp: number;
-};
-
-const DASHBOARD_SPEECH_RECOGNITION = RegistryType.createJson<TranscriptStatus>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'speech_recognition',
-    defaultValue: { type: 'idle' },
-    permissions: {
-        read: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
-        write: DASHBOARD_SET_PERMISSION_ID,
-    },
-});
-
-export type SpeechRecognitionStart = {
-    type: 'start';
-};
-
-const DASHBOARD_SPEECH_RECOGNITION_START = EndpointType.createJson<SpeechRecognitionStart, UserResponse<undefined>>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'speech_recognition_start',
-    permissionId: DASHBOARD_SPEECH_RECOGNITION_PERMISSION_ID,
-});
-
-interface PromptRequestBase<T extends string> {
-    kind: T;
-    id: string;
-}
-
-export interface PromptRequestAppPermissions extends PromptRequestBase<'app/permissions'> {
-    app: AppJson;
-    permissions: PermissionTypeJson[];
-}
-
-export interface PromptRequestAppPlugins extends PromptRequestBase<'app/plugins'> {
-    app: AppJson;
-    packages: PackageInfo[];
-}
-
-export interface PromptRequestAppInstall extends PromptRequestBase<'app/install'> {
-    app: AppJson;
-    dependencies: Record<string, AppJson>;
-}
-
-export interface PromptRequestAppUpdate extends PromptRequestBase<'app/update'> {
-    old_app: AppJson;
-    new_app: AppJson;
-    dependencies: Record<string, AppJson>;
-}
-
-export interface PromptRequestIndexInstall extends PromptRequestBase<'index/install'> {
-    index_url: string;
-    meta?: AppIndexRegistryMeta;
-}
-
-export interface PortProcess {
-    port: number;
-    name: string;
-    exe: string;
-}
-
-export interface PromptRequestHttpPort extends PromptRequestBase<'http/port'> {
-    app: AppJson;
-    processes: PortProcess[];
-}
-
-export type PromptRequest = (
-    PromptRequestAppPermissions
-    | PromptRequestAppPlugins
-    | PromptRequestAppInstall
-    | PromptRequestAppUpdate
-    | PromptRequestIndexInstall
-    | PromptRequestHttpPort
-);
-
-const DASHBOARD_PROMPT_REQUEST = PacketType.createJson<PromptRequest>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'prompt_request',
-});
-
-export type PromptResult = 'accept' | 'deny' | 'block';
-
-interface PromptResponse {
-    id: string;
-    kind: string;
-    result: PromptResult;
-}
-
-const DASHBOARD_PROMPT_RESPONSE = PacketType.createJson<PromptResponse>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'prompt_response',
-});
-
-const DASHBOARD_PROMPT_CLEAR_BLOCKED = EndpointType.createJson<null, null>(DASHBOARD_EXTENSION_TYPE, {
-    name: 'prompt_clear_blocked',
-});
+export { DASHBOARD_EXTENSION_TYPE };
 
 export class DashboardExtension {
     public readonly type: ExtensionType<DashboardExtension> = DASHBOARD_EXTENSION_TYPE;
     private dashboard: DashboardHandler | null = null;
-    private dragDropHandler: DragDropHandler | null = null;
-    private dragDropListeners = {
-        enter: [] as Array<(state: DragEnter) => unknown>,
-        over: [] as Array<(state: DragOver) => unknown>,
-        drop: [] as Array<(state: DragDrop) => unknown>,
-        leave: [] as Array<(state: DragLeave) => unknown>,
-    };
-    public readonly allowedHosts: Table<AllowedHost>;
     public readonly speechRecognition: Registry<TranscriptStatus>;
-    private readonly webviewHandles: IdentifierMap<{ handle: WebviewHandle; emit: WebviewEventEmit }> = new IdentifierMap();
+    private readonly webview: WebviewAPI;
+    private readonly dragdrop: DragDropAPI;
+    public readonly apps: DashboardApps;
 
     constructor(private readonly omu: Omu) {
+        this.webview = new WebviewAPI(omu);
+        this.dragdrop = new DragDropAPI(omu);
+        this.apps = new DashboardApps(omu);
         omu.network.registerPacket(
             DASHBOARD_OPEN_APP_PACKET,
-            DASHBOARD_DRAG_DROP_STATE_PACKET,
-            DASHBOARD_WEBVIEW_EVENT_PACKET,
             DASHBOARD_PROMPT_REQUEST,
             DASHBOARD_PROMPT_RESPONSE,
         );
@@ -339,32 +36,6 @@ export class DashboardExtension {
         omu.network.addPacketHandler(DASHBOARD_OPEN_APP_PACKET, (app) => {
             this.handleOpenApp(app);
         });
-        omu.network.addPacketHandler(DASHBOARD_DRAG_DROP_STATE_PACKET, ({ state }) => {
-            switch (state.type) {
-                case 'enter': {
-                    this.dragDropListeners.enter.forEach((fn) => fn(state));
-                    break;
-                }
-                case 'over': {
-                    this.dragDropListeners.over.forEach((fn) => fn(state));
-                    break;
-                }
-                case 'drop': {
-                    this.dragDropListeners.drop.forEach((fn) => fn(state));
-                    break;
-                }
-                case 'leave': {
-                    this.dragDropListeners.leave.forEach((fn) => fn(state));
-                    break;
-                }
-            }
-        });
-        omu.network.addPacketHandler(DASHBOARD_WEBVIEW_EVENT_PACKET, (packet) => {
-            const handle = this.webviewHandles.get(packet.id);
-            if (!handle) return;
-            handle.emit(packet.event);
-        });
-        this.allowedHosts = omu.tables.get(DASHBOARD_ALLOWED_WEBVIEW_HOSTS);
         this.speechRecognition = omu.registries.get(DASHBOARD_SPEECH_RECOGNITION);
     }
 
@@ -416,100 +87,9 @@ export class DashboardExtension {
         }
         this.dashboard = dashboard;
 
-        this.omu.server.apps.event.remove.listen(async (apps) => {
-            for (const app of apps.values()) {
-                const hosts = await this.allowedHosts.get(app.id.key());
-                if (!hosts) continue;
-                this.allowedHosts.remove(hosts);
-            }
-        });
-
-        const requireHost = async (params: InvokedParams, host: string): Promise<UserResponse<undefined>> => {
-            const id = params.caller.key();
-            const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id: id, hosts: [] };
-            const allowed = hostEntry.hosts.includes(host);
-            if (!allowed) {
-                const result = await dashboard.handleHostRequest({
-                    host,
-                }, params);
-                if (result === 'accept') {
-                    const hostEntry: AllowedHost = await this.allowedHosts.get(id) ?? { id: id, hosts: [] };
-                    hostEntry.hosts.push(host);
-                    await this.allowedHosts.update(hostEntry);
-                } else {
-                    return { type: 'cancelled' };
-                }
-            }
-            return { type: 'ok', value: undefined };
-        };
-
-        this.omu.endpoints.bind(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, async (request: DragDropRequestDashboard, params): Promise<DragDropRequestResponse> => {
-            const dashboard = this.getDashboard();
-            const accepted = await dashboard.handleDragDropRequest(request, params);
-            return {
-                ok: accepted,
-            };
-        });
-        this.omu.endpoints.bind(DASHBOARD_DRAG_DROP_READ_ENDPOINT, async (request, params): Promise<DragDropReadResponse> => {
-            const dashboard = this.getDashboard();
-            const response = await dashboard.handleDragDropReadRequest(request, params);
-            return response;
-        });
-        this.omu.endpoints.bind(DASHBOARD_COOKIES_GET, async (request, params): Promise<UserResponse<Cookie[]>> => {
-            const { url } = request;
-            const { host } = new URL(url);
-            const hostAccessResult = await requireHost(params, host);
-            if (hostAccessResult.type !== 'ok') {
-                return hostAccessResult;
-            }
-            return await dashboard.getCookies(request);
-        });
-        this.omu.endpoints.bind(DASHBOARD_HOST_REQUEST, async (request, params): Promise<UserResponse> => {
-            const { host } = request;
-            const result = await requireHost(params, host);
-            return result;
-        });
-        this.omu.endpoints.bind(DASHBOARD_WEBVIEW_REQUEST, async (request, params): Promise<WebviewResponse> => {
-            const url = new URL(request.url);
-            const { host } = url;
-            const hostAccessResult = await requireHost(params, host);
-            if (hostAccessResult.type !== 'ok') {
-                return hostAccessResult;
-            }
-            const emit = async (event: WebviewEvent) => {
-                this.omu.send(DASHBOARD_WEBVIEW_EVENT_PACKET, {
-                    id,
-                    target: params.caller,
-                    event,
-                });
-            };
-            const id = await dashboard.createWebview(request, params, emit);
-            return {
-                type: 'ok',
-                value: {
-                    id: id.key(),
-                },
-            };
-        });
-        this.omu.endpoints.bind(DASHBOARD_WEBVIEW_CLOSE, async (request, params): Promise<WebviewResponse> => {
-            const id = await dashboard.getWebview(request, params);
-            if (!id) {
-                return {
-                    type: 'cancelled',
-                };
-            }
-            await dashboard.closeWebview(request, params);
-            return {
-                type: 'ok',
-                value: {
-                    id: id.key(),
-                },
-            };
-        });
-        this.omu.endpoints.bind(DASHBOARD_SPEECH_RECOGNITION_START, async (request, params): Promise<UserResponse<undefined>> => {
-            const result = await dashboard.speechRecognitionStart(request, params);
-            return result;
-        });
+        this.webview.setDashboard(dashboard);
+        this.dragdrop.setDashboard(dashboard);
+        this.apps.setDashboard(dashboard);
         this.omu.network.addTask(async () => {
             const response = await this.omu.endpoints.call(
                 DASHBOARD_SET_ENDPOINT,
@@ -519,84 +99,18 @@ export class DashboardExtension {
                 throw new Error('Failed to set dashboard');
             }
         });
+        this.omu.endpoints.bind(DASHBOARD_SPEECH_RECOGNITION_START, async (request, params): Promise<UserResponse<undefined>> => {
+            const result = await dashboard.speechRecognitionStart(request, params);
+            return result;
+        });
     }
 
     public requestWebview(options: WebviewRequest): PromiseResult<WebviewHandle, UserError> {
-        const { promise, resolve, reject } = PromiseResult.create<WebviewHandle, UserError>();
-        this.omu.endpoints.call(
-            DASHBOARD_WEBVIEW_REQUEST,
-            options,
-        ).then((result) => {
-            if (result.type !== 'ok') {
-                reject(result);
-                return;
-            }
-            const { value } = result;
-            const id = Identifier.fromKey(value.id);
-            const eventListeners: WebviewEventListeners = {};
-            const handle: WebviewHandle = {
-                id,
-                url: options.url,
-                close: async () => {
-                    await this.omu.endpoints.call(
-                        DASHBOARD_WEBVIEW_CLOSE,
-                        { id: id.key() },
-                    );
-                },
-                getCookies: () => this.getCookies({
-                    url: options.url,
-                }),
-                on: function <T extends WebviewEvent['type']>(key: T, callback: (event: Extract<WebviewEvent, { type: T }>) => void): void {
-                    if (!eventListeners[key]) {
-                        eventListeners[key] = [];
-                    }
-                    const listeners = eventListeners[key]!;
-                    listeners.push(callback);
-                },
-                join: async () => {
-                    await new Promise<void>((resolve) => {
-                        handle.on('closed', () => resolve());
-                    });
-                },
-            };
-            this.webviewHandles.set(id, {
-                handle,
-                emit: function <T extends WebviewEvent['type']>(event: Extract<WebviewEvent, { type: T }>): void {
-                    const listeners = eventListeners[event.type];
-                    if (!listeners) return;
-                    for (const listener of listeners) {
-                        listener(event);
-                    }
-                },
-            });
-
-            resolve(handle);
-        });
-        return promise;
+        return this.webview.requestWebview(options);
     }
 
     public getCookies(options: GetCookiesRequest): PromiseResult<CookieList, UserError> {
-        const { promise, resolve, reject } = PromiseResult.create<CookieList, UserError>();
-        this.omu.endpoints.call(
-            DASHBOARD_COOKIES_GET,
-            options,
-        ).then((response) => {
-            if (response.type === 'ok') {
-                resolve(CookieList.from(response.value));
-                return;
-            } else {
-                reject(response);
-            }
-        });
-        return promise;
-    }
-
-    public async openApp(app: App): Promise<void> {
-        return await this.omu.endpoints.call(DASHBOARD_OPEN_APP_ENDPOINT, app);
-    }
-
-    public async installApp(app: App): Promise<AppInstallResponse> {
-        return await this.omu.endpoints.call(DASHBOARD_APP_INSTALL_ENDPOINT, app);
+        return this.webview.getCookies(options);
     }
 
     public async clearBlockedPrompts(): Promise<null> {
@@ -604,21 +118,11 @@ export class DashboardExtension {
     }
 
     public async requestDragDrop(): Promise<DragDropHandler> {
-        await this.omu.endpoints.call(DASHBOARD_DRAG_DROP_REQUEST_ENDPOINT, {});
-        const listeners = this.dragDropListeners;
-        const client = this.omu;
-        this.dragDropHandler = {
-            onEnter(fn) { listeners.enter.push(fn); },
-            onOver(fn) { listeners.over.push(fn); },
-            onDrop(fn) { listeners.drop.push(fn); },
-            onLeave(fn) { listeners.leave.push(fn); },
-            async read(id) { return await client.endpoints.call(DASHBOARD_DRAG_DROP_READ_ENDPOINT, { drag_id: id }); },
-        };
-        return this.dragDropHandler;
+        return this.dragdrop.requestDragDrop();
     }
 
     public async notifyDropDragState(packet: FileDragPacket): Promise<void> {
-        this.omu.send(DASHBOARD_DRAG_DROP_STATE_PACKET, packet);
+        return this.notifyDropDragState(packet);
     }
 
     public requestSpeechRecognition(): PromiseResult<Registry<TranscriptStatus>, UserError> {
