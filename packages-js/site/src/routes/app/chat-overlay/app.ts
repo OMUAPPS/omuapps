@@ -16,7 +16,7 @@ export const CHAT_OVERLAY_APP = new App(APP_ID, {
             en: 'Display the chat in the screen',
         },
         icon: 'ti-list',
-        tags: ['underdevelopment', 'tool', 'asset'] as TagKey[],
+        tags: ['tool', 'asset'] as TagKey[],
     }),
 });
 export const ASSET_APP = new App(APP_ID.join('asset'), {
