@@ -1,12 +1,12 @@
 <script lang="ts">
-    import Section from "$lib/components/Section.svelte";
-    import { ChatPermissions } from "@omujs/chat";
-    import { BrowserSession, Omu, OmuPermissions } from "@omujs/omu";
-    import type { WebviewHandle } from "@omujs/omu/api/dashboard";
-    import { AssetButton, Button } from "@omujs/ui";
-    import Preview from "./_components/Preview.svelte";
-    import { ASSET_APP, CHAT_OVERLAY_APP, HUD_APP } from "./app.js";
-    import type { ChatOverlayApp } from "./chat-app.js";
+    import Section from '$lib/components/Section.svelte';
+    import { ChatPermissions } from '@omujs/chat';
+    import { BrowserSession, Omu, OmuPermissions } from '@omujs/omu';
+    import type { WebviewHandle } from '@omujs/omu/api/dashboard';
+    import { AssetButton, Button } from '@omujs/ui';
+    import Preview from './_components/Preview.svelte';
+    import { ASSET_APP, CHAT_OVERLAY_APP, HUD_APP } from './app.js';
+    import type { ChatOverlayApp } from './chat-app.js';
 
     interface Props {
         omu: Omu;
@@ -103,8 +103,12 @@
         <Section name="配信に追加" icon="ti-arrow-bar-to-down">
             <AssetButton
                 asset={ASSET_APP}
-                permissions={[ChatPermissions.CHAT_PERMISSION_ID]}
-                dimensions={{ width: 500, height: 400 }}
+                permissions={[
+                    ChatPermissions.CHAT_PERMISSION_ID,
+                    OmuPermissions.ASSET_PERMISSION_ID,
+                    OmuPermissions.TABLE_PERMISSION_ID,
+                ]}
+                dimensions={{ width: 500, height: 700 }}
             />
         </Section>
     </div>

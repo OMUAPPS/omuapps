@@ -19,7 +19,10 @@ import { APP as tester } from './tester/app.js';
 import { APP as timer } from './timer/app.js';
 import { VIDEO_OVERLAY_APP } from './video-overlay/app.js';
 
-export const apps = [
+export const apps: App[] = [];
+
+apps.push(
+    CHAT_OVERLAY_APP,
     OMIKUJI_APP,
     discordOverlay,
     reaction,
@@ -30,10 +33,9 @@ export const apps = [
     reaction,
     DISCORD_PLUGIN_APP,
     VIDEO_OVERLAY_APP,
-    CHAT_OVERLAY_APP,
     clock,
     tester,
-] satisfies App[];
+);
 
 if (DEV) {
     apps.unshift(
