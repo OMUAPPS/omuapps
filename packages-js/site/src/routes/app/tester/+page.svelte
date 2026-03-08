@@ -1,21 +1,23 @@
 <script lang="ts">
+    import Section from '$lib/components/Section.svelte';
+    import { ARC4 } from '$lib/random.js';
+    import type { Models } from '@omujs/chat';
     import {
         Author,
         type Component,
         Message,
         Provider,
         Room,
+        type Root,
     } from '@omujs/chat/models';
-    import { AppHeader, AppPage, MessageRenderer } from '@omujs/ui';
+    import { AppHeader, AppPage, Button, MessageEntry, MessageRenderer, TableList } from '@omujs/ui';
     import { APP } from './app.js';
     import { chat, omu } from './client.js';
     import ComponentEditor from './components/ComponentEditor.svelte';
 
-    let component: Component = $state({
+    let component: Root = $state({
         type: 'root',
         data: [
-            { type: 'text', data: 'Hello, World!' },
-            { type: 'text', data: 'This is a test.' },
         ],
     });
 
@@ -23,8 +25,6 @@
         component = {
             type: 'root',
             data: [
-                { type: 'text', data: 'Hello, World!' },
-                { type: 'text', data: 'This is a test.' },
             ],
         };
     }
@@ -39,15 +39,58 @@
         version: '0.0.1',
     });
 
-    function send() {
-        const authorName = `test-author-${Date.now()}`;
-        const authorIcon = `https://picsum.photos/seed/${Date.now()}/200/200`;
-        const author = new Author({
+    const AUTHORS = [
+        new Author({
             providerId: TEST_PROVIDER.id,
-            id: TEST_PROVIDER.id.join(`${Date.now()}`),
-            name: authorName,
-            avatarUrl: authorIcon,
-        });
+            id: TEST_PROVIDER.id.join('hal'),
+            avatarUrl: 'https://picsum.photos/seed/0/200/200',
+            name: 'Hal',
+        }),
+        new Author({
+            providerId: TEST_PROVIDER.id,
+            id: TEST_PROVIDER.id.join('aqu-A'),
+            avatarUrl: 'https://picsum.photos/seed/1/200/200',
+            name: 'aqu-A',
+        }),
+        new Author({
+            providerId: TEST_PROVIDER.id,
+            id: TEST_PROVIDER.id.join('loibo'),
+            avatarUrl: 'https://picsum.photos/seed/2/200/200',
+            name: 'loibo',
+        }),
+        new Author({
+            providerId: TEST_PROVIDER.id,
+            id: TEST_PROVIDER.id.join('tell-I'),
+            avatarUrl: 'https://picsum.photos/seed/3/200/200',
+            name: 'tell-I',
+        }),
+    ];
+
+    const rng = ARC4.fromNumber(Date.now());
+
+    function getContent(): Component {
+        if (component.data.length) return component;
+        const contents = [
+            'あっ狐飛んだ',
+            '犬起きて',
+            '犬寝てる…？',
+            '狐が飛んでる',
+            '飛んだ！！',
+            'とんだ',
+            'とんだ！',
+            '犬ｗｗｗ 全く起きる気配なくて草🐶💤',
+            'キツネさん、身体能力高すぎ！🦊💨',
+        ];
+        return {
+            type: 'root',
+            data: [
+                { type: 'text', data: rng.choice(contents) },
+            ],
+        };
+    }
+
+    function send() {
+        const author = rng.choice(AUTHORS);
         chat.authors.add(author);
         const room = new Room({
             id: TEST_PROVIDER.id.join('test-room'),
@@ -62,12 +105,22 @@
             new Message({
                 roomId: room.id,
                 id: room.id.join(`${Date.now()}`),
-                content: component,
+                content: getContent(),
                 authorId: author.id,
                 createdAt: new Date(),
             }),
         );
     }
+
+    let interval: number | undefined = $state();
+
+    const filter = (_: string, message: Models.Message) => message.deleted !== true;
+
+    const sort = (a: Models.Message) => {
+        if (!a.createdAt) return 0;
+        return a.createdAt.getTime();
+    };
+
 </script>
 
 <AppPage>
@@ -77,144 +130,137 @@
         </header>
     {/snippet}
     <main>
-        <section>
-            <div class="flex gap">
-                <button onclick={reset}>
-                    <i class="ti ti-reload"></i>
-                    Reset
-                </button>
-                <button onclick={send}>
-                    <i class="ti ti-send"></i>
-                    Send
-                </button>
-            </div>
-        </section>
-        <h3>
-            <i class="ti ti-eye"></i>
-            Preview
-        </h3>
-        <section class="fill">
-            <MessageRenderer content={component} />
-        </section>
-        <h3>
-            <i class="ti ti-pencil"></i>
-            Content
-        </h3>
-        <section>
-            <div class="flex width gap between">
-                <div class="flex col width height">
-                    <small>INPUT</small>
+        <div class="left">
+            <Section name="操作" icon="ti-rocket">
+                <label>
+                    <span>リセット</span>
+                    <Button primary onclick={reset}>
+                        リセット
+                        <i class="ti ti-reload"></i>
+                    </Button>
+                </label>
+                <label>
+                    <span>テスト</span>
+                    <Button primary onclick={send}>
+                        テスト
+                        <i class="ti ti-send"></i>
+                    </Button>
+                </label>
+                <label>
+                    <span>自動</span>
+                    <Button primary={!interval} onclick={() => {
+                        if (interval) {
+                            clearInterval(interval);
+                            interval = undefined;
+                        } else {
+                            interval = window.setInterval(() => {
+                                send();
+                            }, 1000);
+                        }
+                    }}>
+                        {#if interval}
+                            停止
+                            <i class="ti ti-square"></i>
+                        {:else}
+                            開始
+                            <i class="ti ti-player-play"></i>
+                        {/if}
+                    </Button>
+                </label>
+            </Section>
+            <Section name="内容">
+                <div class="flex width gap between">
                     <div class="editor">
                         <ComponentEditor bind:component remove={reset} />
                     </div>
                 </div>
-                <div class="flex col width height">
-                    <small>JSON</small>
-                    <pre>{JSON.stringify(component, null, 4)}</pre>
+            </Section>
+        </div>
+        <div class="preview">
+            <Section name="プレビュー">
+                <MessageRenderer content={component} />
+            </Section>
+            <Section name="JSON">
+                <textarea
+                    cols="30"
+                    onchange={(event) => {
+                        component = JSON.parse(event.currentTarget.value);
+                    }}
+                >{JSON.stringify(component, null, 2)}</textarea>
+            </Section>
+        </div>
+        <div class="chat">
+            <Section name="チャット">
+                <div class="list">
+                    <TableList
+                        table={chat.messages}
+                        {filter}
+                        {sort}
+                        reverse={true}
+                    >
+                        {#snippet component({ entry, selected })}
+                            <MessageEntry {entry} {selected} />
+                        {/snippet}
+                    </TableList>
                 </div>
-            </div>
-        </section>
+            </Section>
+        </div>
     </main>
 </AppPage>
 
 <style lang="scss">
     main {
-        position: relative;
+        position: absolute;
+        inset: 0;
         display: flex;
-        flex-direction: column;
-        align-items: start;
+        align-items: stretch;
         justify-content: flex-start;
-        width: 100%;
-        height: 100%;
         background: var(--color-bg-1);
-        padding: 40px;
-    }
-
-    h3 {
-        color: var(--color-1);
-        margin-bottom: 10px;
-    }
-
-    section {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        align-items: start;
-        justify-content: flex-start;
-        width: 100%;
-        padding: 0px;
-        margin-bottom: 20px;
-
-        &.fill {
-            background: var(--color-bg-2);
-            padding: 10px;
-        }
-    }
-
-    small {
-        color: var(--color-1);
-    }
-
-    .editor {
-        background: var(--color-bg-2);
-        width: 100%;
-        height: 100%;
-        padding: 5px;
-    }
-
-    pre {
-        background: var(--color-bg-2);
-        width: 100%;
-        white-space: pre-wrap;
-        overflow: auto;
-        font-size: 12px;
-        padding: 5px;
-    }
-
-    button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        margin: 0;
-        height: 30px;
-        padding: 10px;
-        display: flex;
-        font-size: 14px;
-        align-items: center;
-        justify-content: center;
-        color: var(--color-1);
-        background: var(--color-bg-2);
-        outline: 1px solid var(--color-1);
-        outline-offset: -1px;
-        border-radius: 4px;
-
-        &:hover {
-            background: var(--color-bg-1);
-        }
-
-        &:active {
-            background: var(--color-1);
-            color: var(--color-bg-2);
-        }
-    }
-
-    .flex {
-        display: flex;
-    }
-
-    .col {
-        flex-direction: column;
-    }
-
-    .width {
-        width: 100%;
-    }
-
-    .height {
-        height: 100%;
-    }
-
-    .gap {
+        margin: 1rem;
         gap: 1rem;
+    }
+
+    .left {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 20rem;
+    }
+
+    label {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .preview {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        width: 20rem;
+        flex: 1;
+    }
+
+    .chat {
+        width: 24rem;
+        height: 100%;
+        background: var(--color-bg-2);
+        position: relative;
+    }
+
+    .list {
+        position: absolute;
+        inset: 0;
+        top: 3.5rem;
+    }
+
+    textarea {
+        height: 10rem;
+        border-radius: 2px;
+        border: 1px solid var(--color-1);
+        color: var(--color-text);
+        padding: 0.5rem;
+        font-size: 0.8rem;
+        font-family: 'Courier New', Courier, monospace;
+        resize: vertical;
     }
 </style>

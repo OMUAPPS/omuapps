@@ -9,12 +9,12 @@ export const APP = new App(APP_ID, {
     metadata: buildMetadata({
         locale: 'en',
         name: {
-            en: 'Tester',
-            ja: 'コメントテスター',
+            en: 'Chat Tester',
+            ja: 'チャットテスター',
         },
         description: {
-            en: 'Test comments.',
-            ja: 'コメントのテストをします。',
+            en: 'Test chat.',
+            ja: 'チャットのテストをします。',
         },
         icon,
         tags: ['tool', 'underdevelopment'] as TagKey[],

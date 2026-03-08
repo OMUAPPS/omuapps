@@ -1,5 +1,5 @@
 import { Chat } from '@omujs/chat';
-import { Omu } from '@omujs/omu';
+import { Omu, OmuPermissions } from '@omujs/omu';
 import { setGlobal } from '@omujs/ui';
 import { BROWSER } from 'esm-env';
 import { APP } from './app.js';
@@ -9,5 +9,8 @@ export const chat = Chat.create(omu);
 setGlobal({ omu, chat });
 
 if (BROWSER) {
+    omu.permissions.require(
+        OmuPermissions.ASSET_PERMISSION_ID,
+    );
     omu.start();
 }

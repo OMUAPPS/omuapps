@@ -38,8 +38,7 @@
         <TextEdit bind:component />
     {:else if component.type === 'image'}
         <ImageEdit bind:component />
-    {/if}
-    {#if children.length > 0}
+    {:else if component.type === 'root'}
         <div>
             {#each children as child, i (i)}
                 <ComponentEditor
