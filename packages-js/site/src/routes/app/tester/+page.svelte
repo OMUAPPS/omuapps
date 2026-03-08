@@ -121,15 +121,6 @@
         if (!a.createdAt) return 0;
         return a.createdAt.getTime();
     };
-
-    $effect(() => {
-        if (intervalHandle) {
-            clearInterval(intervalHandle);
-            intervalHandle = window.setInterval(() => {
-                send();
-            }, interval);
-        }
-    });
 </script>
 
 <AppPage>
