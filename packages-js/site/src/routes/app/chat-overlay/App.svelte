@@ -108,7 +108,7 @@
                     OmuPermissions.ASSET_PERMISSION_ID,
                     OmuPermissions.TABLE_PERMISSION_ID,
                 ]}
-                dimensions={{ width: 500, height: 400 }}
+                dimensions={{ width: 500, height: 700 }}
             />
         </Section>
     </div>
