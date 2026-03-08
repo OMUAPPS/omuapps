@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { Models } from "@omujs/chat";
-    import { ComponentRenderer } from "@omujs/ui";
-    import HeightTransition from "../../_components/HeightTransition.svelte";
-    import { ChatOverlayApp } from "../../chat-app";
+    import { Models } from '@omujs/chat';
+    import { ComponentRenderer } from '@omujs/ui';
+    import HeightTransition from '../../_components/HeightTransition.svelte';
+    import { ChatOverlayApp } from '../../chat-app';
 
     let { chat, config } = ChatOverlayApp.getInstance();
 
@@ -16,15 +16,15 @@
 <div
     id="container"
     class="container"
-    class:newer-bottom={$config.asset.list.direction === "newer-bottom"}
+    class:newer-bottom={$config.asset.list.direction === 'newer-bottom'}
 >
     <div class="fade">
         <div class="list">
             <div class="messages comments">
-                {#each [...new Map(messages.map( (m) => [m.key(), m], )).values()] as message (message.key())}
+                {#each [...new Map(messages.map((m) => [m.key(), m])).values()] as message (message.key())}
                     {@const author =
                         message.authorId &&
-                        chat.authors.get(message.authorId.key())}
+                            chat.authors.get(message.authorId.key())}
                     {#await author then author}
                         <HeightTransition duration={150}>
                             <div
