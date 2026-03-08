@@ -10,7 +10,7 @@
         Room,
         type Root,
     } from '@omujs/chat/models';
-    import { AppHeader, AppPage, Button, MessageEntry, MessageRenderer, TableList } from '@omujs/ui';
+    import { AppHeader, AppPage, Button, MessageEntry, MessageRenderer, Slider, TableList } from '@omujs/ui';
     import { APP } from './app.js';
     import { chat, omu } from './client.js';
     import ComponentEditor from './components/ComponentEditor.svelte';
@@ -112,7 +112,8 @@
         );
     }
 
-    let interval: number | undefined = $state();
+    let interval: number = $state(1000);
+    let intervalHandle: number | undefined = $state();
 
     const filter = (_: string, message: Models.Message) => message.deleted !== true;
 
@@ -121,6 +122,14 @@
         return a.createdAt.getTime();
     };
 
+    $effect(() => {
+        if (intervalHandle) {
+            clearInterval(intervalHandle);
+            intervalHandle = window.setInterval(() => {
+                send();
+            }, interval);
+        }
+    });
 </script>
 
 <AppPage>
@@ -148,17 +157,17 @@
                 </label>
                 <label>
                     <span>自動</span>
-                    <Button primary={!interval} onclick={() => {
-                        if (interval) {
-                            clearInterval(interval);
-                            interval = undefined;
+                    <Button primary={!intervalHandle} onclick={() => {
+                        clearInterval(intervalHandle);
+                        if (intervalHandle) {
+                            intervalHandle = undefined;
                         } else {
-                            interval = window.setInterval(() => {
+                            intervalHandle = window.setInterval(() => {
                                 send();
-                            }, 1000);
+                            }, interval);
                         }
                     }}>
-                        {#if interval}
+                        {#if intervalHandle}
                             停止
                             <i class="ti ti-square"></i>
                         {:else}
@@ -166,6 +175,10 @@
                             <i class="ti ti-player-play"></i>
                         {/if}
                     </Button>
+                </label>
+                <label>
+                    間隔
+                    <Slider bind:value={interval} min={100} max={10000} step={100} unit="ms" />
                 </label>
             </Section>
             <Section name="内容">
@@ -230,6 +243,7 @@
     label {
         display: flex;
         justify-content: space-between;
+        font-size: 0.8rem;
     }
 
     .preview {
