@@ -85,4 +85,17 @@ export class Message {
     key(): string {
         return this.id.key();
     }
+
+    public clone(): Message {
+        return new Message({
+            roomId: this.roomId,
+            id: this.id,
+            authorId: this.authorId,
+            content: this.content,
+            paid: this.paid?.clone(),
+            gifts: this.gifts ? this.gifts.map((gift) => gift.clone()) : undefined,
+            createdAt: new Date(this.createdAt.getTime()),
+            deleted: this.deleted,
+        });
+    }
 }
