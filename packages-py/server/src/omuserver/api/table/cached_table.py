@@ -29,7 +29,7 @@ class CachedTable(ServerTable):
         self._event = ServerTableEvents()
         self._sessions: dict[Session, SessionTableListener] = {}
         self._permissions: TablePermissions | None = None
-        self._proxy_sessions: dict[str, Session] = {}
+        self._proxy_sessions: set[Session] = set()
         self._changed = False
         self._proxy_id = 0
         self._save_task: asyncio.Task | None = None
@@ -78,7 +78,7 @@ class CachedTable(ServerTable):
 
     def detach_session(self, session: Session) -> None:
         if session in self._proxy_sessions:
-            del self._proxy_sessions[session.app.key()]
+            self._proxy_sessions.remove(session)
         if session in self._sessions:
             handler = self._sessions.pop(session)
             handler.close()
@@ -87,7 +87,8 @@ class CachedTable(ServerTable):
         self.detach_session(session)
 
     def attach_proxy_session(self, session: Session) -> None:
-        self._proxy_sessions[session.app.key()] = session
+        self._proxy_sessions.add(session)
+        session.event.disconnected += self.handle_disconnection
 
     async def get(self, key: str) -> bytes | None:
         if self._adapter is None:
@@ -101,9 +102,9 @@ class CachedTable(ServerTable):
         return data
 
     async def get_many(self, *keys: str) -> dict[str, bytes]:
-        key_list = list(keys)
         if self._adapter is None:
             raise Exception("Table not set")
+        key_list = list(keys)
         items: dict[str, bytes] = {}
         for key in tuple(key_list):
             if key in self._cache:
@@ -112,8 +113,7 @@ class CachedTable(ServerTable):
         if len(key_list) == 0:
             return items
         data = await self._adapter.get_many(key_list)
-        for key, value in data.items():
-            items[key] = value
+        items.update(data)
         await self.update_cache(items)
         return items
 
@@ -129,7 +129,7 @@ class CachedTable(ServerTable):
         self.mark_changed()
 
     async def send_proxy_event(self, items: Mapping[str, bytes]) -> None:
-        session = tuple(self._proxy_sessions.values())[0]
+        session = next(iter(self._proxy_sessions))
         self._proxy_id += 1
         await session.send(
             TABLE_PROXY_PACKET,
@@ -144,10 +144,9 @@ class CachedTable(ServerTable):
         adapter = self._adapter
         if adapter is None:
             raise Exception("Table not set")
-        if session.app.key() not in self._proxy_sessions:
+        if session not in self._proxy_sessions:
             raise ValueError("Session not in proxy sessions")
-        session_key = session.app.key()
-        index = tuple(self._proxy_sessions.keys()).index(session_key)
+        index = tuple(self._proxy_sessions).index(session)
         if index == len(self._proxy_sessions) - 1:
             adapter = self._adapter
             if adapter is None:
@@ -157,8 +156,8 @@ class CachedTable(ServerTable):
             await self.update_cache(items)
             self.mark_changed()
             return 0
-        session = tuple(self._proxy_sessions.values())[index + 1]
-        await session.send(
+        next_session = tuple(self._proxy_sessions)[index + 1]
+        await next_session.send(
             TABLE_PROXY_PACKET,
             TableProxyPacket(
                 id=self._id,
