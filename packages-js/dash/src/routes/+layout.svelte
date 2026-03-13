@@ -1,9 +1,7 @@
 <script lang="ts">
     import AppWindow from '$lib/common/AppWindow.svelte';
-    import { i18n } from '$lib/i18n/i18n-context.js';
-    import { DEFAULT_LOCALE, LOCALES } from '$lib/i18n/i18n.js';
     import { language } from '$lib/settings.js';
-    import { createI18nUnion, type I18n } from '@omujs/i18n';
+    import { createI18nUnion, i18n, LOCALES, SYSTEM_LANGUAGE, type I18n } from '@omujs/i18n';
     import '@omujs/ui';
     import { Theme } from '@omujs/ui';
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
@@ -22,12 +20,12 @@
     async function loadLocale() {
         const langs: I18n[] = [];
         if (!LOCALES[$language]) {
-            console.warn(`Locale ${$language} not found, falling back to ${DEFAULT_LOCALE}`);
-            $language = DEFAULT_LOCALE;
+            console.warn(`Locale ${$language} not found, falling back to ${SYSTEM_LANGUAGE}`);
+            $language = SYSTEM_LANGUAGE;
         }
-        langs.push(await LOCALES[$language].load());
-        if ($language !== DEFAULT_LOCALE) {
-            langs.push(await LOCALES[DEFAULT_LOCALE].load());
+        langs.push(LOCALES[$language].i18n);
+        if ($language !== SYSTEM_LANGUAGE) {
+            langs.push(LOCALES[SYSTEM_LANGUAGE].i18n);
         }
         i18n.set(createI18nUnion(langs));
     }

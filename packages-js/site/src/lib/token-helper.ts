@@ -1,3 +1,4 @@
+import { DynamicDictionaries } from '@2ji-han/kuromoji.js/dict/dynamic-dictionaries.js';
 import type { TOKEN } from '@2ji-han/kuromoji.js/util/ipadic-formatter.js';
 
 export function isEmptyToken(token: TOKEN) {
@@ -93,4 +94,135 @@ export function hasMatchingTokenSet(tokens: TOKEN[], ...requiredTokenSets: TOKEN
         }
     }
     return false;
+}
+
+function resolvePath(base: URL, path: string): URL {
+    const { pathname } = base;
+    return new URL(
+        pathname.endsWith('/') ? pathname + path : `${pathname}/${path}`,
+        base,
+    );
+}
+
+export interface DictionaryLoader {
+    load(): Promise<DynamicDictionaries>;
+}
+
+export class ProxyDictionaryLoader implements DictionaryLoader {
+    private constructor(
+        private readonly resourceBase: URL,
+        private readonly fetch: typeof window.fetch,
+    ) { }
+
+    public static async fromURL(url: string | URL, fetch: typeof window.fetch): Promise<DynamicDictionaries> {
+        const baseUrl = typeof url === 'string' ? new URL(url) : url;
+        const loader = new ProxyDictionaryLoader(baseUrl, fetch);
+        return loader.load();
+    }
+
+    async #loadArrayBuffer(url: URL) {
+        const res = await this.fetch(url);
+        const buffer = await res.arrayBuffer();
+        const decompressionStream = new DecompressionStream('gzip');
+        const decompressedStream = new Blob([buffer]).stream().pipeThrough(decompressionStream);
+        const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
+        return decompressedBuffer;
+    }
+
+    async load(): Promise<DynamicDictionaries> {
+        const dictionaries = new DynamicDictionaries();
+        const buffers = await Promise.all(
+            [
+                // Trie
+                'base.dat.gz',
+                'check.dat.gz',
+                // Token info dictionaries
+                'tid.dat.gz',
+                'tid_pos.dat.gz',
+                'tid_map.dat.gz',
+                // Connection cost matrix
+                'cc.dat.gz',
+                // Unknown dictionaries
+                'unk.dat.gz',
+                'unk_pos.dat.gz',
+                'unk_map.dat.gz',
+                'unk_char.dat.gz',
+                'unk_compat.dat.gz',
+                'unk_invoke.dat.gz',
+            ].map((filename) => this.#loadArrayBuffer(resolvePath(this.resourceBase, filename))),
+        );
+        // Trie
+        dictionaries.loadTrie(new Int32Array(buffers[0]), new Int32Array(buffers[1]));
+        // Token info dictionaries
+        dictionaries.loadTokenInfoDictionaries(
+            new Uint8Array(buffers[2]),
+            new Uint8Array(buffers[3]),
+            new Uint8Array(buffers[4]),
+        );
+        // Connection cost matrix
+        dictionaries.loadConnectionCosts(new Int16Array(buffers[5]));
+        // Unknown dictionaries
+        dictionaries.loadUnknownDictionaries(
+            new Uint8Array(buffers[6]),
+            new Uint8Array(buffers[7]),
+            new Uint8Array(buffers[8]),
+            new Uint8Array(buffers[9]),
+            new Uint32Array(buffers[10]),
+            new Uint8Array(buffers[11]),
+        );
+        return dictionaries;
+    }
+}
+
+export interface Pattern extends Partial<TOKEN> {
+    kind: 'include' | 'exclude' | 'optional';
+}
+
+export interface TokenReplacement {
+    patterns: Pattern[];
+    replace: string;
+}
+
+export function tokenReplace(tokens: TOKEN[], replacement: TokenReplacement): string | undefined {
+    for (let index = 0; index < tokens.length - replacement.patterns.length + 1; index++) {
+        let match = true;
+        let tokenIndex = 0;
+        let patternIndex = 0;
+        while (patternIndex < replacement.patterns.length) {
+            const token = tokens[index + tokenIndex];
+            const pattern = replacement.patterns[patternIndex];
+            for (const key in pattern) {
+                if (key === 'kind') continue;
+                if (token[key as keyof TOKEN] !== pattern[key as keyof TOKEN]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                if (pattern.kind === 'exclude') {
+                    match = false;
+                    break;
+                }
+                tokenIndex++;
+                patternIndex++;
+                continue;
+            }
+            if (pattern.kind === 'optional') {
+                patternIndex++;
+                continue;
+            }
+            break;
+        }
+        if (match) {
+            return replacement.replace;
+        }
+    }
+}
+
+export function tokenReplaces(token: TOKEN[], replacements: TokenReplacement[]) {
+    for (const replacement of replacements) {
+        const replaced = tokenReplace(token, replacement);
+        if (replaced) return replaced;
+    }
+    return token.map(t => t.surface_form).join('');
 }

@@ -46,4 +46,14 @@ export class Gift {
             image_url: this.imageUrl,
         };
     }
+
+    public clone(): Gift {
+        return new Gift({
+            id: this.id,
+            name: this.name,
+            amount: this.amount,
+            isPaid: this.isPaid,
+            imageUrl: this.imageUrl,
+        });
+    }
 }

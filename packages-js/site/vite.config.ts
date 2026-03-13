@@ -29,7 +29,6 @@ export default defineConfig({
     },
     build: {
         rollupOptions: {
-            external: '@2ji-han/kuromoji.js',
         },
     },
 });

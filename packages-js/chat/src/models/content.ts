@@ -1,30 +1,30 @@
 import { JsonType } from '@omujs/omu/serialize';
 
 export interface ComponentType<T extends string, D extends JsonType = JsonType> {
-    type: T;
-    data: D;
+    readonly type: T;
+    readonly data: D;
 };
 
-export type Root = ComponentType<'root', Component[]>;
+export type Root = ComponentType<'root', readonly Component[]>;
 
 export type Text = ComponentType<'text', string>;
 
 export type Image = ComponentType<'image', {
-    url: string;
-    id: string;
-    name?: string;
+    readonly url: string;
+    readonly id: string;
+    readonly name?: string;
 }>;
 
 export type Asset = ComponentType<'asset', {
-    id: string;
+    readonly id: string;
 }>;
 
 export type Link = ComponentType<'link', {
-    url: string;
-    children: Component[];
+    readonly url: string;
+    readonly children: readonly Component[];
 }>;
 
-export type System = ComponentType<'system', Component[]>;
+export type System = ComponentType<'system', readonly Component[]>;
 
 export type Component =
                     | Root
@@ -34,7 +34,7 @@ export type Component =
                     | Link
                     | System;
 
-export function children(component: Component): Component[] {
+export function children(component: Component): readonly Component[] {
     switch (component.type) {
         case 'root': return component.data;
         case 'system': return component.data;
@@ -42,6 +42,15 @@ export function children(component: Component): Component[] {
         case 'text': return [];
         case 'image': return [];
         case 'asset': return [];
+    }
+}
+
+export function setChildren(component: Component, children: readonly Component[]): Component {
+    switch (component.type) {
+        case 'root': return { ...component, data: children };
+        case 'system': return { ...component, data: children };
+        case 'link': return { ...component, data: { ...component.data, children } };
+        default: return component;
     }
 }
 
@@ -59,4 +68,10 @@ export function format(component: Component): string {
     return [...walk(component)]
         .filter(it => it.type === 'text')
         .map(it => it.data).join('');
+}
+
+export function transform(component: Component, fn: (component: Component) => Component): Component {
+    const newChildren = children(component).map(child => transform(child, fn));
+    const newComponent = setChildren(component, newChildren);
+    return fn(newComponent);
 }

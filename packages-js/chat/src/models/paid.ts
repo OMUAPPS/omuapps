@@ -19,4 +19,8 @@ export class Paid {
             currency: this.currency,
         };
     }
+
+    public clone(): Paid {
+        return new Paid(this.amount, this.currency);
+    }
 }
