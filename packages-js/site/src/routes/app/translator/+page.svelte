@@ -5,7 +5,7 @@
     import type { Tokenizer } from '@2ji-han/kuromoji.js/tokenizer.js';
     import { Chat } from '@omujs/chat';
     import { Omu, OmuPermissions } from '@omujs/omu';
-    import { setGlobal } from '@omujs/ui';
+    import { AppHeader, AppPage, setGlobal, Spinner } from '@omujs/ui';
     import { TRANSLATOR_APP } from './app';
     import App from './App.svelte';
     import { TranslatorApp } from './translator-app';
@@ -27,10 +27,6 @@
         init();
     });
 
-    // chat.messages.proxy((item) => {
-    //     return item;
-    // });
-
     if (browser) {
         omu.permissions.require(
             OmuPermissions.ASSET_PERMISSION_ID,
@@ -41,8 +37,37 @@
 
 </script>
 
-{#if tokenizer}
-    <App {app} {chat} {tokenizer} />
-{:else}
-    読み込み中
-{/if}
+<AppPage>
+    {#snippet header()}
+        <header>
+            <AppHeader app={TRANSLATOR_APP} />
+        </header>
+    {/snippet}
+    {#if tokenizer}
+        <App {app} {chat} {tokenizer} />
+    {:else}
+        <div class="loading">
+            <p>辞書を読み込み中<Spinner /></p>
+        </div>
+    {/if}
+</AppPage>
+
+<style lang="scss">
+    .loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: var(--color-1);
+
+        > * {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-1);
+        }
+    }
+</style>
