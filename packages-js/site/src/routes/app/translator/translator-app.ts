@@ -11,7 +11,7 @@ export class TranslatorApp {
     public readonly config: Writable<TranslatorConfig>;
 
     constructor(
-        omu: Omu,
+        public readonly omu: Omu,
     ) {
         this.config = omu.registries.json<TranslatorConfig>('config', {
             default: { mode: null },
