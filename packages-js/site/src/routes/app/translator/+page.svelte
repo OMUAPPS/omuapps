@@ -31,6 +31,7 @@
         omu.permissions.require(
             OmuPermissions.ASSET_PERMISSION_ID,
             OmuPermissions.HTTP_REQUEST_PERMISSION_ID,
+            OmuPermissions.DASHBOARD_APP_STARTUP_PERMISSION_ID,
         );
         omu.start();
     }
