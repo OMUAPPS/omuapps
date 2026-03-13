@@ -297,12 +297,7 @@ class TableImpl<T> implements Table<T> {
 
     public proxy(callback: (item: T) => T | undefined): Unlisten {
         if (this.proxies.length === 0) {
-            let cancel = (): void => {};
-            cancel = this.omu.onReady(() => {
-                if (this.proxies.length === 0) {
-                    cancel();
-                    return;
-                }
+            this.omu.onReady(() => {
                 this.omu.send(TABLE_PROXY_LISTEN_PACKET, this.id);
             });
         }
