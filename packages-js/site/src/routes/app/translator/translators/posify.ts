@@ -28,7 +28,13 @@ export class PosifyTranslator implements Translator {
                 data += `[${token.pos}]`;
             }
         }
-        data = data.replace('!?', '⁉️').replace('!', '❗').replace('?', '❓');
+        data = data
+            .replace('!?', '⁉️')
+            .replace('！？', '⁉️')
+            .replace('!', '❗')
+            .replace('！', '❗')
+            .replace('?', '❓')
+            .replace('？', '❓');
         return {
             type: 'text',
             data,
