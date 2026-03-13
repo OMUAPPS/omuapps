@@ -17,6 +17,7 @@ import { APP as replay } from './replay/app.js';
 import { APP as roulette } from './roulette/app.js';
 import { APP as tester } from './tester/app.js';
 import { APP as timer } from './timer/app.js';
+import { TRANSLATOR_APP } from './translator/app.js';
 import { VIDEO_OVERLAY_APP } from './video-overlay/app.js';
 
 export const apps: App[] = [];
@@ -35,6 +36,7 @@ apps.push(
     VIDEO_OVERLAY_APP,
     clock,
     tester,
+    TRANSLATOR_APP,
 );
 
 if (DEV) {
