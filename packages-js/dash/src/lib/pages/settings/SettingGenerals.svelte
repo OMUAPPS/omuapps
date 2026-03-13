@@ -1,6 +1,5 @@
 <script lang="ts">
     import { omu } from '$lib/client';
-    import { LOCALES } from '$lib/i18n/i18n';
     import { t } from '$lib/i18n/i18n-context';
     import { pushScreen } from '$lib/screen/screen';
     import ScreenCleaningEnvironment from '$lib/screen/ScreenCleanEnvironment.svelte';
@@ -8,6 +7,7 @@
     import ScreenUpdate from '$lib/screen/ScreenUpdate.svelte';
     import { devMode, isBetaEnabled, language, openLinkMode, speechRecognition } from '$lib/settings';
     import { checkUpdate } from '$lib/tauri';
+    import { LOCALES } from '@omujs/i18n';
     import { Button, Combobox } from '@omujs/ui';
     import { invoke } from '@tauri-apps/api/core';
     import { Update } from '@tauri-apps/plugin-updater';

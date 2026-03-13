@@ -27,7 +27,7 @@ export { default as RelativeDate } from './RelativeDate.svelte';
 export { default as Role } from './Role.svelte';
 export { default as Slider } from './Slider.svelte';
 export { default as Spinner } from './Spinner.svelte';
-export { chat, linkOpenHandler, obs, omu, setGlobal, theme, translate } from './stores.js';
+export { chat, linkOpenHandler, obs, omu, setGlobal, theme } from './stores.js';
 export { default as TableList } from './TableList.svelte';
 export { default as Textbox } from './Textbox.svelte';
 export { default as Theme } from './Theme.svelte';

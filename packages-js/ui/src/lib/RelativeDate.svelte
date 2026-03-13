@@ -1,7 +1,6 @@
 <script lang="ts">
-
+    import { i18n } from '@omujs/i18n';
     import { onDestroy } from 'svelte';
-    import { translate } from './stores.js';
 
     interface Props {
         date: Date | undefined;
@@ -54,13 +53,13 @@
                 unit = timeUnits[i - 1];
             }
             const diffValue = Math.round(diff / unit.value);
-            formattedDate = $translate(unit.label, { time: diffValue.toString() });
+            formattedDate = $i18n.translate(unit.label, { time: diffValue.toString() });
             sleep(unit.value - (diff % unit.value));
             return;
         }
 
         if (!formattedDate) {
-            formattedDate = $translate('date.just_now');
+            formattedDate = $i18n.translate('date.just_now');
             sleep(1000 - (diff % 1000));
         }
     }

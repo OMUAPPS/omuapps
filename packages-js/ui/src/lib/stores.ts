@@ -5,14 +5,6 @@ import { BROWSER } from 'esm-env';
 import type { Snippet } from 'svelte';
 import { type Writable, writable } from 'svelte/store';
 
-type TranslateFunction = (key: string, options?: Record<string, string>) => string;
-
-export const translate: Writable<TranslateFunction> = writable(
-    (key: string, options?: Record<string, unknown>) => {
-        return `(translation for ${key} not found. options: ${JSON.stringify(options)})`;
-    },
-);
-
 export const omu: Writable<Omu> = writable();
 export const chat: Writable<Chat> = writable();
 export const obs: Writable<OBSPlugin> = writable();

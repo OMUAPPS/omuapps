@@ -1,22 +1,8 @@
-import { LOCALES } from '$lib/i18n/i18n.js';
 import { linkOpenHandler } from '@omujs/ui';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { writable, type Writable } from 'svelte/store';
 
-function getSystemLanguage(): keyof typeof LOCALES {
-    if (typeof window === 'undefined') {
-        return 'ja-JP';
-    }
-    for (const lang of window.navigator.languages) {
-        for (const [key, { alias }] of Object.entries(LOCALES)) {
-            if (alias.includes(lang)) {
-                return key as keyof typeof LOCALES;
-            }
-        }
-    }
-    return 'ja-JP';
-}
-
+import { i18n, LOCALES, SYSTEM_LANGUAGE, type LocaleCode } from '@omujs/i18n';
 import { load } from '@tauri-apps/plugin-store';
 
 const settings = await load('settings.json');
@@ -39,8 +25,7 @@ export function createSetting<T>(key: string, defaultValue: T): Writable<T> & { 
     };
 }
 
-const systemLanguage = getSystemLanguage();
-export const language = createSetting<keyof typeof LOCALES>('language', systemLanguage);
+export const language = createSetting<LocaleCode>('language', SYSTEM_LANGUAGE);
 export const devMode = createSetting('devMode', false);
 export const currentPage = createSetting('currentPage', 'explore');
 export const lastApp = createSetting<string | null>('lastApp', null);
@@ -72,4 +57,8 @@ openLinkMode.subscribe((value) => {
             return true;
         });
     }
+});
+
+language.subscribe((code) => {
+    i18n.set(LOCALES[code].i18n);
 });

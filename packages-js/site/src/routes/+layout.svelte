@@ -3,6 +3,7 @@
     import '@tabler/icons-webfont/dist/tabler-icons.scss';
     import ProgressBar from './_components/ProgressBar.svelte';
     import './styles.css';
+
     interface Props {
         children?: import('svelte').Snippet;
     }

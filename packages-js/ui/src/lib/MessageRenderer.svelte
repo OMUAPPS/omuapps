@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Content, Models } from '@omujs/chat';
+    import { i18n } from '@omujs/i18n';
     import ButtonLink from './ButtonLink.svelte';
     import ButtonMini from './ButtonMini.svelte';
     import ComponentRenderer from './ComponentRenderer.svelte';
@@ -8,7 +9,7 @@
     import RelativeDate from './RelativeDate.svelte';
     import Role from './Role.svelte';
     import Tooltip from './Tooltip.svelte';
-    import { dateTimeFormats, omu, translate } from './stores.js';
+    import { dateTimeFormats, omu } from './stores.js';
     import { applyOpacity } from './utils/class-helper.js';
 
     interface Props {
@@ -136,7 +137,7 @@
                             <div class="paid">
                                 <span>
                                     <i class="ti ti-gift"></i>
-                                    {$translate('panels.messages.paid')}
+                                    {$i18n.translate('panels.messages.paid')}
                                 </span>
                                 <p>
                                     {#if currency}
@@ -165,14 +166,14 @@
                     primary
                 >
                     <Tooltip>
-                        <p>{$translate('panels.messages.see_in_room')}</p>
+                        <p>{$i18n.translate('panels.messages.see_in_room')}</p>
                         <p>{formatTime(time)}</p>
                     </Tooltip>
                     <i class="ti ti-external-link"></i>
                 </ButtonLink>
             {/if}
             <ButtonMini primary onclick={handleCopy}>
-                <Tooltip>{$translate('panels.messages.copy')}</Tooltip>
+                <Tooltip>{$i18n.translate('panels.messages.copy')}</Tooltip>
                 <i class="ti ti-files"></i>
             </ButtonMini>
         </div>
