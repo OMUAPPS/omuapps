@@ -39,7 +39,7 @@
         return translator.translate(item);
     });
 
-    await app.omu.dashboard.apps.addStartup(app.omu.app);
+    app.omu.dashboard.apps.addStartup(app.omu.app);
 </script>
 
 <main>

@@ -14,7 +14,6 @@ export default defineConfig({
         include: ['src/**/*.{test,spec}.{js,ts}'],
     },
     optimizeDeps: {
-        noDiscovery: true,
     },
     server: {
         host: '0.0.0.0',

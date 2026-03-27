@@ -9,7 +9,7 @@ const config = {
 
     compilerOptions: {
         experimental: {
-            async: true,
+            async: false,
         },
         warningFilter: (warning) => {
             const ignoredWarnings = ['state_referenced_locally'];
