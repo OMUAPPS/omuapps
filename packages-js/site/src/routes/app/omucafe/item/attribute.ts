@@ -7,3 +7,5 @@ export type Attributes = Partial<{
     dragging: AttrDragging;
     container: AttrContainer;
 }>;
+
+export type AttributeKey = keyof Attributes;

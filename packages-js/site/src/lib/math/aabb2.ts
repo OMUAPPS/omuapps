@@ -151,4 +151,16 @@ export class AABB2 {
             this.max.scale(scaler),
         );
     }
+
+    public get size(): Vec2 {
+        return this.max.sub(this.min);
+    }
+
+    public get width(): number {
+        return this.max.x - this.min.x;
+    }
+
+    public get height(): number {
+        return this.max.y - this.min.y;
+    }
 }

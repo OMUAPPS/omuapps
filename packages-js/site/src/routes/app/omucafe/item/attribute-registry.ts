@@ -20,6 +20,10 @@ export class AttributeRegistry {
     ) {
     }
 
+    get values() {
+        return this.attributes;
+    }
+
     public static new(game: Game) {
         const base = new AttributeBase(game);
         const attrs: AttributeHandlerMap = {

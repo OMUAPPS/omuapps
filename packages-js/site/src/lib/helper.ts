@@ -105,6 +105,12 @@ export function sha256(data: Uint8Array): Uint8Array {
     return hash;
 }
 
+export function hash(buffer: Uint8Array): string {
+    const hash = sha256(buffer);
+    const hashHex = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
 function rightRotate(value: number, amount: number): number {
     return (value >>> amount) | (value << (32 - amount));
 }

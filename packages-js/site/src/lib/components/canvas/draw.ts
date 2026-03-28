@@ -36,6 +36,7 @@ out vec4 fragColor;
 
 void main() {
     fragColor = u_color;
+    fragColor.rgb *= fragColor.a;
 }
 `;
 
