@@ -115,6 +115,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             if (!container) return;
             ctx.actions.push({
                 title: '乗せる',
+                priority: 100,
                 invoke: async () => {
                     states.held = undefined;
                     this.game.itemSystem.attachItem(container, item);

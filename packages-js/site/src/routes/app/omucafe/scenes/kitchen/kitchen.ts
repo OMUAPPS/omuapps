@@ -68,12 +68,17 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
             },
             pool: kitchen,
         };
+        kitchen.id = 'kitchen';
         this.game.itemSystem.initRenderPass();
         await this.game.itemSystem.renderPool(kitchen, KITCHEN_OPTIONS);
+        const fridgePos = new Vec2(width / 2 - 400, 0);
+        await this.game.fridgeSystem.render(fridgePos);
+        await this.game.itemSystem.renderHeld();
         for (const event of input) {
             this.game.inputSystem.clear();
             this.game.itemSystem.initPass();
             await this.game.itemSystem.handleMouse(kitchen, KITCHEN_OPTIONS, event);
+            await this.game.fridgeSystem.handleInput(fridgePos, event);
             this.game.itemSystem.endInput();
             await this.game.inputSystem.handle(event);
         }

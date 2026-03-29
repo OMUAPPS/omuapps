@@ -36,7 +36,10 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         let item: Item | undefined = scene.item && this.game.states.items.get(scene.item.id);
         if (!scene.item) {
             item = scene.item = this.game.itemSystem.allocateItem({
-                attrs: {},
+                attrs: {
+                    image: this.game.itemSystem.attributeRegistry.image.create(),
+                    dragging: this.game.itemSystem.attributeRegistry.dragging.create(),
+                },
                 children: [],
                 transform: DEFAULT_TRANSFORM,
                 pool: 'factory',

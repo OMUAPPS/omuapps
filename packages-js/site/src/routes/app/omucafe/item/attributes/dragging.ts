@@ -56,7 +56,8 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
         if (!attr.active) return;
         if (!this.game.itemSystem.states.held && this.game.itemSystem.states.hovered === item.id) {
             ctx.actions.push({
-                title: `持つ ${pool.id}`,
+                title: `持つ ${pool.id} - ${item.pool}`,
+                priority: 100,
                 invoke: async () => {
                     this.game.itemSystem.states.held = item.id;
                     this.game.itemSystem.dettachItem(item);

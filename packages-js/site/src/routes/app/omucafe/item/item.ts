@@ -82,6 +82,8 @@ export class ItemSystem {
         const registryString = [
             JSON.stringify(this.game.states.kitchen.value),
             JSON.stringify(this.game.states.scene.value),
+            JSON.stringify(this.game.states.factory.value),
+            JSON.stringify(this.game.states.fridge.value),
         ].join('');
         const activeItems: Item[] = [];
         for (const [id, item] of this.items.entries()) {
@@ -552,9 +554,9 @@ export class ItemSystem {
         const ctx: CollideContext = {};
         for (let i = rootItems.length - 1; i >= 0; i--) {
             const data = this.items.get(rootItems[i].id);
-            if (data && !data.parent) {
-                await this.traverseCollision(data, pool, rootEvent, ctx);
-            }
+            if (!data) continue;
+            if (data.parent) continue;
+            await this.traverseCollision(data, pool, rootEvent, ctx);
         }
         if (ctx.hovered) {
             this.states.hovered = ctx.hovered;
@@ -589,6 +591,7 @@ export class ItemSystem {
             const oldPool = this.renderPass.pools[held.pool];
             this.inputPass.actions.push({
                 title: `離す ${pool.id}`,
+                priority: 0,
                 invoke: async () => {
                     const poolToGlobalTransform = getTransform(oldPool.transform);
                     const globalToNewTransform = getTransform(options.transform).affineInverse();
@@ -597,44 +600,29 @@ export class ItemSystem {
                     held.transform = newTransform.toJSON();
 
                     this.states.held = undefined;
-                    delete oldPool.pool.items[held.id];
-                    pool.items[held.id] = { id: held.id };
-                    held.pool = pool.id;
+                    this.setPool(held, pool);
                 },
             });
         }
     }
 
-    public async handleInput(pool: ItemPool, options: PoolOptions, event: InputEvent): Promise<void> {
-        const isMouse =
-            event.kind === 'mouse-move' ||
-            event.kind === 'mouse-down' ||
-            event.kind === 'mouse-up' ||
-            event.kind === 'mouse-enter' ||
-            event.kind === 'mouse-leave' ||
-            event.kind === 'mouse-wheel';
-
-        if (!isMouse) return;
-
-        const { matrices } = this.game.pipeline;
-        const view = matrices.getViewToWorld().multiply(getTransform(options.transform).getMat4().inverse());
-        const rootEvent: ItemMouseEvent = {
-            ...event,
-            offset: view.transform2(event.mouse.pos),
-            offsetPrev: view.transform2(event.mouse.pos.sub(event.mouse.delta)),
-            offsetDelta: view.basisTransform2(event.mouse.delta),
-        };
-
-        // Use array copy + reverse iterate to handle Z-order (top items first)
-        // Optimization: Use reverse for-loop to avoid allocating .toReversed() array
-        const rootItems = Object.values(pool.items);
-
-        // 2. Event Dispatch Pass
-        for (let i = rootItems.length - 1; i >= 0; i--) {
-            const data = this.items.get(rootItems[i].id);
-            if (data && !data.parent) {
-                await this.traverseDispatch(data, pool, rootEvent);
+    public setPool(item: Item, pool: ItemPool) {
+        if (!this.renderPass) {
+            throw new Error('Render pass is not set.');
+        }
+        if (item.pool) {
+            const oldPool = this.renderPass.pools[item.pool];
+            if (!oldPool) {
+                throw new Error(`Pool ${item.pool} not found.`);
             }
+            delete oldPool.pool.items[item.id];
+        }
+        pool.items[item.id] = { id: item.id };
+        item.pool = pool.id;
+        for (const child of item.children) {
+            const data = this.items.get(child);
+            if (!data) continue;
+            this.setPool(data, pool);
         }
     }
 
@@ -655,16 +643,14 @@ export class ItemSystem {
 
     private async traverseCollision(item: Item, pool: ItemPool, event: ItemMouseEvent, ctx: CollideContext): Promise<void> {
         const localEvent = this.toLocalEvent(item, event);
+        await this.attributeRegistry.emit('collide', item, pool, localEvent, ctx);
 
         const children = item.children;
-        for (let i = children.length - 1; i >= 0; i--) {
+        for (let i = children.length; i >= 0; i--) {
             const child = this.items.get(children[i]);
-            if (child) {
-                this.traverseCollision(child, pool, localEvent, ctx);
-            }
+            if (!child) continue;
+            this.traverseCollision(child, pool, localEvent, ctx);
         }
-
-        await this.attributeRegistry.emit('collide', item, pool, localEvent, ctx);
     }
 
     private async traverseActions(item: Item, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void> {

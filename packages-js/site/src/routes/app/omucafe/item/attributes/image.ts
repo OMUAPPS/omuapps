@@ -46,7 +46,6 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
         const textureResult = this.game.assetManager.getTexture(asset);
         const { states } = this.game.itemSystem;
 
-        if (event.kind !== 'mouse-move') return;
         if (textureResult.type !== 'ready') return;
         if (states.held === item.id) return;
 
