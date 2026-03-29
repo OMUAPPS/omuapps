@@ -1,14 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Vec2 } from '$lib/math/vec2';
 import type { Registry } from '@omujs/omu/api/registry';
 import type { Table } from '@omujs/omu/api/table';
-import { writable, type Writable } from 'svelte/store';
+import { type Writable } from 'svelte/store';
 import type { Item } from '../item';
 import type { ItemPool, ItemSystemState } from '../item/item';
 import type { OmucafeApp } from '../omucafe-app';
 import type { SceneData } from '../scenes/scene';
+import { getAssetKey, type Asset } from './asset';
 
-// パフォーマンス改善版 ProxyTracker
-class FastProxyTracker<T extends object> {
+class ProxyTracker<T extends object> {
     private readonly originalSymbol = Symbol('Original');
     private readonly proxyCache = new WeakMap<object, any>();
     private readonly changes = new Map<symbol, any>();
@@ -71,7 +72,7 @@ class FastProxyTracker<T extends object> {
             set: (obj, prop, val, receiver) => {
                 const current = Reflect.get(obj, prop, receiver);
                 // 値が変わった場合のみ通知
-                if (current !== val) {
+                if (JSON.stringify(current) !== JSON.stringify(val)) {
                     let symbol = fields.get(prop);
                     if (!symbol) {
                         symbol = Symbol(prop.toString());
@@ -79,7 +80,7 @@ class FastProxyTracker<T extends object> {
                     }
                     if (this.changes.has(symbol)) {
                         const original = this.changes.get(symbol);
-                        if (original === val) {
+                        if (JSON.stringify(original) === JSON.stringify(val)) {
                             this.changes.delete(symbol);
                             if (this.changes.size === 0) {
                                 this.callback(false); // 変更通知
@@ -124,7 +125,7 @@ class FastProxyTracker<T extends object> {
 export class BufferedMap<T extends object> {
     private map: Map<string, T> = new Map();
     // 生成したProxyをキャッシュして、getのたびに生成しないようにする
-    private proxies: Map<string, FastProxyTracker<T>> = new Map();
+    private proxies: Map<string, ProxyTracker<T>> = new Map();
 
     private updated: Set<string> = new Set();
     private removed: Map<string, T> = new Map();
@@ -213,7 +214,7 @@ export class BufferedMap<T extends object> {
         if (!item) return undefined;
 
         // 新しいProxyを作り、キャッシュに保存
-        const tracker = new FastProxyTracker(item, (changed) => {
+        const tracker = new ProxyTracker(item, (changed) => {
             if (changed) {
                 this.updated.add(key);
             } else {
@@ -262,19 +263,19 @@ export class BufferedMap<T extends object> {
 }
 
 export class BufferedRegistry<T extends object> {
-    #tracker: FastProxyTracker<T>;
+    #tracker: ProxyTracker<T>;
     public store: Writable<T>;
 
     constructor(
         public readonly registry: Registry<T>,
     ) {
         // Registryの値監視
-        this.#tracker = new FastProxyTracker(registry.value, () => {
+        this.#tracker = new ProxyTracker(registry.value, () => {
             // Svelte storeにも通知が必要ならここで行う
             this.store.set(this.#tracker.value);
         });
 
-        this.store = writable(registry.value);
+        this.store = registry.compatSvelte();
 
         registry.listen((newValue) => {
             // サーバー側から更新が来たらProxyのターゲットを差し替える
@@ -292,6 +293,7 @@ export class BufferedRegistry<T extends object> {
     public async wait() {
         const val = await this.registry.get();
         this.#tracker.value = val;
+        this.store.set(val);
     }
 
     get value(): T {
@@ -306,22 +308,16 @@ export class BufferedRegistry<T extends object> {
     public async flush() {
         if (!this.#tracker.changed) return;
         this.#tracker.flush();
-        // FastProxyTrackerは生オブジェクトを汚染しないので、
-        // update時には現在のProxyがラップしている生の値を取得する必要があるが、
-        // Proxyを通して変更した内容は生オブジェクト(this.#tracker.valueの実体)に反映されているため
-        // そのままregistry.valueを送ればよい。
-
-        // 注意: ここで送るべきは「変更が適用された生オブジェクト」です。
-        // OmuのRegistry実装によりますが、通常は生データを送るのが安全です。
-        // しかし、Proxyのまま送ってもJSON.stringifyされる際に剥がれることが多いです。
         await this.registry.set(this.#tracker.value);
     }
 }
 
 export class GameState {
     public items: BufferedMap<Item>;
+    public assets: BufferedMap<Asset>;
     public kitchen: BufferedRegistry<ItemPool>;
     public fridge: BufferedRegistry<ItemPool>;
+    public factory: BufferedRegistry<ItemPool>;
     public itemStates: BufferedRegistry<ItemSystemState>;
     public scene: BufferedRegistry<SceneData>;
 
@@ -333,11 +329,29 @@ export class GameState {
         const items = new BufferedMap(omu.tables.json<Item>('items', {
             key: (item) => item.id,
         }), listen);
+        const assets = new BufferedMap(omu.tables.json<Asset>('assets', {
+            key: (asset) => getAssetKey(asset),
+        }), listen);
         const kitchen = new BufferedRegistry(omu.registries.json<ItemPool>('kitchen', {
-            default: { items: {} },
+            default: {
+                id: 'kitchen',
+                items: {},
+                bounds: { min: Vec2.ZERO, max: { x: 1920 * 1.5, y: 1080 * 1.5 } },
+            },
         }));
         const fridge = new BufferedRegistry(omu.registries.json<ItemPool>('fridge', {
-            default: { items: {} },
+            default: {
+                id: 'fridge',
+                items: {},
+                bounds: { min: Vec2.ZERO, max: { x: 1920 * 1.5, y: 1080 * 1.5 } },
+            },
+        }));
+        const factory = new BufferedRegistry(omu.registries.json<ItemPool>('factory', {
+            default: {
+                id: 'factory',
+                items: {},
+                bounds: { min: Vec2.ZERO, max: { x: 1920 * 1.5, y: 1080 * 1.5 } },
+            },
         }));
         const itemStates = new BufferedRegistry(omu.registries.json<ItemSystemState>('itemStates', {
             default: { },
@@ -347,8 +361,10 @@ export class GameState {
         }));
 
         this.items = items;
+        this.assets = assets;
         this.kitchen = kitchen;
         this.fridge = fridge;
+        this.factory = factory;
         this.itemStates = itemStates;
         this.scene = scene;
     }

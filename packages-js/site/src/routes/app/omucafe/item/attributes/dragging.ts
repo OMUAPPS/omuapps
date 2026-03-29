@@ -4,6 +4,7 @@ import type { Game } from '../../core/game';
 import type { Action } from '../../core/input-system';
 import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, ItemRender } from '../attribute-handler';
 import type { ItemPool } from '../item';
+import DraggingEditor from './DraggingEditor.svelte';
 
 export interface AttrDragging {
     active: boolean;
@@ -11,9 +12,18 @@ export interface AttrDragging {
 }
 
 export class AttributeDragging implements AttributeHandler<AttrDragging> {
+    name = 'つかみ';
+    editor = DraggingEditor;
+
     constructor(
         private readonly game: Game,
     ) {}
+
+    create(): AttrDragging {
+        return {
+            active: true,
+        };
+    }
 
     async renderOverlay({ item, attr }: AttributeInvoke<AttrDragging>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
         if (this.game.itemSystem.states.hovered == item.id) {
@@ -43,21 +53,13 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
     }
 
     async actions({ item, attr }: AttributeInvoke<AttrDragging>, pool: ItemPool, event: ItemMouseEvent, ctx: { actions: Action[] }): Promise<void> {
+        if (!attr.active) return;
         if (!this.game.itemSystem.states.held && this.game.itemSystem.states.hovered === item.id) {
             ctx.actions.push({
-                title: '持つ',
+                title: `持つ ${pool.id}`,
                 invoke: async () => {
                     this.game.itemSystem.states.held = item.id;
                     this.game.itemSystem.dettachItem(item);
-                },
-            });
-        }
-        if (this.game.itemSystem.states.held === item.id) {
-            ctx.actions.push({
-                title: '離す',
-                invoke: async () => {
-                    this.game.itemSystem.states.held = undefined;
-                    attr.lastDrag = Timer.now();
                 },
             });
         }

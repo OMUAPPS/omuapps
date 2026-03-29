@@ -7,7 +7,7 @@ export interface Transform {
     offset: Vec2Like;
 }
 
-export const TRANSFORM_ORIGIN: Transform = {
+export const DEFAULT_TRANSFORM: Transform = {
     right: { x: 1, y: 0 },
     up: { x: 0, y: 1 },
     offset: { x: 0, y: 0 },

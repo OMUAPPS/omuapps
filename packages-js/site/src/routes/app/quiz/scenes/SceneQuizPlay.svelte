@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { Button, chat } from '@omujs/ui';
-    import { QuizApp, type AnswerEntry, type PlayState } from '../quiz-app';
-    import QuizPlayQuestion from './_components/QuizPlayQuestion.svelte';
     import { ChatEvents } from '@omujs/chat';
+    import { Button, chat } from '@omujs/ui';
+    import { QuizApp, type PlayState } from '../quiz-app';
+    import QuizPlayQuestion from './_components/QuizPlayQuestion.svelte';
 
     interface Props {
         state: PlayState;

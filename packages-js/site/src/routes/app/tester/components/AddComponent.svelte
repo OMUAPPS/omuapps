@@ -9,8 +9,7 @@
 
     function add(child: Content.Component) {
         const children = Content.children(component);
-        children.push(child);
-        component = component;
+        component = Content.setChildren(component, [...children, child]);
     }
 
     type ComponentType = 'text' | 'image';

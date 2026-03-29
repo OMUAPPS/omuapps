@@ -20,7 +20,14 @@
             type: 'main_menu',
         };
     }}>
-        bbb
+        menu
+    </button>
+    <button onclick={() => {
+        $scene = {
+            type: 'factory',
+        };
+    }}>
+        factory
     </button>
     <div class="asset">
         <AssetButton asset={OMUCAFE_OVERLAY_APP} single />
@@ -31,8 +38,5 @@
     main {
         position: absolute;
         inset: 0;
-    }
-
-    .asset {
     }
 </style>

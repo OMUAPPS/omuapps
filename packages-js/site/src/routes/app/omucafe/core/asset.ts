@@ -1,6 +1,7 @@
 import type { GlTexture } from '$lib/components/canvas/glcontext';
-import type { RenderPipeline } from '$lib/components/canvas/pipeline';
-import type { Omu } from '@omujs/omu';
+import { hash } from '$lib/helper';
+import type { Identifier } from '@omujs/omu';
+import type { Game } from './game';
 
 export type Asset = {
     type: 'asset';
@@ -9,6 +10,14 @@ export type Asset = {
     type: 'url';
     url: string;
 };
+
+export function getAssetKey(asset: Asset): string {
+    if (asset.type === 'asset') {
+        return `asset:${asset.id}`;
+    } else {
+        return `url:${asset.url}`;
+    }
+}
 
 export type LoadingResult<T, E> = ({
     type: 'ready';
@@ -29,7 +38,12 @@ export type LoadingState<T, E = Error> = {
 
 export type AssetStatus = LoadingState<Uint8Array>;
 
-export type TextureStatus = LoadingState<GlTexture>;
+export interface AssetTexture {
+    texture: GlTexture;
+    data: ImageData;
+}
+
+export type TextureStatus = LoadingState<AssetTexture>;
 
 class Loader<D, T, E = Error> {
     private readonly cache: Map<string, LoadingState<T, E>> = new Map();
@@ -76,9 +90,9 @@ class Loader<D, T, E = Error> {
 }
 
 export class AssetManager {
-    private readonly assets = new Loader<Asset, Uint8Array>((data) => this.getAssetKey(data), async (asset) => {
+    private readonly assets = new Loader<Asset, Uint8Array>((data) => getAssetKey(data), async (asset) => {
         if (asset.type === 'asset') {
-            const { buffer } = await this.omu.assets.download(asset.id);
+            const buffer = await this.download(asset.id);
             return buffer;
         } else {
             const response = await fetch(asset.url);
@@ -87,7 +101,7 @@ export class AssetManager {
         }
     });
 
-    private readonly textures = new Loader<Asset, GlTexture>((data) => this.getAssetKey(data), async (asset) => {
+    private readonly textures = new Loader<Asset, AssetTexture>((data) => getAssetKey(data), async (asset) => {
         const result = await this.assets.get(asset).promise;
         if (result.type === 'error') {
             throw result.error;
@@ -97,17 +111,29 @@ export class AssetManager {
         return texture;
     });
 
-    constructor(
-        private readonly omu: Omu,
-        private readonly pipeline: RenderPipeline,
-    ) { }
+    private readonly dataCanvas: OffscreenCanvas;
+    private readonly dataContext: OffscreenCanvasRenderingContext2D;
 
-    private getAssetKey(asset: Asset): string {
-        if (asset.type === 'asset') {
-            return `asset:${asset.id}`;
-        } else {
-            return `url:${asset.url}`;
+    constructor(
+        private readonly game: Game,
+    ) {
+        this.dataCanvas = new OffscreenCanvas(1, 1);
+        const ctx = this.dataCanvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Failed to create canvas context');
         }
+        this.dataContext = ctx;
+    }
+
+    private getAssetId(id: string): Identifier {
+        const { omu } = this.game.app;
+        return omu.app.id.join('asset', id);
+    }
+
+    private async download(id: string): Promise<Uint8Array> {
+        const { omu } = this.game.app;
+        const assetId = omu.app.id.join('asset', id);
+        return (await omu.assets.download(assetId)).buffer;
     }
 
     public getTexture(asset: Asset): TextureStatus {
@@ -118,14 +144,22 @@ export class AssetManager {
         return this.textures.get({ type: 'url', url });
     }
 
-    private async createTexture(data: Uint8Array): Promise<GlTexture> {
-        const { context } = this.pipeline;
+    private getImageData(image: HTMLImageElement): ImageData {
+        this.dataCanvas.width = image.width;
+        this.dataCanvas.height = image.height;
+        this.dataContext.drawImage(image, 0, 0);
+        return this.dataContext.getImageData(0, 0, image.width, image.height);
+    }
+
+    private async createTexture(data: Uint8Array): Promise<AssetTexture> {
+        const { context } = this.game.pipeline;
         const texture = context.createTexture();
         const image = new Image();
         const blob = new Blob([data as BlobPart]);
         const url = URL.createObjectURL(blob);
         image.src = url;
         await image.decode();
+        const imageData = this.getImageData(image);
         URL.revokeObjectURL(url);
         texture.use(() => {
             texture.setImage(image, {
@@ -141,6 +175,28 @@ export class AssetManager {
                 wrapT: 'clamp-to-edge',
             });
         });
-        return texture;
+        return {
+            texture,
+            data: imageData,
+        };
+    }
+
+    public upload(asset: Asset) {
+        this.game.states.assets.set(getAssetKey(asset), asset);
+        return asset;
+    }
+
+    public async uploadFile(file: File): Promise<Asset> {
+        const { omu } = this.game.app;
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = new Uint8Array(arrayBuffer);
+        const id = hash(buffer);
+        const asset: Asset = {
+            type: 'asset',
+            id,
+        };
+        const assetId = this.getAssetId(id);
+        await omu.assets.upload(assetId, buffer);
+        return this.upload(asset);
     }
 }
