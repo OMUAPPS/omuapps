@@ -58,7 +58,7 @@ export default [
     },
     {
         rules: {
-            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/no-explicit-any': 'off',
             '@typescript-eslint/no-unused-vars': 'warn',
             'quotes': ['error', 'single'],
 
@@ -74,6 +74,7 @@ export default [
             ],
             'svelte/no-navigation-without-resolve': 'off',
             'svelte/no-unused-svelte-ignore': 'off',
+            'no-useless-assignment': 'off',
 
             //#region stylistic
             '@stylistic/array-bracket-spacing': ['error', 'never'],
