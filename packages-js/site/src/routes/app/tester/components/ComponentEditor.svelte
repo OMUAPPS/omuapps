@@ -20,9 +20,8 @@
     let icon = $derived(component && icons[component.type as 'text' | 'image']);
 
     function removeChild(child: Content.Component) {
-        const children = Content.children(component);
-        const index = children.findIndex((it) => it === child);
-        children.splice(index);
+        const children = Content.children(component).filter((it) => it !== child);
+        component = Content.setChildren(component, children);
     }
 </script>
 
