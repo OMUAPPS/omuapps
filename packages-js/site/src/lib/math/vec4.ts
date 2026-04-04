@@ -43,16 +43,16 @@ export class Vec4 {
                 break;
             }
             case 6: {
-                r = parseInt(hex.slice(0, 2), 16) / 16;
-                g = parseInt(hex.slice(2, 4), 16) / 16;
-                b = parseInt(hex.slice(4, 6), 16) / 16;
+                r = parseInt(hex.slice(0, 2), 16) / 255;
+                g = parseInt(hex.slice(2, 4), 16) / 255;
+                b = parseInt(hex.slice(4, 6), 16) / 255;
                 break;
             }
             case 8: {
-                r = parseInt(hex.slice(0, 2), 16) / 16;
-                g = parseInt(hex.slice(2, 4), 16) / 16;
-                b = parseInt(hex.slice(4, 6), 16) / 16;
-                a = parseInt(hex.slice(6, 8), 16) / 16;
+                r = parseInt(hex.slice(0, 2), 16) / 255;
+                g = parseInt(hex.slice(2, 4), 16) / 255;
+                b = parseInt(hex.slice(4, 6), 16) / 255;
+                a = parseInt(hex.slice(6, 8), 16) / 255;
                 break;
             }
             default: {

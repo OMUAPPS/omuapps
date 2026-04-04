@@ -2,7 +2,7 @@ export class Timer {
     private lastMS: number;
 
     public static now(): number {
-        return performance.now();
+        return performance.now() + performance.timeOrigin;
     }
 
     public constructor() {

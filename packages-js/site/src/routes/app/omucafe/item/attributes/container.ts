@@ -1,6 +1,7 @@
 import { AABB2 } from '$lib/math/aabb2';
 import { Vec2 } from '$lib/math/vec2';
-import type { Asset } from '../../core/asset';
+import { PALETTE_RGB } from '../../colors';
+import { getAssetKey, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
 import type { Action } from '../../core/input-system';
 import { getTransform, type Transform } from '../../core/transform';
@@ -17,108 +18,126 @@ export interface AttrContainer {
 }
 
 export class AttributeContainer implements AttributeHandler<AttrContainer> {
-    name = '容器';
-    editor = ContainerEditor;
+    readonly name = '容器';
+    readonly editor = ContainerEditor;
 
-    constructor(
-        private readonly game: Game,
-    ) {}
+    constructor(private readonly game: Game) {}
 
     create(): AttrContainer {
-        return {
-            active: true,
-        };
+        return { active: true };
     }
 
+    /** * 蓋（カバー）用テクスチャの事前ロード
+     */
     async load({ attr }: AttributeInvoke<AttrContainer>, ctx: LoadContext): Promise<void> {
-        const { cover } = attr;
-        if (!cover) return;
-        const assetState = this.game.assetManager.getTexture(cover.asset);
+        if (!attr.cover) return;
+
+        const assetState = this.game.asset.getTexture(attr.cover.asset);
         if (assetState.type !== 'ready') {
-            const task = ctx.create({
-                title: `Loading texture: ${JSON.stringify(cover.asset)}`,
-            });
-            assetState.promise.then(() => {
-                task.resolve();
-            });
+            const task = ctx.create({ title: `テクスチャ読込中: ${getAssetKey(attr.cover.asset)}` });
+            await assetState.promise;
+            task.resolve();
         }
     }
 
-    async bounds({ item, attr }: AttributeInvoke<AttrContainer>, result: { render: AABB2 }, childrenRender: Record<string, ItemRender>): Promise<void> {
+    /** * 子要素を含めた全体の描画範囲を計算
+     */
+    async bounds({ item }: AttributeInvoke<AttrContainer>, result: { render: AABB2 }, childrenRender: Record<string, ItemRender>): Promise<void> {
         for (const id of item.children) {
-            const child = this.game.itemSystem.items.get(id);
-            if (!child) continue;
-            const transform = getTransform(child.transform).getMat4();
-            const bounds = transform.transformAABB2(childrenRender[id].bounds);
-            result.render = result.render.union(bounds);
-        }
-        const { cover } = attr;
-        if (cover) {
-            const texture = this.game.assetManager.getTexture(cover.asset);
-            if (texture.type !== 'ready') throw new Error('Asset not ready');
-            const { width, height } = texture.data.texture;
-            const bounds = new AABB2(
-                new Vec2(-width / 2, -height / 2),
-                new Vec2(width / 2, height / 2),
-            );
-            const transform = getTransform(cover.transform);
-            result.render = result.render.union(transform.getMat4().transformAABB2(bounds));
+            const child = this.game.item.items.get(id);
+            const renderData = childrenRender[id];
+            if (!child || !renderData) continue;
+
+            const mat = getTransform(child.transform).getMat4();
+            const worldBounds = mat.transformAABB2(renderData.bounds);
+            result.render = result.render.union(worldBounds);
         }
     }
 
-    async renderOverlay({ item, attr }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
+    /** * コンテナ自体の蓋（カバー）やデバッグ情報の描画
+     */
+    async renderOverlay({ attr, item }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
         const { draw, matrices } = this.game.pipeline;
-        for (const id of item.children) {
-            const child = this.game.itemSystem.items.get(id);
-            if (!child) continue;
-            const transform = getTransform(child.transform).getMat4();
-            const bounds = transform.transformAABB2(children[id].bounds);
-            // draw.rectangleStroke(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, Vec4.ONE, 2);
-        }
         const { cover } = attr;
         if (cover) {
-            const texture = this.game.assetManager.getTexture(cover.asset);
-            if (texture.type !== 'ready') throw new Error('Asset not ready');
-            const { width, height } = texture.data.texture;
-            const bounds = new AABB2(
-                new Vec2(-width / 2, -height / 2),
-                new Vec2(width / 2, height / 2),
-            );
-            const transform = getTransform(cover.transform);
+            const textureState = this.game.asset.getTexture(cover.asset);
+            if (textureState.type !== 'ready') return;
+
+            const tex = textureState.data.texture;
+            const halfSize = new Vec2(tex.width / 2, tex.height / 2);
+
+            // 中心基準の描画範囲
+            const bounds = new AABB2(halfSize.scale(-1), halfSize);
+            const mat = getTransform(cover.transform).getMat4();
+
             matrices.model.scope(() => {
-                matrices.model.multiply(transform.getMat4());
-                draw.texture(...bounds.toArray(), texture.data.texture);
+                matrices.model.multiply(mat);
+                draw.texture(...bounds.toArray(), tex);
+            });
+        }
+
+        const { states } = this.game.item;
+        const hoveringId = states.hovered;
+        const isHovered = hoveringId === item.id ||
+                                     (hoveringId && this.game.item.getParents(this.game.item.get(hoveringId)!).includes(item));
+
+        if (isHovered && states.held) {
+            const { min, max } = render.bounds;
+            const { texture } = render;
+
+            draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.CONTAINER_HOVERED, 4);
+        }
+    }
+
+    /** * 子要素の描画（各子のトランスフォームを適用）
+     */
+    async renderChildren(_invoke: AttributeInvoke<AttrContainer>, _render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
+        const { draw, matrices } = this.game.pipeline;
+
+        for (const [id, renderData] of Object.entries(children)) {
+            const child = this.game.item.items.get(id);
+            if (!child) continue;
+
+            matrices.model.scope(() => {
+                matrices.model.multiply(getTransform(child.transform).getMat4());
+                draw.texture(
+                    renderData.bounds.min.x, renderData.bounds.min.y,
+                    renderData.bounds.max.x, renderData.bounds.max.y,
+                    renderData.texture,
+                );
             });
         }
     }
 
-    async renderChildren(invoke: AttributeInvoke<AttrContainer>, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
-        const { draw, matrices } = this.game.pipeline;
-        for (const id in children) {
-            if (!Object.hasOwn(children, id)) continue;
-            const child = this.game.itemSystem.items.get(id);
-            if (!child) continue;
-            const { texture, bounds } = children[id];
-
-            matrices.model.push();
-            matrices.model.multiply(getTransform(child.transform).getMat4());
-            draw.texture(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, texture);
-            matrices.model.pop();
-        }
-    }
-
-    async actions({ item, attr }: AttributeInvoke<AttrContainer>, pool: ItemPool, event: ItemMouseEvent, ctx: { actions: Action[] }): Promise<void> {
+    /** * 他のアイテムをコンテナに入れるアクション
+     */
+    async actions({ item, attr }: AttributeInvoke<AttrContainer>, pool: ItemPool, _event: ItemMouseEvent, ctx: { actions: Action[] }): Promise<void> {
         if (!attr.active) return;
-        const { states } = this.game.itemSystem;
-        if (states.held === item.id && states.hovered) {
-            const container = this.game.itemSystem.items.get(states.hovered);
-            if (!container) return;
+
+        const { states } = this.game.item;
+        if (!states.held) return;
+
+        const scene = this.game.states.scene.value;
+
+        if (pool.id === 'fridge' && scene.type !== 'factory') {
+            return;
+        }
+
+        // ホバーされているのが自分自身、または自分の子供かどうかを確認
+        const hoveringId = states.hovered;
+        const isHovered = hoveringId === item.id ||
+                         (hoveringId && this.game.item.getParents(this.game.item.get(hoveringId)!).includes(item));
+
+        if (isHovered) {
+            const heldItem = this.game.item.items.get(states.held);
+            if (!heldItem) return;
+
             ctx.actions.push({
-                title: '乗せる',
+                title: `${item.name}に乗せる`,
                 priority: 100,
                 invoke: async () => {
-                    states.held = undefined;
-                    this.game.itemSystem.attachItem(container, item);
+                    states.held = undefined; // 持っている状態を解除
+                    this.game.item.attachItem(item, heldItem);
                 },
             });
         }

@@ -3,8 +3,9 @@ import type { Game } from '../core/game';
 import { SceneFactory, type SceneFactoryData } from './factory/factory';
 import { SceneKitchen, type SceneKitchenData } from './kitchen/kitchen';
 import { SceneMainMenu, type SceneMainMenuData } from './main';
+import { ScenePhoto, type ScenePhotoData } from './photo/photo';
 
-export type SceneData = SceneMainMenuData | SceneKitchenData | SceneFactoryData;
+export type SceneData = SceneMainMenuData | SceneKitchenData | SceneFactoryData | ScenePhotoData;
 
 export interface SceneHandler<T> {
     component?: TypedComponent<{
@@ -12,6 +13,7 @@ export interface SceneHandler<T> {
         game: Game;
     }>;
     handle(scene: T): Promise<void>;
+    handleFile?(scene: T, buffer: Uint8Array): Promise<void>;
 }
 
 export class SceneSystem {
@@ -26,6 +28,7 @@ export class SceneSystem {
             main_menu: new SceneMainMenu(game),
             kitchen: new SceneKitchen(game),
             factory: new SceneFactory(game),
+            photo: new ScenePhoto(game),
         };
     }
 
@@ -37,6 +40,13 @@ export class SceneSystem {
         const handler = this.registry[scene.type];
         // @ts-expect-error Union vs Intersection
         await handler.handle(scene);
+    }
+
+    async handleFile(buffer: Uint8Array) {
+        const scene = this.game.states.scene.value;
+        const handler = this.registry[scene.type];
+        // @ts-expect-error Union vs Intersection
+        await handler.handleFile?.(scene, buffer);
     }
 
     public getComponent(data: SceneData) {

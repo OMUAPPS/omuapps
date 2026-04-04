@@ -2,7 +2,7 @@
     import { Checkbox, FileDrop } from '@omujs/ui';
     import EditTransform from '../../common/EditTransform.svelte';
     import { Game } from '../../core/game';
-    import { DEFAULT_TRANSFORM } from '../../core/transform';
+    import { createTransform } from '../../core/transform';
     import type { AttrContainer } from './container';
 
     interface Props {
@@ -19,11 +19,11 @@
     </label>
     <FileDrop accept="image/*" handle={async (files) => {
         const file = files[0];
-        const asset = await Game.getInstance().assetManager.uploadFile(file);
+        const asset = await Game.getInstance().asset.uploadFile(file);
         if (!attr.cover) {
             attr.cover = {
                 asset,
-                transform: DEFAULT_TRANSFORM,
+                transform: createTransform(),
             };
         } else {
             attr.cover.asset = asset;

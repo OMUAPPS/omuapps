@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
 
     interface Props {
         value: number;
@@ -37,7 +36,7 @@
         handleChange(newValue);
     }
 
-    run(() => {
+    $effect(() => {
         update(value);
     });
 
@@ -134,7 +133,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: space-between;
-        width: 10rem;
+        width: min(10rem, 100%);
 
         > .label {
             width: 100%;

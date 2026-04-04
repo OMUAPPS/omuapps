@@ -41,9 +41,12 @@ export interface LoadTask {
 }
 
 export type ItemMouseEvent = InputEventMouse & {
-    offset: Vec2;
-    offsetPrev: Vec2;
-    offsetDelta: Vec2;
+    localPos: Vec2;
+    localPrev: Vec2;
+    localDelta: Vec2;
+    poolPos: Vec2;
+    poolPrev: Vec2;
+    poolDelta: Vec2;
 };
 
 export interface LoadContext {

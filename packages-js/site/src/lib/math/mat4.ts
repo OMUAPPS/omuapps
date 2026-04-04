@@ -3,7 +3,7 @@ import { Mat2 } from './mat2.js';
 import { Mat3 } from './mat3.js';
 import type { Quaternion } from './quaternion.js';
 import { Vec2, type Vec2Like } from './vec2.js';
-import { Vec3 } from './vec3.js';
+import { Vec3, type Vec3Like } from './vec3.js';
 import { Vec4 } from './vec4.js';
 
 export type Mat4Like = {
@@ -142,6 +142,12 @@ export class Mat4 {
             this.m20 * x, this.m21 * y, this.m22 * z, this.m23,
             this.m30, this.m31, this.m32, this.m33,
         );
+    }
+
+    public scaleAt(x: number, y: number, z: number, anchor: Vec3Like) {
+        return this.translate(-anchor.x, -anchor.y, -anchor.z)
+            .scale(x, y, z)
+            .translate(anchor.x, anchor.y, anchor.z);
     }
 
     public translate(x: number, y: number, z: number): Mat4 {

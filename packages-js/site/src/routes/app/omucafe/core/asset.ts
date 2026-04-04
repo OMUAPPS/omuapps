@@ -118,7 +118,7 @@ export class AssetManager {
         private readonly game: Game,
     ) {
         this.dataCanvas = new OffscreenCanvas(1, 1);
-        const ctx = this.dataCanvas.getContext('2d');
+        const ctx = this.dataCanvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) {
             throw new Error('Failed to create canvas context');
         }
@@ -127,12 +127,12 @@ export class AssetManager {
 
     private getAssetId(id: string): Identifier {
         const { omu } = this.game.app;
-        return omu.app.id.join('asset', id);
+        return omu.app.id.base.join('asset', id);
     }
 
     private async download(id: string): Promise<Uint8Array> {
         const { omu } = this.game.app;
-        const assetId = omu.app.id.join('asset', id);
+        const assetId = this.getAssetId(id);
         return (await omu.assets.download(assetId)).buffer;
     }
 
@@ -186,10 +186,8 @@ export class AssetManager {
         return asset;
     }
 
-    public async uploadFile(file: File): Promise<Asset> {
+    public async uploadBuffer(buffer: Uint8Array): Promise<Asset> {
         const { omu } = this.game.app;
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = new Uint8Array(arrayBuffer);
         const id = hash(buffer);
         const asset: Asset = {
             type: 'asset',
@@ -198,5 +196,11 @@ export class AssetManager {
         const assetId = this.getAssetId(id);
         await omu.assets.upload(assetId, buffer);
         return this.upload(asset);
+    }
+
+    public async uploadFile(file: File): Promise<Asset> {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = new Uint8Array(arrayBuffer);
+        return this.uploadBuffer(buffer);
     }
 }

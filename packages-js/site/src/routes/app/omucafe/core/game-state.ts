@@ -1,13 +1,17 @@
 
-import { Vec2 } from '$lib/math/vec2';
 import type { Registry } from '@omujs/omu/api/registry';
 import type { Table } from '@omujs/omu/api/table';
-import { type Writable } from 'svelte/store';
+import { writable, type Writable } from 'svelte/store';
 import type { Item } from '../item';
 import type { ItemPool, ItemSystemState } from '../item/item';
 import type { OmucafeApp } from '../omucafe-app';
 import type { SceneData } from '../scenes/scene';
 import { getAssetKey, type Asset } from './asset';
+
+interface State {
+    wait(): Promise<void>;
+    flush(): Promise<void>;
+}
 
 class ProxyTracker<T extends object> {
     private readonly originalSymbol = Symbol('Original');
@@ -15,6 +19,7 @@ class ProxyTracker<T extends object> {
     private readonly changes = new Map<symbol, any>();
 
     private readonly callback: (changed: boolean) => void;
+    private readonly subscribers: Array<(value: T) => void> = [];
     #proxy: T;
 
     constructor(value: T, callback: (changed: boolean) => void) {
@@ -34,6 +39,10 @@ class ProxyTracker<T extends object> {
     set value(newValue: T) {
         this.#proxy = this.createProxy(newValue);
         this.changes.clear();
+    }
+
+    public subscribe(subscriber: (value: T) => void) {
+        this.subscribers.push(subscriber);
     }
 
     public flush() {
@@ -73,6 +82,9 @@ class ProxyTracker<T extends object> {
                 const current = Reflect.get(obj, prop, receiver);
                 // 値が変わった場合のみ通知
                 if (JSON.stringify(current) !== JSON.stringify(val)) {
+                    for (const subscriber of this.subscribers) {
+                        subscriber(this.value);
+                    }
                     let symbol = fields.get(prop);
                     if (!symbol) {
                         symbol = Symbol(prop.toString());
@@ -105,14 +117,17 @@ class ProxyTracker<T extends object> {
                         fields.set(prop, symbol);
                     }
                     if (!this.changes.has(symbol)) {
+                        for (const subscriber of this.subscribers) {
+                            subscriber(this.value);
+                        }
                         if (this.changes.size === 0) {
                             this.callback(true); // 変更通知
                         }
                         this.changes.set(symbol, Reflect.get(obj, prop));
                     }
                 }
-                const result = Reflect.deleteProperty(obj, prop);
-                return result;
+                Reflect.deleteProperty(obj, prop);
+                return true;
             },
         };
 
@@ -122,7 +137,7 @@ class ProxyTracker<T extends object> {
     }
 }
 
-export class BufferedMap<T extends object> {
+export class BufferedMap<T extends object> implements State {
     private map: Map<string, T> = new Map();
     // 生成したProxyをキャッシュして、getのたびに生成しないようにする
     private proxies: Map<string, ProxyTracker<T>> = new Map();
@@ -194,6 +209,10 @@ export class BufferedMap<T extends object> {
         this.updated.add(key);
     }
 
+    public has(key: string) {
+        return this.map.has(key);
+    }
+
     public delete(key: string) {
         const existed = this.map.get(key);
         if (existed) {
@@ -205,9 +224,14 @@ export class BufferedMap<T extends object> {
     }
 
     public get(key: string): T | undefined {
+        const tracker = this.getTracker(key);
+        return tracker?.value;
+    }
+
+    public getTracker(key: string): ProxyTracker<T> | undefined {
         // キャッシュがあればそれを返す（超高速化）
         if (this.proxies.has(key)) {
-            return this.proxies.get(key)?.value;
+            return this.proxies.get(key);
         }
 
         const item = this.map.get(key);
@@ -223,7 +247,17 @@ export class BufferedMap<T extends object> {
         });
 
         this.proxies.set(key, tracker);
-        return tracker.value;
+        return tracker;
+    }
+
+    public getStore(key: string): Writable<T> | undefined {
+        const tracker = this.getTracker(key);
+        if (!tracker) return;
+        const store = writable(tracker.value);
+        tracker.subscribe((newValue) => {
+            store.set(newValue);
+        });
+        return store;
     }
 
     private getUpdated(): T[] {
@@ -262,7 +296,7 @@ export class BufferedMap<T extends object> {
     }
 }
 
-export class BufferedRegistry<T extends object> {
+export class BufferedRegistry<T extends object> implements State {
     #tracker: ProxyTracker<T>;
     public store: Writable<T>;
 
@@ -312,75 +346,154 @@ export class BufferedRegistry<T extends object> {
     }
 }
 
+interface TransitionData {
+    current: {
+        to: SceneData;
+        start: number;
+    } | null;
+}
+
+interface ShopData {
+    shop: {
+        name: string;
+        address: string;
+        owner: string;
+    };
+}
+
+interface CanvasEditBrushStart {
+    t: 'bs';
+    p: [x:number, y: number];
+}
+
+interface CanvasEditBrushMove {
+    t: 'bm';
+    d: [x: number, y: number];
+}
+
+interface CanvasEditBrushEnd {
+    t: 'be';
+}
+
+type CanvasEdit = (CanvasEditBrushStart | CanvasEditBrushMove | CanvasEditBrushEnd);
+
+interface CanvasEditChunk {
+    i: number;
+    e: CanvasEdit[];
+}
+
+interface Config {
+    obs?: {
+        scene_uuid: string;
+        background_uuid?: string;
+        overlay_uuid?: string;
+    };
+}
+
 export class GameState {
+    private states: State[] = [];
     public items: BufferedMap<Item>;
     public assets: BufferedMap<Asset>;
     public kitchen: BufferedRegistry<ItemPool>;
+    public counter: BufferedRegistry<ItemPool>;
     public fridge: BufferedRegistry<ItemPool>;
     public factory: BufferedRegistry<ItemPool>;
     public itemStates: BufferedRegistry<ItemSystemState>;
     public scene: BufferedRegistry<SceneData>;
+    public transition: BufferedRegistry<TransitionData>;
+    public shop: BufferedRegistry<ShopData>;
+    public config: BufferedRegistry<Config>;
+    public canvasEdits: BufferedMap<CanvasEditChunk>;
+
+    private register<T extends State>(state: T): T {
+        this.states.push(state);
+        return state;
+    }
 
     constructor(
         private readonly omucafe: OmucafeApp,
     ) {
         const { omu } = omucafe;
         const listen = omucafe.side !== 'client';
-        const items = new BufferedMap(omu.tables.json<Item>('items', {
+        const items = this.register(new BufferedMap(omu.tables.json<Item>('items', {
             key: (item) => item.id,
-        }), listen);
-        const assets = new BufferedMap(omu.tables.json<Asset>('assets', {
+        }), listen));
+        const assets = this.register(new BufferedMap(omu.tables.json<Asset>('assets', {
             key: (asset) => getAssetKey(asset),
-        }), listen);
-        const kitchen = new BufferedRegistry(omu.registries.json<ItemPool>('kitchen', {
+        }), listen));
+        const kitchen = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('kitchen', {
             default: {
                 id: 'kitchen',
                 items: {},
-                bounds: { min: Vec2.ZERO, max: { x: 1920 * 1.5, y: 1080 * 1.5 } },
             },
-        }));
-        const fridge = new BufferedRegistry(omu.registries.json<ItemPool>('fridge', {
+        })));
+        const counter = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('counter', {
+            default: {
+                id: 'counter',
+                items: {},
+            },
+        })));
+        const fridge = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('fridge', {
             default: {
                 id: 'fridge',
                 items: {},
-                bounds: { min: Vec2.ZERO, max: { x: 1920 * 1.5, y: 1080 * 1.5 } },
             },
-        }));
-        const factory = new BufferedRegistry(omu.registries.json<ItemPool>('factory', {
+        })));
+        const factory = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('factory', {
             default: {
                 id: 'factory',
                 items: {},
-                bounds: { min: Vec2.ZERO, max: { x: 1920 * 1.5, y: 1080 * 1.5 } },
             },
-        }));
-        const itemStates = new BufferedRegistry(omu.registries.json<ItemSystemState>('itemStates', {
+        })));
+        const itemStates = this.register(new BufferedRegistry(omu.registries.json<ItemSystemState>('itemStates', {
             default: { },
-        }));
-        const scene = new BufferedRegistry(omu.registries.json<SceneData>('scene', {
+        })));
+        const scene = this.register(new BufferedRegistry(omu.registries.json<SceneData>('scene', {
             default: { 'type': 'main_menu' },
-        }));
+        })));
+        const transition = this.register(new BufferedRegistry(omu.registries.json<TransitionData>('transition', {
+            default: {
+                current: null,
+            },
+        })));
+        const shop = this.register(new BufferedRegistry(omu.registries.json<ShopData>('shop', {
+            default: {
+                shop: {
+                    name: '',
+                    address: '',
+                    owner: '',
+                },
+            },
+        })));
+        const config = this.register(new BufferedRegistry(omu.registries.json<Config>('config', {
+            default: {
+            },
+        })));
+        const canvasEdits = this.register(new BufferedMap(omu.tables.json<CanvasEditChunk>('canvas_edits', {
+            key: (edit) => edit.i.toString(),
+        }), listen));
 
         this.items = items;
         this.assets = assets;
         this.kitchen = kitchen;
+        this.counter = counter;
         this.fridge = fridge;
         this.factory = factory;
         this.itemStates = itemStates;
         this.scene = scene;
+        this.transition = transition;
+        this.shop = shop;
+        this.config = config;
+        this.canvasEdits = canvasEdits;
     }
 
     public async wait() {
-        await Promise.all([this.items.wait(), this.kitchen.wait(), this.scene.wait()]);
+        await Promise.all(this.states.map((state) => state.wait()));
     }
 
     public async flush() {
         if (this.omucafe.side === 'client') {
-            await Promise.all([
-                this.items.flush(),
-                this.kitchen.flush(),
-                this.fridge.flush(),
-                this.scene.flush(),
-            ]);
+            await Promise.all(this.states.map((state) => state.flush()));
         }
     }
 }

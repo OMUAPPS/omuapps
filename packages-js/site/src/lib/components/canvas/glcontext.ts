@@ -453,6 +453,10 @@ export class GlTexture {
         private params?: TextureParams,
     ) {}
 
+    public get size() {
+        return new Vec2(this.width, this.height);
+    }
+
     public static create(stateManager: GLStateManager, gl: WebGL2RenderingContext): GlTexture {
         const texture = gl.createTexture();
         if (texture == null) {
@@ -677,7 +681,7 @@ export class GlFramebuffer {
         return new ImageData(new Uint8ClampedArray(data), width, height);
     }
 
-    public readAs(x: number, y: number, width: number, height: number, type = 'image/png'): Promise<Blob> {
+    public readAsBlob(x: number, y: number, width: number, height: number, type = 'image/png'): Promise<Blob> {
         width = Math.ceil(width);
         height = Math.ceil(height);
         if (width <= 0 || height <= 0) {

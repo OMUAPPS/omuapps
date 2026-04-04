@@ -62,7 +62,7 @@ export class Vec2 {
         return new Vec2(this.x - other.x, this.y - other.y);
     }
 
-    public length(): number {
+    public get length(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
@@ -75,7 +75,7 @@ export class Vec2 {
     }
 
     public distance(other: Vec2Like): number {
-        return this.sub(other).length();
+        return this.sub(other).length;
     }
 
     public rotate(angle: number): Vec2 {
@@ -92,8 +92,13 @@ export class Vec2 {
         return new Vec2(this.y, -this.x);
     }
 
+    public get normalized(): Vec2 {
+        const len = this.length;
+        return new Vec2(this.x / len, this.y / len);
+    }
+
     public normalize(): Vec2 {
-        const len = this.length();
+        const len = this.length;
         return new Vec2(this.x / len, this.y / len);
     }
 

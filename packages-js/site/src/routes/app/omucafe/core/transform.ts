@@ -1,5 +1,6 @@
 import { Transform2D } from '$lib/math/transform2d';
 import type { Vec2Like } from '$lib/math/vec2';
+import { clone } from './helper';
 
 export interface Transform {
     right: Vec2Like;
@@ -12,6 +13,10 @@ export const DEFAULT_TRANSFORM: Transform = {
     up: { x: 0, y: 1 },
     offset: { x: 0, y: 0 },
 };
+
+export function createTransform() {
+    return clone(DEFAULT_TRANSFORM);
+}
 
 export function getTransform(transform: Transform): Transform2D {
     const _transform = new Transform2D([

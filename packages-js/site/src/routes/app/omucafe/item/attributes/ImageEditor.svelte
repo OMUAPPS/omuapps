@@ -14,7 +14,7 @@
     <label>
         <FileDrop accept="image/*" handle={async (files) => {
             const file = files[0];
-            attr.asset = await Game.getInstance().assetManager.uploadFile(file);
+            attr.asset = await Game.getInstance().asset.uploadFile(file);
         }}>
             画像を変更
         </FileDrop>

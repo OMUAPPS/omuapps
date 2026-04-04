@@ -1,5 +1,11 @@
 import { lerp } from './math.js';
 
+export interface Vec3Like {
+    x: number;
+    y: number;
+    z: number;
+}
+
 export class Vec3 {
     public static ZERO = new Vec3(0, 0, 0);
 

@@ -1,10 +1,12 @@
-import { Vec4 } from '$lib/math/vec4';
 import type { Game } from '../../core/game';
 import type { SceneHandler } from '../scene';
 import ScreenMainMenu from './ScreenMainMenu.svelte';
 
 export interface SceneMainMenuData {
     type: 'main_menu';
+    task?: {
+        type: 'omucafe' | 'avatar' | 'overlay' | 'setup' | 'obs_waiting';
+    };
 }
 
 export class SceneMainMenu implements SceneHandler<SceneMainMenuData> {
@@ -15,7 +17,5 @@ export class SceneMainMenu implements SceneHandler<SceneMainMenuData> {
     ) {}
 
     async handle(scene: SceneMainMenuData) {
-        const { draw } = this.game.pipeline;
-        draw.rectangle(0, 0, 100, 100, Vec4.ONE);
     }
 }

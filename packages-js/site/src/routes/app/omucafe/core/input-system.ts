@@ -22,6 +22,7 @@ export class InputSystem {
     public add(...action: Action[]) {
         this.actions.push(...action);
         this.actions.sort(comparator((action) => -action.priority));
+        this.currentIndex = clamp(this.currentIndex, 0, this.actions.length - 1);
     }
 
     public clear() {
@@ -41,17 +42,21 @@ export class InputSystem {
     }
 
     public async render() {
-        const { draw, input } = this.game.pipeline;
+        const { draw, input, matrices } = this.game.pipeline;
         // Render Actions (UI overlay)
         if (!this.actions.length) return;
         const padding = 10;
         draw.fontSize = 16;
+        const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
+        matrices.model.push();
+        matrices.model.translate(mouse.x, mouse.y, 1);
+        matrices.model.scale(1 / this.game.renderer.scale, 1 / this.game.renderer.scale, 1);
         for (let index = 0; index < this.actions.length; index++) {
             const action = this.actions[index];
             const title = action.title;
             const bounds = draw.measureTextActual(title);
             const offsetY = 30 * index;
-            const pos = new Vec2(input.mouse.pos.x + padding * 2, input.mouse.pos.y + offsetY + padding);
+            const pos = new Vec2(padding * 2, offsetY + padding);
             draw.rectangle(bounds.min.x + pos.x - padding, bounds.min.y + pos.y - padding / 2, bounds.max.x + pos.x + padding, bounds.max.y + pos.y + padding / 2, PALETTE_RGB.TOOLTIP_BG);
             draw.fontWeight = '500';
             await draw.textAlign(
@@ -62,12 +67,13 @@ export class InputSystem {
             );
         }
 
-        const pos = new Vec2(input.mouse.pos.x + padding * 2, input.mouse.pos.y + 30 * this.currentIndex + padding);
+        const pos = new Vec2(padding * 2, 30 * this.currentIndex + padding);
         draw.triangle(
             pos.add({ x: 0 - 9, y: -6 + 8 }),
             pos.add({ x: 6 - 9, y: 0 + 8 }),
             pos.add({ x: 0 - 9, y: 6 + 8 }),
             PALETTE_RGB.TOOLTIP_TEXT,
         );
+        matrices.model.pop();
     }
 }

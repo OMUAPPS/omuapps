@@ -23,13 +23,31 @@ export const OMUCAFE_APP = new App(APP_ID, {
     }),
 });
 
-export const OMUCAFE_OVERLAY_APP = new App(APP_ID.join('overlay'), {
+export const OMUCAFE_OVERLAY_APP = new App(OVERLAY_ID, {
     parentId: OMUCAFE_APP,
     url: getUrl('/app/omucafe/asset/overlay'),
     metadata: buildMetadata({
         locale: 'en',
         name: {
-            ja: '配信喫茶',
+            ja: 'オーバーレイ',
+            en: 'Café',
+        },
+        description: {
+            ja: '自分だけのカフェを作ってみよう',
+            en: 'Create your own café',
+        },
+        icon: 'ti-coffee',
+        tags: ['underdevelopment', 'game'] as TagKey[],
+    }),
+});
+
+export const OMUCAFE_BACKGROUND_APP = new App(BACKGROUND_ID, {
+    parentId: OMUCAFE_APP,
+    url: getUrl('/app/omucafe/asset/background'),
+    metadata: buildMetadata({
+        locale: 'en',
+        name: {
+            ja: '背景',
             en: 'Café',
         },
         description: {

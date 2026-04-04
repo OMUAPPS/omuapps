@@ -41,9 +41,9 @@
 
     async function generateURL() {
         const url = new URL(asset.url ?? location.href);
-        const timestamp = Date.now().toString(36);
         let app = asset;
         if (!single) {
+            const timestamp = Date.now().toString(36);
             url.searchParams.set('id', timestamp);
             app = app.join(timestamp);
         }
