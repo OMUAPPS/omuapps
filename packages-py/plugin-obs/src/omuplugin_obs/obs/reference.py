@@ -26,7 +26,7 @@ class Reference[T]:
             raise ValueError("Reference is already released")
         if self.ref_count > 0:
             raise ValueError("Reference is still in use")
-        self.release_func(self._ref)
+        # self.release_func(self._ref)
 
     def acquire(self) -> T:
         if self._ref is None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from contextlib import contextmanager
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
@@ -99,12 +100,17 @@ class OBSSceneItem(Reference[obs_sceneitem_t]):
         return OBSScene(obs_scene)
 
     @property
-    def source(self) -> OBSSource:
+    @contextmanager
+    def source(self):
         with self as scene_item:
             obs_source = obspython.obs_sceneitem_get_source(scene_item)
         from .source import OBSSource
 
-        return OBSSource(obs_source)
+        source = OBSSource(obs_source)
+        try:
+            yield source
+        finally:
+            source.release()
 
     def select(self, selected: bool) -> None:
         with self as scene_item:
@@ -438,12 +444,17 @@ class OBSScene(Reference[obs_scene_t]):
         )
 
     @classmethod
-    def create(cls, name: str) -> OBSScene:
-        existing_scene = cls.get_scene_by_name(name)
-        if existing_scene is not None:
-            raise ValueError(f"Scene with name {name} already exists")
+    @contextmanager
+    def create(cls, name: str):
+        with cls.get_scene_by_name(name) as existing_scene:
+            if existing_scene is not None:
+                raise ValueError(f"Scene with name {name} already exists")
         obs_scene = obspython.obs_scene_create(name)
-        return cls(obs_scene)
+        scene = cls(obs_scene)
+        try:
+            yield scene
+        finally:
+            scene.release()
 
     @classmethod
     def create_private(cls, name: str | None = None) -> OBSScene:
@@ -451,11 +462,17 @@ class OBSScene(Reference[obs_scene_t]):
         return cls(obs_scene)
 
     @classmethod
-    def get_scene_by_name(cls, name: str) -> OBSScene | None:
+    @contextmanager
+    def get_scene_by_name(cls, name: str):
         obs_scene = obspython.obs_get_scene_by_name(name)
         if obs_scene is None:
-            return None
-        return cls(obs_scene)
+            yield None
+            return
+        scene = cls(obs_scene)
+        try:
+            yield scene
+        finally:
+            scene.release()
 
     @classmethod
     def from_source(cls, source: OBSSource) -> OBSScene:
@@ -466,12 +483,18 @@ class OBSScene(Reference[obs_scene_t]):
         obs_scene = obspython.obs_scene_duplicate(self, name, duplicate_type.value)
         return OBSScene(obs_scene)
 
-    def find_source(self, name: str) -> OBSSceneItem | None:
+    @contextmanager
+    def find_source(self, name: str):
         with self as scene:
             obs_sceneitem = obspython.obs_scene_find_source(scene, name)
         if obs_sceneitem is None:
+            yield None
             return
-        return OBSSceneItem(obs_sceneitem)
+        scene_item = OBSSceneItem(obs_sceneitem)
+        try:
+            yield scene_item
+        finally:
+            scene_item.release()
 
     def find_source_recursive(self, name: str) -> OBSSceneItem:
         with self as scene:
@@ -487,7 +510,8 @@ class OBSScene(Reference[obs_scene_t]):
         with self as scene:
             items = obspython.obs_scene_enum_items(scene)  # type: ignore
             for item in items:
-                yield OBSSceneItem(item)
+                item = OBSSceneItem(item)
+                yield item
             obspython.source_list_release(items)
 
     def obs_scene_reorder_items(self, order: list[OBSSceneItem]) -> None:
@@ -529,17 +553,28 @@ class OBSScene(Reference[obs_scene_t]):
             obs_sceneitem = obspython.obs_scene_get_group(scene, name)
         return OBSSceneItem(obs_sceneitem)
 
-    def add(self, source: OBSSource) -> OBSSceneItem:
+    @contextmanager
+    def add(self, source: OBSSource):
         with self as scene, source as source_data:
             obs_sceneitem = obspython.obs_scene_add(scene, source_data)
         new_scene_item = OBSSceneItem(obs_sceneitem)
-        new_scene_item.acquire()
-        return new_scene_item
+        try:
+            yield new_scene_item
+        finally:
+            new_scene_item.release()
 
-    def sceneitem_from_source(self, source: OBSSource) -> OBSSceneItem:
-        with self as scene, source as source_data:
-            obs_sceneitem = obspython.obs_scene_sceneitem_from_source(scene, source_data)
-        return OBSSceneItem(obs_sceneitem)
+    @contextmanager
+    def sceneitem_from_source(self, source: OBSSource):
+        with self as scene:
+            obs_sceneitem = obspython.obs_scene_find_source(scene, source.name)
+        if obs_sceneitem is None:
+            yield None
+            return
+        scene_item = OBSSceneItem(obs_sceneitem)
+        try:
+            yield scene_item
+        finally:
+            scene_item.release()
 
     @property
     def is_group(self) -> bool:
