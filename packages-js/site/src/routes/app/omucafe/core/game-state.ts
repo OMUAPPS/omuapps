@@ -1,7 +1,10 @@
 
+import type { Vec4Like } from '$lib/math/vec4';
 import type { Registry } from '@omujs/omu/api/registry';
+import type { Signal } from '@omujs/omu/api/signal';
 import type { Table } from '@omujs/omu/api/table';
 import { writable, type Writable } from 'svelte/store';
+import { PALETTE_RGB } from '../colors';
 import type { Item } from '../item';
 import type { ItemPool, ItemSystemState } from '../item/item';
 import type { OmucafeApp } from '../omucafe-app';
@@ -82,6 +85,7 @@ class ProxyTracker<T extends object> {
                 const current = Reflect.get(obj, prop, receiver);
                 // 値が変わった場合のみ通知
                 if (JSON.stringify(current) !== JSON.stringify(val)) {
+                    const result = Reflect.set(obj, prop, val, receiver);
                     for (const subscriber of this.subscribers) {
                         subscriber(this.value);
                     }
@@ -104,7 +108,6 @@ class ProxyTracker<T extends object> {
                         }
                         this.changes.set(symbol, current);
                     }
-                    const result = Reflect.set(obj, prop, val, receiver);
                     return result;
                 }
                 return true;
@@ -267,6 +270,11 @@ export class BufferedMap<T extends object> implements State {
             if (proxy) {
                 result.push(proxy.value);
                 proxy.flush();
+            } else {
+                const value = this.map.get(key);
+                if (value) {
+                    result.push(value);
+                }
             }
         }
         this.updated.clear();
@@ -302,6 +310,7 @@ export class BufferedRegistry<T extends object> implements State {
 
     constructor(
         public readonly registry: Registry<T>,
+        private readonly listen: boolean,
     ) {
         // Registryの値監視
         this.#tracker = new ProxyTracker(registry.value, () => {
@@ -313,11 +322,13 @@ export class BufferedRegistry<T extends object> implements State {
 
         registry.listen((newValue) => {
             // サーバー側から更新が来たらProxyのターゲットを差し替える
+            if (!this.listen) return;
             this.#tracker.value = newValue;
         });
 
         this.store.subscribe((newValue) => {
             // Svelte側で代入が行われた場合
+            if (this.listen) return;
             if (newValue !== this.#tracker.value) {
                 this.#tracker.value = newValue;
             }
@@ -335,6 +346,7 @@ export class BufferedRegistry<T extends object> implements State {
     }
 
     set value(val: T) {
+        if (this.listen) return;
         this.#tracker.value = val;
         this.store.set(val);
     }
@@ -368,18 +380,40 @@ interface CanvasEditBrushStart {
 
 interface CanvasEditBrushMove {
     t: 'bm';
-    d: [x: number, y: number];
+    p: [x: number, y: number];
 }
 
 interface CanvasEditBrushEnd {
     t: 'be';
+    p: [x:number, y: number];
 }
 
-type CanvasEdit = (CanvasEditBrushStart | CanvasEditBrushMove | CanvasEditBrushEnd);
+interface CanvasEditSetColor {
+    t: 'sc';
+    c: [
+        x: number,
+        y: number,
+        z: number,
+        w: number,
+    ];
+}
 
-interface CanvasEditChunk {
+interface CanvasEditSetWidth {
+    t: 'sw';
+    w: number;
+}
+
+interface CanvasEditSetTool {
+    t: 'st';
+    k: 'brush' | 'eraser';
+}
+
+export type BrushCommand = CanvasEditBrushStart | CanvasEditBrushMove | CanvasEditBrushEnd;
+export type CanvasCommand = BrushCommand | CanvasEditSetColor | CanvasEditSetWidth | CanvasEditSetTool;
+
+export interface CanvasEditChunk {
     i: number;
-    e: CanvasEdit[];
+    c: CanvasCommand[];
 }
 
 interface Config {
@@ -388,6 +422,49 @@ interface Config {
         background_uuid?: string;
         overlay_uuid?: string;
     };
+    canvas: {
+        brush: {
+            color: Vec4Like;
+            width: number;
+        };
+        eraser: {
+            width: number;
+        };
+        tool?: {
+            type: 'brush';
+        } | {
+            type: 'eraser';
+        } | {
+            type: 'move';
+        };
+    };
+}
+
+export interface Customer {
+    source: {
+        type: 'chat';
+        id: string;
+    } | {
+        type: 'task';
+    };
+    meta: {
+        name: string;
+        avatar: string;
+    };
+}
+
+export interface Product {
+    id: string;
+    itemId: string;
+    name: string;
+}
+
+export interface Order {
+    id: string;
+    user: Customer;
+    items: {
+        productId: string;
+    }[];
 }
 
 export class GameState {
@@ -403,7 +480,11 @@ export class GameState {
     public transition: BufferedRegistry<TransitionData>;
     public shop: BufferedRegistry<ShopData>;
     public config: BufferedRegistry<Config>;
-    public canvasEdits: BufferedMap<CanvasEditChunk>;
+    public canvasEditHeap: BufferedMap<CanvasEditChunk>;
+    public canvasEditStack: BufferedRegistry<CanvasEditChunk>;
+    public canvasEditSignal: Signal<CanvasEditChunk>;
+    public orderQueue: BufferedMap<Order>;
+    public products: BufferedMap<Product>;
 
     private register<T extends State>(state: T): T {
         this.states.push(state);
@@ -426,36 +507,36 @@ export class GameState {
                 id: 'kitchen',
                 items: {},
             },
-        })));
+        }), listen));
         const counter = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('counter', {
             default: {
                 id: 'counter',
                 items: {},
             },
-        })));
+        }), listen));
         const fridge = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('fridge', {
             default: {
                 id: 'fridge',
                 items: {},
             },
-        })));
+        }), listen));
         const factory = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('factory', {
             default: {
                 id: 'factory',
                 items: {},
             },
-        })));
+        }), listen));
         const itemStates = this.register(new BufferedRegistry(omu.registries.json<ItemSystemState>('itemStates', {
             default: { },
-        })));
+        }), listen));
         const scene = this.register(new BufferedRegistry(omu.registries.json<SceneData>('scene', {
             default: { 'type': 'main_menu' },
-        })));
+        }), listen));
         const transition = this.register(new BufferedRegistry(omu.registries.json<TransitionData>('transition', {
             default: {
                 current: null,
             },
-        })));
+        }), listen));
         const shop = this.register(new BufferedRegistry(omu.registries.json<ShopData>('shop', {
             default: {
                 shop: {
@@ -464,13 +545,35 @@ export class GameState {
                     owner: '',
                 },
             },
-        })));
+        }), listen));
         const config = this.register(new BufferedRegistry(omu.registries.json<Config>('config', {
             default: {
+                canvas: {
+                    brush: {
+                        color: PALETTE_RGB.ACCENT,
+                        width: 10,
+                    },
+                    eraser: {
+                        width: 20,
+                    },
+                },
             },
-        })));
-        const canvasEdits = this.register(new BufferedMap(omu.tables.json<CanvasEditChunk>('canvas_edits', {
+        }), listen));
+        const canvasEditHeap = this.register(new BufferedMap(omu.tables.json<CanvasEditChunk>('canvas_edit_heap', {
             key: (edit) => edit.i.toString(),
+        }), listen));
+        const canvasEditStack = this.register(new BufferedRegistry(omu.registries.json<CanvasEditChunk>('canvas_edit_stack', {
+            default: {
+                i: 0,
+                c: [],
+            },
+        }), listen));
+        const canvasEditSignal = omu.signals.json<CanvasEditChunk>('canvas_edit_signal');
+        const orderQueue = this.register(new BufferedMap(omu.tables.json<Order>('order_queue', {
+            key: (order) => order.id,
+        }), listen));
+        const products = this.register(new BufferedMap(omu.tables.json<Product>('products', {
+            key: (product) => product.id,
         }), listen));
 
         this.items = items;
@@ -484,7 +587,11 @@ export class GameState {
         this.transition = transition;
         this.shop = shop;
         this.config = config;
-        this.canvasEdits = canvasEdits;
+        this.canvasEditHeap = canvasEditHeap;
+        this.canvasEditStack = canvasEditStack;
+        this.canvasEditSignal = canvasEditSignal;
+        this.orderQueue = orderQueue;
+        this.products = products;
     }
 
     public async wait() {

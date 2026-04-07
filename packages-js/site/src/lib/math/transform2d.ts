@@ -7,6 +7,18 @@ export class Transform2D {
         private columns: readonly [Vec2Like, Vec2Like, Vec2Like],
     ) { }
 
+    public static IDENTITY = new Transform2D([Vec2.RIGHT, Vec2.UP, Vec2.ZERO]);
+
+    public static from(offset: Vec2Like, angle: number): Transform2D {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return new Transform2D([
+            new Vec2(cos, sin),
+            new Vec2(-sin, cos),
+            Vec2.from(offset),
+        ]);
+    }
+
     public toJSON() {
         return {
             right: this.columns[0],
@@ -60,6 +72,35 @@ export class Transform2D {
             this.basisXForm(other.columns[1]),
             this.xform(other.columns[2]),
         ]);
+    }
+
+    public rotate(angle: number): Transform2D {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const rot = new Transform2D([
+            new Vec2(cos, sin),
+            new Vec2(-sin, cos),
+            new Vec2(0, 0),
+        ]);
+        return this.multiply(rot);
+    }
+
+    public scale(scalar: number): Transform2D {
+        const scale = new Transform2D([
+            new Vec2(scalar, 0),
+            new Vec2(0, scalar),
+            new Vec2(0, 0),
+        ]);
+        return this.multiply(scale);
+    }
+
+    public translate(offset: Vec2Like): Transform2D {
+        const translation = new Transform2D([
+            new Vec2(1, 0),
+            new Vec2(0, 1),
+            Vec2.from(offset),
+        ]);
+        return this.multiply(translation);
     }
 
     get origin(): Vec2 {

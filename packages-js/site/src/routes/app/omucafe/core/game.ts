@@ -1,5 +1,6 @@
 import type { RenderPipeline } from '$lib/components/canvas/pipeline';
 import { Timer } from '$lib/timer';
+import { Canvas } from '../canvas/canvas';
 import { FridgeSystem } from '../fridge';
 import { ItemSystem } from '../item';
 import { AttributeRegistry } from '../item/attribute-registry';
@@ -29,6 +30,7 @@ export class Game {
     public scene: SceneSystem;
     public fridge: FridgeSystem;
     public trashbin: Trashbin;
+    public canvas: Canvas;
     public readonly side: GameSide;
 
     constructor(
@@ -46,6 +48,7 @@ export class Game {
         this.scene = new SceneSystem(this);
         this.fridge = new FridgeSystem(this);
         this.trashbin = new Trashbin(this);
+        this.canvas = new Canvas(this);
 
         Game.INSTANCE = this;
         if (app.side === 'client') {

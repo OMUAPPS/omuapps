@@ -3,8 +3,10 @@ import { AABB2 } from '$lib/math/aabb2';
 import { Vec2 } from '$lib/math/vec2';
 import { get, writable } from 'svelte/store';
 import type { Game } from '../../core/game';
+import type { Product } from '../../core/game-state';
+import { generateUid } from '../../core/helper';
 import { DEFAULT_TRANSFORM } from '../../core/transform';
-import { type ItemPool, type PoolOptions } from '../../item/item';
+import { type Item, type ItemPool, type PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
 import type { SceneHandler } from '../scene';
 import factory_bg from './img/factory.png';
@@ -12,7 +14,15 @@ import ScreenCreator from './ScreenFactory.svelte';
 
 export interface SceneFactoryData {
     type: 'factory';
-    itemId?: string;
+    selecting?: {
+        type: 'pick_product';
+    } | {
+        type: 'edit_item';
+        itemId: string;
+    } | {
+        type: 'edit_product';
+        productId: string;
+    };
 }
 
 export const preview = writable<{
@@ -64,6 +74,23 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         return this.cachedAssets;
     }
 
+    public createProductFromItem(item: Item) {
+        const products = this.game.states.products;
+        const product: Product = {
+            id: generateUid(),
+            itemId: item.id,
+            name: item.name,
+        };
+        products.set(product.id, product);
+        this.game.states.scene.value = {
+            type: 'factory',
+            selecting: {
+                type: 'edit_product',
+                productId: product.id,
+            },
+        };
+    }
+
     /**
      * プールオプションの共通生成ロジック
      */
@@ -88,14 +115,17 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         const assets = await this.loadAssets();
         const options = this.getPoolOptions();
 
-        await this.renderScene(scene, assets, options, isClient);
+        if (this.game.side === 'client') {
+            await this.renderSceneClientSide(scene, assets, options);
+        } else if (this.game.side === 'overlay') {
+            await this.renderSceneOverlaySide(scene, assets, options);
+        } else if (this.game.side === 'background') {
+            await this.renderSceneBackgroundSide(scene, assets);
+        }
         await this.processInput(options, isClient);
     }
 
-    /**
-     * 描画処理 (Client / Overlay 共通)
-     */
-    private async renderScene(scene: SceneFactoryData, assets: SceneAssets, options: PoolOptions, isClient: boolean) {
+    private async renderSceneClientSide(scene: SceneFactoryData, assets: SceneAssets, options: PoolOptions) {
         const { draw } = this.game.pipeline;
         const { renderer, itemRenderer, trashbin, fridge } = this.game;
 
@@ -107,19 +137,36 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         itemRenderer.initPass();
         await itemRenderer.renderPool(this.pool, options);
 
-        // 3. クライアント専用の描画
-        if (isClient) {
-            await trashbin.render(new Vec2(renderer.bounds.max.x - OFFSETS.TRASHBIN_X, renderer.bounds.max.y));
-            await fridge.render();
-        }
+        await trashbin.render(new Vec2(renderer.bounds.max.x - OFFSETS.TRASHBIN_X, renderer.bounds.max.y));
+        await fridge.render();
 
         // 4. 手に持っているアイテムの描画 (共通)
         await itemRenderer.renderHeld();
 
-        // 5. プレビューの更新 (クライアント専用)
-        if (isClient) {
-            await this.updatePreview(scene);
-        }
+        await this.updatePreview(scene);
+    }
+
+    private async renderSceneOverlaySide(scene: SceneFactoryData, assets: SceneAssets, options: PoolOptions) {
+        const { draw } = this.game.pipeline;
+        const { renderer, itemRenderer } = this.game;
+
+        // 1. 背景の描画
+        draw.texture(...renderer.bounds.fit(assets.texFactory.size).toArray(), assets.texFactory);
+
+        // 2. アイテムプールの描画
+        itemRenderer.initPass();
+        await itemRenderer.renderPool(this.pool, options);
+
+        // 4. 手に持っているアイテムの描画 (共通)
+        await itemRenderer.renderHeld();
+    }
+
+    private async renderSceneBackgroundSide(scene: SceneFactoryData, assets: SceneAssets) {
+        const { draw } = this.game.pipeline;
+        const { renderer } = this.game;
+
+        // 1. 背景の描画
+        draw.texture(...renderer.containBounds.toArray(), assets.texBackground);
     }
 
     /**
@@ -152,7 +199,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         const previewState = get(preview);
 
         // 選択アイテムがない場合はクリア
-        if (!scene.itemId) {
+        if (!scene.selecting || scene.selecting.type !== 'edit_item' || !scene.selecting.itemId) {
             if (previewState) {
                 if (previewState.url) URL.revokeObjectURL(previewState.url); // メモリリーク対策
                 preview.set(undefined);
@@ -160,11 +207,14 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
             return;
         }
 
-        const item = this.game.item.get(scene.itemId);
+        if (scene.selecting.type !== 'edit_item') return;
+        const itemId = scene.selecting.itemId;
+
+        const item = this.game.item.get(itemId);
         if (!item) return;
 
         // すでに最新のプレビューが生成されている場合はスキップ
-        if (previewState && previewState.itemId === scene.itemId && previewState.update === item.update) {
+        if (previewState && previewState.itemId === itemId && previewState.update === item.update) {
             return;
         }
 
@@ -208,7 +258,10 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
             pool: 'factory',
         });
 
-        scene.itemId = item.id;
+        scene.selecting = {
+            type: 'edit_item',
+            itemId: item.id,
+        };
         this.pool.items[item.id] = { id: item.id };
     }
 }

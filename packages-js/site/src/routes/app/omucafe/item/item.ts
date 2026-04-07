@@ -5,7 +5,7 @@ import type { Transform2D } from '$lib/math/transform2d';
 import type { Vec2Like } from '$lib/math/vec2';
 import type { Game } from '../core/game';
 import type { BufferedMap } from '../core/game-state';
-import { clone } from '../core/helper';
+import { clone, generateUid } from '../core/helper';
 import type { Action } from '../core/input-system';
 import { getTransform, type Transform } from '../core/transform';
 import type { Attributes } from './attribute';
@@ -50,9 +50,6 @@ export interface PoolInputPass {
     actions: Action[];
 }
 
-// --- Constants ---
-const EPOCH_OFFSET = 946684800000;
-
 // --- System ---
 export class ItemSystem {
     public readonly name = 'ItemSystem';
@@ -85,6 +82,7 @@ export class ItemSystem {
             JSON.stringify(this.game.states.scene.value),
             JSON.stringify(this.game.states.factory.value),
             JSON.stringify(this.game.states.fridge.value),
+            JSON.stringify(this.game.states.products.values()),
         ].join('');
 
         const activeItems: Item[] = [];
@@ -102,7 +100,6 @@ export class ItemSystem {
             const toRemove: string[] = [];
             for (const childId of item.children) {
                 const child = this.items.get(childId);
-
                 if (!child || child.parent !== item.id || toKeep.has(childId)) {
                     toRemove.push(childId);
                     continue;
@@ -129,14 +126,8 @@ export class ItemSystem {
     // Lifecycle & Allocation
     // =========================================================================================
 
-    private generateUid(): string {
-        const count = this.itemCounter++;
-        const timestamp = Date.now() - EPOCH_OFFSET;
-        return (timestamp + count).toString(36);
-    }
-
     public allocateItem(item: Omit<Item, 'id' | 'update'>): Item {
-        const id = this.generateUid();
+        const id = generateUid();
         const allocItem: Item = {
             ...clone(item),
             id,
@@ -217,6 +208,11 @@ export class ItemSystem {
             current = parent;
         }
         return parents;
+    }
+
+    public isItemGrandchildOf(item: Item, ancestorId: string): boolean {
+        const parents = this.getParents(item);
+        return parents.some(parent => parent.id === ancestorId);
     }
 
     public dettachItem(item: Item) {
@@ -370,7 +366,7 @@ export class ItemSystem {
 
         // 1. Collision Pass
         const ctx: CollideContext = {};
-        for (let i = 0; i < rootItems.length; i++) {
+        for (let i = rootItems.length - 1; i >= 0; i--) {
             const data = this.items.get(rootItems[i].id);
             if (data && !data.parent) {
                 await this.traverseCollision(data, pool, rootEvent, ctx);
@@ -512,13 +508,14 @@ export class ItemSystem {
 
     private async traverseCollision(item: Item, pool: ItemPool, event: ItemMouseEvent, ctx: CollideContext): Promise<void> {
         const localEvent = this.toLocalEvent(item, event);
-        await this.game.attribute.emit('collide', item, pool, localEvent, ctx);
 
-        // for (let i = item.children.length - 1; i >= 0; i--) {
-        for (let i = 0; i < item.children.length; i++) {
+        for (let i = item.children.length - 1; i >= 0; i--) {
+        // for (let i = 0; i < item.children.length; i++) {
             const child = this.items.get(item.children[i]);
             if (child) this.traverseCollision(child, pool, localEvent, ctx);
         }
+
+        await this.game.attribute.emit('collide', item, pool, localEvent, ctx);
     }
 
     private async traverseActions(item: Item, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void> {

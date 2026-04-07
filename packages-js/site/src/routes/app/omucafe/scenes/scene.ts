@@ -20,15 +20,19 @@ export class SceneSystem {
     private readonly registry: {
         [key in SceneData['type']]: SceneHandler<Extract<SceneData, { type: key }>>;
     };
+    public readonly main_menu: SceneMainMenu;
+    public readonly kitchen: SceneKitchen;
+    public readonly factory: SceneFactory;
+    public readonly photo: ScenePhoto;
 
     constructor(
         private readonly game: Game,
     ) {
         this.registry = {
-            main_menu: new SceneMainMenu(game),
-            kitchen: new SceneKitchen(game),
-            factory: new SceneFactory(game),
-            photo: new ScenePhoto(game),
+            main_menu: this.main_menu = new SceneMainMenu(game),
+            kitchen: this.kitchen = new SceneKitchen(game),
+            factory: this.factory = new SceneFactory(game),
+            photo: this.photo = new ScenePhoto(game),
         };
     }
 

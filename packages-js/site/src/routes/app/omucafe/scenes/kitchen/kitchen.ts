@@ -52,7 +52,8 @@ const OFFSETS = {
         MAX_SUB_2: { x: 310, y: 635 },
     },
     OVERLAY: {
-        KITCHEN_Y: -400,
+        KITCHEN_Y: -200,
+        COUNTER_Y: 200,
         TRASHBIN_X: 400,
     },
     CLIENT: {
@@ -68,7 +69,6 @@ class Display {
 
     public async render() {
         const { matrices, draw, input } = this.game.pipeline;
-        const { states } = this.game;
         this.action = undefined;
 
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
@@ -101,9 +101,7 @@ class Display {
                 title: '会計へ進む',
                 priority: 0,
                 invoke: async () => {
-                    this.game.startTransition({
-                        type: 'photo',
-                    });
+                    this.game.scene.photo.openPhotoMode();
                 },
             };
         }
@@ -187,7 +185,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         return {
             center: Vec2.ZERO,
             kitchenOptions: this.createPoolOptions(states.kitchen.value, DESIGN.WIDTH, DESIGN.HEIGHT, { x: centerX, y: OFFSETS.OVERLAY.KITCHEN_Y }),
-            counterOptions: this.createPoolOptions(states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: centerX, y: counterOffsetY }),
+            counterOptions: this.createPoolOptions(states.counter.value, DESIGN.COUNTER_WIDTH, DESIGN.COUNTER_HEIGHT, { x: centerX, y: counterOffsetY + OFFSETS.OVERLAY.COUNTER_Y }),
         };
     }
 
@@ -200,7 +198,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         } else if (this.game.side === 'overlay') {
             await this.renderOverlaySide(assets, layout);
         } else if (this.game.side === 'background') {
-            await this.renderBackgroundSide(assets, layout);
+            await this.renderBackgroundSide(assets);
         }
     }
 
@@ -246,7 +244,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         await itemRenderer.renderPool(states.kitchen.value, layout.kitchenOptions);
 
         // カウンターレイヤー
-        draw.texture(renderer.bounds.min.x, renderer.bounds.max.y - counterHeight, renderer.bounds.max.x, renderer.bounds.max.y, assets.texCounter);
+        draw.texture(renderer.bounds.min.x, renderer.bounds.max.y - counterHeight + OFFSETS.OVERLAY.COUNTER_Y, renderer.bounds.max.x, renderer.bounds.max.y + OFFSETS.OVERLAY.COUNTER_Y, assets.texCounter);
         await itemRenderer.renderPool(states.counter.value, layout.counterOptions);
 
         await fridge.render();
@@ -255,7 +253,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         await itemRenderer.renderHeld();
     }
 
-    private async renderBackgroundSide(assets: SceneAssets, layout: SceneLayout) {
+    private async renderBackgroundSide(assets: SceneAssets) {
         const { draw } = this.game.pipeline;
         const { renderer } = this.game;
 

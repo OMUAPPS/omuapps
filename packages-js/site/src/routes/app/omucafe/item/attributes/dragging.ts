@@ -68,12 +68,6 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
             // アイテムの位置 = 現在のマウス座標 - 掴んだ時の相対位置
             item.transform.offset = event.poolPos.sub(attr.lastDrag.offset);
         }
-
-        // シーン固有の参照更新（ファクトリーシーン用）
-        const scene = this.game.states.scene.value;
-        if (scene.type === 'factory') {
-            scene.itemId = item.id;
-        }
     }
 
     /** * 「持つ」アクションの登録
@@ -90,24 +84,41 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
         const isPickable = !this.game.item.states.held && this.game.item.states.hovered === item.id;
         const { states } = this.game;
 
-        if (isPickable) {
-            ctx.actions.push({
-                title: `${item.name}を持つ`,
-                priority: 100,
-                invoke: async () => {
-                    if (states.scene.value.type !== 'factory' && pool.id === 'fridge') {
-                        item = this.game.item.clone(item);
-                    }
-                    this.game.item.states.held = item.id;
-                    this.game.item.dettachItem(item);
+        if (!isPickable) return;
 
-                    // 掴んだ瞬間のマウス座標とアイテム座標の差分を保存
-                    attr.lastDrag = {
-                        timestamp: Date.now(),
-                        offset: event.poolPos.sub(item.transform.offset),
-                    };
-                },
-            });
+        // シーン固有の参照更新（ファクトリーシーン用）
+        const scene = this.game.states.scene.value;
+        if (scene.type === 'factory') {
+            if (scene.selecting?.type === 'pick_product') {
+                ctx.actions.push({
+                    title: `${item.name}を商品化する`,
+                    priority: 100,
+                    invoke: async () => {
+                        this.game.scene.factory.createProductFromItem(item);
+                    },
+                });
+            }
         }
+
+        ctx.actions.push({
+            title: `${item.name}を持つ ${item.pool} ${pool.id}`,
+            priority: 100,
+            invoke: async () => {
+                if (states.scene.value.type !== 'factory' && pool.id === 'fridge') {
+                    item = this.game.item.clone(item);
+                }
+                if (states.scene.value.type === 'factory') {
+                    states.scene.value.selecting = { type: 'edit_item', itemId: item.id };
+                }
+                this.game.item.states.held = item.id;
+                this.game.item.dettachItem(item);
+
+                // 掴んだ瞬間のマウス座標とアイテム座標の差分を保存
+                attr.lastDrag = {
+                    timestamp: Date.now(),
+                    offset: event.poolPos.sub(item.transform.offset),
+                };
+            },
+        });
     }
 }

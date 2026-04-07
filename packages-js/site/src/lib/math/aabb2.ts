@@ -1,4 +1,4 @@
-import { lerp } from './math.js';
+import { invLerp, lerp } from './math.js';
 import { Vec2, type Vec2Like } from './vec2.js';
 
 export type AABB2Like = {
@@ -68,6 +68,27 @@ export class AABB2 {
 
     public shrink(amount: Vec2Like): AABB2 {
         return new AABB2(this.min.add(amount), this.max.sub(amount));
+    }
+
+    public with({ min, max }: { min?: Partial<Vec2Like>; max?: Partial<Vec2Like> }): AABB2 {
+        return new AABB2(
+            min ? this.min.with(min) : this.min,
+            max ? this.max.with(max) : this.max,
+        );
+    }
+
+    public unmap(pos: Vec2Like): Vec2 {
+        return new Vec2(
+            invLerp(this.min.x, this.max.x, pos.x),
+            invLerp(this.min.y, this.max.y, pos.y),
+        );
+    }
+
+    public map(value: Vec2Like): Vec2 {
+        return new Vec2(
+            lerp(this.min.x, this.max.x, value.x),
+            lerp(this.min.y, this.max.y, value.y),
+        );
     }
 
     public expand(amount: Vec2Like): AABB2 {
@@ -178,6 +199,12 @@ export class AABB2 {
             this.min.scale(scaler),
             this.max.scale(scaler),
         );
+    }
+
+    public scaleAt(scaler: number, anchor: Vec2Like): AABB2 {
+        const scaledMin = this.min.sub(anchor).scale(scaler).add(anchor);
+        const scaledMax = this.max.sub(anchor).scale(scaler).add(anchor);
+        return new AABB2(scaledMin, scaledMax);
     }
 
     public get size(): Vec2 {

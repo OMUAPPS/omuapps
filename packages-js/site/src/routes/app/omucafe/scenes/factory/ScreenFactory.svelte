@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { Button, Textbox, Tooltip } from '@omujs/ui';
-    import EditTransform from '../../common/EditTransform.svelte';
+    import { Button } from '@omujs/ui';
     import type { Game } from '../../core/game';
-    import type { AttributeKey } from '../../item/attribute';
-    import { preview, type SceneFactoryData } from './factory';
+    import EditItem from './EditItem.svelte';
+    import EditProduct from './EditProduct.svelte';
+    import { type SceneFactoryData } from './factory';
 
     interface Props {
         scene: SceneFactoryData;
@@ -11,33 +11,6 @@
     }
 
     let { game, scene }: Props = $props();
-
-    const itemStore = $derived(
-        scene.itemId ? game.item.items.getStore(scene.itemId) : undefined,
-    );
-
-    let lastAttributeString = JSON.stringify($itemStore?.attrs);
-
-    $effect.pre(() => {
-        if (!$itemStore) return;
-        const currentAttributeString = JSON.stringify($itemStore.attrs);
-        if (lastAttributeString !== currentAttributeString) {
-            $itemStore.update++;
-        }
-        lastAttributeString = currentAttributeString;
-    });
-
-    function deleteAttribute(key: AttributeKey) {
-        if (!$itemStore) return;
-        delete $itemStore.attrs[key];
-    }
-
-    function addAttribute(event: Event & { currentTarget: HTMLSelectElement }) {
-        const key = event.currentTarget.value as AttributeKey;
-        const attribute = game.attribute.values[key];
-        if (!attribute || !$itemStore) return;
-        $itemStore.attrs[key] = attribute.create() as never;
-    }
 
     function goBack() {
         game.startTransition({ type: 'kitchen' });
@@ -47,58 +20,56 @@
 
 <main>
     {#if game.side === 'client'}
-        <div class="menu omu-scroll">
-            <Button onclick={goBack} primary>
-                <i class="ti ti-chevron-left"></i>
-                もどる
-            </Button>
-            <h1>工場</h1>
-
-            {#if scene && $itemStore}
-                {#if $preview}
-                    <div class="preview">
-                        <img src={$preview.url} alt="">
-                    </div>
-                {/if}
-                <h2>名前</h2>
-                <Textbox bind:value={$itemStore.name} />
-                <h2>変形</h2>
-                <EditTransform bind:transform={$itemStore.transform} />
-                <h2>属性</h2>
-                <div class="attributes">
-                    {#each Object.entries(game.attribute.values) as [key, attribute] (key)}
-                        {@const attr = $itemStore.attrs[key as AttributeKey]}
-                        {#if attr}
-                            <div class="attr">
-                                <h3>
-                                    {attribute.name}
-                                    <button onclick={() => deleteAttribute(key as AttributeKey)}>
-                                        <Tooltip>削除</Tooltip>
-                                        <i class="ti ti-x"></i>
-                                    </button>
-                                </h3>
-                                <div class="body">
-                                    <attribute.editor
-                                        bind:attr={$itemStore.attrs[key as AttributeKey] as never}
-                                    />
-                                </div>
-                            </div>
-                        {/if}
+        <div class="menu">
+            <div class="panel">
+                <Button onclick={goBack} primary>
+                    <i class="ti ti-chevron-left"></i>
+                    もどる
+                </Button>
+                <h1>工場</h1>
+            </div>
+            {#if !scene.selecting}
+                <div class="panel">
+                    <Button primary onclick={() => {
+                        scene.selecting = { type: 'pick_product' };
+                    }}>
+                        商品にするアイテムを選択する
+                        <i class="ti ti-pointer"></i>
+                    </Button>
+                    {#each game.states.products.values() as product (product.id)}
+                        <Button onclick={() => {
+                            scene.selecting = { type: 'edit_product', productId: product.id };
+                        }} primary>
+                            {product.name}
+                        </Button>
+                    {:else}
+                        商品がありません
                     {/each}
-
-                    <select onchange={addAttribute}>
-                        <option value="">追加</option>
-                        {#each Object.entries(game.attribute.values) as [key, attribute] (key)}
-                            {@const attr = $itemStore.attrs[key as AttributeKey]}
-                            {#if !attr}
-                                <option value={key}>{attribute.name}</option>
-                            {/if}
-                        {/each}
-                    </select>
                 </div>
-            {:else}
-                <br>
-                <small>アイテムを選択するか追加して編集します</small>
+            {:else if scene.selecting.type === 'pick_product'}
+                <div class="panel">
+                    アイテムを選択してください
+                </div>
+            {:else if scene.selecting.type === 'edit_product'}
+                <div class="panel omu-scroll">
+                    <button class="close" onclick={() => {
+                        scene.selecting = undefined;
+                    }}>
+                        閉じる
+                        <i class="ti ti-x"></i>
+                    </button>
+                    <EditProduct id={scene.selecting.productId} />
+                </div>
+            {:else if scene.selecting.type === 'edit_item'}
+                <div class="panel omu-scroll">
+                    <button class="close" onclick={() => {
+                        scene.selecting = undefined;
+                    }}>
+                        閉じる
+                        <i class="ti ti-x"></i>
+                    </button>
+                    <EditItem id={scene.selecting.itemId} />
+                </div>
             {/if}
         </div>
     {/if}
@@ -112,32 +83,40 @@
     }
 
     .menu {
-        width: 24rem;
+        width: 26rem;
         display: flex;
         flex-direction: column;
+        gap: 2rem;
         padding: 2rem;
-        background: var(--color-bg-1);
-        box-shadow: 0 0 1rem rgba($color: #000000, $alpha: 0.3);
     }
 
-    .preview {
-        background: var(--color-bg-2);
-        margin: 1rem 0;
-        padding: 1rem 0;
-        height: 8rem;
+    .panel {
+        position: relative;
         display: flex;
-        align-items: center;
-        justify-content: center;
+        flex-direction: column;
+        padding: 1.5rem 1.5rem;
+        background: var(--color-bg-1);
+        box-shadow: 0 0 1rem rgba($color: #000000, $alpha: 0.3);
 
-        > img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        > .close {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            align-self: flex-start;
+            padding: 0.75rem 1.5rem;
+            margin: 2px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: var(--color-1);
+            color: var(--color-bg-1);
+            border-radius: 2px;
+            border: none;
+            cursor: pointer;
         }
     }
 
-    h1,
-    h2 {
+    h1 {
         color: var(--color-1);
         margin: 0.5rem 0;
         margin-top: 1rem;
@@ -153,60 +132,5 @@
         border-bottom: 2px solid var(--color-1);
         width: 100%;
         margin-bottom: 1rem;
-    }
-
-    .attributes {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 1rem;
-        flex: 1;
-    }
-
-    .attr {
-        width: 100%;
-        color: var(--color-text);
-        font-size: 0.8621rem;
-        background: var(--color-bg-2);
-        outline: 1px solid var(--color-outline);
-        padding: 0 1rem;
-        corner-shape: squircle;
-        border-radius: 1rem;
-
-        > h3 {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            text-align: center;
-            border-bottom: 1px solid var(--color-1);
-            font-size: 1rem;
-            height: 3rem;
-            color: var(--color-1);
-            text-align: left;
-
-            > button {
-                height: 2rem;
-                width: 3rem;
-                border: none;
-                background: transparent;
-                color: var(--color-1);
-
-                &:hover {
-                    background: rgb(206, 13, 13);
-                    color: #fff;
-                }
-            }
-        }
-
-        > .body {
-                padding: 1rem 0;
-                display: flex;
-                flex-direction: column;
-                gap: 1rem;
-        }
-    }
-
-    select {
-        padding: 0.5rem 1rem;
     }
 </style>

@@ -12,6 +12,7 @@ export interface PoolRenderPass {
 
 export class ItemRenderer {
     public renderPass: PoolRenderPass | undefined;
+    public renderPassStack: PoolRenderPass[] = [];
     private itemRender: Map<string, ItemRenderState> = new Map();
 
     constructor(
@@ -20,6 +21,35 @@ export class ItemRenderer {
 
     public initPass() {
         this.renderPass = undefined;
+    }
+
+    public pushPass() {
+        if (!this.renderPass) {
+            throw new Error('No active render pass to push.');
+        }
+        this.renderPassStack.push(this.renderPass);
+        this.renderPass = {
+            pools: {
+                ...this.renderPass.pools,
+            },
+        };
+    }
+
+    public popPass() {
+        if (this.renderPassStack.length === 0) {
+            throw new Error('No render pass to pop.');
+        }
+        this.renderPass = this.renderPassStack.pop();
+    }
+
+    public addPool(options: PoolOptions) {
+        if (!this.renderPass) {
+            this.renderPass = { pools: {} };
+        }
+        if (this.renderPass.pools[options.pool.id]) {
+            throw new Error(`Pool with id ${options.pool.id} already exists in the current render pass.`);
+        }
+        this.renderPass.pools[options.pool.id] = options;
     }
 
     // =========================================================================================
@@ -52,6 +82,10 @@ export class ItemRenderer {
             const item = items.get(id);
             if (!item) {
                 // Garbage collection: Remove reference if item no longer exists
+                delete pool.items[id];
+                continue;
+            }
+            if (pool.id !== item.pool) {
                 delete pool.items[id];
                 continue;
             }

@@ -314,7 +314,8 @@ float closestBezierPoint(
 }
 
 vec4 getColor(float dir, float dist, float t) {
-    float radius = mix(u_widthIn, u_widthOut, t);
+    float inoutT = -(cos(PI * t) - 1.0) / 2.0;
+    float radius = mix(u_widthIn, u_widthOut, inoutT);
     float alpha = smoothstep(radius - 1.0, radius - 2.0, dist);
     return u_color * alpha;
 }
@@ -676,7 +677,7 @@ export class Draw {
             this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
 
-            this.colorProgram.getAttribute('a_position').set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0); ;
+            this.colorProgram.getAttribute('a_position').set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 3);
         });
     }
@@ -695,6 +696,28 @@ export class Draw {
             ]));
             this.setMatrices(this.colorProgram);
             this.colorProgram.getUniform('u_color').asVec4().set(color);
+
+            const position = this.colorProgram.getAttribute('a_position');
+            position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        });
+    }
+
+    public rectangleGradient2(left: number, top: number, right: number, bottom: number, color1: Vec4Like, color2: Vec4Like): void {
+        const { gl } = this.glContext;
+
+        this.colorProgram.use(() => {
+            this.setMesh(this.colorProgram, new Float32Array([
+                left, top, 0,
+                right, top, 0,
+                right, bottom, 0,
+                left, top, 0,
+                right, bottom, 0,
+                left, bottom, 0,
+            ]));
+            this.setMatrices(this.colorProgram);
+            this.colorProgram.getUniform('u_color1').asVec4().set(color1);
+            this.colorProgram.getUniform('u_color2').asVec4().set(color2);
 
             const position = this.colorProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);

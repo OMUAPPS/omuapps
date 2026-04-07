@@ -6,7 +6,7 @@ import type { Game } from '../../core/game';
 import type { Action } from '../../core/input-system';
 import { getTransform, type Transform } from '../../core/transform';
 import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, ItemRender, LoadContext } from '../attribute-handler';
-import type { ItemPool } from '../item';
+import type { Item, ItemPool } from '../item';
 import ContainerEditor from './ContainerEditor.svelte';
 
 export interface AttrContainer {
@@ -56,7 +56,24 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
     /** * コンテナ自体の蓋（カバー）やデバッグ情報の描画
      */
-    async renderOverlay({ attr, item }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
+    async renderOverlay({ item }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
+        const { draw } = this.game.pipeline;
+
+        const { states } = this.game.item;
+        const hoveringId = states.hovered;
+        const hoveringItem = hoveringId && this.game.item.get(hoveringId);
+        const isHovered = hoveringId === item.id ||
+                         (hoveringItem && this.game.item.getParents(hoveringItem).includes(item));
+
+        if (isHovered && states.held) {
+            const { min, max } = render.bounds;
+            const { texture } = render;
+
+            draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.CONTAINER_HOVERED, 4);
+        }
+    }
+
+    async renderPost({ attr, item }: AttributeInvoke<AttrContainer>, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
         const { draw, matrices } = this.game.pipeline;
         const { cover } = attr;
         if (cover) {
@@ -74,18 +91,6 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 matrices.model.multiply(mat);
                 draw.texture(...bounds.toArray(), tex);
             });
-        }
-
-        const { states } = this.game.item;
-        const hoveringId = states.hovered;
-        const isHovered = hoveringId === item.id ||
-                                     (hoveringId && this.game.item.getParents(this.game.item.get(hoveringId)!).includes(item));
-
-        if (isHovered && states.held) {
-            const { min, max } = render.bounds;
-            const { texture } = render;
-
-            draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.CONTAINER_HOVERED, 4);
         }
     }
 
@@ -125,8 +130,9 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
         // ホバーされているのが自分自身、または自分の子供かどうかを確認
         const hoveringId = states.hovered;
+        const hoveringItem = hoveringId && this.game.item.get(hoveringId);
         const isHovered = hoveringId === item.id ||
-                         (hoveringId && this.game.item.getParents(this.game.item.get(hoveringId)!).includes(item));
+                         (hoveringItem && this.game.item.getParents(hoveringItem).includes(item));
 
         if (isHovered) {
             const heldItem = this.game.item.items.get(states.held);
@@ -138,8 +144,38 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 invoke: async () => {
                     states.held = undefined; // 持っている状態を解除
                     this.game.item.attachItem(item, heldItem);
+                    await this.reorderChildren(item);
                 },
             });
         }
+    }
+
+    private async reorderChildren(item: Item) {
+        // 子アイテムをバウンドの中心のY座標順にソートする
+        const children = item.children
+            .map(id => this.game.item.items.get(id))
+            .filter((child): child is Item => !!child);
+
+        const renderData: Record<string, ItemRender> = {};
+        for (const child of children) {
+            const renderState = await this.game.itemRenderer.getItemRender(child);
+            if (renderState.type === 'rendered') {
+                renderData[child.id] = renderState.render;
+            }
+        }
+
+        children.sort((a, b) => {
+            const aBounds = renderData[a.id]?.bounds;
+            const bBounds = renderData[b.id]?.bounds;
+
+            if (!aBounds || !bBounds) return 0; // 描画データがない場合は順序を変えない
+
+            const aCenterY = a.transform.offset.y + (aBounds.min.y + aBounds.max.y) / 2;
+            const bCenterY = b.transform.offset.y + (bBounds.min.y + bBounds.max.y) / 2;
+
+            return bCenterY - aCenterY; // Y座標が大きいものを前面に
+        });
+
+        item.children = children.map(child => child.id);
     }
 }

@@ -52,7 +52,9 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
         // ロード中の場合は判定を行わない（エラーにはしない）
         if (textureResult.type !== 'ready') return;
         // 自分が操作中の場合は判定をスキップ
+        if (ctx.hovered) return;
         if (this.game.item.states.held === item.id) return;
+        if (this.game.item.states.held && this.game.item.isItemGrandchildOf(item, this.game.item.states.held)) return;
 
         const { texture, data } = textureResult.data;
         const { width, height } = texture;

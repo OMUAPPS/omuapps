@@ -68,8 +68,9 @@ export class GameRenderer {
         const { current } = transition;
         if (!current) return;
         const isBackground = this.game.side === 'background';
-        const timeOffset = isBackground ? 500 / 3 : 0;
+        const timeOffset = isBackground ? 100 : 50;
         const elapsed = Timer.now() - current.start - timeOffset;
+        if (elapsed < 0) return;
         const time = elapsed / TRANSITION_DURATION * 3;
         const t = time % 1;
         const stage = Math.floor(time);

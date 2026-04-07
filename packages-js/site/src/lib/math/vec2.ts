@@ -34,6 +34,13 @@ export class Vec2 {
         );
     }
 
+    public with(values: Partial<Vec2Like>): Vec2 {
+        return new Vec2(
+            values.x ?? this.x,
+            values.y ?? this.y,
+        );
+    }
+
     public scale(scalar: number): Vec2 {
         return new Vec2(this.x * scalar, this.y * scalar);
     }

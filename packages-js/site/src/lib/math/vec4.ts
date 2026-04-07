@@ -18,6 +18,10 @@ export class Vec4 {
         return new Vec4(vec.x, vec.y, vec.z, vec.w);
     }
 
+    public static fromArray(arr: [number, number, number, number]): Vec4 {
+        return new Vec4(...arr);
+    }
+
     public static fromColorHex(hex: string): Vec4 {
         if (hex.startsWith('#')) {
             hex = hex.slice(1);
@@ -83,6 +87,19 @@ export class Vec4 {
         return this.x === other.x && this.y === other.y && this.z === other.z && this.w === other.w;
     }
 
+    public distance(other: Vec4Like) {
+        const dx = other.x - this.x;
+        const dy = other.y - this.y;
+        const dz = other.z - this.z;
+        const dw = other.w - this.w;
+        return Math.sqrt(
+            dx * dx
+            + dy * dy
+            + dz * dz
+            + dw * dw,
+        );
+    }
+
     with(values: Partial<Vec4Like>): Vec4 {
         return new Vec4(
             values.x ?? this.x,
@@ -125,6 +142,15 @@ export class Vec4 {
             this.y - other.y,
             this.z - other.z,
             this.w - other.w,
+        );
+    }
+
+    mul(other: Vec4Like): Vec4 {
+        return new Vec4(
+            this.x * other.x,
+            this.y * other.y,
+            this.z * other.z,
+            this.w * other.w,
         );
     }
 

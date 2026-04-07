@@ -23,7 +23,7 @@
     <Canvas {setPipeline} />
     {#if $scene && game}
         {@const Component = $scene && game?.scene.getComponent($scene)}
-        {#key Component}
+        {#key [Component, $scene]}
             {#if Component && $transition && (!$transition.current || $transition.current.to.type === $scene.type)}
                 <div class="screen" transition:fade={{ duration: 250 }}>
                     <!-- Union vs Intersection -->
@@ -31,10 +31,19 @@
                 </div>
             {/if}
         {/key}
+        <div class="debug">
+            {JSON.stringify($scene)}
+        </div>
     {/if}
 </main>
 
 <style lang="scss">
+    .debug {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
     main {
         position: absolute;
         inset: 0;
