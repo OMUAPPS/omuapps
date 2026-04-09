@@ -15,6 +15,7 @@ export interface AttrContainer {
         asset: Asset;
         transform: Transform;
     };
+    layerOrder: 'upper' | 'lower';
 }
 
 export class AttributeContainer implements AttributeHandler<AttrContainer> {
@@ -24,7 +25,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
     constructor(private readonly game: Game) {}
 
     create(): AttrContainer {
-        return { active: true };
+        return { active: true, layerOrder: 'lower' };
     }
 
     /** * 蓋（カバー）用テクスチャの事前ロード
@@ -42,7 +43,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
     /** * 子要素を含めた全体の描画範囲を計算
      */
-    async bounds({ item }: AttributeInvoke<AttrContainer>, result: { render: AABB2 }, childrenRender: Record<string, ItemRender>): Promise<void> {
+    async bounds({ attr, item }: AttributeInvoke<AttrContainer>, result: { render: AABB2 }, childrenRender: Record<string, ItemRender>): Promise<void> {
         for (const id of item.children) {
             const child = this.game.item.items.get(id);
             const renderData = childrenRender[id];
@@ -51,6 +52,18 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             const mat = getTransform(child.transform).getMat4();
             const worldBounds = mat.transformAABB2(renderData.bounds);
             result.render = result.render.union(worldBounds);
+        }
+        const { cover } = attr;
+        if (cover) {
+            const textureState = this.game.asset.getTexture(cover.asset);
+            if (textureState.type === 'ready') {
+                const { width, height } = textureState.data.texture;
+                const bounds = new AABB2(
+                    new Vec2(-width / 2, -height / 2),
+                    new Vec2(width / 2, height / 2),
+                );
+                result.render = result.render.union(bounds);
+            }
         }
     }
 
@@ -144,14 +157,13 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 invoke: async () => {
                     states.held = undefined; // 持っている状態を解除
                     this.game.item.attachItem(item, heldItem);
-                    await this.reorderChildren(item);
+                    await this.reorderChildren(item, attr);
                 },
             });
         }
     }
 
-    private async reorderChildren(item: Item) {
-        // 子アイテムをバウンドの中心のY座標順にソートする
+    private async reorderChildren(item: Item, attr: AttrContainer) {
         const children = item.children
             .map(id => this.game.item.items.get(id))
             .filter((child): child is Item => !!child);
@@ -173,7 +185,8 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             const aCenterY = a.transform.offset.y + (aBounds.min.y + aBounds.max.y) / 2;
             const bCenterY = b.transform.offset.y + (bBounds.min.y + bBounds.max.y) / 2;
 
-            return bCenterY - aCenterY; // Y座標が大きいものを前面に
+            const delta = (bCenterY - aCenterY);
+            return attr.layerOrder === 'upper' ? delta : -delta;
         });
 
         item.children = children.map(child => child.id);

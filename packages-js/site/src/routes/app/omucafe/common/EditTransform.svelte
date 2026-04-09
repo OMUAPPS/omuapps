@@ -278,7 +278,7 @@
         }
 
         input {
-            width: 100%;
+            width: 50%;
             padding: 2px 4px;
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--color-outline);

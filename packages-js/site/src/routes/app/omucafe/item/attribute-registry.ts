@@ -1,7 +1,7 @@
 import type { Game } from '../core/game';
 import type { Attributes } from './attribute';
 import type { AttributeHandler } from './attribute-handler';
-import { AttributeDragging, AttributeImage } from './attributes';
+import { AttributeDragging, AttributeImage, AttributeParticle } from './attributes';
 import { AttributeContainer } from './attributes/container';
 import type { Item } from './item';
 
@@ -19,11 +19,13 @@ export class AttributeRegistry {
         public readonly image: AttributeImage,
         public readonly dragging: AttributeDragging,
         public readonly container: AttributeContainer,
+        public readonly particle: AttributeParticle,
     ) {
         this.attributes = {
             image,
             dragging,
             container,
+            particle,
         };
     }
 
@@ -35,10 +37,12 @@ export class AttributeRegistry {
         const image = new AttributeImage(game);
         const dragging = new AttributeDragging(game);
         const container = new AttributeContainer(game);
+        const particle = new AttributeParticle(game);
         return new AttributeRegistry(
             image,
             dragging,
             container,
+            particle,
         );
     }
 

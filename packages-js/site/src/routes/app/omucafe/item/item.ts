@@ -42,7 +42,7 @@ export interface PoolOptions {
     pool: ItemPool;
     transform: Transform;
     bounds: AABB2Like;
-    align: Vec2Like;
+    align?: Vec2Like;
 }
 
 export interface PoolInputPass {
@@ -439,6 +439,7 @@ export class ItemSystem {
      * アイテムをプールの境界内に収めるための座標計算を行います。
      */
     private constrainItemToBounds(item: Item, options: PoolOptions, itemBounds: AABB2) {
+        if (!options.align) return;
         const poolAABB = AABB2.from(options.bounds);
         const dimensions = poolAABB.size;
         const size = itemBounds.size;

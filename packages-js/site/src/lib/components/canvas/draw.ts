@@ -53,6 +53,7 @@ out vec4 fragColor;
 
 void main() {
     fragColor = texture(u_texture, v_texcoord) * u_color;
+    fragColor.rgb *= u_color.a;
 }
 `;
 

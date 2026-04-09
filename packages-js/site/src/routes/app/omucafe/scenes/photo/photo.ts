@@ -83,7 +83,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             if (!targetItem || targetItem.parent) continue;
 
             const clone = item.clone(targetItem);
-            clone.transform.offset = { x: 0, y: 0 };
+            clone.transform.offset = { x: 0, y: 400 };
             item.setPool(clone, pool);
         }
         itemRenderer.popPass();
@@ -124,6 +124,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             canvas.updateInput(canvasOptions);
         }
         const canvasRender = await canvas.render(canvasOptions);
+        draw.textureOutline(...frameBounds.toArray(), canvasRender, PALETTE_RGB.CANVAS_GLOW, 6);
         draw.texture(...frameBounds.toArray(), canvasRender);
 
         const isHovered = pos.x > 0 && pos.y > 0 && pos.x < photoTex.width && pos.y < photoTex.height;
@@ -158,6 +159,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         // キャンバスの描画
         const canvasOptions: CanvasOptions = { pos: Vec2.ZERO, mouse: Vec2.ZERO, size: photoTex.size };
         const canvasRender = await canvas.render(canvasOptions);
+        draw.textureOutline(...frameBounds.toArray(), canvasRender, PALETTE_RGB.CANVAS_GLOW, 6);
         draw.texture(...frameBounds.toArray(), canvasRender);
 
         matrices.model.pop();

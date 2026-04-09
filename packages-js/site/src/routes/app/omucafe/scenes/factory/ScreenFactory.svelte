@@ -36,6 +36,7 @@
                 <div class="panel">
                     <Button primary onclick={() => {
                         scene.selecting = { type: 'pick_product' };
+                        scene = { ...scene };
                     }}>
                         商品にするアイテムを選択する
                         <i class="ti ti-pointer"></i>
@@ -46,6 +47,7 @@
                             <div class="entry">
                                 <button onclick={() => {
                                     scene.selecting = { type: 'edit_product', productId: product.id };
+                                    scene = { ...scene };
                                 }}>
                                     {#if $preview[product.itemId]}
                                         <img src={$preview[product.itemId].url} alt="">
@@ -64,6 +66,7 @@
                     アイテムを選択してください
                     <Button onclick={() => {
                         scene.selecting = selecting.back;
+                        scene = { ...scene };
                     }} primary>
                         やめる
                         <i class="ti ti-x"></i>
@@ -73,6 +76,7 @@
                 <div class="panel omu-scroll">
                     <button class="close" onclick={() => {
                         scene.selecting = undefined;
+                        scene = { ...scene };
                     }}>
                         閉じる
                         <i class="ti ti-x"></i>
@@ -83,6 +87,7 @@
                 <div class="panel omu-scroll">
                     <button class="close" onclick={() => {
                         scene.selecting = undefined;
+                        scene = { ...scene };
                     }}>
                         閉じる
                         <i class="ti ti-x"></i>

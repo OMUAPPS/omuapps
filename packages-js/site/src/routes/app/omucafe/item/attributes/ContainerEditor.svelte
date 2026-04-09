@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Checkbox, FileDrop } from '@omujs/ui';
+    import { Checkbox, Combobox, FileDrop } from '@omujs/ui';
     import EditTransform from '../../common/EditTransform.svelte';
     import { Game } from '../../core/game';
     import { createTransform } from '../../core/transform';
@@ -34,4 +34,15 @@
     {#if attr.cover}
         <EditTransform bind:transform={attr.cover.transform} />
     {/if}
+    <small>前後関係</small>
+    <Combobox bind:value={attr.layerOrder} options={{
+        lower: {
+            label: '下にあるほど前へ',
+            value: 'lower',
+        },
+        upper: {
+            label: '上にあるほど前へ',
+            value: 'upper',
+        },
+    }} />
 {/if}

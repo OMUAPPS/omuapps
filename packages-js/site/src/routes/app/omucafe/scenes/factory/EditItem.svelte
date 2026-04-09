@@ -72,7 +72,10 @@
         {/each}
 
         <select onchange={addAttribute}>
-            <option value="">追加</option>
+            <option value="">
+                追加
+                <i class="ti ti-plus"></i>
+            </option>
             {#each Object.entries(game.attribute.values) as [key, attribute] (key)}
                 {@const attr = $itemStore.attrs[key as AttributeKey]}
                 {#if !attr}
@@ -156,14 +159,28 @@
         }
 
         > .body {
-                padding: 1rem 0;
-                display: flex;
-                flex-direction: column;
-                gap: 1rem;
+            padding: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
     }
 
     select {
-        padding: 0.5rem 1rem;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        outline: none;
+        background: var(--color-1);
+        color: var(--color-bg-2);
+        font-size: 0.8rem;
+        font-weight: 600;
+        border-radius: 4px;
+
+        > option {
+            background: var(--color-bg-2);
+            color: var(--color-text);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
     }
 </style>

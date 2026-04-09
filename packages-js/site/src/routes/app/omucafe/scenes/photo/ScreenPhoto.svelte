@@ -199,6 +199,11 @@
                 <i class="ti ti-chevron-left"></i>
             </button>
         </div>
+        {#if scene.receipt}
+            <div class="receipt-client">
+                <Receipt receipt={scene.receipt} />
+            </div>
+        {/if}
     {:else if scene.photo.type === 'started'}
         <div class="countdown">
             <Ticker interval={1000} offset={scene.photo.startTime - Timer.now()}>
@@ -212,7 +217,7 @@
         </div>
     {:else if scene.photo.type === 'completed'}
         {#if scene.receipt}
-            <Receipt receipt={scene.receipt} />
+            <Receipt receipt={scene.receipt} animation />
         {/if}
         <div class="actions">
             <button class="primary" onclick={() => {
@@ -255,9 +260,15 @@
         {:else if scene.photo.type === 'completed'}
             {#if scene.receipt}
                 <div class="receipt">
-                    <Receipt receipt={scene.receipt} />
+                    <Receipt receipt={scene.receipt} animation />
                 </div>
             {/if}
+        {/if}
+    {:else}
+        {#if scene.receipt}
+            <div class="receipt">
+                <Receipt receipt={scene.receipt} />
+            </div>
         {/if}
     {/if}
 {/snippet}
@@ -301,11 +312,19 @@
 
     .receipt {
         position: fixed;
-        left: 16rem;
+        left: 4rem;
         bottom: 4rem;
         filter: drop-shadow(0.25rem 0.5rem 0 rgba(0,0,0,0.5)) drop-shadow(0.25rem 0.5rem 2rem rgba(0,0,0,0.3));
-        transform: rotate(-10deg) scale(1.5);
+        transform: rotate(-10deg);
         transform-origin: bottom;
+    }
+
+    .receipt-client {
+        position: fixed;
+        left: 1rem;
+        bottom: 1rem;
+        transform-origin: left bottom;
+        scale: 0.75;
     }
 
     .tool-switch {

@@ -93,7 +93,7 @@ class Display {
         draw.fontSize = 32;
 
         const entries = Array.from(orders.values());
-        const listBounds = this.bounds.shrink({ x: 10, y: 10 });
+        const listBounds = this.bounds.with({ max: { x: this.bounds.center.x } }).shrink({ x: 10, y: 10 });
 
         this.scroll = lerp(this.scroll, this.scrollTarget, 0.5);
         let offsetY = listBounds.min.y + this.scroll;
@@ -206,7 +206,6 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
                 new Vec2(-CLIENT_RESOLUTION.x / 2, 0),
                 new Vec2(-CLIENT_RESOLUTION.x / 2 + width, height),
             ),
-            align: { x: 0.5, y: 0.5 },
         };
     }
 

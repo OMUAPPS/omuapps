@@ -4,15 +4,16 @@
 
     interface Props {
         receipt: Receipt;
+        animation?: boolean;
     }
 
-    let { receipt }: Props = $props();
+    let { receipt, animation }: Props = $props();
 
     const game = Game.getInstance();
     const shop = game.states.shop.store;
 </script>
 
-<div class="receipt">
+<div class="receipt" class:animation>
     <h1 class="center">{$shop.shop.name}</h1>
     <div class="item">
         <span>Address</span>
@@ -32,6 +33,8 @@
     {/each}
     <br>
     {receipt.date}
+    <br>
+    {receipt.order.user.name}
     <br>
     {#if receipt.screenshot}
         {#await game.asset.getUrl(receipt.screenshot).promise then screenshot}
@@ -56,7 +59,6 @@
         font-family: "Zen Maru Gothic", sans-serif;
         font-weight: 700;
         font-style: normal;
-        animation: print forwards 0.621s linear;
         filter: drop-shadow(0 0 0.5px black);
 
         > img {
@@ -71,7 +73,7 @@
             position: absolute;
             left: 0;
             right: 0;
-            top: -14px;
+            top: -13px;
             background: linear-gradient(45deg, var(--color-bg-2) 50%, transparent 52%),
                 linear-gradient(315deg, var(--color-bg-2) 50%, transparent 52%);
             background-size: 16px 16px;
@@ -81,9 +83,13 @@
 
         &::before {
             top: unset;
-            bottom: -14px;
+            bottom: -13px;
             transform: scaleY(-1);
         }
+    }
+
+    .animation {
+        animation: print forwards 0.621s linear;
     }
 
     @keyframes print {

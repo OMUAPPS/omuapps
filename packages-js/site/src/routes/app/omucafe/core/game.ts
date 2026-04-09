@@ -6,6 +6,7 @@ import { ItemSystem } from '../item';
 import { AttributeRegistry } from '../item/attribute-registry';
 import { ItemRenderer } from '../item/renderer';
 import type { GameSide, OmucafeApp } from '../omucafe-app';
+import { OrderSystem } from '../order';
 import { SceneSystem, type SceneData } from '../scenes/scene';
 import { Trashbin } from '../trashbin';
 import { AssetManager } from './asset';
@@ -31,6 +32,7 @@ export class Game {
     public fridge: FridgeSystem;
     public trashbin: Trashbin;
     public canvas: Canvas;
+    public order: OrderSystem;
     public readonly side: GameSide;
 
     constructor(
@@ -48,6 +50,7 @@ export class Game {
         this.scene = new SceneSystem(this);
         this.fridge = new FridgeSystem(this);
         this.trashbin = new Trashbin(this);
+        this.order = new OrderSystem(this);
         this.canvas = new Canvas(this);
 
         Game.INSTANCE = this;

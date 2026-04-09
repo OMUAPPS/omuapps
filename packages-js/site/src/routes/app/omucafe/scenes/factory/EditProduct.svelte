@@ -51,7 +51,6 @@
             <i class="ti ti-trash"></i>
         </Button>
     </div>
-    {id}
 {/if}
 
 <style lang="scss">

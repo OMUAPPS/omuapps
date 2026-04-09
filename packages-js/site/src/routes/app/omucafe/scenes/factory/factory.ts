@@ -5,7 +5,7 @@ import { get, writable } from 'svelte/store';
 import type { Game } from '../../core/game';
 import type { Product } from '../../core/game-state';
 import { generateUid } from '../../core/helper';
-import { DEFAULT_TRANSFORM } from '../../core/transform';
+import { createTransform, DEFAULT_TRANSFORM } from '../../core/transform';
 import { type Item, type ItemPool, type PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
 import type { SceneHandler } from '../scene';
@@ -48,13 +48,15 @@ const OFFSETS = {
 
 export class SceneFactory implements SceneHandler<SceneFactoryData> {
     public readonly component = ScreenCreator;
-    private readonly pool: ItemPool;
     private readonly readBuffer: GlFramebuffer;
     private cachedAssets: SceneAssets | null = null; // アセットのキャッシュ
 
     constructor(private readonly game: Game) {
-        this.pool = game.states.factory.value;
         this.readBuffer = game.pipeline.context.createFramebuffer();
+    }
+
+    get pool(): ItemPool {
+        return this.game.states.factory.value;
     }
 
     /**
@@ -277,6 +279,8 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
      * ファイルアップロード処理
      */
     async handleFile(scene: SceneFactoryData, buffer: Uint8Array): Promise<void> {
+        const transform = createTransform();
+        transform.offset = { x: 0, y: 300 };
         const item = this.game.item.allocateItem({
             attrs: {
                 image: {
@@ -286,7 +290,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
             },
             name: '新しいアイテム',
             children: [],
-            transform: DEFAULT_TRANSFORM,
+            transform,
             pool: 'factory',
         });
 
