@@ -39,7 +39,7 @@
 </script>
 
 <main>
-    <Canvas {setPipeline} />
+    <Canvas {setPipeline} fps={15} />
     {#if $scene && game}
         {@const Component = $scene && game?.scene.getComponent($scene)}
         {#key Component}

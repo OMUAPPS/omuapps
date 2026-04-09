@@ -75,7 +75,7 @@
     onMount(async () => {
         if (!canvas) return;
         if (setPipeline) {
-            const context = GlContext.create(canvas);
+            const context = GlContext.create(canvas, { preserveDrawingBuffer: true });
             const pipeline = createPipeline(context, canvas);
             setPipeline(pipeline);
         } else {

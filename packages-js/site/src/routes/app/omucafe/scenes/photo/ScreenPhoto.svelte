@@ -55,6 +55,7 @@
     }
 
     async function updatePhoto(photo: typeof scene.photo) {
+        if (game.side !== 'client') return;
         if (!photo) return;
         if (photo.type === 'started') {
             const elapsed = Timer.now() - photo.startTime;
@@ -129,11 +130,6 @@
                 {@render tool(item)}
             {/each}
         </div>
-        <button onclick={() => {
-            game.canvas.clear();
-        }}>
-            reset
-        </button>
         <div class="tool">
             {#if $config.canvas.tool?.type === 'brush'}
                 {#snippet color(color: Vec4)}
@@ -226,6 +222,7 @@
                 if (scene.receipt) {
                     game.states.orders.delete(scene.receipt.order.id);
                 }
+                game.canvas.clear();
             }}>
                 次の注文へ
             </button>

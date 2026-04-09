@@ -47,12 +47,18 @@ export class AABB2 {
             new Vec2(maxX, maxY),
         );
     }
-    public toArray(): [number, number, number, number] {
+    public toArray(options?: { flipY?: boolean }): [number, number, number, number] {
+        let minY = this.min.y;
+        let maxY = this.max.y;
+        if (options?.flipY) {
+            minY = -minY;
+            maxY = -maxY;
+        }
         return [
             this.min.x,
-            this.min.y,
+            minY,
             this.max.x,
-            this.max.y,
+            maxY,
         ];
     }
 

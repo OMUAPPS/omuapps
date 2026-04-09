@@ -107,7 +107,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
                 if (states.scene.value.type !== 'factory' && pool.id === 'fridge') {
                     item = this.game.item.clone(item);
                 }
-                if (states.scene.value.type === 'factory' && !states.scene.value.selecting) {
+                if (states.scene.value.type === 'factory' && (!states.scene.value.selecting || states.scene.value.selecting.type === 'edit_item')) {
                     states.scene.value.selecting = { type: 'edit_item', itemId: item.id };
                 }
                 this.game.item.states.held = item.id;

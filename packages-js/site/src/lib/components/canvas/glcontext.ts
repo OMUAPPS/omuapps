@@ -608,6 +608,14 @@ export class GlFramebuffer {
         return new GlFramebuffer(stateManager, gl, framebuffer);
     }
 
+    public clear(color: Vec4Like): void {
+        if (!this.stateManager.isFramebufferBound(this)) {
+            throw new Error('Framebuffer not bound');
+        }
+        this.gl.clearColor(color.x, color.y, color.z, color.w);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT | this.gl.STENCIL_BUFFER_BIT);
+    }
+
     public use(callback: () => void): void {
         this.stateManager.bindFramebuffer(this, () => {
             callback();
@@ -728,8 +736,8 @@ export class GlContext {
 
     public destroy(): void {}
 
-    public static create(canvas: HTMLCanvasElement | OffscreenCanvas): GlContext {
-        const gl = canvas.getContext('webgl2', { premultipliedAlpha: true }) as WebGL2RenderingContext | null;
+    public static create(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebGLContextAttributes): GlContext {
+        const gl = canvas.getContext('webgl2', { premultipliedAlpha: true, ...options }) as WebGL2RenderingContext | null;
         if (gl == null) {
             throw new Error('WebGL2 not supported');
         }

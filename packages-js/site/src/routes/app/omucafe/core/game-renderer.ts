@@ -1,6 +1,8 @@
+import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext';
 import { AABB2 } from '$lib/math/aabb2';
 import { lerp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
+import { Vec4 } from '$lib/math/vec4';
 import { Timer } from '$lib/timer';
 import { PALETTE_RGB } from '../colors';
 import type { Game } from './game';
@@ -18,10 +20,33 @@ export class GameRenderer {
     public fitBounds: AABB2 = AABB2.ZEROONE;
     public containBounds: AABB2 = AABB2.ZEROONE;
     public scale = 1;
+    private mainFrameBuffer: GlFramebuffer;
+    private mainTexture: GlTexture;
 
     constructor(
         private readonly game: Game,
-    ) {}
+    ) {
+        const { context } = game.pipeline;
+        this.mainFrameBuffer = context.createFramebuffer();
+        this.mainTexture = context.createTexture();
+        this.mainTexture.use(() => {
+            this.mainTexture.setParams({
+                magFilter: 'linear',
+                minFilter: 'linear',
+                wrapS: 'clamp-to-edge',
+                wrapT: 'clamp-to-edge',
+            });
+            this.mainTexture.setImage(null, {
+                width: 4,
+                height: 4,
+                internalFormat: 'rgba',
+                format: 'rgba',
+            });
+        });
+        this.mainFrameBuffer.use(() => {
+            this.mainFrameBuffer.attachTexture(this.mainTexture);
+        });
+    }
 
     public async prepare() {
         this.prepareGL();
@@ -48,6 +73,34 @@ export class GameRenderer {
         this.bounds = matrices.getViewToWorld().transformAABB2(new AABB2(Vec2.ZERO, renderResolution));
         this.fitBounds = this.bounds.fit(this.resolution);
         this.containBounds = this.bounds.contain(this.resolution);
+    }
+
+    public async render(callback: () => Promise<void>): Promise<void> {
+        const { context, matrices, draw } = this.game.pipeline;
+        const { gl } = context;
+        this.mainTexture.use(() => {
+            this.mainTexture.ensureSize(matrices.width, matrices.height);
+        });
+        await this.mainFrameBuffer.useAsync(async () => {
+            this.mainFrameBuffer.clear(Vec4.ZERO);
+            gl.colorMask(true, true, true, true);
+            gl.clearColor(1, 1, 1, 1);
+            gl.clear(gl.DEPTH_BUFFER_BIT);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+            gl.clearColor(0.0, 0.0, 0.0, 0.0);
+
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+
+            await callback();
+        });
+
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
+
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+
+        draw.texture(...this.bounds.toArray({ flipY: true }), this.mainTexture);
     }
 
     private prepareGL() {

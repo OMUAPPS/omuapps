@@ -57,6 +57,7 @@
         font-weight: 700;
         font-style: normal;
         animation: print forwards 0.621s linear;
+        filter: drop-shadow(0 0 0.5px black);
 
         > img {
             height: 12rem;

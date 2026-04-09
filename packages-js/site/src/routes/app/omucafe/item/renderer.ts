@@ -17,7 +17,7 @@ export class ItemRenderer {
 
     constructor(
         private readonly game: Game,
-    ) {}
+    ) { }
 
     public initPass() {
         this.renderPass = undefined;

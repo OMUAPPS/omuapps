@@ -81,9 +81,11 @@ export class Game {
         for await (const frame of this.pipeline) {
             this.pipeline.context.stateManager.setViewport({ x: this.pipeline.matrices.width, y: this.pipeline.matrices.height });
             await this.renderer.prepare();
-            await this.scene.handleFrame();
-            await this.renderer.renderTransition();
-            await this.input.render();
+            await this.renderer.render(async () => {
+                await this.scene.handleFrame();
+                await this.renderer.renderTransition();
+                await this.input.render();
+            });
             await this.states.flush();
         }
     }
