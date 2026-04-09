@@ -3,6 +3,7 @@
     import EditTransform from '../../common/EditTransform.svelte';
     import { Game } from '../../core/game';
     import type { AttributeKey } from '../../item/attribute';
+    import EditItemJson from './EditItemJson.svelte';
     import { preview } from './factory';
 
     interface Props {
@@ -84,6 +85,8 @@
             {/each}
         </select>
     </div>
+    <h2>JSON</h2>
+    <EditItemJson bind:item={$itemStore} />
 {/if}
 
 <style lang="scss">

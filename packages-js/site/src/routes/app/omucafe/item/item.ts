@@ -3,12 +3,12 @@ import { AABB2, type AABB2Like } from '$lib/math/aabb2';
 import { lerp } from '$lib/math/math';
 import type { Transform2D } from '$lib/math/transform2d';
 import type { Vec2Like } from '$lib/math/vec2';
-import type { Game } from '../core/game';
+import { Game } from '../core/game';
 import type { BufferedMap } from '../core/game-state';
-import { clone, generateUid } from '../core/helper';
+import { clone, generateUid, type ValidateResult } from '../core/helper';
 import type { Action } from '../core/input-system';
-import { getTransform, type Transform } from '../core/transform';
-import type { Attributes } from './attribute';
+import { getTransform, validateTransform, type Transform } from '../core/transform';
+import type { AttributeKey, Attributes } from './attribute';
 import type { ActionContext, CollideContext, ItemMouseEvent, LoadTask } from './attribute-handler';
 
 // --- Interfaces ---
@@ -48,6 +48,43 @@ export interface PoolOptions {
 export interface PoolInputPass {
     hovered?: string;
     actions: Action[];
+}
+
+export function validateItem(item: Item): ValidateResult<Item> {
+    const game = Game.getInstance();
+    const attributeMap = game.attribute.values;
+    if (typeof item.name !== 'string') {
+        return { type: 'invalid', message: 'nameは文字列でなければなりません' };
+    }
+    const transformResult = validateTransform(item.transform);
+    if (transformResult.type === 'invalid') {
+        return { type: 'invalid', message: `transformが無効: ${transformResult.message}` };
+    }
+    if (!Array.isArray(item.children)) {
+        return { type: 'invalid', message: 'childrenは配列でなければなりません' };
+    }
+    if (item.children.some(childId => typeof childId !== 'string')) {
+        return { type: 'invalid', message: 'childrenの要素はすべて文字列でなければなりません' };
+    }
+    if (typeof item.pool !== 'string') {
+        return { type: 'invalid', message: 'poolは文字列でなければなりません' };
+    }
+    if (typeof item.update !== 'number') {
+        return { type: 'invalid', message: 'updateは数値でなければなりません' };
+    }
+    // Attributeのバリデーション
+    for (const [attrName, attrValue] of Object.entries(item.attrs)) {
+        const handler = attributeMap[attrName as AttributeKey];
+        if (!handler) {
+            return { type: 'invalid', message: `不明な属性: ${attrName}` };
+        }
+        // @ts-expect-error Union vs Intersection
+        const handlerResult = handler.validate(attrValue);
+        if (handlerResult.type === 'invalid') {
+            return { type: 'invalid', message: `属性${attrName}が無効: ${handlerResult.message}` };
+        }
+    }
+    return { type: 'valid', value: item };
 }
 
 // --- System ---

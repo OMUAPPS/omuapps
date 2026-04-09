@@ -6,6 +6,7 @@ import { Vec2, type Vec2Like } from '$lib/math/vec2';
 import { PALETTE_RGB } from '../../colors';
 import { Game } from '../../core/game';
 import { CLIENT_RESOLUTION, CLIENT_WORLD_BOUNDS } from '../../core/game-renderer';
+import type { BufferedMap, Order } from '../../core/game-state';
 import type { Action } from '../../core/input-system';
 import type { ItemPool, PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
@@ -75,26 +76,26 @@ class Display {
         const { orders } = this.game.states;
         const { matrices, draw, input } = this.game.pipeline;
         this.action = undefined;
-        orders.set('8', {
-            id: '8',
-            items: [{
-                id: '8',
-                name: 'テスト商品',
-                itemId: 'aktmme11',
-            }],
-            user: {
-                source: { type: 'task' },
-                avatar: 'https://pbs.twimg.com/profile_images/1985575332007845888/0CgI0pIh_400x400.jpg',
-                name: 'テスト',
-            },
-        });
 
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
-        draw.fontSize = 32;
 
-        const entries = Array.from(orders.values());
+        await this.renderOrderList(orders, mouse);
+
+        await draw.textAlign(this.bounds.center, 'ようこそ！', Vec2.ZERO, PALETTE_RGB.ACCENT);
+    }
+
+    private async renderOrderList(orders: BufferedMap<Order>, mouse: Vec2) {
+        const { draw } = this.game.pipeline;
         const listBounds = this.bounds.with({ max: { x: this.bounds.center.x } }).shrink({ x: 10, y: 10 });
+        const entries = Array.from(orders.values());
 
+        if (entries.length === 0) {
+            draw.fontSize = 16;
+            draw.fontWeight = '500';
+            await draw.textAlign(listBounds.center, '注文はまだありません', Vec2.CENTER, PALETTE_RGB.ACCENT);
+        }
+
+        draw.fontSize = 32;
         this.scroll = lerp(this.scroll, this.scrollTarget, 0.5);
         let offsetY = listBounds.min.y + this.scroll;
         draw.scissor(this.bounds);
@@ -102,9 +103,11 @@ class Display {
         for (const order of entries) {
             const minY = offsetY;
             offsetY += 10;
-            const avatarStatus = (await this.game.asset.getTextureByUrl(order.user.avatar).promise);
-            if (avatarStatus.type === 'ready') {
-                draw.texture(listBounds.min.x, offsetY, listBounds.min.x + 48, offsetY + 48, avatarStatus.data.texture);
+            if (order.user.avatar) {
+                const avatarStatus = (await this.game.asset.getTextureByUrl(order.user.avatar).promise);
+                if (avatarStatus.type === 'ready') {
+                    draw.texture(listBounds.min.x, offsetY, listBounds.min.x + 48, offsetY + 48, avatarStatus.data.texture);
+                }
             }
             draw.fontWeight = '600';
             await draw.textAlign(new Vec2(listBounds.min.x + 64, offsetY + 12), order.user.name, Vec2.ZERO, PALETTE_RGB.ACCENT);

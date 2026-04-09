@@ -108,7 +108,8 @@ void main() {
     float alpha = 0.0;
     for (int x = -1; x <= 1; x++) {
         for (int y = -1; y <= 1; y++) {
-            vec2 sampleCoord = v_texcoord + vec2(float(x), float(y)) * offset;
+            vec2 dir = normalize(vec2(float(x), float(y)));
+            vec2 sampleCoord = v_texcoord + dir * offset;
             bool isOnEdge = sampleCoord.x < 0.0 || sampleCoord.x > 1.0 || sampleCoord.y < 0.0 || sampleCoord.y > 1.0;
             if (!isOnEdge) {
                 alpha = max(alpha, texture(u_texture, sampleCoord).a);

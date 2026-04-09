@@ -461,13 +461,14 @@ export interface Customer {
         type: 'task';
     };
     name: string;
-    avatar: string;
+    avatar?: string;
 }
 
 export interface Product {
     id: string;
     itemId: string;
     name: string;
+    aliases: string[];
 }
 
 export interface Order {

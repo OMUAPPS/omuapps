@@ -52,6 +52,7 @@
             duration,
             startTime,
         };
+        scene = { ...scene };
     }
 
     async function updatePhoto(photo: typeof scene.photo) {
@@ -78,6 +79,7 @@
                 scene.photo = {
                     type: 'failed',
                 };
+                scene = { ...scene };
                 return;
             }
             const screenshot = await game.asset.uploadBuffer(binary);
@@ -85,6 +87,7 @@
                 type: 'completed',
                 screenshot,
             };
+            scene = { ...scene };
             if (scene.receipt) {
                 scene.receipt.screenshot = screenshot;
                 game.states.receipts.set(scene.receipt.id, scene.receipt);
@@ -228,6 +231,7 @@
                     game.states.orders.delete(scene.receipt.order.id);
                 }
                 game.canvas.clear();
+                game.states.counter.value.items = {};
             }}>
                 次の注文へ
             </button>
@@ -238,7 +242,7 @@
                     receipt: scene.receipt,
                 };
             }}>
-                取り直す
+                撮り直す
             </button>
         </div>
     {/if}
@@ -251,18 +255,29 @@
                 <Ticker interval={1000} offset={scene.photo.startTime - Timer.now()}>
                     {#snippet children(tick)}
                         {@const remaining = 6 - tick}
-                        {#if remaining > 0}
+                        {#if remaining > 1}
                             {remaining}
                         {/if}
                     {/snippet}
                 </Ticker>
             </div>
+            {#if scene.receipt}
+                <div class="receipt">
+                    <Receipt receipt={scene.receipt} />
+                </div>
+            {/if}
         {:else if scene.photo.type === 'completed'}
+            {#await game.asset.getUrl(scene.photo.screenshot).promise then screenshot}
+                {#if screenshot.type === 'ready'}
+                    <img src={screenshot.data} alt="" class="screenshot">
+                {/if}
+            {/await}
             {#if scene.receipt}
                 <div class="receipt">
                     <Receipt receipt={scene.receipt} animation />
                 </div>
             {/if}
+            <div class="flash"></div>
         {/if}
     {:else}
         {#if scene.receipt}
@@ -317,6 +332,44 @@
         filter: drop-shadow(0.25rem 0.5rem 0 rgba(0,0,0,0.5)) drop-shadow(0.25rem 0.5rem 2rem rgba(0,0,0,0.3));
         transform: rotate(-10deg);
         transform-origin: bottom;
+    }
+
+    .flash {
+        position: fixed;
+        inset: 0;
+        animation: forwards 0.5s flash;
+    }
+
+    @keyframes flash {
+        0% {
+            background: rgba(255, 255, 255, 1);
+        }
+        100% {
+            background: rgba(255, 255, 255, 0);
+        }
+    }
+
+    .screenshot {
+        position: fixed;
+        inset: 0;
+        animation: forwards 5s screenshot cubic-bezier(0, 1, 0, 1);
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.5); /* 影の濃さ・範囲 */
+        }
+    }
+
+    @keyframes screenshot {
+        0% {
+            transform: rotate(0) scale(1);
+        }
+        100% {
+            transform: rotate(3deg) scale(1.1);
+            filter: saturate(1.2) contrast(1.2) sepia(0.4);
+        }
     }
 
     .receipt-client {

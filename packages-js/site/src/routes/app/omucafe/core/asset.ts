@@ -2,6 +2,7 @@ import type { GlTexture } from '$lib/components/canvas/glcontext';
 import { hash } from '$lib/helper';
 import type { Identifier } from '@omujs/omu';
 import type { Game } from './game';
+import type { ValidateResult } from './helper';
 
 export type Asset = {
     type: 'asset';
@@ -17,6 +18,24 @@ export function getAssetKey(asset: Asset): string {
     } else {
         return `url:${asset.url}`;
     }
+}
+
+export function validateAsset(value: Asset): ValidateResult<Asset> {
+    if (value.type === 'asset') {
+        if (!value.id) {
+            return { type: 'invalid', message: 'アセットIDが指定されていません' };
+        }
+    } else {
+        if (!value.url) {
+            return { type: 'invalid', message: 'URLが指定されていません' };
+        }
+        try {
+            new URL(value.url);
+        } catch {
+            return { type: 'invalid', message: '無効なURLです' };
+        }
+    }
+    return { type: 'valid', value };
 }
 
 export type LoadingResult<T, E> = ({

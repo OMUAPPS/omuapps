@@ -1,7 +1,8 @@
 import { AABB2 } from '$lib/math/aabb2';
 import { Vec2 } from '$lib/math/vec2';
-import type { Asset } from '../../core/asset';
+import { validateAsset, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
+import type { ValidateResult } from '../../core/helper';
 import placeholder from '../../resources/img/placeholder.png';
 import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, LoadContext } from '../attribute-handler';
 import type { ItemPool } from '../item';
@@ -26,6 +27,20 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
                 url: placeholder,
             },
         };
+    }
+
+    validate(value: AttrImage): ValidateResult<AttrImage> {
+        const assetResult = validateAsset(value.asset);
+        if (assetResult.type === 'invalid') {
+            return { type: 'invalid', message: `アセットが無効: ${assetResult.message}` };
+        }
+
+        const assetState = this.game.asset.getTexture(value.asset);
+        if (assetState.type === 'error') {
+            return { type: 'invalid', message: `テクスチャの読み込みに失敗: ${JSON.stringify(value.asset)}` };
+        }
+
+        return { type: 'valid', value: value };
     }
 
     /**

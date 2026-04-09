@@ -107,7 +107,7 @@
     }
 
     .menu {
-        width: 26rem;
+        width: 28rem;
         display: flex;
         flex-direction: column;
         gap: 2rem;

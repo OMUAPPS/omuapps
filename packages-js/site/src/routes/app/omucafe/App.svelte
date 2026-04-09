@@ -47,4 +47,17 @@
         display: flex;
         justify-content: center;
     }
+
+    .screen {
+        animation: fadeIn forwards 0.25s;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
 </style>

@@ -1,6 +1,7 @@
 import { type Vec2Like } from '$lib/math/vec2';
 import { PALETTE_RGB } from '../../colors';
 import type { Game } from '../../core/game';
+import { validateVec2, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
 import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, ItemRender } from '../attribute-handler';
 import type { ItemPool } from '../item';
@@ -28,6 +29,22 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
 
     create(): AttrDragging {
         return { active: true };
+    }
+
+    validate(value: AttrDragging): ValidateResult<AttrDragging> {
+        if (typeof value.active !== 'boolean') {
+            return { type: 'invalid', message: 'activeはbooleanでなければなりません' };
+        }
+        if (value.lastDrag) {
+            if (typeof value.lastDrag.timestamp !== 'number') {
+                return { type: 'invalid', message: 'lastDrag.timestampはnumberでなければなりません' };
+            }
+            const offsetResult = validateVec2(value.lastDrag.offset);
+            if (offsetResult.type === 'invalid') {
+                return { type: 'invalid', message: `lastDrag.offsetが無効: ${offsetResult.message}` };
+            }
+        }
+        return { type: 'valid', value: value };
     }
 
     /** * ホバー時やドラッグ直後のエフェクト描画

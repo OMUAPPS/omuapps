@@ -1,10 +1,11 @@
 import { AABB2 } from '$lib/math/aabb2';
 import { Vec2 } from '$lib/math/vec2';
 import { PALETTE_RGB } from '../../colors';
-import { getAssetKey, type Asset } from '../../core/asset';
+import { getAssetKey, validateAsset, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
+import type { ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
-import { getTransform, type Transform } from '../../core/transform';
+import { getTransform, validateTransform, type Transform } from '../../core/transform';
 import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, ItemRender, LoadContext } from '../attribute-handler';
 import type { Item, ItemPool } from '../item';
 import ContainerEditor from './ContainerEditor.svelte';
@@ -26,6 +27,33 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
 
     create(): AttrContainer {
         return { active: true, layerOrder: 'lower' };
+    }
+
+    validate(value: AttrContainer): ValidateResult<AttrContainer> {
+        if (value.cover) {
+            if (!value.cover.asset) {
+                return { type: 'invalid', message: 'カバーのアセットが指定されていません' };
+            }
+            if (value.cover.transform) {
+                const transformResult = validateTransform(value.cover.transform);
+                if (transformResult.type === 'invalid') {
+                    return { type: 'invalid', message: `カバーのトランスフォームが無効: ${transformResult.message}` };
+                }
+            }
+            const assetResult = validateAsset(value.cover.asset);
+            if (assetResult.type === 'invalid') {
+                return { type: 'invalid', message: `カバーのアセットが無効: ${assetResult.message}` };
+            }
+
+            const assetState = this.game.asset.getTexture(value.cover.asset);
+            if (assetState.type === 'error') {
+                return { type: 'invalid', message: `テクスチャの読み込みに失敗: ${getAssetKey(value.cover.asset)}` };
+            }
+        }
+        if (value.layerOrder !== 'upper' && value.layerOrder !== 'lower') {
+            return { type: 'invalid', message: `無効なレイヤー順序: ${value.layerOrder}` };
+        }
+        return { type: 'valid', value: value };
     }
 
     /** * 蓋（カバー）用テクスチャの事前ロード

@@ -1,9 +1,11 @@
+import type { GlTexture } from '$lib/components/canvas/glcontext';
 import { Vec2, type Vec2Like } from '$lib/math/vec2';
 import { Vec4 } from '$lib/math/vec4';
 import { ARC4 } from '$lib/random';
 import { Timer } from '$lib/timer';
-import type { Asset } from '../../core/asset';
+import { validateAsset, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
+import { validateEnum, validateVec2, type ValidateResult } from '../../core/helper';
 import type { AttributeHandler, AttributeInvoke, LoadContext } from '../attribute-handler';
 import ParticleEditor from './ParticleEditor.svelte';
 
@@ -26,16 +28,14 @@ export class AttributeParticle implements AttributeHandler<AttrParticle> {
     readonly name = 'パーティクル';
     readonly editor = ParticleEditor;
 
-    private static readonly ALPHA_THRESHOLD = 4;
-
     constructor(private readonly game: Game) {}
 
     create(): AttrParticle {
         return {
             assets: [],
             origin: { x: 0, y: 0 },
-            velocity: { x: 10, y: 10 },
             position: { x: 50, y: 50 },
+            velocity: { x: 10, y: 10 },
             acceleration: { x: 0, y: 10 },
             random: true,
             direction: {
@@ -45,6 +45,52 @@ export class AttributeParticle implements AttributeHandler<AttrParticle> {
             count: 1,
             duration: 1,
         };
+    }
+
+    validate(value: AttrParticle): ValidateResult<AttrParticle> {
+        if (!Array.isArray(value.assets)) {
+            return { type: 'invalid', message: 'assetsはAssetの配列でなければなりません' };
+        }
+        for (const asset of value.assets) {
+            const assetResult = validateAsset(asset);
+            if (assetResult.type === 'invalid') {
+                return { type: 'invalid', message: `assetsの要素が無効: ${assetResult.message}` };
+            }
+        }
+        const originResult = validateVec2(value.origin);
+        if (originResult.type === 'invalid') {
+            return { type: 'invalid', message: `originが無効: ${originResult.message}` };
+        }
+        const positionResult = validateVec2(value.position);
+        if (positionResult.type === 'invalid') {
+            return { type: 'invalid', message: `positionが無効: ${positionResult.message}` };
+        }
+        const velocityResult = validateVec2(value.velocity);
+        if (velocityResult.type === 'invalid') {
+            return { type: 'invalid', message: `velocityが無効: ${velocityResult.message}` };
+        }
+        const accelerationResult = validateVec2(value.acceleration);
+        if (accelerationResult.type === 'invalid') {
+            return { type: 'invalid', message: `accelerationが無効: ${accelerationResult.message}` };
+        }
+        if (typeof value.random !== 'boolean') {
+            return { type: 'invalid', message: 'randomはbooleanでなければなりません' };
+        }
+        const horizontalResult = validateEnum(value.direction.horizontal, ['left', 'right', 'both']);
+        if (horizontalResult.type === 'invalid') {
+            return { type: 'invalid', message: `direction.horizontalが無効: ${horizontalResult.message}` };
+        }
+        const verticalResult = validateEnum(value.direction.vertical, ['up', 'down', 'both']);
+        if (verticalResult.type === 'invalid') {
+            return { type: 'invalid', message: `direction.verticalが無効: ${verticalResult.message}` };
+        }
+        if (typeof value.count !== 'number' || value.count <= 0) {
+            return { type: 'invalid', message: 'countは正の数でなければなりません' };
+        }
+        if (typeof value.duration !== 'number' || value.duration <= 0) {
+            return { type: 'invalid', message: 'durationは正の数でなければなりません' };
+        }
+        return { type: 'valid', value: value };
     }
 
     /**
@@ -57,93 +103,115 @@ export class AttributeParticle implements AttributeHandler<AttrParticle> {
                 const task = ctx.create({
                     title: `画像を読み込み中: ${JSON.stringify(asset)}`,
                 });
-                // Promiseが解決されたらタスクを完了させる
                 await assetState.promise;
                 task.resolve();
             }
         }
     }
 
-    private getTexture(attr: AttrParticle, random: ARC4) {
+    /**
+     * ランダムにテクスチャを取得する
+     */
+    private getTexture(attr: AttrParticle, random: ARC4): GlTexture {
         const asset = random.choice(attr.assets);
         const assetState = this.game.asset.getTexture(asset);
+
         if (assetState.type !== 'ready') {
             throw new Error(`Asset not loaded: ${JSON.stringify(asset)}`);
         }
-        const { texture } = assetState.data;
-        return texture;
+
+        return assetState.data.texture;
     }
 
-    private getPosition(attr: AttrParticle, random: ARC4, t: number): Vec2 {
+    /**
+     * 初期位置を計算する
+     */
+    private getInitialPosition(attr: AttrParticle, random: ARC4): Vec2 {
+        const pos = Vec2.from(attr.position);
+        if (!attr.random) return pos;
+
+        return new Vec2(
+            pos.x * (random.next() - 0.5) * 2,
+            pos.y * (random.next() - 0.5) * 2,
+        );
+    }
+
+    /**
+     * 初期速度を計算する
+     */
+    private getInitialVelocity(attr: AttrParticle, random: ARC4): Vec2 {
+        let velX = attr.velocity.x;
+        let velY = attr.velocity.y;
+
+        // 水平方向の向き
+        if (attr.direction.horizontal === 'left') velX *= -1;
+        else if (attr.direction.horizontal === 'both' && random.next() < 0.5) velX *= -1;
+
+        // 垂直方向の向き
+        if (attr.direction.vertical === 'up') velY *= -1;
+        else if (attr.direction.vertical === 'both' && random.next() < 0.5) velY *= -1;
+
+        if (attr.random) {
+            velX *= random.next();
+            velY *= random.next();
+        }
+
+        return new Vec2(velX, velY);
+    }
+
+    /**
+     * 時間 t におけるパーティクルの現在位置を計算する
+     */
+    private calculatePosition(attr: AttrParticle, random: ARC4, t: number): Vec2 {
         const origin = Vec2.from(attr.origin);
-
-        // position
-        let position = Vec2.from(attr.position);
-        if (attr.random) {
-            position = new Vec2(
-                position.x * (random.next() - 0.5) * 2,
-                position.y * (random.next() - 0.5) * 2,
-            );
-        }
-
-        // velocity
-        let velocity = Vec2.from(attr.velocity);
-        if (attr.direction.horizontal === 'left') {
-            velocity = new Vec2(-velocity.x, velocity.y);
-        } else if (attr.direction.horizontal === 'both') {
-            velocity = new Vec2(
-                velocity.x * (random.next() < 0.5 ? -1 : 1),
-                velocity.y,
-            );
-        }
-        if (attr.direction.vertical === 'up') {
-            velocity = new Vec2(velocity.x, -velocity.y);
-        } else if (attr.direction.vertical === 'both') {
-            velocity = new Vec2(
-                velocity.x,
-                velocity.y * (random.next() < 0.5 ? -1 : 1),
-            );
-        }
-        if (attr.random) {
-            velocity = new Vec2(
-                velocity.x * random.next(),
-                velocity.y * random.next(),
-            );
-        }
-
-        // acceleration
+        const initialPos = this.getInitialPosition(attr, random);
+        const velocity = this.getInitialVelocity(attr, random);
         const acceleration = new Vec2(attr.acceleration.x, -attr.acceleration.y);
 
-        // p = p0 + vt + 0.5at^2
+        // 等加速度直線運動の公式: p = p0 + vt + 0.5at^2
         return origin
-            .add(position)
+            .add(initialPos)
             .add(velocity.scale(t))
             .add(acceleration.scale(0.5 * t * t));
     }
 
     /**
-     * 描画処理。ロード未完了時はエラーをスロー。
+     * 1つのパーティクルを描画する
      */
+    private drawSingleParticle(attr: AttrParticle, particleIndex: number, particleT: number): void {
+        const random = ARC4.fromNumber(particleIndex * 1000);
+        const texture = this.getTexture(attr, random);
+        const position = this.calculatePosition(attr, random, particleT);
+
+        // サイン波でフェードイン・フェードアウトを表現
+        const opacity = Math.sin(particleT * Math.PI);
+
+        const halfW = texture.width / 2;
+        const halfH = texture.height / 2;
+
+        this.game.pipeline.draw.texture(
+            position.x - halfW,
+            position.y - halfH,
+            position.x + halfW,
+            position.y + halfH,
+            texture,
+            Vec4.ONE.with({ w: opacity }),
+        );
+    }
+
     async renderOverlay({ attr }: AttributeInvoke<AttrParticle>): Promise<void> {
-        const { draw } = this.game.pipeline;
-        const time = Timer.now() / 1000;
+        if (attr.assets.length === 0) return;
+
+        const currentTimeInSeconds = Timer.now() / 1000;
         const timeOffset = attr.duration / attr.count;
+
         for (let index = 0; index < attr.count; index++) {
-            const particleTime = time / attr.duration + timeOffset * index;
+            // 各パーティクルの進行度を計算
+            const particleTime = (currentTimeInSeconds / attr.duration) + (timeOffset * index);
             const particleIndex = Math.floor(particleTime);
-            const particleT = particleTime - particleIndex;
-            const random = ARC4.fromNumber(particleIndex * 1000);
-            const texture = this.getTexture(attr, random);
-            const position = this.getPosition(attr, random, particleT);
-            const opacity = Math.sin(particleT * Math.PI);
-            draw.texture(
-                position.x - texture.width / 2,
-                position.y - texture.height / 2,
-                position.x + texture.width / 2,
-                position.y + texture.height / 2,
-                texture,
-                Vec4.ONE.with({ w: opacity }),
-            );
+            const particleT = particleTime - particleIndex; // 0.0 ~ 1.0 の正規化された時間
+
+            this.drawSingleParticle(attr, particleIndex, particleT);
         }
     }
 }

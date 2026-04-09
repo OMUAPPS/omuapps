@@ -3,6 +3,7 @@ import type { InputEventMouse } from '$lib/components/canvas/pipeline';
 import type { AABB2 } from '$lib/math/aabb2';
 import type { Vec2 } from '$lib/math/vec2';
 import type { Component } from 'svelte';
+import type { ValidateResult } from '../core/helper';
 import type { Action } from '../core/input-system';
 import type { Item, ItemPool } from './item';
 
@@ -61,10 +62,13 @@ export interface ActionContext {
     actions: Action[];
 }
 
+export type AttributeTypeOfHandler<T extends AttributeHandler<unknown>> = T extends AttributeHandler<infer Attr> ? Attr : never;
+
 export interface AttributeHandler<T> {
     name: string;
     editor: Component<{ attr: T }>;
     create(): T;
+    validate(value: T): ValidateResult<T>;
     load?(invoke: AttributeInvoke<T>, ctx: LoadContext): Promise<void>;
     bounds?(invoke: AttributeInvoke<T>, result: { render: AABB2 }, children: Record<string, ItemRender>): Promise<void>;
     renderPre?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;

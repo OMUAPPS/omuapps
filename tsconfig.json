@@ -20,8 +20,9 @@
         "isolatedDeclarations": true,
         "composite": true,
         "lib": [
-            "dom",
-            "esnext"
+            "esnext",
+            "DOM",
+            "DOM.Iterable"
         ],
     },
     "compileOnSave": false,
