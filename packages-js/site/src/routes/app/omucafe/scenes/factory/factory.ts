@@ -102,6 +102,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
                 id: generateUid(),
                 itemId: item.id,
                 name: item.name,
+                aliases: [],
             };
             products.set(product.id, product);
             scene.value = {

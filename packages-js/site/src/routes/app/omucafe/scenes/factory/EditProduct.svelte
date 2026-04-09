@@ -51,6 +51,28 @@
             <i class="ti ti-trash"></i>
         </Button>
     </div>
+    <h2>反応する文字</h2>
+    <div class="aliases">
+        {#each $product.aliases as _, index (index)}
+            <div class="entry">
+                <input type="text" bind:value={() => $product.aliases[index], (alias) => {
+                    $product.aliases[index] = alias;
+                    $product.aliases = [...$product.aliases];
+                }} />
+                <button title="削除" onclick={() => {
+                    $product.aliases = $product.aliases.filter((_, i) => i !== index);
+                }}>
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+        {/each}
+        <Button onclick={() => {
+            $product.aliases = [...$product.aliases, ''];
+        }} primary>
+            追加する
+            <i class="ti ti-plus"></i>
+        </Button>
+    </div>
 {/if}
 
 <style lang="scss">
@@ -89,5 +111,45 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+    }
+
+    h2 {
+        color: var(--color-1);
+        margin: 0.5rem 0;
+        margin-top: 1rem;
+        text-align: left;
+        font-size: 1.5rem;
+        color: var(--color-1);
+        corner-shape: squircle;
+        padding: 0.5rem 0;
+        width: fit-content;
+    }
+
+    .aliases {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .entry {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            input {
+                flex: 1;
+                padding: 0.5rem;
+                background: var(--color-bg-2);
+                color: var(--color-text);
+                border-radius: 2px;
+                border: none;
+            }
+
+            button {
+                background: transparent;
+                color: var(--color-text);
+                border: none;
+                cursor: pointer;
+            }
+        }
     }
 </style>

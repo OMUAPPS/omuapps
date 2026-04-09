@@ -130,10 +130,10 @@ export class OrderSystem {
      * 正規化されたテキスト内に、特定の商品（またはエイリアス）が含まれているか判定
      */
     private matchProduct(product: Product, normalizedText: string): boolean {
-        product.aliases = [];
         const aliases = new Set([product.name, ...product.aliases]);
 
         for (const alias of aliases) {
+            if (alias.length === 0) continue;
             const normalizedAlias = this.normalizeText(alias);
             let index = 0;
 
