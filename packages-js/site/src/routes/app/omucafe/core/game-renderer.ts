@@ -68,7 +68,8 @@ export class GameRenderer {
         const { current } = transition;
         if (!current) return;
         const isBackground = this.game.side === 'background';
-        const timeOffset = isBackground ? 100 : 50;
+        if (isBackground) return;
+        const timeOffset = 50;
         const elapsed = Timer.now() - current.start - timeOffset;
         if (elapsed < 0) return;
         const time = elapsed / TRANSITION_DURATION * 3;
@@ -93,6 +94,6 @@ export class GameRenderer {
                 ? 0
                 : lerp(0, -1, t);
         const offset = size.y * Math.pow(a, 3);
-        draw.rectangle(min.x, min.y + offset, min.x + size.x, min.y + offset + size.y, isBackground ? PALETTE_RGB.ACCENT : PALETTE_RGB.BACKGROUND);
+        draw.rectangle(min.x, min.y + offset, min.x + size.x, min.y + offset + size.y, PALETTE_RGB.BACKGROUND);
     }
 }

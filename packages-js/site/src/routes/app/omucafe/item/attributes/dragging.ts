@@ -101,13 +101,13 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
         }
 
         ctx.actions.push({
-            title: `${item.name}を持つ ${item.pool} ${pool.id}`,
+            title: `${item.name}を持つ`,
             priority: 100,
             invoke: async () => {
                 if (states.scene.value.type !== 'factory' && pool.id === 'fridge') {
                     item = this.game.item.clone(item);
                 }
-                if (states.scene.value.type === 'factory') {
+                if (states.scene.value.type === 'factory' && !states.scene.value.selecting) {
                     states.scene.value.selecting = { type: 'edit_item', itemId: item.id };
                 }
                 this.game.item.states.held = item.id;

@@ -1,9 +1,10 @@
 <script lang="ts">
     import { Button } from '@omujs/ui';
+    import EditText from '../../common/EditText.svelte';
     import type { Game } from '../../core/game';
     import EditItem from './EditItem.svelte';
     import EditProduct from './EditProduct.svelte';
-    import { type SceneFactoryData } from './factory';
+    import { preview, type SceneFactoryData } from './factory';
 
     interface Props {
         scene: SceneFactoryData;
@@ -26,7 +27,10 @@
                     <i class="ti ti-chevron-left"></i>
                     もどる
                 </Button>
-                <h1>工場</h1>
+                <h1>商品研究所</h1>
+                <p>
+                    商品やアイテムを編集できます。
+                </p>
             </div>
             {#if !scene.selecting}
                 <div class="panel">
@@ -36,19 +40,34 @@
                         商品にするアイテムを選択する
                         <i class="ti ti-pointer"></i>
                     </Button>
-                    {#each game.states.products.values() as product (product.id)}
-                        <Button onclick={() => {
-                            scene.selecting = { type: 'edit_product', productId: product.id };
-                        }} primary>
-                            {product.name}
-                        </Button>
-                    {:else}
-                        商品がありません
-                    {/each}
+                    <div class="product-list">
+                        <h1>商品一覧</h1>
+                        {#each game.states.products.values() as product (product.id)}
+                            <div class="entry">
+                                <button onclick={() => {
+                                    scene.selecting = { type: 'edit_product', productId: product.id };
+                                }}>
+                                    {#if $preview[product.itemId]}
+                                        <img src={$preview[product.itemId].url} alt="">
+                                    {/if}
+                                    <EditText value={product.name} size="1.8rem" />
+                                </button>
+                            </div>
+                        {:else}
+                            商品がありません
+                        {/each}
+                    </div>
                 </div>
             {:else if scene.selecting.type === 'pick_product'}
+                {@const { selecting } = scene}
                 <div class="panel">
                     アイテムを選択してください
+                    <Button onclick={() => {
+                        scene.selecting = selecting.back;
+                    }} primary>
+                        やめる
+                        <i class="ti ti-x"></i>
+                    </Button>
                 </div>
             {:else if scene.selecting.type === 'edit_product'}
                 <div class="panel omu-scroll">
@@ -88,21 +107,24 @@
         flex-direction: column;
         gap: 2rem;
         padding: 2rem;
+        background: linear-gradient(
+            to right,
+            color-mix(in srgb, var(--color-bg-1) 50%, transparent 0%),
+            transparent
+        );
     }
 
     .panel {
         position: relative;
         display: flex;
+        align-items: stretch;
         flex-direction: column;
         padding: 1.5rem 1.5rem;
         background: var(--color-bg-1);
-        box-shadow: 0 0 1rem rgba($color: #000000, $alpha: 0.3);
+        box-shadow: 0 0 1rem rgba($color: #888, $alpha: 0.3);
+        border-radius: 0.25rem;
 
         > .close {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
             align-self: flex-start;
             padding: 0.75rem 1.5rem;
             margin: 2px;
@@ -113,6 +135,7 @@
             border-radius: 2px;
             border: none;
             cursor: pointer;
+            margin-bottom: 2rem;
         }
     }
 
@@ -132,5 +155,38 @@
         border-bottom: 2px solid var(--color-1);
         width: 100%;
         margin-bottom: 1rem;
+    }
+
+    .product-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .entry {
+            width: 100%;
+            outline: 1px solid var(--color-outline);
+            border-radius: 0.5rem;
+            overflow: hidden;
+
+            > button {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+                padding: 0.75rem 1.5rem;
+                background: var(--color-bg-2);
+                color: var(--color-text);
+                border-radius: 2px;
+                border: none;
+                cursor: pointer;
+
+                > img {
+                    width: 8rem;
+                    height: 8rem;
+                    object-fit: contain;
+                }
+            }
+        }
     }
 </style>

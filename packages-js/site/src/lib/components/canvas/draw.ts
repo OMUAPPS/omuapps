@@ -524,6 +524,20 @@ export class Draw {
         return this.glContext.createProgram([this.vertexShader, fragmentShader]);
     }
 
+    public scissor(bounds: AABB2) {
+        const { gl } = this.glContext;
+        const { canvas } = gl;
+        gl.enable(gl.SCISSOR_TEST);
+        const mvp = this.matrices.getModelToView();
+        const viewBounds = mvp.transformAABB2(bounds);
+        gl.scissor(viewBounds.min.x, canvas.height - viewBounds.max.y, viewBounds.width, viewBounds.height);
+    }
+
+    public endScissor() {
+        const { gl } = this.glContext;
+        gl.disable(gl.SCISSOR_TEST);
+    }
+
     private get font(): string {
         return `${this.fontStyle} ${this.fontWeight} ${this.fontSize}px ${this.fontFamily}`;
     }

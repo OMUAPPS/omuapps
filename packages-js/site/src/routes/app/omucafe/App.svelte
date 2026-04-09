@@ -31,9 +31,6 @@
                 </div>
             {/if}
         {/key}
-        <div class="debug">
-            {JSON.stringify($scene)}
-        </div>
     {/if}
 </main>
 

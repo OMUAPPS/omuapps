@@ -1,9 +1,10 @@
 import type { GlTexture } from '$lib/components/canvas/glcontext';
 import type { InputEvent } from '$lib/components/canvas/pipeline';
 import { AABB2 } from '$lib/math/aabb2';
+import { clamp, lerp } from '$lib/math/math';
 import { Vec2, type Vec2Like } from '$lib/math/vec2';
 import { PALETTE_RGB } from '../../colors';
-import type { Game } from '../../core/game';
+import { Game } from '../../core/game';
 import { CLIENT_RESOLUTION, CLIENT_WORLD_BOUNDS } from '../../core/game-renderer';
 import type { Action } from '../../core/input-system';
 import type { ItemPool, PoolOptions } from '../../item/item';
@@ -64,51 +65,95 @@ const OFFSETS = {
 class Display {
     public bounds: AABB2 = AABB2.ZEROONE;
     private action: Action | undefined;
+    private scroll = 0;
+    private scrollTarget = 0;
+    private scrollHeight = 0;
 
     constructor(private readonly game: Game) {}
 
     public async render() {
+        const { orders } = this.game.states;
         const { matrices, draw, input } = this.game.pipeline;
         this.action = undefined;
+        orders.set('8', {
+            id: '8',
+            items: [{
+                id: '8',
+                name: 'テスト商品',
+                itemId: 'aktmme11',
+            }],
+            user: {
+                source: { type: 'task' },
+                avatar: 'https://pbs.twimg.com/profile_images/1985575332007845888/0CgI0pIh_400x400.jpg',
+                name: 'テスト',
+            },
+        });
 
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
+        draw.fontSize = 32;
 
-        // メッセージ描画
-        draw.fontSize = 40;
-        draw.fontWeight = '600';
-        await draw.textAlign(
-            this.bounds.center.add({ x: -150, y: 0 }),
-            'ようこそ！',
-            Vec2.CENTER,
-            PALETTE_RGB.ACCENT,
-            { width: 4, color: PALETTE_RGB.BACKGROUND },
-        );
+        const entries = Array.from(orders.values());
+        const listBounds = this.bounds.shrink({ x: 10, y: 10 });
 
-        // ボタン描画
-        const buttonCenter = this.bounds.center.add({ x: 100, y: 0 });
-        const buttonBounds = new AABB2(
-            buttonCenter.add({ x: 0, y: -40 }),
-            buttonCenter.add({ x: 180, y: 40 }),
-        );
-        const buttonHovered = buttonBounds.contains(mouse);
+        this.scroll = lerp(this.scroll, this.scrollTarget, 0.5);
+        let offsetY = listBounds.min.y + this.scroll;
+        draw.scissor(this.bounds);
 
-        draw.fontSize = 30;
-        draw.roundedRect(buttonBounds.min, buttonBounds.max, 10, PALETTE_RGB.DISPLAY_BUTTON_BG);
-        await draw.textAlign(buttonBounds.center, '会計✅', Vec2.CENTER, PALETTE_RGB.DISPLAY_BUTTON_TEXT);
-        if (buttonHovered) {
-            draw.roundedRect(buttonBounds.min, buttonBounds.max, 10, PALETTE_RGB.DISPLAY_BUTTON_HOVERED);
-            this.action = {
-                title: '会計へ進む',
-                priority: 0,
-                invoke: async () => {
-                    this.game.scene.photo.openPhotoMode();
-                },
-            };
+        for (const order of entries) {
+            const minY = offsetY;
+            offsetY += 10;
+            const avatarStatus = (await this.game.asset.getTextureByUrl(order.user.avatar).promise);
+            if (avatarStatus.type === 'ready') {
+                draw.texture(listBounds.min.x, offsetY, listBounds.min.x + 48, offsetY + 48, avatarStatus.data.texture);
+            }
+            draw.fontWeight = '600';
+            await draw.textAlign(new Vec2(listBounds.min.x + 64, offsetY + 12), order.user.name, Vec2.ZERO, PALETTE_RGB.ACCENT);
+            offsetY += 64;
+
+            draw.fontWeight = '500';
+            draw.fontSize = 18;
+            await draw.textAlign(new Vec2(listBounds.min.x + 64, offsetY), '注文内容', Vec2.ZERO, PALETTE_RGB.ACCENT);
+            offsetY += 30;
+
+            for (const item of order.items) {
+                draw.fontWeight = '500';
+                draw.fontSize = 24;
+                await draw.textAlign(new Vec2(listBounds.min.x + 64, offsetY), `・ ${item.name}`, Vec2.ZERO, PALETTE_RGB.ACCENT);
+                offsetY += 30;
+            }
+            offsetY += 24;
+            draw.rectangle(listBounds.min.x, offsetY, listBounds.max.x, offsetY + 1, PALETTE_RGB.ACCENT);
+
+            const bounds = new AABB2(
+                new Vec2(listBounds.min.x, minY),
+                new Vec2(listBounds.max.x, offsetY),
+            );
+            const hovered = bounds.contains(mouse);
+            if (hovered) {
+                this.action = {
+                    title: 'クリックで納品',
+                    priority: 0,
+                    invoke: async () => {
+                        this.game.scene.photo.openPhotoMode(order);
+                    },
+                };
+            }
         }
+
+        draw.endScissor();
+
+        this.scrollHeight = offsetY - this.scroll - listBounds.min.y;
     }
 
     public handle(event: InputEvent) {
         const { input } = this.game;
+        const { matrices } = this.game.pipeline;
+        const mouse = matrices.getViewToWorld().transform2(this.game.pipeline.input.mouse.pos);
+        if (!this.bounds.contains(mouse)) return;
+        if (event.kind === 'mouse-wheel') {
+            this.scrollTarget -= event.delta;
+            this.scrollTarget = clamp(this.scrollTarget, Math.min(0, this.bounds.size.y - this.scrollHeight - 100), 0);
+        }
         if (this.action) {
             input.add(this.action);
         }
@@ -161,7 +206,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
                 new Vec2(-CLIENT_RESOLUTION.x / 2, 0),
                 new Vec2(-CLIENT_RESOLUTION.x / 2 + width, height),
             ),
-            align: { x: 0, y: 1.75 },
+            align: { x: 0.5, y: 0.5 },
         };
     }
 

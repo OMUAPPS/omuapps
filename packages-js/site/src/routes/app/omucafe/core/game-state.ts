@@ -14,6 +14,7 @@ import { getAssetKey, type Asset } from './asset';
 interface State {
     wait(): Promise<void>;
     flush(): Promise<void>;
+    getStringified(): string;
 }
 
 class ProxyTracker<T extends object> {
@@ -302,6 +303,14 @@ export class BufferedMap<T extends object> implements State {
         this.unlisten.forEach(u => u());
         this.unlisten = [];
     }
+
+    public getStringified(): string {
+        const obj: Record<string, T> = {};
+        for (const [key, value] of this.map.entries()) {
+            obj[key] = value;
+        }
+        return JSON.stringify(obj);
+    }
 }
 
 export class BufferedRegistry<T extends object> implements State {
@@ -355,6 +364,10 @@ export class BufferedRegistry<T extends object> implements State {
         if (!this.#tracker.changed) return;
         this.#tracker.flush();
         await this.registry.set(this.#tracker.value);
+    }
+
+    public getStringified(): string {
+        return JSON.stringify(this.#tracker.value);
     }
 }
 
@@ -447,10 +460,8 @@ export interface Customer {
     } | {
         type: 'task';
     };
-    meta: {
-        name: string;
-        avatar: string;
-    };
+    name: string;
+    avatar: string;
 }
 
 export interface Product {
@@ -462,9 +473,18 @@ export interface Product {
 export interface Order {
     id: string;
     user: Customer;
-    items: {
-        productId: string;
-    }[];
+    items: Product[];
+}
+
+export interface OrderState {
+    order?: Order;
+}
+
+export interface Receipt {
+    id: string;
+    order: Order;
+    screenshot?: Asset;
+    date: string;
 }
 
 export class GameState {
@@ -483,8 +503,9 @@ export class GameState {
     public canvasEditHeap: BufferedMap<CanvasEditChunk>;
     public canvasEditStack: BufferedRegistry<CanvasEditChunk>;
     public canvasEditSignal: Signal<CanvasEditChunk>;
-    public orderQueue: BufferedMap<Order>;
+    public orders: BufferedMap<Order>;
     public products: BufferedMap<Product>;
+    public receipts: BufferedMap<Receipt>;
 
     private register<T extends State>(state: T): T {
         this.states.push(state);
@@ -569,10 +590,13 @@ export class GameState {
             },
         }), listen));
         const canvasEditSignal = omu.signals.json<CanvasEditChunk>('canvas_edit_signal');
-        const orderQueue = this.register(new BufferedMap(omu.tables.json<Order>('order_queue', {
+        const orders = this.register(new BufferedMap(omu.tables.json<Order>('orders', {
             key: (order) => order.id,
         }), listen));
         const products = this.register(new BufferedMap(omu.tables.json<Product>('products', {
+            key: (product) => product.id,
+        }), listen));
+        const receipts = this.register(new BufferedMap(omu.tables.json<Receipt>('receipts', {
             key: (product) => product.id,
         }), listen));
 
@@ -590,8 +614,9 @@ export class GameState {
         this.canvasEditHeap = canvasEditHeap;
         this.canvasEditStack = canvasEditStack;
         this.canvasEditSignal = canvasEditSignal;
-        this.orderQueue = orderQueue;
+        this.orders = orders;
         this.products = products;
+        this.receipts = receipts;
     }
 
     public async wait() {
@@ -602,5 +627,13 @@ export class GameState {
         if (this.omucafe.side === 'client') {
             await Promise.all(this.states.map((state) => state.flush()));
         }
+    }
+
+    public getAllJsonStringified() {
+        const result = [];
+        for (const state of this.states) {
+            result.push(state.getStringified());
+        }
+        return result.join('');
     }
 }

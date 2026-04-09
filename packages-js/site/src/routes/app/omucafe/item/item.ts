@@ -76,14 +76,7 @@ export class ItemSystem {
     }
 
     private garbageCollection() {
-        const registryString = [
-            JSON.stringify(this.game.states.kitchen.value),
-            JSON.stringify(this.game.states.counter.value),
-            JSON.stringify(this.game.states.scene.value),
-            JSON.stringify(this.game.states.factory.value),
-            JSON.stringify(this.game.states.fridge.value),
-            JSON.stringify(this.game.states.products.values()),
-        ].join('');
+        const registryString = this.game.states.getAllJsonStringified();
 
         const activeItems: Item[] = [];
         for (const [id, item] of this.items.entries()) {
@@ -100,7 +93,8 @@ export class ItemSystem {
             const toRemove: string[] = [];
             for (const childId of item.children) {
                 const child = this.items.get(childId);
-                if (!child || child.parent !== item.id || toKeep.has(childId)) {
+                if (toKeep.has(childId)) continue;
+                if (!child || child.parent !== item.id) {
                     toRemove.push(childId);
                     continue;
                 }
@@ -147,9 +141,9 @@ export class ItemSystem {
         for (const childId of item.children) {
             const data = this.get(childId);
             if (!data) continue;
-            const child = this.clone(data);
-            child.parent = clonedItem.id;
-            clonedItem.children.push(child.id);
+            const childClone = this.clone(data);
+            childClone.parent = clonedItem.id;
+            clonedItem.children.push(childClone.id);
         }
 
         pool.pool.items[clonedItem.id] = { id: clonedItem.id };

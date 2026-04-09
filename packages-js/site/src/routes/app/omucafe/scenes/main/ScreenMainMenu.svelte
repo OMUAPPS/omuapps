@@ -174,7 +174,6 @@
                 <button onclick={() => {
                     scene.task = prev;
                     scene = { ...scene };
-                    game.states.scene.store.set(scene);
                 }}>
                     <p>
                         前へ
@@ -192,7 +191,6 @@
                 <button onclick={() => {
                     scene.task = next;
                     scene = { ...scene };
-                    game.states.scene.store.set(scene);
                 }}>
                     <p>
                         次へ

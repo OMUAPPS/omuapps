@@ -39,9 +39,9 @@
     }
 </script>
 
-{#if $preview}
+{#if $preview[id]}
     <div class="preview">
-        <img src={$preview.url} alt="">
+        <img src={$preview[id].url} alt="">
     </div>
 {/if}
 {#if $itemStore}

@@ -1,3 +1,4 @@
+import type { GlTexture } from '$lib/components/canvas/glcontext';
 import { BetterMath } from '$lib/math';
 import { AABB2 } from '$lib/math/aabb2';
 import { Axis } from '$lib/math/axis';
@@ -5,17 +6,36 @@ import { Transform2D } from '$lib/math/transform2d';
 import { Vec2 } from '$lib/math/vec2';
 import type { CanvasOptions } from '../../canvas/canvas';
 import { PALETTE_RGB } from '../../colors';
+import type { Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
+import type { Order, Receipt } from '../../core/game-state';
 import { createTransform } from '../../core/transform';
-import type { ItemPool, ItemRef, PoolOptions } from '../../item/item';
+import type { ItemPool, PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
+import asset_vertical_background from '../kitchen/img/asset_vertical_background.png';
 import type { SceneHandler } from '../scene';
-import ScreenPhoto from './ScreenPhoto.svelte';
 import photo_frame from './img/photo_frame.png';
+import ScreenPhoto from './ScreenPhoto.svelte';
+
+// --- Constants ---
+const PHOTO_ROTATION_DEG = 3;
+const DATE_FONT_FAMILY = 'Zen Maru Gothic';
+const DEFAULT_FONT_FAMILY = 'Noto Sans JP';
 
 export interface ScenePhotoData {
     type: 'photo';
     pool: ItemPool;
+    receipt?: Receipt;
+    photo?: {
+        type: 'started';
+        startTime: number;
+        duration: number;
+    } | {
+        type: 'failed';
+    } | {
+        type: 'completed';
+        screenshot: Asset;
+    };
 }
 
 export class ScenePhoto implements SceneHandler<ScenePhotoData> {
@@ -27,49 +47,58 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
      * メインハンドラ
      */
     async handle(scene: ScenePhotoData) {
-        if (this.game.side === 'client') {
-            await this.renderClientSide(scene);
-        } else if (this.game.side === 'background') {
-            await this.renderBackgroundSide();
-        } else if (this.game.side === 'overlay') {
-            await this.renderOverlaySide(scene);
+        let poolOptions: PoolOptions | undefined;
+
+        switch (this.game.side) {
+            case 'client':
+                poolOptions = await this.renderClientSide(scene);
+                break;
+            case 'background':
+                await this.renderBackgroundSide();
+                break;
+            case 'overlay':
+                await this.renderOverlaySide(scene);
+                break;
         }
 
-        await this.processInput();
+        // 入力処理を一箇所に集約
+        await this.processInput(scene, poolOptions);
     }
 
-    public openPhotoMode() {
-        const items: Record<string, ItemRef> = {};
-        const pool: ItemPool = { id: 'photo', items };
+    public openPhotoMode(order?: Order) {
+        const pool: ItemPool = { id: 'photo', items: {} };
         const counterItems = this.game.states.counter.value.items;
+        const { itemRenderer, item } = this.game;
 
-        this.game.itemRenderer.pushPass();
-        this.game.itemRenderer.addPool({
+        itemRenderer.pushPass();
+        itemRenderer.addPool({
             pool,
             align: Vec2.ZERO,
             bounds: AABB2.ZEROONE,
             transform: createTransform(),
         });
-        // Object.values を使用してシンプルに反復処理
+
         for (const ref of Object.values(counterItems)) {
-            const item = this.game.item.get(ref.id);
-            if (!item || item.parent) continue;
+            const targetItem = item.get(ref.id);
+            if (!targetItem || targetItem.parent) continue;
 
-            const clone = this.game.item.clone(item);
+            const clone = item.clone(targetItem);
             clone.transform.offset = { x: 0, y: 0 };
-            this.game.item.setPool(clone, pool);
+            item.setPool(clone, pool);
         }
-        this.game.itemRenderer.popPass();
+        itemRenderer.popPass();
 
-        this.game.startTransition({
-            type: 'photo',
-            pool,
-        });
+        // Receiptの取得・生成を簡略化
+        const receipt: Receipt | undefined = order && (
+            this.game.states.receipts.get(order.id) || { id: order.id, order, date: new Date().toISOString() }
+        );
+
+        this.game.startTransition({ type: 'photo', pool, receipt });
     }
 
-    private async renderClientSide(scene: ScenePhotoData) {
+    private async renderClientSide(scene: ScenePhotoData): Promise<PoolOptions> {
         const { draw, matrices, input: pipelineInput } = this.game.pipeline;
-        const { renderer, itemRenderer, asset, canvas } = this.game;
+        const { renderer, asset, canvas } = this.game;
         const { bounds, containBounds } = renderer;
 
         // 背景の描画
@@ -79,118 +108,133 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         draw.rectangle(...bounds.toArray(), PALETTE_RGB.BACKGROUND.with({ w: 0.7 }));
         draw.rectangle(...bounds.with({ min: { x: 0 } }).toArray(), PALETTE_RGB.BACKGROUND.with({ w: 0.9 }));
 
-        // 写真フレームの描画
-        const photoAsset = await asset.getTextureByUrl(photo_frame).promise;
-        const photoTex = photoAsset.unwrap.texture;
-
+        // 写真フレームと描画オプションのセットアップ
         const container = bounds.with({ max: { x: 0 } }).shrink({ x: 100, y: 100 });
-        const frameBounds = container.fit(photoTex.size);
-        const scale = frameBounds.width / photoTex.width;
+        const { photoTex, frameBounds, poolOptions } = await this.setupPhotoFrame(scene.pool, container);
 
-        // アイテム群の描画
-        const transform = Transform2D.IDENTITY.rotate(BetterMath.toRadians(3)).translate(frameBounds.center).scale(scale);
-        const options: PoolOptions = {
-            pool: scene.pool,
-            transform: transform.toJSON(),
-            bounds: AABB2.fromSize(photoTex).setAt(Vec2.CENTER, Vec2.ZERO),
-            align: Vec2.CENTER,
-        };
-
-        itemRenderer.initPass();
-        await itemRenderer.renderPool(scene.pool, options);
-        await itemRenderer.renderHeld();
-
-        matrices.model.push();
-        matrices.model.rotate(Axis.Z_POS.rotateDeg(3));
-        draw.texture(...frameBounds.toArray(), photoTex);
+        // 共通のアイテム＆フレーム描画 (フォントサイズ指定: 72/2 = 36)
+        await this.drawPhotoItemsAndFrame(scene, poolOptions, frameBounds, photoTex, 36);
 
         // フレーム内キャンバスの描画
         const mouse = matrices.getViewToModel().transform2(pipelineInput.mouse.pos);
         const pos = frameBounds.unmap(mouse).mul(photoTex.size);
         const canvasOptions: CanvasOptions = { pos, mouse, size: photoTex.size };
 
-        // 呼び出し元で既に client 判定されているためチェックを省略
-        canvas.updateInput(canvasOptions);
+        if (!scene.photo) {
+            canvas.updateInput(canvasOptions);
+        }
         const canvasRender = await canvas.render(canvasOptions);
-
         draw.texture(...frameBounds.toArray(), canvasRender);
-        canvas.renderCursor(canvasOptions);
+
+        const isHovered = pos.x > 0 && pos.y > 0 && pos.x < photoTex.width && pos.y < photoTex.height;
+        if (isHovered) {
+            canvas.renderCursor(canvasOptions);
+        }
+
         matrices.model.pop();
 
-        const { input: eventPipeline } = this.game.pipeline;
-        const { item, input: inputSystem } = this.game;
-
-        for (const event of eventPipeline) {
-            inputSystem.clear();
-            item.initPass();
-
-            // 判定は手前にあるものから順に行う
-            if (this.game.states.config.value.canvas.tool?.type === 'move') {
-                await item.handleMouse(scene.pool, options, event);
-            }
-
-            item.endInput();
-            await inputSystem.handle(event);
-        }
+        return poolOptions;
     }
 
     private async renderBackgroundSide() {
         const { draw } = this.game.pipeline;
         const { containBounds } = this.game.renderer;
 
-        const bgAsset = await this.game.asset.getTextureByUrl(client_background).promise;
+        const bgAsset = await this.game.asset.getTextureByUrl(asset_vertical_background).promise;
         draw.texture(...containBounds.toArray(), bgAsset.unwrap.texture);
     }
 
     private async renderOverlaySide(scene: ScenePhotoData) {
         const { draw, matrices } = this.game.pipeline;
         const { bounds } = this.game.renderer;
+        const { canvas } = this.game;
 
+        const container = bounds.offset({ x: 0, y: bounds.min.y / 8 }).shrink({ x: -50, y: 100 });
+        const { photoTex, frameBounds, poolOptions } = await this.setupPhotoFrame(scene.pool, container);
+
+        // 共通のアイテム＆フレーム描画 (フォントサイズ指定: 74)
+        await this.drawPhotoItemsAndFrame(scene, poolOptions, frameBounds, photoTex, 74);
+
+        // キャンバスの描画
+        const canvasOptions: CanvasOptions = { pos: Vec2.ZERO, mouse: Vec2.ZERO, size: photoTex.size };
+        const canvasRender = await canvas.render(canvasOptions);
+        draw.texture(...frameBounds.toArray(), canvasRender);
+
+        matrices.model.pop();
+    }
+
+    /**
+     * 写真フレームの設定と PoolOptions の共通生成ロジック
+     */
+    private async setupPhotoFrame(pool: ItemPool, container: AABB2) {
         const photoAsset = await this.game.asset.getTextureByUrl(photo_frame).promise;
         const photoTex = photoAsset.unwrap.texture;
 
-        const container = bounds.offset({ x: 0, y: bounds.min.y / 8 }).shrink({ x: -50, y: 100 });
         const frameBounds = container.fit(photoTex.size);
         const scale = frameBounds.width / photoTex.width;
 
-        // アイテム群の描画
-        const transform = Transform2D.IDENTITY.rotate(BetterMath.toRadians(3)).translate(frameBounds.center).scale(scale);
-        const options: PoolOptions = {
-            pool: scene.pool,
+        const transform = Transform2D.IDENTITY
+            .rotate(BetterMath.toRadians(PHOTO_ROTATION_DEG))
+            .translate(frameBounds.center)
+            .scale(scale);
+
+        const poolOptions: PoolOptions = {
+            pool,
             transform: transform.toJSON(),
             bounds: AABB2.fromSize(photoTex).setAt(Vec2.CENTER, Vec2.ZERO),
             align: Vec2.CENTER,
         };
 
-        const { itemRenderer } = this.game;
-        itemRenderer.initPass();
-        await itemRenderer.renderPool(scene.pool, options);
-        await itemRenderer.renderHeld();
-
-        const canvasOptions: CanvasOptions = {
-            pos: Vec2.ZERO,
-            mouse: Vec2.ZERO,
-            size: photoTex.size,
-        };
-
-        matrices.model.push();
-        matrices.model.rotate(Axis.Z_POS.rotateDeg(3));
-        draw.texture(...frameBounds.toArray(), photoTex);
-
-        const canvasRender = await this.game.canvas.render(canvasOptions);
-        draw.texture(...frameBounds.toArray(), canvasRender);
-        matrices.model.pop();
+        return { photoTex, frameBounds, poolOptions };
     }
 
-    private async processInput() {
+    private async drawPhotoItemsAndFrame(
+        scene: ScenePhotoData,
+        poolOptions: PoolOptions,
+        frameBounds: AABB2,
+        photoTex: GlTexture,
+        fontSize: number,
+    ) {
+        const { draw, matrices } = this.game.pipeline;
+        const { itemRenderer } = this.game;
+
+        // アイテム群の描画
+        itemRenderer.initPass();
+        await itemRenderer.renderPool(scene.pool, poolOptions);
+        await itemRenderer.renderHeld();
+
+        matrices.model.push();
+        matrices.model.rotate(Axis.Z_POS.rotateDeg(PHOTO_ROTATION_DEG));
+
+        draw.texture(...frameBounds.toArray(), photoTex);
+
+        // 日付テキストの描画
+        draw.fontFamily = DATE_FONT_FAMILY;
+        draw.fontSize = fontSize;
+        const date = scene.receipt?.date ? new Date(scene.receipt?.date) : new Date();
+        await draw.textAlign(frameBounds.at({ x: 0.9, y: 0.75 }), date.toLocaleDateString(), Vec2.ONE, PALETTE_RGB.PHOTOFRAME_TEXT);
+        draw.fontFamily = DEFAULT_FONT_FAMILY;
+    }
+
+    /**
+     * パイプラインイベントの入力処理
+     */
+    private async processInput(scene?: ScenePhotoData, poolOptions?: PoolOptions) {
         const { input: eventPipeline } = this.game.pipeline;
-        const { input, item } = this.game;
+        const { input, item, states } = this.game;
+
+        const isMoveTool = states.config.value.canvas.tool?.type === 'move' && !scene?.photo;
 
         for (const event of eventPipeline) {
             input.clear();
             item.initPass();
-            item.endInput();
 
+            // クライアントサイドなど、必要な情報が揃っている場合のみマウスハンドリングを実行
+            if (isMoveTool && scene && poolOptions) {
+                await item.handleMouse(scene.pool, poolOptions, event);
+            }
+
+            item.endInput();
             await input.handle(event);
         }
     }

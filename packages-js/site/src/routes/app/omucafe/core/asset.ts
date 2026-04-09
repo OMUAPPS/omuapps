@@ -95,10 +95,39 @@ export class AssetManager {
             const buffer = await this.download(asset.id);
             return buffer;
         } else {
-            const response = await fetch(asset.url);
-            const arrayBuffer = await response.arrayBuffer();
-            return new Uint8Array(arrayBuffer);
+            if (asset.url.startsWith('https://')) {
+                const proxiedUrl = this.game.app.omu.assets.proxy(asset.url);
+                const response = await fetch(proxiedUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                return new Uint8Array(arrayBuffer);
+            } else {
+                const response = await fetch(asset.url);
+                const arrayBuffer = await response.arrayBuffer();
+                return new Uint8Array(arrayBuffer);
+            }
         }
+    });
+
+    private readonly blobs = new Loader<Asset, Blob>((data) => getAssetKey(data), async (asset) => {
+        const buffer = await this.assets.get(asset).promise;
+        if (buffer.type === 'error') {
+            throw buffer.error;
+        }
+        return new Blob([buffer.data as BlobPart]);
+    });
+
+    private readonly urls = new Loader<Asset, string>((data) => getAssetKey(data), async (asset) => {
+        const blobState = this.blobs.get(asset);
+        if (blobState.type === 'error') {
+            throw blobState.error;
+        }
+        const blob = await blobState.promise.then(result => {
+            if (result.type === 'error') {
+                throw result.error;
+            }
+            return result.data;
+        });
+        return URL.createObjectURL(blob);
     });
 
     private readonly textures = new Loader<Asset, AssetTexture>((data) => getAssetKey(data), async (asset) => {
@@ -142,6 +171,14 @@ export class AssetManager {
 
     public getTextureByUrl(url: string): TextureStatus {
         return this.textures.get({ type: 'url', url });
+    }
+
+    public getBlob(asset: Asset): LoadingState<Blob> {
+        return this.blobs.get(asset);
+    }
+
+    public getUrl(asset: Asset): LoadingState<string> {
+        return this.urls.get(asset);
     }
 
     private getImageData(image: HTMLImageElement): ImageData {

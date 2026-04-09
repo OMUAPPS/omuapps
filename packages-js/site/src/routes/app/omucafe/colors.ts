@@ -15,6 +15,7 @@ export const PALETTE_RGB = {
     DISPLAY_BUTTON_HOVERED: ACCENT.with({ w: 0.4 }),
     CANVAS_BRUSH_OUTLINE_1: Vec4.fromColorHex('#fff'),
     CANVAS_BRUSH_OUTLINE_2: Vec4.fromColorHex('#888'),
+    PHOTOFRAME_TEXT: Vec4.fromColorHex('#666'),
 };
 
 // https://gist.github.com/dkaraush/65d19d61396f5f3cd8ba7d1b4b3c9432

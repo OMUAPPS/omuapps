@@ -12,12 +12,22 @@
     let tick = $state(0);
 
     let timeout = 0;
-    window.setTimeout(() => {
-        tick ++;
-        timeout = window.setInterval(() => {
+    if (offset > 0) {
+        window.setTimeout(() => {
             tick ++;
-        }, interval);
-    }, offset);
+            timeout = window.setInterval(() => {
+                tick ++;
+            }, interval);
+        }, offset);
+    } else {
+        tick += Math.floor(-offset / interval) + 1;
+        window.setTimeout(() => {
+            tick++;
+            timeout = window.setInterval(() => {
+                tick ++;
+            }, interval);
+        }, interval - offset);
+    }
 
     onDestroy(() => {
         window.clearInterval(timeout);

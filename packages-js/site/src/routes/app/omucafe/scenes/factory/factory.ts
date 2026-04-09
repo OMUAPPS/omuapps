@@ -12,24 +12,28 @@ import type { SceneHandler } from '../scene';
 import factory_bg from './img/factory.png';
 import ScreenCreator from './ScreenFactory.svelte';
 
+export type FactorySelection = {
+    type: 'pick_product';
+    productId?: string;
+    back?: FactorySelection;
+} | {
+    type: 'edit_item';
+    itemId: string;
+} | {
+    type: 'edit_product';
+    productId: string;
+};
+
 export interface SceneFactoryData {
     type: 'factory';
-    selecting?: {
-        type: 'pick_product';
-    } | {
-        type: 'edit_item';
-        itemId: string;
-    } | {
-        type: 'edit_product';
-        productId: string;
-    };
+    selecting?: FactorySelection;
 }
 
-export const preview = writable<{
+export const preview = writable<Record<string, {
     itemId: string;
     update: number;
     url: string;
-} | undefined>();
+}>>({});
 
 // アセットデータの型定義
 interface SceneAssets {
@@ -75,20 +79,37 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
     }
 
     public createProductFromItem(item: Item) {
-        const products = this.game.states.products;
-        const product: Product = {
-            id: generateUid(),
-            itemId: item.id,
-            name: item.name,
-        };
-        products.set(product.id, product);
-        this.game.states.scene.value = {
-            type: 'factory',
-            selecting: {
-                type: 'edit_product',
-                productId: product.id,
-            },
-        };
+        const { scene, products } = this.game.states;
+        if (scene.value.type !== 'factory') return;
+        const { selecting } = scene.value;
+        if (!selecting) return;
+        if (selecting.type !== 'pick_product') return;
+        if (selecting.productId) {
+            const product = products.get(selecting.productId);
+            if (!product) return;
+            product.itemId = item.id;
+            scene.value = {
+                type: 'factory',
+                selecting: {
+                    type: 'edit_product',
+                    productId: product.id,
+                },
+            };
+        } else {
+            const product: Product = {
+                id: generateUid(),
+                itemId: item.id,
+                name: item.name,
+            };
+            products.set(product.id, product);
+            scene.value = {
+                type: 'factory',
+                selecting: {
+                    type: 'edit_product',
+                    productId: product.id,
+                },
+            };
+        }
     }
 
     /**
@@ -143,7 +164,14 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         // 4. 手に持っているアイテムの描画 (共通)
         await itemRenderer.renderHeld();
 
-        await this.updatePreview(scene);
+        const itemId = this.getPreviewItemId(scene);
+        // 選択アイテムがない場合はクリア
+        if (itemId) {
+            await this.updatePreview(itemId);
+        }
+        for (const product of this.game.states.products.values()) {
+            await this.updatePreview(product.itemId);
+        }
     }
 
     private async renderSceneOverlaySide(scene: SceneFactoryData, assets: SceneAssets, options: PoolOptions) {
@@ -195,26 +223,27 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
     /**
      * プレビュー画像の更新処理
      */
-    private async updatePreview(scene: SceneFactoryData) {
-        const previewState = get(preview);
-
-        // 選択アイテムがない場合はクリア
-        if (!scene.selecting || scene.selecting.type !== 'edit_item' || !scene.selecting.itemId) {
-            if (previewState) {
-                if (previewState.url) URL.revokeObjectURL(previewState.url); // メモリリーク対策
-                preview.set(undefined);
-            }
-            return;
+    private getPreviewItemId(scene: SceneFactoryData): string | undefined {
+        if (!scene.selecting) return;
+        if (scene.selecting.type === 'edit_item') {
+            return scene.selecting.itemId;
         }
+        if (scene.selecting.type === 'edit_product') {
+            const product = this.game.states.products.get(scene.selecting.productId);
+            if (!product) return;
+            return product.itemId;
+        }
+    }
 
-        if (scene.selecting.type !== 'edit_item') return;
-        const itemId = scene.selecting.itemId;
+    private async updatePreview(itemId: string) {
+        const previewState = get(preview);
 
         const item = this.game.item.get(itemId);
         if (!item) return;
 
         // すでに最新のプレビューが生成されている場合はスキップ
-        if (previewState && previewState.itemId === itemId && previewState.update === item.update) {
+        const previewEntry = previewState[item.id];
+        if (previewEntry && previewEntry.itemId === itemId && previewEntry.update === item.update) {
             return;
         }
 
@@ -230,13 +259,16 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
 
             // 前のURLが存在すれば破棄してメモリ解放
             if (previewState?.url) {
-                URL.revokeObjectURL(previewState.url);
+                URL.revokeObjectURL(previewEntry.url);
             }
 
             preview.set({
-                itemId: item.id,
-                update: item.update,
-                url,
+                ...previewState,
+                [item.id]: {
+                    itemId,
+                    update: item.update,
+                    url,
+                },
             });
         });
     }

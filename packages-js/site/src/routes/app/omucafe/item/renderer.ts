@@ -68,14 +68,6 @@ export class ItemRenderer {
             throw new Error(`Pool with id ${options.pool.id} already exists.`);
         }
         this.renderPass.pools[options.pool.id] = options;
-        draw.rectangleStroke(
-            options.bounds.min.x,
-            options.bounds.min.y,
-            options.bounds.max.x,
-            options.bounds.max.y,
-            PALETTE_RGB.ACCENT,
-            4,
-        );
 
         // Render Items
         for (const { id } of poolItems) {
@@ -139,8 +131,6 @@ export class ItemRenderer {
         }
         const pool = this.renderPass.pools[item.pool];
         if (!pool) {
-            states.held = undefined;
-            console.error(`Pool with id ${item.pool} not found.`);
             return;
         }
         const { matrices, draw } = this.game.pipeline;

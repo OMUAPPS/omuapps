@@ -29,6 +29,7 @@
         new OmucafeApp(omu, 'overlay');
         omu.permissions.require(
             OmuPermissions.ASSET_PERMISSION_ID,
+            OmuPermissions.REGISTRY_PERMISSION_ID,
         );
         omu.start();
     }
