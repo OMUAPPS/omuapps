@@ -5,6 +5,7 @@ export type Vec2Like = { x: number; y: number };
 export class Vec2 {
     public static ZERO = new Vec2(0, 0);
     public static ONE = new Vec2(1, 1);
+    public static ONE_NEGATIVE = new Vec2(-1, -1);
     public static UP = new Vec2(0, 1);
     public static DOWN = new Vec2(0, -1);
     public static LEFT = new Vec2(-1, 0);
@@ -88,7 +89,10 @@ export class Vec2 {
     public rotate(angle: number): Vec2 {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
-        return new Vec2(this.x * cos - this.y * sin, this.x * sin + this.y * cos);
+        return new Vec2(
+            this.x * cos - this.y * sin,
+            this.x * sin + this.y * cos,
+        );
     }
 
     public turnLeft(): Vec2 {

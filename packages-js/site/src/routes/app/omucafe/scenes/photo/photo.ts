@@ -10,16 +10,18 @@ import type { Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
 import type { Order, Receipt } from '../../core/game-state';
 import { createTransform } from '../../core/transform';
-import type { ItemPool, PoolOptions } from '../../item/item';
+import type { Item, ItemPool, PoolOptions } from '../../item/item';
 import client_background from '../../resources/client_background.png';
 import asset_vertical_background from '../kitchen/img/asset_vertical_background.png';
 import type { SceneHandler } from '../scene';
+import dummy from './img/dummy.png';
 import photo_frame from './img/photo_frame.png';
 import ScreenPhoto from './ScreenPhoto.svelte';
 
 // --- Constants ---
-const PHOTO_ROTATION_DEG = 3;
+const PHOTO_ROTATION_DEG = -10;
 const DATE_FONT_FAMILY = 'Zen Maru Gothic';
+const DATE_FONT_WEIGHT = '500';
 const DEFAULT_FONT_FAMILY = 'Noto Sans JP';
 
 export interface ScenePhotoData {
@@ -78,12 +80,16 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
             transform: createTransform(),
         });
 
-        for (const ref of Object.values(counterItems)) {
-            const targetItem = item.get(ref.id);
-            if (!targetItem || targetItem.parent) continue;
+        const refs = Object.values(counterItems);
+        const space = 400;
+        const rootItems = refs.map(ref => item.get(ref.id)).filter(i => i && !i.parent) as Item[];
+        const gap = space / rootItems.length;
+        for (let index = 0; index < rootItems.length; index++) {
+            const targetItem = rootItems[index];
+            const x = gap * (index - (rootItems.length - 1) / 2);
 
             const clone = item.clone(targetItem);
-            clone.transform.offset = { x: 0, y: 400 };
+            clone.transform.offset = { x: x, y: 400 };
             item.setPool(clone, pool);
         }
         itemRenderer.popPass();
@@ -112,8 +118,7 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         const container = bounds.with({ max: { x: 0 } }).shrink({ x: 100, y: 100 });
         const { photoTex, frameBounds, poolOptions } = await this.setupPhotoFrame(scene.pool, container);
 
-        // 共通のアイテム＆フレーム描画 (フォントサイズ指定: 72/2 = 36)
-        await this.drawPhotoItemsAndFrame(scene, poolOptions, frameBounds, photoTex, 36);
+        await this.drawPhotoItemsAndFrame(scene, poolOptions, frameBounds, photoTex, 42);
 
         // フレーム内キャンバスの描画
         const mouse = matrices.getViewToModel().transform2(pipelineInput.mouse.pos);
@@ -176,8 +181,8 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         const scale = frameBounds.width / photoTex.width;
 
         const transform = Transform2D.IDENTITY
-            .rotate(BetterMath.toRadians(PHOTO_ROTATION_DEG))
             .translate(frameBounds.center)
+            .rotate(BetterMath.toRadians(PHOTO_ROTATION_DEG))
             .scale(scale);
 
         const poolOptions: PoolOptions = {
@@ -198,7 +203,20 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         fontSize: number,
     ) {
         const { draw, matrices } = this.game.pipeline;
-        const { itemRenderer } = this.game;
+        const { itemRenderer, asset } = this.game;
+
+        if (this.game.side === 'client') {
+            matrices.model.push();
+            const center = frameBounds.center;
+            matrices.model.translate(center.x, center.y, 0);
+            matrices.model.rotate(Axis.Z_POS.rotateDeg(-PHOTO_ROTATION_DEG));
+            matrices.model.scale(1.2, 1.2, 1);
+            matrices.model.translate(-center.x, -center.y, 0);
+            const dummyAsset = await asset.getTextureByUrl(dummy).promise;
+            const dummyTex = dummyAsset.unwrap.texture;
+            draw.texture(...frameBounds.fit(dummyTex.size).offset({ x: 0, y: 50 }).toArray(), dummyTex);
+            matrices.model.pop();
+        }
 
         // アイテム群の描画
         itemRenderer.initPass();
@@ -206,12 +224,18 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
         await itemRenderer.renderHeld();
 
         matrices.model.push();
-        matrices.model.rotate(Axis.Z_POS.rotateDeg(PHOTO_ROTATION_DEG));
+        if (this.game.side !== 'client') {
+            const center = frameBounds.center;
+            matrices.model.translate(center.x, center.y, 0);
+            matrices.model.rotate(Axis.Z_POS.rotateDeg(PHOTO_ROTATION_DEG));
+            matrices.model.translate(-center.x, -center.y, 0);
+        }
 
         draw.texture(...frameBounds.toArray(), photoTex);
 
         // 日付テキストの描画
         draw.fontFamily = DATE_FONT_FAMILY;
+        draw.fontWeight = DATE_FONT_WEIGHT;
         draw.fontSize = fontSize;
         const date = scene.receipt?.date ? new Date(scene.receipt?.date) : new Date();
         await draw.textAlign(frameBounds.at({ x: 0.9, y: 0.75 }), date.toLocaleDateString(), Vec2.ONE, PALETTE_RGB.PHOTOFRAME_TEXT);

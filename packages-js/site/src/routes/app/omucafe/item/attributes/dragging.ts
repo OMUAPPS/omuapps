@@ -55,7 +55,7 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
         render: ItemRender,
     ): Promise<void> {
         const { draw } = this.game.pipeline;
-        const { min, max } = render.bounds;
+        const { min, max } = render.renderBounds;
         const { texture } = render;
 
         // 1. ホバー時のアウトライン表示

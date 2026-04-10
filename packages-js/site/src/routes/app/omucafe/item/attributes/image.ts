@@ -4,7 +4,7 @@ import { validateAsset, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
 import type { ValidateResult } from '../../core/helper';
 import placeholder from '../../resources/img/placeholder.png';
-import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, LoadContext } from '../attribute-handler';
+import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, LoadContext } from '../attribute-handler';
 import type { ItemPool } from '../item';
 import ImageEditor from './ImageEditor.svelte';
 
@@ -91,7 +91,7 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
     /**
      * 描画範囲の計算。ロード未完了時はエラーをスロー。
      */
-    async bounds({ attr }: AttributeInvoke<AttrImage>, result: { render: AABB2 }): Promise<void> {
+    async bounds({ attr }: AttributeInvoke<AttrImage>, ctx: CalculateBoundsContext): Promise<void> {
         const textureResult = this.game.asset.getTexture(attr.asset);
 
         if (textureResult.type !== 'ready') {
@@ -103,7 +103,7 @@ export class AttributeImage implements AttributeHandler<AttrImage> {
             new Vec2(-width / 2, -height / 2),
             new Vec2(width / 2, height / 2),
         );
-        result.render = result.render.union(bounds);
+        ctx.render = ctx.render.union(bounds);
     }
 
     /**

@@ -178,8 +178,8 @@ export class AttributeParticle implements AttributeHandler<AttrParticle> {
     /**
      * 1つのパーティクルを描画する
      */
-    private drawSingleParticle(attr: AttrParticle, particleIndex: number, particleT: number): void {
-        const random = ARC4.fromNumber(particleIndex * 1000);
+    private drawSingleParticle(attr: AttrParticle, seed: string, particleIndex: number, particleT: number): void {
+        const random = ARC4.fromString(`${seed}${particleIndex * 1000}`);
         const texture = this.getTexture(attr, random);
         const position = this.calculatePosition(attr, random, particleT);
 
@@ -199,19 +199,20 @@ export class AttributeParticle implements AttributeHandler<AttrParticle> {
         );
     }
 
-    async renderOverlay({ attr }: AttributeInvoke<AttrParticle>): Promise<void> {
+    async renderOverlay({ attr, item }: AttributeInvoke<AttrParticle>): Promise<void> {
         if (attr.assets.length === 0) return;
 
         const currentTimeInSeconds = Timer.now() / 1000;
         const timeOffset = attr.duration / attr.count;
+        const itemRandom = ARC4.fromString(item.id);
 
         for (let index = 0; index < attr.count; index++) {
             // 各パーティクルの進行度を計算
-            const particleTime = (currentTimeInSeconds / attr.duration) + (timeOffset * index);
+            const particleTime = (currentTimeInSeconds / attr.duration) + (timeOffset * index) + (itemRandom.next() * attr.duration);
             const particleIndex = Math.floor(particleTime);
             const particleT = particleTime - particleIndex; // 0.0 ~ 1.0 の正規化された時間
 
-            this.drawSingleParticle(attr, particleIndex, particleT);
+            this.drawSingleParticle(attr, item.id, particleIndex, particleT);
         }
     }
 }

@@ -1,10 +1,10 @@
-<script lang="ts">
+<script lang="ts" generics="T">
     import { Button, FileDrop } from '@omujs/ui';
     import type { Asset } from '../core/asset';
     import { Game } from '../core/game';
 
     interface Props {
-        asset: Asset;
+        asset: Asset | T;
         remove?: () => void;
     }
 
@@ -12,23 +12,29 @@
 
     const game = Game.getInstance();
 
-    let urlPromise = $derived(game.asset.getUrl(asset));
+    function isAsset(asset: Asset | T): asset is Asset {
+        if (!asset) return false;
+        return (asset as Asset).type !== undefined;
+    }
+    let urlPromise = $derived(isAsset(asset) ? game.asset.getUrl(asset) : undefined);
 </script>
 
 <div class="edit">
     <span>
-        {#if remove}
+        {#if remove && asset}
             <Button onclick={remove} primary>
                 削除
             </Button>
         {/if}
     </span>
     <div class="image">
-        {#await urlPromise.promise then result}
-            {#if result.type === 'ready'}
-                <img src={result.data} alt="">
-            {/if}
-        {/await}
+        {#if urlPromise}
+            {#await urlPromise.promise then result}
+                {#if result.type === 'ready'}
+                    <img src={result.data} alt="">
+                {/if}
+            {/await}
+        {/if}
         <FileDrop accept="image/*" handle={async (files) => {
             const file = files[0];
             asset = await game.asset.uploadFile(file);

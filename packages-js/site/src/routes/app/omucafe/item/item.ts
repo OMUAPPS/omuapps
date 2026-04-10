@@ -9,16 +9,17 @@ import { clone, generateUid, type ValidateResult } from '../core/helper';
 import type { Action } from '../core/input-system';
 import { getTransform, validateTransform, type Transform } from '../core/transform';
 import type { AttributeKey, Attributes } from './attribute';
-import type { ActionContext, CollideContext, ItemMouseEvent, LoadTask } from './attribute-handler';
+import type { ActionContext, CollideContext, ItemMouseEvent, ItemRender, LoadTask } from './attribute-handler';
 
 // --- Interfaces ---
 // (インターフェースの変更はありません)
 export interface Item {
     readonly id: string;
-    readonly attrs: Attributes;
+    attrs: Attributes;
     name: string;
     transform: Transform;
     children: string[];
+    tags: string[];
     update: number;
     parent?: string;
     pool: string;
@@ -65,6 +66,15 @@ export function validateItem(item: Item): ValidateResult<Item> {
     }
     if (item.children.some(childId => typeof childId !== 'string')) {
         return { type: 'invalid', message: 'childrenの要素はすべて文字列でなければなりません' };
+    }
+    if (item.tags === undefined) {
+        item.tags = [];
+    }
+    if (!Array.isArray(item.tags)) {
+        return { type: 'invalid', message: 'tagsは配列でなければなりません' };
+    }
+    if (item.tags.some(tag => typeof tag !== 'string')) {
+        return { type: 'invalid', message: 'tagsの要素はすべて文字列でなければなりません' };
     }
     if (typeof item.pool !== 'string') {
         return { type: 'invalid', message: 'poolは文字列でなければなりません' };
@@ -447,7 +457,7 @@ export class ItemSystem {
 
         if (scene.type !== 'factory' && pool.id === 'fridge') {
             this.inputPass!.actions.push({
-                title: `離す ${pool.id}`,
+                title: '戻す',
                 priority: 0,
                 invoke: async () => {
                     this.states.held = undefined;
@@ -468,8 +478,41 @@ export class ItemSystem {
                 if (render.type === 'rendered') {
                     this.constrainItemToBounds(held, options, transform.getMat4().basisTransformAABB2(render.render.bounds));
                 }
+                // this.reorderItems(pool);
             },
         });
+    }
+
+    private async reorderItems(pool: ItemPool) {
+        const items = Object.values(pool.items)
+            .map(({ id }) => this.game.item.items.get(id))
+            .filter((child): child is Item => !!child);
+
+        const renderData: Record<string, ItemRender> = {};
+        for (const child of items) {
+            const renderState = await this.game.itemRenderer.getItemRender(child);
+            if (renderState.type === 'rendered') {
+                renderData[child.id] = renderState.render;
+            }
+        }
+
+        items.sort((a, b) => {
+            const aBounds = renderData[a.id]?.bounds;
+            const bBounds = renderData[b.id]?.bounds;
+
+            if (!aBounds || !bBounds) return 0; // 描画データがない場合は順序を変えない
+
+            const aCenterY = a.transform.offset.y + aBounds.max.y;
+            const bCenterY = b.transform.offset.y + bBounds.max.y;
+
+            const delta = (bCenterY - aCenterY);
+            return -delta;
+        });
+
+        pool.items = {};
+        for (const item of items) {
+            pool.items[item.id] = { id: item.id };
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ import type { Game } from '../core/game';
 import type { Order, Product } from '../core/game-state';
 import { generateUid } from '../core/helper';
 // Message等の型は利用環境に合わせて適宜インポートしてください
+import { dev } from '$app/environment';
 import type { Message } from '@omujs/chat/models';
 
 const CONFIG = {
@@ -22,6 +23,7 @@ export class OrderSystem {
     private tokenizer: Tokenizer | undefined;
 
     constructor(private readonly game: Game) {
+        if (dev) return;
         if (game.side === 'client') {
             this.initTokenizer();
             this.setupChatListener();

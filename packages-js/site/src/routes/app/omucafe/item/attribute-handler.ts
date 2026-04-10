@@ -16,6 +16,7 @@ export interface ItemRender {
     update: number;
     texture: GlTexture;
     target: GlFramebuffer;
+    renderBounds: AABB2;
     bounds: AABB2;
 }
 
@@ -64,13 +65,17 @@ export interface ActionContext {
 
 export type AttributeTypeOfHandler<T extends AttributeHandler<unknown>> = T extends AttributeHandler<infer Attr> ? Attr : never;
 
+export interface CalculateBoundsContext {
+    render: AABB2;
+}
+
 export interface AttributeHandler<T> {
     name: string;
     editor: Component<{ attr: T }>;
     create(): T;
     validate(value: T): ValidateResult<T>;
     load?(invoke: AttributeInvoke<T>, ctx: LoadContext): Promise<void>;
-    bounds?(invoke: AttributeInvoke<T>, result: { render: AABB2 }, children: Record<string, ItemRender>): Promise<void>;
+    bounds?(invoke: AttributeInvoke<T>, ctx: CalculateBoundsContext, children: Record<string, ItemRender>): Promise<void>;
     renderPre?(invoke: AttributeInvoke<T>, render: ItemRender): Promise<void>;
     renderChildren?(invoke: AttributeInvoke<T>, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;
     renderPost?(invoke: AttributeInvoke<T>, render: ItemRender, children: Record<string, ItemRender>): Promise<void>;

@@ -324,6 +324,14 @@ export class Mat4 {
         return new Vec3(x, y, z);
     }
 
+    public transform4(point: Vec4): Vec4 {
+        const x = this.m00 * point.x + this.m10 * point.y + this.m20 * point.z + this.m30 * point.w;
+        const y = this.m01 * point.x + this.m11 * point.y + this.m21 * point.z + this.m31 * point.w;
+        const z = this.m02 * point.x + this.m12 * point.y + this.m22 * point.z + this.m32 * point.w;
+        const w = this.m03 * point.x + this.m13 * point.y + this.m23 * point.z + this.m33 * point.w;
+        return new Vec4(x, y, z, w);
+    }
+
     public equals(other: Mat4): boolean {
         return (
             this.m00 === other.m00 && this.m01 === other.m01 && this.m02 === other.m02 && this.m03 === other.m03 &&

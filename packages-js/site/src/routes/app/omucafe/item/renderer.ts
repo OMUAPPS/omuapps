@@ -87,11 +87,11 @@ export class ItemRenderer {
 
             const renderState = await this.getItemRender(item);
             if (renderState.type === 'rendered') {
-                const { bounds, texture } = renderState.render;
+                const { renderBounds, texture } = renderState.render;
                 matrices.model.push();
                 matrices.model.multiply(getTransform(item.transform).getMat4());
-                draw.textureColor(bounds.min.x, bounds.min.y + 20, bounds.max.x, bounds.max.y + 15, texture, PALETTE_RGB.ITEM_SHADOW);
-                draw.texture(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, texture);
+                draw.textureColor(renderBounds.min.x, renderBounds.min.y + 20, renderBounds.max.x, renderBounds.max.y + 15, texture, PALETTE_RGB.ITEM_SHADOW);
+                draw.texture(renderBounds.min.x, renderBounds.min.y, renderBounds.max.x, renderBounds.max.y, texture);
                 matrices.model.pop();
             }
         }
@@ -139,11 +139,11 @@ export class ItemRenderer {
         if (renderState.type === 'rendered' && childrenRender) {
             matrices.view.push();
             matrices.view.multiply(getTransform(pool.transform).getMat4());
-            const { bounds, texture } = renderState.render;
+            const { renderBounds, texture } = renderState.render;
             matrices.model.push();
             matrices.model.multiply(getTransform(item.transform).getMat4());
-            draw.textureColor(bounds.min.x, bounds.min.y + 20, bounds.max.x, bounds.max.y + 15, texture, PALETTE_RGB.ITEM_SHADOW);
-            draw.texture(bounds.min.x, bounds.min.y, bounds.max.x, bounds.max.y, texture);
+            draw.textureColor(renderBounds.min.x, renderBounds.min.y + 20, renderBounds.max.x, renderBounds.max.y + 15, texture, PALETTE_RGB.ITEM_SHADOW);
+            draw.texture(renderBounds.min.x, renderBounds.min.y, renderBounds.max.x, renderBounds.max.y, texture);
             await this.game.attribute.emit('renderOverlay', item, pool.pool, renderState.render, childrenRender);
             matrices.model.pop();
             matrices.view.pop();
@@ -184,9 +184,10 @@ export class ItemRenderer {
         // 3. Render Fresh
         const render = existing?.type !== 'loading' && existing?.render || await this.createItemRender(item, childrenRender);
 
-        render.bounds = await this.getItemRenderBounds(item, childrenRender);
+        render.bounds = await this.getItemBounds(item, childrenRender);
+        render.renderBounds = await this.getItemRenderBounds(item, childrenRender);
         render.texture.use(() => {
-            const dimensions = render.bounds.dimensions();
+            const dimensions = render.renderBounds.dimensions();
             render.texture.ensureSize(dimensions.x, dimensions.y);
         });
 
@@ -223,16 +224,16 @@ export class ItemRenderer {
     }
 
     private async renderItemToTarget(render: ItemRender, item: Item, childrenRender: Record<string, ItemRender>): Promise<void> {
-        const { bounds, target } = render;
+        const { renderBounds, target } = render;
         const { context, matrices } = this.game.pipeline;
-        const dims = bounds.dimensions();
+        const dims = renderBounds.dimensions();
 
         // Pass 1: Pre-render
         await target.useAsync(async () => {
             context.stateManager.pushViewport(dims);
             await matrices.scopeAsync(async () => {
                 matrices.identity();
-                matrices.projection.orthographic(bounds.min.x, bounds.max.y, bounds.max.x, bounds.min.y, -1, 1);
+                matrices.projection.orthographic(renderBounds.min.x, renderBounds.max.y, renderBounds.max.x, renderBounds.min.y, -1, 1);
                 context.gl.clearColor(0, 0, 0, 0);
                 context.gl.clear(context.gl.COLOR_BUFFER_BIT);
                 await this.game.attribute.emit('renderPre', item, render);
@@ -246,7 +247,7 @@ export class ItemRenderer {
             await matrices.scopeAsync(async () => {
                 matrices.identity();
                 matrices.view.identity();
-                matrices.projection.orthographic(bounds.min.x, bounds.max.y, bounds.max.x, bounds.min.y, -1, 1);
+                matrices.projection.orthographic(renderBounds.min.x, renderBounds.max.y, renderBounds.max.x, renderBounds.min.y, -1, 1);
                 await this.game.attribute.emit('renderChildren', item, render, childrenRender);
                 await this.game.attribute.emit('renderPost', item, render, childrenRender);
             });
@@ -256,8 +257,9 @@ export class ItemRenderer {
 
     private async createItemRender(item: Item, childrenRender: Record<string, ItemRender>): Promise<ItemRender> {
         const { context } = this.game.pipeline;
-        const bounds = await this.getItemRenderBounds(item, childrenRender);
-        const dimensions = bounds.dimensions();
+        const bounds = await this.getItemBounds(item, childrenRender);
+        const renderBounds = await this.getItemRenderBounds(item, childrenRender);
+        const dimensions = renderBounds.dimensions();
 
         const texture = context.createTexture();
         texture.use(() => {
@@ -278,15 +280,37 @@ export class ItemRenderer {
 
         return {
             bounds,
+            renderBounds,
             target,
             texture,
             update: item.update,
         };
     }
 
-    private async getItemRenderBounds(item: Item, childrenRender: Record<string, ItemRender>): Promise<AABB2> {
+    private async getItemBounds(item: Item, childrenRender: Record<string, ItemRender>): Promise<AABB2> {
         const result = { render: AABB2.ZEROONE };
         await this.game.attribute.emit('bounds', item, result, childrenRender);
         return result.render;
+    }
+
+    private async getItemRenderBounds(item: Item, childrenRender: Record<string, ItemRender>): Promise<AABB2> {
+        const boundsResult = { render: AABB2.ZEROONE };
+        await this.game.attribute.emit('bounds', item, boundsResult, childrenRender);
+        let bounds = boundsResult.render;
+
+        // 子アイテムの描画範囲も考慮する
+        for (const childId of item.children) {
+            const child = this.game.item.get(childId);
+            if (!child) continue;
+            const childRender = childrenRender[childId];
+            if (childRender) {
+                const childBounds = childRender.renderBounds;
+                const mat = getTransform(child.transform).getMat4();
+                const worldBounds = mat.transformAABB2(childBounds);
+                bounds = bounds.union(worldBounds);
+            }
+        }
+
+        return bounds;
     }
 }

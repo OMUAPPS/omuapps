@@ -1115,8 +1115,8 @@ export class Draw {
     }
 
     public roundedRectTexture(
-        start: Vec2,
-        end: Vec2,
+        start: Vec2Like,
+        end: Vec2Like,
         radius: number,
         texture: GlTexture,
         color: Vec4 = Vec4.ONE,
@@ -1135,7 +1135,7 @@ export class Draw {
             ]));
             this.setMatrices(this.roundedRectTextureProgram);
             this.roundedRectTextureProgram.getUniform('u_color').asVec4().set(color);
-            this.roundedRectTextureProgram.getUniform('u_resolution').asVec2().set(end.sub(start));
+            this.roundedRectTextureProgram.getUniform('u_resolution').asVec2().set(Vec2.from(end).sub(start));
             this.roundedRectTextureProgram.getUniform('u_radius').asFloat().set(radius);
             this.roundedRectTextureProgram.getUniform('u_smoothness').asFloat().set(smoothness);
             this.roundedRectTextureProgram.getUniform('u_texture').asSampler2D().set(texture);

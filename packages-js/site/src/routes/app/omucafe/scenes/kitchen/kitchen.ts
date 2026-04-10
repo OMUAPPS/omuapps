@@ -106,7 +106,7 @@ class Display {
             if (order.user.avatar) {
                 const avatarStatus = (await this.game.asset.getTextureByUrl(order.user.avatar).promise);
                 if (avatarStatus.type === 'ready') {
-                    draw.texture(listBounds.min.x, offsetY, listBounds.min.x + 48, offsetY + 48, avatarStatus.data.texture);
+                    draw.roundedRectTexture({ x: listBounds.min.x, y: offsetY }, { x: listBounds.min.x + 48, y: offsetY + 48 }, 48 / 2, avatarStatus.data.texture);
                 }
             }
             draw.fontWeight = '600';

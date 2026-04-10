@@ -327,10 +327,10 @@
 
     .receipt {
         position: fixed;
-        left: 4rem;
+        right: 4rem;
         bottom: 4rem;
         filter: drop-shadow(0.25rem 0.5rem 0 rgba(0,0,0,0.5)) drop-shadow(0.25rem 0.5rem 2rem rgba(0,0,0,0.3));
-        transform: rotate(-10deg);
+        transform: rotate(10deg);
         transform-origin: bottom;
     }
 
@@ -374,10 +374,11 @@
 
     .receipt-client {
         position: fixed;
-        left: 1rem;
-        bottom: 1rem;
+        left: calc(50% - 4rem);
+        bottom: -1rem;
         transform-origin: left bottom;
         scale: 0.75;
+        filter: drop-shadow(1px 1px 2px black);
     }
 
     .tool-switch {

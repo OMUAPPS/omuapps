@@ -22,7 +22,7 @@
         if (!$itemStore) return;
         const currentAttributeString = JSON.stringify($itemStore.attrs);
         if (lastAttributeString !== currentAttributeString) {
-            $itemStore.update++;
+            game.item.updateItem($itemStore);
         }
         lastAttributeString = currentAttributeString;
     });
@@ -30,6 +30,7 @@
     function deleteAttribute(key: AttributeKey) {
         if (!$itemStore) return;
         delete $itemStore.attrs[key];
+        $itemStore.attrs = $itemStore.attrs;
     }
 
     function addAttribute(event: Event & { currentTarget: HTMLSelectElement }) {
@@ -109,7 +110,7 @@
     h2 {
         color: var(--color-1);
         margin: 0.5rem 0;
-        margin-top: 1rem;
+        margin-top: 1.5rem;
         text-align: left;
         font-size: 1.5rem;
         color: var(--color-1);
