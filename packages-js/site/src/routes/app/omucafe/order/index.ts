@@ -2,14 +2,13 @@ import { ProxyDictionaryLoader } from '$lib/token-helper';
 import kuromoji from '@2ji-han/kuromoji.js';
 import type { Tokenizer } from '@2ji-han/kuromoji.js/tokenizer.js';
 import { ChatEvents } from '@omujs/chat';
+import type { Message } from '@omujs/chat/models';
 import { chat as chatStore } from '@omujs/ui';
 import { get } from 'svelte/store';
 import type { Game } from '../core/game';
 import type { Order, Product } from '../core/game-state';
 import { generateUid } from '../core/helper';
-// Message等の型は利用環境に合わせて適宜インポートしてください
-import { dev } from '$app/environment';
-import type { Message } from '@omujs/chat/models';
+import bell from './se/bell.wav';
 
 const CONFIG = {
     ORDER_PREFIX: '#',
@@ -23,7 +22,6 @@ export class OrderSystem {
     private tokenizer: Tokenizer | undefined;
 
     constructor(private readonly game: Game) {
-        if (dev) return;
         if (game.side === 'client') {
             this.initTokenizer();
             this.setupChatListener();
@@ -82,6 +80,15 @@ export class OrderSystem {
 
         // 状態を更新
         this.game.states.orders.set(order.id, order);
+
+        this.game.audio.start({
+            asset: {
+                type: 'url',
+                url: bell,
+            },
+            duration: 2,
+            start: 0,
+        });
     }
 
     /**

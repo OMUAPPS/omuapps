@@ -182,13 +182,13 @@ export class ScenePhoto implements SceneHandler<ScenePhotoData> {
 
         const transform = Transform2D.IDENTITY
             .translate(frameBounds.center)
-            .rotate(BetterMath.toRadians(PHOTO_ROTATION_DEG))
+            .rotate(BetterMath.toRadians(this.game.side === 'client' ? -PHOTO_ROTATION_DEG : -PHOTO_ROTATION_DEG / 2))
             .scale(scale);
 
         const poolOptions: PoolOptions = {
             pool,
             transform: transform.toJSON(),
-            bounds: AABB2.fromSize(photoTex).setAt(Vec2.CENTER, Vec2.ZERO),
+            bounds: AABB2.fromSize(photoTex).setAt(Vec2.CENTER, Vec2.ZERO).scale(1.5),
             align: Vec2.CENTER,
         };
 

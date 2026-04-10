@@ -5,7 +5,7 @@ import { Vec2 } from '$lib/math/vec2';
 import { PALETTE_RGB } from '../../colors';
 import { getAssetKey, validateAsset, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
-import type { ValidateResult } from '../../core/helper';
+import { validateEnum, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
 import { getTransform, validateTransform, type Transform } from '../../core/transform';
 import type { AttributeHandler, AttributeInvoke, CalculateBoundsContext, ItemMouseEvent, ItemRender, LoadContext } from '../attribute-handler';
@@ -29,6 +29,12 @@ export interface AttrContainer {
         bounds?: {
             horizontal: 'left' | 'right' | 'both' | 'none';
             vertical: 'top' | 'bottom' | 'both' | 'none';
+            padding: {
+                left: number;
+                right: number;
+                top: number;
+                bottom: number;
+            };
         };
     };
 }
@@ -92,6 +98,12 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 bounds: {
                     horizontal: 'both',
                     vertical: 'bottom',
+                    padding: {
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                    },
                 },
             },
         };
@@ -118,6 +130,60 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 return { type: 'invalid', message: `テクスチャの読み込みに失敗: ${getAssetKey(value.cover.asset)}` };
             }
         }
+
+        if (value.mask) {
+            if (!value.mask.asset) {
+                return { type: 'invalid', message: 'マスクのアセットが指定されていません' };
+            }
+            if (value.mask.transform) {
+                const transformResult = validateTransform(value.mask.transform);
+                if (transformResult.type === 'invalid') {
+                    return { type: 'invalid', message: `マスクのトランスフォームが無効: ${transformResult.message}` };
+                }
+            }
+            const assetResult = validateAsset(value.mask.asset);
+            if (assetResult.type === 'invalid') {
+                return { type: 'invalid', message: `マスクのアセットが無効: ${assetResult.message}` };
+            }
+
+            const assetState = this.game.asset.getTexture(value.mask.asset);
+            if (assetState.type === 'error') {
+                return { type: 'invalid', message: `テクスチャの読み込みに失敗: ${getAssetKey(value.mask.asset)}` };
+            }
+        }
+
+        if (value.constraints) {
+            if (value.constraints.maxItems !== undefined) {
+                if (typeof value.constraints.maxItems !== 'number' || value.constraints.maxItems < 0) {
+                    return { type: 'invalid', message: 'constraints.maxItemsは0以上の数値でなければなりません' };
+                }
+            }
+            if (value.constraints.tags) {
+                if (!Array.isArray(value.constraints.tags) || !value.constraints.tags.every(tag => typeof tag === 'string')) {
+                    return { type: 'invalid', message: 'constraints.tagsは文字列の配列でなければなりません' };
+                }
+            }
+            if (value.constraints.bounds) {
+                const { horizontal, vertical } = value.constraints.bounds;
+                const horizontalResult = validateEnum(horizontal, ['left', 'right', 'both', 'none']);
+                if (horizontalResult.type === 'invalid') {
+                    return { type: 'invalid', message: `無効な水平拘束: ${horizontal}` };
+                }
+                const verticalResult = validateEnum(vertical, ['top', 'bottom', 'both', 'none']);
+                if (verticalResult.type === 'invalid') {
+                    return { type: 'invalid', message: `無効な垂直拘束: ${vertical}` };
+                }
+                if (!value.constraints.bounds.padding) {
+                    value.constraints.bounds.padding = {
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                    };
+                }
+            }
+        }
+
         if (value.layerOrder !== 'upper' && value.layerOrder !== 'lower') {
             return { type: 'invalid', message: `無効なレイヤー順序: ${value.layerOrder}` };
         }
@@ -303,7 +369,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 title: `${item.name}に乗せる`,
                 priority: 100,
                 invoke: async () => {
-                    states.held = undefined; // 持っている状態を解除
+                    this.game.item.dropHeldItem();
                     this.game.item.attachItem(item, heldItem);
                     await this.reorderChildren(item, attr);
                     await this.constrainItemToBounds(attr, item, heldItem);
@@ -321,7 +387,11 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         const containerRender = await this.game.itemRenderer.getItemRender(container);
         if (containerRender.type !== 'rendered') return;
 
-        const containerBounds = containerRender.render.bounds;
+        const bounds = containerRender.render.bounds;
+        const containerBounds = new AABB2(
+            new Vec2(bounds.min.x + attr.constraints.bounds.padding.left, bounds.min.y + attr.constraints.bounds.padding.top),
+            new Vec2(bounds.max.x - attr.constraints.bounds.padding.right, bounds.max.y - attr.constraints.bounds.padding.bottom),
+        );
 
         const childRender = await this.game.itemRenderer.getItemRender(child);
         if (childRender.type !== 'rendered') return;

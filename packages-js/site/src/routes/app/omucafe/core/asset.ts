@@ -159,6 +159,17 @@ export class AssetManager {
         return texture;
     });
 
+    private readonly audioBuffers = new Loader<Asset, AudioBuffer>((data) => getAssetKey(data), async (asset) => {
+        const result = await this.assets.get(asset).promise;
+        if (result.type === 'error') {
+            throw result.error;
+        }
+        const { data } = result;
+        const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+        const cachedBuffer = await this.game.audio.ctx.decodeAudioData(arrayBuffer);
+        return cachedBuffer;
+    });
+
     private readonly dataCanvas: OffscreenCanvas;
     private readonly dataContext: OffscreenCanvasRenderingContext2D;
 
@@ -190,6 +201,10 @@ export class AssetManager {
 
     public getTextureByUrl(url: string): TextureStatus {
         return this.textures.get({ type: 'url', url });
+    }
+
+    public getAudioBuffer(asset: Asset): LoadingState<AudioBuffer> {
+        return this.audioBuffers.get(asset);
     }
 
     public getBlob(asset: Asset): LoadingState<Blob> {

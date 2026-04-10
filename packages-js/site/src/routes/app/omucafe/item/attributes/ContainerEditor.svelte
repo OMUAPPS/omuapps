@@ -11,6 +11,14 @@
     }
 
     let { attr = $bindable() }: Props = $props();
+    if (attr?.constraints?.bounds) {
+        attr.constraints.bounds.padding ??= {
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+        };
+    }
 </script>
 
 {#if attr}
@@ -109,6 +117,12 @@
                         attr.constraints.bounds = {
                             horizontal: 'both',
                             vertical: 'bottom',
+                            padding: {
+                                left: 0,
+                                right: 0,
+                                top: 0,
+                                bottom: 0,
+                            },
                         };
                     } else {
                         attr.constraints.bounds = undefined;
@@ -157,6 +171,19 @@
                             value: 'none',
                         },
                     }} />
+                </label>
+                <label>
+                    余白
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-direction: column;">
+                        <span>左</span>
+                        <Slider bind:value={attr.constraints.bounds.padding.left} min={0} max={512} step={1} clamp={false} />
+                        <span>右</span>
+                        <Slider bind:value={attr.constraints.bounds.padding.right} min={0} max={512} step={1} clamp={false} />
+                        <span>上</span>
+                        <Slider bind:value={attr.constraints.bounds.padding.top} min={0} max={512} step={1} clamp={false} />
+                        <span>下</span>
+                        <Slider bind:value={attr.constraints.bounds.padding.bottom} min={0} max={512} step={1} clamp={false} />
+                    </div>
                 </label>
             {/if}
         {/if}

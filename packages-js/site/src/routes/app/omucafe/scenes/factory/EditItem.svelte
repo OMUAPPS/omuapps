@@ -3,6 +3,7 @@
     import EditTransform from '../../common/EditTransform.svelte';
     import { Game } from '../../core/game';
     import type { AttributeKey } from '../../item/attribute';
+    import { validateItem } from '../../item/item';
     import EditItemJson from './EditItemJson.svelte';
     import { preview } from './factory';
 
@@ -15,6 +16,13 @@
     const game = Game.getInstance();
 
     const itemStore = $derived(game.item.items.getStore(id));
+
+    if ($itemStore) {
+        const result = validateItem($itemStore);
+        if (result.type === 'valid') {
+            $itemStore = result.value;
+        }
+    }
 
     let lastAttributeString = JSON.stringify($itemStore?.attrs);
 

@@ -1,5 +1,6 @@
 import type { RenderPipeline } from '$lib/components/canvas/pipeline';
 import { Timer } from '$lib/timer';
+import { AudioSystem } from '../audio';
 import { Canvas } from '../canvas/canvas';
 import { FridgeSystem } from '../fridge';
 import { ItemSystem } from '../item';
@@ -33,6 +34,7 @@ export class Game {
     public trashbin: Trashbin;
     public canvas: Canvas;
     public order: OrderSystem;
+    public audio: AudioSystem;
     public readonly side: GameSide;
 
     constructor(
@@ -40,7 +42,10 @@ export class Game {
         public readonly pipeline: RenderPipeline,
         public readonly states: GameState,
     ) {
+        Game.INSTANCE = this;
+
         this.side = app.side;
+        this.audio = new AudioSystem(this);
         this.asset = new AssetManager(this);
         this.input = new InputSystem(this);
         this.renderer = new GameRenderer(this);
@@ -53,7 +58,6 @@ export class Game {
         this.order = new OrderSystem(this);
         this.canvas = new Canvas(this);
 
-        Game.INSTANCE = this;
         if (app.side === 'client') {
             app.omu.dashboard.requestDragDrop().then((handler) => {
                 handler.onDrop(async (event) => {

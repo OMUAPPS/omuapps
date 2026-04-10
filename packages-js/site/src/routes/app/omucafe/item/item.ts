@@ -32,6 +32,8 @@ export interface ItemRef {
 export interface ItemPool {
     id: string;
     items: Record<string, ItemRef>;
+    // Sound Effects
+    soundEffects?: Record<string, string>;
 }
 
 export interface ItemSystemState {
@@ -460,7 +462,7 @@ export class ItemSystem {
                 title: '戻す',
                 priority: 0,
                 invoke: async () => {
-                    this.states.held = undefined;
+                    this.dropHeldItem();
                     this.remove(held);
                 },
             });
@@ -468,19 +470,28 @@ export class ItemSystem {
         }
 
         this.inputPass!.actions.push({
-            title: `離す ${pool.id}`,
+            title: '置く',
             priority: 0,
             invoke: async () => {
-                this.states.held = undefined;
+                this.dropHeldItem();
                 this.setPool(held, pool);
                 const render = await this.game.itemRenderer.getItemRender(held);
                 const transform = getTransform(held.transform);
                 if (render.type === 'rendered') {
                     this.constrainItemToBounds(held, options, transform.getMat4().basisTransformAABB2(render.render.bounds));
                 }
-                // this.reorderItems(pool);
             },
         });
+    }
+
+    public dropHeldItem() {
+        const heldId = this.states.held;
+        if (!heldId) return;
+        const held = this.get(heldId);
+        if (!held) return;
+        const poolOptions = this.renderPass.pools[held.pool];
+        this.game.attribute.emit('drop', held, poolOptions.pool);
+        this.states.held = undefined;
     }
 
     private async reorderItems(pool: ItemPool) {

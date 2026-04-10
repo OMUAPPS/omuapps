@@ -1,4 +1,5 @@
 import { type Vec2Like } from '$lib/math/vec2';
+import type { AudioClip } from '../../audio';
 import { PALETTE_RGB } from '../../colors';
 import type { Game } from '../../core/game';
 import { validateVec2, type ValidateResult } from '../../core/helper';
@@ -13,6 +14,8 @@ export interface AttrDragging {
         timestamp: number;
         offset: Vec2Like;
     };
+    dragSound?: AudioClip;
+    dropSound?: AudioClip;
 }
 
 /** * アイテムの「つかみ」操作を管理する属性ハンドラー
@@ -129,6 +132,9 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
                 }
                 this.game.item.states.held = item.id;
                 this.game.item.dettachItem(item);
+                if (attr.dragSound) {
+                    this.game.audio.start(attr.dragSound);
+                }
 
                 // 掴んだ瞬間のマウス座標とアイテム座標の差分を保存
                 attr.lastDrag = {
@@ -137,5 +143,11 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
                 };
             },
         });
+    }
+
+    async drop({ attr }: AttributeInvoke<AttrDragging>, _pool: ItemPool): Promise<void> {
+        if (attr.dropSound) {
+            this.game.audio.start(attr.dropSound);
+        }
     }
 }
