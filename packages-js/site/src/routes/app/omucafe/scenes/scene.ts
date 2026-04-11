@@ -4,8 +4,9 @@ import { SceneFactory, type SceneFactoryData } from './factory/factory';
 import { SceneKitchen, type SceneKitchenData } from './kitchen/kitchen';
 import { SceneMainMenu, type SceneMainMenuData } from './main';
 import { ScenePhoto, type ScenePhotoData } from './photo/photo';
+import { SceneSettings, type SceneSettingsData } from './settings/settings';
 
-export type SceneData = SceneMainMenuData | SceneKitchenData | SceneFactoryData | ScenePhotoData;
+export type SceneData = SceneMainMenuData | SceneKitchenData | SceneFactoryData | ScenePhotoData | SceneSettingsData;
 
 export interface SceneHandler<T> {
     component?: TypedComponent<{
@@ -24,6 +25,7 @@ export class SceneSystem {
     public readonly kitchen: SceneKitchen;
     public readonly factory: SceneFactory;
     public readonly photo: ScenePhoto;
+    public readonly settings: SceneSettings;
 
     constructor(
         private readonly game: Game,
@@ -33,6 +35,7 @@ export class SceneSystem {
             kitchen: this.kitchen = new SceneKitchen(game),
             factory: this.factory = new SceneFactory(game),
             photo: this.photo = new ScenePhoto(game),
+            settings: this.settings = new SceneSettings(game),
         };
     }
 

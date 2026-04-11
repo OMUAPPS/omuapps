@@ -122,6 +122,8 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
         const { resolution } = this.game.renderer;
         return {
             pool: this.pool,
+            name: '作業台',
+            ordering: 'lower',
             transform: DEFAULT_TRANSFORM,
             bounds: new AABB2(
                 new Vec2(-resolution.x / 2, 0),
@@ -292,6 +294,7 @@ export class SceneFactory implements SceneHandler<SceneFactoryData> {
             name: '新しいアイテム',
             children: [],
             transform,
+            tags: [],
             pool: 'factory',
         });
 

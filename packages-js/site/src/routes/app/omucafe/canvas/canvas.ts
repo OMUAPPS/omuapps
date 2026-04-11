@@ -4,6 +4,7 @@ import { Vec2 } from '$lib/math/vec2';
 import { Vec4 } from '$lib/math/vec4';
 import { PALETTE_RGB } from '../colors';
 import type { Game } from '../core/game';
+import { ASSET_RESOLUTION } from '../core/game-renderer';
 import type { BrushCommand, CanvasCommand } from '../core/game-state';
 
 export class Palette {}
@@ -15,8 +16,8 @@ export interface CanvasOptions {
 }
 
 const CONFIG = {
-    WIDTH: 830,
-    HEIGHT: 1080,
+    WIDTH: ASSET_RESOLUTION.x,
+    HEIGHT: ASSET_RESOLUTION.y,
     CHUNK_SIZE_LIMIT: 100,
     DUMPING_FACTOR: 0.4,
     WIDTH_DUMPING_FACTOR: 0.6,
@@ -118,7 +119,7 @@ export class Canvas {
         const renderMouse = options.mouse.toArray();
         if (toolType === 'move') return;
 
-        const width = this.brush.stroke.kind === 'idle' ? this.brush.width : this.brush.currentWidth;
+        const width = (this.brush.stroke.kind === 'idle' ? this.brush.width : this.brush.currentWidth) / 2;
 
         draw.circle(...renderMouse, width - 2, width + 4, PALETTE_RGB.CANVAS_BRUSH_OUTLINE_2);
         draw.circle(...renderMouse, width, width + 2, PALETTE_RGB.CANVAS_BRUSH_OUTLINE_1);

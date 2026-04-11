@@ -17,21 +17,26 @@
         return (asset as Asset).type !== undefined;
     }
     let urlPromise = $derived(isAsset(asset) ? game.asset.getUrl(asset) : undefined);
+    let image: HTMLImageElement | undefined = $state();
 </script>
 
 <div class="edit">
     <span>
-        {#if remove && asset}
-            <Button onclick={remove} primary>
-                削除
-            </Button>
+        {#if asset}
+            {#if remove}
+                <Button onclick={remove} primary>
+                    削除
+                </Button>
+            {/if}
+        {:else}
+            無し
         {/if}
     </span>
     <div class="image">
         {#if urlPromise}
             {#await urlPromise.promise then result}
                 {#if result.type === 'ready'}
-                    <img src={result.data} alt="">
+                    <img bind:this={image} src={result.data} alt="">
                 {/if}
             {/await}
         {/if}

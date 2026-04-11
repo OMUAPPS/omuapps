@@ -11,6 +11,7 @@ export class Trashbin {
     private pool: ItemPool = { id: 'trashbin', items: {} };
     private options: PoolOptions = {
         pool: this.pool,
+        name: 'ゴミ箱',
         bounds: AABB2.ZEROONE,
         transform: DEFAULT_TRANSFORM,
         align: Vec2.CENTER,
@@ -28,6 +29,7 @@ export class Trashbin {
         draw.texture(...this.bounds.toArray(), binTex);
         this.options = {
             bounds: this.bounds,
+            name: 'ゴミ箱',
             transform: DEFAULT_TRANSFORM,
             pool: this.pool,
             align: Vec2.CENTER,

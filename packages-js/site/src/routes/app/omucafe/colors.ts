@@ -1,9 +1,11 @@
 import { Vec4, type Vec4Like } from '$lib/math/vec4';
 
 const ACCENT = new Vec4(11 / 255, 111 / 255, 114 / 255, 1);
+const SECONDARY = Vec4.fromColorHex('#729D2D');
 export const PALETTE_RGB = {
     BACKGROUND: new Vec4(246 / 255, 242 / 255, 235 / 255, 1),
     ACCENT,
+    SECONDARY,
     OVERLAY_BACKGROUND: new Vec4(1, 1, 1, 0.5),
     OVERLAY_OUTLINE: new Vec4(1, 1, 1, 0.75),
     TOOLTIP_TEXT: new Vec4(1, 1, 1, 1),
@@ -16,7 +18,12 @@ export const PALETTE_RGB = {
     CANVAS_BRUSH_OUTLINE_1: Vec4.fromColorHex('#fff'),
     CANVAS_BRUSH_OUTLINE_2: Vec4.fromColorHex('#888'),
     CANVAS_GLOW: Vec4.fromColorHex('#fff'),
+    PHOTOFRAME_OUTLINE: Vec4.fromColorHex('#888'),
     PHOTOFRAME_TEXT: Vec4.fromColorHex('#666'),
+    PHOTOFRAME_TEXT_SHADOW: Vec4.fromColorHex('#fff'),
+    PHOTO_BACKGROUND_OVERLAY: Vec4.fromColorHex('#7C7A6544'),
+    KITCHN_EDITMODE_GRADIENT_1: Vec4.fromColorHex('#ffff'),
+    KITCHN_EDITMODE_GRADIENT_2: Vec4.fromColorHex('#fff0'),
 };
 
 // https://gist.github.com/dkaraush/65d19d61396f5f3cd8ba7d1b4b3c9432

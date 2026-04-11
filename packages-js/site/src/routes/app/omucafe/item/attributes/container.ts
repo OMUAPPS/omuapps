@@ -2,6 +2,7 @@ import type { GlFramebuffer, GlTexture } from '$lib/components/canvas/glcontext'
 import { AABB2 } from '$lib/math/aabb2';
 import { lerp } from '$lib/math/math';
 import { Vec2 } from '$lib/math/vec2';
+import { Vec4, type Vec4Like } from '$lib/math/vec4';
 import { PALETTE_RGB } from '../../colors';
 import { getAssetKey, validateAsset, type Asset } from '../../core/asset';
 import type { Game } from '../../core/game';
@@ -22,10 +23,12 @@ export interface AttrContainer {
         asset: Asset;
         transform: Transform;
     };
+    maskInverted?: boolean;
     layerOrder: 'upper' | 'lower';
     constraints?: {
         maxItems?: number;
         tags?: string[];
+        noOverflow?: boolean;
         bounds?: {
             horizontal: 'left' | 'right' | 'both' | 'none';
             vertical: 'top' | 'bottom' | 'both' | 'none';
@@ -233,19 +236,24 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
     /** * コンテナ自体のカバーやデバッグ情報の描画
      */
     async renderOverlay({ item, attr }: AttributeInvoke<AttrContainer>, pool: ItemPool, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
-        const { matrices, draw } = this.game.pipeline;
+        const { draw } = this.game.pipeline;
 
         const { states } = this.game.item;
         const hoveringId = states.hovered;
         const hoveringItem = hoveringId && this.game.item.get(hoveringId);
+        const heldItem = states.held && this.game.item.get(states.held);
         const isHovered = hoveringId === item.id ||
                          (hoveringItem && this.game.item.getParents(hoveringItem).includes(item));
 
-        if (isHovered && states.held && !this.isItemCountLimited(item, attr)) {
+        if (isHovered && heldItem && await this.isItemWithinLimits(item, attr, heldItem)) {
             const { min, max } = render.renderBounds;
             const { texture } = render;
 
             draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.CONTAINER_HOVERED, 4);
+        }
+
+        if (isHovered && this.game.side === 'client') {
+            this.renderChildrenToTarget(children, Vec4.ONE.with({ w: 0.25 }));
         }
     }
 
@@ -275,7 +283,7 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
     async renderChildren({ attr }: AttributeInvoke<AttrContainer>, render: ItemRender, children: Record<string, ItemRender>): Promise<void> {
         const { mask } = attr;
         if (!mask) {
-            this.renderChildrenToTarget(children);
+            this.renderChildrenToTarget(children, Vec4.ONE);
             return;
         }
         const textureState = this.game.asset.getTexture(mask.asset);
@@ -288,8 +296,17 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
             this.maskTexture.ensureSize(render.renderBounds.width, render.renderBounds.height);
         });
         this.maskBuffer.use(() => {
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
+            const inverted = attr.maskInverted;
+            if (inverted) {
+                gl.clearColor(1, 1, 1, 1);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                // Sub blending
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_COLOR);
+            } else {
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+            }
 
             const tex = textureState.data.texture;
             const halfSize = new Vec2(tex.width / 2, tex.height / 2);
@@ -302,6 +319,10 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 matrices.model.multiply(mat);
                 draw.texture(...bounds.toArray(), tex);
             });
+
+            if (inverted) {
+                this.game.renderer.resetBlending();
+            }
         });
 
         // 子アイテムの書き出し
@@ -311,13 +332,13 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         this.childrenBuffer.use(() => {
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
-            this.renderChildrenToTarget(children);
+            this.renderChildrenToTarget(children, Vec4.ONE);
         });
 
         draw.textureMask(...render.renderBounds.toArray(), this.childrenTexture, this.maskTexture);
     }
 
-    private renderChildrenToTarget(children: Record<string, ItemRender>) {
+    private renderChildrenToTarget(children: Record<string, ItemRender>, color: Vec4Like) {
         const { draw, matrices } = this.game.pipeline;
 
         for (const [id, renderData] of Object.entries(children)) {
@@ -330,15 +351,10 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                     renderData.renderBounds.min.x, renderData.renderBounds.min.y,
                     renderData.renderBounds.max.x, renderData.renderBounds.max.y,
                     renderData.texture,
+                    color,
                 );
             });
         }
-    }
-
-    private isItemCountLimited(item: Item, attr: AttrContainer) {
-        if (!attr.constraints) return false;
-        if (!attr.constraints.maxItems) return false;
-        return item.children.length >= attr.constraints.maxItems;
     }
 
     /** * 他のアイテムをコンテナに入れるアクション
@@ -361,15 +377,14 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
         const isHovered = hoveringId === item.id ||
                          (hoveringItem && this.game.item.getParents(hoveringItem).includes(item));
 
-        if (isHovered && !this.isItemCountLimited(item, attr)) {
-            const heldItem = this.game.item.items.get(states.held);
-            if (!heldItem) return;
-
+        const heldItem = this.game.item.items.get(states.held);
+        if (!heldItem) return;
+        if (isHovered && await this.isItemWithinLimits(item, attr, heldItem)) {
             ctx.actions.push({
                 title: `${item.name}に乗せる`,
-                priority: 100,
+                priority: 200,
                 invoke: async () => {
-                    this.game.item.dropHeldItem();
+                    this.game.item.dropItem();
                     this.game.item.attachItem(item, heldItem);
                     await this.reorderChildren(item, attr);
                     await this.constrainItemToBounds(attr, item, heldItem);
@@ -377,6 +392,46 @@ export class AttributeContainer implements AttributeHandler<AttrContainer> {
                 },
             });
         }
+    }
+
+    private async isItemWithinLimits(item: Item, attr: AttrContainer, child: Item): Promise<boolean> {
+        const { constraints } = attr;
+        if (!constraints) return true;
+        // アイテム数制約の確認
+        if (constraints.maxItems !== undefined && item.children.length >= constraints.maxItems) {
+            return false;
+        }
+        // タグ制約の確認
+        if (constraints.tags && constraints.tags.length > 0) {
+            const childTags = new Set(child.tags);
+            if (!constraints.tags.some(tag => childTags.has(tag))) {
+                return false;
+            }
+        }
+        // 境界制約の確認
+        if (constraints.bounds) {
+            const containerRender = await this.game.itemRenderer.getItemRender(item);
+            if (containerRender.type !== 'rendered') return true;
+
+            const bounds = containerRender.render.bounds;
+            const containerBounds = new AABB2(
+                new Vec2(bounds.min.x + constraints.bounds.padding.left, bounds.min.y + constraints.bounds.padding.top),
+                new Vec2(bounds.max.x - constraints.bounds.padding.right, bounds.max.y - constraints.bounds.padding.bottom),
+            );
+
+            const childRender = await this.game.itemRenderer.getItemRender(child);
+            if (childRender.type !== 'rendered') return true;
+            const childBounds = childRender.render.bounds;
+
+            const dimensions = containerBounds.size;
+            const size = childBounds.size;
+            const sizeExceded = dimensions.x < size.x || dimensions.y < size.y;
+
+            if (sizeExceded && constraints.noOverflow) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

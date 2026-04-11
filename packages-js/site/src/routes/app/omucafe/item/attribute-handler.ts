@@ -84,5 +84,6 @@ export interface AttributeHandler<T> {
     actions?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent, ctx: ActionContext): Promise<void>;
     collide?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent, ctx: CollideContext): Promise<void>;
     mouse?(invoke: AttributeInvoke<T>, pool: ItemPool, event: ItemMouseEvent): Promise<void>;
+    drag?(invoke: AttributeInvoke<T>, pool: ItemPool): Promise<void>;
     drop?(invoke: AttributeInvoke<T>, pool: ItemPool): Promise<void>;
 }

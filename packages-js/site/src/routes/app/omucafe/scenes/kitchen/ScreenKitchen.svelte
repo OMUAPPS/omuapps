@@ -14,20 +14,6 @@
 
 {#if game.side === 'client'}
     <main>
-        <button onclick={() => {
-            game.startTransition({
-                type: 'main_menu',
-            });
-        }}>
-            menu
-        </button>
-        <button onclick={() => {
-            game.startTransition({
-                type: 'factory',
-            });
-        }}>
-            factory
-        </button>
     </main>
 {/if}
 

@@ -77,12 +77,12 @@ export class ItemRenderer {
                 delete pool.items[id];
                 continue;
             }
+            if (item.parent) continue;
             if (pool.id !== item.pool) {
                 delete pool.items[id];
                 continue;
             }
             // Skip if child (children are rendered by parents)
-            if (item.parent) continue;
             if (states.held === item.id) continue;
 
             const renderState = await this.getItemRender(item);
@@ -117,6 +117,10 @@ export class ItemRenderer {
         }
 
         matrices.view.pop();
+    }
+
+    public getPoolOptions(poolId: string): PoolOptions | undefined {
+        return this.renderPass?.pools[poolId];
     }
 
     public async renderHeld() {

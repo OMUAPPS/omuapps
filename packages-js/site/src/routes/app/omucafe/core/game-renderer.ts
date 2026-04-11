@@ -114,6 +114,13 @@ export class GameRenderer {
         context.stateManager.setViewport({ x: matrices.width, y: matrices.height });
     }
 
+    public resetBlending() {
+        const { context } = this.game.pipeline;
+        const { gl } = context;
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    }
+
     public async renderTransition() {
         const { draw } = this.game.pipeline;
         const transition = this.game.states.transition.value;

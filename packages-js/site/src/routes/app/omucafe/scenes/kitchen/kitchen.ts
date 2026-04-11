@@ -3,6 +3,8 @@ import type { InputEvent } from '$lib/components/canvas/pipeline';
 import { AABB2 } from '$lib/math/aabb2';
 import { clamp, lerp } from '$lib/math/math';
 import { Vec2, type Vec2Like } from '$lib/math/vec2';
+import { Timer } from '$lib/timer';
+import { elasticIn } from 'svelte/easing';
 import { PALETTE_RGB } from '../../colors';
 import { Game } from '../../core/game';
 import { CLIENT_RESOLUTION, CLIENT_WORLD_BOUNDS } from '../../core/game-renderer';
@@ -22,6 +24,10 @@ export interface SceneKitchenData {
     type: 'kitchen';
     display?: {
         type: 'welcome';
+    };
+    editMode?: {
+        type: 'kitchen';
+        timestamp: number;
     };
 }
 
@@ -72,66 +78,145 @@ class Display {
 
     constructor(private readonly game: Game) {}
 
-    public async render() {
-        const { orders } = this.game.states;
-        const { matrices, draw, input } = this.game.pipeline;
+    public async render(scene: SceneKitchenData) {
+        const { matrices, input } = this.game.pipeline;
         this.action = undefined;
 
         const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
 
-        await this.renderOrderList(orders, mouse);
-
-        await draw.textAlign(this.bounds.center, 'ようこそ！', Vec2.ZERO, PALETTE_RGB.ACCENT);
+        if (scene.editMode) {
+            await this.renderEditMode(mouse, scene);
+        } else {
+            await this.renderNormalMode(mouse, scene);
+        }
     }
 
-    private async renderOrderList(orders: BufferedMap<Order>, mouse: Vec2) {
+    private async renderEditMode(mouse: Vec2, scene: SceneKitchenData) {
+        const [controlPanelButton, backButton] = this.bounds.shrink({ x: 20, y: 150 }).split({
+            direction: 'x',
+            ratio: 0.5,
+            gap: 20,
+        });
+
+        await this.renderButton('管理画面', controlPanelButton, {
+            title: 'データの管理など',
+            priority: 0,
+            invoke: async () => {
+                this.game.startTransition({
+                    type: 'settings',
+                    prev: {
+                        type: 'kitchen',
+                    },
+                });
+            },
+        });
+        await this.renderButton('戻る', backButton, {
+            title: '編集を終える',
+            priority: 0,
+            invoke: async () => {
+                scene.editMode = undefined;
+            },
+        });
+    }
+
+    private async renderNormalMode(mouse: Vec2, scene: SceneKitchenData) {
+        const { orders } = this.game.states;
+        const [listBounds, actionsBounds] = this.bounds.shrink({ x: 50, y: 50 }).split({
+            direction: 'x',
+            ratio: 0.5,
+            gap: 10,
+        });
+
+        await this.renderOrderList(orders, listBounds, mouse);
+
+        const [setupButton, factoryButton] = actionsBounds.shrink({ x: 50, y: 50 })
+            .split({
+                direction: 'y',
+                ratio: 0.5,
+                gap: 10,
+            });
+
+        await this.renderButton('店の設定', setupButton, {
+            title: '店の設定をする',
+            priority: 1,
+            invoke: async () => {
+                scene.editMode = {
+                    type: 'kitchen',
+                    timestamp: Timer.now(),
+                };
+            },
+        });
+        await this.renderButton('商品開発', factoryButton, {
+            title: '商品開発へ移動',
+            priority: 1,
+            invoke: async () => {
+                this.game.startTransition({
+                    type: 'factory',
+                });
+            },
+        });
+    }
+
+    private async renderButton(text: string, bounds: AABB2, action: Action) {
+        const { matrices, draw, input } = this.game.pipeline;
+        draw.roundedRect(bounds.min, bounds.max, 8, PALETTE_RGB.DISPLAY_BUTTON_BG);
+        draw.fontSize = 24;
+        draw.fontWeight = '600';
+        await draw.textAlign(bounds.center, text, Vec2.CENTER, PALETTE_RGB.DISPLAY_BUTTON_TEXT);
+        const mouse = matrices.getViewToWorld().transform2(input.mouse.pos);
+        const hovered = bounds.contains(mouse);
+        if (hovered) {
+            this.action = action;
+        }
+    }
+
+    private async renderOrderList(orders: BufferedMap<Order>, bounds: AABB2, mouse: Vec2) {
         const { draw } = this.game.pipeline;
-        const listBounds = this.bounds.with({ max: { x: this.bounds.center.x } }).shrink({ x: 10, y: 10 });
         const entries = Array.from(orders.values());
 
         if (entries.length === 0) {
             draw.fontSize = 16;
             draw.fontWeight = '500';
-            await draw.textAlign(listBounds.center, '注文はまだありません', Vec2.CENTER, PALETTE_RGB.ACCENT);
+            await draw.textAlign(bounds.center, '注文はまだありません', Vec2.CENTER, PALETTE_RGB.ACCENT);
         }
 
         draw.fontSize = 32;
         this.scroll = lerp(this.scroll, this.scrollTarget, 0.5);
-        let offsetY = listBounds.min.y + this.scroll;
+        let offsetY = bounds.min.y + this.scroll;
         draw.scissor(this.bounds);
 
         for (const order of entries) {
             const minY = offsetY;
-            offsetY += 10;
+            offsetY += 50;
             if (order.user.avatar) {
                 const avatarStatus = (await this.game.asset.getTextureByUrl(order.user.avatar).promise);
                 if (avatarStatus.type === 'ready') {
-                    draw.roundedRectTexture({ x: listBounds.min.x, y: offsetY }, { x: listBounds.min.x + 48, y: offsetY + 48 }, 48 / 2, avatarStatus.data.texture);
+                    draw.roundedRectTexture({ x: bounds.min.x, y: offsetY }, { x: bounds.min.x + 48, y: offsetY + 48 }, 48 / 2, avatarStatus.data.texture);
                 }
             }
             draw.fontWeight = '600';
-            await draw.textAlign(new Vec2(listBounds.min.x + 64, offsetY + 12), order.user.name, Vec2.ZERO, PALETTE_RGB.ACCENT);
+            await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY + 12), order.user.name, Vec2.ZERO, PALETTE_RGB.ACCENT);
             offsetY += 64;
 
             draw.fontWeight = '500';
             draw.fontSize = 18;
-            await draw.textAlign(new Vec2(listBounds.min.x + 64, offsetY), '注文内容', Vec2.ZERO, PALETTE_RGB.ACCENT);
+            await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), '注文内容', Vec2.ZERO, PALETTE_RGB.ACCENT);
             offsetY += 30;
 
             for (const item of order.items) {
                 draw.fontWeight = '500';
                 draw.fontSize = 24;
-                await draw.textAlign(new Vec2(listBounds.min.x + 64, offsetY), `・ ${item.name}`, Vec2.ZERO, PALETTE_RGB.ACCENT);
+                await draw.textAlign(new Vec2(bounds.min.x + 64, offsetY), `・ ${item.name}`, Vec2.ZERO, PALETTE_RGB.ACCENT);
                 offsetY += 30;
             }
             offsetY += 24;
-            draw.rectangle(listBounds.min.x, offsetY, listBounds.max.x, offsetY + 1, PALETTE_RGB.ACCENT);
+            draw.rectangle(bounds.min.x, offsetY, bounds.max.x, offsetY + 3, PALETTE_RGB.ACCENT);
 
-            const bounds = new AABB2(
-                new Vec2(listBounds.min.x, minY),
-                new Vec2(listBounds.max.x, offsetY),
+            const orderBounds = new AABB2(
+                new Vec2(bounds.min.x, minY),
+                new Vec2(bounds.max.x, offsetY),
             );
-            const hovered = bounds.contains(mouse);
+            const hovered = orderBounds.contains(mouse);
             if (hovered) {
                 this.action = {
                     title: 'クリックで納品',
@@ -145,7 +230,7 @@ class Display {
 
         draw.endScissor();
 
-        this.scrollHeight = offsetY - this.scroll - listBounds.min.y;
+        this.scrollHeight = offsetY - this.scroll - bounds.min.y;
     }
 
     public handle(event: InputEvent) {
@@ -204,6 +289,8 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
     private createPoolOptions(pool: ItemPool, width: number, height: number, offset: Vec2Like): PoolOptions {
         return {
             pool,
+            name: 'キッチン',
+            ordering: 'lower',
             transform: { right: { x: 1, y: 0 }, up: { x: 0, y: 1 }, offset },
             bounds: new AABB2(
                 new Vec2(-CLIENT_RESOLUTION.x / 2, 0),
@@ -239,9 +326,9 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
     /**
      * 3. 実際の描画処理
      */
-    private async renderScene(assets: SceneAssets, layout: SceneLayout) {
+    private async renderScene(assets: SceneAssets, layout: SceneLayout, scene: SceneKitchenData) {
         if (this.game.side === 'client') {
-            await this.renderClientSide(assets, layout);
+            await this.renderClientSide(assets, layout, scene);
         } else if (this.game.side === 'overlay') {
             await this.renderOverlaySide(assets, layout);
         } else if (this.game.side === 'background') {
@@ -249,9 +336,11 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         }
     }
 
-    private async renderClientSide(assets: SceneAssets, layout: SceneLayout) {
+    private async renderClientSide(assets: SceneAssets, layout: SceneLayout, scene: SceneKitchenData) {
         const { draw } = this.game.pipeline;
         const { itemRenderer, trashbin, fridge, states, renderer } = this.game;
+        const { editMode } = scene;
+        const isInEditMode = editMode?.type === 'kitchen';
 
         // 背景
         draw.texture(...renderer.containBounds.toArray(), assets.texBackground);
@@ -262,18 +351,35 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         // カウンターレイヤー
         const counterTextureBounds = CLIENT_WORLD_BOUNDS.fit(assets.texCounter.size).offset({ x: 0, y: OFFSETS.CLIENT.COUNTER_Y });
         draw.texture(...counterTextureBounds.toArray(), assets.texCounter);
+        await this.renderDisplay(scene, assets);
+
         await itemRenderer.renderPool(states.counter.value, layout.counterOptions);
 
         // キッチンレイヤー
         await itemRenderer.renderPool(states.kitchen.value, layout.kitchenOptions);
 
-        // ディスプレイ
-        await this.renderDisplay(assets);
-
         // オーバーレイ
-        await trashbin.render(new Vec2(renderer.bounds.max.x - OFFSETS.OVERLAY.TRASHBIN_X, renderer.bounds.max.y));
+        if (!isInEditMode) {
+            await trashbin.render(new Vec2(renderer.bounds.max.x - OFFSETS.OVERLAY.TRASHBIN_X, renderer.bounds.max.y));
+        }
         await fridge.render();
         await itemRenderer.renderHeld();
+
+        if (isInEditMode) {
+            const elapsed = Timer.now() - editMode.timestamp;
+            const t = elasticIn(1 - 1 / elapsed);
+            const margin = lerp(-100, 50, t);
+            const color = PALETTE_RGB.ACCENT.lerp(PALETTE_RGB.SECONDARY, (Math.sin(Timer.now() / 1000 * Math.PI) + 1) / 2).with({ w: t });
+            const bounds = renderer.bounds.shrink({ x: -50, y: margin });
+            const wave = Math.sin(elapsed / 1000 * Math.PI) * 5;
+            draw.rectangleGradient2(renderer.bounds.min.x, renderer.bounds.min.y, renderer.bounds.max.x, renderer.bounds.min.y + 200, PALETTE_RGB.KITCHN_EDITMODE_GRADIENT_1.with({ w: t }), PALETTE_RGB.KITCHN_EDITMODE_GRADIENT_2, Vec2.UP);
+            draw.rectangleGradient2(renderer.bounds.min.x, renderer.bounds.max.y, renderer.bounds.max.x, renderer.bounds.max.y - 200, PALETTE_RGB.KITCHN_EDITMODE_GRADIENT_1.with({ w: t }), PALETTE_RGB.KITCHN_EDITMODE_GRADIENT_2, Vec2.UP);
+            draw.rectangleStroke(...bounds.shrink({ x: 0, y: wave }).toArray(), color, 10);
+            draw.fontSize = 64;
+            await draw.textAlign(bounds.min.add({ x: 250, y: 50 }), '編集モード', Vec2.ZERO, color);
+            draw.fontSize = 64 / 2;
+            await draw.textAlign(bounds.min.add({ x: 250, y: 50 + 64 + 10 }), 'すべてのものを動かせます', Vec2.ZERO, color);
+        }
     }
 
     private async renderOverlaySide(assets: SceneAssets, layout: SceneLayout) {
@@ -308,13 +414,13 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
         draw.texture(...renderer.containBounds.toArray(), assets.texBackground);
     }
 
-    private async renderDisplay(assets: SceneAssets) {
+    private async renderDisplay(scene: SceneKitchenData, assets: SceneAssets) {
         const counterBounds = CLIENT_WORLD_BOUNDS.fit(assets.texCounter.size);
         this.display.bounds = new AABB2(
             counterBounds.max.sub(OFFSETS.DISPLAY.MAX_SUB_1),
             counterBounds.max.sub(OFFSETS.DISPLAY.MAX_SUB_2),
         );
-        await this.display.render();
+        await this.display.render(scene);
     }
 
     /**
@@ -343,7 +449,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
     /**
      * メインハンドラ: 流れを制御する
      */
-    async handle() {
+    async handle(scene: SceneKitchenData) {
         // 1. 準備
         const assets = await this.loadAssets();
         const layout = this.game.side === 'client'
@@ -351,7 +457,7 @@ export class SceneKitchen implements SceneHandler<SceneKitchenData> {
             : this.calculateLayoutOverlay(assets);
 
         // 2. 実行
-        await this.renderScene(assets, layout);
+        await this.renderScene(assets, layout, scene);
         await this.processInput(layout);
     }
 }

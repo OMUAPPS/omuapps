@@ -5,7 +5,7 @@ import type { Game } from '../../core/game';
 import { validateVec2, type ValidateResult } from '../../core/helper';
 import type { Action } from '../../core/input-system';
 import type { AttributeHandler, AttributeInvoke, ItemMouseEvent, ItemRender } from '../attribute-handler';
-import type { ItemPool } from '../item';
+import type { Item, ItemPool } from '../item';
 import DraggingEditor from './DraggingEditor.svelte';
 
 export interface AttrDragging {
@@ -62,7 +62,8 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
         const { texture } = render;
 
         // 1. ホバー時のアウトライン表示
-        if (this.game.item.states.hovered === item.id) {
+        const isPickable = this.isPickable(item, attr);
+        if (isPickable) {
             draw.textureOutline(min.x, min.y, max.x, max.y, texture, PALETTE_RGB.ACCENT, AttributeDragging.OUTLINE_WIDTH);
         }
 
@@ -98,10 +99,8 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
         event: ItemMouseEvent,
         ctx: { actions: Action[] },
     ): Promise<void> {
-        if (!attr.active) return;
-
         // 他のアイテムを持っていない、かつ自身がホバーされている場合
-        const isPickable = !this.game.item.states.held && this.game.item.states.hovered === item.id;
+        const isPickable = this.isPickable(item, attr);
         const { states } = this.game;
 
         if (!isPickable) return;
@@ -130,19 +129,32 @@ export class AttributeDragging implements AttributeHandler<AttrDragging> {
                 if (states.scene.value.type === 'factory' && (!states.scene.value.selecting || states.scene.value.selecting.type === 'edit_item')) {
                     states.scene.value.selecting = { type: 'edit_item', itemId: item.id };
                 }
-                this.game.item.states.held = item.id;
+                await this.game.item.holdItem(item);
                 this.game.item.dettachItem(item);
-                if (attr.dragSound) {
-                    this.game.audio.start(attr.dragSound);
-                }
 
-                // 掴んだ瞬間のマウス座標とアイテム座標の差分を保存
                 attr.lastDrag = {
                     timestamp: Date.now(),
                     offset: event.poolPos.sub(item.transform.offset),
                 };
             },
         });
+    }
+
+    private isPickable(item: Item, attr: AttrDragging): boolean {
+        const scene = this.game.states.scene.value;
+        const { held, hovered } = this.game.item.states;
+        if (hovered !== item.id) return false;
+        if (scene.type === 'factory' || (scene.type === 'kitchen' && scene.editMode)) {
+            return true;
+        }
+        if (!attr.active) return false;
+        return !held;
+    }
+
+    async drag({ attr }: AttributeInvoke<AttrDragging>, _pool: ItemPool): Promise<void> {
+        if (attr.dragSound) {
+            this.game.audio.start(attr.dragSound);
+        }
     }
 
     async drop({ attr }: AttributeInvoke<AttrDragging>, _pool: ItemPool): Promise<void> {

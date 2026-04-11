@@ -452,6 +452,25 @@ void main() {
     fragColor = color * u_color * alpha;
 }`;
 
+const GRADIENT_RECT_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+
+uniform vec4 u_color1;
+uniform vec4 u_color2;
+uniform vec2 u_dir;
+
+in vec2 v_texcoord;
+
+out vec4 fragColor;
+
+void main() {
+    vec2 uv = v_texcoord;
+    float t = dot(uv, u_dir) / dot(u_dir, u_dir);
+    vec4 color = mix(u_color1, u_color2, t);
+    fragColor = color;
+    fragColor.rgb *= color.a;
+}`;
+
 type TextTexture = {
     texture: GlTexture;
     width: number;
@@ -466,6 +485,7 @@ export class Draw {
     private readonly textureMaskProgram: GlProgram;
     private readonly textureColorProgram: GlProgram;
     private readonly textureOutlineProgram: GlProgram;
+    private readonly gradientRectProgram: GlProgram;
     private readonly bezierProgram: GlProgram;
     private readonly circleProgram: GlProgram;
     private readonly circleTextureProgram: GlProgram;
@@ -494,6 +514,7 @@ export class Draw {
         this.textureMaskProgram = this.createProgram(TEXTURE_MASK_FRAGMENT_SHADER);
         this.textureColorProgram = this.createProgram(TEXTURE_COLOR_FRAGMENT_SHADER);
         this.textureOutlineProgram = this.createProgram(TEXTURE_OUTLINE_FRAGMENT_SHADER);
+        this.gradientRectProgram = this.createProgram(GRADIENT_RECT_FRAGMENT_SHADER);
         this.bezierProgram = this.createProgram(QUADRATIC_BEZIER_FRAGMENT_SHADER);
         this.circleProgram = this.createProgram(CIRCLE_FRAGMENT_SHADER);
         this.circleTextureProgram = this.createProgram(CIRCLE_TEXTURE_FRAGMENT_SHADER);
@@ -719,11 +740,11 @@ export class Draw {
         });
     }
 
-    public rectangleGradient2(left: number, top: number, right: number, bottom: number, color1: Vec4Like, color2: Vec4Like): void {
+    public rectangleGradient2(left: number, top: number, right: number, bottom: number, color1: Vec4Like, color2: Vec4Like, dir: Vec2): void {
         const { gl } = this.glContext;
 
-        this.colorProgram.use(() => {
-            this.setMesh(this.colorProgram, new Float32Array([
+        this.gradientRectProgram.use(() => {
+            this.setMesh(this.gradientRectProgram, new Float32Array([
                 left, top, 0,
                 right, top, 0,
                 right, bottom, 0,
@@ -731,50 +752,61 @@ export class Draw {
                 right, bottom, 0,
                 left, bottom, 0,
             ]));
-            this.setMatrices(this.colorProgram);
-            this.colorProgram.getUniform('u_color1').asVec4().set(color1);
-            this.colorProgram.getUniform('u_color2').asVec4().set(color2);
+            this.setMatrices(this.gradientRectProgram);
+            this.gradientRectProgram.getUniform('u_color1').asVec4().set(color1);
+            this.gradientRectProgram.getUniform('u_color2').asVec4().set(color2);
+            this.gradientRectProgram.getUniform('u_dir').asVec2().set(dir);
 
-            const position = this.colorProgram.getAttribute('a_position');
+            const position = this.gradientRectProgram.getAttribute('a_position');
             position.set(this.vertexBuffer, 3, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         });
     }
 
-    public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4Like, width: number): void {
+    public rectangleStroke(left: number, top: number, right: number, bottom: number, color: Vec4Like, width: number, side: 'outer' | 'inner' | 'middle' = 'middle'): void {
         const { gl } = this.glContext;
         width /= 2;
+
+        const expand = side === 'inner'
+            ? 0
+            : side === 'middle'
+                ? width / 2
+                : width;
+        const bounds = new AABB2(new Vec2(left, top), new Vec2(right, bottom)).expand(
+            { x: expand, y: expand },
+        );
+        const { min, max } = bounds;
 
         this.colorProgram.use(() => {
             this.setMesh(this.colorProgram, new Float32Array([
                 // top
-                left - width, top - width, 0,
-                right - width, top - width, 0,
-                right - width, top + width, 0,
-                left - width, top - width, 0,
-                right - width, top + width, 0,
-                left - width, top + width, 0,
+                min.x - width, min.y - width, 0,
+                max.x - width, min.y - width, 0,
+                max.x - width, min.y + width, 0,
+                min.x - width, min.y - width, 0,
+                max.x - width, min.y + width, 0,
+                min.x - width, min.y + width, 0,
                 // right
-                right - width, top - width, 0,
-                right + width, top - width, 0,
-                right + width, bottom - width, 0,
-                right - width, top - width, 0,
-                right + width, bottom - width, 0,
-                right - width, bottom - width, 0,
+                max.x - width, min.y - width, 0,
+                max.x + width, min.y - width, 0,
+                max.x + width, max.y - width, 0,
+                max.x - width, min.y - width, 0,
+                max.x + width, max.y - width, 0,
+                max.x - width, max.y - width, 0,
                 // bottom
-                left + width, bottom - width, 0,
-                right + width, bottom - width, 0,
-                right + width, bottom + width, 0,
-                left + width, bottom - width, 0,
-                right + width, bottom + width, 0,
-                left + width, bottom + width, 0,
+                min.x + width, max.y - width, 0,
+                max.x + width, max.y - width, 0,
+                max.x + width, max.y + width, 0,
+                min.x + width, max.y - width, 0,
+                max.x + width, max.y + width, 0,
+                min.x + width, max.y + width, 0,
                 // left
-                left - width, top + width, 0,
-                left + width, top + width, 0,
-                left + width, bottom + width, 0,
-                left - width, top + width, 0,
-                left + width, bottom + width, 0,
-                left - width, bottom + width, 0,
+                min.x - width, min.y + width, 0,
+                min.x + width, min.y + width, 0,
+                min.x + width, max.y + width, 0,
+                min.x - width, min.y + width, 0,
+                min.x + width, max.y + width, 0,
+                min.x - width, max.y + width, 0,
             ]));
             this.setMatrices(this.colorProgram);
 

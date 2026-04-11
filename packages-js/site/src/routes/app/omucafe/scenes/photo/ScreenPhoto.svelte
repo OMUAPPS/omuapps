@@ -3,7 +3,7 @@
     import { Vec4 } from '$lib/math/vec4';
     import { Timer } from '$lib/timer';
     import { obs, Slider, Tooltip } from '@omujs/ui';
-    import { oklch2rgb } from '../../colors';
+    import { oklch2rgb, rgb2oklch } from '../../colors';
     import type { Game } from '../../core/game';
     import type { ScenePhotoData } from './photo';
     import Receipt from './Receipt.svelte';
@@ -136,23 +136,26 @@
         <div class="tool">
             {#if $config.canvas.tool?.type === 'brush'}
                 {#snippet color(color: Vec4)}
+                    {@const lch = rgb2oklch(color)}
+                    {@const darker = oklch2rgb(lch.with({ x: lch.x / 2, y: lch.y / 2 }))}
+                    {@const color1 = color.mul({ x: 1 / 255, y: 1 / 255, z: 1 / 255, w: 1 })}
                     <!-- svelte-ignore a11y_consider_explicit_label -->
                     <button
                         class="color"
-                        style="background: rgba({color.x * 255}, {color.y * 255}, {color.z * 255}, {color.w})"
-                        class:selected={color.distance($config.canvas.brush.color) < 1 / 255}
+                        style="background: rgba({color.x}, {color.y}, {color.z}, {color.w}); outline: 1px solid rgba({darker.x}, {darker.y}, {darker.z}, 1);"
+                        class:selected={color1.distance($config.canvas.brush.color) < 1 / 255}
                         onclick={() => {
-                            $config.canvas.brush.color = color;
+                            $config.canvas.brush.color = color1;
                             $config = { ...$config };
                         }}
                     ></button>
                 {/snippet}
                 <div class="palette">
                     <div class="col">
-                        {@render color(new Vec4(1, 1, 1, 1))}
-                        {@render color(new Vec4(0.70, 0.70, 0.70, 1))}
-                        {@render color(new Vec4(0.5, 0.5, 0.5, 1))}
-                        {@render color(new Vec4(0.25, 0.25, 0.25, 1))}
+                        {@render color(new Vec4(1, 1, 1, 1).mul({ x: 255, y: 255, z: 255, w: 1 }))}
+                        {@render color(new Vec4(0.70, 0.70, 0.70, 1).mul({ x: 255, y: 255, z: 255, w: 1 }))}
+                        {@render color(new Vec4(0.5, 0.5, 0.5, 1).mul({ x: 255, y: 255, z: 255, w: 1 }))}
+                        {@render color(new Vec4(0.25, 0.25, 0.25, 1).mul({ x: 255, y: 255, z: 255, w: 1 }))}
                     </div>
                     {#each Array.from({ length: 10 }).fill(0) as _, hue (hue)}
                         <div class="col">
@@ -172,7 +175,7 @@
                                 {@const h = (1 - hue / 10) * 360}
                                 {@const lch = { x: l, y: c, z: h, w: 1 }}
                                 {@const rgb = oklch2rgb(lch)}
-                                {@render color(rgb.mul({ x: 1 / 255, y: 1 / 255, z: 1 / 255, w: 1 }))}
+                                {@render color(rgb)}
                             {/each}
                         </div>
                     {/each}
@@ -251,21 +254,21 @@
 {#snippet overlayUI()}
     {#if scene.photo}
         {#if scene.photo.type === 'started'}
-            <div class="countdown">
-                <Ticker interval={1000} offset={scene.photo.startTime - Timer.now()}>
-                    {#snippet children(tick)}
-                        {@const remaining = 6 - tick}
-                        {#if remaining > 1}
+            <Ticker interval={1000} offset={scene.photo.startTime - Timer.now()}>
+                {#snippet children(tick)}
+                    {@const remaining = 6 - tick}
+                    {#if remaining > 1}
+                        <div class="countdown">
                             {remaining}
+                        </div>
+                        {#if scene.receipt}
+                            <div class="receipt">
+                                <Receipt receipt={scene.receipt} />
+                            </div>
                         {/if}
-                    {/snippet}
-                </Ticker>
-            </div>
-            {#if scene.receipt}
-                <div class="receipt">
-                    <Receipt receipt={scene.receipt} />
-                </div>
-            {/if}
+                    {/if}
+                {/snippet}
+            </Ticker>
         {:else if scene.photo.type === 'completed'}
             {#await game.asset.getUrl(scene.photo.screenshot).promise then screenshot}
                 {#if screenshot.type === 'ready'}
@@ -328,9 +331,9 @@
     .receipt {
         position: fixed;
         right: 4rem;
-        bottom: 4rem;
+        bottom: 28rem;
         filter: drop-shadow(0.25rem 0.5rem 0 rgba(0,0,0,0.5)) drop-shadow(0.25rem 0.5rem 2rem rgba(0,0,0,0.3));
-        transform: rotate(10deg);
+        transform: rotate(10deg) translateY(100%);
         transform-origin: bottom;
     }
 
@@ -367,7 +370,7 @@
             transform: rotate(0) scale(1);
         }
         100% {
-            transform: rotate(3deg) scale(1.1);
+            transform: rotate(1deg) scale(1.05);
             filter: saturate(1.2) contrast(1.2) sepia(0.4);
         }
     }

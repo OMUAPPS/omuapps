@@ -19,6 +19,11 @@
         <span>Address</span>
         <small>{$shop.shop.address}</small>
     </div>
+    <br>
+    {receipt.date}
+    <br>
+    {receipt.order.user.name}
+    <br>
     <div class="item">
         <span>Owner</span>
         <small>{$shop.shop.owner}</small>
@@ -31,10 +36,6 @@
             <small>1</small>
         </div>
     {/each}
-    <br>
-    {receipt.date}
-    <br>
-    {receipt.order.user.name}
     <br>
     {#if receipt.screenshot}
         {#await game.asset.getUrl(receipt.screenshot).promise then screenshot}

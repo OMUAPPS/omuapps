@@ -41,6 +41,19 @@
         {/if}
     </Collapse>
     <Collapse name="マスキング">
+        <label>
+            マスク方法
+            <Combobox bind:value={attr.maskInverted} options={{
+                false: {
+                    label: '重なった場所だけ表示',
+                    value: false,
+                },
+                true: {
+                    label: '重ならない場所だけ表示',
+                    value: true,
+                },
+            }} />
+        </label>
         <EditAsset bind:asset={() => attr.mask?.asset, (asset) => {
             if (!asset) return;
             attr.mask = {

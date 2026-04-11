@@ -1,8 +1,10 @@
 
 import type { Vec4Like } from '$lib/math/vec4';
+import type { Identifier } from '@omujs/omu';
 import type { Registry } from '@omujs/omu/api/registry';
 import type { Signal } from '@omujs/omu/api/signal';
 import type { Table } from '@omujs/omu/api/table';
+import { ByteReader, ByteWriter, type JsonType } from '@omujs/omu/serialize';
 import { writable, type Writable } from 'svelte/store';
 import { PALETTE_RGB } from '../colors';
 import type { Item } from '../item';
@@ -15,6 +17,9 @@ interface State {
     wait(): Promise<void>;
     flush(): Promise<void>;
     getStringified(): string;
+    ignore: boolean;
+    serialize(): Uint8Array;
+    deserialize(buffer: Uint8Array): void;
 }
 
 class ProxyTracker<T extends object> {
@@ -153,6 +158,7 @@ export class BufferedMap<T extends object> implements State {
     constructor(
         private readonly table: Table<T>,
         listen: boolean,
+        public readonly ignore = false,
     ) {
         if (listen) {
             this.unlisten.push(
@@ -311,11 +317,34 @@ export class BufferedMap<T extends object> implements State {
         }
         return JSON.stringify(obj);
     }
+
+    public serialize(): Uint8Array {
+        const writer = new ByteWriter();
+        writer.writeULEB128(this.map.size);
+        for (const [key, value] of this.map.entries()) {
+            writer.writeString(key);
+            writer.writeUint8Array(this.table.type.serializer.serialize(value));
+        }
+        return writer.toUint8Array();
+    }
+
+    public deserialize(buffer: Uint8Array) {
+        this.clear();
+        const reader = ByteReader.fromUint8Array(buffer);
+        const size = reader.readULEB128();
+        for (let i = 0; i < size; i++) {
+            const key = reader.readString();
+            const valueBuffer = reader.readUint8Array();
+            const value = this.table.type.serializer.deserialize(valueBuffer);
+            this.map.set(key, value);
+        }
+    }
 }
 
 export class BufferedRegistry<T extends object> implements State {
     #tracker: ProxyTracker<T>;
     public store: Writable<T>;
+    public ignore = false;
 
     constructor(
         public readonly registry: Registry<T>,
@@ -369,6 +398,14 @@ export class BufferedRegistry<T extends object> implements State {
     public getStringified(): string {
         return JSON.stringify(this.#tracker.value);
     }
+
+    public serialize(): Uint8Array {
+        return this.registry.type.serializer.serialize(this.value);
+    }
+
+    public deserialize(buffer: Uint8Array) {
+        this.value = this.registry.type.serializer.deserialize(buffer);
+    }
 }
 
 interface TransitionData {
@@ -378,12 +415,35 @@ interface TransitionData {
     } | null;
 }
 
+type AssetPair<T> = Record<'asset' | 'client', T>;
+type PartialAssets<T> = {
+    [P in keyof T]?: T[P] extends Asset ? Asset : PartialAssets<T[P]>;
+};
+
 interface ShopData {
     shop: {
         name: string;
         address: string;
         owner: string;
     };
+}
+
+interface KitchenSkin {
+    assets: PartialAssets<{
+        vertical: {
+            kitchen: AssetPair<{
+                counter: Asset;
+                kitchen: Asset;
+                background: Asset;
+            }>;
+            photo: AssetPair<{
+                photo_frame: Asset;
+                counter: Asset;
+                kitchen: Asset;
+                background: Asset;
+            }>;
+        };
+    }>;
 }
 
 interface CanvasEditBrushStart {
@@ -501,6 +561,7 @@ export class GameState {
     public transition: BufferedRegistry<TransitionData>;
     public shop: BufferedRegistry<ShopData>;
     public config: BufferedRegistry<Config>;
+    public skin: BufferedRegistry<KitchenSkin>;
     public canvasEditHeap: BufferedMap<CanvasEditChunk>;
     public canvasEditStack: BufferedRegistry<CanvasEditChunk>;
     public canvasEditSignal: Signal<CanvasEditChunk>;
@@ -520,10 +581,10 @@ export class GameState {
         const listen = omucafe.side !== 'client';
         const items = this.register(new BufferedMap(omu.tables.json<Item>('items', {
             key: (item) => item.id,
-        }), listen));
+        }), listen, true));
         const assets = this.register(new BufferedMap(omu.tables.json<Asset>('assets', {
             key: (asset) => getAssetKey(asset),
-        }), listen));
+        }), listen, true));
         const kitchen = this.register(new BufferedRegistry(omu.registries.json<ItemPool>('kitchen', {
             default: {
                 id: 'kitchen',
@@ -581,6 +642,11 @@ export class GameState {
                 },
             },
         }), listen));
+        const skin = this.register(new BufferedRegistry(omu.registries.json<KitchenSkin>('skin', {
+            default: {
+                assets: {},
+            },
+        }), listen));
         const canvasEditHeap = this.register(new BufferedMap(omu.tables.json<CanvasEditChunk>('canvas_edit_heap', {
             key: (edit) => edit.i.toString(),
         }), listen));
@@ -612,6 +678,7 @@ export class GameState {
         this.transition = transition;
         this.shop = shop;
         this.config = config;
+        this.skin = skin;
         this.canvasEditHeap = canvasEditHeap;
         this.canvasEditStack = canvasEditStack;
         this.canvasEditSignal = canvasEditSignal;
@@ -630,11 +697,162 @@ export class GameState {
         }
     }
 
-    public getAllJsonStringified() {
+    public getAllJsonStringified(ignore: State) {
         const result = [];
         for (const state of this.states) {
+            if (state === ignore) continue;
             result.push(state.getStringified());
         }
         return result.join('');
+    }
+
+    public async serializeAssets() {
+        const writer = new ByteWriter();
+        const entries = [...this.assets.entries()];
+        writer.writeULEB128(entries.length);
+        for (const [id, asset] of entries) {
+            if (asset.type === 'url') continue;
+            const id = this.getAssetId(asset.id);
+            const { buffer } = await this.omucafe.omu.assets.download(id);
+            writer.writeString(asset.id);
+            writer.writeUint8Array(buffer);
+        }
+        return writer.toUint8Array();
+    }
+
+    private getAssetId(id: string): Identifier {
+        const { omu } = this.omucafe;
+        return omu.app.id.base.join('asset', id);
+    }
+
+    public async deserializeAssets(buffer: Uint8Array) {
+        const reader = ByteReader.fromUint8Array(buffer);
+        const count = reader.readULEB128();
+        for (let i = 0; i < count; i++) {
+            const id = reader.readString();
+            const data = reader.readUint8Array();
+            const asset: Asset = {
+                type: 'asset',
+                id,
+            };
+            await this.omucafe.omu.assets.upload(this.getAssetId(id), data);
+            this.assets.set(id, asset);
+        }
+    }
+}
+
+class AssetPackData<Buffers extends Record<string, Uint8Array | undefined>, T extends JsonType> {
+    private static HEADER = 'omupk';
+    private static VERSION = 0;
+
+    constructor(
+        public readonly buffers: Buffers,
+        public readonly data: T,
+    ) {}
+
+    public static deserialize<Buffers extends Record<string, Uint8Array | undefined>, T extends JsonType>(buffer: Uint8Array): AssetPackData<Buffers, T> {
+        const reader = ByteReader.fromUint8Array(buffer);
+        const header = reader.readString();
+        if (header !== AssetPackData.HEADER) {
+            throw new Error('Invalid asset pack');
+        }
+        const version = reader.readULEB128();
+        if (version !== AssetPackData.VERSION) {
+            throw new Error('Unsupported asset pack version');
+        }
+        const data = reader.readJSON() as JsonType;
+        const buffers: Record<string, Uint8Array> = {};
+        const count = reader.readULEB128();
+        for (let i = 0; i < count; i++) {
+            const id = reader.readString();
+            const buf = reader.readUint8Array();
+            buffers[id] = buf;
+        }
+        return new AssetPackData<Buffers, T>(buffers as Buffers, data as T);
+    }
+
+    public serialize() {
+        const writer = new ByteWriter();
+        writer.writeString(AssetPackData.HEADER);
+        writer.writeULEB128(AssetPackData.VERSION);
+        writer.writeJSON(this.data);
+        const entries = Object.entries(this.buffers).filter(([_, buf]) => buf !== undefined) as [string, Uint8Array][];
+        writer.writeULEB128(entries.length);
+        for (const [id, buffer] of entries) {
+            writer.writeString(id);
+            writer.writeUint8Array(buffer);
+        }
+        return writer.finish();
+    }
+}
+
+type KitchenPackBuffers = {
+    assets: Uint8Array;
+    items: Uint8Array;
+    kitchen: Uint8Array;
+    counter: Uint8Array;
+    fridge: Uint8Array;
+    factory: Uint8Array;
+    products: Uint8Array;
+    skin: Uint8Array;
+};
+
+type KitchenPackData = {
+    type: 'kitchen';
+};
+export class KitchenPack {
+    constructor(
+        private readonly data: AssetPackData<KitchenPackBuffers, KitchenPackData>,
+    ) {}
+
+    public static async create(state: GameState) {
+        const assets = await state.serializeAssets();
+        const items = state.items.serialize();
+        const kitchen = state.kitchen.serialize();
+        const counter = state.counter.serialize();
+        const fridge = state.fridge.serialize();
+        const factory = state.factory.serialize();
+        const products = state.products.serialize();
+        const skin = state.skin.serialize();
+        const data = new AssetPackData<KitchenPackBuffers, KitchenPackData>({
+            items,
+            assets,
+            kitchen,
+            counter,
+            fridge,
+            factory,
+            products,
+            skin,
+        }, {
+            type: 'kitchen',
+        });
+        return new KitchenPack(data);
+    }
+
+    public static load(buffer: Uint8Array): KitchenPack {
+        const data = AssetPackData.deserialize<KitchenPackBuffers, KitchenPackData>(buffer);
+        return new KitchenPack(data);
+    }
+
+    public async apply(state: GameState) {
+        state.items.deserialize(this.data.buffers.items);
+        await state.deserializeAssets(this.data.buffers.assets);
+        state.kitchen.deserialize(this.data.buffers.kitchen);
+        state.counter.deserialize(this.data.buffers.counter);
+        state.fridge.deserialize(this.data.buffers.fridge);
+        state.factory.deserialize(this.data.buffers.factory);
+        state.products.deserialize(this.data.buffers.products);
+        state.skin.deserialize(this.data.buffers.skin);
+    }
+
+    public download(filename: string) {
+        const blob = new Blob([this.data.serialize()], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
     }
 }

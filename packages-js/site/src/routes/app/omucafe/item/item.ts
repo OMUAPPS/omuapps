@@ -43,9 +43,11 @@ export interface ItemSystemState {
 
 export interface PoolOptions {
     pool: ItemPool;
+    name: string;
     transform: Transform;
     bounds: AABB2Like;
     align?: Vec2Like;
+    ordering: 'upper' | 'lower' | 'latest';
 }
 
 export interface PoolInputPass {
@@ -125,7 +127,7 @@ export class ItemSystem {
     }
 
     private garbageCollection() {
-        const registryString = this.game.states.getAllJsonStringified();
+        const registryString = this.game.states.getAllJsonStringified(this.game.states.items);
 
         const activeItems: Item[] = [];
         for (const [id, item] of this.items.entries()) {
@@ -135,6 +137,7 @@ export class ItemSystem {
         }
 
         const toKeep: Map<string, Item> = new Map();
+        const deletedItems: string[] = [];
         while (activeItems.length > 0) {
             const item = activeItems.pop();
             if (!item) continue;
@@ -154,6 +157,7 @@ export class ItemSystem {
                 const idx = item.children.indexOf(id);
                 if (idx !== -1) item.children.splice(idx, 1);
                 this.items.delete(id);
+                deletedItems.push(id);
             }
             toKeep.set(item.id, item);
         }
@@ -161,7 +165,12 @@ export class ItemSystem {
         for (const id of this.items.keys()) {
             if (!toKeep.has(id)) {
                 this.items.delete(id);
+                deletedItems.push(id);
             }
+        }
+
+        if (deletedItems.length > 0) {
+            console.log(`Garbage collected ${deletedItems.length} items:`, deletedItems);
         }
     }
 
@@ -181,7 +190,7 @@ export class ItemSystem {
     }
 
     public clone(item: Item): Item {
-        const pool = this.renderPass.pools[item.pool];
+        const poolOptions = this.renderPass.pools[item.pool];
         const clonedItem = this.allocateItem({
             ...item,
             children: [],
@@ -195,7 +204,7 @@ export class ItemSystem {
             clonedItem.children.push(childClone.id);
         }
 
-        pool.pool.items[clonedItem.id] = { id: clonedItem.id };
+        this.setPool(clonedItem, poolOptions.pool);
         return clonedItem;
     }
 
@@ -462,7 +471,7 @@ export class ItemSystem {
                 title: '戻す',
                 priority: 0,
                 invoke: async () => {
-                    this.dropHeldItem();
+                    await this.dropItem();
                     this.remove(held);
                 },
             });
@@ -470,31 +479,44 @@ export class ItemSystem {
         }
 
         this.inputPass!.actions.push({
-            title: '置く',
+            title: `${options.name}に置く`,
             priority: 0,
             invoke: async () => {
-                this.dropHeldItem();
+                await this.dropItem();
                 this.setPool(held, pool);
                 const render = await this.game.itemRenderer.getItemRender(held);
                 const transform = getTransform(held.transform);
                 if (render.type === 'rendered') {
                     this.constrainItemToBounds(held, options, transform.getMat4().basisTransformAABB2(render.render.bounds));
                 }
+                await this.reorderItems(pool, options.ordering);
             },
         });
     }
 
-    public dropHeldItem() {
+    public async holdItem(item: Item) {
+        this.states.held = item.id;
+        const poolOptions = this.renderPass.pools[item.pool];
+        for (const entry of this.traverseHierarchy(item)) {
+            await this.game.attribute.emit('drag', entry, poolOptions.pool);
+        }
+    }
+
+    public async dropItem() {
         const heldId = this.states.held;
         if (!heldId) return;
         const held = this.get(heldId);
         if (!held) return;
         const poolOptions = this.renderPass.pools[held.pool];
-        this.game.attribute.emit('drop', held, poolOptions.pool);
         this.states.held = undefined;
+        for (const entry of this.traverseHierarchy(held)) {
+            await this.game.attribute.emit('drop', entry, poolOptions.pool);
+        }
     }
 
-    private async reorderItems(pool: ItemPool) {
+    private async reorderItems(pool: ItemPool, ordering: PoolOptions['ordering']) {
+        if (!ordering) return;
+        if (ordering === 'latest') return;
         const items = Object.values(pool.items)
             .map(({ id }) => this.game.item.items.get(id))
             .filter((child): child is Item => !!child);
@@ -517,7 +539,7 @@ export class ItemSystem {
             const bCenterY = b.transform.offset.y + bBounds.max.y;
 
             const delta = (bCenterY - aCenterY);
-            return -delta;
+            return ordering === 'lower' ? -delta : delta;
         });
 
         pool.items = {};
@@ -578,6 +600,16 @@ export class ItemSystem {
             const data = this.items.get(child);
             if (!data) continue;
             this.setPool(data, pool);
+        }
+    }
+
+    public *traverseHierarchy(item: Item): Generator<Item> {
+        yield item;
+        for (const childId of item.children) {
+            const child = this.items.get(childId);
+            if (child) {
+                yield* this.traverseHierarchy(child);
+            }
         }
     }
 

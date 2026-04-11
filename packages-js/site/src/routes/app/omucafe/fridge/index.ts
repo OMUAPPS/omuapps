@@ -11,7 +11,6 @@ import fridge_step from './img/fridge_step.png';
 import fridge_top from './img/fridge_top.png';
 
 export class FridgeSystem {
-    private pool: ItemPool;
     public width = 620 * 1.5;
     public offsetX = 0;
     public scroll = 0;
@@ -21,7 +20,10 @@ export class FridgeSystem {
     constructor(
         private readonly game: Game,
     ) {
-        this.pool = game.states.fridge.value;
+    }
+
+    get pool(): ItemPool {
+        return this.game.states.fridge.value;
     }
 
     public async render() {
@@ -49,9 +51,11 @@ export class FridgeSystem {
         this.pool.id = 'fridge';
         const options: PoolOptions = {
             pool: this.pool,
+            name: '冷蔵庫',
             transform: transform.toJSON(),
             bounds: this.bounds,
             align: Vec2.CENTER,
+            ordering: 'latest',
         };
         await this.game.itemRenderer.renderPool(this.pool, options);
     }
@@ -64,9 +68,11 @@ export class FridgeSystem {
         ]);
         const options: PoolOptions = {
             pool: this.pool,
+            name: '冷蔵庫',
             transform: transform.toJSON(),
             bounds: this.bounds,
             align: Vec2.CENTER,
+            ordering: 'latest',
         };
         if (event.kind === 'mouse-wheel' && this.hovered) {
             this.scroll = clamp(this.scroll + event.delta, 0, this.bounds.height - CLIENT_WORLD_BOUNDS.max.y * 2);

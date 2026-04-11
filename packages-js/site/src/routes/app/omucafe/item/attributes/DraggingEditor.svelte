@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Checkbox } from '@omujs/ui';
+    import { Checkbox, Tooltip } from '@omujs/ui';
     import EditAudioClip from '../../common/EditAudioClip.svelte';
     import type { AttrDragging } from './dragging';
 
@@ -12,6 +12,9 @@
 
 {#if attr}
     <label>
+        <Tooltip>
+            無効にすると編集時のみに移動できるようになります
+        </Tooltip>
         有効
         <Checkbox bind:value={attr.active} />
     </label>

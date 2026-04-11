@@ -182,6 +182,28 @@ export class AssetManager {
             throw new Error('Failed to create canvas context');
         }
         this.dataContext = ctx;
+        this.garbageAssetCollection();
+    }
+
+    private garbageAssetCollection() {
+        const states = this.game.states;
+        const allString = states.getAllJsonStringified(states.assets);
+        const toRemove = new Set<string>();
+        for (const [id, asset] of states.assets.entries()) {
+            const included1 = allString.includes(id);
+            const included2 = asset.type === 'asset' && allString.includes(asset.id);
+            if (included1 || included2) continue;
+            toRemove.add(id);
+        }
+        for (const id of toRemove) {
+            const asset = states.assets.get(id);
+            if (!asset) continue;
+            if (asset.type === 'asset') {
+                const id = this.getAssetId(asset.id);
+                this.game.app.omu.assets.delete(id);
+            }
+            states.assets.delete(id);
+        }
     }
 
     private getAssetId(id: string): Identifier {

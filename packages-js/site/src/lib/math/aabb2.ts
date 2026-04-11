@@ -159,6 +159,27 @@ export class AABB2 {
         );
     }
 
+    public split(options: {
+        direction: 'x' | 'y';
+        ratio: number;
+        gap?: number;
+    }): [AABB2, AABB2] {
+        const gap = options.gap ?? 0;
+        if (options.direction === 'x') {
+            const splitX = this.min.x + this.width * options.ratio;
+            return [
+                new AABB2(this.min, new Vec2(splitX - gap, this.max.y)),
+                new AABB2(new Vec2(splitX + gap, this.min.y), this.max),
+            ];
+        } else {
+            const splitY = this.min.y + this.height * options.ratio;
+            return [
+                new AABB2(this.min, new Vec2(this.max.x, splitY - gap)),
+                new AABB2(new Vec2(this.min.x, splitY + gap), this.max),
+            ];
+        }
+    }
+
     public offset(position: Vec2Like) {
         return new AABB2(
             this.min.add(position),
